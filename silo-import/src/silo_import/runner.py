@@ -47,6 +47,19 @@ class ImporterRunner:
         # Determine if hard refresh needed
         hard_refresh = time.time() - self.last_hard_refresh >= self.config.hard_refresh_interval
 
+        if hard_refresh:
+            logger.info(
+                f"Hard refresh triggered: "
+                f"time_since_last={time.time() - self.last_hard_refresh:.1f}s, "
+                f"interval={self.config.hard_refresh_interval}s,"
+                f"last_refresh_time={self.last_hard_refresh}"
+            )
+        else:
+            logger.info(
+                f"Soft refresh: time_since_last={time.time() - self.last_hard_refresh:.1f}s, "
+                f"using etag={self.current_etag}"
+            )
+
         # Use special ETag for hard refresh to force re-download
         last_etag = SPECIAL_ETAG_NONE if hard_refresh else self.current_etag
 
@@ -75,7 +88,7 @@ class ImporterRunner:
 
         # Prepare input for SILO
         safe_remove(self.paths.silo_input_data_path)
-        shutil.copyfile(download.data_path, self.paths.silo_input_data_path)
+        shutil.copyfile(download.transformed_path, self.paths.silo_input_data_path)
 
         run_id = str(int(time.time()))
         self.silo.request_run(run_id)

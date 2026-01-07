@@ -337,6 +337,12 @@
                   "default": true,
                   "description": "If false, the submission form will not allow submission of consensus sequences (i.e. the sequences file must be omitted). All consensus sequence related parts on the website will be hidden."
                 },
+                "maxSequencesPerEntry": {
+                  "groups": ["schema"],
+                  "type": ["integer", "null"],
+                  "default": null,
+                  "description": "Maximum number of sequences allowed per submission entry. Set to null for unlimited sequences per entry. For single-segment organisms, set to 1 to ensure only one sequence per entry."
+                },
                 "files": {
                   "type": "object",
                   "properties": {
@@ -580,6 +586,12 @@
                 "type": "object",
                 "description": "Object of type [ConfigFile](#nextclade-preprocessing-pipeline-configfile-type), Fields that should be added to the preprocessing pipeline config file.",
                 "properties": {
+                  "create_embl_file": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "boolean",
+                    "description": "If prepreprocessing should generate an EMBL file for each sequence, note this requires additional metadata fields to be present (taxon_id, scientific_name, molecule_type)."
+                  },
                   "alignment_requirement": {
                     "groups": ["nextcladePipelineConfigFile"],
                     "docsIncludePrefix": false,
@@ -587,16 +599,72 @@
                     "enum": ["ALL", "ANY"],
                     "description": "If multi-segmented viruses should require ALL segments (that the user provides) align or ANY segment aligns"
                   },
-                  "nextclade_dataset_server": {
-                    "groups": ["nextcladePipelineConfigFile"],
-                    "docsIncludePrefix": false,
-                    "type": "string"
-                  },
-                  "nextclade_dataset_name": {
+                  "segment_classification_method": {
                     "groups": ["nextcladePipelineConfigFile"],
                     "docsIncludePrefix": false,
                     "type": "string",
-                    "description": "Required if sequences should be aligned"
+                    "enum": ["minimizer", "align"],
+                    "description": "Method to classify segments for multi-segmented viruses"
+                  },
+                  "nextclade_dataset_server": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "string",
+                    "description": "Server from which to download nextclade datasets."
+                  },
+                  "nextclade_sequence_and_datasets": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "array",
+                    "description": "Array of [nextcladeSequenceAndDataset](#nextclade-preprocessing-pipeline-sequence-and-dataset-objects-type) objects containing nucleotide sequence names and datasets.",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "groups": ["nextcladeSequenceAndDataset"],
+                          "docsIncludePrefix": false,
+                          "type": "string",
+                          "description": "Name of the nucleotide sequence to which this dataset applies - defaults to 'main'."
+                        },
+                        "nextclade_dataset_name": {
+                          "groups": ["nextcladeSequenceAndDataset"],
+                          "docsIncludePrefix": false,
+                          "type": "string",
+                          "description": "Name of the nextclade dataset to use to align the sequence - required if this sequence should be aligned."
+                        },
+                        "nextclade_dataset_tag": {
+                          "groups": ["nextcladeSequenceAndDataset"],
+                          "docsIncludePrefix": false,
+                          "type": "string",
+                          "description": "Optional. Tag of the nextclade dataset to use to align the sequence."
+                        },
+                        "nextclade_dataset_server": {
+                          "groups": ["nextcladeSequenceAndDataset"],
+                          "docsIncludePrefix": false,
+                          "type": "string",
+                          "description": "Optional. Server from which to download the nextclade dataset to use to align the sequence. If not specified, use the global nextclade_dataset_server."
+                        },
+                        "accepted_sort_matches": {
+                          "groups": ["nextcladeSequenceAndDataset"],
+                          "docsIncludePrefix": false,
+                          "type": "array",
+                          "description": "Optional. Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use only accept matches with the same name or nextclade_dataset_name."
+                        },
+                        "genes": {
+                          "groups": ["nextcladeSequenceAndDataset"],
+                          "docsIncludePrefix": false,
+                          "type": "array",
+                          "description": "Array of strings. The names of the genes to be extracted from the sequence alignment results (should correspond to gene names in the nextclade dataset)."
+                        },
+                        "gene_prefix": {
+                          "groups": ["nextcladeSequenceAndDataset"],
+                          "docsIncludePrefix": false,
+                          "type": "string",
+                          "description": "Optional. Prefix to add to extracted gene names when sending the processing results to the backend. For example, if the nucleotide sequence is for segment (or subtype) A of a multi-segmented virus, then setting gene_prefix to 'A_' will result in gene names 'A_gene1', 'A_gene2', etc."
+                        }
+                      }
+                    }
                   },
                   "require_nextclade_sort_match": {
                     "groups": ["nextcladePipelineConfigFile"],
@@ -608,13 +676,7 @@
                     "groups": ["nextcladePipelineConfigFile"],
                     "docsIncludePrefix": false,
                     "type": "string",
-                    "description": "Minimizer used for nextclade sort (if require_nextclade_sort_match is true), if not specified use default nextclade server minimizer"
-                  },
-                  "accepted_dataset_matches": {
-                    "groups": ["nextcladePipelineConfigFile"],
-                    "docsIncludePrefix": false,
-                    "type": "array",
-                    "description": "Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use nextclade_dataset_name."
+                    "description": "Minimizer used for nextclade sort (if require_nextclade_sort_match or if segments are to be assigned using nextclade sort)"
                   },
                   "backend_request_timeout_seconds": {
                     "groups": ["nextcladePipelineConfigFile"],
@@ -622,7 +684,8 @@
                     "type": "integer",
                     "description": "Timeout in seconds for requests to the backend server for data to process"
                   }
-                }
+                },
+                "required": ["nextclade_sequence_and_datasets"]
               }
             },
             "required": ["version", "image"]
@@ -684,7 +747,7 @@
                       "type": "array",
                       "description": "Required if method is minimizer, list of the name of each '_' - separated metadata field in the minimizer index"
                     },
-                    "minimizer_index": {
+                    "minimizer_url": {
                       "groups": ["ingestPipelineConfigFile"],
                       "docsIncludePrefix": false,
                       "type": "string",
@@ -883,6 +946,23 @@
       "default": "LOC_",
       "description": "Prefix used for accession numbers"
     },
+    "zstdCompressionLevel": {
+      "groups": ["general"],
+      "group": "general",
+      "type": "integer",
+      "default": 10,
+      "minimum": -7,
+      "maximum": 22,
+      "description": "Zstandard compression level for sequence data. Higher means better compression ratio but higher CPU/memory usage."
+    },
+    "pipelineVersionUpgradeCheckIntervalSeconds": {
+      "groups": ["general"],
+      "group": "general",
+      "type": "integer",
+      "default": 10,
+      "minimum": 1,
+      "description": "Interval in seconds at which the backend checks for and adopts newer preprocessing pipeline versions. Pipeline version upgrades are irreversible one-time changes. The check runs on backend startup (with initial delay of min(interval, 600) seconds to avoid DB load). Higher values reduce database load but delay adoption of new pipeline versions."
+    },
     "environment": {
       "groups": ["general"],
       "type": "string",
@@ -919,6 +999,18 @@
       "type": "string",
       "default": "",
       "description": "URL to fetch banner message HTML from - if set will be polled regularly for banner text, e.g. notice of temporary downtime, and overwrite the 'bannerMessage'-config"
+    },
+    "submissionBannerMessage": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "",
+      "description": "Banner message (as HTML) to display on submission pages"
+    },
+    "submissionBannerMessageURL": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "",
+      "description": "URL to fetch submission banner message HTML from - if set will be polled regularly for banner text on submission pages"
     },
     "welcomeMessageHTML": {
       "groups": ["general"],
@@ -1521,10 +1613,35 @@
       "description": "TODO",
       "default": "You must agree to the <a href=\"http://main.loculus.org/terms\">terms of use</a>."
     },
-    "siloImportLimitSeconds": {
-      "type": "integer",
-      "description": "TODO",
-      "default": 3600
+    "siloImport": {
+      "type": "object",
+      "description": "Configuration for SILO import process",
+      "properties": {
+        "siloTimeoutSeconds": {
+          "type": "integer",
+          "description": "Timeout for SILO preprocessing runs in seconds",
+          "default": 3600,
+          "minimum": 1
+        },
+        "hardRefreshIntervalSeconds": {
+          "type": "integer",
+          "description": "Interval in seconds for forcing a hard refresh (re-download) of data, regardless of ETag",
+          "default": 3600,
+          "minimum": 1
+        },
+        "pollIntervalSeconds": {
+          "type": "integer",
+          "description": "Interval in seconds between checking for new data",
+          "default": 30,
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false,
+      "default": {
+        "siloTimeoutSeconds": 3600,
+        "hardRefreshIntervalSeconds": 3600,
+        "pollIntervalSeconds": 30
+      }
     },
     "gitHubEditLink": {
       "type": "string",

@@ -1,6 +1,7 @@
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
-from typing import Any
+from typing import Any, Final
 
 AccessionVersion = str
 GeneName = str
@@ -18,6 +19,9 @@ ProcessedMetadataValue = str | int | float | bool | None
 ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
 InputMetadata = dict[str, InputMetadataValue]
+FastaId = str
+
+ProcessingAnnotationAlignment: Final = "alignment"
 
 
 @unique
@@ -49,7 +53,13 @@ class ProcessingAnnotation:
         return hash((self.unprocessedFields, self.processedFields, self.message))
 
     @classmethod
-    def from_fields(cls, input_fields, output_fields, type, message):
+    def from_fields(
+        cls,
+        input_fields: Iterable[str],
+        output_fields: Iterable[str],
+        type: AnnotationSourceType,
+        message: str,
+    ):
         return cls(
             unprocessedFields=[AnnotationSource(name=f, type=type) for f in input_fields],
             processedFields=[AnnotationSource(name=f, type=type) for f in output_fields],
@@ -80,14 +90,6 @@ FunctionInputs = dict[ArgName, InputField]
 FunctionArgs = dict[ArgName, ArgValue]
 
 
-@dataclass
-class ProcessingSpec:
-    inputs: FunctionInputs
-    function: FunctionName
-    required: bool | None
-    args: FunctionArgs
-
-
 # For single segment, need to generalize for multi segments later
 @dataclass
 class UnprocessedAfterNextclade:
@@ -99,6 +101,7 @@ class UnprocessedAfterNextclade:
     nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]  # noqa: N815
     alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]  # noqa: N815
+    sequenceNameToFastaId: dict[SegmentName, FastaId]  # noqa: N815
     errors: list[ProcessingAnnotation]
     warnings: list[ProcessingAnnotation]
 
@@ -117,6 +120,7 @@ class ProcessedData:
     nucleotideInsertions: dict[SegmentName, Any]  # noqa: N815
     alignedAminoAcidSequences: dict[GeneName, Any]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, Any]  # noqa: N815
+    sequenceNameToFastaId: dict[SegmentName, FastaId]  # noqa: N815
     files: dict[str, list[FileIdAndName]] | None = None
 
 
@@ -126,9 +130,12 @@ class Annotation:
 
 
 @dataclass
-class Alerts:
-    errors: dict[AccessionVersion, list[ProcessingAnnotation]] = field(default_factory=dict)
-    warnings: dict[AccessionVersion, list[ProcessingAnnotation]] = field(default_factory=dict)
+class Alert:
+    errors: list[ProcessingAnnotation] = field(default_factory=list)
+    warnings: list[ProcessingAnnotation] = field(default_factory=list)
+
+
+Alerts = dict[AccessionVersion, Alert]
 
 
 @dataclass
@@ -153,10 +160,43 @@ class SubmissionData:
 
 
 @dataclass
+class InputData:
+    datum: InputMetadataValue
+    warnings: list[ProcessingAnnotation] = field(default_factory=list)
+    errors: list[ProcessingAnnotation] = field(default_factory=list)
+
+
+@dataclass
 class ProcessingResult:
     datum: ProcessedMetadataValue
     warnings: list[ProcessingAnnotation] = field(default_factory=list)
     errors: list[ProcessingAnnotation] = field(default_factory=list)
+
+
+@unique
+class SegmentClassificationMethod(StrEnum):
+    ALIGN = "align"
+    MINIMIZER = "minimizer"
+
+
+@dataclass
+class SegmentAssignment:
+    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None] = field(
+        default_factory=dict
+    )
+    sequenceNameToFastaId: dict[SegmentName, FastaId] = field(default_factory=dict)  # noqa: N815
+    alert: Alert = field(default_factory=Alert)
+
+
+@dataclass
+class SegmentAssignmentBatch:
+    unalignedNucleotideSequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ] = field(default_factory=dict)
+    sequenceNameToFastaId: dict[AccessionVersion, dict[SegmentName, FastaId]] = field(
+        default_factory=dict
+    )
+    alerts: Alerts = field(default_factory=Alerts)
 
 
 @dataclass

@@ -85,7 +85,7 @@ export class GroupPage {
     - Requires that the user is logged in
     - Returns null if the user is not a member of the group
     - Throws an error if the user is a member of multiple groups with the same name */
-    async getGroupId(groupName: string): Promise<number | null> {
+    async getGroupId(groupName: string): Promise<number> {
         await this.page.goto('/user');
 
         const signInPage = this.page.getByText('Sign in to your account');

@@ -1,81 +1,131 @@
 import logging
 import os
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import field
 
 import dotenv
 import yaml
+from pydantic import BaseModel
+
+from ena_deposition.ena_types import MoleculeType, Topology
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class Config:
-    """Configuration for the ENA submission process.
-    See config/defaults.yaml for default values."""
-
-    test: bool
-    organisms: dict[str, dict[str, Any]]
-    backend_url: str
-    keycloak_token_url: str
-    keycloak_client_id: str
-    username: str
-    password: str
-    db_username: str
-    db_password: str
-    db_url: str
-    db_name: str
-    unique_project_suffix: str
-    ena_submission_url: str
-    ena_submission_password: str
-    ena_submission_username: str
-    ena_reports_service_url: str
-    approved_list_url: str
-    approved_list_test_url: str
-    suppressed_list_url: str
-    suppressed_list_test_url: str
-    slack_hook: str
-    slack_token: str
-    slack_channel_id: str
+class MetadataMapping(BaseModel):
     # Map from Biosample key to dict that defines:
     # - which Loculus field(s) to use as input
     # - (optional) function: currently only "match" supported
     # - (optional) args: list of regexes that match against values
     # - (optional) units: units added to sample attribute
     # - (optional) default: default value if field not in input data
-    metadata_mapping: dict[str, dict[str, str | list[str]]]
-    """
-    manifest_fields_mapping:
-      authors:
-        loculus_fields: [authors]
-        function: reformat_authors
-      program:
-        loculus_fields: [consensusSequenceSoftwareName, consensusSequenceSoftwareVersion]
-        default: "Unknown"
-      ... etc ...
-    """
-    manifest_fields_mapping: dict[str, dict[str, str | list[str]]]
-    ingest_pipeline_submission_group: str
-    ena_deposition_host: str
-    ena_deposition_port: int
+    loculus_fields: list[str]
+    default: str | None = None
+    function: str | None = None
+    args: list[str] | None = None
+    units: str | None = None
+
+
+class ManifestFieldDetails(BaseModel):
+    loculus_fields: list[str] = field(default_factory=list)
+    function: str | None = None
+    type: str | None = None
+    default: str | int | None = None
+
+
+class ExternalMetadataField(BaseModel):
+    """Definition of an external metadata field to be uploaded to Loculus."""
+
+    externalMetadataUpdater: str  # noqa: N815
+    name: str
+    type: str
+
+
+class EnaOrganismDetails(BaseModel):
+    """Details about an ENA organism from the config file."""
+
+    molecule_type: MoleculeType
+    scientific_name: str
+    taxon_id: int
+    organismName: str  # noqa: N815
+    externalMetadata: list[ExternalMetadataField] = field(default_factory=list)  # noqa: N815
+    topology: Topology = Topology.LINEAR
+    segments: list[str]
+    loculusOrganism: str | None = None  # noqa: N815
+    suborganismIdentifierField: str | None = None  # noqa: N815
+
+    def is_multi_segment(self) -> bool:
+        return len(self.segments) > 1
+
+
+type EnaOrganismName = str
+
+
+class Config(BaseModel):
+    """Configuration for the ENA submission process.
+    See config/defaults.yaml for default values."""
+
+    # Details for connecting to the Loculus backend
+    backend_url: str
+    keycloak_token_url: str
+    keycloak_client_id: str
+    username: str
+    password: str
+
+    # Details for connecting to the ENA submission state database
+    db_username: str
+    db_password: str
+    db_url: str
+    db_name: str
+
+    # API host and port for ena-deposition service
+    ena_deposition_host: str | None
+    ena_deposition_port: int | None
+
+    # ENA specific configuration is set in secure_ena_connection()
+    test: bool
+    ena_submission_url: str
+    ena_submission_password: str
+    ena_submission_username: str
+    ena_reports_service_url: str
+    submit_to_ena_prod: bool = False
+    is_broker: bool = False
+    allowed_submission_hosts: list[str] = field(
+        default_factory=lambda: ["https://backend.pathoplexus.org"]
+    )
+    approved_list_url: str
+    approved_list_test_url: str | None
+    suppressed_list_url: str
+    suppressed_list_test_url: str | None
+
+    # Slack configuration must be provided via environment variables or config
+    slack_hook: str | None
+    slack_token: str | None
+    slack_channel_id: str | None
+
+    enaOrganisms: dict[EnaOrganismName, EnaOrganismDetails]  # noqa: N815
+    unique_project_suffix: str
+    metadata_mapping: dict[str, MetadataMapping]
+    manifest_fields_mapping: dict[str, ManifestFieldDetails]
+    ingest_pipeline_submission_group: int
+    ena_checklist: str | None = None
+    set_alias_suffix: str | None = None  # Add to test revisions in dev
+
     ena_http_timeout_seconds: int = 60
     ena_public_search_timeout_seconds: int = 120
     ncbi_public_search_timeout_seconds: int = 120
     ena_http_get_retry_attempts: int = 3
     # By default, don't retry HTTP post requests to ENA
     ena_http_post_retry_attempts: int = 1
-    submit_to_ena_prod: bool = False
-    is_broker: bool = False
-    allowed_submission_hosts: list[str] = field(
-        default_factory=lambda: ["https://backend.pathoplexus.org"]
-    )
     min_between_github_requests: int = 2
     time_between_iterations: int = 10
     min_between_publicness_checks: int = 12 * 60  # 12 hours
     min_between_ena_checks: int = 5
     log_level: str = "DEBUG"
-    ena_checklist: str | None = None
-    set_alias_suffix: str | None = None  # Add to test revisions in dev
+
+    retry_threshold_min: int = 240
+    slack_retry_threshold_min: int = 720
+    submitting_time_threshold_min: int = 15
+    waiting_threshold_hours: int = 48
 
 
 def secure_ena_connection(config: Config):

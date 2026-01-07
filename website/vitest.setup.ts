@@ -51,6 +51,10 @@ vi.stubGlobal('ResizeObserver', ResizeObserver);
 export const metadataKey = 'originalMetadataField';
 export const metadataDisplayName = 'Original metadata field';
 export const editableEntry = 'originalMetaDataValue';
+export const originalUnalignedNucleotideSequenceValue = 'originalUnalignedNucleotideSequencesValue';
+export const originalFastaHeader = 'originalFastaHeader';
+export const unalignedProcessedSequenceName = 'unalignedProcessedSequenceName';
+
 export const defaultReviewData: SequenceEntryToEdit = {
     accession: '1',
     version: 1,
@@ -95,7 +99,7 @@ export const defaultReviewData: SequenceEntryToEdit = {
             [metadataKey]: editableEntry,
         },
         unalignedNucleotideSequences: {
-            originalSequenceName: 'originalUnalignedNucleotideSequencesValue',
+            [originalFastaHeader]: originalUnalignedNucleotideSequenceValue,
         },
         files: null,
     },
@@ -105,7 +109,7 @@ export const defaultReviewData: SequenceEntryToEdit = {
             nullField: null,
         },
         unalignedNucleotideSequences: {
-            unalignedProcessedSequenceName: 'processedUnalignedNucleotideSequencesValue',
+            [unalignedProcessedSequenceName]: 'processedUnalignedNucleotideSequencesValue',
         },
         alignedNucleotideSequences: {
             alignedProcessedSequenceName: 'processedAlignedNucleotideSequencesValue',
@@ -118,6 +122,9 @@ export const defaultReviewData: SequenceEntryToEdit = {
         },
         aminoAcidInsertions: {
             processedInsertionGeneName: ['aminoAcidInsertion1', 'aminoAcidInsertion2'],
+        },
+        sequenceNameToFastaId: {
+            [unalignedProcessedSequenceName]: originalFastaHeader,
         },
         files: null,
     },

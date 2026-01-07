@@ -4,6 +4,7 @@ import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { test } from '@playwright/test';
+import { randomUUID } from 'crypto';
 
 const execAsync = promisify(exec);
 
@@ -22,15 +23,13 @@ export class CliPage {
     private configFile: string;
 
     constructor() {
+        const uuid = randomUUID();
         // Get base URL from environment or default to localhost
         this.baseUrl = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
         // Generate a unique keyring service name for this test instance
-        this.keyringService = `loculus-cli-test-${process.pid}-${Date.now()}`;
+        this.keyringService = `loculus-cli-test-${uuid}`;
         // Generate a unique config file for this test instance
-        this.configFile = join(
-            tmpdir(),
-            `loculus-cli-test-config-${process.pid}-${Date.now()}.yml`,
-        );
+        this.configFile = join(tmpdir(), `loculus-cli-test-config-${uuid}.yml`);
     }
 
     /**
@@ -167,7 +166,7 @@ export class CliPage {
      * Create a temporary file with the given content
      */
     async createTempFile(content: string, suffix: string = '.tmp'): Promise<string> {
-        const filename = `cli-test-${Date.now()}${suffix}`;
+        const filename = `cli-test-${randomUUID()}${suffix}`;
         const filepath = join(tmpdir(), filename);
         await writeFile(filepath, content, 'utf-8');
         return filepath;

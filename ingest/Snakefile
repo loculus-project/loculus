@@ -75,7 +75,7 @@ if SEGMENTED:
 
 APPLY_MINIMIZER = (
     SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER
-) or (config.get("minimizer_index") and config.get("minimizer_parser"))
+) or (config.get("minimizer_url") and config.get("minimizer_parser"))
 
 print(segment_detection_method)
 
@@ -116,7 +116,7 @@ rule fetch_inflate_ncbi_dataset_package:
         dataset_sequences="results/ncbi_dataset/data/genomic.fna",
     params:
         taxon_id=TAXON_ID,
-        api_key=NCBI_API_KEY,
+        api_key=f"--api-key {NCBI_API_KEY}" if NCBI_API_KEY else "",
         gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
         use_mirror=bool(MIRROR_BUCKET),
         mirror_url=f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}.tar.zst",
@@ -133,7 +133,7 @@ rule fetch_inflate_ncbi_dataset_package:
             datasets download virus genome taxon {params.taxon_id} \
                 --no-progressbar \
                 --filename {params.compressed_package_zip} \
-                --api-key {params.api_key} \
+                {params.api_key} \
                 {params.gateway} \
             && {params.unzip} \
                 -o {params.compressed_package_zip} \
@@ -286,9 +286,9 @@ if APPLY_MINIMIZER:
             results="results/minimizer.json",
         params:
             minimizer=(
-                config.get("segment_identification").get("minimizer_index")
+                config.get("segment_identification").get("minimizer_url")
                 if config.get("segment_identification")
-                else config.get("minimizer_index")
+                else config.get("minimizer_url")
             ),
         shell:
             """

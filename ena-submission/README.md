@@ -99,7 +99,7 @@ In a loop:
   - else: create assembly entry in `assembly_table` for (accession, version).
 - Get sequences in `submission_table` in state SUBMITTING_SAMPLE
   - if (corresponding `assembly_table` entry is in state SUBMITTED): update entries to state SUBMITTED_ALL.
-- Get sequences in `assembly_table` in state READY, prepare files: we need chromosome_list, fasta files and a manifest file, set status to WAITING
+- Get sequences in `assembly_table` in state READY, prepare files: we need chromosome_list, embl flatfiles and a manifest file, set status to WAITING
   - if (submission succeeds): set status to WAITING and fill in results: ena-internal `erz_accession`
   - else: set status to HAS_ERRORS and fill in errors
 - Get sequences in `assembly_table` in state WAITING, every 5minutes (to not overload ENA) check if ENA has processed the assemblies and assigned them `gca_accession`. If so update the table to status SUBMITTED and fill in results
@@ -188,9 +188,11 @@ pip install -e .
 
 #### Unit tests
 
+To run `scripts/test_ena_submission_integration.py` and `scripts/test_api.py` locally you will need to have the database running locally (see the steps above on how to run the database with the ena_deposition_schema).
+
 ```sh
 micromamba activate loculus-ena-submission
-python3 scripts/test_ena_submission.py
+pytest --ignore=./scripts/test_ena_submission_integration.py --ignore=./scripts/test_api.py
 ```
 
 #### Dry run

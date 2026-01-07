@@ -9,7 +9,9 @@ from helpers import (
     MockHttpResponse,
     compress_ndjson,
     make_mock_download_func,
+    mock_records,
     mock_silo_prepro_success,
+    mock_transformed_records,
     read_ndjson_file,
 )
 from silo_import import lineage
@@ -31,7 +33,7 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {"pipelineVersion": "1"}, "payload": 1}]
+    records = mock_records()
     body = compress_ndjson(records)
     responses = [
         MockHttpResponse(
@@ -43,7 +45,9 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     mock_download, responses_list = make_mock_download_func(responses)
 
     monkeypatch.setattr(
-        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data")  # noqa: ARG005
+        lineage,
+        "_download_lineage_file",
+        lambda url, path: path.write_text("lineage: data"),  # noqa: ARG005
     )
 
     runner = ImporterRunner(config, paths)
@@ -57,7 +61,7 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert not paths.silo_done.exists()
 
     records_out = read_ndjson_file(paths.silo_input_data_path)
-    assert records_out == records
+    assert records_out == mock_transformed_records()
     assert runner.current_etag == 'W/"123"'
     assert runner.last_hard_refresh > 0
     assert paths.lineage_definition_file.read_text(encoding="utf-8") == "lineage: data"
@@ -110,21 +114,23 @@ def test_runner_skips_on_hash_match_updates_etag(
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
+    records = mock_records()
     body = compress_ndjson(records)
 
     responses = [
         MockHttpResponse(
-            status=200, headers={"ETag": 'W/"111"', "x-total-records": "1"}, body=body
+            status=200, headers={"ETag": 'W/"111"', "x-total-records": "3"}, body=body
         ),
         MockHttpResponse(
-            status=200, headers={"ETag": 'W/"222"', "x-total-records": "1"}, body=body
+            status=200, headers={"ETag": 'W/"222"', "x-total-records": "3"}, body=body
         ),
     ]
     mock_download, responses_list = make_mock_download_func(responses)
 
     monkeypatch.setattr(
-        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data")  # noqa: ARG005
+        lineage,
+        "_download_lineage_file",
+        lambda url, path: path.write_text("lineage: data"),  # noqa: ARG005
     )
 
     runner = ImporterRunner(config, paths)
@@ -153,7 +159,7 @@ def test_runner_cleans_up_on_record_mismatch(tmp_path: Path) -> None:
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {}, "value": 1}]
+    records = mock_records()
     body = compress_ndjson(records)
     responses = [
         MockHttpResponse(status=200, headers={"ETag": 'W/"999"', "x-total-records": "5"}, body=body)

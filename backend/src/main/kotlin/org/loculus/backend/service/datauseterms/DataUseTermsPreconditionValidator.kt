@@ -22,10 +22,13 @@ class DataUseTermsPreconditionValidator(private val dateProvider: DateProvider, 
     fun constructDataUseTermsAndValidate(dataUseTermsType: DataUseTermsType?, restrictedUntil: String?): DataUseTerms =
         when (backendConfig.dataUseTerms.enabled) {
             false -> DataUseTerms.Open
+
             true -> when (dataUseTermsType) {
                 DataUseTermsType.OPEN -> DataUseTerms.Open
+
                 DataUseTermsType.RESTRICTED -> DataUseTerms.fromParameters(dataUseTermsType, restrictedUntil)
                     .also { checkThatRestrictedUntilDateValid(it) }
+
                 null -> throw BadRequestException("the 'dataUseTermsType' needs to be provided.")
             }
         }
@@ -57,6 +60,7 @@ class DataUseTermsPreconditionValidator(private val dateProvider: DateProvider, 
                     )
                 }
             }
+
             is DataUseTerms.Restricted -> {
                 checkThatRestrictedUntilDateValid(newDataUseTerms)
                 dataUseTerms.forEach {
@@ -91,6 +95,7 @@ class DataUseTermsPreconditionValidator(private val dateProvider: DateProvider, 
                     "The date 'restrictedUntil' must be in the future, up to a maximum of 1 year from now.",
                 )
             }
+
             useTerms.restrictedUntil > now.plus(1, DateTimeUnit.YEAR) -> {
                 throw BadRequestException(
                     "The date 'restrictedUntil' must not exceed 1 year from today.",

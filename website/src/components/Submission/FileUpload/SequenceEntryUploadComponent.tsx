@@ -8,8 +8,7 @@ import type { ColumnMapping } from './ColumnMapping';
 import { ColumnMappingModal } from './ColumnMappingModal';
 import { FileUploadComponent } from './FileUploadComponent';
 import { FASTA_FILE_KIND, METADATA_FILE_KIND, RawFile, type ProcessedFile } from './fileProcessing';
-import type { InputField } from '../../../types/config';
-import { getFirstLightweightSchema, type ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes';
+import type { InputField, SubmissionDataTypes } from '../../../types/config';
 import { dataUploadDocsUrl } from '../dataUploadDocsUrl';
 
 type SequenceEntryUploadProps = {
@@ -21,10 +20,8 @@ type SequenceEntryUploadProps = {
     setSequenceFile: Dispatch<SetStateAction<ProcessedFile | undefined>>;
     columnMapping: ColumnMapping | null;
     setColumnMapping: Dispatch<SetStateAction<ColumnMapping | null>>;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     metadataTemplateFields: Map<string, InputField[]>;
-    enableConsensusSequences: boolean;
-    isMultiSegmented: boolean;
+    submissionDataTypes: SubmissionDataTypes;
 };
 
 /**
@@ -39,11 +36,11 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
     setSequenceFile,
     columnMapping,
     setColumnMapping,
-    referenceGenomeLightweightSchema,
     metadataTemplateFields,
-    enableConsensusSequences,
-    isMultiSegmented,
+    submissionDataTypes,
 }) => {
+    const enableConsensusSequences = submissionDataTypes.consensusSequences;
+    const isMultiSegmented = submissionDataTypes.maxSequencesPerEntry !== 1;
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
 
     const handleLoadExampleData = () => {
@@ -98,23 +95,9 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                 {isMultiSegmented && (
                     <p className='text-gray-400 text-xs mt-3'>
                         {organism.toUpperCase()} has a multi-segmented genome. Please submit one metadata entry with a
-                        unique <i>submissionId</i> for the full multi-segmented sample, e.g. <b>sample1</b>. Sequence
-                        data should be a FASTA file with each header indicating the <i>submissionId</i> and the segment,
-                        i.e.{' '}
-                        {getFirstLightweightSchema(referenceGenomeLightweightSchema).nucleotideSegmentNames.map(
-                            (name, index) => (
-                                <span key={index} className='font-bold'>
-                                    sample1_{name}
-                                    {index !==
-                                    getFirstLightweightSchema(referenceGenomeLightweightSchema).nucleotideSegmentNames
-                                        .length -
-                                        1
-                                        ? ', '
-                                        : ''}
-                                </span>
-                            ),
-                        )}
-                        .
+                        unique <i>id</i> column for the full multi-segmented sample, e.g. <b>sample1</b> and a{' '}
+                        <i>fastaIds</i> column with a space-separated list of the fasta headers of all segments, e.g.{' '}
+                        <b>fastaHeaderSegment1 fastaHeaderSegment2 fastaHeaderSegment3</b>.
                     </p>
                 )}
 

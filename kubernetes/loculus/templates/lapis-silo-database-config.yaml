@@ -1,20 +1,24 @@
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 {{- $importScriptWrapperLines := .Files.Lines "silo_import_wrapper.sh" }}
 
-{{- range $key, $instance := (include "loculus.enabledOrganisms" . | fromJson) }}
+{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $key := $item.key }}
+{{- $organismContent := $item.contents }}
 
-{{- $lineageSystem := $instance | include "loculus.lineageSystemForOrganism" }}
+{{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: lapis-silo-database-config-{{ $key }}
 data:
-  {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
-  {{- $args := merge (dict "commonMetadata" $commonMetadata) . }}
+  {{- $args := dict
+    "schema" ($organismContent.schema | include "loculus.patchMetadataSchema" | fromYaml)
+    "commonMetadata" $commonMetadata
+    "referenceGenomes" $organismContent.referenceGenomes
+  }}
   database_config.yaml: |
     {{ include "loculus.siloDatabaseConfig" $args | nindent 4 }}
-  {{- end }}
 
   preprocessing_config.yaml: |
     ndjsonInputFilename: data.ndjson.zst
@@ -24,7 +28,7 @@ data:
     {{- end }}
 
   reference_genomes.json: |
-    {{ include "loculus.mergeReferenceGenomes" $instance.referenceGenomes | fromYaml | toJson }}
+    {{ include "loculus.mergeReferenceGenomes" $organismContent.referenceGenomes | fromYaml | toJson }}
 
   silo_import_wrapper.sh: |
     {{ range $importScriptWrapperLines }}

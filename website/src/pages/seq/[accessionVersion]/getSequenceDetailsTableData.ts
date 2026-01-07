@@ -14,7 +14,6 @@ import { parseAccessionVersionFromString } from '../../../utils/extractAccession
 export enum SequenceDetailsTableResultType {
     TABLE_DATA = 'tableData',
     REDIRECT = 'redirect',
-    ERROR = 'error',
 }
 
 export type TableData = {
@@ -22,7 +21,7 @@ export type TableData = {
     tableData: TableDataEntry[];
     sequenceEntryHistory: SequenceEntryHistory;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    suborganism: Suborganism;
+    suborganism: Suborganism | null;
     isRevocation: boolean;
 };
 

@@ -14,6 +14,7 @@ from loculus_preprocessing.datatypes import (
     ProcessedEntry,
     ProcessedMetadataValue,
     ProcessingAnnotation,
+    ProcessingAnnotationAlignment,
     SegmentName,
     UnprocessedData,
     UnprocessedEntry,
@@ -42,11 +43,20 @@ class ProcessingAnnotationHelper:
     message: str
     type: AnnotationSourceType = AnnotationSourceType.METADATA
 
+    @classmethod
+    def sequence_annotation_helper(cls, message: str) -> "ProcessingAnnotationHelper":
+        return cls(
+            unprocessed_field_names=[ProcessingAnnotationAlignment],
+            processed_field_names=[ProcessingAnnotationAlignment],
+            message=message,
+            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+        )
+
 
 @dataclass
 class ProcessedAlignment:
     unalignedNucleotideSequences: dict[str, str | None] = field(  # noqa: N815
-        default_factory=lambda: {"main": None}
+        default_factory=dict
     )
     alignedNucleotideSequences: dict[str, str | None] = field(  # noqa: N815
         default_factory=dict
@@ -54,6 +64,9 @@ class ProcessedAlignment:
     nucleotideInsertions: dict[str, list[str]] = field(default_factory=dict)  # noqa: N815
     alignedAminoAcidSequences: dict[str, str | None] = field(default_factory=dict)  # noqa: N815
     aminoAcidInsertions: dict[str, list[str]] = field(default_factory=dict)  # noqa: N815
+    sequenceNameToFastaId: dict[str, str] = field(  # noqa: N815
+        default_factory=dict
+    )
 
 
 @dataclass
@@ -63,6 +76,7 @@ class UnprocessedEntryFactory:
         metadata_dict: dict[str, str | None],
         accession_id: str,
         sequences: dict[SegmentName, NucleotideSequence | None],
+        group_id: int = 2,
     ) -> UnprocessedEntry:
         return UnprocessedEntry(
             accessionVersion=f"LOC_{accession_id}.1",
@@ -71,7 +85,7 @@ class UnprocessedEntryFactory:
                 submittedAt=str(
                     datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
                 ),
-                group_id=2,
+                group_id=group_id,
                 metadata=metadata_dict,
                 unalignedNucleotideSequences=sequences,
             ),
@@ -112,23 +126,20 @@ class ProcessedEntryFactory:
         self,
         metadata_dict: dict[str, ProcessedMetadataValue],
         accession: str,
-        metadata_errors: list[ProcessingAnnotationHelper] | None = None,
-        metadata_warnings: list[ProcessingAnnotationHelper] | None = None,
+        errors: list[ProcessingAnnotation] | None = None,
+        warnings: list[ProcessingAnnotation] | None = None,
         processed_alignment: ProcessedAlignment | None = None,
     ) -> ProcessedEntry:
-        if metadata_errors is None:
-            metadata_errors = []
-        if metadata_warnings is None:
-            metadata_warnings = []
+        if errors is None:
+            errors = []
+        if warnings is None:
+            warnings = []
         if self.all_metadata_fields is None:
             self.all_metadata_fields = []
         base_metadata_dict = dict.fromkeys(self.all_metadata_fields)
         base_metadata_dict.update(metadata_dict)
         if not processed_alignment:
             processed_alignment = ProcessedAlignment()
-
-        errors = build_processing_annotations(metadata_errors)
-        warnings = build_processing_annotations(metadata_warnings)
 
         return ProcessedEntry(
             accession=accession,
@@ -140,6 +151,7 @@ class ProcessedEntryFactory:
                 nucleotideInsertions=processed_alignment.nucleotideInsertions,
                 alignedAminoAcidSequences=processed_alignment.alignedAminoAcidSequences,
                 aminoAcidInsertions=processed_alignment.aminoAcidInsertions,
+                sequenceNameToFastaId=processed_alignment.sequenceNameToFastaId,
             ),
             errors=errors,
             warnings=warnings,
@@ -153,9 +165,10 @@ class Case:
     input_sequence: dict[str, str | None] = field(default_factory=lambda: {"main": None})
     accession_id: str = "000999"
     expected_metadata: dict[str, ProcessedMetadataValue] = field(default_factory=dict)
-    expected_errors: list[ProcessingAnnotationHelper] | None = None
-    expected_warnings: list[ProcessingAnnotationHelper] | None = None
+    expected_errors: list[ProcessingAnnotation] | None = None
+    expected_warnings: list[ProcessingAnnotation] | None = None
     expected_processed_alignment: ProcessedAlignment | None = None
+    group_id: int = 2
 
     def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
         if not self.expected_processed_alignment:
@@ -164,12 +177,13 @@ class Case:
             metadata_dict=self.input_metadata,
             accession_id=self.accession_id,
             sequences=self.input_sequence,
+            group_id=self.group_id,
         )
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
             accession=unprocessed_entry.accessionVersion.split(".")[0],
-            metadata_errors=self.expected_errors or [],
-            metadata_warnings=self.expected_warnings or [],
+            errors=self.expected_errors or [],
+            warnings=self.expected_warnings or [],
             processed_alignment=self.expected_processed_alignment,
         )
         return ProcessingTestCase(
@@ -180,7 +194,11 @@ class Case:
 def sort_annotations(annotations: list[ProcessingAnnotation]) -> list[ProcessingAnnotation]:
     return sorted(
         annotations,
-        key=lambda x: (x.unprocessedFields[0].name, x.processedFields[0].name, x.message),
+        key=lambda x: (
+            x.unprocessedFields[0].name if x.unprocessedFields else None,
+            x.processedFields[0].name if x.processedFields else None,
+            x.message,
+        ),
     )
 
 
@@ -197,12 +215,6 @@ def verify_processed_entry(
         f"does not match expected output {expected_output.accession}.{expected_output.version}."
     )
 
-    # Check metadata
-    assert processed_entry.data.metadata == expected_output.data.metadata, (
-        f"{test_name}: processed metadata {processed_entry.data.metadata} "
-        f"does not match expected metadata {expected_output.data.metadata}."
-    )
-
     # Check errors
     processed_errors = sort_annotations(processed_entry.errors)
     expected_errors = sort_annotations(expected_output.errors)
@@ -217,6 +229,12 @@ def verify_processed_entry(
     assert processed_warnings == expected_warnings, (
         f"{test_name}: processed warnings {processed_warnings}"
         f"does not match expected output {expected_warnings}."
+    )
+
+    # Check metadata
+    assert processed_entry.data.metadata == expected_output.data.metadata, (
+        f"{test_name}: processed metadata {processed_entry.data.metadata} "
+        f"does not match expected metadata {expected_output.data.metadata}."
     )
 
     # Check alignment data
@@ -241,4 +259,8 @@ def verify_processed_entry(
     assert actual.aminoAcidInsertions == expected.aminoAcidInsertions, (
         f"{test_name}: amino acid insertions '{actual.aminoAcidInsertions}' do not "
         f"match expectation '{expected.aminoAcidInsertions}'."
+    )
+    assert actual.sequenceNameToFastaId == expected.sequenceNameToFastaId, (
+        f"{test_name}: sequence name to fasta header map '{actual.sequenceNameToFastaId}' do not "
+        f"match expectation '{expected.sequenceNameToFastaId}'."
     )

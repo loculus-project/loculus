@@ -34,7 +34,7 @@ spec:
               path: "/actuator/health/liveness"
               port: 8079
             periodSeconds: 5
-            failureThreshold: 36 # 3 minutes to start
+            failureThreshold: 360 # 30 minutes to start
           livenessProbe:
             httpGet:
               path: "/actuator/health/liveness"
@@ -68,6 +68,7 @@ spec:
             - "--spring.datasource.username=$(DB_USERNAME)"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
             - "--loculus.cleanup.task.reset-stale-in-processing-after-seconds={{- .Values.preprocessingTimeout | default 120 }}"
+            - "--loculus.pipeline-version-upgrade-check.interval-seconds={{- .Values.pipelineVersionUpgradeCheckIntervalSeconds | default 10 }}"
             - "--loculus.s3.enabled=$(S3_ENABLED)"
             {{- if $.Values.s3.enabled }}
             - "--loculus.s3.bucket.endpoint=$(S3_BUCKET_ENDPOINT)"

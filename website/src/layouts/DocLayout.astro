@@ -3,6 +3,7 @@ import '../styles/mdcontainer.scss';
 import BaseLayout from './BaseLayout.astro';
 import DocsMenu from '../components/Navigation/DocsMenu';
 import { getWebsiteConfig } from '../config';
+import type { MdxPage } from '../types/mdxTypes';
 import MdiGithub from '~icons/mdi/github';
 
 const { frontmatter } = Astro.props;
@@ -10,7 +11,7 @@ const activeTopNavigationItem = frontmatter?.activeTopNavigationItem ?? '/docs/'
 const file = Astro.props.file;
 const FILE_BEGINNING = 'src/pages/';
 const fileLocation = file.slice(file.indexOf(FILE_BEGINNING), file.length);
-const docsPages = await Astro.glob('../pages/docs/**/*.mdx');
+const docsPages = Object.values(import.meta.glob<MdxPage>('../pages/docs/**/*.mdx', { eager: true }));
 const currentPageUrl = Astro.url.pathname;
 const { gitHubEditLink } = getWebsiteConfig();
 const editUrl = `${gitHubEditLink}${fileLocation}`;

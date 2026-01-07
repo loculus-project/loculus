@@ -11,6 +11,8 @@ data class BackendConfig(
     val accessionPrefix: String,
     val dataUseTerms: DataUseTerms,
     val fileSharing: FileSharing = FileSharing(),
+    val zstdCompressionLevel: Int = 10,
+    val pipelineVersionUpgradeCheckIntervalSeconds: Long = 10,
 ) {
     fun getInstanceConfig(organism: Organism) = organisms[organism.name] ?: throw IllegalArgumentException(
         "Organism: ${organism.name} not found in backend config. Available organisms: ${organisms.keys}",
@@ -51,11 +53,13 @@ data class Schema(
     val externalMetadata: List<ExternalMetadata> = emptyList(),
     val earliestReleaseDate: EarliestReleaseDate = EarliestReleaseDate(false, emptyList()),
     val submissionDataTypes: SubmissionDataTypes = SubmissionDataTypes(),
-    val files: List<FileCategory> = emptyList(),
+    val files: List<FileCategory> = emptyList(), // Allowed file categories for output files
 )
 
 data class SubmissionDataTypes(
     val consensusSequences: Boolean = true,
+    val maxSequencesPerEntry: Int? = null, // null means unlimited sequences per entry
+    // Allowed file categories for submission files
     val files: FilesSubmissionDataType = FilesSubmissionDataType(false, emptyList()),
 )
 

@@ -70,7 +70,9 @@ describe('fileProcessing', () => {
     });
 
     test('Plain segment file content is extracted correctly', async () => {
-        const dummyFile = new File(['>fooid\nACTG\n\nACTG\nACTG\n'], 'example.fasta', { type: 'text/plain' });
+        const dummyFile = new File(['>fooid description\nACTG\n\nACTG\nACTG\n'], 'example.fasta', {
+            type: 'text/plain',
+        });
         const result = await PLAIN_SEGMENT_KIND.processRawFile(dummyFile);
         if (result.isErr()) {
             fail(`result was error: ${result._unsafeUnwrapErr().message}`);
@@ -78,5 +80,6 @@ describe('fileProcessing', () => {
         const processedFile = result._unsafeUnwrap();
         const processedText = await processedFile.text();
         expect(processedText).toBe('ACTGACTGACTG');
+        expect(processedFile.fastaHeader()).toBe('fooid description');
     });
 });

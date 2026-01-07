@@ -1,4 +1,3 @@
-import datetime
 import glob
 import gzip
 import json
@@ -10,8 +9,9 @@ import string
 import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
-from collections.abc import Sequence
-from dataclasses import Field, dataclass, is_dataclass
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import Field, asdict, dataclass, is_dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, ClassVar, Final, Literal, Protocol
 
@@ -34,7 +34,7 @@ from tenacity import (
 )
 from unidecode import unidecode
 
-from ena_deposition.config import Config
+from ena_deposition.config import Config, EnaOrganismDetails
 
 from .ena_types import (
     DEFAULT_EMBL_PROPERTY_FIELDS,
@@ -51,11 +51,15 @@ from .ena_types import (
     XmlNone,
 )
 from .submission_db_helper import (
+    AssemblyTableEntry,
     ProjectTableEntry,
     SampleTableEntry,
     Status,
+    TableName,
+    add_to_assembly_table,
     add_to_project_table,
     add_to_sample_table,
+    update_with_retry,
 )
 
 logger = logging.getLogger(__name__)
@@ -132,7 +136,7 @@ def dataclass_to_xml(dataclass_instance: DataclassProtocol, root_name="root") ->
 
 def get_submission_dict(hold_until_date: str | None = None) -> Submission:
     if not hold_until_date:
-        hold_until_date = datetime.datetime.now(tz=pytz.utc).strftime("%Y-%m-%d")
+        hold_until_date = datetime.now(tz=pytz.utc).strftime("%Y-%m-%d")
     return Submission(
         actions=Actions(action=[Action(add=""), Action(hold=Hold(XmlAttribute(hold_until_date)))])
     )
@@ -159,7 +163,7 @@ def get_alias(prefix: str, test=False, set_alias_suffix: str | None = None) -> X
         return XmlAttribute(f"{prefix}:{set_alias_suffix}")
     if test:
         entropy = "".join(random.choices(string.ascii_letters + string.digits, k=4))  # noqa: S311
-        timestamp = datetime.datetime.now(tz=pytz.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(tz=pytz.utc).strftime("%Y%m%d_%H%M%S")
         return XmlAttribute(f"{prefix}:{timestamp}_{entropy}")
 
     return XmlAttribute(prefix)
@@ -234,7 +238,7 @@ def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResul
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
 
     if not response.ok:
         error_message = (
@@ -242,7 +246,7 @@ def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResul
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     try:
         parsed_response = xmltodict.parse(response.text)
         valid = (
@@ -256,7 +260,7 @@ def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResul
         error_message = f"Response is in unexpected format: {e}. Response: {response.text}."
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     project_results = {
         "bioproject_accession": parsed_response["RECEIPT"]["PROJECT"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
@@ -298,7 +302,7 @@ def create_ena_sample(
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
 
     if not response.ok:
         error_message = (
@@ -307,7 +311,7 @@ def create_ena_sample(
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     try:
         parsed_response = xmltodict.parse(response.text)
         valid = (
@@ -328,7 +332,7 @@ def create_ena_sample(
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     sample_results = {
         "ena_sample_accession": parsed_response["RECEIPT"]["SAMPLE"]["@accession"],
         "biosample_accession": parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
@@ -403,16 +407,6 @@ def create_chromosome_list(list_object: AssemblyChromosomeListFile, dir: str | N
     return filename
 
 
-def get_molecule_type(organism_metadata: dict[str, str]) -> MoleculeType:
-    try:
-        moleculetype = MoleculeType(organism_metadata.get("molecule_type"))
-    except ValueError as err:
-        msg = f"Invalid molecule type: {organism_metadata.get('molecule_type')}"
-        logger.error(msg)
-        raise ValueError(msg) from err
-    return moleculetype
-
-
 def get_description(config: Config, metadata: dict[str, str]) -> str:
     return (
         f"Original sequence submitted to {config.db_name} with accession: "
@@ -440,15 +434,21 @@ def get_country(metadata: dict[str, str]) -> str:
 
 
 def create_flatfile(
-    config: Config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir
+    config: Config,
+    metadata: dict[str, Any],
+    organism_metadata: EnaOrganismDetails,
+    unaligned_nucleotide_sequences: dict[str, str],
+    dir: str | None,
 ):
     collection_date = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property, "Unknown")
     authors = get_authors(metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.authors_property) or "")
+    # BioPython's EMBL writer automatically adds a terminating semicolon,
+    # so we need to strip it from our formatted authors string to avoid duplication
+    authors = authors.removesuffix(";")
     country = get_country(metadata)
-    organism = organism_metadata.get("scientific_name", "Unknown")
+    organism = organism_metadata.scientific_name
     accession = metadata["accession"]
     description = get_description(config, metadata)
-    moleculetype = get_molecule_type(organism_metadata)
 
     if dir:
         os.makedirs(dir, exist_ok=True)
@@ -465,7 +465,7 @@ def create_flatfile(
 
     embl_content = []
 
-    multi_segment = set(unaligned_nucleotide_sequences.keys()) != {"main"}
+    multi_segment = organism_metadata.is_multi_segment()
 
     for seq_name, sequence_str in unaligned_nucleotide_sequences.items():
         if not isinstance(sequence_str, str) or len(sequence_str) == 0:
@@ -476,9 +476,9 @@ def create_flatfile(
             seq=Seq(sequence_str),
             id=f"{accession}_{seq_name}" if multi_segment else accession,
             annotations={
-                "molecule_type": seq_io_moleculetype[moleculetype],
+                "molecule_type": seq_io_moleculetype[organism_metadata.molecule_type],
                 "organism": organism,
-                "topology": organism_metadata.get("topology", "linear"),
+                "topology": organism_metadata.topology,
                 "references": [reference],  # type: ignore
             },
             description=description,
@@ -488,7 +488,7 @@ def create_flatfile(
             FeatureLocation(start=0, end=len(sequence_str)),
             type="source",
             qualifiers={
-                "molecule_type": str(moleculetype),
+                "molecule_type": str(organism_metadata.molecule_type),
                 "organism": organism,
                 "country": country,
                 "collection_date": collection_date,
@@ -512,37 +512,6 @@ def create_flatfile(
         file.write(final_content)
 
     return gzip_filename
-
-
-def create_fasta(
-    unaligned_sequences: dict[str, str],
-    chromosome_list: AssemblyChromosomeListFile,
-    dir: str | None = None,
-) -> str:
-    """
-    Creates a temp fasta file:
-    https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#fasta-file
-    """
-    if dir:
-        os.makedirs(dir, exist_ok=True)
-        filename = os.path.join(dir, "fasta.gz")
-    else:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".fasta.gz") as temp:
-            filename = temp.name
-
-    multi_segment = set(unaligned_sequences.keys()) != {"main"}
-
-    with gzip.GzipFile(filename, "wb") as gz:
-        if not multi_segment:
-            entry = chromosome_list.chromosomes[0]
-            gz.write(f">{entry.object_name}\n".encode())
-            gz.write(f"{unaligned_sequences['main']}\n".encode())
-        else:
-            for entry in chromosome_list.chromosomes:
-                gz.write(f">{entry.object_name}\n".encode())
-                gz.write(f"{unaligned_sequences[entry.chromosome_name]}\n".encode())
-
-    return filename
 
 
 def create_manifest(
@@ -685,6 +654,12 @@ def create_ena_assembly(
     logger.error(error_message)
     errors.append(error_message)
 
+    try:
+        manifest_contents = Path(manifest_filename).read_text(encoding="utf-8")
+        logger.info(f"manifest.tsv contents:\n{manifest_contents}")
+    except Exception as e:
+        logger.warning(f"Reading manifest from {manifest_filename} failed: {e}")
+
     for file_path in glob.glob(f"{output_tmpdir.name}/**", recursive=True, include_hidden=True):
         logger.info(f"Attempting to print webin-cli log file: {file_path}")
         try:
@@ -692,11 +667,11 @@ def create_ena_assembly(
             logger.info(f"webin-cli log file {file_path} contents:\n{contents}")
         except Exception as e:
             logger.warning(f"Reading webin-cli log file {file_path} failed: {e}")
-    return CreationResult(result=None, errors=errors, warnings=warnings)
+    return CreationResult(errors=errors, warnings=warnings)
 
 
 def get_ena_analysis_process(
-    config: Config, erz_accession: str, segment_order: list[str]
+    config: Config, erz_accession: str, segment_order: list[str], organism: EnaOrganismDetails
 ) -> CreationResult:
     """
     Query ENA webin endpoint to get analysis outcomes: assembly (GCA) and nucleotide accessions
@@ -725,7 +700,7 @@ def get_ena_analysis_process(
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     if not response.ok:
         req = response.request
         headers = req.headers
@@ -745,12 +720,12 @@ def get_ena_analysis_process(
         logger.error(error_message)
         errors.append(error_message)
         logger.debug(f"First 1000 characters of ENA API response text: {response.text[:1000]}")
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     if response.text == "[]":
         # For some minutes the response will be empty, requests to
         # f"{config.ena_reports_service_url}/analysis-files/{erz_accession}?format=json"
         # should still succeed
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     try:
         parsed_response = json.loads(response.text)
         entry = parsed_response[0]["report"]
@@ -769,11 +744,11 @@ def get_ena_analysis_process(
             insdc_accession_range = acc_dict.get("chromosomes")
             if insdc_accession_range:
                 chromosome_accessions_dict = get_chromsome_accessions(
-                    insdc_accession_range, segment_order
+                    insdc_accession_range, segment_order, organism.is_multi_segment()
                 )
                 assembly_results.update(chromosome_accessions_dict)
         else:
-            return CreationResult(result=None, errors=errors, warnings=warnings)
+            return CreationResult(errors=errors, warnings=warnings)
     except Exception:
         error_message = (
             f"ENA Check returned errors or is in unexpected format. "
@@ -781,14 +756,12 @@ def get_ena_analysis_process(
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     return CreationResult(result=assembly_results, errors=errors, warnings=warnings)
 
 
-# TODO: Also pass the full segment list from config so we can handle someone submitting
-# a multi-segmented virus that has a main segment.
 def get_chromsome_accessions(
-    insdc_accession_range: str, segment_order: list[str]
+    insdc_accession_range: str, segment_order: list[str], is_multi_segment: bool
 ) -> dict[str, str]:
     """
     ENA doesn't actually give us the version, we assume it's 1.
@@ -827,20 +800,18 @@ def get_chromsome_accessions(
             msg = "Unexpected number of segments"
             raise ValueError(msg)
 
-        match segment_order:
-            case ["main"]:
-                accession = f"{start_letters}{start_num:0{num_digits}d}"
-                return {
-                    "insdc_accession": accession,
-                    "insdc_accession_full": f"{accession}.1",
-                }
-            case _:
-                results = {}
-                for i, segment in enumerate(segment_order):
-                    accession = f"{start_letters}{(start_num + i):0{num_digits}d}"
-                    results[f"insdc_accession_{segment}"] = accession
-                    results[f"insdc_accession_full_{segment}"] = f"{accession}.1"
-                return results
+        if not is_multi_segment:
+            accession = f"{start_letters}{start_num:0{num_digits}d}"
+            return {
+                "insdc_accession": accession,
+                "insdc_accession_full": f"{accession}.1",
+            }
+        results = {}
+        for i, segment in enumerate(segment_order):
+            accession = f"{start_letters}{(start_num + i):0{num_digits}d}"
+            results[f"insdc_accession_{segment}"] = accession
+            results[f"insdc_accession_full_{segment}"] = f"{accession}.1"
+        return results
 
     # Don't handle the Value error here, let it propagate
     except ValueError as ve:
@@ -854,44 +825,107 @@ def get_chromsome_accessions(
         raise ValueError(msg) from e
 
 
-def set_error_if_accession_not_exists(
-    conditions: dict[str, str | dict[str, str]],
+def accession_exists(
     accession: str,
-    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"],
-    db_pool: SimpleConnectionPool,
     config: Config,
 ) -> bool:
-    """Make request to ENA to check if an accession exists"""
+    """Make request to ENA to check if an accession exists
+    Returns True if accession exists, False otherwise.
+    """
     url = f"https://www.ebi.ac.uk/ena/browser/api/summary/{accession}"
     try:
         response = ena_http_get_with_retry(config, url)
-        exists = int(response.json()["total"]) > 0
-        if exists:
-            return True
+        return int(response.json()["total"]) > 0
     except Exception as e:
         logger.error(f"Error checking if accession exists: {e!s}")
+        return False
 
+
+def set_accession_does_not_exist_error(
+    conditions: dict[str, str | dict[str, str]],
+    accession: str,
+    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"] | Literal["RUN_REF"],
+    db_pool: SimpleConnectionPool,
+):
     error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
     logger.error(error_text)
 
     succeeded: bool | int | None
-    if accession_type == "BIOSAMPLE":
-        sample_table_entry = SampleTableEntry(
-            **conditions,  # type: ignore
-            status=Status.HAS_ERRORS,
-            errors=json.dumps([error_text]),
-            result={"ena_sample_accession": accession, "biosample_accession": accession},
-        )
-        succeeded = add_to_sample_table(db_pool, sample_table_entry)
-    else:
-        project_table_entry = ProjectTableEntry(
-            **conditions,  # type: ignore
-            status=Status.HAS_ERRORS,
-            errors=json.dumps([error_text]),
-            result={"bioproject_accession": accession},
-        )
-        succeeded = add_to_project_table(db_pool, project_table_entry)
+    match accession_type:
+        case "BIOSAMPLE":
+            sample_table_entry = SampleTableEntry(
+                **conditions,  # type: ignore
+                status=Status.HAS_ERRORS,
+                errors=[error_text],
+                result={"ena_sample_accession": accession, "biosample_accession": accession},
+            )
+            succeeded = add_to_sample_table(db_pool, sample_table_entry)
+        case "BIOPROJECT":
+            project_table_entry = ProjectTableEntry(
+                **conditions,  # type: ignore
+                status=Status.HAS_ERRORS,
+                errors=[error_text],
+                result={"bioproject_accession": accession},
+            )
+            succeeded = add_to_project_table(db_pool, project_table_entry)
+        case "RUN_REF":
+            assembly_table_entry = AssemblyTableEntry(
+                **conditions,  # type: ignore
+                status=Status.HAS_ERRORS,
+                errors=[error_text],
+                result={},  # type: ignore
+            )
+            succeeded = add_to_assembly_table(db_pool, assembly_table_entry)
 
     if not succeeded:
         logger.warning(f"{accession_type} creation failed and DB update failed.")
-    return False
+
+
+def trigger_retry_if_exists(
+    entries_with_errors: Iterable[Mapping[str, Any]],
+    db_config: SimpleConnectionPool,
+    table_name: TableName,
+    retry_threshold_min: int,
+    error_substring: str = "does not exist in ENA",
+    last_retry: datetime | None = None,
+) -> datetime | None:
+    if (
+        last_retry
+        and datetime.now(tz=pytz.utc) - timedelta(minutes=retry_threshold_min) < last_retry
+    ):
+        return last_retry
+    for entry in entries_with_errors:
+        if error_substring not in str(entry.get("errors", "")):
+            continue
+        match table_name:
+            case TableName.PROJECT_TABLE:
+                primary_key = ProjectTableEntry(**entry).primary_key
+            case TableName.SAMPLE_TABLE:
+                primary_key = SampleTableEntry(**entry).primary_key
+            case TableName.ASSEMBLY_TABLE:
+                primary_key = AssemblyTableEntry(**entry).primary_key
+            case _:
+                logger.error(f"Unknown table name: {table_name}")
+                continue
+
+        logger.info(
+            f"Retrying submission {primary_key} in {table_name} with error: '{entry.get('errors')}'"
+        )
+
+        update_values = {
+            "status": Status.READY,
+            "errors": None,
+            "finished_at": None,
+            "result": None,
+        }
+        try:
+            update_with_retry(
+                db_config=db_config,
+                conditions=asdict(primary_key),
+                update_values=update_values,
+                table_name=table_name,
+            )
+            last_retry = datetime.now(tz=pytz.utc)
+        except Exception as e:
+            logger.error(f"Failed to update {table_name} entry for retry: {e!s}")
+    return last_retry

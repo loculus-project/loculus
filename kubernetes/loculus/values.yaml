@@ -24,11 +24,16 @@ website:
     enableLoginNavigationItem: true
     enableSubmissionNavigationItem: true
     enableSubmissionPages: true
-siloImportLimitSeconds: 3600
+siloImport:
+  siloTimeoutSeconds: 3600
+  hardRefreshIntervalSeconds: 3600
+  pollIntervalSeconds: 30
 ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
+zstdCompressionLevel: 10
+pipelineVersionUpgradeCheckIntervalSeconds: 10
 dataUseTerms:
   enabled: true
   urls:
@@ -53,9 +58,12 @@ lineageSystemDefinitions:
   alternativeLineage:
     4: https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml
   cchfS:
-    1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-12/lineages.yaml
+    1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
+    submissionDataTypes: &defaultSubmissionDataTypes
+      consensusSequences: true
+      maxSequencesPerEntry: 1
     loadSequencesAutomatically: true
     earliestReleaseDate:
       enabled: true
@@ -1324,9 +1332,11 @@ defaultOrganismConfig: &defaultOrganismConfig
       replicas: 2
       configFile: &preprocessingConfigFile
         log_level: DEBUG
-        genes: []
         batch_size: 100
         create_embl_file: true
+        nextclade_sequence_and_datasets:
+          - name: "main"
+            genes: []
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
@@ -1346,18 +1356,23 @@ defaultOrganisms:
         version: [1, 2]
         configFile:
           <<: *preprocessingConfigFile
-          genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
-          nextclade_dataset_name: nextstrain/ebola/sudan
+          nextclade_sequence_and_datasets:
+            - nextclade_dataset_name: nextstrain/ebola/sudan
+              genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+          taxon_id: 186540
+          scientific_name: "Sudan ebolavirus"
+          molecule_type: "genomic RNA"
     ingest:
       <<: *ingest
       configFile:
         taxon_id: 3052460
     enaDeposition:
-      configFile:
-        taxon_id: 186540
-        scientific_name: "Sudan ebolavirus"
-        molecule_type: "genomic RNA"
+      singleReference:
+        configFile:
+          taxon_id: 186540
+          scientific_name: "Sudan ebolavirus"
+          molecule_type: "genomic RNA"
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1422,18 +1437,23 @@ defaultOrganisms:
         version: 1
         configFile:
           <<: *preprocessingConfigFile
-          nextclade_dataset_name: nextstrain/wnv/all-lineages
+          nextclade_sequence_and_datasets:
+            - nextclade_dataset_name: nextstrain/wnv/all-lineages
+              genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
-          genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
+          taxon_id: 11082
+          scientific_name: "West Nile virus"
+          molecule_type: "genomic RNA"
     ingest:
       <<: *ingest
       configFile:
         taxon_id: 3048448
     enaDeposition:
-      configFile:
-        taxon_id: 11082
-        scientific_name: "West Nile virus"
-        molecule_type: "genomic RNA"
+      singleReference:
+        configFile:
+          taxon_id: 11082
+          scientific_name: "West Nile virus"
+          molecule_type: "genomic RNA"
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1465,6 +1485,7 @@ defaultOrganisms:
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"
   dummy-organism:
     schema:
+      submissionDataTypes: *defaultSubmissionDataTypes
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
       organismName: "Test Dummy Organism"
       metadataTemplate:
@@ -1608,6 +1629,7 @@ defaultOrganisms:
   not-aligned-organism:
     enabled: true
     schema:
+      submissionDataTypes: *defaultSubmissionDataTypes
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
       organismName: "Test organism (without alignment)"
       metadata:
@@ -1679,8 +1701,10 @@ defaultOrganisms:
           - "prepro"
         configFile:
           log_level: DEBUG
-          genes: []
           batch_size: 100
+          nextclade_sequence_and_datasets:
+            - name: "main"
+              genes: []
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1691,6 +1715,9 @@ defaultOrganisms:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
+      submissionDataTypes:
+        <<: *defaultSubmissionDataTypes
+        maxSequencesPerEntry: 3
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
       nucleotideSequences: [L, M, S]
       image: "/images/organisms/cchf_small.jpg"
@@ -1741,9 +1768,21 @@ defaultOrganisms:
       - <<: *preprocessing
         configFile:
           <<: *preprocessingConfigFile
+          taxon_id: 3052518
+          scientific_name: "Orthonairovirus haemorrhagiae"
+          molecule_type: "genomic RNA"
           log_level: DEBUG
-          nextclade_dataset_name: community/pathoplexus/cchfv
-          genes: [RdRp, GPC, NP]
+          minimizer_url: https://loculus-project.github.io/nextclade-sort-minimizers/data/CCHF/minimizer.json
+          nextclade_sequence_and_datasets:
+            - name: L
+              nextclade_dataset_name: community/pathoplexus/cchfv/L
+              genes: [RdRp]
+            - name: M
+              nextclade_dataset_name: community/pathoplexus/cchfv/M
+              genes: [GPC]
+            - name: S
+              nextclade_dataset_name: community/pathoplexus/cchfv/S
+              genes: [NP]
     ingest:
       <<: *ingest
       configFile:
@@ -1752,10 +1791,11 @@ defaultOrganisms:
           method: "align"
           nextclade_dataset_name: community/pathoplexus/cchfv
     enaDeposition:
-      configFile:
-        taxon_id: 3052518
-        scientific_name: "Orthonairovirus haemorrhagiae"
-        molecule_type: "genomic RNA"
+      singleReference:
+        configFile:
+          taxon_id: 3052518
+          scientific_name: "Orthonairovirus haemorrhagiae"
+          molecule_type: "genomic RNA"
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1785,13 +1825,13 @@ defaultOrganisms:
       image: "/images/organisms/enterovirus.jpg"
       linkOuts:
         - name: "Nextclade (CV-A16)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A16+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A16+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a16&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
         - name: "Nextclade (CV-A10)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A10+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A10+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a10&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
         - name: "Nextclade (EV-A71)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-A71+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-A71+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-a71&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
         - name: "Nextclade (EV-D68)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-D68+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-D68+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-d68"
       metadataAdd:
         - &evMetadataAdd
           name: clade_cv_a16
@@ -1837,8 +1877,9 @@ defaultOrganisms:
           noInput: true
           generateIndex: true
           autocomplete: true
-          ingest: segment
           initiallyVisible: true
+          preprocessing:
+            inputs: {input: ASSIGNED_SEGMENT}
       website:
         <<: *website
         tableColumns:
@@ -1857,19 +1898,63 @@ defaultOrganisms:
       - <<: *preprocessing
         configFile:
           <<: *preprocessingConfigFile
-          log_level: INFO
-          nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked
-          nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
-          genes: ["CV-A16-VP4", "CV-A16-VP2", "CV-A16-VP3", "CV-A16-VP1", "CV-A16-2A", "CV-A16-2B", "CV-A16-2C", "CV-A16-3A", "CV-A16-3B", "CV-A16-3C", "CV-A16-3D", "CV-A10-VP4", "CV-A10-VP2", "CV-A10-VP3", "CV-A10-VP1", "CV-A10-2A", "CV-A10-2B", "CV-A10-2C", "CV-A10-3A", "CV-A10-3B", "CV-A10-3C", "CV-A10-3D", "EV-A71-VP4", "EV-A71-VP2", "EV-A71-VP3", "EV-A71-VP1", "EV-A71-2A", "EV-A71-2B", "EV-A71-2C", "EV-A71-3A", "EV-A71-3B", "EV-A71-3C", "EV-A71-3D", "EV-D68-VP4", "EV-D68-VP2", "EV-D68-VP3", "EV-D68-VP1", "EV-D68-2A", "EV-D68-2B", "EV-D68-2C", "EV-D68-3A", "EV-D68-3B", "EV-D68-3C", "EV-D68-3D"]
+          segment_classification_method: "minimizer"
+          # TODO(https://github.com/loculus-project/loculus/issues/5673): switch creation on when multi-path is supported
+          create_embl_file: false
+          minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+          nextclade_sequence_and_datasets:
+            - name: CV-A16
+              nextclade_dataset_name: enpen/enterovirus/cv-a16
+              accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
+              gene_prefix: "CV-A16-"
+              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+            - name: CV-A10
+              nextclade_dataset_name: enpen/enterovirus/cv-a10
+              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
+              gene_prefix: "CV-A10-"
+              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+            - name: EV-A71
+              nextclade_dataset_name: enpen/enterovirus/ev-a71
+              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71"]
+              gene_prefix: "EV-A71-"
+              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+            - name: EV-D68
+              gene_prefix: "EV-D68-"
+              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68"]
+              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+              nextclade_dataset_name: enpen/enterovirus/ev-d68
+              nextclade_dataset_server: https://data.clades.nextstrain.org/v3
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output
     ingest:
       <<: *ingest
       configFile:
-        taxon_id: 138948 # Enterovirus A (once we include non-A, broaden to 12059)
-        segment_identification:
-          method: "minimizer"
-          minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
-          minimizer_parser:
-            - segment
+        taxon_id: 12059
+        subsample_fraction: 0.2
+    enaDeposition:
+      CV-A16:
+        configFile:
+          taxon_id: 31704
+          scientific_name: "Coxsackievirus A16"
+          molecule_type: "genomic RNA"
+        suborganismIdentifierField: genotype
+      CV-A10:
+        configFile:
+          taxon_id: 42769
+          scientific_name: "Coxsackievirus A10"
+          molecule_type: "genomic RNA"
+        suborganismIdentifierField: genotype
+      EV-A71:
+        configFile:
+          taxon_id: 39054
+          scientific_name: "Enterovirus A71"
+          molecule_type: "genomic RNA"
+        suborganismIdentifierField: genotype
+      EV-D68:
+        configFile:
+          taxon_id: 42789
+          scientific_name: "Enterovirus D68"
+          molecule_type: "genomic RNA"
+        suborganismIdentifierField: genotype
     referenceGenomes:
       CV-A16:
         nucleotideSequences:
@@ -1994,7 +2079,7 @@ additionalHeadHTML: ""
 images:
   lapisSilo:
     repository: "ghcr.io/genspectrum/lapis-silo"
-    tag: "v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+    tag: "0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
     pullPolicy: Always
   siloImporter:
     repository: "ghcr.io/loculus-project/silo-import"

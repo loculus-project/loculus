@@ -21,11 +21,11 @@ jobs:
       run:
         working-directory: ./website
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version-file: ./website/.nvmrc
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
@@ -41,12 +41,12 @@ jobs:
       run:
         working-directory: ./website
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version-file: ./website/.nvmrc
       - name: Cache .npm
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
