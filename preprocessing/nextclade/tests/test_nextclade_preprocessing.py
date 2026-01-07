@@ -1332,7 +1332,7 @@ multi_pathogen_cases = [
                     " - only one entry is allowed.",
                 ),
                 ProcessingAnnotationHelper(
-                    ["ASSIGNED_SEGMENT"],
+                    ["ASSIGNED_REFERENCE"],
                     ["subtype"],
                     "Metadata field subtype is required.",
                 ),

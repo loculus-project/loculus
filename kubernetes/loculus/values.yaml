@@ -1890,7 +1890,7 @@ defaultOrganisms:
           autocomplete: true
           initiallyVisible: true
           preprocessing:
-            inputs: {input: ASSIGNED_SEGMENT}
+            inputs: {input: ASSIGNED_REFERENCE}
       website:
         <<: *website
         tableColumns:

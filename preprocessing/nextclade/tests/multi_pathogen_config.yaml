@@ -22,25 +22,22 @@ processing_spec:
       type: str
     function: identity
     inputs:
-      input: ASSIGNED_SEGMENT
+      input: ASSIGNED_REFERENCE
     required: true
   totalSnps:
     args:
-      useFirstSegment: true
       type: int
     function: identity
     inputs:
       input: nextclade.totalSubstitutions
   totalInsertedNucs:
     args:
-      useFirstSegment: true
       type: int
     function: identity
     inputs:
       input: nextclade.totalInsertions
   length:
     args:
-      useFirstSegment: true
       type: int
     function: identity
     inputs:

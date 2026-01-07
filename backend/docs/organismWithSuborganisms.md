@@ -58,7 +58,8 @@ defaultOrganisms:
           header: "Genotype"
           noInput: true
           preprocessing:
-            inputs: {input: ASSIGNED_SEGMENT} # TODO(#5663): might be renamed in the future
+            inputs: {input: ASSIGNED_REFERENCE}
+          perSegment: true
       website:
         <<: *website
         # When the website needs to know which suborganism a sequence entry belongs to,

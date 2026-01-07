@@ -50,6 +50,11 @@ class AlignmentRequirement(StrEnum):
     NONE = "NONE"
 
 
+type SegmentName = str
+# name of the processed nucleotide sequence, as expected by the backend and LAPIS
+type SequenceName = str
+
+
 class Reference(BaseModel):
     reference: str = "singleReference"
     nextclade_dataset_name: str | None = None
@@ -60,15 +65,14 @@ class Reference(BaseModel):
 
 
 class Segment(BaseModel):
-    name: str = "main"
+    name: SegmentName = "main"
     references: list[Reference] = Field(default_factory=list)
 
 
 class NextcladeSequenceAndDataset(BaseModel):
-    # name of the processed nucleotide sequence, as expected by the backend and LAPIS
-    lapis_name: str = "main"
+    name: SequenceName = "main"
     reference: str = "singleReference"
-    segment: str = "main"
+    segment: SegmentName = "main"
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str | None = None
@@ -77,9 +81,6 @@ class NextcladeSequenceAndDataset(BaseModel):
     # Names of genes in the Nextclade dataset; when concatenated with gene_prefix
     # this must match the gene names expected by the backend and LAPIS
     genes: list[str] = Field(default_factory=list)
-
-
-type SegmentName = str
 
 
 class Config(BaseModel):
@@ -146,7 +147,7 @@ class Config(BaseModel):
             )
             if ds.nextclade_dataset_server is None:
                 ds.nextclade_dataset_server = self.nextclade_dataset_server
-            ds.lapis_name = set_lapis_name(multi_reference, self.multi_segment, ds)
+            ds.name = set_sequence_name(multi_reference, self.multi_segment, ds)
             # TODO: this should be a suffix in future
             ds.gene_prefix = ds.reference if multi_reference else None
             return ds
@@ -165,8 +166,14 @@ class Config(BaseModel):
     def multi_datasets(self) -> bool:
         return len(self.nextclade_sequence_and_datasets) > 1
 
+    def get_dataset_by_name(self, name: str) -> NextcladeSequenceAndDataset:
+        datasets = [ds for ds in self.nextclade_sequence_and_datasets if ds.name == name]
+        if len(datasets) > 1:
+            raise Exception
+        return datasets[0]
 
-def set_lapis_name(
+
+def set_sequence_name(
     multi_reference: bool, multi_segment: bool, ds: NextcladeSequenceAndDataset
 ) -> str:
     match (multi_reference, multi_segment):
