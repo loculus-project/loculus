@@ -1126,13 +1126,7 @@ data:
         - type: string
           name: collectionMethod
         - type: float
-          name: "completeness_CV-A16"
-        - type: float
-          name: "completeness_CV-A10"
-        - type: float
-          name: "completeness_EV-A71"
-        - type: float
-          name: "completeness_EV-D68"
+          name: completeness
         - type: string
           name: consensusSequenceSoftwareName
         - type: string
@@ -1174,13 +1168,7 @@ data:
         - type: string
           name: foodProductProperties
         - type: string
-          name: "frameShifts_CV-A16"
-        - type: string
-          name: "frameShifts_CV-A10"
-        - type: string
-          name: "frameShifts_EV-A71"
-        - type: string
-          name: "frameShifts_EV-D68"
+          name: frameShifts
         - type: string
           name: gcaAccession
         - type: string
@@ -1231,41 +1219,17 @@ data:
         - type: string
           name: hostVaccinationStatus
         - type: string
-          name: "insdcAccessionBase_CV-A16"
+          name: insdcAccessionBase
         - type: string
-          name: "insdcAccessionBase_CV-A10"
-        - type: string
-          name: "insdcAccessionBase_EV-A71"
-        - type: string
-          name: "insdcAccessionBase_EV-D68"
-        - type: string
-          name: "insdcAccessionFull_CV-A16"
-        - type: string
-          name: "insdcAccessionFull_CV-A10"
-        - type: string
-          name: "insdcAccessionFull_EV-A71"
-        - type: string
-          name: "insdcAccessionFull_EV-D68"
+          name: insdcAccessionFull
         - type: string
           name: insdcRawReadsAccession
         - type: int
-          name: "insdcVersion_CV-A16"
-        - type: int
-          name: "insdcVersion_CV-A10"
-        - type: int
-          name: "insdcVersion_EV-A71"
-        - type: int
-          name: "insdcVersion_EV-D68"
+          name: insdcVersion
         - type: boolean
           name: isLabHost
         - type: int
-          name: "length_CV-A16"
-        - type: int
-          name: "length_CV-A10"
-        - type: int
-          name: "length_EV-A71"
-        - type: int
-          name: "length_EV-D68"
+          name: length
         - type: date
           name: ncbiReleaseDate
         - type: string
@@ -1275,13 +1239,7 @@ data:
           generateIndex: true
           name: ncbiSubmitterCountry
         - type: date
-          name: "ncbiUpdateDate_CV-A16"
-        - type: date
-          name: "ncbiUpdateDate_CV-A10"
-        - type: date
-          name: "ncbiUpdateDate_EV-A71"
-        - type: date
-          name: "ncbiUpdateDate_EV-D68"
+          name: ncbiUpdateDate
         - type: string
           generateIndex: true
           name: ncbiVirusName
@@ -1349,69 +1307,21 @@ data:
         - type: string
           name: specimenProcessingDetails
         - type: string
-          name: "stopCodons_CV-A16"
-        - type: string
-          name: "stopCodons_CV-A10"
-        - type: string
-          name: "stopCodons_EV-A71"
-        - type: string
-          name: "stopCodons_EV-D68"
+          name: stopCodons
         - type: int
-          name: "totalAmbiguousNucs_CV-A16"
+          name: totalAmbiguousNucs
         - type: int
-          name: "totalAmbiguousNucs_CV-A10"
+          name: totalDeletedNucs
         - type: int
-          name: "totalAmbiguousNucs_EV-A71"
+          name: totalFrameShifts
         - type: int
-          name: "totalAmbiguousNucs_EV-D68"
+          name: totalInsertedNucs
         - type: int
-          name: "totalDeletedNucs_CV-A16"
+          name: totalSnps
         - type: int
-          name: "totalDeletedNucs_CV-A10"
+          name: totalStopCodons
         - type: int
-          name: "totalDeletedNucs_EV-A71"
-        - type: int
-          name: "totalDeletedNucs_EV-D68"
-        - type: int
-          name: "totalFrameShifts_CV-A16"
-        - type: int
-          name: "totalFrameShifts_CV-A10"
-        - type: int
-          name: "totalFrameShifts_EV-A71"
-        - type: int
-          name: "totalFrameShifts_EV-D68"
-        - type: int
-          name: "totalInsertedNucs_CV-A16"
-        - type: int
-          name: "totalInsertedNucs_CV-A10"
-        - type: int
-          name: "totalInsertedNucs_EV-A71"
-        - type: int
-          name: "totalInsertedNucs_EV-D68"
-        - type: int
-          name: "totalSnps_CV-A16"
-        - type: int
-          name: "totalSnps_CV-A10"
-        - type: int
-          name: "totalSnps_EV-A71"
-        - type: int
-          name: "totalSnps_EV-D68"
-        - type: int
-          name: "totalStopCodons_CV-A16"
-        - type: int
-          name: "totalStopCodons_CV-A10"
-        - type: int
-          name: "totalStopCodons_EV-A71"
-        - type: int
-          name: "totalStopCodons_EV-D68"
-        - type: int
-          name: "totalUnknownNucs_CV-A16"
-        - type: int
-          name: "totalUnknownNucs_CV-A10"
-        - type: int
-          name: "totalUnknownNucs_EV-A71"
-        - type: int
-          name: "totalUnknownNucs_EV-D68"
+          name: totalUnknownNucs
         - type: string
           name: travelHistory
         - type: string

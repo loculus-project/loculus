@@ -77,7 +77,7 @@ spec:
                   key: orcidSecret
       containers:
         - name: silo
-          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          image: "ghcr.io/genspectrum/lapis-silo:0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
           imagePullPolicy: "Always"
           
           resources:
@@ -133,9 +133,13 @@ spec:
             - name: BACKEND_BASE_URL
               value: "http://loculus-backend-service:8079/cchf"
             - name: LINEAGE_DEFINITIONS
-              value: "{\"1\":\"https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-12/lineages.yaml\"}"
+              value: "{\"1\":\"https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml\"}"
             - name: SILO_RUN_TIMEOUT_SECONDS
               value: "3600"
+            - name: HARD_REFRESH_INTERVAL
+              value: "3600"
+            - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
+              value: "30"
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json
@@ -151,7 +155,7 @@ spec:
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
         - name: silo-preprocessing
-          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          image: "ghcr.io/genspectrum/lapis-silo:0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
           imagePullPolicy: "Always"
           
           resources:
@@ -168,7 +172,7 @@ spec:
             - name: BACKEND_BASE_URL
               value: "http://loculus-backend-service:8079/cchf"
             - name: LINEAGE_DEFINITIONS
-              value: "{\"1\":\"https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-12/lineages.yaml\"}"
+              value: "{\"1\":\"https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml\"}"
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json
@@ -276,7 +280,7 @@ spec:
                   key: orcidSecret
       containers:
         - name: silo
-          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          image: "ghcr.io/genspectrum/lapis-silo:0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
           imagePullPolicy: "Always"
           
           resources:
@@ -335,6 +339,10 @@ spec:
               value: "{\"1\":\"https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml\",\"2\":\"https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml\"}"
             - name: SILO_RUN_TIMEOUT_SECONDS
               value: "3600"
+            - name: HARD_REFRESH_INTERVAL
+              value: "3600"
+            - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
+              value: "30"
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json
@@ -350,7 +358,7 @@ spec:
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
         - name: silo-preprocessing
-          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          image: "ghcr.io/genspectrum/lapis-silo:0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
           imagePullPolicy: "Always"
           
           resources:
@@ -475,7 +483,7 @@ spec:
                   key: orcidSecret
       containers:
         - name: silo
-          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          image: "ghcr.io/genspectrum/lapis-silo:0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
           imagePullPolicy: "Always"
           
           resources:
@@ -534,6 +542,10 @@ spec:
               value: "{\"1\":\"https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml\",\"2\":\"https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml\"}"
             - name: SILO_RUN_TIMEOUT_SECONDS
               value: "3600"
+            - name: HARD_REFRESH_INTERVAL
+              value: "3600"
+            - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
+              value: "30"
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json
@@ -549,7 +561,7 @@ spec:
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
         - name: silo-preprocessing
-          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          image: "ghcr.io/genspectrum/lapis-silo:0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
           imagePullPolicy: "Always"
           
           resources:
@@ -674,7 +686,7 @@ spec:
                   key: orcidSecret
       containers:
         - name: silo
-          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          image: "ghcr.io/genspectrum/lapis-silo:0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
           imagePullPolicy: "Always"
           
           resources:
@@ -731,6 +743,10 @@ spec:
               value: "http://loculus-backend-service:8079/ebola-sudan"
             - name: SILO_RUN_TIMEOUT_SECONDS
               value: "3600"
+            - name: HARD_REFRESH_INTERVAL
+              value: "3600"
+            - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
+              value: "30"
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json
@@ -746,7 +762,7 @@ spec:
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
         - name: silo-preprocessing
-          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          image: "ghcr.io/genspectrum/lapis-silo:0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
           imagePullPolicy: "Always"
           
           resources:
@@ -869,7 +885,7 @@ spec:
                   key: orcidSecret
       containers:
         - name: silo
-          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          image: "ghcr.io/genspectrum/lapis-silo:0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
           imagePullPolicy: "Always"
           
           resources:
@@ -926,6 +942,10 @@ spec:
               value: "http://loculus-backend-service:8079/enteroviruses"
             - name: SILO_RUN_TIMEOUT_SECONDS
               value: "3600"
+            - name: HARD_REFRESH_INTERVAL
+              value: "3600"
+            - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
+              value: "30"
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json
@@ -941,7 +961,7 @@ spec:
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
         - name: silo-preprocessing
-          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          image: "ghcr.io/genspectrum/lapis-silo:0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
           imagePullPolicy: "Always"
           
           resources:
@@ -1064,7 +1084,7 @@ spec:
                   key: orcidSecret
       containers:
         - name: silo
-          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          image: "ghcr.io/genspectrum/lapis-silo:0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
           imagePullPolicy: "Always"
           
           resources:
@@ -1123,6 +1143,10 @@ spec:
               value: "{\"4\":\"https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml\"}"
             - name: SILO_RUN_TIMEOUT_SECONDS
               value: "3600"
+            - name: HARD_REFRESH_INTERVAL
+              value: "3600"
+            - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
+              value: "30"
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json
@@ -1138,7 +1162,7 @@ spec:
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
         - name: silo-preprocessing
-          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          image: "ghcr.io/genspectrum/lapis-silo:0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
           imagePullPolicy: "Always"
           
           resources:
@@ -1263,7 +1287,7 @@ spec:
                   key: orcidSecret
       containers:
         - name: silo
-          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          image: "ghcr.io/genspectrum/lapis-silo:0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
           imagePullPolicy: "Always"
           
           resources:
@@ -1320,6 +1344,10 @@ spec:
               value: "http://loculus-backend-service:8079/west-nile"
             - name: SILO_RUN_TIMEOUT_SECONDS
               value: "3600"
+            - name: HARD_REFRESH_INTERVAL
+              value: "3600"
+            - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
+              value: "30"
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json
@@ -1335,7 +1363,7 @@ spec:
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
         - name: silo-preprocessing
-          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          image: "ghcr.io/genspectrum/lapis-silo:0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
           imagePullPolicy: "Always"
           
           resources:

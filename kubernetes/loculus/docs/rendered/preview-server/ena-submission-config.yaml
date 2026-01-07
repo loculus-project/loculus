@@ -15,13 +15,17 @@ data:
     approved_list_test_url: 
     suppressed_list_test_url: https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt
     
-    organisms:
+    enaOrganisms:
       cchf:
-        enaDeposition:
-          molecule_type: genomic RNA
-          scientific_name: Orthonairovirus haemorrhagiae
-          taxon_id: 3052518
+        
+        molecule_type: genomic RNA
+        scientific_name: Orthonairovirus haemorrhagiae
+        taxon_id: 3052518
         organismName: "Crimean-Congo Hemorrhagic Fever Virus"
+        segments: 
+          - L
+          - M
+          - S
         externalMetadata:
           - externalMetadataUpdater: ena
             name: bioprojectAccession
@@ -87,11 +91,213 @@ data:
             name: ncbiVirusTaxId
             type: int
       ebola-sudan:
-        enaDeposition:
-          molecule_type: genomic RNA
-          scientific_name: Sudan ebolavirus
-          taxon_id: 186540
+        
+        molecule_type: genomic RNA
+        scientific_name: Sudan ebolavirus
+        taxon_id: 186540
         organismName: "Ebola Sudan"
+        segments: 
+          - main
+        externalMetadata:
+          - externalMetadataUpdater: ena
+            name: bioprojectAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: biosampleAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: gcaAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcAccessionBase
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcAccessionFull
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcRawReadsAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcVersion
+            type: int
+          - externalMetadataUpdater: ena
+            name: ncbiReleaseDate
+            type: date
+          - externalMetadataUpdater: ena
+            name: ncbiSourceDb
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiSubmitterCountry
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiUpdateDate
+            type: date
+          - externalMetadataUpdater: ena
+            name: ncbiVirusName
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiVirusTaxId
+            type: int
+      CV-A10:
+        loculusOrganism: "enteroviruses"
+        
+        molecule_type: genomic RNA
+        scientific_name: Coxsackievirus A10
+        taxon_id: 42769
+        suborganismIdentifierField: "genotype"
+        organismName: "Enterovirus"
+        segments: 
+          - main
+        externalMetadata:
+          - externalMetadataUpdater: ena
+            name: bioprojectAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: biosampleAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: gcaAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcAccessionBase
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcAccessionFull
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcRawReadsAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcVersion
+            type: int
+          - externalMetadataUpdater: ena
+            name: ncbiReleaseDate
+            type: date
+          - externalMetadataUpdater: ena
+            name: ncbiSourceDb
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiSubmitterCountry
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiUpdateDate
+            type: date
+          - externalMetadataUpdater: ena
+            name: ncbiVirusName
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiVirusTaxId
+            type: int
+      CV-A16:
+        loculusOrganism: "enteroviruses"
+        
+        molecule_type: genomic RNA
+        scientific_name: Coxsackievirus A16
+        taxon_id: 31704
+        suborganismIdentifierField: "genotype"
+        organismName: "Enterovirus"
+        segments: 
+          - main
+        externalMetadata:
+          - externalMetadataUpdater: ena
+            name: bioprojectAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: biosampleAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: gcaAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcAccessionBase
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcAccessionFull
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcRawReadsAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcVersion
+            type: int
+          - externalMetadataUpdater: ena
+            name: ncbiReleaseDate
+            type: date
+          - externalMetadataUpdater: ena
+            name: ncbiSourceDb
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiSubmitterCountry
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiUpdateDate
+            type: date
+          - externalMetadataUpdater: ena
+            name: ncbiVirusName
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiVirusTaxId
+            type: int
+      EV-A71:
+        loculusOrganism: "enteroviruses"
+        
+        molecule_type: genomic RNA
+        scientific_name: Enterovirus A71
+        taxon_id: 39054
+        suborganismIdentifierField: "genotype"
+        organismName: "Enterovirus"
+        segments: 
+          - main
+        externalMetadata:
+          - externalMetadataUpdater: ena
+            name: bioprojectAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: biosampleAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: gcaAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcAccessionBase
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcAccessionFull
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcRawReadsAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcVersion
+            type: int
+          - externalMetadataUpdater: ena
+            name: ncbiReleaseDate
+            type: date
+          - externalMetadataUpdater: ena
+            name: ncbiSourceDb
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiSubmitterCountry
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiUpdateDate
+            type: date
+          - externalMetadataUpdater: ena
+            name: ncbiVirusName
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiVirusTaxId
+            type: int
+      EV-D68:
+        loculusOrganism: "enteroviruses"
+        
+        molecule_type: genomic RNA
+        scientific_name: Enterovirus D68
+        taxon_id: 42789
+        suborganismIdentifierField: "genotype"
+        organismName: "Enterovirus"
+        segments: 
+          - main
         externalMetadata:
           - externalMetadataUpdater: ena
             name: bioprojectAccession
@@ -133,11 +339,13 @@ data:
             name: ncbiVirusTaxId
             type: int
       west-nile:
-        enaDeposition:
-          molecule_type: genomic RNA
-          scientific_name: West Nile virus
-          taxon_id: 11082
+        
+        molecule_type: genomic RNA
+        scientific_name: West Nile virus
+        taxon_id: 11082
         organismName: "West Nile Virus"
+        segments: 
+          - main
         externalMetadata:
           - externalMetadataUpdater: ena
             name: bioprojectAccession
