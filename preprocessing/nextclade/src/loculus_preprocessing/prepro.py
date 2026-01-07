@@ -288,7 +288,9 @@ def get_output_metadata(
         if output_field == "length":
             try:
                 segment = spec.args.get("segment", "main") if spec.args else "main"
-                sequence_name = get_name(str(segment), unprocessed.unalignedNucleotideSequences, config)
+                sequence_name = get_name(
+                    str(segment), unprocessed.unalignedNucleotideSequences, config
+                )
             except MultipleSequencesPerSegmentError as e:
                 error_annotation = e.get_processing_annotation(
                     processed_field_name=output_field, organism=config.organism

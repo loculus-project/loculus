@@ -299,7 +299,7 @@ def assign_segment(  # noqa: C901
     If a segment has multiple references assign to the reference with highest alignment score
     1. If no best hit for a sequence, add error/warning about unaligned sequence
     2. If best hit does not match any accepted reference, add error/warning about unaligned sequence
-    3. If multiple sequences match the same segment (also if they match different references of 
+    3. If multiple sequences match the same segment (also if they match different references of
     that segment), add error about duplicate segments
     4. If no sequences assigned and no errors about unaligned/duplicate, add error about
        no sequence data found (e.g. when alignment requirement is ANY and all sequences miss)
