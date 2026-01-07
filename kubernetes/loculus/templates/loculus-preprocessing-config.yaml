@@ -1,6 +1,4 @@
-{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-{{- $organism := $item.key }}
-{{- $organismConfig := $item.contents }}
+{{- range $organism, $organismConfig := (include "loculus.enabledOrganisms" . | fromJson) }}
 {{- $metadata := ($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).metadata }}
 {{- $referenceGenomes:= include "loculus.mergeReferenceGenomes" $organismConfig.referenceGenomes | fromYaml }}
 {{- $flattened := include "loculus.flattenPreprocessingVersions" $organismConfig.preprocessing | fromJson }}

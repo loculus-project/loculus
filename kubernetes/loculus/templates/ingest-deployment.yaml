@@ -1,9 +1,7 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- if not .Values.disableIngest }}
-{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-{{- $key := $item.key }}
-{{- $organismContent := $item.contents }}
-{{- if $organismContent.ingest }}
+{{- range $key, $value := (include "loculus.enabledOrganisms" . | fromJson) }}
+{{- if $value.ingest }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -50,7 +48,7 @@ spec:
               subPath: config.yaml
       containers:
         - name: ingest-{{ $key }}
-          image: {{ $organismContent.ingest.image}}:{{ $dockerTag }}
+          image: {{ $value.ingest.image}}:{{ $dockerTag }}
           imagePullPolicy: {{ $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "ingest" $.Values) | nindent 10 }}
           env:
@@ -75,7 +73,7 @@ spec:
             - results/revised
             - results/approved
             - --all-temp # Reduce disk usage by not keeping files around
-      {{- if $organismContent.ingest.configFile }}
+      {{- if $value.ingest.configFile }}
           volumeMounts:
             - name: loculus-ingest-config-volume-{{ $key }}
               mountPath: /package/config/config.yaml
@@ -110,7 +108,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: ingest-{{ $key }}
-              image: {{ $organismContent.ingest.image}}:{{ $dockerTag }}
+              image: {{ $value.ingest.image}}:{{ $dockerTag }}
               imagePullPolicy: {{ $.Values.imagePullPolicy }}
               resources:
                 requests:
@@ -132,7 +130,7 @@ spec:
                 - results/revoked
                 - results/approved
                 - --all-temp # Reduce disk usage by not keeping files around
-          {{- if $organismContent.ingest.configFile }}
+          {{- if $value.ingest.configFile }}
               volumeMounts:
                 - name: loculus-ingest-config-volume-{{ $key }}
                   mountPath: /package/config/config.yaml
