@@ -182,6 +182,9 @@ def set_sequence_name(
             return f"{ds.segment}-{ds.reference}"
         case (True, False):
             return ds.reference
+        case _:
+            msg = "Internal Error - unreachable code reached"
+            raise AssertionError(msg)
 
 
 def base_type(field_type: Any) -> type:
