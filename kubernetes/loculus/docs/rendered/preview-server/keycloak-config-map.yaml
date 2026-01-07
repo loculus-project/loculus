@@ -5,16 +5,17 @@ metadata:
   name: keycloak-config
 data:
   keycloak-config.json: |
-      {
-        "realm": "loculus",
-        "enabled": true,
-        "verifyEmail": false,
-        "resetPasswordAllowed": true,
-        "registrationAllowed": true,
-        "accessTokenLifespan": 36000,
-        "ssoSessionIdleTimeout": 36000,
-        "actionTokenGeneratedByUserLifespan": 1800,
-        "users": [
+    {
+      "realm": "loculus",
+      "enabled": true,
+      "verifyEmail": false,
+      "resetPasswordAllowed": true,
+      "registrationAllowed": true,
+      "accessTokenLifespan": 36000,
+      "ssoSessionIdleTimeout": 36000,
+      "actionTokenGeneratedByUserLifespan": 1800,
+      "users": [
+        
           {
             "username": "testuser_0_firefox",
             "enabled": true,
@@ -41,6 +42,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_1_firefox",
             "enabled": true,
@@ -67,6 +69,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_2_firefox",
             "enabled": true,
@@ -93,6 +96,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_3_firefox",
             "enabled": true,
@@ -119,6 +123,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_4_firefox",
             "enabled": true,
@@ -145,6 +150,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_5_firefox",
             "enabled": true,
@@ -171,6 +177,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_6_firefox",
             "enabled": true,
@@ -197,6 +204,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_7_firefox",
             "enabled": true,
@@ -223,6 +231,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_8_firefox",
             "enabled": true,
@@ -249,6 +258,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_9_firefox",
             "enabled": true,
@@ -275,6 +285,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_10_firefox",
             "enabled": true,
@@ -301,6 +312,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_11_firefox",
             "enabled": true,
@@ -327,6 +339,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_12_firefox",
             "enabled": true,
@@ -353,6 +366,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_13_firefox",
             "enabled": true,
@@ -379,6 +393,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_14_firefox",
             "enabled": true,
@@ -405,6 +420,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_15_firefox",
             "enabled": true,
@@ -431,6 +447,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_16_firefox",
             "enabled": true,
@@ -457,6 +474,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_17_firefox",
             "enabled": true,
@@ -483,6 +501,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_18_firefox",
             "enabled": true,
@@ -509,6 +528,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_19_firefox",
             "enabled": true,
@@ -535,6 +555,8 @@ data:
               ]
             }
           },
+            
+          
           {
             "username": "testuser_0_webkit",
             "enabled": true,
@@ -561,6 +583,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_1_webkit",
             "enabled": true,
@@ -587,6 +610,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_2_webkit",
             "enabled": true,
@@ -613,6 +637,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_3_webkit",
             "enabled": true,
@@ -639,6 +664,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_4_webkit",
             "enabled": true,
@@ -665,6 +691,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_5_webkit",
             "enabled": true,
@@ -691,6 +718,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_6_webkit",
             "enabled": true,
@@ -717,6 +745,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_7_webkit",
             "enabled": true,
@@ -743,6 +772,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_8_webkit",
             "enabled": true,
@@ -769,6 +799,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_9_webkit",
             "enabled": true,
@@ -795,6 +826,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_10_webkit",
             "enabled": true,
@@ -821,6 +853,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_11_webkit",
             "enabled": true,
@@ -847,6 +880,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_12_webkit",
             "enabled": true,
@@ -873,6 +907,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_13_webkit",
             "enabled": true,
@@ -899,6 +934,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_14_webkit",
             "enabled": true,
@@ -925,6 +961,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_15_webkit",
             "enabled": true,
@@ -951,6 +988,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_16_webkit",
             "enabled": true,
@@ -977,6 +1015,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_17_webkit",
             "enabled": true,
@@ -1003,6 +1042,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_18_webkit",
             "enabled": true,
@@ -1029,6 +1069,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_19_webkit",
             "enabled": true,
@@ -1055,6 +1096,8 @@ data:
               ]
             }
           },
+            
+          
           {
             "username": "testuser_0_chromium",
             "enabled": true,
@@ -1081,6 +1124,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_1_chromium",
             "enabled": true,
@@ -1107,6 +1151,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_2_chromium",
             "enabled": true,
@@ -1133,6 +1178,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_3_chromium",
             "enabled": true,
@@ -1159,6 +1205,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_4_chromium",
             "enabled": true,
@@ -1185,6 +1232,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_5_chromium",
             "enabled": true,
@@ -1211,6 +1259,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_6_chromium",
             "enabled": true,
@@ -1237,6 +1286,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_7_chromium",
             "enabled": true,
@@ -1263,6 +1313,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_8_chromium",
             "enabled": true,
@@ -1289,6 +1340,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_9_chromium",
             "enabled": true,
@@ -1315,6 +1367,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_10_chromium",
             "enabled": true,
@@ -1341,6 +1394,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_11_chromium",
             "enabled": true,
@@ -1367,6 +1421,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_12_chromium",
             "enabled": true,
@@ -1393,6 +1448,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_13_chromium",
             "enabled": true,
@@ -1419,6 +1475,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_14_chromium",
             "enabled": true,
@@ -1445,6 +1502,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_15_chromium",
             "enabled": true,
@@ -1471,6 +1529,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_16_chromium",
             "enabled": true,
@@ -1497,6 +1556,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_17_chromium",
             "enabled": true,
@@ -1523,6 +1583,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_18_chromium",
             "enabled": true,
@@ -1549,6 +1610,7 @@ data:
               ]
             }
           },
+            
           {
             "username": "testuser_19_chromium",
             "enabled": true,
@@ -1575,11 +1637,13 @@ data:
               ]
             }
           },
+            
+          
           {
             "username": "testuser",
             "enabled": true,
             "email": "testuser@void.o",
-            "emailVerified": true,
+            "emailVerified" : true,
             "firstName": "Test",
             "lastName": "User",
             "credentials": [
@@ -1605,7 +1669,7 @@ data:
             "username": "superuser",
             "enabled": true,
             "email": "superuser@void.o",
-            "emailVerified": true,
+            "emailVerified" : true,
             "firstName": "Dummy",
             "lastName": "SuperUser",
             "credentials": [
@@ -1627,11 +1691,12 @@ data:
               ]
             }
           },
+        
           {
             "username": "insdc_ingest_user",
             "enabled": true,
             "email": "insdc_ingest_user@void.o",
-            "emailVerified": true,
+            "emailVerified" : true,
             "firstName": "INSDC Ingest",
             "lastName": "User",
             "credentials": [
@@ -1657,7 +1722,7 @@ data:
             "username": "preprocessing_pipeline",
             "enabled": true,
             "email": "preprocessing_pipeline@void.o",
-            "emailVerified": true,
+            "emailVerified" : true,
             "firstName": "Dummy",
             "lastName": "Preprocessing",
             "credentials": [
@@ -1683,7 +1748,7 @@ data:
             "username": "external_metadata_updater",
             "enabled": true,
             "email": "external_metadata_updater@void.o",
-            "emailVerified": true,
+            "emailVerified" : true,
             "firstName": "Dummy",
             "lastName": "INSDC",
             "credentials": [
@@ -1706,192 +1771,175 @@ data:
               ]
             }
           },
-          {
-            "username": "backend",
-            "enabled": true,
-            "email": "nothing@void.o",
-            "emailVerified": true,
-            "firstName": "Backend",
-            "lastName": "Technical-User",
-            "attributes": {
-              "university": "University of Test"
-            },
-            "credentials": [
-              {
-                "type": "password",
-                "value": "[[backendUserPassword]]"
-              }
-            ],
-            "clientRoles": {
-              "realm-management": [
-                "view-users"
-              ],
-              "account": [
-                "manage-account"
-              ]
-            }
-          }
-        ],
-        "roles": {
-          "realm": [
-            {
-              "name": "user",
-              "description": "User privileges"
-            },
-            {
-              "name": "admin",
-              "description": "Administrator privileges"
-            },
-            {
-              "name": "preprocessing_pipeline",
-              "description": "Preprocessing pipeline privileges"
-            },
-            {
-              "name": "external_metadata_updater",
-              "description": "External Submitter privileges"
-            },
-            {
-              "name": "get_released_data",
-              "description": "Privileges for getting released data"
-            },
-            {
-              "name": "super_user",
-              "description": "Privileges for curators to modify sequence entries of any user"
-            }
-          ]
-        },
-        "clients": [
-          {
-            "clientId": "backend-client",
-            "enabled": true,
-            "publicClient": true,
-            "directAccessGrantsEnabled": true,
-            "redirectUris": [
-              "https:///*",
-              "http:///*",
-              "http://localhost:3000/*"
-            ]
+        {
+          "username": "backend",
+          "enabled": true,
+          "email": "nothing@void.o",
+          "emailVerified": true,
+          "firstName": "Backend",
+          "lastName": "Technical-User",
+          "attributes": {
+            "university": "University of Test"
           },
-          {
-            "clientId": "account-console2",
-            "name": "${client_account-console}",
-            "description": "",
-            "rootUrl": "${authBaseUrl}",
-            "adminUrl": "",
-            "baseUrl": "/realms/loculus/account/",
-            "surrogateAuthRequired": false,
-            "enabled": true,
-            "alwaysDisplayInConsole": false,
-            "clientAuthenticatorType": "client-secret",
-            "redirectUris": [
-              "/realms/loculus/account/*"
+          "credentials": [
+            {
+              "type": "password",
+              "value": "[[backendUserPassword]]"
+            }
+          ],
+          "clientRoles": {
+            "realm-management": [
+              "view-users"
             ],
-            "webOrigins": [
-              "+"
-            ],
-            "notBefore": 0,
-            "bearerOnly": false,
-            "consentRequired": false,
-            "standardFlowEnabled": true,
-            "implicitFlowEnabled": false,
-            "directAccessGrantsEnabled": false,
-            "serviceAccountsEnabled": false,
-            "publicClient": true,
-            "frontchannelLogout": false,
-            "protocol": "openid-connect",
-            "attributes": {
-              "oidc.ciba.grant.enabled": "false",
-              "backchannel.logout.session.required": "true",
-              "post.logout.redirect.uris": "+",
-              "oauth2.device.authorization.grant.enabled": "false",
-              "display.on.consent.screen": "false",
-              "pkce.code.challenge.method": "S256",
-              "backchannel.logout.revoke.offline.tokens": "false"
-            },
-            "authenticationFlowBindingOverrides": {},
-            "fullScopeAllowed": false,
-            "nodeReRegistrationTimeout": 0,
-            "protocolMappers": [
-              {
-                "name": "audience resolve",
-                "protocol": "openid-connect",
-                "protocolMapper": "oidc-audience-resolve-mapper",
-                "consentRequired": false,
-                "config": {}
-              }
-            ],
-            "defaultClientScopes": [
-              "web-origins",
-              "acr",
-              "profile",
-              "roles",
-              "email"
-            ],
-            "optionalClientScopes": [
-              "address",
-              "phone",
-              "offline_access",
-              "microprofile-jwt"
+            "account": [
+              "manage-account"
             ]
           }
-        ],
-        "attributes": {
-          "frontendUrl": "https://authentication-%!s(<nil>)",
-          "userProfileEnabled": "true"
-        },
-        "components": {
-          "org.keycloak.userprofile.UserProfileProvider": [
-            {
-              "providerId": "declarative-user-profile",
-              "subComponents": {},
-              "config": {
-                "kc.user.profile.config": [
-                  "{\"attributes\":[{\"name\":\"username\",\"displayName\":\"${username}\",\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{},\"up-username-not-idn-homograph\":{}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"email\",\"displayName\":\"${email}\",\"validations\":{\"email\":{},\"length\":{\"max\":255}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"firstName\",\"displayName\":\"${firstName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"lastName\",\"displayName\":\"${lastName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"university\",\"displayName\":\"University / Organisation\",\"validations\":{},\"annotations\":{},\"required\":{\"roles\":[\"admin\",\"user\"]},\"permissions\":{\"view\":[],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"orcid\",\"displayName\":\"\",\"permissions\":{\"edit\":[\"admin\"],\"view\":[\"admin\",\"user\"]},\"annotations\":{},\"validations\":{}}],\"groups\":[]}"
-                ]
-              }
-            }
-          ]
-        },
-        "loginTheme": "loculus",
-        "emailTheme": "loculus",
-        "identityProviders": [
+        }
+      ],
+      "roles": {
+        "realm": [
           {
-            "alias": "orcid",
-            "providerId": "orcid",
-            "enabled": true,
-            "updateProfileFirstLoginMode": "on",
-            "trustEmail": false,
-            "storeToken": false,
-            "addReadTokenRoleOnCreate": false,
-            "authenticateByDefault": false,
-            "linkOnly": false,
-            "firstBrokerLoginFlowAlias": "first broker login",
-            "config": {
-              "clientSecret": "[[orcidSecret]]",
-              "clientId": "APP-P1P7N7T9YVBHQ4EH"
-            }
-          }
-        ],
-        "identityProviderMappers": [
-          {
-            "name": "username mapper",
-            "identityProviderAlias": "orcid",
-            "identityProviderMapper": "hardcoded-attribute-idp-mapper",
-            "config": {
-              "syncMode": "IMPORT",
-              "attribute": "username"
-            }
+            "name": "user",
+            "description": "User privileges"
           },
           {
-            "name": "orcid",
-            "identityProviderAlias": "orcid",
-            "identityProviderMapper": "orcid-user-attribute-mapper",
-            "config": {
-              "syncMode": "INHERIT",
-              "jsonField": "orcid-identifier",
-              "userAttribute": "orcid.path"
-            }
+            "name": "admin",
+            "description": "Administrator privileges"
+          },
+          {
+            "name": "preprocessing_pipeline",
+            "description": "Preprocessing pipeline privileges"
+          },
+          {
+            "name": "external_metadata_updater",
+            "description": "External Submitter privileges"
+          },
+          {
+            "name": "get_released_data",
+            "description": "Privileges for getting released data"
+          },
+          {
+            "name": "super_user",
+            "description": "Privileges for curators to modify sequence entries of any user"
           }
         ]
-      }
+      },
+      "clients": [
+        {
+          "clientId": "backend-client",
+          "enabled": true,
+          "publicClient": true,
+          "directAccessGrantsEnabled": true,
+          "redirectUris": [
+            "https:///*",
+            "http:///*",
+            "http://localhost:3000/*"
+          ]
+        },
+        {
+          "clientId" : "account-console2",
+          "name" : "${client_account-console}",
+          "description" : "",
+          "rootUrl" : "${authBaseUrl}",
+          "adminUrl" : "",
+          "baseUrl" : "/realms/loculus/account/",
+          "surrogateAuthRequired" : false,
+          "enabled" : true,
+          "alwaysDisplayInConsole" : false,
+          "clientAuthenticatorType" : "client-secret",
+          "redirectUris" : [ "/realms/loculus/account/*" ],
+          "webOrigins" : [ "+" ],
+          "notBefore" : 0,
+          "bearerOnly" : false,
+          "consentRequired" : false,
+          "standardFlowEnabled" : true,
+          "implicitFlowEnabled" : false,
+          "directAccessGrantsEnabled" : false,
+          "serviceAccountsEnabled" : false,
+          "publicClient" : true,
+          "frontchannelLogout" : false,
+          "protocol" : "openid-connect",
+          "attributes" : {
+            "oidc.ciba.grant.enabled" : "false",
+            "backchannel.logout.session.required" : "true",
+            "post.logout.redirect.uris" : "+",
+            "oauth2.device.authorization.grant.enabled" : "false",
+            "display.on.consent.screen" : "false",
+            "pkce.code.challenge.method" : "S256",
+            "backchannel.logout.revoke.offline.tokens" : "false"
+          },
+          "authenticationFlowBindingOverrides" : { },
+          "fullScopeAllowed" : false,
+          "nodeReRegistrationTimeout" : 0,
+          "protocolMappers" : [
+            {
+              "name" : "audience resolve",
+              "protocol" : "openid-connect",
+              "protocolMapper" : "oidc-audience-resolve-mapper",
+              "consentRequired" : false,
+              "config" : { }
+            }
+          ],
+          "defaultClientScopes" : [ "web-origins", "acr", "profile", "roles", "email" ],
+          "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
+        }
+      ],
+      "attributes": {
+        "frontendUrl": "https://authentication-%!s(<nil>)",
+        "userProfileEnabled" : "true"
+      },
+      "components": {
+        "org.keycloak.userprofile.UserProfileProvider" : [
+          {
+            "providerId" : "declarative-user-profile",
+            "subComponents" : { },
+            "config" : {
+              "kc.user.profile.config" : [ "{\"attributes\":[{\"name\":\"username\",\"displayName\":\"${username}\",\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{},\"up-username-not-idn-homograph\":{}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"email\",\"displayName\":\"${email}\",\"validations\":{\"email\":{},\"length\":{\"max\":255}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"firstName\",\"displayName\":\"${firstName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"lastName\",\"displayName\":\"${lastName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"university\",\"displayName\":\"University / Organisation\",\"validations\":{},\"annotations\":{},\"required\":{\"roles\":[\"admin\",\"user\"]},\"permissions\":{\"view\":[],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"orcid\",\"displayName\":\"\",\"permissions\":{\"edit\":[\"admin\"],\"view\":[\"admin\",\"user\"]},\"annotations\":{},\"validations\":{}}],\"groups\":[]}" ]
+             }
+          }
+        ]
+      },
+      "loginTheme": "loculus",
+      "emailTheme": "loculus",
+      "identityProviders" : [
+        {
+          "alias" : "orcid",
+          "providerId" : "orcid",
+          "enabled" : true,
+          "updateProfileFirstLoginMode" : "on",
+          "trustEmail" : false,
+          "storeToken" : false,
+          "addReadTokenRoleOnCreate" : false,
+          "authenticateByDefault" : false,
+          "linkOnly" : false,
+          "firstBrokerLoginFlowAlias" : "first broker login",
+          "config" : {
+            "clientSecret" : "[[orcidSecret]]",
+            "clientId" : "APP-P1P7N7T9YVBHQ4EH"
+          }
+        }
+      ],
+      "identityProviderMappers" : [
+        {
+          "name" : "username mapper",
+          "identityProviderAlias" : "orcid",
+          "identityProviderMapper" : "hardcoded-attribute-idp-mapper",
+          "config" : {
+            "syncMode" : "IMPORT",
+            "attribute" : "username"
+          }
+        },
+        {
+          "name" : "orcid",
+          "identityProviderAlias" : "orcid",
+          "identityProviderMapper" : "orcid-user-attribute-mapper",
+          "config" : {
+            "syncMode" : "INHERIT",
+            "jsonField" : "orcid-identifier",
+            "userAttribute" : "orcid.path"
+          }
+        }
+      ]
+    }
 ---
