@@ -69,7 +69,14 @@ const getAllGroupsEndpoint = makeEndpoint({
     method: 'get',
     path: '/groups',
     alias: 'getAllGroups',
-    parameters: [authorizationHeader],
+    parameters: [
+        authorizationHeader,
+        {
+            name: "name",
+            type: "Query",
+            schema: z.string().optional(),
+        },
+    ],
     response: z.array(group),
     errors: [notAuthorizedError],
 });

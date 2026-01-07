@@ -1,5 +1,6 @@
 import { useState, type FC, type FormEvent } from 'react';
 
+import { ExistingGroupsModal } from './ExistingGroupsModal.tsx';
 import {
     AddressLineOneInput,
     AddressLineTwoInput,
@@ -13,9 +14,22 @@ import {
     StateInput,
     groupFromFormData,
 } from './Inputs';
-import type { NewGroup } from '../../types/backend';
+import { type GetAllGroupsResult } from '../../hooks/useGroupOperations.ts';
+import { type Group, type NewGroup } from '../../types/backend';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { Button } from '../common/Button';
+
+const PLACEHOLDER_NEWGROUP: NewGroup = {
+    groupName: "",
+    institution: "",
+    address: {
+        line1: "",
+        city: "",
+        postalCode: "",
+        country: "",
+    },
+    contactEmail: "",
+}
 
 interface GroupFormProps {
     /**
@@ -36,6 +50,14 @@ interface GroupFormProps {
      * @returns A submit success or error.
      */
     onSubmit: (group: NewGroup) => Promise<GroupSubmitResult>;
+    /**
+     * Handler that can be used to check if the name of the group being created is 
+     * already in use by another group in the database.
+     * @param groupName Group name to filter the results by
+     * @returns A result object where the `groups` property 
+     *          is an array of existing Groups
+     */
+    getAllGroups: (groupName?: string) => Promise<GetAllGroupsResult>
 }
 
 export type GroupSubmitSuccess = {
@@ -48,29 +70,58 @@ export type GroupSubmitError = {
 };
 export type GroupSubmitResult = GroupSubmitSuccess | GroupSubmitError;
 
-export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupData, onSubmit }) => {
+export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupData, onSubmit, getAllGroups }) => {
+    const [currentGroup, setCurrentGroup] = useState<NewGroup>(PLACEHOLDER_NEWGROUP);
+    const [existingGroups, setExistingGroups] = useState<Group[]>([]);
+    const isExistingGroupModalOpen = existingGroups.length > 0;
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
-    const internalOnSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    const submitGroup = async (group: NewGroup): Promise<void> => {
+        if (isSubmitting) return;
+
+        setIsSubmitting(true);
+        try {
+            const result = await onSubmit(group);
+
+            if (result.succeeded) {
+                window.location.href = result.nextPageHref;
+            } else {
+                setErrorMessage(result.errorMessage);
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const submitFromForm = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
         const formData = new FormData(e.currentTarget);
-
         const group = groupFromFormData(formData);
+        setCurrentGroup(group);
 
         if (group.address.country === CountryInputNoOptionChosen) {
             setErrorMessage('Please choose a country');
-            return false;
+            return;
         }
 
-        const result = await onSubmit(group);
-
-        if (result.succeeded) {
-            window.location.href = result.nextPageHref;
+        const existingGroupsResult = await getAllGroups(group.groupName);
+        if (existingGroupsResult.succeeded) {
+            if (existingGroupsResult.groups.length === 0) {
+                await submitGroup(group);
+                return;
+            }
+            setExistingGroups(existingGroupsResult.groups);
         } else {
-            setErrorMessage(result.errorMessage);
+            setErrorMessage(existingGroupsResult.errorMessage);
         }
     };
+
+    const submitFromModal = async (group: NewGroup) => {
+        // Checks have already been done in `submitFromForm`, so we can just submit here
+        await submitGroup(group);
+    };
+
 
     return (
         <div className='p-4 max-w-6xl mx-auto'>
@@ -80,7 +131,7 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
                 <ErrorFeedback message={errorMessage} onClose={() => setErrorMessage(undefined)} />
             )}
 
-            <form onSubmit={(event) => void internalOnSubmit(event)}>
+            <form onSubmit={(event) => void submitFromForm(event)}>
                 <div className='border-b border-gray-900/10 pb-12 '>
                     <p className='mt-1 text-sm leading-6 text-gray-600'>
                         The information you enter on this form will be publicly available on your group page.
@@ -103,6 +154,15 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
                             {buttonText}
                         </Button>
                     </div>
+                    <ExistingGroupsModal
+                        title='Group name already in use!'
+                        isOpen={isExistingGroupModalOpen}
+                        onClose={() => setExistingGroups([])}
+                        newGroup={currentGroup}
+                        existingGroups={existingGroups}
+                        submitFromModal={submitFromModal}
+                        isSubmitting={isSubmitting}
+                    />
                 </div>
             </form>
         </div>

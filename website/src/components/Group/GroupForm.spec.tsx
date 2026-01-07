@@ -2,9 +2,18 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, test } from 'vitest';
 
 import { GroupForm } from './GroupForm';
+import type { GetAllGroupsResult } from '../../hooks/useGroupOperations';
 
 const noOpSubmit = () => {
     throw new Error('Not implemented');
+};
+
+// eslint-disable-next-line @typescript-eslint/require-await
+const dummyGetAllGroups = async (_groupName?: string): Promise<GetAllGroupsResult> => {
+    return {
+        succeeded: true,
+        groups: [],
+    }
 };
 
 describe('GroupForm', () => {
@@ -12,7 +21,7 @@ describe('GroupForm', () => {
         const formTitle = 'Create group';
         const buttonText = 'Submit';
 
-        render(<GroupForm title={formTitle} buttonText={buttonText} onSubmit={noOpSubmit} />);
+        render(<GroupForm title={formTitle} buttonText={buttonText} onSubmit={noOpSubmit} getAllGroups={dummyGetAllGroups} />);
 
         expect(screen.getByRole('heading', { name: formTitle })).toBeVisible();
         expect(screen.getByRole('button', { name: buttonText })).toBeVisible();
@@ -42,6 +51,7 @@ describe('GroupForm', () => {
                     contactEmail,
                     address: { line1, line2, city, state, postalCode, country },
                 }}
+                getAllGroups={dummyGetAllGroups}
             />,
         );
 
