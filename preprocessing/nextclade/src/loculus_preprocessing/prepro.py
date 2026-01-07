@@ -159,24 +159,20 @@ def add_nextclade_metadata(
 
 
 def add_assigned_reference(
+    spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
 ) -> InputData:
     if not unprocessed.nextcladeMetadata:
         return InputData(datum=None)
-    valid_sequences = [key for key, value in unprocessed.nextcladeMetadata.items() if value]
-    if not valid_sequences:
+    segment = spec.args.get("segment", "main") if spec.args else "main"
+    name = get_name(str(segment), unprocessed.nextcladeMetadata, config)
+    if not name:
         return InputData(datum=None)
-    if len(valid_sequences) > 1:
-        return InputData(
-            datum=None,
-            errors=[
-                MultipleSequencesPerSegmentError(valid_sequences).get_processing_annotation(
-                    processed_field_name="ASSIGNED_REFERENCE", organism=config.organism
-                )
-            ],
-        )
-    return InputData(datum=valid_sequences[0])
+    reference = config.get_dataset_by_name(name).reference
+    if not reference:
+        return InputData(datum=None)
+    return InputData(datum=reference)
 
 
 def add_input_metadata(
@@ -186,8 +182,8 @@ def add_input_metadata(
     config: Config,
 ) -> InputData:
     """Returns value of input_path in unprocessed metadata"""
-    if input_path == "ASSIGNED_REFERENCE":
-        return add_assigned_reference(unprocessed, config=config)
+    if input_path.startswith("ASSIGNED_REFERENCE"):
+        return add_assigned_reference(spec, unprocessed, config=config)
     # If field starts with "nextclade.", take from nextclade metadata
     nextclade_prefix = "nextclade."
     if input_path.startswith(nextclade_prefix):
