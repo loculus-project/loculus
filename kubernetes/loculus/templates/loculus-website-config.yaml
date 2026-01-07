@@ -5,7 +5,7 @@ metadata:
   name: loculus-website-config
 data:
   website_config.json: |
-    {{ include "loculus.generateWebsiteConfig" . | fromYaml | toJson }}
+{{ include "loculus.generateWebsiteConfig" . | fromYaml | toPrettyJson | indent 4 }}
   runtime_config.json: |
     {
         "name" : "{{ $.Values.name }}",

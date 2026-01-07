@@ -45,10 +45,6 @@ jobs:
         sed -i 's/timestamp: "[^"]*"/timestamp: ""/g' /tmp/helm-output-${{ matrix.config.name }}.yaml
         .github/scripts/split-helm-output.sh /tmp/helm-output-${{ matrix.config.name }}.yaml kubernetes/loculus/docs/rendered/${{ matrix.config.name }}
 
-    - name: Format JSON in rendered YAML files
-      run: |
-        python3 .github/scripts/format-json-in-yaml.py kubernetes/loculus/docs/rendered/${{ matrix.config.name }}
-
     - name: Upload rendered output as artifact
       uses: actions/upload-artifact@v4
       with:

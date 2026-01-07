@@ -5,4 +5,4 @@ metadata:
   name: loculus-backend-config
 data:
   backend_config.json: |
-    {{ include "loculus.generateBackendConfig" . | fromYaml | toJson }}
+{{ include "loculus.generateBackendConfig" . | fromYaml | toPrettyJson | indent 4 }}
