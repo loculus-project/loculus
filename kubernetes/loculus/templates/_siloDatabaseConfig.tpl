@@ -6,7 +6,8 @@
   {{- end }}
   {{- if .lineageSystem }}
   generateIndex: true
-  generateLineageIndex: lineage_definitions {{- /* must match the file name in the lineageDefinitionFilenames */ }}
+  {{- /* must match the file name in the lineageDefinitionFilenames */ }}
+  generateLineageIndex: lineage_definitions
   {{- end }}
 {{- end }}
 
