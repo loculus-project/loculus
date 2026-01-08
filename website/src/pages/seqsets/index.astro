@@ -8,9 +8,8 @@ import NeedToLogin from '../../components/common/NeedToLogin.astro';
 import { getRuntimeConfig, seqSetsAreEnabled } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
-import { KeycloakClientManager } from '../../utils/KeycloakClientManager';
 import { getAccessToken } from '../../utils/getAccessToken';
-import { urlForKeycloakAccountPage } from '../../utils/urlForKeycloakAccountPage';
+import { getUrlForKeycloakAccountPage } from '../../utils/getAuthUrl.ts';
 
 if (!seqSetsAreEnabled()) {
     return Astro.rewrite('/404');
@@ -22,11 +21,10 @@ const accessToken = getAccessToken(session)!;
 const username = session.user?.username ?? '';
 const clientConfig = getRuntimeConfig().public;
 const seqSetClient = SeqSetCitationClient.create();
-const keycloakClient = await KeycloakClientManager.getClient();
 
 const seqSetsResponse = await seqSetClient.getSeqSetsOfUser(accessToken);
 const authorResponse = await seqSetClient.getAuthor(username);
-const editAccountUrl = urlForKeycloakAccountPage(keycloakClient!) + '/#/personal-info';
+const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-info';
 ---
 
 <BaseLayout title='SeqSets' data-testid='seqSets-list-container' activeTopNavigationItem='seqsets'>
