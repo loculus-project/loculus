@@ -84,9 +84,6 @@ class NextcladeSequenceAndDataset(BaseModel):
     genes: list[str] = Field(default_factory=list)
 
 
-type SegmentName = str
-
-
 class Config(BaseModel):
     log_level: str = "DEBUG"
     keep_tmp_dir: bool = False
