@@ -58,14 +58,14 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
                         );
                     })}
                     <li className='border-t mt-1 pt-1'>
-                        <a href={routes.versionPage(accessionVersion)} className='hover:no-underline'>
+                        <a href={routes.sequenceEntryVersionsPage(accessionVersion)} className='hover:no-underline'>
                             All versions
                         </a>
                     </li>
                 </ul>
             </div>
             <div className='sm:hidden inline-block mr-2'>
-                <a href={routes.versionPage(accessionVersion)} className='text-xl'>
+                <a href={routes.sequenceEntryVersionsPage(accessionVersion)} className='text-xl'>
                     <IcBaselineHistory />
                 </a>
             </div>
