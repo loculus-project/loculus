@@ -1825,11 +1825,11 @@ defaultOrganisms:
       image: "/images/organisms/enterovirus.jpg"
       linkOuts:
         - name: "Nextclade (CV-A16)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A16+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a16&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A16+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a16&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
         - name: "Nextclade (CV-A10)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A10+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a10&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A10+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a10&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
         - name: "Nextclade (EV-A71)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-A71+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-a71&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-A71+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-a71&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
         - name: "Nextclade (EV-D68)"
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-D68+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-d68"
       metadataAdd:
