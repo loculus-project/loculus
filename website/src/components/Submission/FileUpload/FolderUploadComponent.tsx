@@ -328,7 +328,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 );
             }}
         >
-            <LucideFolderUp className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`} aria-hidden='true' />
+            <LucideFolderUp
+                className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`}
+                aria-hidden='true'
+                data-testid='folder-up-icon'
+            />
             <div>
                 {fileUploadState === undefined ? (
                     <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>

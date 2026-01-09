@@ -31,10 +31,6 @@ vi.mock('../../../utils/multipartUpload', async () => {
     };
 });
 
-vi.mock('~icons/lucide/file', () => ({ default: () => <div data-testid='file-icon' /> }));
-vi.mock('~icons/lucide/folder-up', () => ({ default: () => <div data-testid='folder-up-icon' /> }));
-vi.mock('~icons/lucide/loader', () => ({ default: () => <div data-testid='loader-icon' /> }));
-
 const mockSetFileMapping = vi.fn();
 const mockOnError = vi.fn();
 
