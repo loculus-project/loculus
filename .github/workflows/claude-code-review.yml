@@ -26,6 +26,8 @@ jobs:
           # Enable progress tracking
           track_progress: true
 
+          model: claude-opus-4-5-20251101
+
           # Your custom review instructions
           prompt: |
             REPO: ${{ github.repository }}
