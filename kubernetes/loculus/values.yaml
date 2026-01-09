@@ -1627,7 +1627,10 @@ defaultOrganisms:
         args:
           - "--watch"
           - "--disableConsensusSequences"
-    referenceGenomes: {}
+    referenceGenomes:
+      main:
+        singleReference:
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
   not-aligned-organism:
     enabled: true
     schema:
