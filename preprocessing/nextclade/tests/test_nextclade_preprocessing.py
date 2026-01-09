@@ -37,24 +37,43 @@ from loculus_preprocessing.processing_functions import (
 SINGLE_SEGMENT_CONFIG = "tests/single_segment_config.yaml"
 MULTI_SEGMENT_CONFIG = "tests/multi_segment_config.yaml"
 MULTI_SEGMENT_CONFIG_UNALIGNED = "tests/multi_segment_config_unaligned.yaml"
-MULTI_PATHOGEN_CONFIG = "tests/multi_pathogen_config.yaml"
+MULTI_REFERENCE_CONFIG = "tests/multi_reference_config.yaml"
+MULTI_SEGMENT_MULTI_REFERENCE_CONFIG = "tests/multi_segment_multi_reference.yaml"
 EMBL_METADATA = "tests/embl_required_metadata.yaml"
 
 EBOLA_SUDAN_DATASET = "tests/ebola-dataset/ebola-sudan"
 EBOLA_ZAIRE_DATASET = "tests/ebola-dataset/ebola-zaire"
 MULTI_EBOLA_DATASET = "tests/ebola-multipath-dataset"
+CCHF_DATASET = "tests/cchfv"
 
 SINGLE_SEGMENT_EMBL = "tests/flatfiles/single_segment.embl"
 
 
 def consensus_sequence(
-    type: Literal["single"] | Literal["ebola-sudan"] | Literal["ebola-zaire"],
+    type: Literal["single"]
+    | Literal["ebola-sudan"]
+    | Literal["ebola-zaire"]
+    | Literal["cchf-L"]
+    | Literal["cchf-S-1and6"]
+    | Literal["cchf-S-2to5"],
 ) -> str:
+    match type:
+        case "single":
+            dataset_path = EBOLA_SUDAN_DATASET + "/main"
+        case "ebola-sudan":
+            dataset_path = EBOLA_SUDAN_DATASET + "/main"
+        case "ebola-zaire":
+            dataset_path = EBOLA_ZAIRE_DATASET + "/main"
+        case "cchf-L":
+            dataset_path = CCHF_DATASET + "/L"
+        case "cchf-S-1and6":
+            dataset_path = CCHF_DATASET + "/S-1and6"
+        case "cchf-S-2to5":
+            dataset_path = CCHF_DATASET + "/S-2to5"
     return str(
         next(
             SeqIO.parse(
-                (EBOLA_ZAIRE_DATASET if type == "ebola-zaire" else EBOLA_SUDAN_DATASET)
-                + "/main/reference.fasta",
+                dataset_path + "/reference.fasta",
                 "fasta",
             )
         ).seq
@@ -73,15 +92,40 @@ def sequence_with_mutation(
 
 
 def ebola_sudan_aa(nuc: str, gene: Literal["VP35", "NP"]) -> str:
-    if gene == "NP":
-        return str(Seq(nuc[(458 - 1) : 2674]).translate(to_stop=False))
-    return str(Seq(nuc[(3138 - 1) : 4127]).translate(to_stop=False))
+    match gene:
+        case "NP":
+            return str(Seq(nuc[(458 - 1) : 2674]).translate(to_stop=False))
+        case "VP35":
+            return str(Seq(nuc[(3138 - 1) : 4127]).translate(to_stop=False))
+        case _:
+            msg = f"Unknown gene: {gene}"
+            raise ValueError(msg)
 
 
 def ebola_zaire_aa(nuc: str, gene: Literal["VP24", "L"]) -> str:
-    if gene == "VP24":
-        return str(Seq(nuc[(10345 - 1) : 11100]).translate(to_stop=False))
-    return str(Seq(nuc[(11581 - 1) : 18219]).translate(to_stop=False))
+    match gene:
+        case "VP24":
+            return str(Seq(nuc[(10345 - 1) : 11100]).translate(to_stop=False))
+        case "L":
+            return str(Seq(nuc[(11581 - 1) : 18219]).translate(to_stop=False))
+        case _:
+            msg = f"Unknown gene: {gene}"
+            raise ValueError(msg)
+
+
+def cchf_s_aa(nuc: str, subtype: Literal["1and6", "2to5"]) -> str:
+    match subtype:
+        case "1and6":
+            return str(Seq(nuc[(55 - 1) : 1503]).translate(to_stop=False))
+        case "2to5":
+            return str(Seq(nuc[(56 - 1) : 1504]).translate(to_stop=False))
+        case _:
+            msg = f"Unknown subtype: {subtype}"
+            raise ValueError(msg)
+
+
+def cchf_l_aa(nuc: str) -> str:
+    return str(Seq(nuc[(77 - 1) : 11914]).translate(to_stop=False))
 
 
 def sequence_with_deletion(
@@ -1243,9 +1287,9 @@ def test_create_flatfile():
     assert embl_str == expected_embl
 
 
-multi_pathogen_cases = [
+multi_reference_cases = [
     Case(
-        name="with only first one uploaded",
+        name="with only one reference uploaded",
         input_metadata={},
         input_sequence={
             "ebola-zaire": sequence_with_mutation("ebola-zaire"),
@@ -1280,40 +1324,7 @@ multi_pathogen_cases = [
         ),
     ),
     Case(
-        name="with only second one uploaded",
-        input_metadata={},
-        input_sequence={
-            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-        },
-        accession_id="1",
-        expected_metadata={
-            "totalInsertedNucs": 0,
-            "totalSnps": 1,
-            "length": len(consensus_sequence("ebola-sudan")),
-            "subtype": "ebola-sudan",
-        },
-        expected_errors=[],
-        expected_warnings=[],
-        expected_processed_alignment=ProcessedAlignment(
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-            },
-            alignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-            },
-            nucleotideInsertions={},
-            alignedAminoAcidSequences={
-                "ebola-sudan-NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
-                "ebola-sudan-VP35EbolaSudan": ebola_sudan_aa(
-                    sequence_with_mutation("single"), "VP35"
-                ),
-            },
-            aminoAcidInsertions={},
-            sequenceNameToFastaId={"ebola-sudan": "ebola-sudan"},
-        ),
-    ),
-    Case(
-        name="with both segments uploaded should fail",
+        name="with both references uploaded should fail",
         input_metadata={},
         input_sequence={
             "ebola-zaire": sequence_with_mutation("ebola-zaire"),
@@ -1353,15 +1364,146 @@ multi_pathogen_cases = [
 
 @pytest.mark.parametrize(
     "test_case_def",
-    multi_pathogen_cases,
-    ids=lambda tc: f"multi pathogen {tc.name}",
+    multi_reference_cases,
+    ids=lambda tc: f"single segment, multi reference {tc.name}",
 )
-def test_preprocessing_multi_pathogen(test_case_def: Case):
-    config = get_config(MULTI_PATHOGEN_CONFIG, ignore_args=True)
+def test_preprocessing_multi_reference(test_case_def: Case):
+    config = get_config(MULTI_REFERENCE_CONFIG, ignore_args=True)
     config.alignment_requirement = AlignmentRequirement.ANY
     factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
     test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
+    verify_processed_entry(
+        processed_entry.processed_entry, test_case.expected_output, test_case.name
+    )
+
+
+multi_segment_multi_reference_cases = [
+    Case(
+        name="with only one reference of one segment uploaded",
+        input_metadata={},
+        input_sequence={
+            "seg1": consensus_sequence("cchf-S-1and6"),
+        },
+        accession_id="1",
+        expected_metadata={
+            "totalInsertedNucs_S": 0,
+            "totalSnps_S": 0,
+            "length_S": len(consensus_sequence("cchf-S-1and6")),
+            "subtype_S": "1and6",
+            "totalInsertedNucs_L": None,
+            "totalSnps_L": None,
+            "length_L": 0,
+        },
+        expected_errors=[],
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={
+                "S-1and6": consensus_sequence("cchf-S-1and6"),
+            },
+            alignedNucleotideSequences={
+                "S-1and6": consensus_sequence("cchf-S-1and6"),
+            },
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={
+                "1and6-NP": cchf_s_aa(consensus_sequence("cchf-S-1and6"), "1and6"),
+            },
+            aminoAcidInsertions={},
+            sequenceNameToFastaId={"S-1and6": "seg1"},
+        ),
+    ),
+    Case(
+        name="with one reference of each segment uploaded",
+        input_metadata={},
+        input_sequence={
+            "seg1": consensus_sequence("cchf-S-1and6"),
+            "seg2": consensus_sequence("cchf-L"),
+        },
+        accession_id="1",
+        expected_metadata={
+            "totalInsertedNucs_S": 0,
+            "totalSnps_S": 0,
+            "length_S": len(consensus_sequence("cchf-S-1and6")),
+            "length_L": len(consensus_sequence("cchf-L")),
+            "subtype_S": "1and6",
+            "totalInsertedNucs_L": 0,
+            "totalSnps_L": 0,
+        },
+        expected_errors=[],
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={
+                "S-1and6": consensus_sequence("cchf-S-1and6"),
+                "L": consensus_sequence("cchf-L"),
+            },
+            alignedNucleotideSequences={
+                "S-1and6": consensus_sequence("cchf-S-1and6"),
+                "L": consensus_sequence("cchf-L"),
+            },
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={
+                "1and6-NP": cchf_s_aa(consensus_sequence("cchf-S-1and6"), "1and6"),
+                "RdRp": cchf_l_aa(consensus_sequence("cchf-L")),
+            },
+            aminoAcidInsertions={},
+            sequenceNameToFastaId={"S-1and6": "seg1", "L": "seg2"},
+        ),
+    ),
+    Case(
+        name="with multiple references of same segment uploaded should fail",
+        input_metadata={},
+        input_sequence={
+            "seg1": consensus_sequence("cchf-S-1and6"),
+            "seg2": consensus_sequence("cchf-S-2to5"),
+        },
+        accession_id="1",
+        expected_metadata={
+            "totalInsertedNucs_S": None,
+            "totalSnps_S": None,
+            "length_S": 0,
+            "totalInsertedNucs_L": None,
+            "totalSnps_L": None,
+            "length_L": 0,
+            "subtype_S": None,
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper.sequence_annotation_helper(
+                    "Multiple sequences (with fasta ids: seg1, seg2) align to S"
+                    " - only one entry is allowed.",
+                ),
+                ProcessingAnnotationHelper(
+                    ["ASSIGNED_REFERENCE"],
+                    ["subtype_S"],
+                    "Metadata field subtype_S is required.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={},
+            alignedNucleotideSequences={},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
+            aminoAcidInsertions={},
+            sequenceNameToFastaId={},
+        ),
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "test_case_def",
+    multi_segment_multi_reference_cases,
+    ids=lambda tc: f"multi segment, multi reference {tc.name}",
+)
+def test_preprocessing_multi_segment_multi_reference(test_case_def: Case):
+    config = get_config(MULTI_SEGMENT_MULTI_REFERENCE_CONFIG, ignore_args=True)
+    config.alignment_requirement = AlignmentRequirement.ANY
+    print(config.nextclade_sequence_and_datasets)
+    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+    test_case = test_case_def.create_test_case(factory_custom)
+    processed_entry = process_single_entry(test_case, config, CCHF_DATASET)
     verify_processed_entry(
         processed_entry.processed_entry, test_case.expected_output, test_case.name
     )

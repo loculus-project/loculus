@@ -300,9 +300,7 @@ def get_output_metadata(
             )
             continue
 
-        if output_field.startswith("length_") and output_field[7:] in [
-            seq.name for seq in config.nextclade_sequence_and_datasets
-        ]:
+        if output_field.startswith("length_"):
             segment = output_field[7:]
             sequence_name = get_name(str(segment), unprocessed.unalignedNucleotideSequences, config)
             output_metadata[output_field] = get_sequence_length(
