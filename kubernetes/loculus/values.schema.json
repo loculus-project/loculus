@@ -632,48 +632,51 @@
                           "docsIncludePrefix": false,
                           "type": "array",
                           "description": "Details of the nextclade dataset for each reference",
-                          "additionalProperties": false,
-                          "properties": {
-                            "reference_name": {
-                              "groups": ["nextcladeSegment"],
-                              "docsIncludePrefix": false,
-                              "type": "string",
-                              "description": "Name of the reference to use for alignment  - set name to 'singleReference' if there is only one reference."
-                            },
-                            "nextclade_dataset_name": {
-                              "groups": ["nextcladeSegment"],
-                              "docsIncludePrefix": false,
-                              "type": "string",
-                              "description": "Name of the nextclade dataset to use to align the sequence - required if this sequence should be aligned."
-                            },
-                            "nextclade_dataset_tag": {
-                              "groups": ["nextcladeSegment"],
-                              "docsIncludePrefix": false,
-                              "type": "string",
-                              "description": "Optional. Tag of the nextclade dataset to use to align the sequence."
-                            },
-                            "nextclade_dataset_server": {
-                              "groups": ["nextcladeSegment"],
-                              "docsIncludePrefix": false,
-                              "type": "string",
-                              "description": "Optional. Server from which to download the nextclade dataset to use to align the sequence. If not specified, use the global nextclade_dataset_server."
-                            },
-                            "accepted_sort_matches": {
-                              "groups": ["nextcladeSegment"],
-                              "docsIncludePrefix": false,
-                              "type": "array",
-                              "description": "Optional. Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use only accept matches with the same name or nextclade_dataset_name."
-                            },
-                            "genes": {
-                              "groups": ["nextcladeSegment"],
-                              "docsIncludePrefix": false,
-                              "type": "array",
-                              "description": "Array of strings. The names of the genes to be extracted from the sequence alignment results (should correspond to gene names in the nextclade dataset)."
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["reference_name"],
+                            "properties": {
+                              "reference_name": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "string",
+                                "description": "Name of the reference to use for alignment  - set name to 'singleReference' if there is only one reference."
+                              },
+                              "nextclade_dataset_name": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "string",
+                                "description": "Name of the nextclade dataset to use to align the sequence - required if this sequence should be aligned."
+                              },
+                              "nextclade_dataset_tag": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "string",
+                                "description": "Optional. Tag of the nextclade dataset to use to align the sequence."
+                              },
+                              "nextclade_dataset_server": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "string",
+                                "description": "Optional. Server from which to download the nextclade dataset to use to align the sequence. If not specified, use the global nextclade_dataset_server."
+                              },
+                              "accepted_sort_matches": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "array",
+                                "description": "Optional. Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use only accept matches with the same name or nextclade_dataset_name."
+                              },
+                              "genes": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "array",
+                                "description": "Array of strings. The names of the genes to be extracted from the sequence alignment results (should correspond to gene names in the nextclade dataset)."
+                              }
                             }
                           }
                         }
-                      },
-                      "required": ["reference_name"]
+                      }
                     }
                   },
                   "require_nextclade_sort_match": {
