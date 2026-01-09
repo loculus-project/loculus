@@ -9,6 +9,26 @@ export class MyAccountPage {
         await this.page.waitForURL(/\/user/);
     }
 
+    getEditAccountInformationLink() {
+        return this.page.getByRole('link', { name: 'Edit account information' });
+    }
+
+    async expectEditAccountLinkHasCorrectHref() {
+        const link = this.getEditAccountInformationLink();
+        await expect(link).toBeVisible();
+        await expect(link).toHaveAttribute('target', '_blank');
+        await expect(link).toHaveAttribute('href', /\/realms\/loculus\/account$/);
+    }
+
+    async clickEditAccountAndGetKeycloakPage() {
+        const link = this.getEditAccountInformationLink();
+        const popupPromise = this.page.waitForEvent('popup');
+        await link.click();
+        const keycloakPage = await popupPromise;
+        await keycloakPage.waitForLoadState();
+        return keycloakPage;
+    }
+
     private groupListItem(groupName: string) {
         return this.page.locator('li').filter({ hasText: groupName });
     }
