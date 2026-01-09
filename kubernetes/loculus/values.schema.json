@@ -638,7 +638,7 @@
                               "groups": ["nextcladeSegment"],
                               "docsIncludePrefix": false,
                               "type": "string",
-                              "description": "Name of the reference to use for alignment - defaults to 'singleReference'."
+                              "description": "Name of the reference to use for alignment  - set name to 'singleReference' if there is only one reference."
                             },
                             "nextclade_dataset_name": {
                               "groups": ["nextcladeSegment"],
@@ -672,7 +672,8 @@
                             }
                           }
                         }
-                      }
+                      },
+                      "required": ["reference_name"]
                     }
                   },
                   "require_nextclade_sort_match": {

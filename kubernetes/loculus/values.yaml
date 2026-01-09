@@ -1361,7 +1361,8 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - nextclade_dataset_name: nextstrain/ebola/sudan
+              - reference_name: singleReference
+                nextclade_dataset_name: nextstrain/ebola/sudan
                 genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
           taxon_id: 186540
@@ -1444,7 +1445,8 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - nextclade_dataset_name: nextstrain/wnv/all-lineages
+              - reference_name: singleReference
+                nextclade_dataset_name: nextstrain/wnv/all-lineages
                 genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
           taxon_id: 11082
@@ -1785,14 +1787,17 @@ defaultOrganisms:
             - name: L
               references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/L
+                reference_name: singleReference
                 genes: [RdRp]
             - name: M
               references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/M
+                reference_name: singleReference
                 genes: [GPC]
             - name: S
               references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/S
+                reference_name: singleReference
                 genes: [NP]
     ingest:
       <<: *ingest
