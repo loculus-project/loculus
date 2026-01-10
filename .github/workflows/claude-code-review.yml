@@ -63,5 +63,9 @@ jobs:
             Provide detailed feedback using inline comments for specific issues.
             Use top-level comments for general observations or praise.
 
+            Generally if you have mentioned something in an inline comment you do not need 
+            to mention it again in the overall review. The overall review should be brief
+            with most points made as inline comments. Keep language simple and to the point.
+
           claude_args: |
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
