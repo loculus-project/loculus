@@ -67,3 +67,24 @@ test('bulk submit 1 seq: discarding and readding a file', async ({ page, groupId
     const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
     await searchPage.checkFileContentInModal('cell', COUNTRY_1, FILES_DOUBLE);
 });
+
+test('bulk submit 1 seq with a 35 MB file', async ({ page, groupId, tmpDir }) => {
+    test.setTimeout(100_000);
+    void groupId;
+
+    // With 10 MB per part, 35 MB will require 4 parts, allowing us to check that the multipart
+    // upload functions as expected.
+    const FILE_SIZE_MB = 35_000_000;
+    const PATTERN = 'ABCDEFGHIJ'; // 10 bytes
+    const REPEATS = FILE_SIZE_MB / PATTERN.length;
+    const largeFileContent = PATTERN.repeat(REPEATS);
+    const LARGE_FILE = { 'large_file.txt': largeFileContent };
+
+    const submissionPage = new BulkSubmissionPage(page);
+    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
+    await submissionPage.uploadMetadataFile(METADATA_HEADERS, [[ID_1, COUNTRY_1, '2024-01-01']]);
+    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: LARGE_FILE }, tmpDir);
+    const reviewPage = await submissionPage.submitAndWaitForProcessingDone();
+    const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
+    await searchPage.checkFileContentInModal('cell', COUNTRY_1, LARGE_FILE);
+});
