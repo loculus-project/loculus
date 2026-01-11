@@ -149,14 +149,6 @@ export class SearchPage {
         return accessionVersion;
     }
 
-    getSequencePreviewModal() {
-        return this.page.locator('[data-testid="sequence-preview-modal"]');
-    }
-
-    getHalfScreenPreview() {
-        return this.page.locator('[data-testid="half-screen-preview"]');
-    }
-
     toggleHalfScreenButton() {
         return this.page.locator('[data-testid="toggle-half-screen-button"]');
     }

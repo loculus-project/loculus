@@ -26,12 +26,6 @@ export class SequenceDetailPage {
         }
     }
 
-    async selectAlignedTab() {
-        if (await this.alignedTab.isVisible()) {
-            await this.alignedTab.click();
-        }
-    }
-
     async expectSequenceContentVisible(timeout = 10000) {
         await expect(this.page.getByText(/[ACGTN]{20,}/)).toBeVisible({ timeout });
     }
@@ -82,9 +76,5 @@ export class SequenceDetailPage {
         const link = this.page.getByRole('link', { name: accessionVersion });
         await expect(link).toBeVisible();
         await link.click();
-    }
-
-    getPage() {
-        return this.page;
     }
 }

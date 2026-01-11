@@ -137,14 +137,6 @@ export class ReviewPage {
             .toBe(true);
     }
 
-    async navigateToReviewPage() {
-        await this.page.goto('/');
-        await this.navigation.openOrganismNavigation();
-        await this.navigation.selectOrganism('Ebola Sudan');
-        await this.navigation.clickSubmitSequences();
-        await this.page.getByRole('link', { name: "Review Review your group's" }).click();
-    }
-
     async releaseValidSequences() {
         await this.page.getByRole('button', { name: /Release \d+ valid sequence/ }).click();
         await this.page.getByRole('button', { name: 'Release', exact: true }).click();

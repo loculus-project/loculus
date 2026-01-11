@@ -166,10 +166,6 @@ export class GroupPage {
         await this.page.getByLabel('Address Line 1').fill(line1);
     }
 
-    async editAddressLine2(line2: string) {
-        await this.page.getByLabel('Address Line 2').fill(line2);
-    }
-
     async editCity(city: string) {
         await this.page.getByLabel('City').fill(city);
     }

@@ -211,59 +211,10 @@ export class CliPage {
     }
 
     /**
-     * Set default organism
-     */
-    async setDefaultOrganism(organism: string): Promise<CliResult> {
-        return this.execute(['organism', 'select', organism]);
-    }
-
-    /**
-     * Set default group
-     */
-    async setDefaultGroup(groupId: number): Promise<CliResult> {
-        return this.execute(['group', 'select', groupId.toString()]);
-    }
-
-    /**
-     * Clear default organism
-     */
-    async clearDefaultOrganism(): Promise<CliResult> {
-        return this.execute(['organism', 'select', '--none']);
-    }
-
-    /**
-     * Clear default group
-     */
-    async clearDefaultGroup(): Promise<CliResult> {
-        return this.execute(['group', 'select', '--none']);
-    }
-
-    /**
-     * Get available organisms
-     */
-    async getAvailableOrganisms(): Promise<CliResult> {
-        return this.execute(['organism', 'list']);
-    }
-
-    /**
-     * Get available groups
-     */
-    async getAvailableGroups(): Promise<CliResult> {
-        return this.execute(['group', 'list']);
-    }
-
-    /**
      * Login with username and password
      */
     async login(username: string, password: string): Promise<CliResult> {
         return this.execute(['auth', 'login', '--username', username, '--password', password]);
-    }
-
-    /**
-     * Check authentication status
-     */
-    async authStatus(): Promise<CliResult> {
-        return this.execute(['auth', 'status']);
     }
 
     /**
