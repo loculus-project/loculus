@@ -14,7 +14,7 @@ import {
     StateInput,
     groupFromFormData,
 } from './Inputs';
-import { type GetAllGroupsResult } from '../../hooks/useGroupOperations.ts';
+import { type GetGroupsResult } from '../../hooks/useGroupOperations.ts';
 import { type Group, type NewGroup } from '../../types/backend';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { Button } from '../common/Button';
@@ -57,7 +57,7 @@ interface GroupFormProps {
      * @returns A result object where the `groups` property
      *          is an array of existing Groups
      */
-    getAllGroups: (groupName?: string) => Promise<GetAllGroupsResult>;
+    getGroups: (groupName?: string) => Promise<GetGroupsResult>;
 }
 
 export type GroupSubmitSuccess = {
@@ -70,7 +70,7 @@ export type GroupSubmitError = {
 };
 export type GroupSubmitResult = GroupSubmitSuccess | GroupSubmitError;
 
-export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupData, onSubmit, getAllGroups }) => {
+export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupData, onSubmit, getGroups }) => {
     const [currentGroup, setCurrentGroup] = useState<NewGroup>(PLACEHOLDER_NEWGROUP);
     const [existingGroups, setExistingGroups] = useState<Group[]>([]);
     const isExistingGroupModalOpen = existingGroups.length > 0;
@@ -105,7 +105,7 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
             return;
         }
 
-        const existingGroupsResult = await getAllGroups(group.groupName);
+        const existingGroupsResult = await getGroups(group.groupName);
         if (existingGroupsResult.succeeded) {
             if (existingGroupsResult.groups.length === 0) {
                 await submitGroup(group);

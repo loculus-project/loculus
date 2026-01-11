@@ -1,6 +1,6 @@
 import { type FC } from 'react';
 
-import { useGetAllGroups, useGroupEdit } from '../../hooks/useGroupOperations.ts';
+import { useGetGroups, useGroupEdit } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { GroupDetails, NewGroup } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
@@ -16,7 +16,7 @@ interface GroupEditFormProps {
 const InnerGroupEditForm: FC<GroupEditFormProps> = ({ prefetchedGroupDetails, clientConfig, accessToken }) => {
     const { groupId, ...groupInfo } = prefetchedGroupDetails.group;
 
-    const { getAllGroups } = useGetAllGroups({
+    const { getGroups } = useGetGroups({
         clientConfig,
         accessToken,
     });
@@ -47,7 +47,7 @@ const InnerGroupEditForm: FC<GroupEditFormProps> = ({ prefetchedGroupDetails, cl
             buttonText='Update group'
             onSubmit={handleEditGroup}
             defaultGroupData={groupInfo}
-            getAllGroups={getAllGroups}
+            getGroups={getGroups}
         />
     );
 };

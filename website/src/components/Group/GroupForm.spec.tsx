@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test } from 'vitest';
 
 import { GroupForm } from './GroupForm';
-import type { GetAllGroupsResult } from '../../hooks/useGroupOperations';
+import type { GetGroupsResult } from '../../hooks/useGroupOperations';
 
 const MOCK_GROUP = {
     groupId: 1,
@@ -25,7 +25,7 @@ const noOpSubmit = () => {
 };
 
 // eslint-disable-next-line @typescript-eslint/require-await
-const mockGetAllGroupsNone = async (_groupName?: string): Promise<GetAllGroupsResult> => {
+const mockGetGroupsWithNoGroups = async (_groupName?: string): Promise<GetGroupsResult> => {
     return {
         succeeded: true,
         groups: [],
@@ -33,7 +33,7 @@ const mockGetAllGroupsNone = async (_groupName?: string): Promise<GetAllGroupsRe
 };
 
 // eslint-disable-next-line @typescript-eslint/require-await
-const mockGetAllGroupsSome = async (_groupName?: string): Promise<GetAllGroupsResult> => {
+const mockGetGroupsWithGroup = async (_groupName?: string): Promise<GetGroupsResult> => {
     return {
         succeeded: true,
         groups: [MOCK_GROUP],
@@ -50,7 +50,7 @@ describe('GroupForm', () => {
                 title={formTitle}
                 buttonText={buttonText}
                 onSubmit={noOpSubmit}
-                getAllGroups={mockGetAllGroupsNone}
+                getGroups={mockGetGroupsWithNoGroups}
             />,
         );
 
@@ -68,7 +68,7 @@ describe('GroupForm', () => {
                 buttonText=''
                 onSubmit={noOpSubmit}
                 defaultGroupData={MOCK_GROUP}
-                getAllGroups={mockGetAllGroupsNone}
+                getGroups={mockGetGroupsWithNoGroups}
             />,
         );
 
@@ -92,7 +92,7 @@ describe('GroupForm', () => {
                 buttonText={buttonText}
                 onSubmit={noOpSubmit}
                 defaultGroupData={MOCK_GROUP}
-                getAllGroups={mockGetAllGroupsSome}
+                getGroups={mockGetGroupsWithGroup}
             />,
         );
 

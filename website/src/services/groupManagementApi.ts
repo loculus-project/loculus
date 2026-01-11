@@ -65,7 +65,7 @@ const getGroupsOfUserEndpoint = makeEndpoint({
     response: z.array(group),
     errors: [notAuthorizedError],
 });
-const getAllGroupsEndpoint = makeEndpoint({
+const getGroupsEndpoint = makeEndpoint({
     method: 'get',
     path: '/groups',
     alias: 'getAllGroups',
@@ -87,5 +87,5 @@ export const groupManagementApi = makeApi([
     removeUserFromGroupEndpoint,
     getGroupDetailsEndpoint,
     getGroupsOfUserEndpoint,
-    getAllGroupsEndpoint,
+    getGroupsEndpoint,
 ]);

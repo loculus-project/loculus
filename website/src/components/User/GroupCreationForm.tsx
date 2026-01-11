@@ -1,6 +1,6 @@
 import { type FC, useMemo } from 'react';
 
-import { useGetAllGroups, useGroupCreation } from '../../hooks/useGroupOperations.ts';
+import { useGetGroups, useGroupCreation } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { ContinueSubmissionIntent } from '../../routes/routes.ts';
 import type { NewGroup } from '../../types/backend.ts';
@@ -25,7 +25,7 @@ const getContinueSubmissionFromSearchParams = (searchParamsString: string): Cont
 };
 
 const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessToken, searchParams }) => {
-    const { getAllGroups } = useGetAllGroups({
+    const { getGroups } = useGetGroups({
         clientConfig,
         accessToken,
     });
@@ -57,7 +57,7 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
             title='Create a new submitting group'
             buttonText='Create group'
             onSubmit={handleCreateGroup}
-            getAllGroups={getAllGroups}
+            getGroups={getGroups}
         />
     );
 };

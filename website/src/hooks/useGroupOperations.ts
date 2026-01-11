@@ -76,16 +76,16 @@ export const useGroupCreation = ({
     };
 };
 
-export const useGetAllGroups = ({ clientConfig, accessToken }: { clientConfig: ClientConfig; accessToken: string }) => {
+export const useGetGroups = ({ clientConfig, accessToken }: { clientConfig: ClientConfig; accessToken: string }) => {
     const { zodios } = useGroupManagementClient(clientConfig);
 
-    const getAllGroups = useCallback(
-        async (groupName?: string) => callGetAllGroups(accessToken, zodios)(groupName),
+    const getGroups = useCallback(
+        async (groupName?: string) => callGetGroups(accessToken, zodios)(groupName),
         [accessToken, zodios],
     );
 
     return {
-        getAllGroups,
+        getGroups,
     };
 };
 
@@ -141,17 +141,17 @@ function callCreateGroup(accessToken: string, zodios: ZodiosInstance<typeof grou
     };
 }
 
-type GetAllGroupsSuccess = {
+type GetGroupsSuccess = {
     succeeded: true;
     groups: Group[];
 };
-type GetAllGroupsError = {
+type GetGroupsError = {
     succeeded: false;
     errorMessage: string;
 };
-export type GetAllGroupsResult = GetAllGroupsSuccess | GetAllGroupsError;
+export type GetGroupsResult = GetGroupsSuccess | GetGroupsError;
 
-function callGetAllGroups(accessToken: string, zodios: ZodiosInstance<typeof groupManagementApi>) {
+function callGetGroups(accessToken: string, zodios: ZodiosInstance<typeof groupManagementApi>) {
     return async (groupName?: string) => {
         try {
             const existingGroups = await zodios.getAllGroups({
@@ -161,13 +161,13 @@ function callGetAllGroups(accessToken: string, zodios: ZodiosInstance<typeof gro
             return {
                 succeeded: true,
                 groups: existingGroups,
-            } as GetAllGroupsSuccess;
+            } as GetGroupsSuccess;
         } catch (error) {
             const message = `Failed to query existing groups: ${stringifyMaybeAxiosError(error)}`;
             return {
                 succeeded: false,
                 errorMessage: message,
-            } as GetAllGroupsError;
+            } as GetGroupsError;
         }
     };
 }
