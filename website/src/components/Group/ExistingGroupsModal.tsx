@@ -34,9 +34,8 @@ export const ExistingGroupsModal: FC<ExistingGroupsModalProps> = ({
             </p>
 
             <p className='mb-4'>
-                Alternatively, you can go ahead and create an additional group called{' '}
-                <span className='font-semibold'>"{newGroup.groupName}"</span> anyway, but be aware this may cause
-                confusion in the future.
+                Alternatively, you may proceed with creating an additional group called{' '}
+		<span className='font-semibold'>"{newGroup.groupName}"</span>, though this is not recommended.
             </p>
 
             <div className='overflow-x-auto max-h-[150px]'>
