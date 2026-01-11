@@ -8,7 +8,7 @@ import { LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { Schema } from '../../types/config.ts';
 import type { MutationProportionCount } from '../../types/lapis.ts';
-import { type ReferenceGenomes, SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
 
 const schema: Schema = {
     organismName: 'instance name',
@@ -29,22 +29,26 @@ const schema: Schema = {
 };
 
 const singleReferenceGenomes: ReferenceGenomes = {
-    [SINGLE_REFERENCE]: {
-        nucleotideSequences: [],
-        genes: [],
+    main: {
+        ref1: {
+            sequence: 'ATCG',
+            genes: {},
+        },
     },
 };
 
 const genome1 = 'genome1';
 const genome2 = 'genome2';
 const multipleReferenceGenomes: ReferenceGenomes = {
-    [genome1]: {
-        nucleotideSequences: [],
-        genes: [],
-    },
-    [genome2]: {
-        nucleotideSequences: [],
-        genes: [],
+    main: {
+        [genome1]: {
+            sequence: 'ATCG',
+            genes: {},
+        },
+        [genome2]: {
+            sequence: 'ATCG',
+            genes: {},
+        },
     },
 };
 
@@ -326,22 +330,22 @@ describe('getTableData', () => {
         expect(mutationTableEntries).toStrictEqual([]);
     });
 
-    test('should return the suborganism name for a single reference genome', async () => {
+    test('should return the segmentReferences for a single reference genome', async () => {
         const result = await getTableData(accessionVersion, schema, singleReferenceGenomes, lapisClient);
 
-        const suborganism = result._unsafeUnwrap().suborganism;
+        const segmentReferences = result._unsafeUnwrap().segmentReferences;
 
-        expect(suborganism).equals(SINGLE_REFERENCE);
+        expect(segmentReferences).toEqual({ main: 'ref1' });
     });
 
-    test('should return the suborganism name for multiple reference genomes', async () => {
+    test('should return the segmentReferences for multiple reference genomes', async () => {
         mockRequest.lapis.details(200, { info, data: [{ genotype: genome2 }] });
 
         const result = await getTableData(accessionVersion, schema, multipleReferenceGenomes, lapisClient);
 
-        const suborganism = result._unsafeUnwrap().suborganism;
+        const segmentReferences = result._unsafeUnwrap().segmentReferences;
 
-        expect(suborganism).equals(genome2);
+        expect(segmentReferences).toEqual({ main: genome2 });
     });
 
     test('should throw when the suborganism name is not in multiple reference genomes', async () => {
@@ -360,14 +364,14 @@ describe('getTableData', () => {
         );
     });
 
-    test('should tolerate when suborganism is null (as e.g. for revocation entries)', async () => {
+    test('should tolerate when genotype is null (as e.g. for revocation entries)', async () => {
         mockRequest.lapis.details(200, { info, data: [{ genotype: null }] });
 
         const result = await getTableData(accessionVersion, schema, multipleReferenceGenomes, lapisClient);
 
-        const suborganism = result._unsafeUnwrap().suborganism;
+        const segmentReferences = result._unsafeUnwrap().segmentReferences;
 
-        expect(suborganism).equals(null);
+        expect(segmentReferences).equals(null);
     });
 
     test('should throw when the suborganism name is not in multiple reference genomes', async () => {
@@ -377,7 +381,7 @@ describe('getTableData', () => {
 
         expect(result).toStrictEqual(
             err({
-                detail: "Suborganism 'unknown suborganism' (value of field 'genotype') not found in reference genomes.",
+                detail: "ReferenceName 'unknown suborganism' (value of field 'genotype') not found in reference genomes.",
                 instance: '/seq/' + accessionVersion,
                 status: 0,
                 title: 'Invalid suborganism',

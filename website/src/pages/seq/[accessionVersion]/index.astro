@@ -74,13 +74,13 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                                     tableData={result.tableData}
                                     dataUseTermsHistory={result.dataUseTermsHistory}
                                     referenceGenomeLightweightSchema={getReferenceGenomeLightweightSchema(organism)}
-                                    suborganism={result.suborganism}
+                                    segmentReferences={result.segmentReferences}
                                 />
                             ) : (
                                 <SequenceDataUI
                                     tableData={result.tableData}
                                     organism={organism}
-                                    suborganism={result.suborganism}
+                                    segmentReferences={result.segmentReferences}
                                     referenceGenomeSequenceNames={getReferenceGenomeLightweightSchema(organism)}
                                     accessionVersion={accessionVersion}
                                     dataUseTermsHistory={result.dataUseTermsHistory}
