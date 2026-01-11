@@ -123,8 +123,11 @@ const InnerDataUploadForm = ({
                     break;
                 }
                 case 'revise':
-                    revise({ metadataFile: metadataFile, sequenceFile: sequenceFile });
-                    // TODO #4573: handle file stuff for revise
+                    revise({
+                        metadataFile: metadataFile,
+                        sequenceFile: sequenceFile,
+                        fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
+                    });
                     break;
             }
         };
@@ -176,7 +179,7 @@ const InnerDataUploadForm = ({
                             accessToken={accessToken}
                             inputMode={inputMode}
                             clientConfig={clientConfig}
-                            group={group}
+                            groupId={group.groupId}
                             onError={onError}
                             setFileMapping={setFileMapping}
                         />
@@ -269,11 +272,11 @@ const InputModeTabs = ({
     );
 };
 
-const ExtraFilesUpload = ({
+export const ExtraFilesUpload = ({
     accessToken,
     clientConfig,
     inputMode,
-    group,
+    groupId,
     fileCategories,
     setFileMapping,
     onError,
@@ -281,7 +284,7 @@ const ExtraFilesUpload = ({
     accessToken: string;
     clientConfig: ClientConfig;
     inputMode: InputMode;
-    group: Group;
+    groupId: number;
     fileCategories: FileCategory[];
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
     onError: (message: string) => void;
@@ -304,7 +307,7 @@ const ExtraFilesUpload = ({
                         inputMode={inputMode}
                         accessToken={accessToken}
                         clientConfig={clientConfig}
-                        group={group}
+                        groupId={groupId}
                         onError={onError}
                         setFileMapping={setFileMapping}
                     />

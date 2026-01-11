@@ -9,12 +9,13 @@ import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
-import { type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
+import { type FilesBySubmissionId, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
 import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
@@ -54,8 +55,10 @@ const InnerEditPage: FC<EditPageProps> = ({
     const [editableSequences, setEditableSequences] = useState(
         EditableSequences.fromInitialData(dataToEdit, submissionDataTypes.maxSequencesPerEntry),
     );
+    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
+    const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
 
     const { mutate: submitRevision, isPending: isRevisionPending } = useSubmitRevision(
         organism,
@@ -85,9 +88,17 @@ const InnerEditPage: FC<EditPageProps> = ({
                 toast.error('Please enter metadata.', { position: 'top-center', autoClose: false });
                 return;
             }
+
+            let fileMappingWithSubmissionId: FilesBySubmissionId | undefined;
+            if (extraFilesEnabled && fileMapping !== undefined && Object.keys(fileMapping).length > 0) {
+                const files = Object.values(fileMapping)[0];
+                fileMappingWithSubmissionId = { [dataToEdit.submissionId]: files };
+            }
+
             if (!submissionDataTypes.consensusSequences) {
                 submitRevision({
                     metadataFile,
+                    fileMapping: fileMappingWithSubmissionId,
                 });
                 return;
             }
@@ -102,6 +113,7 @@ const InnerEditPage: FC<EditPageProps> = ({
             submitRevision({
                 metadataFile,
                 sequenceFile,
+                fileMapping: fileMappingWithSubmissionId,
             });
         } else {
             submitEdit({
@@ -143,6 +155,19 @@ const InnerEditPage: FC<EditPageProps> = ({
                         setEditableSequences={setEditableSequences}
                         dataToEdit={dataToEdit}
                         isLoading={isPending}
+                    />
+                </div>
+            )}
+            {isCreatingRevision && extraFilesEnabled && (
+                <div className='mt-4'>
+                    <ExtraFilesUpload
+                        accessToken={accessToken}
+                        clientConfig={clientConfig}
+                        inputMode='form'
+                        groupId={dataToEdit.groupId}
+                        fileCategories={submissionDataTypes.files?.categories ?? []}
+                        setFileMapping={setFileMapping}
+                        onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
                     />
                 </div>
             )}

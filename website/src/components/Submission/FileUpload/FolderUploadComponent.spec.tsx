@@ -39,13 +39,7 @@ const defaultProps = {
     inputMode: 'bulk' as const,
     accessToken: 'test-token',
     clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {} },
-    group: {
-        groupId: 1,
-        groupName: 'Test Group',
-        institution: 'Test Institution',
-        address: { line1: '123 Test St', city: 'Test City', postalCode: '12345', country: 'Test Country' },
-        contactEmail: 'test@example.com',
-    },
+    groupId: 1,
     setFileMapping: mockSetFileMapping,
     onError: mockOnError,
 };
