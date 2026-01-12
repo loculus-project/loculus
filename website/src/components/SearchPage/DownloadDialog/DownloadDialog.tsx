@@ -19,24 +19,24 @@ import { BaseDialog } from '../../common/BaseDialog.tsx';
 type DownloadDialogProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     sequenceFilter: SequenceFilter;
-    ReferenceGenomesMap: ReferenceGenomesMap;
+    referenceGenomesMap: ReferenceGenomesMap;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
     schema: Schema;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
-    selectedReferenceName: string | null;
+    selectedReferenceNames: Record<string, string | null>;
     referenceIdentifierField: string | undefined;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
     downloadUrlGenerator,
     sequenceFilter,
-    ReferenceGenomesMap,
+    referenceGenomesMap,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
     schema,
     richFastaHeaderFields,
-    selectedReferenceName,
+    selectedReferenceNames,
     referenceIdentifierField,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -45,8 +45,8 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     const closeDialog = () => setIsOpen(false);
 
     const { nucleotideSequences, genes, useMultiSegmentEndpoint, defaultFastaHeaderTemplate } = useMemo(
-        () => getSequenceNames(ReferenceGenomesMap, selectedReferenceName),
-        [ReferenceGenomesMap, selectedReferenceName],
+        () => getSequenceNames(referenceGenomesMap, selectedReferenceNames),
+        [referenceGenomesMap, selectedReferenceNames],
     );
 
     const [downloadFormState, setDownloadFormState] = useState<DownloadFormState>(
@@ -76,7 +76,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         defaultFastaHeaderTemplate,
         getVisibleFields: () => [
             ...Array.from(downloadFieldVisibilities.entries())
-                .filter(([_, visibility]) => visibility.isVisible(selectedReferenceName))
+                .filter(([_, visibility]) => visibility.isVisible(selectedReferenceNames))
                 .map(([name]) => name),
         ],
         metadata: schema.metadata,
@@ -94,7 +94,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         </div>
                     )}
                     <DownloadForm
-                        ReferenceGenomesMap={ReferenceGenomesMap}
+                        referenceGenomesMap={referenceGenomesMap}
                         downloadFormState={downloadFormState}
                         setDownloadFormState={setDownloadFormState}
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
@@ -103,7 +103,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         downloadFieldVisibilities={downloadFieldVisibilities}
                         onSelectedFieldsChange={setSelectedFields}
                         richFastaHeaderFields={richFastaHeaderFields}
-                        selectedReferenceName={selectedReferenceName}
+                        selectedReferenceNames={selectedReferenceNames}
                         referenceIdentifierField={referenceIdentifierField}
                     />
                     {dataUseTermsEnabled && (
