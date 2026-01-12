@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import { Button } from '../common/Button';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
-import { SuborganismSelector } from './SuborganismSelector.tsx';
+//import { SuborganismSelector } from './SuborganismSelector.tsx';
 import { getDisplayState } from './TableColumnSelectorModal.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { DateField, TimestampField } from './fields/DateField.tsx';
@@ -18,7 +18,7 @@ import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
-import { type ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
+import { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { getSegmentAndGeneInfo } from '../../utils/getSegmentAndGeneInfo.tsx';
@@ -45,8 +45,7 @@ interface SearchFormProps {
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
     referenceIdentifierField: string | undefined;
-    selectedSuborganism: string | null;
-    setSelectedSuborganism: (newValue: string | null) => void;
+    setSelectedReferences: (newValues: Record<string, string | null>) => void;
     selectedReferences: Record<string, string | null>;
 }
 
@@ -61,12 +60,10 @@ export const SearchForm = ({
     lapisSearchParameters,
     showMutationSearch,
     referenceIdentifierField,
-    selectedSuborganism,
-    setSelectedSuborganism,
     selectedReferences,
 }: SearchFormProps) => {
     const visibleFields = filterSchema.filters.filter(
-        (field) => searchVisibilities.get(field.name)?.isVisible(selectedSuborganism) ?? false,
+        (field) => searchVisibilities.get(field.name)?.isVisible(selectedReferences) ?? false,
     );
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
@@ -104,7 +101,7 @@ export const SearchForm = ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),
             header: filter.header,
-            displayState: getDisplayState(filter, selectedSuborganism, referenceIdentifierField),
+            displayState: getDisplayState(filter, selectedReferences, referenceIdentifierField),
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
@@ -174,15 +171,15 @@ export const SearchForm = ({
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
-                        {referenceIdentifierField !== undefined && (
-                            <SuborganismSelector
+                        {/* {referenceIdentifierField !== undefined && (
+                            <ReferenceSelector
                                 filterSchema={filterSchema}
                                 referenceGenomesMap={referenceGenomesMap}
                                 referenceIdentifierField={referenceIdentifierField}
-                                selectedSuborganism={selectedSuborganism}
-                                setSelectedSuborganism={setSelectedSuborganism}
+                                selectedReferences={selectedReferences}
+                                setSelectedReferences={setSelectedReferences}
                             />
-                        )}
+                        )} */}
                         <div className='mb-1'>
                             <AccessionField
                                 textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
