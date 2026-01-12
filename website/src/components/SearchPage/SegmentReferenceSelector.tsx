@@ -1,14 +1,14 @@
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
 import { type FC, useId } from 'react';
 
-import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import DisabledUntilHydrated from '../DisabledUntilHydrated.tsx';
 import { Button } from '../common/Button';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 
 type SegmentReferenceSelectorProps = {
-    schema: ReferenceGenomesLightweightSchema;
+    schema: ReferenceGenomesMap;
     selectedReferences: SegmentReferenceSelections;
     setReferenceForSegment: (segment: string, reference: string | null) => void;
 };

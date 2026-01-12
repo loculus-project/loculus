@@ -7,7 +7,7 @@ import { type InnerSearchFullUIProps, SearchFullUI } from './SearchFullUI';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { FieldValues, MetadataFilter, Schema } from '../../types/config.ts';
-import { type ReferenceAccession, type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
+import { type ReferenceAccession, type ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { ACTIVE_FILTER_BADGE_TEST_ID } from '../common/ActiveFilters.tsx';
 
@@ -68,7 +68,7 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
+const defaultReferenceGenomesMap: ReferenceGenomesMap = {
     segments: {
         main: {
             references: ['ref1'],
@@ -81,13 +81,13 @@ const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchem
 function renderSearchFullUI({
     searchFormFilters = [...defaultSearchFormFilters],
     clientConfig = testConfig.public,
-    referenceGenomeLightweightSchema = defaultReferenceGenomesLightweightSchema,
+    referenceGenomesMap = defaultReferenceGenomesMap,
     hiddenFieldValues = {},
     suborganismIdentifierField,
 }: {
     searchFormFilters?: MetadataFilter[];
     clientConfig?: ClientConfig;
-    referenceGenomeLightweightSchema?: ReferenceGenomesLightweightSchema;
+    referenceGenomesMap?: ReferenceGenomesMap;
     hiddenFieldValues?: FieldValues;
     suborganismIdentifierField?: string | undefined;
 } = {}) {
@@ -98,7 +98,7 @@ function renderSearchFullUI({
 
     const props = {
         accessToken: 'dummyAccessToken',
-        referenceGenomeLightweightSchema,
+        referenceGenomesMap,
         myGroups: [],
         organism: testOrganism,
         clientConfig,
@@ -388,7 +388,7 @@ describe('SearchFullUI', () => {
                     displayName: 'suborganism',
                 },
             ],
-            referenceGenomeLightweightSchema: {
+            referenceGenomesMap: {
                 segments: {
                     main: {
                         references: ['suborganism1', 'suborganism2'],

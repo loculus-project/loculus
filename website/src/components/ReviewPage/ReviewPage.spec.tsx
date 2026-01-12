@@ -16,7 +16,7 @@ import {
     errorsProcessingResult,
     openDataUseTermsOption,
 } from '../../types/backend.ts';
-import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 
 const openDataUseTerms = { type: openDataUseTermsOption } as const;
 
@@ -25,7 +25,7 @@ const unreleasedSequencesRegex = /You do not currently have any unreleased seque
 const testGroup = testGroups[0];
 
 function renderReviewPage() {
-    const schema: ReferenceGenomesLightweightSchema = {
+    const schema: ReferenceGenomesMap = {
         segments: {},
     };
     return render(
@@ -36,7 +36,7 @@ function renderReviewPage() {
             accessToken={testAccessToken}
             clientConfig={testConfig.public}
             filesEnabled={false}
-            referenceGenomeLightweightSchema={schema}
+            referenceGenomesMap={schema}
         />,
     );
 }
