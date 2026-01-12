@@ -195,19 +195,6 @@ Metadata fields that are created from the results of the nextclade analysis requ
 ```
 Note that adding the `perSegment` field will mean that for a multi-segmented organism, preprocessing will create a `totalSnps_<segment>` field for each segment containing the nextclade results of that specific segment. In general, all nextclade metadata fields should be `perSegment`. 
 
-You can instead also `useFirstSegment: true` to take the value of the first segment only.
-This is useful for when you have several suborganisms, but you still want to have a single metadata field for the organism as a whole. For example:
-
-```yaml
-- name: totalSnps
-  type: int
-  displayName: Total SNPs
-  preprocessing:
-    args:
-      useFirstSegment: true
-    inputs: {input: nextclade.totalSubstitutions}
-```
-
 ## Deployment
 
 It is possible to run multiple preprocessing pipelines at once, ideally these will be labeled as different versions and point to different `dockerTags` (dockerTags can specify a commit).

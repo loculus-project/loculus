@@ -2,9 +2,9 @@ batch_size: 100
 alignment_requirement: NONE
 log_level: DEBUG
 minimizer_url: TEST
-nextclade_sequence_and_datasets:
-- name: ebola-sudan
-- name: ebola-zaire
+segments:
+  - name: ebola-sudan
+  - name: ebola-zaire
 organism: multi-ebola-test
 processing_spec:
   length_ebola-sudan:

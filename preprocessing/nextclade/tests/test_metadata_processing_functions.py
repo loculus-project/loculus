@@ -10,7 +10,7 @@ from factory_methods import (
     verify_processed_entry,
 )
 
-from loculus_preprocessing.config import Config, NextcladeSequenceAndDataset, get_config
+from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import (
     ProcessedEntry,
     UnprocessedData,
@@ -673,8 +673,6 @@ def test_preprocessing_without_consensus_sequences(config: Config) -> None:
             unalignedNucleotideSequences={},
         ),
     )
-
-    config.nextclade_sequence_and_datasets = [NextcladeSequenceAndDataset()]
 
     result = process_all([sequence_entry_data], "temp_dataset_dir", config)
     processed_entry = result[0].processed_entry

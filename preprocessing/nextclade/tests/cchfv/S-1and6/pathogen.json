@@ -1,0 +1,58 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nextstrain/nextclade/refs/heads/release/packages/nextclade-schemas/input-pathogen-json.schema.json",
+  "alignmentParams": {
+    "minSeedCover": 0.01,
+    "kmerLength": 7,
+    "retryReverseComplement": true,
+    "penaltyGapOpen": 18,
+    "penaltyGapOpenInFrame": 19,
+    "penaltyGapOpenOutOfFrame": 20
+  },
+  "files": {
+    "reference": "reference.fasta",
+    "pathogenJson": "pathogen.json",
+    "genomeAnnotation": "genome_annotation.gff3"
+  },
+  "schemaVersion": "3.0.0",
+  "attributes": {
+    "name": "CCHF (segment S)",
+    "reference name": "Crimean-Congo hemorrhagic fever virus segment S",
+    "reference accession": "MK299338.1"
+  },
+  "qc": {
+    "privateMutations": {
+      "enabled": true,
+      "typical": 50,
+      "cutoff": 200,
+      "weightLabeledSubstitutions": 2,
+      "weightReversionSubstitutions": 2,
+      "weightUnlabeledSubstitutions": 1
+    },
+    "missingData": {
+      "enabled": false,
+      "missingDataThreshold": 3000,
+      "scoreBias": 500
+    },
+    "snpClusters": {
+      "enabled": false,
+      "windowSize": 100,
+      "clusterCutOff": 6,
+      "scoreWeight": 50
+    },
+    "mixedSites": {
+      "enabled": true,
+      "mixedSitesThreshold": 8
+    },
+    "frameShifts": {
+      "enabled": true,
+      "ignoredFrameShifts": []
+    },
+    "stopCodons": {
+      "enabled": true,
+      "ignoredStopCodons": []
+    }
+  },
+  "mutLabels": {
+    "nucMutLabelMap": {}
+  }
+}
