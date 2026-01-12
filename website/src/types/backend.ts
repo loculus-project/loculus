@@ -296,7 +296,7 @@ export const newGroup = z.object({
     groupName: z.string(),
     institution: z.string(),
     address,
-    contactEmail: z.string(),
+    contactEmail: z.string().nullable(),
 });
 export type NewGroup = z.infer<typeof newGroup>;
 
@@ -311,7 +311,7 @@ export const groupDetails = z.object({
         z.object({
             name: z.string(),
         }),
-    ),
+    ).nullable(),
 });
 
 export type GroupDetails = z.infer<typeof groupDetails>;
