@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { SuborganismSelector } from './SuborganismSelector';
-import { type ReferenceGenomesMap } from '../../types/referencesGenomes';
+import { ReferenceSelector } from './ReferenceSelector.tsx';
+import { type ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../utils/search.ts';
 
 const referenceIdentifierField = 'genotype';
@@ -17,34 +17,36 @@ const filterSchema = new MetadataFilterSchema([
 ]);
 
 const mockreferenceGenomesMap: ReferenceGenomesMap = {
-    segments: {
-        main: {
-            references: ['suborganism1', 'suborganism2'],
-            insdcAccessions: {},
-            genesByReference: {},
+    main: {
+        suborganism1: {
+            sequence: 'ATCG',
+            insdcAccessionFull: 'ABC123',
+        },
+        suborganism2: {
+            sequence: 'ATCG',
+            insdcAccessionFull: 'ABC123',
         },
     },
 };
 
 const singleReferenceSchema: ReferenceGenomesMap = {
-    segments: {
-        main: {
-            references: ['single'],
-            insdcAccessions: {},
-            genesByReference: {},
-        },
+    main: {
+        suborganism1: {
+            sequence: 'ATCG',
+            insdcAccessionFull: 'ABC123',
+        }
     },
 };
 
-describe('SuborganismSelector', () => {
+describe('ReferenceSelector', () => {
     it('renders nothing in single pathogen case', () => {
         const { container } = render(
-            <SuborganismSelector
+            <ReferenceSelector
                 filterSchema={filterSchema}
                 referenceGenomesMap={singleReferenceSchema}
                 referenceIdentifierField={referenceIdentifierField}
-                selectedSuborganism={null}
-                setSelectedSuborganism={vi.fn()}
+                selectedReferences={{"main": null}}
+                setSelectedReferences={vi.fn()}
             />,
         );
 
@@ -54,12 +56,12 @@ describe('SuborganismSelector', () => {
     it('renders selector UI in multi-pathogen case', () => {
         const setSelected = vi.fn();
         render(
-            <SuborganismSelector
+            <ReferenceSelector
                 filterSchema={filterSchema}
                 referenceGenomesMap={mockreferenceGenomesMap}
                 referenceIdentifierField={referenceIdentifierField}
-                selectedSuborganism={null}
-                setSelectedSuborganism={setSelected}
+                selectedReferences={{"main": null}}
+                setSelectedReferences={setSelected}
             />,
         );
 
@@ -71,28 +73,28 @@ describe('SuborganismSelector', () => {
     it('updates selection when changed', async () => {
         const setSelected = vi.fn();
         render(
-            <SuborganismSelector
+            <ReferenceSelector
                 filterSchema={filterSchema}
                 referenceGenomesMap={mockreferenceGenomesMap}
                 referenceIdentifierField={referenceIdentifierField}
-                selectedSuborganism={null}
-                setSelectedSuborganism={setSelected}
+                selectedReferences={{"main": null}}
+                setSelectedReferences={setSelected}
             />,
         );
 
         await userEvent.selectOptions(screen.getByRole('combobox'), 'suborganism1');
-        expect(setSelected).toHaveBeenCalledWith('suborganism1');
+        expect(setSelected).toHaveBeenCalledWith({"main": "suborganism1"});
     });
 
     it('shows clear button and clears selection', async () => {
         const setSelected = vi.fn();
         render(
-            <SuborganismSelector
+            <ReferenceSelector
                 filterSchema={filterSchema}
                 referenceGenomesMap={mockreferenceGenomesMap}
                 referenceIdentifierField={referenceIdentifierField}
-                selectedSuborganism='Pathogen 1'
-                setSelectedSuborganism={setSelected}
+                selectedReferences={{"main": 'Pathogen 1'}}
+                setSelectedReferences={setSelected}
             />,
         );
 
@@ -103,12 +105,12 @@ describe('SuborganismSelector', () => {
     it('throws error when suborganism field is not in config', () => {
         expect(() =>
             render(
-                <SuborganismSelector
+                <ReferenceSelector
                     filterSchema={new MetadataFilterSchema([])}
                     referenceGenomesMap={mockreferenceGenomesMap}
                     referenceIdentifierField={referenceIdentifierField}
-                    selectedSuborganism={null}
-                    setSelectedSuborganism={vi.fn()}
+                    selectedReferences={{"main": null}}
+                    setSelectedReferences={vi.fn()}
                 />,
             ),
         ).toThrow('Cannot render suborganism selector');
