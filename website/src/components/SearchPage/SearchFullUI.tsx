@@ -105,6 +105,8 @@ export const InnerSearchFullUI = ({
         setAColumnVisibility,
     } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema });
 
+    console.log('selectedReferences', selectedReferences);
+
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
     }, [schema, state]);
@@ -224,7 +226,7 @@ export const InnerSearchFullUI = ({
                 schema={schema}
                 columnVisibilities={columnVisibilities}
                 setAColumnVisibility={setAColumnVisibility}
-                selectedReferences={selectedReferences}
+                selectedReferenceNames={selectedReferences}
             />
             <SeqPreviewModal
                 key={previewedSeqId ?? 'seq-modal'}
@@ -239,7 +241,7 @@ export const InnerSearchFullUI = ({
                 setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
                 sequenceFlaggingConfig={sequenceFlaggingConfig}
             />
-            <div className='md:w-[18rem]'>
+            {/* <div className='md:w-[18rem]'>
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}
@@ -256,7 +258,7 @@ export const InnerSearchFullUI = ({
                     selectedReferences={selectedReferences}
                     setSelectedReferences={setSelectedReferences}
                 />
-            </div>
+            </div> */}
             <div
                 className='flex-1 min-w-0'
                 style={{ paddingBottom: Boolean(previewedSeqId) && previewHalfScreen ? '50vh' : '0' }}
@@ -343,7 +345,7 @@ export const InnerSearchFullUI = ({
                                 </Button>
                             ) : null}
 
-                            <DownloadDialog
+                            {/* <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
                                 sequenceFilter={downloadFilter}
                                 ReferenceGenomesMap={referenceGenomesMap}
@@ -353,7 +355,7 @@ export const InnerSearchFullUI = ({
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
                                 selectedReferences={selectedReferences}
                                 referenceIdentifierField={schema.referenceIdentifierField}
-                            />
+                            /> */}
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu
                                     downloadUrlGenerator={downloadUrlGenerator}

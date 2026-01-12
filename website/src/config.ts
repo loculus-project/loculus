@@ -49,11 +49,11 @@ export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
         const knownReferenceNames = Object.keys(toReferenceGenomesMap(schema.referenceGenomes));
 
         schema.schema.metadata.forEach((metadatum) => {
-            const onlyForReferenceName = metadatum.onlyForReferenceName;
-            if (onlyForReferenceName !== undefined && !knownReferenceNames.includes(onlyForReferenceName)) {
+            const onlyForReference = metadatum.onlyForReference;
+            if (onlyForReference !== undefined && !knownReferenceNames.includes(onlyForReference)) {
                 errors.push(
                     new Error(
-                        `Metadata field '${metadatum.name}' in organism '${organism}' references unknown suborganism '${onlyForReferenceName}' in 'onlyForReferenceName'.`,
+                        `Metadata field '${metadatum.name}' in organism '${organism}' references unknown suborganism '${onlyForReference}' in 'onlyForReference'.`,
                     ),
                 );
             }
