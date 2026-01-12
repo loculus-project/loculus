@@ -200,14 +200,14 @@ describe('SearchForm', () => {
                 type: 'string',
                 displayName: 'Field 1',
                 initiallyVisible: true,
-                onlyForReferenceName: 'suborganism1',
+                onlyForReference: 'suborganism1',
             },
             {
                 name: 'field2',
                 type: 'string',
                 displayName: 'Field 2',
                 initiallyVisible: true,
-                onlyForReferenceName: 'suborganism2',
+                onlyForReference: 'suborganism2',
             },
         ]);
         const searchVisibilities = new Map<string, MetadataVisibility>([

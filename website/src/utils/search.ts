@@ -37,23 +37,23 @@ type VisiblitySelectableAccessor = (field: MetadataFilter) => boolean;
 
 export class MetadataVisibility {
     public readonly isChecked: boolean;
-    private readonly onlyForReferenceName: string | undefined;
+    private readonly onlyForReference: string | undefined;
 
-    constructor(isChecked: boolean, onlyForReferenceName: string | undefined) {
+    constructor(isChecked: boolean, onlyForReference: string | undefined) {
         this.isChecked = isChecked;
-        this.onlyForReferenceName = onlyForReferenceName;
+        this.onlyForReference = onlyForReference;
     }
 
-    public isVisible(selectedReferenceName: string | null) {
+    public isVisible(selectedReferenceNames: Record<string, string | null>): boolean {
         if (!this.isChecked) {
             return false;
         }
-
-        if (this.onlyForReferenceName === undefined || selectedReferenceName === null) {
-            return true;
+        for (const value of Object.values(selectedReferenceNames))  {
+            if (this.onlyForReference === value) {
+                return true;
+            }
         }
-
-        return this.onlyForReferenceName === selectedReferenceName;
+        return false;
     }
 }
 
@@ -84,7 +84,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
 
         const visibility = new MetadataVisibility(
             explicitVisibilitiesInUrlByFieldName.get(fieldName) ?? initiallyVisibleAccessor(field),
-            field.onlyForReferenceName,
+            field.onlyForReference,
         );
 
         visibilities.set(fieldName, visibility);

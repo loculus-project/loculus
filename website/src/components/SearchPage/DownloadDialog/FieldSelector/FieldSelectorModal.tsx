@@ -17,7 +17,7 @@ type FieldSelectorProps = {
     schema: Schema;
     downloadFieldVisibilities: Map<string, MetadataVisibility>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
-    selectedReferenceName: string | null;
+    selectedReferenceNames: Record<string, string | null>;
 };
 
 export const FieldSelectorModal: FC<FieldSelectorProps> = ({
@@ -26,7 +26,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     schema,
     downloadFieldVisibilities,
     onSelectedFieldsChange,
-    selectedReferenceName,
+    selectedReferenceNames,
 }) => {
     const handleFieldSelection = (fieldName: string, selected: boolean) => {
         onSelectedFieldsChange((prevSelectedFields) => {
@@ -46,7 +46,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         name: field.name,
         displayName: field.displayName,
         header: field.header,
-        displayState: getDisplayState(field, selectedReferenceName, schema),
+        displayState: getDisplayState(field, selectedReferenceNames, schema),
         isChecked: downloadFieldVisibilities.get(field.name)?.isChecked ?? false,
     }));
 
@@ -63,17 +63,17 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
 
 function getDisplayState(
     field: Metadata,
-    selectedReferenceName: string | null,
+    selectedReferenceNames: Record<string, string | null>,
     schema: Schema,
 ): FieldItemDisplayState | undefined {
     if (field.name === ACCESSION_VERSION_FIELD) {
         return { type: fieldItemDisplayStateType.alwaysChecked };
     }
 
-    if (!isActiveForSelectedReferenceName(selectedReferenceName, field)) {
+    if (!isActiveForSelectedReferenceName(selectedReferenceNames, field)) {
         return {
             type: fieldItemDisplayStateType.disabled,
-            tooltip: `This is only available when the ${schema.referenceIdentifierField} ${field.onlyForReferenceName} is selected.`,
+            tooltip: `This is only available when the ${schema.referenceIdentifierField} ${field.onlyForReference} is selected.`,
         };
     }
 
