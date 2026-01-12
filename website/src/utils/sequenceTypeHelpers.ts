@@ -30,10 +30,10 @@ export function getSinglePathogenSequenceName(name: string): SegmentInfo | GeneI
     };
 }
 
-export function getMultiPathogenSequenceName(name: string, suborganism: string): SegmentInfo | GeneInfo {
+export function getMultiPathogenSequenceName(segment: string, reference: string): SegmentInfo | GeneInfo {
     return {
-        lapisName: `${suborganism}-${name}`,
-        label: name,
+        lapisName: `${segment}-${reference}`,
+        label: segment,
     };
 }
 
@@ -106,4 +106,10 @@ export function getGeneInfoWithReference(geneName: string, referenceName: string
         lapisName: `${referenceName}-${geneName}`,
         label: geneName,
     };
+}
+
+export function stillRequiresReferenceNameSelection(
+    selectedReferenceNames: Map<string, string | undefined>,
+) {
+    return [...selectedReferenceNames.values()].some((value) => value === undefined);
 }

@@ -87,11 +87,11 @@ export const performLapisSearchQueries = async (
 };
 
 function extractReferenceName(schema: Schema, state: QueryState): string | null {
-    if (schema.suborganismIdentifierField === undefined) {
+    if (schema.referenceIdentifierField === undefined) {
         return null;
     }
 
-    const suborganism = state[schema.suborganismIdentifierField];
+    const suborganism = state[schema.referenceIdentifierField];
     if (typeof suborganism !== 'string') {
         return null;
     }

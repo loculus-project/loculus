@@ -6,11 +6,11 @@ import { SuborganismSelector } from './SuborganismSelector';
 import { type ReferenceGenomesMap } from '../../types/referencesGenomes';
 import { MetadataFilterSchema } from '../../utils/search.ts';
 
-const suborganismIdentifierField = 'genotype';
+const referenceIdentifierField = 'genotype';
 
 const filterSchema = new MetadataFilterSchema([
     {
-        name: suborganismIdentifierField,
+        name: referenceIdentifierField,
         displayName: 'My Genotype',
         type: 'string',
     },
@@ -42,7 +42,7 @@ describe('SuborganismSelector', () => {
             <SuborganismSelector
                 filterSchema={filterSchema}
                 referenceGenomesMap={singleReferenceSchema}
-                suborganismIdentifierField={suborganismIdentifierField}
+                referenceIdentifierField={referenceIdentifierField}
                 selectedSuborganism={null}
                 setSelectedSuborganism={vi.fn()}
             />,
@@ -57,7 +57,7 @@ describe('SuborganismSelector', () => {
             <SuborganismSelector
                 filterSchema={filterSchema}
                 referenceGenomesMap={mockreferenceGenomesMap}
-                suborganismIdentifierField={suborganismIdentifierField}
+                referenceIdentifierField={referenceIdentifierField}
                 selectedSuborganism={null}
                 setSelectedSuborganism={setSelected}
             />,
@@ -74,7 +74,7 @@ describe('SuborganismSelector', () => {
             <SuborganismSelector
                 filterSchema={filterSchema}
                 referenceGenomesMap={mockreferenceGenomesMap}
-                suborganismIdentifierField={suborganismIdentifierField}
+                referenceIdentifierField={referenceIdentifierField}
                 selectedSuborganism={null}
                 setSelectedSuborganism={setSelected}
             />,
@@ -90,7 +90,7 @@ describe('SuborganismSelector', () => {
             <SuborganismSelector
                 filterSchema={filterSchema}
                 referenceGenomesMap={mockreferenceGenomesMap}
-                suborganismIdentifierField={suborganismIdentifierField}
+                referenceIdentifierField={referenceIdentifierField}
                 selectedSuborganism='Pathogen 1'
                 setSelectedSuborganism={setSelected}
             />,
@@ -106,7 +106,7 @@ describe('SuborganismSelector', () => {
                 <SuborganismSelector
                     filterSchema={new MetadataFilterSchema([])}
                     referenceGenomesMap={mockreferenceGenomesMap}
-                    suborganismIdentifierField={suborganismIdentifierField}
+                    referenceIdentifierField={referenceIdentifierField}
                     selectedSuborganism={null}
                     setSelectedSuborganism={vi.fn()}
                 />,

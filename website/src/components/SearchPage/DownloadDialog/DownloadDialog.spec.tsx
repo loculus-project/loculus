@@ -74,7 +74,7 @@ async function renderDialog({
     richFastaHeaderFields,
     metadata = mockMetadata,
     selectedSuborganism = null,
-    suborganismIdentifierField,
+    referenceIdentifierField,
     ReferenceGenomesMap = defaultReferenceGenomesMap,
 }: {
     downloadParams?: SequenceFilter;
@@ -83,7 +83,7 @@ async function renderDialog({
     richFastaHeaderFields?: string[];
     metadata?: Metadata[];
     selectedSuborganism?: string | null;
-    suborganismIdentifierField?: string;
+    referenceIdentifierField?: string;
     ReferenceGenomesMap?: ReferenceGenomesMap;
 } = {}) {
     const schema: Schema = {
@@ -111,7 +111,7 @@ async function renderDialog({
             schema={schema}
             richFastaHeaderFields={richFastaHeaderFields}
             selectedReferenceName={selectedSuborganism}
-            suborganismIdentifierField={suborganismIdentifierField}
+            referenceIdentifierField={referenceIdentifierField}
         />,
     );
 
@@ -389,7 +389,7 @@ describe('DownloadDialog', () => {
             await renderDialog({
                 ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: null,
-                suborganismIdentifierField: 'genotype',
+                referenceIdentifierField: 'genotype',
             });
 
             expect(screen.getByText('select a reference', { exact: false })).toBeVisible();
@@ -401,7 +401,7 @@ describe('DownloadDialog', () => {
             await renderDialog({
                 ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: null,
-                suborganismIdentifierField: 'genotype',
+                referenceIdentifierField: 'genotype',
             });
 
             await checkAgreement();
@@ -416,7 +416,7 @@ describe('DownloadDialog', () => {
             await renderDialog({
                 ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: 'suborganism1',
-                suborganismIdentifierField: 'genotype',
+                referenceIdentifierField: 'genotype',
             });
 
             expect(screen.getByLabelText(alignedNucleotideSequencesLabel)).toBeEnabled();
@@ -427,7 +427,7 @@ describe('DownloadDialog', () => {
             await renderDialog({
                 ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: 'suborganism1',
-                suborganismIdentifierField: 'genotype',
+                referenceIdentifierField: 'genotype',
             });
 
             await checkAgreement();
@@ -441,7 +441,7 @@ describe('DownloadDialog', () => {
             await renderDialog({
                 ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: 'suborganism1',
-                suborganismIdentifierField: 'genotype',
+                referenceIdentifierField: 'genotype',
             });
 
             await checkAgreement();
@@ -455,7 +455,7 @@ describe('DownloadDialog', () => {
             await renderDialog({
                 ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: 'suborganism1',
-                suborganismIdentifierField: 'genotype',
+                referenceIdentifierField: 'genotype',
             });
 
             await checkAgreement();
@@ -494,7 +494,7 @@ describe('DownloadDialog', () => {
             await renderDialog({
                 ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: null,
-                suborganismIdentifierField: 'genotype',
+                referenceIdentifierField: 'genotype',
                 metadata: metadataWithOnlyForReferenceName,
             });
 
@@ -510,7 +510,7 @@ describe('DownloadDialog', () => {
             await renderDialog({
                 ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: 'suborganism2',
-                suborganismIdentifierField: 'genotype',
+                referenceIdentifierField: 'genotype',
                 metadata: metadataWithOnlyForReferenceName,
             });
 
