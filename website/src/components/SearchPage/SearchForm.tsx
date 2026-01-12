@@ -44,7 +44,7 @@ interface SearchFormProps {
     referenceGenomesMap: ReferenceGenomesMap;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
-    suborganismIdentifierField: string | undefined;
+    referenceIdentifierField: string | undefined;
     selectedSuborganism: string | null;
     setSelectedSuborganism: (newValue: string | null) => void;
     selectedReferences: Record<string, string | null>;
@@ -60,7 +60,7 @@ export const SearchForm = ({
     referenceGenomesMap,
     lapisSearchParameters,
     showMutationSearch,
-    suborganismIdentifierField,
+    referenceIdentifierField,
     selectedSuborganism,
     setSelectedSuborganism,
     selectedReferences,
@@ -98,13 +98,13 @@ export const SearchForm = ({
 
     const fieldItems: FieldItem[] = filterSchema.filters
         .filter((filter) => filter.name !== ACCESSION_FIELD) // Exclude accession field
-        .filter((filter) => filter.name !== suborganismIdentifierField)
+        .filter((filter) => filter.name !== referenceIdentifierField)
         .filter((filter) => !filter.notSearchable)
         .map((filter) => ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),
             header: filter.header,
-            displayState: getDisplayState(filter, selectedSuborganism, suborganismIdentifierField),
+            displayState: getDisplayState(filter, selectedSuborganism, referenceIdentifierField),
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
@@ -171,11 +171,11 @@ export const SearchForm = ({
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
-                        {suborganismIdentifierField !== undefined && (
+                        {referenceIdentifierField !== undefined && (
                             <SuborganismSelector
                                 filterSchema={filterSchema}
                                 referenceGenomesMap={referenceGenomesMap}
-                                suborganismIdentifierField={suborganismIdentifierField}
+                                referenceIdentifierField={referenceIdentifierField}
                                 selectedSuborganism={selectedSuborganism}
                                 setSelectedSuborganism={setSelectedSuborganism}
                             />

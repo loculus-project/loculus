@@ -304,8 +304,8 @@ organisms:
   {{- if .includeInDownloadsByDefault }}
   includeInDownloadsByDefault: {{ .includeInDownloadsByDefault }}
   {{- end }}
-  {{- if .onlyForSuborganism }}
-  onlyForSuborganism: {{ .onlyForSuborganism }}
+  {{- if .onlyForReference }}
+  onlyForReference: {{ .onlyForReference }}
   {{- end }}
   {{- if .customDisplay }}
   customDisplay:
@@ -527,8 +527,8 @@ enaOrganisms:
   {{- end }}
   {{- with $instance.schema }}
     {{ $configFile.configFile | toYaml | nindent 4 }}
-    {{- if $configFile.suborganismIdentifierField }}
-    suborganismIdentifierField: {{ quote $configFile.suborganismIdentifierField }}
+    {{- if $configFile.referenceIdentifierField }}
+    referenceIdentifierField: {{ quote $configFile.referenceIdentifierField }}
     {{- end }}
     organismName: {{ quote .organismName }}
     {{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" $instance.referenceGenomes | fromYaml).segments }}
