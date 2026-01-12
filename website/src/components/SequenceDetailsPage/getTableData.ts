@@ -12,7 +12,7 @@ import {
     type InsertionCount,
     type MutationProportionCount,
 } from '../../types/lapis.ts';
-import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
 export type GetTableDataResult = {
@@ -24,7 +24,7 @@ export type GetTableDataResult = {
 export async function getTableData(
     accessionVersion: string,
     schema: Schema,
-    referenceGenomes: ReferenceGenomes,
+    referenceGenomes: ReferenceGenomesMap,
     lapisClient: LapisClient,
 ): Promise<Result<GetTableDataResult, ProblemDetail>> {
     return Promise.all([
@@ -78,7 +78,7 @@ export async function getTableData(
 function getSegmentReferences(
     details: Details,
     schema: Schema,
-    referenceGenomes: ReferenceGenomes,
+    referenceGenomes: ReferenceGenomesMap,
     accessionVersion: string,
 ): Result<Record<string, string> | null, ProblemDetail> {
     const segments = Object.keys(referenceGenomes);
