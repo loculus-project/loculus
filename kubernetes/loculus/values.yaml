@@ -1355,7 +1355,7 @@ defaultOrganisms:
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
         - name: "Taxonium"
           maxNumberOfRecommendedEntries: 10000
-          url: "https://taxonium.vercel.app/build?mode=no_genbank&fastaUrl={{[unalignedNucleotideSequences|fasta]}}&metadataUrl={{[details|tsv]}}&refFastaUrl=https%3A%2F%2Ftaxonium.org%2FNC_006432.1.fasta&refGbffUrl=https%3A%2F%2Ftaxonium.org%2FNC_006432.1.gb&speciesName=Sudan+ebolavirus&taxonomyId=186539"
+          url: "https://taxonium.vercel.app/build?mode=no_genbank&fastaUrl={{[unalignedNucleotideSequences|fasta]}}&metadataUrl={{[details|tsv]}}&refFastaUrl=https%3A%2F%2Ftaxonium.vercel.app%2FNC_006432.1.fasta&refGbffUrl=https%3A%2F%2Ftaxonium.org%2FNC_006432.1.gb&speciesName=Sudan+ebolavirus&taxonomyId=186539"
     preprocessing:
       - <<: *preprocessing
         version: [1, 2]
