@@ -23,10 +23,10 @@
 
       {{/* Add genes if present */}}
       {{- if $reference.genes -}}
-        {{- range $geneName, $geneData := $reference.genes -}}
+        {{- range $gene := $reference.genes -}}
           {{- $lapisGenes = append $lapisGenes (dict
-            "name" $geneName
-            "sequence" $geneData.sequence
+            "name" $gene.name
+            "sequence" $gene.sequence
           ) -}}
         {{- end -}}
       {{- end -}}
@@ -40,10 +40,10 @@
         {{/* Add genes if present */}}
         {{- if $reference.genes -}}
           {{- $referenceSuffix := printf "_%s" $reference.reference_name -}}
-          {{- range $geneName, $geneData := $reference.genes -}}
+          {{- range $gene := $reference.genes -}}
             {{- $lapisGenes = append $lapisGenes (dict
-              "name" (printf "%s%s" $geneName $referenceSuffix)
-              "sequence" $geneData.sequence
+              "name" (printf "%s%s" $gene.name $referenceSuffix)
+              "sequence" $gene.sequence
             ) -}}
           {{- end -}}
         {{- end -}}
@@ -57,10 +57,10 @@
 
         {{/* Add genes if present */}}
         {{- if $reference.genes -}}
-          {{- range $geneName, $geneData := $reference.genes -}}
+          {{- range $gene := $reference.genes -}}
             {{- $lapisGenes = append $lapisGenes (dict
-              "name" (printf "%s%s" $geneName $referenceSuffix)
-              "sequence" $geneData.sequence
+              "name" (printf "%s%s" $gene.name $referenceSuffix)
+              "sequence" $gene.sequence
             ) -}}
           {{- end -}}
         {{- end -}}
