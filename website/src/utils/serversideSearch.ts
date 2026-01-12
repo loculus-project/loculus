@@ -25,18 +25,11 @@ export const performLapisSearchQueries = async (
 ): Promise<SearchResponse> => {
     const suborganism = extractReferenceName(schema, state);
 
-    // Build segment references - all segments use the same reference
-    const segmentReferences: Record<string, string> = {};
-    if (suborganism !== null) {
-        for (const segmentName of Object.keys(referenceGenomesMap.segments)) {
-            segmentReferences[segmentName] = suborganism;
-        }
-    }
+    const suborganismSegmentAndGeneInfo =
+        suborganism == null
+            ? null
+            : getSegmentAndGeneInfo(referenceGenomesMap, { main: suborganism });
 
-    const suborganismSegmentAndGeneInfo = getSegmentAndGeneInfo(
-        referenceGenomesMap,
-        Object.keys(segmentReferences).length > 0 ? segmentReferences : {},
-    );
 
     const filterSchema = new MetadataFilterSchema(schema.metadata);
     const fieldValues = filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
@@ -87,6 +80,7 @@ export const performLapisSearchQueries = async (
 };
 
 function extractReferenceName(schema: Schema, state: QueryState): string | null {
+    //TODO: make this perSegment
     if (schema.referenceIdentifierField === undefined) {
         return null;
     }
