@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import useStateSyncedWithUrlQueryParams, { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import useUrlParamState from '../../hooks/useUrlParamState.ts';
@@ -127,14 +127,8 @@ export function useSearchPageState({
         'boolean',
         (value) => !value,
     );
-    const [selectedReferences, setSelectedReferences] = useUrlParamState<string | null>(
-        schema.referenceIdentifierField ?? '',
-        state,
-        null,
-        setSomeFieldValues,
-        'nullable-string',
-        (value) => value === null,
-    );
+    const [selectedReferences, setSelectedReferences] = useState<Record<string, string | null>>({});
+    // Set values from URL on initial load
 
     const removeFilter = useCallback(
         (metadataFilterName: string) => {

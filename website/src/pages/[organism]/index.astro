@@ -4,4 +4,3 @@ import { cleanOrganism } from '../../components/Navigation/cleanOrganism';
 const { organism: _organism } = cleanOrganism(Astro.params.organism);
 return Astro.redirect(`/${_organism!.key}/search`);
 ---
-<div>hello world</div>

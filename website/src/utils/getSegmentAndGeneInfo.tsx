@@ -20,29 +20,23 @@ export type SegmentAndGeneInfo = {
  * @returns SegmentAndGeneInfo with all segments and their genes
  */
 export function getSegmentAndGeneInfo(
-    schema: ReferenceGenomesMap,
+    referenceGenomes: ReferenceGenomesMap,
     selectedReferences: SegmentReferenceSelections,
 ): SegmentAndGeneInfo {
     const nucleotideSegmentInfos: SegmentInfo[] = [];
     const geneInfos: GeneInfo[] = [];
+    const isMultiSegmented = Object.keys(referenceGenomes).length > 1;
 
-    // Check if this is single-reference mode (all segments have only one reference)
-    const segments = Object.values(schema.segments);
-    const isSingleReference = segments.every((segmentData) => segmentData.references.length === 1);
-
-    // Process each segment
-    for (const [segmentName, segmentData] of Object.entries(schema.segments)) {
+    for (const [segmentName, segmentData] of Object.entries(referenceGenomes)) {
+        const isSingleReference = Object.keys(segmentData).length === 1;
         const selectedRef = selectedReferences[segmentName] ?? null;
 
-        // In single-reference mode, don't prefix segment names
         const refForNaming = isSingleReference ? null : selectedRef;
 
-        // Add nucleotide sequence info for this segment
         nucleotideSegmentInfos.push(getSegmentInfoWithReference(segmentName, refForNaming));
 
-        // Add gene info if reference is selected
-        if (selectedRef) {
-            const geneNames = segmentData.genesByReference[selectedRef];
+        if (selectedRef && segmentData.genes) {
+            const geneNames = segmentData.genes.map((gene) => gene.name);
             for (const geneName of geneNames) {
                 geneInfos.push(getGeneInfoWithReference(geneName, refForNaming));
             }
@@ -52,6 +46,6 @@ export function getSegmentAndGeneInfo(
     return {
         nucleotideSegmentInfos,
         geneInfos,
-        isMultiSegmented: Object.keys(schema.segments).length > 1,
+        isMultiSegmented,
     };
 }
