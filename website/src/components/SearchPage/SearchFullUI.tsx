@@ -345,17 +345,17 @@ export const InnerSearchFullUI = ({
                                 </Button>
                             ) : null}
 
-                            {/* <DownloadDialog
+                            <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
                                 sequenceFilter={downloadFilter}
-                                ReferenceGenomesMap={referenceGenomesMap}
+                                referenceGenomesMap={referenceGenomesMap}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
                                 schema={schema}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
-                                selectedReferences={selectedReferences}
+                                selectedReferenceNames={selectedReferences}
                                 referenceIdentifierField={schema.referenceIdentifierField}
-                            /> */}
+                            />
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu
                                     downloadUrlGenerator={downloadUrlGenerator}
