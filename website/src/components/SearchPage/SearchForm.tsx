@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import { Button } from '../common/Button';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
-//import { SuborganismSelector } from './SuborganismSelector.tsx';
+import { ReferenceSelector } from './ReferenceSelector.tsx';
 import { getDisplayState } from './TableColumnSelectorModal.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { DateField, TimestampField } from './fields/DateField.tsx';
@@ -60,6 +60,7 @@ export const SearchForm = ({
     lapisSearchParameters,
     showMutationSearch,
     referenceIdentifierField,
+    setSelectedReferences,
     selectedReferences,
 }: SearchFormProps) => {
     const visibleFields = filterSchema.filters.filter(
@@ -171,7 +172,7 @@ export const SearchForm = ({
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
-                        {/* {referenceIdentifierField !== undefined && (
+                        {referenceIdentifierField !== undefined && (
                             <ReferenceSelector
                                 filterSchema={filterSchema}
                                 referenceGenomesMap={referenceGenomesMap}
@@ -179,7 +180,7 @@ export const SearchForm = ({
                                 selectedReferences={selectedReferences}
                                 setSelectedReferences={setSelectedReferences}
                             />
-                        )} */}
+                        )}
                         <div className='mb-1'>
                             <AccessionField
                                 textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
