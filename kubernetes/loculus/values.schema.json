@@ -854,19 +854,19 @@
                         "additionalProperties": false,
                         "properties": {
                           "name": {
-                              "groups": ["gene"],
-                              "docsIncludePrefix": false,
-                              "type": "string",
-                              "description": "The name of the gene"
-                            },
+                            "groups": ["gene"],
+                            "docsIncludePrefix": false,
+                            "type": "string",
+                            "description": "The name of the gene"
+                          },
                           "sequence": {
                             "groups": ["gene"],
                             "docsIncludePrefix": false,
                             "type": "string",
                             "description": "The amino acid or nucleotide sequence for this gene"
                           }
-                          },
-                          "required": ["name", "sequence"]
+                        },
+                        "required": ["name", "sequence"]
                       },
                       "additionalProperties": false
                     }
