@@ -804,19 +804,33 @@
         "referenceGenomes": {
           "groups": ["organism"],
           "docsIncludePrefix": false,
-          "type": "object",
-          "description": "Segment-first reference genome structure. The top-level keys are segment names, and each segment maps to reference genomes keyed by reference name (e.g., CV-A16, CV-A10). Each reference contains a nucleotide sequence and optionally genes. All segments must define the same set of reference names.",
-          "additionalProperties": false,
-          "patternProperties": {
-            "^[a-zA-Z0-9_-]+$": {
-              "type": "object",
-              "description": "Segment name (e.g., 'main', 'L', 'M', 'S')",
-              "patternProperties": {
-                "^[a-zA-Z0-9_-]+$": {
+          "type": "array",
+          "description": "Segment-first reference genome structure. Each segment must have a name and a list of reference genomes. Each reference contains a nucleotide sequence and optionally genes.",
+          "items": {
+            "type": "object",
+            "description": "Segment details, including name and references",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "groups": ["referenceGenomes"],
+                "docsIncludePrefix": false,
+                "type": "string",
+                "description": "Name of the segment (e.g., 'S', 'M', 'L', or 'main' for single-segmented organisms)"
+              },
+              "references": {
+                "type": "array",
+                "description": "Array of reference genomes for this segment",
+                "items": {
                   "type": "object",
-                  "description": "Reference name (e.g., 'CV-A16', 'CV-A10', or 'singleReference')",
+                  "description": "Reference genome details",
                   "additionalProperties": false,
                   "properties": {
+                    "reference_name": {
+                      "groups": ["nucleotide-sequence"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Name of the reference genome"
+                    },
                     "sequence": {
                       "groups": ["nucleotide-sequence"],
                       "docsIncludePrefix": false,
@@ -832,28 +846,32 @@
                     "genes": {
                       "groups": ["gene"],
                       "docsIncludePrefix": false,
-                      "type": "object",
+                      "type": "array",
                       "description": "Genes for this segment/reference combination",
-                      "patternProperties": {
-                        "^[a-zA-Z0-9_-]+$": {
-                          "type": "object",
-                          "description": "Gene name (e.g., 'VP4', 'NS1')",
-                          "additionalProperties": false,
-                          "properties": {
-                            "sequence": {
+                      "items": {
+                        "type": "object",
+                        "description": "Gene details, including name and references",
+                        "additionalProperties": false,
+                        "properties": {
+                          "name": {
                               "groups": ["gene"],
                               "docsIncludePrefix": false,
                               "type": "string",
-                              "description": "The amino acid or nucleotide sequence for this gene"
-                            }
+                              "description": "The name of the gene"
+                            },
+                          "sequence": {
+                            "groups": ["gene"],
+                            "docsIncludePrefix": false,
+                            "type": "string",
+                            "description": "The amino acid or nucleotide sequence for this gene"
+                          }
                           },
-                          "required": ["sequence"]
-                        }
+                          "required": ["name", "sequence"]
                       },
                       "additionalProperties": false
                     }
                   },
-                  "required": ["sequence"]
+                  "required": ["reference_name", "sequence"]
                 }
               },
               "additionalProperties": false

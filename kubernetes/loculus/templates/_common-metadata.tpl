@@ -331,7 +331,7 @@ organisms:
 
 {{/* Generate website metadata from passed metadata array */}}
 {{- define "loculus.generateWebsiteMetadata" }}
-{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" .referenceGenomes | fromYaml).segments }}
+{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).segments }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
 fields:
@@ -440,7 +440,7 @@ fields:
 
 {{/* Generate backend metadata from passed metadata array */}}
 {{- define "loculus.generateBackendMetadata" }}
-{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" .referenceGenomes | fromYaml).segments }}
+{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).segments }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
 fields:
@@ -464,7 +464,7 @@ fields:
 
 {{/* Generate backend metadata from passed metadata array */}}
 {{- define "loculus.generateBackendExternalMetadata" }}
-{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" .referenceGenomes | fromYaml).segments }}
+{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).segments }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
 fields:
@@ -531,7 +531,7 @@ enaOrganisms:
     suborganismIdentifierField: {{ quote $configFile.suborganismIdentifierField }}
     {{- end }}
     organismName: {{ quote .organismName }}
-    {{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" $instance.referenceGenomes | fromYaml).segments }}
+    {{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" $instance.referenceGenomes | fromYaml).segments }}
     segments: {{ $rawUniqueSegments | toYaml | nindent 6 }}
     externalMetadata:
       {{- $args := dict
