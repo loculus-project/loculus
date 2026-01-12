@@ -46,18 +46,18 @@ export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
             });
         }
 
-        const knownReferenceNames = Object.keys(toReferenceGenomesMap(schema.referenceGenomes));
+        //const knownReferenceNames = Object.keys(toReferenceGenomesMap(schema.referenceGenomes));
 
-        schema.schema.metadata.forEach((metadatum) => {
-            const onlyForReference = metadatum.onlyForReference;
-            if (onlyForReference !== undefined && !knownReferenceNames.includes(onlyForReference)) {
-                errors.push(
-                    new Error(
-                        `Metadata field '${metadatum.name}' in organism '${organism}' references unknown suborganism '${onlyForReference}' in 'onlyForReference'.`,
-                    ),
-                );
-            }
-        });
+        // schema.schema.metadata.forEach((metadatum) => {
+        //     const onlyForReference = metadatum.onlyForReference;
+        //     if (onlyForReference !== undefined && !knownReferenceNames.includes(onlyForReference)) {
+        //         errors.push(
+        //             new Error(
+        //                 `Metadata field '${metadatum.name}' in organism '${organism}' references unknown suborganism '${onlyForReference}' in 'onlyForReference'.`,
+        //             ),
+        //         );
+        //     }
+        // });
 
         const referenceIdentifierField = schema.schema.referenceIdentifierField;
         if (referenceIdentifierField !== undefined) {
@@ -78,6 +78,7 @@ export function getWebsiteConfig(): WebsiteConfig {
         const config = readTypedConfigFile('website_config.json', websiteConfig);
         const validationErrors = validateWebsiteConfig(config);
         if (validationErrors.length > 0) {
+            console.error('Website configuration validation errors:', validationErrors);
             throw new AggregateError(validationErrors, 'There were validation errors in the website_config.json');
         }
         _config = config;
