@@ -109,7 +109,7 @@ export function getGeneInfoWithReference(geneName: string, referenceName: string
 }
 
 export function stillRequiresReferenceNameSelection(
-    selectedReferenceNames: Record<string, string | undefined>,
+    selectedReferenceNames: Record<string, string | null>,
 ) {
-    return Object.values(selectedReferenceNames).some((value) => value === undefined);
+    return Object.values(selectedReferenceNames).some((value) => value === null);
 }

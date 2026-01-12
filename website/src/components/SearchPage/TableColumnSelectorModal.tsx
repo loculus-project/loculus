@@ -17,7 +17,7 @@ export type TableColumnSelectorModalProps = {
     schema: Schema;
     columnVisibilities: Map<string, MetadataVisibility>;
     setAColumnVisibility: (fieldName: string, selected: boolean) => void;
-    selectedReferenceName: string | null;
+    selectedReferenceNames: Record<string, string | null>;
 };
 
 export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
@@ -26,7 +26,7 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
     schema,
     columnVisibilities,
     setAColumnVisibility,
-    selectedReferenceName,
+    selectedReferenceNames,
 }) => {
     const columnFieldItems: FieldItem[] = useMemo(
         () =>
@@ -36,10 +36,10 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
                     name: field.name,
                     displayName: field.displayName ?? field.name,
                     header: field.header,
-                    displayState: getDisplayState(field, selectedReferenceName, schema.referenceIdentifierField),
+                    displayState: getDisplayState(field, selectedReferenceNames, schema.referenceIdentifierField),
                     isChecked: columnVisibilities.get(field.name)?.isChecked ?? false,
                 })),
-        [schema.metadata, schema.referenceIdentifierField, columnVisibilities, selectedReferenceName],
+        [schema.metadata, schema.referenceIdentifierField, columnVisibilities, selectedReferenceNames],
     );
 
     return (
@@ -55,17 +55,17 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
 
 export function getDisplayState(
     field: Metadata,
-    selectedReferenceName: string | null,
+    selectedReferenceNames: Record<string, string | null>,
     referenceIdentifierField: string | undefined,
 ): FieldItemDisplayState | undefined {
     if (field.name === ACCESSION_VERSION_FIELD) {
         return { type: fieldItemDisplayStateType.alwaysChecked };
     }
 
-    if (!isActiveForSelectedReferenceName(selectedReferenceName, field)) {
+    if (!isActiveForSelectedReferenceName(selectedReferenceNames, field)) {
         return {
             type: fieldItemDisplayStateType.greyedOut,
-            tooltip: `This is only visible when the ${referenceIdentifierField ?? 'referenceIdentifierField'} ${field.onlyForReferenceName} is selected.`,
+            tooltip: `This is only visible when the ${referenceIdentifierField ?? 'referenceIdentifierField'} ${field.onlyForReference} is selected.`,
         };
     }
 

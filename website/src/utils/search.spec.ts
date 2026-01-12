@@ -36,7 +36,7 @@ describe('MetadataVisibility', () => {
         expect(visibility.isVisible('suborganism1')).toBe(false);
     });
 
-    it('should return true when isChecked is true and onlyForReferenceName is undefined', () => {
+    it('should return true when isChecked is true and onlyForReference is undefined', () => {
         const visibility = new MetadataVisibility(true, undefined);
 
         expect(visibility.isVisible(null)).toBe(true);
