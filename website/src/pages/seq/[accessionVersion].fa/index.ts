@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 
-import { getReferenceGenomeLightweightSchema } from '../../../config.ts';
+import { getReferenceGenomes } from '../../../config.ts';
 import { routes } from '../../../routes/routes.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
@@ -13,14 +13,14 @@ export const GET: APIRoute = createDownloadAPIRoute(
     async (accessionVersion: string, organism: string) => {
         const lapisClient = LapisClient.createForOrganism(organism);
 
-        const referenceGenomeLightweightSchema = getReferenceGenomeLightweightSchema(organism);
+        const referenceGenomesMap = getReferenceGenomes(organism);
 
         // Check if single reference mode (all segments have only one reference)
-        const segments = Object.entries(referenceGenomeLightweightSchema.segments);
+        const segments = Object.entries(referenceGenomesMap.segments);
         const isSingleReference = segments.every(([_, segmentData]) => segmentData.references.length === 1);
 
         if (isSingleReference) {
-            const segmentNames = Object.keys(referenceGenomeLightweightSchema.segments);
+            const segmentNames = Object.keys(referenceGenomesMap.segments);
             if (segmentNames.length > 1) {
                 return lapisClient.getMultiSegmentSequenceFasta(accessionVersion, segmentNames);
             }

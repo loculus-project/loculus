@@ -1,11 +1,11 @@
 import { describe, test, expect } from 'vitest';
 
 import { getSegmentAndGeneDisplayNameMap } from './getSegmentAndGeneDisplayNameMap.tsx';
-import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 
 describe('getSegmentAndGeneDisplayNameMap', () => {
     test('should map nothing if there is only a single reference with no segments', () => {
-        const schema: ReferenceGenomesLightweightSchema = {
+        const schema: ReferenceGenomesMap = {
             segments: {},
         };
         const map = getSegmentAndGeneDisplayNameMap(schema);
@@ -14,7 +14,7 @@ describe('getSegmentAndGeneDisplayNameMap', () => {
     });
 
     test('should map segments and genes for multiple references', () => {
-        const schema: ReferenceGenomesLightweightSchema = {
+        const schema: ReferenceGenomesMap = {
             segments: {
                 segment1: {
                     references: ['suborganism1', 'suborganism2'],
@@ -40,7 +40,7 @@ describe('getSegmentAndGeneDisplayNameMap', () => {
     });
 
     test('should not prefix segments when there is only a single reference', () => {
-        const schema: ReferenceGenomesLightweightSchema = {
+        const schema: ReferenceGenomesMap = {
             segments: {
                 main: {
                     references: ['ref1'],

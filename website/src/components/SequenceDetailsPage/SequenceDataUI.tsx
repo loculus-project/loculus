@@ -10,7 +10,7 @@ import { routes } from '../../routes/routes';
 import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
-import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
+import { type ReferenceGenomesMap } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
@@ -27,7 +27,7 @@ interface Props {
     myGroups: Group[];
     accessToken: string | undefined;
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
-    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomeSequenceNames: ReferenceGenomesMap;
 }
 
 export const SequenceDataUI: FC<Props> = ({
@@ -66,7 +66,7 @@ export const SequenceDataUI: FC<Props> = ({
                 dataTableData={dataTableData}
                 segmentReferences={segmentReferences}
                 dataUseTermsHistory={dataUseTermsHistory}
-                referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
+                referenceGenomesMap={referenceGenomeSequenceNames}
             />
             {schema.submissionDataTypes.consensusSequences && segmentReferences !== null && (
                 <div className='mt-10'>
@@ -75,7 +75,7 @@ export const SequenceDataUI: FC<Props> = ({
                         segmentReferences={segmentReferences}
                         accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
-                        referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
+                        referenceGenomesMap={referenceGenomeSequenceNames}
                         loadSequencesAutomatically={loadSequencesAutomatically}
                     />
                 </div>

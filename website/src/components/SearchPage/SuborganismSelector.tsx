@@ -1,13 +1,13 @@
 import { type FC, useId, useMemo } from 'react';
 
-import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
 import { Button } from '../common/Button';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 
 type SuborganismSelectorProps = {
     filterSchema: MetadataFilterSchema;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
+    referenceGenomesMap: ReferenceGenomesMap;
     suborganismIdentifierField: string;
     selectedSuborganism: string | null;
     setSelectedSuborganism: (newValue: string | null) => void;
@@ -21,7 +21,7 @@ type SuborganismSelectorProps = {
  */
 export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
     filterSchema,
-    referenceGenomeLightweightSchema,
+    referenceGenomesMap,
     suborganismIdentifierField,
     selectedSuborganism,
     setSelectedSuborganism,
@@ -29,7 +29,7 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
     const selectId = useId();
 
     // Extract reference names from the segments
-    const segments = Object.values(referenceGenomeLightweightSchema.segments);
+    const segments = Object.values(referenceGenomesMap.segments);
     const suborganismNames = segments.length > 0 ? segments[0].references : [];
     const isSinglePathogen = suborganismNames.length < 2;
 
