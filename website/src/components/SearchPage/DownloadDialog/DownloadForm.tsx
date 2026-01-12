@@ -278,7 +278,7 @@ export function getSequenceNames(
     for (const segmentName of segments) {
         const segmentData = referenceGenomesMap[segmentName];
         const selectedReferenceName = selectedReferenceNames[segmentName];
-        if (selectedReferenceName) {
+        if (!selectedReferenceName) {
                 return {
                 nucleotideSequences: [],
                 genes: [],
