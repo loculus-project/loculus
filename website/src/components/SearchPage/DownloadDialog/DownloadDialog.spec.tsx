@@ -473,7 +473,7 @@ describe('DownloadDialog', () => {
                 type: 'string',
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
-                onlyForReferenceName: 'suborganism1',
+                onlyForReference: 'suborganism1',
             },
             {
                 name: 'field2',
@@ -481,7 +481,7 @@ describe('DownloadDialog', () => {
                 type: 'string',
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
-                onlyForReferenceName: 'suborganism2',
+                onlyForReference: 'suborganism2',
             },
             {
                 name: ACCESSION_VERSION_FIELD,
@@ -490,7 +490,7 @@ describe('DownloadDialog', () => {
             },
         ];
 
-        test('should include "onlyForReferenceName" selected fields in download if no suborganism is selected', async () => {
+        test('should include "onlyForReference" selected fields in download if no suborganism is selected', async () => {
             await renderDialog({
                 ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: null,
