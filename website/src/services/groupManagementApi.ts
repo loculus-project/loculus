@@ -1,7 +1,12 @@
 import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
-import { authorizationHeader, conflictError, notAuthorizedError, optionalAuthorizationHeader } from './commonApiTypes.ts';
+import {
+    authorizationHeader,
+    conflictError,
+    notAuthorizedError,
+    optionalAuthorizationHeader,
+} from './commonApiTypes.ts';
 import { group, groupDetails, newGroup } from '../types/backend.ts';
 const createGroupEndpoint = makeEndpoint({
     method: 'post',

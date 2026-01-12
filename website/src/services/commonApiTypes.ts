@@ -13,9 +13,9 @@ export const [authorizationHeader] = makeParameters([
 
 export const [optionalAuthorizationHeader] = makeParameters([
     {
-	name: 'Authorization',
-	type: 'Header',
-	schema: z.string().includes('Bearer ', {position: 0}).optional(),
+        name: 'Authorization',
+        type: 'Header',
+        schema: z.string().includes('Bearer ', { position: 0 }).optional(),
     },
 ]);
 

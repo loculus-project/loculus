@@ -307,11 +307,13 @@ export type Group = z.infer<typeof group>;
 
 export const groupDetails = z.object({
     group,
-    users: z.array(
-        z.object({
-            name: z.string(),
-        }),
-    ).nullable(),
+    users: z
+        .array(
+            z.object({
+                name: z.string(),
+            }),
+        )
+        .nullable(),
 });
 
 export type GroupDetails = z.infer<typeof groupDetails>;

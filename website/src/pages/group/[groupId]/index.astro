@@ -45,24 +45,22 @@ const userGroups = userGroupsResponse.match(
     activeTopNavigationItem='account'
 >
     {
-	(
-		groupDetailsResult.match(
-			(groupDetails) => (
-	                   <GroupPage
-	                       prefetchedGroupDetails={groupDetails}
-	                       accessToken={accessToken}
-	                       clientConfig={clientConfig}
-	                       username={username}
-	                       userGroups={userGroups}
-	                       organisms={organisms}
-	                       databaseName={databaseName}
-	                       continueSubmissionIntent={continueSubmissionIntent}
-		               loginUrl={loginUrl}
-	                       client:load
-	                   />
-	        ),
-	        () => <ErrorBox>Failed to fetch group details, sorry for the inconvenience!</ErrorBox>,
-	    )
-	)
+        groupDetailsResult.match(
+            (groupDetails) => (
+                <GroupPage
+                    prefetchedGroupDetails={groupDetails}
+                    accessToken={accessToken}
+                    clientConfig={clientConfig}
+                    username={username}
+                    userGroups={userGroups}
+                    organisms={organisms}
+                    databaseName={databaseName}
+                    continueSubmissionIntent={continueSubmissionIntent}
+                    loginUrl={loginUrl}
+                    client:load
+                />
+            ),
+            () => <ErrorBox>Failed to fetch group details, sorry for the inconvenience!</ErrorBox>,
+        )
     }
 </BaseLayout>
