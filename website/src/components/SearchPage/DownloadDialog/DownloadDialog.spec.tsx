@@ -9,7 +9,7 @@ import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
 import { versionStatuses } from '../../../types/lapis';
-import { type ReferenceGenomesLightweightSchema, type ReferenceAccession } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesMap, type ReferenceAccession } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
 const defaultAccession: ReferenceAccession = {
@@ -17,7 +17,7 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
+const defaultReferenceGenomesMap: ReferenceGenomesMap = {
     segments: {
         main: {
             references: ['ref1'],
@@ -27,7 +27,7 @@ const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchem
     },
 };
 
-const multiPathogenReferenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema = {
+const multiPathogenreferenceGenomesMap: ReferenceGenomesMap = {
     segments: {
         main: {
             references: ['suborganism1', 'suborganism2'],
@@ -75,7 +75,7 @@ async function renderDialog({
     metadata = mockMetadata,
     selectedSuborganism = null,
     suborganismIdentifierField,
-    referenceGenomesLightweightSchema = defaultReferenceGenomesLightweightSchema,
+    ReferenceGenomesMap = defaultReferenceGenomesMap,
 }: {
     downloadParams?: SequenceFilter;
     allowSubmissionOfConsensusSequences?: boolean;
@@ -84,7 +84,7 @@ async function renderDialog({
     metadata?: Metadata[];
     selectedSuborganism?: string | null;
     suborganismIdentifierField?: string;
-    referenceGenomesLightweightSchema?: ReferenceGenomesLightweightSchema;
+    ReferenceGenomesMap?: ReferenceGenomesMap;
 } = {}) {
     const schema: Schema = {
         defaultOrder: 'ascending',
@@ -105,7 +105,7 @@ async function renderDialog({
                 new DownloadUrlGenerator(defaultOrganism, defaultLapisUrl, dataUseTermsEnabled, richFastaHeaderFields)
             }
             sequenceFilter={downloadParams}
-            referenceGenomesLightweightSchema={referenceGenomesLightweightSchema}
+            ReferenceGenomesMap={ReferenceGenomesMap}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             dataUseTermsEnabled={dataUseTermsEnabled}
             schema={schema}
@@ -387,7 +387,7 @@ describe('DownloadDialog', () => {
     describe('multi pathogen case', () => {
         test('should disable the aligned sequence downloads when no suborganism is selected', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: null,
                 suborganismIdentifierField: 'genotype',
             });
@@ -399,7 +399,7 @@ describe('DownloadDialog', () => {
 
         test('should download all raw segments when no suborganism is selected', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: null,
                 suborganismIdentifierField: 'genotype',
             });
@@ -414,7 +414,7 @@ describe('DownloadDialog', () => {
 
         test('should enable the aligned sequence downloads when suborganism is selected', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: 'suborganism1',
                 suborganismIdentifierField: 'genotype',
             });
@@ -425,7 +425,7 @@ describe('DownloadDialog', () => {
 
         test('should download only the selected raw suborganism sequences when suborganism is selected', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: 'suborganism1',
                 suborganismIdentifierField: 'genotype',
             });
@@ -439,7 +439,7 @@ describe('DownloadDialog', () => {
 
         test('should download only the selected aligned suborganism sequences when suborganism is selected', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: 'suborganism1',
                 suborganismIdentifierField: 'genotype',
             });
@@ -453,7 +453,7 @@ describe('DownloadDialog', () => {
 
         test('should download only the selected aligned suborganism amino acid sequences when suborganism is selected', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: 'suborganism1',
                 suborganismIdentifierField: 'genotype',
             });
@@ -492,7 +492,7 @@ describe('DownloadDialog', () => {
 
         test('should include "onlyForReferenceName" selected fields in download if no suborganism is selected', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: null,
                 suborganismIdentifierField: 'genotype',
                 metadata: metadataWithOnlyForReferenceName,
@@ -508,7 +508,7 @@ describe('DownloadDialog', () => {
 
         test('should exclude selected fields from download if they are not for selected suborganism', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                ReferenceGenomesMap: multiPathogenreferenceGenomesMap,
                 selectedSuborganism: 'suborganism2',
                 suborganismIdentifierField: 'genotype',
                 metadata: metadataWithOnlyForReferenceName,

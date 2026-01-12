@@ -18,7 +18,7 @@ import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
-import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { getSegmentAndGeneInfo } from '../../utils/getSegmentAndGeneInfo.tsx';
@@ -41,7 +41,7 @@ interface SearchFormProps {
     lapisUrl: string;
     searchVisibilities: Map<string, MetadataVisibility>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
+    referenceGenomesMap: ReferenceGenomesMap;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
     suborganismIdentifierField: string | undefined;
@@ -57,7 +57,7 @@ export const SearchForm = ({
     lapisUrl,
     searchVisibilities,
     setASearchVisibility,
-    referenceGenomeLightweightSchema,
+    referenceGenomesMap,
     lapisSearchParameters,
     showMutationSearch,
     suborganismIdentifierField,
@@ -109,8 +109,8 @@ export const SearchForm = ({
         }));
 
     const suborganismSegmentAndGeneInfo = useMemo(
-        () => getSegmentAndGeneInfo(referenceGenomeLightweightSchema, selectedReferences),
-        [referenceGenomeLightweightSchema, selectedReferences],
+        () => getSegmentAndGeneInfo(referenceGenomesMap, selectedReferences),
+        [referenceGenomesMap, selectedReferences],
     );
 
     return (
@@ -174,7 +174,7 @@ export const SearchForm = ({
                         {suborganismIdentifierField !== undefined && (
                             <SuborganismSelector
                                 filterSchema={filterSchema}
-                                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+                                referenceGenomesMap={referenceGenomesMap}
                                 suborganismIdentifierField={suborganismIdentifierField}
                                 selectedSuborganism={selectedSuborganism}
                                 setSelectedSuborganism={setSelectedSuborganism}

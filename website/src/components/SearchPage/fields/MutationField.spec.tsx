@@ -14,7 +14,7 @@ const singleReferenceSegmentAndGeneInfo: SegmentAndGeneInfo = {
     isMultiSegmented: false,
 };
 
-const multiReferenceGenomeLightweightSchema: SegmentAndGeneInfo = {
+const multireferenceGenomesMap: SegmentAndGeneInfo = {
     nucleotideSegmentInfos: [
         { lapisName: 'seg1', label: 'seg1' },
         { lapisName: 'seg2', label: 'seg2' },
@@ -59,7 +59,7 @@ describe('MutationField', () => {
 
     test('should accept input and dispatch events (multi-segmented)', async () => {
         const handleChange = vi.fn();
-        renderField('', handleChange, multiReferenceGenomeLightweightSchema);
+        renderField('', handleChange, multireferenceGenomesMap);
 
         await userEvent.type(screen.getByLabelText('Mutations'), 'seg1:G100A{enter}');
         expect(handleChange).toHaveBeenCalledWith('seg1:G100A');
