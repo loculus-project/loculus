@@ -1,6 +1,6 @@
-# Solution Design - Organisms With Suborganisms
+# Solution Design - Organisms With Multiple References ("Subtypes")
 
-The purpose of this feature is to allow a single top level organism to contain multiple suborganisms.
+The purpose of this feature is to allow a single top level organism to contain multiple references, or multiple "suborganisms".
 
 Motivation:
 
@@ -39,7 +39,7 @@ defaultOrganisms:
       metadataAdd:
         - name: clade_cv_a10
           # tells the website to only show this field on the search page when CV-A10 is selected
-          onlyForSuborganism: CV-A10 
+          onlyForReference: CV-A10 
           preprocessing:
             args:
               #calculate this field from the results of the nextclade dataset for segment main and reference CV-A10
@@ -64,10 +64,10 @@ defaultOrganisms:
           perSegment: true
       website:
         <<: *website
-        # When the website needs to know which suborganism a sequence entry belongs to,
-        # it will look up the value of this metadata field.
+        # When the website needs to know which suborganism a sequence entry belongs to (i.e. which reference it aligns to),
+        # it will look up the value of this metadata field (this metadata field will exist for each segment, e.g. genotype_L, genotype_M).
         # Preprocessing must make sure that this field is always populated.
-        suborganismIdentifierField: genotype
+        referenceIdentifierField: genotype
     preprocessing:
       - <<: *preprocessing
         configFile:

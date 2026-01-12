@@ -48,7 +48,7 @@ describe('validateWebsiteConfig', () => {
         );
     });
 
-    it('should fail when "suborganismIdentifierField" is not in metadata', () => {
+    it('should fail when "referenceIdentifierField" is not in metadata', () => {
         const errors = validateWebsiteConfig({
             ...defaultConfig,
             organisms: {
@@ -62,7 +62,7 @@ describe('validateWebsiteConfig', () => {
                         defaultOrderBy: '',
                         defaultOrder: 'ascending',
                         submissionDataTypes: { consensusSequences: false },
-                        suborganismIdentifierField: 'suborganismField',
+                        referenceIdentifierField: 'suborganismField',
                     },
                     referenceGenomes: {},
                 },
@@ -71,7 +71,7 @@ describe('validateWebsiteConfig', () => {
 
         expect(errors).toHaveLength(1);
         expect(errors[0].message).contains(
-            `suborganismIdentifierField 'suborganismField' of organism 'dummyOrganism' is not defined in the metadata`,
+            `referenceIdentifierField 'suborganismField' of organism 'dummyOrganism' is not defined in the metadata`,
         );
     });
 });

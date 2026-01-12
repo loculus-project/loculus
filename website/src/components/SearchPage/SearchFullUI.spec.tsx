@@ -83,13 +83,13 @@ function renderSearchFullUI({
     clientConfig = testConfig.public,
     referenceGenomesMap = defaultReferenceGenomesMap,
     hiddenFieldValues = {},
-    suborganismIdentifierField,
+    referenceIdentifierField,
 }: {
     searchFormFilters?: MetadataFilter[];
     clientConfig?: ClientConfig;
     referenceGenomesMap?: ReferenceGenomesMap;
     hiddenFieldValues?: FieldValues;
-    suborganismIdentifierField?: string | undefined;
+    referenceIdentifierField?: string | undefined;
 } = {}) {
     const metadataSchema: MetadataFilter[] = searchFormFilters.map((filter) => ({
         ...filter,
@@ -109,7 +109,7 @@ function renderSearchFullUI({
             submissionDataTypes: {
                 consensusSequences: true,
             },
-            suborganismIdentifierField,
+            referenceIdentifierField,
         } as Schema,
         initialData: [],
         initialCount: 0,
@@ -373,7 +373,7 @@ describe('SearchFullUI', () => {
 
     it('should reset suborganism specific search fields when changing the selected suborganism', async () => {
         renderSearchFullUI({
-            suborganismIdentifierField: 'suborganism',
+            referenceIdentifierField: 'suborganism',
             searchFormFilters: [
                 {
                     name: 'field1',

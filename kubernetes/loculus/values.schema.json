@@ -179,7 +179,7 @@
             }
           }
         },
-        "onlyForSuborganism": {
+        "onlyForReference": {
           "groups": ["metadata"],
           "type": "string",
           "description": "Optional. Affects the search page of the website: specify which suborganism the metadata field applies to, this metadata field will then only be visible if that suborganism is selected (in the search bar, as a table column, and in the metadata download). Must be a valid suborganism as defined in the reference genomes."
@@ -514,7 +514,7 @@
                   "enum": ["ascending", "descending"],
                   "description": "Default order direction."
                 },
-                "suborganismIdentifierField": {
+                "referenceIdentifierField": {
                   "groups": ["schema"],
                   "type": "string",
                   "description": "Must be set to use the sub-organism feature. This metadata field is used to determine which suborganism a sequence entry belongs to. N.B. the suborganism feature is incomplete and not ready for production use."
