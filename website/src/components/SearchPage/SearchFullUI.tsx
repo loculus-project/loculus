@@ -241,7 +241,7 @@ export const InnerSearchFullUI = ({
                 setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
                 sequenceFlaggingConfig={sequenceFlaggingConfig}
             />
-            {/* <div className='md:w-[18rem]'>
+            <div className='md:w-[18rem]'>
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}
@@ -258,7 +258,7 @@ export const InnerSearchFullUI = ({
                     selectedReferences={selectedReferences}
                     setSelectedReferences={setSelectedReferences}
                 />
-            </div> */}
+            </div>
             <div
                 className='flex-1 min-w-0'
                 style={{ paddingBottom: Boolean(previewedSeqId) && previewHalfScreen ? '50vh' : '0' }}
