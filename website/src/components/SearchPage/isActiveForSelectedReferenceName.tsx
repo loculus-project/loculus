@@ -1,17 +1,10 @@
 import type { Metadata } from '../../types/config.ts';
 
-export function isActiveForSelectedReferenceName(selectedReferenceName: string | null, field: Metadata) {
-    // Check legacy onlyForReferenceName field
-    const matchesReferenceName =
-        selectedReferenceName === null ||
-        field.onlyForReferenceName === undefined ||
-        field.onlyForReferenceName === selectedReferenceName;
-
-    // Check new onlyForReference field (backward compatible)
+export function isActiveForSelectedReferenceName(selectedReferenceNames: Record<string, string | null>, field: Metadata) {
     const matchesReference =
-        selectedReferenceName === null ||
+        Object.values(selectedReferenceNames).every((value) => value === null) ||
         field.onlyForReference === undefined ||
-        field.onlyForReference === selectedReferenceName;
+        Object.values(selectedReferenceNames).some((value) => value === field.onlyForReference);
 
-    return matchesReferenceName && matchesReference;
+    return matchesReference;
 }
