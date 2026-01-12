@@ -73,7 +73,7 @@ function getDisplayState(
     if (!isActiveForSelectedReferenceName(selectedReferenceName, field)) {
         return {
             type: fieldItemDisplayStateType.disabled,
-            tooltip: `This is only available when the ${schema.suborganismIdentifierField} ${field.onlyForReferenceName} is selected.`,
+            tooltip: `This is only available when the ${schema.referenceIdentifierField} ${field.onlyForReferenceName} is selected.`,
         };
     }
 

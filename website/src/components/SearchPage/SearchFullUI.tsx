@@ -12,7 +12,6 @@ import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
-import { stillRequiresReferenceNameSelection } from './stillRequiresReferenceNameSelection.tsx';
 import { useSearchPageState } from './useSearchPageState.ts';
 import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import { getLapisUrl } from '../../config.ts';
@@ -34,6 +33,7 @@ import {
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
+import { stillRequiresReferenceNameSelection } from '../../utils/sequenceTypeHelpers.ts';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -91,9 +91,8 @@ export const InnerSearchFullUI = ({
         setPreviewedSeqId,
         previewHalfScreen,
         setPreviewHalfScreen,
-        selectedSuborganism,
-        setSelectedSuborganism,
         selectedReferences,
+        setSelectedReferences,
         page,
         setPage,
         setSomeFieldValues,
@@ -114,9 +113,9 @@ export const InnerSearchFullUI = ({
 
     const columnsToShow = useMemo(() => {
         return schema.metadata
-            .filter((field) => columnVisibilities.get(field.name)?.isVisible(selectedSuborganism) === true)
+            .filter((field) => columnVisibilities.get(field.name)?.isVisible(selectedReferences) === true)
             .map((field) => field.name);
-    }, [schema.metadata, columnVisibilities]);
+    }, [schema.metadata, columnVisibilities, selectedReferences]);
 
     const orderByField = columnsToShow.includes(orderByFieldCandidate) ? orderByFieldCandidate : schema.primaryKey;
 
@@ -215,7 +214,7 @@ export const InnerSearchFullUI = ({
 
     const showMutationSearch =
         schema.submissionDataTypes.consensusSequences &&
-        !stillRequiresReferenceNameSelection(referenceGenomesMap, selectedSuborganism);
+        !stillRequiresReferenceNameSelection(selectedReferences);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -225,7 +224,7 @@ export const InnerSearchFullUI = ({
                 schema={schema}
                 columnVisibilities={columnVisibilities}
                 setAColumnVisibility={setAColumnVisibility}
-                selectedReferenceName={selectedSuborganism}
+                selectedReferences={selectedReferences}
             />
             <SeqPreviewModal
                 key={previewedSeqId ?? 'seq-modal'}
@@ -253,10 +252,9 @@ export const InnerSearchFullUI = ({
                     setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
                     showMutationSearch={showMutationSearch}
-                    suborganismIdentifierField={schema.suborganismIdentifierField}
-                    selectedSuborganism={selectedSuborganism}
-                    setSelectedSuborganism={setSelectedSuborganism}
+                    referenceIdentifierField={schema.referenceIdentifierField}
                     selectedReferences={selectedReferences}
+                    setSelectedReferences={setSelectedReferences}
                 />
             </div>
             <div
@@ -353,8 +351,8 @@ export const InnerSearchFullUI = ({
                                 dataUseTermsEnabled={dataUseTermsEnabled}
                                 schema={schema}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
-                                selectedReferenceName={selectedSuborganism}
-                                suborganismIdentifierField={schema.suborganismIdentifierField}
+                                selectedReferences={selectedReferences}
+                                referenceIdentifierField={schema.referenceIdentifierField}
                             />
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu

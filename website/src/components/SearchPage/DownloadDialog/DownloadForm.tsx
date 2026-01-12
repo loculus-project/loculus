@@ -12,13 +12,12 @@ import type { ReferenceGenomesMap } from '../../../types/referencesGenomes.ts';
 import type { MetadataVisibility } from '../../../utils/search.ts';
 import {
     type GeneInfo,
-    getMultiPathogenNucleotideSequenceNames,
     getMultiPathogenSequenceName,
     getSinglePathogenSequenceName,
     isMultiSegmented,
     type SegmentInfo,
+    stillRequiresReferenceNameSelection,
 } from '../../../utils/sequenceTypeHelpers.ts';
-import { stillRequiresReferenceNameSelection } from '../stillRequiresReferenceNameSelection.tsx';
 
 export type DownloadFormState = {
     includeRestricted: boolean;
@@ -40,8 +39,8 @@ type DownloadFormProps = {
     downloadFieldVisibilities: Map<string, MetadataVisibility>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
-    selectedReferenceName: string | null;
-    suborganismIdentifierField: string | undefined;
+    selectedReferenceNames: Map<string, string | undefined>;
+    referenceIdentifierField: string | undefined;
 };
 
 export const DownloadForm: FC<DownloadFormProps> = ({
@@ -54,18 +53,17 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     downloadFieldVisibilities,
     onSelectedFieldsChange,
     richFastaHeaderFields,
-    selectedReferenceName,
-    suborganismIdentifierField,
+    selectedReferenceNames,
+    referenceIdentifierField,
 }) => {
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const { nucleotideSequences, genes } = useMemo(
-        () => getSequenceNames(ReferenceGenomesMap, selectedReferenceName),
-        [ReferenceGenomesMap, selectedReferenceName],
+        () => getSequenceNames(ReferenceGenomesMap, selectedReferenceNames),
+        [ReferenceGenomesMap, selectedReferenceNames],
     );
 
     const disableAlignedSequences = stillRequiresReferenceNameSelection(
-        ReferenceGenomesMap,
-        selectedReferenceName,
+        selectedReferenceNames,
     );
 
     function getDataTypeOptions(): OptionBlockOption[] {
@@ -77,7 +75,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                         onClick={() => setIsFieldSelectorOpen(true)}
                         selectedFieldsCount={
                             Array.from(downloadFieldVisibilities.values()).filter((it) =>
-                                it.isVisible(selectedReferenceName),
+                                it.isVisible(selectedReferenceNames),
                             ).length
                         }
                         disabled={downloadFormState.dataType !== 'metadata'}
@@ -231,7 +229,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                         }))
                     }
                 />
-                {disableAlignedSequences && suborganismIdentifierField !== undefined && (
+                {disableAlignedSequences && referenceIdentifierField !== undefined && (
                     <div className='text-sm text-gray-400 mt-4 max-w-60'>
                         Or select a reference with the search UI to enable download of aligned sequences.
                     </div>
@@ -257,7 +255,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 schema={schema}
                 downloadFieldVisibilities={downloadFieldVisibilities}
                 onSelectedFieldsChange={onSelectedFieldsChange}
-                selectedReferenceName={selectedReferenceName}
+                selectedReferenceNames={selectedReferenceNames}
             />
         </div>
     );
@@ -265,62 +263,54 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 
 export function getSequenceNames(
     referenceGenomesMap: ReferenceGenomesMap,
-    selectedReferenceName: string | null,
+    selectedReferenceNames: Map<string, string | undefined>,
 ): {
     nucleotideSequences: SegmentInfo[];
     genes: GeneInfo[];
     useMultiSegmentEndpoint: boolean;
     defaultFastaHeaderTemplate?: string;
 } {
-    const segments = Object.keys(referenceGenomesMap.segments);
-
-    // Check if single reference mode
-    const firstSegment = segments[0];
-    const firstSegmentRefs = firstSegment ? referenceGenomesMap.segments[firstSegment].references : [];
-    const isSingleReference = firstSegmentRefs.length === 1;
-
-    if (isSingleReference && firstSegmentRefs.length > 0) {
-        const referenceName = firstSegmentRefs[0];
-        const segmentNames = segments;
-        const allGenes: string[] = [];
-
-        for (const segmentName of segments) {
-            const segmentData = referenceGenomesMap.segments[segmentName];
-            const genes = segmentData.genesByReference[referenceName] ?? [];
-            allGenes.push(...genes);
-        }
-
-        return {
-            nucleotideSequences: segmentNames.map(getSinglePathogenSequenceName),
-            genes: allGenes.map(getSinglePathogenSequenceName),
-            useMultiSegmentEndpoint: isMultiSegmented(segmentNames),
-        };
-    }
-
-    if (selectedReferenceName === null) {
-        return {
-            nucleotideSequences: [],
-            genes: [],
-            useMultiSegmentEndpoint: false,
-            defaultFastaHeaderTemplate: `{${ACCESSION_VERSION_FIELD}}`,
-        };
-    }
-
-    // Multi-reference mode
-    const segmentNames = segments;
-    const allGenes: string[] = [];
+    const segments = Object.keys(referenceGenomesMap);
+    let lapisHasMultiSegments = segments.length > 1;
+    const segmentNames: SegmentInfo[] = [];
+    const geneNames: GeneInfo[] = [];
 
     for (const segmentName of segments) {
-        const segmentData = referenceGenomesMap.segments[segmentName];
-        const genes = segmentData.genesByReference[selectedReferenceName] ?? [];
-        allGenes.push(...genes);
+        const segmentData = referenceGenomesMap[segmentName];
+        const selectedReferenceName = selectedReferenceNames.get(segmentName);
+        if (selectedReferenceName) {
+                return {
+                nucleotideSequences: [],
+                genes: [],
+                useMultiSegmentEndpoint: false,
+                defaultFastaHeaderTemplate: `{${ACCESSION_VERSION_FIELD}}`,
+            };
+        }
+        const isMultiReference = Object.keys(segmentData).length > 1;
+        if (!isMultiReference) {
+            segmentNames.push(getSinglePathogenSequenceName(segmentName));
+            const genes = Object.keys(segmentData.genes).map(getSinglePathogenSequenceName) ?? [];
+            geneNames.push(...genes);
+        } else {
+            lapisHasMultiSegments = true;
+            for (const referenceName of Object.keys(segmentData)) {
+                if (segments.length == 1){
+                    segmentNames.push(getSinglePathogenSequenceName(referenceName));
+                } else{
+                    segmentNames.push(getMultiPathogenSequenceName(segmentName, referenceName));
+                }
+                const genes = Object.keys(segmentData.genes).map((geneName) =>
+                    getMultiPathogenSequenceName(geneName, referenceName),
+                ) ?? [];
+                geneNames.push(...genes);
+            }
+        }
     }
-
     return {
-        nucleotideSequences: getMultiPathogenNucleotideSequenceNames(segmentNames, selectedReferenceName),
-        genes: allGenes.map((name: string) => getMultiPathogenSequenceName(name, selectedReferenceName)),
-        useMultiSegmentEndpoint: true,
-    };
+        nucleotideSequences: segmentNames,
+        genes: geneNames,
+        useMultiSegmentEndpoint: lapisHasMultiSegments,
+    }
 }
 
 const optionToDataTypeMap: DownloadDataType['type'][] = [
