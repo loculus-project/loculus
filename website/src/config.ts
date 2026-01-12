@@ -14,8 +14,8 @@ import {
 } from './types/config.ts';
 import {
     type ReferenceAccession,
-    type SegmentFirstReferenceGenomes,
-    type ReferenceGenomesLightweightSchema,
+    toReferenceGenomesMap,
+    ReferenceGenomesMap,
 } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
 
@@ -46,7 +46,7 @@ export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
             });
         }
 
-        const knownReferenceNames = Object.keys(schema.referenceGenomes);
+        const knownReferenceNames = Object.keys(toReferenceGenomesMap(schema.referenceGenomes));
 
         schema.schema.metadata.forEach((metadatum) => {
             const onlyForReferenceName = metadatum.onlyForReferenceName;
@@ -277,49 +277,9 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
     return serviceConfig.lapisUrls[organism];
 }
 
-export function getReferenceGenomes(organism: string): SegmentFirstReferenceGenomes {
-    return getConfig(organism).referenceGenomes;
+export function getReferenceGenomes(organism: string): ReferenceGenomesMap {
+    return toReferenceGenomesMap(getConfig(organism).referenceGenomes);
 }
-
-export const getReferenceGenomeLightweightSchema = (organism: string): ReferenceGenomesLightweightSchema => {
-    const referenceGenomes = getReferenceGenomes(organism);
-    const segments: Record<
-        string,
-        {
-            references: string[];
-            insdcAccessions: Record<string, ReferenceAccession>;
-            genesByReference: Record<string, string[]>;
-        }
-    > = {};
-
-    // Transform segment-first structure to lightweight schema
-    for (const [segmentName, referenceMap] of Object.entries(referenceGenomes)) {
-        segments[segmentName] = {
-            references: Object.keys(referenceMap),
-            insdcAccessions: {},
-            genesByReference: {},
-        };
-
-        for (const [referenceName, referenceData] of Object.entries(referenceMap)) {
-            // Add INSDC accession
-            if (referenceData.insdcAccessionFull) {
-                segments[segmentName].insdcAccessions[referenceName] = {
-                    name: referenceName,
-                    insdcAccessionFull: referenceData.insdcAccessionFull,
-                };
-            }
-
-            // Add genes for this reference
-            if (referenceData.genes) {
-                segments[segmentName].genesByReference[referenceName] = Object.keys(referenceData.genes);
-            } else {
-                segments[segmentName].genesByReference[referenceName] = [];
-            }
-        }
-    }
-
-    return { segments };
-};
 
 export function seqSetsAreEnabled() {
     return getWebsiteConfig().enableSeqSets;

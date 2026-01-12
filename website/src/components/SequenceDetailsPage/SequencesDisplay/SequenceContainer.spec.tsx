@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SequencesContainer } from './SequencesContainer.tsx';
 import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
-import type { ReferenceAccession, ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes.ts';
+import type { ReferenceAccession, ReferenceGenomesMap } from '../../../types/referencesGenomes.ts';
 
 vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
@@ -30,7 +30,7 @@ const getUnalignedSegmentLabel = (segment: string) => `${segment} (unaligned)`;
 const BUTTON_ROLE = 'button';
 
 function renderSequenceViewer(
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    referenceGenomesMap: ReferenceGenomesMap,
     segmentReferences: Record<string, string>,
 ) {
     render(
@@ -39,7 +39,7 @@ function renderSequenceViewer(
                 organism={testOrganism}
                 accessionVersion={accessionVersion}
                 clientConfig={testConfig.public}
-                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+                referenceGenomesMap={referenceGenomesMap}
                 loadSequencesAutomatically={false}
                 segmentReferences={segmentReferences}
             />

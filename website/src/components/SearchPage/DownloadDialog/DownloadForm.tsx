@@ -8,7 +8,7 @@ import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from '.
 import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Schema } from '../../../types/config.ts';
-import type { ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomesMap } from '../../../types/referencesGenomes.ts';
 import type { MetadataVisibility } from '../../../utils/search.ts';
 import {
     type GeneInfo,
@@ -31,7 +31,7 @@ export type DownloadFormState = {
 };
 
 type DownloadFormProps = {
-    referenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema;
+    ReferenceGenomesMap: ReferenceGenomesMap;
     downloadFormState: DownloadFormState;
     setDownloadFormState: Dispatch<SetStateAction<DownloadFormState>>;
     allowSubmissionOfConsensusSequences: boolean;
@@ -45,7 +45,7 @@ type DownloadFormProps = {
 };
 
 export const DownloadForm: FC<DownloadFormProps> = ({
-    referenceGenomesLightweightSchema,
+    ReferenceGenomesMap,
     downloadFormState,
     setDownloadFormState,
     allowSubmissionOfConsensusSequences,
@@ -59,12 +59,12 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 }) => {
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const { nucleotideSequences, genes } = useMemo(
-        () => getSequenceNames(referenceGenomesLightweightSchema, selectedReferenceName),
-        [referenceGenomesLightweightSchema, selectedReferenceName],
+        () => getSequenceNames(ReferenceGenomesMap, selectedReferenceName),
+        [ReferenceGenomesMap, selectedReferenceName],
     );
 
     const disableAlignedSequences = stillRequiresReferenceNameSelection(
-        referenceGenomesLightweightSchema,
+        ReferenceGenomesMap,
         selectedReferenceName,
     );
 
@@ -264,7 +264,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 };
 
 export function getSequenceNames(
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    referenceGenomesMap: ReferenceGenomesMap,
     selectedReferenceName: string | null,
 ): {
     nucleotideSequences: SegmentInfo[];
@@ -272,11 +272,11 @@ export function getSequenceNames(
     useMultiSegmentEndpoint: boolean;
     defaultFastaHeaderTemplate?: string;
 } {
-    const segments = Object.keys(referenceGenomeLightweightSchema.segments);
+    const segments = Object.keys(referenceGenomesMap.segments);
 
     // Check if single reference mode
     const firstSegment = segments[0];
-    const firstSegmentRefs = firstSegment ? referenceGenomeLightweightSchema.segments[firstSegment].references : [];
+    const firstSegmentRefs = firstSegment ? referenceGenomesMap.segments[firstSegment].references : [];
     const isSingleReference = firstSegmentRefs.length === 1;
 
     if (isSingleReference && firstSegmentRefs.length > 0) {
@@ -285,7 +285,7 @@ export function getSequenceNames(
         const allGenes: string[] = [];
 
         for (const segmentName of segments) {
-            const segmentData = referenceGenomeLightweightSchema.segments[segmentName];
+            const segmentData = referenceGenomesMap.segments[segmentName];
             const genes = segmentData.genesByReference[referenceName] ?? [];
             allGenes.push(...genes);
         }
@@ -311,7 +311,7 @@ export function getSequenceNames(
     const allGenes: string[] = [];
 
     for (const segmentName of segments) {
-        const segmentData = referenceGenomeLightweightSchema.segments[segmentName];
+        const segmentData = referenceGenomesMap.segments[segmentName];
         const genes = segmentData.genesByReference[selectedReferenceName] ?? [];
         allGenes.push(...genes);
     }

@@ -10,7 +10,7 @@ import type { SequenceFilter } from './SequenceFilters.tsx';
 import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
-import type { ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomesMap } from '../../../types/referencesGenomes.ts';
 import { MetadataVisibility } from '../../../utils/search.ts';
 import type { GeneInfo, SegmentInfo } from '../../../utils/sequenceTypeHelpers.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
@@ -19,7 +19,7 @@ import { BaseDialog } from '../../common/BaseDialog.tsx';
 type DownloadDialogProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     sequenceFilter: SequenceFilter;
-    referenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema;
+    ReferenceGenomesMap: ReferenceGenomesMap;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
     schema: Schema;
@@ -31,7 +31,7 @@ type DownloadDialogProps = {
 export const DownloadDialog: FC<DownloadDialogProps> = ({
     downloadUrlGenerator,
     sequenceFilter,
-    referenceGenomesLightweightSchema,
+    ReferenceGenomesMap,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
     schema,
@@ -45,8 +45,8 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     const closeDialog = () => setIsOpen(false);
 
     const { nucleotideSequences, genes, useMultiSegmentEndpoint, defaultFastaHeaderTemplate } = useMemo(
-        () => getSequenceNames(referenceGenomesLightweightSchema, selectedReferenceName),
-        [referenceGenomesLightweightSchema, selectedReferenceName],
+        () => getSequenceNames(ReferenceGenomesMap, selectedReferenceName),
+        [ReferenceGenomesMap, selectedReferenceName],
     );
 
     const [downloadFormState, setDownloadFormState] = useState<DownloadFormState>(
@@ -94,7 +94,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         </div>
                     )}
                     <DownloadForm
-                        referenceGenomesLightweightSchema={referenceGenomesLightweightSchema}
+                        ReferenceGenomesMap={ReferenceGenomesMap}
                         downloadFormState={downloadFormState}
                         setDownloadFormState={setDownloadFormState}
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}

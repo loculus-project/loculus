@@ -17,16 +17,16 @@ import {
     DATA_USE_TERMS_FIELD,
 } from '../../settings';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
+import type { ReferenceGenomesMap } from '../../types/referencesGenomes';
 
 interface Props {
     tableData: TableDataEntry[];
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
+    referenceGenomesMap: ReferenceGenomesMap;
     segmentReferences: Record<string, string> | null;
 }
 
-const { tableData, dataUseTermsHistory, referenceGenomeLightweightSchema, segmentReferences } = Astro.props;
+const { tableData, dataUseTermsHistory, referenceGenomesMap, segmentReferences } = Astro.props;
 
 const relevantFieldsForRevocationVersions = [
     ACCESSION_VERSION_FIELD,
@@ -51,5 +51,5 @@ const dataTableData = getDataTableData(relevantData);
     dataTableData={dataTableData}
     dataUseTermsHistory={dataUseTermsHistory}
     segmentReferences={segmentReferences}
-    referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+    referenceGenomesMap={referenceGenomesMap}
 />

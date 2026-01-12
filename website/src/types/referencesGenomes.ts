@@ -5,7 +5,7 @@ export type ReferenceAccession = {
     insdcAccessionFull?: string;
 };
 
-// Segment-first structure types
+
 export type SegmentName = string;
 export type ReferenceName = string;
 export type GeneName = string;
@@ -20,9 +20,7 @@ export type ReferenceSequenceData = {
     genes?: Record<GeneName, GeneSequenceData>;
 };
 
-// Segment-first reference genomes structure (from values.yaml)
-// Structure: referenceGenomes[segmentName][referenceName] = { sequence, insdcAccessionFull?, genes? }
-export const segmentFirstReferenceGenomes = z.record(
+export const ReferenceGenomesMap = z.record(
     z.string(), // segment name
     z.record(
         z.string(), // reference name
@@ -33,20 +31,47 @@ export const segmentFirstReferenceGenomes = z.record(
         }),
     ),
 );
-export type SegmentFirstReferenceGenomes = z.infer<typeof segmentFirstReferenceGenomes>;
+export type ReferenceGenomesMap = z.infer<typeof ReferenceGenomesMap>;
 
-// Type alias for the new segment-first structure
-export type ReferenceGenomes = SegmentFirstReferenceGenomes;
+export const referenceGenomesSchema = z
+    .array(
+        z.object({
+            name: z.string(),
+            references: z.array(
+                z.object({
+                    reference_name: z.string(),
+                    sequence: z.string(),
+                    insdcAccessionFull: z.string().optional(),
+                    genes: z.array(z.object({ name: z.string(), sequence: z.string() })).optional(),
+                }),
+            ),
+        }),
+    )
+    .optional();
+export type ReferenceGenomes = z.infer<typeof referenceGenomesSchema>;
 
-// Lightweight schema for segment-first mode
-export type ReferenceGenomesLightweightSchema = {
-    segments: Record<
-        SegmentName,
-        {
-            references: ReferenceName[];
-            insdcAccessions: Record<ReferenceName, ReferenceAccession>;
-            // Genes available for each reference in this segment
-            genesByReference: Record<ReferenceName, GeneName[]>;
-        }
-    >;
-};
+export function toReferenceGenomesMap(values: ReferenceGenomes): ReferenceGenomesMap {
+  const out: ReferenceGenomesMap = {};
+
+  for (const genome of values ?? []) {
+    const segmentName = genome.name;
+
+    out[segmentName] ??= {};
+
+    for (const ref of genome.references) {
+      out[segmentName][ref.reference_name] = {
+        sequence: ref.sequence,
+        ...(ref.insdcAccessionFull ? { insdcAccessionFull: ref.insdcAccessionFull } : {}),
+        ...(ref.genes
+          ? {
+              genes: Object.fromEntries(
+                ref.genes.map((g) => [g.name, { sequence: g.sequence }]),
+              ),
+            }
+          : {}),
+      };
+    }
+  }
+
+  return ReferenceGenomesMap.parse(out);
+}

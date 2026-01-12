@@ -1,8 +1,8 @@
-import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 
 export function stillRequiresReferenceNameSelection(
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    referenceGenomesMap: ReferenceGenomesMap,
     selectedReferenceName: string | null,
 ) {
-    return Object.keys(referenceGenomeLightweightSchema).length > 1 && selectedReferenceName === null;
+    return Object.keys(referenceGenomesMap).length > 1 && selectedReferenceName === null;
 }

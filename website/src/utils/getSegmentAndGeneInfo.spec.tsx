@@ -2,12 +2,12 @@
 import { describe, expect, test } from 'vitest';
 
 import { getSegmentAndGeneInfo } from './getSegmentAndGeneInfo.tsx';
-import type { ReferenceGenomesLightweightSchema } from '../types/referencesGenomes.ts';
+import type { ReferenceGenomesMap } from '../types/referencesGenomes.ts';
 
 describe('getSegmentAndGeneInfo', () => {
     describe('with single reference per segment', () => {
         test('should return correct names for multi-segmented organism', () => {
-            const schema: ReferenceGenomesLightweightSchema = {
+            const schema: ReferenceGenomesMap = {
                 segments: {
                     segment1: {
                         references: ['ref1'],
@@ -47,7 +47,7 @@ describe('getSegmentAndGeneInfo', () => {
         });
 
         test('should return correct names for single-segmented organism', () => {
-            const schema: ReferenceGenomesLightweightSchema = {
+            const schema: ReferenceGenomesMap = {
                 segments: {
                     main: {
                         references: ['ref1'],
@@ -75,7 +75,7 @@ describe('getSegmentAndGeneInfo', () => {
 
     describe('with multiple references (mixed)', () => {
         test('should handle different references for different segments', () => {
-            const schema: ReferenceGenomesLightweightSchema = {
+            const schema: ReferenceGenomesMap = {
                 segments: {
                     segment1: {
                         references: ['CV-A16', 'CV-A10'],
@@ -117,7 +117,7 @@ describe('getSegmentAndGeneInfo', () => {
         });
 
         test('should handle segments without selected references', () => {
-            const schema: ReferenceGenomesLightweightSchema = {
+            const schema: ReferenceGenomesMap = {
                 segments: {
                     segment1: {
                         references: ['CV-A16', 'CV-A10'],
@@ -159,7 +159,7 @@ describe('getSegmentAndGeneInfo', () => {
         });
 
         test('should handle empty selectedReferences', () => {
-            const schema: ReferenceGenomesLightweightSchema = {
+            const schema: ReferenceGenomesMap = {
                 segments: {
                     main: {
                         references: ['ref1'],

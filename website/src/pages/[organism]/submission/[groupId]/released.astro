@@ -4,7 +4,7 @@ import { SearchFullUI } from '../../../../components/SearchPage/SearchFullUI';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import {
     dataUseTermsAreEnabled,
-    getReferenceGenomeLightweightSchema,
+    getReferenceGenomes,
     getRuntimeConfig,
     getSchema,
     getWebsiteConfig,
@@ -36,7 +36,7 @@ const schema = getSchema(cleanedOrganism.key);
 
 const accessToken = getAccessToken(Astro.locals.session);
 
-const referenceGenomeLightweightSchema = getReferenceGenomeLightweightSchema(cleanedOrganism.key);
+const referenceGenomesMap = getReferenceGenomes(cleanedOrganism.key);
 
 const hiddenFieldValues = {
     [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
@@ -47,7 +47,7 @@ const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
 const { data, totalCount } = await performLapisSearchQueries(
     initialQueryDict,
     schema,
-    referenceGenomeLightweightSchema,
+    referenceGenomesMap,
     hiddenFieldValues,
     cleanedOrganism.key,
 );
@@ -63,7 +63,7 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
         schema={schema}
         myGroups={[group]}
         accessToken={accessToken}
-        referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+        referenceGenomesMap={referenceGenomesMap}
         hiddenFieldValues={hiddenFieldValues}
         initialData={data}
         initialCount={totalCount}

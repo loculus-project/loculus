@@ -1,7 +1,7 @@
 import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from 'react';
 
 import { SequencesViewer } from './SequenceViewer.tsx';
-import { type ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesMap } from '../../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 import { getSegmentAndGeneInfo } from '../../../utils/getSegmentAndGeneInfo.tsx';
 import {
@@ -26,7 +26,7 @@ type SequenceContainerProps = {
     segmentReferences: Record<string, string>;
     accessionVersion: string;
     clientConfig: ClientConfig;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
+    referenceGenomesMap: ReferenceGenomesMap;
     loadSequencesAutomatically: boolean;
 };
 
@@ -35,11 +35,11 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     segmentReferences,
     accessionVersion,
     clientConfig,
-    referenceGenomeLightweightSchema,
+    referenceGenomesMap,
     loadSequencesAutomatically,
 }) => {
     const { nucleotideSegmentInfos, geneInfos, isMultiSegmented } = getSegmentAndGeneInfo(
-        referenceGenomeLightweightSchema,
+        referenceGenomesMap,
         segmentReferences,
     );
 

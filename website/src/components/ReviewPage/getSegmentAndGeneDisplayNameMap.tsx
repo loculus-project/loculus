@@ -1,12 +1,12 @@
-import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 
 export function getSegmentAndGeneDisplayNameMap(
-    referenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema,
+    ReferenceGenomesMap: ReferenceGenomesMap,
 ): Map<string, string | null> {
     const mappingEntries: [string, string][] = [];
 
     // Iterate through all segments and references
-    for (const [segmentName, segmentData] of Object.entries(referenceGenomesLightweightSchema.segments)) {
+    for (const [segmentName, segmentData] of Object.entries(ReferenceGenomesMap.segments)) {
         // If only one reference, no prefix needed
         if (segmentData.references.length === 1) {
             // LAPIS name is just the segment name

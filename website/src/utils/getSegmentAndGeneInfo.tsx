@@ -5,7 +5,7 @@ import {
     getGeneInfoWithReference,
     type SegmentReferenceSelections,
 } from './sequenceTypeHelpers.ts';
-import { type ReferenceGenomesLightweightSchema } from '../types/referencesGenomes.ts';
+import { type ReferenceGenomesMap } from '../types/referencesGenomes.ts';
 
 export type SegmentAndGeneInfo = {
     nucleotideSegmentInfos: SegmentInfo[];
@@ -20,7 +20,7 @@ export type SegmentAndGeneInfo = {
  * @returns SegmentAndGeneInfo with all segments and their genes
  */
 export function getSegmentAndGeneInfo(
-    schema: ReferenceGenomesLightweightSchema,
+    schema: ReferenceGenomesMap,
     selectedReferences: SegmentReferenceSelections,
 ): SegmentAndGeneInfo {
     const nucleotideSegmentInfos: SegmentInfo[] = [];

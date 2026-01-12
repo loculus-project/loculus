@@ -14,12 +14,12 @@ import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQ
 import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
 import type { FieldValues, Schema } from '../types/config';
-import type { ReferenceGenomesLightweightSchema } from '../types/referencesGenomes.ts';
+import type { ReferenceGenomesMap } from '../types/referencesGenomes.ts';
 
 export const performLapisSearchQueries = async (
     state: QueryState,
     schema: Schema,
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    referenceGenomesMap: ReferenceGenomesMap,
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
@@ -28,13 +28,13 @@ export const performLapisSearchQueries = async (
     // Build segment references - all segments use the same reference
     const segmentReferences: Record<string, string> = {};
     if (suborganism !== null) {
-        for (const segmentName of Object.keys(referenceGenomeLightweightSchema.segments)) {
+        for (const segmentName of Object.keys(referenceGenomesMap.segments)) {
             segmentReferences[segmentName] = suborganism;
         }
     }
 
     const suborganismSegmentAndGeneInfo = getSegmentAndGeneInfo(
-        referenceGenomeLightweightSchema,
+        referenceGenomesMap,
         Object.keys(segmentReferences).length > 0 ? segmentReferences : {},
     );
 

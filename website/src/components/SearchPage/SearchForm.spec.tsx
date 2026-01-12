@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataFilter } from '../../types/config.ts';
-import { type ReferenceGenomesLightweightSchema, type ReferenceAccession } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesMap, type ReferenceAccession } from '../../types/referencesGenomes.ts';
 import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
@@ -39,7 +39,7 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
+const defaultReferenceGenomesMap: ReferenceGenomesMap = {
     segments: {
         main: {
             references: ['ref1'],
@@ -49,7 +49,7 @@ const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchem
     },
 };
 
-const multiPathogenReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
+const multiPathogenReferenceGenomesMap: ReferenceGenomesMap = {
     segments: {
         main: {
             references: ['suborganism1', 'suborganism2'],
@@ -76,7 +76,7 @@ const setASearchVisibility = vi.fn();
 const renderSearchForm = ({
     filterSchema = new MetadataFilterSchema([...defaultSearchFormFilters]),
     fieldValues = {},
-    referenceGenomeLightweightSchema = defaultReferenceGenomesLightweightSchema,
+    referenceGenomesMap = defaultReferenceGenomesMap,
     lapisSearchParameters = {},
     suborganismIdentifierField,
     selectedSuborganism = null,
@@ -84,7 +84,7 @@ const renderSearchForm = ({
 }: {
     filterSchema?: MetadataFilterSchema;
     fieldValues?: Record<string, string>;
-    referenceGenomeLightweightSchema?: ReferenceGenomesLightweightSchema;
+    referenceGenomesMap?: ReferenceGenomesMap;
     lapisSearchParameters?: Record<string, string>;
     suborganismIdentifierField?: string;
     selectedSuborganism?: string | null;
@@ -99,7 +99,7 @@ const renderSearchForm = ({
         lapisUrl: 'http://lapis.dummy.url',
         searchVisibilities,
         setASearchVisibility,
-        referenceGenomeLightweightSchema,
+        referenceGenomesMap,
         lapisSearchParameters,
         showMutationSearch: true,
         suborganismIdentifierField,
@@ -159,7 +159,7 @@ describe('SearchForm', () => {
                     lapisUrl='http://lapis.dummy.url'
                     searchVisibilities={defaultSearchVisibilities}
                     setASearchVisibility={setASearchVisibility}
-                    referenceGenomeLightweightSchema={multiPathogenReferenceGenomesLightweightSchema}
+                    referenceGenomesMap={multiPathogenReferenceGenomesMap}
                     lapisSearchParameters={{}}
                     showMutationSearch={true}
                     suborganismIdentifierField='My genotype'

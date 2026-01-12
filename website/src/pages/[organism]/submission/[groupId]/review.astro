@@ -3,7 +3,7 @@ import { ReviewPage } from '../../../../components/ReviewPage/ReviewPage';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import {
     getMetadataDisplayNames,
-    getReferenceGenomeLightweightSchema,
+    getReferenceGenomes,
     getRuntimeConfig,
     outputFilesEnabled,
 } from '../../../../config';
@@ -17,7 +17,7 @@ const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.s
 const clientConfig: ClientConfig = getRuntimeConfig().public;
 const filesEnabled = outputFilesEnabled(organism);
 const metadataDisplayNames: Map<string, string> = getMetadataDisplayNames(organism);
-const referenceGenomeLightweightSchema = getReferenceGenomeLightweightSchema(organism);
+const referenceGenomesMap = getReferenceGenomes(organism);
 ---
 
 <SubmissionPageWrapper title='Review current submissions' groupsResult={groupsResult}>
@@ -31,7 +31,7 @@ const referenceGenomeLightweightSchema = getReferenceGenomeLightweightSchema(org
                     accessToken={getAccessToken(Astro.locals.session)!}
                     metadataDisplayNames={metadataDisplayNames}
                     filesEnabled={filesEnabled}
-                    referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+                    referenceGenomesMap={referenceGenomesMap}
                     client:load
                 />
             ),

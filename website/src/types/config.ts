@@ -1,7 +1,7 @@
 import z from 'zod';
 
 import { mutationProportionCount, orderDirection } from './lapis.ts';
-import { segmentFirstReferenceGenomes } from './referencesGenomes.ts';
+import { referenceGenomesSchema } from './referencesGenomes.ts';
 
 export const FASTA_IDS_SEPARATOR = ' ';
 
@@ -170,7 +170,7 @@ export type Schema = z.infer<typeof schema>;
 
 export const instanceConfig = z.object({
     schema,
-    referenceGenomes: segmentFirstReferenceGenomes,
+    referenceGenomes: referenceGenomesSchema,
 });
 export type InstanceConfig = z.infer<typeof instanceConfig>;
 
