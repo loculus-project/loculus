@@ -4,30 +4,30 @@ export function getSegmentAndGeneDisplayNameMap(
     ReferenceGenomesMap: ReferenceGenomesMap,
 ): Map<string, string | null> {
     const mappingEntries: [string, string][] = [];
+    const multiSegmented = Object.keys(ReferenceGenomesMap).length > 1;
 
     // Iterate through all segments and references
-    for (const [segmentName, segmentData] of Object.entries(ReferenceGenomesMap.segments)) {
+    for (const [segmentName, references] of Object.entries(ReferenceGenomesMap)) {
         // If only one reference, no prefix needed
-        if (segmentData.references.length === 1) {
-            // LAPIS name is just the segment name
+        if (Object.keys(references).length === 1) {
             mappingEntries.push([segmentName, segmentName]);
 
-            // Add genes for this segment/reference
-            const singleRef = segmentData.references[0];
-            const genes = segmentData.genesByReference[singleRef] ?? [];
-            for (const geneName of genes) {
+            for (const referenceName of Object.keys(references)) {
+            const genes = references[referenceName].genes ?? {};
+            for (const geneName of Object.keys(genes)) {
                 mappingEntries.push([geneName, geneName]);
             }
+        }
         } else {
-            // Multiple references: use {reference}-{segment} format
-            for (const referenceName of segmentData.references) {
-                const lapisSegmentName = `${referenceName}-${segmentName}`;
+            // Multiple references: use {segment}-{reference} format
+            for (const referenceName of Object.keys(references)) {
+                const lapisSegmentName = multiSegmented ? `${segmentName}-${referenceName}` : referenceName;
                 mappingEntries.push([lapisSegmentName, segmentName]);
 
                 // Add genes for this segment/reference
-                const genes = segmentData.genesByReference[referenceName] ?? [];
-                for (const geneName of genes) {
-                    const lapisGeneName = `${referenceName}-${geneName}`;
+                const genes = references[referenceName].genes ?? {};
+                for (const geneName of Object.keys(genes)) {
+                    const lapisGeneName = `${geneName}-${referenceName}`;
                     mappingEntries.push([lapisGeneName, geneName]);
                 }
             }
