@@ -30,7 +30,7 @@ export type DownloadFormState = {
 };
 
 type DownloadFormProps = {
-    ReferenceGenomesMap: ReferenceGenomesMap;
+    referenceGenomesMap: ReferenceGenomesMap;
     downloadFormState: DownloadFormState;
     setDownloadFormState: Dispatch<SetStateAction<DownloadFormState>>;
     allowSubmissionOfConsensusSequences: boolean;
@@ -39,12 +39,12 @@ type DownloadFormProps = {
     downloadFieldVisibilities: Map<string, MetadataVisibility>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
-    selectedReferenceNames: Map<string, string | undefined>;
+    selectedReferenceNames: Record<string, string | null>;
     referenceIdentifierField: string | undefined;
 };
 
 export const DownloadForm: FC<DownloadFormProps> = ({
-    ReferenceGenomesMap,
+    referenceGenomesMap,
     downloadFormState,
     setDownloadFormState,
     allowSubmissionOfConsensusSequences,
@@ -58,8 +58,8 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 }) => {
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const { nucleotideSequences, genes } = useMemo(
-        () => getSequenceNames(ReferenceGenomesMap, selectedReferenceNames),
-        [ReferenceGenomesMap, selectedReferenceNames],
+        () => getSequenceNames(referenceGenomesMap, selectedReferenceNames),
+        [referenceGenomesMap, selectedReferenceNames],
     );
 
     const disableAlignedSequences = stillRequiresReferenceNameSelection(
@@ -263,7 +263,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 
 export function getSequenceNames(
     referenceGenomesMap: ReferenceGenomesMap,
-    selectedReferenceNames: Map<string, string | undefined>,
+    selectedReferenceNames: Record<string, string | null>,
 ): {
     nucleotideSequences: SegmentInfo[];
     genes: GeneInfo[];
@@ -277,7 +277,7 @@ export function getSequenceNames(
 
     for (const segmentName of segments) {
         const segmentData = referenceGenomesMap[segmentName];
-        const selectedReferenceName = selectedReferenceNames.get(segmentName);
+        const selectedReferenceName = selectedReferenceNames[segmentName];
         if (selectedReferenceName) {
                 return {
                 nucleotideSequences: [],
