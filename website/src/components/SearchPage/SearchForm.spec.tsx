@@ -78,7 +78,7 @@ const renderSearchForm = ({
     fieldValues = {},
     referenceGenomesMap = defaultReferenceGenomesMap,
     lapisSearchParameters = {},
-    suborganismIdentifierField,
+    referenceIdentifierField,
     selectedSuborganism = null,
     searchVisibilities = defaultSearchVisibilities,
 }: {
@@ -86,7 +86,7 @@ const renderSearchForm = ({
     fieldValues?: Record<string, string>;
     referenceGenomesMap?: ReferenceGenomesMap;
     lapisSearchParameters?: Record<string, string>;
-    suborganismIdentifierField?: string;
+    referenceIdentifierField?: string;
     selectedSuborganism?: string | null;
     searchVisibilities?: Map<string, MetadataVisibility>;
 } = {}) => {
@@ -102,7 +102,7 @@ const renderSearchForm = ({
         referenceGenomesMap,
         lapisSearchParameters,
         showMutationSearch: true,
-        suborganismIdentifierField,
+        referenceIdentifierField,
         selectedSuborganism,
         setSelectedSuborganism: vi.fn(),
         selectedReferences: {},
@@ -162,7 +162,7 @@ describe('SearchForm', () => {
                     referenceGenomesMap={multiPathogenReferenceGenomesMap}
                     lapisSearchParameters={{}}
                     showMutationSearch={true}
-                    suborganismIdentifierField='My genotype'
+                    referenceIdentifierField='My genotype'
                     selectedSuborganism={null}
                     setSelectedSuborganism={setSelectedSuborganism}
                     selectedReferences={{}}
@@ -222,7 +222,7 @@ describe('SearchForm', () => {
             renderSearchForm({
                 filterSchema,
                 searchVisibilities,
-                suborganismIdentifierField: 'My genotype',
+                referenceIdentifierField: 'My genotype',
                 selectedSuborganism: 'suborganism1',
             });
 
@@ -234,7 +234,7 @@ describe('SearchForm', () => {
             renderSearchForm({
                 filterSchema,
                 searchVisibilities,
-                suborganismIdentifierField: 'My genotype',
+                referenceIdentifierField: 'My genotype',
                 selectedSuborganism: null,
             });
 

@@ -36,10 +36,10 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
                     name: field.name,
                     displayName: field.displayName ?? field.name,
                     header: field.header,
-                    displayState: getDisplayState(field, selectedReferenceName, schema.suborganismIdentifierField),
+                    displayState: getDisplayState(field, selectedReferenceName, schema.referenceIdentifierField),
                     isChecked: columnVisibilities.get(field.name)?.isChecked ?? false,
                 })),
-        [schema.metadata, schema.suborganismIdentifierField, columnVisibilities, selectedReferenceName],
+        [schema.metadata, schema.referenceIdentifierField, columnVisibilities, selectedReferenceName],
     );
 
     return (
@@ -56,7 +56,7 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
 export function getDisplayState(
     field: Metadata,
     selectedReferenceName: string | null,
-    suborganismIdentifierField: string | undefined,
+    referenceIdentifierField: string | undefined,
 ): FieldItemDisplayState | undefined {
     if (field.name === ACCESSION_VERSION_FIELD) {
         return { type: fieldItemDisplayStateType.alwaysChecked };
@@ -65,7 +65,7 @@ export function getDisplayState(
     if (!isActiveForSelectedReferenceName(selectedReferenceName, field)) {
         return {
             type: fieldItemDisplayStateType.greyedOut,
-            tooltip: `This is only visible when the ${suborganismIdentifierField ?? 'suborganismIdentifierField'} ${field.onlyForReferenceName} is selected.`,
+            tooltip: `This is only visible when the ${referenceIdentifierField ?? 'referenceIdentifierField'} ${field.onlyForReferenceName} is selected.`,
         };
     }
 

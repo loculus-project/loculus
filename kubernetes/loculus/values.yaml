@@ -1857,7 +1857,7 @@ defaultOrganisms:
         - &evMetadataAdd
           name: clade_cv_a16
           displayName: Clade CV-A16
-          onlyForSuborganism: CV-A16
+          onlyForReference: CV-A16
           header: "Clade"
           noInput: true
           generateIndex: true
@@ -1871,7 +1871,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_cv_a10
           displayName: Clade CV-A10
-          onlyForSuborganism: CV-A10
+          onlyForReference: CV-A10
           preprocessing:
             args:
               reference: CV-A10
@@ -1879,7 +1879,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_ev_a71
           displayName: Clade EV-A71
-          onlyForSuborganism: EV-A71
+          onlyForReference: EV-A71
           preprocessing:
             args:
               reference: EV-A71
@@ -1887,7 +1887,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_ev_d68
           displayName: Clade EV-D68
-          onlyForSuborganism: EV-D68
+          onlyForReference: EV-D68
           preprocessing:
             args:
               reference: EV-D68
@@ -1914,7 +1914,7 @@ defaultOrganisms:
           - segment
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
-        suborganismIdentifierField: genotype
+        referenceIdentifierField: genotype
     preprocessing:
       - <<: *preprocessing
         configFile:
@@ -1955,25 +1955,25 @@ defaultOrganisms:
           taxon_id: 31704
           scientific_name: "Coxsackievirus A16"
           molecule_type: "genomic RNA"
-        suborganismIdentifierField: genotype
+        referenceIdentifierField: genotype
       CV-A10:
         configFile:
           taxon_id: 42769
           scientific_name: "Coxsackievirus A10"
           molecule_type: "genomic RNA"
-        suborganismIdentifierField: genotype
+        referenceIdentifierField: genotype
       EV-A71:
         configFile:
           taxon_id: 39054
           scientific_name: "Enterovirus A71"
           molecule_type: "genomic RNA"
-        suborganismIdentifierField: genotype
+        referenceIdentifierField: genotype
       EV-D68:
         configFile:
           taxon_id: 42789
           scientific_name: "Enterovirus D68"
           molecule_type: "genomic RNA"
-        suborganismIdentifierField: genotype
+        referenceIdentifierField: genotype
     referenceGenomes:
       - name: main
         references:

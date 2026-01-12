@@ -101,13 +101,13 @@ function getSegmentReferences(
     }
 
     // Multiple references mode - get from metadata field
-    const suborganismField = schema.suborganismIdentifierField;
+    const suborganismField = schema.referenceIdentifierField;
     if (suborganismField === undefined) {
         return err({
             type: 'about:blank',
             title: 'Invalid configuration',
             status: 0,
-            detail: `No 'suborganismIdentifierField' has been configured in the schema for organism ${schema.organismName}`,
+            detail: `No 'referenceIdentifierField' has been configured in the schema for organism ${schema.organismName}`,
             instance: '/seq/' + accessionVersion,
         });
     }

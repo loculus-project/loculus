@@ -25,7 +25,7 @@ type DownloadDialogProps = {
     schema: Schema;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
     selectedReferenceName: string | null;
-    suborganismIdentifierField: string | undefined;
+    referenceIdentifierField: string | undefined;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
@@ -37,7 +37,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     schema,
     richFastaHeaderFields,
     selectedReferenceName,
-    suborganismIdentifierField,
+    referenceIdentifierField,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -104,7 +104,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         onSelectedFieldsChange={setSelectedFields}
                         richFastaHeaderFields={richFastaHeaderFields}
                         selectedReferenceName={selectedReferenceName}
-                        suborganismIdentifierField={suborganismIdentifierField}
+                        referenceIdentifierField={referenceIdentifierField}
                     />
                     {dataUseTermsEnabled && (
                         <div className='mb-4 py-4'>

@@ -88,7 +88,7 @@ export function useSearchPageState({
                         newState[key] = value;
                     }
 
-                    if (schema.suborganismIdentifierField !== undefined && key === schema.suborganismIdentifierField) {
+                    if (schema.referenceIdentifierField !== undefined && key === schema.referenceIdentifierField) {
                         delete newState[MUTATION_KEY];
                         filterSchema
                             .ungroupedMetadataFilters()
@@ -108,7 +108,7 @@ export function useSearchPageState({
                 setPage(1);
             }
         },
-        [setState, setPage, hiddenFieldValues, schema.suborganismIdentifierField, filterSchema],
+        [setState, setPage, hiddenFieldValues, schema.referenceIdentifierField, filterSchema],
     );
 
     const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
@@ -127,28 +127,14 @@ export function useSearchPageState({
         'boolean',
         (value) => !value,
     );
-    const [selectedSuborganism, setSelectedSuborganism] = useUrlParamState<string | null>(
-        schema.suborganismIdentifierField ?? '',
+    const [selectedReferences, setSelectedReferences] = useUrlParamState<string | null>(
+        schema.referenceIdentifierField ?? '',
         state,
         null,
         setSomeFieldValues,
         'nullable-string',
         (value) => value === null,
     );
-
-    // Compute selectedReferences from selectedSuborganism for backward compatibility
-    // In the new segment-first mode, all segments use the same reference
-    const selectedReferences: SegmentReferenceSelections = useMemo(() => {
-        if (selectedSuborganism === null) {
-            return {};
-        }
-        // TODO: This assumes all segments use the same reference
-        // In future, this could be enhanced to support per-segment selection
-        const refs: SegmentReferenceSelections = {};
-        // We don't have segment information here, so return empty object
-        // The actual segment references will be built in components that have schema access
-        return refs;
-    }, [selectedSuborganism]);
 
     const removeFilter = useCallback(
         (metadataFilterName: string) => {
@@ -245,9 +231,8 @@ export function useSearchPageState({
             setPreviewedSeqId,
             previewHalfScreen,
             setPreviewHalfScreen,
-            selectedSuborganism,
-            setSelectedSuborganism,
             selectedReferences,
+            setSelectedReferences,
             page,
             setPage,
             setSomeFieldValues,
@@ -265,9 +250,8 @@ export function useSearchPageState({
             setPreviewedSeqId,
             previewHalfScreen,
             setPreviewHalfScreen,
-            selectedSuborganism,
-            setSelectedSuborganism,
             selectedReferences,
+            setSelectedReferences,
             page,
             setPage,
             setSomeFieldValues,

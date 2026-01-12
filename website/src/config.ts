@@ -59,12 +59,12 @@ export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
             }
         });
 
-        const suborganismIdentifierField = schema.schema.suborganismIdentifierField;
-        if (suborganismIdentifierField !== undefined) {
-            if (!schema.schema.metadata.some((metadatum) => metadatum.name === suborganismIdentifierField)) {
+        const referenceIdentifierField = schema.schema.referenceIdentifierField;
+        if (referenceIdentifierField !== undefined) {
+            if (!schema.schema.metadata.some((metadatum) => metadatum.name === referenceIdentifierField)) {
                 errors.push(
                     new Error(
-                        `suborganismIdentifierField '${suborganismIdentifierField}' of organism '${organism}' is not defined in the metadata.`,
+                        `referenceIdentifierField '${referenceIdentifierField}' of organism '${organism}' is not defined in the metadata.`,
                     ),
                 );
             }

@@ -9,7 +9,7 @@ import MaterialSymbolsClose from '~icons/material-symbols/close';
 type SuborganismSelectorProps = {
     filterSchema: MetadataFilterSchema;
     referenceGenomesMap: ReferenceGenomesMap;
-    suborganismIdentifierField: string;
+    referenceIdentifierField: string;
     selectedSuborganism: string | null;
     setSelectedSuborganism: (newValue: string | null) => void;
 };
@@ -23,7 +23,7 @@ type SuborganismSelectorProps = {
 export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
     filterSchema,
     referenceGenomesMap,
-    suborganismIdentifierField,
+    referenceIdentifierField,
     selectedSuborganism,
     setSelectedSuborganism,
 }) => {
@@ -39,8 +39,8 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
             return undefined;
         }
 
-        return filterSchema.filterNameToLabelMap()[suborganismIdentifierField];
-    }, [isSinglePathogen, filterSchema, suborganismIdentifierField]);
+        return filterSchema.filterNameToLabelMap()[referenceIdentifierField];
+    }, [isSinglePathogen, filterSchema, referenceIdentifierField]);
 
     if (isSinglePathogen) {
         return null;
@@ -48,7 +48,7 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
 
     if (label === undefined) {
         throw Error(
-            'Cannot render suborganism selector without a label when using the suborganism feature. Does the field that you specified in "suborganismIdentifierField" exist in the metadata?',
+            'Cannot render suborganism selector without a label when using the suborganism feature. Does the field that you specified in "referenceIdentifierField" exist in the metadata?',
         );
     }
 
