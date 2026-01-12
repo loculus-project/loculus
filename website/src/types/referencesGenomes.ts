@@ -32,10 +32,6 @@ export const ReferenceGenomesMap = z.record(
 );
 export type ReferenceGenomesMap = z.infer<typeof ReferenceGenomesMap>;
 
-export function hasSegmentWithMultipleReferences(referenceGenomesMap: ReferenceGenomesMap): boolean {
-    return Object.values(referenceGenomesMap).some((references) => Object.keys(references).length > 1);
-}
-
 export const referenceGenomesSchema = z
     .array(
         z.object({
