@@ -1,49 +1,43 @@
 import { type FC, useId, useMemo } from 'react';
 
-import type { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
+import { hasSegmentWithMultipleReferences, type ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
-import { Button } from '../common/Button';
+import { Button } from '../common/Button.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 
-type SuborganismSelectorProps = {
+type ReferenceSelectorProps = {
     filterSchema: MetadataFilterSchema;
     referenceGenomesMap: ReferenceGenomesMap;
     referenceIdentifierField: string;
-    selectedSuborganism: string | null;
-    setSelectedSuborganism: (newValue: string | null) => void;
+    setSelectedReferences: (newValues: Record<string, string | null>) => void;
+    selectedReferences: Record<string, string | null>;
 };
 
 /**
- * In the multi pathogen case, this is a prominent selector at the top to choose the suborganism.
+ * In the multi pathogen case, this is a prominent selector at the top to choose the reference.
  * Choosing a value here is required e.g. to enable mutation search and download of aligned sequences.
  *
  * Does nothing in the single pathogen case.
  */
-export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
+export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
     filterSchema,
     referenceGenomesMap,
     referenceIdentifierField,
-    selectedSuborganism,
-    setSelectedSuborganism,
+    selectedReferences,
+    setSelectedReferences,
 }) => {
     const selectId = useId();
 
-    // Extract reference names from the segments
-    const segments = Object.values(referenceGenomesMap.segments);
-    const suborganismNames = segments.length > 0 ? segments[0].references : [];
-    const isSinglePathogen = suborganismNames.length < 2;
-
-    const label = useMemo(() => {
-        if (isSinglePathogen) {
-            return undefined;
-        }
-
-        return filterSchema.filterNameToLabelMap()[referenceIdentifierField];
-    }, [isSinglePathogen, filterSchema, referenceIdentifierField]);
-
-    if (isSinglePathogen) {
+    if (!hasSegmentWithMultipleReferences(referenceGenomesMap)) {
         return null;
     }
+
+    const segments = Object.keys(referenceGenomesMap);
+
+    const label = useMemo(() => {
+
+        return filterSchema.filterNameToLabelMap()[referenceIdentifierField];
+    }, [filterSchema, referenceIdentifierField]);
 
     if (label === undefined) {
         throw Error(
@@ -59,23 +53,23 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
             <div className='relative'>
                 <select
                     id={selectId}
-                    value={selectedSuborganism ?? ''}
-                    onChange={(e) => setSelectedSuborganism(e.target.value)}
+                    value={selectedReferences[segments[0]] ?? ''}
+                    onChange={(e) => setSelectedReferences({ ...selectedReferences, [segments[0]]: e.target.value })}
                     className='w-full px-2 py-1.5 rounded border border-gray-300 text-sm bg-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200'
                 >
                     <option key={''} value={''} disabled>
                         Select {formatLabel(label)}...
                     </option>
-                    {suborganismNames.map((suborganism) => (
-                        <option key={suborganism} value={suborganism}>
-                            {suborganism}
+                    {Object.keys(referenceGenomesMap[segments[0]]).map((reference) => (
+                        <option key={reference} value={reference}>
+                            {reference}
                         </option>
                     ))}
                 </select>
-                {selectedSuborganism !== '' && selectedSuborganism !== null && (
+                {selectedReferences[segments[0]] !== '' && selectedReferences[segments[0]] !== null && (
                     <Button
                         className='absolute top-2 right-6 flex items-center pr-2 h-5 bg-white rounded-sm'
-                        onClick={() => setSelectedSuborganism(null)}
+                        onClick={() => setSelectedReferences({ ...selectedReferences, [segments[0]]: null })}
                         aria-label={`Clear ${label}`}
                         type='button'
                     >

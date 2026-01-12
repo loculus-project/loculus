@@ -42,9 +42,9 @@ const DataTableComponent: React.FC<Props> = ({
     const reference: ReferenceAccession[] = [];
     if (segmentReferences !== null) {
         for (const [segmentName, referenceName] of Object.entries(segmentReferences)) {
-            const segmentData = referenceGenomesMap.segments[segmentName];
-            const accession = segmentData.insdcAccessions[referenceName];
-            reference.push(accession);
+            const segmentData = referenceGenomesMap[segmentName];
+            const accession = segmentData?.[referenceName].insdcAccessionFull;
+            reference.push({insdcAccessionFull: accession, name: segmentName});
         }
     }
     const hasReferenceAccession = reference.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
