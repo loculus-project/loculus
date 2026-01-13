@@ -4,6 +4,7 @@ import { type ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
 import { Button } from '../common/Button.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
+import { getIdentifier } from '../../utils/referenceSelection.ts';
 
 type ReferenceSelectorProps = {
     filterSchema: MetadataFilterSchema;
@@ -39,15 +40,30 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
         return null;
     }
 
-    const label = useMemo(() => {
-        return filterSchema.filterNameToLabelMap()[referenceIdentifierField];
-    }, [filterSchema, referenceIdentifierField]);
+     const labelsBySegment = useMemo(() => {
+        const segments = Object.keys(referenceGenomesMap);
 
-    if (label === undefined) {
-        throw Error(
-            'Cannot render suborganism selector without a label when using the suborganism feature. Does the field that you specified in "referenceIdentifierField" exist in the metadata?',
+        return segments.reduce<Record<string, string | undefined>>(
+            (acc, segmentName) => {
+                const identifier = getIdentifier(
+                    referenceIdentifierField,
+                    segmentName,
+                    segments.length > 1 // or `multipleSegments` if you already have it
+                );
+
+                acc[segmentName] = identifier
+                    ? filterSchema.filterNameToLabelMap()[identifier]
+                    : undefined;
+
+                return acc;
+            },
+            {}
         );
-    }
+    }, [
+        filterSchema,
+        referenceIdentifierField,
+        referenceGenomesMap
+    ]);
 
     return (
         <>
@@ -63,7 +79,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                             className='block text-xs font-semibold text-gray-700 mb-1'
                             htmlFor={selectId}
                         >
-                            {label} ({segment})
+                            {labelsBySegment[segment]} ({segment})
                         </label>
 
                         <div className='relative'>
@@ -79,7 +95,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                                 className='w-full px-2 py-1.5 rounded border border-gray-300 text-sm bg-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200'
                             >
                                 <option value='' disabled>
-                                    Select {formatLabel(label)}...
+                                    Select {formatLabel(labelsBySegment[segment] ?? '')}...
                                 </option>
 
                                 {Object.keys(referenceGenomesMap[segment]).map((reference) => (
@@ -98,7 +114,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                                             [segment]: null,
                                         })
                                     }
-                                    aria-label={`Clear ${label}`}
+                                    aria-label={`Clear ${labelsBySegment[segment] ?? ''}`}
                                     type='button'
                                 >
                                     <MaterialSymbolsClose className='w-5 h-5 text-gray-400' />
@@ -107,7 +123,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                         </div>
 
                         <p className='text-xs text-gray-600 mt-2'>
-                            Select a {formatLabel(label)} to enable mutation search and download of aligned sequences
+                            Select a {formatLabel(labelsBySegment[segment] ?? '')} to enable mutation search and download of aligned sequences
                         </p>
                     </div>
                 );
