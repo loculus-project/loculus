@@ -90,22 +90,20 @@ defaultOrganisms:
     # `referenceGenomes` is now an object { suborganismName: referenceGenomeOfThatSuborganism }
     # The special suborganism name `singleReference` must be used when there is only a single suborganism
     referenceGenomes:
-      CV-A10:
-        nucleotideSequences:
-          - name: main
+      - name: main
+        references:
+          - reference_name: CV-A10
             sequence: "..."
             insdcAccessionFull: ...
-        genes: 
-          - name: VP4
-            sequence: "..."
-      EV-A71:
-        nucleotideSequences:
-          - name: main
+            genes: 
+              - name: VP4
+                sequence: "..."
+          - reference_name: EV-A71
             sequence: "..."
             insdcAccessionFull: ...
-        genes:
-          - name: VP2
-            sequence: "..."
+            genes:
+              - name: VP2
+                sequence: "..."
 ```
 
 The website will then receive the `referenceGenomes` as configured above.
@@ -324,10 +322,10 @@ The reference genome will be a product "suborganism x segment":
     {"name": "suborganism2", "sequence": "..."}
   ],
   "genes": [
-    {"name": "suborganism1_gene1", "sequence": "..."},
-    {"name": "suborganism1_gene2", "sequence": "..."},
-    {"name": "suborganism2_gene1", "sequence": "..."},
-    {"name": "suborganism2_gene2", "sequence": "..."}
+    {"name": "gene1_suborganism1", "sequence": "..."},
+    {"name": "gene2_suborganism1", "sequence": "..."},
+    {"name": "gene1_suborganism2", "sequence": "..."},
+    {"name": "gene2_suborganism2", "sequence": "..."}
   ]
 }
 ```
@@ -337,16 +335,16 @@ for multi-segment:
 ```json
 {
   "nucleotideSequences": [
-    {"name": "suborganism1_segment1", "sequence": "..."},
-    {"name": "suborganism1_segment2", "sequence": "..."},
-    {"name": "suborganism2_segment1", "sequence": "..."},
-    {"name": "suborganism2_segment2", "sequence": "..."}
+    {"name": "segment1_suborganism1", "sequence": "..."},
+    {"name": "segment2_suborganism1", "sequence": "..."},
+    {"name": "segment1_suborganism2", "sequence": "..."},
+    {"name": "segment2_suborganism2", "sequence": "..."}
   ],
   "genes": [
-    {"name": "suborganism1_gene1", "sequence": "..."},
-    {"name": "suborganism1_gene2", "sequence": "..."},
-    {"name": "suborganism2_gene1", "sequence": "..."},
-    {"name": "suborganism2_gene2", "sequence": "..."}
+    {"name": "gene1_suborganism1", "sequence": "..."},
+    {"name": "gene2_suborganism1", "sequence": "..."},
+    {"name": "gene1_suborganism2", "sequence": "..."},
+    {"name": "gene2_suborganism2", "sequence": "..."}
   ]
 }
 ```
