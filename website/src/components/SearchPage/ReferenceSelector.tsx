@@ -79,7 +79,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                             className='block text-xs font-semibold text-gray-700 mb-1'
                             htmlFor={selectId}
                         >
-                            {labelsBySegment[segment]} ({segment})
+                            {labelsBySegment[segment]}
                         </label>
 
                         <div className='relative'>
