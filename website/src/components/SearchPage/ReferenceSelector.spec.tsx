@@ -34,7 +34,7 @@ const singleReferenceSchema: ReferenceGenomesMap = {
         suborganism1: {
             sequence: 'ATCG',
             insdcAccessionFull: 'ABC123',
-        }
+        },
     },
 };
 
@@ -45,7 +45,7 @@ describe('ReferenceSelector', () => {
                 filterSchema={filterSchema}
                 referenceGenomesMap={singleReferenceSchema}
                 referenceIdentifierField={referenceIdentifierField}
-                selectedReferences={{"main": null}}
+                selectedReferences={{ main: null }}
                 setSelectedReferences={vi.fn()}
             />,
         );
@@ -60,7 +60,7 @@ describe('ReferenceSelector', () => {
                 filterSchema={filterSchema}
                 referenceGenomesMap={mockreferenceGenomesMap}
                 referenceIdentifierField={referenceIdentifierField}
-                selectedReferences={{"main": null}}
+                selectedReferences={{ main: null }}
                 setSelectedReferences={setSelected}
             />,
         );
@@ -77,13 +77,13 @@ describe('ReferenceSelector', () => {
                 filterSchema={filterSchema}
                 referenceGenomesMap={mockreferenceGenomesMap}
                 referenceIdentifierField={referenceIdentifierField}
-                selectedReferences={{"main": null}}
+                selectedReferences={{ main: null }}
                 setSelectedReferences={setSelected}
             />,
         );
 
         await userEvent.selectOptions(screen.getByRole('combobox'), 'suborganism1');
-        expect(setSelected).toHaveBeenCalledWith({"main": "suborganism1"});
+        expect(setSelected).toHaveBeenCalledWith({ main: 'suborganism1' });
     });
 
     it('shows clear button and clears selection', async () => {
@@ -93,7 +93,7 @@ describe('ReferenceSelector', () => {
                 filterSchema={filterSchema}
                 referenceGenomesMap={mockreferenceGenomesMap}
                 referenceIdentifierField={referenceIdentifierField}
-                selectedReferences={{"main": 'Pathogen 1'}}
+                selectedReferences={{ main: 'Pathogen 1' }}
                 setSelectedReferences={setSelected}
             />,
         );
@@ -109,7 +109,7 @@ describe('ReferenceSelector', () => {
                     filterSchema={new MetadataFilterSchema([])}
                     referenceGenomesMap={mockreferenceGenomesMap}
                     referenceIdentifierField={referenceIdentifierField}
-                    selectedReferences={{"main": null}}
+                    selectedReferences={{ main: null }}
                     setSelectedReferences={vi.fn()}
                 />,
             ),

@@ -12,11 +12,7 @@ import {
     type WebsiteConfig,
     websiteConfig,
 } from './types/config.ts';
-import {
-    type ReferenceAccession,
-    toReferenceGenomesMap,
-    ReferenceGenomesMap,
-} from './types/referencesGenomes.ts';
+import { type ReferenceAccession, toReferenceGenomesMap, ReferenceGenomesMap } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
 
 let _config: WebsiteConfig | null = null;
