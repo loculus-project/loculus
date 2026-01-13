@@ -17,12 +17,6 @@ export type GeneInfo = {
     label: string;
 };
 
-export function getMultiPathogenNucleotideSequenceNames(nucleotideSequences: string[], suborganism: string) {
-    return nucleotideSequences.length === 1
-        ? [{ lapisName: suborganism, label: 'main' }]
-        : nucleotideSequences.map((name) => getMultiPathogenSequenceName(name, suborganism));
-}
-
 export function getSinglePathogenSequenceName(name: string): SegmentInfo | GeneInfo {
     return {
         lapisName: name,
