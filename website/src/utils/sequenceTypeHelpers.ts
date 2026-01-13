@@ -80,9 +80,9 @@ export function getSegmentInfoWithReference(segmentName: string, referenceName: 
             label: segmentName,
         };
     }
-    // Reference selected - prefix with reference name for LAPIS
+    // Reference selected - suffix with reference name for LAPIS
     return {
-        lapisName: `${referenceName}-${segmentName}`,
+        lapisName: `${segmentName}-${referenceName}`,
         label: segmentName,
     };
 }
@@ -101,9 +101,9 @@ export function getGeneInfoWithReference(geneName: string, referenceName: string
             label: geneName,
         };
     }
-    // Reference selected - prefix with reference name for LAPIS
+    // Reference selected - suffix with reference name for LAPIS
     return {
-        lapisName: `${referenceName}-${geneName}`,
+        lapisName: `${geneName}-${referenceName}`,
         label: geneName,
     };
 }
