@@ -12,7 +12,7 @@ import {
     type WebsiteConfig,
     websiteConfig,
 } from './types/config.ts';
-import { type ReferenceAccession, toReferenceGenomesMap, ReferenceGenomesMap } from './types/referencesGenomes.ts';
+import { toReferenceGenomesMap, ReferenceGenomesMap } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
 
 let _config: WebsiteConfig | null = null;
@@ -74,7 +74,6 @@ export function getWebsiteConfig(): WebsiteConfig {
         const config = readTypedConfigFile('website_config.json', websiteConfig);
         const validationErrors = validateWebsiteConfig(config);
         if (validationErrors.length > 0) {
-            console.error('Website configuration validation errors:', validationErrors);
             throw new AggregateError(validationErrors, 'There were validation errors in the website_config.json');
         }
         _config = config;

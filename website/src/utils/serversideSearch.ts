@@ -1,5 +1,6 @@
 import { validateSingleValue } from './extractFieldValue';
 import { getSegmentAndGeneInfo } from './getSegmentAndGeneInfo.tsx';
+import { getIdentifier } from './referenceSelection.ts';
 import {
     getColumnVisibilitiesFromQuery,
     MetadataFilterSchema,
@@ -15,7 +16,6 @@ import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
 import type { FieldValues, Schema } from '../types/config';
 import type { ReferenceGenomesMap } from '../types/referencesGenomes.ts';
-import { getIdentifier } from './referenceSelection.ts';
 
 export const performLapisSearchQueries = async (
     state: QueryState,
@@ -24,7 +24,6 @@ export const performLapisSearchQueries = async (
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
-
     const selectedReferences = useSelectedReferences({
         referenceGenomesMap,
         schema,
@@ -81,46 +80,25 @@ export const performLapisSearchQueries = async (
     };
 };
 
-function extractReferenceName(schema: Schema, state: QueryState): string | null {
-    //TODO: make this perSegment
-    if (schema.referenceIdentifierField === undefined) {
-        return null;
-    }
-
-    const suborganism = state[schema.referenceIdentifierField];
-    if (typeof suborganism !== 'string') {
-        return null;
-    }
-    return suborganism;
-}
 //TODO: this is a duplication because I cant use react here
-
 type UseSelectedReferencesArgs = {
-  referenceGenomesMap: ReferenceGenomesMap;
-  schema: { referenceIdentifierField?: string };
-  state: Record<string, unknown>;
+    referenceGenomesMap: ReferenceGenomesMap;
+    schema: { referenceIdentifierField?: string };
+    state: Record<string, unknown>;
 };
 
-export function useSelectedReferences({
-  referenceGenomesMap,
-  schema,
-  state,
-}: UseSelectedReferencesArgs) {
-  const segments = Object.keys(referenceGenomesMap);
-const result: Record<string, string | null> = {};
+export function useSelectedReferences({ referenceGenomesMap, schema, state }: UseSelectedReferencesArgs) {
+    const segments = Object.keys(referenceGenomesMap);
+    const result: Record<string, string | null> = {};
 
-segments.forEach((segmentName) => {
-    const referenceIdentifier = getIdentifier(
-    schema.referenceIdentifierField,
-    segmentName,
-    segments.length > 1
-    );
+    segments.forEach((segmentName) => {
+        const referenceIdentifier = getIdentifier(schema.referenceIdentifierField, segmentName, segments.length > 1);
 
-    result[segmentName] =
-    referenceIdentifier === undefined
-        ? null
-        : ((state[referenceIdentifier] as string | null | undefined) ?? null);
-});
+        result[segmentName] =
+            referenceIdentifier === undefined
+                ? null
+                : ((state[referenceIdentifier] as string | null | undefined) ?? null);
+    });
 
-return result;
+    return result;
 }
