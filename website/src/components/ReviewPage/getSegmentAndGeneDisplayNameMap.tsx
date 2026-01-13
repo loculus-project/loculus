@@ -1,8 +1,6 @@
 import { type ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 
-export function getSegmentAndGeneDisplayNameMap(
-    ReferenceGenomesMap: ReferenceGenomesMap,
-): Map<string, string | null> {
+export function getSegmentAndGeneDisplayNameMap(ReferenceGenomesMap: ReferenceGenomesMap): Map<string, string | null> {
     const mappingEntries: [string, string][] = [];
     const multiSegmented = Object.keys(ReferenceGenomesMap).length > 1;
 
@@ -13,11 +11,11 @@ export function getSegmentAndGeneDisplayNameMap(
             mappingEntries.push([segmentName, segmentName]);
 
             for (const referenceName of Object.keys(references)) {
-            const genes = references[referenceName].genes ?? {};
-            for (const geneName of Object.keys(genes)) {
-                mappingEntries.push([geneName, geneName]);
+                const genes = references[referenceName].genes ?? {};
+                for (const geneName of Object.keys(genes)) {
+                    mappingEntries.push([geneName, geneName]);
+                }
             }
-        }
         } else {
             // Multiple references: use {segment}-{reference} format
             for (const referenceName of Object.keys(references)) {
