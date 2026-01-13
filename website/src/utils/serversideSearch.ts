@@ -23,13 +23,14 @@ export const performLapisSearchQueries = async (
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
-    const suborganism = extractReferenceName(schema, state);
 
-    const suborganismSegmentAndGeneInfo =
-        suborganism == null
-            ? null
-            : getSegmentAndGeneInfo(referenceGenomesMap, { main: suborganism });
+    const selectedReferences = useSelectedReferences({
+        referenceGenomesMap,
+        schema,
+        state,
+    });
 
+    const suborganismSegmentAndGeneInfo = getSegmentAndGeneInfo(referenceGenomesMap, selectedReferences);
 
     const filterSchema = new MetadataFilterSchema(schema.metadata);
     const fieldValues = filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
@@ -48,7 +49,7 @@ export const performLapisSearchQueries = async (
     const columnVisibilities = getColumnVisibilitiesFromQuery(schema, state);
 
     const columnsToShow = schema.metadata
-        .filter((field) => columnVisibilities.get(field.name)?.isVisible({ main: suborganism }) === true)
+        .filter((field) => columnVisibilities.get(field.name)?.isVisible({ main: null }) === true)
         .map((field) => field.name);
 
     const client = LapisClient.createForOrganism(organism);
@@ -90,4 +91,43 @@ function extractReferenceName(schema: Schema, state: QueryState): string | null 
         return null;
     }
     return suborganism;
+}
+//TODO: this is a duplication because I cant use react here
+export function getIdentifier(
+  identifier: string | undefined,
+  segmentName: string,
+  multipleSegments: boolean
+) {
+  if (identifier === undefined) return undefined;
+  return multipleSegments ? `${identifier}-${segmentName}` : identifier;
+}
+
+type UseSelectedReferencesArgs = {
+  referenceGenomesMap: ReferenceGenomesMap;
+  schema: { referenceIdentifierField?: string };
+  state: Record<string, unknown>;
+};
+
+export function useSelectedReferences({
+  referenceGenomesMap,
+  schema,
+  state,
+}: UseSelectedReferencesArgs) {
+  const segments = Object.keys(referenceGenomesMap);
+const result: Record<string, string | null> = {};
+
+segments.forEach((segmentName) => {
+    const referenceIdentifier = getIdentifier(
+    schema.referenceIdentifierField,
+    segmentName,
+    segments.length > 1
+    );
+
+    result[segmentName] =
+    referenceIdentifier === undefined
+        ? null
+        : ((state[referenceIdentifier] as string | null | undefined) ?? null);
+});
+
+return result;
 }
