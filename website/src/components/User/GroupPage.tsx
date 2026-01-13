@@ -194,8 +194,8 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     <tbody>
                         <TableRow label='Group ID'>{groupDetails.data?.group.groupId}</TableRow>
                         <TableRow label='Institution'>{groupDetails.data?.group.institution}</TableRow>
-                        {groupDetails.data?.group.contactEmail && (
-                            <TableRow label='Contact email'>{groupDetails.data.group.contactEmail}</TableRow>
+                        {accessToken && (
+                            <TableRow label='Contact email'>{groupDetails.data?.group.contactEmail}</TableRow>
                         )}
                         <TableRow label='Address'>
                             <PostalAddress address={groupDetails.data?.group.address} />
