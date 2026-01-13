@@ -34,8 +34,6 @@ if (!cleanedOrganism) {
 const clientConfig = getRuntimeConfig().public;
 const schema = getSchema(cleanedOrganism.key);
 
-console.log('cleanedOrganism.key:', cleanedOrganism.key);
-
 const accessToken = getAccessToken(Astro.locals.session);
 const myGroups = accessToken !== undefined ? await getMyGroups(accessToken) : [];
 

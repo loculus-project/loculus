@@ -35,8 +35,8 @@ export function getSegmentAndGeneInfo(
 
         nucleotideSegmentInfos.push(getSegmentInfoWithReference(segmentName, refForNaming));
 
-        if (selectedRef && segmentData.genes) {
-            const geneNames = Object.keys(segmentData.genes);
+        if (selectedRef && segmentData[selectedRef].genes) {
+            const geneNames = Object.keys(segmentData[selectedRef].genes);
             for (const geneName of geneNames) {
                 geneInfos.push(getGeneInfoWithReference(geneName, refForNaming));
             }
