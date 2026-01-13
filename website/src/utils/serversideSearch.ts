@@ -15,6 +15,7 @@ import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
 import type { FieldValues, Schema } from '../types/config';
 import type { ReferenceGenomesMap } from '../types/referencesGenomes.ts';
+import { getIdentifier } from './referenceSelection.ts';
 
 export const performLapisSearchQueries = async (
     state: QueryState,
@@ -93,14 +94,6 @@ function extractReferenceName(schema: Schema, state: QueryState): string | null 
     return suborganism;
 }
 //TODO: this is a duplication because I cant use react here
-export function getIdentifier(
-  identifier: string | undefined,
-  segmentName: string,
-  multipleSegments: boolean
-) {
-  if (identifier === undefined) return undefined;
-  return multipleSegments ? `${identifier}-${segmentName}` : identifier;
-}
 
 type UseSelectedReferencesArgs = {
   referenceGenomesMap: ReferenceGenomesMap;
