@@ -106,13 +106,11 @@ export const SearchForm = ({
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
-    console.log("selectedReferences:", selectedReferences);
 
     const suborganismSegmentAndGeneInfo = useMemo(
         () => getSegmentAndGeneInfo(referenceGenomesMap, selectedReferences),
         [referenceGenomesMap, selectedReferences],
     );
-    console.log("suborganismSegmentAndGeneInfo:", suborganismSegmentAndGeneInfo);
 
     return (
         <QueryClientProvider client={queryClient}>
