@@ -1857,6 +1857,16 @@ defaultOrganisms:
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
+        - name: reference
+          displayName: Reference
+          header: "Reference"
+          noInput: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          perSegment: true
+          preprocessing:
+            inputs: {input: ASSIGNED_REFERENCE}
       website:
         <<: *website
         tableColumns:
@@ -1873,6 +1883,7 @@ defaultOrganisms:
           - length_L
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
+        referenceIdentifierField: reference
     preprocessing:
       - <<: *preprocessing
         configFile:
