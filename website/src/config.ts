@@ -59,16 +59,16 @@ export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
         //     }
         // });
 
-        const referenceIdentifierField = schema.schema.referenceIdentifierField;
-        if (referenceIdentifierField !== undefined) {
-            if (!schema.schema.metadata.some((metadatum) => metadatum.name === referenceIdentifierField)) {
-                errors.push(
-                    new Error(
-                        `referenceIdentifierField '${referenceIdentifierField}' of organism '${organism}' is not defined in the metadata.`,
-                    ),
-                );
-            }
-        }
+        // const referenceIdentifierField = schema.schema.referenceIdentifierField;
+        // if (referenceIdentifierField !== undefined) {
+        //     if (!schema.schema.metadata.some((metadatum) => metadatum.name === referenceIdentifierField)) {
+        //         errors.push(
+        //             new Error(
+        //                 `referenceIdentifierField '${referenceIdentifierField}' of organism '${organism}' is not defined in the metadata.`,
+        //             ),
+        //         );
+        //     }
+        // }
     });
     return errors;
 }
