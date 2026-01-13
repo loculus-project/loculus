@@ -8,9 +8,9 @@ import { GroupManagementClient } from '../../../services/groupManagementClient';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getAuthUrl } from '../../../utils/getAuthUrl';
 
-const session = Astro.locals.session!;
-const accessToken = getAccessToken(session)!;
-const username = session.user?.username ?? '';
+const session = Astro.locals.session;
+const accessToken = getAccessToken(session);
+const username = session?.user?.username ?? '';
 const groupId = parseInt(Astro.params.groupId!, 10);
 const clientConfig = getRuntimeConfig().public;
 const organisms = getConfiguredOrganisms();

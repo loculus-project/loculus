@@ -10,7 +10,7 @@ const DUMMY_GROUP_DETAILS = {
 };
 
 describe('GroupPage', () => {
-    test('test authenticated view', () => {
+    test('test authenticated can edit view', () => {
         render(
             <GroupPage
                 prefetchedGroupDetails={DUMMY_GROUP_DETAILS}
@@ -28,6 +28,26 @@ describe('GroupPage', () => {
         expect(screen.getByText(testGroups[0].contactEmail!)).toBeVisible();
         expect(screen.getByRole('heading', { name: `Sequences available in ${testDatabaseName}` })).toBeVisible();
         expect(screen.getByRole('heading', { name: 'Users' })).toBeVisible();
+    });
+
+    test('test authenticated cannot edit view', () => {
+        render(
+            <GroupPage
+                prefetchedGroupDetails={DUMMY_GROUP_DETAILS}
+                clientConfig={testConfig.public}
+                accessToken={testAccessToken}
+                username={testUser.name}
+                userGroups={[]}
+                organisms={[]}
+                databaseName={testDatabaseName}
+                loginUrl=''
+            />,
+        );
+
+        expect(screen.queryByText(/to see full group details/i)).toBeNull();
+        expect(screen.getByText(testGroups[0].contactEmail!)).toBeVisible();
+        expect(screen.getByRole('heading', { name: `Sequences available in ${testDatabaseName}` })).toBeVisible();
+        expect(screen.queryByRole('heading', { name: /users/i })).toBeNull();
     });
 
     test('test unauthenticated view', () => {

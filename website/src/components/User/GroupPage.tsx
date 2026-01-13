@@ -21,7 +21,7 @@ import IwwaArrowDown from '~icons/iwwa/arrow-down';
 type GroupPageProps = {
     prefetchedGroupDetails: GroupDetails;
     clientConfig: ClientConfig;
-    accessToken: string;
+    accessToken: string | undefined;
     username: string;
     userGroups: Group[];
     organisms: Organism[];

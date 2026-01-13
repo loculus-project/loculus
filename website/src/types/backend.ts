@@ -307,6 +307,10 @@ export type Group = z.infer<typeof group>;
 
 export const groupDetails = z.object({
     group,
+    /** 
+     * List of users in the group. 
+     * Null when the requesting user is not authenticated or not authorized to view members.
+     */
     users: z
         .array(
             z.object({
