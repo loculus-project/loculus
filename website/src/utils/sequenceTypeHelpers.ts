@@ -102,8 +102,6 @@ export function getGeneInfoWithReference(geneName: string, referenceName: string
     };
 }
 
-export function stillRequiresReferenceNameSelection(
-    selectedReferenceNames: Record<string, string | null>,
-) {
+export function stillRequiresReferenceNameSelection(selectedReferenceNames: Record<string, string | null>) {
     return Object.values(selectedReferenceNames).some((value) => value === null);
 }

@@ -1,12 +1,7 @@
 ---
 import { ReviewPage } from '../../../../components/ReviewPage/ReviewPage';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import {
-    getMetadataDisplayNames,
-    getReferenceGenomes,
-    getRuntimeConfig,
-    outputFilesEnabled,
-} from '../../../../config';
+import { getMetadataDisplayNames, getReferenceGenomes, getRuntimeConfig, outputFilesEnabled } from '../../../../config';
 import { type ClientConfig } from '../../../../types/runtimeConfig';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';

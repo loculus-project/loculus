@@ -105,7 +105,6 @@ export const InnerSearchFullUI = ({
         setAColumnVisibility,
     } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema, referenceGenomesMap });
 
-
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
     }, [schema, state]);
@@ -214,8 +213,7 @@ export const InnerSearchFullUI = ({
     }, [aggregatedHook.data?.data, oldCount]);
 
     const showMutationSearch =
-        schema.submissionDataTypes.consensusSequences &&
-        !stillRequiresReferenceNameSelection(selectedReferences);
+        schema.submissionDataTypes.consensusSequences && !stillRequiresReferenceNameSelection(selectedReferences);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
