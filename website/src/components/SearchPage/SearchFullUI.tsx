@@ -103,7 +103,7 @@ export const InnerSearchFullUI = ({
         setOrderDirection,
         setASearchVisibility,
         setAColumnVisibility,
-    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema });
+    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema, referenceGenomesMap });
 
 
     const searchVisibilities = useMemo(() => {
