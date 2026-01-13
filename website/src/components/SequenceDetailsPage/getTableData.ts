@@ -17,7 +17,7 @@ import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
 export type GetTableDataResult = {
     data: TableDataEntry[];
-    segmentReferences: Record<string, string> | null;
+    segmentReferences: Record<string, string | null>;
     isRevocation: boolean;
 };
 
@@ -80,8 +80,10 @@ function getSegmentReferences(
     schema: Schema,
     referenceGenomes: ReferenceGenomesMap,
     accessionVersion: string,
-): Result<Record<string, string> | null, ProblemDetail> {
+): Result<Record<string, string | null>, ProblemDetail> {
+    //TODO: this is duplicated - refactor to share code
     const segments = Object.keys(referenceGenomes);
+    const segmentReferences: Record<string, string | null> = {};
 
     // Check if single reference mode (only one reference per segment)
     const firstSegment = segments[0];
@@ -90,7 +92,6 @@ function getSegmentReferences(
 
     if (isSingleReference) {
         // Build segment references from the single reference
-        const segmentReferences: Record<string, string> = {};
         for (const segmentName of segments) {
             const refs = Object.keys(referenceGenomes[segmentName] ?? {});
             if (refs.length > 0) {
@@ -100,9 +101,10 @@ function getSegmentReferences(
         return ok(segmentReferences);
     }
 
+    // TODO: extend to multi segment, multi reference mode
     // Multiple references mode - get from metadata field
-    const suborganismField = schema.referenceIdentifierField;
-    if (suborganismField === undefined) {
+    const referenceField = schema.referenceIdentifierField;
+    if (referenceField === undefined) {
         return err({
             type: 'about:blank',
             title: 'Invalid configuration',
@@ -112,21 +114,21 @@ function getSegmentReferences(
         });
     }
 
-    const value = details[suborganismField];
-    const suborganismResult = z.string().nullable().safeParse(value);
-    if (!suborganismResult.success) {
+    const value = details[referenceField];
+    const referenceResult = z.string().nullable().safeParse(value);
+    if (!referenceResult.success) {
         return err({
             type: 'about:blank',
-            title: 'Invalid suborganism field',
+            title: 'Invalid reference field',
             status: 0,
-            detail: `Value '${value}' of field '${suborganismField}' is not a valid string or null.`,
+            detail: `Value '${value}' of field '${referenceField}' is not a valid string or null.`,
             instance: '/seq/' + accessionVersion,
         });
     }
 
-    const referenceName = suborganismResult.data;
+    const referenceName = referenceResult.data;
     if (referenceName === null) {
-        return ok(null);
+        return ok(segmentReferences);
     }
 
     // Validate that the reference exists in at least one segment
@@ -141,15 +143,14 @@ function getSegmentReferences(
     if (!foundInAnySegment) {
         return err({
             type: 'about:blank',
-            title: 'Invalid suborganism',
+            title: 'Invalid reference',
             status: 0,
-            detail: `ReferenceName '${referenceName}' (value of field '${suborganismField}') not found in reference genomes.`,
+            detail: `ReferenceName '${referenceName}' (value of field '${referenceField}') not found in reference genomes.`,
             instance: '/seq/' + accessionVersion,
         });
     }
 
     // Build segment references - all segments use the same reference
-    const segmentReferences: Record<string, string> = {};
     for (const segmentName of segments) {
         segmentReferences[segmentName] = referenceName;
     }
@@ -184,7 +185,7 @@ function mutationDetails(
     aminoAcidMutations: MutationProportionCount[],
     nucleotideInsertions: InsertionCount[],
     aminoAcidInsertions: InsertionCount[],
-    segmentReferences: Record<string, string> | null,
+    segmentReferences: Record<string, string | null>,
 ): TableDataEntry[] {
     const data: TableDataEntry[] = [
         {
@@ -243,7 +244,7 @@ function mutationDetails(
 
 function toTableData(
     config: Schema,
-    segmentReferences: Record<string, string> | null,
+    segmentReferences: Record<string, string | null>,
     {
         details,
         nucleotideMutations,
@@ -299,7 +300,7 @@ function mapValueToDisplayedValue(value: undefined | null | string | number | bo
 
 export function substitutionsMap(
     mutationData: MutationProportionCount[],
-    segmentReferences: Record<string, string> | null,
+    segmentReferences: Record<string, string | null>,
 ): SegmentedMutations[] {
     const result: SegmentedMutations[] = [];
     const substitutionData = mutationData.filter((m) => m.mutationTo !== '-');
@@ -326,23 +327,27 @@ export function substitutionsMap(
 
 function computeSequenceDisplayName(
     originalSequenceName: string | null,
-    segmentReferences: Record<string, string> | null,
+    segmentReferences: Record<string, string | null>,
 ): string | null {
+    //TODO: this is bad design, instead define the label in the config and then just apply a map here
     if (originalSequenceName === null || segmentReferences === null) {
         return originalSequenceName;
     }
 
-    // Try to strip any reference prefix from the sequence name
+    // Try to strip any reference suffix from the sequence name
     for (const referenceName of Object.values(segmentReferences)) {
         // Check if the sequence name is just the reference (single segment case)
         if (originalSequenceName === referenceName) {
             return null;
         }
 
-        // Try to strip the reference prefix
-        const prefixToTrim = `${referenceName}-`;
-        if (originalSequenceName.startsWith(prefixToTrim)) {
-            return originalSequenceName.substring(prefixToTrim.length);
+        // Try to strip the reference suffix
+        const suffixToTrim = `-${referenceName}`;
+        if (originalSequenceName.endsWith(suffixToTrim)) {
+            return originalSequenceName.substring(
+                0,
+                originalSequenceName.length - suffixToTrim.length
+            );
         }
     }
 
@@ -351,7 +356,7 @@ function computeSequenceDisplayName(
 
 function deletionsToCommaSeparatedString(
     mutationData: MutationProportionCount[],
-    segmentReferences: Record<string, string> | null,
+    segmentReferences: Record<string, string | null>,
 ) {
     const segmentPositions = new Map<string | null, number[]>();
     mutationData
@@ -403,7 +408,7 @@ function deletionsToCommaSeparatedString(
 
 function insertionsToCommaSeparatedString(
     insertionData: InsertionCount[],
-    segmentReferences: Record<string, string> | null,
+    segmentReferences: Record<string, string | null>,
 ) {
     return insertionData
         .map((insertion) => {
