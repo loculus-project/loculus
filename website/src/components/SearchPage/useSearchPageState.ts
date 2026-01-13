@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import useStateSyncedWithUrlQueryParams, { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import useUrlParamState from '../../hooks/useUrlParamState.ts';
@@ -13,6 +13,7 @@ import {
     SELECTED_SEQ_PARAM,
     VISIBILITY_PREFIX,
 } from '../../utils/search.ts';
+import type { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 
 // UI-only parameters that should not reset pagination when changed
 const UI_ONLY_PARAMS = new Set([SELECTED_SEQ_PARAM, HALF_SCREEN_PARAM]);
@@ -22,15 +23,15 @@ type UseSearchPageStateParams = {
     schema: Schema;
     hiddenFieldValues: FieldValues;
     filterSchema: MetadataFilterSchema;
+    referenceGenomesMap: ReferenceGenomesMap;
 };
-
-type SegmentReferenceSelections = Record<string, string>;
 
 export function useSearchPageState({
     initialQueryDict,
     schema,
     hiddenFieldValues,
     filterSchema,
+    referenceGenomesMap,
 }: UseSearchPageStateParams) {
     const [state, setState] = useStateSyncedWithUrlQueryParams(initialQueryDict);
 
@@ -127,8 +128,44 @@ export function useSearchPageState({
         'boolean',
         (value) => !value,
     );
-    const [selectedReferences, setSelectedReferences] = useState<Record<string, string | null>>({});
-    // Set values from URL on initial load
+
+    const segments = useMemo(() => Object.keys(referenceGenomesMap), [referenceGenomesMap]);
+    const getIdentifier = (identifier: string | undefined, segmentName: string, multipleSegments: boolean) => {
+        if (identifier === undefined) {
+            return undefined;
+        }
+        return multipleSegments ? `${identifier}-${segmentName}` : identifier;
+    };
+    const selectedReferences = useMemo<Record<string, string | null>>(() => {
+        const result: Record<string, string | null> = {};
+
+        segments.forEach((segmentName) => {
+            const referenceIdentifier = getIdentifier(
+                schema.referenceIdentifierField,
+                segmentName,
+                segments.length > 1,
+            );
+            result[segmentName] = referenceIdentifier === undefined ? null : (state[referenceIdentifier] ?? null);
+        });
+
+        return result;
+    }, [segments, state, schema.referenceIdentifierField]);
+
+    console.log('selectedReferences in useSearchPageState:');
+    console.log(selectedReferences);
+
+    const setSelectedReferences = useCallback(
+        (updates: Record<string, string | null>) => {
+            Object.entries(updates).forEach(([segmentName, value]) => {
+                const identifier = getIdentifier(schema.referenceIdentifierField, segmentName, segments.length > 1);
+                if (identifier === undefined) {
+                    return;
+                }
+                setSomeFieldValues([identifier, value]);
+            });
+        },
+        [setSomeFieldValues, segments, schema.referenceIdentifierField],
+    );
 
     const removeFilter = useCallback(
         (metadataFilterName: string) => {
