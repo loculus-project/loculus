@@ -9,6 +9,8 @@ import click
 import orjsonl
 import requests
 import yaml
+from loculus_client import revoke
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -20,11 +22,23 @@ logging.basicConfig(
 
 
 @dataclass
+class RevocationConfig:
+    approach: str = "manual_run"  # "manual_run" | "auto_revoke"
+    prevent_revoking_all: bool = False
+
+
+@dataclass
 class Config:
     organism: str
     segmented: str
     nucleotide_sequences: list[str]
     slack_hook: str = ""
+    revocations: RevocationConfig | None = None
+    backend_url: str
+    keycloak_token_url: str
+    keycloak_client_id: str
+    username: str
+    password: str
 
 
 InsdcAccession = str  # one per segment
@@ -266,6 +280,29 @@ def get_approved_submitted_accessions(
     return approved
 
 
+def revoke_all(
+    insdc_accessions: list[InsdcAccession],
+    already_ingested_accessions: dict[InsdcAccession, LatestLoculusVersion],
+    config: Config,
+):
+    """
+    Get the loculus accession for the given INSDC accessions and revoke them.
+    """
+    comment = "Record has been suppressed on Genbank"
+    if config.segmented:
+        already_revoked = []
+        for insdc_accession in insdc_accessions:
+            loculus_accession = already_ingested_accessions[insdc_accession].loculus_accession
+            if loculus_accession in already_revoked:
+                continue
+            already_revoked.append(loculus_accession)
+            revoke(loculus_accession, comment, config)
+    else:
+        for insdc_accession in insdc_accessions:
+            loculus_accession = already_ingested_accessions[insdc_accession].loculus_accession
+            revoke(loculus_accession, comment, config)
+
+
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--old-hashes", required=True, type=click.Path(exists=True))
@@ -303,6 +340,9 @@ def main(
         relevant_config = {
             key: full_config[key] for key in Config.__annotations__ if key in full_config
         }
+        # Handle nested RevocationConfig
+        if "revocations" in relevant_config and relevant_config["revocations"] is not None:
+            relevant_config["revocations"] = RevocationConfig(**relevant_config["revocations"])
         config = Config(**relevant_config)
 
     insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
@@ -424,7 +464,35 @@ def main(
             " If this is not the case, this indicates a potential ingest error."
         )
         logger.warning(warning)
-        notify(config, warning)
+
+        # Check revocation config
+        revocation_config = config.revocations if config.revocations else RevocationConfig()
+
+        # Check if we should prevent revoking all sequences
+        if (
+            revocation_config.prevent_revoking_all
+            and len(potentially_suppressed) == len(already_ingested_accessions)
+        ):
+            safety_warning = (
+                f"SAFETY CHECK: Prevented revoking ALL {len(potentially_suppressed)} sequences. "
+                "This might indicate an ingest error. Please investigate manually."
+            )
+            logger.error(safety_warning)
+            notify(config, safety_warning)
+        elif revocation_config.approach == "auto_revoke":
+            # Auto-revoke mode: perform revocation instead of just notifying
+            logger.info(
+                f"Auto-revoke mode enabled. Would revoke {len(potentially_suppressed)} accessions: "
+                f"{', '.join(potentially_suppressed)}"
+            )
+            print(
+                f"TODO: Implement auto-revocation for {len(potentially_suppressed)} accessions: "
+                f"{', '.join(potentially_suppressed)}"
+            )
+            revoke_all(list(potentially_suppressed))
+        else:
+            # Manual mode (default): send notification
+            notify(config, warning)
 
 
 if __name__ == "__main__":
