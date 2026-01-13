@@ -90,7 +90,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                                 ))}
                             </Select>
 
-                            {selectedReferences[segment] && (
+                            {selectedReferences[segment] != null && (
                                 <Button
                                     className='absolute top-2 right-6 flex items-center pr-2 h-5 bg-white rounded-sm'
                                     onClick={() =>
