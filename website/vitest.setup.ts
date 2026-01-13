@@ -23,7 +23,7 @@ export const DEFAULT_GROUP_NAME = 'testGroup';
 
 export const testOrganism = 'testOrganism';
 
-export const testDatabaseName = 'testDatabase'
+export const testDatabaseName = 'testDatabase';
 
 export const testConfig = {
     public: {
@@ -315,7 +315,7 @@ const lapisRequestMocks = {
     },
 };
 
-export const testUser = {name: 'testUser'};
+export const testUser = { name: 'testUser' };
 
 export const testGroups: Group[] = [
     {
