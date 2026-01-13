@@ -14,55 +14,35 @@
   {{- $segmentName := $segment.name -}}
   {{- $singleReference := eq (len $segment.references) 1 -}}
   {{- range $reference := $segment.references -}}
+    {{- $referenceName := $reference.reference_name -}}
     {{- if $singleReference -}}
       {{/* Single reference mode - no suffix */}}
       {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
         "name" $segmentName
         "sequence" $reference.sequence
       ) -}}
+    {{- else -}}
+      {{- $name := printf "%s%s" (ternary "" (print $segmentName "_") $singleSegment) $referenceName -}}
+      {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
+        "name" $name
+        "sequence" $reference.sequence
+      ) -}}
+    {{- end -}}
 
-      {{/* Add genes if present */}}
-      {{- if $reference.genes -}}
-        {{- range $gene := $reference.genes -}}
+    {{/* Add genes if present */}}
+    {{- if $reference.genes -}}
+      {{- range $gene := $reference.genes -}}
+        {{- if $singleReference -}}
           {{- $lapisGenes = append $lapisGenes (dict
             "name" $gene.name
             "sequence" $gene.sequence
           ) -}}
-        {{- end -}}
-      {{- end -}}
-    {{- else -}}
-      {{- if $singleSegment -}}
-        {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
-          "name" $reference.reference_name
-          "sequence" $reference.sequence
-        ) -}}
-
-        {{/* Add genes if present */}}
-        {{- if $reference.genes -}}
-          {{- $referenceSuffix := printf "_%s" $reference.reference_name -}}
-          {{- range $gene := $reference.genes -}}
-            {{- $lapisGenes = append $lapisGenes (dict
-              "name" (printf "%s%s" $gene.name $referenceSuffix)
-              "sequence" $gene.sequence
-            ) -}}
-          {{- end -}}
-        {{- end -}}
-      {{- else -}}
-        {{/* Multiple references mode - add suffix to names */}}
-        {{- $referenceSuffix := printf "_%s" $reference.reference_name -}}
-        {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
-          "name" (printf "%s%s" $segmentName $referenceSuffix)
-          "sequence" $reference.sequence
-        ) -}}
-
-        {{/* Add genes if present */}}
-        {{- if $reference.genes -}}
-          {{- range $gene := $reference.genes -}}
-            {{- $lapisGenes = append $lapisGenes (dict
-              "name" (printf "%s%s" $gene.name $referenceSuffix)
-              "sequence" $gene.sequence
-            ) -}}
-          {{- end -}}
+        {{- else -}}
+          {{- $geneName := printf "%s_%s" $gene.name $referenceName -}}
+          {{- $lapisGenes = append $lapisGenes (dict
+            "name" $geneName
+            "sequence" $gene.sequence
+          ) -}}
         {{- end -}}
       {{- end -}}
     {{- end -}}
