@@ -22,7 +22,7 @@
         "sequence" $reference.sequence
       ) -}}
     {{- else -}}
-      {{- $name := printf "%s%s" (ternary "" (printf "%s_" $segmentName) $singleSegment) $referenceName -}}
+      {{- $name := printf "%s%s" (ternary "" (printf "%s-" $segmentName) $singleSegment) $referenceName -}}
       {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
         "name" $name
         "sequence" $reference.sequence
@@ -38,7 +38,7 @@
             "sequence" $gene.sequence
           ) -}}
         {{- else -}}
-          {{- $geneName := printf "%s_%s" $gene.name $referenceName -}}
+          {{- $geneName := printf "%s-%s" $gene.name $referenceName -}}
           {{- $lapisGenes = append $lapisGenes (dict
             "name" $geneName
             "sequence" $gene.sequence
