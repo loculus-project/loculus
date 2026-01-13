@@ -289,7 +289,7 @@ export function getSequenceNames(
         const isMultiReference = Object.keys(segmentData).length > 1;
         if (!isMultiReference) {
             segmentNames.push(getSinglePathogenSequenceName(segmentName));
-            const genes = Object.keys(segmentData.genes).map(getSinglePathogenSequenceName) ?? [];
+            const genes = Object.keys(segmentData[selectedReferenceName].genes).map(getSinglePathogenSequenceName) ?? [];
             geneNames.push(...genes);
         } else {
             lapisHasMultiSegments = true;
@@ -299,7 +299,7 @@ export function getSequenceNames(
                 } else{
                     segmentNames.push(getMultiPathogenSequenceName(segmentName, referenceName));
                 }
-                const genes = Object.keys(segmentData.genes).map((geneName) =>
+                const genes = Object.keys(segmentData[selectedReferenceName].genes).map((geneName) =>
                     getMultiPathogenSequenceName(geneName, referenceName),
                 ) ?? [];
                 geneNames.push(...genes);
