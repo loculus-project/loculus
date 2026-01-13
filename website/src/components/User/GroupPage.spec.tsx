@@ -24,7 +24,8 @@ describe('GroupPage', () => {
             />,
         );
 
-        expect(screen.queryByText(/to see full group details/i)).toBeNull();
+        const targetString = `to ${testDatabaseName} see full group details`;
+        expect(screen.queryByText(targetString)).toBeNull();
         expect(screen.getByText(testGroups[0].contactEmail!)).toBeVisible();
         expect(screen.getByRole('heading', { name: `Sequences available in ${testDatabaseName}` })).toBeVisible();
         expect(screen.getByRole('heading', { name: 'Users' })).toBeVisible();
@@ -44,7 +45,8 @@ describe('GroupPage', () => {
             />,
         );
 
-        expect(screen.queryByText(/to see full group details/i)).toBeNull();
+        const targetString = `to ${testDatabaseName} see full group details`;
+        expect(screen.queryByText(targetString)).toBeNull();
         expect(screen.getByText(testGroups[0].contactEmail!)).toBeVisible();
         expect(screen.getByRole('heading', { name: `Sequences available in ${testDatabaseName}` })).toBeVisible();
         expect(screen.queryByRole('heading', { name: /users/i })).toBeNull();
@@ -64,7 +66,8 @@ describe('GroupPage', () => {
             />,
         );
 
-        expect(screen.getByText(/to see full group details/i)).toBeVisible();
+        const targetString = `to ${testDatabaseName} see full group details`;
+        expect(screen.queryByText(targetString)).toBeVisible();
         expect(screen.queryByText(testGroups[0].contactEmail!)).toBeNull();
         expect(screen.getByRole('heading', { name: `Sequences available in ${testDatabaseName}` })).toBeVisible();
         expect(screen.queryByRole('heading', { name: /users/i })).toBeNull();

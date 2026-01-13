@@ -190,9 +190,9 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         <TableRow label='Address'>
                             <PostalAddress address={groupDetails.data?.group.address} />
                         </TableRow>
-			</tbody>
+                    </tbody>
                 </table>
-		<div className='w-full mt-2 text-center'>
+                <div className='w-full mt-2 text-center'>
                     {!accessToken && (
                         <span className='text-sm italic'>
                             <a href={loginUrl} className='underline cursor-pointer'>
@@ -201,7 +201,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             to {databaseName} see full group details
                         </span>
                     )}
-		</div>
+                </div>
             </div>
 
             <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
