@@ -22,7 +22,7 @@
         "sequence" $reference.sequence
       ) -}}
     {{- else -}}
-      {{- $name := printf "%s%s" (ternary "" (print $segmentName "_") $singleSegment) $referenceName -}}
+      {{- $name := printf "%s%s" (ternary "" (printf "%s_" $segmentName) $singleSegment) $referenceName -}}
       {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
         "name" $name
         "sequence" $reference.sequence
