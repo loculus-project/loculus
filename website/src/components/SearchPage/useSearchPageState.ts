@@ -4,6 +4,8 @@ import useStateSyncedWithUrlQueryParams, { type QueryState } from './useStateSyn
 import useUrlParamState from '../../hooks/useUrlParamState.ts';
 import type { FieldValues, FieldValueUpdate, Schema, SetSomeFieldValues } from '../../types/config.ts';
 import type { OrderDirection } from '../../types/lapis.ts';
+import type { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
+import { useSelectedReferences, useSetSelectedReferences } from '../../utils/referenceSelection.ts';
 import {
     COLUMN_VISIBILITY_PREFIX,
     HALF_SCREEN_PARAM,
@@ -13,8 +15,6 @@ import {
     SELECTED_SEQ_PARAM,
     VISIBILITY_PREFIX,
 } from '../../utils/search.ts';
-import type { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
-import { useSelectedReferences, useSetSelectedReferences } from '../../utils/referenceSelection.ts';
 
 // UI-only parameters that should not reset pagination when changed
 const UI_ONLY_PARAMS = new Set([SELECTED_SEQ_PARAM, HALF_SCREEN_PARAM]);
