@@ -105,7 +105,6 @@ export const InnerSearchFullUI = ({
         setAColumnVisibility,
     } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema });
 
-    console.log('selectedReferences', selectedReferences);
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
