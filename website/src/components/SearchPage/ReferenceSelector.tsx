@@ -1,11 +1,11 @@
 import { type FC, useId, useMemo } from 'react';
 
 import { type ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
+import { getIdentifier } from '../../utils/referenceSelection.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
 import { Button } from '../common/Button.tsx';
 import { Select } from '../common/Select.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
-import { getIdentifier } from '../../utils/referenceSelection.ts';
 
 type ReferenceSelectorProps = {
     filterSchema: MetadataFilterSchema;
@@ -41,30 +41,21 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
         return null;
     }
 
-     const labelsBySegment = useMemo(() => {
+    const labelsBySegment = useMemo(() => {
         const segments = Object.keys(referenceGenomesMap);
 
-        return segments.reduce<Record<string, string | undefined>>(
-            (acc, segmentName) => {
-                const identifier = getIdentifier(
-                    referenceIdentifierField,
-                    segmentName,
-                    segments.length > 1 // or `multipleSegments` if you already have it
-                );
+        return segments.reduce<Record<string, string | undefined>>((acc, segmentName) => {
+            const identifier = getIdentifier(
+                referenceIdentifierField,
+                segmentName,
+                segments.length > 1, // or `multipleSegments` if you already have it
+            );
 
-                acc[segmentName] = identifier
-                    ? filterSchema.filterNameToLabelMap()[identifier]
-                    : undefined;
+            acc[segmentName] = identifier ? filterSchema.filterNameToLabelMap()[identifier] : undefined;
 
-                return acc;
-            },
-            {}
-        );
-    }, [
-        filterSchema,
-        referenceIdentifierField,
-        referenceGenomesMap
-    ]);
+            return acc;
+        }, {});
+    }, [filterSchema, referenceIdentifierField, referenceGenomesMap]);
 
     return (
         <>
@@ -72,14 +63,8 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                 const selectId = `${baseSelectId}-${segment}`;
 
                 return (
-                    <div
-                        key={segment}
-                        className='bg-gray-50 border border-gray-300 rounded-md p-3 mb-3'
-                    >
-                        <label
-                            className='block text-xs font-semibold text-gray-700 mb-1'
-                            htmlFor={selectId}
-                        >
+                    <div key={segment} className='bg-gray-50 border border-gray-300 rounded-md p-3 mb-3'>
+                        <label className='block text-xs font-semibold text-gray-700 mb-1' htmlFor={selectId}>
                             {labelsBySegment[segment]}
                         </label>
 
@@ -124,7 +109,8 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                         </div>
 
                         <p className='text-xs text-gray-600 mt-2'>
-                            Select a {formatLabel(labelsBySegment[segment] ?? '')} to enable mutation search and download of aligned sequences
+                            Select a {formatLabel(labelsBySegment[segment] ?? '')} to enable mutation search and
+                            download of aligned sequences
                         </p>
                     </div>
                 );

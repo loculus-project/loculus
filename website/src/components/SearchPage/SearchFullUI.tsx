@@ -30,10 +30,10 @@ import {
     getFieldVisibilitiesFromQuery,
     MetadataFilterSchema,
 } from '../../utils/search.ts';
+import { stillRequiresReferenceNameSelection } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
-import { stillRequiresReferenceNameSelection } from '../../utils/sequenceTypeHelpers.ts';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
