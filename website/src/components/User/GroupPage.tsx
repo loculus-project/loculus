@@ -178,7 +178,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     <label className='block title'>Group: {groupName}</label>
 
                     {!accessToken && (
-                        <span className='text-sm text-muted'>
+                        <span className='text-sm'>
                             (
                             <a href={loginUrl} className='underline cursor-pointer'>
                                 login
