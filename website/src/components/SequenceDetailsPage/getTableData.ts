@@ -344,10 +344,7 @@ function computeSequenceDisplayName(
         // Try to strip the reference suffix
         const suffixToTrim = `-${referenceName}`;
         if (originalSequenceName.endsWith(suffixToTrim)) {
-            return originalSequenceName.substring(
-                0,
-                originalSequenceName.length - suffixToTrim.length
-            );
+            return originalSequenceName.substring(0, originalSequenceName.length - suffixToTrim.length);
         }
     }
 
