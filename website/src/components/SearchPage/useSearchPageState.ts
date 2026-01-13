@@ -14,6 +14,7 @@ import {
     VISIBILITY_PREFIX,
 } from '../../utils/search.ts';
 import type { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
+import { useSelectedReferences, useSetSelectedReferences } from '../../utils/referenceSelection.ts';
 
 // UI-only parameters that should not reset pagination when changed
 const UI_ONLY_PARAMS = new Set([SELECTED_SEQ_PARAM, HALF_SCREEN_PARAM]);
@@ -129,43 +130,18 @@ export function useSearchPageState({
         (value) => !value,
     );
 
-    const segments = useMemo(() => Object.keys(referenceGenomesMap), [referenceGenomesMap]);
-    const getIdentifier = (identifier: string | undefined, segmentName: string, multipleSegments: boolean) => {
-        if (identifier === undefined) {
-            return undefined;
-        }
-        return multipleSegments ? `${identifier}-${segmentName}` : identifier;
-    };
-    const selectedReferences = useMemo<Record<string, string | null>>(() => {
-        const result: Record<string, string | null> = {};
+    const { selectedReferences } = useSelectedReferences({
+        referenceGenomesMap,
+        schema,
+        state,
+    });
 
-        segments.forEach((segmentName) => {
-            const referenceIdentifier = getIdentifier(
-                schema.referenceIdentifierField,
-                segmentName,
-                segments.length > 1,
-            );
-            result[segmentName] = referenceIdentifier === undefined ? null : (state[referenceIdentifier] ?? null);
-        });
 
-        return result;
-    }, [segments, state, schema.referenceIdentifierField]);
-
-    console.log('selectedReferences in useSearchPageState:');
-    console.log(selectedReferences);
-
-    const setSelectedReferences = useCallback(
-        (updates: Record<string, string | null>) => {
-            Object.entries(updates).forEach(([segmentName, value]) => {
-                const identifier = getIdentifier(schema.referenceIdentifierField, segmentName, segments.length > 1);
-                if (identifier === undefined) {
-                    return;
-                }
-                setSomeFieldValues([identifier, value]);
-            });
-        },
-        [setSomeFieldValues, segments, schema.referenceIdentifierField],
-    );
+    const setSelectedReferences = useSetSelectedReferences({
+        referenceGenomesMap,
+        schema,
+        setSomeFieldValues,
+    });
 
     const removeFilter = useCallback(
         (metadataFilterName: string) => {
