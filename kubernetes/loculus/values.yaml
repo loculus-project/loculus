@@ -1607,7 +1607,6 @@ defaultOrganisms:
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
       organismName: "Test organism (with files)"
-      nucleotideSequences: []
       submissionDataTypes:
         consensusSequences: false
         files:
@@ -1729,7 +1728,6 @@ defaultOrganisms:
         <<: *defaultSubmissionDataTypes
         maxSequencesPerEntry: 3
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
-      nucleotideSequences: [L, M, S]
       image: "/images/organisms/cchf_small.jpg"
       linkOuts:
         - name: "Nextclade (L)"
@@ -1836,13 +1834,123 @@ defaultOrganisms:
             genes:
               - name: NP
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
+  cchf-multi-ref:
+    <<: *defaultOrganismConfig
+    schema:
+      <<: *schema
+      submissionDataTypes:
+        <<: *defaultSubmissionDataTypes
+        maxSequencesPerEntry: 3
+      organismName: "Crimean-Congo Hemorrhagic Fever Virus"
+      image: "/images/organisms/cchf_small.jpg"
+      linkOuts: #TODO: refactor for multi-seg, multi-ref
+        - name: "Nextclade (L)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/L"
+        - name: "Nextclade (M)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/M"
+        - name: "Nextclade (S)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/S"
+      metadataAdd:
+        - name: hostNameScientific
+          generateIndex: true
+          autocomplete: true
+          header: "Host"
+          ingest: ncbiHostName
+          initiallyVisible: true
+      website:
+        <<: *website
+        tableColumns:
+          - sampleCollectionDate
+          - geoLocCountry
+          - geoLocAdmin1
+          - lineage
+          - authors
+          - authorAffiliations
+          - ncbiReleaseDate
+          - hostNameScientific
+          - length_M
+          - length_S
+          - length_L
+        defaultOrderBy: sampleCollectionDate
+        defaultOrder: descending
+    preprocessing:
+      - <<: *preprocessing
+        configFile:
+          <<: *preprocessingConfigFile
+          taxon_id: 3052518
+          scientific_name: "Orthonairovirus haemorrhagiae"
+          molecule_type: "genomic RNA"
+          log_level: DEBUG
+          nextclade_dataset_server: "https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
+          segments:
+            - name: L
+              references:
+              - nextclade_dataset_name: cchfv/L
+                reference_name: singleReference
+                genes: [RdRp]
+            - name: M
+              references:
+              - nextclade_dataset_name: cchfv/M
+                reference_name: singleReference
+                genes: [GPC]
+            - name: S
+              references:
+              - nextclade_dataset_name: cchfv/S-1and6
+                reference_name: 1and6
+                genes: [NP]
+              - nextclade_dataset_name: cchfv/S-2to5
+                reference_name: 2to5
+                genes: [NP]
+    ingest:
+      <<: *ingest
+      configFile:
+        taxon_id: 3052518
+        segment_identification:
+          method: "align"
+          nextclade_dataset_name: community/pathoplexus/cchfv  #TODO: allow multiple ref in ingest grouping algo
+    enaDeposition:
+      singleReference:
+        configFile:
+          taxon_id: 3052518
+          scientific_name: "Orthonairovirus haemorrhagiae"
+          molecule_type: "genomic RNA"
+    referenceGenomes:
+      - name: L
+        references:
+          - reference_name: singleReference
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
+            insdcAccessionFull: NC_005301.3
+            genes:
+              - name: RdRp
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
+      - name: M
+        references:
+          - reference_name: singleReference
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_M.fasta]]"
+            insdcAccessionFull: NC_005300.2
+            genes:
+              - name: GPC
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"
+      - name: S
+        references:
+          - reference_name: 1and6
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/reference.fasta]]"
+            insdcAccessionFull: MK299338.1
+            genes:
+              - name: NP
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/NP.fasta]]"
+          - reference_name: 2to5
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/OL774851/reference.fasta]]"
+            insdcAccessionFull: OL774851.1
+            genes:
+              - name: NP
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/OL774851/NP.fasta]]"
   enteroviruses:
     <<: *defaultOrganismConfig
     enabled: true
     schema:
       <<: *schema
       organismName: "Enterovirus"
-      nucleotideSequences: [CV-A16, CV-A10, EV-A71, EV-D68]
       image: "/images/organisms/enterovirus.jpg"
       linkOuts:
         - name: "Nextclade (CV-A16)"
