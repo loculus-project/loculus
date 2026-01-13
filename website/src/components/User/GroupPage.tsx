@@ -176,16 +176,6 @@ const InnerGroupPage: FC<GroupPageProps> = ({
             ) : (
                 <h1 className='flex flex-col title flex-grow'>
                     <label className='block title'>Group: {groupName}</label>
-
-                    {!accessToken && (
-                        <span className='text-sm'>
-                            (
-                            <a href={loginUrl} className='underline cursor-pointer'>
-                                login
-                            </a>{' '}
-                            to see full group details)
-                        </span>
-                    )}
                 </h1>
             )}
 
@@ -200,8 +190,18 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         <TableRow label='Address'>
                             <PostalAddress address={groupDetails.data?.group.address} />
                         </TableRow>
-                    </tbody>
+			</tbody>
                 </table>
+		<div className='w-full mt-2 text-center'>
+                    {!accessToken && (
+                        <span className='text-sm italic'>
+                            <a href={loginUrl} className='underline cursor-pointer'>
+                                Log in
+                            </a>{' '}
+                            to {databaseName} see full group details
+                        </span>
+                    )}
+		</div>
             </div>
 
             <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
