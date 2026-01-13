@@ -1890,8 +1890,11 @@ defaultOrganisms:
                 genes: [RdRp]
             - name: M
               references:
-              - nextclade_dataset_name: cchfv/M
-                reference_name: singleReference
+              - nextclade_dataset_name: cchfv/M-MH396653
+                reference_name: MH396653
+                genes: [GPC]
+              - nextclade_dataset_name: cchfv/M-OR047158
+                reference_name: OR047158
                 genes: [GPC]
             - name: S
               references:
@@ -1925,12 +1928,18 @@ defaultOrganisms:
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
       - name: M
         references:
-          - reference_name: singleReference
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_M.fasta]]"
-            insdcAccessionFull: NC_005300.2
+          - reference_name: MH396653
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference.fasta]]"
+            insdcAccessionFull: MH396653.1
             genes:
               - name: GPC
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/MH396653/GPC.fasta]]"
+          - reference_name: OR047158
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference.fasta]]"
+            insdcAccessionFull: OR047158.1
+            genes:
+              - name: GPC
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/OR047158/GPC.fasta]]"
       - name: S
         references:
           - reference_name: 1and6
