@@ -136,7 +136,6 @@ export function useSearchPageState({
         state,
     });
 
-
     const setSelectedReferences = useSetSelectedReferences({
         referenceGenomesMap,
         schema,

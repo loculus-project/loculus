@@ -48,10 +48,10 @@ export class MetadataVisibility {
         if (!this.isChecked) {
             return false;
         }
-    if (this.onlyForReference == undefined){
-        return true;
-    }
-        for (const value of Object.values(selectedReferenceNames))  {
+        if (this.onlyForReference == undefined) {
+            return true;
+        }
+        for (const value of Object.values(selectedReferenceNames)) {
             if (this.onlyForReference === value) {
                 return true;
             }

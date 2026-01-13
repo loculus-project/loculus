@@ -106,7 +106,6 @@ export const SearchForm = ({
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
-
     const suborganismSegmentAndGeneInfo = useMemo(
         () => getSegmentAndGeneInfo(referenceGenomesMap, selectedReferences),
         [referenceGenomesMap, selectedReferences],

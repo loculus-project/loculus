@@ -62,9 +62,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         [referenceGenomesMap, selectedReferenceNames],
     );
 
-    const disableAlignedSequences = stillRequiresReferenceNameSelection(
-        selectedReferenceNames,
-    );
+    const disableAlignedSequences = stillRequiresReferenceNameSelection(selectedReferenceNames);
 
     function getDataTypeOptions(): OptionBlockOption[] {
         const metadataOption = {
@@ -279,7 +277,7 @@ export function getSequenceNames(
         const segmentData = referenceGenomesMap[segmentName];
         const selectedReferenceName = selectedReferenceNames[segmentName];
         if (!selectedReferenceName) {
-                return {
+            return {
                 nucleotideSequences: [],
                 genes: [],
                 useMultiSegmentEndpoint: false,
@@ -289,19 +287,21 @@ export function getSequenceNames(
         const isMultiReference = Object.keys(segmentData).length > 1;
         if (!isMultiReference) {
             segmentNames.push(getSinglePathogenSequenceName(segmentName));
-            const genes = Object.keys(segmentData[selectedReferenceName].genes).map(getSinglePathogenSequenceName) ?? [];
+            const genes =
+                Object.keys(segmentData[selectedReferenceName].genes).map(getSinglePathogenSequenceName) ?? [];
             geneNames.push(...genes);
         } else {
             lapisHasMultiSegments = true;
             for (const referenceName of Object.keys(segmentData)) {
-                if (segments.length == 1){
+                if (segments.length == 1) {
                     segmentNames.push(getSinglePathogenSequenceName(referenceName));
-                } else{
+                } else {
                     segmentNames.push(getMultiPathogenSequenceName(segmentName, referenceName));
                 }
-                const genes = Object.keys(segmentData[selectedReferenceName].genes).map((geneName) =>
-                    getMultiPathogenSequenceName(geneName, referenceName),
-                ) ?? [];
+                const genes =
+                    Object.keys(segmentData[selectedReferenceName].genes).map((geneName) =>
+                        getMultiPathogenSequenceName(geneName, referenceName),
+                    ) ?? [];
                 geneNames.push(...genes);
             }
         }
@@ -310,7 +310,7 @@ export function getSequenceNames(
         nucleotideSequences: segmentNames,
         genes: geneNames,
         useMultiSegmentEndpoint: lapisHasMultiSegments,
-    }
+    };
 }
 
 const optionToDataTypeMap: DownloadDataType['type'][] = [
