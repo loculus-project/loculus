@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 export function getIdentifier(identifier: string | undefined, segmentName: string, multipleSegments: boolean) {
     if (identifier === undefined) return undefined;
-    return multipleSegments ? `${identifier}-${segmentName}` : identifier;
+    return multipleSegments ? `${identifier}_${segmentName}` : identifier;
 }
 
 export function useSegments(referenceGenomesMap: Record<string, unknown>) {
