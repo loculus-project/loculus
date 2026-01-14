@@ -14,6 +14,7 @@ import {
 } from '../../types/lapis.ts';
 import { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
+import { getIdentifier } from '../../utils/referenceSelection.ts';
 
 export type GetTableDataResult = {
     data: TableDataEntry[];
@@ -81,78 +82,40 @@ function getSegmentReferences(
     referenceGenomes: ReferenceGenomesMap,
     accessionVersion: string,
 ): Result<Record<string, string | null>, ProblemDetail> {
-    //TODO: this is duplicated - refactor to share code
-    const segments = Object.keys(referenceGenomes);
+    //TODO: this is duplicated - refactor to share code with getSegmentAndGeneInfo
     const segmentReferences: Record<string, string | null> = {};
 
-    // Check if single reference mode (only one reference per segment)
-    const firstSegment = segments[0];
-    const firstSegmentRefs = firstSegment ? Object.keys(referenceGenomes[firstSegment] ?? {}) : [];
-    const isSingleReference = firstSegmentRefs.length === 1;
+    let isMultiSegmented = Object.keys(referenceGenomes).length > 1;
 
-    if (isSingleReference) {
-        // Build segment references from the single reference
-        for (const segmentName of segments) {
-            const refs = Object.keys(referenceGenomes[segmentName] ?? {});
-            if (refs.length > 0) {
-                segmentReferences[segmentName] = refs[0];
-            }
+    for (const [segmentName, segmentData] of Object.entries(referenceGenomes)) {
+        const isSingleReference = Object.keys(segmentData).length === 1;
+        const referenceField = getIdentifier(schema.referenceIdentifierField, segmentName, isMultiSegmented);
+        if (isSingleReference) {
+            segmentReferences[segmentName] = Object.keys(segmentData)[0];
+            continue;
         }
-        return ok(segmentReferences);
-    }
-
-    // TODO: extend to multi segment, multi reference mode
-    // Multiple references mode - get from metadata field
-    const referenceField = schema.referenceIdentifierField;
-    if (referenceField === undefined) {
-        return err({
-            type: 'about:blank',
-            title: 'Invalid configuration',
-            status: 0,
-            detail: `No 'referenceIdentifierField' has been configured in the schema for organism ${schema.organismName}`,
-            instance: '/seq/' + accessionVersion,
-        });
-    }
-
-    const value = details[referenceField];
-    const referenceResult = z.string().nullable().safeParse(value);
-    if (!referenceResult.success) {
-        return err({
-            type: 'about:blank',
-            title: 'Invalid reference field',
-            status: 0,
-            detail: `Value '${value}' of field '${referenceField}' is not a valid string or null.`,
-            instance: '/seq/' + accessionVersion,
-        });
-    }
-
-    const referenceName = referenceResult.data;
-    if (referenceName === null) {
-        return ok(segmentReferences);
-    }
-
-    // Validate that the reference exists in at least one segment
-    let foundInAnySegment = false;
-    for (const segmentName of segments) {
-        if (referenceName in (referenceGenomes[segmentName] ?? {})) {
-            foundInAnySegment = true;
-            break;
+        if (referenceField === undefined) {
+            return err({
+                type: 'about:blank',
+                title: 'Invalid configuration',
+                status: 0,
+                detail: `No 'referenceIdentifierField' has been configured in the schema for organism ${schema.organismName}`,
+                instance: '/seq/' + accessionVersion,
+            });
         }
-    }
+        const value = details[referenceField];
+        const referenceResult = z.string().nullable().safeParse(value);
+        if (!referenceResult.success) {
+            return err({
+                type: 'about:blank',
+                title: 'Invalid reference field',
+                status: 0,
+                detail: `Value '${value}' of field '${referenceField}' is not a valid string or null.`,
+                instance: '/seq/' + accessionVersion,
+            });
+        }
 
-    if (!foundInAnySegment) {
-        return err({
-            type: 'about:blank',
-            title: 'Invalid reference',
-            status: 0,
-            detail: `ReferenceName '${referenceName}' (value of field '${referenceField}') not found in reference genomes.`,
-            instance: '/seq/' + accessionVersion,
-        });
-    }
-
-    // Build segment references - all segments use the same reference
-    for (const segmentName of segments) {
-        segmentReferences[segmentName] = referenceName;
+        segmentReferences[segmentName] = referenceResult.data;
     }
 
     return ok(segmentReferences);
