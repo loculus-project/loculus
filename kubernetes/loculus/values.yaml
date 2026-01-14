@@ -1841,7 +1841,7 @@ defaultOrganisms:
       submissionDataTypes:
         <<: *defaultSubmissionDataTypes
         maxSequencesPerEntry: 3
-      organismName: "Crimean-Congo Hemorrhagic Fever Virus (Multi-Ref)"
+      organismName: "CCHF (Multi-Ref)"
       image: "/images/organisms/cchf_small.jpg"
       linkOuts: #TODO: refactor for multi-seg, multi-ref
         - name: "Nextclade (L)"
