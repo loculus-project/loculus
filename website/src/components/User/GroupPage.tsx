@@ -198,7 +198,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             <a href={loginUrl} className='underline cursor-pointer'>
                                 Log in
                             </a>{' '}
-                            to {databaseName} to see full group details
+                            to {databaseName} to see contact details for the group.
                         </span>
                     )}
                 </div>
