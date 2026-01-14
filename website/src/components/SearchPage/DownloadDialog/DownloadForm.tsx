@@ -299,9 +299,7 @@ export function getSequenceNames(
             };
         }
         lapisHasMultiSegments = true;
-        if (!singleSegment) {
-            segmentNames.push(getMultiPathogenSequenceName(segmentName, selectedReferenceName));
-        }
+        segmentNames.push(getMultiPathogenSequenceName(segmentName, selectedReferenceName, singleSegment));
         const genes =
             Object.keys(segmentData[selectedReferenceName].genes).map((geneName) =>
                 getMultiPathogenSequenceName(geneName, selectedReferenceName),
