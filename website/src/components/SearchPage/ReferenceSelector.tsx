@@ -1,6 +1,6 @@
 import { type FC, useId, useMemo } from 'react';
 
-import { type ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesMap, getSegmentsWithMultipleReferences, getSegmentNames } from '../../types/referencesGenomes.ts';
 import { getIdentifier } from '../../utils/referenceSelection.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
 import { Button } from '../common/Button.tsx';
@@ -29,29 +29,19 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
 }) => {
     const baseSelectId = useId();
 
-    const segments = Object.keys(referenceGenomesMap);
-
-    // Only keep segments that actually need a selector
-    const segmentsWithMultipleReferences = segments.filter(
-        (segment) => Object.keys(referenceGenomesMap[segment]).length > 1,
-    );
+    const segmentsWithMultipleReferences = getSegmentsWithMultipleReferences(referenceGenomesMap);
 
     if (segmentsWithMultipleReferences.length === 0) {
         return null;
     }
 
     const labelsBySegment = useMemo(() => {
-        const segments = Object.keys(referenceGenomesMap);
+        const segments = getSegmentNames(referenceGenomesMap);
+        const isMultiSegmented = segments.length > 1;
 
         return segments.reduce<Record<string, string | undefined>>((acc, segmentName) => {
-            const identifier = getIdentifier(
-                referenceIdentifierField,
-                segmentName,
-                segments.length > 1, // or `multipleSegments` if you already have it
-            );
-
+            const identifier = getIdentifier(referenceIdentifierField, segmentName, isMultiSegmented);
             acc[segmentName] = identifier ? filterSchema.filterNameToLabelMap()[identifier] : undefined;
-
             return acc;
         }, {});
     }, [filterSchema, referenceIdentifierField, referenceGenomesMap]);

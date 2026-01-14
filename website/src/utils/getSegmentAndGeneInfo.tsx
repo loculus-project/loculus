@@ -5,7 +5,11 @@ import {
     getGeneInfoWithReference,
     type SegmentReferenceSelections,
 } from './sequenceTypeHelpers.ts';
-import { type ReferenceGenomesMap } from '../types/referencesGenomes.ts';
+import {
+    type ReferenceGenomesMap,
+    getSegmentNames,
+    segmentHasMultipleReferences,
+} from '../types/referencesGenomes.ts';
 
 export type SegmentAndGeneInfo = {
     nucleotideSegmentInfos: SegmentInfo[];
@@ -25,17 +29,20 @@ export function getSegmentAndGeneInfo(
 ): SegmentAndGeneInfo {
     const nucleotideSegmentInfos: SegmentInfo[] = [];
     const geneInfos: GeneInfo[] = [];
-    const isMultiSegmented = Object.keys(referenceGenomes).length > 1;
+    const segments = getSegmentNames(referenceGenomes);
+    const isMultiSegmented = segments.length > 1;
 
-    for (const [segmentName, segmentData] of Object.entries(referenceGenomes)) {
-        const isSingleReference = Object.keys(segmentData).length === 1;
+    for (const segmentName of segments) {
+        const segmentData = referenceGenomes[segmentName];
+        const isMultiReference = segmentHasMultipleReferences(referenceGenomes, segmentName);
         const selectedRef = selectedReferences[segmentName] ?? null;
 
-        const refForNaming = isSingleReference ? null : selectedRef;
+        // For single-reference segments, don't include reference in naming
+        const refForNaming = isMultiReference ? selectedRef : null;
 
         nucleotideSegmentInfos.push(getSegmentInfoWithReference(segmentName, refForNaming));
 
-        if (selectedRef && segmentData[selectedRef].genes) {
+        if (selectedRef && segmentData[selectedRef]?.genes) {
             const geneNames = Object.keys(segmentData[selectedRef].genes);
             for (const geneName of geneNames) {
                 geneInfos.push(getGeneInfoWithReference(geneName, refForNaming));

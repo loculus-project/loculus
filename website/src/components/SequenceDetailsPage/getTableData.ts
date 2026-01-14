@@ -12,7 +12,12 @@ import {
     type InsertionCount,
     type MutationProportionCount,
 } from '../../types/lapis.ts';
-import { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
+import {
+    type ReferenceGenomesMap,
+    getSegmentNames,
+    isSingleReferenceMode,
+    getSingleReferenceName,
+} from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
 export type GetTableDataResult = {
@@ -81,28 +86,18 @@ function getSegmentReferences(
     referenceGenomes: ReferenceGenomesMap,
     accessionVersion: string,
 ): Result<Record<string, string | null>, ProblemDetail> {
-    //TODO: this is duplicated - refactor to share code
-    const segments = Object.keys(referenceGenomes);
+    const segments = getSegmentNames(referenceGenomes);
     const segmentReferences: Record<string, string | null> = {};
 
-    // Check if single reference mode (only one reference per segment)
-    const firstSegment = segments[0];
-    const firstSegmentRefs = firstSegment ? Object.keys(referenceGenomes[firstSegment] ?? {}) : [];
-    const isSingleReference = firstSegmentRefs.length === 1;
-
-    if (isSingleReference) {
-        // Build segment references from the single reference
+    // Single reference mode - use the only available reference for each segment
+    if (isSingleReferenceMode(referenceGenomes)) {
         for (const segmentName of segments) {
-            const refs = Object.keys(referenceGenomes[segmentName] ?? {});
-            if (refs.length > 0) {
-                segmentReferences[segmentName] = refs[0];
-            }
+            segmentReferences[segmentName] = getSingleReferenceName(referenceGenomes, segmentName);
         }
         return ok(segmentReferences);
     }
 
-    // TODO: extend to multi segment, multi reference mode
-    // Multiple references mode - get from metadata field
+    // Multiple references mode - get reference name from metadata field
     const referenceField = schema.referenceIdentifierField;
     if (referenceField === undefined) {
         return err({
@@ -132,13 +127,9 @@ function getSegmentReferences(
     }
 
     // Validate that the reference exists in at least one segment
-    let foundInAnySegment = false;
-    for (const segmentName of segments) {
-        if (referenceName in (referenceGenomes[segmentName] ?? {})) {
-            foundInAnySegment = true;
-            break;
-        }
-    }
+    const foundInAnySegment = segments.some(
+        (segmentName) => referenceName in (referenceGenomes[segmentName] ?? {}),
+    );
 
     if (!foundInAnySegment) {
         return err({

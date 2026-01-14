@@ -8,7 +8,12 @@ import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from '.
 import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Schema } from '../../../types/config.ts';
-import type { ReferenceGenomesMap } from '../../../types/referencesGenomes.ts';
+import {
+    type ReferenceGenomesMap,
+    getSegmentNames,
+    segmentHasMultipleReferences,
+    requiresReferenceSelection,
+} from '../../../types/referencesGenomes.ts';
 import type { MetadataVisibility } from '../../../utils/search.ts';
 import {
     type GeneInfo,
@@ -16,7 +21,6 @@ import {
     getSinglePathogenSequenceName,
     isMultiSegmented,
     type SegmentInfo,
-    stillRequiresReferenceNameSelection,
 } from '../../../utils/sequenceTypeHelpers.ts';
 
 export type DownloadFormState = {
@@ -62,9 +66,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         [referenceGenomesMap, selectedReferenceNames],
     );
 
-    console.log(nucleotideSequences, genes);
-
-    const disableAlignedSequences = stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomesMap);
+    const disableAlignedSequences = requiresReferenceSelection(selectedReferenceNames, referenceGenomesMap);
 
     function getDataTypeOptions(): OptionBlockOption[] {
         const metadataOption = {
@@ -270,7 +272,7 @@ export function getSequenceNames(
     useMultiSegmentEndpoint: boolean;
     defaultFastaHeaderTemplate?: string;
 } {
-    const segments = Object.keys(referenceGenomesMap);
+    const segments = getSegmentNames(referenceGenomesMap);
     let lapisHasMultiSegments = segments.length > 1;
     const singleSegment = segments.length === 1;
     const segmentNames: SegmentInfo[] = [];
@@ -278,17 +280,20 @@ export function getSequenceNames(
 
     for (const segmentName of segments) {
         const segmentData = referenceGenomesMap[segmentName];
-        const isMultiReference = Object.keys(segmentData).length > 1;
+        const isMultiReference = segmentHasMultipleReferences(referenceGenomesMap, segmentName);
+
         if (!isMultiReference) {
             // Single reference for this segment
             const singleReferenceName = Object.keys(segmentData)[0];
             if (!singleSegment) {
                 segmentNames.push(getSinglePathogenSequenceName(segmentName));
             }
-            const genes = Object.keys(segmentData[singleReferenceName].genes).map(getSinglePathogenSequenceName) ?? [];
+            const genes =
+                Object.keys(segmentData[singleReferenceName]?.genes ?? {}).map(getSinglePathogenSequenceName) ?? [];
             geneNames.push(...genes);
             continue;
         }
+
         const selectedReferenceName = selectedReferenceNames[segmentName];
         if (!selectedReferenceName) {
             return {
@@ -298,16 +303,18 @@ export function getSequenceNames(
                 defaultFastaHeaderTemplate: `{${ACCESSION_VERSION_FIELD}}`,
             };
         }
+
         lapisHasMultiSegments = true;
         if (!singleSegment) {
             segmentNames.push(getMultiPathogenSequenceName(segmentName, selectedReferenceName));
         }
         const genes =
-            Object.keys(segmentData[selectedReferenceName].genes).map((geneName) =>
+            Object.keys(segmentData[selectedReferenceName]?.genes ?? {}).map((geneName) =>
                 getMultiPathogenSequenceName(geneName, selectedReferenceName),
             ) ?? [];
         geneNames.push(...genes);
     }
+
     return {
         nucleotideSequences: segmentNames,
         genes: geneNames,

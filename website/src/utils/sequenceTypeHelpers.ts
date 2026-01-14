@@ -102,15 +102,5 @@ export function getGeneInfoWithReference(geneName: string, referenceName: string
     };
 }
 
-export function stillRequiresReferenceNameSelection(
-    selectedReferenceNames: Record<string, string | null>,
-    referenceGenomesMap: Record<string, Record<string, unknown>>,
-) {
-    const segments = Object.keys(referenceGenomesMap);
-
-    // Only keep segments that actually need a selector
-    const segmentsWithMultipleReferences = segments.filter(
-        (segment) => Object.keys(referenceGenomesMap[segment]).length > 1,
-    );
-    return segmentsWithMultipleReferences.some((segment) => selectedReferenceNames[segment] === null);
-}
+// Re-export from referencesGenomes.ts for backwards compatibility
+export { requiresReferenceSelection as stillRequiresReferenceNameSelection } from '../types/referencesGenomes.ts';
