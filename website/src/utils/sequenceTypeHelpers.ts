@@ -102,6 +102,15 @@ export function getGeneInfoWithReference(geneName: string, referenceName: string
     };
 }
 
-export function stillRequiresReferenceNameSelection(selectedReferenceNames: Record<string, string | null>) {
-    return Object.values(selectedReferenceNames).some((value) => value === null);
+export function stillRequiresReferenceNameSelection(
+    selectedReferenceNames: Record<string, string | null>,
+    referenceGenomesMap: Record<string, Record<string, unknown>>,
+) {
+    const segments = Object.keys(referenceGenomesMap);
+
+    // Only keep segments that actually need a selector
+    const segmentsWithMultipleReferences = segments.filter(
+        (segment) => Object.keys(referenceGenomesMap[segment]).length > 1,
+    );
+    return segmentsWithMultipleReferences.some((segment) => selectedReferenceNames[segment] === null);
 }
