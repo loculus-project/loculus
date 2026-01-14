@@ -10,7 +10,7 @@ import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
 
 type UseGroupOperationsProps = {
     clientConfig: ClientConfig;
-    accessToken: string;
+    accessToken: string | undefined;
     setErrorMessage: (message?: string) => void;
 };
 
@@ -206,7 +206,7 @@ function callEditGroup(accessToken: string, zodios: ZodiosInstance<typeof groupM
 }
 
 function callRemoveFromGroup(
-    accessToken: string,
+    accessToken: string | undefined,
     openErrorFeedback: (message: string | undefined) => void,
     zodios: ZodiosInstance<typeof groupManagementApi>,
     refetchGroups: () => Promise<unknown>,
@@ -229,7 +229,7 @@ function callRemoveFromGroup(
 }
 
 function callAddToGroup(
-    accessToken: string,
+    accessToken: string | undefined,
     openErrorFeedback: (message: string | undefined) => void,
     zodios: ZodiosInstance<typeof groupManagementApi>,
     refetchGroups: () => Promise<unknown>,

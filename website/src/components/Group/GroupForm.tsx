@@ -152,7 +152,7 @@ export const GroupForm: FC<GroupFormProps> = ({
 
                     <div className='mt-5 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6'>
                         <GroupNameInput defaultValue={defaultGroupData?.groupName} />
-                        <EmailContactInput defaultValue={defaultGroupData?.contactEmail} />
+                        <EmailContactInput defaultValue={defaultGroupData?.contactEmail ?? ''} />
                         <InstitutionNameInput defaultValue={defaultGroupData?.institution} />
                         <AddressLineOneInput defaultValue={defaultGroupData?.address.line1} />
                         <AddressLineTwoInput defaultValue={defaultGroupData?.address.line2} />

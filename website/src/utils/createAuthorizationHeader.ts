@@ -1,3 +1,3 @@
-export function createAuthorizationHeader(token: string) {
-    return { Authorization: `Bearer ${token}` }; // eslint-disable-line @typescript-eslint/naming-convention
+export function createAuthorizationHeader(token?: string) {
+    return token ? { Authorization: `Bearer ${token}` } : undefined; // eslint-disable-line @typescript-eslint/naming-convention
 }

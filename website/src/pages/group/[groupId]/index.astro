@@ -1,20 +1,21 @@
 ---
 import { GroupPage } from '../../../components/User/GroupPage';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
-import NeedToLogin from '../../../components/common/NeedToLogin.astro';
 import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import type { ContinueSubmissionIntent } from '../../../routes/routes';
 import { GroupManagementClient } from '../../../services/groupManagementClient';
 import { getAccessToken } from '../../../utils/getAccessToken';
+import { getAuthUrl } from '../../../utils/getAuthUrl';
 
-const session = Astro.locals.session!;
-const accessToken = getAccessToken(session)!;
-const username = session.user?.username ?? '';
+const session = Astro.locals.session;
+const accessToken = getAccessToken(session);
+const username = session?.user?.username ?? '';
 const groupId = parseInt(Astro.params.groupId!, 10);
 const clientConfig = getRuntimeConfig().public;
 const organisms = getConfiguredOrganisms();
 const databaseName = getWebsiteConfig().name;
+const loginUrl = await getAuthUrl(Astro.url.toString());
 
 const continueSubmissionOrganism = Astro.url.searchParams.get('continueSubmissionOrganism');
 
@@ -28,7 +29,7 @@ if (isNaN(groupId)) {
 }
 
 const groupManagementClient = GroupManagementClient.create();
-const groupDetailsResult = await groupManagementClient.getGroupDetails(accessToken, groupId);
+const groupDetailsResult = await groupManagementClient.getGroupDetails(groupId, accessToken);
 const userGroupsResponse = await groupManagementClient.getGroupsOfUser(accessToken);
 const userGroups = userGroupsResponse.match(
     (groups) => groups,
@@ -44,25 +45,22 @@ const userGroups = userGroupsResponse.match(
     activeTopNavigationItem='account'
 >
     {
-        !accessToken ? (
-            <NeedToLogin message='You need to be logged in to view group information.' />
-        ) : (
-            groupDetailsResult.match(
-                (groupDetails) => (
-                    <GroupPage
-                        prefetchedGroupDetails={groupDetails}
-                        accessToken={accessToken}
-                        clientConfig={clientConfig}
-                        username={username}
-                        userGroups={userGroups}
-                        organisms={organisms}
-                        databaseName={databaseName}
-                        continueSubmissionIntent={continueSubmissionIntent}
-                        client:load
-                    />
-                ),
-                () => <ErrorBox>Failed to fetch group details, sorry for the inconvenience!</ErrorBox>,
-            )
+        groupDetailsResult.match(
+            (groupDetails) => (
+                <GroupPage
+                    prefetchedGroupDetails={groupDetails}
+                    accessToken={accessToken}
+                    clientConfig={clientConfig}
+                    username={username}
+                    userGroups={userGroups}
+                    organisms={organisms}
+                    databaseName={databaseName}
+                    continueSubmissionIntent={continueSubmissionIntent}
+                    loginUrl={loginUrl}
+                    client:load
+                />
+            ),
+            () => <ErrorBox>Failed to fetch group details, sorry for the inconvenience!</ErrorBox>,
         )
     }
 </BaseLayout>
