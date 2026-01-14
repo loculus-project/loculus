@@ -264,6 +264,7 @@ export const uploadFiles = z.object({
     sequenceFile: z.instanceof(File).optional(),
     fileMapping: filesBySubmissionId.optional(),
 });
+export type UploadFiles = z.infer<typeof uploadFiles>;
 
 export const submitFiles = uploadFiles.merge(
     z.object({

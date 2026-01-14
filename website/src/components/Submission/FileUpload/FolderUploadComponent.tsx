@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
-import type { FilesBySubmissionId, Group } from '../../../types/backend';
+import type { FilesBySubmissionId } from '../../../types/backend';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import { calculatePartSizeAndCount, splitFileIntoParts, uploadPart } from '../../../utils/multipartUpload';
 import { Button } from '../../common/Button';
@@ -79,7 +79,7 @@ type FolderUploadComponentProps = {
     inputMode: InputMode;
     accessToken: string;
     clientConfig: ClientConfig;
-    group: Group;
+    groupId: number;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
     onError: (message: string) => void;
 };
@@ -89,7 +89,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     inputMode,
     accessToken,
     clientConfig,
-    group,
+    groupId,
     setFileMapping,
     onError,
 }) => {
@@ -200,7 +200,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                             const { partCount, partSize } = calculatePartSizeAndCount(file.file.size);
                             const result = await backendClient.requestMultipartUpload(
                                 accessToken,
-                                group.groupId,
+                                groupId,
                                 1,
                                 partCount,
                             );

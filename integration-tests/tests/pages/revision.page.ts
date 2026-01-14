@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { prepareTmpDirForBulkUpload, uploadFilesFromTmpDir } from '../utils/file-upload-helpers';
 
 /**
  * Page object for the sequence revision page.
@@ -121,7 +122,6 @@ export class RevisionPage {
     async submitRevision() {
         await this.acceptTerms();
         await this.clickSubmit();
-        await this.clickConfirm();
     }
 
     /**
@@ -186,5 +186,18 @@ export class RevisionPage {
         }
 
         await this.submitRevision();
+    }
+
+    async uploadExternalFiles(
+        fileId: string,
+        fileContents: Record<string, Record<string, string>>,
+        tmpDir: string,
+    ) {
+        await prepareTmpDirForBulkUpload(fileContents, tmpDir);
+        const fileCount = Object.values(fileContents).reduce(
+            (total, files) => total + Object.keys(files).length,
+            0,
+        );
+        await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);
     }
 }
