@@ -1,3 +1,5 @@
+//TODO: this entire file should be deleted and the logic moved into the config
+
 export type SequenceType =
     | { type: 'nucleotide'; aligned: boolean; name: SegmentInfo }
     | { type: 'aminoAcid'; aligned: true; name: GeneInfo };
@@ -24,7 +26,13 @@ export function getSinglePathogenSequenceName(name: string): SegmentInfo | GeneI
     };
 }
 
-export function getMultiPathogenSequenceName(segment: string, reference: string): SegmentInfo | GeneInfo {
+export function getMultiPathogenSequenceName(segment: string, reference: string, isSingleSegment?: boolean): SegmentInfo | GeneInfo {
+    if (isSingleSegment) {
+        return {
+            lapisName: reference,
+            label: segment,
+        };
+    }
     return {
         lapisName: `${segment}-${reference}`,
         label: segment,
@@ -66,11 +74,17 @@ export type SegmentReferenceSelections = Record<string, string | null>;
  * @param referenceName - The selected reference for this segment (e.g., "CV-A16"), or null
  * @returns SegmentInfo with appropriate LAPIS naming
  */
-export function getSegmentInfoWithReference(segmentName: string, referenceName: string | null): SegmentInfo {
+export function getSegmentInfoWithReference(segmentName: string, referenceName: string | null, isSingleSegment?: boolean): SegmentInfo {
     if (referenceName === null) {
         // No reference selected - use segment name as-is
         return {
             lapisName: segmentName,
+            label: segmentName,
+        };
+    }
+    if (isSingleSegment && referenceName !== null) {
+        return {
+            lapisName: referenceName,
             label: segmentName,
         };
     }

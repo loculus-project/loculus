@@ -13,6 +13,8 @@ export type SegmentAndGeneInfo = {
     isMultiSegmented: boolean;
 };
 
+//This is basically a duplication of getSequenceNames - it should also be deleted
+
 /**
  * Get segment and gene info where each segment can have its own reference.
  * @param schema - The reference genome lightweight schema
@@ -25,7 +27,7 @@ export function getSegmentAndGeneInfo(
 ): SegmentAndGeneInfo {
     const nucleotideSegmentInfos: SegmentInfo[] = [];
     const geneInfos: GeneInfo[] = [];
-    const isMultiSegmented = Object.keys(referenceGenomes).length > 1;
+    let isMultiSegmented = Object.keys(referenceGenomes).length > 1;
 
     for (const [segmentName, segmentData] of Object.entries(referenceGenomes)) {
         const isSingleReference = Object.keys(segmentData).length === 1;
@@ -33,12 +35,21 @@ export function getSegmentAndGeneInfo(
 
         const refForNaming = isSingleReference ? null : selectedRef;
 
-        nucleotideSegmentInfos.push(getSegmentInfoWithReference(segmentName, refForNaming));
+        nucleotideSegmentInfos.push(getSegmentInfoWithReference(segmentName, refForNaming, !isMultiSegmented));
+        if (!isSingleReference) {
+            isMultiSegmented = true;
+        }
 
         if (selectedRef && segmentData[selectedRef].genes) {
             const geneNames = Object.keys(segmentData[selectedRef].genes);
             for (const geneName of geneNames) {
                 geneInfos.push(getGeneInfoWithReference(geneName, refForNaming));
+            }
+        }
+        else if (isSingleReference) {
+            const geneNames = Object.keys(segmentData[Object.keys(segmentData)[0]].genes ?? {});
+            for (const geneName of geneNames) {
+                geneInfos.push(getGeneInfoWithReference(geneName, null));
             }
         }
     }
