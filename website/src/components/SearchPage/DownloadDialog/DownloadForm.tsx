@@ -62,7 +62,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         [referenceGenomesMap, selectedReferenceNames],
     );
 
-    const disableAlignedSequences = stillRequiresReferenceNameSelection(selectedReferenceNames);
+    const disableAlignedSequences = stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomesMap);
 
     function getDataTypeOptions(): OptionBlockOption[] {
         const metadataOption = {
