@@ -1859,11 +1859,11 @@ defaultOrganisms:
           initiallyVisible: true
         - name: reference
           displayName: Reference
-          header: "Reference"
           noInput: true
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
+          hideOnSequenceDetailsPage: true
           perSegment: true
           preprocessing:
             inputs: {input: ASSIGNED_REFERENCE}
