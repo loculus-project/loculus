@@ -66,7 +66,7 @@ describe('GroupPage', () => {
             />,
         );
 
-        const targetString = `to ${testDatabaseName} see full group details`;
+        const targetString = `to ${testDatabaseName} to see full group details`;
         expect(screen.queryByText(targetString)).toBeVisible();
         expect(screen.queryByText(testGroups[0].contactEmail!)).toBeNull();
         expect(screen.getByRole('heading', { name: `Sequences available in ${testDatabaseName}` })).toBeVisible();
