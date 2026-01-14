@@ -65,11 +65,18 @@ const getGroupsOfUserEndpoint = makeEndpoint({
     response: z.array(group),
     errors: [notAuthorizedError],
 });
-const getAllGroupsEndpoint = makeEndpoint({
+const getGroupsEndpoint = makeEndpoint({
     method: 'get',
     path: '/groups',
     alias: 'getAllGroups',
-    parameters: [authorizationHeader],
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'name',
+            type: 'Query',
+            schema: z.string().optional(),
+        },
+    ],
     response: z.array(group),
     errors: [notAuthorizedError],
 });
@@ -80,5 +87,5 @@ export const groupManagementApi = makeApi([
     removeUserFromGroupEndpoint,
     getGroupDetailsEndpoint,
     getGroupsOfUserEndpoint,
-    getAllGroupsEndpoint,
+    getGroupsEndpoint,
 ]);

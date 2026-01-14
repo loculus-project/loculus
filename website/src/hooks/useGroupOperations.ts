@@ -76,6 +76,19 @@ export const useGroupCreation = ({
     };
 };
 
+export const useGetGroups = ({ clientConfig, accessToken }: { clientConfig: ClientConfig; accessToken: string }) => {
+    const { zodios } = useGroupManagementClient(clientConfig);
+
+    const getGroups = useCallback(
+        async (groupName?: string) => callGetGroups(accessToken, zodios)(groupName),
+        [accessToken, zodios],
+    );
+
+    return {
+        getGroups,
+    };
+};
+
 export const useGroupEdit = ({ clientConfig, accessToken }: { clientConfig: ClientConfig; accessToken: string }) => {
     const { zodios } = useGroupManagementClient(clientConfig);
 
@@ -124,6 +137,37 @@ function callCreateGroup(accessToken: string, zodios: ZodiosInstance<typeof grou
                 succeeded: false,
                 errorMessage: message,
             } as CreateGroupError;
+        }
+    };
+}
+
+type GetGroupsSuccess = {
+    succeeded: true;
+    groups: Group[];
+};
+type GetGroupsError = {
+    succeeded: false;
+    errorMessage: string;
+};
+export type GetGroupsResult = GetGroupsSuccess | GetGroupsError;
+
+function callGetGroups(accessToken: string, zodios: ZodiosInstance<typeof groupManagementApi>) {
+    return async (groupName?: string) => {
+        try {
+            const existingGroups = await zodios.getAllGroups({
+                headers: createAuthorizationHeader(accessToken),
+                queries: { name: groupName },
+            });
+            return {
+                succeeded: true,
+                groups: existingGroups,
+            } as GetGroupsSuccess;
+        } catch (error) {
+            const message = `Failed to query existing groups: ${stringifyMaybeAxiosError(error)}`;
+            return {
+                succeeded: false,
+                errorMessage: message,
+            } as GetGroupsError;
         }
     };
 }
