@@ -45,6 +45,11 @@ interface GroupFormProps {
      */
     defaultGroupData?: NewGroup;
     /**
+     * Provide this when editing existing group to prevent 'existing group alert'
+     * for the group that's currently being edited
+     */
+    editingGroupId?: number;
+    /**
      * A handler to call when the button is clicked (i.e. create or update a group).
      * @param group The new group information entered into the form.
      * @returns A submit success or error.
@@ -70,10 +75,17 @@ export type GroupSubmitError = {
 };
 export type GroupSubmitResult = GroupSubmitSuccess | GroupSubmitError;
 
-export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupData, onSubmit, getGroups }) => {
+export const GroupForm: FC<GroupFormProps> = ({
+    title,
+    buttonText,
+    defaultGroupData,
+    editingGroupId,
+    onSubmit,
+    getGroups,
+}) => {
     const [currentGroup, setCurrentGroup] = useState<NewGroup>(PLACEHOLDER_NEWGROUP);
     const [existingGroups, setExistingGroups] = useState<Group[]>([]);
-    const isExistingGroupModalOpen = existingGroups.length > 0;
+    const [isExistingGroupModalOpen, setIsExistingGroupModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
@@ -107,11 +119,13 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
 
         const existingGroupsResult = await getGroups(group.groupName);
         if (existingGroupsResult.succeeded) {
-            if (existingGroupsResult.groups.length === 0) {
+            const existingGroups = existingGroupsResult.groups.filter((group) => group.groupId !== editingGroupId);
+            if (existingGroups.length === 0) {
                 await submitGroup(group);
                 return;
             }
-            setExistingGroups(existingGroupsResult.groups);
+            setExistingGroups(existingGroups);
+            setIsExistingGroupModalOpen(true);
         } else {
             setErrorMessage(existingGroupsResult.errorMessage);
         }
@@ -156,7 +170,7 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
                     <ExistingGroupsModal
                         title='Group name already in use!'
                         isOpen={isExistingGroupModalOpen}
-                        onClose={() => setExistingGroups([])}
+                        onClose={() => setIsExistingGroupModalOpen(false)}
                         newGroup={currentGroup}
                         existingGroups={existingGroups}
                         submitFromModal={submitFromModal}

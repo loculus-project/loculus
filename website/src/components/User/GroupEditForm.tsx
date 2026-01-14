@@ -47,6 +47,7 @@ const InnerGroupEditForm: FC<GroupEditFormProps> = ({ prefetchedGroupDetails, cl
             buttonText='Update group'
             onSubmit={handleEditGroup}
             defaultGroupData={groupInfo}
+            editingGroupId={groupId}
             getGroups={getGroups}
         />
     );
