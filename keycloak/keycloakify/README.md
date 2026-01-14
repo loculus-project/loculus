@@ -75,3 +75,7 @@ npm run build-keycloak-theme
 
 Note that by default Keycloakify generates multiple .jar files for different versions of Keycloak.  
 You can customize this behavior, see documentation [here](https://docs.keycloakify.dev/targeting-specific-keycloak-versions).
+
+## Maintenance notes
+
+The produced theme jars are differ for different Keycloak versions. Targeting of versions happens in `vite.config.ts`.
