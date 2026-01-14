@@ -29,6 +29,7 @@ import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import MaterialSymbolsTune from '~icons/material-symbols/tune';
 import StreamlineWrench from '~icons/streamline/wrench';
+import { getIdentifier } from '../../utils/referenceSelection.ts';
 
 const queryClient = new QueryClient();
 
@@ -63,9 +64,16 @@ export const SearchForm = ({
     setSelectedReferences,
     selectedReferences,
 }: SearchFormProps) => {
-    const visibleFields = filterSchema.filters.filter(
-        (field) => searchVisibilities.get(field.name)?.isVisible(selectedReferences) ?? false,
-    );
+    const segments = Object.keys(referenceGenomesMap);
+    const isMulti = segments.length > 1;
+
+    const excluded = new Set<string>([
+        ACCESSION_FIELD,
+        ...segments.map((segmentName) => getIdentifier(referenceIdentifierField, segmentName, isMulti)),
+    ]);
+    const visibleFields = filterSchema.filters
+        .filter((field) => searchVisibilities.get(field.name)?.isVisible(selectedReferences) ?? false)
+        .filter((field) => !excluded.has(field.name));
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);
@@ -95,8 +103,7 @@ export const SearchForm = ({
     }, [filterSchema]);
 
     const fieldItems: FieldItem[] = filterSchema.filters
-        .filter((filter) => filter.name !== ACCESSION_FIELD) // Exclude accession field
-        .filter((filter) => filter.name !== referenceIdentifierField)
+        .filter((filter) => !excluded.has(filter.name))
         .filter((filter) => !filter.notSearchable)
         .map((filter) => ({
             name: filter.name,
