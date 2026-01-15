@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import type { SegmentAndGeneInfo } from './getSegmentAndGeneInfo.tsx';
 import {
     intoMutationSearchParams,
     type MutationQuery,
@@ -9,6 +8,7 @@ import {
     removeMutationQueries,
     serializeMutationQueries,
 } from './mutation';
+import type { SegmentAndGeneInfo } from './sequenceTypeHelpers';
 
 describe('mutation', () => {
     describe('single segment', () => {
@@ -16,11 +16,10 @@ describe('mutation', () => {
             nucleotideSegmentInfos: [
                 {
                     lapisName: 'lapisName-main',
-                    label: 'label-main',
+                    name: 'label-main',
                 },
             ],
             geneInfos,
-            isMultiSegmented: false,
         };
 
         const nucleotideMutationCases: [string, MutationQuery][] = [
@@ -84,11 +83,10 @@ describe('mutation', () => {
             nucleotideSegmentInfos: [
                 {
                     lapisName: 'lapisName-main',
-                    label: 'label-main',
+                    name: 'label-main',
                 },
             ],
             geneInfos,
-            isMultiSegmented: true,
         };
 
         const nucleotideMutationCases: [string, MutationQuery][] = [
@@ -171,15 +169,14 @@ describe('mutation', () => {
             nucleotideSegmentInfos: [
                 {
                     lapisName: 'lapisName-SEQ1',
-                    label: 'label-SEQ1',
+                    name: 'label-SEQ1',
                 },
                 {
                     lapisName: 'lapisName-SEQ2',
-                    label: 'label-SEQ2',
+                    name: 'label-SEQ2',
                 },
             ],
             geneInfos,
-            isMultiSegmented: true,
         };
 
         const nucleotideMutationCases: [string, MutationQuery][] = [
@@ -381,10 +378,10 @@ const aminoAcidInsertionCases: [string, MutationQuery][] = [
 const geneInfos = [
     {
         lapisName: 'lapisName-gene1',
-        label: 'label-gene1',
+        name: 'label-gene1',
     },
     {
         lapisName: 'lapisName-gene2',
-        label: 'label-gene2',
+        name: 'label-gene2',
     },
 ];

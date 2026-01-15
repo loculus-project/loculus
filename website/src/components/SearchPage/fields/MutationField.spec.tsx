@@ -3,27 +3,25 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
 import { MutationField } from './MutationField.tsx';
-import type { SegmentAndGeneInfo } from '../../../utils/getSegmentAndGeneInfo.tsx';
+import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
 
 const singleReferenceSegmentAndGeneInfo: SegmentAndGeneInfo = {
-    nucleotideSegmentInfos: [{ lapisName: 'main', label: 'main' }],
+    nucleotideSegmentInfos: [{ lapisName: 'main', name: 'main' }],
     geneInfos: [
-        { lapisName: 'gene1', label: 'gene1' },
-        { lapisName: 'gene2', label: 'gene2' },
+        { lapisName: 'gene1', name: 'gene1' },
+        { lapisName: 'gene2', name: 'gene2' },
     ],
-    isMultiSegmented: false,
 };
 
 const multireferenceGenomesMap: SegmentAndGeneInfo = {
     nucleotideSegmentInfos: [
-        { lapisName: 'seg1', label: 'seg1' },
-        { lapisName: 'seg2', label: 'seg2' },
+        { lapisName: 'seg1', name: 'seg1' },
+        { lapisName: 'seg2', name: 'seg2' },
     ],
     geneInfos: [
-        { lapisName: 'gene1', label: 'gene1' },
-        { lapisName: 'gene2', label: 'gene2' },
+        { lapisName: 'gene1', name: 'gene1' },
+        { lapisName: 'gene2', name: 'gene2' },
     ],
-    isMultiSegmented: true,
 };
 
 function renderField(

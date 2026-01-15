@@ -1,5 +1,4 @@
 import { validateSingleValue } from './extractFieldValue';
-import { getSegmentAndGeneInfo } from './getSegmentAndGeneInfo.tsx';
 import { getIdentifier } from './referenceSelection.ts';
 import {
     getColumnVisibilitiesFromQuery,
@@ -15,22 +14,23 @@ import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQ
 import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
 import type { FieldValues, Schema } from '../types/config';
-import type { ReferenceGenomesMap } from '../types/referencesGenomes.ts';
+import type { ReferenceGenomes } from '../types/referencesGenomes.ts';
+import { getSegmentAndGeneInfo } from './sequenceTypeHelpers.ts';
 
 export const performLapisSearchQueries = async (
     state: QueryState,
     schema: Schema,
-    referenceGenomesMap: ReferenceGenomesMap,
+    referenceGenomes: ReferenceGenomes,
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
     const selectedReferences = useSelectedReferences({
-        referenceGenomesMap,
+        referenceGenomes,
         schema,
         state,
     });
 
-    const suborganismSegmentAndGeneInfo = getSegmentAndGeneInfo(referenceGenomesMap, selectedReferences);
+    const suborganismSegmentAndGeneInfo = getSegmentAndGeneInfo(referenceGenomes, selectedReferences);
 
     const filterSchema = new MetadataFilterSchema(schema.metadata);
     const fieldValues = filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
@@ -82,13 +82,13 @@ export const performLapisSearchQueries = async (
 
 //TODO: this is a duplication because I cant use react here
 type UseSelectedReferencesArgs = {
-    referenceGenomesMap: ReferenceGenomesMap;
+    referenceGenomes: ReferenceGenomes;
     schema: { referenceIdentifierField?: string };
     state: Record<string, unknown>;
 };
 
-export function useSelectedReferences({ referenceGenomesMap, schema, state }: UseSelectedReferencesArgs) {
-    const segments = Object.keys(referenceGenomesMap);
+export function useSelectedReferences({ referenceGenomes, schema, state }: UseSelectedReferencesArgs) {
+    const segments = Object.keys(referenceGenomes.segmentReferenceGenomes);
     const result: Record<string, string | null> = {};
 
     segments.forEach((segmentName) => {

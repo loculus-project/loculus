@@ -10,7 +10,7 @@ import { routes } from '../../routes/routes';
 import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
-import { type ReferenceGenomesMap } from '../../types/referencesGenomes';
+import { type ReferenceGenomes } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
@@ -27,7 +27,7 @@ interface Props {
     myGroups: Group[];
     accessToken: string | undefined;
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
-    referenceGenomeSequenceNames: ReferenceGenomesMap;
+    referenceGenomes: ReferenceGenomes;
 }
 
 export const SequenceDataUI: FC<Props> = ({
@@ -41,7 +41,7 @@ export const SequenceDataUI: FC<Props> = ({
     myGroups,
     accessToken,
     sequenceFlaggingConfig,
-    referenceGenomeSequenceNames,
+    referenceGenomes,
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
 
@@ -68,7 +68,7 @@ export const SequenceDataUI: FC<Props> = ({
                 dataTableData={dataTableData}
                 segmentReferences={segmentReferences}
                 dataUseTermsHistory={dataUseTermsHistory}
-                referenceGenomesMap={referenceGenomeSequenceNames}
+                referenceGenomes={referenceGenomes}
             />
             {schema.submissionDataTypes.consensusSequences && !referencesUnassigned && (
                 <div className='mt-10'>
@@ -77,7 +77,7 @@ export const SequenceDataUI: FC<Props> = ({
                         segmentReferences={segmentReferences}
                         accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
-                        referenceGenomesMap={referenceGenomeSequenceNames}
+                        referenceGenomes={referenceGenomes}
                         loadSequencesAutomatically={loadSequencesAutomatically}
                     />
                 </div>

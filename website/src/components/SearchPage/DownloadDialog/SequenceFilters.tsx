@@ -1,7 +1,7 @@
 import { type FieldValues } from '../../../types/config.ts';
-import type { SegmentAndGeneInfo } from '../../../utils/getSegmentAndGeneInfo.tsx';
 import { intoMutationSearchParams } from '../../../utils/mutation.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
+import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
@@ -75,7 +75,7 @@ export class FieldFilterSet implements SequenceFilter {
             new MetadataFilterSchema([]),
             {},
             {},
-            { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
+            { nucleotideSegmentInfos: [], geneInfos: [] },
         );
     }
 

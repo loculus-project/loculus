@@ -1,6 +1,6 @@
 import { type FC, useId, useMemo } from 'react';
 
-import { type ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import { getIdentifier } from '../../utils/referenceSelection.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
 import { Button } from '../common/Button.tsx';
@@ -8,7 +8,7 @@ import MaterialSymbolsClose from '~icons/material-symbols/close';
 
 type ReferenceSelectorProps = {
     filterSchema: MetadataFilterSchema;
-    referenceGenomesMap: ReferenceGenomesMap;
+    referenceGenomes: ReferenceGenomes;
     referenceIdentifierField: string;
     setSelectedReferences: (newValues: Record<string, string | null>) => void;
     selectedReferences: Record<string, string | null>;
@@ -22,18 +22,18 @@ type ReferenceSelectorProps = {
  */
 export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
     filterSchema,
-    referenceGenomesMap,
+    referenceGenomes,
     referenceIdentifierField,
     selectedReferences,
     setSelectedReferences,
 }) => {
     const baseSelectId = useId();
 
-    const segments = Object.keys(referenceGenomesMap);
+    const segments = Object.keys(referenceGenomes);
 
     // Only keep segments that actually need a selector
     const segmentsWithMultipleReferences = segments.filter(
-        (segment) => Object.keys(referenceGenomesMap[segment]).length > 1,
+        (segment) => Object.keys(referenceGenomes.segmentReferenceGenomes[segment]).length > 1,
     );
 
     if (segmentsWithMultipleReferences.length === 0) {
@@ -41,7 +41,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
     }
 
     const labelsBySegment = useMemo(() => {
-        const segments = Object.keys(referenceGenomesMap);
+        const segments = Object.keys(referenceGenomes.segmentReferenceGenomes);
 
         return segments.reduce<Record<string, string | undefined>>((acc, segmentName) => {
             const identifier = getIdentifier(
@@ -54,7 +54,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
 
             return acc;
         }, {});
-    }, [filterSchema, referenceIdentifierField, referenceGenomesMap]);
+    }, [filterSchema, referenceIdentifierField, referenceGenomes]);
 
     return (
         <>
@@ -83,7 +83,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                                     Select {formatLabel(labelsBySegment[segment] ?? '')}...
                                 </option>
 
-                                {Object.keys(referenceGenomesMap[segment]).map((reference) => (
+                                {Object.keys(referenceGenomes.segmentReferenceGenomes[segment]).map((reference) => (
                                     <option key={reference} value={reference}>
                                         {reference}
                                     </option>

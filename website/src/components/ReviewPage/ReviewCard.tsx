@@ -33,6 +33,7 @@ import Files from '~icons/lucide/files';
 import RiDna from '~icons/mdi/dna';
 import TickOutline from '~icons/mdi/tick-outline';
 import WpfPaperPlane from '~icons/wpf/paper-plane';
+import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
@@ -44,7 +45,7 @@ type ReviewCardProps = {
     organism: string;
     accessToken: string;
     filesEnabled: boolean;
-    segmentAndGeneDisplayNameMap: Map<string, string | null>;
+    referenceGenomes: ReferenceGenomes;
 };
 
 export const ReviewCard: FC<ReviewCardProps> = ({
@@ -57,7 +58,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     organism,
     accessToken,
     filesEnabled,
-    segmentAndGeneDisplayNameMap,
+    referenceGenomes,
 }) => {
     const [isSequencesDialogOpen, setSequencesDialogOpen] = useState(false);
     const [isFilesDialogOpen, setFilesDialogOpen] = useState(false);
@@ -122,7 +123,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                 isOpen={isSequencesDialogOpen}
                 onClose={() => setSequencesDialogOpen(false)}
                 dataToView={data}
-                segmentAndGeneDisplayNameMap={segmentAndGeneDisplayNameMap}
+                referenceGenomes={referenceGenomes}
             />
             <FilesDialog isOpen={isFilesDialogOpen} onClose={() => setFilesDialogOpen(false)} dataToView={data} />
         </div>
