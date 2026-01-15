@@ -24,9 +24,8 @@ export const ReferenceGenomesMap = z.record(
     z.record(
         z.string(), // reference name
         z.object({
-            sequence: z.string(),
             insdcAccessionFull: z.string().optional(),
-            genes: z.record(z.string(), z.object({ sequence: z.string() })).optional(),
+            genes: z.array(z.string()).optional(),
         }),
     ),
 );
@@ -59,11 +58,10 @@ export function toReferenceGenomesMap(values: ReferenceGenomes): ReferenceGenome
 
         for (const ref of genome.references) {
             out[segmentName][ref.reference_name] = {
-                sequence: ref.sequence,
                 ...(ref.insdcAccessionFull ? { insdcAccessionFull: ref.insdcAccessionFull } : {}),
                 ...(ref.genes
                     ? {
-                          genes: Object.fromEntries(ref.genes.map((g) => [g.name, { sequence: g.sequence }])),
+                          genes: ref.genes.map((gene) => gene.name),
                       }
                     : {}),
             };
