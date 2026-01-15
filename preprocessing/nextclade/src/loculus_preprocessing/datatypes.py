@@ -177,6 +177,15 @@ class ProcessingResult:
 class SegmentClassificationMethod(StrEnum):
     ALIGN = "align"
     MINIMIZER = "minimizer"
+    DIAMOND = "diamond"
+
+    @property
+    def display_name(self) -> str:
+        return {
+            SegmentClassificationMethod.ALIGN: "nextclade align",
+            SegmentClassificationMethod.MINIMIZER: "nextclade sort",
+            SegmentClassificationMethod.DIAMOND: "diamond",
+        }[self]
 
 
 @dataclass

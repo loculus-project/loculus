@@ -661,7 +661,7 @@
                                 "type": "string",
                                 "description": "Optional. Server from which to download the nextclade dataset to use to align the sequence. If not specified, use the global nextclade_dataset_server."
                               },
-                              "accepted_sort_matches": {
+                              "accepted_dataset_matches": {
                                 "groups": ["nextcladeSegment"],
                                 "docsIncludePrefix": false,
                                 "type": "array",

@@ -78,11 +78,11 @@ defaultOrganisms:
               references:
               - reference_name: CV-A16
                 nextclade_dataset_name: enpen/enterovirus/cv-a16
-                accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
+                accepted_dataset_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
                 genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
               - reference_name: CV-A10
                 nextclade_dataset_name: enpen/enterovirus/cv-a10
-                accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
+                accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
                 genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output
     # `referenceGenomes` is now an object { suborganismName: referenceGenomeOfThatSuborganism }

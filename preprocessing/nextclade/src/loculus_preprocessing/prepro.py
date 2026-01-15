@@ -8,6 +8,7 @@ from typing import Any
 import dpath
 
 from .backend import (
+    download_diamond_db,
     download_minimizer,
     fetch_unprocessed_sequences,
     request_upload,
@@ -599,6 +600,11 @@ def run(config: Config) -> None:
             or config.require_nextclade_sort_match
         ):
             download_minimizer(config, dataset_dir + "/minimizer/minimizer.json")
+        if (
+            config.diamond_dmnd_url
+            and config.segment_classification_method == SegmentClassificationMethod.DIAMOND
+        ):
+            download_diamond_db(config, dataset_dir + "/diamond/diamond.dmnd")
         total_processed = 0
         etag = None
         last_force_refresh = time.time()
