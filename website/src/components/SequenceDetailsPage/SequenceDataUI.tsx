@@ -19,7 +19,7 @@ import MdiEye from '~icons/mdi/eye';
 interface Props {
     tableData: TableDataEntry[];
     organism: string;
-    segmentReferences: Record<string, string> | null;
+    segmentReferences: Record<string, string | null>;
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     schema: Schema;
@@ -59,6 +59,8 @@ export const SequenceDataUI: FC<Props> = ({
 
     const reportUrl = getGitHubReportUrl(sequenceFlaggingConfig, organism, accessionVersion);
 
+    const referencesUnassigned = Object.values(segmentReferences).some((ref) => ref === null);
+
     return (
         <>
             {isRestricted && <RestrictedUseWarning />}
@@ -68,7 +70,7 @@ export const SequenceDataUI: FC<Props> = ({
                 dataUseTermsHistory={dataUseTermsHistory}
                 referenceGenomesMap={referenceGenomeSequenceNames}
             />
-            {schema.submissionDataTypes.consensusSequences && segmentReferences !== null && (
+            {schema.submissionDataTypes.consensusSequences && !referencesUnassigned && (
                 <div className='mt-10'>
                     <SequencesContainer
                         organism={organism}
