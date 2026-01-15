@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 
 import { Button } from '../common/Button';
 
@@ -18,7 +18,7 @@ type NavigationTabProps =
           className?: string;
       };
 
-export const NavigationTab: React.FC<NavigationTabProps> = (props) => {
+export const NavigationTab = forwardRef<HTMLAnchorElement | HTMLButtonElement, NavigationTabProps>((props, ref) => {
     const { isActive = false, children, className = '' } = props;
 
     const baseClasses =
@@ -31,15 +31,17 @@ export const NavigationTab: React.FC<NavigationTabProps> = (props) => {
 
     if (props.as === 'a') {
         return (
-            <a href={props.href} className={combinedClassName}>
+            <a ref={ref as React.Ref<HTMLAnchorElement>} href={props.href} className={combinedClassName}>
                 {children}
             </a>
         );
     }
 
     return (
-        <Button onClick={props.onClick} className={combinedClassName}>
+        <Button ref={ref as React.Ref<HTMLButtonElement>} onClick={props.onClick} className={combinedClassName}>
             {children}
         </Button>
     );
-};
+});
+
+NavigationTab.displayName = 'NavigationTab';
