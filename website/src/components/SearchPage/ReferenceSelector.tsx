@@ -29,7 +29,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
 }) => {
     const baseSelectId = useId();
 
-    const segments = Object.keys(referenceGenomes);
+    const segments = Object.keys(referenceGenomes.segmentReferenceGenomes);
 
     // Only keep segments that actually need a selector
     const segmentsWithMultipleReferences = segments.filter(
