@@ -17,12 +17,12 @@ import {
     DATA_USE_TERMS_FIELD,
 } from '../../settings';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import type { ReferenceGenomesMap } from '../../types/referencesGenomes';
+import type { ReferenceGenomes } from '../../types/referencesGenomes';
 
 interface Props {
     tableData: TableDataEntry[];
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    referenceGenomesMap: ReferenceGenomesMap;
+    referenceGenomesMap: ReferenceGenomes;
     segmentReferences: Record<string, string> | null;
 }
 
