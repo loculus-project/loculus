@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SegmentPresenceField } from './SegmentPresenceField';
-import type { FieldValues, SetSomeFieldValues } from '../../../types/config.ts';
+import type { FieldValues } from '../../../types/config.ts';
 import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 
 describe('SegmentPresenceField', () => {

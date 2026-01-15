@@ -4,6 +4,9 @@ import type { FieldValues, SetSomeFieldValues } from '../../../types/config.ts';
 import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import DisabledUntilHydrated from '../../DisabledUntilHydrated';
 
+// The minimum length value to filter for segment presence
+const MINIMUM_SEGMENT_LENGTH = '1';
+
 interface SegmentPresenceFieldProps {
     suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo;
     fieldValues: FieldValues;
@@ -45,7 +48,7 @@ export const SegmentPresenceField: FC<SegmentPresenceFieldProps> = ({
         if (isChecked) {
             newCheckedSegments.add(segmentLapisName);
             // Set the length filter to require length > 0
-            setSomeFieldValues([lengthFieldName, '1']);
+            setSomeFieldValues([lengthFieldName, MINIMUM_SEGMENT_LENGTH]);
         } else {
             newCheckedSegments.delete(segmentLapisName);
             // Clear the length filter
@@ -56,23 +59,23 @@ export const SegmentPresenceField: FC<SegmentPresenceFieldProps> = ({
     };
 
     return (
-        <DisabledUntilHydrated>
-            <div className='mb-3 p-3 border border-gray-300 rounded-md'>
-                <h3 className='text-sm font-medium text-gray-700 mb-2'>Required segments</h3>
-                <div className='space-y-2'>
-                    {segments.map((segment) => (
-                        <label key={segment.lapisName} className='flex items-center cursor-pointer'>
+        <div className='mb-3 p-3 border border-gray-300 rounded-md'>
+            <h3 className='text-sm font-medium text-gray-700 mb-2'>Required segments</h3>
+            <div className='space-y-2'>
+                {segments.map((segment) => (
+                    <label key={segment.lapisName} className='flex items-center cursor-pointer'>
+                        <DisabledUntilHydrated>
                             <input
                                 type='checkbox'
                                 checked={localCheckedSegments.has(segment.lapisName)}
                                 onChange={(e) => handleCheckboxChange(segment.lapisName, e.target.checked)}
                                 className='h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded cursor-pointer'
                             />
-                            <span className='ml-2 text-sm text-gray-700'>{segment.label}</span>
-                        </label>
-                    ))}
-                </div>
+                        </DisabledUntilHydrated>
+                        <span className='ml-2 text-sm text-gray-700'>{segment.label}</span>
+                    </label>
+                ))}
             </div>
-        </DisabledUntilHydrated>
+        </div>
     );
 };
