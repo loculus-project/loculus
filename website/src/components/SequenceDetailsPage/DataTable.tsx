@@ -13,7 +13,7 @@ interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     referenceGenomesMap: ReferenceGenomesMap;
-    segmentReferences: Record<string, string> | null;
+    segmentReferences: Record<string, string | null>;
 }
 
 const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) => {
@@ -43,7 +43,7 @@ const DataTableComponent: React.FC<Props> = ({
     if (segmentReferences !== null) {
         for (const [segmentName, referenceName] of Object.entries(segmentReferences)) {
             const segmentData = referenceGenomesMap[segmentName];
-            if (segmentData?.[referenceName] === undefined) {
+            if (referenceName === null) {
                 continue;
             }
             const accession = segmentData?.[referenceName].insdcAccessionFull;
