@@ -1,4 +1,13 @@
 import type { MDXInstance } from 'astro';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(#3451) use content collections for proper types
-export type MdxPage = MDXInstance<Record<string, any>>;
+/**
+ * Frontmatter properties used by MDX pages.
+ * These properties are accessed in components like DocsMenu.
+ */
+export interface MdxFrontmatter extends Record<string, unknown> {
+    title?: string;
+    menuTitle?: string;
+    order?: number;
+}
+
+export type MdxPage = MDXInstance<MdxFrontmatter>;

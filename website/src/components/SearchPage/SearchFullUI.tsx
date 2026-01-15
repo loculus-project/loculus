@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '../common/Button';
@@ -61,7 +62,6 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
     return `Search returned ${formattedCount} sequence${pluralSuffix}`;
 };
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) this component is a mess a needs to be refactored */
 export const InnerSearchFullUI = ({
     accessToken,
     referenceGenomeLightweightSchema,
@@ -180,7 +180,7 @@ export const InnerSearchFullUI = ({
                 type: orderDirection,
             },
         ];
-        // @ts-expect-error because the hooks don't accept OrderBy
+        // @ts-expect-error Zodios-generated types don't match the spread of LapisSearchParameters due to catchall type differences
         detailsHook.mutate({
             ...lapisSearchParameters,
             fields: [...columnsToShow, schema.primaryKey],
@@ -264,8 +264,7 @@ export const InnerSearchFullUI = ({
                 <RecentSequencesBanner organism={organism} />
 
                 {(detailsHook.isError || aggregatedHook.isError) &&
-                    // @ts-expect-error because response is not expected on error, but does exist
-                    (aggregatedHook.error?.response?.status === 503 ? (
+                    (isAxiosError(aggregatedHook.error) && aggregatedHook.error.response?.status === 503 ? (
                         <div className='p-3 rounded-lg text-lg text-gray-700 text-italic'>
                             {' '}
                             The retrieval database is currently initializing – please check back later.

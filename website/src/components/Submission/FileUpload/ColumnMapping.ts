@@ -111,8 +111,7 @@ export class ColumnMapping {
         if (other === null) {
             return false;
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mapsAreEqual = (m1: ReadonlyMap<any, any>, m2: ReadonlyMap<any, any>) =>
+        const mapsAreEqual = <K, V>(m1: ReadonlyMap<K, V>, m2: ReadonlyMap<K, V>) =>
             m1.size === m2.size && Array.from(m1.keys()).every((key) => m1.get(key) === m2.get(key));
 
         return mapsAreEqual(this.map, other.map);

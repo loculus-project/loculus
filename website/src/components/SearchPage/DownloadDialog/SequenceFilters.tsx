@@ -1,12 +1,9 @@
-import { type FieldValues } from '../../../types/config.ts';
+import { type FieldValue, type FieldValues } from '../../../types/config.ts';
 import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import { intoMutationSearchParams } from '../../../utils/mutation.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
- TODO(#3451) we should use `unknown` or proper types instead of `any` */
-
-export type LapisSearchParameters = Record<string, any>;
+export type LapisSearchParameters = Record<string, string | string[] | undefined>;
 
 export interface SequenceFilter {
     /**
@@ -88,22 +85,41 @@ export class FieldFilterSet implements SequenceFilter {
     }
 
     public toApiParams(): LapisSearchParameters {
-        const sequenceFilters = Object.fromEntries(
-            Object.entries(this.fieldValues as Record<string, any>).filter(
-                ([, value]) => value !== undefined && value !== '',
-            ),
-        );
+        const sequenceFilters: Record<string, string | string[] | undefined> = {};
+
+        // Copy non-empty field values, converting as needed
+        for (const [key, value] of Object.entries(this.fieldValues)) {
+            if (value === '' || value === null) {
+                continue;
+            }
+            if (Array.isArray(value)) {
+                // Filter out nulls from arrays and keep non-empty arrays
+                const filtered = value.filter((v): v is string => v !== null);
+                if (filtered.length > 0) {
+                    sequenceFilters[key] = filtered;
+                }
+            } else {
+                sequenceFilters[key] = value;
+            }
+        }
+
+        // Apply substring regex transformation
         for (const filterName of Object.keys(sequenceFilters)) {
-            if (this.filterSchema.isSubstringSearchEnabled(filterName) && sequenceFilters[filterName] !== undefined) {
-                sequenceFilters[filterName.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(
-                    sequenceFilters[filterName],
-                );
+            const filterValue = sequenceFilters[filterName];
+            if (
+                this.filterSchema.isSubstringSearchEnabled(filterName) &&
+                filterValue !== undefined &&
+                typeof filterValue === 'string'
+            ) {
+                sequenceFilters[filterName.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(filterValue);
                 delete sequenceFilters[filterName];
             }
         }
 
-        if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
-            sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
+        // Convert accession text to list
+        const accessionValue = sequenceFilters.accession;
+        if (accessionValue !== undefined && typeof accessionValue === 'string' && accessionValue !== '') {
+            sequenceFilters.accession = textAccessionsToList(accessionValue);
         }
 
         delete sequenceFilters.mutation;
@@ -140,7 +156,10 @@ export class FieldFilterSet implements SequenceFilter {
 
         // accession
         if (lapisSearchParameters.accession !== undefined) {
-            lapisSearchParameters.accession.forEach((a: any) => result.push(['accession', String(a)]));
+            const accessions = lapisSearchParameters.accession;
+            if (Array.isArray(accessions)) {
+                accessions.forEach((a) => result.push(['accession', a]));
+            }
         }
 
         // mutations
@@ -192,24 +211,23 @@ export class FieldFilterSet implements SequenceFilter {
         );
     }
 
-    private filterValueDisplayString(fieldName: string, value: any): string | (string | null)[] {
+    private filterValueDisplayString(fieldName: string, value: FieldValue): string | (string | null)[] {
         if (Array.isArray(value)) {
             // Preserve arrays (including nulls) so ActiveFilters can render them correctly
-            return value as (string | null)[];
+            return value;
         }
 
-        let result = value;
+        let result: string = value ?? '';
         if (this.filterSchema.getType(fieldName) === 'timestamp') {
             const date = new Date(Number(value) * 1000);
             result = date.toISOString().split('T')[0]; // Extract YYYY-MM-DD
         }
-        if (typeof result === 'string' && result.length > 40) {
+        if (result.length > 40) {
             result = `${result.substring(0, 37)}...`;
         }
         return result;
     }
 }
-/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
 const textAccessionsToList = (text: string): string[] => {
     const accessions = text

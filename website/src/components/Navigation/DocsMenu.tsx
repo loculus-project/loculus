@@ -38,11 +38,11 @@ const groupPagesByDirectory = (pages: MdxPage[]): GroupedPages => {
     // Sort pages within each directory
     Object.values(groupedPages).forEach((pages) => {
         pages.sort((a, b) => {
-            const orderA = (a.frontmatter.order ?? Infinity) as number;
-            const orderB = (b.frontmatter.order ?? Infinity) as number;
+            const orderA = a.frontmatter.order ?? Infinity;
+            const orderB = b.frontmatter.order ?? Infinity;
             return orderA !== orderB
                 ? orderA - orderB
-                : (a.frontmatter.title as string).localeCompare(b.frontmatter.title as string);
+                : (a.frontmatter.title ?? '').localeCompare(b.frontmatter.title ?? '');
         });
     });
 
@@ -64,7 +64,7 @@ const MenuItem: FC<MenuItemProps> = ({ page, currentPageUrl }) => (
                 page.url === currentPageUrl ? 'font-bold' : ''
             }`}
         >
-            {(page.frontmatter.menuTitle ?? page.frontmatter.title) as string}
+            {page.frontmatter.menuTitle ?? page.frontmatter.title ?? ''}
         </a>
     </li>
 );
@@ -86,7 +86,7 @@ const MenuSection: FC<MenuSectionProps> = ({ dir, pages, indexPage, currentPageU
                         indexPage.url === currentPageUrl ? 'font-bold' : ''
                     }`}
                 >
-                    {indexPage.frontmatter.title as string}
+                    {indexPage.frontmatter.title ?? ''}
                 </a>
             ) : (
                 toTitleCase(dir.replaceAll('-', ' '))
@@ -105,8 +105,8 @@ const DocsMenu: FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
 
     // Sort directories based on index page order
     const sortedDirectories = Object.keys(groupedPages).sort((a, b) => {
-        const orderA = ((a in indexPages ? indexPages[a].frontmatter.order : undefined) ?? Infinity) as number;
-        const orderB = ((b in indexPages ? indexPages[b].frontmatter.order : undefined) ?? Infinity) as number;
+        const orderA = (a in indexPages ? indexPages[a].frontmatter.order : undefined) ?? Infinity;
+        const orderB = (b in indexPages ? indexPages[b].frontmatter.order : undefined) ?? Infinity;
         return orderA - orderB;
     });
 

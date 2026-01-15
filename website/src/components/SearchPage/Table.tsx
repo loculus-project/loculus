@@ -19,17 +19,23 @@ export type TableSequenceData = {
 };
 
 function formatField(value: unknown, type: string): string {
-    if (typeof value === 'number' && Number.isInteger(value)) {
-        if (type === 'timestamp') {
+    if (typeof value === 'number') {
+        if (Number.isInteger(value) && type === 'timestamp') {
             return new Date(value * 1000).toISOString().slice(0, 10);
         }
         return formatNumberWithDefaultLocale(value);
-    } else if (typeof value === 'boolean') {
+    }
+    if (typeof value === 'boolean') {
         return value ? 'True' : 'False';
-    } else {
-        // @ts-expect-error: TODO(#3451) add proper types
+    }
+    if (value === null || value === undefined) {
+        return '';
+    }
+    if (typeof value === 'string') {
         return value;
     }
+    // Handle remaining types (object, symbol, bigint, function)
+    return JSON.stringify(value);
 }
 
 type TableProps = {
