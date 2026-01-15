@@ -603,7 +603,7 @@
                     "groups": ["nextcladePipelineConfigFile"],
                     "docsIncludePrefix": false,
                     "type": "string",
-                    "enum": ["minimizer", "align"],
+                    "enum": ["minimizer", "align", "diamond"],
                     "description": "Method to classify segments for multi-segmented viruses"
                   },
                   "nextclade_dataset_server": {
@@ -665,7 +665,7 @@
                                 "groups": ["nextcladeSegment"],
                                 "docsIncludePrefix": false,
                                 "type": "array",
-                                "description": "Optional. Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use only accept matches with the same name or nextclade_dataset_name."
+                                "description": "Optional. Array of strings. The dataset names that are accepted as matches when using nextclade sort or diamond, if not specified use only accept matches with the same name or nextclade_dataset_name."
                               },
                               "genes": {
                                 "groups": ["nextcladeSegment"],
