@@ -23,7 +23,7 @@ import { withQueryProvider } from '../../common/withQueryProvider.tsx';
 
 type SequenceContainerProps = {
     organism: string;
-    segmentReferences: Record<string, string>;
+    segmentReferences: Record<string, string | null>;
     accessionVersion: string;
     clientConfig: ClientConfig;
     referenceGenomesMap: ReferenceGenomesMap;

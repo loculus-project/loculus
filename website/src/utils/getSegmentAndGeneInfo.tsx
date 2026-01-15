@@ -41,13 +41,13 @@ export function getSegmentAndGeneInfo(
         }
 
         if (selectedRef && segmentData[selectedRef].genes) {
-            const geneNames = Object.keys(segmentData[selectedRef].genes);
+            const geneNames = segmentData[selectedRef].genes;
             for (const geneName of geneNames) {
                 geneInfos.push(getGeneInfoWithReference(geneName, refForNaming));
             }
         }
         else if (isSingleReference) {
-            const geneNames = Object.keys(segmentData[Object.keys(segmentData)[0]].genes ?? {});
+            const geneNames = segmentData[Object.keys(segmentData)[0]].genes ?? [];
             for (const geneName of geneNames) {
                 geneInfos.push(getGeneInfoWithReference(geneName, null));
             }
