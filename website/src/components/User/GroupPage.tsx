@@ -1,18 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-} from 'chart.js';
-import { type FC, type FormEvent, useMemo, useState, useEffect, type ReactNode } from 'react';
-import { Line } from 'react-chartjs-2';
+import { type FC, type FormEvent, useMemo, useState, type ReactNode } from 'react';
 
+import { CumulativeSubmissionsChart, type TimeSeriesData } from './CumulativeSubmissionsChart.tsx';
 import type { Organism } from '../../config.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
@@ -39,6 +29,7 @@ type GroupPageProps = {
     databaseName: string;
     continueSubmissionIntent?: ContinueSubmissionIntent;
     loginUrl: string;
+    metadataItemForCumulativeGroupGraph: string | null;
 };
 
 const InnerGroupPage: FC<GroupPageProps> = ({
@@ -51,6 +42,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     databaseName,
     continueSubmissionIntent,
     loginUrl,
+    metadataItemForCumulativeGroupGraph,
 }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
     const groupId = prefetchedGroupDetails.group.groupId;
@@ -80,8 +72,9 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     });
 
     const { data: timeSeriesData, isLoading: timeSeriesLoading } = useQuery({
-        queryKey: ['group-time-series', groupId, clientConfig, organisms],
-        queryFn: () => fetchTimeSeriesData(groupId, clientConfig, organisms),
+        queryKey: ['group-time-series', groupId, clientConfig, organisms, metadataItemForCumulativeGroupGraph],
+        queryFn: () => fetchTimeSeriesData(groupId, clientConfig, organisms, metadataItemForCumulativeGroupGraph!),
+        enabled: metadataItemForCumulativeGroupGraph !== null,
     });
 
     const continueSubmissionCta = useMemo(() => {
@@ -242,14 +235,16 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 </table>
             </div>
 
-            <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
-                <h2 className='text-lg font-bold mb-2'>Cumulative submissions over time</h2>
-                <CumulativeSubmissionsChart
-                    timeSeriesData={timeSeriesData ?? {}}
-                    organisms={organisms}
-                    isLoading={timeSeriesLoading}
-                />
-            </div>
+            {metadataItemForCumulativeGroupGraph !== null && (
+                <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
+                    <h2 className='text-lg font-bold mb-2'>Cumulative submissions over time</h2>
+                    <CumulativeSubmissionsChart
+                        timeSeriesData={timeSeriesData ?? {}}
+                        organisms={organisms}
+                        isLoading={timeSeriesLoading}
+                    />
+                </div>
+            )}
 
             {userHasEditPrivileges && (
                 <>
@@ -327,14 +322,12 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
     return counts;
 }
 
-type TimeSeriesDataPoint = {
-    earliestReleaseDate: string;
-    count: number;
-};
-
-type TimeSeriesData = Record<string, TimeSeriesDataPoint[]>;
-
-async function fetchTimeSeriesData(groupId: number, clientConfig: ClientConfig, organisms: Organism[]) {
+async function fetchTimeSeriesData(
+    groupId: number,
+    clientConfig: ClientConfig,
+    organisms: Organism[],
+    metadataField: string,
+) {
     const data: TimeSeriesData = {};
     await Promise.all(
         organisms.map(async ({ key }) => {
@@ -348,17 +341,16 @@ async function fetchTimeSeriesData(groupId: number, clientConfig: ClientConfig, 
                     [GROUP_ID_FIELD]: groupId,
                     [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
                     [IS_REVOCATION_FIELD]: 'false',
-                    fields: ['earliestReleaseDate'],
+                    fields: [metadataField],
                 });
-                const rawData =
-                    (response.data as { data?: { earliestReleaseDate?: string; count?: number }[] }).data ?? [];
+                const rawData = (response.data as { data?: Record<string, unknown>[] }).data ?? [];
                 data[key] = rawData
-                    .filter((d) => d.earliestReleaseDate)
+                    .filter((d) => d[metadataField])
                     .map((d) => ({
-                        earliestReleaseDate: d.earliestReleaseDate!,
-                        count: d.count ?? 0,
+                        date: String(d[metadataField]),
+                        count: typeof d.count === 'number' ? d.count : 0,
                     }))
-                    .sort((a, b) => a.earliestReleaseDate.localeCompare(b.earliestReleaseDate));
+                    .sort((a, b) => a.date.localeCompare(b.date));
             } catch {
                 data[key] = [];
             }
@@ -366,119 +358,6 @@ async function fetchTimeSeriesData(groupId: number, clientConfig: ClientConfig, 
     );
     return data;
 }
-
-const ORGANISM_COLORS = ['#54858c', '#e6a756', '#7b68a6', '#5aa469', '#d4776b', '#4a90a4', '#9b8b6e', '#c97b84'];
-
-type CumulativeSubmissionsChartProps = {
-    timeSeriesData: TimeSeriesData;
-    organisms: Organism[];
-    isLoading: boolean;
-};
-
-const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = ({ timeSeriesData, organisms, isLoading }) => {
-    const [isRegistered, setIsRegistered] = useState(false);
-
-    useEffect(() => {
-        ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
-        setIsRegistered(true);
-    }, []);
-
-    const chartData = useMemo(() => {
-        const allDates = new Set<string>();
-        for (const organism of organisms) {
-            const data = timeSeriesData[organism.key] ?? [];
-            for (const point of data) {
-                allDates.add(point.earliestReleaseDate);
-            }
-        }
-        const sortedDates = Array.from(allDates).sort();
-
-        if (sortedDates.length === 0) {
-            return { labels: [], datasets: [] };
-        }
-
-        const datasets = organisms.map((organism, index) => {
-            const data = timeSeriesData[organism.key] ?? [];
-            const dateToCount = new Map(data.map((d) => [d.earliestReleaseDate, d.count]));
-
-            let cumulative = 0;
-            const cumulativeData = sortedDates.map((date) => {
-                cumulative += dateToCount.get(date) ?? 0;
-                return cumulative;
-            });
-
-            return {
-                label: organism.displayName,
-                data: cumulativeData,
-                borderColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
-                backgroundColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
-                borderWidth: 1.5,
-                tension: 0.1,
-                fill: false,
-                pointRadius: 0,
-            };
-        });
-
-        return {
-            labels: sortedDates,
-            datasets: datasets.filter((ds) => ds.data[ds.data.length - 1] > 0),
-        };
-    }, [timeSeriesData, organisms]);
-
-    if (!isRegistered) {
-        return null;
-    }
-
-    if (isLoading) {
-        return (
-            <div className='flex justify-center items-center h-64'>
-                <span className='loading loading-spinner loading-lg'></span>
-            </div>
-        );
-    }
-
-    if (chartData.datasets.length === 0) {
-        return <p className='text-gray-500 text-center py-8'>No submission data available</p>;
-    }
-
-    return (
-        <div className='h-64'>
-            <Line
-                data={chartData}
-                options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        },
-                        title: {
-                            display: false,
-                        },
-                    },
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Release date',
-                            },
-                            ticks: {
-                                maxTicksLimit: 10,
-                            },
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Cumulative submissions',
-                            },
-                            beginAtZero: true,
-                        },
-                    },
-                }}
-            />
-        </div>
-    );
-};
 
 export const GroupPage = withQueryProvider(InnerGroupPage);
 

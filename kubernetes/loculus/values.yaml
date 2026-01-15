@@ -32,6 +32,7 @@ ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
+metadataItemForCumulativeGroupGraph: null
 zstdCompressionLevel: 10
 pipelineVersionUpgradeCheckIntervalSeconds: 10
 dataUseTerms:
