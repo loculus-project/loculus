@@ -73,7 +73,12 @@ const InnerGroupPage: FC<GroupPageProps> = ({
 
     const { data: timeSeriesData, isLoading: timeSeriesLoading } = useQuery({
         queryKey: ['group-time-series', groupId, clientConfig, organisms, metadataItemForCumulativeGroupGraph],
-        queryFn: () => fetchTimeSeriesData(groupId, clientConfig, organisms, metadataItemForCumulativeGroupGraph!),
+        queryFn: () => {
+            if (metadataItemForCumulativeGroupGraph === null) {
+                return Promise.resolve({});
+            }
+            return fetchTimeSeriesData(groupId, clientConfig, organisms, metadataItemForCumulativeGroupGraph);
+        },
         enabled: metadataItemForCumulativeGroupGraph !== null,
     });
 

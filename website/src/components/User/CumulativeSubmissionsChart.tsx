@@ -8,10 +8,12 @@ import {
     Tooltip,
     Legend,
 } from 'chart.js';
-import { type FC, useMemo, useState, useEffect } from 'react';
+import { type FC, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 
 import type { Organism } from '../../config.ts';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 export type TimeSeriesDataPoint = {
     date: string;
@@ -20,6 +22,7 @@ export type TimeSeriesDataPoint = {
 
 export type TimeSeriesData = Record<string, TimeSeriesDataPoint[]>;
 
+// Note: Colors will repeat if there are more than 8 organisms
 const ORGANISM_COLORS = ['#54858c', '#e6a756', '#7b68a6', '#5aa469', '#d4776b', '#4a90a4', '#9b8b6e', '#c97b84'];
 
 type CumulativeSubmissionsChartProps = {
@@ -33,13 +36,6 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
     organisms,
     isLoading,
 }) => {
-    const [isRegistered, setIsRegistered] = useState(false);
-
-    useEffect(() => {
-        ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
-        setIsRegistered(true);
-    }, []);
-
     const chartData = useMemo(() => {
         const allDates = new Set<string>();
         for (const organism of organisms) {
@@ -81,10 +77,6 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
             datasets: datasets.filter((ds) => ds.data[ds.data.length - 1] > 0),
         };
     }, [timeSeriesData, organisms]);
-
-    if (!isRegistered) {
-        return null;
-    }
 
     if (isLoading) {
         return (
