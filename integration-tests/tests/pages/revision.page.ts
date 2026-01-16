@@ -79,4 +79,17 @@ export class RevisionPage {
         );
         await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);
     }
+
+    async uploadExternalFiles(
+        fileId: string,
+        fileContents: Record<string, Record<string, string>>,
+        tmpDir: string,
+    ) {
+        await prepareTmpDirForBulkUpload(fileContents, tmpDir);
+        const fileCount = Object.values(fileContents).reduce(
+            (total, files) => total + Object.keys(files).length,
+            0,
+        );
+        await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);
+    }
 }

@@ -170,3 +170,12 @@ And the `mapping JSON` has this structure:
 - The `fileCategory` needs to be a predefined category which is organism specific.
 - The `fileId` is the ID received in the previous step, which identifies the actual file.
 - The `fileName` can be chosen freely, but depending on configuration it might become an identifier for the file later on.
+
+## Filename restrictions
+
+The filenames may contain any UTF-8 characters except:
+
+- Forbidden characters: `< > : " / \ | ? *`
+- ASCII control characters (character codes 0-31)
+
+Filenames may not be empty or contain more than 255 characters.

@@ -3,13 +3,15 @@ alignment_requirement: ALL
 log_level: DEBUG
 minimizer_url: TEST
 segment_classification_method: "minimizer"
-nextclade_sequence_and_datasets:
-- name: ebola-sudan
-  nextclade_dataset_name: ebola-dataset/ebola-sudan
-  genes: [NPEbolaSudan, VP35EbolaSudan]
-- name: ebola-zaire
-  nextclade_dataset_name: ebola-dataset/ebola-zaire
-  genes: [VP24EbolaZaire, LEbolaZaire]
+segments:
+  - name: ebola-sudan
+    references:
+    - nextclade_dataset_name: ebola-dataset/ebola-sudan
+      genes: [NPEbolaSudan, VP35EbolaSudan]
+  - name: ebola-zaire
+    references:
+    - nextclade_dataset_name: ebola-dataset/ebola-zaire
+      genes: [VP24EbolaZaire, LEbolaZaire]
 organism: multi-ebola-test
 processing_spec:
   totalInsertedNucs_ebola-zaire:

@@ -297,7 +297,7 @@ export const newGroup = z.object({
     groupName: z.string(),
     institution: z.string(),
     address,
-    contactEmail: z.string(),
+    contactEmail: z.string().nullable(),
 });
 export type NewGroup = z.infer<typeof newGroup>;
 
@@ -308,11 +308,17 @@ export type Group = z.infer<typeof group>;
 
 export const groupDetails = z.object({
     group,
-    users: z.array(
-        z.object({
-            name: z.string(),
-        }),
-    ),
+    /**
+     * List of users in the group.
+     * Null when the requesting user is not authenticated or not authorized to view members.
+     */
+    users: z
+        .array(
+            z.object({
+                name: z.string(),
+            }),
+        )
+        .nullable(),
 });
 
 export type GroupDetails = z.infer<typeof groupDetails>;

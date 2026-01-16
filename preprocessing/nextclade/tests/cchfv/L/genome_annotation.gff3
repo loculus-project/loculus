@@ -1,0 +1,8 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region NC_005301.3 1 12108
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=3052518
+NC_005301.3	RefSeq	region	1	12108	.	+	.	ID=NC_005301.3:1..12108;Dbxref=taxon:3052518;Name=L;gbkey=Src;genome=genomic;mol_type=genomic RNA;old-name=Crimean-Congo hemorrhagic fever virus;segment=L;strain=IbAr10200
+NC_005301.3	RefSeq	gene	77	11914	.	+	.	ID=gene-CCFHV_sLgp1;Dbxref=GeneID:2943075;Name=RdRp;gbkey=Gene;gene=RdRp;gene_biotype=protein_coding;locus_tag=CCFHV_sLgp1
+NC_005301.3	RefSeq	CDS	77	11914	.	+	0	Name=RdRp;ID=cds-YP_325663.1;Parent=gene-CCFHV_sLgp1;Dbxref=GenBank:YP_325663.1,GeneID:2943075;Note=putative polymerase and helicase function%3B putative RNA-dependent RNA polymerase%3B contains OTU-like cysteine protease motif;gbkey=CDS;gene=RdRp;locus_tag=CCFHV_sLgp1;product=putative polyprotein;protein_id=YP_325663.1
