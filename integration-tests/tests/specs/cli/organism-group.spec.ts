@@ -21,7 +21,7 @@ cliTest.describe('CLI Organism and Group Commands', () => {
         cliPage.assertSuccess(result, 'List groups');
 
         const hasGroups = result.stdout.includes('Available groups:');
-        expect(hasGroups || hasNoGroupsMessage).toBeTruthy();
+        expect(hasGroups).toBeTruthy();
     });
 
     cliTest('should set and clear default organism', async ({ cliPage }) => {
