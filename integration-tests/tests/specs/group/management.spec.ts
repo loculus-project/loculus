@@ -40,6 +40,7 @@ test.describe('Group management', () => {
         const newInstitution = 'New Institution';
         const newEmail = `contact_${randomUUID().slice(0, 8)}@test.com`;
         const newLine1 = '456 New Street';
+        const newLine2 = 'Suite 100';
         const newCity = 'New City';
         const newState = 'CA';
         const newPostalCode = '99999';
@@ -49,6 +50,7 @@ test.describe('Group management', () => {
         await groupPage.editInstitution(newInstitution);
         await groupPage.editContactEmail(newEmail);
         await groupPage.editAddressLine1(newLine1);
+        await groupPage.editAddressLine2(newLine2);
         await groupPage.editCity(newCity);
         await groupPage.editState(newState);
         await groupPage.editPostalCode(newPostalCode);
@@ -60,6 +62,7 @@ test.describe('Group management', () => {
         await expect(table).toContainText(newInstitution);
         await expect(table).toContainText(newEmail);
         await expect(table).toContainText(newLine1);
+        await expect(table).toContainText(newLine2);
         await expect(table).toContainText(newCity);
         await expect(table).toContainText(newState);
         await expect(table).toContainText(newPostalCode);

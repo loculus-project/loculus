@@ -13,7 +13,7 @@ export class SequenceDetailPage {
     }
 
     private get alignedTab() {
-        return this.page.getByRole('button', { name: /^aligned/i });
+        return this.page.getByRole('button', { name: /^aligned/i }).first();
     }
 
     async waitForSequenceTabs(timeout = 30000) {
@@ -82,9 +82,5 @@ export class SequenceDetailPage {
         const link = this.page.getByRole('link', { name: accessionVersion });
         await expect(link).toBeVisible();
         await link.click();
-    }
-
-    getPage() {
-        return this.page;
     }
 }
