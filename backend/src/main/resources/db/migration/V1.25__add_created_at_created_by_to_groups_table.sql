@@ -41,7 +41,7 @@ WHERE g.created_at IS NULL
 --	3) If the original creator has left the group and there are no users left for the group,
 --	   created_by will remain NULL but created_at will still be set to migration execution time.
 UPDATE groups_table g SET
-    created_at = CURRENT_TIMESTAMP,
+    created_at = timezone('UTC', CURRENT_TIMESTAMP),
     created_by = (
 	SELECT ug.user_name 
 	FROM user_groups_table ug
