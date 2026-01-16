@@ -13,16 +13,20 @@ cliTest.describe('CLI Organism and Group Commands', () => {
         expect(result.stdout).toContain('ebola-sudan');
     });
 
-    cliTest('should list available groups after login', async ({ cliPage }) => {
-        await cliPage.configure();
-        await cliPage.login('testuser', 'testuser');
+    cliTest(
+        'should list available groups after login',
+        async ({ cliPage, groupId, groupName, testAccount }) => {
+            await cliPage.configure();
+            await cliPage.login(testAccount.username, testAccount.password);
 
-        const result = await cliPage.getAvailableGroups();
-        cliPage.assertSuccess(result, 'List groups');
+            const result = await cliPage.getAvailableGroups();
+            cliPage.assertSuccess(result, 'List groups');
 
-        const hasGroups = result.stdout.includes('Available groups:');
-        expect(hasGroups).toBeTruthy();
-    });
+            // The output should contain the test group
+            expect(result.stdout).toContain(groupName);
+            expect(result.stdout).toContain(groupId.toString());
+        },
+    );
 
     cliTest('should set and clear default organism', async ({ cliPage }) => {
         await cliPage.configure();
