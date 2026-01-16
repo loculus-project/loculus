@@ -20,8 +20,8 @@ cliTest.describe('CLI Organism and Group Commands', () => {
         const result = await cliPage.getAvailableGroups();
         cliPage.assertSuccess(result, 'List groups');
 
-        // The output should show groups or indicate no groups
-        expect(result.stdout.length).toBeGreaterThan(0);
+        const hasGroups = result.stdout.includes('Available groups:');
+        expect(hasGroups || hasNoGroupsMessage).toBeTruthy();
     });
 
     cliTest('should set and clear default organism', async ({ cliPage }) => {
