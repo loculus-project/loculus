@@ -88,7 +88,7 @@ jobs:
             --allowedTools "Bash(gh issue:*),Bash(gh label list)"
 
   label-pr:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
