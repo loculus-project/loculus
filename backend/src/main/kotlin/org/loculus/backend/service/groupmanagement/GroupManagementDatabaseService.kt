@@ -18,6 +18,7 @@ import org.loculus.backend.controller.ConflictException
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
+import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional
 class GroupManagementDatabaseService(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val auditLogger: AuditLogger,
+    private val dateProvider: DateProvider,
 ) {
 
     fun getDetailsOfGroup(groupId: Int, user: org.loculus.backend.auth.User): GroupDetails {
@@ -50,6 +52,8 @@ class GroupManagementDatabaseService(
 
     fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
         val groupEntity = GroupEntity.new {
+            createdBy = authenticatedUser.username
+            createdAt = dateProvider.getCurrentDateTime()
             this.updateWith(group)
         }
 
