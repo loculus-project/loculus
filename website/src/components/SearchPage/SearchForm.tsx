@@ -23,7 +23,7 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { getIdentifier } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
-import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
+import { getSegmentAndGeneInfo, type SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
@@ -46,8 +46,8 @@ interface SearchFormProps {
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
     referenceIdentifierField: string | undefined;
-    setSelectedReferences: (newValues: Record<string, string | null>) => void;
-    selectedReferences: Record<string, string | null>;
+    setSelectedReferences: (newValues: SegmentReferenceSelections) => void;
+    selectedReferences: SegmentReferenceSelections;
 }
 
 export const SearchForm = ({

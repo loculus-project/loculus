@@ -3,6 +3,7 @@ import { type FC, useId, useMemo } from 'react';
 import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import { getIdentifier } from '../../utils/referenceSelection.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
+import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { Button } from '../common/Button.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 
@@ -10,8 +11,8 @@ type ReferenceSelectorProps = {
     filterSchema: MetadataFilterSchema;
     referenceGenomes: ReferenceGenomes;
     referenceIdentifierField: string;
-    setSelectedReferences: (newValues: Record<string, string | null>) => void;
-    selectedReferences: Record<string, string | null>;
+    setSelectedReferences: (newValues: SegmentReferenceSelections) => void;
+    selectedReferences: SegmentReferenceSelections;
 };
 
 /**
