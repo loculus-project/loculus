@@ -1,7 +1,8 @@
 import type { Metadata } from '../../types/config.ts';
+import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 
 export function isActiveForSelectedReferenceName(
-    selectedReferenceNames: Record<string, string | null>,
+    selectedReferenceNames: SegmentReferenceSelections,
     field: Metadata,
 ) {
     const matchesReference =
