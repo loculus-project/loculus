@@ -148,11 +148,11 @@ export function getSegmentAndGeneInfo(
     };
 }
 
-export function lapisNameToDisplayName(referenceGenomes: ReferenceGenomes): Map<string, string> {
-    const map = new Map<string, string>();
-    for (const segmentData of Object.values(referenceGenomes.segmentReferenceGenomes)) {
+export function lapisNameToDisplayName(referenceGenomes: ReferenceGenomes): Map<string, string | undefined> {
+    const map = new Map<string, string |undefined>();
+    for (const [segmentName, segmentData] of Object.entries(referenceGenomes.segmentReferenceGenomes)) {
         for (const refData of Object.values(segmentData)) {
-            map.set(refData.lapisName, refData.lapisName);
+            map.set(refData.lapisName, referenceGenomes.isMultiSegmented ?  segmentName : undefined);
             for (const gene of refData.genes) {
                 map.set(gene.lapisName, gene.name);
             }
