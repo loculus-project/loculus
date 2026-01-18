@@ -96,11 +96,6 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         await this.page.getByLabel('Author affiliations').fill(authorAffiliations);
     }
 
-    async fillField(fieldName: string, value: string) {
-        await this.page.getByLabel(fieldName).fill(value);
-        await this.page.getByLabel(fieldName).blur();
-    }
-
     async fillSubmissionFormDummyOrganism({
         submissionId,
         country,

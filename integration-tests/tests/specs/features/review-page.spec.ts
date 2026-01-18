@@ -5,6 +5,15 @@ import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { createTestMetadata, createTestSequenceData } from '../../test-helpers/test-data';
 
 test.describe('Review page functionality', () => {
+    test('can navigate to review page via UI', async ({ page, groupId }) => {
+        void groupId;
+        const reviewPage = new ReviewPage(page);
+        await reviewPage.navigateToReviewPage();
+        await expect(
+            page.getByRole('heading', { name: 'Review current submissions' }),
+        ).toBeVisible();
+    });
+
     test('should show total sequences and increase when new submission occurs', async ({
         page,
         groupId,
