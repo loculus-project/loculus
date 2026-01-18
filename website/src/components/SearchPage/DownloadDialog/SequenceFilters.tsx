@@ -71,12 +71,7 @@ export class FieldFilterSet implements SequenceFilter {
      * This is a convenience function, mostly used for testing.
      */
     public static empty() {
-        return new FieldFilterSet(
-            new MetadataFilterSchema([]),
-            {},
-            {},
-            { nucleotideSegmentInfos: [], geneInfos: [] },
-        );
+        return new FieldFilterSet(new MetadataFilterSchema([]), {}, {}, { nucleotideSegmentInfos: [], geneInfos: [] });
     }
 
     public sequenceCount(): number | undefined {

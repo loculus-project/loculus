@@ -9,10 +9,7 @@ import { routes } from '../../../routes/routes.ts';
 import type { Schema } from '../../../types/config.ts';
 import type { ReferenceGenomes } from '../../../types/referencesGenomes.ts';
 import type { MetadataVisibility } from '../../../utils/search.ts';
-import {
-    getSegmentAndGeneInfo,
-    stillRequiresReferenceNameSelection,
-} from '../../../utils/sequenceTypeHelpers.ts';
+import { getSegmentAndGeneInfo, stillRequiresReferenceNameSelection } from '../../../utils/sequenceTypeHelpers.ts';
 
 export type DownloadFormState = {
     includeRestricted: boolean;
@@ -57,7 +54,10 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         [referenceGenomes, selectedReferenceNames],
     );
 
-    const disableAlignedSequences = stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomes.segmentReferenceGenomes);
+    const disableAlignedSequences = stillRequiresReferenceNameSelection(
+        selectedReferenceNames,
+        referenceGenomes.segmentReferenceGenomes,
+    );
 
     function getDataTypeOptions(): OptionBlockOption[] {
         const metadataOption = {

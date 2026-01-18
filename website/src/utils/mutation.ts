@@ -198,9 +198,10 @@ const isValidNucleotideInsertionQuery = (
         return {
             valid: true,
             text,
-            lapisQuery: suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.length > 1
-                ? `ins_${segmentInfo.lapisName}:${position}:${insertion}`
-                : `ins_${position}:${insertion}`,
+            lapisQuery:
+                suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.length > 1
+                    ? `ins_${segmentInfo.lapisName}:${position}:${insertion}`
+                    : `ins_${position}:${insertion}`,
         };
     } catch (_) {
         return INVALID;
@@ -232,9 +233,10 @@ const isValidNucleotideMutationQuery = (
         return {
             valid: true,
             text,
-            lapisQuery: suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.length > 1
-                ? `${segmentInfo.lapisName}:${mutation}`
-                : mutation,
+            lapisQuery:
+                suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.length > 1
+                    ? `${segmentInfo.lapisName}:${mutation}`
+                    : mutation,
         };
     } catch (_) {
         return INVALID;

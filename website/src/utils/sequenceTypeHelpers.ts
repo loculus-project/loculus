@@ -126,20 +126,19 @@ export function getSegmentAndGeneInfo(
     const nucleotideSegmentInfos: SegmentInfo[] = [];
     const geneInfos: GeneInfo[] = [];
 
-
     for (const [segmentName, segmentData] of Object.entries(referenceGenomes.segmentReferenceGenomes)) {
         const isSingleReference = Object.keys(segmentData).length === 1;
         const selectedRef = selectedReferences[segmentName] ?? null;
 
         if (isSingleReference) {
-            nucleotideSegmentInfos.push({name: segmentName, lapisName: segmentName});
+            nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentName });
             geneInfos.push(...(segmentData[Object.keys(segmentData)[0]].genes ?? []));
             continue;
         }
         if (!selectedRef) {
             continue;
         }
-        nucleotideSegmentInfos.push({name: segmentName, lapisName: segmentData[selectedRef].lapisName});
+        nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentData[selectedRef].lapisName });
         geneInfos.push(...(segmentData[selectedRef].genes ?? []));
     }
 
@@ -148,7 +147,6 @@ export function getSegmentAndGeneInfo(
         geneInfos,
     };
 }
-
 
 export function lapisNameToDisplayName(referenceGenomes: ReferenceGenomes): Map<string, string> {
     const map = new Map<string, string>();
