@@ -14,7 +14,7 @@ from .backend import (
     submit_processed_sequences,
     upload_embl_file_to_presigned_url,
 )
-from .config import AlignmentRequirement, Config
+from .config import AlignmentRequirement, Config, ProcessingSpec, SequenceName
 from .datatypes import (
     AccessionVersion,
     AminoAcidInsertion,
@@ -34,7 +34,6 @@ from .datatypes import (
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
     ProcessingResult,
-    ProcessingSpec,
     SegmentClassificationMethod,
     SegmentName,
     SubmissionData,
@@ -76,42 +75,46 @@ def null_per_backend(x: Any) -> bool:
             return False
 
 
-class MultipleValidSegmentsError(Exception):
-    def __init__(self, segments: list[str]):
-        self.segments = segments
+class MultipleSequencesPerSegmentError(Exception):
+    def __init__(self, references: list[str]):
+        self.references = references
         super().__init__()
 
-    def getProcessingAnnotation(
+    def get_processing_annotation(
         self, processed_field_name: str, organism: str
     ) -> ProcessingAnnotation:
         return ProcessingAnnotation(
             unprocessedFields=[
-                AnnotationSource(name=segment, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE)
-                for segment in self.segments
+                AnnotationSource(name=reference, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE)
+                for reference in self.references
             ],
             processedFields=[
                 AnnotationSource(name=processed_field_name, type=AnnotationSourceType.METADATA)
             ],
-            message=f"Organism {organism} is configured to only accept one segment per submission, found multiple valid segments: {self.segments}.",
+            message=(
+                f"Organism {organism} is configured to only accept one sequence per segment, "
+                f"found multiple valid sequences: {self.references}."
+            ),
         )
 
 
-def get_segment(
-    spec: ProcessingSpec, data_per_segment: dict[SegmentName, Any] | None
+def get_name(
+    segment: SegmentName, data_per_dataset: dict[SequenceName, Any] | None, config: Config
 ) -> str | None:
-    """Returns the segment to use based on spec args"""
-    if spec.args and spec.args.get("useFirstSegment", False) and data_per_segment:
-        valid_segments = [key for key, value in data_per_segment.items() if value]
-        if not valid_segments:
-            return None
-        if len(valid_segments) > 1:
-            raise MultipleValidSegmentsError(valid_segments)
-        return valid_segments[0]
-
-    if spec.args and "segment" in spec.args:
-        return str(spec.args["segment"])
-
-    return "main"
+    """Returns the name of the dataset to use based on spec args"""
+    valid_datasets = (
+        [key for key, value in data_per_dataset.items() if value] if data_per_dataset else []
+    )
+    lapis_names = [
+        dataset
+        for dataset in valid_datasets
+        if config.get_dataset_by_name(dataset).segment == segment
+    ]
+    if not lapis_names:
+        return None
+    if len(lapis_names) > 1:
+        raise MultipleSequencesPerSegmentError(lapis_names)
+    return lapis_names[0]
 
 
 def add_nextclade_metadata(
@@ -121,9 +124,10 @@ def add_nextclade_metadata(
     config: Config,
 ) -> InputData:
     try:
-        segment = get_segment(spec, unprocessed.nextcladeMetadata)
-    except MultipleValidSegmentsError as e:
-        error_annotation = e.getProcessingAnnotation(
+        segment = spec.args.get("segment", "main") if spec.args else "main"
+        sequence_name = get_name(str(segment), unprocessed.nextcladeMetadata, config)
+    except MultipleSequencesPerSegmentError as e:
+        error_annotation = e.get_processing_annotation(
             processed_field_name=nextclade_path, organism=config.organism
         )
         logger.error(error_annotation.message)
@@ -131,13 +135,13 @@ def add_nextclade_metadata(
 
     if (
         not unprocessed.nextcladeMetadata
-        or segment not in unprocessed.nextcladeMetadata
-        or unprocessed.nextcladeMetadata[segment] is None
+        or sequence_name not in unprocessed.nextcladeMetadata
+        or unprocessed.nextcladeMetadata[sequence_name] is None
     ):
         return InputData(datum=None)
 
     raw: str | None = dpath.get(
-        unprocessed.nextcladeMetadata[segment],
+        unprocessed.nextcladeMetadata[sequence_name],
         nextclade_path,
         separator=".",
         default=None,
@@ -154,25 +158,21 @@ def add_nextclade_metadata(
             return InputData(datum=str(raw))
 
 
-def add_assigned_segment(
+def add_assigned_reference(
+    spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
 ) -> InputData:
     if not unprocessed.nextcladeMetadata:
         return InputData(datum=None)
-    valid_segments = [key for key, value in unprocessed.nextcladeMetadata.items() if value]
-    if not valid_segments:
+    segment = spec.args.get("segment", "main") if spec.args else "main"
+    name = get_name(str(segment), unprocessed.nextcladeMetadata, config)
+    if not name:
         return InputData(datum=None)
-    if len(valid_segments) > 1:
-        return InputData(
-            datum=None,
-            errors=[
-                MultipleValidSegmentsError(valid_segments).getProcessingAnnotation(
-                    processed_field_name="ASSIGNED_SEGMENT", organism=config.organism
-                )
-            ],
-        )
-    return InputData(datum=valid_segments[0])
+    reference = config.get_dataset_by_name(name).reference_name
+    if not reference:
+        return InputData(datum=None)
+    return InputData(datum=reference)
 
 
 def add_input_metadata(
@@ -182,9 +182,9 @@ def add_input_metadata(
     config: Config,
 ) -> InputData:
     """Returns value of input_path in unprocessed metadata"""
+    if input_path.startswith("ASSIGNED_REFERENCE"):
+        return add_assigned_reference(spec, unprocessed, config=config)
     # If field starts with "nextclade.", take from nextclade metadata
-    if input_path == "ASSIGNED_SEGMENT":
-        return add_assigned_segment(unprocessed, config=config)
     nextclade_prefix = "nextclade."
     if input_path.startswith(nextclade_prefix):
         nextclade_path = input_path[len(nextclade_prefix) :]
@@ -204,7 +204,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     input_fields: list[str],
     config: Config,
 ) -> ProcessingResult:
-    args = dict(spec.args)
+    args = dict(spec.args) if spec.args else {}
     args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
     args["submittedAt"] = submitted_at
     args["accession_version"] = accession_version
@@ -230,13 +230,13 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
-    sequenceNameToFastaId: dict[SegmentName, str],  # noqa: N803
+    sequenceNameToFastaId: dict[SequenceName, str],  # noqa: N803
 ) -> SubmissionData:
     """Process a single sequence without alignment"""
 
-    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
+    aligned_nucleotide_sequences: dict[SequenceName, NucleotideSequence | None] = {}
     aligned_aminoacid_sequences: dict[GeneName, AminoAcidSequence | None] = {}
-    nucleotide_insertions: dict[SegmentName, list[NucleotideInsertion]] = {}
+    nucleotide_insertions: dict[SequenceName, list[NucleotideInsertion]] = {}
     amino_acid_insertions: dict[GeneName, list[AminoAcidInsertion]] = {}
 
     return SubmissionData(
@@ -261,11 +261,11 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
 
 def get_sequence_length(
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
-    segment: SegmentName | None,
+    name: SequenceName | None,
 ) -> int:
-    if segment is None:
+    if name is None:
         return 0
-    sequence = unaligned_nucleotide_sequences.get(segment)
+    sequence = unaligned_nucleotide_sequences.get(name)
     return len(sequence) if sequence else 0
 
 
@@ -278,21 +278,17 @@ def get_output_metadata(
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
-    for output_field, spec_dict in config.processing_spec.items():
-        spec = ProcessingSpec(
-            inputs=spec_dict["inputs"],
-            function=spec_dict["function"],
-            required=spec_dict.get("required", False),
-            args=spec_dict.get("args", {}),
-        )
-        spec.args = {} if spec.args is None else spec.args
+    for output_field, spec in config.processing_spec.items():
         input_data: InputMetadata = {}
         input_fields: list[str] = []
         if output_field == "length":
             try:
-                segment_name = get_segment(spec, unprocessed.unalignedNucleotideSequences)
-            except MultipleValidSegmentsError as e:
-                error_annotation = e.getProcessingAnnotation(
+                segment = spec.args.get("segment", "main") if spec.args else "main"
+                sequence_name = get_name(
+                    str(segment), unprocessed.unalignedNucleotideSequences, config
+                )
+            except MultipleSequencesPerSegmentError as e:
+                error_annotation = e.get_processing_annotation(
                     processed_field_name=output_field, organism=config.organism
                 )
                 logger.error(error_annotation.message)
@@ -300,16 +296,15 @@ def get_output_metadata(
                 continue
 
             output_metadata[output_field] = get_sequence_length(
-                unprocessed.unalignedNucleotideSequences, segment_name
+                unprocessed.unalignedNucleotideSequences, sequence_name
             )
             continue
 
-        if output_field.startswith("length_") and output_field[7:] in [
-            seq.name for seq in config.nextclade_sequence_and_datasets
-        ]:
+        if output_field.startswith("length_"):
             segment = output_field[7:]
+            sequence_name = get_name(str(segment), unprocessed.unalignedNucleotideSequences, config)
             output_metadata[output_field] = get_sequence_length(
-                unprocessed.unalignedNucleotideSequences, segment
+                unprocessed.unalignedNucleotideSequences, sequence_name
             )
             continue
 
@@ -382,41 +377,41 @@ def alignment_errors_warnings(
             )
         )
         return (errors, warnings)
-    aligned_segments = set()
+    aligned_sequences = set()
     for sequence_and_dataset in config.nextclade_sequence_and_datasets:
-        segment = sequence_and_dataset.name
-        if segment not in unprocessed.unalignedNucleotideSequences:
+        name = sequence_and_dataset.name
+        if name not in unprocessed.unalignedNucleotideSequences:
             continue
         if unprocessed.nextcladeMetadata and (
-            segment not in unprocessed.nextcladeMetadata
-            or (unprocessed.nextcladeMetadata[segment] is None)
+            name not in unprocessed.nextcladeMetadata
+            or (unprocessed.nextcladeMetadata[name] is None)
         ):
             message = (
                 "Nucleotide sequence failed to align"
-                if not config.multi_segment
-                else f"Nucleotide sequence for {segment} failed to align"
+                if not config.multi_datasets
+                else f"Nucleotide sequence for {name} failed to align"
             )
             annotation = ProcessingAnnotation.from_single(
-                segment, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
+                name, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
             )
-            if config.multi_segment and config.alignment_requirement == AlignmentRequirement.ANY:
+            if config.multi_datasets and config.alignment_requirement == AlignmentRequirement.ANY:
                 warnings.append(annotation)
             else:
                 errors.append(annotation)
             continue
-        aligned_segments.add(segment)
+        aligned_sequences.add(name)
 
     if (
-        not aligned_segments
+        not aligned_sequences
         and unprocessed.unalignedNucleotideSequences
-        and config.multi_segment
+        and config.multi_datasets
         and config.alignment_requirement == AlignmentRequirement.ANY
     ):
         errors.append(
             ProcessingAnnotation.from_single(
                 ProcessingAnnotationAlignment,
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                message="No segment aligned.",
+                message="No sequence aligned.",
             )
         )
     return (errors, warnings)
@@ -425,13 +420,13 @@ def alignment_errors_warnings(
 def unpack_annotations(config, nextclade_metadata: dict[str, Any] | None) -> dict[str, Any] | None:
     if not config.create_embl_file or not nextclade_metadata:
         return None
-    annotations: dict[str, Any] = {}
+    annotations: dict[SequenceName, Any] = {}
     for sequence_and_dataset in config.nextclade_sequence_and_datasets:
-        segment = sequence_and_dataset.name
-        if segment in nextclade_metadata:
-            annotations[segment] = None
-            if nextclade_metadata[segment]:
-                annotations[segment] = nextclade_metadata[segment].get("annotation", None)
+        name = sequence_and_dataset.name
+        if name in nextclade_metadata:
+            annotations[name] = None
+            if nextclade_metadata[name]:
+                annotations[name] = nextclade_metadata[name].get("annotation", None)
     return annotations
 
 

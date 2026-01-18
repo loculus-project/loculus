@@ -61,7 +61,7 @@ def construct_project_set_object(
     submissions of the same project for testing.
     (ENA blocks multiple submissions with the same alias)
     """
-    metadata_dict = config.organisms[entry["organism"]]
+    metadata_dict = config.enaOrganisms[entry["organism"]]
     alias = get_alias(
         f"{entry['group_id']}:{entry['organism']}:{config.unique_project_suffix}",
         test,

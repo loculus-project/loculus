@@ -612,56 +612,69 @@
                     "type": "string",
                     "description": "Server from which to download nextclade datasets."
                   },
-                  "nextclade_sequence_and_datasets": {
+                  "segments": {
                     "groups": ["nextcladePipelineConfigFile"],
                     "docsIncludePrefix": false,
                     "type": "array",
-                    "description": "Array of [nextcladeSequenceAndDataset](#nextclade-preprocessing-pipeline-sequence-and-dataset-objects-type) objects containing nucleotide sequence names and datasets.",
+                    "description": "Array of [segment](#nextclade-preprocessing-pipeline-segment-objects-type) objects containing nucleotide sequences, references and their corresponding nextclade datasets.",
                     "items": {
                       "type": "object",
                       "additionalProperties": false,
                       "properties": {
                         "name": {
-                          "groups": ["nextcladeSequenceAndDataset"],
+                          "groups": ["nextcladeSegment"],
                           "docsIncludePrefix": false,
                           "type": "string",
                           "description": "Name of the nucleotide sequence to which this dataset applies - defaults to 'main'."
                         },
-                        "nextclade_dataset_name": {
-                          "groups": ["nextcladeSequenceAndDataset"],
-                          "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Name of the nextclade dataset to use to align the sequence - required if this sequence should be aligned."
-                        },
-                        "nextclade_dataset_tag": {
-                          "groups": ["nextcladeSequenceAndDataset"],
-                          "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Optional. Tag of the nextclade dataset to use to align the sequence."
-                        },
-                        "nextclade_dataset_server": {
-                          "groups": ["nextcladeSequenceAndDataset"],
-                          "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Optional. Server from which to download the nextclade dataset to use to align the sequence. If not specified, use the global nextclade_dataset_server."
-                        },
-                        "accepted_sort_matches": {
-                          "groups": ["nextcladeSequenceAndDataset"],
+                        "references": {
+                          "groups": ["nextcladeSegment"],
                           "docsIncludePrefix": false,
                           "type": "array",
-                          "description": "Optional. Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use only accept matches with the same name or nextclade_dataset_name."
-                        },
-                        "genes": {
-                          "groups": ["nextcladeSequenceAndDataset"],
-                          "docsIncludePrefix": false,
-                          "type": "array",
-                          "description": "Array of strings. The names of the genes to be extracted from the sequence alignment results (should correspond to gene names in the nextclade dataset)."
-                        },
-                        "gene_prefix": {
-                          "groups": ["nextcladeSequenceAndDataset"],
-                          "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Optional. Prefix to add to extracted gene names when sending the processing results to the backend. For example, if the nucleotide sequence is for segment (or subtype) A of a multi-segmented virus, then setting gene_prefix to 'A_' will result in gene names 'A_gene1', 'A_gene2', etc."
+                          "description": "Details of the nextclade dataset for each reference",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["reference_name"],
+                            "properties": {
+                              "reference_name": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "string",
+                                "description": "Name of the reference to use for alignment  - set name to 'singleReference' if there is only one reference."
+                              },
+                              "nextclade_dataset_name": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "string",
+                                "description": "Name of the nextclade dataset to use to align the sequence - required if this sequence should be aligned."
+                              },
+                              "nextclade_dataset_tag": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "string",
+                                "description": "Optional. Tag of the nextclade dataset to use to align the sequence."
+                              },
+                              "nextclade_dataset_server": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "string",
+                                "description": "Optional. Server from which to download the nextclade dataset to use to align the sequence. If not specified, use the global nextclade_dataset_server."
+                              },
+                              "accepted_sort_matches": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "array",
+                                "description": "Optional. Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use only accept matches with the same name or nextclade_dataset_name."
+                              },
+                              "genes": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "array",
+                                "description": "Array of strings. The names of the genes to be extracted from the sequence alignment results (should correspond to gene names in the nextclade dataset)."
+                              }
+                            }
+                          }
                         }
                       }
                     }
@@ -684,8 +697,7 @@
                     "type": "integer",
                     "description": "Timeout in seconds for requests to the backend server for data to process"
                   }
-                },
-                "required": ["nextclade_sequence_and_datasets"]
+                }
               }
             },
             "required": ["version", "image"]

@@ -435,10 +435,10 @@ def get_country(metadata: dict[str, str]) -> str:
 
 def create_flatfile(
     config: Config,
-    metadata,
+    metadata: dict[str, Any],
     organism_metadata: EnaOrganismDetails,
     unaligned_nucleotide_sequences: dict[str, str],
-    dir: str | None = None,
+    dir: str | None,
 ):
     collection_date = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property, "Unknown")
     authors = get_authors(metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.authors_property) or "")
@@ -465,7 +465,7 @@ def create_flatfile(
 
     embl_content = []
 
-    multi_segment = set(unaligned_nucleotide_sequences.keys()) != {"main"}
+    multi_segment = organism_metadata.is_multi_segment()
 
     for seq_name, sequence_str in unaligned_nucleotide_sequences.items():
         if not isinstance(sequence_str, str) or len(sequence_str) == 0:
@@ -654,6 +654,12 @@ def create_ena_assembly(
     logger.error(error_message)
     errors.append(error_message)
 
+    try:
+        manifest_contents = Path(manifest_filename).read_text(encoding="utf-8")
+        logger.info(f"manifest.tsv contents:\n{manifest_contents}")
+    except Exception as e:
+        logger.warning(f"Reading manifest from {manifest_filename} failed: {e}")
+
     for file_path in glob.glob(f"{output_tmpdir.name}/**", recursive=True, include_hidden=True):
         logger.info(f"Attempting to print webin-cli log file: {file_path}")
         try:
@@ -665,7 +671,7 @@ def create_ena_assembly(
 
 
 def get_ena_analysis_process(
-    config: Config, erz_accession: str, segment_order: list[str]
+    config: Config, erz_accession: str, segment_order: list[str], organism: EnaOrganismDetails
 ) -> CreationResult:
     """
     Query ENA webin endpoint to get analysis outcomes: assembly (GCA) and nucleotide accessions
@@ -738,7 +744,7 @@ def get_ena_analysis_process(
             insdc_accession_range = acc_dict.get("chromosomes")
             if insdc_accession_range:
                 chromosome_accessions_dict = get_chromsome_accessions(
-                    insdc_accession_range, segment_order
+                    insdc_accession_range, segment_order, organism.is_multi_segment()
                 )
                 assembly_results.update(chromosome_accessions_dict)
         else:
@@ -754,10 +760,8 @@ def get_ena_analysis_process(
     return CreationResult(result=assembly_results, errors=errors, warnings=warnings)
 
 
-# TODO: Also pass the full segment list from config so we can handle someone submitting
-# a multi-segmented virus that has a main segment.
 def get_chromsome_accessions(
-    insdc_accession_range: str, segment_order: list[str]
+    insdc_accession_range: str, segment_order: list[str], is_multi_segment: bool
 ) -> dict[str, str]:
     """
     ENA doesn't actually give us the version, we assume it's 1.
@@ -796,20 +800,18 @@ def get_chromsome_accessions(
             msg = "Unexpected number of segments"
             raise ValueError(msg)
 
-        match segment_order:
-            case ["main"]:
-                accession = f"{start_letters}{start_num:0{num_digits}d}"
-                return {
-                    "insdc_accession": accession,
-                    "insdc_accession_full": f"{accession}.1",
-                }
-            case _:
-                results = {}
-                for i, segment in enumerate(segment_order):
-                    accession = f"{start_letters}{(start_num + i):0{num_digits}d}"
-                    results[f"insdc_accession_{segment}"] = accession
-                    results[f"insdc_accession_full_{segment}"] = f"{accession}.1"
-                return results
+        if not is_multi_segment:
+            accession = f"{start_letters}{start_num:0{num_digits}d}"
+            return {
+                "insdc_accession": accession,
+                "insdc_accession_full": f"{accession}.1",
+            }
+        results = {}
+        for i, segment in enumerate(segment_order):
+            accession = f"{start_letters}{(start_num + i):0{num_digits}d}"
+            results[f"insdc_accession_{segment}"] = accession
+            results[f"insdc_accession_full_{segment}"] = f"{accession}.1"
+        return results
 
     # Don't handle the Value error here, let it propagate
     except ValueError as ve:

@@ -19,7 +19,6 @@ fields:
     hideOnSequenceDetailsPage: true
   - name: version
     type: int
-    notSearchable: true
     hideOnSequenceDetailsPage: true
   - name: submissionId
     displayName: Submission ID
@@ -200,7 +199,9 @@ enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
-  {{- range $key, $instance := (include "loculus.enabledOrganisms" . | fromJson) }}
+  {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $key := $item.key }}
+{{- $instance := $item.contents }}
   {{ $key }}:
     schema:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
@@ -377,7 +378,9 @@ fileSharing:
 websiteUrl: {{ include "loculus.websiteUrl" . }}
 backendUrl: {{ include "loculus.backendUrl" . }}
 organisms:
-  {{- range $key, $instance := (include "loculus.enabledOrganisms" . | fromJson) }}
+  {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $key := $item.key }}
+{{- $instance := $item.contents }}
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
@@ -510,13 +513,26 @@ fields:
 
 {{/* Generate ENA submission config from passed config object */}}
 {{- define "loculus.generateENASubmissionConfig" }}
-organisms:
-  {{- range $key, $instance := (include "loculus.enabledOrganisms" . | fromJson) }}
+enaOrganisms:
+  {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $key := $item.key }}
+{{- $instance := $item.contents }}
   {{- if $instance.enaDeposition }}
+  {{- range $suborganismName, $configFile := $instance.enaDeposition -}}
+  {{- if eq $suborganismName "singleReference" }}
   {{ $key }}:
-    {{- with $instance.schema }}
-    {{- $instance.enaDeposition.configFile | toYaml | nindent 4 }}
+  {{- else }}
+  {{ $suborganismName }}:
+    loculusOrganism: {{ quote $key }}
+  {{- end }}
+  {{- with $instance.schema }}
+    {{ $configFile.configFile | toYaml | nindent 4 }}
+    {{- if $configFile.suborganismIdentifierField }}
+    suborganismIdentifierField: {{ quote $configFile.suborganismIdentifierField }}
+    {{- end }}
     organismName: {{ quote .organismName }}
+    {{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" $instance.referenceGenomes | fromYaml).segments }}
+    segments: {{ $rawUniqueSegments | toYaml | nindent 6 }}
     externalMetadata:
       {{- $args := dict
         "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata
@@ -525,6 +541,7 @@ organisms:
       {{-  $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
       {{- $metadata.fields | default list | toYaml | nindent 6 }}
     {{- end }}
+  {{- end }}
   {{- end }}
   {{- end }}
 {{- end }}
