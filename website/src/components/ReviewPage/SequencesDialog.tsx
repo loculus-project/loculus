@@ -64,7 +64,7 @@ export const SequencesDialog: FC<SequencesDialogProps> = ({ isOpen, onClose, dat
 
 const extractProcessedSequences = (
     data: SequenceEntryToEdit,
-    lapisNameToDisplayNameMap: Map<string, string>,
+    lapisNameToDisplayNameMap: Map<string, string | undefined>,
 ): ProcessedSequence[] => {
     return [
         { type: 'unaligned', sequences: data.processedData.unalignedNucleotideSequences },

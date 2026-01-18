@@ -29,14 +29,14 @@ const getUnalignedSegmentLabel = (segment: string) => `${segment} (unaligned)`;
 // Test Selectors
 const BUTTON_ROLE = 'button';
 
-function renderSequenceViewer(referenceGenomesMap: ReferenceGenomes, segmentReferences: Record<string, string>) {
+function renderSequenceViewer(referenceGenomes: ReferenceGenomes, segmentReferences: Record<string, string | null>) {
     render(
         <QueryClientProvider client={queryClient}>
             <SequencesContainer
                 organism={testOrganism}
                 accessionVersion={accessionVersion}
                 clientConfig={testConfig.public}
-                referenceGenomesMap={referenceGenomesMap}
+                referenceGenomes={referenceGenomes}
                 loadSequencesAutomatically={false}
                 segmentReferences={segmentReferences}
             />
