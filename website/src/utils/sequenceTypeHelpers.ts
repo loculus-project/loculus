@@ -63,7 +63,7 @@ export function getSegmentLapisName(
     if (!isMultiReferenced) {
         return segmentName;
     }
-    if (isMultiSegmented && isMultiReferenced) {
+    if (isMultiSegmented) {
         return `${segmentName}-${referenceName}`;
     }
     return referenceName;
@@ -132,14 +132,14 @@ export function getSegmentAndGeneInfo(
 
         if (isSingleReference) {
             nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentName });
-            geneInfos.push(...(segmentData[Object.keys(segmentData)[0]].genes ?? []));
+            geneInfos.push(...(segmentData[Object.keys(segmentData)[0]].genes));
             continue;
         }
         if (!selectedRef) {
             continue;
         }
         nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentData[selectedRef].lapisName });
-        geneInfos.push(...(segmentData[selectedRef].genes ?? []));
+        geneInfos.push(...(segmentData[selectedRef].genes));
     }
 
     return {
@@ -153,7 +153,7 @@ export function lapisNameToDisplayName(referenceGenomes: ReferenceGenomes): Map<
     for (const segmentData of Object.values(referenceGenomes.segmentReferenceGenomes)) {
         for (const refData of Object.values(segmentData)) {
             map.set(refData.lapisName, refData.lapisName);
-            for (const gene of refData.genes ?? []) {
+            for (const gene of refData.genes) {
                 map.set(gene.lapisName, gene.name);
             }
         }

@@ -21,15 +21,15 @@ import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldVa
 import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
+import { getIdentifier } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
+import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import MaterialSymbolsTune from '~icons/material-symbols/tune';
 import StreamlineWrench from '~icons/streamline/wrench';
-import { getIdentifier } from '../../utils/referenceSelection.ts';
-import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
 
 const queryClient = new QueryClient();
 

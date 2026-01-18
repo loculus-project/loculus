@@ -8,10 +8,10 @@ import {
     parseMutationString,
     serializeMutationQueries,
 } from '../../../utils/mutation.ts';
+import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
 import { Button } from '../../common/Button';
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '../../common/headlessui/Combobox';
 import DisplaySearchDocs from '../DisplaySearchDocs';
-import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
 
 interface MutationFieldProps {
     suborganismSegmentAndGeneInfo: SegmentAndGeneInfo;

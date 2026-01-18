@@ -85,12 +85,13 @@ function getSegmentReferences(
 ): Result<Record<string, string | null>, ProblemDetail> {
     //TODO: this is duplicated - refactor to share code with getSegmentAndGeneInfo
     const segmentReferences: Record<string, string | null> = {};
-
-    let isMultiSegmented = Object.keys(referenceGenomes).length > 1;
-
-    for (const [segmentName, segmentData] of Object.entries(referenceGenomes)) {
+    for (const [segmentName, segmentData] of Object.entries(referenceGenomes.segmentReferenceGenomes)) {
         const isSingleReference = Object.keys(segmentData).length === 1;
-        const referenceField = getIdentifier(schema.referenceIdentifierField, segmentName, isMultiSegmented);
+        const referenceField = getIdentifier(
+            schema.referenceIdentifierField,
+            segmentName,
+            referenceGenomes.isMultiSegmented,
+        );
         if (isSingleReference) {
             segmentReferences[segmentName] = Object.keys(segmentData)[0];
             continue;
@@ -348,7 +349,7 @@ function insertionsToCommaSeparatedString(insertionData: InsertionCount[], refer
                 ? lapisNameToDisplayNameMap.get(insertion.sequenceName)
                 : null;
 
-            const sequenceNamePart = sequenceDisplayName !== null ? sequenceDisplayName + ':' : '';
+            const sequenceNamePart = sequenceDisplayName ? sequenceDisplayName + ':' : '';
             return `ins_${sequenceNamePart}${insertion.position}:${insertion.insertedSymbols}`;
         })
         .join(', ');

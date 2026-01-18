@@ -16,6 +16,7 @@ import {
     errorsProcessingResult,
     warningsProcessingResult,
 } from '../../types/backend.ts';
+import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
@@ -33,7 +34,6 @@ import Files from '~icons/lucide/files';
 import RiDna from '~icons/mdi/dna';
 import TickOutline from '~icons/mdi/tick-outline';
 import WpfPaperPlane from '~icons/wpf/paper-plane';
-import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;

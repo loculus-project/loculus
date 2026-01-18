@@ -1,11 +1,11 @@
 import { type FC, useState } from 'react';
 
 import { type SequenceEntryToEdit } from '../../types/backend.ts';
+import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import { lapisNameToDisplayName } from '../../utils/sequenceTypeHelpers.ts';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
 import { Button } from '../common/Button';
 import { FixedLengthTextViewer } from '../common/FixedLengthTextViewer.tsx';
-import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
-import { lapisNameToDisplayName } from '../../utils/sequenceTypeHelpers.ts';
 
 type SequencesDialogProps = {
     isOpen: boolean;

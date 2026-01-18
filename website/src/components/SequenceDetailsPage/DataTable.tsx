@@ -40,15 +40,13 @@ const DataTableComponent: React.FC<Props> = ({
 }) => {
     // Gather INSDC accessions from all segment/reference combinations
     const reference: ReferenceAccession[] = [];
-    if (segmentReferences !== null) {
-        for (const [segmentName, referenceName] of Object.entries(segmentReferences)) {
-            const segmentData = referenceGenomes.segmentReferenceGenomes[segmentName];
-            if (referenceName === null) {
-                continue;
-            }
-            const accession = segmentData?.[referenceName].insdcAccessionFull;
-            reference.push({ insdcAccessionFull: accession, name: segmentName });
+    for (const [segmentName, referenceName] of Object.entries(segmentReferences)) {
+        const segmentData = referenceGenomes.segmentReferenceGenomes[segmentName];
+        if (referenceName === null) {
+            continue;
         }
+        const accession = segmentData?.[referenceName].insdcAccessionFull;
+        reference.push({ insdcAccessionFull: accession, name: segmentName });
     }
     const hasReferenceAccession = reference.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
 

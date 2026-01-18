@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+
 import type { ReferenceGenomes } from '../types/referencesGenomes';
 
 export function getIdentifier(identifier: string | undefined, segmentName: string, multipleSegments: boolean) {

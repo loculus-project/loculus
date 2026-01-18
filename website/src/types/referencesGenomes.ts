@@ -1,4 +1,5 @@
 import z from 'zod';
+
 import type { GeneInfo } from '../utils/sequenceTypeHelpers';
 
 export type ReferenceAccession = {

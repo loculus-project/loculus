@@ -1,6 +1,6 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import Pagination from '@mui/material/Pagination';
-import { type ChangeEvent, type FC, useMemo, useState } from 'react';
+import { type ChangeEvent, type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { ReviewCard } from './ReviewCard.tsx';

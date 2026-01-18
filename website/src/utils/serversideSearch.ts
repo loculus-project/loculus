@@ -8,6 +8,7 @@ import {
     PAGE_KEY,
     type SearchResponse,
 } from './search';
+import { getSegmentAndGeneInfo } from './sequenceTypeHelpers.ts';
 import { FieldFilterSet } from '../components/SearchPage/DownloadDialog/SequenceFilters';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
@@ -15,7 +16,6 @@ import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
 import type { FieldValues, Schema } from '../types/config';
 import type { ReferenceGenomes } from '../types/referencesGenomes.ts';
-import { getSegmentAndGeneInfo } from './sequenceTypeHelpers.ts';
 
 export const performLapisSearchQueries = async (
     state: QueryState,
