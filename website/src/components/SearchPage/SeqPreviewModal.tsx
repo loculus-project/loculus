@@ -26,7 +26,7 @@ interface SeqPreviewModalProps {
     accessToken?: string;
     isOpen: boolean;
     onClose: () => void;
-    referenceGenomesMap: ReferenceGenomes;
+    referenceGenomes: ReferenceGenomes;
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     myGroups: Group[];
     isHalfScreen?: boolean;
@@ -41,7 +41,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     accessToken,
     isOpen,
     onClose,
-    referenceGenomesMap,
+    referenceGenomes,
     sequenceFlaggingConfig,
     myGroups,
     isHalfScreen = false,
@@ -88,7 +88,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                 <div className='px-6'>
                     <SequenceDataUI
                         {...data}
-                        referenceGenomeSequenceNames={referenceGenomesMap}
+                        referenceGenomes={referenceGenomes}
                         myGroups={myGroups}
                         accessToken={accessToken}
                         sequenceFlaggingConfig={data.isRevocation ? undefined : sequenceFlaggingConfig}
