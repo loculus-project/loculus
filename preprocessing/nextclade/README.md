@@ -87,6 +87,14 @@ prepro --config-file=../../website/tests/config/preprocessing-config.{organism}.
 
 Additionally, the `--keep-tmp-dir` is useful for debugging issues. The results of nextclade run will be stored in the temp directory, as well as a file called `submission_requests.json` which contains a log of the full submit requests that are sent to the backend.
 
+## Sequence Assignment/Classification for Multi-segmented sequences
+
+For multi-segmented viruses the preprocessing pipeline is configured to take entries with multiple sequences and classify which segment each sequence best aligns to - it returns the identity of each segment with a fasta Id to segment name map. This can also be used to identify which reference a sequence best aligns to in the case that multiple references exist. Currently the prepro pipeline in configured to only accept one segment per submission entry. This classification of sequences to the sequence they best align to can be done using three different algorithms:
+
+- nextclade sort https://github.com/loculus-project/nextclade-sort-minimizers
+- nextclade align 
+- diamond blastx
+
 ## Preprocessing Checks
 
 ### Type Check
