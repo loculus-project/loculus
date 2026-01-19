@@ -14,8 +14,12 @@ import {
 } from '../../types/lapis.ts';
 import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
-import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
-import { lapisNameToDisplayName, type SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
+import { getReferenceIdentifier, getSelectedReferences } from '../../utils/referenceSelection.ts';
+import {
+    lapisNameToDisplayName,
+    segmentsWithMultipleReferences,
+    type SegmentReferenceSelections,
+} from '../../utils/sequenceTypeHelpers.ts';
 
 export type GetTableDataResult = {
     data: TableDataEntry[];
@@ -56,17 +60,23 @@ export async function getTableData(
                     }),
                 )
                 .andThen((data) => {
-                    const segmentReferencesResult = getSegmentReferences(
-                        data.details,
-                        schema,
-                        referenceGenomes,
-                        accessionVersion,
-                    );
-                    if (segmentReferencesResult.isErr()) {
-                        return err(segmentReferencesResult.error);
+                    if (
+                        segmentsWithMultipleReferences(referenceGenomes).length > 0 &&
+                        schema.referenceIdentifierField === undefined
+                    ) {
+                        return err({
+                            type: 'about:blank',
+                            title: 'Invalid configuration',
+                            status: 0,
+                            detail: `No 'referenceIdentifierField' has been configured in the schema for organism ${schema.organismName}`,
+                            instance: '/seq/' + accessionVersion,
+                        });
                     }
-
-                    const segmentReferences = segmentReferencesResult.value;
+                    const segmentReferences = getSelectedReferences({
+                        referenceGenomes,
+                        schema,
+                        state: data.details,
+                    });
 
                     return ok({
                         data: toTableData(schema, referenceGenomes, data),
@@ -75,52 +85,6 @@ export async function getTableData(
                     });
                 }),
         );
-}
-
-function getSegmentReferences(
-    details: Details,
-    schema: Schema,
-    referenceGenomes: ReferenceGenomes,
-    accessionVersion: string,
-): Result<SegmentReferenceSelections, ProblemDetail> {
-    //TODO: this is duplicated - refactor to share code with getSegmentAndGeneInfo
-    const segmentReferences: SegmentReferenceSelections = {};
-    for (const [segmentName, segmentData] of Object.entries(referenceGenomes.segmentReferenceGenomes)) {
-        const isSingleReference = Object.keys(segmentData).length === 1;
-        const referenceField = getReferenceIdentifier(
-            schema.referenceIdentifierField,
-            segmentName,
-            referenceGenomes.isMultiSegmented,
-        );
-        if (isSingleReference) {
-            segmentReferences[segmentName] = Object.keys(segmentData)[0];
-            continue;
-        }
-        if (referenceField === undefined) {
-            return err({
-                type: 'about:blank',
-                title: 'Invalid configuration',
-                status: 0,
-                detail: `No 'referenceIdentifierField' has been configured in the schema for organism ${schema.organismName}`,
-                instance: '/seq/' + accessionVersion,
-            });
-        }
-        const value = details[referenceField];
-        const referenceResult = z.string().nullable().safeParse(value);
-        if (!referenceResult.success) {
-            return err({
-                type: 'about:blank',
-                title: 'Invalid reference field',
-                status: 0,
-                detail: `Value '${value}' of field '${referenceField}' is not a valid string or null.`,
-                instance: '/seq/' + accessionVersion,
-            });
-        }
-
-        segmentReferences[segmentName] = referenceResult.data;
-    }
-
-    return ok(segmentReferences);
 }
 
 function isRevocationEntry(details: Details): boolean {
