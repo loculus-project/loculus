@@ -118,7 +118,8 @@ def process_hashes(
         notification = (
             f"Ingest: Sequence {corresponding_loculus_accession} with INSDC "
             f"accession {ingested_insdc_accession} has been curated before "
-            "- do not know how to proceed"
+            f"- do not know how to proceed. New hash: {newly_ingested_hash}, "
+            f"old hash: {previously_submitted_entry.hash}."
         )
         logger.warning(notification)
         notify(update_manager.config, notification)
