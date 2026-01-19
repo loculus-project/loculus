@@ -3,7 +3,11 @@ import { type FC, useId, useMemo } from 'react';
 import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
-import { getSegmentNames, type SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
+import {
+    getSegmentNames,
+    segmentsWithMultipleReferences,
+    type SegmentReferenceSelections,
+} from '../../utils/sequenceTypeHelpers.ts';
 import { Button } from '../common/Button.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 
@@ -32,12 +36,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
 
     const segments = getSegmentNames(referenceGenomes);
 
-    // Only keep segments that actually need a selector
-    const segmentsWithMultipleReferences = segments.filter(
-        (segment) => Object.keys(referenceGenomes.segmentReferenceGenomes[segment]).length > 1,
-    );
-
-    if (segmentsWithMultipleReferences.length === 0) {
+    if (segmentsWithMultipleReferences(referenceGenomes).length === 0) {
         return null;
     }
 
@@ -57,7 +56,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
 
     return (
         <>
-            {segmentsWithMultipleReferences.map((segment) => {
+            {segmentsWithMultipleReferences(referenceGenomes).map((segment) => {
                 const selectId = `${baseSelectId}-${segment}`;
 
                 return (
