@@ -20,7 +20,7 @@ object GroupsTable : IntIdTable(GROUPS_TABLE_NAME, "group_id") {
     val addressCountry = text("address_country")
     val contactEmailColumn = text("contact_email")
     val createdAt = datetime("created_at")
-    val createdBy = text("created_by")
+    val createdBy = text("created_by").nullable()
 }
 
 class GroupEntity(id: EntityID<Int>) : IntEntity(id) {

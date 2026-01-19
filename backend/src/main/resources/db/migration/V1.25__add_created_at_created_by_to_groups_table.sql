@@ -50,5 +50,4 @@ UPDATE groups_table g SET
 WHERE g.created_at IS NULL;
 
 ALTER TABLE groups_table
-    ALTER COLUMN created_at SET NOT NULL,
-    ALTER COLUMN created_by SET NOT NULL;
+    ALTER COLUMN created_at SET NOT NULL;
