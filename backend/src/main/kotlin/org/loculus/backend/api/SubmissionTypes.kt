@@ -287,7 +287,7 @@ data class EditedSequenceEntryData(
 data class UnprocessedData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
-    val data: OriginalDataWithFileUrls<GeneticSequence>,
+    val data: UnprocessedDataContentWithFileUrls<GeneticSequence>,
     @Schema(description = "The submission id that was used in the upload to link metadata and sequences")
     val submissionId: String,
     @Schema(description = "The username of the submitter")
@@ -298,7 +298,7 @@ data class UnprocessedData(
     val submittedAt: Long,
 ) : AccessionVersionInterface
 
-data class OriginalDataInternal<SequenceType, FilesType>(
+data class UnprocessedDataContentInternal<SequenceType, FilesType>(
     @Schema(
         example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\"}",
         description = "Key value pairs of metadata, as submitted in the metadata file",
@@ -316,9 +316,10 @@ data class OriginalDataInternal<SequenceType, FilesType>(
     val files: Map<String, List<FilesType>>? = null,
 )
 
-typealias OriginalData<SequenceType> = OriginalDataInternal<SequenceType, FileIdAndName>
-typealias OriginalDataWithFileUrls<SequenceType> =
-    OriginalDataInternal<SequenceType, FileIdAndNameAndReadUrl>
+typealias UnprocessedDataContent<SequenceType> = UnprocessedDataContentInternal<SequenceType, FileIdAndName>
+typealias OriginalData<SequenceType> = UnprocessedDataContent<SequenceType>
+typealias UnprocessedDataContentWithFileUrls<SequenceType> =
+    UnprocessedDataContentInternal<SequenceType, FileIdAndNameAndReadUrl>
 
 data class AccessionVersionUnprocessedMetadata(
     override val accession: Accession,
@@ -326,6 +327,24 @@ data class AccessionVersionUnprocessedMetadata(
     val submitter: String,
     val isRevocation: Boolean,
     val unprocessedMetadata: Map<String, String?>?,
+) : AccessionVersionInterface
+
+data class GetOriginalDataRequest(
+    @Schema(
+        description = "The group ID to download data for.",
+    )
+    val groupId: Int,
+    @Schema(
+        description = "Filter by specific accessions. If not provided, all accessions for the group are returned.",
+    )
+    val accessionsFilter: List<Accession>? = null,
+)
+
+data class UnprocessedDataDownloadEntry(
+    override val accession: Accession,
+    override val version: Version,
+    val submissionId: String,
+    val unprocessedData: UnprocessedDataContent<GeneticSequence>,
 ) : AccessionVersionInterface
 
 enum class Status {

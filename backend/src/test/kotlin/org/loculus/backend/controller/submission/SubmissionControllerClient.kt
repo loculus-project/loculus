@@ -323,6 +323,25 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .param("fields", fields?.joinToString(",")),
     )
 
+    fun getOriginalData(
+        organism: String = DEFAULT_ORGANISM,
+        jwt: String? = jwtForDefaultUser,
+        groupId: Int,
+        accessionsFilter: List<String>? = null,
+    ): ResultActions = mockMvc.perform(
+        post(addOrganismToPath("/get-original-data", organism = organism))
+            .withAuth(jwt)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(
+                objectMapper.writeValueAsString(
+                    mapOf(
+                        "groupId" to groupId,
+                        "accessionsFilter" to accessionsFilter,
+                    ),
+                ),
+            ),
+    )
+
     private fun serialize(listOfSequencesToApprove: List<AccessionVersionInterface>? = null): String =
         if (listOfSequencesToApprove != null) {
             objectMapper.writeValueAsString(

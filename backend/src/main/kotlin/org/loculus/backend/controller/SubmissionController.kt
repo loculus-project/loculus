@@ -24,6 +24,7 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
+import org.loculus.backend.api.GetOriginalDataRequest
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
@@ -41,6 +42,10 @@ import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
 import org.loculus.backend.log.ORGANISM_MDC_KEY
 import org.loculus.backend.log.REQUEST_ID_MDC_KEY
 import org.loculus.backend.log.RequestIdContext
+import org.loculus.backend.model.ACCESSION_HEADER
+import org.loculus.backend.model.FASTA_IDS_HEADER
+import org.loculus.backend.model.FASTA_IDS_SEPARATOR
+import org.loculus.backend.model.METADATA_ID_HEADER
 import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
@@ -49,7 +54,12 @@ import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidato
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
+import org.loculus.backend.utils.FastaEntry
+import org.loculus.backend.utils.FastaWriter
+import org.loculus.backend.utils.GetOriginalDataHelpers
 import org.loculus.backend.utils.IteratorStreamer
+import org.loculus.backend.utils.TsvWriter
+import org.loculus.backend.utils.makeUniqueIds
 import org.slf4j.MDC
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -69,10 +79,16 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 private val log = KotlinLogging.logger { }
+private val ORIGINAL_DATA_DOWNLOAD_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
+
+const val MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES = 500
 
 @RestController
 @RequestMapping("/{organism}")
@@ -456,6 +472,112 @@ open class SubmissionController(
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
+    }
+
+    @Operation(
+        description = "Download original data (metadata and sequences) as a zip file, suitable for revisions. " +
+            "It is limited to $MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES entries.",
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @PostMapping(
+        "/get-original-data",
+        consumes = [MediaType.APPLICATION_JSON_VALUE],
+        produces = ["application/zip"],
+    )
+    fun getOriginalData(
+        @PathVariable @Valid organism: Organism,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestBody body: GetOriginalDataRequest,
+    ): ResponseEntity<StreamingResponseBody> {
+        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(body.groupId, authenticatedUser)
+
+        val entryCount = transaction {
+            submissionDatabaseService.countOriginalDataDownloadEntries(
+                organism,
+                body.groupId,
+                body.accessionsFilter,
+            )
+        }
+
+        if (entryCount > MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES) {
+            throw UnprocessableEntityException(
+                "Download is limited to $MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES entries. " +
+                    "Requested download would include $entryCount entries. " +
+                    "Please filter fewer sequences.",
+            )
+        }
+
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.parseMediaType("application/zip")
+        headers.set(
+            HttpHeaders.CONTENT_DISPOSITION,
+            "attachment; filename=\"${originalDataDownloadFilename(organism)}\"",
+        )
+
+        val instanceConfig = backendConfig.getInstanceConfig(organism)
+        val hasConsensusSequences = instanceConfig.schema.submissionDataTypes.consensusSequences
+        val isMultiSegmented = instanceConfig.referenceGenome.nucleotideSequences.size > 1
+
+        val streamBody = StreamingResponseBody { responseBodyStream ->
+            val startTime = System.currentTimeMillis()
+            MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
+            MDC.put(ORGANISM_MDC_KEY, organism.name)
+
+            try {
+                java.util.zip.ZipOutputStream(responseBodyStream).use { zipOut ->
+                    transaction {
+                        val data = submissionDatabaseService.streamUnprocessedDataForOriginalDataDownload(
+                            organism,
+                            body.groupId,
+                            body.accessionsFilter,
+                        ).toList()
+
+                        val metadataIds = makeUniqueIds(data.map { it.submissionId })
+                        val uniqueFastaIdsByEntry =
+                            GetOriginalDataHelpers.uniqueFastaIdsByEntry(data, isMultiSegmented)
+
+                        zipOut.putNextEntry(java.util.zip.ZipEntry("metadata.tsv"))
+                        GetOriginalDataHelpers.writeMetadataTsv(
+                            data,
+                            metadataIds,
+                            uniqueFastaIdsByEntry,
+                            zipOut,
+                            isMultiSegmented,
+                        )
+                        zipOut.closeEntry()
+
+                        if (hasConsensusSequences) {
+                            zipOut.putNextEntry(java.util.zip.ZipEntry("sequences.fasta"))
+                            GetOriginalDataHelpers.writeSequencesFasta(
+                                data,
+                                metadataIds,
+                                uniqueFastaIdsByEntry,
+                                zipOut,
+                                isMultiSegmented,
+                            )
+                            zipOut.closeEntry()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                val duration = System.currentTimeMillis() - startTime
+                log.error(e) { "[get-original-data] Error after ${duration}ms: $e" }
+                throw e
+            } finally {
+                MDC.remove(REQUEST_ID_MDC_KEY)
+                MDC.remove(ORGANISM_MDC_KEY)
+            }
+
+            val duration = System.currentTimeMillis() - startTime
+            log.info { "[get-original-data] Completed in ${duration}ms" }
+        }
+
+        return ResponseEntity(streamBody, headers, HttpStatus.OK)
+    }
+
+    private fun originalDataDownloadFilename(organism: Organism): String {
+        val timestamp = OffsetDateTime.now(ZoneOffset.UTC).format(ORIGINAL_DATA_DOWNLOAD_TIMESTAMP_FORMAT)
+        return "${organism.name}_original_data_$timestamp.zip"
     }
 
     @Operation(description = APPROVE_PROCESSED_DATA_DESCRIPTION)
