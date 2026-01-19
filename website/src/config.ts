@@ -3,7 +3,7 @@ import path from 'path';
 
 import type { z, ZodError } from 'zod';
 
-import { ACCESSION_FIELD, SUBMISSION_ID_INPUT_FIELD } from './settings.ts';
+import { ACCESSION_FIELD, FASTA_IDS_FIELD, SUBMISSION_ID_INPUT_FIELD } from './settings.ts';
 import {
     type InputField,
     type InstanceConfig,
@@ -15,7 +15,6 @@ import {
 import {
     type NamedSequence,
     type ReferenceAccession,
-    type ReferenceGenome,
     type ReferenceGenomes,
     type ReferenceGenomesLightweightSchema,
 } from './types/referencesGenomes.ts';
@@ -32,7 +31,7 @@ function getConfigDir(): string {
     return configDir;
 }
 
-function validateWebsiteConfig(config: WebsiteConfig): Error[] {
+export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
     const errors: Error[] = [];
     Array.from(Object.entries(config.organisms).values()).forEach(([organism, schema]) => {
         if (schema.schema.metadataTemplate !== undefined) {
@@ -46,6 +45,30 @@ function validateWebsiteConfig(config: WebsiteConfig): Error[] {
                     );
                 }
             });
+        }
+
+        const knownSuborganisms = Object.keys(schema.referenceGenomes);
+
+        schema.schema.metadata.forEach((metadatum) => {
+            const onlyForSuborganism = metadatum.onlyForSuborganism;
+            if (onlyForSuborganism !== undefined && !knownSuborganisms.includes(onlyForSuborganism)) {
+                errors.push(
+                    new Error(
+                        `Metadata field '${metadatum.name}' in organism '${organism}' references unknown suborganism '${onlyForSuborganism}' in 'onlyForSuborganism'.`,
+                    ),
+                );
+            }
+        });
+
+        const suborganismIdentifierField = schema.schema.suborganismIdentifierField;
+        if (suborganismIdentifierField !== undefined) {
+            if (!schema.schema.metadata.some((metadatum) => metadatum.name === suborganismIdentifierField)) {
+                errors.push(
+                    new Error(
+                        `suborganismIdentifierField '${suborganismIdentifierField}' of organism '${organism}' is not defined in the metadata.`,
+                    ),
+                );
+            }
         }
     });
     return errors;
@@ -137,8 +160,8 @@ export function getMetadataTemplateFields(
 ): Map<string, string | undefined> {
     const schema = getConfig(organism).schema;
     const baseFields: string[] = schema.metadataTemplate ?? schema.inputFields.map((field) => field.name);
-    const extraFields =
-        action === 'submit' ? [SUBMISSION_ID_INPUT_FIELD] : [ACCESSION_FIELD, SUBMISSION_ID_INPUT_FIELD];
+    const submissionIdInputFields = getSubmissionIdInputFields(schema).map((field) => field.name);
+    const extraFields = action === 'submit' ? submissionIdInputFields : [ACCESSION_FIELD, ...submissionIdInputFields];
     const allFields = [...extraFields, ...baseFields];
     const fieldsToDisplaynames = new Map<string, string | undefined>(
         allFields.map((field) => [field, schema.metadata.find((metadata) => metadata.name === field)?.displayName]),
@@ -159,17 +182,44 @@ function getAccessionInputField(): InputField {
     };
 }
 
-function getSubmissionIdInputField(): InputField {
-    return {
-        name: SUBMISSION_ID_INPUT_FIELD,
-        displayName: 'ID',
-        definition: 'FASTA ID',
-        guidance:
-            'Your sequence identifier; should match the FASTA file header - this is used to link the metadata to the FASTA sequence',
-        example: 'GJP123',
-        noEdit: true,
-        required: true,
-    };
+export function getSubmissionIdInputFields(schema: Schema): InputField[] {
+    const maxSequencesPerEntry = schema.submissionDataTypes.maxSequencesPerEntry ?? Infinity;
+
+    if (maxSequencesPerEntry == 1) {
+        return [
+            {
+                name: SUBMISSION_ID_INPUT_FIELD,
+                displayName: 'ID',
+                definition: 'FASTA ID',
+                guidance:
+                    "Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence.",
+                example: 'GJP123',
+                noEdit: true,
+                required: true,
+            },
+        ];
+    }
+    return [
+        {
+            name: SUBMISSION_ID_INPUT_FIELD,
+            displayName: 'ID',
+            definition: 'METADATA ID',
+            guidance:
+                'Your sample identifier. If FASTA IDS column is provided, this sample ID will be used to associate the metadata with the sequence.',
+            example: 'GJP123',
+            noEdit: true,
+            required: true,
+        },
+        {
+            name: FASTA_IDS_FIELD,
+            displayName: 'FASTA IDS',
+            definition: 'FASTA IDS',
+            guidance: 'Space-separated list of FASTA IDS of each sequence to be associated with this metadata entry.',
+            example: 'GJP123 GJP124',
+            noEdit: true,
+            desired: true,
+        },
+    ];
 }
 
 export function getGroupedInputFields(
@@ -177,28 +227,28 @@ export function getGroupedInputFields(
     action: 'submit' | 'revise',
     excludeDuplicates: boolean = false,
 ): Map<string, InputField[]> {
-    const inputFields = getConfig(organism).schema.inputFields;
-    const metadata = getConfig(organism).schema.metadata;
+    const schema = getConfig(organism).schema;
+    const submissionIdInputFields = getSubmissionIdInputFields(schema);
+
+    const allFields = [
+        ...submissionIdInputFields,
+        ...(action === 'submit' ? [] : [getAccessionInputField()]),
+        ...schema.inputFields,
+    ];
+    const requiredFields = allFields.filter((meta) => meta.required);
+    const desiredFields = allFields.filter((meta) => meta.desired);
 
     const groups = new Map<string, InputField[]>();
-
-    const requiredFields = inputFields.filter((meta) => meta.required);
-    const desiredFields = inputFields.filter((meta) => meta.desired);
-
-    const coreFields =
-        action === 'submit' ? [getSubmissionIdInputField()] : [getSubmissionIdInputField(), getAccessionInputField()];
-
-    groups.set('Required fields', [...coreFields, ...requiredFields]);
+    groups.set('Required fields', requiredFields);
     groups.set('Desired fields', desiredFields);
-    if (!excludeDuplicates) groups.set('Submission details', [getSubmissionIdInputField()]);
-
+    if (!excludeDuplicates) groups.set('Submission details', submissionIdInputFields);
     const fieldAlreadyAdded = (fieldName: string) =>
         Array.from(groups.values())
             .flatMap((fields) => fields.map((f) => f.name))
             .some((name) => name === fieldName);
 
-    inputFields.forEach((field) => {
-        const metadataEntry = metadata.find((meta) => meta.name === field.name);
+    schema.inputFields.forEach((field) => {
+        const metadataEntry = schema.metadata.find((meta) => meta.name === field.name);
         const header = metadataEntry?.header ?? 'Uncategorized';
 
         if (!groups.has(header)) {
@@ -226,13 +276,6 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
         throw new Error(`No lapis url configured for organism ${organism}`);
     }
     return serviceConfig.lapisUrls[organism];
-}
-
-/**
- * TODO(#3984) this should be removed. Use `getReferenceGenomes` instead.
- */
-export function getReferenceGenome(organism: string): ReferenceGenome {
-    return Object.values(getConfig(organism).referenceGenomes)[0];
 }
 
 export function getReferenceGenomes(organism: string): ReferenceGenomes {

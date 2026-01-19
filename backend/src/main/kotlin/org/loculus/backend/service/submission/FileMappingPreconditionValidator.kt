@@ -20,6 +20,19 @@ class FileMappingPreconditionValidator(
     private val s3Service: S3Service,
     private val filesDatabaseService: FilesDatabaseService,
 ) {
+    fun validateFilenameCharacters(fileCategoriesFilesMap: FileCategoryFilesMap?): FileMappingPreconditionValidator {
+        if (fileCategoriesFilesMap == null) {
+            return this
+        }
+
+        fileCategoriesFilesMap.forEach { (category, files) ->
+            files.forEach { file ->
+                validateFilename(file.name, category)
+            }
+        }
+        return this
+    }
+
     fun validateFilenamesAreUnique(fileCategoriesFilesMap: FileCategoryFilesMap?): FileMappingPreconditionValidator {
         if (fileCategoriesFilesMap == null) return this
         fileCategoriesFilesMap.categories.forEach { category: FileCategory ->
@@ -60,6 +73,7 @@ class FileMappingPreconditionValidator(
         return validateCategoriesMatchSchema(fileCategoriesFilesMap, allowedCategories, organism, "output")
     }
 
+    // TODO #5503: Write tests for this
     fun validateMultipartUploads(fileIds: Set<FileId>): FileMappingPreconditionValidator {
         val uncompleted = filesDatabaseService.getUncompletedMultipartUploadIds(fileIds)
         if (uncompleted.isNotEmpty()) {
@@ -70,14 +84,79 @@ class FileMappingPreconditionValidator(
         return this
     }
 
-    fun validateFilesExist(fileIds: Set<FileId>): FileMappingPreconditionValidator {
-        val uncheckedFileIds = filesDatabaseService.getUncheckedFileIds(fileIds)
-        uncheckedFileIds.forEach { fileId ->
-            val fileSize = s3Service.getFileSize(fileId)
-                ?: throw UnprocessableEntityException("No file uploaded for file ID $fileId.")
-            filesDatabaseService.setFileSize(fileId, fileSize)
+    fun validateFileIdsExist(fileIds: Set<FileId>): FileMappingPreconditionValidator {
+        val nonExistentFileIds = filesDatabaseService.getNonExistentFileIds(fileIds)
+        if (nonExistentFileIds.isNotEmpty()) {
+            throw UnprocessableEntityException(
+                "The following file IDs do not exist: " + nonExistentFileIds.joinToString(),
+            )
         }
         return this
+    }
+
+    fun validateFilesUploaded(fileIds: Set<FileId>): FileMappingPreconditionValidator {
+        val uncheckedFileIds = filesDatabaseService.getUncheckedFileIds(fileIds)
+        val fileIdsWithoutFile = uncheckedFileIds.mapNotNull { fileId ->
+            val fileSize = s3Service.getFileSize(fileId)
+            if (fileSize == null) {
+                fileId
+            } else {
+                filesDatabaseService.setFileSize(fileId, fileSize)
+                null
+            }
+        }
+        if (fileIdsWithoutFile.isNotEmpty()) {
+            throw UnprocessableEntityException("No file uploaded for file IDs: ${fileIdsWithoutFile.joinToString()}")
+        }
+        return this
+    }
+
+    /**
+     * 1. Validate that the fileIds exist (have been requested for upload)
+     * 2. Check that a file has been uploaded for each fileId by checking S3 for its size
+     */
+    fun validateFilesExist(fileIds: Set<FileId>): FileMappingPreconditionValidator {
+        validateFileIdsExist(fileIds)
+        validateFilesUploaded(fileIds)
+        return this
+    }
+
+    /**
+     * This validates that the filename is not in violation with our defined restrictions, ensuring that the filenames
+     * are likely compatible with major operating systems.
+     *
+     * Restrictions:
+     * - ASCII control characters (code 0-31)
+     * - /\:*"?<>| and NUL: forbidden in NTFS (for Windows) and FAT32
+     * - More than 255 characters: ext4 and NTFS only allow 255 bytes
+     *
+     * References:
+     * - https://en.wikipedia.org/wiki/Comparison_of_file_systems#Limits
+     * - https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+     */
+    private fun validateFilename(filename: String, category: FileCategory) {
+        if (filename.isEmpty()) {
+            throw UnprocessableEntityException(
+                "Invalid filename '$filename' in category '$category': Filenames may not be empty",
+            )
+        }
+        if (filename.length > 255) {
+            throw UnprocessableEntityException(
+                "Invalid filename '$filename' in category '$category': Filenames may not exceed 255 characters",
+            )
+        }
+        if (filename.any { it in "<>:\"/\\|?*" }) {
+            throw UnprocessableEntityException(
+                "Invalid filename '$filename' in category '$category': Filenames may not contain " +
+                    "forbidden characters (< > : \" / \\ | ? *).",
+            )
+        }
+        if (filename.any { it.code in 0..31 }) {
+            throw UnprocessableEntityException(
+                "Invalid filename '$filename' in category '$category': Filenames may not contain " +
+                    "ASCII control characters 0-31.",
+            )
+        }
     }
 
     private fun validateCategoriesMatchSchema(
@@ -104,6 +183,15 @@ class FileMappingPreconditionValidator(
 class SubmissionIdFilesMappingPreconditionValidator(
     private val fileMappingValidator: FileMappingPreconditionValidator,
 ) {
+    fun validateFilenameCharacters(
+        submissionIdFilesMap: SubmissionIdFilesMap?,
+    ): SubmissionIdFilesMappingPreconditionValidator {
+        submissionIdFilesMap?.values?.forEach {
+            fileMappingValidator.validateFilenameCharacters(it)
+        }
+        return this
+    }
+
     fun validateFilenamesAreUnique(
         submissionIdFilesMap: SubmissionIdFilesMap?,
     ): SubmissionIdFilesMappingPreconditionValidator {
@@ -127,6 +215,7 @@ class SubmissionIdFilesMappingPreconditionValidator(
      * For files that have been uploaded through the multipart upload protocol, this validates that the uploads
      * have been completed.
      */
+    // TODO #5503: Write tests for this
     fun validateMultipartUploads(
         submissionIdFilesMap: SubmissionIdFilesMap?,
     ): SubmissionIdFilesMappingPreconditionValidator {

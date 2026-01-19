@@ -1,6 +1,7 @@
-import { type Dispatch, type SetStateAction, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import type { QueryState } from '../components/SearchPage/useQueryAsState.ts';
+import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
+import type { FieldValueUpdate } from '../types/config.ts';
 
 type ParamType = 'string' | 'boolean' | 'nullable-string';
 
@@ -10,7 +11,7 @@ type ParamType = 'string' | 'boolean' | 'nullable-string';
  * @param paramName The name of the URL parameter to sync with
  * @param queryState The current URL query state object
  * @param defaultValue The default value to use if the parameter is not present in the URL
- * @param setState Function to update the URL query state
+ * @param setSomeFieldValues Function to update field values
  * @param paramType Type of the parameter for proper parsing/serialization
  * @param shouldRemove Function to determine if the parameter should be removed from URL
  * @returns [value, setValue] tuple similar to useState
@@ -19,7 +20,7 @@ function useUrlParamState<T>(
     paramName: string,
     queryState: QueryState,
     defaultValue: T,
-    setState: Dispatch<SetStateAction<QueryState>>,
+    setSomeFieldValues: (...fieldValuesToSet: FieldValueUpdate[]) => void,
     paramType: ParamType = 'string',
     shouldRemove: (value: T) => boolean,
 ): [T, (newValue: T) => void] {
@@ -44,20 +45,9 @@ function useUrlParamState<T>(
 
     const updateUrlParam = useCallback(
         (newValue: T) => {
-            setState((prev) => {
-                if (shouldRemove(newValue)) {
-                    const newState = { ...prev };
-                    delete newState[paramName];
-                    return newState;
-                } else {
-                    return {
-                        ...prev,
-                        [paramName]: String(newValue),
-                    };
-                }
-            });
+            setSomeFieldValues([paramName, shouldRemove(newValue) ? null : String(newValue)]);
         },
-        [paramName, setState, shouldRemove],
+        [paramName, setSomeFieldValues, shouldRemove],
     );
 
     return [valueState, updateUrlParam];

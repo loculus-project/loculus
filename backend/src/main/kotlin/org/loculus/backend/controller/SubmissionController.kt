@@ -38,12 +38,15 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
+import org.loculus.backend.log.ORGANISM_MDC_KEY
 import org.loculus.backend.log.REQUEST_ID_MDC_KEY
 import org.loculus.backend.log.RequestIdContext
 import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
+import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
+import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
@@ -83,6 +86,8 @@ open class SubmissionController(
     private val requestIdContext: RequestIdContext,
     private val backendConfig: BackendConfig,
     private val objectMapper: ObjectMapper,
+    private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
+    private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
 ) {
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
@@ -106,14 +111,11 @@ open class SubmissionController(
         ) @RequestParam restrictedUntil: String?,
         @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart(required = false) fileMapping: String?,
     ): List<SubmissionIdMapping> {
-        var innerDataUseTermsType = DataUseTermsType.OPEN
-        if (backendConfig.dataUseTerms.enabled) {
-            if (dataUseTermsType == null) {
-                throw BadRequestException("the 'dataUseTermsType' needs to be provided.")
-            } else {
-                innerDataUseTermsType = dataUseTermsType
-            }
-        }
+        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
+        val dataUseTerms = dataUseTermsPreconditionValidator.constructDataUseTermsAndValidate(
+            dataUseTermsType,
+            restrictedUntil,
+        )
         val fileMappingParsed = parseFileMapping(fileMapping, organism)
 
         val params = SubmissionParams.OriginalSubmissionParams(
@@ -123,7 +125,7 @@ open class SubmissionController(
             sequenceFile,
             fileMappingParsed,
             groupId,
-            DataUseTerms.fromParameters(innerDataUseTermsType, restrictedUntil),
+            dataUseTerms,
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
     }
@@ -199,7 +201,7 @@ open class SubmissionController(
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         headers.eTag = lastDatabaseWriteETag
-        val streamBody = streamTransactioned {
+        val streamBody = streamTransactioned(endpoint = "extract-unprocessed-data", organism = organism) {
             submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
         }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -331,7 +333,9 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
+        val streamBody = streamTransactioned(compression, endpoint = "get-released-data", organism = organism) {
+            releasedDataModel.getReleasedData(organism)
+        }
         return ResponseEntity.ok().headers(headers).body(streamBody)
     }
 
@@ -440,7 +444,7 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression) {
+        val streamBody = streamTransactioned(compression, endpoint = "get-original-metadata", organism = organism) {
             submissionDatabaseService.streamOriginalMetadata(
                 authenticatedUser,
                 organism,
@@ -497,9 +501,13 @@ open class SubmissionController(
 
     private fun <T> streamTransactioned(
         compressionFormat: CompressionFormat? = null,
+        endpoint: String,
+        organism: Organism,
         sequenceProvider: () -> Sequence<T>,
     ) = StreamingResponseBody { responseBodyStream ->
+        val startTime = System.currentTimeMillis()
         MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
+        MDC.put(ORGANISM_MDC_KEY, organism.name)
 
         val outputStream = when (compressionFormat) {
             CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
@@ -511,14 +519,22 @@ open class SubmissionController(
                 try {
                     iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
                 } catch (e: Exception) {
-                    log.error(e) { "An unexpected error occurred while streaming, aborting the stream: $e" }
+                    val duration = System.currentTimeMillis() - startTime
+                    log.error(e) {
+                        "[$endpoint] An unexpected error occurred while streaming after ${duration}ms, aborting the stream: $e"
+                    }
                     stream.write(
                         "An unexpected error occurred while streaming, aborting the stream: ${e.message}".toByteArray(),
                     )
                 }
             }
         }
+
+        val duration = System.currentTimeMillis() - startTime
+        log.info { "[$endpoint] Streaming response completed in ${duration}ms" }
+
         MDC.remove(REQUEST_ID_MDC_KEY)
+        MDC.remove(ORGANISM_MDC_KEY)
     }
 
     fun parseFileMapping(fileMapping: String?, organism: Organism): SubmissionIdFilesMap? {

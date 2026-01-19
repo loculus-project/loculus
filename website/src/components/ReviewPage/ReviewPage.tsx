@@ -1,6 +1,6 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import Pagination from '@mui/material/Pagination';
-import { type ChangeEvent, type FC, useState } from 'react';
+import { type ChangeEvent, type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { ReviewCard } from './ReviewCard.tsx';
@@ -10,21 +10,24 @@ import {
     approveAllDataScope,
     deleteAllDataScope,
     deleteProcessedDataWithErrorsScope,
+    errorsProcessingResult,
     type GetSequencesResponse,
     type Group,
-    processedStatus,
     inProcessingStatus,
+    noIssuesProcessingResult,
     type PageQuery,
+    processedStatus,
     receivedStatus,
     type SequenceEntryStatus,
-    errorsProcessingResult,
     warningsProcessingResult,
-    noIssuesProcessingResult,
 } from '../../types/backend.ts';
+import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { getSegmentAndGeneDisplayNameMap } from './getSegmentAndGeneDisplayNameMap.tsx';
 import { getLastApprovalTimeKey } from '../SearchPage/RecentSequencesBanner.tsx';
+import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import BiTrash from '~icons/bi/trash';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
@@ -43,6 +46,7 @@ type ReviewPageProps = {
     accessToken: string;
     metadataDisplayNames: Map<string, string>;
     filesEnabled: boolean;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
 };
 
 const pageSizeOptions = [10, 20, 50, 100] as const;
@@ -81,6 +85,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     accessToken,
     metadataDisplayNames,
     filesEnabled,
+    referenceGenomeLightweightSchema,
 }) => {
     const [pageQuery, setPageQuery] = useState<PageQuery>({ pageOneIndexed: 1, size: pageSizeOptions[2] });
 
@@ -122,6 +127,11 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
         const newSize = parseInt(event.target.value, 10);
         setPageQuery({ pageOneIndexed: 1, size: newSize });
     };
+
+    const segmentAndGeneDisplayNameMap = useMemo(
+        () => getSegmentAndGeneDisplayNameMap(referenceGenomeLightweightSchema),
+        [referenceGenomeLightweightSchema],
+    );
 
     let sequencesData = hooks.getSequences.data;
 
@@ -268,7 +278,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                         <div className='py-1'>
                             {errorCount > 0 && showErrors && (
                                 <MenuItem>
-                                    <button
+                                    <Button
                                         className={menuItemClassName}
                                         onClick={() =>
                                             displayConfirmationDialog({
@@ -286,11 +296,11 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                                     >
                                         <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
                                         Discard {errorCount} sequence{errorCount > 1 ? 's' : ''} with errors
-                                    </button>
+                                    </Button>
                                 </MenuItem>
                             )}
                             <MenuItem>
-                                <button
+                                <Button
                                     className={menuItemClassName}
                                     onClick={() =>
                                         displayConfirmationDialog({
@@ -307,14 +317,14 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                                 >
                                     <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
                                     Discard all {processedCount} processed sequences
-                                </button>
+                                </Button>
                             </MenuItem>
                         </div>
                     </MenuItems>
                 </Menu>
             )}
             {validCount > 0 && (
-                <button
+                <Button
                     className='border rounded-md p-1 bg-primary-600 text-white px-2'
                     onClick={() =>
                         displayConfirmationDialog({
@@ -334,7 +344,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                     <WpfPaperPlane className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
                     Release {validCount} valid sequence
                     {validCount > 1 ? 's' : ''}
-                </button>
+                </Button>
             )}
         </div>
     );
@@ -381,6 +391,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                             organism={organism}
                             accessToken={accessToken}
                             filesEnabled={filesEnabled}
+                            segmentAndGeneDisplayNameMap={segmentAndGeneDisplayNameMap}
                         />
                     </div>
                 );

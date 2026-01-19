@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.`is`
@@ -26,6 +27,7 @@ import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
+import org.loculus.backend.controller.DUMMY_ORGANISM_MAIN_SEQUENCE
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.S3_CONFIG
@@ -139,7 +141,7 @@ class SubmitProcessedDataEndpointTest(
         assertThat(processedData.unalignedNucleotideSequences, hasEntry(MAIN_SEGMENT, "NACTG"))
         assertThat(
             processedData.alignedNucleotideSequences,
-            hasEntry(MAIN_SEGMENT, "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"),
+            hasEntry(MAIN_SEGMENT, DUMMY_ORGANISM_MAIN_SEQUENCE),
         )
         assertThat(processedData.alignedAminoAcidSequences, hasEntry(SOME_LONG_GENE, "ACDEFGHIKLMNPQRSTVWYBZX-*"))
         assertThat(processedData.nucleotideInsertions, hasEntry(MAIN_SEGMENT, listOf(Insertion(123, "ACTG"))))
@@ -514,7 +516,10 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(
                 jsonPath(
                     "$.detail",
-                    containsString("The File IDs [caaf8c66-e1ba-4c47-99b1-8c368adb9850] do not exist."),
+                    allOf(
+                        containsString("not exist"),
+                        containsString("$fileId"),
+                    ),
                 ),
             )
     }
@@ -544,7 +549,10 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(
                 jsonPath(
                     "$.detail",
-                    containsString("No file uploaded for file ID ${fileIdAndUrl.fileId}."),
+                    allOf(
+                        containsString("No file uploaded"),
+                        containsString(fileIdAndUrl.fileId.toString()),
+                    ),
                 ),
             )
     }

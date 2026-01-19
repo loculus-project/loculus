@@ -131,6 +131,41 @@ class ReviseEndpointTest(
     }
 
     @Test
+    fun `WHEN submitting revision for multi-segmented entries with status 'APPROVED_FOR_RELEASE' THEN success`() {
+        val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map { it.accession }
+
+        client.reviseSequenceEntries(
+            DefaultFiles.getRevisedMultiSegmentedMetadataFile(accessions),
+            DefaultFiles.sequencesFileMultiSegmented,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
+            .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
+            .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
+            .andExpect(jsonPath("\$[0].version").value(2))
+
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
+            .assertStatusIs(RECEIVED)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+            .assertStatusIs(APPROVED_FOR_RELEASE)
+
+        val result = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
+        val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
+        assertThat(responseBody, hasSize(10))
+
+        assertThat(
+            responseBody,
+            hasItem(
+                allOf(
+                    hasProperty<UnprocessedData>("accession", `is`(accessions.first())),
+                    hasProperty("version", `is`(2L)),
+                ),
+            ),
+        )
+    }
+
+    @Test
     fun `WHEN submitting revised data with non-existing accessions THEN throws an unprocessableEntity error`() {
         val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map {
             it.accession
@@ -156,13 +191,38 @@ class ReviseEndpointTest(
     }
 
     @Test
+    fun `WHEN submitting revised data with duplicate accessions THEN throws an unprocessableEntity error`() {
+        val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map {
+            it.accession
+        }
+
+        client.reviseSequenceEntries(
+            SubmitFiles.revisedMetadataFileWith(
+                content =
+                """
+                 accession	submissionId	firstColumn
+                    ${accessions.first()}	someHeader_main	someValue
+                    ${accessions.first()}	someHeader2_main	someOtherValue
+                """.trimIndent(),
+            ),
+            SubmitFiles.sequenceFileWith(),
+        ).andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "Duplicate accession found in metadata file: ${accessions.first()}",
+                ),
+            )
+    }
+
+    @Test
     fun `WHEN submitting revised data for wrong organism THEN throws an unprocessableEntity error`() {
         val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE, organism = DEFAULT_ORGANISM).map {
             it.accession
         }
 
         client.reviseSequenceEntries(
-            DefaultFiles.getRevisedMetadataFile(accessions),
+            DefaultFiles.getRevisedMultiSegmentedMetadataFile(accessions),
             DefaultFiles.sequencesFileMultiSegmented,
             organism = OTHER_ORGANISM,
         )
@@ -394,7 +454,12 @@ class ReviseEndpointTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("No file uploaded for file ID $fileId."),
+                ).value(
+                    allOf(
+                        containsString("No file uploaded"),
+                        containsString(fileId.toString()),
+                    ),
+                ),
             )
     }
 
@@ -496,7 +561,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "A row in metadata file contains no id",
+                "contains no value for 'id'",
             ),
             Arguments.of(
                 "metadata file with no header",
@@ -523,7 +588,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "Metadata file contains at least one duplicate submissionId",
+                "Duplicate submission_id found in metadata file: sameHeader",
             ),
             Arguments.of(
                 "duplicate headers in sequence file",
@@ -554,11 +619,13 @@ class ReviseEndpointTest(
                             AC
                             >notInMetadata
                             AC
+                            >notInMetadata2
+                            AC
                     """.trimIndent(),
                 ),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "Sequence file contains 1 ids that are not present in the metadata file: notInMetadata",
+                "Sequence file contains 2 FASTA ids that are not present in the metadata file: 'notInMetadata', 'notInMetadata2'",
             ),
             Arguments.of(
                 "sequence file misses submissionIds",
@@ -577,7 +644,7 @@ class ReviseEndpointTest(
                 ),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "Metadata file contains 1 ids that are not present in the sequence file: notInSequences",
+                "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'",
             ),
             Arguments.of(
                 "metadata file misses accession header",
@@ -605,7 +672,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "A row in metadata file contains no accession",
+                "contains no value for 'accession'",
             ),
         )
     }

@@ -35,9 +35,9 @@ jobs:
             build-mode: none
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
@@ -55,8 +55,8 @@ jobs:
         run: |
           cd backend
           export JAVA_OPTS="-Xmx4096m"
-          ./gradlew --no-daemon -Dorg.gradle.jvmargs=-Xmx1g build --info --stacktrace -x ktlintCheck -x test
+          ./gradlew --no-daemon -Dorg.gradle.jvmargs=-Xmx1g assemble --info --stacktrace
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{matrix.language}}"

@@ -13,3 +13,5 @@ disableEnaSubmission: true
 auth:
   verifyEmail: false
 host: localhost:3000
+siloImport:
+  pollIntervalSeconds: 5

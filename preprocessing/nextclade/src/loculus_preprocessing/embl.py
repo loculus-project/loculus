@@ -1,10 +1,10 @@
 import logging
 from typing import Any
-from unidecode import unidecode
 
 from Bio.Seq import Seq
 from Bio.SeqFeature import CompoundLocation, FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
+from unidecode import unidecode
 
 from loculus_preprocessing.datatypes import MoleculeType, ProcessedMetadata, SubmissionData
 
@@ -269,13 +269,13 @@ def create_flatfile(  # noqa: PLR0914
                 "molecule_type": seqIO_moleculetype.get(molecule_type, "DNA"),
                 "organism": organism,
                 "topology": topology,
-                "references": [reference],
-            },  # type: ignore
+                "references": [reference],  # type: ignore[dict-item]
+            },
             description=description,
         )
 
         source_feature = SeqFeature(
-            FeatureLocation(start=0, end=len(sequence.seq)),
+            FeatureLocation(start=0, end=len(sequence_str)),
             type="source",
             qualifiers={
                 "molecule_type": str(molecule_type),

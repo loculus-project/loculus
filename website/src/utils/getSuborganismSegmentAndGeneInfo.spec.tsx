@@ -102,5 +102,43 @@ describe('getSuborganismSegmentAndGeneInfo', () => {
                 isMultiSegmented: true,
             });
         });
+
+        test('should return null when no suborganism is selected', () => {
+            const referenceGenomeSequenceNames = {
+                [suborganism]: {
+                    nucleotideSegmentNames: ['main'],
+                    geneNames: ['gene1'],
+                    insdcAccessionFull: [],
+                },
+                anotherSuborganism: {
+                    nucleotideSegmentNames: ['segmentA', 'segmentB'],
+                    geneNames: ['geneA', 'geneB'],
+                    insdcAccessionFull: [],
+                },
+            };
+
+            const result = getSuborganismSegmentAndGeneInfo(referenceGenomeSequenceNames, null);
+
+            expect(result).toBeNull();
+        });
+
+        test('should return null when unknown suborganism is selected', () => {
+            const referenceGenomeSequenceNames = {
+                [suborganism]: {
+                    nucleotideSegmentNames: ['main'],
+                    geneNames: ['gene1'],
+                    insdcAccessionFull: [],
+                },
+                anotherSuborganism: {
+                    nucleotideSegmentNames: ['segmentA', 'segmentB'],
+                    geneNames: ['geneA', 'geneB'],
+                    insdcAccessionFull: [],
+                },
+            };
+
+            const result = getSuborganismSegmentAndGeneInfo(referenceGenomeSequenceNames, 'unknownSuborganism');
+
+            expect(result).toBeNull();
+        });
     });
 });

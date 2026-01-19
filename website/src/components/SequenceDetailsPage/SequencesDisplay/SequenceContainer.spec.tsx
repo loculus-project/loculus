@@ -18,6 +18,21 @@ vi.mock('../../config', () => ({
 const queryClient = new QueryClient();
 const accessionVersion = 'accession';
 
+// CSS Classes
+const TAB_ACTIVE_CLASS = 'tab-active';
+
+// Button Labels
+const LOAD_SEQUENCES_BUTTON = 'Load sequences';
+const ALIGNED_NUCLEOTIDE_SEQUENCE_TAB = 'Aligned nucleotide sequence';
+const NUCLEOTIDE_SEQUENCE_TAB = 'Nucleotide sequence';
+
+// Helper Functions for Dynamic Labels
+const getAlignedSegmentLabel = (segment: string) => `${segment} (aligned)`;
+const getUnalignedSegmentLabel = (segment: string) => `${segment} (unaligned)`;
+
+// Test Selectors
+const BUTTON_ROLE = 'button';
+
 function renderSequenceViewer(
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     suborganism: string,
@@ -86,9 +101,9 @@ describe('SequencesContainer', () => {
                 genes: [],
             });
 
-            click('Load sequences');
+            click(LOAD_SEQUENCES_BUTTON);
 
-            click('Aligned nucleotide sequence');
+            click(ALIGNED_NUCLEOTIDE_SEQUENCE_TAB);
             await waitFor(() => {
                 expect(
                     screen.getByText(singleSegmentSequence, {
@@ -96,8 +111,10 @@ describe('SequencesContainer', () => {
                     }),
                 ).toBeVisible();
             });
+            expectTabActive(ALIGNED_NUCLEOTIDE_SEQUENCE_TAB);
+            expectTabNotActive(NUCLEOTIDE_SEQUENCE_TAB);
 
-            click('Nucleotide sequence');
+            click(NUCLEOTIDE_SEQUENCE_TAB);
             await waitFor(() => {
                 expect(
                     screen.getByText(unalignedSingleSegmentSequence, {
@@ -105,6 +122,8 @@ describe('SequencesContainer', () => {
                     }),
                 ).toBeVisible();
             });
+            expectTabActive(NUCLEOTIDE_SEQUENCE_TAB);
+            expectTabNotActive(ALIGNED_NUCLEOTIDE_SEQUENCE_TAB);
         });
 
         test('should render multi segmented sequence', async () => {
@@ -113,9 +132,9 @@ describe('SequencesContainer', () => {
                 genes: [],
             });
 
-            click('Load sequences');
+            click(LOAD_SEQUENCES_BUTTON);
 
-            click(`${multiSegmentName} (aligned)`);
+            click(getAlignedSegmentLabel(multiSegmentName));
             await waitFor(() => {
                 expect(
                     screen.getByText(multiSegmentSequence, {
@@ -123,8 +142,11 @@ describe('SequencesContainer', () => {
                     }),
                 ).toBeVisible();
             });
+            // Regression test for #5330
+            expectTabActive(getAlignedSegmentLabel(multiSegmentName));
+            expectTabNotActive(getAlignedSegmentLabel('main'));
 
-            click(`${multiSegmentName} (unaligned)`);
+            click(getUnalignedSegmentLabel(multiSegmentName));
             await waitFor(() => {
                 expect(
                     screen.getByText(unalignedMultiSegmentSequence, {
@@ -132,6 +154,8 @@ describe('SequencesContainer', () => {
                     }),
                 ).toBeVisible();
             });
+            expectTabActive(getUnalignedSegmentLabel(multiSegmentName));
+            expectTabNotActive(getAlignedSegmentLabel(multiSegmentName));
         });
     });
 
@@ -161,17 +185,21 @@ describe('SequencesContainer', () => {
                 suborganism1,
             );
 
-            click('Load sequences');
+            click(LOAD_SEQUENCES_BUTTON);
 
-            click('Aligned nucleotide sequence');
+            click(ALIGNED_NUCLEOTIDE_SEQUENCE_TAB);
             await waitFor(() => {
                 expect(screen.getByText(alignedSequence, { exact: false })).toBeVisible();
             });
+            expectTabActive(ALIGNED_NUCLEOTIDE_SEQUENCE_TAB);
+            expectTabNotActive(NUCLEOTIDE_SEQUENCE_TAB);
 
-            click('Nucleotide sequence');
+            click(NUCLEOTIDE_SEQUENCE_TAB);
             await waitFor(() => {
                 expect(screen.getByText(sequence, { exact: false })).toBeVisible();
             });
+            expectTabActive(NUCLEOTIDE_SEQUENCE_TAB);
+            expectTabNotActive(ALIGNED_NUCLEOTIDE_SEQUENCE_TAB);
         });
 
         test('should render multi segmented sequences', async () => {
@@ -205,21 +233,33 @@ describe('SequencesContainer', () => {
                 suborganism2,
             );
 
-            click('Load sequences');
+            click(LOAD_SEQUENCES_BUTTON);
 
-            click('segment1 (aligned)');
+            click(getAlignedSegmentLabel('segment1'));
             await waitFor(() => {
                 expect(screen.getByText(alignedSequence, { exact: false })).toBeVisible();
             });
+            expectTabActive(getAlignedSegmentLabel('segment1'));
+            expectTabNotActive(getUnalignedSegmentLabel('segment1'));
 
-            click('segment2 (unaligned)');
+            click(getUnalignedSegmentLabel('segment2'));
             await waitFor(() => {
                 expect(screen.getByText(sequence, { exact: false })).toBeVisible();
             });
+            expectTabActive(getUnalignedSegmentLabel('segment2'));
+            expectTabNotActive(getAlignedSegmentLabel('segment1'));
         });
     });
 
     function click(name: string) {
-        act(() => screen.getByRole('button', { name }).click());
+        act(() => screen.getByRole(BUTTON_ROLE, { name }).click());
+    }
+
+    function expectTabActive(name: string) {
+        expect(screen.getByRole(BUTTON_ROLE, { name })).toHaveClass(TAB_ACTIVE_CLASS);
+    }
+
+    function expectTabNotActive(name: string) {
+        expect(screen.getByRole(BUTTON_ROLE, { name })).not.toHaveClass(TAB_ACTIVE_CLASS);
     }
 });

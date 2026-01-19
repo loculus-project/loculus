@@ -5,6 +5,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
 import org.loculus.backend.service.submission.CompressionAlgorithm
+import org.loculus.backend.testutil.TestResource
 import org.loculus.backend.utils.Accession
 import org.springframework.http.MediaType.TEXT_PLAIN_VALUE
 import org.springframework.mock.web.MockMultipartFile
@@ -15,9 +16,11 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 private const val DEFAULT_METADATA_FILE_NAME = "metadata.tsv"
+private const val DEFAULT_MULTI_SEGMENTED_METADATA_FILE_NAME = "metadata_multi_segment.tsv"
 private const val REVISED_METADATA_FILE_NAME = "revised_metadata.tsv"
+private const val REVISED_MULTI_SEGMENTED_METADATA_FILE_NAME = "revised_metadata_multi_segment.tsv"
 private const val DEFAULT_SEQUENCES_FILE_NAME = "sequences.fasta"
-private const val DEFAULT_MULTI_SEGMENT_SEQUENCES_FILE_NAME = "sequences_multi_segment.fasta"
+private const val DEFAULT_MULTI_SEGMENTED_SEQUENCES_FILE_NAME = "sequences_multi_segment.fasta"
 
 object SubmitFiles {
 
@@ -29,8 +32,25 @@ object SubmitFiles {
                 "someOtherAccession\tsomeHeader2\tsomeValue2",
         )
 
+        fun getRevisedMultiSegmentedMetadataFile(accessions: List<Accession>): MockMultipartFile {
+            val fileContent = getFileContent(REVISED_MULTI_SEGMENTED_METADATA_FILE_NAME)
+
+            val lines = fileContent.trim().split("\n").toMutableList()
+            val headerLine = lines.removeFirst()
+
+            val revisedLines = lines
+                .map { it.substringAfter('\t') }
+                .zip(accessions)
+                .map { (line, accession) -> "$accession\t$line" }
+                .toMutableList()
+
+            revisedLines.addFirst(headerLine)
+
+            return metadataFileWith(content = revisedLines.joinToString("\n"))
+        }
+
         fun getRevisedMetadataFile(accessions: List<Accession>): MockMultipartFile {
-            val fileContent = getFileContent(REVISED_METADATA_FILE_NAME)
+            val fileContent = TestResource(REVISED_METADATA_FILE_NAME).content
 
             val lines = fileContent.trim().split("\n").toMutableList()
             val headerLine = lines.removeFirst()
@@ -48,7 +68,7 @@ object SubmitFiles {
 
         val metadataFiles = CompressionAlgorithm.entries.associateWith {
             metadataFileWith(
-                content = getFileContent(DEFAULT_METADATA_FILE_NAME),
+                content = TestResource(DEFAULT_METADATA_FILE_NAME).content,
                 compression = it,
             )
         }
@@ -58,12 +78,20 @@ object SubmitFiles {
                 compression = it,
             )
         }
-        private val sequencesFilesMultiSegmented = CompressionAlgorithm.entries.associateWith {
-            sequenceFileWith(
-                content = getFileContent(DEFAULT_MULTI_SEGMENT_SEQUENCES_FILE_NAME),
+        private val metadataFilesMultiSegmented = CompressionAlgorithm.entries.associateWith {
+            metadataFileWith(
+                content = getFileContent(DEFAULT_MULTI_SEGMENTED_METADATA_FILE_NAME),
                 compression = it,
             )
         }
+        private val sequencesFilesMultiSegmented = CompressionAlgorithm.entries.associateWith {
+            sequenceFileWith(
+                content = TestResource(DEFAULT_MULTI_SEGMENTED_SEQUENCES_FILE_NAME).content,
+                compression = it,
+            )
+        }
+        val multiSegmentedMetadataFile = metadataFilesMultiSegmented[CompressionAlgorithm.NONE]
+            ?: error("No multi-segment metadata file")
         val metadataFile = metadataFiles[CompressionAlgorithm.NONE] ?: error("No metadata file")
         val sequencesFile = sequencesFiles[CompressionAlgorithm.NONE] ?: error("No sequences file")
         val sequencesFileMultiSegmented = sequencesFilesMultiSegmented[CompressionAlgorithm.NONE] ?: error(

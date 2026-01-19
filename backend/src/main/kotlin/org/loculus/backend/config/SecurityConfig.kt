@@ -59,6 +59,11 @@ class SecurityConfig {
         "/get-author",
         "/*/get-released-data",
         "/files/get/**",
+        "/groups/*",
+    )
+
+    private val headEndpointsThatArePublic = arrayOf(
+        "/files/get/**",
     )
 
     private val debugEndpoints = arrayOf(
@@ -77,7 +82,7 @@ class SecurityConfig {
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
                 "/",
-                "favicon.ico",
+                "/favicon.ico",
                 "/error/**",
                 "/actuator/**",
                 "/api-docs**",
@@ -85,6 +90,7 @@ class SecurityConfig {
                 "/swagger-ui/**",
             ).permitAll()
             auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
+            auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
             auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
             auth.requestMatchers(
@@ -128,7 +134,9 @@ fun getRoles(jwt: Jwt): List<String> {
     val defaultRealmAccess = mapOf<String, List<String>>()
     val realmAccess = when (jwt.claims["realm_access"]) {
         null -> defaultRealmAccess
+
         is Map<*, *> -> jwt.claims["realm_access"] as Map<*, *>
+
         else -> {
             log.debug { "Ignoring value of realm_access in jwt because type was not Map<*,*>" }
             defaultRealmAccess
@@ -137,7 +145,9 @@ fun getRoles(jwt: Jwt): List<String> {
 
     return when (realmAccess["roles"]) {
         null -> emptyList()
+
         is List<*> -> (realmAccess["roles"] as List<*>).filterIsInstance<String>()
+
         else -> {
             log.debug { "Ignoring value of roles in jwt because type was not List<*>" }
             emptyList()

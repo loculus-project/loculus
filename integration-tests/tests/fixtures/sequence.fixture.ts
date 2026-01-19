@@ -1,17 +1,26 @@
 import { test as groupTest } from './group.fixture';
-import { expect, Page } from '@playwright/test';
-import { v4 as uuidv4 } from 'uuid';
+import { expect } from '@playwright/test';
+import { randomUUID } from 'crypto';
 import { SingleSequenceSubmissionPage } from '../pages/submission.page';
+import {
+    CCHF_L_SEGMENT_FULL_SEQUENCE,
+    CCHF_M_SEGMENT_FULL_SEQUENCE,
+    CCHF_S_SEGMENT_FULL_SEQUENCE,
+    removeWhitespaces,
+} from '../test-helpers/test-data';
 
 type SequenceFixtures = {
-    pageWithReleasedSequence: Page;
+    releasedSequence: string;
 };
 
 export const test = groupTest.extend<SequenceFixtures>({
-    pageWithReleasedSequence: [
-        async ({ pageWithGroup }, use) => {
-            const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
-            const submissionId = `test_${uuidv4().slice(0, 8)}`;
+    releasedSequence: [
+        async ({ page, groupId }, use) => {
+            // Ensure group is created by depending on groupId
+            void groupId;
+
+            const submissionPage = new SingleSequenceSubmissionPage(page);
+            const submissionId = `test_${randomUUID().slice(0, 8)}`;
 
             await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
             await submissionPage.fillSubmissionForm({
@@ -22,30 +31,47 @@ export const test = groupTest.extend<SequenceFixtures>({
             });
 
             await submissionPage.fillSequenceData({
-                L: 'CCACATTGACACAGANAGCTCCAGTAGTGGTTCTCTGTCCTTATTAAACCATGGACTTCTTAAGAAACCTTGACTGGACTCAGGTGATTGCTAGTCAGTATGTGACCAATCCCAGGTTTAATATCTCTGATTACTTCGAGATTGTTCGACAGCCTGGTGACGGGAACTGTTTCTACCACAGTATAGCTGAGTTAACCATGCCCAACAAAACAGATCACTCATACCATAACATCAAACATCTGACTGAGGTGGCAGCACGGAAGTATTATCAGGAGGAGCCGGAGGCTAAGCTCATTGGCCTGAGTCTGGAAGACTATCTTAAGAGGATGCTATCTGACAACGAATGGGGATCGACTCTTGAGGCATCTATGTTGGCTAAGGAAATGGGTATTACTATCATCATTTGGACTGTTGCAGCCAGTGACGAAGTGGAAGCAGGCATAAAGTTTGGTGATGGTGATGTGTTTACAGCCGTGAATCTTCTGCACTCCGGACAGACACACTTTGATGCCCTCAGAATACTGCCNCANTTTGAGGCTGACACAAGAGAGNCCTTNAGTCTGGTAGACAANNTNATAGCTGTGGACCANNTGACCTCNTCTTCAAGTGATGAANTGCAGGACTANGAAGANCTTGCTTTAGCACTTACNAGNGCGGAAGAACCATNTAGACGGTCTAGCNTGGATGAGGTNACCCTNTCTAAGAAACAAGCAGAGNTATTGAGGCAGAAGGCATCTCAGTTGTCNAAACTGGTTAATAAAAGTCAGAACATACCGACTAGAGTTGGCAGGGTTCTGGACTGTATGTTTAACTGCAAACTATGTGTTGAAATATCAGCTGACACTCTAATTCTGCGACCAGAATCTAAAGAAAGAATTGG',
-                M: 'GTGGATTGAGCATCTTAATTGCAGCATACTTGTCAACATCATGCATATATCATTGATGTATGCAGTTTTCTGCTTGCAGCTGTGCGGTCTAGGGAAAACTAACGGACTACACAATGGGACTGAACACAATAAGACACACGTTATGACAACGCCTGATGACAGTCAGAGCCCTGAACCGCCAGTGAGCACAGCCCTGCCTGTCACACCGGACCCTTCCACTGTCACACCTACAACACCAGCCAGCGGATTAGAAGGCTCAGGAGAGGTTCACACATCCTCTCCAATCACCACCAAGGGTTTGTCTCTGCCGGGGGCTACATCTGAGCTCCCTGCGACTACTAGCATAGTCACTTCAGGTGCAAGTGATGCCGATTCTAGCACACAGGCAGCCAGAGACACCCCTAAACCATCAGTCCGCACGAGTCTGCCCAACAGCCCTAGCACACCATCCACACCACAAGGCACACACCATCCCGTGAGGAGTCTGCTTTCAGTCACGAGCCCTAAGCCAGAAGAAACACCAACACCGTCAAAATCAAGCAAAGATAGCTCAGCAACCAACAGTCCTCACCCAGCCGCCAGCAGACCAACAACCCCTCCCACAACAGCCCAGAGACCCGCTGAAAACAACAGCCACAACACCACCGAACAGCTTGAGTCCTTAACACAATTAGCAACTTCAGGTTCAATGATCTCTCCAACACAGACAGTCCTCCCAAAGAGTGTTACTTCTATAGCCATTCAAGACATTCATCCCAGCCCAACAAATAGGTCTAAAAGAAACCTTGATATGGAAATAATCT',
-                S: 'GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAGTTCAAGAAAGGAAATGGACTTGTGGACACTTTCACAAACTCNTATTCCTTTTGTGAAAGCGTNCCAAATCTGGACAGNTTTGTNTTCCAGATGGCNAGTGCCACTGATGATGCACAAAANGANTCCATCTACGCATCTGCNCTGGTGGANGCAACCAAATTTTGTGCACCTATATACGAGTGTGCTTGGGCTAGCTCCACTGGCATTGTTAAAAAGGGACTGGAGTGGTTCGAGAAAAATGCAGGAACCATTAAATCCTGGGATGAGAGTTATACTGAGCTTAAAGTTGAAGTTCCCAAAATAGAACAACTCTCCAACTACCAGCAGGCTGCTCTCAAATGGAGAAAAGACATAGGCTTCCGTGTCAATGCAAATACGGCAGCTTTGAGTAACAAAGTCCTAGCAGAGTACAAAGTTCCTGGCGAGATTGTAATGTCTGTCAAAGAGATGTTGTCAGATATGATTAGAAGNAGGAACCTGATTCTCAACAGAGGTGGTGATGAGAACCCACGCGGCCCAGTTAGCCGTGAACATGTGGAGTGGTGC',
+                fastaHeaderL: removeWhitespaces(CCHF_L_SEGMENT_FULL_SEQUENCE),
+                fastaHeaderM: removeWhitespaces(CCHF_M_SEGMENT_FULL_SEQUENCE),
+                fastaHeaderS: removeWhitespaces(CCHF_S_SEGMENT_FULL_SEQUENCE),
             });
 
             await submissionPage.acceptTerms();
             const reviewPage = await submissionPage.submitSequence();
+            await reviewPage.waitForAllProcessed();
+            const editPage = await reviewPage.editFirstSequence();
 
+            await editPage.discardSequenceFileByTestId(
+                'discard_fastaHeaderL (mapped to L)_segment_file',
+            );
+            await editPage.addSequenceFile(CCHF_L_SEGMENT_FULL_SEQUENCE, 'edited_L.txt');
+            await editPage.discardSequenceFileByTestId(
+                'discard_fastaHeaderM (mapped to M)_segment_file',
+            );
+            await editPage.addSequenceFile(CCHF_M_SEGMENT_FULL_SEQUENCE, 'edited_M.txt');
+            await editPage.discardSequenceFileByTestId(
+                'discard_fastaHeaderS (mapped to S)_segment_file',
+            );
+            await editPage.addSequenceFile(`>edited_S\n${CCHF_S_SEGMENT_FULL_SEQUENCE}`);
+            await editPage.fillField('Authors', 'Integration, Test');
+            await editPage.submitChanges();
             await reviewPage.releaseValidSequences();
-            await pageWithGroup.getByRole('link', { name: 'Released Sequences' }).click();
+
+            await page.getByRole('link', { name: 'Released Sequences' }).click();
             await expect
                 .poll(
                     async () => {
-                        await pageWithGroup.reload();
-                        return pageWithGroup.getByRole('link', { name: /LOC_/ }).isVisible();
+                        await page.reload();
+                        return page.getByRole('link', { name: /LOC_/ }).isVisible();
                     },
                     {
                         message: 'Link with name /LOC_/ never became visible.',
-                        timeout: 60000,
+                        timeout: 90000,
                     },
                 )
                 .toBe(true);
 
-            await use(pageWithGroup);
+            await use(submissionId);
         },
         {
             timeout: 90000,

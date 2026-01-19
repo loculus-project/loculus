@@ -80,7 +80,7 @@ def submitted_insdc_accessions():
             "biosampleAccessions": bio_samples,
         }
     except Exception as e:
-        logger.error("Failed to fetch submitted accessions: %s", str(e))
+        logger.error(f"Failed to fetch submitted accessions: {e}")
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 

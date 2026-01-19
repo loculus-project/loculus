@@ -1,64 +1,39 @@
 name: Mirror NCBI Datasets to Object Storage
+# This reusable workflow contains the shared logic for mirroring NCBI datasets.
+# It is called by datasets-mirror-priority-1.yml and datasets-mirror-priority-2.yml with different schedules.
+# It can also be manually triggered to mirror a single taxon ID.
 on:
+  workflow_call:
+    inputs:
+      taxon_id:
+        description: 'Single taxon ID to process'
+        required: true
+        type: number
   workflow_dispatch:
-  schedule:
-    - cron: '12 */2 * * *' # Runs every two hours at 12 minutes past the hour
+    inputs:
+      taxon_id:
+        description: 'Taxon ID to mirror'
+        required: true
+        type: number
 jobs:
   download-and-upload:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        taxon_id:
-          - 10244   # Mpox
-          - 11053   # Dengue type 1
-          - 11060   # Dengue type 2
-          - 11069   # Dengue type 3
-          - 11070   # Dengue type 4
-          - 11137   # Coronavirus 229E
-          - 11234   # Measles morbillivirus
-          - 11250   # RSV
-          - 11520   # Influenza B
-          - 11676   # HIV1
-          - 12059   # Enterovirus
-          - 12637   # Dengue (all)
-          - 31631   # Coronavirus OC43
-          - 31704   # Coxsackievirus A16
-          - 39054   # Enterovirus A71
-          - 42769   # Coxsackievirus A10
-          - 42789   # Enterovirus D68
-          - 86107   # Coxsackievirus A6
-          - 118655  # Oropouche
-          - 138948  # Enterovirus A
-          - 138949  # Enterovirus B
-          - 138950  # Enterovirus C
-          - 138951  # Enterovirus D
-          - 162145  # Human metapneumovirus
-          - 197911  # Influenza A
-          - 208893  # RSV A
-          - 208895  # RSV B
-          - 277944  # Coronavirus NL63
-          - 290028  # Coronavirus HKU1
-          - 1868215 # Orthopneumovirus
-          - 3048148 # Metapneumovirus hominis
-          - 3048448 # West nile virus
-          - 3050294 # Chickenpox virus
-          - 3052460 # Orthoebolavirus sudanense
-          - 3052462 # Orthoebolavirus zairense
-          - 3052518 # CCHFV
-      fail-fast: false
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: datasets
-          create-args: ncbi-datasets-cli s3cmd
-      - name: Download NCBI Dataset
+          create-args: -c conda-forge -c bioconda ncbi-datasets-cli s3cmd seqkit
+      - name: Download NCBI Dataset and create tzst archive
         shell: bash -l {0}
         run: |
-          datasets download virus genome taxon ${{ matrix.taxon_id }} --no-progressbar --filename ${{ matrix.taxon_id }}.zip
-          unzip -o ${{ matrix.taxon_id }}.zip
-          tar -I 'zstd -T0 -18' -cvf ${{ matrix.taxon_id }}.tar.zst ncbi_dataset
+          datasets download virus genome taxon ${{ inputs.taxon_id }} --no-progressbar --filename ${{ inputs.taxon_id }}.zip
+          unzip -o ${{ inputs.taxon_id }}.zip
+          tar -I 'zstd -T0 -18' -cvf ${{ inputs.taxon_id }}.tar.zst ncbi_dataset
+          cat md5sum.txt
+          ls -lh ${{ inputs.taxon_id }}.* ncbi_dataset/data/*
+          seqkit stats ncbi_dataset/data/genomic.fna
       - name: Create S3cmd config
         run: |
           cat <<EOF > ~/.s3cfg
@@ -72,10 +47,10 @@ jobs:
       - name: Upload to Object Storage
         shell: bash -l {0}
         run: |
-          for file in ${{ matrix.taxon_id }}.zip ${{ matrix.taxon_id }}.tar.zst ; do
+          for file in ${{ inputs.taxon_id }}.zip ${{ inputs.taxon_id }}.tar.zst ; do
             s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
           done
-  notify_on_failure:  # Runs only if 'build' job fails
+  notify_on_failure:
     needs: download-and-upload
     runs-on: ubuntu-latest
     if: failure()

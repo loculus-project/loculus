@@ -19,13 +19,12 @@ import {
 } from '../../types/backend.ts';
 import type { FileCategory, InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
-import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import DisabledUntilHydrated from '../DisabledUntilHydrated';
+import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 export type UploadAction = 'submit' | 'revise';
@@ -37,7 +36,6 @@ type DataUploadFormProps = {
     action: UploadAction;
     inputMode: InputMode;
     group: Group;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     metadataTemplateFields: Map<string, InputField[]>;
     onSuccess: () => void;
     onError: (message: string) => void;
@@ -56,7 +54,6 @@ const InnerDataUploadForm = ({
     onSuccess,
     onError,
     group,
-    referenceGenomeLightweightSchema,
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
@@ -126,8 +123,11 @@ const InnerDataUploadForm = ({
                     break;
                 }
                 case 'revise':
-                    revise({ metadataFile: metadataFile, sequenceFile: sequenceFile });
-                    // TODO #4573: handle file stuff for revise
+                    revise({
+                        metadataFile: metadataFile,
+                        sequenceFile: sequenceFile,
+                        fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
+                    });
                     break;
             }
         };
@@ -157,7 +157,6 @@ const InnerDataUploadForm = ({
                             setFileFactory={setFileFactory}
                             organism={organism}
                             action={action}
-                            referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                             metadataTemplateFields={metadataTemplateFields}
                             submissionDataTypes={submissionDataTypes}
                         />
@@ -168,7 +167,6 @@ const InnerDataUploadForm = ({
                         setFileFactory={setFileFactory}
                         organism={organism}
                         action={action}
-                        referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                         metadataTemplateFields={metadataTemplateFields}
                         submissionDataTypes={submissionDataTypes}
                     />
@@ -181,7 +179,7 @@ const InnerDataUploadForm = ({
                             accessToken={accessToken}
                             inputMode={inputMode}
                             clientConfig={clientConfig}
-                            group={group}
+                            groupId={group.groupId}
                             onError={onError}
                             setFileMapping={setFileMapping}
                         />
@@ -211,19 +209,18 @@ const InnerDataUploadForm = ({
                     </>
                 )}
                 <div className='flex justify-end gap-x-6'>
-                    <DisabledUntilHydrated alsoDisabledIf={isPending}>
-                        <button
-                            name='submit'
-                            type='submit'
-                            className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
-                            onClick={(e) => void handleSubmit(e)}
-                        >
-                            <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
-                                <span className='loading loading-spinner loading-sm' />
-                            </div>
-                            <span className='flex-1 text-center mx-8'>Submit sequences</span>
-                        </button>
-                    </DisabledUntilHydrated>
+                    <Button
+                        name='submit'
+                        type='submit'
+                        className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
+                        onClick={(e) => void handleSubmit(e)}
+                        alsoDisabledIf={isPending}
+                    >
+                        <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
+                            <span className='loading loading-spinner loading-sm' />
+                        </div>
+                        <span className='flex-1 text-center mx-8'>Submit sequences</span>
+                    </Button>
                 </div>
             </div>
         </div>
@@ -275,11 +272,11 @@ const InputModeTabs = ({
     );
 };
 
-const ExtraFilesUpload = ({
+export const ExtraFilesUpload = ({
     accessToken,
     clientConfig,
     inputMode,
-    group,
+    groupId,
     fileCategories,
     setFileMapping,
     onError,
@@ -287,7 +284,7 @@ const ExtraFilesUpload = ({
     accessToken: string;
     clientConfig: ClientConfig;
     inputMode: InputMode;
-    group: Group;
+    groupId: number;
     fileCategories: FileCategory[];
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
     onError: (message: string) => void;
@@ -310,7 +307,7 @@ const ExtraFilesUpload = ({
                         inputMode={inputMode}
                         accessToken={accessToken}
                         clientConfig={clientConfig}
-                        group={group}
+                        groupId={groupId}
                         onError={onError}
                         setFileMapping={setFileMapping}
                     />

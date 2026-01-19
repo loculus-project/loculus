@@ -3,7 +3,10 @@ import { type APIRoute } from 'astro';
 import { findOrganismAndData } from './findOrganismAndData';
 import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
 import { getRuntimeConfig, getSchema } from '../../../config';
+import { getInstanceLogger } from '../../../logger.ts';
 import type { DetailsJson } from '../../../types/detailsJson';
+
+const logger = getInstanceLogger('details.json');
 
 export const GET: APIRoute = async (req) => {
     const params = req.params as { accessionVersion: string; accessToken?: string };
@@ -11,6 +14,9 @@ export const GET: APIRoute = async (req) => {
     const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
 
     if (sequenceDetailsTableData.isErr()) {
+        logger.warn(
+            `Could not find sequence details for accessionVersion ${accessionVersion}: ${sequenceDetailsTableData.error.message}`,
+        );
         return new Response(`Error detected`, {
             status: 404,
         });

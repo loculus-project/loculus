@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const browser = process.env.BROWSER;
+const readonlySetupName = 'readonly-setup';
 
 /**
  * Read environment variables from file.
@@ -15,12 +16,14 @@ const browser = process.env.BROWSER;
  */
 const config = {
     testDir: './tests',
+    /* Timeout for each test in milliseconds */
+    timeout: 60_000,
     /* Run tests in files in parallel */
     fullyParallel: true,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
     forbidOnly: !!process.env.CI,
     /* Retry on CI only */
-    retries: process.env.CI ? 2 : 0,
+    retries: process.env.CI ? 0 : 0,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: 'html',
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -31,7 +34,7 @@ const config = {
         ignoreHTTPSErrors: process.env.PLAYWRIGHT_TEST_IGNORE_HTTPS_ERRORS === 'true',
 
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-        trace: (process.env.CI ? 'on-first-retry' : 'on') as
+        trace: (process.env.CI ? 'retain-on-failure' : 'on') as
             | 'on'
             | 'off'
             | 'retain-on-failure'
@@ -42,13 +45,14 @@ const config = {
     projects: [
         // Dependent project setup
         {
-            name: 'readonly setup',
+            name: readonlySetupName,
+            use: { ...devices['Desktop Chrome'] },
             testMatch: /readonly\.setup\.ts/,
         },
         {
             name: 'chromium-with-dep',
             use: { ...devices['Desktop Chrome'] },
-            dependencies: ['readonly setup'],
+            dependencies: [readonlySetupName],
             testMatch: /.*\.dependent\.spec\.ts/,
         },
         {
@@ -56,7 +60,7 @@ const config = {
             use: {
                 ...devices['Desktop Firefox'],
             },
-            dependencies: ['readonly setup'],
+            dependencies: [readonlySetupName],
             testMatch: /.*\.dependent\.spec\.ts/,
         },
 
@@ -64,11 +68,13 @@ const config = {
             name: 'chromium-without-dep',
             use: { ...devices['Desktop Chrome'] },
             testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
+            testIgnore: /.*\/cli\/.*\.spec\.ts$/,
         },
         {
             name: 'firefox-without-dep',
             use: { ...devices['Desktop Firefox'] },
             testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
+            testIgnore: /.*\/cli\/.*\.spec\.ts$/,
         },
 
         // CLI tests - still need browser for user setup
@@ -80,10 +86,26 @@ const config = {
     ],
 };
 
-if (browser) {
-    config.projects = config.projects.filter(
-        (p) => p.name.startsWith(browser) || p.name === 'readonly setup' || p.name === 'cli-tests',
-    );
+const testSuite = process.env.TEST_SUITE || 'all';
+
+if (testSuite === 'cli') {
+    // Run only CLI tests
+    config.projects = config.projects.filter((p) => p.name === 'cli-tests');
+} else if (browser) {
+    if (testSuite === 'browser') {
+        // Run only browser tests (exclude CLI)
+        config.projects = config.projects.filter(
+            (p) => p.name.startsWith(browser) || p.name === readonlySetupName,
+        );
+    } else {
+        // Default 'all': run both browser and CLI tests
+        config.projects = config.projects.filter(
+            (p) =>
+                p.name.startsWith(browser) ||
+                p.name === readonlySetupName ||
+                p.name === 'cli-tests',
+        );
+    }
 }
 
 export default defineConfig(config);

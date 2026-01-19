@@ -50,23 +50,29 @@
   {{- end }}
 {{- end }}
 
+{{/* Expects an object { metadata: [...], referenceGenomes: {...} }
+  .metadata is an array of metadata fields. Each has name, type, displayName, header, required etc.
+  .referenceGenomes is a map of reference genome definitions directly taken from the instance config of an organism.
+*/}}
 {{- define "loculus.preprocessingSpecs" -}}
 {{- $metadata := .metadata }}
-{{/* .metadata is an array of metadata fields. Each has name, type, displayName, header, required etc. */}}
-{{- $segments := .nucleotideSequences}}
-{{- $is_segmented := gt (len $segments) 1 }}
+{{- $referenceGenomes := .referenceGenomes}}
+
+{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" $referenceGenomes | fromYaml).segments }}
+{{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
+
 {{- range $metadata }}
-{{- $currentItem := . }}
-{{- if and $is_segmented .perSegment }}
-{{- range $segment := $segments }}
-{{- with $currentItem }}
-{{- $args := deepCopy . | merge (dict "segment" $segment "key" (printf "%s_%s" .name $segment)) }}
-{{- include "loculus.sharedPreproSpecs" $args }}
-{{- end }}
-{{- end }}
-{{- else }}
-{{- $args := deepCopy . | merge (dict "segment" "" "key" .name) }}
-{{- include "loculus.sharedPreproSpecs" $args }}
-{{- end }}
+    {{- $currentItem := . }}
+    {{- if and $isSegmented .perSegment }}
+        {{- range $segment := $rawUniqueSegments }}
+            {{- with $currentItem }}
+            {{- $args := deepCopy . | merge (dict "segment" $segment "key" (printf "%s_%s" .name $segment)) }}
+            {{- include "loculus.sharedPreproSpecs" $args }}
+            {{- end }}
+        {{- end }}
+    {{- else }}
+        {{- $args := deepCopy . | merge (dict "segment" "" "key" .name) }}
+        {{- include "loculus.sharedPreproSpecs" $args }}
+    {{- end }}
 {{- end }}
 {{- end }}

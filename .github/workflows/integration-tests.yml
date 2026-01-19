@@ -1,6 +1,17 @@
 name: Integration tests
 on:
   workflow_dispatch:
+    inputs:
+      subcomponent:
+        description: 'Which test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - chromium
+          - firefox
+          - cli
   pull_request:
     paths:
       - "backend/**"
@@ -16,7 +27,21 @@ on:
     branches:
       - main
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ] || [ "${{ inputs.subcomponent }}" == "all" ]; then
+            echo 'matrix=["chromium","firefox","cli"]' >> $GITHUB_OUTPUT
+          else
+            echo 'matrix=["${{ inputs.subcomponent }}"]' >> $GITHUB_OUTPUT
+          fi
+
   integration-tests:
+    needs: setup
     permissions:
       packages: read
       contents: read
@@ -26,9 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser:
-          - chromium
-          - firefox
+        browser: ${{ fromJSON(needs.setup.outputs.matrix) }}
     timeout-minutes: 45
     env:
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -36,13 +59,17 @@ jobs:
     steps:
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
+      - name: Get runner IP
+        run: curl -4 ifconfig.me
       - name: Collect Workflow Telemetry
         uses: catchpoint/workflow-telemetry-action@v2
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Install k3d
         run: |
-          curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+          for i in {1..5}; do
+            curl https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | DEBUG=true bash && break || sleep $((i * 2))
+          done
           k3d version
       - uses: azure/setup-helm@v4
         with:
@@ -58,11 +85,11 @@ jobs:
             --for-e2e \
             --enablePreprocessing \
             --use-localhost-ip
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
-          node-version-file: ./website/.nvmrc
+          node-version-file: ./integration-tests/.nvmrc
       - name: Cache .npm
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('integration-tests/**/package-lock.json') }}
@@ -73,42 +100,31 @@ jobs:
         with:
           python-version: '3.13'
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
       - name: Install CLI
-        run: cd cli && uv sync && uv build && pip install dist/*.whl
+        run: cd cli && uv sync && uv build && uv pip install --system dist/*.whl
       - name: Install keyring backend for CLI
-        run: pip install keyrings.alt
-      - name: Get Installed Playwright Version
-        id: playwright-version
-        run: cd integration-tests && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
-      - name: Cache Playwright Browsers
-        uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+        run: uv pip install --system keyrings.alt
+      # Firefox's readonly-setup is also done with Chromium
       - name: Install Playwright Browsers and System Dependencies
-        run: cd integration-tests && npx playwright install --with-deps
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-      - name: Install only System Dependencies
-        run: cd website && npx playwright install-deps
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: cd integration-tests && npx playwright install --with-deps --only-shell chromium ${{ matrix.browser == 'firefox' && 'firefox' || '' }}
       - name: Wait for the pods to be ready
         run: ./.github/scripts/wait_for_pods_to_be_ready.py --timeout ${{ env.wait_timeout }}
       - name: Sleep for 10 secs
         run: sleep 10
       - name: Run Integration test
         env:
-          BROWSER: ${{ matrix.browser }}
+          BROWSER: ${{ matrix.browser == 'cli' && 'chromium' || matrix.browser }}
+          TEST_SUITE: ${{ matrix.browser == 'cli' && 'cli' || 'browser' }}
         run: |
           set -o pipefail
-          cd integration-tests && npx playwright test --workers=4 2>&1 | tee output.txt
+          cd integration-tests && npx playwright test --workers=4 --reporter=list,html 2>&1 | tee output.txt
           EXIT_CODE=$?
           echo '```' >> $GITHUB_STEP_SUMMARY
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           exit $EXIT_CODE
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: playwright-report-${{ matrix.browser }}
@@ -119,7 +135,15 @@ jobs:
         run: kubectl get pods --all-namespaces
       - name: Describe pods
         if: ${{ !cancelled() }}
-        run: kubectl describe pods -l app=loculus
+        run: |
+          mkdir -p pod_descriptions
+          kubectl describe pods -l app=loculus | tee pod_descriptions/describe_pods.txt
+      - name: Upload pod descriptions
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: pod-descriptions-${{ matrix.browser }}
+          path: pod_descriptions/
       - name: Show events
         if: ${{ !cancelled() }}
         run: kubectl get events
@@ -128,7 +152,7 @@ jobs:
         run: ./.github/scripts/collect_kubernetes_logs.sh
       - name: Upload Kubernetes logs
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: kubernetes-logs-${{ matrix.browser }}
           path: kubernetes_logs/

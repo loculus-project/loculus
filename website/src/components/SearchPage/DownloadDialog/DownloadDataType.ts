@@ -1,12 +1,20 @@
 export type DownloadDataType =
-    | { type: 'metadata' }
+    | { type: 'metadata'; fields: string[] }
     | {
           type: 'unalignedNucleotideSequences';
           segment?: string;
-          includeRichFastaHeaders?: boolean;
+          richFastaHeaders: IncludeRichFastaHeaders;
       }
-    | { type: 'alignedNucleotideSequences'; segment?: string; includeRichFastaHeaders?: boolean }
-    | { type: 'alignedAminoAcidSequences'; gene: string; includeRichFastaHeaders?: boolean };
+    | { type: 'alignedNucleotideSequences'; segment?: string; richFastaHeaders: IncludeRichFastaHeaders }
+    | { type: 'alignedAminoAcidSequences'; gene: string; richFastaHeaders: IncludeRichFastaHeaders };
+
+type IncludeRichFastaHeaders =
+    | {
+          include: true;
+          /** Use this fasta header template (or the default if undefined) */
+          fastaHeaderOverride?: string;
+      }
+    | { include: false };
 
 /**
  * Get a shortened kebab-case datatype including the gene and sequence as well.

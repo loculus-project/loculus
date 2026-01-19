@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import { Button } from '../common/Button';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
 import { LinkOutMenu } from './DownloadDialog/LinkOutMenu.tsx';
@@ -10,37 +11,29 @@ import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
+import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
 import { stillRequiresSuborganismSelection } from './stillRequiresSuborganismSelection.tsx';
-import useQueryAsState, { type QueryState } from './useQueryAsState';
+import { useSearchPageState } from './useSearchPageState.ts';
+import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import { getLapisUrl } from '../../config.ts';
-import useUrlParamState from '../../hooks/useUrlParamState';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import type { LinkOut } from '../../types/config.ts';
-import {
-    type FieldValues,
-    type FieldValueUpdate,
-    type Schema,
-    type SequenceFlaggingConfig,
-    type SetSomeFieldValues,
-} from '../../types/config.ts';
-import { type OrderBy, type OrderDirection } from '../../types/lapis.ts';
+import { type FieldValues, type Schema, type SequenceFlaggingConfig } from '../../types/config.ts';
+import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
+import { getSuborganismSegmentAndGeneInfo } from '../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import {
-    COLUMN_VISIBILITY_PREFIX,
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
     MetadataFilterSchema,
-    NULL_QUERY_VALUE,
-    VISIBILITY_PREFIX,
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
-import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -92,46 +85,25 @@ export const InnerSearchFullUI = ({
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
-    const columnFieldItems: FieldItem[] = useMemo(
-        () =>
-            schema.metadata
-                .filter((field) => !(field.hideInSearchResultsTable ?? false))
-                .map((field) => ({
-                    name: field.name,
-                    displayName: field.displayName ?? field.name,
-                    header: field.header,
-                    alwaysSelected: field.name === schema.primaryKey,
-                    disabled: field.name === schema.primaryKey,
-                })),
-        [schema.metadata, schema.primaryKey],
-    );
-
-    const [state, setState] = useQueryAsState(initialQueryDict);
-
-    const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
-        'selectedSeq',
+    const {
         state,
-        null,
-        setState,
-        'nullable-string',
-        (value) => !value,
-    );
-    const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState(
-        'halfScreen',
-        state,
-        false,
-        setState,
-        'boolean',
-        (value) => !value,
-    );
-    const [selectedSuborganism, setSelectedSuborganism] = useUrlParamState<string | null>(
-        schema.suborganismIdentifierField ?? '',
-        state,
-        null,
-        setState,
-        'nullable-string',
-        (value) => value === null,
-    );
+        previewedSeqId,
+        setPreviewedSeqId,
+        previewHalfScreen,
+        setPreviewHalfScreen,
+        selectedSuborganism,
+        setSelectedSuborganism,
+        page,
+        setPage,
+        setSomeFieldValues,
+        removeFilter,
+        orderByField: orderByFieldCandidate,
+        orderDirection,
+        setOrderByField,
+        setOrderDirection,
+        setASearchVisibility,
+        setAColumnVisibility,
+    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema });
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -141,52 +113,11 @@ export const InnerSearchFullUI = ({
 
     const columnsToShow = useMemo(() => {
         return schema.metadata
-            .filter((field) => columnVisibilities.get(field.name) === true)
+            .filter((field) => columnVisibilities.get(field.name)?.isVisible(selectedSuborganism) === true)
             .map((field) => field.name);
     }, [schema.metadata, columnVisibilities]);
 
-    let orderByField = state.orderBy ?? schema.defaultOrderBy;
-    if (!columnsToShow.includes(orderByField)) {
-        orderByField = schema.primaryKey;
-    }
-
-    const orderDirection = state.order ?? schema.defaultOrder;
-
-    const page = parseInt(state.page ?? '1', 10);
-
-    const setPage = useCallback(
-        (newPage: number) => {
-            setState((prev: QueryState) => {
-                if (newPage === 1) {
-                    const withoutPageSet = { ...prev };
-                    delete withoutPageSet.page;
-                    return withoutPageSet;
-                } else {
-                    return {
-                        ...prev,
-                        page: newPage.toString(),
-                    };
-                }
-            });
-        },
-        [setState],
-    );
-
-    const setOrderByField = (field: string) => {
-        setState((prev: QueryState) => ({
-            ...prev,
-            orderBy: field,
-            page: '1',
-        }));
-    };
-
-    const setOrderDirection = (direction: OrderDirection) => {
-        setState((prev: QueryState) => ({
-            ...prev,
-            order: direction,
-            page: '1',
-        }));
-    };
+    const orderByField = columnsToShow.includes(orderByFieldCandidate) ? orderByFieldCandidate : schema.primaryKey;
 
     /**
      * The `fieldValues` are the values of the search fields.
@@ -196,98 +127,6 @@ export const InnerSearchFullUI = ({
     const fieldValues = useMemo(() => {
         return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
     }, [state, hiddenFieldValues, filterSchema]);
-
-    /**
-     * Update field values (query parameters).
-     * If value is '' or null, the query parameter is unset.
-     * For multi-select fields, we handle fieldValuesToSet as an array where:
-     * - If value is an array, it sets multiple values for that field
-     * - If value is '' or null, it clears the field
-     */
-    const setSomeFieldValues: SetSomeFieldValues = useCallback(
-        (...fieldValuesToSet: FieldValueUpdate[]) => {
-            setState((prev: QueryState) => {
-                const newState = { ...prev };
-                fieldValuesToSet.forEach(([key, value]) => {
-                    if (value === '' || value === null) {
-                        if (Object.keys(hiddenFieldValues).includes(key)) {
-                            // keep explicitly empty fields because they override the hiddenFieldValues here
-                            newState[key] = '';
-                        } else {
-                            // we can delete keys that are not in the hiddenFieldValues
-                            delete newState[key];
-                        }
-                    } else if (Array.isArray(value)) {
-                        // Handle array values for multi-select
-                        if (value.length === 0) {
-                            delete newState[key];
-                        } else {
-                            newState[key] = value.map((v) => v ?? NULL_QUERY_VALUE);
-                        }
-                    } else {
-                        newState[key] = value;
-                    }
-                });
-                return newState;
-            });
-            setPage(1);
-        },
-        [setState, setPage, hiddenFieldValues],
-    );
-
-    const removeFilter = (metadataFilterName: string) => {
-        if (Object.keys(hiddenFieldValues).includes(metadataFilterName)) {
-            const hiddenValue = hiddenFieldValues[metadataFilterName];
-            // If it's an array with nulls, filter them out (shouldn't happen but TypeScript doesn't know)
-            const valueToSet = Array.isArray(hiddenValue)
-                ? hiddenValue.filter((v): v is string => v !== null)
-                : hiddenValue;
-            setSomeFieldValues([metadataFilterName, valueToSet]);
-        } else {
-            setSomeFieldValues([metadataFilterName, null]);
-        }
-    };
-
-    const setASearchVisibility = (fieldName: string, visible: boolean) => {
-        setState((prev: QueryState) => {
-            const newState = { ...prev };
-            const key = `${VISIBILITY_PREFIX}${fieldName}`;
-            const metadataField = schema.metadata.find((field) => {
-                let name = field.name;
-                if (field.rangeOverlapSearch) {
-                    name = field.rangeOverlapSearch.rangeName;
-                }
-                return name === fieldName;
-            });
-            const defaultVisible = metadataField?.initiallyVisible === true;
-            if (visible === defaultVisible) {
-                delete newState[key];
-            } else {
-                newState[key] = visible ? 'true' : 'false';
-            }
-            if (!visible) {
-                delete newState[fieldName];
-            }
-            return newState;
-        });
-        if (!visible) {
-            setPage(1);
-        }
-    };
-
-    const setAColumnVisibility = (fieldName: string, visible: boolean) => {
-        setState((prev: QueryState) => {
-            const newState = { ...prev };
-            const key = `${COLUMN_VISIBILITY_PREFIX}${fieldName}`;
-            const defaultVisible = schema.tableColumns.includes(fieldName);
-            if (visible === defaultVisible) {
-                delete newState[key];
-            } else {
-                newState[key] = visible ? 'true' : 'false';
-            }
-            return newState;
-        });
-    };
 
     useEffect(() => {
         if (showEditDataUseTermsControls && dataUseTermsEnabled) {
@@ -303,17 +142,23 @@ export const InnerSearchFullUI = ({
         schema.richFastaHeaderFields,
     );
 
-    const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
-    const aggregatedHook = hooks.useAggregated({}, {});
-    const detailsHook = hooks.useDetails({}, {});
+    const hooks = lapisClientHooks(lapisUrl);
+    const aggregatedHook = hooks.useAggregated();
+    const detailsHook = hooks.useDetails();
 
     const [selectedSeqs, setSelectedSeqs] = useState<Set<string>>(new Set());
     const sequencesSelected = selectedSeqs.size > 0;
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
     const tableFilter = useMemo(
-        () => new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomeLightweightSchema),
-        [fieldValues, hiddenFieldValues, referenceGenomeLightweightSchema, filterSchema],
+        () =>
+            new FieldFilterSet(
+                filterSchema,
+                fieldValues,
+                hiddenFieldValues,
+                getSuborganismSegmentAndGeneInfo(referenceGenomeLightweightSchema, selectedSuborganism),
+            ),
+        [fieldValues, hiddenFieldValues, referenceGenomeLightweightSchema, selectedSuborganism, filterSchema],
     );
 
     /**
@@ -373,19 +218,13 @@ export const InnerSearchFullUI = ({
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
-            <FieldSelectorModal
-                title='Customize columns'
+            <TableColumnSelectorModal
                 isOpen={isColumnModalOpen}
                 onClose={() => setIsColumnModalOpen(!isColumnModalOpen)}
-                fields={columnFieldItems}
-                selectedFields={
-                    new Set(
-                        Array.from(columnVisibilities.entries())
-                            .filter(([_, visible]) => visible)
-                            .map(([field]) => field),
-                    )
-                }
-                setFieldSelected={setAColumnVisibility}
+                schema={schema}
+                columnVisibilities={columnVisibilities}
+                setAColumnVisibility={setAColumnVisibility}
+                selectedSuborganism={selectedSuborganism}
             />
             <SeqPreviewModal
                 key={previewedSeqId ?? 'seq-modal'}
@@ -489,28 +328,28 @@ export const InnerSearchFullUI = ({
                                     sequenceFilter={downloadFilter}
                                 />
                             )}
-                            <button
+                            <Button
                                 className='mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
                             >
                                 Customize columns
-                            </button>
+                            </Button>
                             {sequencesSelected ? (
-                                <button
+                                <Button
                                     className='mr-4 underline text-primary-700 hover:text-primary-500'
                                     onClick={clearSelectedSeqs}
                                 >
                                     Clear selection
-                                </button>
+                                </Button>
                             ) : null}
 
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
                                 sequenceFilter={downloadFilter}
-                                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+                                referenceGenomesLightweightSchema={referenceGenomeLightweightSchema}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
-                                metadata={schema.metadata}
+                                schema={schema}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
                                 selectedSuborganism={selectedSuborganism}
                                 suborganismIdentifierField={schema.suborganismIdentifierField}

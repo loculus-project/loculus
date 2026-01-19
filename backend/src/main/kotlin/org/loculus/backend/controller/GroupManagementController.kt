@@ -8,6 +8,7 @@ import org.loculus.backend.api.GroupDetails
 import org.loculus.backend.api.NewGroup
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
+import org.loculus.backend.auth.User
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -47,14 +49,15 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
         group: NewGroup,
     ): Group = groupManagementDatabaseService.updateGroup(groupId, group, authenticatedUser)
 
-    @Operation(description = "Get details of a group.")
+    @Operation(description = "Get details of a group. Contact information is redacted when not authenticated.")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/groups/{groupId}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUsersOfGroup(
+        @HiddenParam user: User,
         @Parameter(
             description = "The id of the group to get details of.",
         ) @PathVariable groupId: Int,
-    ): GroupDetails = groupManagementDatabaseService.getDetailsOfGroup(groupId)
+    ): GroupDetails = groupManagementDatabaseService.getDetailsOfGroup(groupId, user)
 
     @Operation(description = "Get all groups the user is a member of.")
     @ResponseStatus(HttpStatus.OK)
@@ -62,10 +65,11 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
     fun getGroupsOfUser(@HiddenParam authenticatedUser: AuthenticatedUser): List<Group> =
         groupManagementDatabaseService.getGroupsOfUser(authenticatedUser)
 
-    @Operation(description = "Get a list of all groups.")
+    @Operation(description = "Get a list of groups. Supports filtering by name request parameter")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/groups", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getAllGroups(): List<Group> = groupManagementDatabaseService.getAllGroups()
+    fun getGroups(@RequestParam(required = false) name: String?): List<Group> =
+        groupManagementDatabaseService.getGroups(name)
 
     @Operation(description = "Add user to a group.")
     @ResponseStatus(HttpStatus.NO_CONTENT)

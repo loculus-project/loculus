@@ -52,6 +52,12 @@ In NCBI sequences are uploaded for each segment separately. To upload all segmen
 
 We group segments by adding a `jointAccession` field to the metadata which consists of a concatenated list of all `genbankAccession` IDs of the segments in the group. Each fasta record is also modified to use `jointAccession` with the concatenated segment as their ID (as required by loculus).
 
+#### Manual grouping override
+
+Using the config `grouping_override` you can provide a URL to a JSON file containing grouping overrides. The file should contain a dictionary mapping group names to lists of accessions.
+
+During grouping, this file will be used first to group segments together into a sequence entry. Only the remaining segments will be grouped using heuristic grouping (as described above).
+
 ### Getting status and hashes of previously submitted sequences and triaging
 
 Before uploading new sequences, the pipeline queries the Loculus backend for the status and hash of all previously submitted sequences. This is done to avoid uploading sequences that have already been submitted and have not changed. Furthermore, only accessions whose highest version is in status `APPROVED_FOR_RELEASE` can be updated through revision. Entries in other states cannot currently be updated (TODO: Potentially use `/submit-edited-data` endpoint to allow updating entries in more states).
@@ -145,7 +151,7 @@ From the ingest directly, create local test configs for the organism you are int
 cp ../website/tests/config/ingest-config.ebola-sudan.yaml config/config.yaml
 ```
 
-You might need to edit the following lines in the `config/config.yaml` to match your local setup:
+If you would like to run ingest so that it uploads to a Loculus preview, you will need to edit the following lines in the `config/config.yaml` to match your local setup:
 
 ```yaml
 username: insdc_ingest_user

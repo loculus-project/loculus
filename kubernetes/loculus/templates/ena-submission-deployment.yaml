@@ -52,7 +52,7 @@ spec:
       containers:
         - name: ena-submission
           image: "ghcr.io/loculus-project/ena-submission:{{ $dockerTag }}"
-          imagePullPolicy: Always
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "ena-submission" $.Values) | nindent 10 }}
           env:
             - name: EXTERNAL_METADATA_UPDATER_PASSWORD
@@ -117,7 +117,8 @@ kind: CronJob
 metadata:
   name: loculus-get-ena-submission-list-cronjob
 spec:
-  schedule: "0 0 * * *" # get submission list daily at midnight
+   # run twice a day to ensure at least once no overlap with argo cd refresh
+  schedule: "0 1,13 * * *"
   startingDeadlineSeconds: 60
   concurrencyPolicy: Forbid
   jobTemplate:
@@ -136,7 +137,7 @@ spec:
           containers:
             - name: ena-submission
               image: "ghcr.io/loculus-project/ena-submission:{{ $dockerTag }}"
-              imagePullPolicy: Always
+              imagePullPolicy: {{ $.Values.imagePullPolicy }}
               {{- include "loculus.resources" (list "ena-submission-list-cronjob" $.Values) | nindent 14 }}
               env:
                 - name: EXTERNAL_METADATA_UPDATER_PASSWORD

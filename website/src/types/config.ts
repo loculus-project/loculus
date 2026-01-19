@@ -3,6 +3,8 @@ import z from 'zod';
 import { mutationProportionCount, orderDirection } from './lapis.ts';
 import { referenceGenomes } from './referencesGenomes.ts';
 
+export const FASTA_IDS_SEPARATOR = ' ';
+
 // These metadata types need to be kept in sync with the backend config class `MetadataType` in Config.kt
 export const metadataPossibleTypes = z.enum([
     'string',
@@ -72,6 +74,7 @@ export const metadata = z.object({
     order: z.number().optional(),
     orderOnDetailsPage: z.number().optional(),
     includeInDownloadsByDefault: z.boolean().optional(),
+    onlyForSuborganism: z.string().optional(),
 });
 
 export const inputFieldOption = z.object({
@@ -139,6 +142,7 @@ export const submissionFiles = z.object({
 
 export const submissionDataTypesSchema = z.object({
     consensusSequences: z.boolean(),
+    maxSequencesPerEntry: z.number().int().optional(),
     files: submissionFiles.optional(),
 });
 
@@ -198,6 +202,8 @@ export const websiteConfig = z.object({
     logo: logoConfig,
     bannerMessage: z.string().optional(),
     bannerMessageURL: z.string().optional(),
+    submissionBannerMessage: z.string().optional(),
+    submissionBannerMessageURL: z.string().optional(),
     welcomeMessageHTML: z.string().optional().nullable(),
     additionalHeadHTML: z.string().optional(),
     gitHubEditLink: z.string().optional(),

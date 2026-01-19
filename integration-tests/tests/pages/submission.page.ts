@@ -1,10 +1,12 @@
 import { Page } from '@playwright/test';
 import { ReviewPage } from './review.page';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
 import Papa from 'papaparse';
 import { NavigationPage } from './navigation.page';
+import {
+    prepareTmpDirForBulkUpload,
+    prepareTmpDirForSingleUpload,
+    uploadFilesFromTmpDir,
+} from '../utils/file-upload-helpers';
 
 class SubmissionPage {
     protected page: Page;
@@ -30,21 +32,43 @@ class SubmissionPage {
         await this.page.getByRole('link', { name: 'Submit Upload new sequences.' }).click();
     }
 
+    async discardRawReadsFiles() {
+        await this.page.getByTestId('discard_raw_reads').click();
+    }
+
     async acceptTerms() {
         await this.page.getByText('I confirm that the data').click();
         await this.page.getByText('I confirm I have not and will').click();
     }
 
+    async selectRestrictedDataUseTerms() {
+        const restrictedSelector = '#data-use-restricted';
+        await this.page.waitForSelector(restrictedSelector);
+        await this.page.click(restrictedSelector);
+    }
+
+    // TODO #5357: improve this function by passing in whether we accepted open terms to simplify and also test modal appearance/absence
     async submitSequence(): Promise<ReviewPage> {
-        await this.page.getByRole('button', { name: 'Submit sequences' }).click();
-        const confirmButton = this.page.getByRole('button', {
-            name: 'Continue under Open terms',
-        });
-        if (await confirmButton.isVisible()) {
-            await confirmButton.click();
-        }
-        await this.page.waitForURL('**/review');
+        await this.page
+            .getByRole('button', { name: 'Submit sequences' })
+            .click({ timeout: 10_000 });
+
+        // 'Continue under Open terms' only shows if we are submitting under open terms - but we don't know in this function
+        // Void because we're waiting for the review page anyway, so no need to wait for this specifically
+        void this.page
+            .getByRole('button', { name: 'Continue under Open terms' })
+            .click({ timeout: 3_000 })
+            .catch(() => {});
+
+        await this.page.waitForURL('**/review', { timeout: 15_000 });
         return new ReviewPage(this.page);
+    }
+
+    async submitAndWaitForProcessingDone(): Promise<ReviewPage> {
+        await this.acceptTerms();
+        const reviewPage = await this.submitSequence();
+        await reviewPage.waitForZeroProcessing();
+        return reviewPage;
     }
 }
 
@@ -72,11 +96,6 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         await this.page.getByLabel('Author affiliations').fill(authorAffiliations);
     }
 
-    async fillField(fieldName: string, value: string) {
-        await this.page.getByLabel(fieldName).fill(value);
-        await this.page.getByLabel(fieldName).blur();
-    }
-
     async fillSubmissionFormDummyOrganism({
         submissionId,
         country,
@@ -94,10 +113,10 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
 
     async fillSequenceData(sequenceData: Record<string, string>) {
         for (const [key, value] of Object.entries(sequenceData)) {
-            await this.page.getByLabel(`${key} segment file`).setInputFiles({
+            await this.page.getByLabel(new RegExp('Add a segment', 'i')).setInputFiles({
                 name: 'example.txt',
                 mimeType: 'text/plain',
-                buffer: Buffer.from(value),
+                buffer: Buffer.from(`>${key}\n${value}`),
             });
         }
     }
@@ -105,17 +124,11 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
     async uploadExternalFiles(
         fileId: string,
         fileContents: Record<string, string>,
-    ): Promise<() => Promise<void>> {
-        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload-'));
-        await Promise.all(
-            Object.entries(fileContents).map(([fileName, fileContent]) =>
-                fs.promises.writeFile(path.join(tmpDir, fileName), fileContent),
-            ),
-        );
-
-        await this.page.getByTestId(fileId).setInputFiles(tmpDir);
-
-        return () => fs.promises.rm(tmpDir, { recursive: true, force: true });
+        tmpDir: string,
+    ) {
+        await prepareTmpDirForSingleUpload(fileContents, tmpDir);
+        const fileCount = Object.keys(fileContents).length;
+        await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);
     }
 
     async completeSubmission(
@@ -125,23 +138,24 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
             collectionDate,
             authorAffiliations,
             groupId = undefined,
+            isRestricted = false,
         }: {
             submissionId: string;
             collectionCountry: string;
             collectionDate: string;
             authorAffiliations: string;
             groupId?: string;
+            isRestricted?: boolean;
         },
         sequenceData: Record<string, string>,
     ): Promise<ReviewPage> {
-        await this.navigateToSubmissionPage();
         if (groupId) {
-            const currentUrl = this.page.url();
-            const newUrl = currentUrl.replace(/submission\/\d+/, `submission/${groupId}`);
-            if (currentUrl !== newUrl) {
-                await this.page.goto(newUrl);
-            }
+            await this.page.goto(`/ebola-sudan/submission/${groupId}/submit`);
+            await this.page.getByRole('link', { name: 'Submit single sequence' }).click();
+        } else {
+            await this.navigateToSubmissionPage();
         }
+
         await this.fillSubmissionForm({
             submissionId,
             collectionCountry,
@@ -149,6 +163,11 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
             authorAffiliations,
         });
         await this.fillSequenceData(sequenceData);
+
+        if (isRestricted) {
+            await this.selectRestrictedDataUseTerms();
+        }
+
         await this.acceptTerms();
         return this.submitSequence();
     }
@@ -186,32 +205,16 @@ export class BulkSubmissionPage extends SubmissionPage {
         });
     }
 
-    /**
-     * The given file contents will be stored in a temp dir and then submitted
-     * for the given file ID.
-     * @param fileId For which file ID to upload the files.
-     * @param fileContents A struct: submissionID -> filename -> filecontent.
-     * @returns Returns a function to be called to delete the tmp dir again.
-     */
     async uploadExternalFiles(
         fileId: string,
         fileContents: Record<string, Record<string, string>>,
-    ): Promise<() => Promise<void>> {
-        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload-'));
-        const submissionIds = Object.keys(fileContents);
-        await Promise.all(
-            submissionIds.map((submissionId) => fs.promises.mkdir(path.join(tmpDir, submissionId))),
+        tmpDir: string,
+    ) {
+        await prepareTmpDirForBulkUpload(fileContents, tmpDir);
+        const fileCount = Object.values(fileContents).reduce(
+            (total, files) => total + Object.keys(files).length,
+            0,
         );
-        await Promise.all(
-            Object.entries(fileContents).flatMap(([submissionId, files]) => {
-                return Object.entries(files).map(([fileName, fileContent]) =>
-                    fs.promises.writeFile(path.join(tmpDir, submissionId, fileName), fileContent),
-                );
-            }),
-        );
-
-        await this.page.getByTestId(fileId).setInputFiles(tmpDir);
-
-        return () => fs.promises.rm(tmpDir, { recursive: true, force: true });
+        await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);
     }
 }

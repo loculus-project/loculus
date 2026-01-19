@@ -2,6 +2,7 @@ package org.loculus.backend.service.submission
 
 import kotlinx.datetime.LocalDateTime
 import mu.KotlinLogging
+import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.VarCharColumnType
@@ -16,12 +17,15 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
+import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.service.GenerateAccessionFromNumberService
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.accessionColumn
+import org.loculus.backend.service.submission.MetadataUploadAuxTable.fastaIdsColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.filesColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.groupIdColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.metadataColumn
@@ -31,13 +35,11 @@ import org.loculus.backend.service.submission.MetadataUploadAuxTable.submitterCo
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.uploadIdColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.uploadedAtColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.compressedSequenceDataColumn
-import org.loculus.backend.service.submission.SequenceUploadAuxTable.segmentNameColumn
-import org.loculus.backend.service.submission.SequenceUploadAuxTable.sequenceSubmissionIdColumn
+import org.loculus.backend.service.submission.SequenceUploadAuxTable.fastaIdColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.sequenceUploadIdColumn
 import org.loculus.backend.utils.DatabaseConstants
 import org.loculus.backend.utils.FastaEntry
 import org.loculus.backend.utils.MetadataEntry
-import org.loculus.backend.utils.ParseFastaHeader
 import org.loculus.backend.utils.RevisionEntry
 import org.loculus.backend.utils.chunkedForDatabase
 import org.loculus.backend.utils.getNextSequenceNumbers
@@ -55,7 +57,6 @@ private const val METADATA_BATCH_SIZE = DatabaseConstants.POSTGRESQL_PARAMETER_L
 @Service
 @Transactional
 class UploadDatabaseService(
-    private val parseFastaHeader: ParseFastaHeader,
     private val compressor: CompressionService,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val dataUseTermsDatabaseService: DataUseTermsDatabaseService,
@@ -78,12 +79,28 @@ class UploadDatabaseService(
                 this[groupIdColumn] = groupId
                 this[uploadedAtColumn] = uploadedAt
                 this[submissionIdColumn] = it.submissionId
+                this[fastaIdsColumn] = it.fastaIds?.toList()
                 this[metadataColumn] = it.metadata
                 this[filesColumn] = files?.get(it.submissionId)
                 this[organismColumn] = submittedOrganism.name
                 this[uploadIdColumn] = uploadId
             }
         }
+    }
+
+    private val keyDetail =
+        Regex("""Key \((?<cols>[^)]+)\)=\((?<vals>[^)]+)\) already exists""")
+
+    private fun ExposedSQLException.extractDuplicateColumns(): Map<String, String>? {
+        val text = this.cause?.message ?: this.message ?: return null
+        val match = keyDetail.find(text) ?: return null
+
+        val cols = match.groups["cols"]?.value?.split(",")?.map { it.trim() } ?: return null
+        val vals = match.groups["vals"]?.value?.split(",")?.map { it.trim() } ?: return null
+
+        return cols.zip(vals)
+            .filter { (col, _) -> col in listOf("accession", "submission_id") }
+            .toMap()
     }
 
     fun batchInsertRevisedMetadataInAuxTable(
@@ -94,17 +111,29 @@ class UploadDatabaseService(
         uploadedAt: LocalDateTime,
         files: SubmissionIdFilesMap?,
     ) {
-        uploadedRevisedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
-            MetadataUploadAuxTable.batchInsert(batch) {
-                this[accessionColumn] = it.accession
-                this[submitterColumn] = authenticatedUser.username
-                this[uploadedAtColumn] = uploadedAt
-                this[submissionIdColumn] = it.submissionId
-                this[metadataColumn] = it.metadata
-                this[filesColumn] = files?.get(it.submissionId)
-                this[organismColumn] = submittedOrganism.name
-                this[uploadIdColumn] = uploadId
+        try {
+            uploadedRevisedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
+                MetadataUploadAuxTable.batchInsert(batch) {
+                    this[accessionColumn] = it.accession
+                    this[submitterColumn] = authenticatedUser.username
+                    this[uploadedAtColumn] = uploadedAt
+                    this[submissionIdColumn] = it.submissionId
+                    this[fastaIdsColumn] = it.fastaIds?.toList()
+                    this[metadataColumn] = it.metadata
+                    this[filesColumn] = files?.get(it.submissionId)
+                    this[organismColumn] = submittedOrganism.name
+                    this[uploadIdColumn] = uploadId
+                }
             }
+        } catch (e: ExposedSQLException) {
+            log.error { "Error inserting revised metadata in aux table: ${e.message}" }
+            val duplicates = e.extractDuplicateColumns() ?: throw UnprocessableEntityException(
+                "Error inserting revised metadata in aux table - please contact an administrator.",
+            )
+            val details = duplicates.entries.joinToString(" ") { (col, value) ->
+                "Duplicate $col found in metadata file: $value"
+            }
+            throw UnprocessableEntityException(details)
         }
     }
 
@@ -116,13 +145,10 @@ class UploadDatabaseService(
         uploadedSequencesBatch.chunkedForDatabase(
             { batch ->
                 SequenceUploadAuxTable.batchInsert(batch) {
-                    val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName, submittedOrganism)
-                    this[sequenceSubmissionIdColumn] = submissionId
-                    this[segmentNameColumn] = segmentName
+                    this[fastaIdColumn] = it.fastaId
                     this[sequenceUploadIdColumn] = uploadId
-                    this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
+                    this[compressedSequenceDataColumn] = compressor.compressOriginalSequence(
                         it.sequence,
-                        segmentName,
                         submittedOrganism,
                     )
                 }
@@ -140,14 +166,22 @@ class UploadDatabaseService(
         .where { uploadIdColumn eq uploadId }
         .map { it[submissionIdColumn] }
 
+    fun getFastaIdsForMetadata(uploadId: String): List<List<String>> = MetadataUploadAuxTable
+        .select(
+            uploadIdColumn,
+            fastaIdsColumn,
+        )
+        .where { uploadIdColumn eq uploadId }
+        .map { it[fastaIdsColumn] ?: emptyList() }
+
     fun getSequenceUploadSubmissionIds(uploadId: String): List<SubmissionId> = SequenceUploadAuxTable
         .select(
             sequenceUploadIdColumn,
-            sequenceSubmissionIdColumn,
+            fastaIdColumn,
         )
         .where { sequenceUploadIdColumn eq uploadId }
         .map {
-            it[sequenceSubmissionIdColumn]
+            it[fastaIdColumn]
         }
 
     fun deleteAuxTableEntriesOlderThan(thresholdDateTime: LocalDateTime): Int {
@@ -177,39 +211,27 @@ class UploadDatabaseService(
                 original_data
             )
             SELECT
-                metadata_upload_aux_table.accession,
-                metadata_upload_aux_table.version,
-                metadata_upload_aux_table.organism,
-                metadata_upload_aux_table.submission_id,
-                metadata_upload_aux_table.submitter,
-                metadata_upload_aux_table.group_id,
-                metadata_upload_aux_table.uploaded_at,
+                m.accession,
+                m.version,
+                m.organism,
+                m.submission_id,
+                m.submitter,
+                m.group_id,
+                m.uploaded_at,
                 jsonb_build_object(
-                    'metadata', metadata_upload_aux_table.metadata,
-                    'files', metadata_upload_aux_table.files,
-                    'unalignedNucleotideSequences', 
-                    COALESCE(
-                        jsonb_object_agg(
-                            sequence_upload_aux_table.segment_name,
-                            sequence_upload_aux_table.compressed_sequence_data::jsonb
-                        ) FILTER (WHERE sequence_upload_aux_table.segment_name IS NOT NULL),
-                        '{}'::jsonb
-                    )
+                    'metadata', m.metadata,
+                    'files',    m.files,
+                    'unalignedNucleotideSequences',
+                    COALESCE(x.seq_map, '{}'::jsonb)
                 )
-            FROM
-                metadata_upload_aux_table
-            LEFT JOIN
-                sequence_upload_aux_table
-                ON metadata_upload_aux_table.upload_id = sequence_upload_aux_table.upload_id 
-                AND metadata_upload_aux_table.submission_id = sequence_upload_aux_table.submission_id
-            WHERE metadata_upload_aux_table.upload_id = ?
-            GROUP BY
-                metadata_upload_aux_table.upload_id,
-                metadata_upload_aux_table.organism,
-                metadata_upload_aux_table.submission_id,
-                metadata_upload_aux_table.submitter,
-                metadata_upload_aux_table.group_id,
-                metadata_upload_aux_table.uploaded_at
+            FROM metadata_upload_aux_table AS m
+            LEFT JOIN LATERAL (
+                SELECT jsonb_object_agg(s.fasta_id, s.compressed_sequence_data::jsonb) AS seq_map
+                FROM sequence_upload_aux_table AS s
+                WHERE s.upload_id = m.upload_id
+                AND s.fasta_id = ANY (COALESCE(m.fasta_ids, ARRAY[]::text[]))
+            ) AS x ON TRUE
+            WHERE m.upload_id = ?
             RETURNING accession, version, submission_id;
         """.trimIndent()
         val insertionResult = exec(

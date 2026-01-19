@@ -24,6 +24,7 @@ import software.amazon.awssdk.services.s3.model.Tagging
 import software.amazon.awssdk.services.s3.model.UploadPartRequest
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
+import software.amazon.awssdk.services.s3.presigner.model.HeadObjectPresignRequest
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest
 import software.amazon.awssdk.services.s3.presigner.model.UploadPartPresignRequest
 import java.net.URI
@@ -124,6 +125,21 @@ class S3Service(private val s3Config: S3Config) {
             .signatureDuration(Duration.ofSeconds(PRESIGNED_URL_EXPIRY_SECONDS.toLong()))
             .build()
         presigner.presignGetObject(presignRequest).url().toString()
+    }
+
+    fun createUrlToHeadPrivateFile(fileId: FileId): String = s3ErrorMapping {
+        val config = getS3BucketConfig()
+        val headRequest = HeadObjectRequest.builder()
+            .bucket(config.bucket)
+            .key(getFileIdPath(fileId))
+            .build()
+
+        val presignRequest = HeadObjectPresignRequest.builder()
+            .headObjectRequest(headRequest)
+            .signatureDuration(Duration.ofSeconds(PRESIGNED_URL_EXPIRY_SECONDS.toLong()))
+            .build()
+
+        presigner.presignHeadObject(presignRequest).url().toString()
     }
 
     /**
@@ -231,14 +247,17 @@ fun <T> s3ErrorMapping(block: () -> T): T {
                 "EntityTooSmall: Your proposed upload is smaller than the minimum allowed object size. " +
                     "Each part, except the last one, must be at least 5 MB.",
             )
+
             "InvalidPart" -> UnprocessableEntityException(
                 "InvalidPart: One or more of the specified parts could not be found. The part may not have been " +
                     "uploaded, or the specified etag may not match the part's etag.",
             )
+
             "InvalidPartOrder" -> UnprocessableEntityException(
                 "The list of parts was not in ascending order. The parts list must be specified in order " +
                     "by part number.",
             )
+
             else -> RuntimeException("Unexpected S3 error: ${e.awsErrorDetails().errorCode()}")
         }
     }

@@ -5,7 +5,9 @@ import kotlinx.datetime.DateTimeUnit.Companion.YEAR
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.hasEntry
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -33,6 +35,7 @@ import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON
+import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.http.MediaType.APPLICATION_PROBLEM_JSON
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.ResultMatcher
@@ -45,6 +48,7 @@ import kotlin.time.Clock
 @EndpointTest
 class SubmitEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
+    @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val backendConfig: BackendConfig,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
 ) {
@@ -140,7 +144,7 @@ class SubmitEndpointTest(
     @Test
     fun `GIVEN valid input multi segment data THEN returns mapping of provided custom ids to generated ids`() {
         submissionControllerClient.submit(
-            DefaultFiles.metadataFile,
+            DefaultFiles.multiSegmentedMetadataFile,
             DefaultFiles.sequencesFileMultiSegmented,
             organism = OTHER_ORGANISM,
             groupId = groupId,
@@ -162,96 +166,6 @@ class SubmitEndpointTest(
             groupId = groupId,
         )
             .andExpect(status().isBadRequest)
-    }
-
-    @Test
-    fun `GIVEN fasta data with unknown segment THEN data is not accepted`() {
-        submissionControllerClient.submit(
-            SubmitFiles.metadataFileWith(
-                content = """
-                        submissionId	firstColumn
-                        commonHeader	someValue
-                """.trimIndent(),
-            ),
-            SubmitFiles.sequenceFileWith(
-                content = """
-                        >commonHeader_nonExistingSegmentName
-                        AC
-                """.trimIndent(),
-            ),
-            organism = OTHER_ORGANISM,
-            groupId = groupId,
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
-            .andExpect(
-                jsonPath(
-                    "\$.detail",
-                ).value(
-                    "The FASTA header commonHeader_nonExistingSegmentName ends with the segment name nonExistingSegmentName, which is not valid. Valid segment names: notOnlySegment, secondSegment",
-                ),
-            )
-    }
-
-    @Test
-    fun `GIVEN fasta data with empty segment THEN data is not accepted`() {
-        submissionControllerClient.submit(
-            SubmitFiles.metadataFileWith(
-                content = """
-                        submissionId	firstColumn
-                        commonHeader	someValue
-                """.trimIndent(),
-            ),
-            SubmitFiles.sequenceFileWith(
-                content = """
-                        >commonHeader_notOnlySegment
-                        AC
-                        >commonHeader_secondSegment
-                """.trimIndent(),
-            ),
-            organism = OTHER_ORGANISM,
-            groupId = groupId,
-        )
-            .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
-            .andExpect(
-                jsonPath(
-                    "\$.detail",
-                ).value(
-                    "No sequence data given for sample commonHeader_secondSegment.",
-                ),
-            )
-    }
-
-    @Test
-    fun `GIVEN fasta data with whitespace-only segment THEN data is not accepted`() {
-        submissionControllerClient.submit(
-            SubmitFiles.metadataFileWith(
-                content = """
-                        submissionId	firstColumn
-                        commonHeader	someValue
-                """.trimIndent(),
-            ),
-            SubmitFiles.sequenceFileWith(
-                content = """
-                        >commonHeader_notOnlySegment
-                        AC
-                        >commonHeader_secondSegment
-                          
-                """.trimIndent(),
-            ),
-            organism = OTHER_ORGANISM,
-            groupId = groupId,
-        )
-            .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
-            .andExpect(
-                jsonPath(
-                    "\$.detail",
-                ).value(
-                    "No sequence data given for sample commonHeader_secondSegment.",
-                ),
-            )
     }
 
     @Test
@@ -406,9 +320,15 @@ class SubmitEndpointTest(
                     status().isBadRequest,
                     "Bad Request",
                     "${metadataFileTypes.displayName} has wrong extension. Must be " +
-                        ".${metadataFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
                         ".${
-                            metadataFileTypes.getCompressedExtensions().filterKeys { it != CompressionAlgorithm.NONE }
+                            metadataFileTypes.validExtensions.joinToString(
+                                ", .",
+                            )
+                        } for uncompressed submissions or " +
+                        ".${
+                            metadataFileTypes.getCompressedExtensions().filterKeys {
+                                it != CompressionAlgorithm.NONE
+                            }
                                 .flatMap { it.value }.joinToString(", .")
                         } for compressed submissions",
                     DEFAULT_ORGANISM,
@@ -421,9 +341,15 @@ class SubmitEndpointTest(
                     status().isBadRequest,
                     "Bad Request",
                     "${sequenceFileTypes.displayName} has wrong extension. Must be " +
-                        ".${sequenceFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
                         ".${
-                            sequenceFileTypes.getCompressedExtensions().filterKeys { it != CompressionAlgorithm.NONE }
+                            sequenceFileTypes.validExtensions.joinToString(
+                                ", .",
+                            )
+                        } for uncompressed submissions or " +
+                        ".${
+                            sequenceFileTypes.getCompressedExtensions().filterKeys {
+                                it != CompressionAlgorithm.NONE
+                            }
                                 .flatMap { it.value }.joinToString(", .")
                         } for compressed submissions",
                     DEFAULT_ORGANISM,
@@ -441,7 +367,7 @@ class SubmitEndpointTest(
                     DefaultFiles.sequencesFile,
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "A row in metadata file contains no id",
+                    "contains no value for 'id'",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -511,7 +437,7 @@ class SubmitEndpointTest(
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Sequence file contains 1 ids that are not present in the metadata file: notInMetadata",
+                    "Sequence file contains 1 FASTA ids that are not present in the metadata file: 'notInMetadata'",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -532,29 +458,8 @@ class SubmitEndpointTest(
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Metadata file contains 1 ids that are not present in the sequence file: notInSequences",
+                    "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'",
                     DEFAULT_ORGANISM,
-                    DataUseTerms.Open,
-                ),
-                Arguments.of(
-                    "FASTA header misses segment name",
-                    SubmitFiles.metadataFileWith(
-                        content = """
-                            submissionId	firstColumn
-                            commonHeader	someValue
-                        """.trimIndent(),
-                    ),
-                    SubmitFiles.sequenceFileWith(
-                        content = """
-                            >commonHeader
-                            AC
-                        """.trimIndent(),
-                    ),
-                    status().isBadRequest,
-                    "Bad Request",
-                    "The FASTA header commonHeader does not contain the segment name. Please provide the segment " +
-                        "name in the format <id>_<segment name>",
-                    OTHER_ORGANISM,
                     DataUseTerms.Open,
                 ),
                 Arguments.of(
@@ -641,5 +546,117 @@ class SubmitEndpointTest(
                     "The metadata file contains both 'id' and 'submissionId'. Only one is allowed.",
                 ),
             )
+    }
+
+    @Test
+    fun `GIVEN valid input data THEN data is accepted and shows fastaID`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+
+        submissionControllerClient.submit(
+            SubmitFiles.metadataFileWith(
+                content = """
+                        submissionId	firstColumn
+                        header1	someValue
+                        header2	someValue
+                """.trimIndent(),
+            ),
+            SubmitFiles.sequenceFileWith(
+                content = """
+                        >header1
+                        AC
+                        >header2
+                        GT
+                """.trimIndent(),
+            ),
+            groupId = groupId,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(2))
+            .andExpect(jsonPath("\$[0].submissionId").value("header1"))
+            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(jsonPath("\$[0].version").value(1))
+
+        val unalignedNucleotideSequences = convenienceClient.extractUnprocessedData()[0]
+            .data
+            .unalignedNucleotideSequences
+
+        assertThat(unalignedNucleotideSequences, hasEntry("header1", "AC"))
+    }
+
+    @Test
+    fun `GIVEN valid input multi segment data THEN data is accepted and originalData shows fastaIDs`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+
+        submissionControllerClient.submit(
+            SubmitFiles.metadataFileWith(
+                content = """
+                        submissionId	firstColumn	fastaIds
+                        header1	someValue	header1_seg1 header1_seg2
+                        header2	someValue	fasta_header2_seg1
+                """.trimIndent(),
+            ),
+            SubmitFiles.sequenceFileWith(
+                content = """
+                        >header1_seg1
+                        AC
+                        >header1_seg2
+                        GT
+                        >fasta_header2_seg1
+                        TA
+                """.trimIndent(),
+            ),
+            organism = OTHER_ORGANISM,
+            groupId = groupId,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(2))
+            .andExpect(jsonPath("\$[0].submissionId").value("header1"))
+            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(jsonPath("\$[0].version").value(1))
+
+        val unalignedNucleotideSequences = convenienceClient.extractUnprocessedData(organism = OTHER_ORGANISM)[0]
+            .data
+            .unalignedNucleotideSequences
+
+        assertThat(unalignedNucleotideSequences, hasEntry("header1_seg1", "AC"))
+    }
+
+    @Test
+    fun `GIVEN valid input multi-segment data wo fastaIDs THEN data is accepted and originalData shows fastaIDs`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+
+        submissionControllerClient.submit(
+            SubmitFiles.metadataFileWith(
+                content = """
+                        submissionId	firstColumn
+                        header1	someValue
+                        header2	someValue
+                """.trimIndent(),
+            ),
+            SubmitFiles.sequenceFileWith(
+                content = """
+                        >header1
+                        AC
+                        >header2
+                        TA
+                """.trimIndent(),
+            ),
+            organism = OTHER_ORGANISM,
+            groupId = groupId,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(2))
+            .andExpect(jsonPath("\$[0].submissionId").value("header1"))
+            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(jsonPath("\$[0].version").value(1))
+
+        val unalignedNucleotideSequences = convenienceClient.extractUnprocessedData(organism = OTHER_ORGANISM)[0]
+            .data
+            .unalignedNucleotideSequences
+
+        assertThat(unalignedNucleotideSequences, hasEntry("header1", "AC"))
     }
 }

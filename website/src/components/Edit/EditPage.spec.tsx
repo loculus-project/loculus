@@ -41,11 +41,13 @@ function renderEditPage({
             <EditPage
                 organism={testOrganism}
                 dataToEdit={editedData}
-                segmentNames={['originalSequenceName']}
                 clientConfig={clientConfig}
                 accessToken={testAccessToken}
                 groupedInputFields={groupedInputFields}
-                submissionDataTypes={{ consensusSequences: allowSubmissionOfConsensusSequences }}
+                submissionDataTypes={{
+                    consensusSequences: allowSubmissionOfConsensusSequences,
+                    maxSequencesPerEntry: 1,
+                }}
             />
         </QueryClientProvider>,
     );

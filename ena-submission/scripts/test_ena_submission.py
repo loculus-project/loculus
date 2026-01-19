@@ -4,6 +4,7 @@ import csv
 import gzip
 import json
 import logging
+import os
 import unittest
 from pathlib import Path
 from typing import Any, Final
@@ -11,6 +12,7 @@ from unittest import mock
 
 import xmltodict
 import yaml
+from ena_deposition.config import EnaOrganismDetails, ManifestFieldDetails, MetadataMapping
 from ena_deposition.create_assembly import (
     create_chromosome_list_object,
     create_manifest_object,
@@ -21,7 +23,7 @@ from ena_deposition.ena_submission_helper import (
     create_chromosome_list,
     create_ena_project,
     create_ena_sample,
-    create_fasta,
+    create_flatfile,
     create_manifest,
     dataclass_to_xml,
     get_chromsome_accessions,
@@ -30,6 +32,8 @@ from ena_deposition.ena_submission_helper import (
     reformat_authors_from_loculus_to_embl_style,
 )
 from ena_deposition.ena_types import (
+    MoleculeType,
+    Topology,
     default_project_set,
     default_sample_set_type,
 )
@@ -45,18 +49,39 @@ with open("config/defaults.yaml", encoding="utf-8") as f:
     defaults = yaml.safe_load(f)
 
 
+def mock_organism() -> EnaOrganismDetails:
+    return EnaOrganismDetails(
+        taxon_id=12345,
+        scientific_name="Test scientific name",
+        molecule_type=MoleculeType.GENOMIC_RNA,
+        organismName="Test organism",
+        segments=["main"],
+    )
+
+
+def mock_multi_segmented_organism() -> EnaOrganismDetails:
+    return EnaOrganismDetails(
+        taxon_id=12345,
+        scientific_name="Test scientific name",
+        molecule_type=MoleculeType.GENOMIC_RNA,
+        organismName="Test organism",
+        topology=Topology.CIRCULAR,
+        segments=["seg2", "seg3"],
+    )
+
+
 def mock_config():
     config = mock.Mock()
     config.db_name = "Loculus"
     config.unique_project_suffix = "Test suffix"
-    metadata_dict = {
-        "taxon_id": "Test taxon",
-        "scientific_name": "Test scientific name",
-        "molecule_type": "genomic RNA",
+    config.enaOrganisms = {"Test organism": mock_organism()}
+    config.metadata_mapping = {
+        key: MetadataMapping(**item) for key, item in defaults["metadata_mapping"].items()
     }
-    config.organisms = {"Test organism": {"enaDeposition": metadata_dict}}
-    config.metadata_mapping = defaults["metadata_mapping"]
-    config.manifest_fields_mapping = defaults["manifest_fields_mapping"]
+    config.manifest_fields_mapping = {
+        key: ManifestFieldDetails(**item)
+        for key, item in defaults["manifest_fields_mapping"].items()
+    }
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None
     config.is_broker = True
@@ -247,9 +272,47 @@ class AssemblyCreationTests(unittest.TestCase):
         desired_result_extended = "Perez J., Bailley F., Moller A., Walesa L.;"
         self.assertEqual(result_extended, desired_result_extended)
 
+        # Test with apostrophes in surnames (middle and trailing)
+        authors_with_apostrophe = "O'Brien, Patrick; Malago', Giovanni; Smith, Jane"
+        result_apostrophe = reformat_authors_from_loculus_to_embl_style(authors_with_apostrophe)
+        desired_result_apostrophe = "O'Brien P., Malago' G., Smith J.;"
+        self.assertEqual(result_apostrophe, desired_result_apostrophe)
+
+    def test_flatfile_with_apostrophe_in_authors(self):
+        """Test that flatfile generation handles apostrophes correctly"""
+        config = mock_config()
+        metadata = {
+            "accession": "LOC_TEST001",
+            "version": "1",
+            "authors": "Malago', Giovanni; O'Brien, Patrick",
+            "sampleCollectionDate": "2024-01-01",
+            "geoLocCountry": "Italy",
+        }
+        unaligned_sequences = {
+            "main": "ATCGATCGATCG",
+        }
+
+        flatfile_path = create_flatfile(
+            config, metadata, mock_organism(), unaligned_sequences, dir="./tmp"
+        )
+
+        with gzip.open(flatfile_path, "rt", encoding="utf-8") as f:
+            generated_content = f.read()
+
+        expected_flatfile_path = Path("test/test_flatfile_with_apostrophe.embl")
+        expected_content = Path(expected_flatfile_path).read_text(encoding="utf-8")
+
+        self.assertEqual(generated_content, expected_content)
+
+        # Additional check: ensure no &apos; entities are present
+        self.assertNotIn("&apos;", generated_content, "Flatfile should not contain &apos; entities")
+
+        # Clean up
+        os.remove(flatfile_path)
+
     def test_create_chromosome_list_multi_segment(self):
         chromosome_list = create_chromosome_list_object(
-            self.unaligned_sequences_multi, self.seq_key, {"topology": "circular"}
+            self.unaligned_sequences_multi, self.seq_key, mock_multi_segmented_organism()
         )
         file_name_chromosome_list = create_chromosome_list(chromosome_list)
 
@@ -262,7 +325,9 @@ class AssemblyCreationTests(unittest.TestCase):
         )
 
     def test_create_chromosome_list(self):
-        chromosome_list = create_chromosome_list_object(self.unaligned_sequences, self.seq_key, {})
+        chromosome_list = create_chromosome_list_object(
+            self.unaligned_sequences, self.seq_key, mock_organism()
+        )
         file_name_chromosome_list = create_chromosome_list(chromosome_list)
 
         with gzip.GzipFile(file_name_chromosome_list, "rb") as gz:
@@ -271,30 +336,6 @@ class AssemblyCreationTests(unittest.TestCase):
         self.assertEqual(
             content,
             b"LOC_0001TLY\tgenome\tlinear-monopartite\n",
-        )
-
-    def test_create_fasta_multi(self):
-        chromosome_list = create_chromosome_list_object(
-            self.unaligned_sequences_multi, self.seq_key, {}
-        )
-        fasta_file_name = create_fasta(self.unaligned_sequences_multi, chromosome_list)
-
-        with gzip.GzipFile(fasta_file_name, "rb") as gz:
-            content = gz.read()
-        self.assertEqual(
-            content,
-            b">LOC_0001TLY_seg2\nGCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT\n>LOC_0001TLY_seg3\nCTTAACTTTGAGAGAGTGAATT\n",
-        )
-
-    def test_create_fasta(self):
-        chromosome_list = create_chromosome_list_object(self.unaligned_sequences, self.seq_key, {})
-        fasta_file_name = create_fasta(self.unaligned_sequences, chromosome_list)
-
-        with gzip.GzipFile(fasta_file_name, "rb") as gz:
-            content = gz.read()
-        self.assertEqual(
-            content,
-            b">LOC_0001TLY\nCTTAACTTTGAGAGAGTGAATT\n",
         )
 
     @mock.patch("ena_deposition.call_loculus.get_group_info")
@@ -333,7 +374,7 @@ class AssemblyCreationTests(unittest.TestCase):
             "ADDRESS": "Fake center name, Basel, BS, Switzerland",
             "ASSEMBLYNAME": "LOC_0001TLY.1",
             "ASSEMBLY_TYPE": "isolate",
-            "AUTHORS": "M. Ammar M.S.;",
+            "AUTHORS": "Umair M., Haider S.A., Jamal Z., Ammar M., Hakim R., Ali Q., Salman M.;",
             "COVERAGE": "1",
             "PROGRAM": "Ivar",
             "PLATFORM": "Illumina",
@@ -348,7 +389,7 @@ class AssemblyCreationTests(unittest.TestCase):
     def test_get_chromsome_accessions(self):
         insdc_accession_range = "OZ189935-OZ189936"
         segment_order = ["seg2", "seg3"]
-        result_multi = get_chromsome_accessions(insdc_accession_range, segment_order)
+        result_multi = get_chromsome_accessions(insdc_accession_range, segment_order, True)
         self.assertEqual(
             result_multi,
             {
@@ -361,7 +402,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
         insdc_accession_range = "OZ189935-OZ189935"
         segment_order = ["main"]
-        result_single = get_chromsome_accessions(insdc_accession_range, segment_order)
+        result_single = get_chromsome_accessions(insdc_accession_range, segment_order, False)
         self.assertEqual(
             result_single,
             {
@@ -372,7 +413,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
         insdc_accession_range = "OZ189935-OZ189935"
         segment_order = ["seg3"]
-        result_single = get_chromsome_accessions(insdc_accession_range, segment_order)
+        result_single = get_chromsome_accessions(insdc_accession_range, segment_order, True)
         self.assertEqual(
             result_single,
             {
@@ -387,7 +428,7 @@ class AssemblyCreationTests(unittest.TestCase):
             self.assertRaises(ValueError),
             self.assertLogs("ena_deposition.ena_submission_helper", level="ERROR"),
         ):
-            get_chromsome_accessions(insdc_accession_range, segment_order)
+            get_chromsome_accessions(insdc_accession_range, segment_order, False)
 
         insdc_accession_range = "OZ189935-TK189936"
         segment_order = ["A", "B"]
@@ -395,13 +436,13 @@ class AssemblyCreationTests(unittest.TestCase):
             self.assertRaises(ValueError),
             self.assertLogs("ena_deposition.ena_submission_helper", level="ERROR"),
         ):
-            get_chromsome_accessions(insdc_accession_range, segment_order)
+            get_chromsome_accessions(insdc_accession_range, segment_order, True)
 
     @mock.patch("requests.get")
     def test_get_ena_analysis_process(self, mock_post):
         mock_post.return_value = mock_requests_post(200, process_response_text)
         response = get_ena_analysis_process(
-            MOCK_CONFIG, erz_accession="ERZ000001", segment_order=["main"]
+            MOCK_CONFIG, erz_accession="ERZ000001", segment_order=["main"], organism=mock_organism()
         )
         desired_response = {
             "erz_accession": "ERZ000001",

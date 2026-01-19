@@ -11,7 +11,6 @@ export type DownloadOption = {
     dataType: DownloadDataType;
     compression: Compression;
     dataFormat?: string;
-    fields?: string[];
 };
 
 const downloadAsFile = 'downloadAsFile';
@@ -50,6 +49,9 @@ export class DownloadUrlGenerator {
         }
         if (option.dataType.type === 'metadata') {
             params.set(dataFormat, metadataDefaultDownloadDataFormat);
+            if (option.dataType.fields.length > 0) {
+                params.set('fields', option.dataType.fields.join(','));
+            }
         } else {
             params.set(dataFormat, sequenceDefaultDownloadDataFormat);
         }
@@ -62,19 +64,19 @@ export class DownloadUrlGenerator {
             params.set(dataFormat, option.dataFormat);
         }
 
-        if (option.fields && option.fields.length > 0 && option.dataType.type === 'metadata') {
-            params.set('fields', option.fields.join(','));
-        }
         if (
             (option.dataType.type === 'unalignedNucleotideSequences' ||
                 option.dataType.type === 'alignedNucleotideSequences' ||
                 option.dataType.type === 'alignedAminoAcidSequences') &&
-            option.dataType.includeRichFastaHeaders === true &&
-            this.richFastaHeaderFields &&
-            this.richFastaHeaderFields.length > 0
+            option.dataType.richFastaHeaders.include
         ) {
-            params.delete(dataFormat);
-            params.append('fastaHeaderTemplate', this.richFastaHeaderFields.map((field) => `{${field}}`).join('|'));
+            if (option.dataType.richFastaHeaders.fastaHeaderOverride !== undefined) {
+                params.delete(dataFormat);
+                params.append('fastaHeaderTemplate', option.dataType.richFastaHeaders.fastaHeaderOverride);
+            } else if (this.richFastaHeaderFields !== undefined && this.richFastaHeaderFields.length > 0) {
+                params.delete(dataFormat);
+                params.append('fastaHeaderTemplate', this.richFastaHeaderFields.map((field) => `{${field}}`).join('|'));
+            }
         }
 
         downloadParameters

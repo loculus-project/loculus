@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test } from 'vitest';
 
 import { ReviewPage } from './ReviewPage.tsx';
-import { openDataUseTerms } from '../../../tests/e2e.fixture.ts';
 import { mockRequest, testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
 import {
     approvedForReleaseStatus,
@@ -15,7 +14,11 @@ import {
     noIssuesProcessingResult,
     warningsProcessingResult,
     errorsProcessingResult,
+    openDataUseTermsOption,
 } from '../../types/backend.ts';
+import { SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
+
+const openDataUseTerms = { type: openDataUseTermsOption } as const;
 
 const unreleasedSequencesRegex = /You do not currently have any unreleased sequences awaiting review.*/;
 
@@ -30,6 +33,9 @@ function renderReviewPage() {
             accessToken={testAccessToken}
             clientConfig={testConfig.public}
             filesEnabled={false}
+            referenceGenomeLightweightSchema={{
+                [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], geneNames: [], insdcAccessionFull: [] },
+            }}
         />,
     );
 }

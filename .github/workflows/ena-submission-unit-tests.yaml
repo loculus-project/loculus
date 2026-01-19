@@ -13,12 +13,16 @@ on:
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-ena-submission-unit-tests
   cancel-in-progress: true
+defaults:
+  run:
+    shell: micromamba-shell {0}
+    working-directory: ena-submission
 jobs:
   checkFormat:
     name: Check formatting
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
@@ -27,13 +31,11 @@ jobs:
           cache-environment: true
       - name: Run ruff format check
         run: ruff check . --fix --diff
-        shell: micromamba-shell {0}
-        working-directory: ena-submission
   lint:
     name: Lint code
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
@@ -42,27 +44,25 @@ jobs:
           cache-environment: true
       - name: Run ruff check
         run: ruff check .
-        shell: micromamba-shell {0}
-        working-directory: ena-submission
   unitTests:
     name: Unit Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: "ena-submission/environment.yml"
           micromamba-version: "latest"
           cache-environment: true
+      - name: Install package
+        run: |
+            uv pip install --system .
       - name: Run tests
         run: |
-          pip install .
           # The integration tests are run in a separate workflow
           # They require postgres to be running
             pytest \
             --ignore=./scripts/test_ena_submission_integration.py \
             --ignore=./scripts/test_api.py
-        shell: micromamba-shell {0}
-        working-directory: ena-submission

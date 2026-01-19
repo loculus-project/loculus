@@ -20,12 +20,24 @@ class SlackConfig:
 
 
 def slack_conn_init(
-    slack_hook_default: str, slack_token_default: str, slack_channel_id_default: str
+    slack_hook_default: str | None,
+    slack_token_default: str | None,
+    slack_channel_id_default: str | None,
 ) -> SlackConfig:
+    def get_param(env_name: str, default: str | None) -> str:
+        value = os.getenv(env_name, default)
+        if value is None:
+            error_msg = (
+                f"Missing required Slack config value: '{env_name}' "
+                f"(no environment variable and no default provided)"
+            )
+            raise ValueError(error_msg)
+        return value
+
     return SlackConfig(
-        slack_hook=os.getenv("SLACK_HOOK", slack_hook_default),
-        slack_token=os.getenv("SLACK_TOKEN", slack_token_default),
-        slack_channel_id=os.getenv("SLACK_CHANNEL_ID", slack_channel_id_default),
+        slack_hook=get_param("SLACK_HOOK", slack_hook_default),
+        slack_token=get_param("SLACK_TOKEN", slack_token_default),
+        slack_channel_id=get_param("SLACK_CHANNEL_ID", slack_channel_id_default),
         last_notification_sent=None,
     )
 
@@ -54,7 +66,7 @@ def upload_file_with_comment(
 
 
 def send_slack_notification(
-    comment: str, slack_config: SlackConfig, time: datetime, time_threshold: int = 12
+    comment: str, slack_config: SlackConfig, time: datetime, slack_retry_threshold_min: int
 ):
     """
     Sends a slack notification if current time is over time_threshold hours
@@ -65,7 +77,7 @@ def send_slack_notification(
         return
     if (
         not slack_config.last_notification_sent
-        or time - timedelta(hours=time_threshold) > slack_config.last_notification_sent
+        or time - timedelta(minutes=slack_retry_threshold_min) > slack_config.last_notification_sent
     ):
         logger.warning(comment)
         try:

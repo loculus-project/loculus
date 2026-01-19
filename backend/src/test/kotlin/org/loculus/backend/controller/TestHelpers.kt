@@ -41,6 +41,11 @@ val DEFAULT_MULTIPART_FILE_PARTS = listOf(
 )
 val DEFAULT_MULTIPART_FILE_CONTENT = DEFAULT_MULTIPART_FILE_PARTS.joinToString("")
 
+/**
+ * As defined in the test backend configs
+ */
+const val DUMMY_ORGANISM_MAIN_SEQUENCE = "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"
+
 fun dateMonthsFromNow(months: Int) = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.plus(months, MONTH)
 
 fun AccessionVersionInterface.toAccessionVersion() = AccessionVersion(this.accession, this.version)
@@ -79,9 +84,8 @@ inline fun <reified T> ResultActions.expectNdjsonAndGetContent(): List<T> {
 }
 
 fun awaitResponse(result: MvcResult): String {
-    await().until {
-        result.response.isCommitted
-    }
+    result.getAsyncResult()
+
     return result.response.contentAsString
 }
 
@@ -125,6 +129,7 @@ fun expectUnauthorizedResponse(isModifyingRequest: Boolean = false, apiCall: (jw
     // See https://github.com/spring-projects/spring-security/blob/c2d88eca5ac2b1638e28041e4ee8aaecf6b5ac6a/web/src/main/java/org/springframework/security/web/csrf/CsrfFilter.java#L205
     when (isModifyingRequest) {
         true -> response.andExpect(status().isForbidden)
+
         false ->
             response
                 .andExpect(status().isUnauthorized)

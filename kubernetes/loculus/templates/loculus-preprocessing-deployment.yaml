@@ -6,8 +6,9 @@
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $keycloakHost := $testconfig | ternary (printf "http://%s:8083" $.Values.localHost) "http://loculus-keycloak-service:8083" }}
 {{- if not .Values.disablePreprocessing }}
-{{- range $organism, $organismConfig := (include "loculus.enabledOrganisms" . | fromJson) }}
-{{- $flattened := include "loculus.flattenPreprocessingVersions" $organismConfig.preprocessing | fromJson }}
+{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $organism := $item.key }}
+{{- $flattened := include "loculus.flattenPreprocessingVersions" $item.contents.preprocessing | fromJson }}
 {{- range $processingIndex, $processingConfig := $flattened.items }}
 {{- $thisDockerTag := $processingConfig.dockerTag | default $dockerTag }}
 {{- $replicas := $processingConfig.replicas | default 1 }}
@@ -36,7 +37,7 @@ spec:
       containers:
         - name: preprocessing-{{ $organism }}
           image: {{ $processingConfig.image}}:{{ $thisDockerTag }}
-          imagePullPolicy: Always
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "preprocessing" $.Values) | nindent 10 }}
           env:
             - name: KEYCLOAK_PASSWORD

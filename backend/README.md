@@ -6,7 +6,7 @@ All commands mentioned in this section are run from the `backend` directory unle
 
 ### Prerequisites
 
-- Java 21 installed on your system
+- [Java 21](https://adoptium.net/de/temurin/releases) – You can do this with [SDKMAN!](https://sdkman.io/).
 
 ### Starting the backend
 
@@ -31,7 +31,7 @@ All commands mentioned in this section are run from the `backend` directory unle
    ./start_dev.sh
    ```
 
-The service listens, by default, to **port 8079**: <http://localhost:8079/swagger-ui/index.html>.
+The service listens, by default, to **port 8079**: <http://localhost:8079/swagger-ui/index.html>. The test config will be written to `loculus/website/tests/config`.
 
 3. Clean up the database when done:
 
@@ -105,6 +105,12 @@ See [the documentation of the Testcontainers](https://java.testcontainers.org/su
 ```bash
 ./gradlew ktlintFormat
 ```
+
+### Upgrading Gradle
+
+1. Check the Kotlin Gradle plugin version in `build.gradle` (plugins block).
+2. Look up the max supported Gradle for that Kotlin version in the compatibility table: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin.
+3. If the target Gradle version is supported, run `./gradlew wrapper --gradle-version=<version> && ./gradlew wrapper` to regenerate the wrapper, commit the changed wrapper files, then validate with `./gradlew test --console=plain` and `./gradlew ktlintFormat`.
 
 ## Logs
 

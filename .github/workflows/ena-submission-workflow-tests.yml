@@ -30,7 +30,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Extract Flyway version
         id: flyway_version
         run: |
@@ -59,9 +59,13 @@ jobs:
             environment-file: ena-submission/environment.yml
             micromamba-version: 'latest'
             cache-environment: true
+      - name: Install package
+        run: |
+            uv pip install --system .
+        shell: micromamba-shell {0}
+        working-directory: ena-submission
       - name: Run tests
         run: |
-            pip install .
             # The unit tests are run in ena-submission-unit-tests.yaml
             pytest \
               --ignore=./scripts/test_ena_submission.py

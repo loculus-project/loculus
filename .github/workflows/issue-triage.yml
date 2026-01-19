@@ -1,0 +1,172 @@
+name: Issue and PR Triage
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  triage-issue:
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code for Issue Triage
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          model: claude-sonnet-4-5-20250929
+
+          prompt: |
+            You're an issue triage assistant for the Loculus project. Your tasks are to:
+            1. Analyze the issue and apply appropriate component labels
+            2. Search for duplicate issues and comment if found
+
+            Issue Information:
+            - REPO: ${{ github.repository }}
+            - ISSUE_NUMBER: ${{ github.event.issue.number }}
+
+            COMPONENT LABELS TO USE:
+            The following labels should be applied based on which component(s) the issue relates to:
+            - `website` - Issues related to the web frontend (website/ directory)
+            - `backend` - Issues related to the backend API/server (backend/ directory)
+            - `deposition` - Issues related to ENA submission/deposition (ena-submission/ directory)
+            - `preprocessing` - Issues related to data preprocessing (preprocessing/ directory)
+            - `deployment` - Issues related to Kubernetes deployment/infrastructure (kubernetes/ directory)
+            - `ingest` - Issues related to data ingestion (ingest/ directory)
+
+            TASK STEPS:
+
+            1. First, fetch the list of available labels in this repository:
+               Run: `gh label list`
+
+            2. Get the issue details using: `gh issue view ${{ github.event.issue.number }}`
+
+            3. Analyze the issue content to determine:
+               - Which component(s) are affected based on:
+                 - Explicit mentions of components (website, backend, API, frontend, etc.)
+                 - File paths or directories mentioned
+                 - Feature areas described (UI issues -> website, API issues -> backend, etc.)
+                 - Error messages or stack traces that indicate the component
+               - The type of issue (bug, feature request, question, etc.)
+
+            4. Search for potential duplicate issues:
+               - Run: `gh issue list --state open --limit 50` to see recent open issues
+               - Search for similar issues: `gh issue list --search "keywords from title" --state open`
+               - Look for issues with similar error messages, feature requests, or problem descriptions
+
+            5. Apply component labels:
+               - Run: `gh issue edit ${{ github.event.issue.number }} --add-label "label1,label2"`
+               - You can apply multiple component labels if the issue spans multiple components
+               - Only apply labels that exist in the repository
+               - If no component is clearly identifiable, do not apply component labels
+
+            6. If potential duplicates are found:
+               - Post a helpful comment using: `gh issue comment ${{ github.event.issue.number }} --body "message"`
+               - Format: "This issue may be related to existing issues: #X, #Y. Please check if your issue is already being tracked."
+               - Only comment if you find genuinely similar issues (not just any issue with a common word)
+
+            IMPORTANT GUIDELINES:
+            - Be thorough in your analysis
+            - Only apply labels that exist in the repository
+            - When in doubt about duplicates, err on the side of not commenting
+            - Keep duplicate comments brief and helpful
+
+          claude_args: |
+            --allowedTools "Bash(gh issue:*),Bash(gh label list)"
+
+  label-pr:
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude Code for PR Labeling
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          model: claude-sonnet-4-5-20250929
+
+          prompt: |
+            You're a PR triage assistant for the Loculus project. Your tasks are to:
+            1. Analyze the changed files and apply appropriate component labels
+            2. Search for related issues that this PR might address
+
+            PR Information:
+            - REPO: ${{ github.repository }}
+            - PR_NUMBER: ${{ github.event.pull_request.number }}
+            - PR_TITLE: ${{ github.event.pull_request.title }}
+
+            COMPONENT LABEL MAPPING:
+            Apply labels based on which directories have changed files:
+            - `website` - Changes in website/ directory
+            - `backend` - Changes in backend/ directory
+            - `deposition` - Changes in ena-submission/ directory
+            - `preprocessing` - Changes in preprocessing/ directory
+            - `deployment` - Changes in kubernetes/ directory
+            - `ingest` - Changes in ingest/ directory
+
+            TASK STEPS:
+
+            1. Get the list of changed files in this PR:
+               Run: `gh pr diff ${{ github.event.pull_request.number }} --name-only`
+
+            2. Fetch the list of available labels:
+               Run: `gh label list`
+
+            3. Analyze changed files and determine component labels:
+               - website/* -> apply "website" label
+               - backend/* -> apply "backend" label
+               - ena-submission/* -> apply "deposition" label
+               - preprocessing/* -> apply "preprocessing" label
+               - kubernetes/* -> apply "deployment" label
+               - ingest/* -> apply "ingest" label
+               - Multiple directories -> apply multiple labels
+
+            4. Apply the component labels:
+               Run: `gh pr edit ${{ github.event.pull_request.number }} --add-label "label1,label2"`
+               Only add labels that exist in the repository.
+
+            5. Search for related issues that this PR might address:
+               - Run: `gh issue list --state open --limit 30` to see recent issues
+               - Search for related issues: `gh issue list --search "keywords" --state open`
+               - Look for issues that describe the bug being fixed or feature being added
+               - Check the PR title and description for issue references
+
+            6. If related issues are found that aren't already linked:
+               - Post a comment: `gh pr comment ${{ github.event.pull_request.number }} --body "message"`
+               - Format: "This PR may be related to: #X, #Y"
+               - Only comment if genuinely related issues are found
+               - Skip if issues are already linked in the PR description
+
+            IMPORTANT GUIDELINES:
+            - Always apply component labels based on changed files
+            - Only apply labels that exist in the repository
+            - Be conservative when suggesting related issues
+            - Do not duplicate information already in the PR description
+
+          claude_args: |
+            --allowedTools "Bash(gh pr:*),Bash(gh issue list:*),Bash(gh label list)"

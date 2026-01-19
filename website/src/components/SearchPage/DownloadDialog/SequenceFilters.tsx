@@ -1,5 +1,5 @@
 import { type FieldValues } from '../../../types/config.ts';
-import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
+import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import { intoMutationSearchParams } from '../../../utils/mutation.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
@@ -44,7 +44,7 @@ export class FieldFilterSet implements SequenceFilter {
     private readonly filterSchema: MetadataFilterSchema;
     private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
-    private readonly referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
+    private readonly suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo | null;
 
     /**
      * @param filterSchema The {@link MetadataFilterSchema} to use. Provides labels and other
@@ -52,18 +52,18 @@ export class FieldFilterSet implements SequenceFilter {
      * @param fieldValues The {@link FieldValues} that are used to filter sequence entries.
      * @param hiddenFieldValues key-value combinations of fields that should be hidden when converting
      *     displaying the field values (because these are default values).
-     * @param referenceGenomeSequenceNames Necessary to construct mutation API params.
+     * @param suborganismSegmentAndGeneInfo Necessary to construct mutation API params.
      */
     constructor(
         filterSchema: MetadataFilterSchema,
         fieldValues: FieldValues,
         hiddenFieldValues: FieldValues,
-        referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema,
+        suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo | null,
     ) {
         this.filterSchema = filterSchema;
         this.fieldValues = fieldValues;
         this.hiddenFieldValues = hiddenFieldValues;
-        this.referenceGenomeLightweightSchema = referenceGenomeSequenceNames;
+        this.suborganismSegmentAndGeneInfo = suborganismSegmentAndGeneInfo;
     }
 
     /**
@@ -75,7 +75,7 @@ export class FieldFilterSet implements SequenceFilter {
             new MetadataFilterSchema([]),
             {},
             {},
-            { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], geneNames: [], insdcAccessionFull: [] } },
+            { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
         );
     }
 
@@ -107,10 +107,15 @@ export class FieldFilterSet implements SequenceFilter {
         }
 
         delete sequenceFilters.mutation;
-        const mutationSearchParams = intoMutationSearchParams(
-            this.fieldValues.mutation,
-            this.referenceGenomeLightweightSchema,
-        );
+        const mutationSearchParams =
+            this.suborganismSegmentAndGeneInfo !== null
+                ? intoMutationSearchParams(this.fieldValues.mutation, this.suborganismSegmentAndGeneInfo)
+                : {
+                      aminoAcidInsertions: [],
+                      aminoAcidMutations: [],
+                      nucleotideInsertions: [],
+                      nucleotideMutations: [],
+                  };
 
         return {
             ...sequenceFilters,

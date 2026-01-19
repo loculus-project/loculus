@@ -144,8 +144,10 @@ preprocessing:
       - 'prepro'
     configFile:
       log_level: DEBUG
-      nextclade_dataset_name: nextstrain/ebola/zaire
-      genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+      nextclade_sequence_and_datasets:
+        - name: 'main'
+          nextclade_dataset_name: nextstrain/ebola/zaire
+          genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
       batch_size: 100
 ```
 

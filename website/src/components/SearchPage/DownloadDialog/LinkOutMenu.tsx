@@ -1,10 +1,12 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { type FC, useState, useRef } from 'react';
+import { type MutableRefObject, type FC, useState, useRef } from 'react';
 
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator';
 import { type SequenceFilter } from './SequenceFilters';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes';
+import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
 import { processTemplate, matchPlaceholders } from '../../../utils/templateProcessor';
+import { Button } from '../../common/Button';
 import BasicModal from '../../common/Modal';
 import DashiconsExternal from '~icons/dashicons/external';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
@@ -72,14 +74,19 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
 
             const downloadOption: DownloadOption = {
                 includeRestricted: includeRestricted,
-                dataType: {
-                    type: dataType as DataType,
-                    segment: segment,
-                    includeRichFastaHeaders: richHeaders ? true : undefined,
-                },
+                dataType:
+                    dataType === 'metadata'
+                        ? {
+                              type: 'metadata',
+                              fields: columns ?? [],
+                          }
+                        : {
+                              type: dataType as 'unalignedNucleotideSequences' | 'alignedNucleotideSequences',
+                              segment: segment,
+                              richFastaHeaders: { include: richHeaders === true },
+                          },
                 compression: undefined,
                 dataFormat: dataFormat,
-                fields: columns,
             };
 
             const { url } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);
@@ -125,12 +132,16 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                     <IwwaArrowDown className='ml-2 h-5 w-5' aria-hidden='true' />
                 </MenuButton>
 
-                <MenuItems className='absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none'>
+                <MenuItems className='absolute right-0 mt-2 w-64  origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none'>
                     <div className='py-1'>
+                        <div className='px-4 py-2 text-sm text-gray-500'>
+                            Analyze {sequenceCount !== undefined ? formatNumberWithDefaultLocale(sequenceCount) : '...'}{' '}
+                            sequences with:
+                        </div>
                         {linkOuts.map((linkOut) => (
                             <MenuItem key={linkOut.name}>
                                 {({ focus }) => (
-                                    <button
+                                    <Button
                                         onClick={() => handleLinkClick(linkOut)}
                                         className={`
                                             ${focus ? 'bg-gray-100 text-gray-900' : 'text-gray-700'}
@@ -139,14 +150,13 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                                     >
                                         {linkOut.name}
                                         <DashiconsExternal className='h-4 w-4 ml-2' />
-                                    </button>
+                                    </Button>
                                 )}
                             </MenuItem>
                         ))}
                     </div>
                 </MenuItems>
             </Menu>
-
             {dataUseTermsEnabled && (
                 <LinkOutMenuDataUseTermModal
                     modalVisible={isDataUseTermsModalVisible}
@@ -163,7 +173,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
 function LinkOutMenuDataUseTermModal(props: {
     modalVisible: boolean;
     setModalVisible: (value: ((prevState: boolean) => boolean) | boolean) => void;
-    currentLinkOut: React.MutableRefObject<LinkOut | null>;
+    currentLinkOut: MutableRefObject<LinkOut | null>;
     onClick: () => void;
     onClick1: () => void;
 }) {
@@ -179,18 +189,18 @@ function LinkOutMenuDataUseTermModal(props: {
                     with the Restricted-Use terms.)
                 </p>
                 <div className='flex justify-end space-x-4'>
-                    <button
+                    <Button
                         className='px-4 py-2 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition-colors'
                         onClick={props.onClick}
                     >
                         Open sequences only
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         className='px-4 py-2 bg-primary-600 text-white rounded-md font-medium hover:bg-primary-700 transition-colors'
                         onClick={props.onClick1}
                     >
                         Include Restricted-Use
-                    </button>
+                    </Button>
                 </div>
             </div>
         </BasicModal>

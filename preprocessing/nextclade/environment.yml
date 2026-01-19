@@ -4,21 +4,23 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - python=3.12
-  - biopython=1.84
-  - dpath=2.2
-  - nextclade=3.15
-  - pip=24.3
-  - PyYAML=6.0
-  - pyjwt=2.10
-  - python-dateutil=2.9
-  - pytz=2024.2
-  - requests=2.32
-  - pandas=2.2
-  - ruff
-  - types-PyYAML
-  - types-requests
-  - types-pytz
-  - types-python-dateutil
-  - pytest
-  - unidecode
+  - python=3.14.2
+  - biopython=1.86
+  - dpath=2.2.0
+  - nextclade=3.18.1
+  - pip=25.2
+  - uv=0.9.21
+  - PyYAML=6.0.3
+  - pyjwt=2.10.1
+  - python-dateutil=2.9.0.post0
+  - pytz=2025.2
+  - requests=2.32.5
+  - pandas=2.3.3
+  - ruff=0.14.10
+  - types-PyYAML=6.0.12.20250915
+  - types-requests=2.32.4.20250913
+  - types-python-dateutil=2.9.0.20251115
+  - types-pytz=2025.2.0.20251108
+  - unidecode=1.4.0
+  - pytest=9.0.2
+  - pydantic=2.12.3

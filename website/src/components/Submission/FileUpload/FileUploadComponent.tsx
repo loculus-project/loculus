@@ -3,10 +3,11 @@ import { toast } from 'react-toastify';
 
 import type { FileKind, ProcessedFile } from './fileProcessing.ts';
 import useClientFlag from '../../../hooks/isClient.ts';
+import { Button } from '../../common/Button';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import UndoTwoToneIcon from '~icons/ic/twotone-undo';
 
-export const FileUploadComponent = ({
+export const FileUploadComponent = <F extends ProcessedFile>({
     setFile,
     name,
     ariaLabel,
@@ -17,17 +18,17 @@ export const FileUploadComponent = ({
     onDownload = undefined,
     downloadDisabled = false,
 }: {
-    setFile: (file: ProcessedFile | undefined) => Promise<void> | void;
+    setFile: (file: F | undefined) => Promise<void> | void;
     name: string;
     ariaLabel: string;
-    fileKind: FileKind;
+    fileKind: FileKind<F>;
     small?: boolean;
-    initialValue?: ProcessedFile;
+    initialValue?: F;
     showUndo?: boolean;
     onDownload?: () => void;
     downloadDisabled?: boolean;
 }) => {
-    const [myFile, rawSetMyFile] = useState<ProcessedFile | undefined>(initialValue);
+    const [myFile, rawSetMyFile] = useState<F | undefined>(initialValue);
     const [isDragOver, setIsDragOver] = useState(false);
     const isClient = useClientFlag();
 
@@ -35,7 +36,7 @@ export const FileUploadComponent = ({
 
     const setMyFile = useCallback(
         async (file: File | null) => {
-            let processedFile: ProcessedFile | undefined = undefined;
+            let processedFile: F | undefined = undefined;
             if (file !== null) {
                 const processingResult = await fileKind.processRawFile(file);
                 processedFile = processingResult.match(
@@ -166,18 +167,18 @@ export const FileUploadComponent = ({
             ) : (
                 <div className='flex flex-col items-center justify-center text-center flex-1 px-4 py-2'>
                     <div className='text-sm text-gray-500 mb-1'>{myFile.handle().name}</div>
-                    <button
+                    <Button
                         onClick={() => void setMyFile(null)}
                         data-testid={`discard_${name}`}
                         className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
                     >
                         Discard file
-                    </button>
+                    </Button>
                 </div>
             )}
             {showUndo && isEdited && (
                 <div className='absolute top-1 right-2'>
-                    <button
+                    <Button
                         className='bg-transparent'
                         onClick={() => void reset()}
                         aria-label={`Undo ${name}`}
@@ -186,12 +187,12 @@ export const FileUploadComponent = ({
                         <div className='tooltip tooltip-info whitespace-pre-line' data-tip='Revert to initial data'>
                             <UndoTwoToneIcon color='action' />
                         </div>
-                    </button>
+                    </Button>
                 </div>
             )}
             {onDownload && myFile && (
                 <div className={`absolute top-1 ${showUndo && isEdited ? 'right-10' : 'right-2'}`}>
-                    <button
+                    <Button
                         className='bg-transparent'
                         onClick={onDownload}
                         disabled={downloadDisabled}
@@ -203,7 +204,7 @@ export const FileUploadComponent = ({
                                 className={`${downloadDisabled ? 'text-gray-200' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
                             />
                         </div>
-                    </button>
+                    </Button>
                 </div>
             )}
         </div>

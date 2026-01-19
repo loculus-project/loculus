@@ -17,6 +17,7 @@ import {
     unalignedSequenceSegment,
 } from '../../../utils/sequenceTypeHelpers.ts';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../../common/BoxWithTabs.tsx';
+import { Button } from '../../common/Button';
 import { withQueryProvider } from '../../common/withQueryProvider.tsx';
 
 type SequenceContainerProps = {
@@ -41,19 +42,14 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
         suborganism,
     );
 
-    const [loadSequences, setLoadSequences] = useState(false);
-    useEffect(() => {
-        if (loadSequencesAutomatically) {
-            setLoadSequences(true);
-        }
-    }, [loadSequencesAutomatically]);
+    const [loadSequences, setLoadSequences] = useState(() => loadSequencesAutomatically);
     const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentInfos[0]));
 
     if (!loadSequences) {
         return (
-            <button className='btn btn-sm m-4' onClick={() => setLoadSequences(true)}>
+            <Button className='btn btn-sm m-4' onClick={() => setLoadSequences(true)}>
                 Load sequences
-            </button>
+            </Button>
         );
     }
 
@@ -182,7 +178,9 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
             {segments.map((segmentName) => (
                 <BoxWithTabsTab
                     key={segmentName.lapisName}
-                    isActive={isActive && isUnalignedSequence(sequenceType) && segmentName === sequenceType.name}
+                    isActive={
+                        isActive && isUnalignedSequence(sequenceType) && segmentName.label === sequenceType.name.label
+                    }
                     onClick={() => {
                         setType(unalignedSequenceSegment(segmentName));
                         setActiveTab('unaligned');
@@ -221,7 +219,9 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
             {segments.map((segmentName) => (
                 <BoxWithTabsTab
                     key={segmentName.lapisName}
-                    isActive={isActive && isAlignedSequence(sequenceType) && segmentName === sequenceType.name}
+                    isActive={
+                        isActive && isAlignedSequence(sequenceType) && segmentName.label === sequenceType.name.label
+                    }
                     onClick={() => {
                         setType(alignedSequenceSegment(segmentName));
                         setActiveTab('aligned');
@@ -245,6 +245,7 @@ const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) =
     return (
         <div className='mb-4'>
             <select
+                data-testid='gene-dropdown'
                 className='select select-bordered w-full max-w-xs'
                 value={selectedGene}
                 onChange={(e) => {

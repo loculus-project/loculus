@@ -11,6 +11,7 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { deserializeAccessionInput, serializeSeqSetRecords } from '../../utils/parseAccessionInput';
+import { Button } from '../common/Button';
 
 const logger = getClientLogger('SeqSetForm');
 
@@ -200,13 +201,13 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                     </span>
                 </div>
             </div>
-            <button
+            <Button
                 className='flex items-center btn loculusColor text-white hover:bg-primary-700'
                 disabled={isPending || seqSetRecordValidation !== '' || seqSetNameValidation !== ''}
                 onClick={handleSubmit}
             >
                 {isPending ? <span className='loading loading-spinner loading-sm mr-2 relative top-1' /> : 'Save'}
-            </button>
+            </Button>
         </div>
     );
 };

@@ -2,16 +2,17 @@ import { expect } from '@playwright/test';
 import { test } from '../../../fixtures/group.fixture';
 import { SearchPage } from '../../../pages/search.page';
 import { BulkSubmissionPage } from '../../../pages/submission.page';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 const SEQUENCE = 'ATTGATCTCATCATTT';
 
-test('Lineage field lineage counts', async ({ page, pageWithGroup }) => {
+test('Lineage field lineage counts', async ({ page, groupId }) => {
     test.setTimeout(95_000);
-    const uuid = uuidv4();
+    void groupId;
+    const uuid = randomUUID();
 
     await page.goto('/');
-    const submissionPage = new BulkSubmissionPage(pageWithGroup);
+    const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage('Test organism (without alignment)');
     await submissionPage.uploadMetadataFile(
         ['id', 'date', 'host', 'lineage'],

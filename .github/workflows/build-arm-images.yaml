@@ -33,6 +33,12 @@ jobs:
     uses: ./.github/workflows/config-preprocessor-image.yml
     with:
       build_arm: true
+  trigger-silo-import:
+    needs: should-build
+    if: needs.should-build.outputs.should_run == 'true'
+    uses: ./.github/workflows/silo-import-image.yml
+    with:
+      build_arm: true
   trigger-dummy-preprocessing:
     needs: should-build
     if: needs.should-build.outputs.should_run == 'true'
@@ -67,11 +73,5 @@ jobs:
     needs: should-build
     if: needs.should-build.outputs.should_run == 'true'
     uses: ./.github/workflows/preprocessing-nextclade-image.yml
-    with:
-      build_arm: true
-  trigger-website:
-    needs: should-build
-    if: needs.should-build.outputs.should_run == 'true'
-    uses: ./.github/workflows/website-image.yml
     with:
       build_arm: true

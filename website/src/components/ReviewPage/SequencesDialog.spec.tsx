@@ -8,7 +8,12 @@ import { processedStatus, type SequenceEntryToEdit } from '../../types/backend.t
 describe('SequencesDialog', () => {
     test('should only show existing sequences', async () => {
         const { getByText, queryByText, getByRole } = render(
-            <SequencesDialog isOpen={true} onClose={() => undefined} dataToView={dataToView} />,
+            <SequencesDialog
+                isOpen={true}
+                onClose={() => undefined}
+                dataToView={dataToView}
+                segmentAndGeneDisplayNameMap={new Map()}
+            />,
         );
 
         await waitFor(() => {
@@ -32,6 +37,28 @@ describe('SequencesDialog', () => {
 
         expect(queryByText(new RegExp(sequence2))).not.toBeInTheDocument();
         expect(queryByText(new RegExp(gene2))).not.toBeInTheDocument();
+    });
+
+    test('should show mapped segment names', async () => {
+        const { getByRole } = render(
+            <SequencesDialog
+                isOpen={true}
+                onClose={() => undefined}
+                dataToView={dataToView}
+                segmentAndGeneDisplayNameMap={
+                    new Map([
+                        [sequence1, 'mappedName1'],
+                        [gene1, 'mappedGeneName1'],
+                    ])
+                }
+            />,
+        );
+
+        await waitFor(() => {
+            expect(getByRole('button', { name: `mappedName1 (aligned)` })).toBeVisible();
+            expect(getByRole('button', { name: `mappedName1 (unaligned)` })).toBeVisible();
+            expect(getByRole('button', { name: 'mappedGeneName1' })).toBeVisible();
+        });
     });
 });
 
@@ -66,6 +93,10 @@ const dataToView: SequenceEntryToEdit = {
         },
         nucleotideInsertions: {},
         aminoAcidInsertions: {},
+        sequenceNameToFastaId: {
+            [sequence1]: 'header1',
+            [sequence2]: 'header2',
+        },
         files: null,
     },
     status: processedStatus,

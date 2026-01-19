@@ -32,8 +32,11 @@ The integration tests are organized as follows:
 
 There are some fixtures to help with the development of tests:
 
-- `pageWithACreatedUser` creates a user account and logs into it
-- `pageWithGroup` inherits from `pageWithACreatedUser` and in addition creates a group for the user
+- `authenticatedUser` creates a user account and logs into it (returns `TestAccount`)
+- `groupId` inherits from `authenticatedUser` and creates a group for the user (returns the group ID)
+- `releasedSequence` inherits from `groupId` and creates and releases a test sequence (returns the submission ID)
+
+All fixtures follow the pattern of returning data rather than page objects. Tests should use the regular `page` fixture along with these data fixtures. To ensure a fixture runs, include it as a dependency and use `void <fixtureName>;` at the start of the test.
 
 ## Running the tests
 
@@ -76,4 +79,24 @@ Run the tests:
 
 ```sh
 npx playwright test
+```
+
+### Controlling Test Execution
+
+You can control which tests are run using the `BROWSER` and `TEST_SUITE` environment variables.
+
+- `BROWSER`: Specifies the browser to run the *browser-based* tests on. Can be `chromium` or `firefox`. If not set, browser-based tests will run on all configured browsers. Note that CLI tests always run on Chromium, regardless of this setting.
+- `TEST_SUITE`: Controls which suite of tests to run.
+    - `all` (default): Runs both browser and CLI tests.
+    - `browser`: Runs only the browser-based tests.
+    - `cli`: Runs only the command-line interface (CLI) tests (always on Chromium).
+
+Example:
+
+```sh
+# Run only CLI tests on Chromium
+BROWSER=chromium TEST_SUITE=cli npx playwright test
+
+# Run only browser tests on Firefox
+BROWSER=firefox TEST_SUITE=browser npx playwright test
 ```

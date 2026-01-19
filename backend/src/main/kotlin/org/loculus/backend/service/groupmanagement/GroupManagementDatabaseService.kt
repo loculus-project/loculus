@@ -6,6 +6,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.lowerCase
 import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.Address
 import org.loculus.backend.api.Group
@@ -27,14 +28,24 @@ class GroupManagementDatabaseService(
     private val auditLogger: AuditLogger,
 ) {
 
-    fun getDetailsOfGroup(groupId: Int): GroupDetails {
+    fun getDetailsOfGroup(groupId: Int, user: org.loculus.backend.auth.User): GroupDetails {
         val groupEntity = GroupEntity.findById(groupId) ?: throw NotFoundException("Group $groupId does not exist.")
-        val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
 
-        return GroupDetails(
-            group = groupEntity.toGroup(),
-            users = users.map { User(it.userName) },
-        )
+        return when (user is AuthenticatedUser) {
+            true -> {
+                val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
+                GroupDetails(
+                    group = groupEntity.toGroup(),
+                    users = users.map { User(it.userName) },
+                )
+            }
+
+            false ->
+                GroupDetails(
+                    group = groupEntity.toGroup(redactEmail = true),
+                    users = null,
+                )
+        }
     }
 
     fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
@@ -71,6 +82,7 @@ class GroupManagementDatabaseService(
     fun getGroupsOfUser(authenticatedUser: AuthenticatedUser): List<Group> {
         val groupsQuery = when (authenticatedUser.isSuperUser) {
             true -> GroupsTable.selectAll()
+
             false ->
                 UserGroupsTable
                     .join(
@@ -135,23 +147,18 @@ class GroupManagementDatabaseService(
         auditLogger.log(authenticatedUser.username, "Removed $usernameToRemove from group $groupId")
     }
 
-    fun getAllGroups(): List<Group> = GroupEntity.all()
-        .map {
-            Group(
-                groupId = it.id.value,
-                groupName = it.groupName,
-                institution = it.institution,
-                address = Address(
-                    line1 = it.addressLine1,
-                    line2 = it.addressLine2,
-                    postalCode = it.addressPostalCode,
-                    city = it.addressCity,
-                    state = it.addressState,
-                    country = it.addressCountry,
-                ),
-                contactEmail = it.contactEmail,
-            )
+    fun getGroups(name: String?): List<Group> {
+        val entities = if (name == null) {
+            GroupEntity.all()
+        } else {
+            GroupEntity.find {
+                // just case-insensitive perfect matches for now
+                GroupsTable.groupNameColumn.lowerCase() eq name.lowercase()
+            }
         }
+
+        return entities.map { it.toGroup() }
+    }
 
     private fun GroupEntity.updateWith(group: NewGroup) {
         groupName = group.groupName
@@ -165,7 +172,7 @@ class GroupManagementDatabaseService(
         contactEmail = group.contactEmail
     }
 
-    private fun GroupEntity.toGroup(): Group = Group(
+    private fun GroupEntity.toGroup(redactEmail: Boolean = false): Group = Group(
         groupId = this.id.value,
         groupName = this.groupName,
         institution = this.institution,
@@ -177,6 +184,6 @@ class GroupManagementDatabaseService(
             state = this.addressState,
             country = this.addressCountry,
         ),
-        contactEmail = this.contactEmail,
+        contactEmail = if (redactEmail) null else this.contactEmail,
     )
 }

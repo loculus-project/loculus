@@ -5,56 +5,34 @@ on:
     branches:
       - main
   workflow_dispatch:
-    inputs:
-      build_arm:
-        type: boolean
-        description: "Build for ARM as well"
-        default: false
-        required: false
   workflow_call:
-    inputs:
-      build_arm:
-        type: boolean
-        description: "Build for ARM as well"
-        default: false
-        required: false
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/website
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-  BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
   sha: ${{ github.event.pull_request.head.sha || github.sha }}
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-website-${{github.event.inputs.build_arm}}
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-website
   cancel-in-progress: true
 jobs:
-  website-docker:
-    name: Build Website Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
+  check-cache:
+    name: Check Cache
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 5
     permissions:
       contents: read
       packages: write
-      checks: read
+    outputs:
+      cache-hit: ${{ steps.check-image.outputs.cache-hit }}
+      dir-hash: ${{ steps.prepare.outputs.dir-hash }}
+      sha-short: ${{ steps.prepare.outputs.sha-short }}
     steps:
-      - name: Shorten sha
-        run: echo "sha=${sha::7}" >> $GITHUB_ENV
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Generate files hash
-        id: files-hash
+        id: prepare
         run: |
           DIR_HASH=$(echo -n ${{ hashFiles('website/**', '.github/workflows/website-image.yml') }})
-          echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}" >> $GITHUB_ENV
-      - name: Setup Docker metadata
-        id: dockerMetadata
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.DOCKER_IMAGE_NAME }}
-          tags: |
-            type=raw,value=${{ env.DIR_HASH }}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=${{ env.BRANCH_NAME }}
-            type=raw,value=commit-${{ env.sha }}
-            type=raw,value=${{ env.BRANCH_NAME }}-arm,enable=${{ env.BUILD_ARM }}
+          echo "dir-hash=$DIR_HASH" >> $GITHUB_OUTPUT
+          echo "sha-short=${sha::7}" >> $GITHUB_OUTPUT
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -64,31 +42,123 @@ jobs:
       - name: Check if image exists
         id: check-image
         run: |
-          EXISTS=$(docker manifest inspect ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }} > /dev/null 2>&1 && echo "true" || echo "false")
-          echo "CACHE_HIT=$EXISTS" >> $GITHUB_ENV
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Get node version build arg
-        id: get-node-version
-        if: env.CACHE_HIT == 'false'
+          EXISTS=$(docker manifest inspect ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.prepare.outputs.dir-hash }} > /dev/null 2>&1 && echo "true" || echo "false")
+          echo "cache-hit=$EXISTS" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build ${{ matrix.platform }}
+    needs: check-cache
+    if: needs.check-cache.outputs.cache-hit == 'false'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6
+      - name: Prepare build variables
+        id: prepare
         run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
           NODE_VERSION=$(grep -v "^[[:space:]]*#" website/.nvmrc | tr -d 'v')
           echo "NODE_VERSION=$NODE_VERSION" >> $GITHUB_OUTPUT
-      - name: Build and push image
-        if: env.CACHE_HIT == 'false'
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_IMAGE_NAME }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push by digest
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: ./website
-          push: true
-          tags: ${{ steps.dockerMetadata.outputs.tags }}
-          cache-from: type=gha,scope=website-${{ github.ref }}
-          cache-to: type=gha,mode=max,scope=website-${{ github.ref }}
-          platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
-          build-args: NODE_VERSION=${{ steps.get-node-version.outputs.NODE_VERSION }}
-      - name: Retag and push existing image if cache hit
-        if: env.CACHE_HIT == 'true'
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=website-${{ github.ref }}-${{ env.PLATFORM_PAIR }}
+          cache-to: type=gha,mode=max,scope=website-${{ github.ref }}-${{ env.PLATFORM_PAIR }}
+          outputs: type=image,name=${{ env.DOCKER_IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          build-args: NODE_VERSION=${{ steps.prepare.outputs.NODE_VERSION }}
+      - name: Export digest
         run: |
-          TAGS=(${{ steps.dockerMetadata.outputs.tags }})
-          for TAG in "${TAGS[@]}"; do
-            docker buildx imagetools create --tag $TAG ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }}
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+      - name: Upload digest
+        uses: actions/upload-artifact@v6
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge-or-retag:
+    name: Publish Website Docker Image
+    needs: [check-cache, build]
+    if: always() && needs.check-cache.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Setup Docker metadata
+        id: dockerMetadata
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ needs.check-cache.outputs.dir-hash }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=${{ env.BRANCH_NAME }}
+            type=raw,value=commit-${{ needs.check-cache.outputs.sha-short }}
+      - name: Download digests
+        if: needs.check-cache.outputs.cache-hit == 'false'
+        uses: actions/download-artifact@v7
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Create manifest list and push
+        if: needs.check-cache.outputs.cache-hit == 'false'
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          METADATA='${{ steps.dockerMetadata.outputs.json }}'
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$METADATA") \
+            $(printf '${{ env.DOCKER_IMAGE_NAME }}@sha256:%s ' *)
+      - name: Inspect image
+        if: needs.check-cache.outputs.cache-hit == 'false'
+        run: |
+          docker buildx imagetools inspect ${{ env.DOCKER_IMAGE_NAME }}:${{ needs.check-cache.outputs.dir-hash }}
+      - name: Retag and push existing image
+        if: needs.check-cache.outputs.cache-hit == 'true'
+        run: |
+          METADATA='${{ steps.dockerMetadata.outputs.json }}'
+          TAGS=$(jq -r '.tags[]' <<< "$METADATA")
+          for TAG in $TAGS; do
+            docker buildx imagetools create --tag $TAG ${{ env.DOCKER_IMAGE_NAME }}:${{ needs.check-cache.outputs.dir-hash }}
           done

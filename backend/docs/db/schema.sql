@@ -4,8 +4,8 @@
 
 \restrict dummy
 
--- Dumped from database version 15.14 (Debian 15.14-1.pgdg13+1)
--- Dumped by pg_dump version 16.10 (Debian 16.10-1.pgdg13+1)
+-- Dumped from database version 15.15 (Debian 15.15-1.pgdg13+1)
+-- Dumped by pg_dump version 16.11 (Debian 16.11-1.pgdg13+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -103,36 +103,6 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: external_metadata; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.external_metadata (
-    accession text NOT NULL,
-    version bigint NOT NULL,
-    external_metadata_updater text NOT NULL,
-    external_metadata jsonb,
-    updated_metadata_at timestamp without time zone NOT NULL
-);
-
-
-ALTER TABLE public.external_metadata OWNER TO postgres;
-
---
--- Name: all_external_metadata; Type: VIEW; Schema: public; Owner: postgres
---
-
-CREATE VIEW public.all_external_metadata AS
- SELECT external_metadata.accession,
-    external_metadata.version,
-    max(external_metadata.updated_metadata_at) AS updated_metadata_at,
-    public.jsonb_merge_agg(external_metadata.external_metadata) AS external_metadata
-   FROM public.external_metadata
-  GROUP BY external_metadata.accession, external_metadata.version;
-
-
-ALTER VIEW public.all_external_metadata OWNER TO postgres;
-
---
 -- Name: audit_log; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -168,6 +138,35 @@ ALTER SEQUENCE public.audit_log_id_seq OWNED BY public.audit_log.id;
 
 
 --
+-- Name: compression_dictionaries; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.compression_dictionaries (
+    id integer NOT NULL,
+    hash character(64) NOT NULL,
+    dict_contents bytea NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    description text
+);
+
+
+ALTER TABLE public.compression_dictionaries OWNER TO postgres;
+
+--
+-- Name: compression_dictionaries_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.compression_dictionaries ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.compression_dictionaries_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: current_processing_pipeline; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -196,77 +195,19 @@ CREATE TABLE public.data_use_terms_table (
 ALTER TABLE public.data_use_terms_table OWNER TO postgres;
 
 --
--- Name: sequence_entries; Type: TABLE; Schema: public; Owner: postgres
+-- Name: external_metadata; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.sequence_entries (
+CREATE TABLE public.external_metadata (
     accession text NOT NULL,
     version bigint NOT NULL,
-    organism text NOT NULL,
-    submission_id text NOT NULL,
-    submitter text NOT NULL,
-    approver text,
-    group_id integer NOT NULL,
-    submitted_at timestamp without time zone NOT NULL,
-    released_at timestamp without time zone,
-    is_revocation boolean DEFAULT false NOT NULL,
-    original_data jsonb,
-    version_comment text
+    external_metadata_updater text NOT NULL,
+    external_metadata jsonb,
+    updated_metadata_at timestamp without time zone NOT NULL
 );
 
 
-ALTER TABLE public.sequence_entries OWNER TO postgres;
-
---
--- Name: sequence_entries_preprocessed_data; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.sequence_entries_preprocessed_data (
-    accession text NOT NULL,
-    version bigint NOT NULL,
-    pipeline_version bigint NOT NULL,
-    processed_data jsonb,
-    errors jsonb,
-    warnings jsonb,
-    processing_status text NOT NULL,
-    started_processing_at timestamp without time zone NOT NULL,
-    finished_processing_at timestamp without time zone
-);
-
-
-ALTER TABLE public.sequence_entries_preprocessed_data OWNER TO postgres;
-
---
--- Name: external_metadata_view; Type: VIEW; Schema: public; Owner: postgres
---
-
-CREATE VIEW public.external_metadata_view AS
- SELECT cpd.accession,
-    cpd.version,
-    all_external_metadata.updated_metadata_at,
-        CASE
-            WHEN (all_external_metadata.external_metadata IS NULL) THEN jsonb_build_object('metadata', (cpd.processed_data -> 'metadata'::text))
-            ELSE jsonb_build_object('metadata', ((cpd.processed_data -> 'metadata'::text) || all_external_metadata.external_metadata))
-        END AS joint_metadata
-   FROM (( SELECT sequence_entries_preprocessed_data.accession,
-            sequence_entries_preprocessed_data.version,
-            sequence_entries_preprocessed_data.pipeline_version,
-            sequence_entries_preprocessed_data.processed_data,
-            sequence_entries_preprocessed_data.errors,
-            sequence_entries_preprocessed_data.warnings,
-            sequence_entries_preprocessed_data.processing_status,
-            sequence_entries_preprocessed_data.started_processing_at,
-            sequence_entries_preprocessed_data.finished_processing_at
-           FROM public.sequence_entries_preprocessed_data
-          WHERE (sequence_entries_preprocessed_data.pipeline_version = ( SELECT current_processing_pipeline.version
-                   FROM public.current_processing_pipeline
-                  WHERE (current_processing_pipeline.organism = ( SELECT se.organism
-                           FROM public.sequence_entries se
-                          WHERE ((se.accession = sequence_entries_preprocessed_data.accession) AND (se.version = sequence_entries_preprocessed_data.version))))))) cpd
-     LEFT JOIN public.all_external_metadata ON (((all_external_metadata.accession = cpd.accession) AND (all_external_metadata.version = cpd.version))));
-
-
-ALTER VIEW public.external_metadata_view OWNER TO postgres;
+ALTER TABLE public.external_metadata OWNER TO postgres;
 
 --
 -- Name: files; Type: TABLE; Schema: public; Owner: postgres
@@ -361,7 +302,8 @@ CREATE TABLE public.metadata_upload_aux_table (
     group_id integer,
     uploaded_at timestamp without time zone NOT NULL,
     metadata jsonb NOT NULL,
-    files jsonb
+    files jsonb,
+    fasta_ids text[]
 );
 
 
@@ -468,6 +410,47 @@ CREATE TABLE public.seqsets (
 ALTER TABLE public.seqsets OWNER TO postgres;
 
 --
+-- Name: sequence_entries; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.sequence_entries (
+    accession text NOT NULL,
+    version bigint NOT NULL,
+    organism text NOT NULL,
+    submission_id text NOT NULL,
+    submitter text NOT NULL,
+    approver text,
+    group_id integer NOT NULL,
+    submitted_at timestamp without time zone NOT NULL,
+    released_at timestamp without time zone,
+    is_revocation boolean DEFAULT false NOT NULL,
+    original_data jsonb,
+    version_comment text
+);
+
+
+ALTER TABLE public.sequence_entries OWNER TO postgres;
+
+--
+-- Name: sequence_entries_preprocessed_data; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.sequence_entries_preprocessed_data (
+    accession text NOT NULL,
+    version bigint NOT NULL,
+    pipeline_version bigint NOT NULL,
+    processed_data jsonb,
+    errors jsonb,
+    warnings jsonb,
+    processing_status text NOT NULL,
+    started_processing_at timestamp without time zone NOT NULL,
+    finished_processing_at timestamp without time zone
+);
+
+
+ALTER TABLE public.sequence_entries_preprocessed_data OWNER TO postgres;
+
+--
 -- Name: sequence_entries_view; Type: VIEW; Schema: public; Owner: postgres
 --
 
@@ -487,11 +470,12 @@ CREATE VIEW public.sequence_entries_view AS
     sepd.started_processing_at,
     sepd.finished_processing_at,
     sepd.processed_data,
-    (sepd.processed_data || em.joint_metadata) AS joint_metadata,
         CASE
-            WHEN se.is_revocation THEN ( SELECT current_processing_pipeline.version
-               FROM public.current_processing_pipeline
-              WHERE (current_processing_pipeline.organism = se.organism))
+            WHEN (aem.external_metadata IS NULL) THEN sepd.processed_data
+            ELSE (sepd.processed_data || jsonb_build_object('metadata', ((sepd.processed_data -> 'metadata'::text) || aem.external_metadata)))
+        END AS joint_metadata,
+        CASE
+            WHEN se.is_revocation THEN cpp.version
             ELSE sepd.pipeline_version
         END AS pipeline_version,
     sepd.errors,
@@ -510,13 +494,13 @@ CREATE VIEW public.sequence_entries_view AS
             ELSE 'NO_ISSUES'::text
         END AS processing_result
    FROM (((public.sequence_entries se
-     LEFT JOIN public.sequence_entries_preprocessed_data sepd ON (((se.accession = sepd.accession) AND (se.version = sepd.version) AND (sepd.pipeline_version = ( SELECT current_processing_pipeline.version
-           FROM public.current_processing_pipeline
-          WHERE (current_processing_pipeline.organism = ( SELECT se_1.organism
-                   FROM public.sequence_entries se_1
-                  WHERE ((se_1.accession = sepd.accession) AND (se_1.version = sepd.version)))))))))
-     LEFT JOIN public.current_processing_pipeline ccp ON (((se.organism = ccp.organism) AND (sepd.pipeline_version = ccp.version))))
-     LEFT JOIN public.external_metadata_view em ON (((se.accession = em.accession) AND (se.version = em.version))));
+     LEFT JOIN public.current_processing_pipeline cpp ON ((se.organism = cpp.organism)))
+     LEFT JOIN public.sequence_entries_preprocessed_data sepd ON (((se.accession = sepd.accession) AND (se.version = sepd.version) AND (sepd.pipeline_version = cpp.version))))
+     LEFT JOIN ( SELECT em.accession,
+            em.version,
+            public.jsonb_merge_agg(em.external_metadata) AS external_metadata
+           FROM public.external_metadata em
+          GROUP BY em.accession, em.version) aem ON (((aem.accession = se.accession) AND (aem.version = se.version))));
 
 
 ALTER VIEW public.sequence_entries_view OWNER TO postgres;
@@ -527,9 +511,8 @@ ALTER VIEW public.sequence_entries_view OWNER TO postgres;
 
 CREATE TABLE public.sequence_upload_aux_table (
     upload_id text NOT NULL,
-    submission_id text NOT NULL,
-    segment_name text NOT NULL,
-    compressed_sequence_data text NOT NULL
+    compressed_sequence_data text NOT NULL,
+    fasta_id text NOT NULL
 );
 
 
@@ -626,6 +609,22 @@ ALTER TABLE ONLY public.audit_log
 
 
 --
+-- Name: compression_dictionaries compression_dictionaries_hash_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.compression_dictionaries
+    ADD CONSTRAINT compression_dictionaries_hash_key UNIQUE (hash);
+
+
+--
+-- Name: compression_dictionaries compression_dictionaries_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.compression_dictionaries
+    ADD CONSTRAINT compression_dictionaries_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: current_processing_pipeline current_processing_pipeline_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -674,6 +673,14 @@ ALTER TABLE ONLY public.metadata_upload_aux_table
 
 
 --
+-- Name: metadata_upload_aux_table metadata_upload_aux_table_upload_id_accession_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.metadata_upload_aux_table
+    ADD CONSTRAINT metadata_upload_aux_table_upload_id_accession_key UNIQUE (upload_id, accession);
+
+
+--
 -- Name: seqset_records seqset_records_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -718,7 +725,7 @@ ALTER TABLE ONLY public.sequence_entries_preprocessed_data
 --
 
 ALTER TABLE ONLY public.sequence_upload_aux_table
-    ADD CONSTRAINT sequence_upload_aux_table_pkey PRIMARY KEY (upload_id, submission_id, segment_name);
+    ADD CONSTRAINT sequence_upload_aux_table_pkey PRIMARY KEY (upload_id, fasta_id);
 
 
 --
@@ -760,10 +767,31 @@ CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING b
 
 
 --
+-- Name: sequence_entries_organism_covering_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sequence_entries_organism_covering_idx ON public.sequence_entries USING btree (organism) INCLUDE (accession);
+
+
+--
 -- Name: sequence_entries_organism_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX sequence_entries_organism_idx ON public.sequence_entries USING btree (organism);
+
+
+--
+-- Name: sequence_entries_organism_not_revocation_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sequence_entries_organism_not_revocation_idx ON public.sequence_entries USING btree (organism) WHERE (NOT is_revocation);
+
+
+--
+-- Name: sequence_entries_preprocessed_data_accession_version_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sequence_entries_preprocessed_data_accession_version_idx ON public.sequence_entries_preprocessed_data USING btree (accession, version);
 
 
 --

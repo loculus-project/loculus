@@ -12,7 +12,7 @@ concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-backend-tests
   cancel-in-progress: true
 jobs:
-  Tests:
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -27,7 +27,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN_READ_PUBLIC }}
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
@@ -38,6 +38,19 @@ jobs:
       - name: Run tests
         run: ./gradlew test
         working-directory: ./backend
+
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: "21"
+          distribution: "adopt"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
       - name: Check Format And Lint
         run: ./gradlew ktlintCheck
         working-directory: ./backend

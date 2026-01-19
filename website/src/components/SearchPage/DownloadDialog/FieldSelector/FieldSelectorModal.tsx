@@ -1,34 +1,35 @@
-import { useState, type FC } from 'react';
+import { type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { ACCESSION_VERSION_FIELD } from '../../../../settings.ts';
-import { type Metadata } from '../../../../types/config.ts';
-import { FieldSelectorModal as CommonFieldSelectorModal, type FieldItem } from '../../../common/FieldSelectorModal.tsx';
+import { type Metadata, type Schema } from '../../../../types/config.ts';
+import type { MetadataVisibility } from '../../../../utils/search.ts';
+import {
+    type FieldItem,
+    type FieldItemDisplayState,
+    fieldItemDisplayStateType,
+    FieldSelectorModal as CommonFieldSelectorModal,
+} from '../../../common/FieldSelectorModal.tsx';
+import { isActiveForSelectedSuborganism } from '../../isActiveForSelectedSuborganism.tsx';
 
 type FieldSelectorProps = {
     isOpen: boolean;
     onClose: () => void;
-    metadata: Metadata[];
-    initialSelectedFields?: string[];
-    onSave: (selectedFields: string[]) => void;
+    schema: Schema;
+    downloadFieldVisibilities: Map<string, MetadataVisibility>;
+    onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
+    selectedSuborganism: string | null;
 };
 
 export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     isOpen,
     onClose,
-    metadata,
-    initialSelectedFields,
-    onSave,
+    schema,
+    downloadFieldVisibilities,
+    onSelectedFieldsChange,
+    selectedSuborganism,
 }) => {
-    const getInitialSelectedFields = () => {
-        const fields = new Set(initialSelectedFields ?? getDefaultSelectedFields(metadata));
-        fields.add(ACCESSION_VERSION_FIELD);
-        return fields;
-    };
-
-    const [selectedFields, setSelectedFields] = useState<Set<string>>(getInitialSelectedFields());
-
     const handleFieldSelection = (fieldName: string, selected: boolean) => {
-        setSelectedFields((prevSelectedFields) => {
+        onSelectedFieldsChange((prevSelectedFields) => {
             const newSelectedFields = new Set(prevSelectedFields);
 
             if (selected) {
@@ -37,17 +38,16 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
                 newSelectedFields.delete(fieldName);
             }
 
-            onSave(Array.from(newSelectedFields));
             return newSelectedFields;
         });
     };
 
-    const fieldItems: FieldItem[] = metadata.map((field) => ({
+    const fieldItems: FieldItem[] = schema.metadata.map((field) => ({
         name: field.name,
         displayName: field.displayName,
         header: field.header,
-        alwaysSelected: field.name === ACCESSION_VERSION_FIELD,
-        disabled: field.name === ACCESSION_VERSION_FIELD,
+        displayState: getDisplayState(field, selectedSuborganism, schema),
+        isChecked: downloadFieldVisibilities.get(field.name)?.isChecked ?? false,
     }));
 
     return (
@@ -56,23 +56,38 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
             isOpen={isOpen}
             onClose={onClose}
             fields={fieldItems}
-            selectedFields={selectedFields}
             setFieldSelected={handleFieldSelection}
         />
     );
 };
 
+function getDisplayState(
+    field: Metadata,
+    selectedSuborganism: string | null,
+    schema: Schema,
+): FieldItemDisplayState | undefined {
+    if (field.name === ACCESSION_VERSION_FIELD) {
+        return { type: fieldItemDisplayStateType.alwaysChecked };
+    }
+
+    if (!isActiveForSelectedSuborganism(selectedSuborganism, field)) {
+        return {
+            type: fieldItemDisplayStateType.disabled,
+            tooltip: `This is only available when the ${schema.suborganismIdentifierField} ${field.onlyForSuborganism} is selected.`,
+        };
+    }
+
+    return undefined;
+}
+
 /**
  * Gets the default list of field names that should be selected
  * based on the includeInDownloadsByDefault flag
  */
-export function getDefaultSelectedFields(metadata: Metadata[]): string[] {
-    const defaultFields = metadata.filter((field) => field.includeInDownloadsByDefault).map((field) => field.name);
-
-    // Ensure ACCESSION_VERSION_FIELD is always included
-    if (!defaultFields.includes(ACCESSION_VERSION_FIELD)) {
-        defaultFields.push(ACCESSION_VERSION_FIELD);
-    }
-
+export function getDefaultSelectedFields(metadata: Metadata[]): Set<string> {
+    const defaultFields = new Set(
+        metadata.filter((field) => field.includeInDownloadsByDefault).map((field) => field.name),
+    );
+    defaultFields.add(ACCESSION_VERSION_FIELD);
     return defaultFields;
 }

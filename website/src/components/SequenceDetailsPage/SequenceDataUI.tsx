@@ -19,7 +19,7 @@ import MdiEye from '~icons/mdi/eye';
 interface Props {
     tableData: TableDataEntry[];
     organism: string;
-    suborganism: Suborganism;
+    suborganism: Suborganism | null;
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     schema: Schema;
@@ -68,7 +68,7 @@ export const SequenceDataUI: FC<Props> = ({
                 dataUseTermsHistory={dataUseTermsHistory}
                 referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
             />
-            {schema.submissionDataTypes.consensusSequences && (
+            {schema.submissionDataTypes.consensusSequences && suborganism !== null && (
                 <div className='mt-10'>
                     <SequencesContainer
                         organism={organism}

@@ -8,9 +8,9 @@ import json
 import logging
 import math
 import re
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime
-import unicodedata
 
 import dateutil.parser as dateutil
 import pytz
@@ -19,6 +19,7 @@ from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     FunctionArgs,
+    InputData,
     InputMetadata,
     ProcessedMetadataValue,
     ProcessingAnnotation,
@@ -67,9 +68,14 @@ def valid_name() -> str:
         r"\u0180-\u024F"  # Latin Extended-B
     )
 
-    alpha = rf"\s*[{chars}]"  # leading letter
-    name_chars = rf"[{chars}\s.\-']*"  # letters + space/.-'
-    return alpha + name_chars + r"," + name_chars
+    # Ordinal must be a separate "word":
+    # - preceded only by start-of-string or whitespace
+    # - ends at a word boundary
+    ordinal = r"(?<!\S)\d+(?:st|nd|rd|th)\b"
+    alpha_or_ord = rf"\s*(?:[{chars}']|{ordinal})"  # First character: letter or ordinal
+    name_chars = rf"(?:[{chars}\s.\-']|{ordinal})*"
+
+    return alpha_or_ord + name_chars + r"," + name_chars
 
 
 def valid_authors(authors: str) -> bool:
@@ -102,7 +108,8 @@ def check_latin_characters(
 ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
     warnings: list[ProcessingAnnotation] = []
     errors: list[ProcessingAnnotation] = []
-    # Check if all characters in the authors string are Latin letters or spaces (transformable to ASCII)
+    # Check if all characters in the authors string are Latin letters or spaces
+    # (transformable to ASCII)
     for char in authors:
         # If character is already ASCII, skip
         if ord(char) < 128:
@@ -991,7 +998,7 @@ class ProcessingFunctions:
         if standardized_input_datum in options:
             output_datum = options[standardized_input_datum]
         # Allow ingested data to include fields not in options
-        elif args["submitter"] == "insdc_ingest_user":
+        elif args["is_insdc_ingest_group"]:
             return ProcessingResult(
                 datum=input_datum,
                 warnings=[
@@ -1018,6 +1025,38 @@ class ProcessingFunctions:
                 ],
             )
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
+
+
+def single_metadata_annotation(
+    source_name: str,
+    message: str,
+) -> list[ProcessingAnnotation]:
+    return [
+        ProcessingAnnotation.from_single(
+            source_name,
+            AnnotationSourceType.METADATA,
+            message=message,
+        )
+    ]
+
+
+def process_frameshifts(input: str | None) -> InputData:
+    """Converts frameshift string to InputData for processing"""
+    try:
+        return InputData(datum=format_frameshift(input))
+    except Exception as e:
+        msg = (
+            "Was unable to format frameshift - this is likely an internal error. "
+            "Please contact the administrator."
+        )
+        logger.error(msg + f" Error: {e}")
+        return InputData(
+            datum=None,
+            errors=single_metadata_annotation(
+                "frameshifts",
+                msg,
+            ),
+        )
 
 
 def format_frameshift(input: str | None) -> str | None:
@@ -1083,6 +1122,25 @@ def format_frameshift(input: str | None) -> str | None:
             frame_shift["cdsName"] + f":{codon_range}(nt:" + ";".join(nuc_range_list) + ")"
         )
     return ",".join(frame_shift_strings)
+
+
+def process_stop_codons(input: str | None) -> InputData:
+    """Converts stop codon string to InputData for processing"""
+    try:
+        return InputData(datum=format_stop_codon(input))
+    except Exception as e:
+        msg = (
+            "Was unable to format stop codon - this is likely an internal error. "
+            "Please contact the administrator."
+        )
+        logger.error(msg + f" Error: {e}")
+        return InputData(
+            datum=None,
+            errors=single_metadata_annotation(
+                "stopCodons",
+                msg,
+            ),
+        )
 
 
 def format_stop_codon(result: str | None) -> str | None:

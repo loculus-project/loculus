@@ -318,20 +318,32 @@ class GetReleasedDataEndpointTest(
         for ((key, value) in revocationEntry.metadata) {
             when (key) {
                 "isRevocation" -> assertThat(value, `is`(BooleanNode.TRUE))
+
                 "versionStatus" -> assertThat(value, `is`(TextNode("LATEST_VERSION")))
+
                 "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
+
                 "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
+
                 "submitter" -> assertThat(value, `is`(TextNode(DEFAULT_USER_NAME)))
+
                 "groupName" -> assertThat(value, `is`(TextNode(DEFAULT_GROUP_NAME)))
+
                 "groupId" -> assertThat(value.intValue(), `is`(greaterThan(0)))
+
                 "accession", "version", "accessionVersion", "submissionId" -> {}
+
                 "dataUseTerms" -> assertThat(value, `is`(TextNode("OPEN")))
+
                 "submittedDate" -> assertThat(value, `is`(TextNode(currentDate)))
+
                 "releasedDate" -> assertThat(value, `is`(TextNode(currentDate)))
+
                 "versionComment" -> assertThat(
                     value,
                     `is`(TextNode("This is a test revocation")),
                 )
+
                 "pipelineVersion" -> assertThat(value, `is`(IntNode(DEFAULT_PIPELINE_VERSION.toInt())))
 
                 else -> assertThat("value for $key", value, `is`(NullNode.instance))
@@ -567,6 +579,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
         assertThat(releasedData.metadata["dataUseTerms"]?.textValue(), `is`(dataUseTerms))
         when (restrictedUntilDate) {
             null -> assertThat(releasedData.metadata["dataUseTermsRestrictedUntil"], `is`(NullNode.instance))
+
             else -> assertThat(
                 releasedData.metadata["dataUseTermsRestrictedUntil"]?.textValue(),
                 `is`(restrictedUntilDate.toString()),

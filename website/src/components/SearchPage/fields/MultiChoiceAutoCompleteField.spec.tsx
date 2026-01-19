@@ -17,9 +17,7 @@ const mockUseAggregated = vi.fn();
 // @ts-expect-error mock implementation for test double
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 lapisClientHooks.mockReturnValue({
-    zodiosHooks: {
-        useAggregated: mockUseAggregated,
-    },
+    useAggregated: mockUseAggregated,
 });
 
 describe('MultiChoiceAutoCompleteField', () => {

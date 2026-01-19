@@ -1,6 +1,7 @@
 import type { FC, ReactNode } from 'react';
 import { Fragment } from 'react';
 
+import { Button } from './Button';
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 
@@ -9,6 +10,7 @@ type ActiveFiltersProps = {
     removeFilter?: (key: string) => void;
 };
 
+export const ACTIVE_FILTER_BADGE_TEST_ID = 'active-filter-badge';
 const BADGE_CLASSES =
     'border-primary-600 rounded-sm border border-l-primary-600 bg-gray-100 border-l-8 pl-3 py-1 text-sm flex flex-row';
 
@@ -94,13 +96,13 @@ type BadgeProps = {
 };
 
 const Badge: FC<BadgeProps> = ({ label, showX, onRemove, ariaLabel, children }) => (
-    <div className={BADGE_CLASSES}>
+    <div className={BADGE_CLASSES} data-testid={ACTIVE_FILTER_BADGE_TEST_ID}>
         <span className='text-primary-900 font-light pr-1'>{label}:</span>
         {children}
         {showX ? (
-            <button aria-label={ariaLabel} className='inline ml-2 mt-0.5 pr-2' onClick={onRemove}>
+            <Button aria-label={ariaLabel} className='inline ml-2 mt-0.5 pr-2' onClick={onRemove}>
                 <MaterialSymbolsClose className='w-3 h-4 text-primary-600' />
-            </button>
+            </Button>
         ) : (
             <div className='pr-4'></div>
         )}

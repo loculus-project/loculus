@@ -5,9 +5,9 @@ import type { ColumnMapping } from './FileUpload/ColumnMapping';
 import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
 import type { InputField, SubmissionDataTypes } from '../../types/config';
-import { getFirstLightweightSchema, type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
+import { EditableSequences } from '../Edit/EditableSequences';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
-import { EditableSequences, SequencesForm } from '../Edit/SequencesForm';
+import { SequencesForm } from '../Edit/SequencesForm';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -41,7 +41,6 @@ type FormOrUploadWrapperProps = {
     setFileFactory: Dispatch<SetStateAction<FileFactory | undefined>>;
     organism: string;
     action: UploadAction;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
 };
@@ -58,18 +57,13 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     setFileFactory,
     organism,
     action,
-    referenceGenomeLightweightSchema,
     metadataTemplateFields,
     submissionDataTypes,
 }) => {
     const enableConsensusSequences = submissionDataTypes.consensusSequences;
-    const isMultiSegmented =
-        getFirstLightweightSchema(referenceGenomeLightweightSchema).nucleotideSegmentNames.length > 1;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
     const [editableSequences, setEditableSequences] = useState(
-        EditableSequences.fromSequenceNames(
-            getFirstLightweightSchema(referenceGenomeLightweightSchema).nucleotideSegmentNames,
-        ),
+        EditableSequences.empty(submissionDataTypes.maxSequencesPerEntry),
     );
 
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);
@@ -87,11 +81,12 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                         if (!submissionId) {
                             return { type: 'error', errorMessage: 'Please specify an ID.' };
                         }
-                        const metadataFile = editableMetadata.getMetadataTsv();
+                        const fastaIds = enableConsensusSequences ? editableSequences.getFastaIds() : undefined;
+                        const metadataFile = editableMetadata.getMetadataTsv(undefined, undefined, fastaIds);
                         if (!metadataFile) {
                             return { type: 'error', errorMessage: 'Please specify metadata.' };
                         }
-                        const sequenceFile = editableSequences.getSequenceFasta(submissionId);
+                        const sequenceFile = editableSequences.getSequenceFasta();
                         if (!sequenceFile && enableConsensusSequences) {
                             return { type: 'error', errorMessage: 'Please enter sequence data.' };
                         }
@@ -139,10 +134,8 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 setSequenceFile={setSequenceFile}
                 columnMapping={columnMapping}
                 setColumnMapping={setColumnMapping}
-                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                 metadataTemplateFields={metadataTemplateFields}
-                enableConsensusSequences={enableConsensusSequences}
-                isMultiSegmented={isMultiSegmented}
+                submissionDataTypes={submissionDataTypes}
             />
         );
     } else {
