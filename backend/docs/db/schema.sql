@@ -261,8 +261,8 @@ CREATE TABLE public.groups_table (
     address_state character varying(255),
     address_country character varying(255) NOT NULL,
     contact_email character varying(255) NOT NULL,
-    created_at timestamp without time zone,
-    created_by text
+    created_at timestamp without time zone NOT NULL,
+    created_by text NOT NULL
 );
 
 
