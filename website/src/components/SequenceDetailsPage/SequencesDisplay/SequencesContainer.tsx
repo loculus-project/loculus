@@ -12,6 +12,7 @@ import {
     isGeneSequence,
     isUnalignedSequence,
     type SegmentInfo,
+    type SegmentReferenceSelections,
     type SequenceType,
     unalignedSequenceSegment,
 } from '../../../utils/sequenceTypeHelpers.ts';
@@ -21,7 +22,7 @@ import { withQueryProvider } from '../../common/withQueryProvider.tsx';
 
 type SequenceContainerProps = {
     organism: string;
-    segmentReferences: Record<string, string | null>;
+    segmentReferences: SegmentReferenceSelections;
     accessionVersion: string;
     clientConfig: ClientConfig;
     referenceGenomes: ReferenceGenomes;

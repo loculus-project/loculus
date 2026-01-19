@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import type { ReferenceGenomes } from '../types/referencesGenomes';
+import type { SegmentReferenceSelections } from './sequenceTypeHelpers';
 
 export function getReferenceIdentifier(identifier: string | undefined, segmentName: string, multipleSegments: boolean) {
     if (identifier === undefined) return undefined;
@@ -20,8 +21,8 @@ type UseSelectedReferencesArgs = {
 export function useSelectedReferences({ referenceGenomes, schema, state }: UseSelectedReferencesArgs) {
     const segments = useSegments(referenceGenomes);
 
-    const selectedReferences = useMemo<Record<string, string | null>>(() => {
-        const result: Record<string, string | null> = {};
+    const selectedReferences = useMemo<SegmentReferenceSelections>(() => {
+        const result: SegmentReferenceSelections = {};
 
         segments.forEach((segmentName) => {
             const referenceIdentifier = getReferenceIdentifier(
@@ -55,7 +56,7 @@ export function useSetSelectedReferences({
 }: UseSetSelectedReferencesArgs) {
     const segments = useSegments(referenceGenomes);
     return useCallback(
-        (updates: Record<string, string | null>) => {
+        (updates: SegmentReferenceSelections) => {
             Object.entries(updates).forEach(([segmentName, value]) => {
                 const identifier = getReferenceIdentifier(
                     schema.referenceIdentifierField,

@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { SequencesContainer } from './SequencesContainer.tsx';
 import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
 import type { ReferenceAccession, ReferenceGenomes } from '../../../types/referencesGenomes.ts';
+import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 
 vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
@@ -29,7 +30,7 @@ const getUnalignedSegmentLabel = (segment: string) => `${segment} (unaligned)`;
 // Test Selectors
 const BUTTON_ROLE = 'button';
 
-function renderSequenceViewer(referenceGenomes: ReferenceGenomes, segmentReferences: Record<string, string | null>) {
+function renderSequenceViewer(referenceGenomes: ReferenceGenomes, segmentReferences: SegmentReferenceSelections) {
     render(
         <QueryClientProvider client={queryClient}>
             <SequencesContainer
@@ -59,7 +60,7 @@ function renderSingleReferenceSequenceViewer({
             genesByReference: Record<string, string[]>;
         }
     > = {};
-    const segmentReferences: Record<string, string> = {};
+    const segmentReferences: SegmentReferenceSelections = {};
 
     for (const segmentName of nucleotideSegmentNames) {
         segments[segmentName] = {

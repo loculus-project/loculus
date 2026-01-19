@@ -12,7 +12,12 @@ import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
 import type { ReferenceGenomes } from '../../../types/referencesGenomes.ts';
 import { MetadataVisibility } from '../../../utils/search.ts';
-import { getSegmentAndGeneInfo, type GeneInfo, type SegmentInfo } from '../../../utils/sequenceTypeHelpers.ts';
+import {
+    getSegmentAndGeneInfo,
+    type GeneInfo,
+    type SegmentInfo,
+    type SegmentReferenceSelections,
+} from '../../../utils/sequenceTypeHelpers.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
 import { BaseDialog } from '../../common/BaseDialog.tsx';
 
@@ -24,7 +29,7 @@ type DownloadDialogProps = {
     dataUseTermsEnabled: boolean;
     schema: Schema;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
-    selectedReferenceNames: Record<string, string | null>;
+    selectedReferenceNames: SegmentReferenceSelections;
     referenceIdentifierField: string | undefined;
 };
 
