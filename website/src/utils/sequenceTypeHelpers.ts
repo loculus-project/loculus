@@ -164,13 +164,15 @@ export function lapisNameToDisplayName(referenceGenomes: ReferenceGenomes): Map<
     return map;
 }
 
+export function segmentsWithMultipleReferences(referenceGenomes: ReferenceGenomes) {
+    return getSegmentNames(referenceGenomes).filter(
+        (segment) => Object.keys(referenceGenomes.segmentReferenceGenomes[segment]).length > 1,
+    );
+}
+
 export function stillRequiresReferenceNameSelection(
     selectedReferenceNames: SegmentReferenceSelections,
     referenceGenomes: ReferenceGenomes,
 ) {
-    // Only keep segments that actually need a selector
-    const segmentsWithMultipleReferences = getSegmentNames(referenceGenomes).filter(
-        (segment) => Object.keys(referenceGenomes.segmentReferenceGenomes[segment]).length > 1,
-    );
-    return segmentsWithMultipleReferences.some((segment) => selectedReferenceNames[segment] === null);
+    return segmentsWithMultipleReferences(referenceGenomes).some((segment) => selectedReferenceNames[segment] === null);
 }
