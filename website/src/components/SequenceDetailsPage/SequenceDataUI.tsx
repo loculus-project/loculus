@@ -15,11 +15,12 @@ import { type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
 import MdiEye from '~icons/mdi/eye';
+import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 
 interface Props {
     tableData: TableDataEntry[];
     organism: string;
-    segmentReferences: Record<string, string | null>;
+    segmentReferences: SegmentReferenceSelections;
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     schema: Schema;

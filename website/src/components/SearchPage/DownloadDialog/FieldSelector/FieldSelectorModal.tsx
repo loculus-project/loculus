@@ -10,6 +10,7 @@ import {
     FieldSelectorModal as CommonFieldSelectorModal,
 } from '../../../common/FieldSelectorModal.tsx';
 import { isActiveForSelectedReferenceName } from '../../isActiveForSelectedReferenceName.tsx';
+import type { SegmentReferenceSelections } from '../../../../utils/sequenceTypeHelpers.ts';
 
 type FieldSelectorProps = {
     isOpen: boolean;
@@ -17,7 +18,7 @@ type FieldSelectorProps = {
     schema: Schema;
     downloadFieldVisibilities: Map<string, MetadataVisibility>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
-    selectedReferenceNames: Record<string, string | null>;
+    selectedReferenceNames: SegmentReferenceSelections;
 };
 
 export const FieldSelectorModal: FC<FieldSelectorProps> = ({
@@ -63,7 +64,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
 
 function getDisplayState(
     field: Metadata,
-    selectedReferenceNames: Record<string, string | null>,
+    selectedReferenceNames: SegmentReferenceSelections,
     schema: Schema,
 ): FieldItemDisplayState | undefined {
     if (field.name === ACCESSION_VERSION_FIELD) {

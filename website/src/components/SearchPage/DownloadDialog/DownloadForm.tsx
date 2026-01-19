@@ -9,7 +9,11 @@ import { routes } from '../../../routes/routes.ts';
 import type { Schema } from '../../../types/config.ts';
 import type { ReferenceGenomes } from '../../../types/referencesGenomes.ts';
 import type { MetadataVisibility } from '../../../utils/search.ts';
-import { getSegmentAndGeneInfo, stillRequiresReferenceNameSelection } from '../../../utils/sequenceTypeHelpers.ts';
+import {
+    getSegmentAndGeneInfo,
+    stillRequiresReferenceNameSelection,
+    type SegmentReferenceSelections,
+} from '../../../utils/sequenceTypeHelpers.ts';
 
 export type DownloadFormState = {
     includeRestricted: boolean;
@@ -31,7 +35,7 @@ type DownloadFormProps = {
     downloadFieldVisibilities: Map<string, MetadataVisibility>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
-    selectedReferenceNames: Record<string, string | null>;
+    selectedReferenceNames: SegmentReferenceSelections;
     referenceIdentifierField: string | undefined;
 };
 
