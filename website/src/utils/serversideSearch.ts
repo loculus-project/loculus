@@ -1,5 +1,5 @@
 import { validateSingleValue } from './extractFieldValue';
-import { getIdentifier } from './referenceSelection.ts';
+import { getReferenceIdentifier } from './referenceSelection.ts';
 import {
     getColumnVisibilitiesFromQuery,
     MetadataFilterSchema,
@@ -92,7 +92,11 @@ export function useSelectedReferences({ referenceGenomes, schema, state }: UseSe
     const result: Record<string, string | null> = {};
 
     segments.forEach((segmentName) => {
-        const referenceIdentifier = getIdentifier(schema.referenceIdentifierField, segmentName, segments.length > 1);
+        const referenceIdentifier = getReferenceIdentifier(
+            schema.referenceIdentifierField,
+            segmentName,
+            segments.length > 1,
+        );
 
         result[segmentName] =
             referenceIdentifier === undefined

@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import type { ReferenceGenomes } from '../types/referencesGenomes';
 
-export function getIdentifier(identifier: string | undefined, segmentName: string, multipleSegments: boolean) {
+export function getReferenceIdentifier(identifier: string | undefined, segmentName: string, multipleSegments: boolean) {
     if (identifier === undefined) return undefined;
     return multipleSegments ? `${identifier}_${segmentName}` : identifier;
 }
@@ -24,7 +24,7 @@ export function useSelectedReferences({ referenceGenomes, schema, state }: UseSe
         const result: Record<string, string | null> = {};
 
         segments.forEach((segmentName) => {
-            const referenceIdentifier = getIdentifier(
+            const referenceIdentifier = getReferenceIdentifier(
                 schema.referenceIdentifierField,
                 segmentName,
                 segments.length > 1,
@@ -57,7 +57,11 @@ export function useSetSelectedReferences({
     return useCallback(
         (updates: Record<string, string | null>) => {
             Object.entries(updates).forEach(([segmentName, value]) => {
-                const identifier = getIdentifier(schema.referenceIdentifierField, segmentName, segments.length > 1);
+                const identifier = getReferenceIdentifier(
+                    schema.referenceIdentifierField,
+                    segmentName,
+                    segments.length > 1,
+                );
                 if (identifier === undefined) return;
 
                 setSomeFieldValues([identifier, value]);

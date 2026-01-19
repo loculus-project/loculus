@@ -14,7 +14,7 @@ import {
 } from '../../types/lapis.ts';
 import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
-import { getIdentifier } from '../../utils/referenceSelection.ts';
+import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import { lapisNameToDisplayName } from '../../utils/sequenceTypeHelpers.ts';
 
 export type GetTableDataResult = {
@@ -87,7 +87,7 @@ function getSegmentReferences(
     const segmentReferences: Record<string, string | null> = {};
     for (const [segmentName, segmentData] of Object.entries(referenceGenomes.segmentReferenceGenomes)) {
         const isSingleReference = Object.keys(segmentData).length === 1;
-        const referenceField = getIdentifier(
+        const referenceField = getReferenceIdentifier(
             schema.referenceIdentifierField,
             segmentName,
             referenceGenomes.isMultiSegmented,

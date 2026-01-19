@@ -21,7 +21,7 @@ import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldVa
 import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
-import { getIdentifier } from '../../utils/referenceSelection.ts';
+import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
 import { getSegmentAndGeneInfo, type SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
@@ -69,7 +69,8 @@ export const SearchForm = ({
     const excluded = new Set<string>([
         ACCESSION_FIELD,
         ...segments.map(
-            (segmentName) => getIdentifier(referenceIdentifierField, segmentName, referenceGenomes.isMultiSegmented)!,
+            (segmentName) =>
+                getReferenceIdentifier(referenceIdentifierField, segmentName, referenceGenomes.isMultiSegmented)!,
         ),
     ]);
     const visibleFields = filterSchema.filters

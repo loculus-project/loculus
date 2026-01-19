@@ -25,8 +25,7 @@ const unreleasedSequencesRegex = /You do not currently have any unreleased seque
 const testGroup = testGroups[0];
 
 function renderReviewPage() {
-    const schema: ReferenceGenomes = {
-    };
+    const schema: ReferenceGenomes = {};
     return render(
         <ReviewPage
             group={testGroup}

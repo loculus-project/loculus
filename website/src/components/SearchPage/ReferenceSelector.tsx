@@ -1,7 +1,7 @@
 import { type FC, useId, useMemo } from 'react';
 
 import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
-import { getIdentifier } from '../../utils/referenceSelection.ts';
+import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
 import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { Button } from '../common/Button.tsx';
@@ -45,7 +45,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
         const segments = Object.keys(referenceGenomes.segmentReferenceGenomes);
 
         return segments.reduce<Record<string, string | undefined>>((acc, segmentName) => {
-            const identifier = getIdentifier(
+            const identifier = getReferenceIdentifier(
                 referenceIdentifierField,
                 segmentName,
                 referenceGenomes.isMultiSegmented,
