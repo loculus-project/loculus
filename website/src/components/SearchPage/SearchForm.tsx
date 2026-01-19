@@ -14,6 +14,7 @@ import { LineageField } from './fields/LineageField.tsx';
 import { MultiChoiceAutoCompleteField } from './fields/MultiChoiceAutoCompleteField';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
+import { SegmentPresenceField } from './fields/SegmentPresenceField.tsx';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
@@ -184,6 +185,14 @@ export const SearchForm = ({
                                 setTextValue={(value) => setSomeFieldValues(['accession', value])}
                             />
                         </div>
+
+                        {suborganismSegmentAndGeneInfo !== null && suborganismSegmentAndGeneInfo.isMultiSegmented && (
+                            <SegmentPresenceField
+                                suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
+                                fieldValues={fieldValues}
+                                setSomeFieldValues={setSomeFieldValues}
+                            />
+                        )}
 
                         {showMutationSearch && suborganismSegmentAndGeneInfo !== null && (
                             <MutationField
