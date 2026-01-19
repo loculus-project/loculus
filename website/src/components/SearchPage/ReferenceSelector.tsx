@@ -48,7 +48,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
             const identifier = getIdentifier(
                 referenceIdentifierField,
                 segmentName,
-                segments.length > 1, // or `multipleSegments` if you already have it
+                referenceGenomes.isMultiSegmented,
             );
 
             acc[segmentName] = identifier ? filterSchema.filterNameToLabelMap()[identifier] : undefined;

@@ -64,12 +64,13 @@ export const SearchForm = ({
     setSelectedReferences,
     selectedReferences,
 }: SearchFormProps) => {
-    const segments = Object.keys(referenceGenomes);
-    const isMulti = segments.length > 1;
+    const segments = Object.keys(referenceGenomes.segmentReferenceGenomes);
 
     const excluded = new Set<string>([
         ACCESSION_FIELD,
-        ...segments.map((segmentName) => getIdentifier(referenceIdentifierField, segmentName, isMulti)),
+        ...segments.map(
+            (segmentName) => getIdentifier(referenceIdentifierField, segmentName, referenceGenomes.isMultiSegmented)!,
+        ),
     ]);
     const visibleFields = filterSchema.filters
         .filter((field) => searchVisibilities.get(field.name)?.isVisible(selectedReferences) ?? false)
