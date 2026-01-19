@@ -64,7 +64,7 @@ class GroupManagementDatabaseService(
             this.groupId = groupId
         }
 
-        auditLogger.log(authenticatedUser.username, "Created group: ${group.groupName}")
+        auditLogger.log(authenticatedUser.username, "Created group: $groupId")
 
         return groupEntity.toGroup()
     }
@@ -78,7 +78,7 @@ class GroupManagementDatabaseService(
 
         groupEntity.updateWith(group)
 
-        auditLogger.log(authenticatedUser.username, "Updated group: ${group.groupName}")
+        auditLogger.log(authenticatedUser.username, "Updated group: $groupId")
 
         return groupEntity.toGroup()
     }
