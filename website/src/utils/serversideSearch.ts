@@ -8,7 +8,7 @@ import {
     PAGE_KEY,
     type SearchResponse,
 } from './search';
-import { getSegmentAndGeneInfo } from './sequenceTypeHelpers.ts';
+import { getSegmentAndGeneInfo, type SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
 import { FieldFilterSet } from '../components/SearchPage/DownloadDialog/SequenceFilters';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
@@ -89,7 +89,7 @@ type UseSelectedReferencesArgs = {
 
 export function useSelectedReferences({ referenceGenomes, schema, state }: UseSelectedReferencesArgs) {
     const segments = Object.keys(referenceGenomes.segmentReferenceGenomes);
-    const result: Record<string, string | null> = {};
+    const result: SegmentReferenceSelections = {};
 
     segments.forEach((segmentName) => {
         const referenceIdentifier = getReferenceIdentifier(

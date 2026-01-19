@@ -18,7 +18,7 @@ export type TableColumnSelectorModalProps = {
     schema: Schema;
     columnVisibilities: Map<string, MetadataVisibility>;
     setAColumnVisibility: (fieldName: string, selected: boolean) => void;
-    selectedReferenceNames: Record<string, string | null>;
+    selectedReferenceNames: SegmentReferenceSelections;
 };
 
 export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({

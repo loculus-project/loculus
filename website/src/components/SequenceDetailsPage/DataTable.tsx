@@ -8,12 +8,13 @@ import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { type ReferenceAccession, type ReferenceGenomes } from '../../types/referencesGenomes';
 import AkarInfo from '~icons/ri/information-line';
+import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers';
 
 interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     referenceGenomes: ReferenceGenomes;
-    segmentReferences: Record<string, string | null>;
+    segmentReferences: SegmentReferenceSelections;
 }
 
 const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) => {
