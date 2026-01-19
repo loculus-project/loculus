@@ -213,7 +213,7 @@ export const InnerSearchFullUI = ({
 
     const showMutationSearch =
         schema.submissionDataTypes.consensusSequences &&
-        !stillRequiresReferenceNameSelection(selectedReferences, referenceGenomes.segmentReferenceGenomes);
+        !stillRequiresReferenceNameSelection(selectedReferences, referenceGenomes);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
