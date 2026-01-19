@@ -309,6 +309,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         statusesFilter: List<Status>? = null,
         fields: List<String>? = null,
         compression: String? = null,
+        accessionVersionsFilter: List<String>? = null,
     ): ResultActions = mockMvc.perform(
         get(addOrganismToPath("/get-original-metadata", organism = organism))
             .withAuth(jwt)
@@ -320,7 +321,27 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             }
             .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
             .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
-            .param("fields", fields?.joinToString(",")),
+            .param("fields", fields?.joinToString(","))
+            .param("accessionVersionsFilter", accessionVersionsFilter?.joinToString(",")),
+    )
+
+    fun getOriginalData(
+        organism: String = DEFAULT_ORGANISM,
+        jwt: String? = jwtForDefaultUser,
+        groupId: Int,
+        accessionsFilter: List<String>? = null,
+    ): ResultActions = mockMvc.perform(
+        post(addOrganismToPath("/get-original-data", organism = organism))
+            .withAuth(jwt)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(
+                objectMapper.writeValueAsString(
+                    mapOf(
+                        "groupId" to groupId,
+                        "accessionsFilter" to accessionsFilter,
+                    ),
+                ),
+            ),
     )
 
     private fun serialize(listOfSequencesToApprove: List<AccessionVersionInterface>? = null): String =

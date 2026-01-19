@@ -506,6 +506,7 @@ class SubmissionConvenienceClient(
         statusesFilter: List<Status>? = null,
         fields: List<String>? = null,
         compression: String? = null,
+        accessionVersionsFilter: List<String>? = null,
     ) = client
         .getOriginalMetadata(
             organism = organism,
@@ -514,6 +515,7 @@ class SubmissionConvenienceClient(
             statusesFilter = statusesFilter,
             fields = fields,
             compression = compression,
+            accessionVersionsFilter = accessionVersionsFilter,
         )
         .expectNdjsonAndGetContent<AccessionVersionOriginalMetadata>()
 

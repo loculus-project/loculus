@@ -24,8 +24,10 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
+import org.loculus.backend.api.GetOriginalDataRequest
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
+import org.loculus.backend.api.OriginalDataResponse
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryVersionToEdit
@@ -49,7 +51,10 @@ import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidato
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
+import org.loculus.backend.utils.FastaEntry
+import org.loculus.backend.utils.FastaWriter
 import org.loculus.backend.utils.IteratorStreamer
+import org.loculus.backend.utils.TsvWriter
 import org.slf4j.MDC
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -73,6 +78,8 @@ import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 private val log = KotlinLogging.logger { }
+
+const val MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES = 500
 
 @RestController
 @RequestMapping("/{organism}")
@@ -436,6 +443,7 @@ open class SubmissionController(
             organism,
             groupIdsFilter?.takeIf { it.isNotEmpty() },
             statusesFilter?.takeIf { it.isNotEmpty() },
+            null,
         )
         headers.add(X_TOTAL_RECORDS, totalRecords.toString())
         // TODO(https://github.com/loculus-project/loculus/issues/2778)
@@ -451,10 +459,143 @@ open class SubmissionController(
                 groupIdsFilter?.takeIf { it.isNotEmpty() },
                 statusesFilter?.takeIf { it.isNotEmpty() },
                 fields?.takeIf { it.isNotEmpty() },
+                null,
             )
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
+    }
+
+    @Operation(
+        description = "Download original data (metadata and sequences) as a zip file, suitable for revisions. " +
+            "It is limited to $MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES entries.",
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @PostMapping(
+        "/get-original-data",
+        consumes = [MediaType.APPLICATION_JSON_VALUE],
+        produces = ["application/zip"],
+    )
+    fun getOriginalData(
+        @PathVariable @Valid organism: Organism,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestBody body: GetOriginalDataRequest,
+    ): ResponseEntity<StreamingResponseBody> {
+        val entryCount = transaction {
+            submissionDatabaseService.countOriginalData(
+                authenticatedUser,
+                organism,
+                body.groupId,
+                body.accessionsFilter,
+            )
+        }
+
+        if (entryCount > MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES) {
+            throw UnprocessableEntityException(
+                "Download is limited to $MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES entries. " +
+                    "Requested download would include $entryCount entries. " +
+                    "Please filter fewer sequences.",
+            )
+        }
+
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.parseMediaType("application/zip")
+        headers.set(
+            HttpHeaders.CONTENT_DISPOSITION,
+            "attachment; filename=\"${organism.name}_original_data.zip\"",
+        )
+
+        val instanceConfig = backendConfig.getInstanceConfig(organism)
+        val hasConsensusSequences = instanceConfig.schema.submissionDataTypes.consensusSequences
+        val isMultiSegmented = instanceConfig.referenceGenome.nucleotideSequences.size > 1
+
+        val streamBody = StreamingResponseBody { responseBodyStream ->
+            val startTime = System.currentTimeMillis()
+            MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
+            MDC.put(ORGANISM_MDC_KEY, organism.name)
+
+            try {
+                java.util.zip.ZipOutputStream(responseBodyStream).use { zipOut ->
+                    transaction {
+                        val data = submissionDatabaseService.streamOriginalData(
+                            authenticatedUser,
+                            organism,
+                            body.groupId,
+                            body.accessionsFilter,
+                        ).toList()
+
+                        zipOut.putNextEntry(java.util.zip.ZipEntry("metadata.tsv"))
+                        writeMetadataTsv(data, zipOut, isMultiSegmented)
+                        zipOut.closeEntry()
+
+                        if (hasConsensusSequences) {
+                            zipOut.putNextEntry(java.util.zip.ZipEntry("sequences.fasta"))
+                            writeSequencesFasta(data, zipOut, isMultiSegmented)
+                            zipOut.closeEntry()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                val duration = System.currentTimeMillis() - startTime
+                log.error(e) { "[get-original-data] Error after ${duration}ms: $e" }
+                throw e
+            }
+
+            val duration = System.currentTimeMillis() - startTime
+            log.info { "[get-original-data] Completed in ${duration}ms" }
+
+            MDC.remove(REQUEST_ID_MDC_KEY)
+            MDC.remove(ORGANISM_MDC_KEY)
+        }
+
+        return ResponseEntity(streamBody, headers, HttpStatus.OK)
+    }
+
+    private fun writeMetadataTsv(
+        data: List<OriginalDataResponse>,
+        outputStream: java.io.OutputStream,
+        isMultiSegmented: Boolean,
+    ) {
+        val metadataKeys = data.flatMap { it.originalData.metadata.keys }.toSet().sorted()
+        val headers = if (isMultiSegmented) {
+            listOf("id", "accession", "fastaIds") + metadataKeys
+        } else {
+            listOf("id", "accession") + metadataKeys
+        }
+
+        TsvWriter(outputStream, headers).use { writer ->
+            for (entry in data) {
+                val id = "${entry.accession}.${entry.version}"
+                val metadataValues = metadataKeys.map { entry.originalData.metadata[it] ?: "" }
+                val row = if (isMultiSegmented) {
+                    val fastaIds = entry.originalData.unalignedNucleotideSequences.keys
+                        .map { originalFastaId -> "$id|$originalFastaId" }
+                        .joinToString(" ")
+                    listOf(id, entry.accession, fastaIds) + metadataValues
+                } else {
+                    listOf(id, entry.accession) + metadataValues
+                }
+                writer.writeRow(row)
+            }
+        }
+    }
+
+    private fun writeSequencesFasta(
+        data: List<OriginalDataResponse>,
+        outputStream: java.io.OutputStream,
+        isMultiSegmented: Boolean,
+    ) {
+        FastaWriter(outputStream).use { writer ->
+            for (entry in data) {
+                val id = "${entry.accession}.${entry.version}"
+                for ((originalFastaId, sequence) in entry.originalData.unalignedNucleotideSequences) {
+                    if (sequence != null) {
+                        val header = if (isMultiSegmented) "$id|$originalFastaId" else id
+                        writer.write(FastaEntry(header, sequence))
+                    }
+                }
+            }
+        }
     }
 
     @Operation(description = APPROVE_PROCESSED_DATA_DESCRIPTION)
