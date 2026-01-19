@@ -43,7 +43,6 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
     }
 
     const labelsBySegment = useMemo(() => {
-
         return segments.reduce<Record<string, string | undefined>>((acc, segmentName) => {
             const identifier = getReferenceIdentifier(
                 referenceIdentifierField,
