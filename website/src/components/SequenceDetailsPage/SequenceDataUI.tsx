@@ -60,9 +60,6 @@ export const SequenceDataUI: FC<Props> = ({
 
     const reportUrl = getGitHubReportUrl(sequenceFlaggingConfig, organism, accessionVersion);
 
-    //TODO: this does not work for cases where not all segments exist
-    const referencesUnassigned = Object.values(segmentReferences).some((ref) => ref === null);
-
     return (
         <>
             {isRestricted && <RestrictedUseWarning />}
@@ -72,7 +69,7 @@ export const SequenceDataUI: FC<Props> = ({
                 dataUseTermsHistory={dataUseTermsHistory}
                 referenceGenomes={referenceGenomes}
             />
-            {schema.submissionDataTypes.consensusSequences && !referencesUnassigned && (
+            {schema.submissionDataTypes.consensusSequences && (
                 <div className='mt-10'>
                     <SequencesContainer
                         organism={organism}
