@@ -26,7 +26,6 @@ const testGroup = testGroups[0];
 
 function renderReviewPage() {
     const schema: ReferenceGenomes = {
-        segments: {},
     };
     return render(
         <ReviewPage
@@ -36,7 +35,7 @@ function renderReviewPage() {
             accessToken={testAccessToken}
             clientConfig={testConfig.public}
             filesEnabled={false}
-            referenceGenomesMap={schema}
+            referenceGenomes={schema}
         />,
     );
 }
