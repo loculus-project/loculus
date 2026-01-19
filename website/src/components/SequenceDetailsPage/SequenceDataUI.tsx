@@ -59,6 +59,7 @@ export const SequenceDataUI: FC<Props> = ({
 
     const reportUrl = getGitHubReportUrl(sequenceFlaggingConfig, organism, accessionVersion);
 
+    //TODO: this does not work for cases where not all segments exist
     const referencesUnassigned = Object.values(segmentReferences).some((ref) => ref === null);
 
     return (
