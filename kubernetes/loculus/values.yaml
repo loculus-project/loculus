@@ -2176,7 +2176,7 @@ secrets:
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 runDevelopmentS3: true
-developmentDatabasePersistence: true
+developmentDatabasePersistence: false
 enforceHTTPS: true
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
