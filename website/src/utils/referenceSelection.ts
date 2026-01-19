@@ -8,6 +8,33 @@ export function getReferenceIdentifier(identifier: string | undefined, segmentNa
     return multipleSegments ? `${identifier}_${segmentName}` : identifier;
 }
 
+type GetSegmentSelectionsOpts = {
+    segments: string[];
+    referenceIdentifierField?: string;
+    isMultiSegmented: boolean;
+    state: Record<string, unknown>;
+};
+
+export function getSegmentReferenceSelections({
+    segments,
+    referenceIdentifierField,
+    isMultiSegmented,
+    state,
+}: GetSegmentSelectionsOpts): SegmentReferenceSelections {
+    const result: SegmentReferenceSelections = {};
+
+    for (const segmentName of segments) {
+        const referenceIdentifier = getReferenceIdentifier(referenceIdentifierField, segmentName, isMultiSegmented);
+
+        result[segmentName] =
+            referenceIdentifier === undefined
+                ? null
+                : ((state[referenceIdentifier] as string | null | undefined) ?? null);
+    }
+
+    return result;
+}
+
 type UseSelectedReferencesArgs = {
     referenceGenomes: ReferenceGenomes;
     schema: { referenceIdentifierField?: string };
@@ -17,26 +44,31 @@ type UseSelectedReferencesArgs = {
 export function useSelectedReferences({ referenceGenomes, schema, state }: UseSelectedReferencesArgs) {
     const segments = useMemo(() => getSegmentNames(referenceGenomes), [referenceGenomes]);
 
-    const selectedReferences = useMemo<SegmentReferenceSelections>(() => {
-        const result: SegmentReferenceSelections = {};
+    return useMemo(
+        () =>
+            getSegmentReferenceSelections({
+                segments,
+                referenceIdentifierField: schema.referenceIdentifierField,
+                isMultiSegmented: segments.length > 1,
+                state,
+            }),
+        [segments, schema.referenceIdentifierField, state],
+    );
+}
 
-        segments.forEach((segmentName) => {
-            const referenceIdentifier = getReferenceIdentifier(
-                schema.referenceIdentifierField,
-                segmentName,
-                segments.length > 1,
-            );
+export function getSelectedReferences({
+    referenceGenomes,
+    schema,
+    state,
+}: UseSelectedReferencesArgs): SegmentReferenceSelections {
+    const segments = Object.keys(referenceGenomes.segmentReferenceGenomes);
 
-            result[segmentName] =
-                referenceIdentifier === undefined
-                    ? null
-                    : ((state[referenceIdentifier] as string | null | undefined) ?? null);
-        });
-
-        return result;
-    }, [segments, state, schema.referenceIdentifierField]);
-
-    return { segments, selectedReferences };
+    return getSegmentReferenceSelections({
+        segments,
+        referenceIdentifierField: schema.referenceIdentifierField,
+        isMultiSegmented: segments.length > 1,
+        state,
+    });
 }
 
 type UseSetSelectedReferencesArgs = {

@@ -276,6 +276,7 @@ export const Table: FC<TableProps> = ({
                                             type='checkbox'
                                             className='text-primary-900 hover:text-primary-800 hover:no-underline pointer-events-none'
                                             checked={selectedSeqs.has(row[primaryKey] as string)}
+                                            readOnly
                                             onChange={() => {
                                                 const seqId = row[primaryKey] as string;
                                                 setRowSelected(seqId, !selectedSeqs.has(seqId));

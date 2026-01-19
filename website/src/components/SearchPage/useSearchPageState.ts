@@ -130,7 +130,7 @@ export function useSearchPageState({
         (value) => !value,
     );
 
-    const { selectedReferences } = useSelectedReferences({
+    const selectedReferences = useSelectedReferences({
         referenceGenomes,
         schema,
         state,
