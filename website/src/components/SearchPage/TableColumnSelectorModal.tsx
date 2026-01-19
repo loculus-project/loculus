@@ -4,6 +4,7 @@ import { isActiveForSelectedReferenceName } from './isActiveForSelectedReference
 import { ACCESSION_VERSION_FIELD } from '../../settings.ts';
 import type { Metadata, Schema } from '../../types/config.ts';
 import { type MetadataVisibility } from '../../utils/search.ts';
+import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import {
     type FieldItem,
     type FieldItemDisplayState,
@@ -55,7 +56,7 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
 
 export function getDisplayState(
     field: Metadata,
-    selectedReferenceNames: Record<string, string | null>,
+    selectedReferenceNames: SegmentReferenceSelections,
     referenceIdentifierField: string | undefined,
 ): FieldItemDisplayState | undefined {
     if (field.name === ACCESSION_VERSION_FIELD) {

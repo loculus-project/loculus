@@ -12,7 +12,7 @@ describe('SequencesDialog', () => {
                 isOpen={true}
                 onClose={() => undefined}
                 dataToView={dataToView}
-                segmentAndGeneDisplayNameMap={new Map()}
+                referenceGenomes={new Map()}
             />,
         );
 

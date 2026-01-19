@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataFilter } from '../../types/config.ts';
-import { type ReferenceGenomesMap, type ReferenceAccession } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomes, type ReferenceAccession } from '../../types/referencesGenomes.ts';
 import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
@@ -39,7 +39,7 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenomesMap: ReferenceGenomesMap = {
+const defaultReferenceGenomesMap: ReferenceGenomes = {
     segments: {
         main: {
             references: ['ref1'],
@@ -49,7 +49,7 @@ const defaultReferenceGenomesMap: ReferenceGenomesMap = {
     },
 };
 
-const multiPathogenReferenceGenomesMap: ReferenceGenomesMap = {
+const multiPathogenReferenceGenomesMap: ReferenceGenomes = {
     segments: {
         main: {
             references: ['suborganism1', 'suborganism2'],
@@ -84,7 +84,7 @@ const renderSearchForm = ({
 }: {
     filterSchema?: MetadataFilterSchema;
     fieldValues?: Record<string, string>;
-    referenceGenomesMap?: ReferenceGenomesMap;
+    referenceGenomesMap?: ReferenceGenomes;
     lapisSearchParameters?: Record<string, string>;
     referenceIdentifierField?: string;
     selectedSuborganism?: string | null;

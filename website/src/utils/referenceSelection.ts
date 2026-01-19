@@ -1,28 +1,30 @@
 import { useCallback, useMemo } from 'react';
 
-export function getIdentifier(identifier: string | undefined, segmentName: string, multipleSegments: boolean) {
+import type { ReferenceGenomes } from '../types/referencesGenomes';
+
+export function getReferenceIdentifier(identifier: string | undefined, segmentName: string, multipleSegments: boolean) {
     if (identifier === undefined) return undefined;
     return multipleSegments ? `${identifier}_${segmentName}` : identifier;
 }
 
-export function useSegments(referenceGenomesMap: Record<string, unknown>) {
-    return useMemo(() => Object.keys(referenceGenomesMap), [referenceGenomesMap]);
+export function useSegments(referenceGenomes: ReferenceGenomes) {
+    return useMemo(() => Object.keys(referenceGenomes.segmentReferenceGenomes), [referenceGenomes]);
 }
 
 type UseSelectedReferencesArgs = {
-    referenceGenomesMap: Record<string, unknown>;
+    referenceGenomes: ReferenceGenomes;
     schema: { referenceIdentifierField?: string };
     state: Record<string, unknown>;
 };
 
-export function useSelectedReferences({ referenceGenomesMap, schema, state }: UseSelectedReferencesArgs) {
-    const segments = useSegments(referenceGenomesMap);
+export function useSelectedReferences({ referenceGenomes, schema, state }: UseSelectedReferencesArgs) {
+    const segments = useSegments(referenceGenomes);
 
     const selectedReferences = useMemo<Record<string, string | null>>(() => {
         const result: Record<string, string | null> = {};
 
         segments.forEach((segmentName) => {
-            const referenceIdentifier = getIdentifier(
+            const referenceIdentifier = getReferenceIdentifier(
                 schema.referenceIdentifierField,
                 segmentName,
                 segments.length > 1,
@@ -41,22 +43,25 @@ export function useSelectedReferences({ referenceGenomesMap, schema, state }: Us
 }
 
 type UseSetSelectedReferencesArgs = {
-    referenceGenomesMap: Record<string, unknown>;
+    referenceGenomes: ReferenceGenomes;
     schema: { referenceIdentifierField?: string };
     setSomeFieldValues: (entry: [string, string | null]) => void;
 };
 
 export function useSetSelectedReferences({
-    referenceGenomesMap,
+    referenceGenomes,
     schema,
     setSomeFieldValues,
 }: UseSetSelectedReferencesArgs) {
-    const segments = useSegments(referenceGenomesMap);
-
+    const segments = useSegments(referenceGenomes);
     return useCallback(
         (updates: Record<string, string | null>) => {
             Object.entries(updates).forEach(([segmentName, value]) => {
-                const identifier = getIdentifier(schema.referenceIdentifierField, segmentName, segments.length > 1);
+                const identifier = getReferenceIdentifier(
+                    schema.referenceIdentifierField,
+                    segmentName,
+                    segments.length > 1,
+                );
                 if (identifier === undefined) return;
 
                 setSomeFieldValues([identifier, value]);
