@@ -1,16 +1,15 @@
 import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from 'react';
 
 import { SequencesViewer } from './SequenceViewer.tsx';
-import { type ReferenceGenomesMap } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomes } from '../../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
-import { getSegmentAndGeneInfo } from '../../../utils/getSegmentAndGeneInfo.tsx';
 import {
     alignedSequenceSegment,
     type GeneInfo,
     geneSequence,
+    getSegmentAndGeneInfo,
     isAlignedSequence,
     isGeneSequence,
-    isMultiSegmented,
     isUnalignedSequence,
     type SegmentInfo,
     type SequenceType,
@@ -26,7 +25,7 @@ type SequenceContainerProps = {
     segmentReferences: Record<string, string | null>;
     accessionVersion: string;
     clientConfig: ClientConfig;
-    referenceGenomesMap: ReferenceGenomesMap;
+    referenceGenomes: ReferenceGenomes;
     loadSequencesAutomatically: boolean;
 };
 
@@ -35,13 +34,10 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     segmentReferences,
     accessionVersion,
     clientConfig,
-    referenceGenomesMap,
+    referenceGenomes,
     loadSequencesAutomatically,
 }) => {
-    const { nucleotideSegmentInfos, geneInfos, isMultiSegmented } = getSegmentAndGeneInfo(
-        referenceGenomesMap,
-        segmentReferences,
-    );
+    const { nucleotideSegmentInfos, geneInfos } = getSegmentAndGeneInfo(referenceGenomes, segmentReferences);
 
     const [loadSequences, setLoadSequences] = useState(() => loadSequencesAutomatically);
     const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentInfos[0]));
@@ -63,7 +59,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             sequenceType={sequenceType}
             setType={setSequenceType}
             genes={geneInfos}
-            isMultiSegmented={isMultiSegmented}
+            isMultiSegmented={referenceGenomes.isMultiSegmented}
         />
     );
 };
@@ -159,7 +155,7 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
     isActive,
     setActiveTab,
 }) => {
-    if (!isMultiSegmented(segments)) {
+    if (segments.length === 1) {
         const onlySegment = segments[0];
         return (
             <BoxWithTabsTab
@@ -180,13 +176,13 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
                 <BoxWithTabsTab
                     key={segmentName.lapisName}
                     isActive={
-                        isActive && isUnalignedSequence(sequenceType) && segmentName.label === sequenceType.name.label
+                        isActive && isUnalignedSequence(sequenceType) && segmentName.name === sequenceType.name.name
                     }
                     onClick={() => {
                         setType(unalignedSequenceSegment(segmentName));
                         setActiveTab('unaligned');
                     }}
-                    label={`${segmentName.label} (unaligned)`}
+                    label={`${segmentName.name} (unaligned)`}
                 />
             ))}
         </>
@@ -200,7 +196,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
     isActive,
     setActiveTab,
 }) => {
-    if (!isMultiSegmented(segments)) {
+    if (segments.length === 1) {
         const onlySegment = segments[0];
         return (
             <BoxWithTabsTab
@@ -221,13 +217,13 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
                 <BoxWithTabsTab
                     key={segmentName.lapisName}
                     isActive={
-                        isActive && isAlignedSequence(sequenceType) && segmentName.label === sequenceType.name.label
+                        isActive && isAlignedSequence(sequenceType) && segmentName.name === sequenceType.name.name
                     }
                     onClick={() => {
                         setType(alignedSequenceSegment(segmentName));
                         setActiveTab('aligned');
                     }}
-                    label={`${segmentName.label} (aligned)`}
+                    label={`${segmentName.name} (aligned)`}
                 />
             ))}
         </>
@@ -241,7 +237,7 @@ type GeneDropdownProps = {
 };
 
 const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) => {
-    const selectedGene = isGeneSequence(sequenceType.name, sequenceType) ? sequenceType.name.label : '';
+    const selectedGene = isGeneSequence(sequenceType.name, sequenceType) ? sequenceType.name.name : '';
 
     return (
         <div className='mb-4'>
@@ -250,8 +246,8 @@ const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) =
                 className='select select-bordered w-full max-w-xs'
                 value={selectedGene}
                 onChange={(e) => {
-                    const label = e.target.value;
-                    const gene = genes.find((gene) => gene.label === label);
+                    const name = e.target.value;
+                    const gene = genes.find((gene) => gene.name === name);
                     if (gene !== undefined) {
                         setType(geneSequence(gene));
                     }
@@ -261,8 +257,8 @@ const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) =
                     Select a gene
                 </option>
                 {genes.map((gene) => (
-                    <option key={gene.label} value={gene.label}>
-                        {gene.label}
+                    <option key={gene.name} value={gene.name}>
+                        {gene.name}
                     </option>
                 ))}
             </Select>

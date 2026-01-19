@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ReferenceSelector } from './ReferenceSelector.tsx';
-import { type ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../utils/search.ts';
 
 const referenceIdentifierField = 'genotype';
@@ -16,7 +16,7 @@ const filterSchema = new MetadataFilterSchema([
     },
 ]);
 
-const mockreferenceGenomesMap: ReferenceGenomesMap = {
+const mockreferenceGenomesMap: ReferenceGenomes = {
     main: {
         suborganism1: {
             sequence: 'ATCG',
@@ -29,7 +29,7 @@ const mockreferenceGenomesMap: ReferenceGenomesMap = {
     },
 };
 
-const singleReferenceSchema: ReferenceGenomesMap = {
+const singleReferenceSchema: ReferenceGenomes = {
     main: {
         suborganism1: {
             sequence: 'ATCG',

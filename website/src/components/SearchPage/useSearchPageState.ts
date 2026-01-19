@@ -4,7 +4,7 @@ import useStateSyncedWithUrlQueryParams, { type QueryState } from './useStateSyn
 import useUrlParamState from '../../hooks/useUrlParamState.ts';
 import type { FieldValues, FieldValueUpdate, Schema, SetSomeFieldValues } from '../../types/config.ts';
 import type { OrderDirection } from '../../types/lapis.ts';
-import type { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import { useSelectedReferences, useSetSelectedReferences } from '../../utils/referenceSelection.ts';
 import {
     COLUMN_VISIBILITY_PREFIX,
@@ -24,7 +24,7 @@ type UseSearchPageStateParams = {
     schema: Schema;
     hiddenFieldValues: FieldValues;
     filterSchema: MetadataFilterSchema;
-    referenceGenomesMap: ReferenceGenomesMap;
+    referenceGenomes: ReferenceGenomes;
 };
 
 export function useSearchPageState({
@@ -32,7 +32,7 @@ export function useSearchPageState({
     schema,
     hiddenFieldValues,
     filterSchema,
-    referenceGenomesMap,
+    referenceGenomes,
 }: UseSearchPageStateParams) {
     const [state, setState] = useStateSyncedWithUrlQueryParams(initialQueryDict);
 
@@ -131,13 +131,13 @@ export function useSearchPageState({
     );
 
     const { selectedReferences } = useSelectedReferences({
-        referenceGenomesMap,
+        referenceGenomes,
         schema,
         state,
     });
 
     const setSelectedReferences = useSetSelectedReferences({
-        referenceGenomesMap,
+        referenceGenomes,
         schema,
         setSomeFieldValues,
     });

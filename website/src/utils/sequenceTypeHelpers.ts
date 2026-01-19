@@ -1,4 +1,10 @@
-//TODO: this entire file should be deleted and the logic moved into the config
+import type {
+    ReferenceGenomes,
+    ReferenceGenomesSchema,
+    ReferenceName,
+    SegmentName,
+    SegmentReferenceGenomes,
+} from '../types/referencesGenomes';
 
 export type SequenceType =
     | { type: 'nucleotide'; aligned: boolean; name: SegmentInfo }
@@ -9,39 +15,20 @@ export type SegmentInfo = {
     /** the segment name as it is called in LAPIS */
     lapisName: string;
     /** the segment name as it should be displayed in the UI */
-    label: string;
+    name: string;
 };
 
 export type GeneInfo = {
     /** the gene name as it is called in LAPIS */
     lapisName: string;
     /** the gene name as it should be displayed in the UI */
-    label: string;
+    name: string;
 };
 
-export function getSinglePathogenSequenceName(name: string): SegmentInfo | GeneInfo {
-    return {
-        lapisName: name,
-        label: name,
-    };
-}
-
-export function getMultiPathogenSequenceName(segment: string, reference: string, isSingleSegment?: boolean): SegmentInfo | GeneInfo {
-    if (isSingleSegment) {
-        return {
-            lapisName: reference,
-            label: segment,
-        };
-    }
-    return {
-        lapisName: `${segment}-${reference}`,
-        label: segment,
-    };
-}
-
-export function isMultiSegmented(nucleotideSegmentNames: unknown[]) {
-    return nucleotideSegmentNames.length > 1;
-}
+export type SegmentAndGeneInfo = {
+    nucleotideSegmentInfos: SegmentInfo[];
+    geneInfos: GeneInfo[];
+};
 
 export const unalignedSequenceSegment = (segmentInfo: SegmentInfo): SequenceType => ({
     type: 'nucleotide',
@@ -65,66 +52,124 @@ export const isAlignedSequence = (type: SequenceType): boolean => type.type === 
 export const isGeneSequence = (segmentOrGeneInfo: SegmentInfo | GeneInfo, type: SequenceType): boolean =>
     type.type === 'aminoAcid' && type.name.lapisName === segmentOrGeneInfo.lapisName;
 
-// NEW: Segment-first mode helpers
-export type SegmentReferenceSelections = Record<string, string | null>;
+export type SegmentReferenceSelections = Record<SegmentName, ReferenceName | null>;
 
-/**
- * Get segment info for segment-first mode where each segment can have its own reference.
- * @param segmentName - The segment name (e.g., "main", "VP4")
- * @param referenceName - The selected reference for this segment (e.g., "CV-A16"), or null
- * @returns SegmentInfo with appropriate LAPIS naming
- */
-export function getSegmentInfoWithReference(segmentName: string, referenceName: string | null, isSingleSegment?: boolean): SegmentInfo {
-    if (referenceName === null) {
-        // No reference selected - use segment name as-is
-        return {
-            lapisName: segmentName,
-            label: segmentName,
-        };
+export function getSegmentLapisName(
+    segmentName: string,
+    referenceName: string,
+    isMultiSegmented: boolean,
+    isMultiReferenced: boolean,
+): string {
+    if (!isMultiReferenced) {
+        return segmentName;
     }
-    if (isSingleSegment && referenceName !== null) {
-        return {
-            lapisName: referenceName,
-            label: segmentName,
-        };
+    if (isMultiSegmented) {
+        return `${segmentName}-${referenceName}`;
     }
-    // Reference selected - suffix with reference name for LAPIS
+    return referenceName;
+}
+
+export function getGeneLapisName(geneName: string, referenceName: string, isMultiReferenced: boolean): string {
+    if (!isMultiReferenced) {
+        return geneName;
+    }
+    return `${geneName}-${referenceName}`;
+}
+
+export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGenomes {
+    const genomes: SegmentReferenceGenomes = {};
+
+    const isMultiSegmented = (values?.length ?? 0) > 1;
+    let useLapisMultiSegmentedEndpoint = isMultiSegmented;
+
+    for (const segmentData of values ?? []) {
+        const segmentName = segmentData.name;
+        const isMultiReferenced = segmentData.references.length > 1;
+
+        genomes[segmentName] ??= {};
+
+        if (isMultiReferenced) {
+            useLapisMultiSegmentedEndpoint = true;
+        }
+
+        for (const ref of segmentData.references) {
+            genomes[segmentName][ref.reference_name] = {
+                lapisName: getSegmentLapisName(segmentName, ref.reference_name, isMultiSegmented, isMultiReferenced),
+                insdcAccessionFull: ref.insdcAccessionFull ?? null,
+                genes: ref.genes
+                    ? ref.genes.map((gene) => ({
+                          name: gene.name,
+                          lapisName: getGeneLapisName(gene.name, ref.reference_name, isMultiReferenced),
+                      }))
+                    : [],
+            };
+        }
+    }
+
     return {
-        lapisName: `${segmentName}-${referenceName}`,
-        label: segmentName,
+        segmentReferenceGenomes: genomes,
+        isMultiSegmented,
+        useLapisMultiSegmentedEndpoint,
     };
 }
 
 /**
- * Get gene info for segment-first mode.
- * @param geneName - The gene name (e.g., "VP4")
- * @param referenceName - The reference name (e.g., "CV-A16")
- * @returns GeneInfo with appropriate LAPIS naming
+ * Get segment and gene info where each segment can have its own reference.
+ * @param schema - The reference genome lightweight schema
+ * @param selectedReferences - Map of segment names to selected references
+ * @returns SegmentAndGeneInfo with all segments and their genes
  */
-export function getGeneInfoWithReference(geneName: string, referenceName: string | null): GeneInfo {
-    if (referenceName === null) {
-        // No reference selected - use gene name as-is
-        return {
-            lapisName: geneName,
-            label: geneName,
-        };
+export function getSegmentAndGeneInfo(
+    referenceGenomes: ReferenceGenomes,
+    selectedReferences: SegmentReferenceSelections,
+): SegmentAndGeneInfo {
+    const nucleotideSegmentInfos: SegmentInfo[] = [];
+    const geneInfos: GeneInfo[] = [];
+
+    for (const [segmentName, segmentData] of Object.entries(referenceGenomes.segmentReferenceGenomes)) {
+        const isSingleReference = Object.keys(segmentData).length === 1;
+        const selectedRef = selectedReferences[segmentName] ?? null;
+
+        if (isSingleReference) {
+            nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentName });
+            geneInfos.push(...segmentData[Object.keys(segmentData)[0]].genes);
+            continue;
+        }
+        if (!selectedRef) {
+            continue;
+        }
+        nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentData[selectedRef].lapisName });
+        geneInfos.push(...segmentData[selectedRef].genes);
     }
-    // Reference selected - suffix with reference name for LAPIS
+
     return {
-        lapisName: `${geneName}-${referenceName}`,
-        label: geneName,
+        nucleotideSegmentInfos,
+        geneInfos,
     };
+}
+
+export function lapisNameToDisplayName(referenceGenomes: ReferenceGenomes): Map<string, string | undefined> {
+    const map = new Map<string, string | undefined>();
+    for (const [segmentName, segmentData] of Object.entries(referenceGenomes.segmentReferenceGenomes)) {
+        for (const refData of Object.values(segmentData)) {
+            map.set(refData.lapisName, referenceGenomes.isMultiSegmented ? segmentName : undefined);
+            for (const gene of refData.genes) {
+                map.set(gene.lapisName, gene.name);
+            }
+        }
+    }
+    return map;
 }
 
 export function stillRequiresReferenceNameSelection(
-    selectedReferenceNames: Record<string, string | null>,
-    referenceGenomesMap: Record<string, Record<string, unknown>>,
+    selectedReferenceNames: SegmentReferenceSelections,
+    segmentReferenceGenomes: SegmentReferenceGenomes,
 ) {
-    const segments = Object.keys(referenceGenomesMap);
+    const segments = Object.keys(segmentReferenceGenomes);
 
     // Only keep segments that actually need a selector
     const segmentsWithMultipleReferences = segments.filter(
-        (segment) => Object.keys(referenceGenomesMap[segment]).length > 1,
+        (segment) => Object.keys(segmentReferenceGenomes[segment]).length > 1,
     );
     return segmentsWithMultipleReferences.some((segment) => selectedReferenceNames[segment] === null);
 }

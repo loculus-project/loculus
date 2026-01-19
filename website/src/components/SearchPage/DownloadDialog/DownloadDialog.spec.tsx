@@ -9,7 +9,7 @@ import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
 import { versionStatuses } from '../../../types/lapis';
-import { type ReferenceGenomesMap, type ReferenceAccession } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomes, type ReferenceAccession } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
 const defaultAccession: ReferenceAccession = {
@@ -17,7 +17,7 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenomesMap: ReferenceGenomesMap = {
+const defaultReferenceGenomesMap: ReferenceGenomes = {
     segments: {
         main: {
             references: ['ref1'],
@@ -27,7 +27,7 @@ const defaultReferenceGenomesMap: ReferenceGenomesMap = {
     },
 };
 
-const multiPathogenreferenceGenomesMap: ReferenceGenomesMap = {
+const multiPathogenreferenceGenomesMap: ReferenceGenomes = {
     segments: {
         main: {
             references: ['suborganism1', 'suborganism2'],
@@ -84,7 +84,7 @@ async function renderDialog({
     metadata?: Metadata[];
     selectedSuborganism?: string | null;
     referenceIdentifierField?: string;
-    referenceGenomesMap?: ReferenceGenomesMap;
+    referenceGenomesMap?: ReferenceGenomes;
 } = {}) {
     const schema: Schema = {
         defaultOrder: 'ascending',

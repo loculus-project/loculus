@@ -6,18 +6,10 @@ import { FieldSelectorButton } from './FieldSelector/FieldSelectorButton.tsx';
 import { FieldSelectorModal } from './FieldSelector/FieldSelectorModal.tsx';
 import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from './OptionBlock.tsx';
 import { routes } from '../../../routes/routes.ts';
-import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Schema } from '../../../types/config.ts';
-import type { ReferenceGenomesMap } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomes } from '../../../types/referencesGenomes.ts';
 import type { MetadataVisibility } from '../../../utils/search.ts';
-import {
-    type GeneInfo,
-    getMultiPathogenSequenceName,
-    getSinglePathogenSequenceName,
-    isMultiSegmented,
-    type SegmentInfo,
-    stillRequiresReferenceNameSelection,
-} from '../../../utils/sequenceTypeHelpers.ts';
+import { getSegmentAndGeneInfo, stillRequiresReferenceNameSelection } from '../../../utils/sequenceTypeHelpers.ts';
 
 export type DownloadFormState = {
     includeRestricted: boolean;
@@ -30,7 +22,7 @@ export type DownloadFormState = {
 };
 
 type DownloadFormProps = {
-    referenceGenomesMap: ReferenceGenomesMap;
+    referenceGenomes: ReferenceGenomes;
     downloadFormState: DownloadFormState;
     setDownloadFormState: Dispatch<SetStateAction<DownloadFormState>>;
     allowSubmissionOfConsensusSequences: boolean;
@@ -44,7 +36,7 @@ type DownloadFormProps = {
 };
 
 export const DownloadForm: FC<DownloadFormProps> = ({
-    referenceGenomesMap,
+    referenceGenomes,
     downloadFormState,
     setDownloadFormState,
     allowSubmissionOfConsensusSequences,
@@ -57,14 +49,15 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     referenceIdentifierField,
 }) => {
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
-    const { nucleotideSequences, genes } = useMemo(
-        () => getSequenceNames(referenceGenomesMap, selectedReferenceNames),
-        [referenceGenomesMap, selectedReferenceNames],
+    const { nucleotideSegmentInfos, geneInfos } = useMemo(
+        () => getSegmentAndGeneInfo(referenceGenomes, selectedReferenceNames),
+        [referenceGenomes, selectedReferenceNames],
     );
 
-    console.log(nucleotideSequences, genes);
-
-    const disableAlignedSequences = stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomesMap);
+    const disableAlignedSequences = stillRequiresReferenceNameSelection(
+        selectedReferenceNames,
+        referenceGenomes.segmentReferenceGenomes,
+    );
 
     function getDataTypeOptions(): OptionBlockOption[] {
         const metadataOption = {
@@ -88,19 +81,19 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             label: <>Raw nucleotide sequences</>,
             subOptions: (
                 <div className='px-8'>
-                    {isMultiSegmented(nucleotideSequences) ? (
+                    {referenceGenomes.isMultiSegmented ? (
                         <DropdownOptionBlock
                             name='unalignedNucleotideSequences'
-                            options={nucleotideSequences.map((segment) => ({
-                                label: <>{segment.label}</>,
+                            options={nucleotideSegmentInfos.map((segment) => ({
+                                label: <>{segment.name}</>,
                             }))}
-                            selected={nucleotideSequences.findIndex(
+                            selected={nucleotideSegmentInfos.findIndex(
                                 (info) => info.lapisName === downloadFormState.unalignedNucleotideSequence,
                             )}
                             onSelect={(value) =>
                                 setDownloadFormState((previous) => ({
                                     ...previous,
-                                    unalignedNucleotideSequence: nucleotideSequences[value].lapisName,
+                                    unalignedNucleotideSequence: nucleotideSegmentInfos[value].lapisName,
                                 }))
                             }
                             disabled={downloadFormState.dataType !== 'unalignedNucleotideSequences'}
@@ -139,20 +132,20 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             rawNucleotideSequencesOption,
             {
                 label: <>Aligned nucleotide sequences</>,
-                subOptions: isMultiSegmented(nucleotideSequences) ? (
+                subOptions: referenceGenomes.isMultiSegmented ? (
                     <div className='px-8'>
                         <DropdownOptionBlock
                             name='alignedNucleotideSequences'
-                            options={nucleotideSequences.map((segment) => ({
-                                label: <>{segment.label}</>,
+                            options={nucleotideSegmentInfos.map((segment) => ({
+                                label: <>{segment.name}</>,
                             }))}
-                            selected={nucleotideSequences.findIndex(
+                            selected={nucleotideSegmentInfos.findIndex(
                                 (info) => info.lapisName === downloadFormState.alignedNucleotideSequence,
                             )}
                             onSelect={(value) =>
                                 setDownloadFormState((previous) => ({
                                     ...previous,
-                                    alignedNucleotideSequence: nucleotideSequences[value].lapisName,
+                                    alignedNucleotideSequence: nucleotideSegmentInfos[value].lapisName,
                                 }))
                             }
                             disabled={downloadFormState.dataType !== 'alignedNucleotideSequences'}
@@ -162,20 +155,20 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             },
             {
                 label: <>Aligned amino acid sequences</>,
-                subOptions: isMultiSegmented(genes) ? (
+                subOptions: referenceGenomes.isMultiSegmented ? (
                     <div className='px-8'>
                         <DropdownOptionBlock
                             name='alignedAminoAcidSequences'
-                            options={genes.map((gene) => ({
-                                label: <>{gene.label}</>,
+                            options={geneInfos.map((gene) => ({
+                                label: <>{gene.name}</>,
                             }))}
-                            selected={genes.findIndex(
+                            selected={geneInfos.findIndex(
                                 (info) => info.lapisName === downloadFormState.alignedAminoAcidSequence,
                             )}
                             onSelect={(value) =>
                                 setDownloadFormState((previous) => ({
                                     ...previous,
-                                    alignedAminoAcidSequence: genes[value].lapisName,
+                                    alignedAminoAcidSequence: geneInfos[value].lapisName,
                                 }))
                             }
                             disabled={downloadFormState.dataType !== 'alignedAminoAcidSequences'}
@@ -260,58 +253,6 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         </div>
     );
 };
-
-export function getSequenceNames(
-    referenceGenomesMap: ReferenceGenomesMap,
-    selectedReferenceNames: Record<string, string | null>,
-): {
-    nucleotideSequences: SegmentInfo[];
-    genes: GeneInfo[];
-    useMultiSegmentEndpoint: boolean;
-    defaultFastaHeaderTemplate?: string;
-} {
-    const segments = Object.keys(referenceGenomesMap);
-    let lapisHasMultiSegments = segments.length > 1;
-    const singleSegment = segments.length === 1;
-    const segmentNames: SegmentInfo[] = [];
-    const geneNames: GeneInfo[] = [];
-
-    for (const segmentName of segments) {
-        const segmentData = referenceGenomesMap[segmentName];
-        const isMultiReference = Object.keys(segmentData).length > 1;
-        if (!isMultiReference) {
-            // Single reference for this segment
-            const singleReferenceName = Object.keys(segmentData)[0];
-            if (!singleSegment) {
-                segmentNames.push(getSinglePathogenSequenceName(segmentName));
-            }
-            const genes = segmentData[singleReferenceName].genes ? segmentData[singleReferenceName].genes.map(getSinglePathogenSequenceName) : [];
-            geneNames.push(...genes);
-            continue;
-        }
-        const selectedReferenceName = selectedReferenceNames[segmentName];
-        if (!selectedReferenceName) {
-            return {
-                nucleotideSequences: [],
-                genes: [],
-                useMultiSegmentEndpoint: false,
-                defaultFastaHeaderTemplate: `{${ACCESSION_VERSION_FIELD}}`,
-            };
-        }
-        lapisHasMultiSegments = true;
-        segmentNames.push(getMultiPathogenSequenceName(segmentName, selectedReferenceName, singleSegment));
-        const genes =
-            segmentData[selectedReferenceName].genes ? segmentData[selectedReferenceName].genes.map((geneName) =>
-                getMultiPathogenSequenceName(geneName, selectedReferenceName),
-            ) : [];
-        geneNames.push(...genes);
-    }
-    return {
-        nucleotideSequences: segmentNames,
-        genes: geneNames,
-        useMultiSegmentEndpoint: lapisHasMultiSegments,
-    };
-}
 
 const optionToDataTypeMap: DownloadDataType['type'][] = [
     'metadata',

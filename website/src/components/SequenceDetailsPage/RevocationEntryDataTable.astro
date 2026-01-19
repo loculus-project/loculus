@@ -17,13 +17,14 @@ import {
     DATA_USE_TERMS_FIELD,
 } from '../../settings';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import type { ReferenceGenomesMap } from '../../types/referencesGenomes';
+import type { ReferenceGenomes } from '../../types/referencesGenomes';
+import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers';
 
 interface Props {
     tableData: TableDataEntry[];
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    referenceGenomesMap: ReferenceGenomesMap;
-    segmentReferences: Record<string, string> | null;
+    referenceGenomesMap: ReferenceGenomes;
+    segmentReferences: SegmentReferenceSelections;
 }
 
 const { tableData, dataUseTermsHistory, referenceGenomesMap, segmentReferences } = Astro.props;
@@ -51,5 +52,5 @@ const dataTableData = getDataTableData(relevantData);
     dataTableData={dataTableData}
     dataUseTermsHistory={dataUseTermsHistory}
     segmentReferences={segmentReferences}
-    referenceGenomesMap={referenceGenomesMap}
+    referenceGenomes={referenceGenomesMap}
 />
