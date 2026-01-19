@@ -15,11 +15,11 @@ import {
 import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
-import { lapisNameToDisplayName } from '../../utils/sequenceTypeHelpers.ts';
+import { lapisNameToDisplayName, type SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 
 export type GetTableDataResult = {
     data: TableDataEntry[];
-    segmentReferences: Record<string, string | null>;
+    segmentReferences: SegmentReferenceSelections;
     isRevocation: boolean;
 };
 
@@ -82,9 +82,9 @@ function getSegmentReferences(
     schema: Schema,
     referenceGenomes: ReferenceGenomes,
     accessionVersion: string,
-): Result<Record<string, string | null>, ProblemDetail> {
+): Result<SegmentReferenceSelections, ProblemDetail> {
     //TODO: this is duplicated - refactor to share code with getSegmentAndGeneInfo
-    const segmentReferences: Record<string, string | null> = {};
+    const segmentReferences: SegmentReferenceSelections = {};
     for (const [segmentName, segmentData] of Object.entries(referenceGenomes.segmentReferenceGenomes)) {
         const isSingleReference = Object.keys(segmentData).length === 1;
         const referenceField = getReferenceIdentifier(

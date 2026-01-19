@@ -11,6 +11,7 @@ import type {
     MetadataType,
     Schema,
 } from '../types/config';
+import type { SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
 
 export const VISIBILITY_PREFIX = 'visibility_';
 
@@ -44,7 +45,7 @@ export class MetadataVisibility {
         this.onlyForReference = onlyForReference;
     }
 
-    public isVisible(selectedReferenceNames: Record<string, string | null>): boolean {
+    public isVisible(selectedReferenceNames: SegmentReferenceSelections): boolean {
         if (!this.isChecked) {
             return false;
         }
