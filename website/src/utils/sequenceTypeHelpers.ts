@@ -113,6 +113,9 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
     };
 }
 
+export const getSegmentNames = (genomes: ReferenceGenomes) =>
+    Object.keys(genomes.segmentReferenceGenomes) as SegmentName[];
+
 /**
  * Get segment and gene info where each segment can have its own reference.
  * @param schema - The reference genome lightweight schema
@@ -163,13 +166,11 @@ export function lapisNameToDisplayName(referenceGenomes: ReferenceGenomes): Map<
 
 export function stillRequiresReferenceNameSelection(
     selectedReferenceNames: SegmentReferenceSelections,
-    segmentReferenceGenomes: SegmentReferenceGenomes,
+    referenceGenomes: ReferenceGenomes,
 ) {
-    const segments = Object.keys(segmentReferenceGenomes);
-
     // Only keep segments that actually need a selector
-    const segmentsWithMultipleReferences = segments.filter(
-        (segment) => Object.keys(segmentReferenceGenomes[segment]).length > 1,
+    const segmentsWithMultipleReferences = getSegmentNames(referenceGenomes).filter(
+        (segment) => Object.keys(referenceGenomes.segmentReferenceGenomes[segment]).length > 1,
     );
     return segmentsWithMultipleReferences.some((segment) => selectedReferenceNames[segment] === null);
 }

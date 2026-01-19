@@ -5,6 +5,7 @@ import { routes } from '../../../routes/routes.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import { createDownloadAPIRoute } from '../../../utils/createDownloadAPIRoute.ts';
+import { getSegmentNames } from '../../../utils/sequenceTypeHelpers.ts';
 
 export const GET: APIRoute = createDownloadAPIRoute(
     'text/x-fasta',
@@ -15,19 +16,15 @@ export const GET: APIRoute = createDownloadAPIRoute(
 
         const referenceGenomes = getReferenceGenomes(organism);
 
-        // Check if single reference mode (all segments have only one reference)
-        const segments = Object.entries(referenceGenomes.segmentReferenceGenomes);
-        const isSingleReference = segments.every(([_, segmentData]) => Object.keys(segmentData).length === 1);
-
-        if (isSingleReference) {
-            const segmentNames = Object.keys(referenceGenomes.segmentReferenceGenomes);
+        if (referenceGenomes.useLapisMultiSegmentedEndpoint) {
+            const segmentNames = getSegmentNames(referenceGenomes);
             if (segmentNames.length > 1) {
                 return lapisClient.getMultiSegmentSequenceFasta(accessionVersion, segmentNames);
             }
 
-            return lapisClient.getSequenceFasta(accessionVersion);
+            return lapisClient.getSequenceFasta(accessionVersion, { fastaHeaderTemplate: `{${ACCESSION_VERSION_FIELD}}` });
         }
 
-        return lapisClient.getSequenceFasta(accessionVersion, { fastaHeaderTemplate: `{${ACCESSION_VERSION_FIELD}}` });
+        return lapisClient.getSequenceFasta(accessionVersion);
     },
 );
