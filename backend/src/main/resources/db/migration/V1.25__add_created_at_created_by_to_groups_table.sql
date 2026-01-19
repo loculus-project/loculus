@@ -3,30 +3,28 @@ ALTER TABLE groups_table
     ADD COLUMN created_by TEXT NULL;
 
 -- Try to populate created_at and created_by from the audit_log table.
--- Because group names are not unique, we can only condfidently identify creation time and user for a group if:
+-- The audit log only documented the name a group was updated to and not from.
+-- Because group names are not unique, we can only identify creation time and user for a group if:
 --	1) There is exactly ONE 'Created group: <group_name>' entries in the audit_log
---	    -> if there is more than one group with the same name, we can't tell which was created first
 --	2) There are NO 'Updated group: <group_name>' entries in the audit_log
---	    -> this message is ambiguous: it can mean either that 'Group A was edited, but it's name has not changed' OR 
---	       'Group B was edited, it's name is now Group A'. This means that the group_name is essentially tainted and 
---	       can not be used to infer creation time and user anymore.
 UPDATE groups_table g
 SET
     created_at = (
         SELECT al.timestamp
         FROM audit_log al
         WHERE al.description = 'Created group: ' || g.group_name
-        GROUP BY al.timestamp, al.username
-        HAVING COUNT(*) = 1
+        ORDER BY al.timestamp ASC
+        LIMIT 1
     ),
     created_by = (
         SELECT al.username
         FROM audit_log al
         WHERE al.description = 'Created group: ' || g.group_name
-        GROUP BY al.timestamp, al.username
-        HAVING COUNT(*) = 1
+        ORDER BY al.timestamp ASC
+        LIMIT 1
     )
 WHERE g.created_at IS NULL
+  AND (SELECT COUNT(*) FROM audit_log WHERE description = 'Created group: ' || g.group_name) = 1
   AND NOT EXISTS (
       SELECT 1
       FROM audit_log u
@@ -50,3 +48,7 @@ UPDATE groups_table g SET
 	LIMIT 1
     )
 WHERE g.created_at IS NULL;
+
+ALTER TABLE groups_table
+    ALTER COLUMN created_at SET NOT NULL,
+    ALTER COLUMN created_by SET NOT NULL;
