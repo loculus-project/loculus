@@ -6,13 +6,13 @@ import ReferenceSequenceLinkButton from './ReferenceSequenceLinkButton';
 import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import { type ReferenceAccession, type ReferenceGenomesMap } from '../../types/referencesGenomes';
+import { type ReferenceAccession, type ReferenceGenomes } from '../../types/referencesGenomes';
 import AkarInfo from '~icons/ri/information-line';
 
 interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    referenceGenomesMap: ReferenceGenomesMap;
+    referenceGenomes: ReferenceGenomes;
     segmentReferences: Record<string, string | null>;
 }
 
@@ -35,20 +35,21 @@ const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) =>
 const DataTableComponent: React.FC<Props> = ({
     dataTableData,
     dataUseTermsHistory,
-    referenceGenomesMap,
+    referenceGenomes,
     segmentReferences,
 }) => {
     // Gather INSDC accessions from all segment/reference combinations
     const reference: ReferenceAccession[] = [];
-    if (segmentReferences !== null) {
-        for (const [segmentName, referenceName] of Object.entries(segmentReferences)) {
-            const segmentData = referenceGenomesMap[segmentName];
-            if (referenceName === null) {
-                continue;
-            }
-            const accession = segmentData?.[referenceName].insdcAccessionFull;
-            reference.push({ insdcAccessionFull: accession, name: segmentName });
+    for (const [segmentName, referenceName] of Object.entries(segmentReferences)) {
+        const segmentData = referenceGenomes.segmentReferenceGenomes[segmentName];
+        if (referenceName === null) {
+            continue;
         }
+        const accession = segmentData?.[referenceName].insdcAccessionFull;
+        reference.push({
+            name: segmentName,
+            ...(accession !== null && { insdcAccessionFull: accession }),
+        });
     }
     const hasReferenceAccession = reference.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
 

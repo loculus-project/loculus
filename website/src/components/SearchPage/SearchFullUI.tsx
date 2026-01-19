@@ -21,23 +21,22 @@ import type { Group } from '../../types/backend.ts';
 import type { LinkOut } from '../../types/config.ts';
 import { type FieldValues, type Schema, type SequenceFlaggingConfig } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
-import type { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
-import { getSegmentAndGeneInfo } from '../../utils/getSegmentAndGeneInfo.tsx';
 import {
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
     MetadataFilterSchema,
 } from '../../utils/search.ts';
-import { stillRequiresReferenceNameSelection } from '../../utils/sequenceTypeHelpers.ts';
+import { getSegmentAndGeneInfo, stillRequiresReferenceNameSelection } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
-    referenceGenomesMap: ReferenceGenomesMap;
+    referenceGenomes: ReferenceGenomes;
     myGroups: Group[];
     organism: string;
     clientConfig: ClientConfig;
@@ -64,7 +63,7 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) this component is a mess a needs to be refactored */
 export const InnerSearchFullUI = ({
     accessToken,
-    referenceGenomesMap,
+    referenceGenomes,
     myGroups,
     organism,
     clientConfig,
@@ -103,7 +102,7 @@ export const InnerSearchFullUI = ({
         setOrderDirection,
         setASearchVisibility,
         setAColumnVisibility,
-    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema, referenceGenomesMap });
+    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema, referenceGenomes });
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -156,9 +155,9 @@ export const InnerSearchFullUI = ({
                 filterSchema,
                 fieldValues,
                 hiddenFieldValues,
-                getSegmentAndGeneInfo(referenceGenomesMap, selectedReferences),
+                getSegmentAndGeneInfo(referenceGenomes, selectedReferences),
             ),
-        [fieldValues, hiddenFieldValues, referenceGenomesMap, selectedReferences, filterSchema],
+        [fieldValues, hiddenFieldValues, referenceGenomes, selectedReferences, filterSchema],
     );
 
     /**
@@ -214,7 +213,7 @@ export const InnerSearchFullUI = ({
 
     const showMutationSearch =
         schema.submissionDataTypes.consensusSequences &&
-        !stillRequiresReferenceNameSelection(selectedReferences, referenceGenomesMap);
+        !stillRequiresReferenceNameSelection(selectedReferences, referenceGenomes.segmentReferenceGenomes);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -232,7 +231,7 @@ export const InnerSearchFullUI = ({
                 accessToken={accessToken}
                 isOpen={Boolean(previewedSeqId)}
                 onClose={() => setPreviewedSeqId(null)}
-                referenceGenomesMap={referenceGenomesMap}
+                referenceGenomes={referenceGenomes}
                 myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
                 setIsHalfScreen={setPreviewHalfScreen}
@@ -243,7 +242,7 @@ export const InnerSearchFullUI = ({
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}
-                    referenceGenomesMap={referenceGenomesMap}
+                    referenceGenomes={referenceGenomes}
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
                     filterSchema={filterSchema}
@@ -346,7 +345,7 @@ export const InnerSearchFullUI = ({
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
                                 sequenceFilter={downloadFilter}
-                                referenceGenomesMap={referenceGenomesMap}
+                                referenceGenomes={referenceGenomes}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
                                 schema={schema}

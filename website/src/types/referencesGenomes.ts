@@ -1,5 +1,7 @@
 import z from 'zod';
 
+import type { GeneInfo } from '../utils/sequenceTypeHelpers';
+
 export type ReferenceAccession = {
     name: string;
     insdcAccessionFull?: string;
@@ -19,17 +21,21 @@ export type ReferenceSequenceData = {
     genes?: Record<GeneName, GeneSequenceData>;
 };
 
-export const ReferenceGenomesMap = z.record(
-    z.string(), // segment name
-    z.record(
-        z.string(), // reference name
-        z.object({
-            insdcAccessionFull: z.string().optional(),
-            genes: z.array(z.string()).optional(),
-        }),
-    ),
-);
-export type ReferenceGenomesMap = z.infer<typeof ReferenceGenomesMap>;
+export type ReferenceGenomeInfo = {
+    lapisName: string;
+    genes: GeneInfo[];
+    insdcAccessionFull: string | null;
+};
+
+export type ReferenceGenomeMap = Record<ReferenceName, ReferenceGenomeInfo>;
+
+export type SegmentReferenceGenomes = Record<SegmentName, ReferenceGenomeMap>;
+
+export type ReferenceGenomes = {
+    segmentReferenceGenomes: SegmentReferenceGenomes;
+    isMultiSegmented: boolean;
+    useLapisMultiSegmentedEndpoint: boolean;
+};
 
 export const referenceGenomesSchema = z
     .array(
@@ -46,27 +52,5 @@ export const referenceGenomesSchema = z
         }),
     )
     .optional();
-export type ReferenceGenomes = z.infer<typeof referenceGenomesSchema>;
 
-export function toReferenceGenomesMap(values: ReferenceGenomes): ReferenceGenomesMap {
-    const out: ReferenceGenomesMap = {};
-
-    for (const genome of values ?? []) {
-        const segmentName = genome.name;
-
-        out[segmentName] ??= {};
-
-        for (const ref of genome.references) {
-            out[segmentName][ref.reference_name] = {
-                ...(ref.insdcAccessionFull ? { insdcAccessionFull: ref.insdcAccessionFull } : {}),
-                ...(ref.genes
-                    ? {
-                          genes: ref.genes.map((gene) => gene.name),
-                      }
-                    : {}),
-            };
-        }
-    }
-
-    return ReferenceGenomesMap.parse(out);
-}
+export type ReferenceGenomesSchema = z.infer<typeof referenceGenomesSchema>;

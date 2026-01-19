@@ -12,8 +12,9 @@ import {
     type WebsiteConfig,
     websiteConfig,
 } from './types/config.ts';
-import { toReferenceGenomesMap, ReferenceGenomesMap } from './types/referencesGenomes.ts';
+import { type ReferenceGenomes } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
+import { toReferenceGenomes } from './utils/sequenceTypeHelpers.ts';
 
 let _config: WebsiteConfig | null = null;
 let _runtimeConfig: RuntimeConfig | null = null;
@@ -273,8 +274,8 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
     return serviceConfig.lapisUrls[organism];
 }
 
-export function getReferenceGenomes(organism: string): ReferenceGenomesMap {
-    return toReferenceGenomesMap(getConfig(organism).referenceGenomes);
+export function getReferenceGenomes(organism: string): ReferenceGenomes {
+    return toReferenceGenomes(getConfig(organism).referenceGenomes);
 }
 
 export function seqSetsAreEnabled() {

@@ -9,6 +9,7 @@ import { LapisClient } from '../../../services/lapisClient.ts';
 import type { DataUseTermsHistoryEntry, ProblemDetail } from '../../../types/backend.ts';
 import type { SequenceEntryHistory } from '../../../types/lapis.ts';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
+import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 
 export enum SequenceDetailsTableResultType {
     TABLE_DATA = 'tableData',
@@ -20,7 +21,7 @@ export type TableData = {
     tableData: TableDataEntry[];
     sequenceEntryHistory: SequenceEntryHistory;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    segmentReferences: Record<string, string> | null;
+    segmentReferences: SegmentReferenceSelections;
     isRevocation: boolean;
 };
 
