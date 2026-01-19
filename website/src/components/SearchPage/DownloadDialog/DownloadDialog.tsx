@@ -3,23 +3,23 @@ import { type FC, useEffect, useMemo, useState } from 'react';
 import { DownloadDialogButton } from './DowloadDialogButton.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
 import type { DownloadDataType } from './DownloadDataType.ts';
-import { DownloadForm, type DownloadFormState, getSequenceNames } from './DownloadForm.tsx';
+import { DownloadForm, type DownloadFormState } from './DownloadForm.tsx';
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { getDefaultSelectedFields } from './FieldSelector/FieldSelectorModal.tsx';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
-import type { ReferenceGenomesMap } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomes } from '../../../types/referencesGenomes.ts';
 import { MetadataVisibility } from '../../../utils/search.ts';
-import type { GeneInfo, SegmentInfo } from '../../../utils/sequenceTypeHelpers.ts';
+import { getSegmentAndGeneInfo, type GeneInfo, type SegmentInfo } from '../../../utils/sequenceTypeHelpers.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
 import { BaseDialog } from '../../common/BaseDialog.tsx';
 
 type DownloadDialogProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     sequenceFilter: SequenceFilter;
-    referenceGenomesMap: ReferenceGenomesMap;
+    referenceGenomes: ReferenceGenomes;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
     schema: Schema;
@@ -31,7 +31,7 @@ type DownloadDialogProps = {
 export const DownloadDialog: FC<DownloadDialogProps> = ({
     downloadUrlGenerator,
     sequenceFilter,
-    referenceGenomesMap,
+    referenceGenomes,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
     schema,
@@ -44,18 +44,18 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const { nucleotideSequences, genes, useMultiSegmentEndpoint, defaultFastaHeaderTemplate } = useMemo(
-        () => getSequenceNames(referenceGenomesMap, selectedReferenceNames),
-        [referenceGenomesMap, selectedReferenceNames],
+    const { nucleotideSegmentInfos, geneInfos } = useMemo(
+        () => getSegmentAndGeneInfo(referenceGenomes, selectedReferenceNames),
+        [referenceGenomes, selectedReferenceNames],
     );
+    const useMultiSegmentEndpoint = referenceGenomes.useLapisMultiSegmentedEndpoint;
 
     const [downloadFormState, setDownloadFormState] = useState<DownloadFormState>(
-        getDefaultDownloadFormState(nucleotideSequences, genes),
+        getDefaultDownloadFormState(nucleotideSegmentInfos, geneInfos),
     );
     useEffect(() => {
-        setDownloadFormState(getDefaultDownloadFormState(nucleotideSequences, genes));
-    }, [nucleotideSequences, genes]);
-
+        setDownloadFormState(getDefaultDownloadFormState(nucleotideSegmentInfos, geneInfos));
+    }, [nucleotideSegmentInfos, geneInfos]);
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
     const [selectedFields, setSelectedFields] = useState<Set<string>>(getDefaultSelectedFields(schema.metadata)); // This is here so that the state is persisted across closing and reopening the dialog
 
@@ -70,10 +70,9 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
 
     const downloadOption = getDownloadOption({
         downloadFormState,
-        nucleotideSequences,
-        genes,
+        nucleotideSegmentInfos,
+        geneInfos,
         useMultiSegmentEndpoint,
-        defaultFastaHeaderTemplate,
         getVisibleFields: () => [
             ...Array.from(downloadFieldVisibilities.entries())
                 .filter(([_, visibility]) => visibility.isVisible(selectedReferenceNames))
@@ -94,7 +93,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         </div>
                     )}
                     <DownloadForm
-                        referenceGenomesMap={referenceGenomesMap}
+                        referenceGenomes={referenceGenomes}
                         downloadFormState={downloadFormState}
                         setDownloadFormState={setDownloadFormState}
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
@@ -144,14 +143,14 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     );
 };
 
-function getDefaultDownloadFormState(nucleotideSequences: SegmentInfo[], genes: GeneInfo[]): DownloadFormState {
+function getDefaultDownloadFormState(nucleotideSegmentInfos: SegmentInfo[], geneInfos: GeneInfo[]): DownloadFormState {
     return {
         includeRestricted: false,
         dataType: 'metadata',
         compression: undefined,
-        unalignedNucleotideSequence: nucleotideSequences[0]?.lapisName ?? '',
-        alignedNucleotideSequence: nucleotideSequences[0]?.lapisName ?? '',
-        alignedAminoAcidSequence: genes[0]?.lapisName ?? '',
+        unalignedNucleotideSequence: nucleotideSegmentInfos[0]?.lapisName ?? '',
+        alignedNucleotideSequence: nucleotideSegmentInfos[0]?.lapisName ?? '',
+        alignedAminoAcidSequence: geneInfos[0]?.lapisName ?? '',
         includeRichFastaHeaders: false,
     };
 }
@@ -159,15 +158,13 @@ function getDefaultDownloadFormState(nucleotideSequences: SegmentInfo[], genes: 
 function getDownloadOption({
     downloadFormState,
     useMultiSegmentEndpoint,
-    defaultFastaHeaderTemplate,
     getVisibleFields,
     metadata,
 }: {
     downloadFormState: DownloadFormState;
-    nucleotideSequences: SegmentInfo[];
-    genes: GeneInfo[];
+    nucleotideSegmentInfos: SegmentInfo[];
+    geneInfos: GeneInfo[];
     useMultiSegmentEndpoint: boolean;
-    defaultFastaHeaderTemplate: string | undefined;
     getVisibleFields: () => string[];
     metadata: Metadata[];
 }): DownloadOption {
@@ -182,10 +179,7 @@ function getDownloadOption({
                 return {
                     type: downloadFormState.dataType,
                     segment: useMultiSegmentEndpoint ? downloadFormState.unalignedNucleotideSequence : undefined,
-                    richFastaHeaders:
-                        defaultFastaHeaderTemplate !== undefined
-                            ? { include: true, fastaHeaderOverride: defaultFastaHeaderTemplate }
-                            : { include: downloadFormState.includeRichFastaHeaders },
+                    richFastaHeaders: { include: downloadFormState.includeRichFastaHeaders },
                 };
             case 'alignedNucleotideSequences':
                 return {

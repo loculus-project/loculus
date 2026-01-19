@@ -13,14 +13,14 @@ export const GET: APIRoute = createDownloadAPIRoute(
     async (accessionVersion: string, organism: string) => {
         const lapisClient = LapisClient.createForOrganism(organism);
 
-        const referenceGenomesMap = getReferenceGenomes(organism);
+        const referenceGenomes = getReferenceGenomes(organism);
 
         // Check if single reference mode (all segments have only one reference)
-        const segments = Object.entries(referenceGenomesMap);
+        const segments = Object.entries(referenceGenomes.segmentReferenceGenomes);
         const isSingleReference = segments.every(([_, segmentData]) => Object.keys(segmentData).length === 1);
 
         if (isSingleReference) {
-            const segmentNames = Object.keys(referenceGenomesMap);
+            const segmentNames = Object.keys(referenceGenomes.segmentReferenceGenomes);
             if (segmentNames.length > 1) {
                 return lapisClient.getMultiSegmentSequenceFasta(accessionVersion, segmentNames);
             }

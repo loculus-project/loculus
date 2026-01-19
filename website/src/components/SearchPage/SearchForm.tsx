@@ -18,18 +18,18 @@ import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
-import { ReferenceGenomesMap } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
-import { getSegmentAndGeneInfo } from '../../utils/getSegmentAndGeneInfo.tsx';
+import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
+import { getSegmentAndGeneInfo, type SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import MaterialSymbolsTune from '~icons/material-symbols/tune';
 import StreamlineWrench from '~icons/streamline/wrench';
-import { getIdentifier } from '../../utils/referenceSelection.ts';
 
 const queryClient = new QueryClient();
 
@@ -42,12 +42,12 @@ interface SearchFormProps {
     lapisUrl: string;
     searchVisibilities: Map<string, MetadataVisibility>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
-    referenceGenomesMap: ReferenceGenomesMap;
+    referenceGenomes: ReferenceGenomes;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
     referenceIdentifierField: string | undefined;
-    setSelectedReferences: (newValues: Record<string, string | null>) => void;
-    selectedReferences: Record<string, string | null>;
+    setSelectedReferences: (newValues: SegmentReferenceSelections) => void;
+    selectedReferences: SegmentReferenceSelections;
 }
 
 export const SearchForm = ({
@@ -57,19 +57,21 @@ export const SearchForm = ({
     lapisUrl,
     searchVisibilities,
     setASearchVisibility,
-    referenceGenomesMap,
+    referenceGenomes,
     lapisSearchParameters,
     showMutationSearch,
     referenceIdentifierField,
     setSelectedReferences,
     selectedReferences,
 }: SearchFormProps) => {
-    const segments = Object.keys(referenceGenomesMap);
-    const isMulti = segments.length > 1;
+    const segments = Object.keys(referenceGenomes.segmentReferenceGenomes);
 
     const excluded = new Set<string>([
         ACCESSION_FIELD,
-        ...segments.map((segmentName) => getIdentifier(referenceIdentifierField, segmentName, isMulti)),
+        ...segments.map(
+            (segmentName) =>
+                getReferenceIdentifier(referenceIdentifierField, segmentName, referenceGenomes.isMultiSegmented)!,
+        ),
     ]);
     const visibleFields = filterSchema.filters
         .filter((field) => searchVisibilities.get(field.name)?.isVisible(selectedReferences) ?? false)
@@ -114,8 +116,8 @@ export const SearchForm = ({
         }));
 
     const suborganismSegmentAndGeneInfo = useMemo(
-        () => getSegmentAndGeneInfo(referenceGenomesMap, selectedReferences),
-        [referenceGenomesMap, selectedReferences],
+        () => getSegmentAndGeneInfo(referenceGenomes, selectedReferences),
+        [referenceGenomes, selectedReferences],
     );
 
     return (
@@ -179,7 +181,7 @@ export const SearchForm = ({
                         {referenceIdentifierField !== undefined && (
                             <ReferenceSelector
                                 filterSchema={filterSchema}
-                                referenceGenomesMap={referenceGenomesMap}
+                                referenceGenomes={referenceGenomes}
                                 referenceIdentifierField={referenceIdentifierField}
                                 selectedReferences={selectedReferences}
                                 setSelectedReferences={setSelectedReferences}
