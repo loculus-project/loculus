@@ -23,7 +23,7 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
-import { getSegmentAndGeneInfo, type SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
+import { getSegmentAndGeneInfo, getSegmentNames, type SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
@@ -64,11 +64,9 @@ export const SearchForm = ({
     setSelectedReferences,
     selectedReferences,
 }: SearchFormProps) => {
-    const segments = Object.keys(referenceGenomes.segmentReferenceGenomes);
-
     const excluded = new Set<string>([
         ACCESSION_FIELD,
-        ...segments.map(
+        ...getSegmentNames(referenceGenomes).map(
             (segmentName) =>
                 getReferenceIdentifier(referenceIdentifierField, segmentName, referenceGenomes.isMultiSegmented)!,
         ),

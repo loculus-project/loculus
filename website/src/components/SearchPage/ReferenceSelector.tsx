@@ -3,7 +3,7 @@ import { type FC, useId, useMemo } from 'react';
 import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
-import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
+import { getSegmentNames, type SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { Button } from '../common/Button.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 
@@ -30,7 +30,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
 }) => {
     const baseSelectId = useId();
 
-    const segments = Object.keys(referenceGenomes.segmentReferenceGenomes);
+    const segments = getSegmentNames(referenceGenomes);
 
     // Only keep segments that actually need a selector
     const segmentsWithMultipleReferences = segments.filter(
@@ -42,7 +42,6 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
     }
 
     const labelsBySegment = useMemo(() => {
-        const segments = Object.keys(referenceGenomes.segmentReferenceGenomes);
 
         return segments.reduce<Record<string, string | undefined>>((acc, segmentName) => {
             const identifier = getReferenceIdentifier(
