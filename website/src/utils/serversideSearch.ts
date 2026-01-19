@@ -1,5 +1,5 @@
 import { validateSingleValue } from './extractFieldValue';
-import { getReferenceIdentifier } from './referenceSelection.ts';
+import { getSelectedReferences } from './referenceSelection.ts';
 import {
     getColumnVisibilitiesFromQuery,
     MetadataFilterSchema,
@@ -8,7 +8,7 @@ import {
     PAGE_KEY,
     type SearchResponse,
 } from './search';
-import { getSegmentAndGeneInfo, type SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
+import { getSegmentAndGeneInfo } from './sequenceTypeHelpers.ts';
 import { FieldFilterSet } from '../components/SearchPage/DownloadDialog/SequenceFilters';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
@@ -24,7 +24,7 @@ export const performLapisSearchQueries = async (
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
-    const selectedReferences = useSelectedReferences({
+    const selectedReferences = getSelectedReferences({
         referenceGenomes,
         schema,
         state,
@@ -79,30 +79,3 @@ export const performLapisSearchQueries = async (
         totalCount: aggregatedResult.unwrapOr({ data: [{ count: 0 }] }).data[0].count,
     };
 };
-
-//TODO: this is a duplication because I cant use react here
-type UseSelectedReferencesArgs = {
-    referenceGenomes: ReferenceGenomes;
-    schema: { referenceIdentifierField?: string };
-    state: Record<string, unknown>;
-};
-
-export function useSelectedReferences({ referenceGenomes, schema, state }: UseSelectedReferencesArgs) {
-    const segments = Object.keys(referenceGenomes.segmentReferenceGenomes);
-    const result: SegmentReferenceSelections = {};
-
-    segments.forEach((segmentName) => {
-        const referenceIdentifier = getReferenceIdentifier(
-            schema.referenceIdentifierField,
-            segmentName,
-            segments.length > 1,
-        );
-
-        result[segmentName] =
-            referenceIdentifier === undefined
-                ? null
-                : ((state[referenceIdentifier] as string | null | undefined) ?? null);
-    });
-
-    return result;
-}

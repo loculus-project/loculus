@@ -22,7 +22,9 @@ export const GET: APIRoute = createDownloadAPIRoute(
                 return lapisClient.getMultiSegmentSequenceFasta(accessionVersion, segmentNames);
             }
 
-            return lapisClient.getSequenceFasta(accessionVersion, { fastaHeaderTemplate: `{${ACCESSION_VERSION_FIELD}}` });
+            return lapisClient.getSequenceFasta(accessionVersion, {
+                fastaHeaderTemplate: `{${ACCESSION_VERSION_FIELD}}`,
+            });
         }
 
         return lapisClient.getSequenceFasta(accessionVersion);
