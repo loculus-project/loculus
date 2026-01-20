@@ -16,14 +16,14 @@ const accessionVersion = 'accession';
 
 const singleSegmentedSequenceType: SequenceType = {
     type: 'nucleotide',
-    name: { label: 'pretty much anything', lapisName: 'pretty much anything' },
+    name: { name: 'pretty much anything', lapisName: 'pretty much anything' },
     aligned: true,
 };
 
 const multiSegmentName = 'main2';
 const multiSegmentedSequenceType: SequenceType = {
     type: 'nucleotide',
-    name: { label: multiSegmentName, lapisName: multiSegmentName },
+    name: { name: multiSegmentName, lapisName: multiSegmentName },
     aligned: true,
 };
 

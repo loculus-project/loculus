@@ -10,6 +10,10 @@ import type { FieldValues, MetadataFilter, Schema } from '../../types/config.ts'
 import { type ReferenceAccession, type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { ACTIVE_FILTER_BADGE_TEST_ID } from '../common/ActiveFilters.tsx';
+import {
+    SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+    SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+} from '../../types/referenceGenomes.spec.ts';
 
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
@@ -63,31 +67,16 @@ const defaultSearchFormFilters: MetadataFilter[] = [
     },
 ];
 
-const defaultAccession: ReferenceAccession = {
-    name: 'main',
-    insdcAccessionFull: undefined,
-};
-
-const defaultReferenceGenomesMap: ReferenceGenomes = {
-    segments: {
-        main: {
-            references: ['ref1'],
-            insdcAccessions: { ref1: defaultAccession },
-            genesByReference: { ref1: ['gene1', 'gene2'] },
-        },
-    },
-};
-
 function renderSearchFullUI({
     searchFormFilters = [...defaultSearchFormFilters],
     clientConfig = testConfig.public,
-    referenceGenomesMap = defaultReferenceGenomesMap,
+    referenceGenomes = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
     hiddenFieldValues = {},
     referenceIdentifierField,
 }: {
     searchFormFilters?: MetadataFilter[];
     clientConfig?: ClientConfig;
-    referenceGenomesMap?: ReferenceGenomes;
+    referenceGenomes?: ReferenceGenomes;
     hiddenFieldValues?: FieldValues;
     referenceIdentifierField?: string | undefined;
 } = {}) {
@@ -98,7 +87,7 @@ function renderSearchFullUI({
 
     const props = {
         accessToken: 'dummyAccessToken',
-        referenceGenomesMap,
+        referenceGenomes,
         myGroups: [],
         organism: testOrganism,
         clientConfig,
@@ -388,21 +377,7 @@ describe('SearchFullUI', () => {
                     displayName: 'suborganism',
                 },
             ],
-            referenceGenomesMap: {
-                segments: {
-                    main: {
-                        references: ['suborganism1', 'suborganism2'],
-                        insdcAccessions: {
-                            suborganism1: defaultAccession,
-                            suborganism2: defaultAccession,
-                        },
-                        genesByReference: {
-                            suborganism1: ['gene1'],
-                            suborganism2: ['gene1'],
-                        },
-                    },
-                },
-            },
+            referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
         });
 
         const suborganismSelector = () => screen.findByLabelText('suborganism');

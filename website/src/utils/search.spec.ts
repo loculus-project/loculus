@@ -32,24 +32,24 @@ describe('MetadataVisibility', () => {
     it('should return false when isChecked is false', () => {
         const visibility = new MetadataVisibility(false, undefined);
 
-        expect(visibility.isVisible(null)).toBe(false);
-        expect(visibility.isVisible('suborganism1')).toBe(false);
+        expect(visibility.isVisible({ main: null })).toBe(false);
+        expect(visibility.isVisible({ main: 'suborganism1' })).toBe(false);
     });
 
     it('should return true when isChecked is true and onlyForReference is undefined', () => {
         const visibility = new MetadataVisibility(true, undefined);
 
-        expect(visibility.isVisible(null)).toBe(true);
-        expect(visibility.isVisible('suborganism1')).toBe(true);
-        expect(visibility.isVisible('suborganism2')).toBe(true);
+        expect(visibility.isVisible({ main: null })).toBe(true);
+        expect(visibility.isVisible({ main: 'suborganism1' })).toBe(true);
+        expect(visibility.isVisible({ main: 'suborganism2' })).toBe(true);
     });
 
     it('should return true when isChecked is true and selectedSuborganism matches or is not set', () => {
         const visibility = new MetadataVisibility(true, 'suborganism1');
 
-        expect(visibility.isVisible(null)).toBe(true);
-        expect(visibility.isVisible('suborganism1')).toBe(true);
-        expect(visibility.isVisible('suborganism2')).toBe(false);
-        expect(visibility.isVisible('suborganism3')).toBe(false);
+        expect(visibility.isVisible({ main: null })).toBe(true);
+        expect(visibility.isVisible({ main: 'suborganism1' })).toBe(true);
+        expect(visibility.isVisible({ main: 'suborganism2' })).toBe(false);
+        expect(visibility.isVisible({ main: 'suborganism3' })).toBe(false);
     });
 });

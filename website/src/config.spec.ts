@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { validateWebsiteConfig } from './config.ts';
 import type { WebsiteConfig } from './types/config.ts';
+import { SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES } from './types/referenceGenomes.spec.ts';
 
 const defaultConfig: WebsiteConfig = {
     accessionPrefix: '',
@@ -64,7 +65,7 @@ describe('validateWebsiteConfig', () => {
                         submissionDataTypes: { consensusSequences: false },
                         referenceIdentifierField: 'suborganismField',
                     },
-                    referenceGenomes: {},
+                    referenceGenomes: SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
                 },
             },
         });
