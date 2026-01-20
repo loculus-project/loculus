@@ -8,7 +8,10 @@ import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { type ReferenceAccession, type ReferenceGenomes } from '../../types/referencesGenomes';
 import AkarInfo from '~icons/ri/information-line';
-import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers';
+import {
+    getInsdcAccessionsFromSegmentReferences,
+    type SegmentReferenceSelections,
+} from '../../utils/sequenceTypeHelpers';
 
 interface Props {
     dataTableData: DataTableData;
@@ -39,20 +42,8 @@ const DataTableComponent: React.FC<Props> = ({
     referenceGenomes,
     segmentReferences,
 }) => {
-    // Gather INSDC accessions from all segment/reference combinations
-    const reference: ReferenceAccession[] = [];
-    for (const [segmentName, referenceName] of Object.entries(segmentReferences)) {
-        const segmentData = referenceGenomes.segmentReferenceGenomes[segmentName];
-        if (referenceName === null) {
-            continue;
-        }
-        const accession = segmentData?.[referenceName].insdcAccessionFull;
-        reference.push({
-            name: segmentName,
-            ...(accession !== null && { insdcAccessionFull: accession }),
-        });
-    }
-    const hasReferenceAccession = reference.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
+    const references = getInsdcAccessionsFromSegmentReferences(referenceGenomes, segmentReferences);
+    const hasReferenceAccession = references.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
 
     return (
         <div>
@@ -73,14 +64,14 @@ const DataTableComponent: React.FC<Props> = ({
                         <div className='flex flex-row'>
                             <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
                             {hasReferenceAccession && header.includes('Alignment') && (
-                                <ReferenceSequenceLinkButton reference={reference} />
+                                <ReferenceSequenceLinkButton reference={references} />
                             )}
                         </div>
                         {hasReferenceAccession && header.includes('mutation') && (
                             <h2 className='pt-2 text-xs text-gray-500'>
                                 <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
-                                Mutations called relative to the <ReferenceDisplay reference={reference} /> reference
-                                {reference.length > 1 ? 's' : ''}
+                                Mutations called relative to the <ReferenceDisplay reference={references} /> reference
+                                {references.length > 1 ? 's' : ''}
                             </h2>
                         )}
                         <div className='mt-4'>
