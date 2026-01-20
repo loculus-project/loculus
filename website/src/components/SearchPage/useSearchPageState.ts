@@ -5,7 +5,11 @@ import useUrlParamState from '../../hooks/useUrlParamState.ts';
 import type { FieldValues, FieldValueUpdate, Schema, SetSomeFieldValues } from '../../types/config.ts';
 import type { OrderDirection } from '../../types/lapis.ts';
 import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
-import { useSelectedReferences, useSetSelectedReferences } from '../../utils/referenceSelection.ts';
+import {
+    getReferenceIdentifier,
+    useSelectedReferences,
+    useSetSelectedReferences,
+} from '../../utils/referenceSelection.ts';
 import {
     COLUMN_VISIBILITY_PREFIX,
     HALF_SCREEN_PARAM,
@@ -15,6 +19,7 @@ import {
     SELECTED_SEQ_PARAM,
     VISIBILITY_PREFIX,
 } from '../../utils/search.ts';
+import { getSegmentNames } from '../../utils/sequenceTypeHelpers.ts';
 
 // UI-only parameters that should not reset pagination when changed
 const UI_ONLY_PARAMS = new Set([SELECTED_SEQ_PARAM, HALF_SCREEN_PARAM]);
@@ -90,14 +95,30 @@ export function useSearchPageState({
                         newState[key] = value;
                     }
 
-                    if (schema.referenceIdentifierField !== undefined && key === schema.referenceIdentifierField) {
-                        delete newState[MUTATION_KEY];
-                        filterSchema
-                            .ungroupedMetadataFilters()
-                            .filter((metadataFilter) => metadataFilter.onlyForReference !== undefined)
-                            .forEach((metadataFilter) => {
-                                delete newState[metadataFilter.name];
-                            });
+                    if (schema.referenceIdentifierField !== undefined) {
+                        for (const segmentName of getSegmentNames(referenceGenomes)) {
+                            if (
+                                key ===
+                                getReferenceIdentifier(
+                                    schema.referenceIdentifierField,
+                                    segmentName,
+                                    referenceGenomes.isMultiSegmented,
+                                )
+                            ) {
+                                delete newState[MUTATION_KEY];
+                                const referenceNames = Object.keys(
+                                    referenceGenomes.segmentReferenceGenomes[segmentName],
+                                );
+                                filterSchema
+                                    .ungroupedMetadataFilters()
+                                    .filter((metadataFilter) =>
+                                        referenceNames.some((value) => value === metadataFilter.onlyForReference),
+                                    )
+                                    .forEach((metadataFilter) => {
+                                        delete newState[metadataFilter.name];
+                                    });
+                            }
+                        }
                     }
                 });
 
@@ -110,7 +131,7 @@ export function useSearchPageState({
                 setPage(1);
             }
         },
-        [setState, setPage, hiddenFieldValues, schema.referenceIdentifierField, filterSchema],
+        [setState, setPage, hiddenFieldValues, schema.referenceIdentifierField, filterSchema, referenceGenomes],
     );
 
     const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
