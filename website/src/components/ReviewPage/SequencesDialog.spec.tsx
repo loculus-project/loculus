@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest';
 
 import { SequencesDialog } from './SequencesDialog.tsx';
 import { processedStatus, type SequenceEntryToEdit } from '../../types/backend.ts';
+import { SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES } from '../../types/referenceGenomes.spec.ts';
 
 describe('SequencesDialog', () => {
     test('should only show existing sequences', async () => {
@@ -12,7 +13,7 @@ describe('SequencesDialog', () => {
                 isOpen={true}
                 onClose={() => undefined}
                 dataToView={dataToView}
-                referenceGenomes={new Map()}
+                referenceGenomes={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -45,12 +46,7 @@ describe('SequencesDialog', () => {
                 isOpen={true}
                 onClose={() => undefined}
                 dataToView={dataToView}
-                segmentAndGeneDisplayNameMap={
-                    new Map([
-                        [sequence1, 'mappedName1'],
-                        [gene1, 'mappedGeneName1'],
-                    ])
-                }
+                referenceGenomes={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
