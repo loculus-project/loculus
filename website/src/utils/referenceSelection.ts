@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
-import type { ReferenceGenomes } from '../types/referencesGenomes';
 import { getSegmentNames, type SegmentReferenceSelections } from './sequenceTypeHelpers';
+import type { ReferenceGenomes } from '../types/referencesGenomes';
 
 export function getReferenceIdentifier(identifier: string | undefined, segmentName: string, multipleSegments: boolean) {
     if (identifier === undefined) return undefined;

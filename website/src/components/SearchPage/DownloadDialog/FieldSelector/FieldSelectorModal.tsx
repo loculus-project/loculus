@@ -3,6 +3,7 @@ import { type Dispatch, type FC, type SetStateAction } from 'react';
 import { ACCESSION_VERSION_FIELD } from '../../../../settings.ts';
 import { type Metadata, type Schema } from '../../../../types/config.ts';
 import type { MetadataVisibility } from '../../../../utils/search.ts';
+import type { SegmentReferenceSelections } from '../../../../utils/sequenceTypeHelpers.ts';
 import {
     type FieldItem,
     type FieldItemDisplayState,
@@ -10,7 +11,6 @@ import {
     FieldSelectorModal as CommonFieldSelectorModal,
 } from '../../../common/FieldSelectorModal.tsx';
 import { isActiveForSelectedReferenceName } from '../../isActiveForSelectedReferenceName.tsx';
-import type { SegmentReferenceSelections } from '../../../../utils/sequenceTypeHelpers.ts';
 
 type FieldSelectorProps = {
     isOpen: boolean;

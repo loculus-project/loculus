@@ -12,10 +12,10 @@ import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms 
 import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
 import { type ReferenceGenomes } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
+import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
 import MdiEye from '~icons/mdi/eye';
-import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 
 interface Props {
     tableData: TableDataEntry[];
