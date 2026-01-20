@@ -262,7 +262,7 @@ CREATE TABLE public.groups_table (
     address_country character varying(255) NOT NULL,
     contact_email character varying(255) NOT NULL,
     created_at timestamp without time zone NOT NULL,
-    created_by text NOT NULL
+    created_by text
 );
 
 
