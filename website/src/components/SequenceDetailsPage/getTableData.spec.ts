@@ -8,7 +8,10 @@ import { LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { Schema } from '../../types/config.ts';
 import type { MutationProportionCount } from '../../types/lapis.ts';
-import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import {
+    SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+    SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+} from '../../types/referenceGenomes.spec.ts';
 
 const schema: Schema = {
     organismName: 'instance name',
@@ -28,29 +31,8 @@ const schema: Schema = {
     referenceIdentifierField: 'genotype',
 };
 
-const singleReferenceGenomes: ReferenceGenomes = {
-    main: {
-        ref1: {
-            sequence: 'ATCG',
-            genes: {},
-        },
-    },
-};
-
-const genome1 = 'genome1';
-const genome2 = 'genome2';
-const multipleReferenceGenomes: ReferenceGenomes = {
-    main: {
-        [genome1]: {
-            sequence: 'ATCG',
-            genes: {},
-        },
-        [genome2]: {
-            sequence: 'ATCG',
-            genes: {},
-        },
-    },
-};
+const genome1 = 'ref1';
+const genome2 = 'ref2';
 
 const dummyError = {
     error: {
@@ -85,7 +67,12 @@ describe('getTableData', () => {
     test('should return an error when getSequenceDetails fails', async () => {
         mockRequest.lapis.details(500, dummyError);
 
-        const result = await getTableData(accessionVersion, schema, singleReferenceGenomes, lapisClient);
+        const result = await getTableData(
+            accessionVersion,
+            schema,
+            SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+            lapisClient,
+        );
 
         expect(result).toStrictEqual(err(dummyError.error));
     });
@@ -93,7 +80,12 @@ describe('getTableData', () => {
     test('should return an error when getSequenceMutations fails', async () => {
         mockRequest.lapis.nucleotideMutations(500, dummyError);
 
-        const result = await getTableData(accessionVersion, schema, singleReferenceGenomes, lapisClient);
+        const result = await getTableData(
+            accessionVersion,
+            schema,
+            SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+            lapisClient,
+        );
 
         expect(result).toStrictEqual(err(dummyError.error));
     });
@@ -101,13 +93,23 @@ describe('getTableData', () => {
     test('should return an error when getSequenceInsertions fails', async () => {
         mockRequest.lapis.nucleotideInsertions(500, dummyError);
 
-        const result = await getTableData(accessionVersion, schema, singleReferenceGenomes, lapisClient);
+        const result = await getTableData(
+            accessionVersion,
+            schema,
+            SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+            lapisClient,
+        );
 
         expect(result).toStrictEqual(err(dummyError.error));
     });
 
     test('should return default values when there is no data', async () => {
-        const result = await getTableData(accessionVersion, schema, singleReferenceGenomes, lapisClient);
+        const result = await getTableData(
+            accessionVersion,
+            schema,
+            SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+            lapisClient,
+        );
 
         const data = result._unsafeUnwrap().data;
         expect(data).toStrictEqual(defaultMutationsInsertionsDeletionsList);
@@ -127,7 +129,7 @@ describe('getTableData', () => {
             ].map((d) => toLapisEntry(d)),
         });
 
-        const result = await getTableData('accession', schema, singleReferenceGenomes, lapisClient);
+        const result = await getTableData('accession', schema, SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, lapisClient);
 
         const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
@@ -150,7 +152,7 @@ describe('getTableData', () => {
         mockRequest.lapis.nucleotideMutations(200, { info, data: nucleotideMutations });
         mockRequest.lapis.aminoAcidMutations(200, { info, data: aminoAcidMutations });
 
-        const result = await getTableData('accession', schema, singleReferenceGenomes, lapisClient);
+        const result = await getTableData('accession', schema, SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, lapisClient);
 
         expectMutationDataMatches(result);
     });
@@ -160,7 +162,7 @@ describe('getTableData', () => {
         mockRequest.lapis.nucleotideMutations(200, { info, data: multiPathogenNucleotideMutations });
         mockRequest.lapis.aminoAcidMutations(200, { info, data: multiPathogenAminoAcidMutations });
 
-        const result = await getTableData('accession', schema, multipleReferenceGenomes, lapisClient);
+        const result = await getTableData('accession', schema, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, lapisClient);
 
         expectMutationDataMatches(result);
     });
@@ -245,7 +247,7 @@ describe('getTableData', () => {
         mockRequest.lapis.nucleotideInsertions(200, { info, data: nucleotideInsertions });
         mockRequest.lapis.aminoAcidInsertions(200, { info, data: aminoAcidInsertions });
 
-        const result = await getTableData('accession', schema, singleReferenceGenomes, lapisClient);
+        const result = await getTableData('accession', schema, SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, lapisClient);
         expectInsertionsMatch(result);
     });
 
@@ -254,7 +256,7 @@ describe('getTableData', () => {
         mockRequest.lapis.nucleotideInsertions(200, { info, data: multiPathogenNucleotideInsertions });
         mockRequest.lapis.aminoAcidInsertions(200, { info, data: multiPathogenAminoAcidInsertions });
 
-        const result = await getTableData('accession', schema, multipleReferenceGenomes, lapisClient);
+        const result = await getTableData('accession', schema, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, lapisClient);
         expectInsertionsMatch(result);
     });
 
@@ -279,7 +281,7 @@ describe('getTableData', () => {
     test('should map timestamps to human readable dates', async () => {
         mockRequest.lapis.details(200, { info, data: [{ timestampField: 1706194761 }] });
 
-        const result = await getTableData('accession', schema, singleReferenceGenomes, lapisClient);
+        const result = await getTableData('accession', schema, SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, lapisClient);
 
         const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
@@ -297,7 +299,7 @@ describe('getTableData', () => {
                 info,
                 data: [toLapisEntry({}, expectedIsRevocation)],
             });
-            const result = await getTableData('accession', schema, singleReferenceGenomes, lapisClient);
+            const result = await getTableData('accession', schema, SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, lapisClient);
             const isRevocation = result._unsafeUnwrap().isRevocation;
             expect(isRevocation).toBe(expectedIsRevocation);
         }
@@ -316,7 +318,7 @@ describe('getTableData', () => {
                     consensusSequences: false,
                 },
             },
-            singleReferenceGenomes,
+            SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
             lapisClient,
         );
 
@@ -331,7 +333,12 @@ describe('getTableData', () => {
     });
 
     test('should return the segmentReferences for a single reference genome', async () => {
-        const result = await getTableData(accessionVersion, schema, singleReferenceGenomes, lapisClient);
+        const result = await getTableData(
+            accessionVersion,
+            schema,
+            SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+            lapisClient,
+        );
 
         const segmentReferences = result._unsafeUnwrap().segmentReferences;
 
@@ -341,7 +348,7 @@ describe('getTableData', () => {
     test('should return the segmentReferences for multiple reference genomes', async () => {
         mockRequest.lapis.details(200, { info, data: [{ genotype: genome2 }] });
 
-        const result = await getTableData(accessionVersion, schema, multipleReferenceGenomes, lapisClient);
+        const result = await getTableData(accessionVersion, schema, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, lapisClient);
 
         const segmentReferences = result._unsafeUnwrap().segmentReferences;
 
@@ -351,7 +358,7 @@ describe('getTableData', () => {
     test('should throw when the suborganism name is not in multiple reference genomes', async () => {
         mockRequest.lapis.details(200, { info, data: [{ genotype: 5 }] });
 
-        const result = await getTableData(accessionVersion, schema, multipleReferenceGenomes, lapisClient);
+        const result = await getTableData(accessionVersion, schema, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, lapisClient);
 
         expect(result).toStrictEqual(
             err({
@@ -367,7 +374,7 @@ describe('getTableData', () => {
     test('should tolerate when genotype is null (as e.g. for revocation entries)', async () => {
         mockRequest.lapis.details(200, { info, data: [{ genotype: null }] });
 
-        const result = await getTableData(accessionVersion, schema, multipleReferenceGenomes, lapisClient);
+        const result = await getTableData(accessionVersion, schema, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, lapisClient);
 
         const segmentReferences = result._unsafeUnwrap().segmentReferences;
 
@@ -377,7 +384,7 @@ describe('getTableData', () => {
     test('should throw when the suborganism name is not in multiple reference genomes', async () => {
         mockRequest.lapis.details(200, { info, data: [{ genotype: 'unknown suborganism' }] });
 
-        const result = await getTableData(accessionVersion, schema, multipleReferenceGenomes, lapisClient);
+        const result = await getTableData(accessionVersion, schema, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, lapisClient);
 
         expect(result).toStrictEqual(
             err({
