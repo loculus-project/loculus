@@ -1,6 +1,5 @@
 import { sentenceCase } from 'change-case';
 import { err, ok, Result } from 'neverthrow';
-import z from 'zod';
 
 import type { TableDataEntry } from './types.js';
 import { type LapisClient } from '../../services/lapisClient.ts';
@@ -14,7 +13,7 @@ import {
 } from '../../types/lapis.ts';
 import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
-import { getReferenceIdentifier, getSelectedReferences } from '../../utils/referenceSelection.ts';
+import { getSelectedReferences } from '../../utils/referenceSelection.ts';
 import {
     lapisNameToDisplayName,
     segmentsWithMultipleReferences,
