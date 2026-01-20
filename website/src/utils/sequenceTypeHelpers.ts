@@ -1,4 +1,5 @@
 import type {
+    ReferenceAccession,
     ReferenceGenomes,
     ReferenceGenomesSchema,
     ReferenceName,
@@ -149,6 +150,29 @@ export function getSegmentAndGeneInfo(
         nucleotideSegmentInfos,
         geneInfos,
     };
+}
+
+export function getInsdcAccessionsFromSegmentReferences(
+    referenceGenomes: ReferenceGenomes,
+    segmentReferences: SegmentReferenceSelections,
+): ReferenceAccession[] {
+    const references: ReferenceAccession[] = [];
+    for (const [segmentName, referenceName] of Object.entries(segmentReferences)) {
+        const segmentData = referenceGenomes.segmentReferenceGenomes[segmentName];
+        let reference = referenceName;
+        if (!segmentsWithMultipleReferences(referenceGenomes).includes(segmentName)) {
+            reference = Object.keys(segmentData)[0];
+        }
+        if (reference === null) {
+            continue;
+        }
+        const accession = segmentData?.[reference].insdcAccessionFull;
+        references.push({
+            name: segmentName,
+            ...(accession !== null && { insdcAccessionFull: accession }),
+        });
+    }
+    return references;
 }
 
 export function lapisNameToDisplayName(referenceGenomes: ReferenceGenomes): Map<string, string | undefined> {
