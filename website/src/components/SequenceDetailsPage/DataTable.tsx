@@ -7,11 +7,11 @@ import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { type ReferenceAccession, type ReferenceGenomes } from '../../types/referencesGenomes';
-import AkarInfo from '~icons/ri/information-line';
 import {
     getInsdcAccessionsFromSegmentReferences,
     type SegmentReferenceSelections,
 } from '../../utils/sequenceTypeHelpers';
+import AkarInfo from '~icons/ri/information-line';
 
 interface Props {
     dataTableData: DataTableData;

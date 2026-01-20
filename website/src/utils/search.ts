@@ -1,6 +1,7 @@
 import { sentenceCase } from 'change-case';
 
 import { validateSingleValue } from './extractFieldValue';
+import type { SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
 import type {
@@ -11,7 +12,6 @@ import type {
     MetadataType,
     Schema,
 } from '../types/config';
-import type { SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
 
 export const VISIBILITY_PREFIX = 'visibility_';
 

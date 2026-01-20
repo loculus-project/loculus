@@ -115,7 +115,7 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
 }
 
 export const getSegmentNames = (genomes: ReferenceGenomes) =>
-    Object.keys(genomes.segmentReferenceGenomes) as SegmentName[];
+    Object.keys(genomes.segmentReferenceGenomes);
 
 /**
  * Get segment and gene info where each segment can have its own reference.
