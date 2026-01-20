@@ -5,8 +5,13 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SequencesContainer } from './SequencesContainer.tsx';
 import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
-import type { ReferenceAccession, ReferenceGenomes } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomes } from '../../../types/referencesGenomes.ts';
 import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
+import {
+    MULTI_SEG_SINGLE_REF_REFERENCEGENOMES,
+    SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+    SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+} from '../../../types/referenceGenomes.spec.ts';
 
 vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
@@ -45,36 +50,12 @@ function renderSequenceViewer(referenceGenomes: ReferenceGenomes, segmentReferen
     );
 }
 
-function renderSingleReferenceSequenceViewer({
-    nucleotideSegmentNames,
-    genes,
-}: {
-    nucleotideSegmentNames: string[];
-    genes: string[];
-}) {
-    const segments: Record<
-        string,
-        {
-            references: string[];
-            insdcAccessions: Record<string, ReferenceAccession>;
-            genesByReference: Record<string, string[]>;
-        }
-    > = {};
-    const segmentReferences: SegmentReferenceSelections = {};
-
-    for (const segmentName of nucleotideSegmentNames) {
-        segments[segmentName] = {
-            references: ['ref1'],
-            insdcAccessions: {},
-            genesByReference: { ref1: genes },
-        };
-        segmentReferences[segmentName] = 'ref1';
-    }
-
-    renderSequenceViewer({ segments }, segmentReferences);
+function renderSingleReferenceSequenceViewer(
+    referenceGenomes: ReferenceGenomes,
+    segmentReferences: SegmentReferenceSelections,
+) {
+    renderSequenceViewer(referenceGenomes, segmentReferences);
 }
-
-const multiSegmentName = 'main2';
 
 const singleSegmentSequence = 'SingleSegmentSequence';
 const multiSegmentSequence = 'MultiSegmentSequence';
@@ -85,25 +66,18 @@ describe('SequencesContainer', () => {
     describe('with single reference', () => {
         beforeEach(() => {
             mockRequest.lapis.alignedNucleotideSequences(200, `>some\n${singleSegmentSequence}`);
-            mockRequest.lapis.alignedNucleotideSequencesMultiSegment(
-                200,
-                `>some\n${multiSegmentSequence}`,
-                multiSegmentName,
-            );
+            mockRequest.lapis.alignedNucleotideSequencesMultiSegment(200, `>some\n${multiSegmentSequence}`, 'L');
             mockRequest.lapis.unalignedNucleotideSequences(200, `>some\n${unalignedSingleSegmentSequence}`);
             mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(200, '', 'main');
             mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(
                 200,
                 `>some\n${unalignedMultiSegmentSequence}`,
-                multiSegmentName,
+                'L',
             );
         });
 
         test('should render single segmented sequence', async () => {
-            renderSingleReferenceSequenceViewer({
-                nucleotideSegmentNames: ['main'],
-                genes: [],
-            });
+            renderSingleReferenceSequenceViewer(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { main: null });
 
             click(LOAD_SEQUENCES_BUTTON);
 
@@ -131,14 +105,10 @@ describe('SequencesContainer', () => {
         });
 
         test('should render multi segmented sequence', async () => {
-            renderSingleReferenceSequenceViewer({
-                nucleotideSegmentNames: ['main', multiSegmentName],
-                genes: [],
-            });
-
+            renderSingleReferenceSequenceViewer(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { L: null, S: null });
             click(LOAD_SEQUENCES_BUTTON);
 
-            click(getAlignedSegmentLabel(multiSegmentName));
+            click(getAlignedSegmentLabel('L'));
             await waitFor(() => {
                 expect(
                     screen.getByText(multiSegmentSequence, {
@@ -147,10 +117,10 @@ describe('SequencesContainer', () => {
                 ).toBeVisible();
             });
             // Regression test for #5330
-            expectTabActive(getAlignedSegmentLabel(multiSegmentName));
-            expectTabNotActive(getAlignedSegmentLabel('main'));
+            expectTabActive(getAlignedSegmentLabel('L'));
+            expectTabNotActive(getAlignedSegmentLabel('L'));
 
-            click(getUnalignedSegmentLabel(multiSegmentName));
+            click(getUnalignedSegmentLabel('L'));
             await waitFor(() => {
                 expect(
                     screen.getByText(unalignedMultiSegmentSequence, {
@@ -158,8 +128,8 @@ describe('SequencesContainer', () => {
                     }),
                 ).toBeVisible();
             });
-            expectTabActive(getUnalignedSegmentLabel(multiSegmentName));
-            expectTabNotActive(getAlignedSegmentLabel(multiSegmentName));
+            expectTabActive(getUnalignedSegmentLabel('L'));
+            expectTabNotActive(getAlignedSegmentLabel('L'));
         });
     });
 
@@ -174,21 +144,7 @@ describe('SequencesContainer', () => {
             mockRequest.lapis.alignedNucleotideSequences(200, `>some\n${alignedSequence}`);
             mockRequest.lapis.unalignedNucleotideSequences(200, `>some\n${sequence}`);
 
-            renderSequenceViewer(
-                {
-                    segments: {
-                        main: {
-                            references: [suborganism1, suborganism2],
-                            insdcAccessions: {},
-                            genesByReference: {
-                                [suborganism1]: [],
-                                [suborganism2]: [],
-                            },
-                        },
-                    },
-                },
-                { main: suborganism1 },
-            );
+            renderSequenceViewer(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: suborganism1 });
 
             click(LOAD_SEQUENCES_BUTTON);
 
@@ -222,45 +178,26 @@ describe('SequencesContainer', () => {
                 `${suborganism2}-segment2`,
             );
 
-            renderSequenceViewer(
-                {
-                    segments: {
-                        segment1: {
-                            references: [suborganism1, suborganism2],
-                            insdcAccessions: {},
-                            genesByReference: {
-                                [suborganism1]: [],
-                                [suborganism2]: [],
-                            },
-                        },
-                        segment2: {
-                            references: [suborganism1, suborganism2],
-                            insdcAccessions: {},
-                            genesByReference: {
-                                [suborganism1]: [],
-                                [suborganism2]: [],
-                            },
-                        },
-                    },
-                },
-                { segment1: suborganism2, segment2: suborganism2 },
-            );
+            renderSequenceViewer(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, {
+                L: suborganism2,
+                S: suborganism1,
+            });
 
             click(LOAD_SEQUENCES_BUTTON);
 
-            click(getAlignedSegmentLabel('segment1'));
+            click(getAlignedSegmentLabel('L'));
             await waitFor(() => {
                 expect(screen.getByText(alignedSequence, { exact: false })).toBeVisible();
             });
-            expectTabActive(getAlignedSegmentLabel('segment1'));
-            expectTabNotActive(getUnalignedSegmentLabel('segment1'));
+            expectTabActive(getAlignedSegmentLabel('L'));
+            expectTabNotActive(getUnalignedSegmentLabel('L'));
 
-            click(getUnalignedSegmentLabel('segment2'));
+            click(getUnalignedSegmentLabel('S'));
             await waitFor(() => {
                 expect(screen.getByText(sequence, { exact: false })).toBeVisible();
             });
-            expectTabActive(getUnalignedSegmentLabel('segment2'));
-            expectTabNotActive(getAlignedSegmentLabel('segment1'));
+            expectTabActive(getUnalignedSegmentLabel('S'));
+            expectTabNotActive(getAlignedSegmentLabel('L'));
         });
     });
 

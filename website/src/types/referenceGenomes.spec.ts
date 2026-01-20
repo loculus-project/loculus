@@ -1,4 +1,4 @@
-import type { ReferenceGenomes } from "./referencesGenomes";
+import type { ReferenceGenomes } from './referencesGenomes';
 
 export const SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomes = {
     segmentReferenceGenomes: {
@@ -23,18 +23,14 @@ export const MULTI_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomes = {
             singleReference: {
                 lapisName: 'S',
                 insdcAccessionFull: 'defaultInsdcAccession1',
-                genes: [
-                    { lapisName: 'gene1', name: 'gene1' },
-                ],
+                genes: [{ lapisName: 'gene1', name: 'gene1' }],
             },
         },
         L: {
             singleReference: {
                 lapisName: 'L',
                 insdcAccessionFull: 'defaultInsdcAccession2',
-                genes: [
-                    { lapisName: 'gene2', name: 'gene2' },
-                ],
+                genes: [{ lapisName: 'gene2', name: 'gene2' }],
             },
         },
     },

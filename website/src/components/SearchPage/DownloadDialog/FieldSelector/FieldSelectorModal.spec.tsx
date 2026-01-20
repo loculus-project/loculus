@@ -6,6 +6,7 @@ import { FieldSelectorModal, getDefaultSelectedFields } from './FieldSelectorMod
 import { ACCESSION_VERSION_FIELD } from '../../../../settings';
 import { type Metadata } from '../../../../types/config';
 import { MetadataVisibility } from '../../../../utils/search.ts';
+import type { SegmentReferenceSelections } from '../../../../utils/sequenceTypeHelpers.ts';
 
 // Mock BaseDialog component
 vi.mock('../../../common/BaseDialog.tsx', () => ({
@@ -160,7 +161,7 @@ describe('FieldSelectorModal', () => {
         });
 
         it('should disable fields that are not for the currently selected suborganism', () => {
-            renderFieldSelectorModal('suborganism1', [
+            renderFieldSelectorModal({ main: 'suborganism1' }, [
                 {
                     name: 'field1',
                     displayName: 'Field 1',
@@ -194,7 +195,10 @@ describe('FieldSelectorModal', () => {
         });
     });
 
-    function renderFieldSelectorModal(selectedSuborganism: string | null = null, metadata: Metadata[] = mockMetadata) {
+    function renderFieldSelectorModal(
+        selectedReferenceNames: SegmentReferenceSelections = { main: null },
+        metadata: Metadata[] = mockMetadata,
+    ) {
         const { result } = renderHook(() => useState(getDefaultSelectedFields(metadata)));
 
         const getComponent = () => (
@@ -222,7 +226,7 @@ describe('FieldSelectorModal', () => {
                     )
                 }
                 onSelectedFieldsChange={result.current[1]}
-                selectedReferenceName={selectedSuborganism}
+                selectedReferenceNames={selectedReferenceNames}
             />
         );
 

@@ -12,7 +12,10 @@ import { versionStatuses } from '../../../types/lapis';
 import { type ReferenceGenomes } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
-import { SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES } from '../../../types/referenceGenomes.spec.ts';
+import {
+    SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+    SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+} from '../../../types/referenceGenomes.spec.ts';
 
 const defaultLapisUrl = 'https://lapis';
 const defaultOrganism = 'ebola';
@@ -44,7 +47,7 @@ async function renderDialog({
     dataUseTermsEnabled = true,
     richFastaHeaderFields,
     metadata = mockMetadata,
-    selectedReferenceNames = {"main": null},
+    selectedReferenceNames = { main: null },
     referenceIdentifierField,
     referenceGenomes = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 }: {
@@ -56,7 +59,7 @@ async function renderDialog({
     selectedReferenceNames?: SegmentReferenceSelections;
     referenceIdentifierField?: string;
     referenceGenomes?: ReferenceGenomes;
-}) {
+} = {}) {
     const schema: Schema = {
         defaultOrder: 'ascending',
         defaultOrderBy: '',
@@ -145,7 +148,7 @@ describe('DownloadDialog', () => {
                     field1: 'value1',
                 },
                 {},
-                { nucleotideSegmentInfos: [], geneInfos: []},
+                { nucleotideSegmentInfos: [], geneInfos: [] },
             ),
         });
         await checkAgreement();
@@ -290,7 +293,7 @@ describe('DownloadDialog', () => {
                     field2: 'value2',
                 },
                 {},
-                { nucleotideSegmentInfos: [], geneInfos: []},
+                { nucleotideSegmentInfos: [], geneInfos: [] },
             ),
         });
         await checkAgreement();
@@ -339,7 +342,7 @@ describe('DownloadDialog', () => {
                         field1: 'value1',
                     },
                     {},
-                    { nucleotideSegmentInfos: [], geneInfos: []},
+                    { nucleotideSegmentInfos: [], geneInfos: [] },
                 ),
             });
 
@@ -384,7 +387,7 @@ describe('DownloadDialog', () => {
         test('should enable the aligned sequence downloads when suborganism is selected', async () => {
             await renderDialog({
                 referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
-                selectedReferenceNames: {'main': 'ref1'},
+                selectedReferenceNames: { main: 'ref1' },
                 referenceIdentifierField: 'genotype',
             });
 
@@ -395,7 +398,7 @@ describe('DownloadDialog', () => {
         test('should download only the selected raw suborganism sequences when suborganism is selected', async () => {
             await renderDialog({
                 referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
-                selectedReferenceNames: {'main': 'ref1'},
+                selectedReferenceNames: { main: 'ref1' },
                 referenceIdentifierField: 'genotype',
             });
 
@@ -409,7 +412,7 @@ describe('DownloadDialog', () => {
         test('should download only the selected aligned suborganism sequences when suborganism is selected', async () => {
             await renderDialog({
                 referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
-                selectedReferenceNames: {'main': 'ref1'},
+                selectedReferenceNames: { main: 'ref1' },
                 referenceIdentifierField: 'genotype',
             });
 
@@ -423,7 +426,7 @@ describe('DownloadDialog', () => {
         test('should download only the selected aligned suborganism amino acid sequences when suborganism is selected', async () => {
             await renderDialog({
                 referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
-                selectedReferenceNames: {'main': 'ref1'},
+                selectedReferenceNames: { main: 'ref1' },
                 referenceIdentifierField: 'genotype',
             });
 
@@ -477,7 +480,7 @@ describe('DownloadDialog', () => {
         test('should exclude selected fields from download if they are not for selected suborganism', async () => {
             await renderDialog({
                 referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
-                selectedReferenceNames: {'main': 'ref2'},
+                selectedReferenceNames: { main: 'ref2' },
                 referenceIdentifierField: 'genotype',
                 metadata: metadataWithOnlyForReferenceName,
             });
