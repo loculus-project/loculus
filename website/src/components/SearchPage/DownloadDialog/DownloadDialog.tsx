@@ -14,6 +14,7 @@ import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { MetadataVisibility } from '../../../utils/search.ts';
 import {
     getSegmentAndGeneInfo,
+    segmentsWithMultipleReferences,
     type GeneInfo,
     type SegmentInfo,
     type SegmentReferenceSelections,
@@ -84,6 +85,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                 .map(([name]) => name),
         ],
         metadata: schema.metadata,
+        defaultFastaHeaderTemplate: (segmentsWithMultipleReferences(referenceGenomesInfo).length > 0) ? `{${ACCESSION_VERSION_FIELD}}` : undefined,
     });
 
     return (
@@ -165,6 +167,7 @@ function getDownloadOption({
     useMultiSegmentEndpoint,
     getVisibleFields,
     metadata,
+    defaultFastaHeaderTemplate,
 }: {
     downloadFormState: DownloadFormState;
     nucleotideSegmentInfos: SegmentInfo[];
@@ -172,6 +175,7 @@ function getDownloadOption({
     useMultiSegmentEndpoint: boolean;
     getVisibleFields: () => string[];
     metadata: Metadata[];
+    defaultFastaHeaderTemplate?: string;
 }): DownloadOption {
     const assembleDownloadDataType = (): DownloadDataType => {
         switch (downloadFormState.dataType) {
@@ -184,7 +188,10 @@ function getDownloadOption({
                 return {
                     type: downloadFormState.dataType,
                     segment: useMultiSegmentEndpoint ? downloadFormState.unalignedNucleotideSequence : undefined,
-                    richFastaHeaders: { include: downloadFormState.includeRichFastaHeaders },
+                    richFastaHeaders:
+                        defaultFastaHeaderTemplate !== undefined
+                            ? { include: true, fastaHeaderOverride: defaultFastaHeaderTemplate }
+                            : { include: downloadFormState.includeRichFastaHeaders },
                 };
             case 'alignedNucleotideSequences':
                 return {
@@ -221,3 +228,4 @@ function orderFieldsForDownload(fields: string[], metadata: Metadata[]): string[
         .sort((a, b) => (orderMap.get(a) ?? Number.MAX_SAFE_INTEGER) - (orderMap.get(b) ?? Number.MAX_SAFE_INTEGER));
     return [ACCESSION_VERSION_FIELD, ...ordered];
 }
+
