@@ -6,12 +6,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataFilter } from '../../types/config.ts';
-import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
 import {
     MULTI_SEG_SINGLE_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
-} from '../../types/referenceGenomes.spec.ts';
+} from '../../types/referenceGenomesInfo.spec.ts';
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
     observe() {}
@@ -49,7 +49,7 @@ const setASearchVisibility = vi.fn();
 const renderSearchForm = ({
     filterSchema = new MetadataFilterSchema([...defaultSearchFormFilters]),
     fieldValues = {},
-    referenceGenomes = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+    referenceGenomesInfo = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
     lapisSearchParameters = {},
     referenceIdentifierField,
     selectedReferences = {},
@@ -57,7 +57,7 @@ const renderSearchForm = ({
 }: {
     filterSchema?: MetadataFilterSchema;
     fieldValues?: Record<string, string>;
-    referenceGenomes?: ReferenceGenomes;
+    referenceGenomesInfo?: ReferenceGenomesInfo;
     lapisSearchParameters?: Record<string, string>;
     referenceIdentifierField?: string;
     selectedReferences?: Record<string, string>;
@@ -72,7 +72,7 @@ const renderSearchForm = ({
         lapisUrl: 'http://lapis.dummy.url',
         searchVisibilities,
         setASearchVisibility,
-        referenceGenomes: referenceGenomes,
+        referenceGenomesInfo: referenceGenomesInfo,
         lapisSearchParameters,
         showMutationSearch: true,
         referenceIdentifierField,
@@ -131,7 +131,7 @@ describe('SearchForm', () => {
                     lapisUrl='http://lapis.dummy.url'
                     searchVisibilities={defaultSearchVisibilities}
                     setASearchVisibility={setASearchVisibility}
-                    referenceGenomes={MULTI_SEG_SINGLE_REF_REFERENCEGENOMES}
+                    referenceGenomesInfo={MULTI_SEG_SINGLE_REF_REFERENCEGENOMES}
                     lapisSearchParameters={{}}
                     showMutationSearch={true}
                     referenceIdentifierField='My genotype'

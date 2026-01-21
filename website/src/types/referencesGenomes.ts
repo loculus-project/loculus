@@ -31,7 +31,7 @@ export type ReferenceGenomeMap = Record<ReferenceName, ReferenceGenomeInfo>;
 
 export type SegmentReferenceGenomes = Record<SegmentName, ReferenceGenomeMap>;
 
-export type ReferenceGenomes = {
+export type ReferenceGenomesInfo = {
     segmentReferenceGenomes: SegmentReferenceGenomes;
     isMultiSegmented: boolean;
     useLapisMultiSegmentedEndpoint: boolean;

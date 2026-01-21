@@ -21,7 +21,7 @@ import type { Group } from '../../types/backend.ts';
 import type { LinkOut } from '../../types/config.ts';
 import { type FieldValues, type Schema, type SequenceFlaggingConfig } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
-import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import {
@@ -36,7 +36,7 @@ import ErrorBox from '../common/ErrorBox.tsx';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
-    referenceGenomes: ReferenceGenomes;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     myGroups: Group[];
     organism: string;
     clientConfig: ClientConfig;
@@ -63,7 +63,7 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) this component is a mess a needs to be refactored */
 export const InnerSearchFullUI = ({
     accessToken,
-    referenceGenomes,
+    referenceGenomesInfo,
     myGroups,
     organism,
     clientConfig,
@@ -102,7 +102,7 @@ export const InnerSearchFullUI = ({
         setOrderDirection,
         setASearchVisibility,
         setAColumnVisibility,
-    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema, referenceGenomes });
+    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema, referenceGenomesInfo });
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -155,9 +155,9 @@ export const InnerSearchFullUI = ({
                 filterSchema,
                 fieldValues,
                 hiddenFieldValues,
-                getSegmentAndGeneInfo(referenceGenomes, selectedReferences),
+                getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferences),
             ),
-        [fieldValues, hiddenFieldValues, referenceGenomes, selectedReferences, filterSchema],
+        [fieldValues, hiddenFieldValues, referenceGenomesInfo, selectedReferences, filterSchema],
     );
 
     /**
@@ -213,7 +213,7 @@ export const InnerSearchFullUI = ({
 
     const showMutationSearch =
         schema.submissionDataTypes.consensusSequences &&
-        !stillRequiresReferenceNameSelection(selectedReferences, referenceGenomes);
+        !stillRequiresReferenceNameSelection(selectedReferences, referenceGenomesInfo);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -231,7 +231,7 @@ export const InnerSearchFullUI = ({
                 accessToken={accessToken}
                 isOpen={Boolean(previewedSeqId)}
                 onClose={() => setPreviewedSeqId(null)}
-                referenceGenomes={referenceGenomes}
+                referenceGenomesInfo={referenceGenomesInfo}
                 myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
                 setIsHalfScreen={setPreviewHalfScreen}
@@ -242,7 +242,7 @@ export const InnerSearchFullUI = ({
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}
-                    referenceGenomes={referenceGenomes}
+                    referenceGenomesInfo={referenceGenomesInfo}
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
                     filterSchema={filterSchema}
@@ -345,7 +345,7 @@ export const InnerSearchFullUI = ({
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
                                 sequenceFilter={downloadFilter}
-                                referenceGenomes={referenceGenomes}
+                                referenceGenomesInfo={referenceGenomesInfo}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
                                 schema={schema}

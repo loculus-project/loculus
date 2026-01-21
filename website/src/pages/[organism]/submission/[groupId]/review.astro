@@ -12,7 +12,7 @@ const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.s
 const clientConfig: ClientConfig = getRuntimeConfig().public;
 const filesEnabled = outputFilesEnabled(organism);
 const metadataDisplayNames: Map<string, string> = getMetadataDisplayNames(organism);
-const referenceGenomes = getReferenceGenomes(organism);
+const referenceGenomesInfo = getReferenceGenomes(organism);
 ---
 
 <SubmissionPageWrapper title='Review current submissions' groupsResult={groupsResult}>
@@ -26,7 +26,7 @@ const referenceGenomes = getReferenceGenomes(organism);
                     accessToken={getAccessToken(Astro.locals.session)!}
                     metadataDisplayNames={metadataDisplayNames}
                     filesEnabled={filesEnabled}
-                    referenceGenomes={referenceGenomes}
+                    referenceGenomesInfo={referenceGenomesInfo}
                     client:load
                 />
             ),

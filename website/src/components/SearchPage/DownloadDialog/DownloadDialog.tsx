@@ -10,7 +10,7 @@ import type { SequenceFilter } from './SequenceFilters.tsx';
 import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
-import type { ReferenceGenomes } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { MetadataVisibility } from '../../../utils/search.ts';
 import {
     getSegmentAndGeneInfo,
@@ -24,7 +24,7 @@ import { BaseDialog } from '../../common/BaseDialog.tsx';
 type DownloadDialogProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     sequenceFilter: SequenceFilter;
-    referenceGenomes: ReferenceGenomes;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
     schema: Schema;
@@ -36,7 +36,7 @@ type DownloadDialogProps = {
 export const DownloadDialog: FC<DownloadDialogProps> = ({
     downloadUrlGenerator,
     sequenceFilter,
-    referenceGenomes,
+    referenceGenomesInfo,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
     schema,
@@ -50,10 +50,10 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     const closeDialog = () => setIsOpen(false);
 
     const { nucleotideSegmentInfos, geneInfos } = useMemo(
-        () => getSegmentAndGeneInfo(referenceGenomes, selectedReferenceNames),
-        [referenceGenomes, selectedReferenceNames],
+        () => getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferenceNames),
+        [referenceGenomesInfo, selectedReferenceNames],
     );
-    const useMultiSegmentEndpoint = referenceGenomes.useLapisMultiSegmentedEndpoint;
+    const useMultiSegmentEndpoint = referenceGenomesInfo.useLapisMultiSegmentedEndpoint;
 
     const [downloadFormState, setDownloadFormState] = useState<DownloadFormState>(
         getDefaultDownloadFormState(nucleotideSegmentInfos, geneInfos),
@@ -98,7 +98,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         </div>
                     )}
                     <DownloadForm
-                        referenceGenomes={referenceGenomes}
+                        referenceGenomesInfo={referenceGenomesInfo}
                         downloadFormState={downloadFormState}
                         setDownloadFormState={setDownloadFormState}
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
