@@ -50,7 +50,7 @@ export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
         if (referenceIdentifierField == undefined && hasMultipleReferences) {
             errors.push(
                 new Error(
-                    `Organism '${organism}' has multiple references but referenceIdentifierField '${referenceIdentifierField}' is not defined in the metadata.`,
+                    `Organism '${organism}' has multiple references but referenceIdentifierField is not defined in the schema.`,
                 ),
             );
         }

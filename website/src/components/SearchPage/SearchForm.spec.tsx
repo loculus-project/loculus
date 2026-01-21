@@ -145,7 +145,7 @@ describe('SearchForm', () => {
         expect(referenceSelector).toBeInTheDocument();
         await userEvent.selectOptions(referenceSelector, 'ref1');
 
-        expect(setSelectedReferences).toHaveBeenCalledWith({ 'main': 'ref1' });
+        expect(setSelectedReferences).toHaveBeenCalledWith({ main: 'ref1' });
     });
 
     it('opens advanced options modal with version status and revocation fields', async () => {
