@@ -462,7 +462,7 @@ describe('DownloadDialog', () => {
             },
         ];
 
-        test('should include "onlyForReference" selected fields in download if no reference is selected', async () => {
+        test('should not include "onlyForReference" selected fields in download if no reference is selected', async () => {
             await renderDialog({
                 referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 referenceIdentifierField: 'genotype',
@@ -471,10 +471,10 @@ describe('DownloadDialog', () => {
 
             await checkAgreement();
 
-            expect(screen.getByText('Choose fields (3)')).toBeVisible();
+            expect(screen.getByText('Choose fields (1)')).toBeVisible();
 
             const { query } = parseDownloadHref();
-            expect(query).toMatch(/fields=accessionVersion%2Cfield1%2Cfield2$/);
+            expect(query).toMatch(/fields=accessionVersion$/);
         });
 
         test('should exclude selected fields from download if they are not for selected reference', async () => {
