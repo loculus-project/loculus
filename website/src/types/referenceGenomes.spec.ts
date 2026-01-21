@@ -35,7 +35,7 @@ export const MULTI_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
         },
     },
     isMultiSegmented: true,
-    useLapisMultiSegmentedEndpoint: false,
+    useLapisMultiSegmentedEndpoint: true,
 };
 
 export const SINGLE_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {

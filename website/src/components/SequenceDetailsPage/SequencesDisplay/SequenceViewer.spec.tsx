@@ -29,7 +29,7 @@ const multiSegmentedSequenceType: SequenceType = {
 
 function renderSequenceViewer(
     sequenceType: SequenceType,
-    isMultiSegmented: boolean,
+    useLapisMultiSegmentedEndpoint: boolean,
     clientConfig: ClientConfig = testConfig.public,
 ) {
     render(
@@ -39,7 +39,7 @@ function renderSequenceViewer(
                 accessionVersion={accessionVersion}
                 clientConfig={clientConfig}
                 sequenceType={sequenceType}
-                isMultiSegmented={isMultiSegmented}
+                useLapisMultiSegmentedEndpoint={useLapisMultiSegmentedEndpoint}
             />
         </QueryClientProvider>,
     );
