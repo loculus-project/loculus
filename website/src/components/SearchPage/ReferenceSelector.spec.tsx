@@ -3,8 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ReferenceSelector } from './ReferenceSelector.tsx';
-import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../utils/search.ts';
+import {
+    SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+    SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+} from '../../types/referenceGenomes.spec.ts';
 
 const referenceIdentifierField = 'genotype';
 
@@ -16,34 +19,12 @@ const filterSchema = new MetadataFilterSchema([
     },
 ]);
 
-const mockreferenceGenomesMap: ReferenceGenomes = {
-    main: {
-        suborganism1: {
-            sequence: 'ATCG',
-            insdcAccessionFull: 'ABC123',
-        },
-        suborganism2: {
-            sequence: 'ATCG',
-            insdcAccessionFull: 'ABC123',
-        },
-    },
-};
-
-const singleReferenceSchema: ReferenceGenomes = {
-    main: {
-        suborganism1: {
-            sequence: 'ATCG',
-            insdcAccessionFull: 'ABC123',
-        },
-    },
-};
-
 describe('ReferenceSelector', () => {
     it('renders nothing in single pathogen case', () => {
         const { container } = render(
             <ReferenceSelector
                 filterSchema={filterSchema}
-                referenceGenomesMap={singleReferenceSchema}
+                referenceGenomes={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
                 selectedReferences={{ main: null }}
                 setSelectedReferences={vi.fn()}
@@ -58,7 +39,7 @@ describe('ReferenceSelector', () => {
         render(
             <ReferenceSelector
                 filterSchema={filterSchema}
-                referenceGenomesMap={mockreferenceGenomesMap}
+                referenceGenomes={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
                 selectedReferences={{ main: null }}
                 setSelectedReferences={setSelected}
@@ -75,7 +56,7 @@ describe('ReferenceSelector', () => {
         render(
             <ReferenceSelector
                 filterSchema={filterSchema}
-                referenceGenomesMap={mockreferenceGenomesMap}
+                referenceGenomes={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
                 selectedReferences={{ main: null }}
                 setSelectedReferences={setSelected}
@@ -91,7 +72,7 @@ describe('ReferenceSelector', () => {
         render(
             <ReferenceSelector
                 filterSchema={filterSchema}
-                referenceGenomesMap={mockreferenceGenomesMap}
+                referenceGenomes={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
                 selectedReferences={{ main: 'Pathogen 1' }}
                 setSelectedReferences={setSelected}
@@ -99,7 +80,7 @@ describe('ReferenceSelector', () => {
         );
 
         await userEvent.click(screen.getByRole('button'));
-        expect(setSelected).toHaveBeenCalledWith(null);
+        expect(setSelected).toHaveBeenCalledWith({ main: null });
     });
 
     it('throws error when suborganism field is not in config', () => {
@@ -107,7 +88,7 @@ describe('ReferenceSelector', () => {
             render(
                 <ReferenceSelector
                     filterSchema={new MetadataFilterSchema([])}
-                    referenceGenomesMap={mockreferenceGenomesMap}
+                    referenceGenomes={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                     referenceIdentifierField={referenceIdentifierField}
                     selectedReferences={{ main: null }}
                     setSelectedReferences={vi.fn()}

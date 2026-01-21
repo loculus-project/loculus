@@ -16,7 +16,7 @@ import {
     errorsProcessingResult,
     openDataUseTermsOption,
 } from '../../types/backend.ts';
-import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import { SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES } from '../../types/referenceGenomes.spec.ts';
 
 const openDataUseTerms = { type: openDataUseTermsOption } as const;
 
@@ -25,7 +25,6 @@ const unreleasedSequencesRegex = /You do not currently have any unreleased seque
 const testGroup = testGroups[0];
 
 function renderReviewPage() {
-    const schema: ReferenceGenomes = {};
     return render(
         <ReviewPage
             group={testGroup}
@@ -34,7 +33,7 @@ function renderReviewPage() {
             accessToken={testAccessToken}
             clientConfig={testConfig.public}
             filesEnabled={false}
-            referenceGenomes={schema}
+            referenceGenomes={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
         />,
     );
 }

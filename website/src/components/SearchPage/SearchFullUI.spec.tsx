@@ -7,7 +7,7 @@ import { type InnerSearchFullUIProps, SearchFullUI } from './SearchFullUI';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { FieldValues, MetadataFilter, Schema } from '../../types/config.ts';
-import { type ReferenceAccession, type ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { ACTIVE_FILTER_BADGE_TEST_ID } from '../common/ActiveFilters.tsx';
 import {
