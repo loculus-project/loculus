@@ -85,7 +85,10 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                 .map(([name]) => name),
         ],
         metadata: schema.metadata,
-        defaultFastaHeaderTemplate: (segmentsWithMultipleReferences(referenceGenomesInfo).length > 0) ? `{${ACCESSION_VERSION_FIELD}}` : undefined,
+        defaultFastaHeaderTemplate:
+            segmentsWithMultipleReferences(referenceGenomesInfo).length > 0
+                ? `{${ACCESSION_VERSION_FIELD}}`
+                : undefined,
     });
 
     return (
@@ -228,4 +231,3 @@ function orderFieldsForDownload(fields: string[], metadata: Metadata[]): string[
         .sort((a, b) => (orderMap.get(a) ?? Number.MAX_SAFE_INTEGER) - (orderMap.get(b) ?? Number.MAX_SAFE_INTEGER));
     return [ACCESSION_VERSION_FIELD, ...ordered];
 }
-
