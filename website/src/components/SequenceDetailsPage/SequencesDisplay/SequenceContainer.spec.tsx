@@ -60,24 +60,10 @@ const unalignedMultiSegmentSequence = 'UnalignedMultiSegmentSequence';
 
 describe('SequencesContainer', () => {
     describe('with single reference', () => {
-        beforeEach(() => {
-            mockRequest.lapis.alignedNucleotideSequences(200, `>some\n${singleSegmentSequence}`);
-            mockRequest.lapis.alignedNucleotideSequencesMultiSegment(200, `>some\n${multiSegmentSequence}`, 'L');
-            mockRequest.lapis.unalignedNucleotideSequences(200, `>some\n${unalignedSingleSegmentSequence}`);
-            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(200, '', 'main');
-            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(
-                200,
-                `>some\n${unalignedMultiSegmentSequence}`,
-                'L',
-            );
-            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(
-                200,
-                `>some\n${unalignedMultiSegmentSequence}`,
-                'S',
-            );
-        });
 
         test('should render single segmented sequence', async () => {
+            mockRequest.lapis.alignedNucleotideSequences(200, `>some\n${singleSegmentSequence}`);
+            mockRequest.lapis.unalignedNucleotideSequences(200, `>some\n${unalignedSingleSegmentSequence}`);
             renderSequenceViewer(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { main: null });
 
             click(LOAD_SEQUENCES_BUTTON);
@@ -106,7 +92,18 @@ describe('SequencesContainer', () => {
         });
 
         test('should render multi segmented sequence', async () => {
-            renderSequenceViewer(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { L: null, S: null });
+            mockRequest.lapis.alignedNucleotideSequencesMultiSegment(200, `>some\n${multiSegmentSequence}`, 'L');
+            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(
+                200,
+                `>some\n${unalignedMultiSegmentSequence}`,
+                'L',
+            );
+            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(
+                200,
+                `>some\n${unalignedMultiSegmentSequence}`,
+                'S',
+            );
+            renderSequenceViewer(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { L: 'singleReference', S: 'singleReference' });
             click(LOAD_SEQUENCES_BUTTON);
 
             click(getAlignedSegmentLabel('L'));

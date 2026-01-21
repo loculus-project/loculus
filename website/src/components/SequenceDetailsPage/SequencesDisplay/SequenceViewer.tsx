@@ -14,7 +14,7 @@ type Props = {
     accessionVersion: string;
     clientConfig: ClientConfig;
     sequenceType: SequenceType;
-    isMultiSegmented: boolean;
+    useLapisMultiSegmentedEndpoint: boolean;
 };
 
 export const SequencesViewer: FC<Props> = ({
@@ -22,12 +22,12 @@ export const SequencesViewer: FC<Props> = ({
     accessionVersion,
     clientConfig,
     sequenceType,
-    isMultiSegmented,
+    useLapisMultiSegmentedEndpoint,
 }) => {
     const { data, error, isLoading } = lapisClientHooks(getLapisUrl(clientConfig, organism)).useGetSequence(
         accessionVersion,
         sequenceType,
-        isMultiSegmented,
+        useLapisMultiSegmentedEndpoint,
     );
 
     if (error !== null) {
