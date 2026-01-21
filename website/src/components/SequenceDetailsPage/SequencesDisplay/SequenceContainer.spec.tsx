@@ -53,13 +53,6 @@ function renderSequenceViewer(
     );
 }
 
-function renderSingleReferenceSequenceViewer(
-    referenceGenomesInfo: ReferenceGenomesInfo,
-    segmentReferences: SegmentReferenceSelections,
-) {
-    renderSequenceViewer(referenceGenomesInfo, segmentReferences);
-}
-
 const singleSegmentSequence = 'SingleSegmentSequence';
 const multiSegmentSequence = 'MultiSegmentSequence';
 const unalignedSingleSegmentSequence = 'UnalignedSingleSegmentSequence';
@@ -77,10 +70,15 @@ describe('SequencesContainer', () => {
                 `>some\n${unalignedMultiSegmentSequence}`,
                 'L',
             );
+            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(
+                200,
+                `>some\n${unalignedMultiSegmentSequence}`,
+                'S',
+            );
         });
 
         test('should render single segmented sequence', async () => {
-            renderSingleReferenceSequenceViewer(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { main: null });
+            renderSequenceViewer(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { main: null });
 
             click(LOAD_SEQUENCES_BUTTON);
 
@@ -108,7 +106,7 @@ describe('SequencesContainer', () => {
         });
 
         test('should render multi segmented sequence', async () => {
-            renderSingleReferenceSequenceViewer(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { L: null, S: null });
+            renderSequenceViewer(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { L: null, S: null });
             click(LOAD_SEQUENCES_BUTTON);
 
             click(getAlignedSegmentLabel('L'));
@@ -119,9 +117,9 @@ describe('SequencesContainer', () => {
                     }),
                 ).toBeVisible();
             });
-            // Regression test for #5330
+            //Regression test for #5330
             expectTabActive(getAlignedSegmentLabel('L'));
-            expectTabNotActive(getAlignedSegmentLabel('L'));
+            expectTabNotActive(getUnalignedSegmentLabel('L'));
 
             click(getUnalignedSegmentLabel('L'));
             await waitFor(() => {
@@ -137,17 +135,15 @@ describe('SequencesContainer', () => {
     });
 
     describe('with multiple references', () => {
-        const suborganism1 = 'sub1';
-        const suborganism2 = 'sub2';
+        const reference1 = 'ref1';
 
-        test('should render single segmented sequences', async () => {
-            const alignedSequence = `${suborganism1}AlignedSequence`;
-            const sequence = `${suborganism1}Sequence`;
-            // Single segment uses non-segmented endpoints even in multi-reference mode
-            mockRequest.lapis.alignedNucleotideSequences(200, `>some\n${alignedSequence}`);
-            mockRequest.lapis.unalignedNucleotideSequences(200, `>some\n${sequence}`);
+        test('should render single segmented sequences with multiple references', async () => {
+            const alignedSequence = `${reference1}AlignedSequence`;
+            const sequence = `${reference1}Sequence`;
+            mockRequest.lapis.alignedNucleotideSequencesMultiSegment(200, `>some\n${alignedSequence}`, reference1);
+            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(200, `>some\n${sequence}`, reference1);
 
-            renderSequenceViewer(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: suborganism1 });
+            renderSequenceViewer(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: reference1 });
 
             click(LOAD_SEQUENCES_BUTTON);
 
@@ -164,43 +160,6 @@ describe('SequencesContainer', () => {
             });
             expectTabActive(NUCLEOTIDE_SEQUENCE_TAB);
             expectTabNotActive(ALIGNED_NUCLEOTIDE_SEQUENCE_TAB);
-        });
-
-        test('should render multi segmented sequences', async () => {
-            const alignedSequence = `${suborganism2}AlignedSequence`;
-            const sequence = `${suborganism2}Sequence`;
-            mockRequest.lapis.alignedNucleotideSequencesMultiSegment(
-                200,
-                `>some\n${alignedSequence}`,
-                `${suborganism2}-segment1`,
-            );
-            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(200, ``, `${suborganism2}-segment1`);
-            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(
-                200,
-                `>some\n${sequence}`,
-                `${suborganism2}-segment2`,
-            );
-
-            renderSequenceViewer(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, {
-                L: suborganism2,
-                S: suborganism1,
-            });
-
-            click(LOAD_SEQUENCES_BUTTON);
-
-            click(getAlignedSegmentLabel('L'));
-            await waitFor(() => {
-                expect(screen.getByText(alignedSequence, { exact: false })).toBeVisible();
-            });
-            expectTabActive(getAlignedSegmentLabel('L'));
-            expectTabNotActive(getUnalignedSegmentLabel('L'));
-
-            click(getUnalignedSegmentLabel('S'));
-            await waitFor(() => {
-                expect(screen.getByText(sequence, { exact: false })).toBeVisible();
-            });
-            expectTabActive(getUnalignedSegmentLabel('S'));
-            expectTabNotActive(getAlignedSegmentLabel('L'));
         });
     });
 
