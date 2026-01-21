@@ -1,0 +1,79 @@
+name: Mirror Images to GHCR
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Daily at 3 AM UTC
+  workflow_dispatch:
+    inputs:
+      force_mirror:
+        description: 'Force mirror all images'
+        type: boolean
+        default: false
+
+permissions:
+  packages: write
+  contents: write  # Need write to update config with digests
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub (if secrets available)
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN_READ_PUBLIC }}
+
+      - name: Mirror images and update digests
+        env:
+          FORCE: ${{ inputs.force_mirror || 'false' }}
+        run: |
+          set -euo pipefail
+          
+          images=$(yq eval '.images | length' .github/docker-image-mirror-config.yaml)
+          updated=false
+          
+          for i in $(seq 0 $((images - 1))); do
+            source=$(yq eval ".images[$i].source" .github/docker-image-mirror-config.yaml)
+            dest=$(yq eval ".images[$i].destination" .github/docker-image-mirror-config.yaml)
+            current_digest=$(yq eval ".images[$i].digest" .github/docker-image-mirror-config.yaml)
+            
+            # Get source digest
+            source_digest=$(docker manifest inspect "$source" 2>/dev/null | jq -r 'if .manifests then .manifests[0].digest else .config.digest // "unknown" end')
+            
+            # Skip if digest matches and not forced
+            if [ "$FORCE" != "true" ] && [ "$current_digest" = "$source_digest" ]; then
+              echo "$source: skipping (unchanged)"
+              continue
+            fi
+            
+            echo "$source → $dest"
+            docker pull "$source" >/dev/null 2>&1
+            docker tag "$source" "$dest"
+            docker push "$dest" >/dev/null 2>&1
+            
+            # Update digest in config
+            yq eval ".images[$i].digest = \"$source_digest\"" -i .github/docker-image-mirror-config.yaml
+            updated=true
+          done
+          
+          echo "updated=$updated" >> $GITHUB_ENV
+
+      - name: Commit digest updates
+        if: env.updated == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/docker-image-mirror-config.yaml
+          git commit -m "chore: Update image digests after mirroring"
+          git push
