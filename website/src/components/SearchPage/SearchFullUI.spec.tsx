@@ -360,33 +360,33 @@ describe('SearchFullUI', () => {
         });
     });
 
-    it('should reset suborganism specific search fields when changing the selected suborganism', async () => {
+    it('should reset reference specific search fields when changing the selected reference', async () => {
         renderSearchFullUI({
-            referenceIdentifierField: 'suborganism',
+            referenceIdentifierField: 'reference',
             searchFormFilters: [
                 {
                     name: 'field1',
                     type: 'string',
                     displayName: 'Field 1',
-                    onlyForReference: 'suborganism1',
+                    onlyForReference: 'ref1',
                     initiallyVisible: true,
                 },
                 {
-                    name: 'suborganism',
+                    name: 'reference',
                     type: 'string',
-                    displayName: 'suborganism',
+                    displayName: 'Reference',
                 },
             ],
             referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
         });
 
-        const suborganismSelector = () => screen.findByLabelText('suborganism');
+        const referenceSelector = () => screen.findByLabelText('Reference');
         const mutationsField = () => screen.findByLabelText('Mutations');
         const field1 = () => screen.findByLabelText('Field 1');
 
-        // select suborganism1 and set mutations and field1
-        expect(await suborganismSelector()).toBeVisible();
-        await userEvent.selectOptions(await suborganismSelector(), 'suborganism1');
+        // select reference1 and set mutations and field1
+        expect(await referenceSelector()).toBeVisible();
+        await userEvent.selectOptions(await referenceSelector(), 'ref1');
 
         expect(await mutationsField()).toBeVisible();
         await userEvent.type(await mutationsField(), '123{enter}');
@@ -395,42 +395,42 @@ describe('SearchFullUI', () => {
         await userEvent.type(await field1(), 'test{enter}');
 
         await assertActiveFilterBadgesAre([
-            { fieldLabel: 'suborganism', value: 'suborganism1' },
+            { fieldLabel: 'Reference', value: 'ref1' },
             { fieldLabel: 'Field 1', value: 'test' },
             { fieldLabel: 'mutation', value: '123' },
         ]);
 
-        // change to suborganism2 and expect field1 and mutations to be cleared
-        await userEvent.selectOptions(await suborganismSelector(), 'suborganism2');
-        await assertActiveFilterBadgesAre([{ fieldLabel: 'suborganism', value: 'suborganism2' }]);
+        // change to reference2 and expect field1 and mutations to be cleared
+        await userEvent.selectOptions(await referenceSelector(), 'ref2');
+        await assertActiveFilterBadgesAre([{ fieldLabel: 'Reference', value: 'ref2' }]);
 
-        // set mutations again for suborganism2
+        // set mutations again for reference2
         expect(await mutationsField()).toBeVisible();
         await userEvent.type(await mutationsField(), '234{enter}');
         await assertActiveFilterBadgesAre([
-            { fieldLabel: 'suborganism', value: 'suborganism2' },
+            { fieldLabel: 'Reference', value: 'ref2' },
             { fieldLabel: 'mutation', value: '234' },
         ]);
 
-        // clear suborganism in suborganism selector and expect mutations to be cleared
-        await userEvent.click(await screen.findByRole('button', { name: 'Clear suborganism' }));
+        // clear reference in reference selector and expect mutations to be cleared
+        await userEvent.click(await screen.findByRole('button', { name: 'Clear Reference' }));
         expect(screen.queryByTestId(ACTIVE_FILTER_BADGE_TEST_ID)).not.toBeInTheDocument();
 
-        // set suborganism1 again and set mutations again
-        await userEvent.selectOptions(await suborganismSelector(), 'suborganism1');
+        // set reference1 again and set mutations again
+        await userEvent.selectOptions(await referenceSelector(), 'ref1');
         expect(await mutationsField()).toBeVisible();
         await userEvent.type(await mutationsField(), '345{enter}');
         await assertActiveFilterBadgesAre([
-            { fieldLabel: 'suborganism', value: 'suborganism1' },
+            { fieldLabel: 'Reference', value: 'ref1' },
             { fieldLabel: 'mutation', value: '345' },
         ]);
 
-        // remove suborganism via its filter badge and expect mutations to be cleared
+        // remove reference via its filter badge and expect mutations to be cleared
         const badges = await screen.findAllByTestId(ACTIVE_FILTER_BADGE_TEST_ID);
-        const suborganismBadge = badges.find((badge) => {
-            return within(badge).queryByText(`suborganism:`) !== null;
+        const referenceBadge = badges.find((badge) => {
+            return within(badge).queryByText(`Reference:`) !== null;
         });
-        await userEvent.click(await within(suborganismBadge!).findByRole('button', { name: 'remove filter' }));
+        await userEvent.click(await within(referenceBadge!).findByRole('button', { name: 'remove filter' }));
         expect(screen.queryByTestId(ACTIVE_FILTER_BADGE_TEST_ID)).not.toBeInTheDocument();
     });
 
