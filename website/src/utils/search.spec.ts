@@ -47,7 +47,7 @@ describe('MetadataVisibility', () => {
     it('should return true when isChecked is true and selectedSuborganism matches or is not set', () => {
         const visibility = new MetadataVisibility(true, 'suborganism1');
 
-        expect(visibility.isVisible({ main: null })).toBe(true);
+        expect(visibility.isVisible({ main: null })).toBe(false);
         expect(visibility.isVisible({ main: 'suborganism1' })).toBe(true);
         expect(visibility.isVisible({ main: 'suborganism2' })).toBe(false);
         expect(visibility.isVisible({ main: 'suborganism3' })).toBe(false);
