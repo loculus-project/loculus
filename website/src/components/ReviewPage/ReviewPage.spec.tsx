@@ -16,7 +16,7 @@ import {
     errorsProcessingResult,
     openDataUseTermsOption,
 } from '../../types/backend.ts';
-import { SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES } from '../../types/referenceGenomesInfo.spec.ts';
+import { SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES } from '../../types/referenceGenomes.spec.ts';
 
 const openDataUseTerms = { type: openDataUseTermsOption } as const;
 

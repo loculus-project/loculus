@@ -13,7 +13,7 @@ import { ACTIVE_FILTER_BADGE_TEST_ID } from '../common/ActiveFilters.tsx';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
-} from '../../types/referenceGenomesInfo.spec.ts';
+} from '../../types/referenceGenomes.spec.ts';
 
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
