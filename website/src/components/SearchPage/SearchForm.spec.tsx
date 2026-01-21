@@ -9,7 +9,7 @@ import type { MetadataFilter } from '../../types/config.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
 import {
-    MULTI_SEG_SINGLE_REF_REFERENCEGENOMES,
+    SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 } from '../../types/referenceGenomes.spec.ts';
 
@@ -116,7 +116,7 @@ describe('SearchForm', () => {
         expect(window.location.href).toMatch(/\/$/);
     });
 
-    it('should render the suborganism selector in the multi pathogen case', async () => {
+    it('should render the reference selector in the multiReference case', async () => {
         const setSelectedReferences = vi.fn();
         render(
             <QueryClientProvider client={queryClient}>
@@ -131,7 +131,7 @@ describe('SearchForm', () => {
                     lapisUrl='http://lapis.dummy.url'
                     searchVisibilities={defaultSearchVisibilities}
                     setASearchVisibility={setASearchVisibility}
-                    referenceGenomesInfo={MULTI_SEG_SINGLE_REF_REFERENCEGENOMES}
+                    referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                     lapisSearchParameters={{}}
                     showMutationSearch={true}
                     referenceIdentifierField='My genotype'
@@ -141,11 +141,11 @@ describe('SearchForm', () => {
             </QueryClientProvider>,
         );
 
-        const suborganismSelector = await screen.findByRole('combobox', { name: 'My genotype' });
-        expect(suborganismSelector).toBeInTheDocument();
-        await userEvent.selectOptions(suborganismSelector, 'suborganism1');
+        const referenceSelector = await screen.findByRole('combobox', { name: 'My genotype' });
+        expect(referenceSelector).toBeInTheDocument();
+        await userEvent.selectOptions(referenceSelector, 'ref1');
 
-        expect(setSelectedReferences).toHaveBeenCalledWith('suborganism1');
+        expect(setSelectedReferences).toHaveBeenCalledWith({ 'main': 'ref1' });
     });
 
     it('opens advanced options modal with version status and revocation fields', async () => {
