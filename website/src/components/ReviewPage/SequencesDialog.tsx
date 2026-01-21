@@ -74,15 +74,15 @@ const extractProcessedSequences = (
         Object.entries(sequences)
             .filter((tuple): tuple is [string, string] => tuple[1] !== null)
             .map(([sequenceName, sequence]) => {
-                let label = lapisNameToDisplayNameMap.get(sequenceName) ?? sequenceName;
+                let label = lapisNameToDisplayNameMap.get(sequenceName);
                 if (type !== 'gene') {
-                    if (label === 'main') {
+                    if (label === 'main' || label === undefined) {
                         label = type === 'unaligned' ? 'Sequence' : 'Aligned';
                     } else {
                         label = type === 'unaligned' ? `${label} (unaligned)` : `${label} (aligned)`;
                     }
                 }
-                return { label, sequence };
+                return { label: label ? label : sequenceName, sequence };
             }),
     );
 };
