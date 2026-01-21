@@ -1,17 +1,17 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { act } from 'react';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import { SequencesContainer } from './SequencesContainer.tsx';
 import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
-import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
-import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 import {
     MULTI_SEG_SINGLE_REF_REFERENCEGENOMES,
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 } from '../../../types/referenceGenomes.spec.ts';
+import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
+import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 
 vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
@@ -102,6 +102,7 @@ describe('SequencesContainer', () => {
                 `>some\n${unalignedMultiSegmentSequence}`,
                 'S',
             );
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             renderSequenceViewer(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { L: 'singleReference', S: 'singleReference' });
             click(LOAD_SEQUENCES_BUTTON);
 

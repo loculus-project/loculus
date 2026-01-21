@@ -78,11 +78,11 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - reference_name: CV-A16
+              - referenceName: CV-A16
                 nextclade_dataset_name: enpen/enterovirus/cv-a16
                 accepted_dataset_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
                 genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-              - reference_name: CV-A10
+              - referenceName: CV-A10
                 nextclade_dataset_name: enpen/enterovirus/cv-a10
                 accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
                 genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
@@ -92,13 +92,13 @@ defaultOrganisms:
     referenceGenomes:
       - name: main
         references:
-          - reference_name: CV-A10
+          - referenceName: CV-A10
             sequence: "..."
             insdcAccessionFull: ...
             genes: 
               - name: VP4
                 sequence: "..."
-          - reference_name: EV-A71
+          - referenceName: EV-A71
             sequence: "..."
             insdcAccessionFull: ...
             genes:
