@@ -15,22 +15,22 @@ import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQ
 import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
 import type { FieldValues, Schema } from '../types/config';
-import type { ReferenceGenomes } from '../types/referencesGenomes.ts';
+import type { ReferenceGenomesInfo } from '../types/referencesGenomes.ts';
 
 export const performLapisSearchQueries = async (
     state: QueryState,
     schema: Schema,
-    referenceGenomes: ReferenceGenomes,
+    referenceGenomesInfo: ReferenceGenomesInfo,
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
     const selectedReferences = getSelectedReferences({
-        referenceGenomes,
+        referenceGenomesInfo,
         schema,
         state,
     });
 
-    const suborganismSegmentAndGeneInfo = getSegmentAndGeneInfo(referenceGenomes, selectedReferences);
+    const suborganismSegmentAndGeneInfo = getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferences);
 
     const filterSchema = new MetadataFilterSchema(schema.metadata);
     const fieldValues = filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);

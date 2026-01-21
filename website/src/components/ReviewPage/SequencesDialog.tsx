@@ -1,7 +1,7 @@
 import { type FC, useState } from 'react';
 
 import { type SequenceEntryToEdit } from '../../types/backend.ts';
-import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { lapisNameToDisplayName } from '../../utils/sequenceTypeHelpers.ts';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
 import { Button } from '../common/Button';
@@ -11,7 +11,7 @@ type SequencesDialogProps = {
     isOpen: boolean;
     onClose: () => void;
     dataToView: SequenceEntryToEdit | undefined;
-    referenceGenomes: ReferenceGenomes;
+    referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
 type ProcessedSequence = {
@@ -19,12 +19,12 @@ type ProcessedSequence = {
     sequence: string;
 };
 
-export const SequencesDialog: FC<SequencesDialogProps> = ({ isOpen, onClose, dataToView, referenceGenomes }) => {
+export const SequencesDialog: FC<SequencesDialogProps> = ({ isOpen, onClose, dataToView, referenceGenomesInfo }) => {
     const [activeTab, setActiveTab] = useState(0);
 
     if (!isOpen || !dataToView) return null;
 
-    const processedSequences = extractProcessedSequences(dataToView, lapisNameToDisplayName(referenceGenomes));
+    const processedSequences = extractProcessedSequences(dataToView, lapisNameToDisplayName(referenceGenomesInfo));
 
     if (processedSequences.length === 0) {
         return null;

@@ -16,7 +16,7 @@ import {
     errorsProcessingResult,
     openDataUseTermsOption,
 } from '../../types/backend.ts';
-import { SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES } from '../../types/referenceGenomes.spec.ts';
+import { SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES } from '../../types/referenceGenomesInfo.spec.ts';
 
 const openDataUseTerms = { type: openDataUseTermsOption } as const;
 
@@ -33,7 +33,7 @@ function renderReviewPage() {
             accessToken={testAccessToken}
             clientConfig={testConfig.public}
             filesEnabled={false}
-            referenceGenomes={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
+            referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
         />,
     );
 }

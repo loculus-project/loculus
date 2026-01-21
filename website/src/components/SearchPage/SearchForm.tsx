@@ -18,7 +18,7 @@ import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
-import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
@@ -46,7 +46,7 @@ interface SearchFormProps {
     lapisUrl: string;
     searchVisibilities: Map<string, MetadataVisibility>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
-    referenceGenomes: ReferenceGenomes;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
     referenceIdentifierField: string | undefined;
@@ -61,7 +61,7 @@ export const SearchForm = ({
     lapisUrl,
     searchVisibilities,
     setASearchVisibility,
-    referenceGenomes,
+    referenceGenomesInfo,
     lapisSearchParameters,
     showMutationSearch,
     referenceIdentifierField,
@@ -70,9 +70,9 @@ export const SearchForm = ({
 }: SearchFormProps) => {
     const excluded = new Set<string>([
         ACCESSION_FIELD,
-        ...getSegmentNames(referenceGenomes).map(
+        ...getSegmentNames(referenceGenomesInfo).map(
             (segmentName) =>
-                getReferenceIdentifier(referenceIdentifierField, segmentName, referenceGenomes.isMultiSegmented)!,
+                getReferenceIdentifier(referenceIdentifierField, segmentName, referenceGenomesInfo.isMultiSegmented)!,
         ),
     ]);
     const visibleFields = filterSchema.filters
@@ -118,8 +118,8 @@ export const SearchForm = ({
         }));
 
     const suborganismSegmentAndGeneInfo = useMemo(
-        () => getSegmentAndGeneInfo(referenceGenomes, selectedReferences),
-        [referenceGenomes, selectedReferences],
+        () => getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferences),
+        [referenceGenomesInfo, selectedReferences],
     );
 
     return (
@@ -183,7 +183,7 @@ export const SearchForm = ({
                         {referenceIdentifierField !== undefined && (
                             <ReferenceSelector
                                 filterSchema={filterSchema}
-                                referenceGenomes={referenceGenomes}
+                                referenceGenomesInfo={referenceGenomesInfo}
                                 referenceIdentifierField={referenceIdentifierField}
                                 selectedReferences={selectedReferences}
                                 setSelectedReferences={setSelectedReferences}

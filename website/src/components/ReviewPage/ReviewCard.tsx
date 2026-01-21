@@ -16,7 +16,7 @@ import {
     errorsProcessingResult,
     warningsProcessingResult,
 } from '../../types/backend.ts';
-import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
@@ -45,7 +45,7 @@ type ReviewCardProps = {
     organism: string;
     accessToken: string;
     filesEnabled: boolean;
-    referenceGenomes: ReferenceGenomes;
+    referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
 export const ReviewCard: FC<ReviewCardProps> = ({
@@ -58,7 +58,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     organism,
     accessToken,
     filesEnabled,
-    referenceGenomes,
+    referenceGenomesInfo,
 }) => {
     const [isSequencesDialogOpen, setSequencesDialogOpen] = useState(false);
     const [isFilesDialogOpen, setFilesDialogOpen] = useState(false);
@@ -123,7 +123,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                 isOpen={isSequencesDialogOpen}
                 onClose={() => setSequencesDialogOpen(false)}
                 dataToView={data}
-                referenceGenomes={referenceGenomes}
+                referenceGenomesInfo={referenceGenomesInfo}
             />
             <FilesDialog isOpen={isFilesDialogOpen} onClose={() => setFilesDialogOpen(false)} dataToView={data} />
         </div>

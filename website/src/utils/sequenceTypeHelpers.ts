@@ -1,6 +1,6 @@
 import type {
     ReferenceAccession,
-    ReferenceGenomes,
+    ReferenceGenomesInfo,
     ReferenceGenomesSchema,
     ReferenceName,
     SegmentName,
@@ -77,7 +77,7 @@ export function getGeneLapisName(geneName: string, referenceName: string, isMult
     return `${geneName}-${referenceName}`;
 }
 
-export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGenomes {
+export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGenomesInfo {
     const genomes: SegmentReferenceGenomes = {};
 
     const isMultiSegmented = (values?.length ?? 0) > 1;
@@ -114,7 +114,7 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
     };
 }
 
-export const getSegmentNames = (genomes: ReferenceGenomes) => Object.keys(genomes.segmentReferenceGenomes);
+export const getSegmentNames = (genomes: ReferenceGenomesInfo) => Object.keys(genomes.segmentReferenceGenomes);
 
 /**
  * Get segment and gene info where each segment can have its own reference.
@@ -123,13 +123,13 @@ export const getSegmentNames = (genomes: ReferenceGenomes) => Object.keys(genome
  * @returns SegmentAndGeneInfo with all segments and their genes
  */
 export function getSegmentAndGeneInfo(
-    referenceGenomes: ReferenceGenomes,
+    referenceGenomesInfo: ReferenceGenomesInfo,
     selectedReferences: SegmentReferenceSelections,
 ): SegmentAndGeneInfo {
     const nucleotideSegmentInfos: SegmentInfo[] = [];
     const geneInfos: GeneInfo[] = [];
 
-    for (const [segmentName, segmentData] of Object.entries(referenceGenomes.segmentReferenceGenomes)) {
+    for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
         const isSingleReference = Object.keys(segmentData).length === 1;
         const selectedRef = selectedReferences[segmentName] ?? null;
 
@@ -152,14 +152,14 @@ export function getSegmentAndGeneInfo(
 }
 
 export function getInsdcAccessionsFromSegmentReferences(
-    referenceGenomes: ReferenceGenomes,
+    referenceGenomesInfo: ReferenceGenomesInfo,
     segmentReferences: SegmentReferenceSelections,
 ): ReferenceAccession[] {
     const references: ReferenceAccession[] = [];
     for (const [segmentName, referenceName] of Object.entries(segmentReferences)) {
-        const segmentData = referenceGenomes.segmentReferenceGenomes[segmentName];
+        const segmentData = referenceGenomesInfo.segmentReferenceGenomes[segmentName];
         let reference = referenceName;
-        if (!segmentsWithMultipleReferences(referenceGenomes).includes(segmentName)) {
+        if (!segmentsWithMultipleReferences(referenceGenomesInfo).includes(segmentName)) {
             reference = Object.keys(segmentData)[0];
         }
         if (reference === null) {
@@ -174,11 +174,11 @@ export function getInsdcAccessionsFromSegmentReferences(
     return references;
 }
 
-export function lapisNameToDisplayName(referenceGenomes: ReferenceGenomes): Map<string, string | undefined> {
+export function lapisNameToDisplayName(referenceGenomesInfo: ReferenceGenomesInfo): Map<string, string | undefined> {
     const map = new Map<string, string | undefined>();
-    for (const [segmentName, segmentData] of Object.entries(referenceGenomes.segmentReferenceGenomes)) {
+    for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
         for (const refData of Object.values(segmentData)) {
-            map.set(refData.lapisName, referenceGenomes.isMultiSegmented ? segmentName : undefined);
+            map.set(refData.lapisName, referenceGenomesInfo.isMultiSegmented ? segmentName : undefined);
             for (const gene of refData.genes) {
                 map.set(gene.lapisName, gene.name);
             }
@@ -187,15 +187,17 @@ export function lapisNameToDisplayName(referenceGenomes: ReferenceGenomes): Map<
     return map;
 }
 
-export function segmentsWithMultipleReferences(referenceGenomes: ReferenceGenomes) {
-    return getSegmentNames(referenceGenomes).filter(
-        (segment) => Object.keys(referenceGenomes.segmentReferenceGenomes[segment]).length > 1,
+export function segmentsWithMultipleReferences(referenceGenomesInfo: ReferenceGenomesInfo) {
+    return getSegmentNames(referenceGenomesInfo).filter(
+        (segment) => Object.keys(referenceGenomesInfo.segmentReferenceGenomes[segment]).length > 1,
     );
 }
 
 export function stillRequiresReferenceNameSelection(
     selectedReferenceNames: SegmentReferenceSelections,
-    referenceGenomes: ReferenceGenomes,
+    referenceGenomesInfo: ReferenceGenomesInfo,
 ) {
-    return segmentsWithMultipleReferences(referenceGenomes).some((segment) => selectedReferenceNames[segment] === null);
+    return segmentsWithMultipleReferences(referenceGenomesInfo).some(
+        (segment) => selectedReferenceNames[segment] === null,
+    );
 }

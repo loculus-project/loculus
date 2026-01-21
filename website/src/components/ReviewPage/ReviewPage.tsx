@@ -21,7 +21,7 @@ import {
     type SequenceEntryStatus,
     warningsProcessingResult,
 } from '../../types/backend.ts';
-import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
@@ -45,7 +45,7 @@ type ReviewPageProps = {
     accessToken: string;
     metadataDisplayNames: Map<string, string>;
     filesEnabled: boolean;
-    referenceGenomes: ReferenceGenomes;
+    referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
 const pageSizeOptions = [10, 20, 50, 100] as const;
@@ -84,7 +84,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     accessToken,
     metadataDisplayNames,
     filesEnabled,
-    referenceGenomes,
+    referenceGenomesInfo,
 }) => {
     const [pageQuery, setPageQuery] = useState<PageQuery>({ pageOneIndexed: 1, size: pageSizeOptions[2] });
 
@@ -385,7 +385,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                             organism={organism}
                             accessToken={accessToken}
                             filesEnabled={filesEnabled}
-                            referenceGenomes={referenceGenomes}
+                            referenceGenomesInfo={referenceGenomesInfo}
                         />
                     </div>
                 );
