@@ -169,7 +169,7 @@ export type Schema = z.infer<typeof schema>;
 
 export const instanceConfig = z.object({
     schema,
-    referenceGenomesInfo: referenceGenomesSchema,
+    referenceGenomes: referenceGenomesSchema,
 });
 export type InstanceConfig = z.infer<typeof instanceConfig>;
 

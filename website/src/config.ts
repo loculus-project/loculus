@@ -275,7 +275,7 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
 }
 
 export function getReferenceGenomes(organism: string): ReferenceGenomesInfo {
-    return toReferenceGenomes(getConfig(organism).referenceGenomesInfo);
+    return toReferenceGenomes(getConfig(organism).referenceGenomes);
 }
 
 export function seqSetsAreEnabled() {
