@@ -6,8 +6,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataFilter } from '../../types/config.ts';
-import { type ReferenceGenomes, type ReferenceAccession } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
+import {
+    MULTI_SEG_SINGLE_REF_REFERENCEGENOMES,
+    SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+} from '../../types/referenceGenomes.spec.ts';
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
     observe() {}
@@ -34,37 +38,6 @@ const defaultSearchFormFilters: MetadataFilter[] = [
     },
 ];
 
-const defaultAccession: ReferenceAccession = {
-    name: 'main',
-    insdcAccessionFull: undefined,
-};
-
-const defaultReferenceGenomesMap: ReferenceGenomes = {
-    segments: {
-        main: {
-            references: ['ref1'],
-            insdcAccessions: { ref1: defaultAccession },
-            genesByReference: { ref1: ['gene1', 'gene2'] },
-        },
-    },
-};
-
-const multiPathogenReferenceGenomesMap: ReferenceGenomes = {
-    segments: {
-        main: {
-            references: ['suborganism1', 'suborganism2'],
-            insdcAccessions: {
-                suborganism1: defaultAccession,
-                suborganism2: defaultAccession,
-            },
-            genesByReference: {
-                suborganism1: ['gene1', 'gene2'],
-                suborganism2: ['gene1', 'gene2'],
-            },
-        },
-    },
-};
-
 const defaultSearchVisibilities = new Map<string, MetadataVisibility>([
     ['field1', new MetadataVisibility(true, undefined)],
     ['field3', new MetadataVisibility(true, undefined)],
@@ -76,18 +49,18 @@ const setASearchVisibility = vi.fn();
 const renderSearchForm = ({
     filterSchema = new MetadataFilterSchema([...defaultSearchFormFilters]),
     fieldValues = {},
-    referenceGenomesMap = defaultReferenceGenomesMap,
+    referenceGenomes = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
     lapisSearchParameters = {},
     referenceIdentifierField,
-    selectedSuborganism = null,
+    selectedReferences = {},
     searchVisibilities = defaultSearchVisibilities,
 }: {
     filterSchema?: MetadataFilterSchema;
     fieldValues?: Record<string, string>;
-    referenceGenomesMap?: ReferenceGenomes;
+    referenceGenomes?: ReferenceGenomes;
     lapisSearchParameters?: Record<string, string>;
     referenceIdentifierField?: string;
-    selectedSuborganism?: string | null;
+    selectedReferences?: Record<string, string>;
     searchVisibilities?: Map<string, MetadataVisibility>;
 } = {}) => {
     const props = {
@@ -99,13 +72,12 @@ const renderSearchForm = ({
         lapisUrl: 'http://lapis.dummy.url',
         searchVisibilities,
         setASearchVisibility,
-        referenceGenomesMap,
+        referenceGenomes: referenceGenomes,
         lapisSearchParameters,
         showMutationSearch: true,
         referenceIdentifierField,
-        selectedSuborganism,
-        setSelectedSuborganism: vi.fn(),
-        selectedReferences: {},
+        selectedReferences,
+        setSelectedReferences: vi.fn(),
     };
 
     render(
@@ -145,7 +117,7 @@ describe('SearchForm', () => {
     });
 
     it('should render the suborganism selector in the multi pathogen case', async () => {
-        const setSelectedSuborganism = vi.fn();
+        const setSelectedReferences = vi.fn();
         render(
             <QueryClientProvider client={queryClient}>
                 <SearchForm
@@ -159,13 +131,12 @@ describe('SearchForm', () => {
                     lapisUrl='http://lapis.dummy.url'
                     searchVisibilities={defaultSearchVisibilities}
                     setASearchVisibility={setASearchVisibility}
-                    referenceGenomesMap={multiPathogenReferenceGenomesMap}
+                    referenceGenomes={MULTI_SEG_SINGLE_REF_REFERENCEGENOMES}
                     lapisSearchParameters={{}}
                     showMutationSearch={true}
                     referenceIdentifierField='My genotype'
-                    selectedSuborganism={null}
-                    setSelectedSuborganism={setSelectedSuborganism}
                     selectedReferences={{}}
+                    setSelectedReferences={setSelectedReferences}
                 />
             </QueryClientProvider>,
         );
@@ -174,7 +145,7 @@ describe('SearchForm', () => {
         expect(suborganismSelector).toBeInTheDocument();
         await userEvent.selectOptions(suborganismSelector, 'suborganism1');
 
-        expect(setSelectedSuborganism).toHaveBeenCalledWith('suborganism1');
+        expect(setSelectedReferences).toHaveBeenCalledWith('suborganism1');
     });
 
     it('opens advanced options modal with version status and revocation fields', async () => {
@@ -223,7 +194,7 @@ describe('SearchForm', () => {
                 filterSchema,
                 searchVisibilities,
                 referenceIdentifierField: 'My genotype',
-                selectedSuborganism: 'suborganism1',
+                selectedReferences: { 'My genotype': 'suborganism1' },
             });
 
             expect(field1()).toBeVisible();
@@ -235,7 +206,7 @@ describe('SearchForm', () => {
                 filterSchema,
                 searchVisibilities,
                 referenceIdentifierField: 'My genotype',
-                selectedSuborganism: null,
+                selectedReferences: {},
             });
 
             expect(field1()).toBeVisible();
