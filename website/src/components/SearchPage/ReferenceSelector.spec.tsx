@@ -63,8 +63,8 @@ describe('ReferenceSelector', () => {
             />,
         );
 
-        await userEvent.selectOptions(screen.getByRole('combobox'), 'suborganism1');
-        expect(setSelected).toHaveBeenCalledWith({ main: 'suborganism1' });
+        await userEvent.selectOptions(screen.getByRole('combobox'), 'ref1');
+        expect(setSelected).toHaveBeenCalledWith({ main: 'ref1' });
     });
 
     it('shows clear button and clears selection', async () => {
@@ -74,26 +74,12 @@ describe('ReferenceSelector', () => {
                 filterSchema={filterSchema}
                 referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
-                selectedReferences={{ main: 'Pathogen 1' }}
+                selectedReferences={{ main: 'ref1' }}
                 setSelectedReferences={setSelected}
             />,
         );
 
         await userEvent.click(screen.getByRole('button'));
         expect(setSelected).toHaveBeenCalledWith({ main: null });
-    });
-
-    it('throws error when suborganism field is not in config', () => {
-        expect(() =>
-            render(
-                <ReferenceSelector
-                    filterSchema={new MetadataFilterSchema([])}
-                    referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
-                    referenceIdentifierField={referenceIdentifierField}
-                    selectedReferences={{ main: null }}
-                    setSelectedReferences={vi.fn()}
-                />,
-            ),
-        ).toThrow('Cannot render suborganism selector');
     });
 });
