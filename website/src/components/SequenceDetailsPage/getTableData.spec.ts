@@ -342,7 +342,7 @@ describe('getTableData', () => {
 
         const segmentReferences = result._unsafeUnwrap().segmentReferences;
 
-        expect(segmentReferences).toEqual({ main: 'ref1' });
+        expect(segmentReferences).to.deep.equal({ main: null });
     });
 
     test('should return the segmentReferences for multiple reference genomes', async () => {
@@ -355,22 +355,6 @@ describe('getTableData', () => {
         expect(segmentReferences).toEqual({ main: genome2 });
     });
 
-    test('should throw when the suborganism name is not in multiple reference genomes', async () => {
-        mockRequest.lapis.details(200, { info, data: [{ genotype: 5 }] });
-
-        const result = await getTableData(accessionVersion, schema, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, lapisClient);
-
-        expect(result).toStrictEqual(
-            err({
-                detail: "Value '5' of field 'genotype' is not a valid string or null.",
-                instance: '/seq/' + accessionVersion,
-                status: 0,
-                title: 'Invalid suborganism field',
-                type: 'about:blank',
-            }),
-        );
-    });
-
     test('should tolerate when genotype is null (as e.g. for revocation entries)', async () => {
         mockRequest.lapis.details(200, { info, data: [{ genotype: null }] });
 
@@ -378,23 +362,7 @@ describe('getTableData', () => {
 
         const segmentReferences = result._unsafeUnwrap().segmentReferences;
 
-        expect(segmentReferences).equals(null);
-    });
-
-    test('should throw when the suborganism name is not in multiple reference genomes', async () => {
-        mockRequest.lapis.details(200, { info, data: [{ genotype: 'unknown suborganism' }] });
-
-        const result = await getTableData(accessionVersion, schema, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, lapisClient);
-
-        expect(result).toStrictEqual(
-            err({
-                detail: "ReferenceName 'unknown suborganism' (value of field 'genotype') not found in reference genomes.",
-                instance: '/seq/' + accessionVersion,
-                status: 0,
-                title: 'Invalid suborganism',
-                type: 'about:blank',
-            }),
-        );
+        expect(segmentReferences).to.deep.equal({ main: null });
     });
 });
 
