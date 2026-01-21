@@ -156,26 +156,27 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             },
             {
                 label: <>Aligned amino acid sequences</>,
-                subOptions: geneInfos.length > 0 ? (
-                    <div className='px-8'>
-                        <DropdownOptionBlock
-                            name='alignedAminoAcidSequences'
-                            options={geneInfos.map((gene) => ({
-                                label: <>{gene.name}</>,
-                            }))}
-                            selected={geneInfos.findIndex(
-                                (info) => info.lapisName === downloadFormState.alignedAminoAcidSequence,
-                            )}
-                            onSelect={(value) =>
-                                setDownloadFormState((previous) => ({
-                                    ...previous,
-                                    alignedAminoAcidSequence: geneInfos[value].lapisName,
-                                }))
-                            }
-                            disabled={downloadFormState.dataType !== 'alignedAminoAcidSequences'}
-                        />
-                    </div>
-                ) : undefined,
+                subOptions:
+                    geneInfos.length > 0 ? (
+                        <div className='px-8'>
+                            <DropdownOptionBlock
+                                name='alignedAminoAcidSequences'
+                                options={geneInfos.map((gene) => ({
+                                    label: <>{gene.name}</>,
+                                }))}
+                                selected={geneInfos.findIndex(
+                                    (info) => info.lapisName === downloadFormState.alignedAminoAcidSequence,
+                                )}
+                                onSelect={(value) =>
+                                    setDownloadFormState((previous) => ({
+                                        ...previous,
+                                        alignedAminoAcidSequence: geneInfos[value].lapisName,
+                                    }))
+                                }
+                                disabled={downloadFormState.dataType !== 'alignedAminoAcidSequences'}
+                            />
+                        </div>
+                    ) : undefined,
             },
         ];
     }
