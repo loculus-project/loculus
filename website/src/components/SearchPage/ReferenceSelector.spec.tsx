@@ -7,7 +7,7 @@ import { MetadataFilterSchema } from '../../utils/search.ts';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
-} from '../../types/referenceGenomesInfo.spec.ts';
+} from '../../types/referenceGenomes.spec.ts';
 
 const referenceIdentifierField = 'genotype';
 
