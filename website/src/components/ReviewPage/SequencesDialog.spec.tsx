@@ -34,7 +34,7 @@ describe('SequencesDialog', () => {
             expect(getByText('ATTTGCC')).toBeVisible();
         });
 
-        await userEvent.click(getByRole('button', { name: `${gene1}` }));
+        await userEvent.click(getByRole('button', { name: gene1 }));
         await waitFor(() => {
             expect(getByText('MADS*')).toBeVisible();
         });
@@ -56,7 +56,7 @@ describe('SequencesDialog', () => {
         await waitFor(() => {
             expect(getByRole('button', { name: `Sequence` })).toBeVisible();
             expect(getByRole('button', { name: `Aligned` })).toBeVisible();
-            expect(getByRole('button', { name: `${gene1}` })).toBeVisible();
+            expect(getByRole('button', { name: gene1 })).toBeVisible();
         });
     });
 });
