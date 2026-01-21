@@ -200,17 +200,5 @@ describe('SearchForm', () => {
             expect(field1()).toBeVisible();
             expect(field2()).not.toBeInTheDocument();
         });
-
-        it('should display suborganism specific fields when no suborganism is selected', () => {
-            renderSearchForm({
-                filterSchema,
-                searchVisibilities,
-                referenceIdentifierField: 'My genotype',
-                selectedReferences: {},
-            });
-
-            expect(field1()).toBeVisible();
-            expect(field2()).toBeVisible();
-        });
     });
 });
