@@ -13,7 +13,7 @@ const singleReferenceSegmentAndGeneInfo: SegmentAndGeneInfo = {
     ],
 };
 
-const multireferenceGenomesMap: SegmentAndGeneInfo = {
+const multiReferenceGenomesMap: SegmentAndGeneInfo = {
     nucleotideSegmentInfos: [
         { lapisName: 'seg1', name: 'seg1' },
         { lapisName: 'seg2', name: 'seg2' },
@@ -22,6 +22,8 @@ const multireferenceGenomesMap: SegmentAndGeneInfo = {
         { lapisName: 'gene1', name: 'gene1' },
         { lapisName: 'gene2', name: 'gene2' },
     ],
+    useLapisMultiSegmentedEndpoint: true,
+    multiSegmented: true,
 };
 
 function renderField(
@@ -57,7 +59,7 @@ describe('MutationField', () => {
 
     test('should accept input and dispatch events (multi-segmented)', async () => {
         const handleChange = vi.fn();
-        renderField('', handleChange, multireferenceGenomesMap);
+        renderField('', handleChange, multiReferenceGenomesMap);
 
         await userEvent.type(screen.getByLabelText('Mutations'), 'seg1:G100A{enter}');
         expect(handleChange).toHaveBeenCalledWith('seg1:G100A');
