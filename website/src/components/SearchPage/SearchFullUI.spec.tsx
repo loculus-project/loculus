@@ -7,13 +7,13 @@ import { type InnerSearchFullUIProps, SearchFullUI } from './SearchFullUI';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { FieldValues, MetadataFilter, Schema } from '../../types/config.ts';
-import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
-import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { ACTIVE_FILTER_BADGE_TEST_ID } from '../common/ActiveFilters.tsx';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 } from '../../types/referenceGenomes.spec.ts';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { ACTIVE_FILTER_BADGE_TEST_ID } from '../common/ActiveFilters.tsx';
 
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}

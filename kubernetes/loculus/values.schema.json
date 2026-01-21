@@ -635,9 +635,9 @@
                           "items": {
                             "type": "object",
                             "additionalProperties": false,
-                            "required": ["reference_name"],
+                            "required": ["referenceName"],
                             "properties": {
-                              "reference_name": {
+                              "referenceName": {
                                 "groups": ["nextcladeSegment"],
                                 "docsIncludePrefix": false,
                                 "type": "string",
@@ -825,7 +825,7 @@
                   "description": "Reference genome details",
                   "additionalProperties": false,
                   "properties": {
-                    "reference_name": {
+                    "referenceName": {
                       "groups": ["nucleotide-sequence"],
                       "docsIncludePrefix": false,
                       "type": "string",
@@ -871,7 +871,7 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["reference_name", "sequence"]
+                  "required": ["referenceName", "sequence"]
                 }
               },
               "additionalProperties": false
