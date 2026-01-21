@@ -6,7 +6,7 @@ import ReferenceSequenceLinkButton from './ReferenceSequenceLinkButton';
 import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import { type ReferenceAccession, type ReferenceGenomes } from '../../types/referencesGenomes';
+import { type ReferenceAccession, type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import {
     getInsdcAccessionsFromSegmentReferences,
     type SegmentReferenceSelections,
@@ -16,7 +16,7 @@ import AkarInfo from '~icons/ri/information-line';
 interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    referenceGenomes: ReferenceGenomes;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     segmentReferences: SegmentReferenceSelections;
 }
 
@@ -39,10 +39,10 @@ const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) =>
 const DataTableComponent: React.FC<Props> = ({
     dataTableData,
     dataUseTermsHistory,
-    referenceGenomes,
+    referenceGenomesInfo,
     segmentReferences,
 }) => {
-    const references = getInsdcAccessionsFromSegmentReferences(referenceGenomes, segmentReferences);
+    const references = getInsdcAccessionsFromSegmentReferences(referenceGenomesInfo, segmentReferences);
     const hasReferenceAccession = references.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
 
     return (

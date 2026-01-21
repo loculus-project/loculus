@@ -7,7 +7,7 @@ import { MetadataFilterSchema } from '../../utils/search.ts';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
-} from '../../types/referenceGenomes.spec.ts';
+} from '../../types/referenceGenomesInfo.spec.ts';
 
 const referenceIdentifierField = 'genotype';
 
@@ -24,7 +24,7 @@ describe('ReferenceSelector', () => {
         const { container } = render(
             <ReferenceSelector
                 filterSchema={filterSchema}
-                referenceGenomes={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
                 selectedReferences={{ main: null }}
                 setSelectedReferences={vi.fn()}
@@ -39,7 +39,7 @@ describe('ReferenceSelector', () => {
         render(
             <ReferenceSelector
                 filterSchema={filterSchema}
-                referenceGenomes={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
+                referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
                 selectedReferences={{ main: null }}
                 setSelectedReferences={setSelected}
@@ -56,7 +56,7 @@ describe('ReferenceSelector', () => {
         render(
             <ReferenceSelector
                 filterSchema={filterSchema}
-                referenceGenomes={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
+                referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
                 selectedReferences={{ main: null }}
                 setSelectedReferences={setSelected}
@@ -72,7 +72,7 @@ describe('ReferenceSelector', () => {
         render(
             <ReferenceSelector
                 filterSchema={filterSchema}
-                referenceGenomes={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
+                referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
                 selectedReferences={{ main: 'Pathogen 1' }}
                 setSelectedReferences={setSelected}
@@ -88,7 +88,7 @@ describe('ReferenceSelector', () => {
             render(
                 <ReferenceSelector
                     filterSchema={new MetadataFilterSchema([])}
-                    referenceGenomes={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
+                    referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                     referenceIdentifierField={referenceIdentifierField}
                     selectedReferences={{ main: null }}
                     setSelectedReferences={vi.fn()}

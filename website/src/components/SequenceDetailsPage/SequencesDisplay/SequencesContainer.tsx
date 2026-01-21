@@ -1,7 +1,7 @@
 import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from 'react';
 
 import { SequencesViewer } from './SequenceViewer.tsx';
-import { type ReferenceGenomes } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 import {
     alignedSequenceSegment,
@@ -25,7 +25,7 @@ type SequenceContainerProps = {
     segmentReferences: SegmentReferenceSelections;
     accessionVersion: string;
     clientConfig: ClientConfig;
-    referenceGenomes: ReferenceGenomes;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     loadSequencesAutomatically: boolean;
 };
 
@@ -34,10 +34,10 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     segmentReferences,
     accessionVersion,
     clientConfig,
-    referenceGenomes,
+    referenceGenomesInfo,
     loadSequencesAutomatically,
 }) => {
-    const { nucleotideSegmentInfos, geneInfos } = getSegmentAndGeneInfo(referenceGenomes, segmentReferences);
+    const { nucleotideSegmentInfos, geneInfos } = getSegmentAndGeneInfo(referenceGenomesInfo, segmentReferences);
 
     const [loadSequences, setLoadSequences] = useState(() => loadSequencesAutomatically);
     const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentInfos[0]));
@@ -59,7 +59,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             sequenceType={sequenceType}
             setType={setSequenceType}
             genes={geneInfos}
-            isMultiSegmented={referenceGenomes.isMultiSegmented}
+            isMultiSegmented={referenceGenomesInfo.isMultiSegmented}
         />
     );
 };

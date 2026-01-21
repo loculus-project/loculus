@@ -50,10 +50,10 @@ export const getSequenceDetailsTableData = async (
     }
 
     const schema = getSchema(organism);
-    const referenceGenomes = getReferenceGenomes(organism);
+    const referenceGenomesInfo = getReferenceGenomes(organism);
 
     const [tableDataResult, sequenceEntryHistoryResult, dataUseHistoryResult] = await Promise.all([
-        getTableData(accessionVersion, schema, referenceGenomes, lapisClient),
+        getTableData(accessionVersion, schema, referenceGenomesInfo, lapisClient),
         lapisClient.getAllSequenceEntryHistoryForAccession(accession),
         backendClient.getDataUseTermsHistory(accession),
     ]);

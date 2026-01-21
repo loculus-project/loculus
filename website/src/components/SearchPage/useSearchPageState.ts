@@ -4,7 +4,7 @@ import useStateSyncedWithUrlQueryParams, { type QueryState } from './useStateSyn
 import useUrlParamState from '../../hooks/useUrlParamState.ts';
 import type { FieldValues, FieldValueUpdate, Schema, SetSomeFieldValues } from '../../types/config.ts';
 import type { OrderDirection } from '../../types/lapis.ts';
-import type { ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import {
     getReferenceIdentifier,
     useSelectedReferences,
@@ -29,7 +29,7 @@ type UseSearchPageStateParams = {
     schema: Schema;
     hiddenFieldValues: FieldValues;
     filterSchema: MetadataFilterSchema;
-    referenceGenomes: ReferenceGenomes;
+    referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
 export function useSearchPageState({
@@ -37,7 +37,7 @@ export function useSearchPageState({
     schema,
     hiddenFieldValues,
     filterSchema,
-    referenceGenomes,
+    referenceGenomesInfo,
 }: UseSearchPageStateParams) {
     const [state, setState] = useStateSyncedWithUrlQueryParams(initialQueryDict);
 
@@ -96,18 +96,18 @@ export function useSearchPageState({
                     }
 
                     if (schema.referenceIdentifierField !== undefined) {
-                        for (const segmentName of getSegmentNames(referenceGenomes)) {
+                        for (const segmentName of getSegmentNames(referenceGenomesInfo)) {
                             if (
                                 key ===
                                 getReferenceIdentifier(
                                     schema.referenceIdentifierField,
                                     segmentName,
-                                    referenceGenomes.isMultiSegmented,
+                                    referenceGenomesInfo.isMultiSegmented,
                                 )
                             ) {
                                 delete newState[MUTATION_KEY];
                                 const referenceNames = Object.keys(
-                                    referenceGenomes.segmentReferenceGenomes[segmentName],
+                                    referenceGenomesInfo.segmentReferenceGenomes[segmentName],
                                 );
                                 filterSchema
                                     .ungroupedMetadataFilters()
@@ -131,7 +131,7 @@ export function useSearchPageState({
                 setPage(1);
             }
         },
-        [setState, setPage, hiddenFieldValues, schema.referenceIdentifierField, filterSchema, referenceGenomes],
+        [setState, setPage, hiddenFieldValues, schema.referenceIdentifierField, filterSchema, referenceGenomesInfo],
     );
 
     const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
@@ -152,13 +152,13 @@ export function useSearchPageState({
     );
 
     const selectedReferences = useSelectedReferences({
-        referenceGenomes,
+        referenceGenomesInfo,
         schema,
         state,
     });
 
     const setSelectedReferences = useSetSelectedReferences({
-        referenceGenomes,
+        referenceGenomesInfo,
         schema,
         setSomeFieldValues,
     });

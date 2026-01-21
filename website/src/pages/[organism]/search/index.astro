@@ -37,14 +37,14 @@ const schema = getSchema(cleanedOrganism.key);
 const accessToken = getAccessToken(Astro.locals.session);
 const myGroups = accessToken !== undefined ? await getMyGroups(accessToken) : [];
 
-const referenceGenomes = getReferenceGenomes(cleanedOrganism.key);
+const referenceGenomesInfo = getReferenceGenomes(cleanedOrganism.key);
 
 // Build initialQueryDict with support for multi-value parameters
 const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
 const { data, totalCount } = await performLapisSearchQueries(
     initialQueryDict,
     schema,
-    referenceGenomes,
+    referenceGenomesInfo,
     hiddenFieldValues,
     cleanedOrganism.key,
 );
@@ -60,7 +60,7 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
         schema={schema}
         myGroups={myGroups}
         accessToken={accessToken}
-        referenceGenomes={referenceGenomes}
+        referenceGenomesInfo={referenceGenomesInfo}
         hiddenFieldValues={hiddenFieldValues}
         initialData={data}
         initialCount={totalCount}

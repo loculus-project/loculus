@@ -5,13 +5,13 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SequencesContainer } from './SequencesContainer.tsx';
 import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
-import type { ReferenceGenomes } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 import {
     MULTI_SEG_SINGLE_REF_REFERENCEGENOMES,
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
-} from '../../../types/referenceGenomes.spec.ts';
+} from '../../../types/referenceGenomesInfo.spec.ts';
 
 vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
@@ -35,14 +35,17 @@ const getUnalignedSegmentLabel = (segment: string) => `${segment} (unaligned)`;
 // Test Selectors
 const BUTTON_ROLE = 'button';
 
-function renderSequenceViewer(referenceGenomes: ReferenceGenomes, segmentReferences: SegmentReferenceSelections) {
+function renderSequenceViewer(
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    segmentReferences: SegmentReferenceSelections,
+) {
     render(
         <QueryClientProvider client={queryClient}>
             <SequencesContainer
                 organism={testOrganism}
                 accessionVersion={accessionVersion}
                 clientConfig={testConfig.public}
-                referenceGenomes={referenceGenomes}
+                referenceGenomesInfo={referenceGenomesInfo}
                 loadSequencesAutomatically={false}
                 segmentReferences={segmentReferences}
             />
@@ -51,10 +54,10 @@ function renderSequenceViewer(referenceGenomes: ReferenceGenomes, segmentReferen
 }
 
 function renderSingleReferenceSequenceViewer(
-    referenceGenomes: ReferenceGenomes,
+    referenceGenomesInfo: ReferenceGenomesInfo,
     segmentReferences: SegmentReferenceSelections,
 ) {
-    renderSequenceViewer(referenceGenomes, segmentReferences);
+    renderSequenceViewer(referenceGenomesInfo, segmentReferences);
 }
 
 const singleSegmentSequence = 'SingleSegmentSequence';

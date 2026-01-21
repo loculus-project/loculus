@@ -1,6 +1,6 @@
 import { type FC, useId, useMemo } from 'react';
 
-import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
 import {
@@ -13,7 +13,7 @@ import MaterialSymbolsClose from '~icons/material-symbols/close';
 
 type ReferenceSelectorProps = {
     filterSchema: MetadataFilterSchema;
-    referenceGenomes: ReferenceGenomes;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     referenceIdentifierField: string;
     setSelectedReferences: (newValues: SegmentReferenceSelections) => void;
     selectedReferences: SegmentReferenceSelections;
@@ -27,16 +27,16 @@ type ReferenceSelectorProps = {
  */
 export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
     filterSchema,
-    referenceGenomes,
+    referenceGenomesInfo,
     referenceIdentifierField,
     selectedReferences,
     setSelectedReferences,
 }) => {
     const baseSelectId = useId();
 
-    const segments = getSegmentNames(referenceGenomes);
+    const segments = getSegmentNames(referenceGenomesInfo);
 
-    if (segmentsWithMultipleReferences(referenceGenomes).length === 0) {
+    if (segmentsWithMultipleReferences(referenceGenomesInfo).length === 0) {
         return null;
     }
 
@@ -45,18 +45,18 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
             const identifier = getReferenceIdentifier(
                 referenceIdentifierField,
                 segmentName,
-                referenceGenomes.isMultiSegmented,
+                referenceGenomesInfo.isMultiSegmented,
             );
 
             acc[segmentName] = identifier ? filterSchema.filterNameToLabelMap()[identifier] : undefined;
 
             return acc;
         }, {});
-    }, [filterSchema, referenceIdentifierField, referenceGenomes]);
+    }, [filterSchema, referenceIdentifierField, referenceGenomesInfo]);
 
     return (
         <>
-            {segmentsWithMultipleReferences(referenceGenomes).map((segment) => {
+            {segmentsWithMultipleReferences(referenceGenomesInfo).map((segment) => {
                 const selectId = `${baseSelectId}-${segment}`;
 
                 return (
@@ -81,7 +81,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                                     Select {formatLabel(labelsBySegment[segment] ?? '')}...
                                 </option>
 
-                                {Object.keys(referenceGenomes.segmentReferenceGenomes[segment]).map((reference) => (
+                                {Object.keys(referenceGenomesInfo.segmentReferenceGenomes[segment]).map((reference) => (
                                     <option key={reference} value={reference}>
                                         {reference}
                                     </option>

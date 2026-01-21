@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { getSegmentNames, type SegmentReferenceSelections } from './sequenceTypeHelpers';
-import type { ReferenceGenomes } from '../types/referencesGenomes';
+import type { ReferenceGenomesInfo } from '../types/referencesGenomes';
 
 export function getReferenceIdentifier(identifier: string | undefined, segmentName: string, multipleSegments: boolean) {
     if (identifier === undefined) return undefined;
@@ -36,13 +36,13 @@ export function getSegmentReferenceSelections({
 }
 
 type UseSelectedReferencesArgs = {
-    referenceGenomes: ReferenceGenomes;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     schema: { referenceIdentifierField?: string };
     state: Record<string, unknown>;
 };
 
-export function useSelectedReferences({ referenceGenomes, schema, state }: UseSelectedReferencesArgs) {
-    const segments = useMemo(() => getSegmentNames(referenceGenomes), [referenceGenomes]);
+export function useSelectedReferences({ referenceGenomesInfo, schema, state }: UseSelectedReferencesArgs) {
+    const segments = useMemo(() => getSegmentNames(referenceGenomesInfo), [referenceGenomesInfo]);
 
     return useMemo(
         () =>
@@ -57,11 +57,11 @@ export function useSelectedReferences({ referenceGenomes, schema, state }: UseSe
 }
 
 export function getSelectedReferences({
-    referenceGenomes,
+    referenceGenomesInfo,
     schema,
     state,
 }: UseSelectedReferencesArgs): SegmentReferenceSelections {
-    const segments = Object.keys(referenceGenomes.segmentReferenceGenomes);
+    const segments = Object.keys(referenceGenomesInfo.segmentReferenceGenomes);
 
     return getSegmentReferenceSelections({
         segments,
@@ -72,17 +72,17 @@ export function getSelectedReferences({
 }
 
 type UseSetSelectedReferencesArgs = {
-    referenceGenomes: ReferenceGenomes;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     schema: { referenceIdentifierField?: string };
     setSomeFieldValues: (entry: [string, string | null]) => void;
 };
 
 export function useSetSelectedReferences({
-    referenceGenomes,
+    referenceGenomesInfo,
     schema,
     setSomeFieldValues,
 }: UseSetSelectedReferencesArgs) {
-    const segments = getSegmentNames(referenceGenomes);
+    const segments = getSegmentNames(referenceGenomesInfo);
     return useCallback(
         (updates: SegmentReferenceSelections) => {
             Object.entries(updates).forEach(([segmentName, value]) => {
