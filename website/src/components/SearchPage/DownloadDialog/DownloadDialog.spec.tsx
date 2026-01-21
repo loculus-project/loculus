@@ -359,7 +359,7 @@ describe('DownloadDialog', () => {
     });
 
     describe('multi pathogen case', () => {
-        test('should disable the aligned sequence downloads when no suborganism is selected', async () => {
+        test('should disable the aligned sequence downloads when no reference is selected', async () => {
             await renderDialog({
                 referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 referenceIdentifierField: 'genotype',
@@ -370,7 +370,7 @@ describe('DownloadDialog', () => {
             expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
         });
 
-        test('should download all raw segments when no suborganism is selected', async () => {
+        test('should download all raw segments when no reference is selected', async () => {
             await renderDialog({
                 referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 referenceIdentifierField: 'genotype',
@@ -384,7 +384,7 @@ describe('DownloadDialog', () => {
             expect(query).contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
         });
 
-        test('should enable the aligned sequence downloads when suborganism is selected', async () => {
+        test('should enable the aligned sequence downloads when reference is selected', async () => {
             await renderDialog({
                 referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 selectedReferenceNames: { main: 'ref1' },
@@ -395,7 +395,7 @@ describe('DownloadDialog', () => {
             expect(screen.getByLabelText(alignedAminoAcidSequencesLabel)).toBeEnabled();
         });
 
-        test('should download only the selected raw suborganism sequences when suborganism is selected', async () => {
+        test('should download only the selected raw reference sequences when reference is selected', async () => {
             await renderDialog({
                 referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 selectedReferenceNames: { main: 'ref1' },
@@ -406,10 +406,10 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
 
             const { path } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences/suborganism1`);
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences/ref1`);
         });
 
-        test('should download only the selected aligned suborganism sequences when suborganism is selected', async () => {
+        test('should download only the selected aligned reference sequences when reference is selected', async () => {
             await renderDialog({
                 referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 selectedReferenceNames: { main: 'ref1' },
@@ -420,10 +420,10 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(alignedNucleotideSequencesLabel));
 
             const { path } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/alignedNucleotideSequences/suborganism1`);
+            expectRouteInPathMatches(path, `/sample/alignedNucleotideSequences/ref1`);
         });
 
-        test('should download only the selected aligned suborganism amino acid sequences when suborganism is selected', async () => {
+        test('should download only the selected aligned reference amino acid sequences when reference is selected', async () => {
             await renderDialog({
                 referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 selectedReferenceNames: { main: 'ref1' },
@@ -435,7 +435,7 @@ describe('DownloadDialog', () => {
             await userEvent.selectOptions(screen.getByRole('combobox', { name: 'alignedAminoAcidSequences' }), 'gene2');
 
             const { path } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/alignedAminoAcidSequences/suborganism1-gene2`);
+            expectRouteInPathMatches(path, `/sample/alignedAminoAcidSequences/gene2-ref1`);
         });
 
         const metadataWithOnlyForReferenceName: Metadata[] = [
@@ -445,7 +445,7 @@ describe('DownloadDialog', () => {
                 type: 'string',
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
-                onlyForReference: 'suborganism1',
+                onlyForReference: 'ref1',
             },
             {
                 name: 'field2',
@@ -453,7 +453,7 @@ describe('DownloadDialog', () => {
                 type: 'string',
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
-                onlyForReference: 'suborganism2',
+                onlyForReference: 'ref2',
             },
             {
                 name: ACCESSION_VERSION_FIELD,
@@ -462,7 +462,7 @@ describe('DownloadDialog', () => {
             },
         ];
 
-        test('should include "onlyForReference" selected fields in download if no suborganism is selected', async () => {
+        test('should include "onlyForReference" selected fields in download if no reference is selected', async () => {
             await renderDialog({
                 referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 referenceIdentifierField: 'genotype',
@@ -477,7 +477,7 @@ describe('DownloadDialog', () => {
             expect(query).toMatch(/fields=accessionVersion%2Cfield1%2Cfield2$/);
         });
 
-        test('should exclude selected fields from download if they are not for selected suborganism', async () => {
+        test('should exclude selected fields from download if they are not for selected reference', async () => {
             await renderDialog({
                 referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 selectedReferenceNames: { main: 'ref2' },
