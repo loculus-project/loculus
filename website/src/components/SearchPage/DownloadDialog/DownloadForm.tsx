@@ -226,7 +226,8 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 />
                 {disableAlignedSequences && referenceIdentifierField !== undefined && (
                     <div className='text-sm text-gray-400 mt-4 max-w-60'>
-                        Or select a reference with the search UI to enable download of aligned sequences.
+                        Or select a {formatLabel(suborganismIdentifierField)} with the search UI to enable download of
+                        aligned sequences.
                     </div>
                 )}
             </div>
