@@ -45,16 +45,16 @@ export const SINGLE_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
                 lapisName: 'ref1',
                 insdcAccessionFull: 'defaultInsdcAccession1',
                 genes: [
-                    { lapisName: 'gene1_ref1', name: 'gene1' },
-                    { lapisName: 'gene2_ref1', name: 'gene2' },
+                    { lapisName: 'gene1-ref1', name: 'gene1' },
+                    { lapisName: 'gene2-ref1', name: 'gene2' },
                 ],
             },
             ref2: {
                 lapisName: 'ref2',
                 insdcAccessionFull: 'defaultInsdcAccession2',
                 genes: [
-                    { lapisName: 'gene1_ref2', name: 'gene1' },
-                    { lapisName: 'gene2_ref2', name: 'gene2' },
+                    { lapisName: 'gene1-ref2', name: 'gene1' },
+                    { lapisName: 'gene2-ref2', name: 'gene2' },
                 ],
             },
         },

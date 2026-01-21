@@ -19,6 +19,7 @@ const schema: Schema = {
         { name: 'metadataField1', type: 'string', header: 'testHeader1' },
         { name: 'metadataField2', type: 'string' },
         { name: 'timestampField', type: 'timestamp', displayName: 'Timestamp field' },
+        { name: 'genotype', type: 'string' },
     ],
     tableColumns: [],
     defaultOrderBy: 'metadataField1',
@@ -487,7 +488,7 @@ const aminoAcidMutations: MutationProportionCount[] = mutationProportionCountWit
 
 const multiPathogenAminoAcidMutations: MutationProportionCount[] = mutationProportionCountWithSequenceName(
     aminoAcidMutations,
-    `${genome1}-gene1`,
+    `gene1-${genome1}`,
 );
 
 function mutationProportionCountWithSequenceName(
@@ -518,17 +519,17 @@ const aminoAcidInsertions = [
 const multiPathogenAminoAcidInsertions = [
     {
         count: 0,
-        insertion: `ins_${genome1}-gene1:123:AAA`,
+        insertion: `ins_gene1-${genome1}:123:AAA`,
         insertedSymbols: 'AAA',
         position: 123,
-        sequenceName: `${genome1}-gene1`,
+        sequenceName: `gene1-${genome1}`,
     },
     {
         count: 0,
-        insertion: `ins_${genome1}-gene1:456:TTT`,
+        insertion: `ins_gene1-${genome1}:456:TTT`,
         insertedSymbols: 'TTT',
         position: 456,
-        sequenceName: `${genome1}-gene1`,
+        sequenceName: `gene1-${genome1}`,
     },
 ];
 
