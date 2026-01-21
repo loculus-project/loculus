@@ -169,7 +169,7 @@ def add_assigned_reference(
     name = get_name(str(segment), unprocessed.nextcladeMetadata, config)
     if not name:
         return InputData(datum=None)
-    reference = config.get_dataset_by_name(name).reference_name
+    reference = config.get_dataset_by_name(name).referenceName
     if not reference:
         return InputData(datum=None)
     return InputData(datum=reference)

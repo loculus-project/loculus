@@ -9,13 +9,13 @@ import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
 import { versionStatuses } from '../../../types/lapis';
-import { type ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
-import { MetadataFilterSchema } from '../../../utils/search.ts';
-import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 } from '../../../types/referenceGenomes.spec.ts';
+import { type ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
+import { MetadataFilterSchema } from '../../../utils/search.ts';
+import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 
 const defaultLapisUrl = 'https://lapis';
 const defaultOrganism = 'ebola';

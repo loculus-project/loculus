@@ -6,15 +6,15 @@ nextclade_dataset_server: TEST
 segments:
   - name: L
     references:
-    - reference_name: singleReference
+    - referenceName: singleReference
       nextclade_dataset_name: CCHF/L
       genes: [RdRp]
   - name: S
     references:
-    - reference_name: 1and6
+    - referenceName: 1and6
       nextclade_dataset_name: CCHF/S-1and6
       genes: [NP]
-    - reference_name: 2to5
+    - referenceName: 2to5
       nextclade_dataset_name: CCHF/S-2to5
       genes: [NP]
 organism: multi-reference-cchf-test

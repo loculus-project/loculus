@@ -6,12 +6,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataFilter } from '../../types/config.ts';
-import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
-import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 } from '../../types/referenceGenomes.spec.ts';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
+import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
     observe() {}
@@ -194,6 +194,7 @@ describe('SearchForm', () => {
                 filterSchema,
                 searchVisibilities,
                 referenceIdentifierField: 'My genotype',
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 selectedReferences: { 'My genotype': 'suborganism1' },
             });
 
