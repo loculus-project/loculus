@@ -42,9 +42,9 @@ describe('Table', () => {
         render(<TestWrapper />);
         const checkboxes = screen.getAllByRole('checkbox');
 
-        fireEvent.mouseDown(checkboxes[0]);
-        fireEvent.mouseEnter(checkboxes[1]);
-        fireEvent.mouseEnter(checkboxes[2]);
+        fireEvent.mouseDown(checkboxes[0], { clientY: 100 });
+        fireEvent.mouseEnter(checkboxes[1], { clientY: 150 });
+        fireEvent.mouseEnter(checkboxes[2], { clientY: 200 });
         fireEvent.mouseUp(document.body);
 
         checkboxes.forEach((cb) => {

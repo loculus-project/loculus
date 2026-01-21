@@ -124,11 +124,12 @@ export const Table: FC<TableProps> = ({
     };
 
     const mouseDownSelection = useRef('');
-    const dragSelecting = useRef({ active: false, value: false });
+    const dragSelecting = useRef({ active: false, value: false, startY: 0 });
+    const checkboxMouseDownFired = useRef(false);
 
     useEffect(() => {
         const handleMouseUp = () => {
-            dragSelecting.current.active = false;
+            dragSelecting.current = { active: false, value: false, startY: 0 };
         };
         window.addEventListener('mouseup', handleMouseUp);
         return () => {
@@ -244,13 +245,25 @@ export const Table: FC<TableProps> = ({
                                         className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
                                         onClick={(e) => {
                                             e.stopPropagation();
+                                            if (checkboxMouseDownFired.current) {
+                                                checkboxMouseDownFired.current = false;
+                                                return;
+                                            }
                                             const seqId = row[primaryKey] as string;
                                             const newValue = !selectedSeqs.has(seqId);
                                             setRowSelected(seqId, newValue);
                                         }}
-                                        onMouseEnter={() => {
+                                        onMouseEnter={(e) => {
+                                            const seqId = row[primaryKey] as string;
+                                            const minMouseMovement = 5;
+                                            if (
+                                                dragSelecting.current.startY !== 0 &&
+                                                Math.abs(e.clientY - dragSelecting.current.startY) > minMouseMovement
+                                            ) {
+                                                dragSelecting.current.active = true;
+                                            }
                                             if (dragSelecting.current.active) {
-                                                setRowSelected(row[primaryKey] as string, dragSelecting.current.value);
+                                                setRowSelected(seqId, dragSelecting.current.value);
                                                 if (document.activeElement instanceof HTMLElement) {
                                                     document.activeElement.blur();
                                                 }
@@ -262,10 +275,15 @@ export const Table: FC<TableProps> = ({
                                             className='text-primary-900 hover:text-primary-800 hover:no-underline'
                                             onClick={(e) => e.stopPropagation()}
                                             checked={selectedSeqs.has(row[primaryKey] as string)}
-                                            onMouseDown={() => {
+                                            onMouseDown={(e) => {
                                                 const seqId = row[primaryKey] as string;
                                                 const newValue = !selectedSeqs.has(seqId);
-                                                dragSelecting.current = { active: true, value: newValue };
+                                                checkboxMouseDownFired.current = true;
+                                                dragSelecting.current = {
+                                                    active: false,
+                                                    value: newValue,
+                                                    startY: e.clientY,
+                                                };
                                                 setRowSelected(seqId, newValue);
                                             }}
                                         />
