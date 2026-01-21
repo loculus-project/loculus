@@ -156,7 +156,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             },
             {
                 label: <>Aligned amino acid sequences</>,
-                subOptions: referenceGenomesInfo.isMultiSegmented ? (
+                subOptions: geneInfos.length > 0 ? (
                     <div className='px-8'>
                         <DropdownOptionBlock
                             name='alignedAminoAcidSequences'
