@@ -7,7 +7,7 @@ import { FieldSelectorModal } from './FieldSelector/FieldSelectorModal.tsx';
 import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from './OptionBlock.tsx';
 import { routes } from '../../../routes/routes.ts';
 import type { Schema } from '../../../types/config.ts';
-import type { ReferenceGenomes } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import type { MetadataVisibility } from '../../../utils/search.ts';
 import {
     getSegmentAndGeneInfo,
@@ -26,7 +26,7 @@ export type DownloadFormState = {
 };
 
 type DownloadFormProps = {
-    referenceGenomes: ReferenceGenomes;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     downloadFormState: DownloadFormState;
     setDownloadFormState: Dispatch<SetStateAction<DownloadFormState>>;
     allowSubmissionOfConsensusSequences: boolean;
@@ -40,7 +40,7 @@ type DownloadFormProps = {
 };
 
 export const DownloadForm: FC<DownloadFormProps> = ({
-    referenceGenomes,
+    referenceGenomesInfo,
     downloadFormState,
     setDownloadFormState,
     allowSubmissionOfConsensusSequences,
@@ -54,11 +54,11 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 }) => {
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const { nucleotideSegmentInfos, geneInfos } = useMemo(
-        () => getSegmentAndGeneInfo(referenceGenomes, selectedReferenceNames),
-        [referenceGenomes, selectedReferenceNames],
+        () => getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferenceNames),
+        [referenceGenomesInfo, selectedReferenceNames],
     );
 
-    const disableAlignedSequences = stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomes);
+    const disableAlignedSequences = stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomesInfo);
 
     function getDataTypeOptions(): OptionBlockOption[] {
         const metadataOption = {
@@ -82,7 +82,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             label: <>Raw nucleotide sequences</>,
             subOptions: (
                 <div className='px-8'>
-                    {referenceGenomes.isMultiSegmented ? (
+                    {referenceGenomesInfo.isMultiSegmented ? (
                         <DropdownOptionBlock
                             name='unalignedNucleotideSequences'
                             options={nucleotideSegmentInfos.map((segment) => ({
@@ -133,7 +133,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             rawNucleotideSequencesOption,
             {
                 label: <>Aligned nucleotide sequences</>,
-                subOptions: referenceGenomes.isMultiSegmented ? (
+                subOptions: referenceGenomesInfo.isMultiSegmented ? (
                     <div className='px-8'>
                         <DropdownOptionBlock
                             name='alignedNucleotideSequences'
@@ -156,7 +156,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             },
             {
                 label: <>Aligned amino acid sequences</>,
-                subOptions: referenceGenomes.isMultiSegmented ? (
+                subOptions: referenceGenomesInfo.isMultiSegmented ? (
                     <div className='px-8'>
                         <DropdownOptionBlock
                             name='alignedAminoAcidSequences'

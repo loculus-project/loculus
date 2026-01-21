@@ -17,13 +17,13 @@ import {
     DATA_USE_TERMS_FIELD,
 } from '../../settings';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import type { ReferenceGenomes } from '../../types/referencesGenomes';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers';
 
 interface Props {
     tableData: TableDataEntry[];
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    referenceGenomesMap: ReferenceGenomes;
+    referenceGenomesMap: ReferenceGenomesInfo;
     segmentReferences: SegmentReferenceSelections;
 }
 
@@ -52,5 +52,5 @@ const dataTableData = getDataTableData(relevantData);
     dataTableData={dataTableData}
     dataUseTermsHistory={dataUseTermsHistory}
     segmentReferences={segmentReferences}
-    referenceGenomes={referenceGenomesMap}
+    referenceGenomesInfo={referenceGenomesMap}
 />

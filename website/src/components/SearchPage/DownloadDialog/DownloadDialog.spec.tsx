@@ -9,13 +9,13 @@ import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
 import { versionStatuses } from '../../../types/lapis';
-import { type ReferenceGenomes } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
-} from '../../../types/referenceGenomes.spec.ts';
+} from '../../../types/referenceGenomesInfo.spec.ts';
 
 const defaultLapisUrl = 'https://lapis';
 const defaultOrganism = 'ebola';
@@ -49,7 +49,7 @@ async function renderDialog({
     metadata = mockMetadata,
     selectedReferenceNames = { main: null },
     referenceIdentifierField,
-    referenceGenomes = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+    referenceGenomesInfo = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 }: {
     downloadParams?: SequenceFilter;
     allowSubmissionOfConsensusSequences?: boolean;
@@ -58,7 +58,7 @@ async function renderDialog({
     metadata?: Metadata[];
     selectedReferenceNames?: SegmentReferenceSelections;
     referenceIdentifierField?: string;
-    referenceGenomes?: ReferenceGenomes;
+    referenceGenomesInfo?: ReferenceGenomesInfo;
 } = {}) {
     const schema: Schema = {
         defaultOrder: 'ascending',
@@ -79,7 +79,7 @@ async function renderDialog({
                 new DownloadUrlGenerator(defaultOrganism, defaultLapisUrl, dataUseTermsEnabled, richFastaHeaderFields)
             }
             sequenceFilter={downloadParams}
-            referenceGenomes={referenceGenomes}
+            referenceGenomesInfo={referenceGenomesInfo}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             dataUseTermsEnabled={dataUseTermsEnabled}
             schema={schema}
@@ -361,7 +361,7 @@ describe('DownloadDialog', () => {
     describe('multi pathogen case', () => {
         test('should disable the aligned sequence downloads when no suborganism is selected', async () => {
             await renderDialog({
-                referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 referenceIdentifierField: 'genotype',
             });
 
@@ -372,7 +372,7 @@ describe('DownloadDialog', () => {
 
         test('should download all raw segments when no suborganism is selected', async () => {
             await renderDialog({
-                referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 referenceIdentifierField: 'genotype',
             });
 
@@ -386,7 +386,7 @@ describe('DownloadDialog', () => {
 
         test('should enable the aligned sequence downloads when suborganism is selected', async () => {
             await renderDialog({
-                referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 selectedReferenceNames: { main: 'ref1' },
                 referenceIdentifierField: 'genotype',
             });
@@ -397,7 +397,7 @@ describe('DownloadDialog', () => {
 
         test('should download only the selected raw suborganism sequences when suborganism is selected', async () => {
             await renderDialog({
-                referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 selectedReferenceNames: { main: 'ref1' },
                 referenceIdentifierField: 'genotype',
             });
@@ -411,7 +411,7 @@ describe('DownloadDialog', () => {
 
         test('should download only the selected aligned suborganism sequences when suborganism is selected', async () => {
             await renderDialog({
-                referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 selectedReferenceNames: { main: 'ref1' },
                 referenceIdentifierField: 'genotype',
             });
@@ -425,7 +425,7 @@ describe('DownloadDialog', () => {
 
         test('should download only the selected aligned suborganism amino acid sequences when suborganism is selected', async () => {
             await renderDialog({
-                referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 selectedReferenceNames: { main: 'ref1' },
                 referenceIdentifierField: 'genotype',
             });
@@ -464,7 +464,7 @@ describe('DownloadDialog', () => {
 
         test('should include "onlyForReference" selected fields in download if no suborganism is selected', async () => {
             await renderDialog({
-                referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 referenceIdentifierField: 'genotype',
                 metadata: metadataWithOnlyForReferenceName,
             });
@@ -479,7 +479,7 @@ describe('DownloadDialog', () => {
 
         test('should exclude selected fields from download if they are not for selected suborganism', async () => {
             await renderDialog({
-                referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
                 selectedReferenceNames: { main: 'ref2' },
                 referenceIdentifierField: 'genotype',
                 metadata: metadataWithOnlyForReferenceName,

@@ -14,10 +14,10 @@ export const GET: APIRoute = createDownloadAPIRoute(
     async (accessionVersion: string, organism: string) => {
         const lapisClient = LapisClient.createForOrganism(organism);
 
-        const referenceGenomes = getReferenceGenomes(organism);
+        const referenceGenomesInfo = getReferenceGenomes(organism);
 
-        if (referenceGenomes.useLapisMultiSegmentedEndpoint) {
-            const segmentNames = getSegmentNames(referenceGenomes);
+        if (referenceGenomesInfo.useLapisMultiSegmentedEndpoint) {
+            const segmentNames = getSegmentNames(referenceGenomesInfo);
             if (segmentNames.length > 1) {
                 return lapisClient.getMultiSegmentSequenceFasta(accessionVersion, segmentNames);
             }

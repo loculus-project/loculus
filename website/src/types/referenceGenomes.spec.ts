@@ -1,6 +1,6 @@
-import type { ReferenceGenomes } from './referencesGenomes';
+import type { ReferenceGenomesInfo } from './referencesGenomes';
 
-export const SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomes = {
+export const SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
     segmentReferenceGenomes: {
         main: {
             singleReference: {
@@ -17,7 +17,7 @@ export const SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomes = {
     useLapisMultiSegmentedEndpoint: false,
 };
 
-export const MULTI_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomes = {
+export const MULTI_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
     segmentReferenceGenomes: {
         S: {
             singleReference: {
@@ -38,7 +38,7 @@ export const MULTI_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomes = {
     useLapisMultiSegmentedEndpoint: false,
 };
 
-export const SINGLE_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomes = {
+export const SINGLE_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
     segmentReferenceGenomes: {
         main: {
             ref1: {

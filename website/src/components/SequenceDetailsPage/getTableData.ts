@@ -11,7 +11,7 @@ import {
     type InsertionCount,
     type MutationProportionCount,
 } from '../../types/lapis.ts';
-import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 import { getSelectedReferences } from '../../utils/referenceSelection.ts';
 import {
@@ -29,7 +29,7 @@ export type GetTableDataResult = {
 export async function getTableData(
     accessionVersion: string,
     schema: Schema,
-    referenceGenomes: ReferenceGenomes,
+    referenceGenomesInfo: ReferenceGenomesInfo,
     lapisClient: LapisClient,
 ): Promise<Result<GetTableDataResult, ProblemDetail>> {
     return Promise.all([
@@ -60,7 +60,7 @@ export async function getTableData(
                 )
                 .andThen((data) => {
                     if (
-                        segmentsWithMultipleReferences(referenceGenomes).length > 0 &&
+                        segmentsWithMultipleReferences(referenceGenomesInfo).length > 0 &&
                         schema.referenceIdentifierField === undefined
                     ) {
                         return err({
@@ -72,13 +72,13 @@ export async function getTableData(
                         });
                     }
                     const segmentReferences = getSelectedReferences({
-                        referenceGenomes,
+                        referenceGenomesInfo,
                         schema,
                         state: data.details,
                     });
 
                     return ok({
-                        data: toTableData(schema, referenceGenomes, data),
+                        data: toTableData(schema, referenceGenomesInfo, data),
                         segmentReferences,
                         isRevocation: isRevocationEntry(data.details),
                     });
@@ -113,7 +113,7 @@ function mutationDetails(
     aminoAcidMutations: MutationProportionCount[],
     nucleotideInsertions: InsertionCount[],
     aminoAcidInsertions: InsertionCount[],
-    referenceGenomes: ReferenceGenomes,
+    referenceGenomesInfo: ReferenceGenomesInfo,
 ): TableDataEntry[] {
     const data: TableDataEntry[] = [
         {
@@ -123,21 +123,21 @@ function mutationDetails(
             header: 'Nucleotide mutations',
             customDisplay: {
                 type: 'badge',
-                value: substitutionsMap(nucleotideMutations, referenceGenomes),
+                value: substitutionsMap(nucleotideMutations, referenceGenomesInfo),
             },
             type: { kind: 'mutation' },
         },
         {
             label: 'Deletions',
             name: 'nucleotideDeletions',
-            value: deletionsToCommaSeparatedString(nucleotideMutations, referenceGenomes),
+            value: deletionsToCommaSeparatedString(nucleotideMutations, referenceGenomesInfo),
             header: 'Nucleotide mutations',
             type: { kind: 'mutation' },
         },
         {
             label: 'Insertions',
             name: 'nucleotideInsertions',
-            value: insertionsToCommaSeparatedString(nucleotideInsertions, referenceGenomes),
+            value: insertionsToCommaSeparatedString(nucleotideInsertions, referenceGenomesInfo),
             header: 'Nucleotide mutations',
             type: { kind: 'mutation' },
         },
@@ -148,21 +148,21 @@ function mutationDetails(
             header: 'Amino acid mutations',
             customDisplay: {
                 type: 'badge',
-                value: substitutionsMap(aminoAcidMutations, referenceGenomes),
+                value: substitutionsMap(aminoAcidMutations, referenceGenomesInfo),
             },
             type: { kind: 'mutation' },
         },
         {
             label: 'Deletions',
             name: 'aminoAcidDeletions',
-            value: deletionsToCommaSeparatedString(aminoAcidMutations, referenceGenomes),
+            value: deletionsToCommaSeparatedString(aminoAcidMutations, referenceGenomesInfo),
             header: 'Amino acid mutations',
             type: { kind: 'mutation' },
         },
         {
             label: 'Insertions',
             name: 'aminoAcidInsertions',
-            value: insertionsToCommaSeparatedString(aminoAcidInsertions, referenceGenomes),
+            value: insertionsToCommaSeparatedString(aminoAcidInsertions, referenceGenomesInfo),
             header: 'Amino acid mutations',
             type: { kind: 'mutation' },
         },
@@ -172,7 +172,7 @@ function mutationDetails(
 
 function toTableData(
     config: Schema,
-    referenceGenomes: ReferenceGenomes,
+    referenceGenomesInfo: ReferenceGenomesInfo,
     {
         details,
         nucleotideMutations,
@@ -206,7 +206,7 @@ function toTableData(
             aminoAcidMutations,
             nucleotideInsertions,
             aminoAcidInsertions,
-            referenceGenomes,
+            referenceGenomesInfo,
         );
         data.push(...mutations);
     }
@@ -228,11 +228,11 @@ function mapValueToDisplayedValue(value: undefined | null | string | number | bo
 
 export function substitutionsMap(
     mutationData: MutationProportionCount[],
-    referenceGenomes: ReferenceGenomes,
+    referenceGenomesInfo: ReferenceGenomesInfo,
 ): SegmentedMutations[] {
     const result: SegmentedMutations[] = [];
     const substitutionData = mutationData.filter((m) => m.mutationTo !== '-');
-    const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomes);
+    const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomesInfo);
 
     const segmentMutationsMap = new Map<string, MutationBadgeData[]>();
     for (const entry of substitutionData) {
@@ -254,9 +254,12 @@ export function substitutionsMap(
     return result;
 }
 
-function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[], referenceGenomes: ReferenceGenomes) {
+function deletionsToCommaSeparatedString(
+    mutationData: MutationProportionCount[],
+    referenceGenomesInfo: ReferenceGenomesInfo,
+) {
     const segmentPositions = new Map<string | null, number[]>();
-    const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomes);
+    const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomesInfo);
     mutationData
         .filter((m) => m.mutationTo === '-')
         .forEach((m) => {
@@ -304,8 +307,8 @@ function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]
         .join(', ');
 }
 
-function insertionsToCommaSeparatedString(insertionData: InsertionCount[], referenceGenomes: ReferenceGenomes) {
-    const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomes);
+function insertionsToCommaSeparatedString(insertionData: InsertionCount[], referenceGenomesInfo: ReferenceGenomesInfo) {
+    const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomesInfo);
     return insertionData
         .map((insertion) => {
             const sequenceDisplayName = insertion.sequenceName
