@@ -11,7 +11,7 @@ import {
     MULTI_SEG_SINGLE_REF_REFERENCEGENOMES,
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
-} from '../../../types/referenceGenomesInfo.spec.ts';
+} from '../../../types/referenceGenomes.spec.ts';
 
 vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
