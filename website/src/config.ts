@@ -43,29 +43,17 @@ export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
             });
         }
 
-        //const knownReferenceNames = Object.keys(toReferenceGenomesMap(schema.referenceGenomes));
-
-        // schema.schema.metadata.forEach((metadatum) => {
-        //     const onlyForReference = metadatum.onlyForReference;
-        //     if (onlyForReference !== undefined && !knownReferenceNames.includes(onlyForReference)) {
-        //         errors.push(
-        //             new Error(
-        //                 `Metadata field '${metadatum.name}' in organism '${organism}' references unknown suborganism '${onlyForReference}' in 'onlyForReference'.`,
-        //             ),
-        //         );
-        //     }
-        // });
-
-        // const referenceIdentifierField = schema.schema.referenceIdentifierField;
-        // if (referenceIdentifierField !== undefined) {
-        //     if (!schema.schema.metadata.some((metadatum) => metadatum.name === referenceIdentifierField)) {
-        //         errors.push(
-        //             new Error(
-        //                 `referenceIdentifierField '${referenceIdentifierField}' of organism '${organism}' is not defined in the metadata.`,
-        //             ),
-        //         );
-        //     }
-        // }
+        const referenceIdentifierField = schema.schema.referenceIdentifierField;
+        const hasMultipleReferences = schema.referenceGenomes
+            ?.map((segment) => segment.references.length > 1)
+            .some((v) => v);
+        if (referenceIdentifierField == undefined && hasMultipleReferences) {
+            errors.push(
+                new Error(
+                    `Organism '${organism}' has multiple references but referenceIdentifierField '${referenceIdentifierField}' is not defined in the metadata.`,
+                ),
+            );
+        }
     });
     return errors;
 }
