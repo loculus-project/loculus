@@ -60,7 +60,6 @@ const unalignedMultiSegmentSequence = 'UnalignedMultiSegmentSequence';
 
 describe('SequencesContainer', () => {
     describe('with single reference', () => {
-
         test('should render single segmented sequence', async () => {
             mockRequest.lapis.alignedNucleotideSequences(200, `>some\n${singleSegmentSequence}`);
             mockRequest.lapis.unalignedNucleotideSequences(200, `>some\n${unalignedSingleSegmentSequence}`);
