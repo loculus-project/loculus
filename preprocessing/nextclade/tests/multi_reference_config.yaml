@@ -7,11 +7,11 @@ nextclade_dataset_server: TEST
 segments:
   - name: main
     references:
-    - reference_name: ebola-sudan
+    - referenceName: ebola-sudan
       nextclade_dataset_name: ebola-dataset/ebola-sudan
       accepted_dataset_matches: [ebola-sudan]
       genes: [NPEbolaSudan, VP35EbolaSudan] # Names of genes in nextclade dataset gff3 file
-    - reference_name: ebola-zaire
+    - referenceName: ebola-zaire
       nextclade_dataset_name: ebola-dataset/ebola-zaire
       accepted_dataset_matches: [ebola-zaire]
       genes: [VP24EbolaZaire, LEbolaZaire]

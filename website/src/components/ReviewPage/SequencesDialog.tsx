@@ -82,7 +82,7 @@ const extractProcessedSequences = (
                         label = type === 'unaligned' ? `${label} (unaligned)` : `${label} (aligned)`;
                     }
                 }
-                return { label: label ? label : sequenceName, sequence };
+                return { label: label ?? sequenceName, sequence };
             }),
     );
 };

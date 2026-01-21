@@ -2,10 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { validateWebsiteConfig } from './config.ts';
 import type { WebsiteConfig } from './types/config.ts';
-import {
-    SINGLE_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA,
-    SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES_SCHEMA,
-} from './types/referenceGenomes.spec.ts';
+import { SINGLE_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA } from './types/referenceGenomes.spec.ts';
 
 const defaultConfig: WebsiteConfig = {
     accessionPrefix: '',
@@ -41,7 +38,6 @@ describe('validateWebsiteConfig', () => {
         });
 
         expect(errors).toHaveLength(1);
-        console.log(errors[0].message);
         expect(errors[0].message).contains(
             `Organism 'dummyOrganism' has multiple references but referenceIdentifierField is not defined in the schema.`,
         );
