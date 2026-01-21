@@ -41,10 +41,12 @@ describe('Table', () => {
     test('allows selecting multiple checkboxes by dragging', () => {
         render(<TestWrapper />);
         const checkboxes = screen.getAllByRole('checkbox');
+        // Events are handled on the parent td, not the checkbox itself
+        const checkboxCells = checkboxes.map((cb) => cb.parentElement!);
 
-        fireEvent.mouseDown(checkboxes[0]);
-        fireEvent.mouseEnter(checkboxes[1]);
-        fireEvent.mouseEnter(checkboxes[2]);
+        fireEvent.mouseDown(checkboxCells[0], { clientY: 100 });
+        fireEvent.mouseEnter(checkboxCells[1], { clientY: 150 });
+        fireEvent.mouseEnter(checkboxCells[2], { clientY: 200 });
         fireEvent.mouseUp(document.body);
 
         checkboxes.forEach((cb) => {
