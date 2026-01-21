@@ -380,7 +380,7 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
 
             const { path, query } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences/`);
             expect(query).contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
         });
 
