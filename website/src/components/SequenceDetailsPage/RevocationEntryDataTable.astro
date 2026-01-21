@@ -23,12 +23,11 @@ import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers
 interface Props {
     tableData: TableDataEntry[];
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    referenceGenomesMap: ReferenceGenomesInfo;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     segmentReferences: SegmentReferenceSelections;
 }
 
-const { tableData, dataUseTermsHistory, referenceGenomesMap, segmentReferences } = Astro.props;
-
+const { tableData, dataUseTermsHistory, referenceGenomesInfo, segmentReferences } = Astro.props;
 const relevantFieldsForRevocationVersions = [
     ACCESSION_VERSION_FIELD,
     ACCESSION_FIELD,
@@ -52,5 +51,5 @@ const dataTableData = getDataTableData(relevantData);
     dataTableData={dataTableData}
     dataUseTermsHistory={dataUseTermsHistory}
     segmentReferences={segmentReferences}
-    referenceGenomesInfo={referenceGenomesMap}
+    referenceGenomesInfo={referenceGenomesInfo}
 />
