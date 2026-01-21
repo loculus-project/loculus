@@ -29,6 +29,8 @@ export type GeneInfo = {
 export type SegmentAndGeneInfo = {
     nucleotideSegmentInfos: SegmentInfo[];
     geneInfos: GeneInfo[];
+    useLapisMultiSegmentedEndpoint?: boolean;
+    multiSegmented?: boolean;
 };
 
 export const unalignedSequenceSegment = (segmentInfo: SegmentInfo): SequenceType => ({
@@ -148,6 +150,8 @@ export function getSegmentAndGeneInfo(
     return {
         nucleotideSegmentInfos,
         geneInfos,
+        useLapisMultiSegmentedEndpoint: referenceGenomesInfo.useLapisMultiSegmentedEndpoint,
+        multiSegmented: referenceGenomesInfo.isMultiSegmented,
     };
 }
 

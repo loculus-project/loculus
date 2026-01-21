@@ -20,6 +20,7 @@ describe('mutation', () => {
                 },
             ],
             geneInfos,
+            useLapisMultiSegmentedEndpoint: false,
         };
 
         const nucleotideMutationCases: [string, MutationQuery][] = [
@@ -87,6 +88,8 @@ describe('mutation', () => {
                 },
             ],
             geneInfos,
+            useLapisMultiSegmentedEndpoint: true,
+            multiSegmented: false,
         };
 
         const nucleotideMutationCases: [string, MutationQuery][] = [
@@ -177,6 +180,8 @@ describe('mutation', () => {
                 },
             ],
             geneInfos,
+            useLapisMultiSegmentedEndpoint: true,
+            multiSegmented: true,
         };
 
         const nucleotideMutationCases: [string, MutationQuery][] = [
