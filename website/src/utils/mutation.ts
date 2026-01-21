@@ -171,7 +171,7 @@ const isValidNucleotideInsertionQuery = (
     suborganismSegmentAndGeneInfo: SegmentAndGeneInfo,
 ): MutationTestResult => {
     try {
-        const multiSegmented = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.length > 1;
+        const multiSegmented = suborganismSegmentAndGeneInfo.multiSegmented === true;
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
             return INVALID;
@@ -199,7 +199,7 @@ const isValidNucleotideInsertionQuery = (
             valid: true,
             text,
             lapisQuery:
-                suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.length > 1
+                suborganismSegmentAndGeneInfo.useLapisMultiSegmentedEndpoint === true
                     ? `ins_${segmentInfo.lapisName}:${position}:${insertion}`
                     : `ins_${position}:${insertion}`,
         };
@@ -213,12 +213,11 @@ const isValidNucleotideMutationQuery = (
     suborganismSegmentAndGeneInfo: SegmentAndGeneInfo,
 ): MutationTestResult => {
     try {
-        const multiSegmented = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.length > 1;
         const textUpper = text.toUpperCase();
         let mutation = textUpper;
         let segmentInfo: SegmentInfo | undefined = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos[0];
 
-        if (multiSegmented) {
+        if (suborganismSegmentAndGeneInfo.multiSegmented === true) {
             const [segment, _mutation] = textUpper.split(':');
             segmentInfo = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.find(
                 (info) => info.name.toUpperCase() === segment,
@@ -234,7 +233,7 @@ const isValidNucleotideMutationQuery = (
             valid: true,
             text,
             lapisQuery:
-                suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.length > 1
+                suborganismSegmentAndGeneInfo.useLapisMultiSegmentedEndpoint === true
                     ? `${segmentInfo.lapisName}:${mutation}`
                     : mutation,
         };
