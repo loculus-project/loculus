@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest';
 
 import { SequencesDialog } from './SequencesDialog.tsx';
 import { processedStatus, type SequenceEntryToEdit } from '../../types/backend.ts';
-import { SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES } from '../../types/referenceGenomesInfo.spec.ts';
+import { SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES } from '../../types/referenceGenomes.spec.ts';
 
 describe('SequencesDialog', () => {
     test('should only show existing sequences', async () => {

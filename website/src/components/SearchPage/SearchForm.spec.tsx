@@ -11,7 +11,7 @@ import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts'
 import {
     MULTI_SEG_SINGLE_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
-} from '../../types/referenceGenomesInfo.spec.ts';
+} from '../../types/referenceGenomes.spec.ts';
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
     observe() {}
