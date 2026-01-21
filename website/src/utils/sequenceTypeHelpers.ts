@@ -120,7 +120,7 @@ export const getSegmentNames = (genomes: ReferenceGenomesInfo) => Object.keys(ge
 
 /**
  * Get segment and gene info where each segment can have its own reference.
- * @param schema - The reference genome lightweight schema
+ * @param referenceGenomesInfo - The reference genome lightweight schema
  * @param selectedReferences - Map of segment names to selected references
  * @returns SegmentAndGeneInfo with all segments and their genes
  */

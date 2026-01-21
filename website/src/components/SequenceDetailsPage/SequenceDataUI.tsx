@@ -29,6 +29,7 @@ interface Props {
     accessToken: string | undefined;
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     referenceGenomesInfo: ReferenceGenomesInfo;
+    isRevocation?: boolean;
 }
 
 export const SequenceDataUI: FC<Props> = ({
@@ -43,6 +44,7 @@ export const SequenceDataUI: FC<Props> = ({
     accessToken,
     sequenceFlaggingConfig,
     referenceGenomesInfo,
+    isRevocation,
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
 
@@ -69,7 +71,7 @@ export const SequenceDataUI: FC<Props> = ({
                 dataUseTermsHistory={dataUseTermsHistory}
                 referenceGenomesInfo={referenceGenomesInfo}
             />
-            {schema.submissionDataTypes.consensusSequences && (
+            {schema.submissionDataTypes.consensusSequences && !isRevocation && (
                 <div className='mt-10'>
                     <SequencesContainer
                         organism={organism}
