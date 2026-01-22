@@ -272,6 +272,8 @@ def run_diamond(
         sep="\t",
     )
     # We assume that each protein in the diamond database has been labeled as <name>|CDS<number>
+    # If this is not the case each protein in the diamond database should be added to the list of
+    # accepted dataset matches in the config
     df[DataSetIdentifier] = df[DataSetIdentifier].str.replace(
         r"\|CDS\d+$",
         "",
