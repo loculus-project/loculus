@@ -128,7 +128,7 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                             <FileUploadComponent
                                 setFile={setSequenceFile}
                                 name='sequence_file'
-                                ariaLabel='Sequence File'
+                                ariaLabel='Sequence file'
                                 fileKind={FASTA_FILE_KIND}
                             />
                         </div>
@@ -139,7 +139,7 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                             <FileUploadComponent
                                 setFile={setMetadataFile}
                                 name='metadata_file'
-                                ariaLabel='Metadata File'
+                                ariaLabel='Metadata file'
                                 fileKind={METADATA_FILE_KIND}
                             />
                             {metadataFile !== undefined && (
