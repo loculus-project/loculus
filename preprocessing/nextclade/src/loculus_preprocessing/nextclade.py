@@ -228,9 +228,20 @@ def run_diamond(
             dataset_dir + "/diamond/diamond.dmnd",
             "--out",
             result_file,
-            "--outfmt", "6",
-            "qseqid", "sseqid", "pident", "length", "mismatch", "gapopen",
-            "qstart", "qend", "sstart", "send", "evalue", "bitscore",
+            "--outfmt",
+            "6",
+            "qseqid",
+            "sseqid",
+            "pident",
+            "length",
+            "mismatch",
+            "gapopen",
+            "qstart",
+            "qend",
+            "sstart",
+            "send",
+            "evalue",
+            "bitscore",
         ]
         if arg
     ]
