@@ -3,19 +3,24 @@ batch_size: 100
 alignment_requirement: ALL
 log_level: DEBUG
 nextclade_dataset_server: TEST
+segment_classification_method: diamond
+diamond_dmnd_url: FAKE_URL
 segments:
   - name: L
     references:
     - reference_name: singleReference
       nextclade_dataset_name: CCHF/L
+      accepted_dataset_matches: [L]
       genes: [RdRp]
   - name: S
     references:
     - reference_name: 1and6
       nextclade_dataset_name: CCHF/S-1and6
+      accepted_dataset_matches: [S-1and6]
       genes: [NP]
     - reference_name: 2to5
       nextclade_dataset_name: CCHF/S-2to5
+      accepted_dataset_matches: [S-2to5]
       genes: [NP]
 organism: multi-reference-cchf-test
 processing_spec:

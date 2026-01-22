@@ -228,8 +228,9 @@ def run_diamond(
             dataset_dir + "/diamond/diamond.dmnd",
             "--out",
             result_file,
-            "--outfmt",
-            "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore",
+            "--outfmt", "6",
+            "qseqid", "sseqid", "pident", "length", "mismatch", "gapopen",
+            "qstart", "qend", "sstart", "send", "evalue", "bitscore",
         ]
         if arg
     ]
@@ -259,7 +260,12 @@ def run_diamond(
         ],
         sep="\t",
     )
-    df.set_index(SequenceIdentifier, inplace=True)
+    # We assume that each protein in the diamond database has been labeled as <name>|CDS<number>
+    df[DataSetIdentifier] = df[DataSetIdentifier].str.replace(
+        r"\|CDS\d+$",
+        "",
+        regex=True,
+    )
     return df
 
 
