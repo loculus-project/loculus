@@ -87,13 +87,18 @@ prepro --config-file=../../website/tests/config/preprocessing-config.{organism}.
 
 Additionally, the `--keep-tmp-dir` is useful for debugging issues. The results of nextclade run will be stored in the temp directory, as well as a file called `submission_requests.json` which contains a log of the full submit requests that are sent to the backend.
 
-## Sequence Assignment/Classification for Multi-segmented sequences
+## Sequence Assignment/Classification for Sequences with Multiple Segments and/or Multiple References
 
-For multi-segmented viruses the preprocessing pipeline is configured to take entries with multiple sequences and classify which segment each sequence best aligns to - it returns the identity of each segment with a fasta Id to segment name map. This can also be used to identify which reference a sequence best aligns to in the case that multiple references exist. Currently the prepro pipeline in configured to only accept one segment per submission entry. This classification of sequences to the sequence they best align to can be done using three different algorithms:
+The preprocessing pipeline is configured to take entries with multiple nucleotide sequences and classify which segment/reference each sequence best aligns to - it returns the identity of each sequence with a sequence name to fastaId map `sequenceNameToFastaId`. This can also be used to identify which reference a sequence best aligns to in the case that multiple references exist. The `sequenceName` uses the segment-reference structure expected by the backend (and query engine):
+ - For an organisms without multiple references the `sequenceName` in the name of the segment (the segment name `main` is used for the single segment edge case).
+ - For single-segmented, multi-reference organisms the `sequenceName` is the name of the reference.
+ - For multi-segment, multi-reference organisms the `sequenceName` is the `{segmentName}-{referenceName}`.
+ 
+Currently the prepro pipeline is configured to only accept one segment per submission entry. The classification of sequences to the sequence they best align to can be done using three different algorithms, which algorithm is used is determined by the `segment_classification_method` config field. (Additionally for non-alignment configurations segment classification can be performed by parsing the fastaId):
 
-- nextclade sort https://github.com/loculus-project/nextclade-sort-minimizers
-- nextclade align 
-- diamond blastx
+- `ALIGN`: uses [nextclade run](https://docs.nextstrain.org/projects/nextclade/en/stable/user/nextclade-cli/reference.html#nextclade-run) to align sequences. The algorithm uses the alignment score to classify the sequence. To use this method a nextclade server and dataset must be configured.
+- `MINIMIZER`: uses [nextclade sort](https://docs.nextstrain.org/projects/nextclade/en/stable/user/nextclade-cli/reference.html#nextclade-sort) to perform fast local alignment of sequences to a reference based on k-mers of the reference that are stored in a minimizer index. Again classification is based on a score. To use this method you need to define a `minimizer index`, see https://github.com/loculus-project/nextclade-sort-minimizers for details. This is the fastest algorithm but maybe suffer performance issues for highly divergent sequences. 
+- `DIAMOND`: uses [diamond blastx](https://github.com/bbuchfink/diamond) to perform pairwise alignment of protein sequences using BLAST. To use this method you need to define a `diamond database`, see https://github.com/loculus-project/diamond-reference-databases for details.
 
 ## Preprocessing Checks
 
