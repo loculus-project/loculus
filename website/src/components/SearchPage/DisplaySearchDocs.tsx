@@ -43,14 +43,14 @@ const DisplaySearchDocs: React.FC = () => {
                             >
                                 <DialogPanel className='w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all'>
                                     <DialogTitle as='h3' className='font-bold text-2xl mb-4 text-primary-700'>
-                                        Mutation Search
+                                        Mutation search
                                     </DialogTitle>
                                     <Button className='absolute right-2 top-2 p-1' onClick={closeDialog}>
                                         <X className='h-6 w-6' />
                                     </Button>
                                     <div className='mb-4'>
                                         <h4 className='font-bold text-l mb-4 text-primary-700'>
-                                            Nucleotide Mutations and Insertions
+                                            Nucleotide mutations and insertions
                                         </h4>
                                         <p className='mb-2'>
                                             For a single-segmented organism, nucleotide mutations have the format{' '}
@@ -76,7 +76,7 @@ const DisplaySearchDocs: React.FC = () => {
 
                                     <div className='mb-4'>
                                         <h4 className='font-bold text-l mb-4 text-primary-700'>
-                                            Amino Acid Mutations and Insertions
+                                            Amino acid mutations and insertions
                                         </h4>
                                         <p className='mb-2'>
                                             An amino acid mutation has the format{' '}
@@ -93,7 +93,7 @@ const DisplaySearchDocs: React.FC = () => {
                                     </div>
 
                                     <div className='mb-4'>
-                                        <h4 className='font-bold text-l mb-4 text-primary-700'>Insertion Wildcards</h4>
+                                        <h4 className='font-bold text-l mb-4 text-primary-700'>Insertion wildcards</h4>
                                         <p className='mb-2'>
                                             Loculus supports insertion queries that contain wildcards <b>?</b>. For
                                             example <b>ins_S:214:?EP?</b> will match all cases where segment <b>S</b>{' '}
@@ -109,7 +109,7 @@ const DisplaySearchDocs: React.FC = () => {
                                     </div>
 
                                     <div className='mb-4'>
-                                        <h4 className='font-bold text-l mb-4 text-primary-700'>Multiple Mutations</h4>
+                                        <h4 className='font-bold text-l mb-4 text-primary-700'>Multiple mutations</h4>
                                         <p className='mb-2'>
                                             Multiple mutation filters can be provided by adding one mutation after the
                                             other.
@@ -117,14 +117,14 @@ const DisplaySearchDocs: React.FC = () => {
                                     </div>
 
                                     <div className='mb-4'>
-                                        <h4 className='font-bold text-l mb-4 text-primary-700'>Any Mutation</h4>
+                                        <h4 className='font-bold text-l mb-4 text-primary-700'>Any mutation</h4>
                                         <p className='mb-2'>
                                             To filter for any mutation at a given position you can omit the{' '}
                                             <b>&lt;base&gt;</b>.
                                         </p>
                                     </div>
                                     <div className='mb-4'>
-                                        <h4 className='font-bold text-l mb-4 text-primary-700'>No Mutation</h4>
+                                        <h4 className='font-bold text-l mb-4 text-primary-700'>No mutation</h4>
                                         <p className='mb-2'>
                                             You can write a <b>.</b> for the <b>&lt;base&gt;</b> to filter for sequences
                                             for which it is confirmed that no mutation occurred, i.e. has the same base

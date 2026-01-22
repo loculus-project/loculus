@@ -104,7 +104,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
 
         fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
         fireEvent.click(screen.getByText('Basic'));
-        fireEvent.click(screen.getByText('Include Restricted-Use'));
+        fireEvent.click(screen.getByText('Include restricted-use'));
 
         expect(window.open).toHaveBeenCalled();
         expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
@@ -130,7 +130,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
 
         fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
         fireEvent.click(screen.getByText('Basic'));
-        fireEvent.click(screen.getByText('Include Restricted-Use'));
+        fireEvent.click(screen.getByText('Include restricted-use'));
 
         expect(window.open).toHaveBeenCalled();
         expect(vi.mocked(window.open).mock.calls[0][0]).not.toBeUndefined();
@@ -152,7 +152,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
 
         fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
         fireEvent.click(screen.getByText('MetadataFields'));
-        fireEvent.click(screen.getByText('Include Restricted-Use'));
+        fireEvent.click(screen.getByText('Include restricted-use'));
 
         expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
@@ -176,7 +176,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
 
         fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
         fireEvent.click(screen.getByText('MetadataSingle'));
-        fireEvent.click(screen.getByText('Include Restricted-Use'));
+        fireEvent.click(screen.getByText('Include restricted-use'));
 
         expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
