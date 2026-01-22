@@ -1782,22 +1782,26 @@ defaultOrganisms:
           scientific_name: "Orthonairovirus haemorrhagiae"
           molecule_type: "genomic RNA"
           log_level: DEBUG
-          minimizer_url: https://loculus-project.github.io/nextclade-sort-minimizers/data/CCHF/minimizer.json
+          segment_classification_method: diamond
+          diamond_dmnd_url: https://loculus-project.github.io/diamond-reference-databases/blob/main/results/CCHF/diamond.dmnd
           segments:
             - name: L
               references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/L
+                accepted_dataset_matches: [L]
                 reference_name: singleReference
                 genes: [RdRp]
             - name: M
               references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/M
                 reference_name: singleReference
+                accepted_dataset_matches: [M-OR047158, M-MH396653]
                 genes: [GPC]
             - name: S
               references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/S
                 reference_name: singleReference
+                accepted_dataset_matches: [S-1and6, S-2to5]
                 genes: [NP]
     ingest:
       <<: *ingest
