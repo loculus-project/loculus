@@ -94,7 +94,7 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
     clientConfig,
     fieldsToDisplay = [
         { field: 'geoLocCountry', displayName: 'Country' },
-        { field: 'sampleCollectionDate', displayName: 'Collection Date' },
+        { field: 'sampleCollectionDate', displayName: 'Collection date' },
         { field: 'authors', displayName: 'Authors' },
     ],
     sortByKey = 'isFocal',

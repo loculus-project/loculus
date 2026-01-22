@@ -27,7 +27,7 @@ const SeqSetListHead = (props: SeqSetListHeadProps) => {
     const headCells: readonly HeadCell[] = [
         {
             id: 'createdAt',
-            label: 'Last Updated',
+            label: 'Last updated',
         },
         {
             id: 'name',
