@@ -1783,7 +1783,7 @@ defaultOrganisms:
           molecule_type: "genomic RNA"
           log_level: DEBUG
           segment_classification_method: diamond
-          diamond_dmnd_url: https://loculus-project.github.io/diamond-reference-databases/blob/main/results/CCHF/diamond.dmnd
+          diamond_dmnd_url: https://loculus-project.github.io/diamond-reference-databases/results/CCHF/diamond.dmnd
           segments:
             - name: L
               references:
