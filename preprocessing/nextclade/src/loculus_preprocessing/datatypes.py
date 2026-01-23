@@ -175,6 +175,14 @@ class ProcessingResult:
 
 @unique
 class SegmentClassificationMethod(StrEnum):
+    """
+    Methods for classifying genomic segments.
+
+    - ALIGN: Best accuracy but slower; uses Nextclade datasets.
+    - MINIMIZER: Fast; suitable for well-characterized organisms with low diversity.
+    - DIAMOND: Protein-based alignment; useful for highly divergent sequences.
+    """
+
     ALIGN = "align"
     MINIMIZER = "minimizer"
     DIAMOND = "diamond"

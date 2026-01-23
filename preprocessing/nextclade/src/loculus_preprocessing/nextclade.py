@@ -214,6 +214,12 @@ def run_diamond(
     """
     Run diamond blastx
     - use diamond.dmnd defined in config.diamond_dmnd_url
+
+    We assume that each protein in the diamond database has been labeled as <name>|CDS<number>,
+    where dataset is a name in accepted_dataset_matches.
+    Thus we strip the |CDS<number> suffix to get the dataset identifier to compare to the
+    accepted dataset matches in the config.
+    If this is not the case, each protein should be added to the accepted_dataset_matches list.
     """
     subprocess_args = [
         arg
@@ -271,9 +277,6 @@ def run_diamond(
         ],
         sep="\t",
     )
-    # We assume that each protein in the diamond database has been labeled as <name>|CDS<number>
-    # If this is not the case each protein in the diamond database should be added to the list of
-    # accepted dataset matches in the config
     df[DataSetIdentifier] = df[DataSetIdentifier].str.replace(
         r"\|CDS\d+$",
         "",
@@ -367,7 +370,7 @@ class AssignedSequence:
     name: str
 
 
-def dataset_matches(method, best_dataset_id, dataset):
+def is_valid_dataset_match(method, best_dataset_id, dataset):
     if method == SegmentClassificationMethod.ALIGN:
         return best_dataset_id == dataset.name
     return best_dataset_id in accepted__dataset_matches_or_default(dataset)
@@ -416,7 +419,9 @@ def assign_segment(  # noqa: C901
         not_found = True
         best_dataset_id = best_hit[DataSetIdentifier].iloc[0]
         for dataset in config.nextclade_sequence_and_datasets:
-            if dataset_matches(config.segment_classification_method, best_dataset_id, dataset):
+            if is_valid_dataset_match(
+                config.segment_classification_method, best_dataset_id, dataset
+            ):
                 not_found = False
                 sort_results_map.setdefault(dataset.segment, []).append(
                     AssignedSequence(fasta_id=fasta_id, name=dataset.name)
@@ -574,8 +579,8 @@ def assign_segment_with_diamond(
 ) -> SequenceAssignmentBatch:
     """
     Run diamond
-    - assert highest score is in sequence_and_dataset.accepted_dataset_matches
-    (default is nextclade_dataset_name)
+    - assert highest pident (percent identity) score is in
+    sequence_and_dataset.accepted_dataset_matches (default is nextclade_dataset_name)
     """
     batch = SequenceAssignmentBatch()
 
