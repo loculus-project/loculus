@@ -3,7 +3,6 @@ import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers
 
 export function isActiveForSelectedReferenceName(selectedReferenceNames: SegmentReferenceSelections, field: Metadata) {
     const matchesReference =
-        Object.values(selectedReferenceNames).every((value) => value === null) ||
         field.onlyForReference === undefined ||
         Object.values(selectedReferenceNames).some((value) => value === field.onlyForReference);
 
