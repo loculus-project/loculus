@@ -160,8 +160,8 @@ describe('FieldSelectorModal', () => {
             expect(accessionVersionInput).toBeChecked();
         });
 
-        it('should disable fields that are not for the currently selected suborganism', () => {
-            renderFieldSelectorModal({ main: 'suborganism1' }, [
+        it('should disable fields that are not for the currently selected reference', () => {
+            renderFieldSelectorModal({ main: 'ref1' }, [
                 {
                     name: 'field1',
                     displayName: 'Field 1',
@@ -175,7 +175,7 @@ describe('FieldSelectorModal', () => {
                     type: 'string',
                     header: 'Group 1',
                     includeInDownloadsByDefault: true,
-                    onlyForReference: 'suborganism1',
+                    onlyForReference: 'ref1',
                 },
                 {
                     name: 'field3',
@@ -183,7 +183,7 @@ describe('FieldSelectorModal', () => {
                     type: 'string',
                     header: 'Group 2',
                     includeInDownloadsByDefault: true,
-                    onlyForReference: 'suborganism2',
+                    onlyForReference: 'ref2',
                 },
                 accessionVersionField,
             ]);
