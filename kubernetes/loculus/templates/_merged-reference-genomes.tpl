@@ -3,11 +3,6 @@
 {{- $lapisNucleotideSequences := list -}}
 {{- $lapisGenes := list -}}
 
-{{- if or (not $segmentWithReferencesList) (eq (len $segmentWithReferencesList) 0) -}}
-{{- $result := dict "nucleotideSequences" (list) "genes" (list) -}}
-{{- $result | toYaml -}}
-{{- else -}}
-
 {{- $singleSegment := eq (len $segmentWithReferencesList) 1 -}}
 
 {{- range $segment := $segmentWithReferencesList -}}
@@ -47,8 +42,6 @@
       {{- end -}}
     {{- end -}}
   {{- end -}}
-{{- end -}}
-
 {{- end -}}
 
 {{- $result := dict "nucleotideSequences" $lapisNucleotideSequences "genes" $lapisGenes -}}
