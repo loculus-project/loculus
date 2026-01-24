@@ -178,6 +178,11 @@ export function getInsdcAccessionsFromSegmentReferences(
     return references;
 }
 
+/**
+ * @param referenceGenomesInfo - The reference genome lightweight schema
+ * @returns Returns a map from LAPIS names to displayNames (segment or gene names).
+ * For single-segmented genomes, the displayName is `undefined`.
+ */
 export function lapisNameToDisplayName(referenceGenomesInfo: ReferenceGenomesInfo): Map<string, string | undefined> {
     const map = new Map<string, string | undefined>();
     for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
