@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { FieldSelectorModal, getDefaultSelectedFields } from './FieldSelectorModal';
 import { ACCESSION_VERSION_FIELD } from '../../../../settings';
 import { type Metadata } from '../../../../types/config';
+import { SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES } from '../../../../types/referenceGenomes.spec.ts';
 import { MetadataVisibility } from '../../../../utils/search.ts';
 import type { SegmentReferenceSelections } from '../../../../utils/sequenceTypeHelpers.ts';
 
@@ -227,6 +228,7 @@ describe('FieldSelectorModal', () => {
                 }
                 onSelectedFieldsChange={result.current[1]}
                 selectedReferenceNames={selectedReferenceNames}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />
         );
 

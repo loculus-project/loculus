@@ -255,6 +255,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 downloadFieldVisibilities={downloadFieldVisibilities}
                 onSelectedFieldsChange={onSelectedFieldsChange}
                 selectedReferenceNames={selectedReferenceNames}
+                referenceGenomesInfo={referenceGenomesInfo}
             />
         </div>
     );
