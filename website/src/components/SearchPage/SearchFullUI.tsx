@@ -224,6 +224,7 @@ export const InnerSearchFullUI = ({
                 columnVisibilities={columnVisibilities}
                 setAColumnVisibility={setAColumnVisibility}
                 selectedReferenceNames={selectedReferences}
+                referenceGenomesInfo={referenceGenomesInfo}
             />
             <SeqPreviewModal
                 key={previewedSeqId ?? 'seq-modal'}

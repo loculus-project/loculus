@@ -6,7 +6,6 @@ import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import { Button } from '../common/Button';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
 import { ReferenceSelector } from './ReferenceSelector.tsx';
-import { getDisplayState } from './TableColumnSelectorModal.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
@@ -29,7 +28,7 @@ import {
     type SegmentReferenceSelections,
 } from '../../utils/sequenceTypeHelpers.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
-import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
+import { type FieldItem, FieldSelectorModal, getDisplayState } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import MaterialSymbolsTune from '~icons/material-symbols/tune';
@@ -113,7 +112,7 @@ export const SearchForm = ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),
             header: filter.header,
-            displayState: getDisplayState(filter, selectedReferences, referenceIdentifierField),
+            displayState: getDisplayState(filter, selectedReferences, referenceIdentifierField, referenceGenomesInfo),
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
