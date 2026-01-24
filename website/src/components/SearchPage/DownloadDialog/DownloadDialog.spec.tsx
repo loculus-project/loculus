@@ -39,6 +39,12 @@ const mockMetadata: Metadata[] = [
         header: 'Group 1',
         includeInDownloadsByDefault: true,
     },
+    {
+        name: 'genotype',
+        displayName: 'Genotype display name',
+        type: 'string',
+        includeInDownloadsByDefault: true,
+    },
 ];
 
 async function renderDialog({
@@ -156,7 +162,7 @@ describe('DownloadDialog', () => {
         let { path, query } = parseDownloadHref();
         expectRouteInPathMatches(path, `/sample/details`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
+            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
 
         await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
@@ -185,7 +191,7 @@ describe('DownloadDialog', () => {
         let { path, query } = parseDownloadHref();
         expectRouteInPathMatches(path, `/sample/details`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2&accessionVersion=SEQID1&accessionVersion=SEQID2/,
+            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
 
         await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
@@ -277,7 +283,7 @@ describe('DownloadDialog', () => {
         const expectedPrefix = 'https://lapis/sample/details?downloadAsFile=true&downloadFileBasename=ebola_metadata_';
         expectStringStartsWith(copiedText, expectedPrefix);
 
-        const expectedSuffix = '&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2';
+        const expectedSuffix = '&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype';
         expectStringEndsWith(copiedText, expectedSuffix);
 
         clipboardMock.mockRestore();
@@ -365,7 +371,7 @@ describe('DownloadDialog', () => {
                 referenceIdentifierField: 'genotype',
             });
 
-            expect(screen.getByText('select a genotype', { exact: false })).toBeVisible();
+            expect(screen.getByText('select a genotype display name', { exact: false })).toBeVisible();
             expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
             expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
         });
