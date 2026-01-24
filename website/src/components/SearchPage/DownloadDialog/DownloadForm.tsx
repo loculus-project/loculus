@@ -8,7 +8,7 @@ import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from '.
 import { routes } from '../../../routes/routes.ts';
 import type { Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
-import type { MetadataVisibility } from '../../../utils/search.ts';
+import { MetadataFilterSchema, type MetadataVisibility } from '../../../utils/search.ts';
 import {
     getSegmentAndGeneInfo,
     stillRequiresReferenceNameSelection,
@@ -59,6 +59,9 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     );
 
     const disableAlignedSequences = stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomesInfo);
+
+    const metadataSchema = schema.metadata;
+    const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
 
     function getDataTypeOptions(): OptionBlockOption[] {
         const metadataOption = {
@@ -226,8 +229,8 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 />
                 {disableAlignedSequences && referenceIdentifierField !== undefined && (
                     <div className='text-sm text-gray-400 mt-4 max-w-60'>
-                        Or select a {referenceIdentifierField} with the search UI to enable download of aligned
-                        sequences.
+                        Or select a {filterSchema.filterNameToLabelMap()[referenceIdentifierField]} with the search UI
+                        to enable download of aligned sequences.
                     </div>
                 )}
             </div>
