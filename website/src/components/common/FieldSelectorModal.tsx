@@ -2,7 +2,14 @@ import { type FC, useId } from 'react';
 
 import { BaseDialog } from './BaseDialog.tsx';
 import { Button } from './Button';
+import { ACCESSION_VERSION_FIELD } from '../../settings.ts';
+import type { Metadata } from '../../types/config.ts';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
+import {
+    stillRequiresReferenceNameSelection,
+    type SegmentReferenceSelections,
+} from '../../utils/sequenceTypeHelpers.ts';
 
 export type FieldItem = {
     name: string;
@@ -234,4 +241,42 @@ function getTooltip(displayState: FieldItemDisplayState | undefined) {
         displayState?.type === fieldItemDisplayStateType.disabled
         ? displayState.tooltip
         : undefined;
+}
+
+export function isActiveForSelectedReferenceName(selectedReferenceNames: SegmentReferenceSelections, field: Metadata) {
+    const matchesReference =
+        field.onlyForReference === undefined ||
+        Object.values(selectedReferenceNames).some((value) => value === field.onlyForReference);
+
+    return matchesReference;
+}
+
+export function getDisplayState(
+    field: Metadata,
+    selectedReferenceNames: SegmentReferenceSelections,
+    referenceIdentifierField: string | undefined,
+    referenceGenomesInfo: ReferenceGenomesInfo,
+): FieldItemDisplayState | undefined {
+    if (field.name === ACCESSION_VERSION_FIELD) {
+        return { type: fieldItemDisplayStateType.alwaysChecked };
+    }
+
+    if (
+        field.onlyForReference !== undefined &&
+        stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomesInfo)
+    ) {
+        return {
+            type: fieldItemDisplayStateType.greyedOut,
+            tooltip: `This is only visible when the ${referenceIdentifierField ?? 'referenceIdentifierField'} ${field.onlyForReference} is selected.`,
+        };
+    }
+
+    if (!isActiveForSelectedReferenceName(selectedReferenceNames, field)) {
+        return {
+            type: fieldItemDisplayStateType.disabled,
+            tooltip: `This is only visible when the ${referenceIdentifierField ?? 'referenceIdentifierField'} ${field.onlyForReference} is selected.`,
+        };
+    }
+
+    return undefined;
 }

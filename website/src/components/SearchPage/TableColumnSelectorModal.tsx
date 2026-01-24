@@ -1,16 +1,10 @@
 import { type FC, useMemo } from 'react';
 
-import { isActiveForSelectedReferenceName } from './isActiveForSelectedReferenceName.tsx';
-import { ACCESSION_VERSION_FIELD } from '../../settings.ts';
-import type { Metadata, Schema } from '../../types/config.ts';
+import type { Schema } from '../../types/config.ts';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { type MetadataVisibility } from '../../utils/search.ts';
 import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
-import {
-    type FieldItem,
-    type FieldItemDisplayState,
-    fieldItemDisplayStateType,
-    FieldSelectorModal,
-} from '../common/FieldSelectorModal.tsx';
+import { type FieldItem, FieldSelectorModal, getDisplayState } from '../common/FieldSelectorModal.tsx';
 
 export type TableColumnSelectorModalProps = {
     isOpen: boolean;
@@ -19,6 +13,7 @@ export type TableColumnSelectorModalProps = {
     columnVisibilities: Map<string, MetadataVisibility>;
     setAColumnVisibility: (fieldName: string, selected: boolean) => void;
     selectedReferenceNames: SegmentReferenceSelections;
+    referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
 export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
@@ -28,6 +23,7 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
     columnVisibilities,
     setAColumnVisibility,
     selectedReferenceNames,
+    referenceGenomesInfo,
 }) => {
     const columnFieldItems: FieldItem[] = useMemo(
         () =>
@@ -37,10 +33,21 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
                     name: field.name,
                     displayName: field.displayName ?? field.name,
                     header: field.header,
-                    displayState: getDisplayState(field, selectedReferenceNames, schema.referenceIdentifierField),
+                    displayState: getDisplayState(
+                        field,
+                        selectedReferenceNames,
+                        schema.referenceIdentifierField,
+                        referenceGenomesInfo,
+                    ),
                     isChecked: columnVisibilities.get(field.name)?.isChecked ?? false,
                 })),
-        [schema.metadata, schema.referenceIdentifierField, columnVisibilities, selectedReferenceNames],
+        [
+            schema.metadata,
+            schema.referenceIdentifierField,
+            columnVisibilities,
+            selectedReferenceNames,
+            referenceGenomesInfo,
+        ],
     );
 
     return (
@@ -53,22 +60,3 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
         />
     );
 };
-
-export function getDisplayState(
-    field: Metadata,
-    selectedReferenceNames: SegmentReferenceSelections,
-    referenceIdentifierField: string | undefined,
-): FieldItemDisplayState | undefined {
-    if (field.name === ACCESSION_VERSION_FIELD) {
-        return { type: fieldItemDisplayStateType.alwaysChecked };
-    }
-
-    if (!isActiveForSelectedReferenceName(selectedReferenceNames, field)) {
-        return {
-            type: fieldItemDisplayStateType.greyedOut,
-            tooltip: `This is only visible when the ${referenceIdentifierField ?? 'referenceIdentifierField'} ${field.onlyForReference} is selected.`,
-        };
-    }
-
-    return undefined;
-}

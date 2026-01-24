@@ -2,15 +2,14 @@ import { type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { ACCESSION_VERSION_FIELD } from '../../../../settings.ts';
 import { type Metadata, type Schema } from '../../../../types/config.ts';
+import type { ReferenceGenomesInfo } from '../../../../types/referencesGenomes.ts';
 import type { MetadataVisibility } from '../../../../utils/search.ts';
 import type { SegmentReferenceSelections } from '../../../../utils/sequenceTypeHelpers.ts';
 import {
     type FieldItem,
-    type FieldItemDisplayState,
-    fieldItemDisplayStateType,
     FieldSelectorModal as CommonFieldSelectorModal,
+    getDisplayState,
 } from '../../../common/FieldSelectorModal.tsx';
-import { isActiveForSelectedReferenceName } from '../../isActiveForSelectedReferenceName.tsx';
 
 type FieldSelectorProps = {
     isOpen: boolean;
@@ -19,6 +18,7 @@ type FieldSelectorProps = {
     downloadFieldVisibilities: Map<string, MetadataVisibility>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
     selectedReferenceNames: SegmentReferenceSelections;
+    referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
 export const FieldSelectorModal: FC<FieldSelectorProps> = ({
@@ -28,6 +28,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     downloadFieldVisibilities,
     onSelectedFieldsChange,
     selectedReferenceNames,
+    referenceGenomesInfo,
 }) => {
     const handleFieldSelection = (fieldName: string, selected: boolean) => {
         onSelectedFieldsChange((prevSelectedFields) => {
@@ -47,7 +48,12 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         name: field.name,
         displayName: field.displayName,
         header: field.header,
-        displayState: getDisplayState(field, selectedReferenceNames, schema),
+        displayState: getDisplayState(
+            field,
+            selectedReferenceNames,
+            schema.referenceIdentifierField,
+            referenceGenomesInfo,
+        ),
         isChecked: downloadFieldVisibilities.get(field.name)?.isChecked ?? false,
     }));
 
@@ -61,25 +67,6 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         />
     );
 };
-
-function getDisplayState(
-    field: Metadata,
-    selectedReferenceNames: SegmentReferenceSelections,
-    schema: Schema,
-): FieldItemDisplayState | undefined {
-    if (field.name === ACCESSION_VERSION_FIELD) {
-        return { type: fieldItemDisplayStateType.alwaysChecked };
-    }
-
-    if (!isActiveForSelectedReferenceName(selectedReferenceNames, field)) {
-        return {
-            type: fieldItemDisplayStateType.disabled,
-            tooltip: `This is only available when the ${schema.referenceIdentifierField} ${field.onlyForReference} is selected.`,
-        };
-    }
-
-    return undefined;
-}
 
 /**
  * Gets the default list of field names that should be selected
