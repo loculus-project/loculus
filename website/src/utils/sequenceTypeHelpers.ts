@@ -140,7 +140,7 @@ export function getSegmentAndGeneInfo(
             geneInfos.push(...segmentData[Object.keys(segmentData)[0]].genes);
             continue;
         }
-        if (!selectedRef) {
+        if (!selectedRef || !(selectedRef in segmentData)) {
             continue;
         }
         nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentData[selectedRef].lapisName });
