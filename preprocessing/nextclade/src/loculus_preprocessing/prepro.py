@@ -112,8 +112,11 @@ def get_name(
         if config.get_dataset_by_name(dataset).segment == segment
     ]
     if not lapis_names:
-        if config.get_dataset_by_name(segment):
-            return segment
+        try:
+            if config.get_dataset_by_name(segment):
+                return segment
+        except ValueError:
+            return None
         return None
     if len(lapis_names) > 1:
         raise MultipleSequencesPerSegmentError(lapis_names)
