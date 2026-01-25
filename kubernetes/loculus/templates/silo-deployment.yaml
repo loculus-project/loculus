@@ -14,7 +14,7 @@ metadata:
     # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
     argocd.argoproj.io/sync-options: Replace=true{{ if (and (not $.Values.developmentDatabasePersistence) $.Values.runDevelopmentMainDatabase) }},Force=true{{ end }}
 spec:
-  replicas: 1
+  replicas: {{ $.Values.replicas.silo | default 1 }}
   selector:
     matchLabels:
       app: loculus
