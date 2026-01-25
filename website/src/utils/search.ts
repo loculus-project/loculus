@@ -61,17 +61,17 @@ export class MetadataVisibility {
         return false;
     }
 
-    public isDownloadable(selectedReferenceNames: SegmentReferenceSelections, referenceGenomesInfo: ReferenceGenomesInfo): boolean {
+    public isDownloadable(
+        selectedReferenceNames: SegmentReferenceSelections,
+        referenceGenomesInfo: ReferenceGenomesInfo,
+    ): boolean {
         if (!this.isChecked) {
             return false;
         }
         if (this.onlyForReference == undefined) {
             return true;
         }
-        if (stillRequiresReferenceNameSelection(
-            selectedReferenceNames,
-            referenceGenomesInfo,
-        )) {
+        if (stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomesInfo)) {
             return true;
         }
         for (const value of Object.values(selectedReferenceNames)) {
