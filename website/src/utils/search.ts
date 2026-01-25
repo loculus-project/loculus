@@ -1,7 +1,7 @@
 import { sentenceCase } from 'change-case';
 
 import { validateSingleValue } from './extractFieldValue';
-import type { SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
+import { stillRequiresReferenceNameSelection, type SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
 import type {
@@ -12,6 +12,7 @@ import type {
     MetadataType,
     Schema,
 } from '../types/config';
+import type { ReferenceGenomesInfo } from '../types/referencesGenomes.ts';
 
 export const VISIBILITY_PREFIX = 'visibility_';
 
@@ -50,6 +51,27 @@ export class MetadataVisibility {
             return false;
         }
         if (this.onlyForReference == undefined) {
+            return true;
+        }
+        for (const value of Object.values(selectedReferenceNames)) {
+            if (this.onlyForReference === value) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public isDownloadable(selectedReferenceNames: SegmentReferenceSelections, referenceGenomesInfo: ReferenceGenomesInfo): boolean {
+        if (!this.isChecked) {
+            return false;
+        }
+        if (this.onlyForReference == undefined) {
+            return true;
+        }
+        if (stillRequiresReferenceNameSelection(
+            selectedReferenceNames,
+            referenceGenomesInfo,
+        )) {
             return true;
         }
         for (const value of Object.values(selectedReferenceNames)) {
