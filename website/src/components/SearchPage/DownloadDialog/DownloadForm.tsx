@@ -72,7 +72,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                         onClick={() => setIsFieldSelectorOpen(true)}
                         selectedFieldsCount={
                             Array.from(downloadFieldVisibilities.values()).filter((it) =>
-                                it.isVisible(selectedReferenceNames),
+                                it.isDownloadable(selectedReferenceNames, referenceGenomesInfo)
                             ).length
                         }
                         disabled={downloadFormState.dataType !== 'metadata'}

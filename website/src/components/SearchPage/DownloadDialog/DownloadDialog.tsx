@@ -81,7 +81,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         useMultiSegmentEndpoint,
         getVisibleFields: () => [
             ...Array.from(downloadFieldVisibilities.entries())
-                .filter(([_, visibility]) => visibility.isVisible(selectedReferenceNames))
+                .filter(([_, visibility]) => visibility.isDownloadable(selectedReferenceNames, referenceGenomesInfo))
                 .map(([name]) => name),
         ],
         metadata: schema.metadata,
