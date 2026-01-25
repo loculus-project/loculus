@@ -104,16 +104,23 @@ export const DownloadOriginalDataButton: FC<DownloadOriginalDataButtonProps> = (
     }, [sequenceFilter, backendUrl, accessToken, organism, groupId, sequenceCount, fetchAccessions]);
 
     const isDisabled = isDownloading || exceedsLimit;
-    const tooltipText = exceedsLimit
-        ? `Download is limited to ${MAX_DOWNLOAD_ENTRIES} entries. Please select fewer sequences.`
-        : undefined;
 
     return (
         <div className='relative'>
-            <div title={tooltipText}>
-                <Button className='w-[18rem] outlineButton' onClick={() => void handleDownload()} disabled={isDisabled}>
+            <div className='group relative inline-block'>
+                <Button
+                    className={`w-[18rem] outlineButton ${exceedsLimit ? 'opacity-50 cursor-not-allowed hover:bg-white hover:text-primary-600' : ''}`}
+                    onClick={() => void handleDownload()}
+                    disabled={isDisabled}
+                >
                     {isDownloading ? 'Downloading...' : buttonText}
                 </Button>
+                {exceedsLimit && (
+                    <div className='invisible group-hover:visible absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 text-sm text-white bg-gray-800 rounded-md shadow-lg whitespace-nowrap z-20'>
+                        Limited to {formatNumberWithDefaultLocale(MAX_DOWNLOAD_ENTRIES)} entries. Please select fewer.
+                        <div className='absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-gray-800' />
+                    </div>
+                )}
             </div>
             {error !== null && (
                 <div className='absolute top-full left-0 mt-1 text-sm text-red-600 bg-white p-2 rounded shadow-md z-10 max-w-xs'>
