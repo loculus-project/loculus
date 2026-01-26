@@ -65,7 +65,7 @@ const MetadataTable: FC<TableProps> = ({ fields, metadata }) => {
         <table className='table-auto border-collapse border border-gray-200 w-full'>
             <thead>
                 <tr>
-                    <th className='border border-gray-300 px-4 py-2 w-[25%]'>Field Name</th>
+                    <th className='border border-gray-300 px-4 py-2 w-[25%]'>Field name</th>
                     <th className='border border-gray-300 px-4 py-2 w-[13%]'>Type</th>
                     <th className='border border-gray-300 px-4 py-2 w-[37%]'>Description</th>
                     <th className='border border-gray-300 px-4 py-2 w-[25%]'>Example</th>

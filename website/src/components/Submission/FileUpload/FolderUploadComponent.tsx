@@ -324,7 +324,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 e.stopPropagation();
                 setIsDragging(false);
                 toast.info(
-                    'Sorry, drag and drop is not currently supported but you can select an entire folder to upload by clicking the Upload Folder button.',
+                    'Sorry, drag and drop is not currently supported but you can select an entire folder to upload by clicking the Upload folder button.',
                 );
             }}
         >
@@ -342,7 +342,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                                 document.getElementById(fileField)?.click();
                             }}
                         >
-                            Upload Folder
+                            Upload folder
                         </span>
                         {isClient && (
                             <input

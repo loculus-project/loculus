@@ -54,7 +54,7 @@ describe('FolderUploadComponent', () => {
 
     it('renders upload folder button', () => {
         render(<FolderUploadComponent {...defaultProps} />);
-        expect(screen.getByText('Upload Folder')).toBeInTheDocument();
+        expect(screen.getByText('Upload folder')).toBeInTheDocument();
         expect(screen.getByTestId('folder-up-icon')).toBeInTheDocument();
     });
 
