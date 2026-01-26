@@ -28,7 +28,7 @@ data:
     {{- end }}
 
   reference_genomes.json: |
-    {{ include "loculus.mergeReferenceGenomes" $organismContent.referenceGenomes | fromYaml | toJson }}
+{{ include "loculus.mergeReferenceGenomes" $organismContent.referenceGenomes | fromYaml | toPrettyJson | indent 4 }}
 
   silo_import_wrapper.sh: |
     {{ range $importScriptWrapperLines }}
