@@ -37,7 +37,7 @@ export const SequenceActionButtons: FC<Props> = ({ sequenceName, sequence }) => 
     };
 
     return (
-        <div className='flex items-center gap-2 mt-2'>
+        <div className='flex items-center gap-1'>
             <Button
                 className='btn btn-sm btn-ghost text-gray-600 hover:text-primary-600 hover:bg-gray-100'
                 onClick={handleCopy}
