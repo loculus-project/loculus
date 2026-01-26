@@ -63,7 +63,7 @@ open class ReleasedDataModel(
     private val objectMapper: ObjectMapper,
 ) {
     @Transactional(readOnly = true)
-    open fun getReleasedData(organism: Organism): Sequence<ReleasedData> {
+    open fun getReleasedData(organism: Organism, filterForEnaDeposition: Boolean = false): Sequence<ReleasedData> {
         log.info { "Fetching released submissions from database for organism $organism" }
 
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
@@ -77,7 +77,7 @@ open class ReleasedDataModel(
         }
 
         log.info { "Starting to stream released submissions for organism $organism" }
-        return submissionDatabaseService.streamReleasedSubmissions(organism)
+        return submissionDatabaseService.streamReleasedSubmissions(organism, filterForEnaDeposition)
             .map {
                 computeAdditionalMetadataFields(
                     it,
