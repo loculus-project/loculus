@@ -75,7 +75,9 @@ export const SearchForm = ({
         ),
     ]);
     const visibleFields = filterSchema.filters
-        .filter((field) => searchVisibilities.get(field.name)?.isVisible(selectedReferences) ?? false)
+        .filter(
+            (field) => searchVisibilities.get(field.name)?.isVisible(selectedReferences, referenceGenomesInfo) ?? false,
+        )
         .filter((field) => !excluded.has(field.name));
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);

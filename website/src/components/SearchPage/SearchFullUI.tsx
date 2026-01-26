@@ -112,9 +112,12 @@ export const InnerSearchFullUI = ({
 
     const columnsToShow = useMemo(() => {
         return schema.metadata
-            .filter((field) => columnVisibilities.get(field.name)?.isVisible(selectedReferences) === true)
+            .filter(
+                (field) =>
+                    columnVisibilities.get(field.name)?.isVisible(selectedReferences, referenceGenomesInfo) === true,
+            )
             .map((field) => field.name);
-    }, [schema.metadata, columnVisibilities, selectedReferences]);
+    }, [schema.metadata, columnVisibilities, selectedReferences, referenceGenomesInfo]);
 
     const orderByField = columnsToShow.includes(orderByFieldCandidate) ? orderByFieldCandidate : schema.primaryKey;
 

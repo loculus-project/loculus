@@ -46,24 +46,10 @@ export class MetadataVisibility {
         this.onlyForReference = onlyForReference;
     }
 
-    public isVisible(selectedReferenceNames: SegmentReferenceSelections): boolean {
-        if (!this.isChecked) {
-            return false;
-        }
-        if (this.onlyForReference == undefined) {
-            return true;
-        }
-        for (const value of Object.values(selectedReferenceNames)) {
-            if (this.onlyForReference === value) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public isDownloadable(
+    public isVisible(
         selectedReferenceNames: SegmentReferenceSelections,
         referenceGenomesInfo: ReferenceGenomesInfo,
+        hideIfStillRequiresReferenceSelection = true,
     ): boolean {
         if (!this.isChecked) {
             return false;
@@ -71,7 +57,10 @@ export class MetadataVisibility {
         if (this.onlyForReference == undefined) {
             return true;
         }
-        if (stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomesInfo)) {
+        if (
+            !hideIfStillRequiresReferenceSelection &&
+            stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomesInfo)
+        ) {
             return true;
         }
         for (const value of Object.values(selectedReferenceNames)) {

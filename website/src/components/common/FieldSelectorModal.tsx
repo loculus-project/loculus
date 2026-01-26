@@ -256,6 +256,7 @@ export function getDisplayState(
     selectedReferenceNames: SegmentReferenceSelections,
     referenceIdentifierField: string | undefined,
     referenceGenomesInfo: ReferenceGenomesInfo,
+    greyOutIfStillRequiresReferenceSelection = true,
 ): FieldItemDisplayState | undefined {
     if (field.name === ACCESSION_VERSION_FIELD) {
         return { type: fieldItemDisplayStateType.alwaysChecked };
@@ -265,10 +266,14 @@ export function getDisplayState(
         field.onlyForReference !== undefined &&
         stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomesInfo)
     ) {
-        return {
-            type: fieldItemDisplayStateType.greyedOut,
-            tooltip: `This is only visible when the ${referenceIdentifierField ?? 'referenceIdentifierField'} ${field.onlyForReference} is selected.`,
-        };
+        if (greyOutIfStillRequiresReferenceSelection) {
+            return {
+                type: fieldItemDisplayStateType.greyedOut,
+                tooltip: `This is only visible when the ${referenceIdentifierField ?? 'referenceIdentifierField'} ${field.onlyForReference} is selected.`,
+            };
+        } else {
+            return undefined;
+        }
     }
 
     if (!isActiveForSelectedReferenceName(selectedReferenceNames, field)) {
