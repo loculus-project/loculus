@@ -5,6 +5,7 @@ requires-python = ">=3.11"
 dependencies = [
     "zstandard>=0.22,<0.26",
     "requests>=2.31,<3.0",
+    "orjsonl>=0.3,<1.0",
 ]
 
 [project.scripts]
