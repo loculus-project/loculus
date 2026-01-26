@@ -117,6 +117,7 @@ function renderSearchFullUI({
         initialCount: 0,
         initialQueryDict: {},
         hiddenFieldValues,
+        isReleasedPage: true,
     } satisfies InnerSearchFullUIProps;
 
     render(
