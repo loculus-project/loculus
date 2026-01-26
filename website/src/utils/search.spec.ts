@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { MetadataFilterSchema, MetadataVisibility, NULL_QUERY_VALUE } from './search.ts';
+import { SINGLE_SEG_MULTI_REF_REFERENCEGENOMES } from '../types/referenceGenomes.spec.ts';
 
 describe('MetadataFilterSchema', () => {
     it('decodes _null_ values from query state for single values', () => {
@@ -32,24 +33,24 @@ describe('MetadataVisibility', () => {
     it('should return false when isChecked is false', () => {
         const visibility = new MetadataVisibility(false, undefined);
 
-        expect(visibility.isVisible({ main: null })).toBe(false);
-        expect(visibility.isVisible({ main: 'suborganism1' })).toBe(false);
+        expect(visibility.isVisible({ main: null }, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES)).toBe(false);
+        expect(visibility.isVisible({ main: 'suborganism1' }, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES)).toBe(false);
     });
 
     it('should return true when isChecked is true and onlyForReference is undefined', () => {
         const visibility = new MetadataVisibility(true, undefined);
 
-        expect(visibility.isVisible({ main: null })).toBe(true);
-        expect(visibility.isVisible({ main: 'suborganism1' })).toBe(true);
-        expect(visibility.isVisible({ main: 'suborganism2' })).toBe(true);
+        expect(visibility.isVisible({ main: null }, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES)).toBe(true);
+        expect(visibility.isVisible({ main: 'suborganism1' }, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES)).toBe(true);
+        expect(visibility.isVisible({ main: 'suborganism2' }, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES)).toBe(true);
     });
 
     it('should return true when isChecked is true and selectedSuborganism matches or is not set', () => {
         const visibility = new MetadataVisibility(true, 'suborganism1');
 
-        expect(visibility.isVisible({ main: null })).toBe(false);
-        expect(visibility.isVisible({ main: 'suborganism1' })).toBe(true);
-        expect(visibility.isVisible({ main: 'suborganism2' })).toBe(false);
-        expect(visibility.isVisible({ main: 'suborganism3' })).toBe(false);
+        expect(visibility.isVisible({ main: null }, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES)).toBe(false);
+        expect(visibility.isVisible({ main: 'suborganism1' }, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES)).toBe(true);
+        expect(visibility.isVisible({ main: 'suborganism2' }, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES)).toBe(false);
+        expect(visibility.isVisible({ main: 'suborganism3' }, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES)).toBe(false);
     });
 });
