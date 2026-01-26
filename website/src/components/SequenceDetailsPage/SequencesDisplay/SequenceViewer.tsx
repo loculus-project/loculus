@@ -1,6 +1,7 @@
 import { noCase } from 'change-case';
 import { type FC } from 'react';
 
+import { SequenceActionButtons } from './SequenceActionButtons.tsx';
 import { getLapisUrl } from '../../../config.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
@@ -48,10 +49,14 @@ export const SequencesViewer: FC<Props> = ({
     }
 
     const header = '>' + data.name + (sequenceType.name.name === 'main' ? '' : `_${sequenceType.name.name}`);
+    const sequenceName = data.name + (sequenceType.name.name === 'main' ? '' : `_${sequenceType.name.name}`);
 
     return (
-        <div className='h-80 overflow-auto'>
-            <FixedLengthTextViewer text={data.sequence} maxLineLength={LINE_LENGTH} header={header} />
+        <div>
+            <div className='h-80 overflow-auto'>
+                <FixedLengthTextViewer text={data.sequence} maxLineLength={LINE_LENGTH} header={header} />
+            </div>
+            <SequenceActionButtons sequenceName={sequenceName} sequence={data.sequence} />
         </div>
     );
 };
