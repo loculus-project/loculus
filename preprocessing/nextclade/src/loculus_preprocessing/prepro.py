@@ -8,6 +8,7 @@ from typing import Any
 import dpath
 
 from .backend import (
+    download_diamond_db,
     download_minimizer,
     fetch_unprocessed_sequences,
     request_upload,
@@ -589,16 +590,20 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             )
 
 
-def run(config: Config) -> None:
+def run(config: Config) -> None:  # noqa: C901
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         if config.alignment_requirement != AlignmentRequirement.NONE:
             download_nextclade_dataset(dataset_dir, config)
         if (
-            config.minimizer_url
-            or config.segment_classification_method == SegmentClassificationMethod.MINIMIZER
+            config.segment_classification_method == SegmentClassificationMethod.MINIMIZER
             or config.require_nextclade_sort_match
         ):
             download_minimizer(config, dataset_dir + "/minimizer/minimizer.json")
+        if config.segment_classification_method == SegmentClassificationMethod.DIAMOND:
+            if not config.diamond_dmnd_url:
+                msg = "Diamond database URL must be provided for diamond segment classification"
+                raise ValueError(msg)
+            download_diamond_db(config, dataset_dir + "/diamond/diamond.dmnd")
         total_processed = 0
         etag = None
         last_force_refresh = time.time()

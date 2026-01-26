@@ -9,11 +9,11 @@ segments:
     references:
     - reference_name: ebola-sudan
       nextclade_dataset_name: ebola-dataset/ebola-sudan
-      accepted_sort_matches: [ebola-sudan]
+      accepted_dataset_matches: [ebola-sudan]
       genes: [NPEbolaSudan, VP35EbolaSudan] # Names of genes in nextclade dataset gff3 file
     - reference_name: ebola-zaire
       nextclade_dataset_name: ebola-dataset/ebola-zaire
-      accepted_sort_matches: [ebola-zaire]
+      accepted_dataset_matches: [ebola-zaire]
       genes: [VP24EbolaZaire, LEbolaZaire]
 organism: multi-ebola-test
 processing_spec:

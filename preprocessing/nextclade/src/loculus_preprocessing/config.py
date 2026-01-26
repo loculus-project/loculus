@@ -60,7 +60,7 @@ class Reference(BaseModel):
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str | None = None
-    accepted_sort_matches: list[str] = Field(default_factory=list)
+    accepted_dataset_matches: list[str] = Field(default_factory=list)
     genes: list[str] = Field(default_factory=list)
 
 
@@ -76,7 +76,8 @@ class NextcladeSequenceAndDataset(BaseModel):
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str | None = None
-    accepted_sort_matches: list[str] = Field(default_factory=list)
+    # Names of diamond or nextclade sort entries that are acceptable matches for this dataset
+    accepted_dataset_matches: list[str] = Field(default_factory=list)
     gene_prefix: str | None = None
     # Names of genes in the Nextclade dataset; when concatenated with gene_prefix
     # this must match the gene names expected by the backend and LAPIS
@@ -106,6 +107,7 @@ class Config(BaseModel):
 
     require_nextclade_sort_match: bool = False
     minimizer_url: str | None = None
+    diamond_dmnd_url: str | None = None
 
     create_embl_file: bool = False
     scientific_name: str = "Orthonairovirus haemorrhagiae"

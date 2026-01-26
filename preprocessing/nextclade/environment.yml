@@ -24,3 +24,4 @@ dependencies:
   - unidecode=1.4.0
   - pytest=9.0.2
   - pydantic=2.12.3
+  - diamond=2.1.18

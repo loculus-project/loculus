@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Literal
+from typing import Any, Final, Literal
 
 import pandas as pd
 from Bio import SeqIO
@@ -42,6 +42,9 @@ from .datatypes import (
 csv.field_size_limit(sys.maxsize)
 
 logger = logging.getLogger(__name__)
+
+DataSetIdentifier: Final = "dataset"
+SequenceIdentifier: Final = "seqName"
 
 
 def sequence_annotation(
@@ -108,7 +111,7 @@ def parse_nextclade_tsv(
     with Path(result_dir + "/nextclade.tsv").open(encoding="utf-8") as nextclade_tsv:
         reader = csv.DictReader(nextclade_tsv, delimiter="\t")
         for row in reader:
-            id = row["seqName"]
+            id = row[SequenceIdentifier]
 
             if row["insertions"]:
                 nucleotide_insertions[id][name] = list(row["insertions"].split(","))
@@ -150,7 +153,7 @@ def parse_nextclade_json(
     nextclade_json_path = Path(result_dir) / "nextclade.json"
     json_data = json.loads(nextclade_json_path.read_text(encoding="utf-8"))
     for result in json_data["results"]:
-        id = result["seqName"]
+        id = result[SequenceIdentifier]
         nextclade_metadata[id][name] = result
     return nextclade_metadata
 
@@ -197,19 +200,98 @@ def run_sort(
         dtype={
             "index": "Int64",
             "score": "float64",
-            "seqName": "string",
-            "dataset": "string",
+            SequenceIdentifier: "string",
+            DataSetIdentifier: "string",
         },
     )
 
 
-def accepted_sort_matches_or_default(
+def run_diamond(
+    result_file: str,
+    input_file: str,
+    dataset_dir: str,
+) -> pd.DataFrame:
+    """
+    Run diamond blastx
+    - use diamond.dmnd defined in config.diamond_dmnd_url
+
+    We assume that each protein in the diamond database has been labeled as <name>|CDS<number>,
+    where dataset is a name in accepted_dataset_matches.
+    Thus we strip the |CDS<number> suffix to get the dataset identifier to compare to the
+    accepted dataset matches in the config.
+    If this is not the case, each protein should be added to the accepted_dataset_matches list.
+    """
+    subprocess_args = [
+        arg
+        for arg in [
+            "diamond",
+            "blastx",
+            "--query",
+            input_file,
+            "--max-target-seqs",
+            "1",
+            "--db",
+            dataset_dir + "/diamond/diamond.dmnd",
+            "--out",
+            result_file,
+            "--outfmt",
+            "6",
+            "qseqid",
+            "sseqid",
+            "pident",
+            "length",
+            "mismatch",
+            "gapopen",
+            "qstart",
+            "qend",
+            "sstart",
+            "send",
+            "evalue",
+            "bitscore",
+        ]
+        if arg
+    ]
+
+    logger.debug(f"Running diamond blastx: {subprocess_args}")
+
+    exit_code = subprocess.run(subprocess_args, check=False).returncode  # noqa: S603
+    if exit_code != 0:
+        msg = f"diamond blastx failed with exit code {exit_code}"
+        raise Exception(msg)
+    df = pd.read_csv(
+        result_file,
+        header=None,
+        names=[
+            SequenceIdentifier,
+            DataSetIdentifier,
+            "pident",
+            "length",
+            "mismatch",
+            "gapopen",
+            "qstart",
+            "qend",
+            "sstart",
+            "send",
+            "evalue",
+            "bitscore",
+        ],
+        sep="\t",
+    )
+    df[DataSetIdentifier] = df[DataSetIdentifier].str.replace(
+        r"\|CDS\d+$",
+        "",
+        regex=True,
+    )
+    return df
+
+
+def accepted__dataset_matches_or_default(
     dataset: NextcladeSequenceAndDataset,
 ) -> list[str]:
     accepted_dataset_names = set()
 
-    if dataset.accepted_sort_matches:
-        accepted_dataset_names.update(dataset.accepted_sort_matches)
+    if dataset.accepted_dataset_matches:
+        accepted_dataset_names.update(dataset.accepted_dataset_matches)
     if dataset.nextclade_dataset_name:
         accepted_dataset_names.add(dataset.nextclade_dataset_name)
     accepted_dataset_names.add(dataset.name)
@@ -222,12 +304,12 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     input_file: str,
     alerts: Alerts,
     organism: str,
-    accepted_sort_matches: list[str],
+    accepted_dataset_matches: list[str],
     dataset_dir: str,
 ) -> Alerts:
     """
     Run nextclade sort
-    - assert highest score is in sequence_and_dataset.accepted_sort_matches
+    - assert highest score is in sequence_and_dataset.accepted_dataset_matches
     (default is nextclade_dataset_name)
     """
     df = run_sort(
@@ -237,8 +319,8 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     )
 
     hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
-    best_hits = hits.groupby("seqName", as_index=False).first()
-    missing_ids = set(df["seqName"].unique()) - set(best_hits["seqName"].unique())
+    best_hits = hits.groupby(SequenceIdentifier, as_index=False).first()
+    missing_ids = set(df[SequenceIdentifier].unique()) - set(best_hits[SequenceIdentifier].unique())
 
     for seq in missing_ids:
         alerts[seq].warnings.append(
@@ -250,10 +332,10 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
 
     for _, row in best_hits.iterrows():
         # If best match is not the same as the dataset we are submitting to, add an error
-        if row["dataset"] not in accepted_sort_matches:
-            alerts[row["seqName"]].errors.append(
+        if row[DataSetIdentifier] not in accepted_dataset_matches:
+            alerts[row[SequenceIdentifier]].errors.append(
                 sequence_annotation(
-                    f"Sequence best matches {row['dataset']}, "
+                    f"Sequence best matches {row[DataSetIdentifier]}, "
                     "a different organism than the one you are submitting to: "
                     f"{organism}. It is therefore not possible to release. "
                     "Contact the administrator if you think this message is an error."
@@ -288,6 +370,12 @@ class AssignedSequence:
     name: str
 
 
+def is_valid_dataset_match(method, best_dataset_id, dataset):
+    if method == SegmentClassificationMethod.ALIGN:
+        return best_dataset_id == dataset.name
+    return best_dataset_id in accepted__dataset_matches_or_default(dataset)
+
+
 def assign_segment(  # noqa: C901
     entry: UnprocessedEntry,
     id_map: dict[tuple[AccessionVersion, FastaId], str],
@@ -295,7 +383,7 @@ def assign_segment(  # noqa: C901
     config: Config,
 ) -> SequenceAssignment:
     """
-    Assign sequences to segments based on best hits from nextclade align or sort
+    Assign sequences to segments based on best hits from nextclade align, nextclade sort or diamond
     If a segment has multiple references assign to the reference with highest alignment score
     1. If no best hit for a sequence, add error/warning about unaligned sequence
     2. If best hit does not match any accepted reference, add error/warning about unaligned sequence
@@ -312,17 +400,13 @@ def assign_segment(  # noqa: C901
 
     for fasta_id in entry.data.unalignedNucleotideSequences:
         seq_id = id_map[entry.accessionVersion, fasta_id]
-        if seq_id not in best_hits["seqName"].unique():
+        if seq_id not in best_hits[SequenceIdentifier].unique():
             has_unaligned_sequence = True
-            method = (
-                "sort"
-                if config.segment_classification_method.value == "minimizer"
-                else config.segment_classification_method.value
-            )
+            method = config.segment_classification_method.display_name
             annotation = sequence_annotation(
                 f"Sequence with fasta id {fasta_id} does not match any reference for "
-                f"organism: {config.organism} per `nextclade "
-                f"{method}`. Double check you are submitting to the correct organism."
+                f"organism: {config.organism} per `{method}`. "
+                "Double check you are submitting to the correct organism."
             )
             if config.alignment_requirement == AlignmentRequirement.ALL:
                 sequence_assignment.alert.errors.append(annotation)
@@ -330,16 +414,13 @@ def assign_segment(  # noqa: C901
                 sequence_assignment.alert.warnings.append(annotation)
             continue
 
-        best_hit = best_hits[best_hits["seqName"] == seq_id]
+        best_hit = best_hits[best_hits[SequenceIdentifier] == seq_id]
 
         not_found = True
+        best_dataset_id = best_hit[DataSetIdentifier].iloc[0]
         for dataset in config.nextclade_sequence_and_datasets:
-            if (
-                config.segment_classification_method == SegmentClassificationMethod.ALIGN
-                and best_hit["segment"].iloc[0] == dataset.name
-            ) or (
-                config.segment_classification_method == SegmentClassificationMethod.MINIMIZER
-                and best_hit["dataset"].iloc[0] in accepted_sort_matches_or_default(dataset)
+            if is_valid_dataset_match(
+                config.segment_classification_method, best_dataset_id, dataset
             ):
                 not_found = False
                 sort_results_map.setdefault(dataset.segment, []).append(
@@ -350,7 +431,7 @@ def assign_segment(  # noqa: C901
         if not_found:
             has_unaligned_sequence = True
             annotation = sequence_annotation(
-                f"Sequence {fasta_id} best matches {best_hit['dataset'].iloc[0]}, "
+                f"Sequence {fasta_id} best matches {best_dataset_id}, "
                 "which is currently not an accepted option for organism: "
                 f"{config.organism}. It is therefore not possible to release. "
                 "Contact the administrator if you think this message is an error."
@@ -425,14 +506,14 @@ def assign_segment_with_nextclade_align(
 
             logger.debug("Nextclade results available in %s", result_dir)
             df = pd.read_csv(result_file_seg, sep="\t")
-            df["segment"] = name
+            df[DataSetIdentifier] = name
             all_dfs.append(df)
 
     df_combined = pd.concat(all_dfs, ignore_index=True)
     hits = df_combined.dropna(subset=["alignmentScore"]).sort_values(
-        by=["seqName", "alignmentScore"], ascending=[True, False]
+        by=[SequenceIdentifier, "alignmentScore"], ascending=[True, False]
     )
-    best_hits = hits.groupby("seqName", as_index=False).first()
+    best_hits = hits.groupby(SequenceIdentifier, as_index=False).first()
 
     for entry in unprocessed:
         sequence_assignment = assign_segment(
@@ -456,7 +537,7 @@ def assign_segment_with_nextclade_sort(
 ) -> SequenceAssignmentBatch:
     """
     Run nextclade sort
-    - assert highest score is in sequence_and_dataset.accepted_sort_matches
+    - assert highest score is in sequence_and_dataset.accepted_dataset_matches
     (default is nextclade_dataset_name)
     """
     batch = SequenceAssignmentBatch()
@@ -472,8 +553,52 @@ def assign_segment_with_nextclade_sort(
         )
 
     # Get best hits per sequence
-    hits = df.dropna(subset=["score"]).sort_values(["seqName", "score"], ascending=[True, False])
-    best_hits = hits.groupby("seqName", as_index=False).first()
+    hits = df.dropna(subset=["score"]).sort_values(
+        [SequenceIdentifier, "score"], ascending=[True, False]
+    )
+    best_hits = hits.groupby(SequenceIdentifier, as_index=False).first()
+
+    for entry in unprocessed:
+        sequence_assignment = assign_segment(
+            entry,
+            id_map,
+            best_hits,
+            config,
+        )
+        accession_version = entry.accessionVersion
+        batch.sequenceNameToFastaId[accession_version] = sequence_assignment.sequenceNameToFastaId
+        batch.unalignedNucleotideSequences[accession_version] = (
+            sequence_assignment.unalignedNucleotideSequences
+        )
+        batch.alerts[accession_version] = sequence_assignment.alert
+    return batch
+
+
+def assign_segment_with_diamond(
+    unprocessed: Sequence[UnprocessedEntry], config: Config, dataset_dir: str
+) -> SequenceAssignmentBatch:
+    """
+    Run diamond
+    - assert highest pident (percent identity) score is in
+    sequence_and_dataset.accepted_dataset_matches (default is nextclade_dataset_name)
+    """
+    batch = SequenceAssignmentBatch()
+
+    with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
+        input_file = result_dir + "/input.fasta"
+        id_map = write_nextclade_input_fasta(unprocessed, input_file)
+
+        df = run_diamond(
+            result_file=result_dir + "/diamond_output.tsv",
+            input_file=input_file,
+            dataset_dir=dataset_dir,
+        )
+
+    # Get best hits per sequence
+    hits = df.dropna(subset=["pident"]).sort_values(
+        [SequenceIdentifier, "pident"], ascending=[True, False]
+    )
+    best_hits = hits.groupby(SequenceIdentifier, as_index=False).first()
 
     for entry in unprocessed:
         sequence_assignment = assign_segment(
@@ -639,7 +764,7 @@ def load_aligned_aa_sequences(
     return aligned_aminoacid_sequences
 
 
-def enrich_with_nextclade(  # noqa: PLR0914
+def enrich_with_nextclade(  # noqa: C901, PLR0914
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
     """
@@ -667,24 +792,21 @@ def enrich_with_nextclade(  # noqa: PLR0914
     }
 
     if not config.multi_datasets:
-        batch = assign_all_single_segments(
-            unprocessed,
-            config=config,
-        )
+        batch = assign_all_single_segments(unprocessed, config=config)
     else:
-        batch = (
-            assign_segment_with_nextclade_sort(
-                unprocessed,
-                config=config,
-                dataset_dir=dataset_dir,
-            )
-            if config.segment_classification_method == SegmentClassificationMethod.MINIMIZER
-            else assign_segment_with_nextclade_align(
-                unprocessed,
-                config=config,
-                dataset_dir=dataset_dir,
-            )
-        )
+        match config.segment_classification_method:
+            case SegmentClassificationMethod.DIAMOND:
+                batch = assign_segment_with_diamond(
+                    unprocessed, config=config, dataset_dir=dataset_dir
+                )
+            case SegmentClassificationMethod.MINIMIZER:
+                batch = assign_segment_with_nextclade_sort(
+                    unprocessed, config=config, dataset_dir=dataset_dir
+                )
+            case SegmentClassificationMethod.ALIGN:
+                batch = assign_segment_with_nextclade_align(
+                    unprocessed, config=config, dataset_dir=dataset_dir
+                )
     unaligned_nucleotide_sequences = batch.unalignedNucleotideSequences
     segment_assignment_map = batch.sequenceNameToFastaId
     alerts: Alerts = batch.alerts
@@ -726,7 +848,9 @@ def enrich_with_nextclade(  # noqa: PLR0914
                     input_file=input_file,
                     alerts=alerts,
                     organism=config.organism,
-                    accepted_sort_matches=accepted_sort_matches_or_default(sequence_and_dataset),
+                    accepted_dataset_matches=accepted__dataset_matches_or_default(
+                        sequence_and_dataset
+                    ),
                     dataset_dir=dataset_dir,
                 )
 
