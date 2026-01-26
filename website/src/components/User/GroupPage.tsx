@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { type FC, type FormEvent, useMemo, useState, type ReactNode } from 'react';
 
+import { CumulativeSubmissionsChart, type TimeSeriesData } from './CumulativeSubmissionsChart.tsx';
 import type { Organism } from '../../config.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
@@ -28,6 +29,7 @@ type GroupPageProps = {
     databaseName: string;
     continueSubmissionIntent?: ContinueSubmissionIntent;
     loginUrl: string;
+    metadataItemForCumulativeGroupGraph: string | null;
 };
 
 const InnerGroupPage: FC<GroupPageProps> = ({
@@ -40,6 +42,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     databaseName,
     continueSubmissionIntent,
     loginUrl,
+    metadataItemForCumulativeGroupGraph,
 }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
     const groupId = prefetchedGroupDetails.group.groupId;
@@ -66,6 +69,17 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     const { data: sequenceCounts, isLoading: sequenceCountsLoading } = useQuery({
         queryKey: ['group-sequence-counts', groupId, clientConfig, organisms],
         queryFn: () => fetchSequenceCounts(groupId, clientConfig, organisms),
+    });
+
+    const { data: timeSeriesData, isLoading: timeSeriesLoading } = useQuery({
+        queryKey: ['group-time-series', groupId, clientConfig, organisms, metadataItemForCumulativeGroupGraph],
+        queryFn: () => {
+            if (metadataItemForCumulativeGroupGraph === null) {
+                return Promise.resolve({});
+            }
+            return fetchTimeSeriesData(groupId, clientConfig, organisms, metadataItemForCumulativeGroupGraph);
+        },
+        enabled: metadataItemForCumulativeGroupGraph !== null,
     });
 
     const continueSubmissionCta = useMemo(() => {
@@ -226,6 +240,17 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 </table>
             </div>
 
+            {metadataItemForCumulativeGroupGraph !== null && (
+                <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
+                    <h2 className='text-lg font-bold mb-2'>Cumulative submissions over time</h2>
+                    <CumulativeSubmissionsChart
+                        timeSeriesData={timeSeriesData ?? {}}
+                        organisms={organisms}
+                        isLoading={timeSeriesLoading}
+                    />
+                </div>
+            )}
+
             {userHasEditPrivileges && (
                 <>
                     <h2 className='text-lg font-bold py-4'> Users </h2>
@@ -300,6 +325,43 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
         }),
     );
     return counts;
+}
+
+async function fetchTimeSeriesData(
+    groupId: number,
+    clientConfig: ClientConfig,
+    organisms: Organism[],
+    metadataField: string,
+) {
+    const data: TimeSeriesData = {};
+    await Promise.all(
+        organisms.map(async ({ key }) => {
+            const url = clientConfig.lapisUrls[key];
+            if (!url) {
+                data[key] = [];
+                return;
+            }
+            try {
+                const response = await axios.post(`${url}/sample/aggregated`, {
+                    [GROUP_ID_FIELD]: groupId,
+                    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
+                    [IS_REVOCATION_FIELD]: 'false',
+                    fields: [metadataField],
+                });
+                const rawData = (response.data as { data?: Record<string, unknown>[] }).data ?? [];
+                data[key] = rawData
+                    .filter((d) => d[metadataField])
+                    .map((d) => ({
+                        date: String(d[metadataField]),
+                        count: typeof d.count === 'number' ? d.count : 0,
+                    }))
+                    .sort((a, b) => a.date.localeCompare(b.date));
+            } catch {
+                data[key] = [];
+            }
+        }),
+    );
+    return data;
 }
 
 export const GroupPage = withQueryProvider(InnerGroupPage);
