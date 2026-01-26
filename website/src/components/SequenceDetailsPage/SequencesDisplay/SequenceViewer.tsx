@@ -52,11 +52,13 @@ export const SequencesViewer: FC<Props> = ({
     const sequenceName = data.name + (sequenceType.name.name === 'main' ? '' : `_${sequenceType.name.name}`);
 
     return (
-        <div>
+        <div className='relative'>
+            <div className='absolute top-0 right-0 z-10'>
+                <SequenceActionButtons sequenceName={sequenceName} sequence={data.sequence} />
+            </div>
             <div className='h-80 overflow-auto'>
                 <FixedLengthTextViewer text={data.sequence} maxLineLength={LINE_LENGTH} header={header} />
             </div>
-            <SequenceActionButtons sequenceName={sequenceName} sequence={data.sequence} />
         </div>
     );
 };
