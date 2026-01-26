@@ -38,3 +38,7 @@ ignore = [
     "PLR6301", # Method could be a function, class method, or static method
 ]
 preview = true
+
+[lint.per-file-ignores]
+# mock-ena directory uses hyphen in name which is fine for Docker/K8s but not valid Python module
+"ena-submission/mock-ena/*" = ["N999"]

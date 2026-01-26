@@ -51,6 +51,17 @@
   {{- end -}}
 {{- end -}}
 
+{{- define "loculus.enaDepositionUrl" -}}
+{{- $publicRuntimeConfig := $.Values.public }}
+  {{- if $publicRuntimeConfig.enaDepositionUrl }}
+    {{- $publicRuntimeConfig.enaDepositionUrl -}}
+  {{- else if eq $.Values.environment "server" -}}
+    {{- (printf "https://ena-deposition%s%s" $.Values.subdomainSeparator $.Values.host) -}}
+  {{- else -}}
+    {{- printf "http://%s:30050" $.Values.localHost -}}
+  {{- end -}}
+{{- end -}}
+
 {{/* generates internal LAPIS urls from given config object */}}
 {{ define "loculus.generateInternalLapisUrls" }}
   {{ range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}

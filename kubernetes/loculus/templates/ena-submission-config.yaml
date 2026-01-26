@@ -1,7 +1,7 @@
 {{- if not .Values.disableEnaSubmission }}
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $enaDepositionHost := $testconfig | ternary "127.0.0.1" "0.0.0.0" }}
-{{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary (printf "http://%s:8079" $.Values.localHost) "http://loculus-backend-service:8079") }}
+{{- $backendHost := $testconfig | ternary (printf "http://%s:8079" $.Values.localHost) "http://loculus-backend-service:8079" }}
 {{- $keycloakHost := $testconfig | ternary (printf "http://%s:8083" $.Values.localHost) "http://loculus-keycloak-service:8083" }}
 {{- $submitToEnaProduction := .Values.enaDeposition.submitToEnaProduction | default false }}
 {{- $enaDbName := .Values.enaDeposition.enaDbName | default false }}

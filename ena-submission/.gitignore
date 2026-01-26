@@ -7,3 +7,4 @@ __pycache__
 config/config.yaml
 tests.log
 webin-cli.jar
+*_ena_submission_list.json

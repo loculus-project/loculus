@@ -1,0 +1,101 @@
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- if .Values.enableMockEna }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-ena
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: mock-ena
+  template:
+    metadata:
+      annotations:
+        timestamp: {{ now | quote }}
+      labels:
+        app: loculus
+        component: mock-ena
+    spec:
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
+      containers:
+        - name: mock-ena
+          image: "ghcr.io/loculus-project/mock-ena:{{ $dockerTag }}"
+          # Use IfNotPresent since mock-ena may be built locally for testing
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          ports:
+            - containerPort: 80
+              name: http
+            - containerPort: 443
+              name: https
+            - containerPort: 21
+              name: ftp
+            - containerPort: 60000
+              name: ftp-passive
+          env:
+            - name: MOCK_ENA_DB_PATH
+              value: "/data/mock-ena.db"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-ena-service
+spec:
+  {{- template "loculus.serviceType" . }}
+  selector:
+    app: loculus
+    component: mock-ena
+  ports:
+    - port: 80
+      targetPort: 80
+      {{- if ne $.Values.environment "server" }}
+      nodePort: 30080
+      {{- end }}
+      name: http
+    - port: 443
+      targetPort: 443
+      {{- if ne $.Values.environment "server" }}
+      nodePort: 30443
+      {{- end }}
+      name: https
+    - port: 21
+      targetPort: 21
+      {{- if ne $.Values.environment "server" }}
+      nodePort: 30021
+      {{- end }}
+      name: ftp
+    - port: 60000
+      targetPort: 60000
+      name: ftp-passive
+{{- end }}

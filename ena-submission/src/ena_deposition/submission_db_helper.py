@@ -675,6 +675,28 @@ def add_to_submission_table(
         db_conn_pool.putconn(con)
 
 
+def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]) -> None:
+    """Upload sequences to the submission table.
+
+    This is a utility function used by tests to populate the submission table
+    with data in the old approved_list JSON format.
+    """
+    for full_accession, data in sequences_to_upload.items():
+        accession, version = full_accession.split(".")
+        if in_submission_table(db_config, {"accession": accession, "version": int(version)}):
+            continue
+        entry = SubmissionTableEntry(
+            accession=accession,
+            version=int(version),
+            group_id=data["metadata"]["groupId"],
+            organism=data["organism"],
+            metadata=data["metadata"],
+            unaligned_nucleotide_sequences=data["unalignedNucleotideSequences"],
+        )
+        add_to_submission_table(db_config, entry)
+        logger.info(f"Inserted {full_accession} into submission_table")
+
+
 def is_revision(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> bool:
     """Check if the entry is a revision"""
     version = seq_key.version

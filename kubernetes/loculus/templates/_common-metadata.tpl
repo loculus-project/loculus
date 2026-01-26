@@ -508,6 +508,9 @@ fields:
             "backendUrl": "{{ include "loculus.backendUrl" . }}",
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" $externalLapisUrlConfig | fromYaml | toJson }},
             "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}"
+            {{- if not $.Values.disableEnaSubmission }},
+            "enaDepositionUrl": "{{ include "loculus.enaDepositionUrl" . }}"
+            {{- end }}
 {{- end }}
 
 

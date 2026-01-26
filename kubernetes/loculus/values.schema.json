@@ -1376,6 +1376,18 @@
       "default": false,
       "description": "If true, disables ENA (European Nucleotide Archive) submission service."
     },
+    "enableMockEna": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, deploys a mock ENA service for testing and redirects ENA submission traffic to it."
+    },
+    "mockEnaClusterIP": {
+      "groups": ["services"],
+      "type": "string",
+      "default": "",
+      "description": "Static ClusterIP for the mock-ena service. Required for hostAliases to work with webin-cli. Example: '10.43.200.200' for k3d clusters."
+    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",

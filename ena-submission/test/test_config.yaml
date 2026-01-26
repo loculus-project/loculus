@@ -12,6 +12,7 @@ slack_channel_id: fake_channel
 ena_http_post_retry_attempts: 3
 ena_http_get_retry_attempts: 3
 ena_http_timeout_seconds: 60
+min_between_github_requests: 2
 
 enaOrganisms:
   cchf:
