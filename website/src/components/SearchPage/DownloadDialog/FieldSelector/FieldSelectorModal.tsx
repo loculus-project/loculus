@@ -53,6 +53,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
             selectedReferenceNames,
             schema.referenceIdentifierField,
             referenceGenomesInfo,
+            false,
         ),
         isChecked: downloadFieldVisibilities.get(field.name)?.isChecked ?? false,
     }));
