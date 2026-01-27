@@ -42,7 +42,9 @@ defaultOrganisms:
           onlyForSuborganism: CV-A10 
           preprocessing:
             args:
-              segment: CV-A10
+              #calculate this field from the results of the nextclade dataset for segment main and reference CV-A10
+              segment: main
+              reference: CV-A10
             inputs: {input: nextclade.clade}
         - name: completeness
           type: float

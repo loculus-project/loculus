@@ -140,7 +140,7 @@ def add_nextclade_metadata(
             str(segment),
             unprocessed.nextcladeMetadata,
             config,
-            str(reference) if reference is not None else None,
+            str(reference) if reference else None,
         )
     except MultipleSequencesPerSegmentError as e:
         error_annotation = e.get_processing_annotation(
