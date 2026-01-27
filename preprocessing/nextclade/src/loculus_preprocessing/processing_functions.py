@@ -3,6 +3,7 @@ Each function takes input data and returns output data, warnings and errors
 This makes it easy to test and reason about the code
 """
 
+import ast
 import calendar
 import json
 import logging
@@ -1167,6 +1168,32 @@ def format_stop_codon(result: str | None) -> str | None:
         stop_codon_string = f"{stop_codon['cdsName']}:{stop_codon['codon'] + 1}"
         stop_codon_strings.append(stop_codon_string)
     return ",".join(stop_codon_strings)
+
+
+def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> InputData:
+    """Processes phenotype values string to InputData for processing"""
+    if input is None:
+        return InputData(datum=None)
+    name = args.get("name", "") if args else ""
+    try:
+        data = ast.literal_eval(input)
+        for entry in data:
+            if entry.get("name") == name:
+                return InputData(datum=str(entry.get("value")))
+    except Exception as e:
+        msg = (
+            "Was unable to process phenotype values - this is likely an internal error. "
+            "Please contact the administrator."
+        )
+        logger.error(msg + f" Error: {e}")
+        return InputData(
+            datum=None,
+            errors=single_metadata_annotation(
+                "phenotypeValues",
+                msg,
+            ),
+        )
+    return InputData(datum=None)
 
 
 def trim_ns(sequence: str) -> str:
