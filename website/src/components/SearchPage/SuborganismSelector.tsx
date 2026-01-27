@@ -2,6 +2,7 @@ import { type FC, useId, useMemo } from 'react';
 
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
+import DisabledUntilHydrated from '../DisabledUntilHydrated.tsx';
 import { Button } from '../common/Button';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 
@@ -54,21 +55,23 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
                 {label}
             </label>
             <div className='relative'>
-                <select
-                    id={selectId}
-                    value={selectedSuborganism ?? ''}
-                    onChange={(e) => setSelectedSuborganism(e.target.value)}
-                    className='w-full px-2 py-1.5 rounded border border-gray-300 text-sm bg-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200'
-                >
-                    <option key={''} value={''} disabled>
-                        Select {formatLabel(label)}...
-                    </option>
-                    {suborganismNames.map((suborganism) => (
-                        <option key={suborganism} value={suborganism}>
-                            {suborganism}
+                <DisabledUntilHydrated>
+                    <select
+                        id={selectId}
+                        value={selectedSuborganism ?? ''}
+                        onChange={(e) => setSelectedSuborganism(e.target.value)}
+                        className='w-full px-2 py-1.5 rounded border border-gray-300 text-sm bg-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200'
+                    >
+                        <option key={''} value={''} disabled>
+                            Select {formatLabel(label)}...
                         </option>
-                    ))}
-                </select>
+                        {suborganismNames.map((suborganism) => (
+                            <option key={suborganism} value={suborganism}>
+                                {suborganism}
+                            </option>
+                        ))}
+                    </select>
+                </DisabledUntilHydrated>
                 {selectedSuborganism !== '' && selectedSuborganism !== null && (
                     <Button
                         className='absolute top-2 right-6 flex items-center pr-2 h-5 bg-white rounded-sm'
