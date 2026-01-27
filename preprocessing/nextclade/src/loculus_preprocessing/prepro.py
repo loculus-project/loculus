@@ -100,7 +100,10 @@ class MultipleSequencesPerSegmentError(Exception):
 
 
 def get_name(
-    segment: SegmentName, data_per_dataset: dict[SequenceName, Any] | None, config: Config
+    segment: SegmentName,
+    data_per_dataset: dict[SequenceName, Any] | None,
+    config: Config,
+    reference: str | None = None,
 ) -> str | None:
     """Returns the name of the dataset to use based on spec args"""
     valid_datasets = (
@@ -111,6 +114,12 @@ def get_name(
         for dataset in valid_datasets
         if config.get_dataset_by_name(dataset).segment == segment
     ]
+    if reference is not None:
+        lapis_names = [
+            dataset
+            for dataset in lapis_names
+            if config.get_dataset_by_name(dataset).reference_name == reference
+        ]
     if not lapis_names:
         return None
     if len(lapis_names) > 1:
@@ -126,7 +135,13 @@ def add_nextclade_metadata(
 ) -> InputData:
     try:
         segment = spec.args.get("segment", "main") if spec.args else "main"
-        sequence_name = get_name(str(segment), unprocessed.nextcladeMetadata, config)
+        reference = spec.args.get("reference", None) if spec.args else None
+        sequence_name = get_name(
+            str(segment),
+            unprocessed.nextcladeMetadata,
+            config,
+            str(reference) if reference is not None else None,
+        )
     except MultipleSequencesPerSegmentError as e:
         error_annotation = e.get_processing_annotation(
             processed_field_name=nextclade_path, organism=config.organism
