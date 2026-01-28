@@ -137,12 +137,10 @@ def add_nextclade_metadata(
         segment = spec.args.get("segment", "main") if spec.args else "main"
         if not isinstance(segment, str):
             msg = f"add_nextclade_metadata: segment must be str, got {type(segment)}"
-            logger.error(msg)
             raise TypeError(msg)
         reference = spec.args.get("reference", None) if spec.args else None
         if not isinstance(reference, str) and reference is not None:
             msg = f"add_nextclade_metadata: reference must be str, got {type(reference)}"
-            logger.error(msg)
             raise TypeError(msg)
         sequence_name = get_dataset_name(
             segment,
@@ -192,7 +190,6 @@ def add_assigned_reference(
     segment = spec.args.get("segment", "main") if spec.args else "main"
     if not isinstance(segment, str):
         msg = f"add_assigned_reference: segment must be str, got {type(segment)}"
-        logger.error(msg)
         raise TypeError(msg)
     name = get_dataset_name(segment, unprocessed.nextcladeMetadata, config)
     if not name:
@@ -314,7 +311,6 @@ def get_output_metadata(
                 segment = spec.args.get("segment", "main") if spec.args else "main"
                 if not isinstance(segment, str):
                     msg = f"get_output_metadata: segment must be str, got {type(segment)}"
-                    logger.error(msg)
                     raise TypeError(msg)
                 sequence_name = get_dataset_name(
                     segment, unprocessed.unalignedNucleotideSequences, config
