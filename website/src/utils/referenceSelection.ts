@@ -4,14 +4,13 @@ import { getSegmentNames, type SegmentReferenceSelections } from './sequenceType
 import type { SetSomeFieldValues } from '../types/config';
 import type { ReferenceGenomesInfo } from '../types/referencesGenomes';
 
-export function getReferenceIdentifier(identifier: string | undefined, segmentName: string, multipleSegments: boolean) {
-    if (identifier === undefined) return undefined;
+export function getReferenceIdentifier(identifier: string, segmentName: string, multipleSegments: boolean) {
     return multipleSegments ? `${identifier}_${segmentName}` : identifier;
 }
 
 type GetSegmentSelectionsOpts = {
     segments: string[];
-    referenceIdentifierField?: string;
+    referenceIdentifierField: string;
     isMultiSegmented: boolean;
     state: Record<string, unknown>;
 };
@@ -39,7 +38,7 @@ export function getSegmentReferenceSelections({
 
 type UseSelectedReferencesArgs = {
     referenceGenomesInfo: ReferenceGenomesInfo;
-    schema: { referenceIdentifierField?: string };
+    schema: { referenceIdentifierField: string };
     state: Record<string, unknown>;
 };
 
@@ -75,7 +74,7 @@ export function getSelectedReferences({
 
 type UseSetSelectedReferencesArgs = {
     referenceGenomesInfo: ReferenceGenomesInfo;
-    schema: { referenceIdentifierField?: string };
+    schema: { referenceIdentifierField: string };
     setSomeFieldValues: SetSomeFieldValues;
 };
 
@@ -93,7 +92,6 @@ export function useSetSelectedReferences({
                     segmentName,
                     segments.length > 1,
                 );
-                if (identifier === undefined) return;
 
                 setSomeFieldValues([identifier, value]);
             });
