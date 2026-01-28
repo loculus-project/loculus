@@ -25,11 +25,12 @@ export function getSegmentReferenceSelections({
 
     for (const segmentName of segments) {
         const referenceIdentifier = getReferenceIdentifier(referenceIdentifierField, segmentName, isMultiSegmented);
-
-        result[segmentName] =
-            referenceIdentifier === undefined
-                ? null
-                : ((state[referenceIdentifier] as string | null | undefined) ?? null);
+        // TODO(5891): it would be better to avoid this typecast
+        if (referenceIdentifier === undefined) {
+            result[segmentName] = null;
+        } else {
+            result[segmentName] = (state[referenceIdentifier] as string | null | undefined) ?? null;
+        }
     }
 
     return result;
