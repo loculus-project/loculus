@@ -24,7 +24,8 @@ data:
     ndjsonInputFilename: data.ndjson.zst
     referenceGenomeFilename: reference_genomes.json
     {{- if $lineageSystem }}
-    lineageDefinitionsFilename: lineage_definitions.yaml
+    lineageDefinitionFilenames:
+      - lineage_definitions.yaml
     {{- end }}
 
   reference_genomes.json: |
