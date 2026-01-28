@@ -69,10 +69,16 @@ export const SearchForm = ({
 }: SearchFormProps) => {
     const excluded = new Set<string>([
         ACCESSION_FIELD,
-        ...getSegmentNames(referenceGenomesInfo).map(
-            (segmentName) =>
-                getReferenceIdentifier(referenceIdentifierField, segmentName, referenceGenomesInfo.isMultiSegmented)!,
-        ),
+        ...(referenceIdentifierField === undefined
+            ? []
+            : getSegmentNames(referenceGenomesInfo).map(
+                  (segmentName) =>
+                      getReferenceIdentifier(
+                          referenceIdentifierField,
+                          segmentName,
+                          referenceGenomesInfo.isMultiSegmented,
+                      )!,
+              )),
     ]);
     const visibleFields = filterSchema.filters
         .filter(
