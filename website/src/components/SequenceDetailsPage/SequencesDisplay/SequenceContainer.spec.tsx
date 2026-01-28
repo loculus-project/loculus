@@ -6,6 +6,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { SequencesContainer } from './SequencesContainer.tsx';
 import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
 import {
+    MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
     MULTI_SEG_SINGLE_REF_REFERENCEGENOMES,
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
@@ -157,6 +158,46 @@ describe('SequencesContainer', () => {
             });
             expectTabActive(NUCLEOTIDE_SEQUENCE_TAB);
             expectTabNotActive(ALIGNED_NUCLEOTIDE_SEQUENCE_TAB);
+        });
+
+        test('should render multi segmented sequences with multiple references', async () => {
+            mockRequest.lapis.alignedNucleotideSequencesMultiSegment(200, `>some\n${multiSegmentSequence}`, 'L-ref1');
+            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(
+                200,
+                `>some\n${unalignedMultiSegmentSequence}`,
+                'L-ref1',
+            );
+            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(
+                200,
+                `>some\n${unalignedMultiSegmentSequence}`,
+                'S',
+            );
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            renderSequenceViewer(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { L: 'ref1', S: 'singleReference' });
+            click(LOAD_SEQUENCES_BUTTON);
+
+            click(getAlignedSegmentLabel('L'));
+            await waitFor(() => {
+                expect(
+                    screen.getByText(multiSegmentSequence, {
+                        exact: false,
+                    }),
+                ).toBeVisible();
+            });
+            //Regression test for #5330
+            expectTabActive(getAlignedSegmentLabel('L'));
+            expectTabNotActive(getUnalignedSegmentLabel('L'));
+
+            click(getUnalignedSegmentLabel('L'));
+            await waitFor(() => {
+                expect(
+                    screen.getByText(unalignedMultiSegmentSequence, {
+                        exact: false,
+                    }),
+                ).toBeVisible();
+            });
+            expectTabActive(getUnalignedSegmentLabel('L'));
+            expectTabNotActive(getAlignedSegmentLabel('L'));
         });
     });
 
