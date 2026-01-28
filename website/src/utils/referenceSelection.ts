@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { getSegmentNames, type SegmentReferenceSelections } from './sequenceTypeHelpers';
+import type { SetSomeFieldValues } from '../types/config';
 import type { ReferenceGenomesInfo } from '../types/referencesGenomes';
 
 export function getReferenceIdentifier(identifier: string | undefined, segmentName: string, multipleSegments: boolean) {
@@ -75,7 +76,7 @@ export function getSelectedReferences({
 type UseSetSelectedReferencesArgs = {
     referenceGenomesInfo: ReferenceGenomesInfo;
     schema: { referenceIdentifierField?: string };
-    setSomeFieldValues: (entry: [string, string | null]) => void;
+    setSomeFieldValues: SetSomeFieldValues;
 };
 
 export function useSetSelectedReferences({
