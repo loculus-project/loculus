@@ -1337,7 +1337,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         segments:
           - name: main
             references:
-            - referenceName: singleReference
+            - name: singleReference
               genes: []
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
@@ -1361,7 +1361,7 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - referenceName: singleReference
+              - name: singleReference
                 nextclade_dataset_name: nextstrain/ebola/sudan
                 genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
@@ -1381,7 +1381,7 @@ defaultOrganisms:
     referenceGenomes:
       - name: main
         references:
-          - referenceName: singleReference
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
             insdcAccessionFull: NC_002549.1
             genes:
@@ -1445,7 +1445,7 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - referenceName: singleReference
+              - name: singleReference
                 nextclade_dataset_name: nextstrain/wnv/all-lineages
                 genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
@@ -1465,7 +1465,7 @@ defaultOrganisms:
     referenceGenomes:
       - name: main
         references:
-          - referenceName: singleReference
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/reference.fasta]]"
             insdcAccessionFull: NC_009942.1
             genes:
@@ -1576,7 +1576,7 @@ defaultOrganisms:
     referenceGenomes:
       - name: main
         references:
-          - referenceName: singleReference
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
             genes:
               - name: NP
@@ -1632,7 +1632,7 @@ defaultOrganisms:
     referenceGenomes:
       - name: main
         references:
-          - referenceName: singleReference
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
   not-aligned-organism:
     enabled: true
@@ -1713,12 +1713,12 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - referenceName: singleReference
+              - name: singleReference
                 genes: []
     referenceGenomes:
       - name: main
         references:
-          - referenceName: singleReference
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
   cchf:
     <<: *defaultOrganismConfig
@@ -1784,17 +1784,17 @@ defaultOrganisms:
             - name: L
               references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/L
-                referenceName: singleReference
+                name: singleReference
                 genes: [RdRp]
             - name: M
               references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/M
-                referenceName: singleReference
+                name: singleReference
                 genes: [GPC]
             - name: S
               references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/S
-                referenceName: singleReference
+                name: singleReference
                 genes: [NP]
     ingest:
       <<: *ingest
@@ -1812,7 +1812,7 @@ defaultOrganisms:
     referenceGenomes:
       - name: L
         references:
-          - referenceName: singleReference
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
             insdcAccessionFull: NC_005301.3
             genes:
@@ -1820,7 +1820,7 @@ defaultOrganisms:
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
       - name: M
         references:
-          - referenceName: singleReference
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_M.fasta]]"
             insdcAccessionFull: NC_005300.2
             genes:
@@ -1828,7 +1828,7 @@ defaultOrganisms:
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"
       - name: S
         references:
-          - referenceName: singleReference
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_S.fasta]]"
             insdcAccessionFull: NC_005302.1
             genes:
@@ -1897,23 +1897,23 @@ defaultOrganisms:
             - name: L
               references:
               - nextclade_dataset_name: cchfv/L
-                referenceName: singleReference
+                name: singleReference
                 genes: [RdRp]
             - name: M
               references:
               - nextclade_dataset_name: cchfv/M-MH396653
-                referenceName: MH396653
+                name: MH396653
                 genes: [GPC]
               - nextclade_dataset_name: cchfv/M-OR047158
-                referenceName: OR047158
+                name: OR047158
                 genes: [GPC]
             - name: S
               references:
               - nextclade_dataset_name: cchfv/S-1and6
-                referenceName: 1and6
+                name: 1and6
                 genes: [NP]
               - nextclade_dataset_name: cchfv/S-2to5
-                referenceName: 2to5
+                name: 2to5
                 genes: [NP]
     ingest:
       <<: *ingest
@@ -1931,7 +1931,7 @@ defaultOrganisms:
     referenceGenomes:
       - name: L
         references:
-          - referenceName: singleReference
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
             insdcAccessionFull: NC_005301.3
             genes:
@@ -1939,13 +1939,13 @@ defaultOrganisms:
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
       - name: M
         references:
-          - referenceName: MH396653
+          - name: MH396653
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/MH396653/reference.fasta]]"
             insdcAccessionFull: MH396653.1
             genes:
               - name: GPC
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/MH396653/GPC.fasta]]"
-          - referenceName: OR047158
+          - name: OR047158
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/OR047158/reference.fasta]]"
             insdcAccessionFull: OR047158.1
             genes:
@@ -1953,13 +1953,13 @@ defaultOrganisms:
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/OR047158/GPC.fasta]]"
       - name: S
         references:
-          - referenceName: 1and6
+          - name: 1and6
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/reference.fasta]]"
             insdcAccessionFull: MK299338.1
             genes:
               - name: NP
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/NP.fasta]]"
-          - referenceName: 2to5
+          - name: 2to5
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/OL774851/reference.fasta]]"
             insdcAccessionFull: OL774851.1
             genes:
@@ -2054,19 +2054,19 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - referenceName: CV-A16
+              - name: CV-A16
                 nextclade_dataset_name: enpen/enterovirus/cv-a16
                 accepted_dataset_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
                 genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-              - referenceName: CV-A10
+              - name: CV-A10
                 nextclade_dataset_name: enpen/enterovirus/cv-a10
                 accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
                 genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-              - referenceName: EV-A71
+              - name: EV-A71
                 nextclade_dataset_name: enpen/enterovirus/ev-a71
                 accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71"]
                 genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-              - referenceName: EV-D68
+              - name: EV-D68
                 accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68"]
                 genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
                 nextclade_dataset_name: enpen/enterovirus/ev-d68
@@ -2105,7 +2105,7 @@ defaultOrganisms:
     referenceGenomes:
       - name: main
         references:
-          - referenceName: CV-A16
+          - name: CV-A16
             sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/reference-cva16.fasta]]"
             insdcAccessionFull: U05876.1
             genes:
@@ -2131,7 +2131,7 @@ defaultOrganisms:
                 sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3C-cva16.fasta]]"
               - name: 3D
                 sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3D-cva16.fasta]]"
-          - referenceName: CV-A10
+          - name: CV-A10
             sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/reference-cva10.fasta]]"
             insdcAccessionFull: AY421767.1
             genes:
@@ -2157,7 +2157,7 @@ defaultOrganisms:
                 sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3C-cva10.fasta]]"
               - name: 3D
                 sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3D-cva10.fasta]]"
-          - referenceName: EV-A71
+          - name: EV-A71
             sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/reference-eva71.fasta]]"
             insdcAccessionFull: U22521.1
             genes:
@@ -2183,7 +2183,7 @@ defaultOrganisms:
                 sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3C-eva71.fasta]]"
               - name: 3D
                 sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3D-eva71.fasta]]"
-          - referenceName: EV-D68
+          - name: EV-D68
             sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/reference-evd68.fasta]]"
             insdcAccessionFull: AY426531.1
             genes:
