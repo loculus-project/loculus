@@ -9,6 +9,7 @@ import type { ProblemDetail } from '../../types/backend.ts';
 import type { Schema } from '../../types/config.ts';
 import type { MutationProportionCount } from '../../types/lapis.ts';
 import {
+    MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 } from '../../types/referenceGenomes.spec.ts';
@@ -158,18 +159,33 @@ describe('getTableData', () => {
         expectMutationDataMatches(result);
     });
 
-    test('should return data of mutations for multi pathogen organism', async () => {
+    test('should return data of mutations for single segment multi reference organism', async () => {
         mockRequest.lapis.details(200, { info, data: [{ genotype: genome1 }] });
-        mockRequest.lapis.nucleotideMutations(200, { info, data: multiPathogenNucleotideMutations });
-        mockRequest.lapis.aminoAcidMutations(200, { info, data: multiPathogenAminoAcidMutations });
+        mockRequest.lapis.nucleotideMutations(200, { info, data: singleSegMultiRefNucleotideMutations });
+        mockRequest.lapis.aminoAcidMutations(200, { info, data: singleSegMultiRefAminoAcidMutations });
 
         const result = await getTableData('accession', schema, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, lapisClient);
 
         expectMutationDataMatches(result);
     });
 
-    function expectMutationDataMatches(result: Result<GetTableDataResult, ProblemDetail>) {
+    test('should return data of mutations for multi segment multi reference organism', async () => {
+        mockRequest.lapis.details(200, { info, data: [{ genotype: genome1 }] });
+        mockRequest.lapis.nucleotideMutations(200, { info, data: multiSegMultiRefNucleotideMutations });
+        mockRequest.lapis.aminoAcidMutations(200, { info, data: multiSegMultiRefAminoAcidMutations });
+
+        const result = await getTableData('accession', schema, MULTI_SEG_MULTI_REF_REFERENCEGENOMES, lapisClient);
+
+        expectMutationDataMatches(result, 'L', 'gene1L');
+    });
+
+    function expectMutationDataMatches(
+        result: Result<GetTableDataResult, ProblemDetail>,
+        segment = '',
+        gene = 'gene1',
+    ) {
         const data = result._unsafeUnwrap().data;
+        const segmentPart = segment ? `${segment}:` : '';
         expect(data).toContainEqual({
             label: 'Substitutions',
             name: 'nucleotideSubstitutions',
@@ -179,19 +195,19 @@ describe('getTableData', () => {
                 type: 'badge',
                 value: [
                     {
-                        segment: '',
+                        segment: segment,
                         mutations: [
                             {
                                 mutationFrom: 'T',
                                 mutationTo: 'A',
                                 position: 10,
-                                sequenceName: null,
+                                sequenceName: segment || null,
                             },
                             {
                                 mutationFrom: 'C',
                                 mutationTo: 'G',
                                 position: 30,
-                                sequenceName: null,
+                                sequenceName: segment || null,
                             },
                         ],
                     },
@@ -202,7 +218,7 @@ describe('getTableData', () => {
         expect(data).toContainEqual({
             label: 'Deletions',
             name: 'nucleotideDeletions',
-            value: '20, 21, 39-45, 400',
+            value: `${segmentPart}20, ${segmentPart}21, ${segmentPart}39-45, ${segmentPart}400`,
             header: nucleotideMutationsHeader,
             type: { kind: 'mutation' },
         });
@@ -215,19 +231,19 @@ describe('getTableData', () => {
                 type: 'badge',
                 value: [
                     {
-                        segment: 'gene1',
+                        segment: gene,
                         mutations: [
                             {
                                 mutationFrom: 'N',
                                 mutationTo: 'Y',
                                 position: 10,
-                                sequenceName: 'gene1',
+                                sequenceName: gene,
                             },
                             {
                                 mutationFrom: 'T',
                                 mutationTo: 'N',
                                 position: 30,
-                                sequenceName: 'gene1',
+                                sequenceName: gene,
                             },
                         ],
                     },
@@ -238,7 +254,7 @@ describe('getTableData', () => {
         expect(data).toContainEqual({
             label: 'Deletions',
             name: 'aminoAcidDeletions',
-            value: 'gene1:20-23, gene1:40',
+            value: `${gene}:20-23, ${gene}:40`,
             header: aminoAcidMutationsHeader,
             type: { kind: 'mutation' },
         });
@@ -252,28 +268,45 @@ describe('getTableData', () => {
         expectInsertionsMatch(result);
     });
 
-    test('should return data of insertions for multi pathogen', async () => {
+    test('should return data of insertions for single segment multi reference organism', async () => {
         mockRequest.lapis.details(200, { info, data: [{ genotype: genome1 }] });
-        mockRequest.lapis.nucleotideInsertions(200, { info, data: multiPathogenNucleotideInsertions });
-        mockRequest.lapis.aminoAcidInsertions(200, { info, data: multiPathogenAminoAcidInsertions });
+        mockRequest.lapis.nucleotideInsertions(200, { info, data: singleSegMultiRefNucleotideInsertions });
+        mockRequest.lapis.aminoAcidInsertions(200, { info, data: singleSegMultiRefAminoAcidInsertions });
 
         const result = await getTableData('accession', schema, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, lapisClient);
         expectInsertionsMatch(result);
     });
 
-    function expectInsertionsMatch(result: Result<GetTableDataResult, ProblemDetail>) {
+    test('should return data of insertions for multi segment multi reference organism', async () => {
+        mockRequest.lapis.details(200, { info, data: [{ genotype: genome1 }] });
+        mockRequest.lapis.nucleotideInsertions(200, { info, data: multiSegMultiRefNucleotideInsertions });
+        mockRequest.lapis.aminoAcidInsertions(200, { info, data: multiSegMultiRefAminoAcidInsertions });
+
+        const result = await getTableData('accession', schema, MULTI_SEG_MULTI_REF_REFERENCEGENOMES, lapisClient);
+        expectInsertionsMatch(result, 'L', 'S', 'gene1L', 'gene1S');
+    });
+
+    function expectInsertionsMatch(
+        result: Result<GetTableDataResult, ProblemDetail>,
+        segment1 = '',
+        segment2 = '',
+        gene1 = 'gene1',
+        gene2 = 'gene1',
+    ) {
+        const segmentPart1 = segment1 ? `${segment1}:` : '';
+        const segmentPart2 = segment2 ? `${segment2}:` : '';
         const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
             label: 'Insertions',
             name: 'nucleotideInsertions',
-            value: 'ins_123:AAA, ins_456:GCT',
+            value: `ins_${segmentPart1}123:AAA, ins_${segmentPart2}456:GCT`,
             header: nucleotideMutationsHeader,
             type: { kind: 'mutation' },
         });
         expect(data).toContainEqual({
             label: 'Insertions',
             name: 'aminoAcidInsertions',
-            value: 'ins_gene1:123:AAA, ins_gene1:456:TTT',
+            value: `ins_${gene1}:123:AAA, ins_${gene2}:456:TTT`,
             header: aminoAcidMutationsHeader,
             type: { kind: 'mutation' },
         });
@@ -440,9 +473,14 @@ const nucleotideMutations: MutationProportionCount[] = mutationProportionCountWi
     null,
 );
 
-const multiPathogenNucleotideMutations: MutationProportionCount[] = mutationProportionCountWithSequenceName(
+const singleSegMultiRefNucleotideMutations: MutationProportionCount[] = mutationProportionCountWithSequenceName(
     nucleotideMutations,
     genome1,
+);
+
+const multiSegMultiRefNucleotideMutations: MutationProportionCount[] = mutationProportionCountWithSequenceName(
+    nucleotideMutations,
+    `L-${genome1}`,
 );
 
 const aminoAcidMutations: MutationProportionCount[] = mutationProportionCountWithSequenceName(
@@ -486,9 +524,14 @@ const aminoAcidMutations: MutationProportionCount[] = mutationProportionCountWit
     'gene1',
 );
 
-const multiPathogenAminoAcidMutations: MutationProportionCount[] = mutationProportionCountWithSequenceName(
+const singleSegMultiRefAminoAcidMutations: MutationProportionCount[] = mutationProportionCountWithSequenceName(
     aminoAcidMutations,
     `gene1-${genome1}`,
+);
+
+const multiSegMultiRefAminoAcidMutations: MutationProportionCount[] = mutationProportionCountWithSequenceName(
+    aminoAcidMutations,
+    `gene1L-${genome1}`,
 );
 
 function mutationProportionCountWithSequenceName(
@@ -508,15 +551,25 @@ const nucleotideInsertions = [
     { count: 0, insertion: 'ins_123:AAA', insertedSymbols: 'AAA', position: 123, sequenceName: null },
     { count: 0, insertion: 'ins_456:GCT', insertedSymbols: 'GCT', position: 456, sequenceName: null },
 ];
-const multiPathogenNucleotideInsertions = [
+const singleSegMultiRefNucleotideInsertions = [
     { count: 0, insertion: `ins_${genome1}:123:AAA`, insertedSymbols: 'AAA', position: 123, sequenceName: genome1 },
     { count: 0, insertion: `ins_${genome1}:456:GCT`, insertedSymbols: 'GCT', position: 456, sequenceName: genome1 },
+];
+const multiSegMultiRefNucleotideInsertions = [
+    {
+        count: 0,
+        insertion: `ins_L-${genome1}:123:AAA`,
+        insertedSymbols: 'AAA',
+        position: 123,
+        sequenceName: `L-${genome1}`,
+    },
+    { count: 0, insertion: `ins_S:456:GCT`, insertedSymbols: 'GCT', position: 456, sequenceName: `S` },
 ];
 const aminoAcidInsertions = [
     { count: 0, insertion: 'ins_gene1:123:AAA', insertedSymbols: 'AAA', position: 123, sequenceName: 'gene1' },
     { count: 0, insertion: 'ins_gene1:456:TTT', insertedSymbols: 'TTT', position: 456, sequenceName: 'gene1' },
 ];
-const multiPathogenAminoAcidInsertions = [
+const singleSegMultiRefAminoAcidInsertions = [
     {
         count: 0,
         insertion: `ins_gene1-${genome1}:123:AAA`,
@@ -530,6 +583,22 @@ const multiPathogenAminoAcidInsertions = [
         insertedSymbols: 'TTT',
         position: 456,
         sequenceName: `gene1-${genome1}`,
+    },
+];
+const multiSegMultiRefAminoAcidInsertions = [
+    {
+        count: 0,
+        insertion: `ins_gene1L-${genome1}:123:AAA`,
+        insertedSymbols: 'AAA',
+        position: 123,
+        sequenceName: `gene1L-${genome1}`,
+    },
+    {
+        count: 0,
+        insertion: `ins_gene1S:456:TTT`,
+        insertedSymbols: 'TTT',
+        position: 456,
+        sequenceName: `gene1S`,
     },
 ];
 
