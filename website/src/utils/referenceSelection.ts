@@ -4,14 +4,13 @@ import { getSegmentNames, type SegmentReferenceSelections } from './sequenceType
 import type { SetSomeFieldValues } from '../types/config';
 import type { ReferenceGenomesInfo } from '../types/referencesGenomes';
 
-export function getReferenceIdentifier(identifier: string | undefined, segmentName: string, multipleSegments: boolean) {
-    if (identifier === undefined) return undefined;
+export function getReferenceIdentifier(identifier: string, segmentName: string, multipleSegments: boolean) {
     return multipleSegments ? `${identifier}_${segmentName}` : identifier;
 }
 
 type GetSegmentSelectionsOpts = {
     segments: string[];
-    referenceIdentifierField?: string;
+    referenceIdentifierField: string;
     isMultiSegmented: boolean;
     state: Record<string, unknown>;
 };
@@ -27,11 +26,7 @@ export function getSegmentReferenceSelections({
     for (const segmentName of segments) {
         const referenceIdentifier = getReferenceIdentifier(referenceIdentifierField, segmentName, isMultiSegmented);
         // TODO(5891): it would be better to avoid this typecast
-        if (referenceIdentifier === undefined) {
-            result[segmentName] = null;
-        } else {
-            result[segmentName] = (state[referenceIdentifier] as string | null | undefined) ?? null;
-        }
+        result[segmentName] = (state[referenceIdentifier] as string | null | undefined) ?? null;
     }
 
     return result;
@@ -39,7 +34,7 @@ export function getSegmentReferenceSelections({
 
 type UseSelectedReferencesArgs = {
     referenceGenomesInfo: ReferenceGenomesInfo;
-    schema: { referenceIdentifierField?: string };
+    schema: { referenceIdentifierField: string };
     state: Record<string, unknown>;
 };
 
@@ -75,7 +70,7 @@ export function getSelectedReferences({
 
 type UseSetSelectedReferencesArgs = {
     referenceGenomesInfo: ReferenceGenomesInfo;
-    schema: { referenceIdentifierField?: string };
+    schema: { referenceIdentifierField: string };
     setSomeFieldValues: SetSomeFieldValues;
 };
 
@@ -93,7 +88,6 @@ export function useSetSelectedReferences({
                     segmentName,
                     segments.length > 1,
                 );
-                if (identifier === undefined) return;
 
                 setSomeFieldValues([identifier, value]);
             });

@@ -24,11 +24,13 @@ export const performLapisSearchQueries = async (
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
-    const selectedReferences = getSelectedReferences({
-        referenceGenomesInfo,
-        schema,
-        state,
-    });
+    const selectedReferences = schema.referenceIdentifierField
+        ? getSelectedReferences({
+              referenceGenomesInfo,
+              schema: { ...schema, referenceIdentifierField: schema.referenceIdentifierField },
+              state,
+          })
+        : {};
 
     const suborganismSegmentAndGeneInfo = getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferences);
 
