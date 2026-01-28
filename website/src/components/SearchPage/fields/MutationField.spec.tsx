@@ -13,7 +13,21 @@ const singleReferenceSegmentAndGeneInfo: SegmentAndGeneInfo = {
     ],
 };
 
-const multiReferenceGenomesMap: SegmentAndGeneInfo = {
+const singleSegMultiRefGenomesMap: SegmentAndGeneInfo = {
+    nucleotideSegmentInfos: [
+        { lapisName: 'ref1', name: 'main' },
+        { lapisName: 'ref2', name: 'main' },
+    ],
+    geneInfos: [
+        { lapisName: 'gene1', name: 'gene1' },
+        { lapisName: 'gene2', name: 'gene2' },
+    ],
+    useLapisMultiSegmentedEndpoint: true,
+    multiSegmented: false,
+};
+
+// This test also covers the multi-segmented, multi-reference case
+const multiSegmentedGenomesMap: SegmentAndGeneInfo = {
     nucleotideSegmentInfos: [
         { lapisName: 'seg1', name: 'seg1' },
         { lapisName: 'seg2', name: 'seg2' },
@@ -57,9 +71,17 @@ describe('MutationField', () => {
         expect(handleChange).toHaveBeenCalledWith('G100A');
     });
 
+    test('should accept input and dispatch events (single-segment, multi-reference)', async () => {
+        const handleChange = vi.fn();
+        renderField('', handleChange, singleSegMultiRefGenomesMap);
+
+        await userEvent.type(screen.getByLabelText('Mutations'), 'G100A{enter}');
+        expect(handleChange).toHaveBeenCalledWith('G100A');
+    });
+
     test('should accept input and dispatch events (multi-segmented)', async () => {
         const handleChange = vi.fn();
-        renderField('', handleChange, multiReferenceGenomesMap);
+        renderField('', handleChange, multiSegmentedGenomesMap);
 
         await userEvent.type(screen.getByLabelText('Mutations'), 'seg1:G100A{enter}');
         expect(handleChange).toHaveBeenCalledWith('seg1:G100A');

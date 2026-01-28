@@ -79,7 +79,7 @@ describe('mutation', () => {
         });
     });
 
-    describe('single segmented case with multiple suborganism', () => {
+    describe('single segmented case with multiple references', () => {
         const mockSegmentAndGeneInfo: SegmentAndGeneInfo = {
             nucleotideSegmentInfos: [
                 {
@@ -167,7 +167,7 @@ describe('mutation', () => {
         );
     });
 
-    describe('multi-segment', () => {
+    describe('multi-segment with selected reference', () => {
         const mockSegmentAndGeneInfo: SegmentAndGeneInfo = {
             nucleotideSegmentInfos: [
                 {
