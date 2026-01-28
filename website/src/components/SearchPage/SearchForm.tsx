@@ -71,13 +71,8 @@ export const SearchForm = ({
         ACCESSION_FIELD,
         ...(referenceIdentifierField === undefined
             ? []
-            : getSegmentNames(referenceGenomesInfo).map(
-                  (segmentName) =>
-                      getReferenceIdentifier(
-                          referenceIdentifierField,
-                          segmentName,
-                          referenceGenomesInfo.isMultiSegmented,
-                      )!,
+            : getSegmentNames(referenceGenomesInfo).map((segmentName) =>
+                  getReferenceIdentifier(referenceIdentifierField, segmentName, referenceGenomesInfo.isMultiSegmented),
               )),
     ]);
     const visibleFields = filterSchema.filters
