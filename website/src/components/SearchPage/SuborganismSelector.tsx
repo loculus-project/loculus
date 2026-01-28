@@ -3,6 +3,7 @@ import { type FC, useId, useMemo } from 'react';
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
 import { Button } from '../common/Button';
+import { Select } from '../common/Select.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 
 type SuborganismSelectorProps = {
@@ -54,7 +55,7 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
                 {label}
             </label>
             <div className='relative'>
-                <select
+                <Select
                     id={selectId}
                     value={selectedSuborganism ?? ''}
                     onChange={(e) => setSelectedSuborganism(e.target.value)}
@@ -68,7 +69,7 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
                             {suborganism}
                         </option>
                     ))}
-                </select>
+                </Select>
                 {selectedSuborganism !== '' && selectedSuborganism !== null && (
                     <Button
                         className='absolute top-2 right-6 flex items-center pr-2 h-5 bg-white rounded-sm'

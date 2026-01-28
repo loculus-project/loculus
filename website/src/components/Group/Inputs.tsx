@@ -2,6 +2,7 @@ import { type ComponentProps, type FC, type PropsWithChildren } from 'react';
 
 import { listOfCountries } from './listOfCountries.ts';
 import type { NewGroup } from '../../types/backend.ts';
+import { Select } from '../common/Select.tsx';
 
 export const CountryInputNoOptionChosen = 'Choose a country...';
 
@@ -116,7 +117,7 @@ export const CountryInput: FC<CountryInputProps> = ({ defaultValue }) => (
         className='sm:col-span-3'
         required
     >
-        <select
+        <Select
             id={fieldMapping.country + '-input'}
             name={fieldMapping.country}
             required
@@ -130,7 +131,7 @@ export const CountryInput: FC<CountryInputProps> = ({ defaultValue }) => (
                     {country}
                 </option>
             ))}
-        </select>
+        </Select>
     </LabelledInputContainer>
 );
 
