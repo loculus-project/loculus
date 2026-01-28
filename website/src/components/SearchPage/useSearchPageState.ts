@@ -151,17 +151,20 @@ export function useSearchPageState({
         (value) => !value,
     );
 
-    const selectedReferences = useSelectedReferences({
-        referenceGenomesInfo,
-        schema,
-        state,
-    });
-
-    const setSelectedReferences = useSetSelectedReferences({
-        referenceGenomesInfo,
-        schema,
-        setSomeFieldValues,
-    });
+    const selectedReferences = schema.referenceIdentifierField
+        ? useSelectedReferences({
+              referenceGenomesInfo,
+              schema: { ...schema, referenceIdentifierField: schema.referenceIdentifierField },
+              state,
+          })
+        : {};
+    const setSelectedReferences = schema.referenceIdentifierField
+        ? useSetSelectedReferences({
+              referenceGenomesInfo,
+              schema: { ...schema, referenceIdentifierField: schema.referenceIdentifierField },
+              setSomeFieldValues,
+          })
+        : () => {};
 
     const removeFilter = useCallback(
         (metadataFilterName: string) => {

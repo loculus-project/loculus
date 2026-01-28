@@ -71,11 +71,13 @@ export async function getTableData(
                             instance: '/seq/' + accessionVersion,
                         });
                     }
-                    const segmentReferences = getSelectedReferences({
-                        referenceGenomesInfo,
-                        schema,
-                        state: data.details,
-                    });
+                    const segmentReferences = schema.referenceIdentifierField
+                        ? getSelectedReferences({
+                              referenceGenomesInfo,
+                              schema: { ...schema, referenceIdentifierField: schema.referenceIdentifierField },
+                              state: data.details,
+                          })
+                        : {};
 
                     return ok({
                         data: toTableData(schema, referenceGenomesInfo, data),
