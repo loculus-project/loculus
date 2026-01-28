@@ -12,13 +12,9 @@ import {
     type WebsiteConfig,
     websiteConfig,
 } from './types/config.ts';
-import {
-    type NamedSequence,
-    type ReferenceAccession,
-    type ReferenceGenomes,
-    type ReferenceGenomesLightweightSchema,
-} from './types/referencesGenomes.ts';
+import { type ReferenceGenomesInfo } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
+import { toReferenceGenomes } from './utils/sequenceTypeHelpers.ts';
 
 let _config: WebsiteConfig | null = null;
 let _runtimeConfig: RuntimeConfig | null = null;
@@ -47,28 +43,16 @@ export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
             });
         }
 
-        const knownSuborganisms = Object.keys(schema.referenceGenomes);
-
-        schema.schema.metadata.forEach((metadatum) => {
-            const onlyForSuborganism = metadatum.onlyForSuborganism;
-            if (onlyForSuborganism !== undefined && !knownSuborganisms.includes(onlyForSuborganism)) {
-                errors.push(
-                    new Error(
-                        `Metadata field '${metadatum.name}' in organism '${organism}' references unknown suborganism '${onlyForSuborganism}' in 'onlyForSuborganism'.`,
-                    ),
-                );
-            }
-        });
-
-        const suborganismIdentifierField = schema.schema.suborganismIdentifierField;
-        if (suborganismIdentifierField !== undefined) {
-            if (!schema.schema.metadata.some((metadatum) => metadatum.name === suborganismIdentifierField)) {
-                errors.push(
-                    new Error(
-                        `suborganismIdentifierField '${suborganismIdentifierField}' of organism '${organism}' is not defined in the metadata.`,
-                    ),
-                );
-            }
+        const referenceIdentifierField = schema.schema.referenceIdentifierField;
+        const hasMultipleReferences = schema.referenceGenomes
+            ?.map((segment) => segment.references.length > 1)
+            .some((v) => v);
+        if (referenceIdentifierField == undefined && hasMultipleReferences) {
+            errors.push(
+                new Error(
+                    `Organism '${organism}' has multiple references but referenceIdentifierField is not defined in the schema.`,
+                ),
+            );
         }
     });
     return errors;
@@ -278,30 +262,9 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
     return serviceConfig.lapisUrls[organism];
 }
 
-export function getReferenceGenomes(organism: string): ReferenceGenomes {
-    return getConfig(organism).referenceGenomes;
+export function getReferenceGenomes(organism: string): ReferenceGenomesInfo {
+    return toReferenceGenomes(getConfig(organism).referenceGenomes);
 }
-
-const getAccession = (n: NamedSequence): ReferenceAccession => {
-    return {
-        name: n.name,
-        insdcAccessionFull: n.insdcAccessionFull,
-    };
-};
-
-export const getReferenceGenomeLightweightSchema = (organism: string): ReferenceGenomesLightweightSchema => {
-    const referenceGenomes = getReferenceGenomes(organism);
-    return Object.fromEntries(
-        Object.entries(referenceGenomes).map(([suborganism, referenceGenome]) => [
-            suborganism,
-            {
-                nucleotideSegmentNames: referenceGenome.nucleotideSequences.map((n) => n.name),
-                geneNames: referenceGenome.genes.map((n) => n.name),
-                insdcAccessionFull: referenceGenome.nucleotideSequences.map((n) => getAccession(n)),
-            },
-        ]),
-    );
-};
 
 export function seqSetsAreEnabled() {
     return getWebsiteConfig().enableSeqSets;

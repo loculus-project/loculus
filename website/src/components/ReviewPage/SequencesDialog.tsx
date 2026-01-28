@@ -1,6 +1,8 @@
 import { type FC, useState } from 'react';
 
 import { type SequenceEntryToEdit } from '../../types/backend.ts';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
+import { lapisNameToDisplayName } from '../../utils/sequenceTypeHelpers.ts';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
 import { Button } from '../common/Button';
 import { FixedLengthTextViewer } from '../common/FixedLengthTextViewer.tsx';
@@ -9,7 +11,7 @@ type SequencesDialogProps = {
     isOpen: boolean;
     onClose: () => void;
     dataToView: SequenceEntryToEdit | undefined;
-    segmentAndGeneDisplayNameMap: Map<string, string | null>;
+    referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
 type ProcessedSequence = {
@@ -17,17 +19,12 @@ type ProcessedSequence = {
     sequence: string;
 };
 
-export const SequencesDialog: FC<SequencesDialogProps> = ({
-    isOpen,
-    onClose,
-    dataToView,
-    segmentAndGeneDisplayNameMap,
-}) => {
+export const SequencesDialog: FC<SequencesDialogProps> = ({ isOpen, onClose, dataToView, referenceGenomesInfo }) => {
     const [activeTab, setActiveTab] = useState(0);
 
     if (!isOpen || !dataToView) return null;
 
-    const processedSequences = extractProcessedSequences(dataToView, segmentAndGeneDisplayNameMap);
+    const processedSequences = extractProcessedSequences(dataToView, lapisNameToDisplayName(referenceGenomesInfo));
 
     if (processedSequences.length === 0) {
         return null;
@@ -67,7 +64,7 @@ export const SequencesDialog: FC<SequencesDialogProps> = ({
 
 const extractProcessedSequences = (
     data: SequenceEntryToEdit,
-    segmentAndGeneDisplayNameMap: Map<string, string | null>,
+    lapisNameToDisplayNameMap: Map<string, string | undefined>,
 ): ProcessedSequence[] => {
     return [
         { type: 'unaligned', sequences: data.processedData.unalignedNucleotideSequences },
@@ -77,15 +74,15 @@ const extractProcessedSequences = (
         Object.entries(sequences)
             .filter((tuple): tuple is [string, string] => tuple[1] !== null)
             .map(([sequenceName, sequence]) => {
-                let label = segmentAndGeneDisplayNameMap.get(sequenceName) ?? sequenceName;
+                let label = lapisNameToDisplayNameMap.get(sequenceName);
                 if (type !== 'gene') {
-                    if (label === 'main') {
+                    if (label === undefined) {
                         label = type === 'unaligned' ? 'Sequence' : 'Aligned';
                     } else {
                         label = type === 'unaligned' ? `${label} (unaligned)` : `${label} (aligned)`;
                     }
                 }
-                return { label, sequence };
+                return { label: label ?? sequenceName, sequence };
             }),
     );
 };

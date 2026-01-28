@@ -1337,7 +1337,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         segments:
           - name: main
             references:
-            - reference_name: singleReference
+            - name: singleReference
               genes: []
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
@@ -1361,7 +1361,7 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - reference_name: singleReference
+              - name: singleReference
                 nextclade_dataset_name: nextstrain/ebola/sudan
                 genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
@@ -1379,30 +1379,30 @@ defaultOrganisms:
           scientific_name: "Sudan ebolavirus"
           molecule_type: "genomic RNA"
     referenceGenomes:
-      singleReference:
-        nucleotideSequences:
-          - name: "main"
+      - name: main
+        references:
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
             insdcAccessionFull: NC_002549.1
-        genes:
-          - name: NP
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
-          - name: VP35
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP35.fasta]]"
-          - name: VP40
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP40.fasta]]"
-          - name: GP
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/GP.fasta]]"
-          - name: ssGP
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/ssGP.fasta]]"
-          - name: sGP
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/sGP.fasta]]"
-          - name: VP30
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP30.fasta]]"
-          - name: VP24
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP24.fasta]]"
-          - name: L
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
+            genes:
+              - name: NP
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
+              - name: VP35
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP35.fasta]]"
+              - name: VP40
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP40.fasta]]"
+              - name: GP
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/GP.fasta]]"
+              - name: ssGP
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/ssGP.fasta]]"
+              - name: sGP
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/sGP.fasta]]"
+              - name: VP30
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP30.fasta]]"
+              - name: VP24
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP24.fasta]]"
+              - name: L
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
   west-nile:
     <<: *defaultOrganismConfig
     schema:
@@ -1445,7 +1445,7 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - reference_name: singleReference
+              - name: singleReference
                 nextclade_dataset_name: nextstrain/wnv/all-lineages
                 genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
@@ -1463,34 +1463,34 @@ defaultOrganisms:
           scientific_name: "West Nile virus"
           molecule_type: "genomic RNA"
     referenceGenomes:
-      singleReference:
-        nucleotideSequences:
-          - name: main
+      - name: main
+        references:
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/reference.fasta]]"
             insdcAccessionFull: NC_009942.1
-        genes:
-          - name: 2K
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/2K.fasta]]"
-          - name: NS1
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS1.fasta]]"
-          - name: NS2A
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2A.fasta]]"
-          - name: NS2B
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2B.fasta]]"
-          - name: NS3
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS3.fasta]]"
-          - name: NS4A
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4A.fasta]]"
-          - name: NS4B
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4B.fasta]]"
-          - name: NS5
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS5.fasta]]"
-          - name: capsid
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/capsid.fasta]]"
-          - name: env
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/env.fasta]]"
-          - name: prM
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"
+            genes:
+              - name: 2K
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/2K.fasta]]"
+              - name: NS1
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS1.fasta]]"
+              - name: NS2A
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2A.fasta]]"
+              - name: NS2B
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2B.fasta]]"
+              - name: NS3
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS3.fasta]]"
+              - name: NS4A
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4A.fasta]]"
+              - name: NS4B
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4B.fasta]]"
+              - name: NS5
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS5.fasta]]"
+              - name: capsid
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/capsid.fasta]]"
+              - name: env
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/env.fasta]]"
+              - name: prM
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"
   dummy-organism:
     schema:
       submissionDataTypes: *defaultSubmissionDataTypes
@@ -1574,40 +1574,39 @@ defaultOrganisms:
           - "--withErrors"
           - "--randomWarnError"
     referenceGenomes:
-      singleReference:
-        nucleotideSequences:
-          - name: "main"
+      - name: main
+        references:
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
-        genes:
-          - name: "E"
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/E.fasta]]"
-          - name: "M"
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/M.fasta]]"
-          - name: "N"
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/N.fasta]]"
-          - name: "ORF1a"
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1a.fasta]]"
-          - name: "ORF1b"
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1b.fasta]]"
-          - name: "ORF3a"
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF3a.fasta]]"
-          - name: "ORF6"
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF6.fasta]]"
-          - name: "ORF7a"
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7a.fasta]]"
-          - name: "ORF7b"
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7b.fasta]]"
-          - name: "ORF8"
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF8.fasta]]"
-          - name: "ORF9b"
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF9b.fasta]]"
-          - name: "S"
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
+            genes:
+              - name: NP
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/E.fasta]]"
+              - name: M
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/M.fasta]]"
+              - name: "N"
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/N.fasta]]"
+              - name: ORF1a
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1a.fasta]]"
+              - name: ORF1b
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1b.fasta]]"
+              - name: ORF3a
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF3a.fasta]]"
+              - name: ORF6
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF6.fasta]]"
+              - name: ORF7a
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7a.fasta]]"
+              - name: ORF7b
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7b.fasta]]"
+              - name: ORF8
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF8.fasta]]"
+              - name: ORF9b
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF9b.fasta]]"
+              - name: S
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
   dummy-organism-with-files:
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
       organismName: "Test organism (with files)"
-      nucleotideSequences: []
       submissionDataTypes:
         consensusSequences: false
         files:
@@ -1631,9 +1630,10 @@ defaultOrganisms:
           - "--watch"
           - "--disableConsensusSequences"
     referenceGenomes:
-      singleReference:
-        nucleotideSequences: []
-        genes: []
+      - name: main
+        references:
+          - name: singleReference
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
   not-aligned-organism:
     enabled: true
     schema:
@@ -1713,14 +1713,13 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - reference_name: "singleReference"
+              - name: singleReference
                 genes: []
     referenceGenomes:
-      singleReference:
-        nucleotideSequences:
-          - name: "main"
+      - name: main
+        references:
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
-        genes: []
   cchf:
     <<: *defaultOrganismConfig
     schema:
@@ -1729,7 +1728,6 @@ defaultOrganisms:
         <<: *defaultSubmissionDataTypes
         maxSequencesPerEntry: 3
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
-      nucleotideSequences: [L, M, S]
       image: "/images/organisms/cchf_small.jpg"
       linkOuts:
         - name: "Nextclade (L)"
@@ -1786,17 +1784,17 @@ defaultOrganisms:
             - name: L
               references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/L
-                reference_name: singleReference
+                name: singleReference
                 genes: [RdRp]
             - name: M
               references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/M
-                reference_name: singleReference
+                name: singleReference
                 genes: [GPC]
             - name: S
               references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/S
-                reference_name: singleReference
+                name: singleReference
                 genes: [NP]
     ingest:
       <<: *ingest
@@ -1812,31 +1810,167 @@ defaultOrganisms:
           scientific_name: "Orthonairovirus haemorrhagiae"
           molecule_type: "genomic RNA"
     referenceGenomes:
-      singleReference:
-        nucleotideSequences:
-          - name: L
+      - name: L
+        references:
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
             insdcAccessionFull: NC_005301.3
-          - name: M
+            genes:
+              - name: RdRp
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
+      - name: M
+        references:
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_M.fasta]]"
             insdcAccessionFull: NC_005300.2
-          - name: S
+            genes:
+              - name: GPC
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"
+      - name: S
+        references:
+          - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_S.fasta]]"
             insdcAccessionFull: NC_005302.1
-        genes:
-          - name: RdRp
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
-          - name: GPC
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"
-          - name: NP
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
+            genes:
+              - name: NP
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
+  cchf-multi-ref:
+    <<: *defaultOrganismConfig
+    schema:
+      <<: *schema
+      submissionDataTypes:
+        <<: *defaultSubmissionDataTypes
+        maxSequencesPerEntry: 3
+      organismName: "CCHF (Multi-Ref)"
+      image: "/images/organisms/cchf_small.jpg"
+      linkOuts: #TODO: refactor for multi-seg, multi-ref
+        - name: "Nextclade (L)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/L"
+        - name: "Nextclade (M)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/M"
+        - name: "Nextclade (S)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/S"
+      metadataAdd:
+        - name: hostNameScientific
+          generateIndex: true
+          autocomplete: true
+          header: "Host"
+          ingest: ncbiHostName
+          initiallyVisible: true
+        - name: reference
+          displayName: Reference
+          noInput: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          hideOnSequenceDetailsPage: true
+          perSegment: true
+          preprocessing:
+            inputs: {input: ASSIGNED_REFERENCE}
+      website:
+        <<: *website
+        tableColumns:
+          - sampleCollectionDate
+          - geoLocCountry
+          - geoLocAdmin1
+          - lineage
+          - authors
+          - authorAffiliations
+          - ncbiReleaseDate
+          - hostNameScientific
+          - length_M
+          - length_S
+          - length_L
+        defaultOrderBy: sampleCollectionDate
+        defaultOrder: descending
+        referenceIdentifierField: reference
+    preprocessing:
+      - <<: *preprocessing
+        configFile:
+          <<: *preprocessingConfigFile
+          taxon_id: 3052518
+          scientific_name: "Orthonairovirus haemorrhagiae"
+          molecule_type: "genomic RNA"
+          log_level: DEBUG
+          nextclade_dataset_server: "https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
+          segments:
+            - name: L
+              references:
+              - nextclade_dataset_name: cchfv/L
+                name: singleReference
+                genes: [RdRp]
+            - name: M
+              references:
+              - nextclade_dataset_name: cchfv/M-MH396653
+                name: MH396653
+                genes: [GPC]
+              - nextclade_dataset_name: cchfv/M-OR047158
+                name: OR047158
+                genes: [GPC]
+            - name: S
+              references:
+              - nextclade_dataset_name: cchfv/S-1and6
+                name: 1and6
+                genes: [NP]
+              - nextclade_dataset_name: cchfv/S-2to5
+                name: 2to5
+                genes: [NP]
+    ingest:
+      <<: *ingest
+      configFile:
+        taxon_id: 3052518
+        segment_identification:
+          method: "align"
+          nextclade_dataset_name: community/pathoplexus/cchfv  #TODO: allow multiple ref in ingest grouping algo
+    enaDeposition:
+      singleReference:
+        configFile:
+          taxon_id: 3052518
+          scientific_name: "Orthonairovirus haemorrhagiae"
+          molecule_type: "genomic RNA"
+    referenceGenomes:
+      - name: L
+        references:
+          - name: singleReference
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
+            insdcAccessionFull: NC_005301.3
+            genes:
+              - name: RdRp
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
+      - name: M
+        references:
+          - name: MH396653
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/MH396653/reference.fasta]]"
+            insdcAccessionFull: MH396653.1
+            genes:
+              - name: GPC
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/MH396653/GPC.fasta]]"
+          - name: OR047158
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/OR047158/reference.fasta]]"
+            insdcAccessionFull: OR047158.1
+            genes:
+              - name: GPC
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/OR047158/GPC.fasta]]"
+      - name: S
+        references:
+          - name: 1and6
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/reference.fasta]]"
+            insdcAccessionFull: MK299338.1
+            genes:
+              - name: NP
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/NP.fasta]]"
+          - name: 2to5
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/OL774851/reference.fasta]]"
+            insdcAccessionFull: OL774851.1
+            genes:
+              - name: NP
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/OL774851/NP.fasta]]"
   enteroviruses:
     <<: *defaultOrganismConfig
     enabled: true
     schema:
       <<: *schema
       organismName: "Enterovirus"
-      nucleotideSequences: [CV-A16, CV-A10, EV-A71, EV-D68]
       image: "/images/organisms/enterovirus.jpg"
       linkOuts:
         - name: "Nextclade (CV-A16)"
@@ -1851,7 +1985,7 @@ defaultOrganisms:
         - &evMetadataAdd
           name: clade_cv_a16
           displayName: Clade CV-A16
-          onlyForSuborganism: CV-A16
+          onlyForReference: CV-A16
           header: "Clade"
           noInput: true
           generateIndex: true
@@ -1865,7 +1999,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_cv_a10
           displayName: Clade CV-A10
-          onlyForSuborganism: CV-A10
+          onlyForReference: CV-A10
           preprocessing:
             args:
               reference: CV-A10
@@ -1873,7 +2007,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_ev_a71
           displayName: Clade EV-A71
-          onlyForSuborganism: EV-A71
+          onlyForReference: EV-A71
           preprocessing:
             args:
               reference: EV-A71
@@ -1881,7 +2015,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_ev_d68
           displayName: Clade EV-D68
-          onlyForSuborganism: EV-D68
+          onlyForReference: EV-D68
           preprocessing:
             args:
               reference: EV-D68
@@ -1908,7 +2042,7 @@ defaultOrganisms:
           - segment
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
-        suborganismIdentifierField: genotype
+        referenceIdentifierField: genotype
     preprocessing:
       - <<: *preprocessing
         configFile:
@@ -1920,19 +2054,19 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - reference_name: CV-A16
+              - name: CV-A16
                 nextclade_dataset_name: enpen/enterovirus/cv-a16
                 accepted_dataset_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
                 genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-              - reference_name: CV-A10
+              - name: CV-A10
                 nextclade_dataset_name: enpen/enterovirus/cv-a10
                 accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
                 genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-              - reference_name: EV-A71
+              - name: EV-A71
                 nextclade_dataset_name: enpen/enterovirus/ev-a71
                 accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71"]
                 genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-              - reference_name: EV-D68
+              - name: EV-D68
                 accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68"]
                 genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
                 nextclade_dataset_name: enpen/enterovirus/ev-d68
@@ -1949,138 +2083,132 @@ defaultOrganisms:
           taxon_id: 31704
           scientific_name: "Coxsackievirus A16"
           molecule_type: "genomic RNA"
-        suborganismIdentifierField: genotype
+        referenceIdentifierField: genotype
       CV-A10:
         configFile:
           taxon_id: 42769
           scientific_name: "Coxsackievirus A10"
           molecule_type: "genomic RNA"
-        suborganismIdentifierField: genotype
+        referenceIdentifierField: genotype
       EV-A71:
         configFile:
           taxon_id: 39054
           scientific_name: "Enterovirus A71"
           molecule_type: "genomic RNA"
-        suborganismIdentifierField: genotype
+        referenceIdentifierField: genotype
       EV-D68:
         configFile:
           taxon_id: 42789
           scientific_name: "Enterovirus D68"
           molecule_type: "genomic RNA"
-        suborganismIdentifierField: genotype
+        referenceIdentifierField: genotype
     referenceGenomes:
-      CV-A16:
-        nucleotideSequences:
-          - name: main
+      - name: main
+        references:
+          - name: CV-A16
             sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/reference-cva16.fasta]]"
             insdcAccessionFull: U05876.1
-        genes:
-          - name: VP4
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP4-cva16.fasta]]"
-          - name: VP2
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP2-cva16.fasta]]"
-          - name: VP3
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP3-cva16.fasta]]"
-          - name: VP1
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP1-cva16.fasta]]"
-          - name: 2A
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2A-cva16.fasta]]"
-          - name: 2B
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2B-cva16.fasta]]"
-          - name: 2C
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2C-cva16.fasta]]"
-          - name: 3A
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3A-cva16.fasta]]"
-          - name: 3B
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3B-cva16.fasta]]"
-          - name: 3C
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3C-cva16.fasta]]"
-          - name: 3D
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3D-cva16.fasta]]"
-      CV-A10:
-        nucleotideSequences:
-          - name: main
+            genes:
+              - name: VP4
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP4-cva16.fasta]]"
+              - name: VP2
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP2-cva16.fasta]]"
+              - name: VP3
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP3-cva16.fasta]]"
+              - name: VP1
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP1-cva16.fasta]]"
+              - name: 2A
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2A-cva16.fasta]]"
+              - name: 2B
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2B-cva16.fasta]]"
+              - name: 2C
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2C-cva16.fasta]]"
+              - name: 3A
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3A-cva16.fasta]]"
+              - name: 3B
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3B-cva16.fasta]]"
+              - name: 3C
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3C-cva16.fasta]]"
+              - name: 3D
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3D-cva16.fasta]]"
+          - name: CV-A10
             sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/reference-cva10.fasta]]"
             insdcAccessionFull: AY421767.1
-        genes:
-          - name: VP4
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP4-cva10.fasta]]"
-          - name: VP2
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP2-cva10.fasta]]"
-          - name: VP3
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP3-cva10.fasta]]"
-          - name: VP1
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP1-cva10.fasta]]"
-          - name: 2A
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2A-cva10.fasta]]"
-          - name: 2B
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2B-cva10.fasta]]"
-          - name: 2C
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2C-cva10.fasta]]"
-          - name: 3A
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3A-cva10.fasta]]"
-          - name: 3B
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3B-cva10.fasta]]"
-          - name: 3C
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3C-cva10.fasta]]"
-          - name: 3D
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3D-cva10.fasta]]"
-      EV-A71:
-        nucleotideSequences:
-          - name: main
+            genes:
+              - name: VP4
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP4-cva10.fasta]]"
+              - name: VP2
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP2-cva10.fasta]]"
+              - name: VP3
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP3-cva10.fasta]]"
+              - name: VP1
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP1-cva10.fasta]]"
+              - name: 2A
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2A-cva10.fasta]]"
+              - name: 2B
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2B-cva10.fasta]]"
+              - name: 2C
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2C-cva10.fasta]]"
+              - name: 3A
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3A-cva10.fasta]]"
+              - name: 3B
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3B-cva10.fasta]]"
+              - name: 3C
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3C-cva10.fasta]]"
+              - name: 3D
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3D-cva10.fasta]]"
+          - name: EV-A71
             sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/reference-eva71.fasta]]"
             insdcAccessionFull: U22521.1
-        genes:
-          - name: VP4
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP4-eva71.fasta]]"
-          - name: VP2
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP2-eva71.fasta]]"
-          - name: VP3
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP3-eva71.fasta]]"
-          - name: VP1
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP1-eva71.fasta]]"
-          - name: 2A
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2A-eva71.fasta]]"
-          - name: 2B
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2B-eva71.fasta]]"
-          - name: 2C
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2C-eva71.fasta]]"
-          - name: 3A
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3A-eva71.fasta]]"
-          - name: 3B
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3B-eva71.fasta]]"
-          - name: 3C
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3C-eva71.fasta]]"
-          - name: 3D
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3D-eva71.fasta]]"
-      EV-D68:
-        nucleotideSequences:
-          - name: main
+            genes:
+              - name: VP4
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP4-eva71.fasta]]"
+              - name: VP2
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP2-eva71.fasta]]"
+              - name: VP3
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP3-eva71.fasta]]"
+              - name: VP1
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP1-eva71.fasta]]"
+              - name: 2A
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2A-eva71.fasta]]"
+              - name: 2B
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2B-eva71.fasta]]"
+              - name: 2C
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2C-eva71.fasta]]"
+              - name: 3A
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3A-eva71.fasta]]"
+              - name: 3B
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3B-eva71.fasta]]"
+              - name: 3C
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3C-eva71.fasta]]"
+              - name: 3D
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3D-eva71.fasta]]"
+          - name: EV-D68
             sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/reference-evd68.fasta]]"
             insdcAccessionFull: AY426531.1
-        genes:
-          - name: VP4
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP4-evd68.fasta]]"
-          - name: VP2
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP2-evd68.fasta]]"
-          - name: VP3
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP3-evd68.fasta]]"
-          - name: VP1
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP1-evd68.fasta]]"
-          - name: 2A
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2A-evd68.fasta]]"
-          - name: 2B
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2B-evd68.fasta]]"
-          - name: 2C
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2C-evd68.fasta]]"
-          - name: 3A
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3A-evd68.fasta]]"
-          - name: 3B
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3B-evd68.fasta]]"
-          - name: 3C
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3C-evd68.fasta]]"
-          - name: 3D
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3D-evd68.fasta]]"
+            genes:
+              - name: VP4
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP4-evd68.fasta]]"
+              - name: VP2
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP2-evd68.fasta]]"
+              - name: VP3
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP3-evd68.fasta]]"
+              - name: VP1
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP1-evd68.fasta]]"
+              - name: 2A
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2A-evd68.fasta]]"
+              - name: 2B
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2B-evd68.fasta]]"
+              - name: 2C
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2C-evd68.fasta]]"
+              - name: 3A
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3A-evd68.fasta]]"
+              - name: 3B
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3B-evd68.fasta]]"
+              - name: 3C
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3C-evd68.fasta]]"
+              - name: 3D
+                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3D-evd68.fasta]]"
 auth:
   verifyEmail: false
   resetPasswordAllowed: true

@@ -6,7 +6,7 @@ import { routes } from '../../routes/routes';
 import { type Group } from '../../types/backend';
 import type { SequenceFlaggingConfig } from '../../types/config.ts';
 import { type DetailsJson, detailsJsonSchema } from '../../types/detailsJson.ts';
-import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu';
 import SequencesBanner from '../SequenceDetailsPage/SequencesBanner.tsx';
@@ -26,7 +26,7 @@ interface SeqPreviewModalProps {
     accessToken?: string;
     isOpen: boolean;
     onClose: () => void;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     myGroups: Group[];
     isHalfScreen?: boolean;
@@ -41,7 +41,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     accessToken,
     isOpen,
     onClose,
-    referenceGenomeLightweightSchema,
+    referenceGenomesInfo,
     sequenceFlaggingConfig,
     myGroups,
     isHalfScreen = false,
@@ -88,7 +88,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                 <div className='px-6'>
                     <SequenceDataUI
                         {...data}
-                        referenceGenomeSequenceNames={referenceGenomeLightweightSchema}
+                        referenceGenomesInfo={referenceGenomesInfo}
                         myGroups={myGroups}
                         accessToken={accessToken}
                         sequenceFlaggingConfig={data.isRevocation ? undefined : sequenceFlaggingConfig}

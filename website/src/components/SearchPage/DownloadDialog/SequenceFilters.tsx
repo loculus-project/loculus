@@ -1,7 +1,7 @@
 import { type FieldValues } from '../../../types/config.ts';
-import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import { intoMutationSearchParams } from '../../../utils/mutation.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
+import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
@@ -44,7 +44,7 @@ export class FieldFilterSet implements SequenceFilter {
     private readonly filterSchema: MetadataFilterSchema;
     private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
-    private readonly suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo | null;
+    private readonly suborganismSegmentAndGeneInfo: SegmentAndGeneInfo | null;
 
     /**
      * @param filterSchema The {@link MetadataFilterSchema} to use. Provides labels and other
@@ -58,7 +58,7 @@ export class FieldFilterSet implements SequenceFilter {
         filterSchema: MetadataFilterSchema,
         fieldValues: FieldValues,
         hiddenFieldValues: FieldValues,
-        suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo | null,
+        suborganismSegmentAndGeneInfo: SegmentAndGeneInfo | null,
     ) {
         this.filterSchema = filterSchema;
         this.fieldValues = fieldValues;
@@ -71,12 +71,7 @@ export class FieldFilterSet implements SequenceFilter {
      * This is a convenience function, mostly used for testing.
      */
     public static empty() {
-        return new FieldFilterSet(
-            new MetadataFilterSchema([]),
-            {},
-            {},
-            { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
-        );
+        return new FieldFilterSet(new MetadataFilterSchema([]), {}, {}, { nucleotideSegmentInfos: [], geneInfos: [] });
     }
 
     public sequenceCount(): number | undefined {

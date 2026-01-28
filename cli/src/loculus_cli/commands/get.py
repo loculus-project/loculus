@@ -156,24 +156,20 @@ def sequences(
         # Get organism schema to check for segments
         schema = instance_config.get_organism_schema(organism)
 
-        # Get nucleotideSequences from referenceGenomes
+        # Get nucleotide segment names from referenceGenomes
+        # Format: list of segments, each with "name" and "references"
         instance_info = instance_config.instance_info.get_info()
         organism_info = instance_info["organisms"].get(organism, {})
-        ref_genomes = organism_info.get("referenceGenomes", {})
+        ref_genomes = organism_info.get("referenceGenomes", [])
 
-        is_single_reference = "singleReference" in ref_genomes
+        nucleotide_sequences = [segment["name"] for segment in ref_genomes]
+        if not nucleotide_sequences:
+            raise ValueError("No nucleotide sequences defined in config")
 
-        nucleotide_sequences: list[str]
-        if is_single_reference:
-            if "nucleotideSequences" in ref_genomes.get("singleReference", {}):
-                nucleotide_sequences = [
-                    seq["name"]
-                    for seq in ref_genomes["singleReference"]["nucleotideSequences"]
-                ]
-            else:
-                raise ValueError("No nucleotide sequences defined in config")
-        else:
-            raise ValueError("Only singleReference organisms are supported currently")
+        # Check if all segments have only one reference (single reference mode)
+        is_single_reference = all(
+            len(segment.get("references", [])) == 1 for segment in ref_genomes
+        )
 
         # Handle segment parameter for multisegmented viruses
         if output_format == "fasta":

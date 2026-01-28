@@ -51,7 +51,7 @@ class EnaOrganismDetails(BaseModel):
     topology: Topology = Topology.LINEAR
     segments: list[str]
     loculusOrganism: str | None = None  # noqa: N815
-    suborganismIdentifierField: str | None = None  # noqa: N815
+    referenceIdentifierField: str | None = None  # noqa: N815
 
     def is_multi_segment(self) -> bool:
         return len(self.segments) > 1

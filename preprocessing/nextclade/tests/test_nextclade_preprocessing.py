@@ -1312,10 +1312,10 @@ multi_reference_cases = [
             },
             nucleotideInsertions={},
             alignedAminoAcidSequences={
-                "ebola-zaire-VP24EbolaZaire": ebola_zaire_aa(
+                "VP24EbolaZaire-ebola-zaire": ebola_zaire_aa(
                     sequence_with_mutation("ebola-zaire"), "VP24"
                 ),
-                "ebola-zaire-LEbolaZaire": ebola_zaire_aa(
+                "LEbolaZaire-ebola-zaire": ebola_zaire_aa(
                     sequence_with_mutation("ebola-zaire"), "L"
                 ),
             },
@@ -1406,7 +1406,7 @@ multi_segment_multi_reference_cases = [
             },
             nucleotideInsertions={},
             alignedAminoAcidSequences={
-                "1and6-NP": cchf_s_aa(consensus_sequence("cchf-S-1and6"), "1and6"),
+                "NP-1and6": cchf_s_aa(consensus_sequence("cchf-S-1and6"), "1and6"),
             },
             aminoAcidInsertions={},
             sequenceNameToFastaId={"S-1and6": "seg1"},
@@ -1442,7 +1442,7 @@ multi_segment_multi_reference_cases = [
             },
             nucleotideInsertions={},
             alignedAminoAcidSequences={
-                "1and6-NP": cchf_s_aa(consensus_sequence("cchf-S-1and6"), "1and6"),
+                "NP-1and6": cchf_s_aa(consensus_sequence("cchf-S-1and6"), "1and6"),
                 "RdRp": cchf_l_aa(consensus_sequence("cchf-L")),
             },
             aminoAcidInsertions={},

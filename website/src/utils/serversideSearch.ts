@@ -1,5 +1,5 @@
 import { validateSingleValue } from './extractFieldValue';
-import { getSuborganismSegmentAndGeneInfo } from './getSuborganismSegmentAndGeneInfo.tsx';
+import { getSelectedReferences } from './referenceSelection.ts';
 import {
     getColumnVisibilitiesFromQuery,
     MetadataFilterSchema,
@@ -8,27 +8,29 @@ import {
     PAGE_KEY,
     type SearchResponse,
 } from './search';
+import { getSegmentAndGeneInfo } from './sequenceTypeHelpers.ts';
 import { FieldFilterSet } from '../components/SearchPage/DownloadDialog/SequenceFilters';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
 import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
 import type { FieldValues, Schema } from '../types/config';
-import type { ReferenceGenomesLightweightSchema } from '../types/referencesGenomes.ts';
+import type { ReferenceGenomesInfo } from '../types/referencesGenomes.ts';
 
 export const performLapisSearchQueries = async (
     state: QueryState,
     schema: Schema,
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    referenceGenomesInfo: ReferenceGenomesInfo,
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
-    const suborganism = extractSuborganism(schema, state);
+    const selectedReferences = getSelectedReferences({
+        referenceGenomesInfo,
+        schema,
+        state,
+    });
 
-    const suborganismSegmentAndGeneInfo = getSuborganismSegmentAndGeneInfo(
-        referenceGenomeLightweightSchema,
-        suborganism,
-    );
+    const suborganismSegmentAndGeneInfo = getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferences);
 
     const filterSchema = new MetadataFilterSchema(schema.metadata);
     const fieldValues = filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
@@ -47,7 +49,9 @@ export const performLapisSearchQueries = async (
     const columnVisibilities = getColumnVisibilitiesFromQuery(schema, state);
 
     const columnsToShow = schema.metadata
-        .filter((field) => columnVisibilities.get(field.name)?.isVisible(suborganism) === true)
+        .filter(
+            (field) => columnVisibilities.get(field.name)?.isVisible(selectedReferences, referenceGenomesInfo) === true,
+        )
         .map((field) => field.name);
 
     const client = LapisClient.createForOrganism(organism);
@@ -77,15 +81,3 @@ export const performLapisSearchQueries = async (
         totalCount: aggregatedResult.unwrapOr({ data: [{ count: 0 }] }).data[0].count,
     };
 };
-
-function extractSuborganism(schema: Schema, state: QueryState): string | null {
-    if (schema.suborganismIdentifierField === undefined) {
-        return null;
-    }
-
-    const suborganism = state[schema.suborganismIdentifierField];
-    if (typeof suborganism !== 'string') {
-        return null;
-    }
-    return suborganism;
-}

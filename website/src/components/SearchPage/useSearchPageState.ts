@@ -4,6 +4,12 @@ import useStateSyncedWithUrlQueryParams, { type QueryState } from './useStateSyn
 import useUrlParamState from '../../hooks/useUrlParamState.ts';
 import type { FieldValues, FieldValueUpdate, Schema, SetSomeFieldValues } from '../../types/config.ts';
 import type { OrderDirection } from '../../types/lapis.ts';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
+import {
+    getReferenceIdentifier,
+    useSelectedReferences,
+    useSetSelectedReferences,
+} from '../../utils/referenceSelection.ts';
 import {
     COLUMN_VISIBILITY_PREFIX,
     HALF_SCREEN_PARAM,
@@ -13,6 +19,7 @@ import {
     SELECTED_SEQ_PARAM,
     VISIBILITY_PREFIX,
 } from '../../utils/search.ts';
+import { getSegmentNames } from '../../utils/sequenceTypeHelpers.ts';
 
 // UI-only parameters that should not reset pagination when changed
 const UI_ONLY_PARAMS = new Set([SELECTED_SEQ_PARAM, HALF_SCREEN_PARAM]);
@@ -22,6 +29,7 @@ type UseSearchPageStateParams = {
     schema: Schema;
     hiddenFieldValues: FieldValues;
     filterSchema: MetadataFilterSchema;
+    referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
 export function useSearchPageState({
@@ -29,6 +37,7 @@ export function useSearchPageState({
     schema,
     hiddenFieldValues,
     filterSchema,
+    referenceGenomesInfo,
 }: UseSearchPageStateParams) {
     const [state, setState] = useStateSyncedWithUrlQueryParams(initialQueryDict);
 
@@ -86,14 +95,30 @@ export function useSearchPageState({
                         newState[key] = value;
                     }
 
-                    if (schema.suborganismIdentifierField !== undefined && key === schema.suborganismIdentifierField) {
-                        delete newState[MUTATION_KEY];
-                        filterSchema
-                            .ungroupedMetadataFilters()
-                            .filter((metadataFilter) => metadataFilter.onlyForSuborganism !== undefined)
-                            .forEach((metadataFilter) => {
-                                delete newState[metadataFilter.name];
-                            });
+                    if (schema.referenceIdentifierField !== undefined) {
+                        for (const segmentName of getSegmentNames(referenceGenomesInfo)) {
+                            if (
+                                key ===
+                                getReferenceIdentifier(
+                                    schema.referenceIdentifierField,
+                                    segmentName,
+                                    referenceGenomesInfo.isMultiSegmented,
+                                )
+                            ) {
+                                delete newState[MUTATION_KEY];
+                                const referenceNames = Object.keys(
+                                    referenceGenomesInfo.segmentReferenceGenomes[segmentName],
+                                );
+                                filterSchema
+                                    .ungroupedMetadataFilters()
+                                    .filter((metadataFilter) =>
+                                        referenceNames.some((value) => value === metadataFilter.onlyForReference),
+                                    )
+                                    .forEach((metadataFilter) => {
+                                        delete newState[metadataFilter.name];
+                                    });
+                            }
+                        }
                     }
                 });
 
@@ -106,7 +131,7 @@ export function useSearchPageState({
                 setPage(1);
             }
         },
-        [setState, setPage, hiddenFieldValues, schema.suborganismIdentifierField, filterSchema],
+        [setState, setPage, hiddenFieldValues, schema.referenceIdentifierField, filterSchema, referenceGenomesInfo],
     );
 
     const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
@@ -125,14 +150,18 @@ export function useSearchPageState({
         'boolean',
         (value) => !value,
     );
-    const [selectedSuborganism, setSelectedSuborganism] = useUrlParamState<string | null>(
-        schema.suborganismIdentifierField ?? '',
+
+    const selectedReferences = useSelectedReferences({
+        referenceGenomesInfo,
+        schema,
         state,
-        null,
+    });
+
+    const setSelectedReferences = useSetSelectedReferences({
+        referenceGenomesInfo,
+        schema,
         setSomeFieldValues,
-        'nullable-string',
-        (value) => value === null,
-    );
+    });
 
     const removeFilter = useCallback(
         (metadataFilterName: string) => {
@@ -229,8 +258,8 @@ export function useSearchPageState({
             setPreviewedSeqId,
             previewHalfScreen,
             setPreviewHalfScreen,
-            selectedSuborganism,
-            setSelectedSuborganism,
+            selectedReferences,
+            setSelectedReferences,
             page,
             setPage,
             setSomeFieldValues,
@@ -248,8 +277,8 @@ export function useSearchPageState({
             setPreviewedSeqId,
             previewHalfScreen,
             setPreviewHalfScreen,
-            selectedSuborganism,
-            setSelectedSuborganism,
+            selectedReferences,
+            setSelectedReferences,
             page,
             setPage,
             setSomeFieldValues,
