@@ -99,8 +99,11 @@ class MultipleSequencesPerSegmentError(Exception):
         )
 
 
-def get_name(
-    segment: SegmentName, data_per_dataset: dict[SequenceName, Any] | None, config: Config
+def get_dataset_name(
+    segment: SegmentName,
+    data_per_dataset: dict[SequenceName, Any] | None,
+    config: Config,
+    reference: str | None = None,
 ) -> str | None:
     """Returns the name of the dataset to use based on spec args"""
     valid_datasets = (
@@ -111,6 +114,12 @@ def get_name(
         for dataset in valid_datasets
         if config.get_dataset_by_name(dataset).segment == segment
     ]
+    if reference is not None:
+        lapis_names = [
+            dataset
+            for dataset in lapis_names
+            if config.get_dataset_by_name(dataset).reference_name == reference
+        ]
     if not lapis_names:
         return None
     if len(lapis_names) > 1:
@@ -126,7 +135,19 @@ def add_nextclade_metadata(
 ) -> InputData:
     try:
         segment = spec.args.get("segment", "main") if spec.args else "main"
-        sequence_name = get_name(str(segment), unprocessed.nextcladeMetadata, config)
+        if not isinstance(segment, str):
+            msg = f"add_nextclade_metadata: segment must be str, got {type(segment)}"
+            raise TypeError(msg)
+        reference = spec.args.get("reference", None) if spec.args else None
+        if not isinstance(reference, str) and reference is not None:
+            msg = f"add_nextclade_metadata: reference must be str, got {type(reference)}"
+            raise TypeError(msg)
+        sequence_name = get_dataset_name(
+            segment,
+            unprocessed.nextcladeMetadata,
+            config,
+            reference,
+        )
     except MultipleSequencesPerSegmentError as e:
         error_annotation = e.get_processing_annotation(
             processed_field_name=nextclade_path, organism=config.organism
@@ -167,7 +188,10 @@ def add_assigned_reference(
     if not unprocessed.nextcladeMetadata:
         return InputData(datum=None)
     segment = spec.args.get("segment", "main") if spec.args else "main"
-    name = get_name(str(segment), unprocessed.nextcladeMetadata, config)
+    if not isinstance(segment, str):
+        msg = f"add_assigned_reference: segment must be str, got {type(segment)}"
+        raise TypeError(msg)
+    name = get_dataset_name(segment, unprocessed.nextcladeMetadata, config)
     if not name:
         return InputData(datum=None)
     reference = config.get_dataset_by_name(name).reference_name
@@ -285,8 +309,11 @@ def get_output_metadata(
         if output_field == "length":
             try:
                 segment = spec.args.get("segment", "main") if spec.args else "main"
-                sequence_name = get_name(
-                    str(segment), unprocessed.unalignedNucleotideSequences, config
+                if not isinstance(segment, str):
+                    msg = f"get_output_metadata: segment must be str, got {type(segment)}"
+                    raise TypeError(msg)
+                sequence_name = get_dataset_name(
+                    segment, unprocessed.unalignedNucleotideSequences, config
                 )
             except MultipleSequencesPerSegmentError as e:
                 error_annotation = e.get_processing_annotation(
@@ -302,8 +329,9 @@ def get_output_metadata(
             continue
 
         if output_field.startswith("length_"):
-            segment = output_field[7:]
-            sequence_name = get_name(str(segment), unprocessed.unalignedNucleotideSequences, config)
+            sequence_name = get_dataset_name(
+                output_field[7:], unprocessed.unalignedNucleotideSequences, config
+            )
             output_metadata[output_field] = get_sequence_length(
                 unprocessed.unalignedNucleotideSequences, sequence_name
             )
