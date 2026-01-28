@@ -9,10 +9,10 @@ jobs:
       matrix:
         taxon_id:
           - 10244    # Mpox
-          - 11234    # Measles morbillivirus
           - 1868215  # Orthopneumovirus
           - 3048148  # Metapneumovirus hominis
           - 3048448  # West nile virus
+          - 3052345  # Morbillivirus hominis
           - 3052460  # Orthoebolavirus sudanense
           - 3052462  # Orthoebolavirus zairense
           - 3052505  # Orthomarburgvirus marburgense
