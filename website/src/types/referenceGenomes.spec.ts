@@ -26,7 +26,7 @@ export const SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSche
         name: 'main',
         references: [
             {
-                referenceName: 'singleReference',
+                name: 'singleReference',
                 sequence: 'ATGC',
                 insdcAccessionFull: 'defaultInsdcAccession',
                 genes: [
@@ -64,7 +64,7 @@ export const MULTI_SEG_SINGLE_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSchem
         name: 'S',
         references: [
             {
-                referenceName: 'singleReference',
+                name: 'singleReference',
                 sequence: 'ATGC',
                 insdcAccessionFull: 'defaultInsdcAccession1',
                 genes: [{ name: 'gene1', sequence: 'AAA' }],
@@ -75,7 +75,7 @@ export const MULTI_SEG_SINGLE_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSchem
         name: 'L',
         references: [
             {
-                referenceName: 'singleReference',
+                name: 'singleReference',
                 sequence: 'GGGG',
                 insdcAccessionFull: 'defaultInsdcAccession2',
                 genes: [{ name: 'gene2', sequence: 'BBB' }],
@@ -114,7 +114,7 @@ export const SINGLE_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSchem
         name: 'main',
         references: [
             {
-                referenceName: 'ref1',
+                name: 'ref1',
                 sequence: 'ATGC',
                 insdcAccessionFull: 'defaultInsdcAccession1',
                 genes: [
@@ -123,7 +123,7 @@ export const SINGLE_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSchem
                 ],
             },
             {
-                referenceName: 'ref2',
+                name: 'ref2',
                 sequence: 'CCCC',
                 insdcAccessionFull: 'defaultInsdcAccession2',
                 genes: [
@@ -175,7 +175,7 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSchema
         name: 'L',
         references: [
             {
-                referenceName: 'ref1',
+                name: 'ref1',
                 sequence: 'ATGC',
                 insdcAccessionFull: 'defaultInsdcAccession1',
                 genes: [
@@ -184,7 +184,7 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSchema
                 ],
             },
             {
-                referenceName: 'ref2',
+                name: 'ref2',
                 sequence: 'CCCC',
                 insdcAccessionFull: 'defaultInsdcAccession2',
                 genes: [
@@ -198,7 +198,7 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSchema
         name: 'S',
         references: [
             {
-                referenceName: 'singleReference',
+                name: 'singleReference',
                 sequence: 'ATGC',
                 insdcAccessionFull: 'defaultInsdcAccession3',
                 genes: [
@@ -251,7 +251,7 @@ describe('toReferenceGenomes', () => {
                 name: 'main',
                 references: [
                     {
-                        referenceName: 'singleReference',
+                        name: 'singleReference',
                         sequence: 'ATGC',
                         // no insdcAccessionFull
                         // no genes
@@ -269,19 +269,19 @@ describe('toReferenceGenomes', () => {
         expect(out.segmentReferenceGenomes.main.singleReference.genes).toEqual([]);
     });
 
-    it('overwrites duplicate referenceName within same segment (last wins)', () => {
+    it('overwrites duplicate name within same segment (last wins)', () => {
         const input: ReferenceGenomesSchema = [
             {
                 name: 'main',
                 references: [
                     {
-                        referenceName: 'dup',
+                        name: 'dup',
                         sequence: 'AAAA',
                         insdcAccessionFull: 'first',
                         genes: [{ name: 'gene1', sequence: 'AAA' }],
                     },
                     {
-                        referenceName: 'dup',
+                        name: 'dup',
                         sequence: 'BBBB',
                         insdcAccessionFull: 'second',
                         genes: [{ name: 'gene2', sequence: 'BBB' }],

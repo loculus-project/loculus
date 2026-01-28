@@ -9,7 +9,7 @@
   {{- $segmentName := $segment.name -}}
   {{- $singleReference := eq (len $segment.references) 1 -}}
   {{- range $reference := $segment.references -}}
-    {{- $referenceName := $reference.referenceName -}}
+    {{- $referenceName := $reference.name -}}
     {{- if $singleReference -}}
       {{/* Single reference mode - no suffix */}}
       {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict

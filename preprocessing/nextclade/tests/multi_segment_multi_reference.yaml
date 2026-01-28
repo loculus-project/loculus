@@ -8,17 +8,17 @@ diamond_dmnd_url: FAKE_URL
 segments:
   - name: L
     references:
-    - referenceName: singleReference
+    - name: singleReference
       nextclade_dataset_name: CCHF/L
       accepted_dataset_matches: [L]
       genes: [RdRp]
   - name: S
     references:
-    - referenceName: 1and6
+    - name: 1and6
       nextclade_dataset_name: CCHF/S-1and6
       accepted_dataset_matches: [S-1and6]
       genes: [NP]
-    - referenceName: 2to5
+    - name: 2to5
       nextclade_dataset_name: CCHF/S-2to5
       accepted_dataset_matches: [S-2to5]
       genes: [NP]
