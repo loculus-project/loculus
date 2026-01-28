@@ -182,7 +182,7 @@
         "onlyForReference": {
           "groups": ["metadata"],
           "type": "string",
-          "description": "Optional. Affects the search page of the website: specify which suborganism the metadata field applies to, this metadata field will then only be visible if that suborganism is selected (in the search bar, as a table column, and in the metadata download). Must be a valid suborganism as defined in the reference genomes."
+          "description": "Optional. Affects the search page of the website: specify which reference the metadata field applies to, this metadata field will then only be visible if that reference is selected (in the search bar, as a table column, and in the metadata download). Must be a valid reference as defined in the reference genomes."
         },
         "ontology_id": {
           "groups": ["metadata"],
