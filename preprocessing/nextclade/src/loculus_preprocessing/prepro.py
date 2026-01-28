@@ -329,9 +329,8 @@ def get_output_metadata(
             continue
 
         if output_field.startswith("length_"):
-            segment = output_field[7:]
             sequence_name = get_dataset_name(
-                str(segment), unprocessed.unalignedNucleotideSequences, config
+                output_field[7:], unprocessed.unalignedNucleotideSequences, config
             )
             output_metadata[output_field] = get_sequence_length(
                 unprocessed.unalignedNucleotideSequences, sequence_name
