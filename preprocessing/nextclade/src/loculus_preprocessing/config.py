@@ -56,7 +56,7 @@ type SequenceName = str
 
 
 class Reference(BaseModel):
-    referenceName: str = "singleReference"  # noqa: N815
+    name: str = "singleReference"
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str | None = None
@@ -71,7 +71,7 @@ class Segment(BaseModel):
 
 class NextcladeSequenceAndDataset(BaseModel):
     name: SequenceName = "main"
-    referenceName: str = "singleReference"  # noqa: N815
+    reference_name: str = "singleReference"
     segment: SegmentName = "main"
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
@@ -146,11 +146,12 @@ class Config(BaseModel):
             ds = NextcladeSequenceAndDataset(
                 **base,
                 segment=segment_name,
+                reference_name=reference.name if reference else "singleReference",
             )
             if ds.nextclade_dataset_server is None:
                 ds.nextclade_dataset_server = self.nextclade_dataset_server
             ds.name = set_sequence_name(multi_reference, self.multi_segment, ds)
-            ds.gene_suffix = ds.referenceName if multi_reference else None
+            ds.gene_suffix = ds.reference_name if multi_reference else None
             return ds
 
         datasets: list[NextcladeSequenceAndDataset] = []
@@ -183,9 +184,9 @@ def set_sequence_name(
         case (False, _):
             return ds.segment
         case (True, True):
-            return f"{ds.segment}-{ds.referenceName}"
+            return f"{ds.segment}-{ds.reference_name}"
         case (True, False):
-            return ds.referenceName
+            return ds.reference_name
         case _:
             msg = "Internal Error - unreachable code reached"
             raise AssertionError(msg)

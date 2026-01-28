@@ -43,7 +43,7 @@ export const referenceGenomesSchema = z
             name: z.string(),
             references: z.array(
                 z.object({
-                    referenceName: z.string(),
+                    name: z.string(),
                     sequence: z.string(),
                     insdcAccessionFull: z.string().optional(),
                     genes: z.array(z.object({ name: z.string(), sequence: z.string() })).optional(),

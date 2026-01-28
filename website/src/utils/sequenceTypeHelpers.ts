@@ -96,13 +96,13 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
         }
 
         for (const ref of segmentData.references) {
-            genomes[segmentName][ref.referenceName] = {
-                lapisName: getSegmentLapisName(segmentName, ref.referenceName, isMultiSegmented, isMultiReferenced),
+            genomes[segmentName][ref.name] = {
+                lapisName: getSegmentLapisName(segmentName, ref.name, isMultiSegmented, isMultiReferenced),
                 insdcAccessionFull: ref.insdcAccessionFull ?? null,
                 genes: ref.genes
                     ? ref.genes.map((gene) => ({
                           name: gene.name,
-                          lapisName: getGeneLapisName(gene.name, ref.referenceName, isMultiReferenced),
+                          lapisName: getGeneLapisName(gene.name, ref.name, isMultiReferenced),
                       }))
                     : [],
             };
