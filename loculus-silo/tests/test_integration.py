@@ -348,6 +348,7 @@ def test_interrupted_run_cleanup_and_hash_skip(
     # Verify a timestamped directory was created
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 1
+    first_dir = input_dirs[0]
 
     # Create a new runner (simulating restart) - this should clear all download directories
     runner2 = ImporterRunner(config, paths)
@@ -355,6 +356,9 @@ def test_interrupted_run_cleanup_and_hash_skip(
     # Download directories should be cleared on startup
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 0, "Download directories should be cleared on startup"
+
+    # Ensure different timestamp for new directory
+    time.sleep(1.1)
 
     # Second download with identical data (same hash) but new ETag
     responses_r2 = [
@@ -369,6 +373,7 @@ def test_interrupted_run_cleanup_and_hash_skip(
     # ETag should be updated
     assert runner2.current_etag == 'W/"v2"', "ETag should be updated"
 
-    # New directory should exist (may have same timestamp if test runs fast)
+    # New directory should exist and be different from the first
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 1, "Should have one directory after successful run"
+    assert input_dirs[0] != first_dir, "Should be a new directory"
