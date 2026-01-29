@@ -22,10 +22,13 @@ def update_lineage_definitions(
         return
 
     if not pipeline_versions:
-        # required for dummy organisms
-        logger.info("No pipeline version found; writing empty lineage definitions")
-        write_text(paths.lineage_definition_file, "{}\n")
-        return
+        # No data yet - use the lowest configured pipeline version's lineage definitions
+        default_version = min(config.lineage_definitions.keys())
+        logger.info(
+            "No pipeline version found; using default version %s for lineage definitions",
+            default_version,
+        )
+        pipeline_versions = {default_version}
 
     if len(pipeline_versions) > 1:
         msg = "Multiple pipeline versions found in released data"

@@ -9,6 +9,7 @@ INPUT_DIR="/preprocessing/input"
 RUN_FILE="$INPUT_DIR/run_silo"
 DONE_FILE="$INPUT_DIR/silo_done"
 SLEEP_SECONDS="${SILO_RUNNER_SLEEP_SECONDS:-1}"
+PATH_TO_SILO_BINARY="${PATH_TO_SILO_BINARY:-/app/silo}"
 
 say_completion() {
   run_id="$1"
@@ -35,7 +36,7 @@ while true; do
     rm -f "$RUN_FILE"
     log "Starting SILO preprocessing for run $run_id"
 
-    if /app/silo preprocessing; then
+    if "$PATH_TO_SILO_BINARY" preprocessing; then
       log "SILO preprocessing completed for run $run_id"
       say_completion "$run_id" "success" ""
     else

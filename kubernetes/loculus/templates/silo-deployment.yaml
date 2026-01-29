@@ -30,14 +30,30 @@ spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
+        - name: download-silo
+          image: "{{ $.Values.silo.baseImage }}"
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              apt-get update && apt-get install -y curl gzip
+              curl -sL "{{ $.Values.silo.binaryUrl }}" | gunzip > /silo-bin/silo
+              chmod +x /silo-bin/silo
+          volumeMounts:
+            - name: silo-binary
+              mountPath: /silo-bin
       containers:
         - name: silo
-          image: "{{ $.Values.images.lapisSilo.repository }}:{{ $.Values.images.lapisSilo.tag }}"
-          imagePullPolicy: "{{ $.Values.images.lapisSilo.pullPolicy | default $.Values.imagePullPolicy }}"
+          image: "{{ $.Values.silo.baseImage }}"
+          command: ["/silo-bin/silo"]
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "silo" $.Values $key) | nindent 10 }}
           env:
             - name: SPDLOG_LEVEL
               value: "debug"
+            - name: SILO_DATA_DIRECTORY
+              value: "/data/"
           ports:
             - containerPort: 8081
           args:
@@ -51,6 +67,8 @@ spec:
           volumeMounts:
             - name: lapis-silo-shared-data
               mountPath: /data
+            - name: silo-binary
+              mountPath: /silo-bin
           readinessProbe:
             httpGet:
               path: /info
@@ -94,7 +112,7 @@ spec:
               subPath: reference_genomes.json
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/database_config.yaml
-              subPath: database_config.yaml
+              subPath: silo_database_config.yaml
             - name: lapis-silo-database-config-processed
               mountPath: /app/preprocessing_config.yaml
               subPath: preprocessing_config.yaml
@@ -103,14 +121,18 @@ spec:
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
         - name: silo-preprocessing
-          image: "{{ $.Values.images.lapisSilo.repository }}:{{ $.Values.images.lapisSilo.tag }}"
-          imagePullPolicy: "{{ $.Values.images.lapisSilo.pullPolicy | default $.Values.imagePullPolicy }}"
+          image: "{{ $.Values.silo.baseImage }}"
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "silo-preprocessing" $.Values) | nindent 10 }}
           command:
             - sh
             - -c
             - sh /silo_import_wrapper.sh
           env:
+            - name: PATH_TO_SILO_BINARY
+              value: "/silo-bin/silo"
+            - name: SILO_PREPROCESSING_CONFIG
+              value: "/app/preprocessing_config.yaml"
             - name: BACKEND_BASE_URL
               {{- if $.Values.disableBackend }}
               value: "http://host.k3d.internal:8079/{{ $key }}"
@@ -127,7 +149,7 @@ spec:
               subPath: reference_genomes.json
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/database_config.yaml
-              subPath: database_config.yaml
+              subPath: silo_database_config.yaml
             - name: lapis-silo-database-config-processed
               mountPath: /app/preprocessing_config.yaml
               subPath: preprocessing_config.yaml
@@ -138,7 +160,11 @@ spec:
             - name: lapis-silo-database-config-processed
               mountPath: /silo_import_wrapper.sh
               subPath: silo_import_wrapper.sh
+            - name: silo-binary
+              mountPath: /silo-bin
       volumes:
+        - name: silo-binary
+          emptyDir: {}
         {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
         - name: lapis-silo-shared-data
           emptyDir: {}
