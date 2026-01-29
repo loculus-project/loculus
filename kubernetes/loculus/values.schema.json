@@ -1616,18 +1616,6 @@
           "description": "Number of threads for HTTP connections in SILO API",
           "default": 16,
           "minimum": 1
-        },
-        "binaryUrl": {
-          "groups": ["silo"],
-          "type": "string",
-          "description": "URL to download SILO binary (gzipped)",
-          "default": "https://silo-benchmarks.genspectrum.org/release_downloads/silo-current.gz"
-        },
-        "baseImage": {
-          "groups": ["silo"],
-          "type": "string",
-          "description": "Base image to use when running SILO binary",
-          "default": "debian:bookworm-slim"
         }
       },
       "additionalProperties": false

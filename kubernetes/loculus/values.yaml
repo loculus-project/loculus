@@ -2109,8 +2109,6 @@ images:
     pullPolicy: Always
 silo:
   apiThreadsForHttpConnections: 16
-  binaryUrl: "https://silo-benchmarks.genspectrum.org/release_downloads/silo-current.gz"
-  baseImage: "debian:bookworm-slim"
 secrets:
   smtp-password:
     type: raw
