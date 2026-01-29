@@ -12,9 +12,10 @@ RUN cargo install --git $REPO --rev $COMMIT
 # --- SILO binary download stage ---
 FROM curlimages/curl:8.12.1 AS silo-downloader
 
-ARG SILO_BINARY_URL=https://silo-benchmarks.genspectrum.org/release_downloads/silo-current.gz
+ARG SILO_VERSION=0.9.6
 
-RUN curl -sL "$SILO_BINARY_URL" | gunzip > /tmp/silo && chmod +x /tmp/silo
+RUN curl -sL "https://silo-benchmarks.genspectrum.org/release_downloads/silo-v${SILO_VERSION}.gz" \
+    | gunzip > /tmp/silo && chmod +x /tmp/silo
 
 # --- Python runtime stage ---
 FROM python:3.11-slim

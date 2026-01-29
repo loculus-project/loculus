@@ -41,7 +41,7 @@ class ImporterConfig:
         silo_run_timeout = int(env.get("SILO_RUN_TIMEOUT_SECONDS", "3600"))
         root_raw = env.get("ROOT_DIR")
         root_dir = Path(root_raw).resolve() if root_raw else Path("/")
-        silo_binary = Path(env.get("PATH_TO_SILO_BINARY", "/app/silo"))
+        silo_binary = Path(env.get("PATH_TO_SILO_BINARY", "/usr/local/bin/silo"))
         preprocessing_config = Path(
             env.get("PREPROCESSING_CONFIG", "/app/preprocessing_config.yaml")
         )
