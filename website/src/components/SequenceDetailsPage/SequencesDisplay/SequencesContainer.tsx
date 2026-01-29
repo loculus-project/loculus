@@ -18,6 +18,7 @@ import {
 } from '../../../utils/sequenceTypeHelpers.ts';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../../common/BoxWithTabs.tsx';
 import { Button } from '../../common/Button';
+import { Select } from '../../common/Select.tsx';
 import { withQueryProvider } from '../../common/withQueryProvider.tsx';
 
 type SequenceContainerProps = {
@@ -244,7 +245,7 @@ const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) =
 
     return (
         <div className='mb-4'>
-            <select
+            <Select
                 data-testid='gene-dropdown'
                 className='select select-bordered w-full max-w-xs'
                 value={selectedGene}
@@ -264,7 +265,7 @@ const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) =
                         {gene.label}
                     </option>
                 ))}
-            </select>
+            </Select>
         </div>
     );
 };
