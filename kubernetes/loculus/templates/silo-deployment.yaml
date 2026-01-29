@@ -30,16 +30,10 @@ spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
-        - name: download-silo
-          image: "{{ $.Values.silo.baseImage }}"
+        - name: copy-silo-binary
+          image: "{{ $.Values.images.siloImporter.repository }}:{{ $.Values.images.siloImporter.tag | default $dockerTag }}"
           imagePullPolicy: {{ $.Values.imagePullPolicy }}
-          command:
-            - sh
-            - -c
-            - |
-              apt-get update && apt-get install -y curl gzip
-              curl -sL "{{ $.Values.silo.binaryUrl }}" | gunzip > /silo-bin/silo
-              chmod +x /silo-bin/silo
+          command: ["cp", "/usr/local/bin/silo", "/silo-bin/silo"]
           volumeMounts:
             - name: silo-binary
               mountPath: /silo-bin
@@ -107,7 +101,7 @@ spec:
             - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
               value: {{ $.Values.siloImport.pollIntervalSeconds | quote }}
             - name: PATH_TO_SILO_BINARY
-              value: "/silo-bin/silo"
+              value: "/usr/local/bin/silo"
             - name: PREPROCESSING_CONFIG
               value: "/app/preprocessing_config.yaml"
           volumeMounts:
@@ -124,8 +118,6 @@ spec:
               mountPath: /preprocessing/output
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
-            - name: silo-binary
-              mountPath: /silo-bin
       volumes:
         - name: silo-binary
           emptyDir: {}
