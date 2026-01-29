@@ -30,17 +30,10 @@ spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
-        - name: copy-silo-binary
-          image: "{{ $.Values.images.siloImporter.repository }}:{{ $.Values.images.siloImporter.tag | default $dockerTag }}"
-          imagePullPolicy: {{ $.Values.imagePullPolicy }}
-          command: ["cp", "/usr/local/bin/silo", "/silo-bin/silo"]
-          volumeMounts:
-            - name: silo-binary
-              mountPath: /silo-bin
       containers:
         - name: silo
-          image: "{{ $.Values.silo.baseImage }}"
-          command: ["/silo-bin/silo"]
+          image: "{{ $.Values.images.siloImporter.repository }}:{{ $.Values.images.siloImporter.tag | default $dockerTag }}"
+          command: ["/usr/local/bin/silo"]
           imagePullPolicy: {{ $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "silo" $.Values $key) | nindent 10 }}
           env:
@@ -61,8 +54,6 @@ spec:
           volumeMounts:
             - name: lapis-silo-shared-data
               mountPath: /data
-            - name: silo-binary
-              mountPath: /silo-bin
           readinessProbe:
             httpGet:
               path: /info
@@ -119,8 +110,6 @@ spec:
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
       volumes:
-        - name: silo-binary
-          emptyDir: {}
         {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
         - name: lapis-silo-shared-data
           emptyDir: {}

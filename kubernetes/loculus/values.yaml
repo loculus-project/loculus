@@ -2095,7 +2095,7 @@ images:
     tag: "0.9.3@sha256:7e3a9a2221e265b56bc280054705f44637fcba7bea812d9bd8de62c923ebe742"
     pullPolicy: Always
   siloImporter:
-    repository: "ghcr.io/loculus-project/silo-import"
+    repository: "ghcr.io/loculus-project/loculus-silo"
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
