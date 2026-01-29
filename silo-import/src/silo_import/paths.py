@@ -20,9 +20,7 @@ class ImporterPaths:
     preprocessing_config: Path
 
     @classmethod
-    def from_root(
-        cls, root: Path, silo_binary: Path, preprocessing_config: Path
-    ) -> ImporterPaths:
+    def from_root(cls, root: Path, silo_binary: Path, preprocessing_config: Path) -> ImporterPaths:
         preprocessing_dir = (root / "preprocessing").resolve()
         input_dir = preprocessing_dir / "input"
         output_dir = preprocessing_dir / "output"

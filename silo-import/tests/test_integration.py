@@ -238,9 +238,7 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
 
 def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that errors during import properly clean up artifacts."""
-    config = make_config(
-        tmp_path, lineage_definitions={1: "http://lineage"}, silo_run_timeout=2
-    )
+    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"}, silo_run_timeout=2)
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
