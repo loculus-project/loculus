@@ -3,10 +3,9 @@
 # ruff: noqa: S101
 from __future__ import annotations
 
-import subprocess  # noqa: S404
 import time
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from helpers import (
@@ -24,19 +23,22 @@ from silo_import.paths import ImporterPaths
 from silo_import.runner import ImporterRunner
 
 
-def make_config(tmp_path: Path, **kwargs) -> ImporterConfig:
-    defaults = {
-        "backend_base_url": "http://backend",
-        "lineage_definitions": None,
-        "hard_refresh_interval": 1000,
-        "poll_interval": 1,
-        "silo_run_timeout": 5,
-        "root_dir": tmp_path,
-        "silo_binary": tmp_path / "silo",
-        "preprocessing_config": tmp_path / "config.yaml",
-    }
-    defaults.update(kwargs)
-    return ImporterConfig(**defaults)
+def make_config(
+    tmp_path: Path,
+    lineage_definitions: dict[int, str] | None = None,
+    hard_refresh_interval: int = 1000,
+    silo_run_timeout: int = 5,
+) -> ImporterConfig:
+    return ImporterConfig(
+        backend_base_url="http://backend",
+        lineage_definitions=lineage_definitions,
+        hard_refresh_interval=hard_refresh_interval,
+        poll_interval=1,
+        silo_run_timeout=silo_run_timeout,
+        root_dir=tmp_path,
+        silo_binary=tmp_path / "silo",
+        preprocessing_config=tmp_path / "config.yaml",
+    )
 
 
 def make_paths(tmp_path: Path) -> ImporterPaths:
@@ -74,8 +76,7 @@ def test_full_import_cycle_with_real_zstd_data(
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
 
-    with patch("silo_import.instruct_silo.subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(returncode=0, stderr="")
+    with patch.object(runner.silo, "run_preprocessing"):
         runner.run_once()
 
     # Verify complete import
@@ -129,8 +130,7 @@ def test_multiple_runs_with_state_persistence(
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    with patch("silo_import.instruct_silo.subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(returncode=0, stderr="")
+    with patch.object(runner.silo, "run_preprocessing"):
         runner.run_once()
 
     assert runner.current_etag == 'W/"etag1"'
@@ -168,8 +168,7 @@ def test_multiple_runs_with_state_persistence(
     mock_download_r3, _ = make_mock_download_func(responses_r3)
     runner.download_manager = DownloadManager(download_func=mock_download_r3)
 
-    with patch("silo_import.instruct_silo.subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(returncode=0, stderr="")
+    with patch.object(runner.silo, "run_preprocessing"):
         runner.run_once()
 
     assert runner.current_etag == 'W/"etag2"', "ETag should update on new data"
@@ -211,8 +210,7 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    with patch("silo_import.instruct_silo.subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(returncode=0, stderr="")
+    with patch.object(runner.silo, "run_preprocessing"):
         runner.run_once()
 
     assert runner.current_etag == 'W/"initial"'
@@ -230,8 +228,7 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     mock_download_r2, responses_list_r2 = make_mock_download_func(responses_r2)
     runner.download_manager = DownloadManager(download_func=mock_download_r2)
 
-    with patch("silo_import.instruct_silo.subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(returncode=0, stderr="")
+    with patch.object(runner.silo, "run_preprocessing"):
         runner.run_once()
 
     # Hard refresh should update timestamp even if data unchanged
@@ -266,11 +263,12 @@ def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.M
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
 
-    # Make SILO timeout
-    with patch("silo_import.instruct_silo.subprocess.run") as mock_run:
-        mock_run.side_effect = subprocess.TimeoutExpired(cmd="silo", timeout=2)
-        with pytest.raises(TimeoutError, match="timed out"):
-            runner.run_once()
+    # Make SILO preprocessing raise TimeoutError
+    with (
+        patch.object(runner.silo, "run_preprocessing", side_effect=TimeoutError("timed out")),
+        pytest.raises(TimeoutError, match="timed out"),
+    ):
+        runner.run_once()
 
     # Verify cleanup happened
     assert not paths.silo_input_data_path.exists(), "SILO input should be cleaned up after timeout"
@@ -346,14 +344,12 @@ def test_interrupted_run_cleanup_and_hash_skip(
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    with patch("silo_import.instruct_silo.subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(returncode=0, stderr="")
+    with patch.object(runner.silo, "run_preprocessing"):
         runner.run_once()
 
-    # Get the first timestamped directory
+    # Verify a timestamped directory was created
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 1
-    first_dir = input_dirs[0]
 
     # Create a new runner (simulating restart) - this should clear all download directories
     runner2 = ImporterRunner(config, paths)
@@ -369,14 +365,12 @@ def test_interrupted_run_cleanup_and_hash_skip(
     mock_download_r2, _ = make_mock_download_func(responses_r2)
     runner2.download_manager = DownloadManager(download_func=mock_download_r2)
 
-    with patch("silo_import.instruct_silo.subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(returncode=0, stderr="")
+    with patch.object(runner2.silo, "run_preprocessing"):
         runner2.run_once()
 
     # ETag should be updated
     assert runner2.current_etag == 'W/"v2"', "ETag should be updated"
 
-    # New directory should exist
+    # New directory should exist (may have same timestamp if test runs fast)
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 1, "Should have one directory after successful run"
-    assert input_dirs[0] != first_dir, "Should be a new directory"

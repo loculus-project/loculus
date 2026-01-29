@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from helpers import (
@@ -21,19 +21,21 @@ from silo_import.paths import ImporterPaths
 from silo_import.runner import ImporterRunner
 
 
-def make_config(tmp_path: Path, **kwargs) -> ImporterConfig:
-    defaults = {
-        "backend_base_url": "http://backend",
-        "lineage_definitions": None,
-        "hard_refresh_interval": 1,
-        "poll_interval": 1,
-        "silo_run_timeout": 5,
-        "root_dir": tmp_path,
-        "silo_binary": tmp_path / "silo",
-        "preprocessing_config": tmp_path / "config.yaml",
-    }
-    defaults.update(kwargs)
-    return ImporterConfig(**defaults)
+def make_config(
+    tmp_path: Path,
+    lineage_definitions: dict[int, str] | None = None,
+    hard_refresh_interval: int = 1,
+) -> ImporterConfig:
+    return ImporterConfig(
+        backend_base_url="http://backend",
+        lineage_definitions=lineage_definitions,
+        hard_refresh_interval=hard_refresh_interval,
+        poll_interval=1,
+        silo_run_timeout=5,
+        root_dir=tmp_path,
+        silo_binary=tmp_path / "silo",
+        preprocessing_config=tmp_path / "config.yaml",
+    )
 
 
 def make_paths(tmp_path: Path) -> ImporterPaths:
@@ -67,8 +69,7 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
 
-    with patch("silo_import.instruct_silo.subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(returncode=0, stderr="")
+    with patch.object(runner.silo, "run_preprocessing"):
         runner.run_once()
 
     records_out = read_ndjson_file(paths.silo_input_data_path)
@@ -132,8 +133,7 @@ def test_runner_skips_on_hash_match_updates_etag(
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
 
-    with patch("silo_import.instruct_silo.subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(returncode=0, stderr="")
+    with patch.object(runner.silo, "run_preprocessing"):
         runner.run_once()
         assert runner.current_etag == 'W/"111"'
 
