@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 from helpers import (
@@ -10,7 +11,6 @@ from helpers import (
     compress_ndjson,
     make_mock_download_func,
     mock_records,
-    mock_silo_prepro_success,
     mock_transformed_records,
     read_ndjson_file,
 )
@@ -21,16 +21,30 @@ from silo_import.paths import ImporterPaths
 from silo_import.runner import ImporterRunner
 
 
+def make_config(tmp_path: Path, **kwargs) -> ImporterConfig:
+    defaults = {
+        "backend_base_url": "http://backend",
+        "lineage_definitions": None,
+        "hard_refresh_interval": 1,
+        "poll_interval": 1,
+        "silo_run_timeout": 5,
+        "root_dir": tmp_path,
+        "silo_binary": tmp_path / "silo",
+        "preprocessing_config": tmp_path / "config.yaml",
+    }
+    defaults.update(kwargs)
+    return ImporterConfig(**defaults)
+
+
+def make_paths(tmp_path: Path) -> ImporterPaths:
+    silo_binary = tmp_path / "silo"
+    preprocessing_config = tmp_path / "config.yaml"
+    return ImporterPaths.from_root(tmp_path, silo_binary, preprocessing_config)
+
+
 def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    config = ImporterConfig(
-        backend_base_url="http://backend",
-        lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=1,
-        poll_interval=1,
-        silo_run_timeout=5,
-        root_dir=tmp_path,
-    )
-    paths = ImporterPaths.from_root(tmp_path)
+    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    paths = make_paths(tmp_path)
     paths.ensure_directories()
 
     records = mock_records()
@@ -52,13 +66,10 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
-    ack_thread = mock_silo_prepro_success(paths)
-    runner.run_once()
-    ack_thread.join(timeout=1)
-    assert not ack_thread.is_alive()
 
-    assert not paths.run_silo.exists()
-    assert not paths.silo_done.exists()
+    with patch("silo_import.instruct_silo.subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0, stderr="")
+        runner.run_once()
 
     records_out = read_ndjson_file(paths.silo_input_data_path)
     assert records_out == mock_transformed_records()
@@ -74,15 +85,8 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 
 
 def test_runner_skips_on_not_modified(tmp_path: Path) -> None:
-    config = ImporterConfig(
-        backend_base_url="http://backend",
-        lineage_definitions=None,
-        hard_refresh_interval=1000,
-        poll_interval=1,
-        silo_run_timeout=5,
-        root_dir=tmp_path,
-    )
-    paths = ImporterPaths.from_root(tmp_path)
+    config = make_config(tmp_path, hard_refresh_interval=1000)
+    paths = make_paths(tmp_path)
     paths.ensure_directories()
 
     responses = [MockHttpResponse(status=304, headers={})]
@@ -94,7 +98,6 @@ def test_runner_skips_on_not_modified(tmp_path: Path) -> None:
     runner.download_manager = DownloadManager(download_func=mock_download)
     runner.run_once()
 
-    assert not paths.run_silo.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert runner.current_etag == 'W/"old"'
     assert not responses_list
@@ -103,15 +106,8 @@ def test_runner_skips_on_not_modified(tmp_path: Path) -> None:
 def test_runner_skips_on_hash_match_updates_etag(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    config = ImporterConfig(
-        backend_base_url="http://backend",
-        lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=1,
-        poll_interval=1,
-        silo_run_timeout=5,
-        root_dir=tmp_path,
-    )
-    paths = ImporterPaths.from_root(tmp_path)
+    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    paths = make_paths(tmp_path)
     paths.ensure_directories()
 
     records = mock_records()
@@ -135,28 +131,23 @@ def test_runner_skips_on_hash_match_updates_etag(
 
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
-    ack_thread = mock_silo_prepro_success(paths)
-    runner.run_once()
-    ack_thread.join(timeout=1)
-    assert runner.current_etag == 'W/"111"'
 
-    runner.run_once()
-    assert runner.current_etag == 'W/"222"'
+    with patch("silo_import.instruct_silo.subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0, stderr="")
+        runner.run_once()
+        assert runner.current_etag == 'W/"111"'
+
+        runner.run_once()
+        assert runner.current_etag == 'W/"222"'
+
     dirs_after = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(dirs_after) == 1
     assert not responses_list
 
 
 def test_runner_cleans_up_on_record_mismatch(tmp_path: Path) -> None:
-    config = ImporterConfig(
-        backend_base_url="http://backend",
-        lineage_definitions=None,
-        hard_refresh_interval=1,
-        poll_interval=1,
-        silo_run_timeout=5,
-        root_dir=tmp_path,
-    )
-    paths = ImporterPaths.from_root(tmp_path)
+    config = make_config(tmp_path)
+    paths = make_paths(tmp_path)
     paths.ensure_directories()
 
     records = mock_records()
@@ -171,7 +162,6 @@ def test_runner_cleans_up_on_record_mismatch(tmp_path: Path) -> None:
     runner.download_manager = DownloadManager(download_func=mock_download)
     runner.run_once()
 
-    assert not paths.run_silo.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert not responses_list
     assert runner.current_etag == "old_etag"
@@ -180,15 +170,8 @@ def test_runner_cleans_up_on_record_mismatch(tmp_path: Path) -> None:
 def test_runner_cleans_up_on_decompress_failure(
     tmp_path: Path,
 ) -> None:
-    config = ImporterConfig(
-        backend_base_url="http://backend",
-        lineage_definitions=None,
-        hard_refresh_interval=1000,
-        poll_interval=1,
-        silo_run_timeout=5,
-        root_dir=tmp_path,
-    )
-    paths = ImporterPaths.from_root(tmp_path)
+    config = make_config(tmp_path, hard_refresh_interval=1000)
+    paths = make_paths(tmp_path)
     paths.ensure_directories()
 
     responses = [
@@ -204,7 +187,6 @@ def test_runner_cleans_up_on_decompress_failure(
 
     runner.run_once()
 
-    assert not paths.run_silo.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert runner.current_etag == 'W/"old"'
     assert not responses_list

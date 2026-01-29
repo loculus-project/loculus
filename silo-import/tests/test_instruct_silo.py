@@ -1,38 +1,41 @@
-# ruff: noqa: S101
 from __future__ import annotations
 
-import threading
-import time
+import subprocess  # noqa: S404
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
-from silo_import.file_io import write_text
-from silo_import.instruct_silo import SiloInstructor
+from silo_import.instruct_silo import SiloRunner
 
 
-def test_silo_roundtrip(tmp_path: Path) -> None:
-    run_file = tmp_path / "run"
-    done_file = tmp_path / "done"
-    silo = SiloInstructor(run_file, done_file)
+def test_silo_runner_success(tmp_path: Path) -> None:
+    silo_binary = tmp_path / "silo"
+    preprocessing_config = tmp_path / "config.yaml"
+    runner = SiloRunner(silo_binary, preprocessing_config)
 
-    silo.request_run("abc")
-    assert run_file.exists()
-
-    def complete() -> None:
-        # Wait briefly so the waiter has time to start
-        time.sleep(0.1)
-        write_text(done_file, "run_id=abc\nstatus=success\n")
-
-    thread = threading.Thread(target=complete)
-    thread.start()
-    silo.wait_for_completion("abc", timeout_seconds=5)
-    thread.join()
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0, stderr="")
+        runner.run_preprocessing(timeout_seconds=60)
+        mock_run.assert_called_once()
 
 
-def test_silo_timeout(tmp_path: Path) -> None:
-    run_file = tmp_path / "run"
-    done_file = tmp_path / "done"
-    silo = SiloInstructor(run_file, done_file)
-    silo.request_run("xyz")
-    with pytest.raises(TimeoutError):
-        silo.wait_for_completion("xyz", timeout_seconds=0)
+def test_silo_runner_failure(tmp_path: Path) -> None:
+    silo_binary = tmp_path / "silo"
+    preprocessing_config = tmp_path / "config.yaml"
+    runner = SiloRunner(silo_binary, preprocessing_config)
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=1, stderr="error")
+        with pytest.raises(RuntimeError, match="failed with exit code 1"):
+            runner.run_preprocessing(timeout_seconds=60)
+
+
+def test_silo_runner_timeout(tmp_path: Path) -> None:
+    silo_binary = tmp_path / "silo"
+    preprocessing_config = tmp_path / "config.yaml"
+    runner = SiloRunner(silo_binary, preprocessing_config)
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd="silo", timeout=60)
+        with pytest.raises(TimeoutError, match="timed out"):
+            runner.run_preprocessing(timeout_seconds=60)

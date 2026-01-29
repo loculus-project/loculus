@@ -106,43 +106,10 @@ spec:
               value: {{ $.Values.siloImport.hardRefreshIntervalSeconds | quote }}
             - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
               value: {{ $.Values.siloImport.pollIntervalSeconds | quote }}
-          volumeMounts:
-            - name: lapis-silo-database-config-processed
-              mountPath: /preprocessing/input/reference_genomes.json
-              subPath: reference_genomes.json
-            - name: lapis-silo-database-config-processed
-              mountPath: /preprocessing/input/database_config.yaml
-              subPath: silo_database_config.yaml
-            - name: lapis-silo-database-config-processed
-              mountPath: /app/preprocessing_config.yaml
-              subPath: preprocessing_config.yaml
-            - name: lapis-silo-shared-data
-              mountPath: /preprocessing/output
-            - name: lapis-silo-input-data-cache
-              mountPath: /preprocessing/input
-        - name: silo-preprocessing
-          image: "{{ $.Values.silo.baseImage }}"
-          imagePullPolicy: {{ $.Values.imagePullPolicy }}
-          {{- include "loculus.resources" (list "silo-preprocessing" $.Values) | nindent 10 }}
-          command:
-            - sh
-            - -c
-            - sh /silo_import_wrapper.sh
-          env:
             - name: PATH_TO_SILO_BINARY
               value: "/silo-bin/silo"
-            - name: SILO_PREPROCESSING_CONFIG
+            - name: PREPROCESSING_CONFIG
               value: "/app/preprocessing_config.yaml"
-            - name: BACKEND_BASE_URL
-              {{- if $.Values.disableBackend }}
-              value: "http://host.k3d.internal:8079/{{ $key }}"
-              {{- else }}
-              value: "http://loculus-backend-service:8079/{{ $key }}"
-              {{- end }}
-            {{- if $lineageSystem }}
-            - name: LINEAGE_DEFINITIONS
-              value: {{ index $.Values.lineageSystemDefinitions $lineageSystem | toJson | quote }}
-            {{- end }}
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json
@@ -157,9 +124,6 @@ spec:
               mountPath: /preprocessing/output
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
-            - name: lapis-silo-database-config-processed
-              mountPath: /silo_import_wrapper.sh
-              subPath: silo_import_wrapper.sh
             - name: silo-binary
               mountPath: /silo-bin
       volumes:

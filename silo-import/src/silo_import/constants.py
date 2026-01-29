@@ -9,7 +9,3 @@ SPECIAL_ETAG_NONE = "0"
 DATA_FILENAME = "untransformed_data.ndjson.zst"
 TRANSFORMED_DATA_FILENAME = "data.ndjson.zst"  # name is set by SILO
 LINEAGES_FILENAME = "lineage_definitions.yaml"
-
-# Sentinel file names
-RUN_SILO_SENTINEL = "run_silo"
-SILO_DONE_SENTINEL = "silo_done"

@@ -6,7 +6,6 @@ from pathlib import Path
 import requests
 
 from .config import ImporterConfig
-from .file_io import write_text
 from .paths import ImporterPaths
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,4 @@
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
-{{- $importScriptWrapperLines := .Files.Lines "silo_import_wrapper.sh" }}
 
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
@@ -35,8 +34,4 @@ data:
 
   reference_genomes.json: |
     {{ include "loculus.mergeReferenceGenomes" $organismContent.referenceGenomes | fromYaml | toJson }}
-
-  silo_import_wrapper.sh: |
-    {{ range $importScriptWrapperLines }}
-    {{ . }}{{ end }}
 {{- end }}
