@@ -116,7 +116,7 @@ spec:
               subPath: reference_genomes.json
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/database_config.yaml
-              subPath: silo_database_config.yaml
+              subPath: database_config.yaml
             - name: lapis-silo-database-config-processed
               mountPath: /app/preprocessing_config.yaml
               subPath: preprocessing_config.yaml

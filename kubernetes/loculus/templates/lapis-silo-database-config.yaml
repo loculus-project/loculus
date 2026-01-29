@@ -19,9 +19,6 @@ data:
   database_config.yaml: |
     {{ include "loculus.siloDatabaseConfig" $args | nindent 4 }}
 
-  silo_database_config.yaml: |
-    {{ include "loculus.siloDatabaseConfigForSilo" $args | nindent 4 }}
-
   preprocessing_config.yaml: |
     inputDirectory: /preprocessing/input
     outputDirectory: /preprocessing/output
