@@ -42,23 +42,9 @@ npm --version
 # Create k3d cluster with port bindings
 ./deploy.py --verbose cluster --bind-all
 
-# Create values file to use host.k3d.internal (see note below)
-echo 'localHost: host.k3d.internal' > /tmp/k3d-values.yaml
-
-# Deploy with Helm
-SHA=$(git rev-parse HEAD | cut -c1-7)
-./deploy.py --verbose helm --branch main --sha $SHA --for-e2e --enablePreprocessing --values /tmp/k3d-values.yaml
-
-# Add host entry so the browser can resolve host.k3d.internal
-# (requires sudo - add this line to /etc/hosts)
-echo '127.0.0.1 host.k3d.internal' | sudo tee -a /etc/hosts
+# Deploy with Helm (use main branch to avoid image pull issues)
+./deploy.py --verbose helm --branch main --for-e2e --enablePreprocessing --use-localhost-ip
 ```
-
-> **Why `host.k3d.internal`?** Services like MinIO generate pre-signed URLs that both browsers and internal pods need to access. Using `host.k3d.internal` works because:
-> - From inside pods: k3d automatically configures DNS to resolve this to the host machine
-> - From the browser: The `/etc/hosts` entry points to `127.0.0.1` where ports are forwarded
->
-> The `--use-localhost-ip` flag uses your machine's actual IP (e.g., `192.168.x.x`), which often isn't routable from inside Docker containers, causing S3 connectivity failures.
 
 ### 2. Install dependencies
 
@@ -120,26 +106,6 @@ PLAYWRIGHT_TEST_BASE_URL=https://main.loculus.org npx playwright test --reporter
 
 # Run tests against a specific preview environment
 PLAYWRIGHT_TEST_BASE_URL=https://preview-123.loculus.org npx playwright test --reporter=list
-```
-
-## Troubleshooting k3d Setup
-
-**Pods can't reach S3/MinIO (connection timeouts to host IP):**
-- Ensure you deployed with `localHost: host.k3d.internal` in your values file
-- Verify the config: `kubectl get deployment loculus-backend -o yaml | grep S3_BUCKET_ENDPOINT`
-- Should show `http://host.k3d.internal:8084`, not your machine's IP
-
-**Browser can't connect to services:**
-- Ensure `/etc/hosts` contains `127.0.0.1 host.k3d.internal`
-- Test with: `curl http://host.k3d.internal:3000`
-
-**Tests timeout waiting for sequence processing:**
-- Check preprocessing pod logs: `kubectl logs -l app=loculus-preprocessing --tail=100`
-- Verify all pods are running: `kubectl get pods`
-
-**Cleanup:**
-```sh
-k3d cluster delete testCluster
 ```
 
 ## Checklist before committing code
