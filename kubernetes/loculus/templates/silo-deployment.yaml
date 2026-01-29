@@ -32,7 +32,7 @@ spec:
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
       containers:
         - name: silo
-          image: "{{ $.Values.images.siloImporter.repository }}:{{ $.Values.images.siloImporter.tag | default $dockerTag }}"
+          image: "{{ $.Values.images.loculusSilo.repository }}:{{ $.Values.images.loculusSilo.tag | default $dockerTag }}"
           command: ["/usr/local/bin/silo"]
           imagePullPolicy: {{ $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "silo" $.Values $key) | nindent 10 }}
@@ -71,8 +71,8 @@ spec:
             failureThreshold: 3
             timeoutSeconds: 5
         - name: silo-importer
-          image: "{{ $.Values.images.siloImporter.repository }}:{{ $.Values.images.siloImporter.tag | default $dockerTag }}"
-          imagePullPolicy: "{{ $.Values.images.siloImporter.pullPolicy }}"
+          image: "{{ $.Values.images.loculusSilo.repository }}:{{ $.Values.images.loculusSilo.tag | default $dockerTag }}"
+          imagePullPolicy: "{{ $.Values.images.loculusSilo.pullPolicy }}"
           {{- include "loculus.resources" (list "silo-importer" $.Values) | nindent 10 }}
           env:
             - name: BACKEND_BASE_URL
