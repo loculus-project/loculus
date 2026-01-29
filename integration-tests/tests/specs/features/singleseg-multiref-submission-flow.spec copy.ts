@@ -2,7 +2,7 @@ import { test } from '../../fixtures/group.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { expect } from '@playwright/test';
 
-test.describe('Multi-pathogen submission flow', () => {
+test.describe('Single segment multi-reference submission flow', () => {
     test('submit single sequence, edit and release', async ({ page, groupId }) => {
         test.setTimeout(120_000);
 
