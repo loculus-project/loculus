@@ -1860,7 +1860,7 @@ defaultOrganisms:
           includeInDownloadsByDefault: true
           preprocessing:
             args:
-              segment: CV-A16
+              reference: CV-A16
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_cv_a10
@@ -1868,7 +1868,7 @@ defaultOrganisms:
           onlyForSuborganism: CV-A10
           preprocessing:
             args:
-              segment: CV-A10
+              reference: CV-A10
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_ev_a71
@@ -1876,7 +1876,7 @@ defaultOrganisms:
           onlyForSuborganism: EV-A71
           preprocessing:
             args:
-              segment: EV-A71
+              reference: EV-A71
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_ev_d68
@@ -1884,7 +1884,7 @@ defaultOrganisms:
           onlyForSuborganism: EV-D68
           preprocessing:
             args:
-              segment: EV-D68
+              reference: EV-D68
             inputs: {input: nextclade.clade}
         - name: genotype
           displayName: Genotype
@@ -2092,14 +2092,14 @@ additionalHeadHTML: ""
 images:
   lapisSilo:
     repository: "ghcr.io/genspectrum/lapis-silo"
-    tag: "0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
+    tag: "0.9.3@sha256:7e3a9a2221e265b56bc280054705f44637fcba7bea812d9bd8de62c923ebe742"
     pullPolicy: Always
   siloImporter:
     repository: "ghcr.io/loculus-project/silo-import"
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "v0.5.19@sha256:6a6e434e8670541dc8478a5e6bd9e7c70ecd5cf3232b81834253398b0e260ece"
+    tag: "v0.6.3@sha256:07ece2d811ed14bcb706db832fa3071af662350b6dab8371748ef73fe6e8f628"
     pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"

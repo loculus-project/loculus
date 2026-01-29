@@ -78,7 +78,7 @@ const renderSearchForm = ({
     fieldValues = {},
     referenceGenomeLightweightSchema = defaultReferenceGenomesLightweightSchema,
     lapisSearchParameters = {},
-    suborganismIdentifierField = undefined,
+    suborganismIdentifierField,
     selectedSuborganism = null,
     searchVisibilities = defaultSearchVisibilities,
 }: {
