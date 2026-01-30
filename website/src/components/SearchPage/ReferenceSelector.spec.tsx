@@ -37,6 +37,8 @@ describe('ReferenceSelector', () => {
     it('renders nothing in single reference case', () => {
         const { container } = render(
             <ReferenceSelector
+                lapisSearchParameters={{}}
+                lapisUrl='https://example.com/lapis'
                 filterSchema={filterSchema}
                 referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
@@ -52,6 +54,8 @@ describe('ReferenceSelector', () => {
         const setSelected = vi.fn();
         render(
             <ReferenceSelector
+                lapisSearchParameters={{}}
+                lapisUrl='https://example.com/lapis'
                 filterSchema={filterSchema}
                 referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
@@ -69,6 +73,8 @@ describe('ReferenceSelector', () => {
         const setSelected = vi.fn();
         render(
             <ReferenceSelector
+                lapisSearchParameters={{}}
+                lapisUrl='https://example.com/lapis'
                 filterSchema={multiSegmentFilterSchema}
                 referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
@@ -86,6 +92,8 @@ describe('ReferenceSelector', () => {
         const setSelected = vi.fn();
         render(
             <ReferenceSelector
+                lapisSearchParameters={{}}
+                lapisUrl='https://example.com/lapis'
                 filterSchema={filterSchema}
                 referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
@@ -102,6 +110,8 @@ describe('ReferenceSelector', () => {
         const setSelected = vi.fn();
         render(
             <ReferenceSelector
+                lapisSearchParameters={{}}
+                lapisUrl='https://example.com/lapis'
                 filterSchema={filterSchema}
                 referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
