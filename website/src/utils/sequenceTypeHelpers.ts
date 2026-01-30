@@ -160,16 +160,15 @@ export function getInsdcAccessionsFromSegmentReferences(
     segmentReferences?: SegmentReferenceSelections,
 ): ReferenceAccession[] {
     const references: ReferenceAccession[] = [];
-    for (const [segmentName, referenceName] of Object.entries(segmentReferences ?? {})) {
-        const segmentData = referenceGenomesInfo.segmentReferenceGenomes[segmentName];
-        let reference = referenceName;
+    for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
+        let referenceName = segmentReferences ? segmentReferences[segmentName] : null;
         if (!segmentsWithMultipleReferences(referenceGenomesInfo).includes(segmentName)) {
-            reference = Object.keys(segmentData)[0];
+            referenceName = Object.keys(segmentData)[0];
         }
-        if (reference === null) {
+        if (referenceName === null) {
             continue;
         }
-        const accession = segmentData[reference].insdcAccessionFull;
+        const accession = segmentData[referenceName].insdcAccessionFull;
         references.push({
             name: segmentName,
             ...(accession !== null && { insdcAccessionFull: accession }),
