@@ -60,14 +60,26 @@ type UseReferenceSelectionArgs = {
     setSomeFieldValues: SetSomeFieldValues;
 };
 
+export type ReferenceSelectionResult =
+    | {
+          referenceIdentifierField: string;
+          selectedReferences: SegmentReferenceSelections;
+          setSelectedReferences: (selections: SegmentReferenceSelections) => void;
+      }
+    | {
+          referenceIdentifierField: undefined;
+          selectedReferences: undefined;
+          setSelectedReferences: undefined;
+      };
+
 export function useReferenceSelection({
     referenceGenomesInfo,
     referenceIdentifierField,
     state,
     setSomeFieldValues,
-}: UseReferenceSelectionArgs) {
+}: UseReferenceSelectionArgs): ReferenceSelectionResult {
     if (!referenceIdentifierField) {
-        return { selectedReferences: undefined, setSelectedReferences: undefined };
+        return { referenceIdentifierField: undefined, selectedReferences: undefined, setSelectedReferences: undefined };
     }
 
     const segments = useMemo(() => getSegmentNames(referenceGenomesInfo), [referenceGenomesInfo]);
@@ -93,5 +105,5 @@ export function useReferenceSelection({
         [setSomeFieldValues, segments, referenceIdentifierField],
     );
 
-    return { selectedReferences, setSelectedReferences };
+    return { referenceIdentifierField, selectedReferences, setSelectedReferences };
 }

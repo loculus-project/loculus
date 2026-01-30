@@ -48,9 +48,10 @@ interface SearchFormProps {
     referenceGenomesInfo: ReferenceGenomesInfo;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
+    // These three are always defined together or all undefined
     referenceIdentifierField?: string;
-    setSelectedReferences?: (newValues: SegmentReferenceSelections) => void;
     selectedReferences?: SegmentReferenceSelections;
+    setSelectedReferences?: (selections: SegmentReferenceSelections) => void;
 }
 
 export const SearchForm = ({
@@ -182,17 +183,15 @@ export const SearchForm = ({
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
-                        {referenceIdentifierField !== undefined &&
-                            selectedReferences !== undefined &&
-                            setSelectedReferences !== undefined && (
-                                <ReferenceSelector
-                                    filterSchema={filterSchema}
-                                    referenceGenomesInfo={referenceGenomesInfo}
-                                    referenceIdentifierField={referenceIdentifierField}
-                                    selectedReferences={selectedReferences}
-                                    setSelectedReferences={setSelectedReferences}
-                                />
-                            )}
+                        {selectedReferences !== undefined && (
+                            <ReferenceSelector
+                                filterSchema={filterSchema}
+                                referenceGenomesInfo={referenceGenomesInfo}
+                                referenceIdentifierField={referenceIdentifierField!}
+                                selectedReferences={selectedReferences}
+                                setSelectedReferences={setSelectedReferences!}
+                            />
+                        )}
                         <div className='mb-1'>
                             <AccessionField
                                 textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
