@@ -34,11 +34,15 @@ export function getSegmentReferenceSelections({
 
 type UseSelectedReferencesArgs = {
     referenceGenomesInfo: ReferenceGenomesInfo;
-    referenceIdentifierField: string ;
+    referenceIdentifierField: string;
     state: Record<string, unknown>;
 };
 
-export function useSelectedReferences({ referenceGenomesInfo, referenceIdentifierField, state }: UseSelectedReferencesArgs) {
+export function useSelectedReferences({
+    referenceGenomesInfo,
+    referenceIdentifierField,
+    state,
+}: UseSelectedReferencesArgs) {
     const segments = useMemo(() => getSegmentNames(referenceGenomesInfo), [referenceGenomesInfo]);
 
     return useMemo(
@@ -83,11 +87,7 @@ export function useSetSelectedReferences({
     return useCallback(
         (updates: SegmentReferenceSelections) => {
             Object.entries(updates).forEach(([segmentName, value]) => {
-                const identifier = getReferenceIdentifier(
-                    referenceIdentifierField,
-                    segmentName,
-                    segments.length > 1,
-                );
+                const identifier = getReferenceIdentifier(referenceIdentifierField, segmentName, segments.length > 1);
 
                 setSomeFieldValues([identifier, value]);
             });
