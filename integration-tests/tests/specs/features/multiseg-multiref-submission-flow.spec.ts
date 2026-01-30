@@ -39,7 +39,6 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
 
         await releasedPage.waitForSequencesInSearch(1);
-        await releasedPage.expectResultTableCellText('Length S');
         const accessionVersions = await releasedPage.waitForSequencesInSearch(1);
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.1`);
@@ -47,6 +46,7 @@ test.describe('Multi-segment multi-reference submission flow', () => {
             `^Display Name: Laos/${firstAccessionVersion.accession}\\.1`,
         );
         await expect(page.getByText(expectedDisplayName)).toBeVisible();
+        await expect(page.getByText('Length S')).toBeVisible();
     });
 
     test('revoke a sequence', async ({ page, groupId }) => {
@@ -70,9 +70,9 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
 
         const accessionVersions = await releasedPage.waitForSequencesInSearch(1);
-        await releasedPage.expectResultTableCellText('Length L');
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accessionVersion);
+        await expect(page.getByText('Length L')).toBeVisible();
         await releasedPage.revokeSequence('revocation for integration test');
 
         await reviewPage.waitForAllProcessed();
@@ -110,11 +110,9 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
 
         const accessionVersions = await releasedPage.waitForSequencesInSearch(2);
-        await releasedPage.expectResultTableCellText('Length S');
-        await releasedPage.expectResultTableCellText('Length M');
-
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accessionVersion);
+        await expect(page.getByText('Length L')).toBeVisible();
         const editPage = await releasedPage.reviseSequence();
 
         const authorAffiliations = 'integration test affiliation';
