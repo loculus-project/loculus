@@ -188,6 +188,8 @@ export const SearchForm = ({
                     <div className='flex flex-col'>
                         {referenceSelection !== undefined && (
                             <ReferenceSelector
+                                    lapisSearchParameters={lapisSearchParameters}
+                                    lapisUrl={lapisUrl}
                                 filterSchema={filterSchema}
                                 referenceGenomesInfo={referenceGenomesInfo}
                                 referenceIdentifierField={referenceSelection.referenceIdentifierField}
