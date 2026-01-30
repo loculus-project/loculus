@@ -38,7 +38,6 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         await reviewPage.waitForAllProcessed();
         const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
 
-        await releasedPage.waitForSequencesInSearch(1);
         const accessionVersions = await releasedPage.waitForSequencesInSearch(1);
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.1`);
