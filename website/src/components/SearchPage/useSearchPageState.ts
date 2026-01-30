@@ -5,11 +5,7 @@ import useUrlParamState from '../../hooks/useUrlParamState.ts';
 import type { FieldValues, FieldValueUpdate, Schema, SetSomeFieldValues } from '../../types/config.ts';
 import type { OrderDirection } from '../../types/lapis.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
-import {
-    getReferenceIdentifier,
-    useSelectedReferences,
-    useSetSelectedReferences,
-} from '../../utils/referenceSelection.ts';
+import { getReferenceIdentifier, useReferenceSelection } from '../../utils/referenceSelection.ts';
 import {
     COLUMN_VISIBILITY_PREFIX,
     HALF_SCREEN_PARAM,
@@ -151,20 +147,12 @@ export function useSearchPageState({
         (value) => !value,
     );
 
-    const selectedReferences = schema.referenceIdentifierField
-        ? useSelectedReferences({
-              referenceGenomesInfo,
-              referenceIdentifierField: schema.referenceIdentifierField,
-              state,
-          })
-        : undefined;
-    const setSelectedReferences = schema.referenceIdentifierField
-        ? useSetSelectedReferences({
-              referenceGenomesInfo,
-              referenceIdentifierField: schema.referenceIdentifierField,
-              setSomeFieldValues,
-          })
-        : undefined;
+    const { selectedReferences, setSelectedReferences } = useReferenceSelection({
+        referenceGenomesInfo,
+        referenceIdentifierField: schema.referenceIdentifierField,
+        state,
+        setSomeFieldValues,
+    });
 
     const removeFilter = useCallback(
         (metadataFilterName: string) => {

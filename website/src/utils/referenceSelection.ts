@@ -32,36 +32,17 @@ export function getSegmentReferenceSelections({
     return result;
 }
 
-type UseSelectedReferencesArgs = {
+type GetSelectedReferencesArgs = {
     referenceGenomesInfo: ReferenceGenomesInfo;
     referenceIdentifierField: string;
     state: Record<string, unknown>;
 };
 
-export function useSelectedReferences({
-    referenceGenomesInfo,
-    referenceIdentifierField,
-    state,
-}: UseSelectedReferencesArgs) {
-    const segments = useMemo(() => getSegmentNames(referenceGenomesInfo), [referenceGenomesInfo]);
-
-    return useMemo(
-        () =>
-            getSegmentReferenceSelections({
-                segments,
-                referenceIdentifierField,
-                isMultiSegmented: segments.length > 1,
-                state,
-            }),
-        [segments, referenceIdentifierField, state],
-    );
-}
-
 export function getSelectedReferences({
     referenceGenomesInfo,
     referenceIdentifierField,
     state,
-}: UseSelectedReferencesArgs): SegmentReferenceSelections {
+}: GetSelectedReferencesArgs): SegmentReferenceSelections {
     const segments = Object.keys(referenceGenomesInfo.segmentReferenceGenomes);
 
     return getSegmentReferenceSelections({
@@ -72,26 +53,45 @@ export function getSelectedReferences({
     });
 }
 
-type UseSetSelectedReferencesArgs = {
+type UseReferenceSelectionArgs = {
     referenceGenomesInfo: ReferenceGenomesInfo;
-    referenceIdentifierField: string;
+    referenceIdentifierField: string | undefined;
+    state: Record<string, unknown>;
     setSomeFieldValues: SetSomeFieldValues;
 };
 
-export function useSetSelectedReferences({
+export function useReferenceSelection({
     referenceGenomesInfo,
     referenceIdentifierField,
+    state,
     setSomeFieldValues,
-}: UseSetSelectedReferencesArgs) {
-    const segments = getSegmentNames(referenceGenomesInfo);
-    return useCallback(
+}: UseReferenceSelectionArgs) {
+    if (!referenceIdentifierField) {
+        return { selectedReferences: undefined, setSelectedReferences: undefined };
+    }
+
+    const segments = useMemo(() => getSegmentNames(referenceGenomesInfo), [referenceGenomesInfo]);
+
+    const selectedReferences = useMemo(
+        () =>
+            getSegmentReferenceSelections({
+                segments,
+                referenceIdentifierField,
+                isMultiSegmented: segments.length > 1,
+                state,
+            }),
+        [segments, referenceIdentifierField, state],
+    );
+
+    const setSelectedReferences = useCallback(
         (updates: SegmentReferenceSelections) => {
             Object.entries(updates).forEach(([segmentName, value]) => {
                 const identifier = getReferenceIdentifier(referenceIdentifierField, segmentName, segments.length > 1);
-
                 setSomeFieldValues([identifier, value]);
             });
         },
         [setSomeFieldValues, segments, referenceIdentifierField],
     );
+
+    return { selectedReferences, setSelectedReferences };
 }
