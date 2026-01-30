@@ -114,7 +114,7 @@ export const InnerSearchFullUI = ({
         return schema.metadata
             .filter(
                 (field) =>
-                    columnVisibilities.get(field.name)?.isVisible(selectedReferences, referenceGenomesInfo) === true,
+                    columnVisibilities.get(field.name)?.isVisible(referenceGenomesInfo, selectedReferences) === true,
             )
             .map((field) => field.name);
     }, [schema.metadata, columnVisibilities, selectedReferences, referenceGenomesInfo]);
@@ -216,7 +216,7 @@ export const InnerSearchFullUI = ({
 
     const showMutationSearch =
         schema.submissionDataTypes.consensusSequences &&
-        !stillRequiresReferenceNameSelection(selectedReferences, referenceGenomesInfo);
+        !stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferences);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>

@@ -170,19 +170,19 @@ describe('segmentsWithMultipleReferences', () => {
 
 describe('stillRequiresReferenceNameSelection', () => {
     it('false when there are no multi-reference segments', () => {
-        expect(stillRequiresReferenceNameSelection({ main: null }, SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES)).toBe(false);
+        expect(stillRequiresReferenceNameSelection(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { main: null })).toBe(false);
 
-        expect(stillRequiresReferenceNameSelection({ S: null, L: null }, MULTI_SEG_SINGLE_REF_REFERENCEGENOMES)).toBe(
+        expect(stillRequiresReferenceNameSelection(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { S: null, L: null })).toBe(
             false,
         );
     });
 
     it('true when a multi-reference segment has null selection', () => {
-        expect(stillRequiresReferenceNameSelection({ main: null }, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES)).toBe(true);
+        expect(stillRequiresReferenceNameSelection(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: null })).toBe(true);
     });
 
     it('false when all multi-reference segments have a selection', () => {
-        expect(stillRequiresReferenceNameSelection({ main: 'ref1' }, SINGLE_SEG_MULTI_REF_REFERENCEGENOMES)).toBe(
+        expect(stillRequiresReferenceNameSelection(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: 'ref1' })).toBe(
             false,
         );
     });

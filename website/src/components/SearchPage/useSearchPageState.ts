@@ -5,11 +5,7 @@ import useUrlParamState from '../../hooks/useUrlParamState.ts';
 import type { FieldValues, FieldValueUpdate, Schema, SetSomeFieldValues } from '../../types/config.ts';
 import type { OrderDirection } from '../../types/lapis.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
-import {
-    getReferenceIdentifier,
-    useSelectedReferences,
-    useSetSelectedReferences,
-} from '../../utils/referenceSelection.ts';
+import { getReferenceIdentifier, useReferenceSelection } from '../../utils/referenceSelection.ts';
 import {
     COLUMN_VISIBILITY_PREFIX,
     HALF_SCREEN_PARAM,
@@ -151,15 +147,10 @@ export function useSearchPageState({
         (value) => !value,
     );
 
-    const selectedReferences = useSelectedReferences({
+    const { selectedReferences, setSelectedReferences } = useReferenceSelection({
         referenceGenomesInfo,
-        schema,
+        referenceIdentifierField: schema.referenceIdentifierField,
         state,
-    });
-
-    const setSelectedReferences = useSetSelectedReferences({
-        referenceGenomesInfo,
-        schema,
         setSomeFieldValues,
     });
 

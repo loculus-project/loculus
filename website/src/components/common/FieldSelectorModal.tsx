@@ -253,18 +253,21 @@ export function isActiveForSelectedReferenceName(selectedReferenceNames: Segment
 
 export function getDisplayState(
     field: Metadata,
-    selectedReferenceNames: SegmentReferenceSelections,
-    referenceIdentifierField: string | undefined,
     referenceGenomesInfo: ReferenceGenomesInfo,
+    selectedReferenceNames?: SegmentReferenceSelections,
+    referenceIdentifierField?: string,
     greyOutIfStillRequiresReferenceSelection = true,
 ): FieldItemDisplayState | undefined {
     if (field.name === ACCESSION_VERSION_FIELD) {
         return { type: fieldItemDisplayStateType.alwaysChecked };
     }
+    if (selectedReferenceNames === undefined) {
+        return undefined;
+    }
 
     if (
         field.onlyForReference !== undefined &&
-        stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomesInfo)
+        stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames)
     ) {
         if (greyOutIfStillRequiresReferenceSelection) {
             return {

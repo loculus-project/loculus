@@ -30,7 +30,7 @@ type DownloadDialogProps = {
     dataUseTermsEnabled: boolean;
     schema: Schema;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
-    selectedReferenceNames: SegmentReferenceSelections;
+    selectedReferenceNames?: SegmentReferenceSelections;
     referenceIdentifierField: string | undefined;
 };
 
@@ -81,7 +81,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         useMultiSegmentEndpoint,
         getVisibleFields: () => [
             ...Array.from(downloadFieldVisibilities.entries())
-                .filter(([_, visibility]) => visibility.isVisible(selectedReferenceNames, referenceGenomesInfo, false))
+                .filter(([_, visibility]) => visibility.isVisible(referenceGenomesInfo, selectedReferenceNames, false))
                 .map(([name]) => name),
         ],
         metadata: schema.metadata,

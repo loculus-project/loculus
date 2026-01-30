@@ -22,8 +22,8 @@ import {
 
 export type GetTableDataResult = {
     data: TableDataEntry[];
-    segmentReferences: SegmentReferenceSelections;
     isRevocation: boolean;
+    segmentReferences?: SegmentReferenceSelections;
 };
 
 export async function getTableData(
@@ -71,16 +71,18 @@ export async function getTableData(
                             instance: '/seq/' + accessionVersion,
                         });
                     }
-                    const segmentReferences = getSelectedReferences({
-                        referenceGenomesInfo,
-                        schema,
-                        state: data.details,
-                    });
+                    const segmentReferences = schema.referenceIdentifierField
+                        ? getSelectedReferences({
+                              referenceGenomesInfo,
+                              referenceIdentifierField: schema.referenceIdentifierField,
+                              state: data.details,
+                          })
+                        : undefined;
 
                     return ok({
                         data: toTableData(schema, referenceGenomesInfo, data),
-                        segmentReferences,
                         isRevocation: isRevocationEntry(data.details),
+                        segmentReferences,
                     });
                 }),
         );

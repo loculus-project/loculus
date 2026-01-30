@@ -20,7 +20,7 @@ import MdiEye from '~icons/mdi/eye';
 interface Props {
     tableData: TableDataEntry[];
     organism: string;
-    segmentReferences: SegmentReferenceSelections;
+    segmentReferences?: SegmentReferenceSelections;
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     schema: Schema;

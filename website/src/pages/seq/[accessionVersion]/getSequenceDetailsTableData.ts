@@ -21,7 +21,7 @@ export type TableData = {
     tableData: TableDataEntry[];
     sequenceEntryHistory: SequenceEntryHistory;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    segmentReferences: SegmentReferenceSelections;
+    segmentReferences?: SegmentReferenceSelections;
     isRevocation: boolean;
 };
 

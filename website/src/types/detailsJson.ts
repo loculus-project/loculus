@@ -14,7 +14,7 @@ export const detailsJsonSchema = z.object({
     schema: schema,
     clientConfig: serviceUrls,
     // Segment-first mode: map of segment names to reference names
-    segmentReferences: z.record(z.string(), z.string().nullable()),
+    segmentReferences: z.record(z.string(), z.string().nullable()).optional(),
     isRevocation: z.boolean(),
     sequenceEntryHistory: z.array(parsedSequenceEntryHistoryEntrySchema),
 });
