@@ -1,4 +1,4 @@
-name: silo-import-image
+name: loculus-silo-image
 on:
   pull_request:
   push:
@@ -19,19 +19,19 @@ on:
         default: "false"
         required: true
 env:
-  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/silo-import
+  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/loculus-silo
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
   sha: ${{ github.event.pull_request.head.sha || github.sha }}
 defaults:
   run:
-    working-directory: ./silo-import
+    working-directory: ./loculus-silo
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-silo-import-${{github.event.inputs.build_arm}}
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-loculus-silo-${{github.event.inputs.build_arm}}
   cancel-in-progress: true
 jobs:
-  silo-import-image:
-    name: Build silo-import Docker Image
+  loculus-silo-image:
+    name: Build loculus-silo Docker Image
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -63,9 +63,9 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
-          context: ./silo-import
+          context: ./loculus-silo
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
-          cache-from: type=gha,scope=silo-import-${{ github.ref }}
-          cache-to: type=gha,mode=max,scope=silo-import-${{ github.ref }}
+          cache-from: type=gha,scope=loculus-silo-${{ github.ref }}
+          cache-to: type=gha,mode=max,scope=loculus-silo-${{ github.ref }}
           platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}

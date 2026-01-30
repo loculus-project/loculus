@@ -47,7 +47,7 @@ jobs:
         uses: lewagon/wait-on-check-action@v1.5.0
         with:
           ref: ${{ github.sha }}
-          check-name: Build silo-import Docker Image
+          check-name: Build loculus-silo Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for Backend Docker Image

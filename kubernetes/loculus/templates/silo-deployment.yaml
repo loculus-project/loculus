@@ -32,12 +32,15 @@ spec:
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
       containers:
         - name: silo
-          image: "{{ $.Values.images.lapisSilo.repository }}:{{ $.Values.images.lapisSilo.tag }}"
-          imagePullPolicy: "{{ $.Values.images.lapisSilo.pullPolicy | default $.Values.imagePullPolicy }}"
+          image: "{{ $.Values.images.loculusSilo.repository }}:{{ $.Values.images.loculusSilo.tag | default $dockerTag }}"
+          command: ["/usr/local/bin/silo"]
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "silo" $.Values $key) | nindent 10 }}
           env:
             - name: SPDLOG_LEVEL
               value: "debug"
+            - name: SILO_DATA_DIRECTORY
+              value: "/data/"
           ports:
             - containerPort: 8081
           args:
@@ -68,8 +71,8 @@ spec:
             failureThreshold: 3
             timeoutSeconds: 5
         - name: silo-importer
-          image: "{{ $.Values.images.siloImporter.repository }}:{{ $.Values.images.siloImporter.tag | default $dockerTag }}"
-          imagePullPolicy: "{{ $.Values.images.siloImporter.pullPolicy }}"
+          image: "{{ $.Values.images.loculusSilo.repository }}:{{ $.Values.images.loculusSilo.tag | default $dockerTag }}"
+          imagePullPolicy: "{{ $.Values.images.loculusSilo.pullPolicy }}"
           {{- include "loculus.resources" (list "silo-importer" $.Values) | nindent 10 }}
           env:
             - name: BACKEND_BASE_URL
@@ -88,6 +91,10 @@ spec:
               value: {{ $.Values.siloImport.hardRefreshIntervalSeconds | quote }}
             - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
               value: {{ $.Values.siloImport.pollIntervalSeconds | quote }}
+            - name: PATH_TO_SILO_BINARY
+              value: "/usr/local/bin/silo"
+            - name: PREPROCESSING_CONFIG
+              value: "/app/preprocessing_config.yaml"
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json
@@ -102,42 +109,6 @@ spec:
               mountPath: /preprocessing/output
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
-        - name: silo-preprocessing
-          image: "{{ $.Values.images.lapisSilo.repository }}:{{ $.Values.images.lapisSilo.tag }}"
-          imagePullPolicy: "{{ $.Values.images.lapisSilo.pullPolicy | default $.Values.imagePullPolicy }}"
-          {{- include "loculus.resources" (list "silo-preprocessing" $.Values) | nindent 10 }}
-          command:
-            - sh
-            - -c
-            - sh /silo_import_wrapper.sh
-          env:
-            - name: BACKEND_BASE_URL
-              {{- if $.Values.disableBackend }}
-              value: "http://host.k3d.internal:8079/{{ $key }}"
-              {{- else }}
-              value: "http://loculus-backend-service:8079/{{ $key }}"
-              {{- end }}
-            {{- if $lineageSystem }}
-            - name: LINEAGE_DEFINITIONS
-              value: {{ index $.Values.lineageSystemDefinitions $lineageSystem | toJson | quote }}
-            {{- end }}
-          volumeMounts:
-            - name: lapis-silo-database-config-processed
-              mountPath: /preprocessing/input/reference_genomes.json
-              subPath: reference_genomes.json
-            - name: lapis-silo-database-config-processed
-              mountPath: /preprocessing/input/database_config.yaml
-              subPath: database_config.yaml
-            - name: lapis-silo-database-config-processed
-              mountPath: /app/preprocessing_config.yaml
-              subPath: preprocessing_config.yaml
-            - name: lapis-silo-shared-data
-              mountPath: /preprocessing/output
-            - name: lapis-silo-input-data-cache
-              mountPath: /preprocessing/input
-            - name: lapis-silo-database-config-processed
-              mountPath: /silo_import_wrapper.sh
-              subPath: silo_import_wrapper.sh
       volumes:
         {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
         - name: lapis-silo-shared-data

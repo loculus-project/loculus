@@ -35,8 +35,6 @@ def get_pods():
 
 def all_pods_are_ready(pods):
     for pod in pods:
-        if "silo-import-cronjob" in pod["metadata"]["name"]:
-            continue
         print("Status of:", pod["metadata"]["name"], "-", pod["status"]["phase"])
         if pod["status"]["phase"] == "Succeeded":
             continue
