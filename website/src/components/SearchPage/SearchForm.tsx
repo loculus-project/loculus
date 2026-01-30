@@ -48,9 +48,9 @@ interface SearchFormProps {
     referenceGenomesInfo: ReferenceGenomesInfo;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
-    referenceIdentifierField: string | undefined;
-    setSelectedReferences: (newValues: SegmentReferenceSelections) => void;
-    selectedReferences: SegmentReferenceSelections;
+    referenceIdentifierField?: string;
+    setSelectedReferences?: (newValues: SegmentReferenceSelections) => void;
+    selectedReferences?: SegmentReferenceSelections;
 }
 
 export const SearchForm = ({
@@ -77,7 +77,7 @@ export const SearchForm = ({
     ]);
     const visibleFields = filterSchema.filters
         .filter(
-            (field) => searchVisibilities.get(field.name)?.isVisible(selectedReferences, referenceGenomesInfo) ?? false,
+            (field) => searchVisibilities.get(field.name)?.isVisible(referenceGenomesInfo, selectedReferences) ?? false,
         )
         .filter((field) => !excluded.has(field.name));
 
@@ -115,7 +115,7 @@ export const SearchForm = ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),
             header: filter.header,
-            displayState: getDisplayState(filter, selectedReferences, referenceIdentifierField, referenceGenomesInfo),
+            displayState: getDisplayState(filter, referenceGenomesInfo, selectedReferences, referenceIdentifierField),
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
@@ -182,15 +182,17 @@ export const SearchForm = ({
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
-                        {referenceIdentifierField !== undefined && (
-                            <ReferenceSelector
-                                filterSchema={filterSchema}
-                                referenceGenomesInfo={referenceGenomesInfo}
-                                referenceIdentifierField={referenceIdentifierField}
-                                selectedReferences={selectedReferences}
-                                setSelectedReferences={setSelectedReferences}
-                            />
-                        )}
+                        {referenceIdentifierField !== undefined &&
+                            selectedReferences !== undefined &&
+                            setSelectedReferences !== undefined && (
+                                <ReferenceSelector
+                                    filterSchema={filterSchema}
+                                    referenceGenomesInfo={referenceGenomesInfo}
+                                    referenceIdentifierField={referenceIdentifierField}
+                                    selectedReferences={selectedReferences}
+                                    setSelectedReferences={setSelectedReferences}
+                                />
+                            )}
                         <div className='mb-1'>
                             <AccessionField
                                 textValue={'accession' in fieldValues ? fieldValues.accession! : ''}

@@ -157,14 +157,14 @@ export function useSearchPageState({
               schema: { ...schema, referenceIdentifierField: schema.referenceIdentifierField },
               state,
           })
-        : {};
+        : undefined;
     const setSelectedReferences = schema.referenceIdentifierField
         ? useSetSelectedReferences({
               referenceGenomesInfo,
               schema: { ...schema, referenceIdentifierField: schema.referenceIdentifierField },
               setSomeFieldValues,
           })
-        : () => {};
+        : undefined;
 
     const removeFilter = useCallback(
         (metadataFilterName: string) => {

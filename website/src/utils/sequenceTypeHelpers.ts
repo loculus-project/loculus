@@ -126,14 +126,14 @@ export const getSegmentNames = (genomes: ReferenceGenomesInfo) => Object.keys(ge
  */
 export function getSegmentAndGeneInfo(
     referenceGenomesInfo: ReferenceGenomesInfo,
-    selectedReferences: SegmentReferenceSelections,
+    selectedReferences?: SegmentReferenceSelections,
 ): SegmentAndGeneInfo {
     const nucleotideSegmentInfos: SegmentInfo[] = [];
     const geneInfos: GeneInfo[] = [];
 
     for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
         const isSingleReference = Object.keys(segmentData).length === 1;
-        const selectedRef = selectedReferences[segmentName] ?? null;
+        const selectedRef = selectedReferences?.[segmentName] ?? null;
 
         if (isSingleReference) {
             nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentName });
@@ -157,10 +157,10 @@ export function getSegmentAndGeneInfo(
 
 export function getInsdcAccessionsFromSegmentReferences(
     referenceGenomesInfo: ReferenceGenomesInfo,
-    segmentReferences: SegmentReferenceSelections,
+    segmentReferences?: SegmentReferenceSelections,
 ): ReferenceAccession[] {
     const references: ReferenceAccession[] = [];
-    for (const [segmentName, referenceName] of Object.entries(segmentReferences)) {
+    for (const [segmentName, referenceName] of Object.entries(segmentReferences ?? {})) {
         const segmentData = referenceGenomesInfo.segmentReferenceGenomes[segmentName];
         let reference = referenceName;
         if (!segmentsWithMultipleReferences(referenceGenomesInfo).includes(segmentName)) {
@@ -203,9 +203,12 @@ export function segmentsWithMultipleReferences(referenceGenomesInfo: ReferenceGe
 }
 
 export function stillRequiresReferenceNameSelection(
-    selectedReferenceNames: SegmentReferenceSelections,
     referenceGenomesInfo: ReferenceGenomesInfo,
+    selectedReferenceNames?: SegmentReferenceSelections,
 ) {
+    if (selectedReferenceNames === undefined) {
+        return false;
+    }
     return segmentsWithMultipleReferences(referenceGenomesInfo).some(
         (segment) => selectedReferenceNames[segment] === null,
     );

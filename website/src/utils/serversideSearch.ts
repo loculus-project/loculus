@@ -30,7 +30,7 @@ export const performLapisSearchQueries = async (
               schema: { ...schema, referenceIdentifierField: schema.referenceIdentifierField },
               state,
           })
-        : {};
+        : undefined;
 
     const suborganismSegmentAndGeneInfo = getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferences);
 
@@ -52,7 +52,7 @@ export const performLapisSearchQueries = async (
 
     const columnsToShow = schema.metadata
         .filter(
-            (field) => columnVisibilities.get(field.name)?.isVisible(selectedReferences, referenceGenomesInfo) === true,
+            (field) => columnVisibilities.get(field.name)?.isVisible(referenceGenomesInfo, selectedReferences) === true,
         )
         .map((field) => field.name);
 

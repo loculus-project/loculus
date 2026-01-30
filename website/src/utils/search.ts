@@ -47,8 +47,8 @@ export class MetadataVisibility {
     }
 
     public isVisible(
-        selectedReferenceNames: SegmentReferenceSelections,
         referenceGenomesInfo: ReferenceGenomesInfo,
+        selectedReferenceNames?: SegmentReferenceSelections,
         hideIfStillRequiresReferenceSelection = true,
     ): boolean {
         if (!this.isChecked) {
@@ -57,9 +57,12 @@ export class MetadataVisibility {
         if (this.onlyForReference == undefined) {
             return true;
         }
+        if (selectedReferenceNames === undefined) {
+            return false;
+        }
         if (
             !hideIfStillRequiresReferenceSelection &&
-            stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomesInfo)
+            stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames)
         ) {
             return true;
         }

@@ -17,7 +17,7 @@ interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     referenceGenomesInfo: ReferenceGenomesInfo;
-    segmentReferences: SegmentReferenceSelections;
+    segmentReferences?: SegmentReferenceSelections;
 }
 
 const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) => {

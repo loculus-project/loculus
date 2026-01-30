@@ -35,7 +35,7 @@ type DownloadFormProps = {
     downloadFieldVisibilities: Map<string, MetadataVisibility>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
-    selectedReferenceNames: SegmentReferenceSelections;
+    selectedReferenceNames?: SegmentReferenceSelections;
     referenceIdentifierField: string | undefined;
 };
 
@@ -58,7 +58,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         [referenceGenomesInfo, selectedReferenceNames],
     );
 
-    const disableAlignedSequences = stillRequiresReferenceNameSelection(selectedReferenceNames, referenceGenomesInfo);
+    const disableAlignedSequences = stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames);
 
     const metadataSchema = schema.metadata;
     const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
@@ -72,7 +72,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                         onClick={() => setIsFieldSelectorOpen(true)}
                         selectedFieldsCount={
                             Array.from(downloadFieldVisibilities.values()).filter((it) =>
-                                it.isVisible(selectedReferenceNames, referenceGenomesInfo, false),
+                                it.isVisible(referenceGenomesInfo, selectedReferenceNames, false),
                             ).length
                         }
                         disabled={downloadFormState.dataType !== 'metadata'}

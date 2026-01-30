@@ -24,7 +24,7 @@ interface Props {
     tableData: TableDataEntry[];
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     referenceGenomesInfo: ReferenceGenomesInfo;
-    segmentReferences: SegmentReferenceSelections;
+    segmentReferences?: SegmentReferenceSelections;
 }
 
 const { tableData, dataUseTermsHistory, referenceGenomesInfo, segmentReferences } = Astro.props;

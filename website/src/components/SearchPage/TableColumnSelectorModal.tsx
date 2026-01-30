@@ -12,7 +12,7 @@ export type TableColumnSelectorModalProps = {
     schema: Schema;
     columnVisibilities: Map<string, MetadataVisibility>;
     setAColumnVisibility: (fieldName: string, selected: boolean) => void;
-    selectedReferenceNames: SegmentReferenceSelections;
+    selectedReferenceNames?: SegmentReferenceSelections;
     referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
@@ -35,9 +35,9 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
                     header: field.header,
                     displayState: getDisplayState(
                         field,
+                        referenceGenomesInfo,
                         selectedReferenceNames,
                         schema.referenceIdentifierField,
-                        referenceGenomesInfo,
                     ),
                     isChecked: columnVisibilities.get(field.name)?.isChecked ?? false,
                 })),

@@ -17,7 +17,7 @@ type FieldSelectorProps = {
     schema: Schema;
     downloadFieldVisibilities: Map<string, MetadataVisibility>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
-    selectedReferenceNames: SegmentReferenceSelections;
+    selectedReferenceNames?: SegmentReferenceSelections;
     referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
@@ -50,9 +50,9 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         header: field.header,
         displayState: getDisplayState(
             field,
+            referenceGenomesInfo,
             selectedReferenceNames,
             schema.referenceIdentifierField,
-            referenceGenomesInfo,
             false,
         ),
         isChecked: downloadFieldVisibilities.get(field.name)?.isChecked ?? false,

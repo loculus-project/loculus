@@ -22,8 +22,8 @@ import {
 
 export type GetTableDataResult = {
     data: TableDataEntry[];
-    segmentReferences: SegmentReferenceSelections;
     isRevocation: boolean;
+    segmentReferences?: SegmentReferenceSelections;
 };
 
 export async function getTableData(
@@ -77,12 +77,12 @@ export async function getTableData(
                               schema: { ...schema, referenceIdentifierField: schema.referenceIdentifierField },
                               state: data.details,
                           })
-                        : {};
+                        : undefined;
 
                     return ok({
                         data: toTableData(schema, referenceGenomesInfo, data),
-                        segmentReferences,
                         isRevocation: isRevocationEntry(data.details),
+                        segmentReferences,
                     });
                 }),
         );
