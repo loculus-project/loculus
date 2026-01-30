@@ -74,7 +74,7 @@ export async function getTableData(
                     const segmentReferences = schema.referenceIdentifierField
                         ? getSelectedReferences({
                               referenceGenomesInfo,
-                              schema: { ...schema, referenceIdentifierField: schema.referenceIdentifierField },
+                              referenceIdentifierField: schema.referenceIdentifierField,
                               state: data.details,
                           })
                         : undefined;

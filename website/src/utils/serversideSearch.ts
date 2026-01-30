@@ -27,7 +27,7 @@ export const performLapisSearchQueries = async (
     const selectedReferences = schema.referenceIdentifierField
         ? getSelectedReferences({
               referenceGenomesInfo,
-              schema: { ...schema, referenceIdentifierField: schema.referenceIdentifierField },
+              referenceIdentifierField: schema.referenceIdentifierField,
               state,
           })
         : undefined;
