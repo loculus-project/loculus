@@ -49,6 +49,9 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         await expect(
             page.getByTestId('sequence-preview-modal').getByText('Length S'),
         ).toBeVisible();
+        await expect(
+            page.getByTestId('sequence-preview-modal').getByText('Length L'),
+        ).toBeVisible();
     });
 
     test('revoke a sequence', async ({ page, groupId }) => {
