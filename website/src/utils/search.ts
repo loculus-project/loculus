@@ -9,6 +9,7 @@ import type {
     Metadata,
     MetadataFilter,
     MetadataType,
+    MultiFieldSearch,
     Schema,
 } from '../types/config';
 
@@ -198,10 +199,12 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
  */
 export class MetadataFilterSchema {
     public readonly filters: (MetadataFilter | GroupedMetadataFilter)[];
+    public readonly multiFieldSearches: MultiFieldSearch[];
 
-    constructor(metadataSchema: Metadata[]) {
+    constructor(metadataSchema: Metadata[], multiFieldSearches?: MultiFieldSearch[]) {
         const expandedFilters = getMetadataSchemaWithExpandedRanges(metadataSchema);
         this.filters = consolidateGroupedFields(expandedFilters);
+        this.multiFieldSearches = multiFieldSearches ?? [];
     }
 
     public ungroupedMetadataFilters(): MetadataFilter[] {
@@ -217,6 +220,11 @@ export class MetadataFilterSchema {
      * ranges, i.e. "released at - from" (<displayname> - <label>)
      */
     public getLabel(fieldName: string): string {
+        const multiFieldSearch = this.multiFieldSearches.find((mfs) => mfs.name === fieldName);
+        if (multiFieldSearch) {
+            return multiFieldSearch.displayName;
+        }
+
         let displayName = this.filters
             .map((metadata) => {
                 if (metadata.grouped === true) {
@@ -276,6 +284,14 @@ export class MetadataFilterSchema {
         if (MUTATION_KEY in queryState) {
             const val = validateSingleValue(queryState.mutation, MUTATION_KEY);
             values.mutation = val === '' ? undefined : val;
+        }
+        for (const mfs of this.multiFieldSearches) {
+            if (mfs.name in queryState) {
+                const val = validateSingleValue(queryState[mfs.name], mfs.name);
+                if (val !== '') {
+                    values[mfs.name] = val;
+                }
+            }
         }
         return values;
     }

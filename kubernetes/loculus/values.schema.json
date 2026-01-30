@@ -518,6 +518,33 @@
                   "groups": ["schema"],
                   "type": "string",
                   "description": "Must be set to use the sub-organism feature. This metadata field is used to determine which suborganism a sequence entry belongs to. N.B. the suborganism feature is incomplete and not ready for production use."
+                },
+                "multiFieldSearches": {
+                  "groups": ["schema"],
+                  "type": "array",
+                  "description": "Define multi-field searches that allow full-text searching across multiple metadata fields of type string.",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["name", "displayName", "fields"],
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "The technical name of the search field."
+                      },
+                      "displayName": {
+                        "type": "string",
+                        "description": "The display name of the search field."
+                      },
+                      "fields": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "List of metadata field names to search across when this multi-field search is used. The fields must all be string fields."
+                      }
+                    }
+                  }
                 }
               }
             }

@@ -88,9 +88,12 @@ export class FieldFilterSet implements SequenceFilter {
     }
 
     public toApiParams(): LapisSearchParameters {
+        const multiFieldSearchNames = new Set(this.filterSchema.multiFieldSearches.map((mfs) => mfs.name));
+
+        // The "normal" search fields
         const sequenceFilters = Object.fromEntries(
             Object.entries(this.fieldValues as Record<string, any>).filter(
-                ([, value]) => value !== undefined && value !== '',
+                ([key, value]) => value !== undefined && value !== '' && !multiFieldSearchNames.has(key),
             ),
         );
         for (const filterName of Object.keys(sequenceFilters)) {
@@ -102,10 +105,12 @@ export class FieldFilterSet implements SequenceFilter {
             }
         }
 
+        // Accessions
         if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
             sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
         }
 
+        // Mutations
         delete sequenceFilters.mutation;
         const mutationSearchParams =
             this.suborganismSegmentAndGeneInfo !== null
@@ -117,10 +122,27 @@ export class FieldFilterSet implements SequenceFilter {
                       nucleotideMutations: [],
                   };
 
-        return {
+        // advancedQuery for multi-field searches
+        const advancedQueryParts: string[] = [];
+        for (const mfs of this.filterSchema.multiFieldSearches) {
+            const value = this.fieldValues[mfs.name];
+            if (value && typeof value === 'string' && value.trim()) {
+                const regex = makeCaseInsensitiveLiteralSubstringRegex(value.trim());
+                const fieldQueries = mfs.fields.map((f) => `${f}.regex='${regex}'`);
+                advancedQueryParts.push(`(${fieldQueries.join(' or ')})`);
+            }
+        }
+
+        const result: LapisSearchParameters = {
             ...sequenceFilters,
             ...mutationSearchParams,
         };
+
+        if (advancedQueryParts.length > 0) {
+            result.advancedQuery = advancedQueryParts.join(' and ');
+        }
+
+        return result;
     }
 
     public toUrlSearchParams(): [string, string | string[]][] {
@@ -168,7 +190,6 @@ export class FieldFilterSet implements SequenceFilter {
                 }
             }
         }
-
         return result;
     }
 
