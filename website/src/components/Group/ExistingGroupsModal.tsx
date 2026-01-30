@@ -42,7 +42,7 @@ export const ExistingGroupsModal: FC<ExistingGroupsModalProps> = ({
                 <table className='w-full border border-gray-200 rounded-md'>
                     <thead className='bg-gray-50'>
                         <tr>
-                            <th className='px-4 py-2 text-left text-sm font-medium text-gray-600'>Group Name</th>
+                            <th className='px-4 py-2 text-left text-sm font-medium text-gray-600'>Group name</th>
                             <th className='px-4 py-2 text-left text-sm font-medium text-gray-600'>Institute</th>
                             <th className='px-4 py-2 text-left text-sm font-medium text-gray-600'>Email</th>
                         </tr>

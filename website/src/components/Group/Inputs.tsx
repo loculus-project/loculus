@@ -143,7 +143,7 @@ export const AddressLineOneInput: FC<AddressLineOneInputProps> = ({ defaultValue
     <TextInput
         className='col-span-full'
         type='text'
-        label='Address Line 1'
+        label='Address line 1'
         name={fieldMapping.line1}
         required
         defaultValue={defaultValue}
@@ -158,7 +158,7 @@ export const AddressLineTwoInput: FC<AddressLineTwoInputProps> = ({ defaultValue
     <TextInput
         className='col-span-full'
         type='text'
-        label='Address Line 2'
+        label='Address line 2'
         name={fieldMapping.line2}
         required={false}
         defaultValue={defaultValue}
