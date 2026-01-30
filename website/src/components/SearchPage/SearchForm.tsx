@@ -20,13 +20,9 @@ import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldVa
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
-import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
+import { getReferenceIdentifier, type ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
-import {
-    getSegmentAndGeneInfo,
-    getSegmentNames,
-    type SegmentReferenceSelections,
-} from '../../utils/sequenceTypeHelpers.ts';
+import { getSegmentAndGeneInfo, getSegmentNames } from '../../utils/sequenceTypeHelpers.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal, getDisplayState } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
@@ -48,9 +44,7 @@ interface SearchFormProps {
     referenceGenomesInfo: ReferenceGenomesInfo;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
-    referenceIdentifierField?: string;
-    setSelectedReferences?: (newValues: SegmentReferenceSelections) => void;
-    selectedReferences?: SegmentReferenceSelections;
+    referenceSelection: ReferenceSelection;
 }
 
 export const SearchForm = ({
@@ -63,21 +57,26 @@ export const SearchForm = ({
     referenceGenomesInfo,
     lapisSearchParameters,
     showMutationSearch,
-    referenceIdentifierField,
-    setSelectedReferences,
-    selectedReferences,
+    referenceSelection,
 }: SearchFormProps) => {
     const excluded = new Set<string>([
         ACCESSION_FIELD,
-        ...(referenceIdentifierField === undefined
+        ...(referenceSelection === undefined
             ? []
             : getSegmentNames(referenceGenomesInfo).map((segmentName) =>
-                  getReferenceIdentifier(referenceIdentifierField, segmentName, referenceGenomesInfo.isMultiSegmented),
+                  getReferenceIdentifier(
+                      referenceSelection.referenceIdentifierField,
+                      segmentName,
+                      referenceGenomesInfo.isMultiSegmented,
+                  ),
               )),
     ]);
     const visibleFields = filterSchema.filters
         .filter(
-            (field) => searchVisibilities.get(field.name)?.isVisible(referenceGenomesInfo, selectedReferences) ?? false,
+            (field) =>
+                searchVisibilities
+                    .get(field.name)
+                    ?.isVisible(referenceGenomesInfo, referenceSelection?.selectedReferences) ?? false,
         )
         .filter((field) => !excluded.has(field.name));
 
@@ -115,13 +114,18 @@ export const SearchForm = ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),
             header: filter.header,
-            displayState: getDisplayState(filter, referenceGenomesInfo, selectedReferences, referenceIdentifierField),
+            displayState: getDisplayState(
+                filter,
+                referenceGenomesInfo,
+                referenceSelection?.selectedReferences,
+                referenceSelection?.referenceIdentifierField,
+            ),
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
     const suborganismSegmentAndGeneInfo = useMemo(
-        () => getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferences),
-        [referenceGenomesInfo, selectedReferences],
+        () => getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
+        [referenceGenomesInfo, referenceSelection?.selectedReferences],
     );
 
     return (
@@ -182,17 +186,15 @@ export const SearchForm = ({
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
-                        {referenceIdentifierField !== undefined &&
-                            selectedReferences !== undefined &&
-                            setSelectedReferences !== undefined && (
-                                <ReferenceSelector
-                                    filterSchema={filterSchema}
-                                    referenceGenomesInfo={referenceGenomesInfo}
-                                    referenceIdentifierField={referenceIdentifierField}
-                                    selectedReferences={selectedReferences}
-                                    setSelectedReferences={setSelectedReferences}
-                                />
-                            )}
+                        {referenceSelection !== undefined && (
+                            <ReferenceSelector
+                                filterSchema={filterSchema}
+                                referenceGenomesInfo={referenceGenomesInfo}
+                                referenceIdentifierField={referenceSelection.referenceIdentifierField}
+                                selectedReferences={referenceSelection.selectedReferences}
+                                setSelectedReferences={referenceSelection.setSelectedReferences}
+                            />
+                        )}
                         <div className='mb-1'>
                             <AccessionField
                                 textValue={'accession' in fieldValues ? fieldValues.accession! : ''}

@@ -147,7 +147,7 @@ export function useSearchPageState({
         (value) => !value,
     );
 
-    const { selectedReferences, setSelectedReferences } = useReferenceSelection({
+    const referenceSelection = useReferenceSelection({
         referenceGenomesInfo,
         referenceIdentifierField: schema.referenceIdentifierField,
         state,
@@ -249,8 +249,7 @@ export function useSearchPageState({
             setPreviewedSeqId,
             previewHalfScreen,
             setPreviewHalfScreen,
-            selectedReferences,
-            setSelectedReferences,
+            referenceSelection,
             page,
             setPage,
             setSomeFieldValues,
@@ -268,8 +267,7 @@ export function useSearchPageState({
             setPreviewedSeqId,
             previewHalfScreen,
             setPreviewHalfScreen,
-            selectedReferences,
-            setSelectedReferences,
+            referenceSelection,
             page,
             setPage,
             setSomeFieldValues,

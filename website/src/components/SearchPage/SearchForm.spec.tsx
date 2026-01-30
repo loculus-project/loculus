@@ -11,6 +11,7 @@ import {
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 } from '../../types/referenceGenomes.spec.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
+import type { ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
@@ -51,16 +52,14 @@ const renderSearchForm = ({
     fieldValues = {},
     referenceGenomesInfo = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
     lapisSearchParameters = {},
-    referenceIdentifierField,
-    selectedReferences = {},
+    referenceSelection,
     searchVisibilities = defaultSearchVisibilities,
 }: {
     filterSchema?: MetadataFilterSchema;
     fieldValues?: Record<string, string>;
     referenceGenomesInfo?: ReferenceGenomesInfo;
     lapisSearchParameters?: Record<string, string>;
-    referenceIdentifierField?: string;
-    selectedReferences?: Record<string, string>;
+    referenceSelection?: ReferenceSelection;
     searchVisibilities?: Map<string, MetadataVisibility>;
 } = {}) => {
     const props = {
@@ -75,9 +74,7 @@ const renderSearchForm = ({
         referenceGenomesInfo: referenceGenomesInfo,
         lapisSearchParameters,
         showMutationSearch: true,
-        referenceIdentifierField,
-        selectedReferences,
-        setSelectedReferences: vi.fn(),
+        referenceSelection,
     };
 
     render(
@@ -134,9 +131,11 @@ describe('SearchForm', () => {
                     referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                     lapisSearchParameters={{}}
                     showMutationSearch={true}
-                    referenceIdentifierField='My genotype'
-                    selectedReferences={{}}
-                    setSelectedReferences={setSelectedReferences}
+                    referenceSelection={{
+                        referenceIdentifierField: 'My genotype',
+                        selectedReferences: {},
+                        setSelectedReferences,
+                    }}
                 />
             </QueryClientProvider>,
         );
@@ -193,9 +192,12 @@ describe('SearchForm', () => {
             renderSearchForm({
                 filterSchema,
                 searchVisibilities,
-                referenceIdentifierField: 'My genotype',
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                selectedReferences: { 'My genotype': 'suborganism1' },
+                referenceSelection: {
+                    referenceIdentifierField: 'My genotype',
+
+                    selectedReferences: { main: 'suborganism1' },
+                    setSelectedReferences: vi.fn(),
+                },
             });
 
             expect(field1()).toBeVisible();
