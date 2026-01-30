@@ -51,6 +51,7 @@ from .nextclade import (
 from .processing_functions import (
     ProcessingFunctions,
     process_frameshifts,
+    process_phenotype_values,
     process_stop_codons,
 )
 from .sequence_checks import errors_if_non_iupac
@@ -176,6 +177,9 @@ def add_nextclade_metadata(
         case "qc.stopCodons.stopCodons":
             result = None if raw is None else str(raw)
             return process_stop_codons(result)
+        case "phenotypeValues":
+            result = None if raw is None else str(raw)
+            return process_phenotype_values(result, spec.args)
         case _:
             return InputData(datum=str(raw))
 

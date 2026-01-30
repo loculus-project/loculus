@@ -3,6 +3,7 @@ Each function takes input data and returns output data, warnings and errors
 This makes it easy to test and reason about the code
 """
 
+import ast
 import calendar
 import json
 import logging
@@ -166,6 +167,16 @@ def format_authors(authors: str) -> str:
             formated_first_name = f"{formated_first_name} {suffix}"
         loculus_authors.append(f"{last_name}, {formated_first_name}")
     return "; ".join(loculus_authors).strip()
+
+
+def regex_error(
+    function_name: str, function_arg: str, input_data: InputMetadata, args: FunctionArgs
+) -> str:
+    return (
+        f"Internal Error: Function {function_name} did not receive valid "
+        f"regex {function_arg}, with input {input_data} and args {args}, "
+        "please contact the administrator."
+    )
 
 
 class ProcessingFunctions:
@@ -843,6 +854,65 @@ class ProcessingFunctions:
         )
 
     @staticmethod
+    def regex_extraction(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        """
+        Extracts a substring from the `regex_field` using the provided regex `pattern`
+        with a `capture_group`.
+        e.g. ^(?P<segment>[^-]+)-(?P<subtype>[^-]+)$
+        """
+        regex_field = input_data["regex_field"]
+
+        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
+
+        pattern = args["pattern"]
+        capture_group = args["capture_group"]
+
+        if not regex_field:
+            return ProcessingResult(datum=None, warnings=warnings, errors=errors)
+        if not isinstance(pattern, str):
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=regex_error("regex_extraction", "pattern", input_data, args),
+                )
+            )
+            return ProcessingResult(datum=None, warnings=warnings, errors=errors)
+        if not isinstance(capture_group, str):
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=regex_error("regex_extraction", "capture_group", input_data, args),
+                )
+            )
+            return ProcessingResult(datum=None, warnings=warnings, errors=errors)
+        match = re.match(pattern, regex_field.strip())
+        if match:
+            result = match.group(capture_group)
+            return ProcessingResult(datum=result, warnings=warnings, errors=errors)
+        errors.append(
+            ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message=(
+                    f"The value '{regex_field}' does not match the expected regex "
+                    f"pattern: '{pattern}' or does not contain a capture group '{capture_group}'."
+                ),
+            )
+        )
+        return ProcessingResult(datum=None, warnings=warnings, errors=errors)
+
+    @staticmethod
     def check_regex(
         input_data: InputMetadata,
         output_field: str,
@@ -868,11 +938,7 @@ class ProcessingFunctions:
                     input_fields,
                     [output_field],
                     AnnotationSourceType.METADATA,
-                    message=(
-                        f"Internal Error: Function check_regex did not receive valid "
-                        f"regex pattern, with input {input_data} and args {args}, "
-                        "please contact the administrator."
-                    ),
+                    message=regex_error("check_regex", "pattern", input_data, args),
                 )
             )
             return ProcessingResult(datum=None, warnings=warnings, errors=errors)
@@ -1167,6 +1233,32 @@ def format_stop_codon(result: str | None) -> str | None:
         stop_codon_string = f"{stop_codon['cdsName']}:{stop_codon['codon'] + 1}"
         stop_codon_strings.append(stop_codon_string)
     return ",".join(stop_codon_strings)
+
+
+def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> InputData:
+    """Processes phenotype values string to InputData for processing"""
+    if input is None:
+        return InputData(datum=None)
+    name = args.get("name", "") if args else ""
+    try:
+        data = ast.literal_eval(input)
+        for entry in data:
+            if entry.get("name") == name:
+                return InputData(datum=str(entry.get("value")))
+    except Exception as e:
+        msg = (
+            "Was unable to process phenotype values - this is likely an internal error. "
+            "Please contact the administrator."
+        )
+        logger.error(msg + f" Error: {e}")
+        return InputData(
+            datum=None,
+            errors=single_metadata_annotation(
+                "phenotypeValues",
+                msg,
+            ),
+        )
+    return InputData(datum=None)
 
 
 def trim_ns(sequence: str) -> str:
