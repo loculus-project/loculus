@@ -39,7 +39,7 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
 
         await releasedPage.waitForSequencesInSearch(1);
-        await releasedPage.expectResultTableCellText('S');
+        await releasedPage.expectResultTableCellText('Length S');
         const accessionVersions = await releasedPage.waitForSequencesInSearch(1);
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.1`);
@@ -70,7 +70,7 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
 
         const accessionVersions = await releasedPage.waitForSequencesInSearch(1);
-        await releasedPage.expectResultTableCellText('L');
+        await releasedPage.expectResultTableCellText('Length L');
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accessionVersion);
         await releasedPage.revokeSequence('revocation for integration test');
@@ -110,8 +110,8 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
 
         const accessionVersions = await releasedPage.waitForSequencesInSearch(2);
-        await releasedPage.expectResultTableCellText('S');
-        await releasedPage.expectResultTableCellText('M');
+        await releasedPage.expectResultTableCellText('Length S');
+        await releasedPage.expectResultTableCellText('Length M');
 
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accessionVersion);
