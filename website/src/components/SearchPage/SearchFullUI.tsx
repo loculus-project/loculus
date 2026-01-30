@@ -12,7 +12,6 @@ import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
-import { stillRequiresSuborganismSelection } from './stillRequiresSuborganismSelection.tsx';
 import { useSearchPageState } from './useSearchPageState.ts';
 import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import { getLapisUrl } from '../../config.ts';
@@ -22,22 +21,22 @@ import type { Group } from '../../types/backend.ts';
 import type { LinkOut } from '../../types/config.ts';
 import { type FieldValues, type Schema, type SequenceFlaggingConfig } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
-import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
-import { getSuborganismSegmentAndGeneInfo } from '../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import {
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
     MetadataFilterSchema,
 } from '../../utils/search.ts';
+import { getSegmentAndGeneInfo, stillRequiresReferenceNameSelection } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     myGroups: Group[];
     organism: string;
     clientConfig: ClientConfig;
@@ -64,7 +63,7 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) this component is a mess a needs to be refactored */
 export const InnerSearchFullUI = ({
     accessToken,
-    referenceGenomeLightweightSchema,
+    referenceGenomesInfo,
     myGroups,
     organism,
     clientConfig,
@@ -91,8 +90,7 @@ export const InnerSearchFullUI = ({
         setPreviewedSeqId,
         previewHalfScreen,
         setPreviewHalfScreen,
-        selectedSuborganism,
-        setSelectedSuborganism,
+        referenceSelection,
         page,
         setPage,
         setSomeFieldValues,
@@ -103,7 +101,7 @@ export const InnerSearchFullUI = ({
         setOrderDirection,
         setASearchVisibility,
         setAColumnVisibility,
-    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema });
+    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema, referenceGenomesInfo });
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -113,9 +111,14 @@ export const InnerSearchFullUI = ({
 
     const columnsToShow = useMemo(() => {
         return schema.metadata
-            .filter((field) => columnVisibilities.get(field.name)?.isVisible(selectedSuborganism) === true)
+            .filter(
+                (field) =>
+                    columnVisibilities
+                        .get(field.name)
+                        ?.isVisible(referenceGenomesInfo, referenceSelection?.selectedReferences) === true,
+            )
             .map((field) => field.name);
-    }, [schema.metadata, columnVisibilities]);
+    }, [schema.metadata, columnVisibilities, referenceSelection?.selectedReferences, referenceGenomesInfo]);
 
     const orderByField = columnsToShow.includes(orderByFieldCandidate) ? orderByFieldCandidate : schema.primaryKey;
 
@@ -156,9 +159,9 @@ export const InnerSearchFullUI = ({
                 filterSchema,
                 fieldValues,
                 hiddenFieldValues,
-                getSuborganismSegmentAndGeneInfo(referenceGenomeLightweightSchema, selectedSuborganism),
+                getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
             ),
-        [fieldValues, hiddenFieldValues, referenceGenomeLightweightSchema, selectedSuborganism, filterSchema],
+        [fieldValues, hiddenFieldValues, referenceGenomesInfo, referenceSelection?.selectedReferences, filterSchema],
     );
 
     /**
@@ -214,7 +217,7 @@ export const InnerSearchFullUI = ({
 
     const showMutationSearch =
         schema.submissionDataTypes.consensusSequences &&
-        !stillRequiresSuborganismSelection(referenceGenomeLightweightSchema, selectedSuborganism);
+        !stillRequiresReferenceNameSelection(referenceGenomesInfo, referenceSelection?.selectedReferences);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -224,7 +227,8 @@ export const InnerSearchFullUI = ({
                 schema={schema}
                 columnVisibilities={columnVisibilities}
                 setAColumnVisibility={setAColumnVisibility}
-                selectedSuborganism={selectedSuborganism}
+                selectedReferenceNames={referenceSelection?.selectedReferences}
+                referenceGenomesInfo={referenceGenomesInfo}
             />
             <SeqPreviewModal
                 key={previewedSeqId ?? 'seq-modal'}
@@ -232,7 +236,7 @@ export const InnerSearchFullUI = ({
                 accessToken={accessToken}
                 isOpen={Boolean(previewedSeqId)}
                 onClose={() => setPreviewedSeqId(null)}
-                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+                referenceGenomesInfo={referenceGenomesInfo}
                 myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
                 setIsHalfScreen={setPreviewHalfScreen}
@@ -243,7 +247,7 @@ export const InnerSearchFullUI = ({
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}
-                    referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+                    referenceGenomesInfo={referenceGenomesInfo}
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
                     filterSchema={filterSchema}
@@ -252,9 +256,7 @@ export const InnerSearchFullUI = ({
                     setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
                     showMutationSearch={showMutationSearch}
-                    suborganismIdentifierField={schema.suborganismIdentifierField}
-                    selectedSuborganism={selectedSuborganism}
-                    setSelectedSuborganism={setSelectedSuborganism}
+                    referenceSelection={referenceSelection}
                 />
             </div>
             <div
@@ -346,13 +348,13 @@ export const InnerSearchFullUI = ({
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
                                 sequenceFilter={downloadFilter}
-                                referenceGenomesLightweightSchema={referenceGenomeLightweightSchema}
+                                referenceGenomesInfo={referenceGenomesInfo}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
                                 schema={schema}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
-                                selectedSuborganism={selectedSuborganism}
-                                suborganismIdentifierField={schema.suborganismIdentifierField}
+                                selectedReferenceNames={referenceSelection?.selectedReferences}
+                                referenceIdentifierField={schema.referenceIdentifierField}
                             />
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu

@@ -90,8 +90,8 @@ def mask_terminal_gaps(
     )
 
 
-def create_gene_name(gene: str, gene_prefix: str | None) -> str:
-    return gene_prefix + "-" + gene if gene_prefix else gene
+def create_gene_name(gene: str, gene_suffix: str | None) -> str:
+    return gene + "-" + gene_suffix if gene_suffix else gene
 
 
 def parse_nextclade_tsv(
@@ -122,7 +122,7 @@ def parse_nextclade_tsv(
                     continue
                 gene, val = ins.split(":", maxsplit=1)
                 if gene in sequence_and_dataset.genes:
-                    gene_name = create_gene_name(gene, sequence_and_dataset.gene_prefix)
+                    gene_name = create_gene_name(gene, sequence_and_dataset.gene_suffix)
                     amino_acid_insertions[id][gene_name].append(val)
                 else:
                     logger.debug(
@@ -754,7 +754,7 @@ def load_aligned_aa_sequences(
                 for aligned_sequence in aligned_translation:
                     sequence_id = aligned_sequence.id
                     masked_sequence = mask_terminal_gaps(str(aligned_sequence.seq), mask_char="X")
-                    gene_name = create_gene_name(gene, sequence_and_dataset.gene_prefix)
+                    gene_name = create_gene_name(gene, sequence_and_dataset.gene_suffix)
                     aligned_aminoacid_sequences[sequence_id][gene_name] = masked_sequence
         except FileNotFoundError:
             # This can happen if the sequence does not cover this gene

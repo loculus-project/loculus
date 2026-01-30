@@ -58,7 +58,7 @@
 {{- $metadata := .metadata }}
 {{- $referenceGenomes := .referenceGenomes}}
 
-{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" $referenceGenomes | fromYaml).segments }}
+{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" $referenceGenomes | fromYaml).segments }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 
 {{- range $metadata }}

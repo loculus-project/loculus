@@ -16,7 +16,7 @@ import {
     errorsProcessingResult,
     openDataUseTermsOption,
 } from '../../types/backend.ts';
-import { SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
+import { SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES } from '../../types/referenceGenomes.spec.ts';
 
 const openDataUseTerms = { type: openDataUseTermsOption } as const;
 
@@ -33,9 +33,7 @@ function renderReviewPage() {
             accessToken={testAccessToken}
             clientConfig={testConfig.public}
             filesEnabled={false}
-            referenceGenomeLightweightSchema={{
-                [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], geneNames: [], insdcAccessionFull: [] },
-            }}
+            referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
         />,
     );
 }
