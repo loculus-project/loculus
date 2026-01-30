@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ReferenceSelector } from './ReferenceSelector.tsx';
+import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import {
     MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 } from '../../types/referenceGenomes.spec.ts';
-import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { MetadataFilterSchema } from '../../utils/search.ts';
 
 const referenceIdentifierField = 'genotype';
