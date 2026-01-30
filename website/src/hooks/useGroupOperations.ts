@@ -14,6 +14,32 @@ type UseGroupOperationsProps = {
     setErrorMessage: (message?: string) => void;
 };
 
+// Generic result type for operations
+type OperationSuccess<T> = { succeeded: true } & T;
+type OperationError = { succeeded: false; errorMessage: string };
+type OperationResult<T> = OperationSuccess<T> | OperationError;
+
+// Exported result types for backwards compatibility
+export type CreateGroupResult = OperationResult<{ group: Group }>;
+export type GetGroupsResult = OperationResult<{ groups: Group[] }>;
+export type EditGroupResult = OperationResult<{ group: Group }>;
+
+// Helper to execute API calls with standardized error handling
+async function executeWithErrorHandling<T>(
+    operation: () => Promise<T>,
+    errorPrefix: string,
+): Promise<OperationResult<T>> {
+    try {
+        const result = await operation();
+        return { succeeded: true, ...result } as OperationSuccess<T>;
+    } catch (error) {
+        return {
+            succeeded: false,
+            errorMessage: `${errorPrefix}: ${stringifyMaybeAxiosError(error)}`,
+        };
+    }
+}
+
 export const useGroupPageHooks = ({
     clientConfig,
     accessToken,
@@ -67,7 +93,13 @@ export const useGroupCreation = ({
     const { zodios } = useGroupManagementClient(clientConfig);
 
     const createGroup = useCallback(
-        async (group: NewGroup) => callCreateGroup(accessToken, zodios)(group),
+        async (group: NewGroup) =>
+            executeWithErrorHandling(async () => {
+                const groupResult = await zodios.createGroup(group, {
+                    headers: createAuthorizationHeader(accessToken),
+                });
+                return { group: groupResult };
+            }, 'Failed to create group'),
         [accessToken, zodios],
     );
 
@@ -80,7 +112,14 @@ export const useGetGroups = ({ clientConfig, accessToken }: { clientConfig: Clie
     const { zodios } = useGroupManagementClient(clientConfig);
 
     const getGroups = useCallback(
-        async (groupName?: string) => callGetGroups(accessToken, zodios)(groupName),
+        async (groupName?: string) =>
+            executeWithErrorHandling(async () => {
+                const existingGroups = await zodios.getAllGroups({
+                    headers: createAuthorizationHeader(accessToken),
+                    queries: { name: groupName },
+                });
+                return { groups: existingGroups };
+            }, 'Failed to query existing groups'),
         [accessToken, zodios],
     );
 
@@ -93,7 +132,14 @@ export const useGroupEdit = ({ clientConfig, accessToken }: { clientConfig: Clie
     const { zodios } = useGroupManagementClient(clientConfig);
 
     const editGroup = useCallback(
-        async (groupId: number, group: NewGroup) => callEditGroup(accessToken, zodios)(groupId, group),
+        async (groupId: number, group: NewGroup) =>
+            executeWithErrorHandling(async () => {
+                const groupResult = await zodios.editGroup(group, {
+                    headers: createAuthorizationHeader(accessToken),
+                    params: { groupId },
+                });
+                return { group: groupResult };
+            }, 'Failed to edit group'),
         [accessToken, zodios],
     );
 
@@ -110,100 +156,6 @@ export const useGroupManagementClient = (clientConfig: ClientConfig) => {
         zodiosHooks,
     };
 };
-
-type CreateGroupSuccess = {
-    succeeded: true;
-    group: Group;
-};
-type CreateGroupError = {
-    succeeded: false;
-    errorMessage: string;
-};
-export type CreateGroupResult = CreateGroupSuccess | CreateGroupError;
-
-function callCreateGroup(accessToken: string, zodios: ZodiosInstance<typeof groupManagementApi>) {
-    return async (group: NewGroup) => {
-        try {
-            const groupResult = await zodios.createGroup(group, {
-                headers: createAuthorizationHeader(accessToken),
-            });
-            return {
-                succeeded: true,
-                group: groupResult,
-            } as CreateGroupSuccess;
-        } catch (error) {
-            const message = `Failed to create group: ${stringifyMaybeAxiosError(error)}`;
-            return {
-                succeeded: false,
-                errorMessage: message,
-            } as CreateGroupError;
-        }
-    };
-}
-
-type GetGroupsSuccess = {
-    succeeded: true;
-    groups: Group[];
-};
-type GetGroupsError = {
-    succeeded: false;
-    errorMessage: string;
-};
-export type GetGroupsResult = GetGroupsSuccess | GetGroupsError;
-
-function callGetGroups(accessToken: string, zodios: ZodiosInstance<typeof groupManagementApi>) {
-    return async (groupName?: string) => {
-        try {
-            const existingGroups = await zodios.getAllGroups({
-                headers: createAuthorizationHeader(accessToken),
-                queries: { name: groupName },
-            });
-            return {
-                succeeded: true,
-                groups: existingGroups,
-            } as GetGroupsSuccess;
-        } catch (error) {
-            const message = `Failed to query existing groups: ${stringifyMaybeAxiosError(error)}`;
-            return {
-                succeeded: false,
-                errorMessage: message,
-            } as GetGroupsError;
-        }
-    };
-}
-
-type EditGroupSuccess = {
-    succeeded: true;
-    group: Group;
-};
-type EditGroupError = {
-    succeeded: false;
-    errorMessage: string;
-};
-export type EditGroupResult = EditGroupSuccess | EditGroupError;
-
-function callEditGroup(accessToken: string, zodios: ZodiosInstance<typeof groupManagementApi>) {
-    return async (groupId: number, group: NewGroup) => {
-        try {
-            const groupResult = await zodios.editGroup(group, {
-                headers: createAuthorizationHeader(accessToken),
-                params: {
-                    groupId,
-                },
-            });
-            return {
-                succeeded: true,
-                group: groupResult,
-            } as EditGroupSuccess;
-        } catch (error) {
-            const message = `Failed to edit group: ${stringifyMaybeAxiosError(error)}`;
-            return {
-                succeeded: false,
-                errorMessage: message,
-            } as EditGroupError;
-        }
-    };
-}
 
 function callRemoveFromGroup(
     accessToken: string | undefined,
@@ -222,8 +174,7 @@ function callRemoveFromGroup(
             });
             await refetchGroups();
         } catch (error) {
-            const message = `Failed to leave group: ${stringifyMaybeAxiosError(error)}`;
-            openErrorFeedback(message);
+            openErrorFeedback(`Failed to leave group: ${stringifyMaybeAxiosError(error)}`);
         }
     };
 }
@@ -245,8 +196,7 @@ function callAddToGroup(
             });
             await refetchGroups();
         } catch (error) {
-            const message = `Failed to add user to group: ${stringifyMaybeAxiosError(error)}`;
-            openErrorFeedback(message);
+            openErrorFeedback(`Failed to add user to group: ${stringifyMaybeAxiosError(error)}`);
         }
     };
 }

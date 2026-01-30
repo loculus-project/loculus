@@ -1,8 +1,8 @@
 import { type FC, useState } from 'react';
 
 import { type SequenceEntryToEdit } from '../../types/backend.ts';
+import { BaseDialog } from '../common/BaseDialog.tsx';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
-import { Button } from '../common/Button';
 import { FixedLengthTextViewer } from '../common/FixedLengthTextViewer.tsx';
 
 type SequencesDialogProps = {
@@ -25,7 +25,7 @@ export const SequencesDialog: FC<SequencesDialogProps> = ({
 }) => {
     const [activeTab, setActiveTab] = useState(0);
 
-    if (!isOpen || !dataToView) return null;
+    if (!dataToView) return null;
 
     const processedSequences = extractProcessedSequences(dataToView, segmentAndGeneDisplayNameMap);
 
@@ -34,34 +34,25 @@ export const SequencesDialog: FC<SequencesDialogProps> = ({
     }
 
     return (
-        <div className='fixed inset-0 flex items-center justify-center z-50 overflow-auto bg-black bg-opacity-30'>
-            <div className='bg-white rounded-lg p-6 max-w-6xl mx-3 w-full max-h-[90vh] flex flex-col'>
-                <div className='flex justify-between items-center mb-4'>
-                    <h2 className='text-xl font-semibold'>Processed sequences</h2>
-                    <Button className='text-gray-500 hover:text-gray-700' onClick={onClose}>
-                        ✕
-                    </Button>
-                </div>
-
-                <div className='flex-grow overflow-hidden flex flex-col'>
-                    <BoxWithTabsTabBar>
-                        {processedSequences.map(({ label }, i) => (
-                            <BoxWithTabsTab
-                                key={label}
-                                isActive={i === activeTab}
-                                label={label}
-                                onClick={() => setActiveTab(i)}
-                            />
-                        ))}
-                    </BoxWithTabsTabBar>
-                    <BoxWithTabsBox>
-                        <div className='overflow-auto' style={{ maxHeight: 'calc(80vh - 10rem)' }}>
-                            <FixedLengthTextViewer text={processedSequences[activeTab].sequence} maxLineLength={100} />
-                        </div>
-                    </BoxWithTabsBox>
-                </div>
+        <BaseDialog title='Processed sequences' isOpen={isOpen} onClose={onClose}>
+            <div className='flex-grow overflow-hidden flex flex-col'>
+                <BoxWithTabsTabBar>
+                    {processedSequences.map(({ label }, i) => (
+                        <BoxWithTabsTab
+                            key={label}
+                            isActive={i === activeTab}
+                            label={label}
+                            onClick={() => setActiveTab(i)}
+                        />
+                    ))}
+                </BoxWithTabsTabBar>
+                <BoxWithTabsBox>
+                    <div className='overflow-auto' style={{ maxHeight: 'calc(80vh - 10rem)' }}>
+                        <FixedLengthTextViewer text={processedSequences[activeTab].sequence} maxLineLength={100} />
+                    </div>
+                </BoxWithTabsBox>
             </div>
-        </div>
+        </BaseDialog>
     );
 };
 

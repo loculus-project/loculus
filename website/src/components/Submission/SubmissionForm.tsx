@@ -1,7 +1,7 @@
 import { type FC } from 'react';
 import { toast } from 'react-toastify';
 
-import { DataUploadForm } from './DataUploadForm.tsx';
+import { DataUploadForm, type UploadAction } from './DataUploadForm.tsx';
 import type { InputMode } from './FormOrUploadWrapper.tsx';
 import { routes } from '../../routes/routes.ts';
 import { type Group } from '../../types/backend.ts';
@@ -9,23 +9,25 @@ import type { InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
-type SubmissionFormProps = {
+type DataSubmissionFormProps = {
     accessToken: string;
     organism: string;
     clientConfig: ClientConfig;
     group: Group;
-    inputMode: InputMode;
+    action: UploadAction;
+    inputMode?: InputMode;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
 };
 
-export const SubmissionForm: FC<SubmissionFormProps> = ({
+const DataSubmissionForm: FC<DataSubmissionFormProps> = ({
     accessToken,
     organism,
     clientConfig,
     group,
-    inputMode,
+    action,
+    inputMode = 'bulk',
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
@@ -37,7 +39,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
                 organism={organism}
                 metadataTemplateFields={metadataTemplateFields}
                 clientConfig={clientConfig}
-                action='submit'
+                action={action}
                 inputMode={inputMode}
                 onError={(message) => toast.error(message, { position: 'top-center', autoClose: false })}
                 group={group}
@@ -50,3 +52,15 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
         </div>
     );
 };
+
+type SubmissionFormProps = Omit<DataSubmissionFormProps, 'action'> & { inputMode: InputMode };
+
+export const SubmissionForm: FC<SubmissionFormProps> = (props) => (
+    <DataSubmissionForm {...props} action='submit' />
+);
+
+type RevisionFormProps = Omit<DataSubmissionFormProps, 'action' | 'inputMode'>;
+
+export const RevisionForm: FC<RevisionFormProps> = (props) => (
+    <DataSubmissionForm {...props} action='revise' inputMode='bulk' />
+);
