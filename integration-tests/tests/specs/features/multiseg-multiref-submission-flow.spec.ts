@@ -30,7 +30,7 @@ test.describe('Multi-segment multi-reference submission flow', () => {
 
         await editPage.discardSequenceFile();
         await editPage.addSequenceFile(`>key\n${CCHF_S_SEGMENT_FULL_SEQUENCE}`);
-        await editPage.addSequenceFile(`>key\n${CCHF_L_SEGMENT_FULL_SEQUENCE}`);
+        await editPage.addSequenceFile(`>key2\n${CCHF_L_SEGMENT_FULL_SEQUENCE}`);
         await editPage.fillField('Authors', 'Integration, Test');
         await editPage.submitChanges();
 
