@@ -1,7 +1,11 @@
 import { test } from '../../fixtures/group.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { expect } from '@playwright/test';
-import { CCHF_L_SEGMENT_FULL_SEQUENCE, CCHF_M_SEGMENT_FULL_SEQUENCE, CCHF_S_SEGMENT_FULL_SEQUENCE } from '../../test-helpers/test-data';
+import {
+    CCHF_L_SEGMENT_FULL_SEQUENCE,
+    CCHF_M_SEGMENT_FULL_SEQUENCE,
+    CCHF_S_SEGMENT_FULL_SEQUENCE,
+} from '../../test-helpers/test-data';
 
 test.describe('Multi-segment multi-reference submission flow', () => {
     test('submit single sequence, edit and release', async ({ page, groupId }) => {
@@ -25,7 +29,9 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         const editPage = await reviewPage.editFirstSequence();
 
         await editPage.discardSequenceFile();
-        await editPage.addSequenceFile(`>key\n${CCHF_S_SEGMENT_FULL_SEQUENCE}\n${CCHF_L_SEGMENT_FULL_SEQUENCE}`);
+        await editPage.addSequenceFile(
+            `>key\n${CCHF_S_SEGMENT_FULL_SEQUENCE}\n${CCHF_L_SEGMENT_FULL_SEQUENCE}`,
+        );
         await editPage.fillField('Authors', 'Integration, Test');
         await editPage.submitChanges();
 
