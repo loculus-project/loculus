@@ -59,18 +59,24 @@ export const SearchForm = ({
     showMutationSearch,
     referenceSelection,
 }: SearchFormProps) => {
-    const { referenceIdentifierField, selectedReferences, setSelectedReferences } = referenceSelection;
     const excluded = new Set<string>([
         ACCESSION_FIELD,
-        ...(referenceIdentifierField === undefined
+        ...(referenceSelection === undefined
             ? []
             : getSegmentNames(referenceGenomesInfo).map((segmentName) =>
-                  getReferenceIdentifier(referenceIdentifierField, segmentName, referenceGenomesInfo.isMultiSegmented),
+                  getReferenceIdentifier(
+                      referenceSelection.referenceIdentifierField,
+                      segmentName,
+                      referenceGenomesInfo.isMultiSegmented,
+                  ),
               )),
     ]);
     const visibleFields = filterSchema.filters
         .filter(
-            (field) => searchVisibilities.get(field.name)?.isVisible(referenceGenomesInfo, selectedReferences) ?? false,
+            (field) =>
+                searchVisibilities
+                    .get(field.name)
+                    ?.isVisible(referenceGenomesInfo, referenceSelection?.selectedReferences) ?? false,
         )
         .filter((field) => !excluded.has(field.name));
 
@@ -108,13 +114,18 @@ export const SearchForm = ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),
             header: filter.header,
-            displayState: getDisplayState(filter, referenceGenomesInfo, selectedReferences, referenceIdentifierField),
+            displayState: getDisplayState(
+                filter,
+                referenceGenomesInfo,
+                referenceSelection?.selectedReferences,
+                referenceSelection?.referenceIdentifierField,
+            ),
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
     const suborganismSegmentAndGeneInfo = useMemo(
-        () => getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferences),
-        [referenceGenomesInfo, selectedReferences],
+        () => getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
+        [referenceGenomesInfo, referenceSelection?.selectedReferences],
     );
 
     return (
@@ -175,13 +186,13 @@ export const SearchForm = ({
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
-                        {referenceIdentifierField !== undefined && (
+                        {referenceSelection !== undefined && (
                             <ReferenceSelector
                                 filterSchema={filterSchema}
                                 referenceGenomesInfo={referenceGenomesInfo}
-                                referenceIdentifierField={referenceIdentifierField}
-                                selectedReferences={selectedReferences}
-                                setSelectedReferences={setSelectedReferences}
+                                referenceIdentifierField={referenceSelection.referenceIdentifierField}
+                                selectedReferences={referenceSelection.selectedReferences}
+                                setSelectedReferences={referenceSelection.setSelectedReferences}
                             />
                         )}
                         <div className='mb-1'>

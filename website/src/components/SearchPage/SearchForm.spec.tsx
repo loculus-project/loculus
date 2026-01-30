@@ -52,11 +52,7 @@ const renderSearchForm = ({
     fieldValues = {},
     referenceGenomesInfo = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
     lapisSearchParameters = {},
-    referenceSelection = {
-        referenceIdentifierField: undefined,
-        selectedReferences: undefined,
-        setSelectedReferences: undefined,
-    },
+    referenceSelection,
     searchVisibilities = defaultSearchVisibilities,
 }: {
     filterSchema?: MetadataFilterSchema;

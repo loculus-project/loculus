@@ -115,10 +115,10 @@ export const InnerSearchFullUI = ({
                 (field) =>
                     columnVisibilities
                         .get(field.name)
-                        ?.isVisible(referenceGenomesInfo, referenceSelection.selectedReferences) === true,
+                        ?.isVisible(referenceGenomesInfo, referenceSelection?.selectedReferences) === true,
             )
             .map((field) => field.name);
-    }, [schema.metadata, columnVisibilities, referenceSelection.selectedReferences, referenceGenomesInfo]);
+    }, [schema.metadata, columnVisibilities, referenceSelection?.selectedReferences, referenceGenomesInfo]);
 
     const orderByField = columnsToShow.includes(orderByFieldCandidate) ? orderByFieldCandidate : schema.primaryKey;
 
@@ -159,9 +159,9 @@ export const InnerSearchFullUI = ({
                 filterSchema,
                 fieldValues,
                 hiddenFieldValues,
-                getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection.selectedReferences),
+                getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
             ),
-        [fieldValues, hiddenFieldValues, referenceGenomesInfo, referenceSelection.selectedReferences, filterSchema],
+        [fieldValues, hiddenFieldValues, referenceGenomesInfo, referenceSelection?.selectedReferences, filterSchema],
     );
 
     /**
@@ -217,7 +217,7 @@ export const InnerSearchFullUI = ({
 
     const showMutationSearch =
         schema.submissionDataTypes.consensusSequences &&
-        !stillRequiresReferenceNameSelection(referenceGenomesInfo, referenceSelection.selectedReferences);
+        !stillRequiresReferenceNameSelection(referenceGenomesInfo, referenceSelection?.selectedReferences);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -227,7 +227,7 @@ export const InnerSearchFullUI = ({
                 schema={schema}
                 columnVisibilities={columnVisibilities}
                 setAColumnVisibility={setAColumnVisibility}
-                selectedReferenceNames={referenceSelection.selectedReferences}
+                selectedReferenceNames={referenceSelection?.selectedReferences}
                 referenceGenomesInfo={referenceGenomesInfo}
             />
             <SeqPreviewModal
@@ -353,7 +353,7 @@ export const InnerSearchFullUI = ({
                                 dataUseTermsEnabled={dataUseTermsEnabled}
                                 schema={schema}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
-                                selectedReferenceNames={referenceSelection.selectedReferences}
+                                selectedReferenceNames={referenceSelection?.selectedReferences}
                                 referenceIdentifierField={schema.referenceIdentifierField}
                             />
                             {linkOuts !== undefined && linkOuts.length > 0 && (
