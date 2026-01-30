@@ -34,35 +34,35 @@ export function getSegmentReferenceSelections({
 
 type UseSelectedReferencesArgs = {
     referenceGenomesInfo: ReferenceGenomesInfo;
-    schema: { referenceIdentifierField: string };
+    referenceIdentifierField: string ;
     state: Record<string, unknown>;
 };
 
-export function useSelectedReferences({ referenceGenomesInfo, schema, state }: UseSelectedReferencesArgs) {
+export function useSelectedReferences({ referenceGenomesInfo, referenceIdentifierField, state }: UseSelectedReferencesArgs) {
     const segments = useMemo(() => getSegmentNames(referenceGenomesInfo), [referenceGenomesInfo]);
 
     return useMemo(
         () =>
             getSegmentReferenceSelections({
                 segments,
-                referenceIdentifierField: schema.referenceIdentifierField,
+                referenceIdentifierField,
                 isMultiSegmented: segments.length > 1,
                 state,
             }),
-        [segments, schema.referenceIdentifierField, state],
+        [segments, referenceIdentifierField, state],
     );
 }
 
 export function getSelectedReferences({
     referenceGenomesInfo,
-    schema,
+    referenceIdentifierField,
     state,
 }: UseSelectedReferencesArgs): SegmentReferenceSelections {
     const segments = Object.keys(referenceGenomesInfo.segmentReferenceGenomes);
 
     return getSegmentReferenceSelections({
         segments,
-        referenceIdentifierField: schema.referenceIdentifierField,
+        referenceIdentifierField,
         isMultiSegmented: segments.length > 1,
         state,
     });
@@ -70,13 +70,13 @@ export function getSelectedReferences({
 
 type UseSetSelectedReferencesArgs = {
     referenceGenomesInfo: ReferenceGenomesInfo;
-    schema: { referenceIdentifierField: string };
+    referenceIdentifierField: string;
     setSomeFieldValues: SetSomeFieldValues;
 };
 
 export function useSetSelectedReferences({
     referenceGenomesInfo,
-    schema,
+    referenceIdentifierField,
     setSomeFieldValues,
 }: UseSetSelectedReferencesArgs) {
     const segments = getSegmentNames(referenceGenomesInfo);
@@ -84,7 +84,7 @@ export function useSetSelectedReferences({
         (updates: SegmentReferenceSelections) => {
             Object.entries(updates).forEach(([segmentName, value]) => {
                 const identifier = getReferenceIdentifier(
-                    schema.referenceIdentifierField,
+                    referenceIdentifierField,
                     segmentName,
                     segments.length > 1,
                 );
@@ -92,6 +92,6 @@ export function useSetSelectedReferences({
                 setSomeFieldValues([identifier, value]);
             });
         },
-        [setSomeFieldValues, segments, schema.referenceIdentifierField],
+        [setSomeFieldValues, segments, referenceIdentifierField],
     );
 }

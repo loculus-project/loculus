@@ -154,14 +154,14 @@ export function useSearchPageState({
     const selectedReferences = schema.referenceIdentifierField
         ? useSelectedReferences({
               referenceGenomesInfo,
-              schema: { ...schema, referenceIdentifierField: schema.referenceIdentifierField },
+              referenceIdentifierField: schema.referenceIdentifierField,
               state,
           })
         : undefined;
     const setSelectedReferences = schema.referenceIdentifierField
         ? useSetSelectedReferences({
               referenceGenomesInfo,
-              schema: { ...schema, referenceIdentifierField: schema.referenceIdentifierField },
+              referenceIdentifierField: schema.referenceIdentifierField,
               setSomeFieldValues,
           })
         : undefined;
