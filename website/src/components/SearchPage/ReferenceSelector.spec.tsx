@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ReferenceSelector } from './ReferenceSelector.tsx';
 import {
@@ -8,9 +8,24 @@ import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 } from '../../types/referenceGenomes.spec.ts';
+import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { MetadataFilterSchema } from '../../utils/search.ts';
 
 const referenceIdentifierField = 'genotype';
+
+vi.mock('../../services/serviceHooks.ts');
+vi.mock('../../clientLogger.ts', () => ({
+    getClientLogger: () => ({
+        error: vi.fn(),
+    }),
+}));
+
+const mockUseAggregated = vi.fn();
+// @ts-expect-error mock implementation for test double
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+lapisClientHooks.mockReturnValue({
+    useAggregated: mockUseAggregated,
+});
 
 const filterSchema = new MetadataFilterSchema([
     {
@@ -34,6 +49,10 @@ const multiSegmentFilterSchema = new MetadataFilterSchema([
 ]);
 
 describe('ReferenceSelector', () => {
+    beforeEach(() => {
+        mockUseAggregated.mockReset();
+    });
+
     it('renders nothing in single reference case', () => {
         const { container } = render(
             <ReferenceSelector
@@ -51,6 +70,17 @@ describe('ReferenceSelector', () => {
     });
 
     it('renders selector UI in multi-reference case', () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { [referenceIdentifierField]: 'ref1', count: 10 },
+                    { [referenceIdentifierField]: 'ref2', count: 20 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
+        });
         const setSelected = vi.fn();
         render(
             <ReferenceSelector
@@ -70,6 +100,17 @@ describe('ReferenceSelector', () => {
     });
 
     it('renders selector UI in multi-segment multi-reference case', () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { [`${referenceIdentifierField}_L`]: 'L-ref1', count: 10 },
+                    { [`${referenceIdentifierField}_L`]: 'L-ref2', count: 20 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
+        });
         const setSelected = vi.fn();
         render(
             <ReferenceSelector
@@ -89,6 +130,17 @@ describe('ReferenceSelector', () => {
     });
 
     it('updates selection when changed', async () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { [referenceIdentifierField]: 'ref1', count: 10 },
+                    { [referenceIdentifierField]: 'ref2', count: 20 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
+        });
         const setSelected = vi.fn();
         render(
             <ReferenceSelector
@@ -107,6 +159,17 @@ describe('ReferenceSelector', () => {
     });
 
     it('shows clear button and clears selection', async () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { [referenceIdentifierField]: 'ref1', count: 10 },
+                    { [referenceIdentifierField]: 'ref2', count: 20 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
+        });
         const setSelected = vi.fn();
         render(
             <ReferenceSelector
