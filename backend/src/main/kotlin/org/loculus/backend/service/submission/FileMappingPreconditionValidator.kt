@@ -183,52 +183,31 @@ class FileMappingPreconditionValidator(
 class SubmissionIdFilesMappingPreconditionValidator(
     private val fileMappingValidator: FileMappingPreconditionValidator,
 ) {
-    fun validateFilenameCharacters(
+    private inline fun delegateValidation(
         submissionIdFilesMap: SubmissionIdFilesMap?,
+        crossinline validation: (FileCategoryFilesMap) -> Unit,
     ): SubmissionIdFilesMappingPreconditionValidator {
-        submissionIdFilesMap?.values?.forEach {
-            fileMappingValidator.validateFilenameCharacters(it)
-        }
+        submissionIdFilesMap?.values?.forEach(validation)
         return this
     }
 
-    fun validateFilenamesAreUnique(
-        submissionIdFilesMap: SubmissionIdFilesMap?,
-    ): SubmissionIdFilesMappingPreconditionValidator {
-        submissionIdFilesMap?.values?.forEach {
-            fileMappingValidator.validateFilenamesAreUnique(it)
-        }
-        return this
-    }
+    fun validateFilenameCharacters(submissionIdFilesMap: SubmissionIdFilesMap?) =
+        delegateValidation(submissionIdFilesMap) { fileMappingValidator.validateFilenameCharacters(it) }
 
-    fun validateCategoriesMatchSchema(
-        submissionIdFilesMap: SubmissionIdFilesMap?,
-        organism: Organism,
-    ): SubmissionIdFilesMappingPreconditionValidator {
-        submissionIdFilesMap?.values?.forEach {
-            fileMappingValidator.validateCategoriesMatchSubmissionSchema(it, organism)
-        }
-        return this
-    }
+    fun validateFilenamesAreUnique(submissionIdFilesMap: SubmissionIdFilesMap?) =
+        delegateValidation(submissionIdFilesMap) { fileMappingValidator.validateFilenamesAreUnique(it) }
+
+    fun validateCategoriesMatchSchema(submissionIdFilesMap: SubmissionIdFilesMap?, organism: Organism) =
+        delegateValidation(submissionIdFilesMap) { fileMappingValidator.validateCategoriesMatchSubmissionSchema(it, organism) }
 
     /**
      * For files that have been uploaded through the multipart upload protocol, this validates that the uploads
      * have been completed.
      */
     // TODO #5503: Write tests for this
-    fun validateMultipartUploads(
-        submissionIdFilesMap: SubmissionIdFilesMap?,
-    ): SubmissionIdFilesMappingPreconditionValidator {
-        submissionIdFilesMap?.values?.forEach {
-            fileMappingValidator.validateMultipartUploads(it.fileIds)
-        }
-        return this
-    }
+    fun validateMultipartUploads(submissionIdFilesMap: SubmissionIdFilesMap?) =
+        delegateValidation(submissionIdFilesMap) { fileMappingValidator.validateMultipartUploads(it.fileIds) }
 
-    fun validateFilesExist(submissionIdFilesMap: SubmissionIdFilesMap?): SubmissionIdFilesMappingPreconditionValidator {
-        submissionIdFilesMap?.values?.forEach {
-            fileMappingValidator.validateFilesExist(it.fileIds)
-        }
-        return this
-    }
+    fun validateFilesExist(submissionIdFilesMap: SubmissionIdFilesMap?) =
+        delegateValidation(submissionIdFilesMap) { fileMappingValidator.validateFilesExist(it.fileIds) }
 }
