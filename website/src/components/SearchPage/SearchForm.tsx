@@ -31,6 +31,7 @@ import MaterialSymbolsTune from '~icons/material-symbols/tune';
 import StreamlineWrench from '~icons/streamline/wrench';
 
 const queryClient = new QueryClient();
+const DEFAULT_HEADER_LABEL = 'Other filters';
 
 interface SearchFormProps {
     organism: string;
@@ -66,6 +67,23 @@ export const SearchForm = ({
     const visibleFields = filterSchema.filters.filter(
         (field) => searchVisibilities.get(field.name)?.isVisible(selectedSuborganism) ?? false,
     );
+
+    const groupedFieldSections = useMemo(() => {
+        const sections = new Map<string, (GroupedMetadataFilter | MetadataFilter)[]>();
+
+        for (const field of visibleFields) {
+            const rawHeader = 'header' in field ? field.header : undefined;
+            const header = rawHeader?.trim() ? rawHeader.trim() : DEFAULT_HEADER_LABEL;
+
+            if (!sections.has(header)) {
+                sections.set(header, []);
+            }
+
+            sections.get(header)!.push(field);
+        }
+
+        return Array.from(sections.entries()).map(([header, fields]) => ({ header, fields }));
+    }, [visibleFields]);
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);
@@ -168,7 +186,7 @@ export const SearchForm = ({
                         lapisUrl={lapisUrl}
                         lapisSearchParameters={lapisSearchParameters}
                     />
-                    <div className='flex flex-col'>
+                    <div className='flex flex-col gap-2 py-2'>
                         {suborganismIdentifierField !== undefined && (
                             <SuborganismSelector
                                 filterSchema={filterSchema}
@@ -178,30 +196,52 @@ export const SearchForm = ({
                                 setSelectedSuborganism={setSelectedSuborganism}
                             />
                         )}
-                        <div className='mb-1'>
+                        <section className='flex flex-col gap-1.5'>
                             <AccessionField
                                 textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
                                 setTextValue={(value) => setSomeFieldValues(['accession', value])}
                             />
-                        </div>
 
-                        {showMutationSearch && suborganismSegmentAndGeneInfo !== null && (
-                            <MutationField
-                                suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
-                                value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
-                                onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
-                            />
-                        )}
-                        {visibleFields.map((filter) => (
-                            <SearchField
-                                field={filter}
-                                lapisUrl={lapisUrl}
-                                fieldValues={fieldValues}
-                                setSomeFieldValues={setSomeFieldValues}
-                                key={filter.name}
-                                lapisSearchParameters={lapisSearchParameters}
-                            />
-                        ))}
+                            {showMutationSearch && suborganismSegmentAndGeneInfo !== null && (
+                                <MutationField
+                                    suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
+                                    value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
+                                    onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
+                                />
+                            )}
+                        </section>
+                        <div className='h-px shadow -mx-4 my-0.5' />
+                        {groupedFieldSections.map(({ header, fields }, index) => {
+                            const shouldShowHeader =
+                                fields.length !== 1 ||
+                                (fields[0].displayName ?? fields[0].name) !== header;
+
+                            return (
+                                <>
+                                    {index > 0 && <div className='h-px shadow -mx-4 my-0.5' />}
+                                    <section key={header}>
+                                        {shouldShowHeader && (
+                                            <div className='flex items-center gap-2 mb-2'>
+                                                <span className='h-4 w-1 rounded-full bg-gray-300'></span>
+                                                <h3 className='text-xs uppercase tracking-wide text-gray-500'>{header}</h3>
+                                            </div>
+                                        )}
+                                        <div className='flex flex-col gap-1.5'>
+                                            {fields.map((filter) => (
+                                                <SearchField
+                                                    field={filter}
+                                                    lapisUrl={lapisUrl}
+                                                    fieldValues={fieldValues}
+                                                    setSomeFieldValues={setSomeFieldValues}
+                                                    key={filter.name}
+                                                    lapisSearchParameters={lapisSearchParameters}
+                                                />
+                                            ))}
+                                        </div>
+                                    </section>
+                                </>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
@@ -223,9 +263,8 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
             return <DateRangeField field={field} fieldValues={fieldValues} setSomeFieldValues={setSomeFieldValues} />;
         } else {
             return (
-                <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
-                    <h3 className='text-gray-500 text-sm mb-1'>{field.displayName ?? field.name}</h3>
-
+                <div key={field.name} className='flex flex-col gap-1.5 border p-2 rounded-md border-gray-300'>
+                    <h3 className='text-gray-500 text-sm'>{field.displayName ?? field.name}</h3>
                     {field.groupedFields.map((f) => (
                         <SearchField
                             field={f}

@@ -50,7 +50,7 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
     }
 
     return (
-        <div className='bg-gray-50 border border-gray-300 rounded-md p-3 mb-3'>
+        <div className='bg-gray-50 border border-gray-300 rounded-md p-3'>
             <label className='block text-xs font-semibold text-gray-700 mb-1' htmlFor={selectId}>
                 {label}
             </label>

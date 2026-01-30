@@ -40,7 +40,7 @@ export const FloatingLabelContainer: React.FC<FloatingLabelContainerProps> = ({
     const borderClasses = borderClassName ?? (isFocused ? 'border-blue-600' : 'border-gray-300 hover:border-gray-400');
 
     return (
-        <div className='relative my-1'>
+        <div className='relative'>
             <div
                 className={`relative flex flex-wrap items-center rounded-md cursor-text transition-colors bg-white min-h-[52px] border ${borderClasses} ${className}`}
                 onClick={onClick}
