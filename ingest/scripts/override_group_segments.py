@@ -68,9 +68,12 @@ class Config:
 
 @dataclass
 class Groups:
-    accession_to_group: dict[InsdcAccession, GroupName]
+    # Group override definitions, showing which accessions belong to a given group.
     override_groups: dict[GroupName, list[InsdcAccession]]
-    found_groups: dict[GroupName, list[dict[str, Any]]]
+
+    # Map of nucleotide sequence accessions to their group/assembly names.
+    # Basically the reverse map of `override_groups`.
+    accession_to_group: dict[InsdcAccession, GroupName]
 
 
 # id is actually NCBI accession
@@ -171,7 +174,7 @@ def get_metadata_of_group(
 def group_records(
     record_list: list[dict],
     output_metadata_path: str,
-    fasta_id_map: dict[str, str],
+    fasta_id_map: dict[Accession, Id],
     config: Config,
     different_values_log: dict[str, int],
 ) -> None:
@@ -183,7 +186,7 @@ def group_records(
             )
             logger.error(msg)
             full_msg = (
-                f"Ingest for {config.organism} filed with: {msg} "
+                f"Ingest for {config.organism} failed with: {msg} "
                 "- this indicates the grouping override file needs to be changed"
             )
             notify(config, full_msg)
@@ -207,7 +210,8 @@ def write_grouped_metadata(
     output_grouped_metadata_path: str,
     config: Config,
     groups: Groups,
-) -> tuple[dict, set]:
+) -> tuple[dict[Accession, Id], set[Accession]]:
+    found_groups = {group: [] for group in groups.override_groups}
     # Map from original accession to the new concatenated accession
     fasta_id_map: dict[Accession, Id] = {}
     ungrouped_accessions = set()
@@ -225,38 +229,39 @@ def write_grouped_metadata(
             ungrouped_accessions.add(record["id"])
             continue
         group = groups.accession_to_group[metadata["insdcAccessionFull"]]
-        groups.found_groups[group].append(record)
-        if len(groups.found_groups[group]) == len(set(groups.override_groups[group])):
+        found_groups[group].append(record)
+        if len(found_groups[group]) == len(set(groups.override_groups[group])):
             group_records(
-                groups.found_groups[group],
+                found_groups[group],
                 output_grouped_metadata_path,
                 fasta_id_map,
                 config,
                 different_values_log,
             )
-            del groups.found_groups[group]
+            del found_groups[group]
 
-    logger.info(f"Found {count_total} records")
-    logger.info(f"Unable to group {count_ungrouped} records")
+    # Now, found_groups has only groups left with either no found metadata at all, or just partial
+    # all the completed ones were deleted.
 
-    # add found_groups without all segments in file
-    count_unfilled_groups = 0
-    count_missing_tests = 0
-    for name, records in groups.found_groups.items():
-        count_unfilled_groups += 1
+    logger.info(f"Scanned {count_total} input metadata records")
+    logger.info(f"No override group definitions found for {count_ungrouped} records")
+
+    count_incomplete_groups = len(found_groups)
+    count_empty_groups = len([name for name, records in found_groups.items() if len(records) == 0])
+
+    # Write out remaining, only partially found groups - even if incomplete
+    for name, records in found_groups.items():
         missing_records = set(groups.override_groups[name]) - {
             record["metadata"]["insdcAccessionFull"] for record in records
         }
         logger.debug(f"{name}: Missing record {missing_records}")
-        if len(records) == 0:
-            count_missing_tests += 1
-            continue
-        group_records(
-            records, output_grouped_metadata_path, fasta_id_map, config, different_values_log
-        )
+        if len(records) > 0:
+            group_records(
+                records, output_grouped_metadata_path, fasta_id_map, config, different_values_log
+            )
     logger.info(different_values_log)
-    logger.info(f"Found {count_unfilled_groups} groups without all segments")
-    logger.info(f"Found {count_missing_tests} groups without any segments")
+    logger.info(f"Found {count_incomplete_groups} groups without all segments")
+    logger.info(f"Found {count_empty_groups} groups without any segments")
     return fasta_id_map, ungrouped_accessions
 
 
@@ -293,24 +298,32 @@ def write_grouped_sequences(
     logger.info(f"Ignored {count_ignored} sequences as not found in {input_seq_path}")
 
 
-def get_groups_object(groups_json_path: str):
+def get_groups_object(groups_json_path: str) -> Groups:
     with open(groups_json_path, encoding="utf-8") as g:
         override_groups = json.load(g)
     logger.info(f"Found {len(override_groups.keys())} source of truth groups")
-    accession_to_group = {}
+    accession_to_group: dict[InsdcAccession, GroupName] = {}
     for group, metadata in override_groups.items():
         for accession in metadata:
             accession_to_group[accession] = group
 
-    found_groups = {group: [] for group in override_groups}
-
-    return Groups(accession_to_group, override_groups, found_groups)
+    return Groups(override_groups, accession_to_group)
 
 
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
-@click.option("--groups", required=True, type=click.Path(exists=True))
-@click.option("--input-seq", required=True, type=click.Path(exists=True))
+@click.option(
+    "--groups",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to the JSON file containing the map from group names to lists of accessions."
+)
+@click.option(
+    "--input-seq",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to the JSONL file of input data."
+)
 @click.option("--input-metadata", required=True, type=click.Path(exists=True))
 @click.option("--output-seq", required=True, type=click.Path())
 @click.option("--output-metadata", required=True, type=click.Path())
