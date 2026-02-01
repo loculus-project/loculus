@@ -155,6 +155,22 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                             </MenuItem>
                         ))}
                     </div>
+                    <div className='border-t border-gray-100'>
+                        <MenuItem>
+                            {({ focus }) => (
+                                <a
+                                    href='/tools'
+                                    target='_blank'
+                                    rel='noopener noreferrer'
+                                    className={`${
+                                        focus ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                                    } flex items-center justify-between px-4 py-2 text-sm w-full text-left`}
+                                >
+                                    More tools
+                                </a>
+                            )}
+                        </MenuItem>
+                    </div>
                 </MenuItems>
             </Menu>
             {dataUseTermsEnabled && (
