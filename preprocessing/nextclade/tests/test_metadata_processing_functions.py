@@ -219,6 +219,7 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_6.1/2022-11-01",
             "regex_field": "EPI_ISL_123456",
+            "extracted_regex_field": "123456",
         },
         expected_errors=[],
         expected_warnings=[],
@@ -239,6 +240,7 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_6.1/2022-11-01",
             "regex_field": None,
+            "extracted_regex_field": None,
         },
         expected_errors=build_processing_annotations(
             [
@@ -248,6 +250,14 @@ test_case_definitions = [
                     (
                         "The value 'EPIISL_123456' does not match the expected regex pattern: "
                         "'^EPI_ISL_[0-9]+$'."
+                    ),
+                ),
+                ProcessingAnnotationHelper(
+                    ["regex_field"],
+                    ["extracted_regex_field"],
+                    (
+                        "The value 'EPIISL_123456' does not match the expected regex pattern: "
+                        "'^EPI_ISL_(?P<id>[0-9]+)$' or does not contain a capture group 'id'."
                     ),
                 ),
             ]
@@ -598,6 +608,7 @@ test_case_definitions = [
             "concatenated_string": "LOC_16.1/2022-11-01",
             "authors": "Smith, John II; Doe, A. B. C.",
             "regex_field": "EPI_ISL_123456",
+            "extracted_regex_field": "123456",
         },
         expected_errors=[],
         expected_warnings=[],
