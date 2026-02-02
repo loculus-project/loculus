@@ -31,6 +31,7 @@ from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
     format_stop_codon,
+    process_phenotype_values,
 )
 
 # Config file used for testing
@@ -1244,6 +1245,18 @@ def test_format_stop_codon():
     input_zero = '[{"cdsName": "L", "codon": 0}]'
     expected_zero = "L:1"
     assert format_stop_codon(input_zero) == expected_zero
+
+
+def test_process_phenotype_values():
+    assert process_phenotype_values("[]", {"name": "NAI"}).datum is None
+    assert (
+        process_phenotype_values(
+            '[{"name": "NAI","cds": "NA","value": 0.0}, {"name": "Other","cds": "NA","value": 1.0}]',
+            {"name": "NAI"},
+        ).datum
+        == "0.0"
+    )
+    assert process_phenotype_values('[{"name": "NAI","cds": "NA","value": 0.0}]', {}).datum is None
 
 
 def test_reformat_authors_from_loculus_to_embl_style():
