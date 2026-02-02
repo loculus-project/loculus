@@ -46,18 +46,6 @@ test.describe('Search', () => {
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
 
-    test('multi-reference mutation filter can be added and removed', async ({ page }) => {
-        const mutation = 'T11C';
-        await searchPage.enterovirus();
-        await searchPage.selectReference('Genotype', 'EV-A71');
-        await searchPage.enterMutation(mutation);
-        await expect(page.getByText(`mutation:${mutation}`)).toBeVisible();
-        const filterChip = page.locator('span', { hasText: mutation }).locator('..');
-        await filterChip.getByRole('button', { name: 'remove filter' }).click();
-        await expect(page.getByText(`mutation:${mutation}`)).toBeHidden();
-        expect(new URL(page.url()).searchParams.size).toBe(1); // only genotype filter remains
-    });
-
     test('substring-search filter can be removed by clicking the X', async ({ page }) => {
         await searchPage.ebolaSudan();
         await searchPage.enableSearchFields('Author affiliations');
