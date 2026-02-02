@@ -908,7 +908,7 @@ class ProcessingFunctions:
                         [output_field],
                         AnnotationSourceType.METADATA,
                         message=(
-                            f"The value '{regex_field}' does not contain a capture group: "
+                            f"The pattern '{pattern}' does not contain a capture group: "
                             f"'{capture_group}'- this is an internal error,"
                             " please contact your local administrator."
                         ),
