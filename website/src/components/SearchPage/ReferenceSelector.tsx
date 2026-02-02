@@ -144,28 +144,30 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
         }, {});
     }, [filterSchema, referenceIdentifierField, referenceGenomesInfo]);
 
+    const optionsProvidersBySegment = useMemo(() => {
+        return multiRefSegments.reduce<Record<string, OptionsProvider>>((acc, segment) => {
+            const identifier = identifierBySegment[segment];
+            if (!identifier) return acc;
+
+            acc[segment] = {
+                type: 'generic' as const,
+                lapisUrl,
+                lapisSearchParameters,
+                fieldName: identifier,
+            };
+
+            return acc;
+        }, {});
+    }, [multiRefSegments, identifierBySegment, lapisUrl, lapisSearchParameters]);
+
     return (
         <>
             {multiRefSegments.map((segment) => {
-                const selectId = `${baseSelectId}-${segment}`;
-                const identifier = identifierBySegment[segment];
-                const label = labelsBySegment[segment];
-
-                const optionsProvider = useMemo(
-                    () => ({
-                        type: 'generic' as const,
-                        lapisUrl,
-                        lapisSearchParameters,
-                        fieldName: identifier!,
-                    }),
-                    [lapisUrl, lapisSearchParameters, identifier],
-                );
-
                 return (
                     <SegmentReferenceSelector
                         key={segment}
-                        label={label}
-                        selectId={selectId}
+                        label={labelsBySegment[segment]}
+                        selectId={`${baseSelectId}-${segment}`}
                         value={selectedReferences[segment]}
                         onChange={(e) =>
                             setSelectedReferences({
@@ -179,7 +181,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                                 [segment]: null,
                             })
                         }
-                        optionsProvider={optionsProvider}
+                        optionsProvider={optionsProvidersBySegment[segment]}
                     />
                 );
             })}
