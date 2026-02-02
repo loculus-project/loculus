@@ -854,7 +854,7 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def regex_extraction(
+    def extract_regex(
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -863,7 +863,8 @@ class ProcessingFunctions:
         """
         Extracts a substring from the `regex_field` using the provided regex `pattern`
         with a `capture_group`.
-        e.g. ^(?P<segment>[^-]+)-(?P<subtype>[^-]+)$
+        e.g. ^(?P<segment>[^-]+)-(?P<subtype>[^-]+)$ where segment or subtype could be used
+        as a capture_group to extract their respective value from the regex_field.
         """
         regex_field = input_data["regex_field"]
 
@@ -881,7 +882,7 @@ class ProcessingFunctions:
                     input_fields,
                     [output_field],
                     AnnotationSourceType.METADATA,
-                    message=regex_error("regex_extraction", "pattern", input_data, args),
+                    message=regex_error("extract_regex", "pattern", input_data, args),
                 )
             )
             return ProcessingResult(datum=None, warnings=warnings, errors=errors)
@@ -891,7 +892,7 @@ class ProcessingFunctions:
                     input_fields,
                     [output_field],
                     AnnotationSourceType.METADATA,
-                    message=regex_error("regex_extraction", "capture_group", input_data, args),
+                    message=regex_error("extract_regex", "capture_group", input_data, args),
                 )
             )
             return ProcessingResult(datum=None, warnings=warnings, errors=errors)
