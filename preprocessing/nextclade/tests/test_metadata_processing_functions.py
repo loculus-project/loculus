@@ -257,7 +257,7 @@ test_case_definitions = [
                     ["extracted_regex_field"],
                     (
                         "The value 'EPIISL_123456' does not match the expected regex pattern: "
-                        "'^EPI_ISL_(?P<id>[0-9]+)$' or does not contain a capture group 'id'."
+                        "'^EPI_ISL_(?P<id>[0-9]+)$'."
                     ),
                 ),
             ]

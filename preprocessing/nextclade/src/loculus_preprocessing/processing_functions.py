@@ -898,19 +898,34 @@ class ProcessingFunctions:
             return ProcessingResult(datum=None, warnings=warnings, errors=errors)
         match = re.match(pattern, regex_field.strip())
         if match:
-            result = match.group(capture_group)
-            return ProcessingResult(datum=result, warnings=warnings, errors=errors)
-        errors.append(
-            ProcessingAnnotation.from_fields(
-                input_fields,
-                [output_field],
-                AnnotationSourceType.METADATA,
-                message=(
-                    f"The value '{regex_field}' does not match the expected regex "
-                    f"pattern: '{pattern}' or does not contain a capture group '{capture_group}'."
-                ),
+            try:
+                result = match.group(capture_group)
+                return ProcessingResult(datum=result, warnings=warnings, errors=errors)
+            except IndexError:
+                errors.append(
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"The value '{regex_field}' does not contain a capture group: "
+                            f"'{capture_group}'- this is an internal error,"
+                            " please contact your local administrator."
+                        ),
+                    )
+                )
+        else:
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=(
+                        f"The value '{regex_field}' does not match the expected regex "
+                        f"pattern: '{pattern}'."
+                    ),
+                )
             )
-        )
         return ProcessingResult(datum=None, warnings=warnings, errors=errors)
 
     @staticmethod
