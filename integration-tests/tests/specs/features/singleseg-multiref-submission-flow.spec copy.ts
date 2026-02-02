@@ -35,6 +35,17 @@ test.describe('Single segment multi-reference submission flow', () => {
         await releasedPage.expectResultTableCellText('EV-A71');
         const accessionVersions = await releasedPage.waitForSequencesInSearch(1);
         const firstAccessionVersion = accessionVersions[0];
+
+        // Test mutation search
+        const mutation = 'T11C';
+        await releasedPage.selectReference('Genotype', 'EV-A71');
+        await releasedPage.enterMutation(mutation);
+        await expect(page.getByText(`mutation:${mutation}`)).toBeVisible();
+        const filterChip = page.locator('span', { hasText: mutation }).locator('..');
+        await filterChip.getByRole('button', { name: 'remove filter' }).click();
+        await expect(page.getByText(`mutation:${mutation}`)).toBeHidden();
+        expect(new URL(page.url()).searchParams.size).toBe(1); // only genotype filter remains
+        
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.1`);
         const expectedDisplayName = new RegExp(
             `^Display Name: Uganda/${firstAccessionVersion.accession}\\.1`,
