@@ -124,7 +124,7 @@ However, the `preprocessing` field can be customized to take an arbitrary number
 5. `concatenate`: Take multiple metadata fields (including the accessionVersion) and concatenate them in the order specified by the `arg.order` parameter, fields will first be processed based on their `arg.type` (the order of the types should correspond to the order of fields specified by the order argument).
 6. `process_options`: Only accept input that is in `args.options`, this check is case-insensitive. If input value is not in options raise an error, or return null if the submitter is in the "insdc_ingest" group.
 7. `check_regex`: Validate that the input field matches the pattern in `args.pattern`.
-8. `extract_regex`: Extracts a substring from input field using the provided regex `args.pattern` with a `args.capture_group`. For example the pattern `^(?P<segment>[^-]+)-(?P<subtype>[^-]+)$` with capture group `subtype` would extract `HA` from the field `seg1-HA`.
+8. `extract_regex`: Extracts a substring from input field using the provided regex `args.pattern` with a `args.capture_group`. For example the pattern `^(?P<segment>[^-]+)-(?P<subtype>[^-]+)$` with capture group `subtype` would extract `HA` from the field `seg1-HA`. Returns an error if the pattern does not match (and internal error if capture group does not exist in pattern).
 
 Using these functions in your `values.yaml` will look like:
 
