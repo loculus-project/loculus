@@ -361,6 +361,18 @@ describe('SearchFullUI', () => {
     });
 
     it('should reset reference specific search fields when changing the selected reference', async () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { ['reference']: 'ref1', count: 10 },
+                    { ['reference']: 'ref2', count: 20 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            isError: false,
+            mutate: vi.fn(),
+        });
         renderSearchFullUI({
             referenceIdentifierField: 'reference',
             searchFormFilters: [
