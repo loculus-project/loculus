@@ -133,7 +133,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
 
             return acc;
         }, {});
-    }, [filterSchema, referenceIdentifierField, referenceGenomesInfo]);
+    }, [referenceIdentifierField, referenceGenomesInfo]);
     const labelsBySegment = useMemo(() => {
         return multiRefSegments.reduce<Record<string, string | undefined>>((acc, segmentName) => {
             const identifier = identifierBySegment[segmentName];

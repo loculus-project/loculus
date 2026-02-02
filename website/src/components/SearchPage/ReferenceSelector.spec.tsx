@@ -97,6 +97,9 @@ describe('ReferenceSelector', () => {
         expect(screen.getByText('My Genotype')).toBeInTheDocument();
         expect(screen.getByRole('combobox')).toBeInTheDocument();
         expect(screen.getAllByRole('option')).toHaveLength(3); // Includes disabled option
+        const options = screen.getAllByRole('option');
+        const optionTexts = options.map((option) => option.textContent);
+        expect(optionTexts).toEqual(expect.arrayContaining(['ref1 (10)', 'ref2 (20)']));
     });
 
     it('renders selector UI in multi-segment multi-reference case', () => {
