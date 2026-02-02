@@ -148,7 +148,10 @@ describe('SearchForm', () => {
                 <SearchForm
                     organism={testOrganism}
                     filterSchema={
-                        new MetadataFilterSchema([...defaultSearchFormFilters, { name: referenceIdentifierField, type: 'string' }])
+                        new MetadataFilterSchema([
+                            ...defaultSearchFormFilters,
+                            { name: referenceIdentifierField, type: 'string' },
+                        ])
                     }
                     clientConfig={testConfig.public}
                     fieldValues={{}}
