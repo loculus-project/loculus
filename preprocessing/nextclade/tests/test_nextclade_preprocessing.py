@@ -1257,6 +1257,9 @@ def test_process_phenotype_values():
         == "0.0"
     )
     assert process_phenotype_values('[{"name": "NAI","cds": "NA","value": 0.0}]', {}).datum is None
+    invalid = process_phenotype_values("Malformed JSON", {"name": "NAI"})
+    assert invalid.datum is None
+    assert "Was unable to process phenotype values" in invalid.errors[0].message
 
 
 def test_reformat_authors_from_loculus_to_embl_style():
