@@ -45,7 +45,7 @@ test.describe('Single segment multi-reference submission flow', () => {
         await filterChip.getByRole('button', { name: 'remove filter' }).click();
         await expect(page.getByText(`mutation:${mutation}`)).toBeHidden();
         expect(new URL(page.url()).searchParams.size).toBe(1); // only genotype filter remains
-        
+
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.1`);
         const expectedDisplayName = new RegExp(
             `^Display Name: Uganda/${firstAccessionVersion.accession}\\.1`,
