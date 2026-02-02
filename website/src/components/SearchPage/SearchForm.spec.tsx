@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
+import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { MetadataFilter } from '../../types/config.ts';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
@@ -13,7 +14,6 @@ import {
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
-import { lapisClientHooks } from '../../services/serviceHooks.ts';
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
     observe() {}
