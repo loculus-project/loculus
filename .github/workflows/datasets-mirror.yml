@@ -11,6 +11,7 @@ jobs:
         taxon_id:
           - 11520   # Influenza B
           - 197911  # Influenza A
+          - 3052518  # CCHFV
       fail-fast: false
     steps:
       - name: Checkout repository

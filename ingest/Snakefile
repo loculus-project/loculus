@@ -383,6 +383,20 @@ if GROUPS_OVERRIDE_JSON and not CALCULATE_GROUPS_OVERRIDE_JSON:
 
 if CALCULATE_GROUPS_OVERRIDE_JSON:
 
+    rule download_ignore_list:
+        output:
+            ignore_list="grouping_ignore_list.txt",
+        params:
+            grouping_ignore_list_url=config.get("grouping_ignore_list_url"),
+        shell:
+            """
+            if [[ {params.grouping_ignore_list_url} ]]; then
+                curl -L -o {output.ignore_list} {params.grouping_ignore_list_url}
+            else
+                touch {output.ignore_list}
+            fi
+            """
+
     rule fetch_inflate_assemblies:
         output:
             marker="{source}_assembly/.fetch_inflate_complete",
@@ -441,7 +455,7 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             report_refseq="refseq_assembly/ncbi_dataset/data/assembly_data_report.jsonl",
             rehydration_genbank="genbank_assembly/.rehydration_complete",
             rehydration_refseq="refseq_assembly/.rehydration_complete",
-            ignore_list="error_sequences.txt",
+            ignore_list="grouping_ignore_list.txt",
         output:
             groups_json="results/{TAXON_ID}-groups.json",
         params:
