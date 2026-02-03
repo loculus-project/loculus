@@ -1,4 +1,4 @@
-name: Mirror NCBI Datasets to Object Storage
+name: Mirror NCBI Assemblies to Object Storage
 on:
   workflow_dispatch:
   schedule:
