@@ -75,7 +75,7 @@ def main(dataset_dir: list[str], output_file: str, ignore_list: str) -> None:
         print(f"{segment_count}: {segment_count_counter[segment_count]:7}")
 
     with open(output_file, "w", encoding="utf-8") as outfile:
-        json.dump(assembly_segment_dict, outfile, indent=4, sort_keys=True)
+        json.dump(assembly_segment_dict, outfile, indent=4)
 
 
 if __name__ == "__main__":
