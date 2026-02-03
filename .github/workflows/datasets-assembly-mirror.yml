@@ -1,0 +1,58 @@
+name: Mirror NCBI Assemblies to Object Storage
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '12 2 * * *' # Runs daily at 02:12 UTC
+jobs:
+  download-and-upload:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        taxon_id:
+          - 11520   # Influenza B
+          - 197911  # Influenza A
+          - 3052518  # CCHFV
+      fail-fast: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: datasets
+          create-args: ncbi-datasets-cli s3cmd
+      - name: Download NCBI Dataset
+        shell: bash -l {0}
+        run: |
+          datasets download genome taxon ${{ matrix.taxon_id }} --no-progressbar --assembly-source refseq --dehydrated --filename ${{ matrix.taxon_id }}-refseq.zip
+          unzip -o ${{ matrix.taxon_id }}-refseq.zip
+          tar -I 'zstd -T0 -18' -cvf ${{ matrix.taxon_id }}-refseq.tar.zst ncbi_dataset
+          datasets download genome taxon ${{ matrix.taxon_id }} --no-progressbar --assembly-source genbank --dehydrated --filename ${{ matrix.taxon_id }}-genbank.zip
+          unzip -o ${{ matrix.taxon_id }}-genbank.zip
+          tar -I 'zstd -T0 -18' -cvf ${{ matrix.taxon_id }}-genbank.tar.zst ncbi_dataset
+      - name: Create S3cmd config
+        run: |
+          cat <<EOF > ~/.s3cfg
+          access_key = ${{ secrets.HETZNER_S3_ACCESS_KEY }}
+          secret_key = ${{ secrets.HETZNER_S3_SECRET_KEY }}
+          host_base = hel1.your-objectstorage.com
+          host_bucket = %(bucket)s.hel1.your-objectstorage.com
+          verbosity = DEBUG
+          EOF
+      - name: Upload to Object Storage
+        shell: bash -l {0}
+        run: |
+          for file in ${{ matrix.taxon_id }}-refseq.zip ${{ matrix.taxon_id }}-genbank.zip ${{ matrix.taxon_id }}-refseq.tar.zst ${{ matrix.taxon_id }}-genbank.tar.zst ; do
+            s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
+          done
+  notify_on_failure:  # Runs only if 'build' job fails
+    needs: download-and-upload
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Send Slack Notification
+        env:
+          SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "🚨 Failed to mirror NCBI assemblies: ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+          }' $SLACK_HOOK
