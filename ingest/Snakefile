@@ -380,6 +380,7 @@ if GROUPS_OVERRIDE_JSON and not CALCULATE_GROUPS_OVERRIDE_JSON:
             curl -L -o {output.results} {params.grouping}
             """
 
+
 if CALCULATE_GROUPS_OVERRIDE_JSON:
 
     rule fetch_inflate_assemblies:
@@ -454,6 +455,7 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             --output-file {output.groups_json} \
             --ignore-list {input.ignore_list}
             """
+
 
 if GROUPS_OVERRIDE_JSON:
 
