@@ -88,6 +88,36 @@ test.describe('Multi-field search', () => {
         expect(urlParams.has('identifier')).toBe(false);
     });
 
+    test('identifier search uses per-segment fields for multi-segmented organism (CCHF)', async ({
+        page,
+    }) => {
+        await searchPage.cchf();
+
+        const lapisRequestBodies: string[] = [];
+        await page.route('**/sample/aggregated', async (route) => {
+            const body = route.request().postData();
+            if (body) {
+                lapisRequestBodies.push(body);
+            }
+            await route.continue();
+        });
+
+        const identifierField = page.getByRole('textbox', { name: 'Identifier', exact: true });
+        await identifierField.fill('nonexistent-id');
+        await identifierField.press('Enter');
+
+        await expect(page.getByText(/Search returned 0 sequence/)).toBeVisible();
+
+        const queryWithIdentifier = lapisRequestBodies.find((body) =>
+            body.includes('nonexistent-id'),
+        );
+        expect(queryWithIdentifier).toBeDefined();
+        expect(queryWithIdentifier).toContain('insdcAccessionFull_L.regex');
+        expect(queryWithIdentifier).toContain('insdcAccessionFull_M.regex');
+        expect(queryWithIdentifier).toContain('insdcAccessionFull_S.regex');
+        expect(queryWithIdentifier).not.toContain('insdcAccessionFull.regex');
+    });
+
     test('contributor filter can be removed by clicking the X', async ({ page }) => {
         await searchPage.ebolaSudan();
 
