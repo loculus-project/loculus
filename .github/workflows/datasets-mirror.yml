@@ -22,13 +22,12 @@ jobs:
       - name: Download NCBI Dataset
         shell: bash -l {0}
         run: |
-          datasets download virus genome taxon ${{ matrix.taxon_id }} --no-progressbar --filename ${{ matrix.taxon_id }}.zip
-          datasets download genome taxon ${{ matrix.taxon_id }} --assembly-source refseq --dehydrated --filename ${{ matrix.taxon_id }}-refseq.zip
-          unzip -o ${{ matrix.taxon_id }}-refseq.zip refseq_dataset
-          tar -I 'zstd -T0 -18' -cvf ${{ matrix.taxon_id }}-refseq.tar.zst refseq_dataset
-          datasets download genome taxon ${{ matrix.taxon_id }} --assembly-source genbank --dehydrated --filename ${{ matrix.taxon_id }}-genbank.zip
-          unzip -o ${{ matrix.taxon_id }}-genbank.zip genbank_dataset
-          tar -I 'zstd -T0 -18' -cvf ${{ matrix.taxon_id }}-genbank.tar.zst genbank_dataset
+          datasets download genome taxon ${{ matrix.taxon_id }} --no-progressbar --assembly-source refseq --dehydrated --filename ${{ matrix.taxon_id }}-refseq.zip
+          unzip -o ${{ matrix.taxon_id }}-refseq.zip
+          tar -I 'zstd -T0 -18' -cvf ${{ matrix.taxon_id }}-refseq.tar.zst ncbi_dataset
+          datasets download genome taxon ${{ matrix.taxon_id }} --no-progressbar --assembly-source genbank --dehydrated --filename ${{ matrix.taxon_id }}-genbank.zip
+          unzip -o ${{ matrix.taxon_id }}-genbank.zip
+          tar -I 'zstd -T0 -18' -cvf ${{ matrix.taxon_id }}-genbank.tar.zst ncbi_dataset
       - name: Create S3cmd config
         run: |
           cat <<EOF > ~/.s3cfg
