@@ -12,7 +12,7 @@ RUN cargo install --git $REPO --rev $COMMIT
 # --- SILO binary download stage ---
 FROM curlimages/curl:8.12.1 AS silo-downloader
 
-ARG SILO_VERSION=0.9.6
+ARG SILO_VERSION=0.9.7
 
 RUN curl -sL "https://github.com/GenSpectrum/LAPIS-SILO/releases/download/v${SILO_VERSION}/silo-linux-amd64.tar.gz" \
     | gunzip > /tmp/silo && chmod +x /tmp/silo
