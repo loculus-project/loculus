@@ -392,6 +392,11 @@ if GROUPS_OVERRIDE_JSON:
             ungrouped_sequences="results/sequences_ungrouped.ndjson",
         params:
             log_level=LOG_LEVEL,
+            match_prev_flag=lambda w: (
+                "--match-previous-accession-versions"
+                if config.get("match_previous_accession_versions", False)
+                else ""
+            ),
         shell:
             """
             python {input.script} \
@@ -404,6 +409,7 @@ if GROUPS_OVERRIDE_JSON:
                 --output-ungrouped-seq {output.ungrouped_sequences} \
                 --output-seq {output.sequences} \
                 --log-level {params.log_level} \
+                {params.match_prev_flag}
             """
 
 
