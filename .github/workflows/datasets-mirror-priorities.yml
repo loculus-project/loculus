@@ -1,0 +1,64 @@
+name: Mirror NCBI Datasets to Object Storage
+# This reusable workflow contains the shared logic for mirroring NCBI datasets.
+# It is called by datasets-mirror-priority-1.yml and datasets-mirror-priority-2.yml with different schedules.
+# It can also be manually triggered to mirror a single taxon ID.
+on:
+  workflow_call:
+    inputs:
+      taxon_id:
+        description: 'Single taxon ID to process'
+        required: true
+        type: number
+  workflow_dispatch:
+    inputs:
+      taxon_id:
+        description: 'Taxon ID to mirror'
+        required: true
+        type: number
+jobs:
+  download-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: datasets
+          create-args: -c conda-forge -c bioconda ncbi-datasets-cli s3cmd seqkit
+      - name: Download NCBI Dataset and create tzst archive
+        shell: bash -l {0}
+        run: |
+          datasets download virus genome taxon ${{ inputs.taxon_id }} --no-progressbar --filename ${{ inputs.taxon_id }}.zip
+          unzip -o ${{ inputs.taxon_id }}.zip
+          tar -I 'zstd -T0 -18' -cvf ${{ inputs.taxon_id }}.tar.zst ncbi_dataset
+          cat md5sum.txt
+          ls -lh ${{ inputs.taxon_id }}.* ncbi_dataset/data/*
+          seqkit stats ncbi_dataset/data/genomic.fna
+      - name: Create S3cmd config
+        run: |
+          cat <<EOF > ~/.s3cfg
+          [default]
+          access_key = ${{ secrets.HETZNER_S3_ACCESS_KEY }}
+          secret_key = ${{ secrets.HETZNER_S3_SECRET_KEY }}
+          host_base = hel1.your-objectstorage.com
+          host_bucket = %(bucket)s.hel1.your-objectstorage.com
+          verbosity = DEBUG
+          EOF
+      - name: Upload to Object Storage
+        shell: bash -l {0}
+        run: |
+          for file in ${{ inputs.taxon_id }}.zip ${{ inputs.taxon_id }}.tar.zst ; do
+            s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
+          done
+  notify_on_failure:
+    needs: download-and-upload
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Send Slack Notification
+        env:
+          SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "🚨 Failed to mirror NCBI datasets: ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+          }' $SLACK_HOOK
