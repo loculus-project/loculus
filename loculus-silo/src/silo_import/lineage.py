@@ -21,13 +21,10 @@ def update_lineage_definitions(
         return
 
     if not pipeline_versions:
-        # No data yet - use the lowest configured pipeline version's lineage definitions
-        default_version = min(config.lineage_definitions.keys())
-        logger.info(
-            "No pipeline version found; using default version %s for lineage definitions",
-            default_version,
-        )
-        pipeline_versions = {default_version}
+        # required for dummy organisms
+        logger.info("No pipeline version found; writing empty lineage definitions")
+        _write_text(paths.lineage_definition_file, "{}\n")
+        return
 
     if len(pipeline_versions) > 1:
         msg = "Multiple pipeline versions found in released data"
@@ -50,5 +47,9 @@ def update_lineage_definitions(
 def _download_lineage_file(url: str, destination: Path) -> None:
     response = requests.get(url, timeout=60)
     response.raise_for_status()
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(response.text, encoding="utf-8")
+    _write_text(destination, response.text)
+
+
+def _write_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
