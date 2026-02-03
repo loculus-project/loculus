@@ -16,7 +16,7 @@ ARG SILO_VERSION=0.9.7
 ARG TARGETARCH
 
 RUN curl -sL "https://github.com/GenSpectrum/LAPIS-SILO/releases/download/v${SILO_VERSION}/silo-linux-${TARGETARCH}.tar.gz" \
-    | tar -xz -C /tmp && chmod +x /tmp/silo
+    | tar -xz -C /tmp && mv /tmp/silo-linux-${TARGETARCH} /tmp/silo && chmod +x /tmp/silo
 
 # --- Python runtime stage ---
 FROM python:3.11-slim
