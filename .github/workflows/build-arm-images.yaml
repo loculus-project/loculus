@@ -33,10 +33,10 @@ jobs:
     uses: ./.github/workflows/config-preprocessor-image.yml
     with:
       build_arm: true
-  trigger-silo-import:
+  trigger-loculus-silo:
     needs: should-build
     if: needs.should-build.outputs.should_run == 'true'
-    uses: ./.github/workflows/silo-import-image.yml
+    uses: ./.github/workflows/loculus-silo-image.yml
     with:
       build_arm: true
   trigger-dummy-preprocessing:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import time
 from collections.abc import Callable
@@ -24,12 +25,42 @@ from .errors import (
     RecordCountMismatchError,
 )
 from .filesystem import prune_timestamped_directories, safe_remove
-from .hash_comparator import md5_file
 from .paths import ImporterPaths
 from .transformer import TransformationError, transform_data_format
-from .validator import RecordCountValidationError, parse_int_header, validate_record_count
 
 logger = logging.getLogger(__name__)
+
+
+class RecordCountValidationError(Exception):
+    """Record count does not match expected value."""
+
+
+def _md5_file(path: Path) -> str:
+    """Compute MD5 hash of a file."""
+    digest = hashlib.md5()  # noqa: S324
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):  # 1MB chunks
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _validate_record_count(actual: int, expected: int | None) -> None:
+    """Validate that the actual record count matches expected."""
+    if expected is not None and actual != expected:
+        logger.warning("Expected %s records but decoded %s", expected, actual)
+        msg = f"Expected {expected} records but got {actual}"
+        raise RecordCountValidationError(msg)
+    logger.info("Actual record count matches expected record count")
+
+
+def _parse_int_header(value: str | None) -> int | None:
+    """Parse an integer from an HTTP header value."""
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 @dataclass
@@ -170,7 +201,7 @@ class DownloadManager:
                 raise RuntimeError(msg)
 
             # Parse expected record count from header
-            expected_count = parse_int_header(response.headers.get("x-total-records"))
+            expected_count = _parse_int_header(response.headers.get("x-total-records"))
 
             # Decompress and analyze the data
             try:
@@ -198,7 +229,7 @@ class DownloadManager:
 
             # Validate record count
             try:
-                validate_record_count(analysis.record_count, expected_count)
+                _validate_record_count(analysis.record_count, expected_count)
             except RecordCountValidationError as err:
                 safe_remove(download_dir)
                 raise RecordCountMismatchError from err
@@ -265,8 +296,8 @@ def _handle_previous_directory(
         return
 
     # Compare hashes to detect duplicates
-    old_hash = md5_file(previous_data_path)
-    new_hash = md5_file(new_data_path)
+    old_hash = _md5_file(previous_data_path)
+    new_hash = _md5_file(new_data_path)
     if old_hash == new_hash:
         logger.info("New data matches previous hash; skipping preprocessing")
         safe_remove(new_dir)

@@ -1,5 +1,4 @@
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
-{{- $importScriptWrapperLines := .Files.Lines "silo_import_wrapper.sh" }}
 
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
@@ -21,6 +20,8 @@ data:
     {{ include "loculus.siloDatabaseConfig" $args | nindent 4 }}
 
   preprocessing_config.yaml: |
+    inputDirectory: /preprocessing/input
+    outputDirectory: /preprocessing/output
     ndjsonInputFilename: data.ndjson.zst
     referenceGenomeFilename: reference_genomes.json
     {{- if $lineageSystem }}
@@ -30,8 +31,4 @@ data:
 
   reference_genomes.json: |
     {{ include "loculus.mergeReferenceGenomes" $organismContent.referenceGenomes | fromYaml | toJson }}
-
-  silo_import_wrapper.sh: |
-    {{ range $importScriptWrapperLines }}
-    {{ . }}{{ end }}
 {{- end }}

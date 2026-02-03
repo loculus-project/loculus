@@ -6,7 +6,6 @@ from pathlib import Path
 import requests
 
 from .config import ImporterConfig
-from .file_io import write_text
 from .paths import ImporterPaths
 
 logger = logging.getLogger(__name__)
@@ -24,7 +23,7 @@ def update_lineage_definitions(
     if not pipeline_versions:
         # required for dummy organisms
         logger.info("No pipeline version found; writing empty lineage definitions")
-        write_text(paths.lineage_definition_file, "{}\n")
+        _write_text(paths.lineage_definition_file, "{}\n")
         return
 
     if len(pipeline_versions) > 1:
@@ -48,5 +47,9 @@ def update_lineage_definitions(
 def _download_lineage_file(url: str, destination: Path) -> None:
     response = requests.get(url, timeout=60)
     response.raise_for_status()
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(response.text, encoding="utf-8")
+    _write_text(destination, response.text)
+
+
+def _write_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
