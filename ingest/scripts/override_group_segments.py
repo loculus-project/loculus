@@ -48,7 +48,7 @@ logging.basicConfig(
 )
 
 type Accession = str
-type InsdcAccession = str
+type InsdcAccession = str  # The INSDC Accession type includes the version (i.e. ABC123D.2)
 type Id = str
 type GroupName = str
 
@@ -69,10 +69,12 @@ class Config:
 @dataclass
 class Groups:
     # Group override definitions, showing which accessions belong to a given group.
+    # The INSDC accessions include the version segment.
     override_groups: dict[GroupName, list[InsdcAccession]]
 
     # Map of nucleotide sequence accessions to their group/assembly names.
     # Basically the reverse map of `override_groups`.
+    # The INSDC accessions include the version segment.
     accession_to_group: dict[InsdcAccession, GroupName]
 
 
