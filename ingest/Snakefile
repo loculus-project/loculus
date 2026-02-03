@@ -456,6 +456,7 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             rehydration_genbank="genbank_assembly/.rehydration_complete",
             rehydration_refseq="refseq_assembly/.rehydration_complete",
             ignore_list="grouping_ignore_list.txt",
+            config_file="results/config.yaml",
         output:
             groups_json="results/{TAXON_ID}-groups.json",
         params:
@@ -467,7 +468,8 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             --dataset-dir {params.genbank_dir} \
             --dataset-dir {params.refseq_dir} \
             --output-file {output.groups_json} \
-            --ignore-list {input.ignore_list}
+            --ignore-list {input.ignore_list} \
+            --config-file {input.config_file}
             """
 
 
