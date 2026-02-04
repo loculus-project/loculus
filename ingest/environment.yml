@@ -17,6 +17,7 @@ dependencies:
   - orjsonl=1.0.0
   - pandas=3.0.0
   - psycopg2=2.9.10
+  - pytz=2025.2
   - PyYAML=6.0.3
   - requests=2.32.5
   - seqkit=2.10.1
