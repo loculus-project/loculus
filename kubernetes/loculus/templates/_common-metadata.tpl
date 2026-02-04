@@ -327,6 +327,12 @@ organisms:
     html: {{ .customDisplay.html }}
     {{- end }}
   {{- end }}
+  {{- if .metadataScope -}}
+  metadataScope: {{ .metadataScope }}
+  {{- end }}
+  {{- if .sequenceMetadataScope -}}
+  sequenceMetadataScope: {{ .sequenceMetadataScope }}
+  {{- end }}
 {{- end }}
 
 {{/* Generate website metadata from passed metadata array */}}
@@ -350,7 +356,9 @@ fields:
   {{- else }}
   header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
   {{- end }}
-{{- end }}
+  {{- if .metadataScope eq "sequence" -}}
+  sequenceMetadataScope: {{ quote $segment }}
+  {{- end }}
 {{- end }}
 {{- else }}
 {{ include "loculus.standardWebsiteMetadata" . }}
