@@ -251,6 +251,7 @@ export const SearchForm = ({
                                             referenceIdentifierField={referenceSelection.referenceIdentifierField}
                                             selectedReferences={referenceSelection.selectedReferences}
                                             setSelectedReferences={referenceSelection.setSelectedReferences}
+                                            segmentName={segmentName}
                                         />
                                     )}
                                     {showMutationSearch && (

@@ -106,6 +106,7 @@ type ReferenceSelectorProps = {
     referenceIdentifierField: string;
     selectedReferences: SegmentReferenceSelections;
     setSelectedReferences: (newValues: SegmentReferenceSelections) => void;
+    segmentName: string;
 };
 
 export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
@@ -116,76 +117,50 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
     referenceIdentifierField,
     selectedReferences,
     setSelectedReferences,
+    segmentName,
 }) => {
     const baseSelectId = useId();
 
     const multiRefSegments = segmentsWithMultipleReferences(referenceGenomesInfo);
     if (multiRefSegments.length === 0) return null;
-    const identifierBySegment = useMemo(() => {
-        return multiRefSegments.reduce<Record<string, string | undefined>>((acc, segmentName) => {
-            const identifier = getReferenceIdentifier(
-                referenceIdentifierField,
-                segmentName,
-                referenceGenomesInfo.isMultiSegmented,
-            );
+    if (!multiRefSegments.includes(segmentName)) return null;
+    const identifier = useMemo(() => {
+        return getReferenceIdentifier(referenceIdentifierField, segmentName, referenceGenomesInfo.isMultiSegmented);
+    }, [referenceIdentifierField, segmentName, referenceGenomesInfo.isMultiSegmented]);
+    const label = useMemo(() => {
+        return identifier ? filterSchema.filterNameToLabelMap()[identifier] : undefined;
+    }, [filterSchema, referenceIdentifierField]);
 
-            acc[segmentName] = identifier;
-
-            return acc;
-        }, {});
-    }, [referenceIdentifierField, referenceGenomesInfo]);
-    const labelsBySegment = useMemo(() => {
-        return multiRefSegments.reduce<Record<string, string | undefined>>((acc, segmentName) => {
-            const identifier = identifierBySegment[segmentName];
-
-            acc[segmentName] = identifier ? filterSchema.filterNameToLabelMap()[identifier] : undefined;
-
-            return acc;
-        }, {});
-    }, [filterSchema, referenceIdentifierField, referenceGenomesInfo]);
-
-    const optionsProvidersBySegment = useMemo(() => {
-        return multiRefSegments.reduce<Record<string, OptionsProvider>>((acc, segment) => {
-            const identifier = identifierBySegment[segment];
-            if (!identifier) return acc;
-
-            acc[segment] = {
-                type: 'generic' as const,
-                lapisUrl,
-                lapisSearchParameters,
-                fieldName: identifier,
-            };
-
-            return acc;
-        }, {});
-    }, [multiRefSegments, identifierBySegment, lapisUrl, lapisSearchParameters]);
+    const optionsProvider = useMemo(
+        () => ({
+            type: 'generic' as const,
+            lapisUrl,
+            lapisSearchParameters,
+            fieldName: identifier,
+        }),
+        [multiRefSegments, identifier, lapisUrl, lapisSearchParameters],
+    );
 
     return (
-        <>
-            {multiRefSegments.map((segment) => {
-                return (
-                    <SegmentReferenceSelector
-                        key={segment}
-                        label={labelsBySegment[segment]}
-                        selectId={`${baseSelectId}-${segment}`}
-                        value={selectedReferences[segment]}
-                        onChange={(e) =>
-                            setSelectedReferences({
-                                ...selectedReferences,
-                                [segment]: e,
-                            })
-                        }
-                        onClear={() =>
-                            setSelectedReferences({
-                                ...selectedReferences,
-                                [segment]: null,
-                            })
-                        }
-                        optionsProvider={optionsProvidersBySegment[segment]}
-                    />
-                );
-            })}
-        </>
+        <SegmentReferenceSelector
+            key={segmentName}
+            label={label}
+            selectId={`${baseSelectId}-${segmentName}`}
+            value={selectedReferences[segmentName]}
+            onChange={(e) =>
+                setSelectedReferences({
+                    ...selectedReferences,
+                    [segmentName]: e,
+                })
+            }
+            onClear={() =>
+                setSelectedReferences({
+                    ...selectedReferences,
+                    [segmentName]: null,
+                })
+            }
+            optionsProvider={optionsProvider}
+        />
     );
 };
 
