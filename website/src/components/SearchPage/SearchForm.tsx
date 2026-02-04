@@ -141,7 +141,7 @@ export const SearchForm = ({
         const sequenceFieldsBySegment: Record<string, (GroupedMetadataFilter | MetadataFilter)[]> = {};
         getSegmentNames(referenceGenomesInfo).map((segmentName) => {
             sequenceFieldsBySegment[segmentName] = [];
-        })
+        });
 
         for (const field of visibleFields) {
             const metadataScope =
@@ -243,7 +243,11 @@ export const SearchForm = ({
                         <section className='flex flex-col gap-1.5 mb-4'>
                             <SearchSectionHeader title='Sequence Metadata' />
                             {getSegmentNames(referenceGenomesInfo).map((segmentName) => (
-                                <details key={segmentName} className='group rounded-lg border px-4 pt-4'>
+                                <details
+                                    key={segmentName}
+                                    className='group rounded-lg border px-4 pt-4'
+                                    open={!referenceGenomesInfo.isMultiSegmented}
+                                >
                                     <summary className='flex w-full items-center list-none cursor-pointer'>
                                         <div className='flex items-center'>
                                             <SearchSectionHeader title={segmentName} />
