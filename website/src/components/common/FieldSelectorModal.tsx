@@ -265,6 +265,7 @@ export function getDisplayState(
         return undefined;
     }
 
+    //TODO: fix this to be at segment level
     if (
         field.onlyForReference !== undefined &&
         stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames)

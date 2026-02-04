@@ -58,6 +58,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         [referenceGenomesInfo, selectedReferenceNames],
     );
 
+    //TODO: fix this to be at segment level
     const disableAlignedSequences = stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames);
 
     const metadataSchema = schema.metadata;

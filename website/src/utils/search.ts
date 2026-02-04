@@ -60,6 +60,7 @@ export class MetadataVisibility {
         if (selectedReferenceNames === undefined) {
             return false;
         }
+        //TODO: fix this to be at segment level
         if (
             !hideIfStillRequiresReferenceSelection &&
             stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames)
