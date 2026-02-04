@@ -901,6 +901,20 @@
         }
       }
     },
+    "pdbSpec": {
+      "type": "object",
+      "properties": {
+        "maxUnavailable": {
+          "type": ["integer", "string"],
+          "description": "Number or percentage of pods that can be unavailable."
+        },
+        "minAvailable": {
+          "type": ["integer", "string"],
+          "description": "Number or percentage of pods that must be available."
+        }
+      },
+      "additionalProperties": false
+    },
     "imageSpec": {
       "type": "object",
       "properties": {
@@ -1557,6 +1571,30 @@
           "type": "integer",
           "description": "Number of replicas for the LAPIS deployment",
           "default": 1
+        },
+        "silo": {
+          "type": "integer",
+          "description": "Number of replicas for the SILO deployment",
+          "default": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "pdb": {
+      "type": "object",
+      "description": "Configuration for PodDisruptionBudgets",
+      "properties": {
+        "website": {
+          "$ref": "#/definitions/pdbSpec"
+        },
+        "backend": {
+          "$ref": "#/definitions/pdbSpec"
+        },
+        "lapis": {
+          "$ref": "#/definitions/pdbSpec"
+        },
+        "silo": {
+          "$ref": "#/definitions/pdbSpec"
         }
       },
       "additionalProperties": false
