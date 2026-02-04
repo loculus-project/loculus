@@ -124,6 +124,7 @@ export type GroupedMetadataFilter = {
     initiallyVisible?: boolean;
     header?: string;
     metadataScope?: Metadata['metadataScope'];
+    sequenceMetadataScope?: Metadata['sequenceMetadataScope'];
 };
 
 export const linkOut = z.object({
