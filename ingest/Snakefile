@@ -458,7 +458,7 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             ignore_list="grouping_ignore_list.txt",
             config_file="results/config.yaml",
         output:
-            groups_json="results/{TAXON_ID}-groups.json",
+            groups_json="results/groups.json",
         params:
             genbank_dir="genbank_assembly/ncbi_dataset/data",
             refseq_dir="refseq_assembly/ncbi_dataset/data",
