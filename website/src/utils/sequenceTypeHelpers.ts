@@ -216,3 +216,17 @@ export function stillRequiresReferenceNameSelection(
         (segment) => selectedReferenceNames[segment] === null,
     );
 }
+
+export function segmentReferenceSelected(
+    segmentName: SegmentName,
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    selectedReferenceNames?: SegmentReferenceSelections,
+): boolean {
+    if (selectedReferenceNames === undefined) {
+        return false;
+    }
+    if (!segmentsWithMultipleReferences(referenceGenomesInfo).includes(segmentName)) {
+        return true;
+    }
+    return selectedReferenceNames[segmentName] !== null;
+}

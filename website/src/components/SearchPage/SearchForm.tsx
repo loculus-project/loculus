@@ -22,7 +22,12 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { getReferenceIdentifier, type ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
-import { getSegmentAndGeneInfo, getSegmentNames, type SegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
+import {
+    getSegmentAndGeneInfo,
+    getSegmentNames,
+    segmentReferenceSelected,
+    type SegmentAndGeneInfo,
+} from '../../utils/sequenceTypeHelpers.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal, getDisplayState } from '../common/FieldSelectorModal.tsx';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
@@ -149,6 +154,7 @@ export const SearchForm = ({
                     ? field.sequenceMetadataScope
                     : 'main';
 
+            sequenceFieldsBySegment[sequenceScope] ??= [];
             sequenceFieldsBySegment[sequenceScope].push(field);
         }
 
@@ -256,13 +262,20 @@ export const SearchForm = ({
                                             segmentName={segmentName}
                                         />
                                     )}
-                                    {showMutationSearch && (
-                                        <MutationField
-                                            suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo[segmentName]}
-                                            value={'mutation' in fieldValues ? (fieldValues.mutation ?? '') : ''}
-                                            onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
-                                        />
-                                    )}
+                                    {showMutationSearch &&
+                                        segmentReferenceSelected(
+                                            segmentName,
+                                            referenceGenomesInfo,
+                                            referenceSelection?.selectedReferences,
+                                        ) && (
+                                            <MutationField
+                                                suborganismSegmentAndGeneInfo={
+                                                    suborganismSegmentAndGeneInfo[segmentName]
+                                                }
+                                                value={'mutation' in fieldValues ? (fieldValues.mutation ?? '') : ''}
+                                                onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
+                                            />
+                                        )}
                                     {sequenceFieldsBySegment[segmentName].map((filter) => (
                                         <SearchField
                                             key={filter.name}
