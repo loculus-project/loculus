@@ -1579,7 +1579,7 @@ defaultOrganisms:
           - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
             genes:
-              - name: NP
+              - name: E
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/E.fasta]]"
               - name: M
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/M.fasta]]"
