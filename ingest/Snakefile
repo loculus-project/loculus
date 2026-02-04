@@ -444,6 +444,7 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             """
             datasets rehydrate \
                 --directory {params.assembly_dir} \
+                --no-progressbar \
             && touch {output.marker}
             """
 
