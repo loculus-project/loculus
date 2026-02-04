@@ -139,6 +139,9 @@ export const SearchForm = ({
     const { sampleFields, sequenceFieldsBySegment } = useMemo(() => {
         const sampleFields: (GroupedMetadataFilter | MetadataFilter)[] = [];
         const sequenceFieldsBySegment: Record<string, (GroupedMetadataFilter | MetadataFilter)[]> = {};
+        getSegmentNames(referenceGenomesInfo).map((segmentName) => {
+            sequenceFieldsBySegment[segmentName] = [];
+        })
 
         for (const field of visibleFields) {
             const metadataScope =
