@@ -123,6 +123,20 @@ export const SearchForm = ({
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
+    const { sampleFields, sequenceFields } = useMemo(() => {
+        const sampleFields: (GroupedMetadataFilter | MetadataFilter)[] = [];
+        const sequenceFields: (GroupedMetadataFilter | MetadataFilter)[] = [];
+
+        for (const field of visibleFields) {
+            const scope = 'metadataScope' in field && field.metadataScope != null ? field.metadataScope : 'sample';
+
+            if (scope === 'sequence') sequenceFields.push(field);
+            else sampleFields.push(field); // default all non-sequence to sample
+        }
+
+        return { sampleFields, sequenceFields };
+    }, [visibleFields]);
+
     const suborganismSegmentAndGeneInfo = useMemo(
         () => getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
         [referenceGenomesInfo, referenceSelection?.selectedReferences],
@@ -186,17 +200,6 @@ export const SearchForm = ({
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
-                        {referenceSelection !== undefined && (
-                            <ReferenceSelector
-                                lapisSearchParameters={lapisSearchParameters}
-                                lapisUrl={lapisUrl}
-                                filterSchema={filterSchema}
-                                referenceGenomesInfo={referenceGenomesInfo}
-                                referenceIdentifierField={referenceSelection.referenceIdentifierField}
-                                selectedReferences={referenceSelection.selectedReferences}
-                                setSelectedReferences={referenceSelection.setSelectedReferences}
-                            />
-                        )}
                         <div className='mb-1'>
                             <AccessionField
                                 textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
@@ -204,23 +207,50 @@ export const SearchForm = ({
                             />
                         </div>
 
-                        {showMutationSearch && (
-                            <MutationField
-                                suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
-                                value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
-                                onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
-                            />
-                        )}
-                        {visibleFields.map((filter) => (
-                            <SearchField
-                                field={filter}
-                                lapisUrl={lapisUrl}
-                                fieldValues={fieldValues}
-                                setSomeFieldValues={setSomeFieldValues}
-                                key={filter.name}
-                                lapisSearchParameters={lapisSearchParameters}
-                            />
-                        ))}
+                        <section className='flex flex-col gap-1.5'>
+                            {referenceSelection !== undefined && (
+                                <ReferenceSelector
+                                    lapisSearchParameters={lapisSearchParameters}
+                                    lapisUrl={lapisUrl}
+                                    filterSchema={filterSchema}
+                                    referenceGenomesInfo={referenceGenomesInfo}
+                                    referenceIdentifierField={referenceSelection.referenceIdentifierField}
+                                    selectedReferences={referenceSelection.selectedReferences}
+                                    setSelectedReferences={referenceSelection.setSelectedReferences}
+                                />
+                            )}
+
+                            {showMutationSearch && (
+                                <MutationField
+                                    suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
+                                    value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
+                                    onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
+                                />
+                            )}
+                            {sequenceFields.map((filter) => (
+                                <SearchField
+                                    field={filter}
+                                    lapisUrl={lapisUrl}
+                                    fieldValues={fieldValues}
+                                    setSomeFieldValues={setSomeFieldValues}
+                                    key={filter.name}
+                                    lapisSearchParameters={lapisSearchParameters}
+                                />
+                            ))}
+                        </section>
+
+                        <section className='flex flex-col gap-1.5'>
+                            {sampleFields.map((filter) => (
+                                <SearchField
+                                    field={filter}
+                                    lapisUrl={lapisUrl}
+                                    fieldValues={fieldValues}
+                                    setSomeFieldValues={setSomeFieldValues}
+                                    key={filter.name}
+                                    lapisSearchParameters={lapisSearchParameters}
+                                />
+                            ))}
+                        </section>
                     </div>
                 </div>
             </div>
