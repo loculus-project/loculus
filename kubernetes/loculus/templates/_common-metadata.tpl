@@ -327,10 +327,10 @@ organisms:
     html: {{ .customDisplay.html }}
     {{- end }}
   {{- end }}
-  {{- if .metadataScope -}}
+  {{- if .metadataScope }}
   metadataScope: {{ .metadataScope }}
   {{- end }}
-  {{- if .sequenceMetadataScope -}}
+  {{- if .sequenceMetadataScope }}
   sequenceMetadataScope: {{ .sequenceMetadataScope }}
   {{- end }}
 {{- end }}
@@ -356,7 +356,7 @@ fields:
   {{- else }}
   header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
   {{- end }}
-  {{- if .metadataScope eq "sequence" -}}
+  {{- if eq .metadataScope "sequence" -}}
   sequenceMetadataScope: {{ quote $segment }}
   {{- end }}
 {{- end }}
