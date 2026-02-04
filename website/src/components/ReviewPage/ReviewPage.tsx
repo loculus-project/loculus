@@ -1,6 +1,6 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import Pagination from '@mui/material/Pagination';
-import { type ChangeEvent, type FC, useMemo, useState } from 'react';
+import { type ChangeEvent, type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { ReviewCard } from './ReviewCard.tsx';
@@ -21,11 +21,10 @@ import {
     type SequenceEntryStatus,
     warningsProcessingResult,
 } from '../../types/backend.ts';
-import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { getSegmentAndGeneDisplayNameMap } from './getSegmentAndGeneDisplayNameMap.tsx';
 import { getLastApprovalTimeKey } from '../SearchPage/RecentSequencesBanner.tsx';
 import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
@@ -46,7 +45,7 @@ type ReviewPageProps = {
     accessToken: string;
     metadataDisplayNames: Map<string, string>;
     filesEnabled: boolean;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
+    referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
 const pageSizeOptions = [10, 20, 50, 100] as const;
@@ -85,7 +84,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     accessToken,
     metadataDisplayNames,
     filesEnabled,
-    referenceGenomeLightweightSchema,
+    referenceGenomesInfo,
 }) => {
     const [pageQuery, setPageQuery] = useState<PageQuery>({ pageOneIndexed: 1, size: pageSizeOptions[2] });
 
@@ -127,11 +126,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
         const newSize = parseInt(event.target.value, 10);
         setPageQuery({ pageOneIndexed: 1, size: newSize });
     };
-
-    const segmentAndGeneDisplayNameMap = useMemo(
-        () => getSegmentAndGeneDisplayNameMap(referenceGenomeLightweightSchema),
-        [referenceGenomeLightweightSchema],
-    );
 
     let sequencesData = hooks.getSequences.data;
 
@@ -391,7 +385,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                             organism={organism}
                             accessToken={accessToken}
                             filesEnabled={filesEnabled}
-                            segmentAndGeneDisplayNameMap={segmentAndGeneDisplayNameMap}
+                            referenceGenomesInfo={referenceGenomesInfo}
                         />
                     </div>
                 );

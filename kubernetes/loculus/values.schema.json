@@ -179,10 +179,10 @@
             }
           }
         },
-        "onlyForSuborganism": {
+        "onlyForReference": {
           "groups": ["metadata"],
           "type": "string",
-          "description": "Optional. Affects the search page of the website: specify which suborganism the metadata field applies to, this metadata field will then only be visible if that suborganism is selected (in the search bar, as a table column, and in the metadata download). Must be a valid suborganism as defined in the reference genomes."
+          "description": "Optional. Affects the search page of the website: specify which reference the metadata field applies to, this metadata field will then only be visible if that reference is selected (in the search bar, as a table column, and in the metadata download). Must be a valid reference as defined in the reference genomes."
         },
         "ontology_id": {
           "groups": ["metadata"],
@@ -514,7 +514,7 @@
                   "enum": ["ascending", "descending"],
                   "description": "Default order direction."
                 },
-                "suborganismIdentifierField": {
+                "referenceIdentifierField": {
                   "groups": ["schema"],
                   "type": "string",
                   "description": "Must be set to use the sub-organism feature. This metadata field is used to determine which suborganism a sequence entry belongs to. N.B. the suborganism feature is incomplete and not ready for production use."
@@ -635,9 +635,9 @@
                           "items": {
                             "type": "object",
                             "additionalProperties": false,
-                            "required": ["reference_name"],
+                            "required": ["name"],
                             "properties": {
-                              "reference_name": {
+                              "name": {
                                 "groups": ["nextcladeSegment"],
                                 "docsIncludePrefix": false,
                                 "type": "string",
@@ -804,71 +804,79 @@
         "referenceGenomes": {
           "groups": ["organism"],
           "docsIncludePrefix": false,
-          "type": "object",
-          "description": "An object where the keys are the suborganism names and the values are a [Reference Genome](#reference-genome-type). If there is only one suborganism, then the key must be \"singleReference\".",
-          "patternProperties": {
-            "^[a-zA-Z0-9_-]+$": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "nucleotideSequences": {
-                  "groups": ["reference-genome"],
-                  "docsIncludePrefix": false,
-                  "type": "array",
-                  "description": "Array of [Nucleotide sequence (type)](#nucleotidesequence-type)",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "groups": ["nucleotide-sequence"],
-                        "docsIncludePrefix": false,
-                        "type": "string",
-                        "description": "Name of the sequence"
-                      },
-                      "sequence": {
-                        "groups": ["nucleotide-sequence"],
-                        "docsIncludePrefix": false,
-                        "type": "string"
-                      },
-                      "insdcAccessionFull": {
-                        "groups": ["nucleotide-sequence"],
-                        "docsIncludePrefix": false,
-                        "type": "string",
-                        "description": "INSDC accession of the sequence"
-                      }
+          "type": "array",
+          "description": "Segment-first reference genome structure. Each segment must have a name and a list of reference genomes. Each reference contains a nucleotide sequence and optionally genes.",
+          "items": {
+            "type": "object",
+            "description": "Segment details, including name and references",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "groups": ["referenceGenomes"],
+                "docsIncludePrefix": false,
+                "type": "string",
+                "description": "Name of the segment (e.g., 'S', 'M', 'L', or 'main' for single-segmented organisms)"
+              },
+              "references": {
+                "type": "array",
+                "description": "Array of reference genomes for this segment",
+                "items": {
+                  "type": "object",
+                  "description": "Reference genome details",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "groups": ["nucleotide-sequence"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Name of the reference genome"
                     },
-                    "required": ["name", "sequence"]
-                  }
-                },
-                "genes": {
-                  "groups": ["reference-genome"],
-                  "docsIncludePrefix": false,
-                  "type": "array",
-                  "description": "Array of [Gene (type)](#gene-type)",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "groups": ["gene"],
-                        "docsIncludePrefix": false,
-                        "type": "string",
-                        "description": "Name of the sequence."
-                      },
-                      "sequence": {
-                        "groups": ["gene"],
-                        "docsIncludePrefix": false,
-                        "type": "string"
-                      }
+                    "sequence": {
+                      "groups": ["nucleotide-sequence"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "The nucleotide sequence for this segment/reference combination"
                     },
-                    "required": ["name", "sequence"]
-                  }
+                    "insdcAccessionFull": {
+                      "groups": ["nucleotide-sequence"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "INSDC accession of the sequence"
+                    },
+                    "genes": {
+                      "groups": ["gene"],
+                      "docsIncludePrefix": false,
+                      "type": "array",
+                      "description": "Genes for this segment/reference combination",
+                      "items": {
+                        "type": "object",
+                        "description": "Gene details, including name and references",
+                        "additionalProperties": false,
+                        "properties": {
+                          "name": {
+                            "groups": ["gene"],
+                            "docsIncludePrefix": false,
+                            "type": "string",
+                            "description": "The name of the gene"
+                          },
+                          "sequence": {
+                            "groups": ["gene"],
+                            "docsIncludePrefix": false,
+                            "type": "string",
+                            "description": "The amino acid or nucleotide sequence for this gene"
+                          }
+                        },
+                        "required": ["name", "sequence"]
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["name", "sequence"]
                 }
-              }
+              },
+              "additionalProperties": false
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "required": ["schema"]
@@ -1595,11 +1603,11 @@
     "images": {
       "groups": ["general"],
       "type": "object",
-      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `siloImporter`, `website` and `backend.`",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend.`",
       "properties": {
         "lapis": { "$ref": "#/definitions/imageSpec" },
         "lapisSilo": { "$ref": "#/definitions/imageSpec" },
-        "siloImporter": { "$ref": "#/definitions/imageSpec" },
+        "loculusSilo": { "$ref": "#/definitions/imageSpec" },
         "website": { "$ref": "#/definitions/imageSpec" },
         "backend": { "$ref": "#/definitions/imageSpec" }
       },

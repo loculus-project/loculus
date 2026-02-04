@@ -1,14 +1,11 @@
-from __future__ import annotations  # noqa: I001
+from __future__ import annotations
 
 import json
-import threading
-import time
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
 import zstandard
-from silo_import.file_io import write_text
 from silo_import.download_manager import HttpResponse
 
 
@@ -144,25 +141,3 @@ def make_mock_download_func(responses: list[MockHttpResponse]):
         return HttpResponse(status_code=response.status, headers=headers)
 
     return mock_download, responses_copy
-
-
-def mock_silo_prepro_success(paths, timeout: float = 5.0) -> threading.Thread:
-    """Helper that simulates SILO acknowledging and completing a run."""
-
-    def _worker() -> None:
-        deadline = time.time() + timeout
-        while time.time() < deadline:
-            if paths.run_silo.exists():
-                content = paths.run_silo.read_text(encoding="utf-8").strip()
-                if content:
-                    _, run_id = content.split("=", 1)
-                    paths.run_silo.unlink(missing_ok=True)
-                    write_text(paths.silo_done, f"run_id={run_id}\nstatus=success\n")
-                    return
-            time.sleep(0.01)
-        msg = "Timed out waiting for run file"
-        raise AssertionError(msg)
-
-    thread = threading.Thread(target=_worker, daemon=True)
-    thread.start()
-    return thread

@@ -21,9 +21,8 @@ describe('ActiveFilters', () => {
                             { field1: 'value1', mutations: 'A123T,G234C,gene:A345T' },
                             {},
                             {
-                                nucleotideSegmentInfos: [{ lapisName: 'main', label: 'main' }],
-                                geneInfos: [{ lapisName: 'gene', label: 'gene' }],
-                                isMultiSegmented: false,
+                                nucleotideSegmentInfos: [{ lapisName: 'main', name: 'main' }],
+                                geneInfos: [{ lapisName: 'gene', name: 'gene' }],
                             },
                         )
                     }
@@ -42,7 +41,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: null },
                             {},
-                            { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
+                            { nucleotideSegmentInfos: [], geneInfos: [] },
                         )
                     }
                 />,
@@ -65,7 +64,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: 'value1' },
                             {},
-                            { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
+                            { nucleotideSegmentInfos: [], geneInfos: [] },
                         )
                     }
                     removeFilter={mockRemoveFilter}
@@ -88,7 +87,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([{ name: 'releaseTimestamp', type: 'timestamp' }]),
                             { releaseTimestamp: '1742288104' },
                             {},
-                            { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
+                            { nucleotideSegmentInfos: [], geneInfos: [] },
                         )
                     }
                 />,
@@ -108,7 +107,7 @@ describe('ActiveFilters', () => {
                             ]),
                             { authorAffiliations: 'foo' },
                             {},
-                            { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
+                            { nucleotideSegmentInfos: [], geneInfos: [] },
                         )
                     }
                 />,

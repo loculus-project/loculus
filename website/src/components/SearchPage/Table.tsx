@@ -316,7 +316,7 @@ export const Table: FC<TableProps> = ({
                         </tbody>
                     </table>
                 ) : (
-                    <div className='flex justify-center font-bold text-xl my-8'>No Data</div>
+                    <div className='flex justify-center font-bold text-xl my-8'>No data</div>
                 )}
             </ScrollContainer>
         </div>

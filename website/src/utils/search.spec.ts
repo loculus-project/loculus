@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { MetadataFilterSchema, MetadataVisibility, NULL_QUERY_VALUE } from './search.ts';
+import {
+    MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
+    SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+    SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+} from '../types/referenceGenomes.spec.ts';
+
+const singleSegmentName = 'main';
+const multiSegmentNames = ['L', 'S'];
 
 describe('MetadataFilterSchema', () => {
     it('decodes _null_ values from query state for single values', () => {
@@ -32,24 +40,85 @@ describe('MetadataVisibility', () => {
     it('should return false when isChecked is false', () => {
         const visibility = new MetadataVisibility(false, undefined);
 
-        expect(visibility.isVisible(null)).toBe(false);
-        expect(visibility.isVisible('suborganism1')).toBe(false);
+        // Single segment single references
+        expect(visibility.isVisible(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { [singleSegmentName]: null })).toBe(false);
+        expect(
+            visibility.isVisible(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { [singleSegmentName]: 'singleReference' }),
+        ).toBe(false);
+
+        // Single segment multiple references
+        expect(visibility.isVisible(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { [singleSegmentName]: null })).toBe(false);
+        expect(visibility.isVisible(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { [singleSegmentName]: 'ref1' })).toBe(
+            false,
+        );
+
+        // Multi segment multiple references
+        expect(visibility.isVisible(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { [multiSegmentNames[0]]: null })).toBe(
+            false,
+        );
+        expect(visibility.isVisible(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { [multiSegmentNames[1]]: null })).toBe(
+            false,
+        );
+        expect(visibility.isVisible(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { [multiSegmentNames[0]]: 'ref1' })).toBe(
+            false,
+        );
     });
 
-    it('should return true when isChecked is true and onlyForSuborganism is undefined', () => {
+    it('should return true when isChecked is true and onlyForReference is undefined', () => {
         const visibility = new MetadataVisibility(true, undefined);
 
-        expect(visibility.isVisible(null)).toBe(true);
-        expect(visibility.isVisible('suborganism1')).toBe(true);
-        expect(visibility.isVisible('suborganism2')).toBe(true);
+        // Single segment single references
+        expect(visibility.isVisible(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { [singleSegmentName]: null })).toBe(true);
+        expect(
+            visibility.isVisible(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { [singleSegmentName]: 'singleReference' }),
+        ).toBe(true);
+
+        // Single segment multiple references
+        expect(visibility.isVisible(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { [singleSegmentName]: null })).toBe(true);
+        expect(visibility.isVisible(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { [singleSegmentName]: 'ref1' })).toBe(true);
+        expect(visibility.isVisible(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { [singleSegmentName]: 'ref2' })).toBe(true);
+
+        // Multi segment multiple references
+        expect(visibility.isVisible(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { [multiSegmentNames[0]]: null })).toBe(true);
+        expect(visibility.isVisible(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { [multiSegmentNames[1]]: null })).toBe(true);
+        expect(visibility.isVisible(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { [multiSegmentNames[0]]: 'ref1' })).toBe(
+            true,
+        );
+        expect(visibility.isVisible(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { [multiSegmentNames[1]]: 'ref2' })).toBe(
+            true,
+        );
     });
 
-    it('should return true when isChecked is true and selectedSuborganism matches or is not set', () => {
-        const visibility = new MetadataVisibility(true, 'suborganism1');
+    it('should return true when isChecked is true and selectedReference matches or is not set', () => {
+        let visibility = new MetadataVisibility(true, 'singleReference');
 
-        expect(visibility.isVisible(null)).toBe(true);
-        expect(visibility.isVisible('suborganism1')).toBe(true);
-        expect(visibility.isVisible('suborganism2')).toBe(false);
-        expect(visibility.isVisible('suborganism3')).toBe(false);
+        // Single segment single references
+        expect(visibility.isVisible(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { [singleSegmentName]: null })).toBe(false);
+        expect(
+            visibility.isVisible(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { [singleSegmentName]: 'singleReference' }),
+        ).toBe(true);
+
+        visibility = new MetadataVisibility(true, 'ref1');
+
+        // Single segment multiple references
+        expect(visibility.isVisible(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { [singleSegmentName]: null })).toBe(false);
+        expect(visibility.isVisible(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { [singleSegmentName]: 'ref1' })).toBe(true);
+        expect(visibility.isVisible(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { [singleSegmentName]: 'ref2' })).toBe(
+            false,
+        );
+
+        // Multi segment multiple references
+        expect(visibility.isVisible(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { [multiSegmentNames[0]]: null })).toBe(
+            false,
+        );
+        expect(visibility.isVisible(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { [multiSegmentNames[1]]: null })).toBe(
+            false,
+        );
+        expect(visibility.isVisible(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { [multiSegmentNames[0]]: 'ref1' })).toBe(
+            true,
+        );
+        expect(visibility.isVisible(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { [multiSegmentNames[1]]: 'ref2' })).toBe(
+            false,
+        );
     });
 });

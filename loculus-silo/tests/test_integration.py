@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from helpers import (
@@ -12,7 +13,6 @@ from helpers import (
     compress_ndjson,
     make_mock_download_func,
     mock_records,
-    mock_silo_prepro_success,
     mock_transformed_records,
     read_ndjson_file,
 )
@@ -23,19 +23,36 @@ from silo_import.paths import ImporterPaths
 from silo_import.runner import ImporterRunner
 
 
+def make_config(
+    tmp_path: Path,
+    lineage_definitions: dict[int, str] | None = None,
+    hard_refresh_interval: int = 1000,
+    silo_run_timeout: int = 5,
+) -> ImporterConfig:
+    return ImporterConfig(
+        backend_base_url="http://backend",
+        lineage_definitions=lineage_definitions,
+        hard_refresh_interval=hard_refresh_interval,
+        poll_interval=1,
+        silo_run_timeout=silo_run_timeout,
+        root_dir=tmp_path,
+        silo_binary=tmp_path / "silo",
+        preprocessing_config=tmp_path / "config.yaml",
+    )
+
+
+def make_paths(tmp_path: Path) -> ImporterPaths:
+    silo_binary = tmp_path / "silo"
+    preprocessing_config = tmp_path / "config.yaml"
+    return ImporterPaths.from_root(tmp_path, silo_binary, preprocessing_config)
+
+
 def test_full_import_cycle_with_real_zstd_data(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test complete import cycle with real zstd-compressed data."""
-    config = ImporterConfig(
-        backend_base_url="http://backend",
-        lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=1000,
-        poll_interval=1,
-        silo_run_timeout=5,
-        root_dir=tmp_path,
-    )
-    paths = ImporterPaths.from_root(tmp_path)
+    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    paths = make_paths(tmp_path)
     paths.ensure_directories()
 
     records = mock_records()
@@ -59,15 +76,8 @@ def test_full_import_cycle_with_real_zstd_data(
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
 
-    # Simulate SILO acknowledging the run
-    ack_thread = mock_silo_prepro_success(paths)
-
-    # Run the import
-    runner.run_once()
-
-    # Wait for SILO simulation to complete
-    ack_thread.join(timeout=2)
-    assert not ack_thread.is_alive(), "SILO simulation timed out"
+    with patch.object(runner.silo, "run_preprocessing"):
+        runner.run_once()
 
     # Verify complete import
     assert paths.silo_input_data_path.exists(), "SILO input data should exist"
@@ -96,15 +106,8 @@ def test_multiple_runs_with_state_persistence(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test multiple sequential runs maintain state correctly."""
-    config = ImporterConfig(
-        backend_base_url="http://backend",
-        lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=1000,  # Long interval to prevent hard refresh
-        poll_interval=1,
-        silo_run_timeout=5,
-        root_dir=tmp_path,
-    )
-    paths = ImporterPaths.from_root(tmp_path)
+    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    paths = make_paths(tmp_path)
     paths.ensure_directories()
 
     monkeypatch.setattr(
@@ -127,9 +130,8 @@ def test_multiple_runs_with_state_persistence(
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    ack_thread_r1 = mock_silo_prepro_success(paths)
-    runner.run_once()
-    ack_thread_r1.join(timeout=2)
+    with patch.object(runner.silo, "run_preprocessing"):
+        runner.run_once()
 
     assert runner.current_etag == 'W/"etag1"'
     first_hard_refresh = runner.last_hard_refresh
@@ -166,9 +168,8 @@ def test_multiple_runs_with_state_persistence(
     mock_download_r3, _ = make_mock_download_func(responses_r3)
     runner.download_manager = DownloadManager(download_func=mock_download_r3)
 
-    ack_thread_r3 = mock_silo_prepro_success(paths)
-    runner.run_once()
-    ack_thread_r3.join(timeout=2)
+    with patch.object(runner.silo, "run_preprocessing"):
+        runner.run_once()
 
     assert runner.current_etag == 'W/"etag2"', "ETag should update on new data"
 
@@ -183,15 +184,10 @@ def test_multiple_runs_with_state_persistence(
 
 def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test hard refresh forces re-download even with valid ETag."""
-    config = ImporterConfig(
-        backend_base_url="http://backend",
-        lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=2,  # Short interval for testing
-        poll_interval=1,
-        silo_run_timeout=5,
-        root_dir=tmp_path,
+    config = make_config(
+        tmp_path, lineage_definitions={1: "http://lineage"}, hard_refresh_interval=2
     )
-    paths = ImporterPaths.from_root(tmp_path)
+    paths = make_paths(tmp_path)
     paths.ensure_directories()
 
     monkeypatch.setattr(
@@ -214,9 +210,8 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    ack_thread_r1 = mock_silo_prepro_success(paths)
-    runner.run_once()
-    ack_thread_r1.join(timeout=2)
+    with patch.object(runner.silo, "run_preprocessing"):
+        runner.run_once()
 
     assert runner.current_etag == 'W/"initial"'
     initial_refresh_time = runner.last_hard_refresh
@@ -225,7 +220,6 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     time.sleep(2.1)
 
     # Run 2: Should force hard refresh (no ETag sent)
-    # Server would normally return 304 with ETag, but hard refresh sends ETag="0"
     responses_r2 = [
         MockHttpResponse(
             status=200, headers={"ETag": 'W/"initial"', "x-total-records": "3"}, body=body
@@ -234,9 +228,8 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     mock_download_r2, responses_list_r2 = make_mock_download_func(responses_r2)
     runner.download_manager = DownloadManager(download_func=mock_download_r2)
 
-    ack_thread_r2 = mock_silo_prepro_success(paths)
-    runner.run_once()
-    ack_thread_r2.join(timeout=2)
+    with patch.object(runner.silo, "run_preprocessing"):
+        runner.run_once()
 
     # Hard refresh should update timestamp even if data unchanged
     assert runner.last_hard_refresh > initial_refresh_time, "Hard refresh time should be updated"
@@ -245,15 +238,8 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
 
 def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that errors during import properly clean up artifacts."""
-    config = ImporterConfig(
-        backend_base_url="http://backend",
-        lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=1000,
-        poll_interval=1,
-        silo_run_timeout=2,  # Short timeout to trigger failure
-        root_dir=tmp_path,
-    )
-    paths = ImporterPaths.from_root(tmp_path)
+    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"}, silo_run_timeout=2)
+    paths = make_paths(tmp_path)
     paths.ensure_directories()
 
     records = mock_records()
@@ -275,15 +261,15 @@ def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.M
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
 
-    # Don't create ack thread - SILO will timeout
-    with pytest.raises(TimeoutError, match="Timed out waiting for SILO run"):
+    # Make SILO preprocessing raise TimeoutError
+    with (
+        patch.object(runner.silo, "run_preprocessing", side_effect=TimeoutError("timed out")),
+        pytest.raises(TimeoutError, match="timed out"),
+    ):
         runner.run_once()
 
     # Verify cleanup happened
     assert not paths.silo_input_data_path.exists(), "SILO input should be cleaned up after timeout"
-    # TODO: check what happens if SILO has no input file?
-    assert not paths.run_silo.exists(), "Run file should be cleared"
-    assert not paths.silo_done.exists(), "Done file should be cleared"
 
     # Verify no timestamped directories remain with processing flag
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
@@ -293,15 +279,8 @@ def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.M
 
 def test_lineage_download_failure_cleanup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that lineage download failure properly cleans up downloaded data."""
-    config = ImporterConfig(
-        backend_base_url="http://backend",
-        lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=1000,
-        poll_interval=1,
-        silo_run_timeout=5,
-        root_dir=tmp_path,
-    )
-    paths = ImporterPaths.from_root(tmp_path)
+    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    paths = make_paths(tmp_path)
     paths.ensure_directories()
 
     records = mock_records()
@@ -341,15 +320,8 @@ def test_interrupted_run_cleanup_and_hash_skip(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test that download directories are cleaned on startup and hash matching still works."""
-    config = ImporterConfig(
-        backend_base_url="http://backend",
-        lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=1000,
-        poll_interval=1,
-        silo_run_timeout=5,
-        root_dir=tmp_path,
-    )
-    paths = ImporterPaths.from_root(tmp_path)
+    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    paths = make_paths(tmp_path)
     paths.ensure_directories()
 
     records = mock_records()[0]
@@ -370,11 +342,10 @@ def test_interrupted_run_cleanup_and_hash_skip(
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    ack_thread_r1 = mock_silo_prepro_success(paths)
-    runner.run_once()
-    ack_thread_r1.join(timeout=2)
+    with patch.object(runner.silo, "run_preprocessing"):
+        runner.run_once()
 
-    # Get the first timestamped directory
+    # Verify a timestamped directory was created
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 1
     first_dir = input_dirs[0]
@@ -386,6 +357,9 @@ def test_interrupted_run_cleanup_and_hash_skip(
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 0, "Download directories should be cleared on startup"
 
+    # Ensure different timestamp for new directory
+    time.sleep(1.1)
+
     # Second download with identical data (same hash) but new ETag
     responses_r2 = [
         MockHttpResponse(status=200, headers={"ETag": 'W/"v2"', "x-total-records": "1"}, body=body)
@@ -393,15 +367,13 @@ def test_interrupted_run_cleanup_and_hash_skip(
     mock_download_r2, _ = make_mock_download_func(responses_r2)
     runner2.download_manager = DownloadManager(download_func=mock_download_r2)
 
-    # Since there's no previous directory (cleared on startup), it will proceed with SILO run
-    ack_thread_r2 = mock_silo_prepro_success(paths)
-    runner2.run_once()
-    ack_thread_r2.join(timeout=2)
+    with patch.object(runner2.silo, "run_preprocessing"):
+        runner2.run_once()
 
     # ETag should be updated
     assert runner2.current_etag == 'W/"v2"', "ETag should be updated"
 
-    # New directory should exist
+    # New directory should exist and be different from the first
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 1, "Should have one directory after successful run"
     assert input_dirs[0] != first_dir, "Should be a new directory"

@@ -1,6 +1,6 @@
-# Solution Design - Organisms With Suborganisms
+# Solution Design - Organisms With Multiple References ("Subtypes")
 
-The purpose of this feature is to allow a single top level organism to contain multiple suborganisms.
+The purpose of this feature is to allow a single top level organism to contain multiple references, or multiple "suborganisms".
 
 Motivation:
 
@@ -39,10 +39,12 @@ defaultOrganisms:
       metadataAdd:
         - name: clade_cv_a10
           # tells the website to only show this field on the search page when CV-A10 is selected
-          onlyForSuborganism: CV-A10 
+          onlyForReference: CV-A10 
           preprocessing:
             args:
-              segment: CV-A10
+              #calculate this field from the results of the nextclade dataset for segment main and reference CV-A10
+              segment: main
+              reference: CV-A10
             inputs: {input: nextclade.clade}
         - name: completeness
           type: float
@@ -62,10 +64,10 @@ defaultOrganisms:
           perSegment: true
       website:
         <<: *website
-        # When the website needs to know which suborganism a sequence entry belongs to,
-        # it will look up the value of this metadata field.
+        # When the website needs to know which suborganism a sequence entry belongs to (i.e. which reference it aligns to),
+        # it will look up the value of this metadata field (this metadata field will exist for each segment, e.g. genotype_L, genotype_M).
         # Preprocessing must make sure that this field is always populated.
-        suborganismIdentifierField: genotype
+        referenceIdentifierField: genotype
     preprocessing:
       - <<: *preprocessing
         configFile:
@@ -76,11 +78,11 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - reference_name: CV-A16
+              - name: CV-A16
                 nextclade_dataset_name: enpen/enterovirus/cv-a16
                 accepted_dataset_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
                 genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-              - reference_name: CV-A10
+              - name: CV-A10
                 nextclade_dataset_name: enpen/enterovirus/cv-a10
                 accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
                 genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
@@ -88,22 +90,20 @@ defaultOrganisms:
     # `referenceGenomes` is now an object { suborganismName: referenceGenomeOfThatSuborganism }
     # The special suborganism name `singleReference` must be used when there is only a single suborganism
     referenceGenomes:
-      CV-A10:
-        nucleotideSequences:
-          - name: main
+      - name: main
+        references:
+          - name: CV-A10
             sequence: "..."
             insdcAccessionFull: ...
-        genes: 
-          - name: VP4
-            sequence: "..."
-      EV-A71:
-        nucleotideSequences:
-          - name: main
+            genes: 
+              - name: VP4
+                sequence: "..."
+          - name: EV-A71
             sequence: "..."
             insdcAccessionFull: ...
-        genes:
-          - name: VP2
-            sequence: "..."
+            genes:
+              - name: VP2
+                sequence: "..."
 ```
 
 The website will then receive the `referenceGenomes` as configured above.
@@ -322,10 +322,10 @@ The reference genome will be a product "suborganism x segment":
     {"name": "suborganism2", "sequence": "..."}
   ],
   "genes": [
-    {"name": "suborganism1_gene1", "sequence": "..."},
-    {"name": "suborganism1_gene2", "sequence": "..."},
-    {"name": "suborganism2_gene1", "sequence": "..."},
-    {"name": "suborganism2_gene2", "sequence": "..."}
+    {"name": "gene1_suborganism1", "sequence": "..."},
+    {"name": "gene2_suborganism1", "sequence": "..."},
+    {"name": "gene1_suborganism2", "sequence": "..."},
+    {"name": "gene2_suborganism2", "sequence": "..."}
   ]
 }
 ```
@@ -335,16 +335,16 @@ for multi-segment:
 ```json
 {
   "nucleotideSequences": [
-    {"name": "suborganism1_segment1", "sequence": "..."},
-    {"name": "suborganism1_segment2", "sequence": "..."},
-    {"name": "suborganism2_segment1", "sequence": "..."},
-    {"name": "suborganism2_segment2", "sequence": "..."}
+    {"name": "segment1_suborganism1", "sequence": "..."},
+    {"name": "segment2_suborganism1", "sequence": "..."},
+    {"name": "segment1_suborganism2", "sequence": "..."},
+    {"name": "segment2_suborganism2", "sequence": "..."}
   ],
   "genes": [
-    {"name": "suborganism1_gene1", "sequence": "..."},
-    {"name": "suborganism1_gene2", "sequence": "..."},
-    {"name": "suborganism2_gene1", "sequence": "..."},
-    {"name": "suborganism2_gene2", "sequence": "..."}
+    {"name": "gene1_suborganism1", "sequence": "..."},
+    {"name": "gene2_suborganism1", "sequence": "..."},
+    {"name": "gene1_suborganism2", "sequence": "..."},
+    {"name": "gene2_suborganism2", "sequence": "..."}
   ]
 }
 ```

@@ -1,18 +1,23 @@
 import { test } from '../../fixtures/group.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { expect } from '@playwright/test';
+import {
+    CCHF_L_SEGMENT_FULL_SEQUENCE,
+    CCHF_M_SEGMENT_FULL_SEQUENCE,
+    CCHF_S_SEGMENT_FULL_SEQUENCE,
+} from '../../test-helpers/test-data';
 
-test.describe('Multi-pathogen submission flow', () => {
+test.describe('Multi-segment multi-reference submission flow', () => {
     test('submit single sequence, edit and release', async ({ page, groupId }) => {
         test.setTimeout(120_000);
 
         void groupId;
         const submissionPage = new SingleSequenceSubmissionPage(page);
 
-        await submissionPage.navigateToSubmissionPage('Enterovirus');
+        await submissionPage.navigateToSubmissionPage('CCHF (Multi-Ref)');
         await submissionPage.fillSubmissionForm({
-            submissionId: 'TEST-ID-123',
-            collectionCountry: 'Uganda',
+            submissionId: 'MSMR-TEST-001',
+            collectionCountry: 'Laos',
             collectionDate: '2023-10-15',
             authorAffiliations: 'Research Lab, University',
         });
@@ -24,15 +29,27 @@ test.describe('Multi-pathogen submission flow', () => {
         const editPage = await reviewPage.editFirstSequence();
 
         await editPage.discardSequenceFile();
-        await editPage.addSequenceFile(`>key\n${a71Sequence}`);
+        await editPage.addSequenceFile(`>key\n${CCHF_S_SEGMENT_FULL_SEQUENCE}`);
+        await editPage.addSequenceFile(`>key2\n${CCHF_L_SEGMENT_FULL_SEQUENCE}`);
         await editPage.fillField('Authors', 'Integration, Test');
         await editPage.submitChanges();
 
         await reviewPage.waitForAllProcessed();
         const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
 
-        await releasedPage.waitForSequencesInSearch(1);
-        await releasedPage.expectResultTableCellText('EV-A71');
+        const accessionVersions = await releasedPage.waitForSequencesInSearch(1);
+        const firstAccessionVersion = accessionVersions[0];
+        await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.1`);
+        const expectedDisplayName = new RegExp(
+            `^Display Name: Laos/${firstAccessionVersion.accession}\\.1`,
+        );
+        await expect(page.getByText(expectedDisplayName)).toBeVisible();
+        await expect(
+            page.getByTestId('sequence-preview-modal').getByText('Length S'),
+        ).toBeVisible();
+        await expect(
+            page.getByTestId('sequence-preview-modal').getByText('Length L'),
+        ).toBeVisible();
     });
 
     test('revoke a sequence', async ({ page, groupId }) => {
@@ -41,14 +58,14 @@ test.describe('Multi-pathogen submission flow', () => {
         void groupId;
         const submissionPage = new SingleSequenceSubmissionPage(page);
 
-        await submissionPage.navigateToSubmissionPage('Enterovirus');
+        await submissionPage.navigateToSubmissionPage('CCHF (Multi-Ref)');
         await submissionPage.fillSubmissionForm({
             submissionId: 'id',
             collectionCountry: 'Uganda',
             collectionDate: '2023-10-15',
             authorAffiliations: 'Research Lab, University',
         });
-        await submissionPage.fillSequenceData({ mySequence: a71Sequence });
+        await submissionPage.fillSequenceData({ mySequence: CCHF_L_SEGMENT_FULL_SEQUENCE });
         await submissionPage.acceptTerms();
         const reviewPage = await submissionPage.submitSequence();
 
@@ -56,9 +73,11 @@ test.describe('Multi-pathogen submission flow', () => {
         const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
 
         const accessionVersions = await releasedPage.waitForSequencesInSearch(1);
-        await releasedPage.expectResultTableCellText('EV-A71');
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accessionVersion);
+        await expect(
+            page.getByTestId('sequence-preview-modal').getByText('Length L'),
+        ).toBeVisible();
         await releasedPage.revokeSequence('revocation for integration test');
 
         await reviewPage.waitForAllProcessed();
@@ -75,17 +94,19 @@ test.describe('Multi-pathogen submission flow', () => {
         void groupId;
         const submissionPage = new BulkSubmissionPage(page);
 
-        await submissionPage.navigateToSubmissionPage('Enterovirus');
+        await submissionPage.navigateToSubmissionPage('CCHF (Multi-Ref)');
         await submissionPage.uploadMetadataFile(
-            ['id', 'geoLocCountry', 'sampleCollectionDate'],
+            ['id', 'geoLocCountry', 'sampleCollectionDate', 'fastaIds'],
             [
-                ['first', 'Uganda', '2023-10-15'],
-                ['second', 'Uganda', '2023-10-16'],
+                ['first', 'Laos', '2023-10-15', 'first_S first_M first_L'],
+                ['second', 'Laos', '2023-10-16', 'second_L'],
             ],
         );
         await submissionPage.uploadSequencesFile({
-            first: a71Sequence,
-            second: d68Sequence,
+            first_S: CCHF_S_SEGMENT_FULL_SEQUENCE,
+            first_M: CCHF_M_SEGMENT_FULL_SEQUENCE,
+            first_L: CCHF_L_SEGMENT_FULL_SEQUENCE,
+            second_L: CCHF_L_SEGMENT_FULL_SEQUENCE,
         });
         await submissionPage.acceptTerms();
         const reviewPage = await submissionPage.submitSequence();
@@ -94,11 +115,11 @@ test.describe('Multi-pathogen submission flow', () => {
         const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
 
         const accessionVersions = await releasedPage.waitForSequencesInSearch(2);
-        await releasedPage.expectResultTableCellText('EV-A71');
-        await releasedPage.expectResultTableCellText('EV-D68');
-
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accessionVersion);
+        await expect(
+            page.getByTestId('sequence-preview-modal').getByText('Length L'),
+        ).toBeVisible();
         const editPage = await releasedPage.reviseSequence();
 
         const authorAffiliations = 'integration test affiliation';
@@ -112,28 +133,8 @@ test.describe('Multi-pathogen submission flow', () => {
         await releasedPage.expectResultTableCellText(authorAffiliations);
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.2`);
         const expectedDisplayName = new RegExp(
-            `^Display Name: Uganda/${firstAccessionVersion.accession}\\.2`,
+            `^Display Name: Laos/${firstAccessionVersion.accession}\\.2`,
         );
         await expect(page.getByText(expectedDisplayName)).toBeVisible();
     });
 });
-
-const a71Sequence =
-    'TCATCAAATGCTAGTGATGAGAGCATGATCGAGACGCGGTGTGTTCTTAATTCACATAGCACAGCTGAGACTACTCTTGATAGCTTTTTCAGCAGAGCAG' +
-    'GATTAGTTGGAGAAATAGATCTCCCCCTTGAAGGCACAACCAATCCGAATGGGTACGCAAACTGGGACATAGATATAACAGGTTACGCACAAATGCGTAG' +
-    'AAAGGTAGAGCTGTTCACCTATATGCGTTTCGACGCAGAGTTCACCTTTGTTGCATGCACGCCCACCGGGGAAGTCGTCCCGCAGTTGCTCCAATATATG' +
-    'TTTGTACCACCCGGAGCCCCCAAGCCAGACTCCAGGGAATCTCTCGCATGGCAAACTGCCACTAATCCTTCAGTCTTTGTGAAGCTGTCAGACCCCCCAG' +
-    'CACAGGTCTCAGTTCCGTTCATGTCACCTGCGAGCGCCTACCAATGGTTTTATGACGGGTATCCTACATTTGGTGAGCACAAGCAGGAGAAAGATCTTGA' +
-    'ATACGGGGCATGCCCAAACAACATGATGGGCACGTTCTCAGTGCGGACTGTAGGAACCTCGAAGTCCAAGTACCCACTGGTGATTAGGATCTACATGAGG' +
-    'ATGAAGCATGTCAGGGCGTGGATACCTCGCCCTATGCGCAACCAAAATTATCTATTCAAAGCCAATCCAAATTATGCTGGCAATTCCATCAAACCAACTG' +
-    'GCGCCAGTCGCACAGCAATCACCACCCTCGG';
-
-const d68Sequence =
-    'GTTTGGGATTTTGGATTACAATCTAGTGTCACCTTGGTGATACCTTGGATTAGTGGATCTCACTACAGGATGTTCAACAATGACGCTAAGTCAACCAATG' +
-    'CCAACGTTGGCTATGTTACCTGTTTTATGCAAACTAATCTAATAGTCCCCAGTGAATCCTCTAACACATGTTCCTTAATAGGGTTCGTAGCAGCAAAAGA' +
-    'TGACTTTTCCCTTAGGTTAATGAGAGATAGCCCTGACATTAGGCAATTAGACCACTTACATGCAGCAGAGGCAGCCTACCAGATCGAGAGCATCATCAAA' +
-    'ACAGCAACTGACACTGTAAAAAGCGAGATTAACGCTGAACTTGGTGTGGTCCCTAGCTTAAATGCAGTTGAAACGGGTGCAAGTTCTAACACCGAACCAG' +
-    'AGGAAGCCATACAAACTCGCACAGTGATAAATCAGCATGGCGTGTCTGAGACATTAGTGGAGAATTTTCTTAGTAGGGCAGCCTTAGTATCAAAGAGAAG' +
-    'CTTCGAGTACAAAAATCATGCCTCATCTGAAGCACAAACAGACAAAAACTTTTTCAAATGGACGATTAATACCAAGTCCTTTGTCCAGTTAAGGAGAAAG' +
-    'CTGGAATTGTTCACATACCTTAGATTTGATGCTGAAGTCACCATACTCACAACTGTGGCAGTAAGTAGCAGTAACAGCACATACACAGGCCTTCCTGATT' +
-    'TGACACTTCAAGCA';

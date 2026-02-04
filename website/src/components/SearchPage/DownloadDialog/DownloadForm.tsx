@@ -6,20 +6,14 @@ import { FieldSelectorButton } from './FieldSelector/FieldSelectorButton.tsx';
 import { FieldSelectorModal } from './FieldSelector/FieldSelectorModal.tsx';
 import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from './OptionBlock.tsx';
 import { routes } from '../../../routes/routes.ts';
-import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Schema } from '../../../types/config.ts';
-import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
-import type { MetadataVisibility } from '../../../utils/search.ts';
+import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
+import { MetadataFilterSchema, type MetadataVisibility } from '../../../utils/search.ts';
 import {
-    type GeneInfo,
-    getMultiPathogenNucleotideSequenceNames,
-    getMultiPathogenSequenceName,
-    getSinglePathogenSequenceName,
-    isMultiSegmented,
-    type SegmentInfo,
+    getSegmentAndGeneInfo,
+    stillRequiresReferenceNameSelection,
+    type SegmentReferenceSelections,
 } from '../../../utils/sequenceTypeHelpers.ts';
-import { formatLabel } from '../SuborganismSelector.tsx';
-import { stillRequiresSuborganismSelection } from '../stillRequiresSuborganismSelection.tsx';
 
 export type DownloadFormState = {
     includeRestricted: boolean;
@@ -32,7 +26,7 @@ export type DownloadFormState = {
 };
 
 type DownloadFormProps = {
-    referenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     downloadFormState: DownloadFormState;
     setDownloadFormState: Dispatch<SetStateAction<DownloadFormState>>;
     allowSubmissionOfConsensusSequences: boolean;
@@ -41,12 +35,12 @@ type DownloadFormProps = {
     downloadFieldVisibilities: Map<string, MetadataVisibility>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
-    selectedSuborganism: string | null;
-    suborganismIdentifierField: string | undefined;
+    selectedReferenceNames?: SegmentReferenceSelections;
+    referenceIdentifierField: string | undefined;
 };
 
 export const DownloadForm: FC<DownloadFormProps> = ({
-    referenceGenomesLightweightSchema,
+    referenceGenomesInfo,
     downloadFormState,
     setDownloadFormState,
     allowSubmissionOfConsensusSequences,
@@ -55,19 +49,19 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     downloadFieldVisibilities,
     onSelectedFieldsChange,
     richFastaHeaderFields,
-    selectedSuborganism,
-    suborganismIdentifierField,
+    selectedReferenceNames,
+    referenceIdentifierField,
 }) => {
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
-    const { nucleotideSequences, genes } = useMemo(
-        () => getSequenceNames(referenceGenomesLightweightSchema, selectedSuborganism),
-        [referenceGenomesLightweightSchema, selectedSuborganism],
+    const { nucleotideSegmentInfos, geneInfos } = useMemo(
+        () => getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferenceNames),
+        [referenceGenomesInfo, selectedReferenceNames],
     );
 
-    const disableAlignedSequences = stillRequiresSuborganismSelection(
-        referenceGenomesLightweightSchema,
-        selectedSuborganism,
-    );
+    const disableAlignedSequences = stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames);
+
+    const metadataSchema = schema.metadata;
+    const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
 
     function getDataTypeOptions(): OptionBlockOption[] {
         const metadataOption = {
@@ -78,7 +72,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                         onClick={() => setIsFieldSelectorOpen(true)}
                         selectedFieldsCount={
                             Array.from(downloadFieldVisibilities.values()).filter((it) =>
-                                it.isVisible(selectedSuborganism),
+                                it.isVisible(referenceGenomesInfo, selectedReferenceNames, false),
                             ).length
                         }
                         disabled={downloadFormState.dataType !== 'metadata'}
@@ -91,19 +85,19 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             label: <>Raw nucleotide sequences</>,
             subOptions: (
                 <div className='px-8'>
-                    {isMultiSegmented(nucleotideSequences) ? (
+                    {referenceGenomesInfo.isMultiSegmented ? (
                         <DropdownOptionBlock
                             name='unalignedNucleotideSequences'
-                            options={nucleotideSequences.map((segment) => ({
-                                label: <>{segment.label}</>,
+                            options={nucleotideSegmentInfos.map((segment) => ({
+                                label: <>{segment.name}</>,
                             }))}
-                            selected={nucleotideSequences.findIndex(
+                            selected={nucleotideSegmentInfos.findIndex(
                                 (info) => info.lapisName === downloadFormState.unalignedNucleotideSequence,
                             )}
                             onSelect={(value) =>
                                 setDownloadFormState((previous) => ({
                                     ...previous,
-                                    unalignedNucleotideSequence: nucleotideSequences[value].lapisName,
+                                    unalignedNucleotideSequence: nucleotideSegmentInfos[value].lapisName,
                                 }))
                             }
                             disabled={downloadFormState.dataType !== 'unalignedNucleotideSequences'}
@@ -142,20 +136,20 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             rawNucleotideSequencesOption,
             {
                 label: <>Aligned nucleotide sequences</>,
-                subOptions: isMultiSegmented(nucleotideSequences) ? (
+                subOptions: referenceGenomesInfo.isMultiSegmented ? (
                     <div className='px-8'>
                         <DropdownOptionBlock
                             name='alignedNucleotideSequences'
-                            options={nucleotideSequences.map((segment) => ({
-                                label: <>{segment.label}</>,
+                            options={nucleotideSegmentInfos.map((segment) => ({
+                                label: <>{segment.name}</>,
                             }))}
-                            selected={nucleotideSequences.findIndex(
+                            selected={nucleotideSegmentInfos.findIndex(
                                 (info) => info.lapisName === downloadFormState.alignedNucleotideSequence,
                             )}
                             onSelect={(value) =>
                                 setDownloadFormState((previous) => ({
                                     ...previous,
-                                    alignedNucleotideSequence: nucleotideSequences[value].lapisName,
+                                    alignedNucleotideSequence: nucleotideSegmentInfos[value].lapisName,
                                 }))
                             }
                             disabled={downloadFormState.dataType !== 'alignedNucleotideSequences'}
@@ -165,26 +159,27 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             },
             {
                 label: <>Aligned amino acid sequences</>,
-                subOptions: (
-                    <div className='px-8'>
-                        <DropdownOptionBlock
-                            name='alignedAminoAcidSequences'
-                            options={genes.map((gene) => ({
-                                label: <>{gene.label}</>,
-                            }))}
-                            selected={genes.findIndex(
-                                (info) => info.lapisName === downloadFormState.alignedAminoAcidSequence,
-                            )}
-                            onSelect={(value) =>
-                                setDownloadFormState((previous) => ({
-                                    ...previous,
-                                    alignedAminoAcidSequence: genes[value].lapisName,
-                                }))
-                            }
-                            disabled={downloadFormState.dataType !== 'alignedAminoAcidSequences'}
-                        />
-                    </div>
-                ),
+                subOptions:
+                    geneInfos.length > 0 ? (
+                        <div className='px-8'>
+                            <DropdownOptionBlock
+                                name='alignedAminoAcidSequences'
+                                options={geneInfos.map((gene) => ({
+                                    label: <>{gene.name}</>,
+                                }))}
+                                selected={geneInfos.findIndex(
+                                    (info) => info.lapisName === downloadFormState.alignedAminoAcidSequence,
+                                )}
+                                onSelect={(value) =>
+                                    setDownloadFormState((previous) => ({
+                                        ...previous,
+                                        alignedAminoAcidSequence: geneInfos[value].lapisName,
+                                    }))
+                                }
+                                disabled={downloadFormState.dataType !== 'alignedAminoAcidSequences'}
+                            />
+                        </div>
+                    ) : undefined,
             },
         ];
     }
@@ -232,10 +227,10 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                         }))
                     }
                 />
-                {disableAlignedSequences && suborganismIdentifierField !== undefined && (
+                {disableAlignedSequences && referenceIdentifierField !== undefined && (
                     <div className='text-sm text-gray-400 mt-4 max-w-60'>
-                        Or select a {formatLabel(suborganismIdentifierField)} with the search UI to enable download of
-                        aligned sequences.
+                        Or select a {filterSchema.filterNameToLabelMap()[referenceIdentifierField]} with the search UI
+                        to enable download of aligned sequences.
                     </div>
                 )}
             </div>
@@ -259,46 +254,12 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 schema={schema}
                 downloadFieldVisibilities={downloadFieldVisibilities}
                 onSelectedFieldsChange={onSelectedFieldsChange}
-                selectedSuborganism={selectedSuborganism}
+                selectedReferenceNames={selectedReferenceNames}
+                referenceGenomesInfo={referenceGenomesInfo}
             />
         </div>
     );
 };
-
-export function getSequenceNames(
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
-    selectedSuborganism: string | null,
-): {
-    nucleotideSequences: SegmentInfo[];
-    genes: GeneInfo[];
-    useMultiSegmentEndpoint: boolean;
-    defaultFastaHeaderTemplate?: string;
-} {
-    if (SINGLE_REFERENCE in referenceGenomeLightweightSchema) {
-        const { nucleotideSegmentNames, geneNames } = referenceGenomeLightweightSchema[SINGLE_REFERENCE];
-        return {
-            nucleotideSequences: nucleotideSegmentNames.map(getSinglePathogenSequenceName),
-            genes: geneNames.map(getSinglePathogenSequenceName),
-            useMultiSegmentEndpoint: isMultiSegmented(nucleotideSegmentNames),
-        };
-    }
-
-    if (selectedSuborganism === null) {
-        return {
-            nucleotideSequences: [],
-            genes: [],
-            useMultiSegmentEndpoint: false, // When no suborganism is selected, use the "all segments" endpoint to download all available segments, even though LAPIS is multisegmented. That endpoint is available at the same route as the single segmented endpoint.
-            defaultFastaHeaderTemplate: `{${ACCESSION_VERSION_FIELD}}`, // make sure that the segment does not appear in the fasta header
-        };
-    }
-
-    const { nucleotideSegmentNames, geneNames } = referenceGenomeLightweightSchema[selectedSuborganism];
-    return {
-        nucleotideSequences: getMultiPathogenNucleotideSequenceNames(nucleotideSegmentNames, selectedSuborganism),
-        genes: geneNames.map((name) => getMultiPathogenSequenceName(name, selectedSuborganism)),
-        useMultiSegmentEndpoint: true,
-    };
-}
 
 const optionToDataTypeMap: DownloadDataType['type'][] = [
     'metadata',

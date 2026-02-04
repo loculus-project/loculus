@@ -33,7 +33,7 @@ export function lapisClientHooks(lapisUrl: string) {
         useAggregated: () => zodiosHooks.useAggregated({}, { ...LAPIS_RETRY_OPTIONS }),
         useDetails: () => zodiosHooks.useDetails({}, { ...LAPIS_RETRY_OPTIONS }),
         useLineageDefinition: zodiosHooks.useLineageDefinition,
-        useGetSequence(accessionVersion: string, sequenceType: SequenceType, isMultiSegmented: boolean) {
+        useGetSequence(accessionVersion: string, sequenceType: SequenceType, useLapisMultiSegmentedEndpoint: boolean) {
             return getSequenceHook(
                 zodiosHooks,
                 {
@@ -41,7 +41,7 @@ export function lapisClientHooks(lapisUrl: string) {
                     dataFormat: 'FASTA',
                 },
                 sequenceType,
-                isMultiSegmented,
+                useLapisMultiSegmentedEndpoint,
             );
         },
     };

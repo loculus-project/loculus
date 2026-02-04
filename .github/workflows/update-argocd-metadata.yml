@@ -30,56 +30,56 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Wait for Prepro Dummy Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.1
+        uses: lewagon/wait-on-check-action@v1.5.0
         with:
           ref: ${{ github.sha }}
           check-name: Preprocessing dummy docker image build
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for Config Processor Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.1
+        uses: lewagon/wait-on-check-action@v1.5.0
         with:
           ref: ${{ github.sha }}
           check-name: Build config-processor Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for SILO Import Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.1
+        uses: lewagon/wait-on-check-action@v1.5.0
         with:
           ref: ${{ github.sha }}
-          check-name: Build silo-import Docker Image
+          check-name: Build loculus-silo Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for Backend Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.1
+        uses: lewagon/wait-on-check-action@v1.5.0
         with:
           ref: ${{ github.sha }}
           check-name: Build Backend Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for Prepro Nextclade Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.1
+        uses: lewagon/wait-on-check-action@v1.5.0
         with:
           ref: ${{ github.sha }}
           check-name: Build preprocessing-nextclade Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for Ingest Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.1
+        uses: lewagon/wait-on-check-action@v1.5.0
         with:
           ref: ${{ github.sha }}
           check-name: Build ingest Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for Keycloakify Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.1
+        uses: lewagon/wait-on-check-action@v1.5.0
         with:
           ref: ${{ github.sha }}
           check-name: Build keycloakify Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for ENA Submission Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.1
+        uses: lewagon/wait-on-check-action@v1.5.0
         with:
           ref: ${{ github.sha }}
           check-name: Build ena-submission Docker Image

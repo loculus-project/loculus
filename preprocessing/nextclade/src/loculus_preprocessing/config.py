@@ -56,7 +56,7 @@ type SequenceName = str
 
 
 class Reference(BaseModel):
-    reference_name: str = "singleReference"
+    name: str = "singleReference"
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str | None = None
@@ -78,8 +78,8 @@ class NextcladeSequenceAndDataset(BaseModel):
     nextclade_dataset_server: str | None = None
     # Names of diamond or nextclade sort entries that are acceptable matches for this dataset
     accepted_dataset_matches: list[str] = Field(default_factory=list)
-    gene_prefix: str | None = None
-    # Names of genes in the Nextclade dataset; when concatenated with gene_prefix
+    gene_suffix: str | None = None
+    # Names of genes in the Nextclade dataset; when concatenated with gene_suffix
     # this must match the gene names expected by the backend and LAPIS
     genes: list[str] = Field(default_factory=list)
 
@@ -146,12 +146,12 @@ class Config(BaseModel):
             ds = NextcladeSequenceAndDataset(
                 **base,
                 segment=segment_name,
+                reference_name=reference.name if reference else "singleReference",
             )
             if ds.nextclade_dataset_server is None:
                 ds.nextclade_dataset_server = self.nextclade_dataset_server
             ds.name = set_sequence_name(multi_reference, self.multi_segment, ds)
-            # TODO: this should be a suffix in future
-            ds.gene_prefix = ds.reference_name if multi_reference else None
+            ds.gene_suffix = ds.reference_name if multi_reference else None
             return ds
 
         datasets: list[NextcladeSequenceAndDataset] = []
