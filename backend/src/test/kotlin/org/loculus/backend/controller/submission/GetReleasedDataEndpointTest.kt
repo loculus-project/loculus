@@ -175,6 +175,7 @@ class GetReleasedDataEndpointTest(
                 "releasedDate" to TextNode(currentDate),
                 "submittedDate" to TextNode(currentDate),
                 "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
+                "dataBecameOpenAt" to TextNode(currentDate),
                 "pipelineVersion" to IntNode(DEFAULT_PIPELINE_VERSION.toInt()),
             )
 
@@ -345,6 +346,8 @@ class GetReleasedDataEndpointTest(
                 )
 
                 "pipelineVersion" -> assertThat(value, `is`(IntNode(DEFAULT_PIPELINE_VERSION.toInt())))
+
+                "dataBecameOpenAt" -> assertThat(value, `is`(TextNode(currentDate)))
 
                 else -> assertThat("value for $key", value, `is`(NullNode.instance))
             }
@@ -544,6 +547,92 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
 
         assertAccessionVersionIsOpen(accessionVersion)
     }
+
+    @Test
+    fun `GIVEN different data use terms scenarios THEN dataBecameOpenAt is computed correctly`() {
+        every { dateProvider.getCurrentInstant() } answers { callOriginal() }
+
+        val threeMonthsFromNow = dateMonthsFromNow(3)
+        val currentDate = dateProvider.getCurrentDate()
+
+        // Scenario 1: Data submitted as OPEN - dataBecameOpenAt should be the submission date
+        val openAccessionVersion = convenienceClient.prepareDataTo(
+            status = Status.APPROVED_FOR_RELEASE,
+            dataUseTerms = DataUseTerms.Open,
+        )[0]
+
+        var releasedData = getReleasedDataForAccessionVersion(openAccessionVersion)
+        assertThat(
+            "OPEN data should have dataBecameOpenAt set to submission date",
+            releasedData.metadata["dataBecameOpenAt"]?.textValue(),
+            `is`(currentDate.toString()),
+        )
+
+        // Scenario 2: Data submitted as RESTRICTED - dataBecameOpenAt should be null
+        val restrictedAccessionVersion = convenienceClient.prepareDataTo(
+            status = Status.APPROVED_FOR_RELEASE,
+            dataUseTerms = DataUseTerms.Restricted(threeMonthsFromNow),
+        )[0]
+
+        releasedData = getReleasedDataForAccessionVersion(restrictedAccessionVersion)
+        assertThat(
+            "RESTRICTED data should have null dataBecameOpenAt",
+            releasedData.metadata["dataBecameOpenAt"],
+            `is`(NullNode.instance),
+        )
+
+        // Scenario 3: Data changed from RESTRICTED to OPEN - dataBecameOpenAt should be the change date
+        // Fast-forward one month before changing to OPEN
+        val oneMonthFromNow = dateMonthsFromNow(1)
+        val oneMonthFromNowInstant = LocalDateTime(
+            date = oneMonthFromNow,
+            time = LocalTime.fromSecondOfDay(0),
+        ).toInstant(DateProvider.timeZone)
+        every { dateProvider.getCurrentInstant() } answers { oneMonthFromNowInstant }
+
+        dataUseTermsClient.changeDataUseTerms(
+            newDataUseTerms = DataUseTermsChangeRequest(
+                accessions = listOf(restrictedAccessionVersion.accession),
+                newDataUseTerms = DataUseTerms.Open,
+            ),
+            jwt = jwtForDefaultUser,
+        )
+
+        releasedData = getReleasedDataForAccessionVersion(restrictedAccessionVersion)
+        assertThat(
+            "Data changed to OPEN should have dataBecameOpenAt set to change date",
+            releasedData.metadata["dataBecameOpenAt"]?.textValue(),
+            `is`(oneMonthFromNow.toString()),
+        )
+
+        // Reset time for next scenario
+        every { dateProvider.getCurrentInstant() } answers { callOriginal() }
+
+        // Scenario 4: Expired RESTRICTED data - dataBecameOpenAt should be the restrictedUntil date
+        val anotherRestrictedAccessionVersion = convenienceClient.prepareDataTo(
+            status = Status.APPROVED_FOR_RELEASE,
+            dataUseTerms = DataUseTerms.Restricted(threeMonthsFromNow),
+        )[0]
+
+        // Fast-forward time past the restriction date
+        val threeMonthsAndADayFromNow = LocalDateTime(
+            date = threeMonthsFromNow.plus(1, DateTimeUnit.DAY),
+            time = LocalTime.fromSecondOfDay(0),
+        ).toInstant(DateProvider.timeZone)
+        every { dateProvider.getCurrentInstant() } answers { threeMonthsAndADayFromNow }
+
+        releasedData = getReleasedDataForAccessionVersion(anotherRestrictedAccessionVersion)
+        assertThat(
+            "Expired RESTRICTED data should have dataBecameOpenAt set to restrictedUntil date",
+            releasedData.metadata["dataBecameOpenAt"]?.textValue(),
+            `is`(threeMonthsFromNow.toString()),
+        )
+    }
+
+    private fun getReleasedDataForAccessionVersion(accessionVersion: AccessionVersionInterface): ReleasedData =
+        submissionControllerClient.getReleasedData()
+            .expectNdjsonAndGetContent<ReleasedData>()
+            .find { it.metadata["accessionVersion"]?.textValue() == accessionVersion.displayAccessionVersion() }!!
 
     private fun assertAccessionVersionIsOpen(accessionVersion: AccessionVersionInterface) {
         assertAccessionVersionHasReleasedDataValues(
