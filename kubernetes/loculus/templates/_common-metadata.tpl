@@ -356,9 +356,10 @@ fields:
   {{- else }}
   header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
   {{- end }}
-  {{- if eq .metadataScope "sequence" -}}
-  sequenceMetadataScope: {{ quote $segment }}
+  {{- if eq .metadataScope "sequence" }}
+  sequenceMetadataScope: {{ $segment }}
   {{- end }}
+{{- end }}
 {{- end }}
 {{- else }}
 {{ include "loculus.standardWebsiteMetadata" . }}
