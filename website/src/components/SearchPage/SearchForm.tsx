@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type FC } from 'react';
 
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import { Button } from '../common/Button';
@@ -46,6 +46,13 @@ interface SearchFormProps {
     showMutationSearch: boolean;
     referenceSelection: ReferenceSelection;
 }
+
+const SearchSectionHeader: FC<{ title: string }> = ({ title }) => (
+    <div className='flex items-center gap-2 mb-2'>
+        <span className='h-4 w-1 rounded-full bg-gray-300'></span>
+        <h3 className='text-xs uppercase tracking-wide text-gray-500'>{title}</h3>
+    </div>
+);
 
 export const SearchForm = ({
     filterSchema,
@@ -208,6 +215,7 @@ export const SearchForm = ({
                         </div>
 
                         <section className='flex flex-col gap-1.5'>
+                            <SearchSectionHeader title='Sequence Metadata' />
                             {referenceSelection !== undefined && (
                                 <ReferenceSelector
                                     lapisSearchParameters={lapisSearchParameters}
@@ -240,6 +248,7 @@ export const SearchForm = ({
                         </section>
 
                         <section className='flex flex-col gap-1.5'>
+                            <SearchSectionHeader title='Sample Metadata' />
                             {sampleFields.map((filter) => (
                                 <SearchField
                                     field={filter}

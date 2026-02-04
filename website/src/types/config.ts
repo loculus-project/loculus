@@ -123,6 +123,7 @@ export type GroupedMetadataFilter = {
     notSearchable?: boolean;
     initiallyVisible?: boolean;
     header?: string;
+    metadataScope?: Metadata['metadataScope'];
 };
 
 export const linkOut = z.object({
