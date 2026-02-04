@@ -222,11 +222,11 @@ export function segmentReferenceSelected(
     referenceGenomesInfo: ReferenceGenomesInfo,
     selectedReferenceNames?: SegmentReferenceSelections,
 ): boolean {
-    if (selectedReferenceNames === undefined) {
-        return false;
-    }
     if (!segmentsWithMultipleReferences(referenceGenomesInfo).includes(segmentName)) {
         return true;
+    }
+    if (selectedReferenceNames === undefined) {
+        return false;
     }
     return selectedReferenceNames[segmentName] !== null;
 }
