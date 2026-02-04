@@ -95,7 +95,7 @@ A revocation adds a new version that declares a [sequence entry](#sequence-entry
 
 ### S3 (Simple Storage Service)
 
-S3 refers to a class of object storage services. It is hosted by several cloud provider (e.g., [AWS S3](https://aws.amazon.com/s3/), [Cloudflare R2](https://www.cloudflare.com/developer-platform/solutions/s3-compatible-object-storage/), [Hetzner Object Storage](https://www.hetzner.com/storage/object-storage/)) and can be self-hosted (e.g., with [Garage](https://garagehq.deuxfleurs.fr/)). Loculus uses [MinIO](https://github.com/minio/minio) for the [file sharing feature](#file-sharing-feature).
+S3 refers to a class of object storage services. It is hosted by several cloud provider (e.g., [AWS S3](https://aws.amazon.com/s3/), [Cloudflare R2](https://www.cloudflare.com/developer-platform/solutions/s3-compatible-object-storage/), [Hetzner Object Storage](https://www.hetzner.com/storage/object-storage/)) and can be self-hosted (e.g., with [Garage](https://garagehq.deuxfleurs.fr/)). Loculus uses S3 for the [file sharing feature](#file-sharing-feature).
 
 ### S3 credentials
 
