@@ -12,11 +12,15 @@ test.describe('Column Visibility', () => {
     test('should show possibly-visible columns and hide always-hidden ones in the customization modal', async ({
         page,
     }) => {
-        await searchPage.navigateToVirus('Test Dummy Organism');
+        await searchPage.navigateToVirus('Ebola Sudan');
         await page.getByText('Customize columns').click();
 
-        await page.getByRole('checkbox', { name: 'Pango lineage' }).waitFor();
-        await expect(page.getByRole('checkbox', { name: 'Pango lineage' })).toBeVisible();
-        await expect(page.getByRole('checkbox', { name: 'Hidden Field' })).toBeHidden();
+        // Collection country is a visible column
+        await page.getByRole('checkbox', { name: 'Collection country' }).waitFor();
+        await expect(page.getByRole('checkbox', { name: 'Collection country' })).toBeVisible();
+        // Collection date (lower bound) has hideInSearchResultsTable: true so should be hidden
+        await expect(
+            page.getByRole('checkbox', { name: 'Collection date (lower bound)' }),
+        ).toBeHidden();
     });
 });

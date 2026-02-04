@@ -1491,119 +1491,7 @@ defaultOrganisms:
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/env.fasta]]"
               - name: prM
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"
-  dummy-organism:
-    schema:
-      submissionDataTypes: *defaultSubmissionDataTypes
-      image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
-      organismName: "Test Dummy Organism"
-      metadataTemplate:
-        - country
-        - date
-      metadata: &dummyMetadata
-        - name: date
-          type: date
-          initiallyVisible: true
-          header: "Collection Details"
-        - name: region
-          type: string
-          initiallyVisible: true
-          generateIndex: true
-          autocomplete: true
-          header: "Collection Details"
-        - name: country
-          initiallyVisible: true
-          type: string
-          generateIndex: true
-          autocomplete: true
-          options:
-            - name: Germany
-            - name: Canada
-            - name: New Zealand
-            - name: Colombia
-          header: "Collection Details"
-        - name: division
-          initiallyVisible: true
-          type: string
-          generateIndex: true
-          autocomplete: true
-          header: "Collection Details"
-        - name: host
-          initiallyVisible: true
-          type: string
-          autocomplete: true
-          header: "Collection Details"
-        - name: lineage
-          initiallyVisible: false
-          notSearchable: true
-        - name: pangoLineage
-          initiallyVisible: true
-          displayName: "Pango lineage"
-          autocomplete: true
-          required: true
-          type: string
-          lineageSystem: pangoLineage
-          options: 
-            - name: A
-            - name: A.1
-            - name: A.1.1
-            - name: A.2
-            - name: B
-          preprocessing:
-            function: process_options
-            inputs:
-              input: lineage
-        - name: hiddenField
-          displayName: "Hidden Field"
-          initiallyVisible: false
-          type: string
-          hideInSearchResultsTable: true
-      website:
-        tableColumns:
-          - country
-          - division
-          - date
-          - pangoLineage
-        defaultOrder: descending
-        defaultOrderBy: date
-    preprocessing:
-      - version: 2
-        image: ghcr.io/loculus-project/preprocessing-dummy
-        args:
-          - "--watch"
-          - "--withWarnings"
-          - "--withErrors"
-          - "--randomWarnError"
-    referenceGenomes:
-      - name: main
-        references:
-          - name: singleReference
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
-            genes:
-              - name: NP
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/E.fasta]]"
-              - name: M
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/M.fasta]]"
-              - name: "N"
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/N.fasta]]"
-              - name: ORF1a
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1a.fasta]]"
-              - name: ORF1b
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1b.fasta]]"
-              - name: ORF3a
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF3a.fasta]]"
-              - name: ORF6
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF6.fasta]]"
-              - name: ORF7a
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7a.fasta]]"
-              - name: ORF7b
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7b.fasta]]"
-              - name: ORF8
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF8.fasta]]"
-              - name: ORF9b
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF9b.fasta]]"
-              - name: S
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
-  dummy-organism-with-files:
+  test-organism-files:
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
       organismName: "Test organism (with files)"
@@ -1615,20 +1503,36 @@ defaultOrganisms:
             - name: raw_reads
       files:
         - name: raw_reads
-      metadata: *dummyMetadata
+      metadata:
+        - name: date
+          type: date
+          initiallyVisible: true
+          header: "Collection Details"
+        - name: country
+          initiallyVisible: true
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: "Collection Details"
       website:
         tableColumns:
           - country
-          - division
           - date
         defaultOrder: descending
         defaultOrderBy: date
     preprocessing:
       - version: 1
-        image: ghcr.io/loculus-project/preprocessing-dummy
+        image: ghcr.io/loculus-project/preprocessing-nextclade
         args:
-          - "--watch"
-          - "--disableConsensusSequences"
+          - "prepro"
+        configFile:
+          log_level: DEBUG
+          batch_size: 100
+          segments:
+            - name: main
+              references:
+              - name: singleReference
+                genes: []
     referenceGenomes:
       - name: main
         references:

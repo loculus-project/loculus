@@ -39,12 +39,6 @@ jobs:
     uses: ./.github/workflows/loculus-silo-image.yml
     with:
       build_arm: true
-  trigger-dummy-preprocessing:
-    needs: should-build
-    if: needs.should-build.outputs.should_run == 'true'
-    uses: ./.github/workflows/preprocessing-dummy-image.yml
-    with:
-      build_arm: true
   trigger-ingest:
     needs: should-build
     if: needs.should-build.outputs.should_run == 'true'

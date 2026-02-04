@@ -164,15 +164,15 @@ Preprocessing pods are named by organism and version:
 kubectl get deployments | grep preprocessing
 
 # Example output:
-# loculus-preprocessing-dummy-organism-v2-0
 # loculus-preprocessing-ebola-sudan-v1-0
+# loculus-preprocessing-west-nile-v1-0
 ```
 
 ### 2. Check preprocessing logs
 
 ```sh
-# Get pod name for a specific organism (e.g., dummy-organism)
-kubectl get pods | grep preprocessing-dummy-organism
+# Get pod name for a specific organism (e.g., ebola-sudan)
+kubectl get pods | grep preprocessing-ebola-sudan
 
 # Check logs for errors
 kubectl logs <pod-name> --tail=100
@@ -188,7 +188,7 @@ kubectl logs -f <pod-name>
 Exception: ('Submitting processed data failed. Status code: 422',
 '{"detail":"Unknown genes in \'alignedAminoAcidSequences\': E."}')
 ```
-This means the preprocessing is submitting amino acid sequences for genes that aren't defined in the organism's `referenceGenomes` config in `values.yaml`. Check that gene names in `mock-sequences.json` (for dummy preprocessing) match gene names in `kubernetes/loculus/values.yaml`.
+This means the preprocessing is submitting amino acid sequences for genes that aren't defined in the organism's `referenceGenomes` config in `values.yaml`.
 
 **304 responses (no sequences to process):**
 If logs show repeated `HTTP/1.1" 304 0` responses, it means:
@@ -203,7 +203,7 @@ kubectl port-forward svc/loculus-database-service 5432:5432
 
 # In another terminal, connect and check sequence status
 PGPASSWORD=loculus psql -h localhost -U loculus -d loculus -c \
-  "SELECT accession, version, status FROM sequence_entries WHERE organism='dummy-organism' ORDER BY accession DESC LIMIT 10;"
+  "SELECT accession, version, status FROM sequence_entries WHERE organism='ebola-sudan' ORDER BY accession DESC LIMIT 10;"
 ```
 
 ### 5. Applying config changes
@@ -221,7 +221,7 @@ SHA=$(git rev-parse HEAD | cut -c1-7)
 After helm upgrade, restart affected deployments:
 ```sh
 kubectl rollout restart deployment/loculus-backend
-kubectl rollout restart deployment/loculus-preprocessing-dummy-organism-v2-0
+kubectl rollout restart deployment/loculus-preprocessing-ebola-sudan-v1-0
 ```
 
 ## Checklist before committing code
