@@ -25,6 +25,7 @@ import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../
 import { getSegmentAndGeneInfo, getSegmentNames } from '../../utils/sequenceTypeHelpers.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal, getDisplayState } from '../common/FieldSelectorModal.tsx';
+import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import MaterialSymbolsTune from '~icons/material-symbols/tune';
@@ -130,18 +131,32 @@ export const SearchForm = ({
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
-    const { sampleFields, sequenceFields } = useMemo(() => {
+    const { sampleFields, sequenceFieldsBySegment } = useMemo(() => {
         const sampleFields: (GroupedMetadataFilter | MetadataFilter)[] = [];
-        const sequenceFields: (GroupedMetadataFilter | MetadataFilter)[] = [];
+        const sequenceFieldsBySegment: Record<string, (GroupedMetadataFilter | MetadataFilter)[]> = {};
 
         for (const field of visibleFields) {
-            const scope = 'metadataScope' in field && field.metadataScope != null ? field.metadataScope : 'sample';
+            const metadataScope =
+                'metadataScope' in field && field.metadataScope != null ? field.metadataScope : 'sample';
 
-            if (scope === 'sequence') sequenceFields.push(field);
-            else sampleFields.push(field); // default all non-sequence to sample
+            if (metadataScope !== 'sequence') {
+                sampleFields.push(field);
+                continue;
+            }
+
+            const sequenceScope =
+                'sequenceMetadataScope' in field && field.sequenceMetadataScope != null
+                    ? field.sequenceMetadataScope
+                    : 'main'; // fallback key
+
+            if (!sequenceFieldsBySegment[sequenceScope]) {
+                sequenceFieldsBySegment[sequenceScope] = [];
+            }
+
+            sequenceFieldsBySegment[sequenceScope].push(field);
         }
 
-        return { sampleFields, sequenceFields };
+        return { sampleFields, sequenceFieldsBySegment };
     }, [visibleFields]);
 
     const suborganismSegmentAndGeneInfo = useMemo(
@@ -214,36 +229,48 @@ export const SearchForm = ({
                             />
                         </div>
 
-                        <section className='flex flex-col gap-1.5'>
+                        <section className='flex flex-col gap-1.5 mb-4'>
                             <SearchSectionHeader title='Sequence Metadata' />
-                            {referenceSelection !== undefined && (
-                                <ReferenceSelector
-                                    lapisSearchParameters={lapisSearchParameters}
-                                    lapisUrl={lapisUrl}
-                                    filterSchema={filterSchema}
-                                    referenceGenomesInfo={referenceGenomesInfo}
-                                    referenceIdentifierField={referenceSelection.referenceIdentifierField}
-                                    selectedReferences={referenceSelection.selectedReferences}
-                                    setSelectedReferences={referenceSelection.setSelectedReferences}
-                                />
-                            )}
-
-                            {showMutationSearch && (
-                                <MutationField
-                                    suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
-                                    value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
-                                    onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
-                                />
-                            )}
-                            {sequenceFields.map((filter) => (
-                                <SearchField
-                                    field={filter}
-                                    lapisUrl={lapisUrl}
-                                    fieldValues={fieldValues}
-                                    setSomeFieldValues={setSomeFieldValues}
-                                    key={filter.name}
-                                    lapisSearchParameters={lapisSearchParameters}
-                                />
+                            {getSegmentNames(referenceGenomesInfo).map((segmentName) => (
+                                <details key={segmentName} className='group rounded-lg border px-4 pt-4'>
+                                    <summary className="flex w-full items-center list-none cursor-pointer">
+                                        <div className="flex items-center">
+                                            <SearchSectionHeader title={segmentName} />
+                                        </div>
+                                        <IwwaArrowDown
+                                            className="ml-auto h-5 w-5 transition-transform duration-200 group-open:rotate-180 text-gray-500"
+                                            aria-hidden="true"
+                                        />
+                                    </summary>
+                                    {referenceSelection !== undefined && (
+                                        <ReferenceSelector
+                                            lapisSearchParameters={lapisSearchParameters}
+                                            lapisUrl={lapisUrl}
+                                            filterSchema={filterSchema}
+                                            referenceGenomesInfo={referenceGenomesInfo}
+                                            referenceIdentifierField={referenceSelection.referenceIdentifierField}
+                                            selectedReferences={referenceSelection.selectedReferences}
+                                            setSelectedReferences={referenceSelection.setSelectedReferences}
+                                        />
+                                    )}
+                                    {showMutationSearch && (
+                                        <MutationField
+                                            suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
+                                            value={'mutation' in fieldValues ? (fieldValues.mutation ?? '') : ''}
+                                            onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
+                                        />
+                                    )}
+                                    {sequenceFieldsBySegment[segmentName]?.map((filter) => (
+                                        <SearchField
+                                            key={filter.name}
+                                            field={filter}
+                                            lapisUrl={lapisUrl}
+                                            fieldValues={fieldValues}
+                                            setSomeFieldValues={setSomeFieldValues}
+                                            lapisSearchParameters={lapisSearchParameters}
+                                        />
+                                    ))}
+                                </details>
                             ))}
                         </section>
 
