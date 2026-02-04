@@ -29,7 +29,7 @@ import {
     getFieldVisibilitiesFromQuery,
     MetadataFilterSchema,
 } from '../../utils/search.ts';
-import { getSegmentAndGeneInfo, stillRequiresReferenceNameSelection } from '../../utils/sequenceTypeHelpers.ts';
+import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
@@ -215,9 +215,7 @@ export const InnerSearchFullUI = ({
         }
     }, [aggregatedHook.data?.data, oldCount]);
 
-    const showMutationSearch =
-        schema.submissionDataTypes.consensusSequences &&
-        !stillRequiresReferenceNameSelection(referenceGenomesInfo, referenceSelection?.selectedReferences);
+    const showMutationSearch = schema.submissionDataTypes.consensusSequences;
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>

@@ -22,7 +22,7 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { getReferenceIdentifier, type ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
-import { getSegmentAndGeneInfo, getSegmentNames } from '../../utils/sequenceTypeHelpers.ts';
+import { getSegmentAndGeneInfo, getSegmentNames, type SegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal, getDisplayState } from '../common/FieldSelectorModal.tsx';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
@@ -147,11 +147,7 @@ export const SearchForm = ({
             const sequenceScope =
                 'sequenceMetadataScope' in field && field.sequenceMetadataScope != null
                     ? field.sequenceMetadataScope
-                    : 'main'; // fallback key
-
-            if (!sequenceFieldsBySegment[sequenceScope]) {
-                sequenceFieldsBySegment[sequenceScope] = [];
-            }
+                    : 'main';
 
             sequenceFieldsBySegment[sequenceScope].push(field);
         }
@@ -159,10 +155,16 @@ export const SearchForm = ({
         return { sampleFields, sequenceFieldsBySegment };
     }, [visibleFields]);
 
-    const suborganismSegmentAndGeneInfo = useMemo(
-        () => getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
-        [referenceGenomesInfo, referenceSelection?.selectedReferences],
-    );
+    const suborganismSegmentAndGeneInfo = useMemo(() => {
+        return getSegmentNames(referenceGenomesInfo).reduce<Record<string, SegmentAndGeneInfo>>((acc, segmentName) => {
+            acc[segmentName] = getSegmentAndGeneInfo(
+                referenceGenomesInfo,
+                referenceSelection?.selectedReferences,
+                segmentName,
+            );
+            return acc;
+        }, {});
+    }, [referenceGenomesInfo, referenceSelection?.selectedReferences]);
 
     return (
         <QueryClientProvider client={queryClient}>
@@ -233,13 +235,13 @@ export const SearchForm = ({
                             <SearchSectionHeader title='Sequence Metadata' />
                             {getSegmentNames(referenceGenomesInfo).map((segmentName) => (
                                 <details key={segmentName} className='group rounded-lg border px-4 pt-4'>
-                                    <summary className="flex w-full items-center list-none cursor-pointer">
-                                        <div className="flex items-center">
+                                    <summary className='flex w-full items-center list-none cursor-pointer'>
+                                        <div className='flex items-center'>
                                             <SearchSectionHeader title={segmentName} />
                                         </div>
                                         <IwwaArrowDown
-                                            className="ml-auto h-5 w-5 transition-transform duration-200 group-open:rotate-180 text-gray-500"
-                                            aria-hidden="true"
+                                            className='ml-auto h-5 w-5 transition-transform duration-200 group-open:rotate-180 text-gray-500'
+                                            aria-hidden='true'
                                         />
                                     </summary>
                                     {referenceSelection !== undefined && (
@@ -256,12 +258,12 @@ export const SearchForm = ({
                                     )}
                                     {showMutationSearch && (
                                         <MutationField
-                                            suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
+                                            suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo[segmentName]}
                                             value={'mutation' in fieldValues ? (fieldValues.mutation ?? '') : ''}
                                             onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
                                         />
                                     )}
-                                    {sequenceFieldsBySegment[segmentName]?.map((filter) => (
+                                    {sequenceFieldsBySegment[segmentName].map((filter) => (
                                         <SearchField
                                             key={filter.name}
                                             field={filter}

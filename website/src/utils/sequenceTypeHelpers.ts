@@ -127,11 +127,15 @@ export const getSegmentNames = (genomes: ReferenceGenomesInfo) => Object.keys(ge
 export function getSegmentAndGeneInfo(
     referenceGenomesInfo: ReferenceGenomesInfo,
     selectedReferences?: SegmentReferenceSelections,
+    segment?: string,
 ): SegmentAndGeneInfo {
     const nucleotideSegmentInfos: SegmentInfo[] = [];
     const geneInfos: GeneInfo[] = [];
 
     for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
+        if (segment && segmentName !== segment) {
+            continue;
+        }
         const isSingleReference = Object.keys(segmentData).length === 1;
         const selectedRef = selectedReferences?.[segmentName] ?? null;
 
