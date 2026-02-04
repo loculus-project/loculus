@@ -1491,15 +1491,19 @@ defaultOrganisms:
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/env.fasta]]"
               - name: prM
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"
-  dummy-organism:
+  dummy-organism-with-files:
     schema:
-      submissionDataTypes: *defaultSubmissionDataTypes
-      image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
-      organismName: "Test Dummy Organism"
-      metadataTemplate:
-        - country
-        - date
-      metadata: &dummyMetadata
+      image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
+      organismName: "Test organism (with files)"
+      submissionDataTypes:
+        consensusSequences: false
+        files:
+          enabled: true
+          categories:
+            - name: raw_reads
+      files:
+        - name: raw_reads
+      metadata:
         - name: date
           type: date
           initiallyVisible: true
@@ -1542,7 +1546,7 @@ defaultOrganisms:
           required: true
           type: string
           lineageSystem: pangoLineage
-          options: 
+          options:
             - name: A
             - name: A.1
             - name: A.1.1
@@ -1557,65 +1561,6 @@ defaultOrganisms:
           initiallyVisible: false
           type: string
           hideInSearchResultsTable: true
-      website:
-        tableColumns:
-          - country
-          - division
-          - date
-          - pangoLineage
-        defaultOrder: descending
-        defaultOrderBy: date
-    preprocessing:
-      - version: 2
-        image: ghcr.io/loculus-project/preprocessing-dummy
-        args:
-          - "--watch"
-          - "--withWarnings"
-          - "--withErrors"
-          - "--randomWarnError"
-    referenceGenomes:
-      - name: main
-        references:
-          - name: singleReference
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
-            genes:
-              - name: NP
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/E.fasta]]"
-              - name: M
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/M.fasta]]"
-              - name: "N"
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/N.fasta]]"
-              - name: ORF1a
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1a.fasta]]"
-              - name: ORF1b
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1b.fasta]]"
-              - name: ORF3a
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF3a.fasta]]"
-              - name: ORF6
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF6.fasta]]"
-              - name: ORF7a
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7a.fasta]]"
-              - name: ORF7b
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7b.fasta]]"
-              - name: ORF8
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF8.fasta]]"
-              - name: ORF9b
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF9b.fasta]]"
-              - name: S
-                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
-  dummy-organism-with-files:
-    schema:
-      image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
-      organismName: "Test organism (with files)"
-      submissionDataTypes:
-        consensusSequences: false
-        files:
-          enabled: true
-          categories:
-            - name: raw_reads
-      files:
-        - name: raw_reads
-      metadata: *dummyMetadata
       website:
         tableColumns:
           - country
