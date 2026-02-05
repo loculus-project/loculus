@@ -82,7 +82,7 @@ class S3Service(private val s3Config: S3Config) {
                 s3Client.createMultipartUpload(
                     x,
                 ).uploadId()
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 println("----- 045 EXCEPTION: ${e.javaClass.name}: ${e.message}")
                 e.printStackTrace()
                 throw e
