@@ -71,12 +71,18 @@ class S3Service(private val s3Config: S3Config) {
             val config = getS3BucketConfig()
 
             println("----- 040")
-            val uploadId = s3Client.createMultipartUpload(
-                CreateMultipartUploadRequest.builder()
-                    .bucket(config.bucket)
-                    .key(getFileIdPath(fileId))
-                    .build(),
-            ).uploadId()
+            val uploadId = try {
+                s3Client.createMultipartUpload(
+                    CreateMultipartUploadRequest.builder()
+                        .bucket(config.bucket)
+                        .key(getFileIdPath(fileId))
+                        .build(),
+                ).uploadId()
+            } catch (e: Exception) {
+                println("----- 045 EXCEPTION: ${e.javaClass.name}: ${e.message}")
+                e.printStackTrace()
+                throw e
+            }
             println("----- 050")
             val urls = (1..numberParts).map { part ->
                 val uploadPartRequest = UploadPartRequest.builder()
