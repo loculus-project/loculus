@@ -9,9 +9,10 @@ interface Props {
     sequenceEntryHistory?: SequenceEntryHistory;
     accessionVersion: string;
     showDownload: boolean;
+    showFastaDownloadButton: boolean;
 }
 
-const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
+const { sequenceEntryHistory, accessionVersion, showDownload, showFastaDownloadButton } = Astro.props;
 ---
 
 <div class='flex justify-between flex-wrap'>
@@ -42,14 +43,16 @@ const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
                         <IcBaselineDownload />
                     </span>
                     <ul class='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn top-full -left-44 sm:-left-24 w-52'>
-                        <li>
-                            <a
-                                href={routes.sequenceEntryFastaPage(accessionVersion, true)}
-                                class='block px-4 py-2 outlineButtonDropdownItem'
-                            >
-                                Download FASTA
-                            </a>
-                        </li>
+                        {showFastaDownloadButton && (
+                            <li>
+                                <a
+                                    href={routes.sequenceEntryFastaPage(accessionVersion, true)}
+                                    class='block px-4 py-2 outlineButtonDropdownItem'
+                                >
+                                    Download FASTA
+                                </a>
+                            </li>
+                        )}
                         <li>
                             <a
                                 href={routes.sequenceEntryTsvPage(accessionVersion, true)}

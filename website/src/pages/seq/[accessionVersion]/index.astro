@@ -12,6 +12,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { type Group } from '../../../types/backend';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getMyGroups } from '../../../utils/getMyGroups';
+import { getSegmentNames } from '../../../utils/sequenceTypeHelpers';
 
 const accessionVersion = Astro.params.accessionVersion!;
 
@@ -67,6 +68,9 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                                     : undefined
                             }
                             showDownload={showDownloadAndReport}
+                            showFastaDownloadButton={
+                                showDownloadAndReport && getSegmentNames(getReferenceGenomes(organism)).length > 0
+                            }
                         />
                         {result.type === SequenceDetailsTableResultType.TABLE_DATA &&
                             (result.isRevocation ? (
