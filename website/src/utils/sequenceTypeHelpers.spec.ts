@@ -172,9 +172,7 @@ describe('notAllReferencesSelected', () => {
     it('false when there are no multi-reference segments', () => {
         expect(notAllReferencesSelected(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { main: null })).toBe(false);
 
-        expect(notAllReferencesSelected(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { S: null, L: null })).toBe(
-            false,
-        );
+        expect(notAllReferencesSelected(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { S: null, L: null })).toBe(false);
     });
 
     it('true when a multi-reference segment has null selection', () => {
@@ -182,8 +180,6 @@ describe('notAllReferencesSelected', () => {
     });
 
     it('false when all multi-reference segments have a selection', () => {
-        expect(notAllReferencesSelected(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: 'ref1' })).toBe(
-            false,
-        );
+        expect(notAllReferencesSelected(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: 'ref1' })).toBe(false);
     });
 });
