@@ -63,19 +63,21 @@ class S3Service(private val s3Config: S3Config) {
 
     fun initiateMultipartUploadAndCreateUrlsToUpload(fileId: FileId, numberParts: Int): MultipartUploadHandler =
         s3ErrorMapping {
+            println("----- 030")
             if (numberParts <= 0 || numberParts > 10000) {
                 throw BadRequestException("The number of parts must between 1 and 10000.")
             }
 
             val config = getS3BucketConfig()
 
+            println("----- 040")
             val uploadId = s3Client.createMultipartUpload(
                 CreateMultipartUploadRequest.builder()
                     .bucket(config.bucket)
                     .key(getFileIdPath(fileId))
                     .build(),
             ).uploadId()
-
+            println("----- 050")
             val urls = (1..numberParts).map { part ->
                 val uploadPartRequest = UploadPartRequest.builder()
                     .bucket(config.bucket)
@@ -91,7 +93,7 @@ class S3Service(private val s3Config: S3Config) {
 
                 presigner.presignUploadPart(presignRequest).url().toString()
             }
-
+            println("----- 060")
             MultipartUploadHandler(uploadId, urls)
         }
 
