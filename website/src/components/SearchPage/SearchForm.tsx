@@ -55,8 +55,7 @@ interface SearchFormProps {
 
 const SearchSectionHeader: FC<{ title: string }> = ({ title }) => (
     <div className='flex items-center gap-2 mb-2'>
-        <span className='h-4 w-1 rounded-full bg-gray-300'></span>
-        <h3 className='text-xs uppercase tracking-wide text-gray-500'>{title}</h3>
+        <h3 className='text-xs uppercase tracking-wide text-primary-700'>{title}</h3>
     </div>
 );
 
@@ -240,75 +239,97 @@ export const SearchForm = ({
                             />
                         </div>
 
-                        <section className='flex flex-col gap-1.5 mb-4'>
-                            <SearchSectionHeader title='Sequence Metadata' />
-                            {getSegmentNames(referenceGenomesInfo).map((segmentName) => (
-                                <details
-                                    key={segmentName}
-                                    className='group rounded-lg border px-4 pt-4'
-                                    open={!referenceGenomesInfo.isMultiSegmented}
-                                >
-                                    <summary className='flex w-full items-center list-none cursor-pointer'>
-                                        <div className='flex items-center'>
-                                            <SearchSectionHeader title={segmentName} />
-                                        </div>
-                                        <IwwaArrowDown
-                                            className='ml-auto h-5 w-5 transition-transform duration-200 group-open:rotate-180 text-gray-500'
-                                            aria-hidden='true'
-                                        />
-                                    </summary>
-                                    {referenceSelection !== undefined && (
-                                        <ReferenceSelector
-                                            lapisSearchParameters={lapisSearchParameters}
-                                            lapisUrl={lapisUrl}
-                                            filterSchema={filterSchema}
-                                            referenceGenomesInfo={referenceGenomesInfo}
-                                            referenceIdentifierField={referenceSelection.referenceIdentifierField}
-                                            selectedReferences={referenceSelection.selectedReferences}
-                                            setSelectedReferences={referenceSelection.setSelectedReferences}
-                                            segmentName={segmentName}
-                                        />
-                                    )}
-                                    {showMutationSearch &&
-                                        segmentReferenceSelected(
-                                            segmentName,
-                                            referenceGenomesInfo,
-                                            referenceSelection?.selectedReferences,
-                                        ) && (
-                                            <MutationField
-                                                suborganismSegmentAndGeneInfo={
-                                                    suborganismSegmentAndGeneInfo[segmentName]
-                                                }
-                                                value={'mutation' in fieldValues ? (fieldValues.mutation ?? '') : ''}
-                                                onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
-                                            />
-                                        )}
-                                    {sequenceFieldsBySegment[segmentName].map((filter) => (
-                                        <SearchField
-                                            key={filter.name}
-                                            field={filter}
-                                            lapisUrl={lapisUrl}
-                                            fieldValues={fieldValues}
-                                            setSomeFieldValues={setSomeFieldValues}
-                                            lapisSearchParameters={lapisSearchParameters}
-                                        />
-                                    ))}
-                                </details>
-                            ))}
+                        <section className='flex flex-col gap-1.5'>
+                            <details key='sample' className='group px-2 pt-2' open={true}>
+                                <summary className='flex w-full items-center list-none cursor-pointer'>
+                                    <div className='flex items-center'>
+                                        <SearchSectionHeader title='Sample Metadata Filters' />
+                                    </div>
+                                    <IwwaArrowDown
+                                        className='ml-auto h-5 w-5 transition-transform duration-200 group-open:rotate-180 text-primary-700'
+                                        aria-hidden='true'
+                                    />
+                                </summary>
+                                {sampleFields.map((filter) => (
+                                    <SearchField
+                                        field={filter}
+                                        lapisUrl={lapisUrl}
+                                        fieldValues={fieldValues}
+                                        setSomeFieldValues={setSomeFieldValues}
+                                        key={filter.name}
+                                        lapisSearchParameters={lapisSearchParameters}
+                                    />
+                                ))}
+                            </details>
                         </section>
 
-                        <section className='flex flex-col gap-1.5'>
-                            <SearchSectionHeader title='Sample Metadata' />
-                            {sampleFields.map((filter) => (
-                                <SearchField
-                                    field={filter}
-                                    lapisUrl={lapisUrl}
-                                    fieldValues={fieldValues}
-                                    setSomeFieldValues={setSomeFieldValues}
-                                    key={filter.name}
-                                    lapisSearchParameters={lapisSearchParameters}
-                                />
-                            ))}
+                        <section className='flex flex-col gap-1.5 mb-4'>
+                            <details key='sequence' className='group px-2 pt-2' open={true}>
+                                <summary className='flex w-full items-center list-none cursor-pointer'>
+                                    <div className='flex items-center'>
+                                        <SearchSectionHeader title='Sequence Metadata Filters' />
+                                    </div>
+                                    <IwwaArrowDown
+                                        className='ml-auto h-5 w-5 transition-transform duration-200 group-open:rotate-180 text-primary-700'
+                                        aria-hidden='true'
+                                    />
+                                </summary>
+                                {getSegmentNames(referenceGenomesInfo).map((segmentName) => (
+                                    <details
+                                        key={segmentName}
+                                        className='group/inner rounded-lg border px-4 pt-4'
+                                        open={!referenceGenomesInfo.isMultiSegmented}
+                                    >
+                                        <summary className='flex w-full items-center list-none cursor-pointer'>
+                                            <div className='flex items-center'>
+                                                <SearchSectionHeader title={segmentName} />
+                                            </div>
+                                            <IwwaArrowDown
+                                                className='ml-auto h-5 w-5 transition-transform duration-200 group-open/inner:rotate-180 text-primary-700'
+                                                aria-hidden='true'
+                                            />
+                                        </summary>
+                                        {referenceSelection !== undefined && (
+                                            <ReferenceSelector
+                                                lapisSearchParameters={lapisSearchParameters}
+                                                lapisUrl={lapisUrl}
+                                                filterSchema={filterSchema}
+                                                referenceGenomesInfo={referenceGenomesInfo}
+                                                referenceIdentifierField={referenceSelection.referenceIdentifierField}
+                                                selectedReferences={referenceSelection.selectedReferences}
+                                                setSelectedReferences={referenceSelection.setSelectedReferences}
+                                                segmentName={segmentName}
+                                            />
+                                        )}
+                                        {showMutationSearch &&
+                                            segmentReferenceSelected(
+                                                segmentName,
+                                                referenceGenomesInfo,
+                                                referenceSelection?.selectedReferences,
+                                            ) && (
+                                                <MutationField
+                                                    suborganismSegmentAndGeneInfo={
+                                                        suborganismSegmentAndGeneInfo[segmentName]
+                                                    }
+                                                    value={
+                                                        'mutation' in fieldValues ? (fieldValues.mutation ?? '') : ''
+                                                    }
+                                                    onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
+                                                />
+                                            )}
+                                        {sequenceFieldsBySegment[segmentName].map((filter) => (
+                                            <SearchField
+                                                key={filter.name}
+                                                field={filter}
+                                                lapisUrl={lapisUrl}
+                                                fieldValues={fieldValues}
+                                                setSomeFieldValues={setSomeFieldValues}
+                                                lapisSearchParameters={lapisSearchParameters}
+                                            />
+                                        ))}
+                                    </details>
+                                ))}
+                            </details>
                         </section>
                     </div>
                 </div>
