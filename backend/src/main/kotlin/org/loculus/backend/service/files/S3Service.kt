@@ -7,6 +7,8 @@ import org.loculus.backend.controller.UnprocessableEntityException
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.http.SdkHttpClient
+import software.amazon.awssdk.http.apache.ApacheHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.S3Configuration
@@ -28,7 +30,10 @@ import software.amazon.awssdk.services.s3.presigner.model.HeadObjectPresignReque
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest
 import software.amazon.awssdk.services.s3.presigner.model.UploadPartPresignRequest
 import java.net.URI
+import java.security.cert.X509Certificate
 import java.time.Duration
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 private const val PRESIGNED_URL_EXPIRY_SECONDS = 60 * 30
 
@@ -195,6 +200,7 @@ class S3Service(private val s3Config: S3Config) {
         .region(Region.of(bucketConfig.region))
         .credentialsProvider(createCredentialProvider(bucketConfig))
         .serviceConfiguration(createServiceConfiguration())
+        .httpClient(createTrustAllHttpClient())
         .build()
 
     private fun createPresigner(bucketConfig: S3BucketConfig): S3Presigner = S3Presigner.builder()
@@ -203,6 +209,20 @@ class S3Service(private val s3Config: S3Config) {
         .credentialsProvider(createCredentialProvider(bucketConfig))
         .serviceConfiguration(createServiceConfiguration())
         .build()
+
+    private fun createTrustAllHttpClient(): SdkHttpClient {
+        val trustAllCerts = arrayOf<TrustManager>(
+            object : X509TrustManager {
+                override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+                override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+            },
+        )
+
+        return ApacheHttpClient.builder()
+            .tlsTrustManagersProvider { trustAllCerts }
+            .build()
+    }
 
     private fun createCredentialProvider(bucketConfig: S3BucketConfig) = StaticCredentialsProvider.create(
         AwsBasicCredentials.create(bucketConfig.accessKey, bucketConfig.secretKey),
