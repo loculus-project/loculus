@@ -116,12 +116,10 @@ organisms:
         defaultOrder: descending
         defaultOrderBy: date
     preprocessing:
-      image: ghcr.io/loculus-project/preprocessing-dummy
-      args:
-        - '--watch'
-      warnings: true
-      errors: true
-      randomWarnError: true
+      - version: 1
+        image: ghcr.io/loculus-project/preprocessing-nextclade
+        args:
+          - 'prepro'
     referenceGenomes:
       singleReference:
         nucleotideSequences:

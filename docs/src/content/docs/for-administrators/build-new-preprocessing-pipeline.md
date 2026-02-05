@@ -6,7 +6,7 @@ title: Building your own pipeline
 As the API interface and config structure have not been finalized and may change rapidly until Loculus 1.0 is officially released (see [current state and roadmap](../../introduction/current-state-and-roadmap/)), this guide might be not fully accurate and complete.
 :::
 
-Using an [existing pipeline](../existing-preprocessing-pipelines/) is the fastest way to get started with Loculus, but it is also easy to develop new pipelines that use custom tooling and logic. You can take a look at the code of the ["dummy pipeline"](https://github.com/loculus-project/loculus/tree/main/preprocessing/dummy) and the [Nextclade-based pipeline](https://github.com/loculus-project/loculus/tree/main/preprocessing/nextclade) (both examples are written in Python but it is possible to implement preprocessing pipelines in any programming language). If you would like to use Python to build your own pipeline, you might consider forking the Nextclade-based pipeline (which is released under the AGPL 3.0 license) and adapting it.
+Using an [existing pipeline](../existing-preprocessing-pipelines/) is the fastest way to get started with Loculus, but it is also easy to develop new pipelines that use custom tooling and logic. You can take a look at the code of the [Nextclade-based pipeline](https://github.com/loculus-project/loculus/tree/main/preprocessing/nextclade) (written in Python, but it is possible to implement preprocessing pipelines in any programming language). If you would like to use Python to build your own pipeline, you might consider forking the Nextclade-based pipeline (which is released under the AGPL 3.0 license) and adapting it.
 
 ## Authentication
 
