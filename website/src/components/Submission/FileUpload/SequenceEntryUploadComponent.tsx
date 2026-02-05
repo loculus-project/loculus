@@ -110,15 +110,14 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                     .
                 </p>
 
-                {(organism.startsWith('not-aligned-organism') || organism === 'ebola-sudan') &&
-                    action === 'submit' && (
-                        <DevExampleData
-                            setExampleEntries={setExampleEntries}
-                            exampleEntries={exampleEntries}
-                            handleLoadExampleData={handleLoadExampleData}
-                            dataIsLoaded={!!metadataFile && (!enableConsensusSequences || !!sequenceFile)}
-                        />
-                    )}
+                {(organism.startsWith('not-aligned-organism') || organism === 'ebola-sudan') && action === 'submit' && (
+                    <DevExampleData
+                        setExampleEntries={setExampleEntries}
+                        exampleEntries={exampleEntries}
+                        handleLoadExampleData={handleLoadExampleData}
+                        dataIsLoaded={!!metadataFile && (!enableConsensusSequences || !!sequenceFile)}
+                    />
+                )}
             </div>
             <form className='sm:col-span-2 space-y-4'>
                 <div className='flex flex-col lg:flex-row gap-6'>
