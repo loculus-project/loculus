@@ -371,7 +371,7 @@ describe('DownloadDialog', () => {
                 referenceIdentifierField: 'genotype',
             });
 
-            expect(screen.getByText('select a genotype display name', { exact: false })).toBeVisible();
+            expect(screen.getByText('select genotype display name', { exact: false })).toBeVisible();
             expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
             expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
         });
