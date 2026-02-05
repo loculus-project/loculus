@@ -1999,6 +1999,7 @@ defaultOrganisms:
         - &evMetadataAdd
           name: clade_cv_a16
           metadataScope: sequence
+          sequenceMetadataScope: main
           displayName: Clade CV-A16
           onlyForReference: CV-A16
           header: "Clade"
@@ -2014,6 +2015,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_cv_a10
           metadataScope: sequence
+          sequenceMetadataScope: main
           displayName: Clade CV-A10
           onlyForReference: CV-A10
           preprocessing:
@@ -2023,6 +2025,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_ev_a71
           metadataScope: sequence
+          sequenceMetadataScope: main
           displayName: Clade EV-A71
           onlyForReference: EV-A71
           preprocessing:
@@ -2032,6 +2035,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_ev_d68
           metadataScope: sequence
+          sequenceMetadataScope: main
           displayName: Clade EV-D68
           onlyForReference: EV-D68
           preprocessing:

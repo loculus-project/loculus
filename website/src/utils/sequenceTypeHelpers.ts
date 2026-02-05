@@ -205,10 +205,10 @@ export function segmentsWithMultipleReferences(referenceGenomesInfo: ReferenceGe
     );
 }
 
-export function stillRequiresReferenceNameSelection(
+export function notAllReferencesSelected(
     referenceGenomesInfo: ReferenceGenomesInfo,
     selectedReferenceNames?: SegmentReferenceSelections,
-) {
+): boolean {
     if (selectedReferenceNames === undefined) {
         return false;
     }
@@ -226,7 +226,7 @@ export function segmentReferenceSelected(
         return true;
     }
     if (selectedReferenceNames === undefined) {
-        return false;
+        return true;
     }
     return selectedReferenceNames[segmentName] !== null;
 }

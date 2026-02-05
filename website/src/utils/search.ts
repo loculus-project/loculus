@@ -64,7 +64,7 @@ export class MetadataVisibility {
         }
         if (
             !hideIfStillRequiresReferenceSelection &&
-            segmentReferenceSelected(this.segmentName!, referenceGenomesInfo, selectedReferenceNames)
+            !segmentReferenceSelected(this.segmentName!, referenceGenomesInfo, selectedReferenceNames)
         ) {
             return true;
         }
