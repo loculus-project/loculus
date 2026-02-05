@@ -1,5 +1,7 @@
 package org.loculus.backend.service.files
 
+import org.apache.http.conn.ssl.NoopHostnameVerifier
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory
 import org.loculus.backend.config.S3BucketConfig
 import org.loculus.backend.config.S3Config
 import org.loculus.backend.controller.BadRequestException
@@ -32,6 +34,7 @@ import software.amazon.awssdk.services.s3.presigner.model.UploadPartPresignReque
 import java.net.URI
 import java.security.cert.X509Certificate
 import java.time.Duration
+import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
@@ -219,8 +222,16 @@ class S3Service(private val s3Config: S3Config) {
             },
         )
 
+        val sslContext = SSLContext.getInstance("TLS")
+        sslContext.init(null, trustAllCerts, java.security.SecureRandom())
+
+        val sslSocketFactory = SSLConnectionSocketFactory(
+            sslContext,
+            NoopHostnameVerifier.INSTANCE,
+        )
+
         return ApacheHttpClient.builder()
-            .tlsTrustManagersProvider { trustAllCerts }
+            .socketFactory(sslSocketFactory)
             .build()
     }
 
