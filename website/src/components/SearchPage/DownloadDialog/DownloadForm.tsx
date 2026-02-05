@@ -8,6 +8,7 @@ import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from '.
 import { routes } from '../../../routes/routes.ts';
 import type { Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
+import { getReferenceIdentifier } from '../../../utils/referenceSelection.ts';
 import { MetadataFilterSchema, type MetadataVisibility } from '../../../utils/search.ts';
 import {
     getSegmentAndGeneInfo,
@@ -15,7 +16,6 @@ import {
     segmentsWithMultipleReferences,
     type SegmentReferenceSelections,
 } from '../../../utils/sequenceTypeHelpers.ts';
-import { getReferenceIdentifier } from '../../../utils/referenceSelection.ts';
 
 export type DownloadFormState = {
     includeRestricted: boolean;
@@ -67,7 +67,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     const notSelectedIdentifiers = useMemo(
         () =>
             segmentsWithMultipleReferences(referenceGenomesInfo)
-                .filter((segment) => selectedReferenceNames && selectedReferenceNames[segment] === null)
+                .filter((segment) => selectedReferenceNames?.[segment] === null)
                 .map((segment) =>
                     getReferenceIdentifier(referenceIdentifierField!, segment, referenceGenomesInfo.isMultiSegmented),
                 )
