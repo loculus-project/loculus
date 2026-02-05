@@ -225,13 +225,10 @@ class S3Service(private val s3Config: S3Config) {
         val sslContext = SSLContext.getInstance("TLS")
         sslContext.init(null, trustAllCerts, java.security.SecureRandom())
 
-        val sslSocketFactory = SSLConnectionSocketFactory(
-            sslContext,
-            NoopHostnameVerifier.INSTANCE,
-        )
+        val socketFactory = SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE)
 
         return ApacheHttpClient.builder()
-            .socketFactory(sslSocketFactory)
+            .socketFactory(socketFactory)
             .build()
     }
 
