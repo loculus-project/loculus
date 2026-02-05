@@ -153,7 +153,11 @@ organisms:
         configFile:
           log_level: DEBUG
           batch_size: 100
-          segments: []
+          segments:
+            - name: main
+              references:
+              - name: singleReference
+                genes: []
     referenceGenomes: [] # We are not performing alignment
 createTestAccounts: true
 ```
