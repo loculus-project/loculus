@@ -1,12 +1,12 @@
 ---
 import { SequenceEntryHistoryMenu } from './SequenceEntryHistoryMenu';
+import { getReferenceGenomes } from '../../config';
+import { findOrganismAndData } from '../../pages/seq/[accessionVersion]/findOrganismAndData';
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
+import { getSegmentNames } from '../../utils/sequenceTypeHelpers';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
-import { findOrganismAndData } from '../../pages/seq/[accessionVersion]/findOrganismAndData';
-import { getReferenceGenomes } from '../../config';
-import { getSegmentNames } from '../../utils/sequenceTypeHelpers';
 
 interface Props {
     sequenceEntryHistory?: SequenceEntryHistory;
@@ -16,7 +16,9 @@ interface Props {
 
 const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
 const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
-const referenceGenomesInfo = getReferenceGenomes(sequenceDetailsTableData.isOk() ? sequenceDetailsTableData.value.organism : '');
+const referenceGenomesInfo = getReferenceGenomes(
+    sequenceDetailsTableData.isOk() ? sequenceDetailsTableData.value.organism : '',
+);
 ---
 
 <div class='flex justify-between flex-wrap'>
@@ -47,15 +49,16 @@ const referenceGenomesInfo = getReferenceGenomes(sequenceDetailsTableData.isOk()
                         <IcBaselineDownload />
                     </span>
                     <ul class='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn top-full -left-44 sm:-left-24 w-52'>
-                        {getSegmentNames(referenceGenomesInfo).length > 0 && <li>
-                            <a
-                                href={routes.sequenceEntryFastaPage(accessionVersion, true)}
-                                class='block px-4 py-2 outlineButtonDropdownItem'
-                            >
-                                Download FASTA
-                            </a>
-                        </li>
-                        }
+                        {getSegmentNames(referenceGenomesInfo).length > 0 && (
+                            <li>
+                                <a
+                                    href={routes.sequenceEntryFastaPage(accessionVersion, true)}
+                                    class='block px-4 py-2 outlineButtonDropdownItem'
+                                >
+                                    Download FASTA
+                                </a>
+                            </li>
+                        )}
                         <li>
                             <a
                                 href={routes.sequenceEntryTsvPage(accessionVersion, true)}
