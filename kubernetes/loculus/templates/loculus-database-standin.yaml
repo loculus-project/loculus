@@ -1,5 +1,18 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- if .Values.runDevelopmentMainDatabase }}
+{{- if .Values.developmentDatabasePersistence }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: loculus-database-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -49,13 +62,24 @@ spec:
         - name: LOCULUS_VERSION
           value: {{ $dockerTag }}
         {{- end }}
+        - name: PGDATA
+          value: "/var/lib/postgresql/data/pgdata"
         volumeMounts:
         - name: init-scripts
           mountPath: /docker-entrypoint-initdb.d
+        {{- if .Values.developmentDatabasePersistence }}
+        - name: database-data
+          mountPath: /var/lib/postgresql/data
+        {{- end }}
       volumes:
       - name: init-scripts
         configMap:
           name: loculus-database-init
+      {{- if .Values.developmentDatabasePersistence }}
+      - name: database-data
+        persistentVolumeClaim:
+          claimName: loculus-database-data
+      {{- end }}
 ---
 apiVersion: v1
 kind: ConfigMap

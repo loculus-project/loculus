@@ -1,5 +1,18 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- if .Values.runDevelopmentKeycloakDatabase }}
+{{- if .Values.developmentDatabasePersistence }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: loculus-keycloak-database-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -46,4 +59,15 @@ spec:
             - name: LOCULUS_VERSION
               value: {{ $dockerTag }}
             {{- end }}
+            - name: PGDATA
+              value: "/var/lib/postgresql/data/pgdata"
+          {{- if .Values.developmentDatabasePersistence }}
+          volumeMounts:
+            - name: database-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: database-data
+          persistentVolumeClaim:
+            claimName: loculus-keycloak-database-data
+          {{- end }}
 {{- end }}

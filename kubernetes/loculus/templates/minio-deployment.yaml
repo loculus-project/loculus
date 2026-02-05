@@ -22,6 +22,19 @@ data:
         }
       ]
     }
+{{- if .Values.developmentDatabasePersistence }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -45,6 +58,11 @@ spec:
         - name: policy-volume
           configMap:
             name: minio-policies
+        {{- if .Values.developmentDatabasePersistence }}
+        - name: minio-data
+          persistentVolumeClaim:
+            claimName: minio-data
+        {{- end }}
       containers:
         - name: minio
           image: minio/minio:latest
@@ -84,5 +102,9 @@ spec:
           volumeMounts:
             - name: policy-volume
               mountPath: /policy
+            {{- if .Values.developmentDatabasePersistence }}
+            - name: minio-data
+              mountPath: /data
+            {{- end }}
       restartPolicy: Always
 {{- end }}

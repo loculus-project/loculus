@@ -1346,7 +1346,7 @@
       "groups": ["db"],
       "type": "boolean",
       "default": true,
-      "description": "If true, makes the database on the argocd preview persistent."
+      "description": "If true, creates PersistentVolumeClaims for development databases (loculus, keycloak, minio) so data survives pod restarts."
     },
     "runDevelopmentS3": {
       "groups": ["db"],
