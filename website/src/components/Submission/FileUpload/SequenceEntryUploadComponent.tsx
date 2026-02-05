@@ -110,15 +110,14 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                     .
                 </p>
 
-                {(organism.startsWith('not-aligned-organism') || organism.startsWith('dummy-organism')) &&
-                    action === 'submit' && (
-                        <DevExampleData
-                            setExampleEntries={setExampleEntries}
-                            exampleEntries={exampleEntries}
-                            handleLoadExampleData={handleLoadExampleData}
-                            dataIsLoaded={!!metadataFile && (!enableConsensusSequences || !!sequenceFile)}
-                        />
-                    )}
+                {(organism.startsWith('not-aligned-organism') || organism === 'ebola-sudan') && action === 'submit' && (
+                    <DevExampleData
+                        setExampleEntries={setExampleEntries}
+                        exampleEntries={exampleEntries}
+                        handleLoadExampleData={handleLoadExampleData}
+                        dataIsLoaded={!!metadataFile && (!enableConsensusSequences || !!sequenceFile)}
+                    />
+                )}
             </div>
             <form className='sm:col-span-2 space-y-4'>
                 <div className='flex flex-col lg:flex-row gap-6'>
@@ -189,30 +188,45 @@ const DevExampleData = ({
 };
 
 function getExampleData(randomEntries = 20) {
-    const regions = ['Europe', 'Asia', 'North America', 'South America', 'Africa', 'Australia'];
-    const countries = ['Switzerland', 'USA', 'China', 'Brazil', 'Nigeria', 'Australia'];
-    const divisions = ['Bern', 'California', 'Beijing', 'Rio de Janeiro', 'Lagos', 'Sydney'];
-    const hosts = ['Homo sapiens', 'Canis lupus familiaris'];
-    const lineages = ['A', 'A.1', 'A.1.1', 'A.2', 'B'];
+    const countries = ['Switzerland', 'USA', 'China', 'Brazil', 'Nigeria', 'Australia', 'France', 'Germany'];
+    const affiliations = [
+        'Test Institute, TestCity',
+        'Example Lab, SampleTown',
+        'Demo Research Center',
+        'Placeholder University',
+    ];
 
-    let metadataContent = 'submissionId\tdate\tregion\tcountry\tdivision\thost\tlineage\n';
-    let revisedMetadataContent = 'accession\tsubmissionId\tdate\tregion\tcountry\tdivision\thost\tlineage\n';
+    // Ebola Sudan compatible sequence (partial NP gene region)
+    const ebolaSequence =
+        'ATGGATAAACGGGTGAGAGGTTCATGGGCCCTGGGAGGACAATCTGAAGTTGATCTTGACTACCACAAAA' +
+        'TATTAACAGCCGGGCTTTCGGTCCAACAAGGGATTGTGCGACAAAGAGTCATCCCGGTATATGTTGTGAG' +
+        'TGATCTTGAGGGTATTTGTCAACATATCATTCAGGCCTTTGAAGCAGGCGTAGATTTCCAAGATAATGCT' +
+        'GACAGCTTCCTTTTACTTTTATGTTTACATCATGCTTACCAAGGAGATCATAGGCTCTTCCTCAAAAGTG' +
+        'ATGCAGTTCAATACTTAGAGGGCCATGGTTTCAGGTTTGAGGTCCGAGAAAAGGAGAATGTGCACCGTCT' +
+        'GGATGAATTGTTGCCCAATGTCACCGGTGGAAAAAATCTTAGGAGAACATTGGCTGCAATGCCTGAAGAG' +
+        'GAGACAACAGAAGCTAATGCTGGTCAGTTTTTATCCTTTGCCAGTTTGTTTCTACCCAAACTTGTCGTTG' +
+        'GGGAGAAAGCGTGTCTGGAAAAAGTACAAAGGCAGATTCAGGTCCATGCAGAACAAGGGCTCATTCAATA' +
+        'TCCAACTTCCTGGCAATCAGTTGGACACATGATGGTGATCTTCCGTTTGATGAGAACAAACTTTTTAATC' +
+        'AAGTTCCTACTAATACATCAGGGGATGCACATGGTCGCAGGCCATGATGCGAATGACACAGTAATATCTA' +
+        'ATTCTGTTGCCCAAGCAAGGTTCTCTGGTCTTCTGATTGTAAAGACTGTTCTGGACCACATCCTACAAAA' +
+        'AACAGATCTTGGAGTACGACTTCATCCACTGGCCAGGACAGCAAAAGTCAAGAATGAGGTCAGTTCATTC' +
+        'AAGGCAGCTCTTGGCTCACTTGCCAAGCATGGAGAATATGCTCCATTTGCACGTCTCCTCAATCTTTCTG';
+
+    let metadataContent = 'submissionId\tsampleCollectionDate\tgeoLocCountry\tauthorAffiliations\n';
+    let revisedMetadataContent = 'accession\tsubmissionId\tsampleCollectionDate\tgeoLocCountry\tauthorAffiliations\n';
     let sequenceContent = '';
 
     for (let i = 0; i < randomEntries; i++) {
-        const submissionId = `custom${i}`;
+        const submissionId = `example${i}`;
         const date = new Date(Date.now() - Math.floor(Math.random() * 365 * 24 * 60 * 60 * 1000))
             .toISOString()
             .split('T')[0];
-        const region = regions[Math.floor(Math.random() * regions.length)];
         const country = countries[Math.floor(Math.random() * countries.length)];
-        const division = divisions[Math.floor(Math.random() * divisions.length)];
-        const host = hosts[Math.floor(Math.random() * hosts.length)];
-        const lineage = lineages[Math.floor(Math.random() * lineages.length)];
+        const affiliation = affiliations[Math.floor(Math.random() * affiliations.length)];
 
-        metadataContent += `${submissionId}\t${date}\t${region}\t${country}\t${division}\t${host}\t${lineage}\n`;
-        revisedMetadataContent += `${i + 1}\t${submissionId}\t${date}\t${region}\t${country}\t${division}\t${host}\t${lineage}\n`;
-        sequenceContent += `>${submissionId}\nACTG\n`;
+        metadataContent += `${submissionId}\t${date}\t${country}\t${affiliation}\n`;
+        revisedMetadataContent += `${i + 1}\t${submissionId}\t${date}\t${country}\t${affiliation}\n`;
+        sequenceContent += `>${submissionId}\n${ebolaSequence}\n`;
     }
 
     return {

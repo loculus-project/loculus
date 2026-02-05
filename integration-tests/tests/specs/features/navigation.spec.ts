@@ -1,7 +1,7 @@
 import { test } from '../../fixtures/auth.fixture';
 import { NavigationPage } from '../../pages/navigation.page';
 
-const organismName = 'Test Dummy Organism';
+const organismName = 'Ebola Sudan';
 
 const organismIndependentNavigationItems = [
     { link: 'My account', title: 'My account' },

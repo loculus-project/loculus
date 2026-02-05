@@ -101,6 +101,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
             if unaligned_nucleotide_sequences
             else {},
+            files=json_object["data"].get("files"),
         )
         entry = UnprocessedEntry(
             accessionVersion=f"{json_object['accession']}.{json_object['version']}",
