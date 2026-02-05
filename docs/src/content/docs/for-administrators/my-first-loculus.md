@@ -158,7 +158,11 @@ organisms:
               references:
               - name: singleReference
                 genes: []
-    referenceGenomes: [] # We are not performing alignment
+    referenceGenomes:
+      - name: main
+        references:
+          - name: singleReference
+            sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
 createTestAccounts: true
 ```
 <!-- prettier-ignore-end -->
