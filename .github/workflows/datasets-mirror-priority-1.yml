@@ -9,6 +9,7 @@ jobs:
       matrix:
         taxon_id:
           - 10244    # Mpox
+          - 11089    # Yellow Fever Virus
           - 1868215  # Orthopneumovirus
           - 3048148  # Metapneumovirus hominis
           - 3048448  # West nile virus
