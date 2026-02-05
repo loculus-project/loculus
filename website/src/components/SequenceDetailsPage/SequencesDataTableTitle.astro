@@ -1,10 +1,7 @@
 ---
 import { SequenceEntryHistoryMenu } from './SequenceEntryHistoryMenu';
-import { getReferenceGenomes } from '../../config';
-import { findOrganismAndData } from '../../pages/seq/[accessionVersion]/findOrganismAndData';
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
-import { getSegmentNames } from '../../utils/sequenceTypeHelpers';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
@@ -12,13 +9,10 @@ interface Props {
     sequenceEntryHistory?: SequenceEntryHistory;
     accessionVersion: string;
     showDownload: boolean;
+    showFastaDownloadButton: boolean;
 }
 
-const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
-const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
-const referenceGenomesInfo = getReferenceGenomes(
-    sequenceDetailsTableData.isOk() ? sequenceDetailsTableData.value.organism : '',
-);
+const { sequenceEntryHistory, accessionVersion, showDownload, showFastaDownloadButton } = Astro.props;
 ---
 
 <div class='flex justify-between flex-wrap'>
@@ -49,7 +43,7 @@ const referenceGenomesInfo = getReferenceGenomes(
                         <IcBaselineDownload />
                     </span>
                     <ul class='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn top-full -left-44 sm:-left-24 w-52'>
-                        {getSegmentNames(referenceGenomesInfo).length > 0 && (
+                        {showFastaDownloadButton && (
                             <li>
                                 <a
                                     href={routes.sequenceEntryFastaPage(accessionVersion, true)}
