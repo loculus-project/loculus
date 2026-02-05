@@ -177,7 +177,7 @@ interface DownloadButtonProps {
     allowFastaDownload?: boolean;
 }
 
-const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId, allowFastaDownload }) => {
+const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId, allowFastaDownload = true }) => {
     return (
         <div className='dropdown dropdown-hover relative inline-block'>
             <Button className={BUTTONCLASS}>
