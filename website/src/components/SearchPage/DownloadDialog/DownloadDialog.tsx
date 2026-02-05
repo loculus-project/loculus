@@ -69,7 +69,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         return new Map(
             schema.metadata.map((field) => [
                 field.name,
-                new MetadataVisibility(selectedFields.has(field.name), field.onlyForReference),
+                new MetadataVisibility(selectedFields.has(field.name), field.onlyForReference, field.sequenceMetadataScope),
             ]),
         );
     }, [selectedFields, schema]);

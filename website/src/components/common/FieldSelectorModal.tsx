@@ -7,7 +7,7 @@ import type { Metadata } from '../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
 import {
-    stillRequiresReferenceNameSelection,
+    segmentReferenceSelected,
     type SegmentReferenceSelections,
 } from '../../utils/sequenceTypeHelpers.ts';
 
@@ -265,10 +265,9 @@ export function getDisplayState(
         return undefined;
     }
 
-    //TODO: fix this to be at segment level
     if (
         field.onlyForReference !== undefined &&
-        stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames)
+        !segmentReferenceSelected(field.sequenceMetadataScope!, referenceGenomesInfo, selectedReferenceNames)
     ) {
         if (greyOutIfStillRequiresReferenceSelection) {
             return {
