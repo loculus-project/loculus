@@ -59,13 +59,16 @@ export class SearchPage {
     }
 
     async selectReference(fieldLabel: string, option: string) {
-        const select = this.page.getByRole('combobox', { name: fieldLabel });
+        const outer = this.page.locator('details', {
+            has: this.page.locator('summary', { hasText: 'Sequence Metadata Filters' }),
+        });
+        const select = outer.getByRole('combobox', { name: fieldLabel });
         await select.focus();
         await this.page.waitForTimeout(500);
         await select.selectOption({ value: option });
         await expect(select).toHaveValue(option);
 
-        const mutations = this.page.getByRole('combobox', { name: 'Mutations' }).first();
+        const mutations = outer.getByRole('combobox', { name: 'Mutations' }).first();
         await expect(mutations).toBeVisible();
         await expect(mutations).toBeEnabled();
     }
