@@ -17,7 +17,7 @@ seqSets:
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
-disableIngest: true
+disableIngest: false
 disableEnaSubmission: true
 website:
   websiteConfig:
