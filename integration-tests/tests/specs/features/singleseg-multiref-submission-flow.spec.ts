@@ -38,7 +38,7 @@ test.describe('Single segment multi-reference submission flow', () => {
 
         // Test mutation search
         const mutation = 'T11C';
-        await releasedPage.selectReference('Genotype', 'EV-A71');
+        await releasedPage.selectReference('Genotype', 'EV-A71 (1)');
         await releasedPage.enterMutation(mutation);
         await expect(page.getByText(`mutation:${mutation}`)).toBeVisible();
         const filterChip = page.locator('span', { hasText: mutation }).locator('..');
