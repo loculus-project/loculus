@@ -717,6 +717,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.pipelineVersionColumn,
             DataUseTermsTable.dataUseTermsTypeColumn,
             DataUseTermsTable.restrictedUntilColumn,
+            DataUseTermsTable.changeDateColumn,
         )
         .where {
             SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
@@ -750,6 +751,7 @@ class SubmissionDatabaseService(
                     it[DataUseTermsTable.restrictedUntilColumn],
                 ),
                 versionComment = it[SequenceEntriesView.versionCommentColumn],
+                dataUseTermsChangeDate = it[DataUseTermsTable.changeDateColumn],
             )
         }
 
@@ -1504,4 +1506,5 @@ data class RawProcessedData(
     val processedData: ProcessedData<GeneticSequence>,
     val pipelineVersion: Long,
     val dataUseTerms: DataUseTerms,
+    val dataUseTermsChangeDate: LocalDateTime?,
 ) : AccessionVersionInterface
