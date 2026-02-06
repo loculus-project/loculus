@@ -862,7 +862,7 @@ class ProcessingFunctions:
     ) -> ProcessingResult:
         """
         Extracts a substring from the `regex_field` using the provided regex `pattern`
-        with a `capture_group`.
+        with a `capture_group`, if `uppercase` is set to true the extracted value is capitalized.
         e.g. ^(?P<segment>[^-]+)-(?P<subtype>[^-]+)$ where segment or subtype could be used
         as a capture_group to extract their respective value from the regex_field.
         """
@@ -871,8 +871,9 @@ class ProcessingFunctions:
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
 
-        pattern = args["pattern"]
-        capture_group = args["capture_group"]
+        pattern = args.get("pattern")
+        capture_group = args.get("capture_group")
+        uppercase = args.get("uppercase", False)
 
         if not regex_field:
             return ProcessingResult(datum=None, warnings=warnings, errors=errors)
@@ -900,6 +901,8 @@ class ProcessingFunctions:
         if match:
             try:
                 result = match.group(capture_group)
+                if uppercase:
+                    result = result.upper()
                 return ProcessingResult(datum=result, warnings=warnings, errors=errors)
             except IndexError:
                 errors.append(
