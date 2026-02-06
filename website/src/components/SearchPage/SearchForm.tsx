@@ -200,6 +200,45 @@ export const SearchForm = ({
         }, {});
     }, [referenceGenomesInfo, referenceSelection?.selectedReferences]);
 
+    const segmentNames = getSegmentNames(referenceGenomesInfo);
+
+    const renderSegmentContents = (segmentName: string) => (
+        <>
+            {referenceSelection !== undefined && (
+                <ReferenceSelector
+                    lapisSearchParameters={lapisSearchParameters}
+                    lapisUrl={lapisUrl}
+                    filterSchema={filterSchema}
+                    referenceGenomesInfo={referenceGenomesInfo}
+                    referenceIdentifierField={referenceSelection.referenceIdentifierField}
+                    selectedReferences={referenceSelection.selectedReferences}
+                    setSelectedReferences={referenceSelection.setSelectedReferences}
+                    segmentName={segmentName}
+                />
+            )}
+
+            {showMutationSearch &&
+                segmentReferenceSelected(segmentName, referenceGenomesInfo, referenceSelection?.selectedReferences) && (
+                    <MutationField
+                        suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo[segmentName]}
+                        value={'mutation' in fieldValues ? (fieldValues.mutation ?? '') : ''}
+                        onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
+                    />
+                )}
+
+            {sequenceFieldsBySegment[segmentName].map((filter) => (
+                <SearchField
+                    key={filter.name}
+                    field={filter}
+                    lapisUrl={lapisUrl}
+                    fieldValues={fieldValues}
+                    setSomeFieldValues={setSomeFieldValues}
+                    lapisSearchParameters={lapisSearchParameters}
+                />
+            ))}
+        </>
+    );
+
     return (
         <QueryClientProvider client={queryClient}>
             <div className='text-right -mb-10 md:hidden'>
@@ -282,55 +321,22 @@ export const SearchForm = ({
 
                         <section className='flex flex-col gap-1.5 mb-4'>
                             <CollapsibleSection title='Sequence Metadata Filters' open>
-                                {getSegmentNames(referenceGenomesInfo).map((segmentName) => (
-                                    <CollapsibleSection
-                                        key={segmentName}
-                                        title={segmentName}
-                                        open={!referenceGenomesInfo.isMultiSegmented}
-                                        subgroups={true}
-                                    >
-                                        {referenceSelection !== undefined && (
-                                            <ReferenceSelector
-                                                lapisSearchParameters={lapisSearchParameters}
-                                                lapisUrl={lapisUrl}
-                                                filterSchema={filterSchema}
-                                                referenceGenomesInfo={referenceGenomesInfo}
-                                                referenceIdentifierField={referenceSelection.referenceIdentifierField}
-                                                selectedReferences={referenceSelection.selectedReferences}
-                                                setSelectedReferences={referenceSelection.setSelectedReferences}
-                                                segmentName={segmentName}
-                                            />
-                                        )}
+                                {!referenceGenomesInfo.isMultiSegmented &&
+                                    segmentNames.map((segmentName) => (
+                                        <div key={segmentName}>{renderSegmentContents(segmentName)}</div>
+                                    ))}
 
-                                        {showMutationSearch &&
-                                            segmentReferenceSelected(
-                                                segmentName,
-                                                referenceGenomesInfo,
-                                                referenceSelection?.selectedReferences,
-                                            ) && (
-                                                <MutationField
-                                                    suborganismSegmentAndGeneInfo={
-                                                        suborganismSegmentAndGeneInfo[segmentName]
-                                                    }
-                                                    value={
-                                                        'mutation' in fieldValues ? (fieldValues.mutation ?? '') : ''
-                                                    }
-                                                    onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
-                                                />
-                                            )}
-
-                                        {sequenceFieldsBySegment[segmentName].map((filter) => (
-                                            <SearchField
-                                                key={filter.name}
-                                                field={filter}
-                                                lapisUrl={lapisUrl}
-                                                fieldValues={fieldValues}
-                                                setSomeFieldValues={setSomeFieldValues}
-                                                lapisSearchParameters={lapisSearchParameters}
-                                            />
-                                        ))}
-                                    </CollapsibleSection>
-                                ))}
+                                {referenceGenomesInfo.isMultiSegmented &&
+                                    segmentNames.map((segmentName) => (
+                                        <CollapsibleSection
+                                            key={segmentName}
+                                            title={segmentName}
+                                            open={false}
+                                            subgroups
+                                        >
+                                            {renderSegmentContents(segmentName)}
+                                        </CollapsibleSection>
+                                    ))}
                             </CollapsibleSection>
                         </section>
                     </div>
