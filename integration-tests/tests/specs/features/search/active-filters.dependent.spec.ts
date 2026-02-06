@@ -47,7 +47,16 @@ test.describe('Search', () => {
         });
         await innerS.locator('summary', { hasText: /^S$/ }).click();
         await expect(innerS).toHaveAttribute('open', '');
-        await searchPage.enterMutation(mutation);
+        await expect(innerS.getByText('Mutations', { exact: true })).toBeVisible();
+        const input = innerS.locator('input#mutField');
+        await expect(input).toBeVisible();
+        await expect(input).toBeEditable();
+        await input.click();
+        await input.fill(mutation);
+        const optionRegex = new RegExp(`^${mutation}(\\([0-9,]+\\))?$`);
+        const matchingOption = innerS.getByRole('option', { name: optionRegex }).first();
+        await matchingOption.click({ timeout: 2000 });
+        await page.keyboard.press('Escape');
         await expect(page.getByText(`mutation:${mutation}`)).toBeVisible();
         await page.getByLabel('remove filter').click();
         await expect(page.getByText(`mutation:${mutation}`)).toBeHidden();
