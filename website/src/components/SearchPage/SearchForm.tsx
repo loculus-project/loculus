@@ -330,7 +330,7 @@ export const SearchForm = ({
                                     segmentNames.map((segmentName) => (
                                         <CollapsibleSection
                                             key={segmentName}
-                                            title={segmentName}
+                                            title={referenceGenomesInfo.segmentDisplayNames[segmentName] ?? segmentName}
                                             open={false}
                                             subgroups
                                         >
