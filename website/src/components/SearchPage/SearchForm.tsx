@@ -38,6 +38,38 @@ import StreamlineWrench from '~icons/streamline/wrench';
 
 const queryClient = new QueryClient();
 
+const SearchSectionHeader: FC<{ title: string }> = ({ title }) => (
+    <div className='flex items-center gap-2 mb-2'>
+        <h3 className='text-xs uppercase tracking-wide text-primary-700'>{title}</h3>
+    </div>
+);
+
+type CollapsibleSectionProps = {
+    title: React.ReactNode;
+    open?: boolean;
+    children: React.ReactNode;
+    subgroups?: boolean;
+};
+
+function CollapsibleSection({ title, open = true, children, subgroups = false }: CollapsibleSectionProps) {
+    const className = subgroups ? 'group/inner rounded-lg border px-4 pt-4' : 'group px-2 pt-2';
+    const arrowClassName = subgroups ? 'group-open/inner:rotate-180' : 'group-open:rotate-180';
+    return (
+        <details className={className} open={open}>
+            <summary className='flex w-full items-center list-none cursor-pointer'>
+                <div className='flex items-center'>
+                    {typeof title === 'string' ? <SearchSectionHeader title={title} /> : title}
+                </div>
+                <IwwaArrowDown
+                    className={`ml-auto h-5 w-5 transition-transform duration-200 text-primary-700 ${arrowClassName}`}
+                    aria-hidden='true'
+                />
+            </summary>
+            {children}
+        </details>
+    );
+}
+
 interface SearchFormProps {
     organism: string;
     filterSchema: MetadataFilterSchema;
@@ -52,12 +84,6 @@ interface SearchFormProps {
     showMutationSearch: boolean;
     referenceSelection: ReferenceSelection;
 }
-
-const SearchSectionHeader: FC<{ title: string }> = ({ title }) => (
-    <div className='flex items-center gap-2 mb-2'>
-        <h3 className='text-xs uppercase tracking-wide text-primary-700'>{title}</h3>
-    </div>
-);
 
 export const SearchForm = ({
     filterSchema,
@@ -240,55 +266,29 @@ export const SearchForm = ({
                         </div>
 
                         <section className='flex flex-col gap-1.5'>
-                            <details key='sample' className='group px-2 pt-2' open={true}>
-                                <summary className='flex w-full items-center list-none cursor-pointer'>
-                                    <div className='flex items-center'>
-                                        <SearchSectionHeader title='Sample Metadata Filters' />
-                                    </div>
-                                    <IwwaArrowDown
-                                        className='ml-auto h-5 w-5 transition-transform duration-200 group-open:rotate-180 text-primary-700'
-                                        aria-hidden='true'
-                                    />
-                                </summary>
+                            <CollapsibleSection title='Sample Metadata Filters' open>
                                 {sampleFields.map((filter) => (
                                     <SearchField
+                                        key={filter.name}
                                         field={filter}
                                         lapisUrl={lapisUrl}
                                         fieldValues={fieldValues}
                                         setSomeFieldValues={setSomeFieldValues}
-                                        key={filter.name}
                                         lapisSearchParameters={lapisSearchParameters}
                                     />
                                 ))}
-                            </details>
+                            </CollapsibleSection>
                         </section>
 
                         <section className='flex flex-col gap-1.5 mb-4'>
-                            <details key='sequence' className='group px-2 pt-2' open={true}>
-                                <summary className='flex w-full items-center list-none cursor-pointer'>
-                                    <div className='flex items-center'>
-                                        <SearchSectionHeader title='Sequence Metadata Filters' />
-                                    </div>
-                                    <IwwaArrowDown
-                                        className='ml-auto h-5 w-5 transition-transform duration-200 group-open:rotate-180 text-primary-700'
-                                        aria-hidden='true'
-                                    />
-                                </summary>
+                            <CollapsibleSection title='Sequence Metadata Filters' open>
                                 {getSegmentNames(referenceGenomesInfo).map((segmentName) => (
-                                    <details
+                                    <CollapsibleSection
                                         key={segmentName}
-                                        className='group/inner rounded-lg border px-4 pt-4'
+                                        title={segmentName}
                                         open={!referenceGenomesInfo.isMultiSegmented}
+                                        subgroups={true}
                                     >
-                                        <summary className='flex w-full items-center list-none cursor-pointer'>
-                                            <div className='flex items-center'>
-                                                <SearchSectionHeader title={segmentName} />
-                                            </div>
-                                            <IwwaArrowDown
-                                                className='ml-auto h-5 w-5 transition-transform duration-200 group-open/inner:rotate-180 text-primary-700'
-                                                aria-hidden='true'
-                                            />
-                                        </summary>
                                         {referenceSelection !== undefined && (
                                             <ReferenceSelector
                                                 lapisSearchParameters={lapisSearchParameters}
@@ -301,6 +301,7 @@ export const SearchForm = ({
                                                 segmentName={segmentName}
                                             />
                                         )}
+
                                         {showMutationSearch &&
                                             segmentReferenceSelected(
                                                 segmentName,
@@ -317,6 +318,7 @@ export const SearchForm = ({
                                                     onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
                                                 />
                                             )}
+
                                         {sequenceFieldsBySegment[segmentName].map((filter) => (
                                             <SearchField
                                                 key={filter.name}
@@ -327,9 +329,9 @@ export const SearchForm = ({
                                                 lapisSearchParameters={lapisSearchParameters}
                                             />
                                         ))}
-                                    </details>
+                                    </CollapsibleSection>
                                 ))}
-                            </details>
+                            </CollapsibleSection>
                         </section>
                     </div>
                 </div>
