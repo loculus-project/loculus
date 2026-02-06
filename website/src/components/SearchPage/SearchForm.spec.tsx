@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
+import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { MetadataFilter } from '../../types/config.ts';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
@@ -19,6 +20,22 @@ global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
     disconnect() {}
     unobserve() {}
 };
+
+vi.mock('../../services/serviceHooks.ts');
+vi.mock('../../clientLogger.ts', () => ({
+    getClientLogger: () => ({
+        error: vi.fn(),
+    }),
+}));
+
+const mockUseAggregated = vi.fn();
+// @ts-expect-error mock implementation for test double
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+lapisClientHooks.mockReturnValue({
+    useAggregated: mockUseAggregated,
+});
+
+const referenceIdentifierField = 'My genotype';
 
 const queryClient = new QueryClient();
 
@@ -87,6 +104,17 @@ const renderSearchForm = ({
 describe('SearchForm', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { [referenceIdentifierField]: 'ref1', count: 10 },
+                    { [referenceIdentifierField]: 'ref2', count: 20 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
+        });
     });
 
     it('renders without crashing', () => {
@@ -120,7 +148,10 @@ describe('SearchForm', () => {
                 <SearchForm
                     organism={testOrganism}
                     filterSchema={
-                        new MetadataFilterSchema([...defaultSearchFormFilters, { name: 'My genotype', type: 'string' }])
+                        new MetadataFilterSchema([
+                            ...defaultSearchFormFilters,
+                            { name: referenceIdentifierField, type: 'string' },
+                        ])
                     }
                     clientConfig={testConfig.public}
                     fieldValues={{}}
@@ -132,7 +163,7 @@ describe('SearchForm', () => {
                     lapisSearchParameters={{}}
                     showMutationSearch={true}
                     referenceSelection={{
-                        referenceIdentifierField: 'My genotype',
+                        referenceIdentifierField: referenceIdentifierField,
                         selectedReferences: {},
                         setSelectedReferences,
                     }}
@@ -140,7 +171,7 @@ describe('SearchForm', () => {
             </QueryClientProvider>,
         );
 
-        const referenceSelector = await screen.findByRole('combobox', { name: 'My genotype' });
+        const referenceSelector = await screen.findByRole('combobox', { name: referenceIdentifierField });
         expect(referenceSelector).toBeInTheDocument();
         await userEvent.selectOptions(referenceSelector, 'ref1');
 

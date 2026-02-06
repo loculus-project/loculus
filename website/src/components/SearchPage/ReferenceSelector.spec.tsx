@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ReferenceSelector } from './ReferenceSelector.tsx';
+import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import {
     MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
@@ -11,6 +12,20 @@ import {
 import { MetadataFilterSchema } from '../../utils/search.ts';
 
 const referenceIdentifierField = 'genotype';
+
+vi.mock('../../services/serviceHooks.ts');
+vi.mock('../../clientLogger.ts', () => ({
+    getClientLogger: () => ({
+        error: vi.fn(),
+    }),
+}));
+
+const mockUseAggregated = vi.fn();
+// @ts-expect-error mock implementation for test double
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+lapisClientHooks.mockReturnValue({
+    useAggregated: mockUseAggregated,
+});
 
 const filterSchema = new MetadataFilterSchema([
     {
@@ -34,9 +49,15 @@ const multiSegmentFilterSchema = new MetadataFilterSchema([
 ]);
 
 describe('ReferenceSelector', () => {
+    beforeEach(() => {
+        mockUseAggregated.mockReset();
+    });
+
     it('renders nothing in single reference case', () => {
         const { container } = render(
             <ReferenceSelector
+                lapisSearchParameters={{}}
+                lapisUrl='https://example.com/lapis'
                 filterSchema={filterSchema}
                 referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
@@ -49,9 +70,22 @@ describe('ReferenceSelector', () => {
     });
 
     it('renders selector UI in multi-reference case', () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { [referenceIdentifierField]: 'ref1', count: 10 },
+                    { [referenceIdentifierField]: 'ref2', count: 20 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
+        });
         const setSelected = vi.fn();
         render(
             <ReferenceSelector
+                lapisSearchParameters={{}}
+                lapisUrl='https://example.com/lapis'
                 filterSchema={filterSchema}
                 referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
@@ -63,12 +97,28 @@ describe('ReferenceSelector', () => {
         expect(screen.getByText('My Genotype')).toBeInTheDocument();
         expect(screen.getByRole('combobox')).toBeInTheDocument();
         expect(screen.getAllByRole('option')).toHaveLength(3); // Includes disabled option
+        const options = screen.getAllByRole('option');
+        const optionTexts = options.map((option) => option.textContent);
+        expect(optionTexts).toEqual(expect.arrayContaining(['ref1 (10)', 'ref2 (20)']));
     });
 
     it('renders selector UI in multi-segment multi-reference case', () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { [`${referenceIdentifierField}_L`]: 'L-ref1', count: 10 },
+                    { [`${referenceIdentifierField}_L`]: 'L-ref2', count: 20 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
+        });
         const setSelected = vi.fn();
         render(
             <ReferenceSelector
+                lapisSearchParameters={{}}
+                lapisUrl='https://example.com/lapis'
                 filterSchema={multiSegmentFilterSchema}
                 referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
@@ -83,9 +133,22 @@ describe('ReferenceSelector', () => {
     });
 
     it('updates selection when changed', async () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { [referenceIdentifierField]: 'ref1', count: 10 },
+                    { [referenceIdentifierField]: 'ref2', count: 20 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
+        });
         const setSelected = vi.fn();
         render(
             <ReferenceSelector
+                lapisSearchParameters={{}}
+                lapisUrl='https://example.com/lapis'
                 filterSchema={filterSchema}
                 referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
@@ -99,9 +162,22 @@ describe('ReferenceSelector', () => {
     });
 
     it('shows clear button and clears selection', async () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { [referenceIdentifierField]: 'ref1', count: 10 },
+                    { [referenceIdentifierField]: 'ref2', count: 20 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
+        });
         const setSelected = vi.fn();
         render(
             <ReferenceSelector
+                lapisSearchParameters={{}}
+                lapisUrl='https://example.com/lapis'
                 filterSchema={filterSchema}
                 referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
