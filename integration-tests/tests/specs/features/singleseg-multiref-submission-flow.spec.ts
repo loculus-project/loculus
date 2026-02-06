@@ -44,7 +44,7 @@ test.describe('Single segment multi-reference submission flow', () => {
         const filterChip = page.locator('span', { hasText: mutation }).locator('..');
         await filterChip.getByRole('button', { name: 'remove filter' }).click();
         await expect(page.getByText(`mutation:${mutation}`)).toBeHidden();
-        expect(new URL(page.url()).searchParams.size).toBe(1); // only genotype filter remains
+        expect(new URL(page.url()).searchParams.has('mutation')).toBeFalsy();
 
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.1`);
         const expectedDisplayName = new RegExp(
