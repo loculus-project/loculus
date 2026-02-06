@@ -18,6 +18,7 @@ type SegmentReferenceSelectorProps = {
     onChange: (next: string) => void;
     onClear: () => void;
     optionsProvider: OptionsProvider;
+    referenceDisplayNameMap: Map<string, string>;
 };
 
 const SegmentReferenceSelector: FC<SegmentReferenceSelectorProps> = ({
@@ -27,6 +28,7 @@ const SegmentReferenceSelector: FC<SegmentReferenceSelectorProps> = ({
     onChange,
     onClear,
     optionsProvider,
+    referenceDisplayNameMap,
 }) => {
     const hook = createOptionsProviderHook(optionsProvider);
     const { options, isPending, error, load } = hook();
@@ -68,8 +70,8 @@ const SegmentReferenceSelector: FC<SegmentReferenceSelectorProps> = ({
                         options.map((opt) => {
                             const display =
                                 opt.count !== undefined
-                                    ? `${opt.option} (${formatNumberWithDefaultLocale(opt.count)})`
-                                    : opt.option;
+                                    ? `${referenceDisplayNameMap.get(opt.option) ?? opt.option} (${formatNumberWithDefaultLocale(opt.count)})`
+                                    : (referenceDisplayNameMap.get(opt.option) ?? opt.option);
 
                             return (
                                 <option key={opt.value} value={opt.value}>
@@ -130,6 +132,15 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
     const label = useMemo(() => {
         return identifier ? filterSchema.filterNameToLabelMap()[identifier] : undefined;
     }, [filterSchema, referenceIdentifierField]);
+    const referenceDisplayNameMap = useMemo(
+        () =>
+            new Map(
+                Object.entries(referenceGenomesInfo.segmentReferenceGenomes[segmentName]).map(
+                    ([ref, refData]) => [ref, refData.displayName ?? ref] as const,
+                ),
+            ),
+        [referenceGenomesInfo.segmentReferenceGenomes, segmentName],
+    );
 
     const optionsProvider = useMemo(
         () => ({
@@ -160,6 +171,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                 })
             }
             optionsProvider={optionsProvider}
+            referenceDisplayNameMap={referenceDisplayNameMap}
         />
     );
 };

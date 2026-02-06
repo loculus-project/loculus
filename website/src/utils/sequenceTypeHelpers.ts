@@ -81,6 +81,7 @@ export function getGeneLapisName(geneName: string, referenceName: string, isMult
 
 export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGenomesInfo {
     const genomes: SegmentReferenceGenomes = {};
+    const segmentDisplayNames: Record<SegmentName, string> = {};
 
     const isMultiSegmented = (values?.length ?? 0) > 1;
     let useLapisMultiSegmentedEndpoint = isMultiSegmented;
@@ -90,6 +91,7 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
         const isMultiReferenced = segmentData.references.length > 1;
 
         genomes[segmentName] ??= {};
+        segmentDisplayNames[segmentName] = segmentData.displayName ?? segmentName;
 
         if (isMultiReferenced) {
             useLapisMultiSegmentedEndpoint = true;
@@ -105,6 +107,7 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
                           lapisName: getGeneLapisName(gene.name, ref.name, isMultiReferenced),
                       }))
                     : [],
+                displayName: ref.displayName,
             };
         }
     }
@@ -113,6 +116,7 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
         segmentReferenceGenomes: genomes,
         isMultiSegmented,
         useLapisMultiSegmentedEndpoint,
+        segmentDisplayNames,
     };
 }
 
