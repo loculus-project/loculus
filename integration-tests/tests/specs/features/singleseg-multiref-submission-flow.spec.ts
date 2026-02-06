@@ -4,7 +4,7 @@ import { expect } from '@playwright/test';
 
 test.describe('Single segment multi-reference submission flow', () => {
     test('submit single sequence, edit and release', async ({ page, groupId }) => {
-        test.setTimeout(12_000_000);
+        test.setTimeout(120_000);
 
         void groupId;
         const submissionPage = new SingleSequenceSubmissionPage(page);
