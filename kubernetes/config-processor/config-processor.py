@@ -1,8 +1,54 @@
+import json
 import os
 import re
 import shutil
 
 import requests
+
+
+def merge_split_configs(input_dir):
+    """Merge base + per-organism config files into a single config.
+
+    Looks for files matching the pattern *_base.json and *_organism_*.json.
+    If found, merges them into a single config file with the name derived
+    from the base file (e.g. backend_config_base.json -> backend_config.json).
+
+    This is backward compatible: if no matching files are found, does nothing.
+    """
+    base_files = {}
+    organism_files = []
+
+    for f in sorted(os.listdir(input_dir)):
+        if not f.endswith('.json'):
+            continue
+        if f.endswith('_base.json'):
+            base_files[f] = f
+        elif '_organism_' in f:
+            organism_files.append(f)
+
+    if not base_files or not organism_files:
+        return
+
+    for base_file in base_files:
+        prefix = base_file.rsplit('_base.json', 1)[0]
+
+        with open(os.path.join(input_dir, base_file)) as f:
+            config = json.load(f)
+
+        config['organisms'] = {}
+        matching_org_files = [
+            of for of in organism_files if of.startswith(prefix + '_organism_')
+        ]
+        for org_file in matching_org_files:
+            with open(os.path.join(input_dir, org_file)) as f:
+                org_data = json.load(f)
+            config['organisms'].update(org_data['organisms'])
+
+        output_name = prefix + '.json'
+        output_path = os.path.join(input_dir, output_name)
+        with open(output_path, 'w') as f:
+            json.dump(config, f)
+        print(f"Merged {base_file} + {len(matching_org_files)} organism files -> {output_name}")
 
 
 def copy_structure(input_dir, output_dir):
@@ -50,6 +96,7 @@ def main(input_dir, output_dir, substitutions):
     print(f"Processing {input_dir} to {output_dir}")
     copy_structure(input_dir, output_dir)
     print(f"Copied directory structure from {input_dir} to {output_dir}")
+    merge_split_configs(output_dir)
     process_files(output_dir, substitutions)
 
 if __name__ == "__main__":

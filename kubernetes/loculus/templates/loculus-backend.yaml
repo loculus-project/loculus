@@ -154,5 +154,9 @@ spec:
             - name: loculus-backend-config-processed
               mountPath: /config
       volumes:
-{{ include "loculus.configVolume" (dict "name" "loculus-backend-config") | nindent 8 }}
+        {{- $backendConfigmaps := list "loculus-backend-config-base" }}
+        {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+        {{- $backendConfigmaps = append $backendConfigmaps (printf "loculus-backend-config-%s" $item.key) }}
+        {{- end }}
+{{ include "loculus.configVolume" (dict "name" "loculus-backend-config" "configmaps" $backendConfigmaps) | nindent 8 }}
 {{- end }}
