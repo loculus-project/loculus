@@ -16,5 +16,5 @@ metadata:
   name: loculus-backend-config-{{ $key }}
 data:
   backend_config_organism_{{ $key }}.json: |
-{{ include "loculus.generateBackendConfigOrganism" (dict "key" $key "instance" $instance "root" $) | fromYaml | toPrettyJson | indent 4 }}
+    {{ include "loculus.generateBackendConfigOrganism" (dict "key" $key "instance" $instance "root" $) | fromYaml | toJson }}
 {{- end }}

@@ -38,5 +38,5 @@ metadata:
   name: loculus-website-config-{{ $key }}
 data:
   website_config_organism_{{ $key }}.json: |
-{{ include "loculus.generateWebsiteConfigOrganism" (dict "key" $key "instance" $instance "root" $) | fromYaml | toPrettyJson | indent 4 }}
+    {{ include "loculus.generateWebsiteConfigOrganism" (dict "key" $key "instance" $instance "root" $) | fromYaml | toJson }}
 {{- end }}
