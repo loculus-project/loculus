@@ -13,6 +13,8 @@ import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Transaction
@@ -52,6 +54,7 @@ import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
+import org.loculus.backend.api.OriginalDataResponse
 import org.loculus.backend.api.OriginalDataWithFileUrls
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.PreprocessingStatus.PROCESSED
@@ -72,6 +75,7 @@ import org.loculus.backend.api.getFileId
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.BadRequestException
+import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
@@ -1182,6 +1186,7 @@ class SubmissionDatabaseService(
         organism: Organism,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
+        accessionVersionsFilter: List<AccessionVersion>?,
     ): Op<Boolean> {
         val organismCondition = SequenceEntriesView.organismIs(organism)
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
@@ -1190,7 +1195,12 @@ class SubmissionDatabaseService(
         } else {
             Op.TRUE
         }
-        val conditions = organismCondition and groupCondition and statusCondition
+        val accessionVersionCondition = if (accessionVersionsFilter != null) {
+            SequenceEntriesView.accessionVersionIsIn(accessionVersionsFilter)
+        } else {
+            Op.TRUE
+        }
+        val conditions = organismCondition and groupCondition and statusCondition and accessionVersionCondition
 
         return conditions
     }
@@ -1200,6 +1210,7 @@ class SubmissionDatabaseService(
         organism: Organism,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
+        accessionVersionsFilter: List<AccessionVersion>?,
     ): Long = SequenceEntriesView
         .selectAll()
         .where(
@@ -1208,6 +1219,7 @@ class SubmissionDatabaseService(
                 organism,
                 groupIdsFilter,
                 statusesFilter,
+                accessionVersionsFilter,
             ),
         )
         .count()
@@ -1218,6 +1230,7 @@ class SubmissionDatabaseService(
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
         fields: List<String>?,
+        accessionVersionsFilter: List<AccessionVersion>?,
     ): Sequence<AccessionVersionOriginalMetadata> {
         val originalMetadata = SequenceEntriesView.originalDataColumn
             // It's actually <Map<String, String>?> but exposed does not support nullable types here
@@ -1238,6 +1251,7 @@ class SubmissionDatabaseService(
                     organism,
                     groupIdsFilter,
                     statusesFilter,
+                    accessionVersionsFilter,
                 ),
             )
             .fetchSize(streamBatchSize)
@@ -1254,6 +1268,67 @@ class SubmissionDatabaseService(
                     it[SequenceEntriesView.submitterColumn],
                     it[SequenceEntriesView.isRevocationColumn],
                     selectedMetadata,
+                )
+            }
+    }
+
+    private fun originalDataConditions(
+        organism: Organism,
+        groupId: Int,
+        accessionsFilter: List<String>?,
+    ): Op<Boolean> {
+        val accessionsCondition = if (!accessionsFilter.isNullOrEmpty()) {
+            SequenceEntriesView.accessionColumn inList accessionsFilter
+        } else {
+            Op.TRUE
+        }
+
+        return SequenceEntriesView.organismIs(organism) and
+            (SequenceEntriesView.groupIdColumn eq groupId) and
+            SequenceEntriesView.statusIs(APPROVED_FOR_RELEASE) and
+            SequenceEntriesView.isMaxVersion and
+            (SequenceEntriesView.isRevocationColumn eq false) and
+            accessionsCondition
+    }
+
+    fun countOriginalData(
+        authenticatedUser: AuthenticatedUser,
+        organism: Organism,
+        groupId: Int,
+        accessionsFilter: List<String>?,
+    ): Long {
+        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
+        return SequenceEntriesView
+            .select(SequenceEntriesView.accessionColumn)
+            .where(originalDataConditions(organism, groupId, accessionsFilter))
+            .count()
+    }
+
+    fun streamOriginalData(
+        authenticatedUser: AuthenticatedUser,
+        organism: Organism,
+        groupId: Int,
+        accessionsFilter: List<String>?,
+    ): Sequence<OriginalDataResponse> {
+        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
+        return SequenceEntriesView
+            .select(
+                SequenceEntriesView.accessionColumn,
+                SequenceEntriesView.versionColumn,
+                SequenceEntriesView.originalDataColumn,
+            )
+            .where(originalDataConditions(organism, groupId, accessionsFilter))
+            .fetchSize(streamBatchSize)
+            .asSequence()
+            .map {
+                val compressedOriginalData = it[SequenceEntriesView.originalDataColumn]!!
+                val decompressedOriginalData = compressionService.decompressSequencesInOriginalData(
+                    compressedOriginalData,
+                )
+                OriginalDataResponse(
+                    it[SequenceEntriesView.accessionColumn],
+                    it[SequenceEntriesView.versionColumn],
+                    decompressedOriginalData,
                 )
             }
     }
