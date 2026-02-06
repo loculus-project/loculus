@@ -127,11 +127,15 @@ export const getSegmentNames = (genomes: ReferenceGenomesInfo) => Object.keys(ge
 export function getSegmentAndGeneInfo(
     referenceGenomesInfo: ReferenceGenomesInfo,
     selectedReferences?: SegmentReferenceSelections,
+    segment?: string,
 ): SegmentAndGeneInfo {
     const nucleotideSegmentInfos: SegmentInfo[] = [];
     const geneInfos: GeneInfo[] = [];
 
     for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
+        if (segment && segmentName !== segment) {
+            continue;
+        }
         const isSingleReference = Object.keys(segmentData).length === 1;
         const selectedRef = selectedReferences?.[segmentName] ?? null;
 
@@ -201,14 +205,28 @@ export function segmentsWithMultipleReferences(referenceGenomesInfo: ReferenceGe
     );
 }
 
-export function stillRequiresReferenceNameSelection(
+export function notAllReferencesSelected(
     referenceGenomesInfo: ReferenceGenomesInfo,
     selectedReferenceNames?: SegmentReferenceSelections,
-) {
+): boolean {
     if (selectedReferenceNames === undefined) {
         return false;
     }
     return segmentsWithMultipleReferences(referenceGenomesInfo).some(
         (segment) => selectedReferenceNames[segment] === null,
     );
+}
+
+export function segmentReferenceSelected(
+    segmentName: SegmentName,
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    selectedReferenceNames?: SegmentReferenceSelections,
+): boolean {
+    if (!segmentsWithMultipleReferences(referenceGenomesInfo).includes(segmentName)) {
+        return true;
+    }
+    if (selectedReferenceNames === undefined) {
+        return true;
+    }
+    return selectedReferenceNames[segmentName] !== null;
 }

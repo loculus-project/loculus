@@ -134,6 +134,17 @@
           "type": "boolean",
           "description": "If true, the field is initially visible in the UI."
         },
+        "metadataScope": {
+          "groups": ["metadata"],
+          "type": "string",
+          "enum": ["sample", "sequence"],
+          "description": "The scope of the metadata field, e.g., sample or sequence. Sample is the default."
+        },
+        "sequenceMetadataScope": {
+          "groups": ["metadata"],
+          "type": "string",
+          "description": "The scope of the sequence metadata field, can be set to any of the segment names defined for the organism."
+        },
         "hideOnSequenceDetailsPage": {
           "groups": ["metadata"],
           "type": "boolean",

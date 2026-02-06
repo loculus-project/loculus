@@ -39,7 +39,7 @@ test.describe('Search', () => {
     test('multi-segment mutation filter can be added and removed', async ({ page }) => {
         const mutation = 'S:G100A';
         await searchPage.cchf();
-        await searchPage.enterMutation(mutation);
+        await searchPage.enterSegmentedMutation(mutation, 'S');
         await expect(page.getByText(`mutation:${mutation}`)).toBeVisible();
         await page.getByLabel('remove filter').click();
         await expect(page.getByText(`mutation:${mutation}`)).toBeHidden();

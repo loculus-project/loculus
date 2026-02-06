@@ -63,6 +63,7 @@ describe('ReferenceSelector', () => {
                 referenceIdentifierField={referenceIdentifierField}
                 selectedReferences={{ main: null }}
                 setSelectedReferences={vi.fn()}
+                segmentName='main'
             />,
         );
 
@@ -91,6 +92,7 @@ describe('ReferenceSelector', () => {
                 referenceIdentifierField={referenceIdentifierField}
                 selectedReferences={{ main: null }}
                 setSelectedReferences={setSelected}
+                segmentName='main'
             />,
         );
 
@@ -124,6 +126,7 @@ describe('ReferenceSelector', () => {
                 referenceIdentifierField={referenceIdentifierField}
                 selectedReferences={{ main: null }}
                 setSelectedReferences={setSelected}
+                segmentName='L'
             />,
         );
 
@@ -154,6 +157,7 @@ describe('ReferenceSelector', () => {
                 referenceIdentifierField={referenceIdentifierField}
                 selectedReferences={{ main: null }}
                 setSelectedReferences={setSelected}
+                segmentName='main'
             />,
         );
 
@@ -183,6 +187,7 @@ describe('ReferenceSelector', () => {
                 referenceIdentifierField={referenceIdentifierField}
                 selectedReferences={{ main: 'ref1' }}
                 setSelectedReferences={setSelected}
+                segmentName='main'
             />,
         );
 

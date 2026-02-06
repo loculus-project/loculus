@@ -59,13 +59,16 @@ export class SearchPage {
     }
 
     async selectReference(fieldLabel: string, option: string) {
-        const select = this.page.getByRole('combobox', { name: fieldLabel });
+        const outer = this.page.locator('details', {
+            has: this.page.locator('summary', { hasText: 'Sequence Metadata Filters' }),
+        });
+        const select = outer.getByRole('combobox', { name: fieldLabel });
         await select.focus();
         await this.page.waitForTimeout(500);
         await select.selectOption({ value: option });
         await expect(select).toHaveValue(option);
 
-        const mutations = this.page.getByRole('combobox', { name: 'Mutations' }).first();
+        const mutations = outer.getByRole('combobox', { name: 'Mutations' }).first();
         await expect(mutations).toBeVisible();
         await expect(mutations).toBeEnabled();
     }
@@ -99,6 +102,27 @@ export class SearchPage {
 
         await matchingOption.click({ timeout: 2000 });
 
+        await this.page.keyboard.press('Escape');
+    }
+
+    async enterSegmentedMutation(mutation: string, segment: string) {
+        const outer = this.page.locator('details', {
+            has: this.page.locator('summary', { hasText: 'Sequence Metadata Filters' }),
+        });
+        const innerS = outer.locator('details', {
+            has: this.page.locator('summary', { hasText: new RegExp(`^${segment}$`) }),
+        });
+        await innerS.locator('summary', { hasText: new RegExp(`^${segment}$`) }).click();
+        await expect(innerS).toHaveAttribute('open', '');
+        await expect(innerS.getByText('Mutations', { exact: true })).toBeVisible();
+        const input = innerS.locator('input#mutField');
+        await expect(input).toBeVisible();
+        await expect(input).toBeEditable();
+        await input.click();
+        await input.fill(mutation);
+        const optionRegex = new RegExp(`^${mutation}(\\([0-9,]+\\))?$`);
+        const matchingOption = innerS.getByRole('option', { name: optionRegex }).first();
+        await matchingOption.click({ timeout: 2000 });
         await this.page.keyboard.press('Escape');
     }
 
