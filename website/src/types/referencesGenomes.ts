@@ -1,39 +1,56 @@
 import z from 'zod';
 
+import type { GeneInfo } from '../utils/sequenceTypeHelpers';
+
 export type ReferenceAccession = {
     name: string;
     insdcAccessionFull?: string;
 };
 
-const namedSequence = z.object({
-    name: z.string(),
-    sequence: z.string(),
-    insdcAccessionFull: z.optional(z.string()),
-});
-export type NamedSequence = z.infer<typeof namedSequence>;
+export type SegmentName = string;
+export type ReferenceName = string;
+export type GeneName = string;
 
-export const referenceGenome = z.object({
-    nucleotideSequences: z.array(namedSequence),
-    genes: z.array(namedSequence),
-});
-export type ReferenceGenome = z.infer<typeof referenceGenome>;
-
-export const suborganism = z.string();
-export type Suborganism = z.infer<typeof suborganism>;
-
-export const referenceGenomes = z
-    .record(suborganism, referenceGenome)
-    .refine((value) => Object.entries(value).length > 0, 'The reference genomes must not be empty.');
-export type ReferenceGenomes = z.infer<typeof referenceGenomes>;
-
-export type NucleotideSegmentNames = string[];
-
-export type SuborganismReferenceGenomesLightweightSchema = {
-    nucleotideSegmentNames: NucleotideSegmentNames;
-    geneNames: string[];
-    insdcAccessionFull: ReferenceAccession[];
+export type GeneSequenceData = {
+    sequence: string;
 };
 
-export type ReferenceGenomesLightweightSchema = Record<Suborganism, SuborganismReferenceGenomesLightweightSchema>;
+export type ReferenceSequenceData = {
+    sequence: string;
+    insdcAccessionFull?: string;
+    genes?: Record<GeneName, GeneSequenceData>;
+};
 
-export const SINGLE_REFERENCE = 'singleReference';
+export type ReferenceGenomeInfo = {
+    lapisName: string;
+    genes: GeneInfo[];
+    insdcAccessionFull: string | null;
+};
+
+export type ReferenceGenomeMap = Record<ReferenceName, ReferenceGenomeInfo>;
+
+export type SegmentReferenceGenomes = Record<SegmentName, ReferenceGenomeMap>;
+
+export type ReferenceGenomesInfo = {
+    segmentReferenceGenomes: SegmentReferenceGenomes;
+    isMultiSegmented: boolean;
+    useLapisMultiSegmentedEndpoint: boolean;
+};
+
+export const referenceGenomesSchema = z
+    .array(
+        z.object({
+            name: z.string(),
+            references: z.array(
+                z.object({
+                    name: z.string(),
+                    sequence: z.string(),
+                    insdcAccessionFull: z.string().optional(),
+                    genes: z.array(z.object({ name: z.string(), sequence: z.string() })).optional(),
+                }),
+            ),
+        }),
+    )
+    .optional();
+
+export type ReferenceGenomesSchema = z.infer<typeof referenceGenomesSchema>;

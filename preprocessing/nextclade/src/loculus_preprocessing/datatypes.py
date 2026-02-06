@@ -6,6 +6,7 @@ from typing import Any, Final
 AccessionVersion = str
 GeneName = str
 SegmentName = str
+SequenceName = str
 NucleotideSequence = str
 AminoAcidSequence = str
 GenericSequence = AminoAcidSequence | NucleotideSequence
@@ -77,7 +78,7 @@ class UnprocessedData:
     group_id: int
     submittedAt: str  # timestamp  # noqa: N815
     metadata: InputMetadata
-    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
+    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
 
 
 @dataclass
@@ -90,18 +91,17 @@ FunctionInputs = dict[ArgName, InputField]
 FunctionArgs = dict[ArgName, ArgValue]
 
 
-# For single segment, need to generalize for multi segments later
 @dataclass
 class UnprocessedAfterNextclade:
     inputMetadata: InputMetadata  # noqa: N815
     # Derived metadata produced by Nextclade
-    nextcladeMetadata: dict[SegmentName, Any] | None  # noqa: N815
-    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
-    alignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
-    nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]  # noqa: N815
+    nextcladeMetadata: dict[SequenceName, Any] | None  # noqa: N815
+    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
+    alignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
+    nucleotideInsertions: dict[SequenceName, list[NucleotideInsertion]]  # noqa: N815
     alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]  # noqa: N815
-    sequenceNameToFastaId: dict[SegmentName, FastaId]  # noqa: N815
+    sequenceNameToFastaId: dict[SequenceName, FastaId]  # noqa: N815
     errors: list[ProcessingAnnotation]
     warnings: list[ProcessingAnnotation]
 
@@ -115,12 +115,12 @@ class FileIdAndName:
 @dataclass
 class ProcessedData:
     metadata: ProcessedMetadata
-    unalignedNucleotideSequences: dict[SegmentName, Any]  # noqa: N815
-    alignedNucleotideSequences: dict[SegmentName, Any]  # noqa: N815
-    nucleotideInsertions: dict[SegmentName, Any]  # noqa: N815
+    unalignedNucleotideSequences: dict[SequenceName, Any]  # noqa: N815
+    alignedNucleotideSequences: dict[SequenceName, Any]  # noqa: N815
+    nucleotideInsertions: dict[SequenceName, Any]  # noqa: N815
     alignedAminoAcidSequences: dict[GeneName, Any]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, Any]  # noqa: N815
-    sequenceNameToFastaId: dict[SegmentName, FastaId]  # noqa: N815
+    sequenceNameToFastaId: dict[SequenceName, FastaId]  # noqa: N815
     files: dict[str, list[FileIdAndName]] | None = None
 
 
@@ -175,25 +175,42 @@ class ProcessingResult:
 
 @unique
 class SegmentClassificationMethod(StrEnum):
+    """
+    Methods for classifying genomic segments.
+
+    - ALIGN: Best accuracy but slower; uses Nextclade datasets.
+    - MINIMIZER: Fast; suitable for well-characterized organisms with low diversity.
+    - DIAMOND: Protein-based alignment; useful for highly divergent sequences.
+    """
+
     ALIGN = "align"
     MINIMIZER = "minimizer"
+    DIAMOND = "diamond"
+
+    @property
+    def display_name(self) -> str:
+        return {
+            SegmentClassificationMethod.ALIGN: "nextclade align",
+            SegmentClassificationMethod.MINIMIZER: "nextclade sort",
+            SegmentClassificationMethod.DIAMOND: "diamond",
+        }[self]
 
 
 @dataclass
-class SegmentAssignment:
-    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None] = field(
+class SequenceAssignment:
+    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None] = field(  # noqa: N815
         default_factory=dict
     )
-    sequenceNameToFastaId: dict[SegmentName, FastaId] = field(default_factory=dict)  # noqa: N815
+    sequenceNameToFastaId: dict[SequenceName, FastaId] = field(default_factory=dict)  # noqa: N815
     alert: Alert = field(default_factory=Alert)
 
 
 @dataclass
-class SegmentAssignmentBatch:
-    unalignedNucleotideSequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+class SequenceAssignmentBatch:
+    unalignedNucleotideSequences: dict[  # noqa: N815
+        AccessionVersion, dict[SequenceName, NucleotideSequence | None]
     ] = field(default_factory=dict)
-    sequenceNameToFastaId: dict[AccessionVersion, dict[SegmentName, FastaId]] = field(
+    sequenceNameToFastaId: dict[AccessionVersion, dict[SequenceName, FastaId]] = field(  # noqa: N815
         default_factory=dict
     )
     alerts: Alerts = field(default_factory=Alerts)

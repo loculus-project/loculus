@@ -1,0 +1,7 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region OL774851.1 1 1806
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=3052518
+OL774851.1	Genbank	region	1	1806	.	+	.	ID=OL774851.1:1..1806;Dbxref=taxon:3052518;Name=S;collection-date=1975;country=Senegal;gbkey=Src;genome=genomic;isolation-source=tick pool from ticks collected at an abbatoir;mol_type=viral cRNA;nat-host=Hyalomma rufipes;old-name=Crimean-Congo hemorrhagic fever orthonairovirus;segment=S;strain=Dakar8692
+OL774851.1	Genbank	CDS	40	1488	.	+	0	Name=RdRp;ID=cds-WAD86875.1;Dbxref=NCBI_GP:WAD86875.1;Name=WAD86875.1;gbkey=CDS;product=nucleocapsid protein;protein_id=WAD86875.1

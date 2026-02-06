@@ -260,7 +260,9 @@ CREATE TABLE public.groups_table (
     address_city character varying(255) NOT NULL,
     address_state character varying(255),
     address_country character varying(255) NOT NULL,
-    contact_email character varying(255) NOT NULL
+    contact_email character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    created_by text
 );
 
 

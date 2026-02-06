@@ -124,11 +124,11 @@ export const Table: FC<TableProps> = ({
     };
 
     const mouseDownSelection = useRef('');
-    const dragSelecting = useRef({ active: false, value: false });
+    const dragSelecting = useRef({ active: false, value: false, startY: 0 });
 
     useEffect(() => {
         const handleMouseUp = () => {
-            dragSelecting.current.active = false;
+            dragSelecting.current = { active: false, value: false, startY: 0 };
         };
         window.addEventListener('mouseup', handleMouseUp);
         return () => {
@@ -241,16 +241,31 @@ export const Table: FC<TableProps> = ({
                                     data-testid='sequence-row'
                                 >
                                     <td
-                                        className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
+                                        className='px-2 whitespace-nowrap text-primary-900 md:pl-6 select-none'
                                         onClick={(e) => {
                                             e.stopPropagation();
+                                        }}
+                                        onMouseDown={(e) => {
                                             const seqId = row[primaryKey] as string;
                                             const newValue = !selectedSeqs.has(seqId);
+                                            dragSelecting.current = {
+                                                active: false,
+                                                value: newValue,
+                                                startY: e.clientY,
+                                            };
                                             setRowSelected(seqId, newValue);
                                         }}
-                                        onMouseEnter={() => {
+                                        onMouseEnter={(e) => {
+                                            const seqId = row[primaryKey] as string;
+                                            const minMouseMovement = 5;
+                                            if (
+                                                dragSelecting.current.startY !== 0 &&
+                                                Math.abs(e.clientY - dragSelecting.current.startY) > minMouseMovement
+                                            ) {
+                                                dragSelecting.current.active = true;
+                                            }
                                             if (dragSelecting.current.active) {
-                                                setRowSelected(row[primaryKey] as string, dragSelecting.current.value);
+                                                setRowSelected(seqId, dragSelecting.current.value);
                                                 if (document.activeElement instanceof HTMLElement) {
                                                     document.activeElement.blur();
                                                 }
@@ -259,14 +274,11 @@ export const Table: FC<TableProps> = ({
                                     >
                                         <input
                                             type='checkbox'
-                                            className='text-primary-900 hover:text-primary-800 hover:no-underline'
-                                            onClick={(e) => e.stopPropagation()}
+                                            className='text-primary-900 hover:text-primary-800 hover:no-underline pointer-events-none'
                                             checked={selectedSeqs.has(row[primaryKey] as string)}
-                                            onMouseDown={() => {
+                                            onChange={() => {
                                                 const seqId = row[primaryKey] as string;
-                                                const newValue = !selectedSeqs.has(seqId);
-                                                dragSelecting.current = { active: true, value: newValue };
-                                                setRowSelected(seqId, newValue);
+                                                setRowSelected(seqId, !selectedSeqs.has(seqId));
                                             }}
                                         />
                                     </td>
@@ -304,7 +316,7 @@ export const Table: FC<TableProps> = ({
                         </tbody>
                     </table>
                 ) : (
-                    <div className='flex justify-center font-bold text-xl my-8'>No Data</div>
+                    <div className='flex justify-center font-bold text-xl my-8'>No data</div>
                 )}
             </ScrollContainer>
         </div>

@@ -304,8 +304,8 @@ organisms:
   {{- if .includeInDownloadsByDefault }}
   includeInDownloadsByDefault: {{ .includeInDownloadsByDefault }}
   {{- end }}
-  {{- if .onlyForSuborganism }}
-  onlyForSuborganism: {{ .onlyForSuborganism }}
+  {{- if .onlyForReference }}
+  onlyForReference: {{ .onlyForReference }}
   {{- end }}
   {{- if .customDisplay }}
   customDisplay:
@@ -331,7 +331,7 @@ organisms:
 
 {{/* Generate website metadata from passed metadata array */}}
 {{- define "loculus.generateWebsiteMetadata" }}
-{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" .referenceGenomes | fromYaml).segments }}
+{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).segments }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
 fields:
@@ -440,7 +440,7 @@ fields:
 
 {{/* Generate backend metadata from passed metadata array */}}
 {{- define "loculus.generateBackendMetadata" }}
-{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" .referenceGenomes | fromYaml).segments }}
+{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).segments }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
 fields:
@@ -464,7 +464,7 @@ fields:
 
 {{/* Generate backend metadata from passed metadata array */}}
 {{- define "loculus.generateBackendExternalMetadata" }}
-{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" .referenceGenomes | fromYaml).segments }}
+{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).segments }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
 fields:
@@ -527,11 +527,11 @@ enaOrganisms:
   {{- end }}
   {{- with $instance.schema }}
     {{ $configFile.configFile | toYaml | nindent 4 }}
-    {{- if $configFile.suborganismIdentifierField }}
-    suborganismIdentifierField: {{ quote $configFile.suborganismIdentifierField }}
+    {{- if $configFile.referenceIdentifierField }}
+    referenceIdentifierField: {{ quote $configFile.referenceIdentifierField }}
     {{- end }}
     organismName: {{ quote .organismName }}
-    {{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" $instance.referenceGenomes | fromYaml).segments }}
+    {{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" $instance.referenceGenomes | fromYaml).segments }}
     segments: {{ $rawUniqueSegments | toYaml | nindent 6 }}
     externalMetadata:
       {{- $args := dict

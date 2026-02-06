@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -64,10 +65,11 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
     fun getGroupsOfUser(@HiddenParam authenticatedUser: AuthenticatedUser): List<Group> =
         groupManagementDatabaseService.getGroupsOfUser(authenticatedUser)
 
-    @Operation(description = "Get a list of all groups.")
+    @Operation(description = "Get a list of groups. Supports filtering by name request parameter")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/groups", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getAllGroups(): List<Group> = groupManagementDatabaseService.getAllGroups()
+    fun getGroups(@RequestParam(required = false) name: String?): List<Group> =
+        groupManagementDatabaseService.getGroups(name)
 
     @Operation(description = "Add user to a group.")
     @ResponseStatus(HttpStatus.NO_CONTENT)

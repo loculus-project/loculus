@@ -43,16 +43,16 @@ class SubmissionResults:
 @dataclass
 class ENAOrganism:
     enaOrganismName: str  # noqa: N815
-    suborganismIdentifierField: str | None = None  # noqa: N815
+    referenceIdentifierField: str | None = None  # noqa: N815
 
 
 def loculus_organism_to_ena_organism(config: Config) -> dict[str, list[ENAOrganism]]:
     loculus_organism_to_ena_organism: dict[str, list[ENAOrganism]] = defaultdict(list)
     for ena_organism, details in config.enaOrganisms.items():
         if details.loculusOrganism:
-            if not details.suborganismIdentifierField:
+            if not details.referenceIdentifierField:
                 error_msg = (
-                    "Could not find suborganismIdentifierField in enaOrganism "
+                    "Could not find referenceIdentifierField in enaOrganism "
                     f"config for {ena_organism}"
                 )
                 logger.error(error_msg)
@@ -60,7 +60,7 @@ def loculus_organism_to_ena_organism(config: Config) -> dict[str, list[ENAOrgani
             loculus_organism_to_ena_organism[details.loculusOrganism].append(
                 ENAOrganism(
                     enaOrganismName=ena_organism,
-                    suborganismIdentifierField=details.suborganismIdentifierField,
+                    referenceIdentifierField=details.referenceIdentifierField,
                 )
             )
             continue
@@ -94,11 +94,11 @@ def assign_ena_organism(
     entry: dict[str, Any],
     ena_organisms: list[ENAOrganism],
 ) -> str:
-    """Assign the correct ena organism based on suborganismIdentifierField if present."""
+    """Assign the correct ena organism based on referenceIdentifierField if present."""
     if len(ena_organisms) == 1:
         return ena_organisms[0].enaOrganismName
     for ena_organism in ena_organisms:
-        suborganism_field = ena_organism.suborganismIdentifierField
+        suborganism_field = ena_organism.referenceIdentifierField
         if (
             suborganism_field
             and entry["metadata"].get(suborganism_field) == ena_organism.enaOrganismName

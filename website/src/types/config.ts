@@ -1,7 +1,7 @@
 import z from 'zod';
 
 import { mutationProportionCount, orderDirection } from './lapis.ts';
-import { referenceGenomes } from './referencesGenomes.ts';
+import { referenceGenomesSchema } from './referencesGenomes.ts';
 
 export const FASTA_IDS_SEPARATOR = ' ';
 
@@ -74,7 +74,7 @@ export const metadata = z.object({
     order: z.number().optional(),
     orderOnDetailsPage: z.number().optional(),
     includeInDownloadsByDefault: z.boolean().optional(),
-    onlyForSuborganism: z.string().optional(),
+    onlyForReference: z.string().optional(),
 });
 
 export const inputFieldOption = z.object({
@@ -163,13 +163,13 @@ export const schema = z.object({
     loadSequencesAutomatically: z.boolean().optional(),
     richFastaHeaderFields: z.array(z.string()).optional(),
     linkOuts: z.array(linkOut).optional(),
-    suborganismIdentifierField: z.string().optional(),
+    referenceIdentifierField: z.string().optional(),
 });
 export type Schema = z.infer<typeof schema>;
 
 export const instanceConfig = z.object({
     schema,
-    referenceGenomes,
+    referenceGenomes: referenceGenomesSchema,
 });
 export type InstanceConfig = z.infer<typeof instanceConfig>;
 

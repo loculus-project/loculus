@@ -153,15 +153,16 @@ organisms:
         configFile:
           log_level: DEBUG
           batch_size: 100
-          nextclade_sequence_and_datasets:
-            - name: 'main'
-              genes: []
+          segments:
+            - name: main
+              references:
+              - name: singleReference
+                genes: []
     referenceGenomes:
-      singleReference:
-        nucleotideSequences:
-          - name: 'main'
+      - name: main
+        references:
+          - name: singleReference
             sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
-        genes: []
 createTestAccounts: true
 ```
 <!-- prettier-ignore-end -->

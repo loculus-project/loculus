@@ -28,16 +28,16 @@ def errors_if_non_iupac(
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
 ) -> list[ProcessingAnnotation]:
     errors: list[ProcessingAnnotation] = []
-    for segment, sequence in unaligned_nucleotide_sequences.items():
+    for name, sequence in unaligned_nucleotide_sequences.items():
         if sequence:
             non_iupac_symbols = set(sequence.upper()) - UNALIGNED_NUCLEOTIDE_SYMBOLS
             if non_iupac_symbols:
                 errors.append(
                     ProcessingAnnotation.from_single(
-                        segment,
+                        name,
                         AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         message=(
-                            f"Found non-IUPAC symbols in the {segment} sequence: "
+                            f"Found non-IUPAC symbols in the {name} sequence: "
                             + ", ".join(non_iupac_symbols)
                             + (
                                 ". Gap characters (-) are not allowed in raw sequences."

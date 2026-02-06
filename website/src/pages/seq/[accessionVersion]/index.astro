@@ -6,12 +6,13 @@ import { SequenceDataUI } from '../../../components/SequenceDetailsPage/Sequence
 import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.tsx';
 import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
-import { getSchema, getRuntimeConfig, getReferenceGenomeLightweightSchema } from '../../../config';
+import { getSchema, getRuntimeConfig, getReferenceGenomes } from '../../../config';
 import { getWebsiteConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { type Group } from '../../../types/backend';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getMyGroups } from '../../../utils/getMyGroups';
+import { getSegmentNames } from '../../../utils/sequenceTypeHelpers';
 
 const accessionVersion = Astro.params.accessionVersion!;
 
@@ -67,21 +68,24 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                                     : undefined
                             }
                             showDownload={showDownloadAndReport}
+                            showFastaDownloadButton={
+                                showDownloadAndReport && getSegmentNames(getReferenceGenomes(organism)).length > 0
+                            }
                         />
                         {result.type === SequenceDetailsTableResultType.TABLE_DATA &&
                             (result.isRevocation ? (
                                 <RevocationEntryDataTable
                                     tableData={result.tableData}
                                     dataUseTermsHistory={result.dataUseTermsHistory}
-                                    referenceGenomeLightweightSchema={getReferenceGenomeLightweightSchema(organism)}
-                                    suborganism={result.suborganism}
+                                    referenceGenomesInfo={getReferenceGenomes(organism)}
+                                    segmentReferences={result.segmentReferences}
                                 />
                             ) : (
                                 <SequenceDataUI
                                     tableData={result.tableData}
                                     organism={organism}
-                                    suborganism={result.suborganism}
-                                    referenceGenomeSequenceNames={getReferenceGenomeLightweightSchema(organism)}
+                                    segmentReferences={result.segmentReferences}
+                                    referenceGenomesInfo={getReferenceGenomes(organism)}
                                     accessionVersion={accessionVersion}
                                     dataUseTermsHistory={result.dataUseTermsHistory}
                                     schema={getSchema(organism)}

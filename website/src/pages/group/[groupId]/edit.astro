@@ -19,7 +19,7 @@ if (isNaN(groupId)) {
 }
 
 const groupManagementClient = GroupManagementClient.create();
-const groupDetailsResult = await groupManagementClient.getGroupDetails(accessToken, groupId);
+const groupDetailsResult = await groupManagementClient.getGroupDetails(groupId, accessToken);
 ---
 
 <BaseLayout title='Edit group' activeTopNavigationItem='account'>

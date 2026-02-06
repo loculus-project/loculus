@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { prepareTmpDirForBulkUpload, uploadFilesFromTmpDir } from '../utils/file-upload-helpers';
 
 /**
  * Page object for the sequence revision page.
@@ -12,23 +13,6 @@ export class RevisionPage {
      */
     async goto(organism: string, groupId: number) {
         await this.page.goto(`/${organism}/submission/${groupId}/revise`);
-    }
-
-    /**
-     * Navigate to revision page from a sequence details page
-     * Clicks the "Revise this sequence" link
-     */
-    async clickReviseSequenceLink() {
-        // Sometimes clicking revise button doesn't register, so let's wait for sequence viewer to be visible first
-        // See #5447
-        await expect(this.page.getByTestId('fixed-length-text-viewer')).toBeVisible();
-
-        await this.page
-            .getByRole('link', { name: 'Revise this sequence' })
-            .click({ timeout: 15000 });
-        await expect(
-            this.page.getByRole('heading', { name: 'Create new revision from' }),
-        ).toBeVisible();
     }
 
     /**
@@ -56,39 +40,6 @@ export class RevisionPage {
     }
 
     /**
-     * Upload a segment file for multi-segment organisms
-     */
-    async uploadSegmentFile(segmentName: string, fileName: string, content: string | Buffer) {
-        await this.page.getByTestId(`${segmentName}_segment_file`).setInputFiles({
-            name: fileName,
-            mimeType: 'text/plain',
-            buffer: typeof content === 'string' ? Buffer.from(content) : content,
-        });
-        await expect(this.page.getByTestId(`discard_${segmentName}_segment_file`)).toBeEnabled();
-    }
-
-    /**
-     * Discard a segment file for multi-segment organisms
-     */
-    async discardSegmentFile(segmentName: string) {
-        await this.page.getByTestId(`discard_${segmentName}_segment_file`).click();
-    }
-
-    /**
-     * Discard the sequence file
-     */
-    async discardSequenceFile() {
-        await this.page.getByTestId('discard_sequence_file').click();
-    }
-
-    /**
-     * Discard the metadata file
-     */
-    async discardMetadataFile() {
-        await this.page.getByTestId('discard_metadata_file').click();
-    }
-
-    /**
      * Accept the data submission terms
      */
     async acceptTerms() {
@@ -108,20 +59,12 @@ export class RevisionPage {
     }
 
     /**
-     * Click the Confirm button in the confirmation dialog
-     */
-    async clickConfirm() {
-        await this.page.getByRole('button', { name: 'Confirm' }).click();
-    }
-
-    /**
      * Complete the full revision submission flow
-     * Accepts terms, submits, and confirms
+     * Accepts terms and submits
      */
     async submitRevision() {
         await this.acceptTerms();
         await this.clickSubmit();
-        await this.clickConfirm();
     }
 
     /**
@@ -142,49 +85,16 @@ export class RevisionPage {
         return downloadPromise;
     }
 
-    /**
-     * High-level helper: Revise a single-segment sequence
-     */
-    async reviseSequence(options: {
-        sequenceFile?: { name: string; content: string | Buffer };
-        metadataFile?: { name: string; content: string | Buffer };
-    }) {
-        if (options.sequenceFile) {
-            await this.uploadSequenceFile(options.sequenceFile.name, options.sequenceFile.content);
-        }
-        if (options.metadataFile) {
-            await this.uploadMetadataFile(options.metadataFile.name, options.metadataFile.content);
-        }
-        await this.submitRevision();
-    }
-
-    /**
-     * High-level helper: Revise a multi-segment sequence
-     */
-    async reviseMultiSegmentSequence(options: {
-        segments?: Record<string, { name: string; content: string | Buffer }>;
-        metadataFile?: { name: string; content: string | Buffer };
-        discardSegments?: string[];
-    }) {
-        // Discard segments first if specified
-        if (options.discardSegments) {
-            for (const segment of options.discardSegments) {
-                await this.discardSegmentFile(segment);
-            }
-        }
-
-        // Upload new segment files
-        if (options.segments) {
-            for (const [segmentName, file] of Object.entries(options.segments)) {
-                await this.uploadSegmentFile(segmentName, file.name, file.content);
-            }
-        }
-
-        // Upload metadata if provided
-        if (options.metadataFile) {
-            await this.uploadMetadataFile(options.metadataFile.name, options.metadataFile.content);
-        }
-
-        await this.submitRevision();
+    async uploadExternalFiles(
+        fileId: string,
+        fileContents: Record<string, Record<string, string>>,
+        tmpDir: string,
+    ) {
+        await prepareTmpDirForBulkUpload(fileContents, tmpDir);
+        const fileCount = Object.values(fileContents).reduce(
+            (total, files) => total + Object.keys(files).length,
+            0,
+        );
+        await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);
     }
 }

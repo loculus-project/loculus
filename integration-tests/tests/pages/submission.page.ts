@@ -1,10 +1,12 @@
 import { Page } from '@playwright/test';
 import { ReviewPage } from './review.page';
-import fs from 'fs';
-import path from 'path';
 import Papa from 'papaparse';
 import { NavigationPage } from './navigation.page';
-import { clearTmpDir } from '../utils/tmpdir';
+import {
+    prepareTmpDirForBulkUpload,
+    prepareTmpDirForSingleUpload,
+    uploadFilesFromTmpDir,
+} from '../utils/file-upload-helpers';
 
 class SubmissionPage {
     protected page: Page;
@@ -68,17 +70,6 @@ class SubmissionPage {
         await reviewPage.waitForZeroProcessing();
         return reviewPage;
     }
-
-    protected async _uploadFilesFromTmpDir(testId: string, tmpDir: string, fileCount: number) {
-        await this.page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
-        // Trigger file upload (don't await) and wait for checkmarks to appear (indicates success)
-        void this.page.getByTestId(testId).setInputFiles(tmpDir);
-        return Promise.all(
-            Array.from({ length: fileCount }, (_, i) =>
-                this.page.getByText('✓').nth(i).waitFor({ state: 'visible' }),
-            ),
-        );
-    }
 }
 
 export class SingleSequenceSubmissionPage extends SubmissionPage {
@@ -103,11 +94,6 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         await this.page.getByLabel('Collection country').blur();
         await this.page.getByLabel('Collection date').fill(collectionDate);
         await this.page.getByLabel('Author affiliations').fill(authorAffiliations);
-    }
-
-    async fillField(fieldName: string, value: string) {
-        await this.page.getByLabel(fieldName).fill(value);
-        await this.page.getByLabel(fieldName).blur();
     }
 
     async fillSubmissionFormDummyOrganism({
@@ -140,19 +126,9 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         fileContents: Record<string, string>,
         tmpDir: string,
     ) {
-        await this._prepareTmpDirWithFiles(fileContents, tmpDir);
+        await prepareTmpDirForSingleUpload(fileContents, tmpDir);
         const fileCount = Object.keys(fileContents).length;
-        await this._uploadFilesFromTmpDir(fileId, tmpDir, fileCount);
-    }
-
-    private async _prepareTmpDirWithFiles(fileContents: Record<string, string>, tmpDir: string) {
-        await clearTmpDir(tmpDir);
-
-        await Promise.all(
-            Object.entries(fileContents).map(([fileName, fileContent]) =>
-                fs.promises.writeFile(path.join(tmpDir, fileName), fileContent),
-            ),
-        );
+        await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);
     }
 
     async completeSubmission(
@@ -229,43 +205,16 @@ export class BulkSubmissionPage extends SubmissionPage {
         });
     }
 
-    /**
-     * The given file contents will be stored in a temp dir and then submitted
-     * for the given file ID.
-     * @param fileId For which file ID to upload the files.
-     * @param fileContents A struct: submissionID -> filename -> filecontent.
-     * @param tmpDir The temporary directory to use for storing files.
-     */
     async uploadExternalFiles(
         fileId: string,
         fileContents: Record<string, Record<string, string>>,
         tmpDir: string,
     ) {
-        await this._prepareTmpDirWithFiles(fileContents, tmpDir);
+        await prepareTmpDirForBulkUpload(fileContents, tmpDir);
         const fileCount = Object.values(fileContents).reduce(
             (total, files) => total + Object.keys(files).length,
             0,
         );
-        await this._uploadFilesFromTmpDir(fileId, tmpDir, fileCount);
-    }
-
-    private async _prepareTmpDirWithFiles(
-        fileContents: Record<string, Record<string, string>>,
-        tmpDir: string,
-    ) {
-        await clearTmpDir(tmpDir);
-
-        // Create submission directories and write files
-        const submissionIds = Object.keys(fileContents);
-        await Promise.all(
-            submissionIds.map((submissionId) => fs.promises.mkdir(path.join(tmpDir, submissionId))),
-        );
-        await Promise.all(
-            Object.entries(fileContents).flatMap(([submissionId, files]) => {
-                return Object.entries(files).map(([fileName, fileContent]) =>
-                    fs.promises.writeFile(path.join(tmpDir, submissionId, fileName), fileContent),
-                );
-            }),
-        );
+        await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);
     }
 }

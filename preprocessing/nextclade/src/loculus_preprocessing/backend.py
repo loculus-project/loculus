@@ -242,3 +242,23 @@ def download_minimizer(config, save_path):
         raise RuntimeError(msg) from e
 
     logger.info(f"Minimizer downloaded successfully and saved to '{save_path}'")
+
+
+def download_diamond_db(config, save_path):
+    url = config.diamond_dmnd_url
+    if not url:
+        msg = "Cannot download diamond db: no diamond_dmnd_url specified in config"
+        logger.error(msg)
+        raise RuntimeError(msg)
+
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(save_path).write_bytes(response.content)
+    except requests.exceptions.RequestException as e:
+        msg = f"Failed to download diamond db: {e}"
+        logger.error(msg)
+        raise RuntimeError(msg) from e
+
+    logger.info(f"Diamond db downloaded successfully and saved to '{save_path}'")

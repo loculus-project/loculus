@@ -1,4 +1,5 @@
 import { KeycloakClientManager } from './KeycloakClientManager';
+import { realmPath } from './realmPath.ts';
 import { routes } from '../routes/routes';
 
 export const getAuthUrl = async (redirectUrl: string) => {
@@ -28,4 +29,9 @@ export const getAuthBaseUrl = async () => {
         return null;
     }
     return authUrl.substring(0, index);
+};
+
+export const getUrlForKeycloakAccountPage = async () => {
+    const baseUrl = await getAuthBaseUrl();
+    return `${baseUrl}${realmPath}/account`;
 };

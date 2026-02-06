@@ -264,6 +264,7 @@ export const uploadFiles = z.object({
     sequenceFile: z.instanceof(File).optional(),
     fileMapping: filesBySubmissionId.optional(),
 });
+export type UploadFiles = z.infer<typeof uploadFiles>;
 
 export const submitFiles = uploadFiles.merge(
     z.object({
@@ -296,7 +297,7 @@ export const newGroup = z.object({
     groupName: z.string(),
     institution: z.string(),
     address,
-    contactEmail: z.string(),
+    contactEmail: z.string().nullable(),
 });
 export type NewGroup = z.infer<typeof newGroup>;
 
@@ -307,11 +308,17 @@ export type Group = z.infer<typeof group>;
 
 export const groupDetails = z.object({
     group,
-    users: z.array(
-        z.object({
-            name: z.string(),
-        }),
-    ),
+    /**
+     * List of users in the group.
+     * Null when the requesting user is not authenticated or not authorized to view members.
+     */
+    users: z
+        .array(
+            z.object({
+                name: z.string(),
+            }),
+        )
+        .nullable(),
 });
 
 export type GroupDetails = z.infer<typeof groupDetails>;
@@ -332,13 +339,23 @@ export const info = z.object({
 
 export type Info = z.infer<typeof info>;
 
-export const requestUploadResponse = z.array(
+export const requestMultipartUploadResponse = z.array(
     z.object({
         fileId: z.string().uuid(),
-        url: z.string(),
+        urls: z.array(z.string()),
     }),
 );
-export type RequestUploadResponse = z.infer<typeof requestUploadResponse>;
+
+export type RequestMultipartUploadResponse = z.infer<typeof requestMultipartUploadResponse>;
+
+export const completeMultipartUploadRequest = z.array(
+    z.object({
+        fileId: z.string().uuid(),
+        etags: z.array(z.string()),
+    }),
+);
+
+export type CompleteMultipartUploadRequest = z.infer<typeof completeMultipartUploadRequest>;
 
 export const pipelineVersionStatistics = z.record(z.record(z.number()));
 export type PipelineVersionStatistics = z.infer<typeof pipelineVersionStatistics>;

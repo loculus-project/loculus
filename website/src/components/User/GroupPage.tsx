@@ -21,12 +21,13 @@ import IwwaArrowDown from '~icons/iwwa/arrow-down';
 type GroupPageProps = {
     prefetchedGroupDetails: GroupDetails;
     clientConfig: ClientConfig;
-    accessToken: string;
+    accessToken: string | undefined;
     username: string;
     userGroups: Group[];
     organisms: Organism[];
     databaseName: string;
     continueSubmissionIntent?: ContinueSubmissionIntent;
+    loginUrl: string;
 };
 
 const InnerGroupPage: FC<GroupPageProps> = ({
@@ -38,6 +39,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     organisms,
     databaseName,
     continueSubmissionIntent,
+    loginUrl,
 }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
     const groupId = prefetchedGroupDetails.group.groupId;
@@ -58,7 +60,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
         setNewUserName('');
     };
 
-    const userIsGroupMember = groupDetails.data?.users.some((user) => user.name === username) ?? false;
+    const userIsGroupMember = groupDetails.data?.users?.some((user) => user.name === username) ?? false;
     const userHasEditPrivileges = userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
 
     const { data: sequenceCounts, isLoading: sequenceCountsLoading } = useQuery({
@@ -152,7 +154,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             <Button
                                 className='object-right p-2 loculusColor text-white rounded px-4'
                                 onClick={() => {
-                                    const isLastMember = (groupDetails.data?.users.length ?? 0) <= 1;
+                                    const isLastMember = (groupDetails.data?.users?.length ?? 0) <= 1;
                                     const lastMemberWarning =
                                         'You are the last user in this group. Leaving will leave the group without any members, meaning that nobody is able to add future members. ';
                                     const dialogText = `${isLastMember ? lastMemberWarning : ''}Are you sure you want to leave the ${groupName} group?`;
@@ -172,9 +174,8 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     )}
                 </div>
             ) : (
-                <h1 className='flex flex-row gap-4 title flex-grow'>
-                    <label className='block title'>Group:</label>
-                    {groupName}
+                <h1 className='flex flex-col title flex-grow'>
+                    <label className='block title'>Group: {groupName}</label>
                 </h1>
             )}
 
@@ -183,12 +184,24 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     <tbody>
                         <TableRow label='Group ID'>{groupDetails.data?.group.groupId}</TableRow>
                         <TableRow label='Institution'>{groupDetails.data?.group.institution}</TableRow>
-                        <TableRow label='Contact email'>{groupDetails.data?.group.contactEmail}</TableRow>
+                        {accessToken && (
+                            <TableRow label='Contact email'>{groupDetails.data?.group.contactEmail}</TableRow>
+                        )}
                         <TableRow label='Address'>
                             <PostalAddress address={groupDetails.data?.group.address} />
                         </TableRow>
                     </tbody>
                 </table>
+                <div className='w-full mt-2 text-center'>
+                    {!accessToken && (
+                        <span className='text-sm italic'>
+                            <a href={loginUrl} className='underline cursor-pointer'>
+                                Log in
+                            </a>{' '}
+                            to {databaseName} to see contact details for the group.
+                        </span>
+                    )}
+                </div>
             </div>
 
             <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
@@ -233,7 +246,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     </form>
                     <div className='flex-1 overflow-y-auto'>
                         <ul>
-                            {groupDetails.data?.users.map((user) => (
+                            {groupDetails.data?.users?.map((user) => (
                                 <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
                                     <span className='text-lg'>{user.name}</span>
                                     {user.name !== username && (

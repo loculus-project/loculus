@@ -50,13 +50,37 @@ class AlignmentRequirement(StrEnum):
     NONE = "NONE"
 
 
-class NextcladeSequenceAndDataset(BaseModel):
-    name: str = "main"
+type SegmentName = str
+# name of the processed nucleotide sequence, as expected by the backend and LAPIS
+type SequenceName = str
+
+
+class Reference(BaseModel):
+    name: str = "singleReference"
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str | None = None
-    accepted_sort_matches: list[str] = Field(default_factory=list)
-    gene_prefix: str | None = None
+    accepted_dataset_matches: list[str] = Field(default_factory=list)
+    genes: list[str] = Field(default_factory=list)
+
+
+class Segment(BaseModel):
+    name: SegmentName = "main"
+    references: list[Reference] = Field(default_factory=list)
+
+
+class NextcladeSequenceAndDataset(BaseModel):
+    name: SequenceName = "main"
+    reference_name: str = "singleReference"
+    segment: SegmentName = "main"
+    nextclade_dataset_name: str | None = None
+    nextclade_dataset_tag: str | None = None
+    nextclade_dataset_server: str | None = None
+    # Names of diamond or nextclade sort entries that are acceptable matches for this dataset
+    accepted_dataset_matches: list[str] = Field(default_factory=list)
+    gene_suffix: str | None = None
+    # Names of genes in the Nextclade dataset; when concatenated with gene_suffix
+    # this must match the gene names expected by the backend and LAPIS
     genes: list[str] = Field(default_factory=list)
 
 
@@ -74,7 +98,7 @@ class Config(BaseModel):
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
 
     organism: str = "mpox"
-    nextclade_sequence_and_datasets: list[NextcladeSequenceAndDataset] = Field(default_factory=list)
+    segments: list[Segment] = Field(default_factory=list)
     processing_spec: dict[str, ProcessingSpec] = Field(default_factory=dict)
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
@@ -83,6 +107,7 @@ class Config(BaseModel):
 
     require_nextclade_sort_match: bool = False
     minimizer_url: str | None = None
+    diamond_dmnd_url: str | None = None
 
     create_embl_file: bool = False
     scientific_name: str = "Orthonairovirus haemorrhagiae"
@@ -95,12 +120,13 @@ class Config(BaseModel):
 
     @model_validator(mode="after")
     def finalize(self):
-        for ds in self.nextclade_sequence_and_datasets:
-            if ds.nextclade_dataset_server is None:
-                ds.nextclade_dataset_server = self.nextclade_dataset_server
-
-        if not any(ds.nextclade_dataset_name for ds in self.nextclade_sequence_and_datasets):
+        if not self.segments:
             self.alignment_requirement = AlignmentRequirement.NONE
+        for segment in self.segments:
+            if not segment.references or not any(
+                ds.nextclade_dataset_name for ds in segment.references
+            ):
+                self.alignment_requirement = AlignmentRequirement.NONE
 
         if not self.backend_host:  # Set here so we can use organism
             self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
@@ -109,7 +135,61 @@ class Config(BaseModel):
 
     @property
     def multi_segment(self) -> bool:
+        return len(self.segments) > 1
+
+    @property
+    def nextclade_sequence_and_datasets(self) -> list[NextcladeSequenceAndDataset]:
+        def build_ds(
+            reference: Reference | None, segment_name: str, multi_reference: bool
+        ) -> NextcladeSequenceAndDataset:
+            base = reference.model_dump() if reference else {}
+            ds = NextcladeSequenceAndDataset(
+                **base,
+                segment=segment_name,
+                reference_name=reference.name if reference else "singleReference",
+            )
+            if ds.nextclade_dataset_server is None:
+                ds.nextclade_dataset_server = self.nextclade_dataset_server
+            ds.name = set_sequence_name(multi_reference, self.multi_segment, ds)
+            ds.gene_suffix = ds.reference_name if multi_reference else None
+            return ds
+
+        datasets: list[NextcladeSequenceAndDataset] = []
+
+        for segment in self.segments:
+            multi_reference = len(segment.references) > 1
+            references: list[Reference] | list[None] = segment.references or [None]
+            datasets.extend(build_ds(ref, segment.name, multi_reference) for ref in references)
+
+        return datasets
+
+    @property
+    def multi_datasets(self) -> bool:
         return len(self.nextclade_sequence_and_datasets) > 1
+
+    def get_dataset_by_name(self, name: str) -> NextcladeSequenceAndDataset:
+        datasets = [ds for ds in self.nextclade_sequence_and_datasets if ds.name == name]
+        if len(datasets) == 0:
+            msg = f"No dataset found with name: {name}"
+            raise ValueError(msg)
+        if len(datasets) > 1:
+            raise Exception
+        return datasets[0]
+
+
+def set_sequence_name(
+    multi_reference: bool, multi_segment: bool, ds: NextcladeSequenceAndDataset
+) -> str:
+    match (multi_reference, multi_segment):
+        case (False, _):
+            return ds.segment
+        case (True, True):
+            return f"{ds.segment}-{ds.reference_name}"
+        case (True, False):
+            return ds.reference_name
+        case _:
+            msg = "Internal Error - unreachable code reached"
+            raise AssertionError(msg)
 
 
 def base_type(field_type: Any) -> type:

@@ -37,7 +37,11 @@ export const OrganismMetadataTable: FC<Props> = ({ organism }) => {
                 <div key={header} className='mb-8'>
                     <h3 className='text-lg font-semibold mb-4 cursor-pointer' onClick={() => toggleHeader(header)}>
                         {header}
-                        <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4' />
+                        <IwwaArrowDown
+                            className={`inline-block -mt-1 ml-1 h-4 w-4 transition-transform duration-300 ${
+                                expandedHeaders.has(header) ? '' : '-rotate-90'
+                            }`}
+                        />
                     </h3>
                     <div
                         className={`transition-all duration-300 ${expandedHeaders.has(header) ? 'block' : 'sr-only'}`}
@@ -61,7 +65,7 @@ const MetadataTable: FC<TableProps> = ({ fields, metadata }) => {
         <table className='table-auto border-collapse border border-gray-200 w-full'>
             <thead>
                 <tr>
-                    <th className='border border-gray-300 px-4 py-2 w-[25%]'>Field Name</th>
+                    <th className='border border-gray-300 px-4 py-2 w-[25%]'>Field name</th>
                     <th className='border border-gray-300 px-4 py-2 w-[13%]'>Type</th>
                     <th className='border border-gray-300 px-4 py-2 w-[37%]'>Description</th>
                     <th className='border border-gray-300 px-4 py-2 w-[25%]'>Example</th>

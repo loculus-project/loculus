@@ -6,6 +6,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.lowerCase
 import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.Address
 import org.loculus.backend.api.Group
@@ -17,6 +18,7 @@ import org.loculus.backend.controller.ConflictException
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
+import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional
 class GroupManagementDatabaseService(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val auditLogger: AuditLogger,
+    private val dateProvider: DateProvider,
 ) {
 
     fun getDetailsOfGroup(groupId: Int, user: org.loculus.backend.auth.User): GroupDetails {
@@ -49,6 +52,8 @@ class GroupManagementDatabaseService(
 
     fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
         val groupEntity = GroupEntity.new {
+            createdBy = authenticatedUser.username
+            createdAt = dateProvider.getCurrentDateTime()
             this.updateWith(group)
         }
 
@@ -59,7 +64,7 @@ class GroupManagementDatabaseService(
             this.groupId = groupId
         }
 
-        auditLogger.log(authenticatedUser.username, "Created group: ${group.groupName}")
+        auditLogger.log(authenticatedUser.username, "Created group: $groupId with groupName ${group.groupName}")
 
         return groupEntity.toGroup()
     }
@@ -73,7 +78,7 @@ class GroupManagementDatabaseService(
 
         groupEntity.updateWith(group)
 
-        auditLogger.log(authenticatedUser.username, "Updated group: ${group.groupName}")
+        auditLogger.log(authenticatedUser.username, "Updated group: $groupId")
 
         return groupEntity.toGroup()
     }
@@ -146,23 +151,18 @@ class GroupManagementDatabaseService(
         auditLogger.log(authenticatedUser.username, "Removed $usernameToRemove from group $groupId")
     }
 
-    fun getAllGroups(): List<Group> = GroupEntity.all()
-        .map {
-            Group(
-                groupId = it.id.value,
-                groupName = it.groupName,
-                institution = it.institution,
-                address = Address(
-                    line1 = it.addressLine1,
-                    line2 = it.addressLine2,
-                    postalCode = it.addressPostalCode,
-                    city = it.addressCity,
-                    state = it.addressState,
-                    country = it.addressCountry,
-                ),
-                contactEmail = it.contactEmail,
-            )
+    fun getGroups(name: String?): List<Group> {
+        val entities = if (name == null) {
+            GroupEntity.all()
+        } else {
+            GroupEntity.find {
+                // just case-insensitive perfect matches for now
+                GroupsTable.groupNameColumn.lowerCase() eq name.lowercase()
+            }
         }
+
+        return entities.map { it.toGroup() }
+    }
 
     private fun GroupEntity.updateWith(group: NewGroup) {
         groupName = group.groupName

@@ -2,7 +2,14 @@ import { type FC, useId } from 'react';
 
 import { BaseDialog } from './BaseDialog.tsx';
 import { Button } from './Button';
+import { ACCESSION_VERSION_FIELD } from '../../settings.ts';
+import type { Metadata } from '../../types/config.ts';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
+import {
+    stillRequiresReferenceNameSelection,
+    type SegmentReferenceSelections,
+} from '../../utils/sequenceTypeHelpers.ts';
 
 export type FieldItem = {
     name: string;
@@ -234,4 +241,50 @@ function getTooltip(displayState: FieldItemDisplayState | undefined) {
         displayState?.type === fieldItemDisplayStateType.disabled
         ? displayState.tooltip
         : undefined;
+}
+
+export function isActiveForSelectedReferenceName(selectedReferenceNames: SegmentReferenceSelections, field: Metadata) {
+    const matchesReference =
+        field.onlyForReference === undefined ||
+        Object.values(selectedReferenceNames).some((value) => value === field.onlyForReference);
+
+    return matchesReference;
+}
+
+export function getDisplayState(
+    field: Metadata,
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    selectedReferenceNames?: SegmentReferenceSelections,
+    referenceIdentifierField?: string,
+    greyOutIfStillRequiresReferenceSelection = true,
+): FieldItemDisplayState | undefined {
+    if (field.name === ACCESSION_VERSION_FIELD) {
+        return { type: fieldItemDisplayStateType.alwaysChecked };
+    }
+    if (selectedReferenceNames === undefined) {
+        return undefined;
+    }
+
+    if (
+        field.onlyForReference !== undefined &&
+        stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames)
+    ) {
+        if (greyOutIfStillRequiresReferenceSelection) {
+            return {
+                type: fieldItemDisplayStateType.greyedOut,
+                tooltip: `This is only visible when the ${referenceIdentifierField ?? 'referenceIdentifierField'} ${field.onlyForReference} is selected.`,
+            };
+        } else {
+            return undefined;
+        }
+    }
+
+    if (!isActiveForSelectedReferenceName(selectedReferenceNames, field)) {
+        return {
+            type: fieldItemDisplayStateType.disabled,
+            tooltip: `This is only visible when the ${referenceIdentifierField ?? 'referenceIdentifierField'} ${field.onlyForReference} is selected.`,
+        };
+    }
+
+    return undefined;
 }

@@ -6,10 +6,11 @@ import {
     dataUseTermsHistoryEntry,
     getSequencesResponse,
     info,
-    requestUploadResponse,
+    requestMultipartUploadResponse,
     sequenceEntryToEdit,
     pipelineVersionStatistics,
     type ProblemDetail,
+    type CompleteMultipartUploadRequest,
 } from '../types/backend.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
@@ -57,23 +58,41 @@ export class BackendClient {
     }
 
     /**
-     * Request presigned URLs to upload files to.
+     * Request presigned URLs for multipart file upload.
      * @param token The bearer token.
      * @param groupId The group ID of the group that will own the uploaded files.
      * @param numberFiles How many file IDs and URLs to generate.
-     * @returns A list of file IDs and presigned URLs to upload the files to.
+     * @param numberParts How many parts per file.
+     * @returns A list of file IDs with lists of presigned URLs for each part.
      */
-    public requestUpload(token: string, groupId: number, numberFiles: number) {
+    public requestMultipartUpload(token: string, groupId: number, numberFiles: number, numberParts: number) {
         return this.request(
-            '/files/request-upload',
+            '/files/request-multipart-upload',
             'POST',
-            requestUploadResponse,
+            requestMultipartUploadResponse,
             createAuthorizationHeader(token),
             undefined,
             {
                 groupId,
                 numberFiles,
+                numberParts,
             },
+        );
+    }
+
+    /**
+     * Complete multipart uploads by providing ETags for all parts.
+     * @param token The bearer token.
+     * @param fileIdsAndEtags List of file IDs with their corresponding ETags.
+     */
+    public completeMultipartUpload(token: string, fileIdsAndEtags: CompleteMultipartUploadRequest) {
+        return this.request(
+            '/files/complete-multipart-upload',
+            'POST',
+            z.unknown(),
+            createAuthorizationHeader(token),
+            fileIdsAndEtags,
+            undefined,
         );
     }
 

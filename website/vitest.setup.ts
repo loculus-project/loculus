@@ -23,6 +23,8 @@ export const DEFAULT_GROUP_NAME = 'testGroup';
 
 export const testOrganism = 'testOrganism';
 
+export const testDatabaseName = 'testDatabase';
+
 export const testConfig = {
     public: {
         discriminator: 'client',
@@ -312,6 +314,8 @@ const lapisRequestMocks = {
         );
     },
 };
+
+export const testUser = { name: 'testUser' };
 
 export const testGroups: Group[] = [
     {

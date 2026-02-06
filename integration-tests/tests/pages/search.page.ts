@@ -33,6 +33,10 @@ export class SearchPage {
         await this.navigateToVirus('Crimean-Congo Hemorrhagic Fever Virus');
     }
 
+    async enterovirus() {
+        await this.navigateToVirus('Enterovirus');
+    }
+
     async testOrganismWithoutAlignment() {
         await this.navigateToVirus('Test organism (without alignment)');
     }
@@ -52,6 +56,16 @@ export class SearchPage {
 
         await this.page.keyboard.press('Escape');
         await this.page.waitForTimeout(200);
+    }
+
+    async selectReference(fieldLabel: string, option: string) {
+        const select = this.page.getByRole('combobox', { name: fieldLabel });
+        await select.selectOption({ value: option });
+        await expect(select).toHaveValue(option);
+
+        const mutations = this.page.getByRole('combobox', { name: 'Mutations' }).first();
+        await expect(mutations).toBeVisible();
+        await expect(mutations).toBeEnabled();
     }
 
     async clearSelect(fieldLabel: string) {

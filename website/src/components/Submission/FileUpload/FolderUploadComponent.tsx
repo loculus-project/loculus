@@ -4,8 +4,9 @@ import { toast } from 'react-toastify';
 
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
-import type { FilesBySubmissionId, Group } from '../../../types/backend';
+import type { FilesBySubmissionId } from '../../../types/backend';
 import type { ClientConfig } from '../../../types/runtimeConfig';
+import { calculatePartSizeAndCount, splitFileIntoParts, uploadPart } from '../../../utils/multipartUpload';
 import { Button } from '../../common/Button';
 import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
@@ -29,9 +30,11 @@ type AwaitingUrlState = {
     >;
 };
 
+type SingleFileUpload = Pending | Uploaded | Error;
+
 type UploadInProgressState = {
     type: 'uploadInProgress';
-    files: Record<SubmissionId, (Pending | Uploaded | Error)[]>;
+    files: Record<SubmissionId, SingleFileUpload[]>;
 };
 
 type UploadCompleted = {
@@ -48,8 +51,13 @@ type Pending = {
     file: File;
     name: string;
     size: number;
-    url: string;
     fileId: string;
+
+    urls: string[];
+    uploadedParts: number;
+    totalParts: number;
+    partSize: number;
+    etags?: string[];
 };
 
 type Uploaded = {
@@ -71,7 +79,7 @@ type FolderUploadComponentProps = {
     inputMode: InputMode;
     accessToken: string;
     clientConfig: ClientConfig;
-    group: Group;
+    groupId: number;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
     onError: (message: string) => void;
 };
@@ -81,7 +89,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     inputMode,
     accessToken,
     clientConfig,
-    group,
+    groupId,
     setFileMapping,
     onError,
 }) => {
@@ -91,58 +99,68 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
     const backendClient = new BackendClient(clientConfig.backendUrl);
 
-    /**
-     * Takes a map of submission IDs to files that are pending for upload, and triggers uploads for each file.
-     * After the upload is done, the file upload state for that file will be updated to either 'uploaded' or 'error'.
-     */
-    function startUploading(submissionIdFileMap: Record<string, Pending[]>) {
-        Object.entries(submissionIdFileMap).forEach(([submissionId, files]) => {
-            files.forEach(({ file, url, fileId }) => {
-                fetch(url, {
-                    method: 'PUT',
-                    headers: {
-                        // eslint-disable-next-line @typescript-eslint/naming-convention
-                        'Content-Type': file.type,
-                    },
-                    body: file,
-                })
-                    .then((response) => {
-                        setFileUploadState((state) => {
-                            if (state?.type === 'uploadInProgress') {
-                                return produce(state, (draft) => {
-                                    draft.files[submissionId] = state.files[submissionId].map((file) => {
-                                        if (file.type === 'pending' && file.fileId === fileId) {
-                                            if (response.ok) {
-                                                return {
-                                                    type: 'uploaded',
-                                                    fileId: file.fileId,
-                                                    name: file.name,
-                                                    size: file.size,
-                                                };
-                                            } else {
-                                                return {
-                                                    type: 'error',
-                                                    msg: 'error',
-                                                    name: file.name,
-                                                    size: file.size,
-                                                };
-                                            }
-                                        } else {
-                                            return file;
-                                        }
-                                    });
-                                });
-                            }
-                            return state;
-                        });
-                    })
-                    .catch((error: unknown) => {
-                        if (error instanceof Error) {
-                            onError(error.message);
-                        }
-                    });
-            });
+    function updatePartProgress(submissionId: string, fileId: string, uploadedParts: number, totalParts: number) {
+        setFileUploadState((state) => {
+            if (state?.type === 'uploadInProgress') {
+                return produce(state, (draft) => {
+                    const file = draft.files[submissionId].find((f) => f.type === 'pending' && f.fileId === fileId);
+                    if (file?.type === 'pending') {
+                        file.uploadedParts = uploadedParts;
+                        file.totalParts = totalParts;
+                    }
+                });
+            }
+            return state;
         });
+    }
+
+    function updateFileState(submissionId: string, fileId: string, newStatus: 'uploaded' | 'error', errorMsg?: string) {
+        setFileUploadState((state) => {
+            if (state?.type === 'uploadInProgress') {
+                return produce(state, (draft) => {
+                    draft.files[submissionId] = state.files[submissionId].map((file) => {
+                        if (file.type === 'pending' && file.fileId === fileId) {
+                            if (newStatus === 'uploaded') {
+                                return { type: 'uploaded', fileId, name: file.name, size: file.size };
+                            } else {
+                                return { type: 'error', name: file.name, size: file.size, msg: errorMsg! };
+                            }
+                        }
+                        return file;
+                    });
+                });
+            }
+            return state;
+        });
+    }
+
+    async function uploadMultipartFile(submissionId: string, pending: Pending) {
+        const parts = splitFileIntoParts(pending.file, pending.partSize);
+        const etags: string[] = [];
+
+        for (let i = 0; i < parts.length; i++) {
+            const etag = await uploadPart(pending.urls[i], parts[i]);
+            etags.push(etag);
+            updatePartProgress(submissionId, pending.fileId, i + 1, pending.totalParts);
+        }
+
+        const result = await backendClient.completeMultipartUpload(accessToken, [{ fileId: pending.fileId, etags }]);
+        result.match(
+            () => updateFileState(submissionId, pending.fileId, 'uploaded'),
+            (err) => {
+                updateFileState(submissionId, pending.fileId, 'error', err.detail);
+                onError(err.detail);
+                throw new Error(`Upload of file ${pending.fileId} failed: ${err.detail}`);
+            },
+        );
+    }
+
+    async function startUploading(submissionIdFileMap: Record<string, Pending[]>) {
+        for (const [submissionId, files] of Object.entries(submissionIdFileMap)) {
+            for (const pending of files) {
+                await uploadMultipartFile(submissionId, pending);
+            }
+        }
     }
 
     useEffect(() => {
@@ -173,46 +191,41 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // If awaiting URLS, request pre signed upload URLs from the backend, assign them to the files,
             // and set the state to 'uploadInProgress'.
             case 'awaitingUrls': {
-                const awaitingUrlCount = Object.values(fileUploadState.files)
-                    .map((l) => l.length)
-                    .reduce((a, b) => a + b);
-
-                backendClient
-                    .requestUpload(accessToken, group.groupId, awaitingUrlCount)
-                    .then((res) => {
-                        res.match(
-                            (fileIdAndUrlList) => {
-                                // Add file IDs and URLs to files, and set state to 'pending'
-                                const pendingFiles: Record<SubmissionId, Pending[]> = {};
-                                Object.keys(fileUploadState.files).forEach(
-                                    (submissionId) => (pendingFiles[submissionId] = []),
-                                );
-                                let i = 0;
-                                Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
-                                    files.forEach((file) => {
-                                        pendingFiles[submissionId].push({
-                                            type: 'pending',
-                                            file: file.file,
-                                            name: file.name,
-                                            size: file.file.size,
-                                            url: fileIdAndUrlList[i].url,
-                                            fileId: fileIdAndUrlList[i].fileId,
-                                        });
-                                        i++;
+                void (async () => {
+                    const pendingFiles: Record<SubmissionId, Pending[]> = {};
+                    for (const [submissionId, files] of Object.entries(fileUploadState.files)) {
+                        const thisPendingFiles: Pending[] = [];
+                        pendingFiles[submissionId] = thisPendingFiles;
+                        for (const file of files) {
+                            const { partCount, partSize } = calculatePartSizeAndCount(file.file.size);
+                            const result = await backendClient.requestMultipartUpload(
+                                accessToken,
+                                groupId,
+                                1,
+                                partCount,
+                            );
+                            result.match(
+                                (data) => {
+                                    thisPendingFiles.push({
+                                        type: 'pending',
+                                        file: file.file,
+                                        name: file.name,
+                                        size: file.file.size,
+                                        fileId: data[0].fileId,
+                                        urls: data[0].urls,
+                                        uploadedParts: 0,
+                                        totalParts: partCount,
+                                        partSize,
+                                        etags: [],
                                     });
-                                });
-                                setFileUploadState({
-                                    type: 'uploadInProgress',
-                                    files: pendingFiles,
-                                });
-
-                                // For all pending files, start the upload
-                                startUploading(pendingFiles);
-                            },
-                            (err) => onError(err.detail),
-                        );
-                    })
-                    .catch(() => onError('failed to prepare upload.'));
+                                },
+                                (err) => onError(err.detail),
+                            );
+                        }
+                    }
+                    setFileUploadState({ type: 'uploadInProgress', files: pendingFiles });
+                    void startUploading(pendingFiles);
+                })();
                 break;
             }
             case 'uploadInProgress': {
@@ -311,11 +324,15 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 e.stopPropagation();
                 setIsDragging(false);
                 toast.info(
-                    'Sorry, drag and drop is not currently supported but you can select an entire folder to upload by clicking the Upload Folder button.',
+                    'Sorry, drag and drop is not currently supported but you can select an entire folder to upload by clicking the Upload folder button.',
                 );
             }}
         >
-            <LucideFolderUp className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`} aria-hidden='true' />
+            <LucideFolderUp
+                className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`}
+                aria-hidden='true'
+                data-testid='folder-up-icon'
+            />
             <div>
                 {fileUploadState === undefined ? (
                     <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
@@ -325,7 +342,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                                 document.getElementById(fileField)?.click();
                             }}
                         >
-                            Upload Folder
+                            Upload folder
                         </span>
                         {isClient && (
                             <input
@@ -355,15 +372,13 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     <h3 className='text-sm font-medium'>Files</h3>
                     {inputMode === 'form'
                         ? Object.values(fileUploadState.files)[0].map((file) => (
-                              <FileListItem key={file.name} name={file.name} size={file.size} status={file.type} />
+                              <FileListItem key={file.name} file={file} />
                           ))
                         : Object.entries(fileUploadState.files).flatMap(([submissionId, files]) => [
                               <h4 key={submissionId} className='text-xs font-medium py-2'>
                                   {submissionId}
                               </h4>,
-                              ...files.map((file) => (
-                                  <FileListItem key={file.name} name={file.name} size={file.size} status={file.type} />
-                              )),
+                              ...files.map((file) => <FileListItem key={`${submissionId}/${file.name}`} file={file} />),
                           ])}
                     <ul></ul>
                 </div>
@@ -381,22 +396,24 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 };
 
 type FileListeItemProps = {
-    name: string;
-    size: number;
-    status: UploadStatus;
+    file: SingleFileUpload;
 };
 
-const FileListItem: FC<FileListeItemProps> = ({ name, size, status }) => {
+const FileListItem: FC<FileListeItemProps> = ({ file }) => {
+    const showProgress = file.type === 'pending';
+    const percentage = showProgress ? Math.round((file.uploadedParts / file.totalParts) * 100) : 0;
+
     return (
         <div className='flex flex-row'>
             <div className='w-3.5' />
             <LucideFile className='h-4 w-4 text-gray-500 ml-1 mr-1' />
             <div className='flex-1 min-w-0 flex items-center'>
-                <span className='text-xs text-gray-700 truncate max-w-[140px]'>{name}</span>
-                <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>({formatFileSize(size)})</span>
+                <span className='text-xs text-gray-700 truncate max-w-[140px]'>{file.name}</span>
+                <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>({formatFileSize(file.size)})</span>
+                {showProgress && <span className='text-xs text-blue-500 ml-2'>{percentage}%</span>}
             </div>
             {/* Status icon */}
-            <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(status)}</div>
+            <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(file.type)}</div>
         </div>
     );
 };

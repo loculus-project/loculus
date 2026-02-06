@@ -5,7 +5,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { FieldSelectorModal, getDefaultSelectedFields } from './FieldSelectorModal';
 import { ACCESSION_VERSION_FIELD } from '../../../../settings';
 import { type Metadata } from '../../../../types/config';
+import { SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES } from '../../../../types/referenceGenomes.spec.ts';
 import { MetadataVisibility } from '../../../../utils/search.ts';
+import type { SegmentReferenceSelections } from '../../../../utils/sequenceTypeHelpers.ts';
 
 // Mock BaseDialog component
 vi.mock('../../../common/BaseDialog.tsx', () => ({
@@ -159,8 +161,8 @@ describe('FieldSelectorModal', () => {
             expect(accessionVersionInput).toBeChecked();
         });
 
-        it('should disable fields that are not for the currently selected suborganism', () => {
-            renderFieldSelectorModal('suborganism1', [
+        it('should disable fields that are not for the currently selected reference', () => {
+            renderFieldSelectorModal({ main: 'ref1' }, [
                 {
                     name: 'field1',
                     displayName: 'Field 1',
@@ -174,7 +176,7 @@ describe('FieldSelectorModal', () => {
                     type: 'string',
                     header: 'Group 1',
                     includeInDownloadsByDefault: true,
-                    onlyForSuborganism: 'suborganism1',
+                    onlyForReference: 'ref1',
                 },
                 {
                     name: 'field3',
@@ -182,7 +184,7 @@ describe('FieldSelectorModal', () => {
                     type: 'string',
                     header: 'Group 2',
                     includeInDownloadsByDefault: true,
-                    onlyForSuborganism: 'suborganism2',
+                    onlyForReference: 'ref2',
                 },
                 accessionVersionField,
             ]);
@@ -194,7 +196,10 @@ describe('FieldSelectorModal', () => {
         });
     });
 
-    function renderFieldSelectorModal(selectedSuborganism: string | null = null, metadata: Metadata[] = mockMetadata) {
+    function renderFieldSelectorModal(
+        selectedReferenceNames: SegmentReferenceSelections = { main: null },
+        metadata: Metadata[] = mockMetadata,
+    ) {
         const { result } = renderHook(() => useState(getDefaultSelectedFields(metadata)));
 
         const getComponent = () => (
@@ -217,12 +222,13 @@ describe('FieldSelectorModal', () => {
                     new Map(
                         metadata.map((field) => [
                             field.name,
-                            new MetadataVisibility(result.current[0].has(field.name), field.onlyForSuborganism),
+                            new MetadataVisibility(result.current[0].has(field.name), field.onlyForReference),
                         ]),
                     )
                 }
                 onSelectedFieldsChange={result.current[1]}
-                selectedSuborganism={selectedSuborganism}
+                selectedReferenceNames={selectedReferenceNames}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />
         );
 

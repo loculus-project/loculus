@@ -1,0 +1,44 @@
+# Expects that only a single segment is present per sequence entry.
+batch_size: 100
+alignment_requirement: ALL
+log_level: DEBUG
+minimizer_url: TEST
+nextclade_dataset_server: TEST
+segments:
+  - name: main
+    references:
+    - name: ebola-sudan
+      nextclade_dataset_name: ebola-dataset/ebola-sudan
+      accepted_dataset_matches: [ebola-sudan]
+      genes: [NPEbolaSudan, VP35EbolaSudan] # Names of genes in nextclade dataset gff3 file
+    - name: ebola-zaire
+      nextclade_dataset_name: ebola-dataset/ebola-zaire
+      accepted_dataset_matches: [ebola-zaire]
+      genes: [VP24EbolaZaire, LEbolaZaire]
+organism: multi-ebola-test
+processing_spec:
+  subtype:
+    args:
+      type: str
+    function: identity
+    inputs:
+      input: ASSIGNED_REFERENCE
+    required: true
+  totalSnps:
+    args:
+      type: int
+    function: identity
+    inputs:
+      input: nextclade.totalSubstitutions
+  totalInsertedNucs:
+    args:
+      type: int
+    function: identity
+    inputs:
+      input: nextclade.totalInsertions
+  length:
+    args:
+      type: int
+    function: identity
+    inputs:
+      input: length_ebola-sudan

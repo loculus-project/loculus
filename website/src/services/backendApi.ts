@@ -16,8 +16,14 @@ import {
     submissionIdMapping,
     submitFiles,
     unprocessedData,
+    type UploadFiles,
     uploadFiles,
 } from '../types/backend.ts';
+
+const stringifyFileMapping = (data: UploadFiles) => {
+    const { fileMapping, ...rest } = data;
+    return fileMapping !== undefined ? { ...rest, fileMapping: JSON.stringify(fileMapping) } : rest;
+};
 
 const submitEndpoint = makeEndpoint({
     method: 'post',
@@ -29,11 +35,7 @@ const submitEndpoint = makeEndpoint({
         {
             name: 'data',
             type: 'Body',
-            schema: submitFiles.transform((submitData) => {
-                // stringify the fileMapping
-                const { fileMapping, ...rest } = submitData;
-                return fileMapping !== undefined ? { ...rest, fileMapping: JSON.stringify(fileMapping) } : rest;
-            }),
+            schema: submitFiles.transform(stringifyFileMapping),
         },
     ],
     response: z.array(submissionIdMapping),
@@ -55,7 +57,7 @@ const reviseEndpoint = makeEndpoint({
         {
             name: 'data',
             type: 'Body',
-            schema: uploadFiles,
+            schema: uploadFiles.transform(stringifyFileMapping),
         },
     ],
     response: z.array(submissionIdMapping),

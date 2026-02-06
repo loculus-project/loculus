@@ -1,0 +1,9 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region MK299338.1 1 1680
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=3052518
+MK299338.1	Genbank	region	1	1680	.	+	.	ID=MK299338.1:1..1680;Dbxref=taxon:3052518;Name=S;collection-date=2012;country=Bulgaria;gbkey=Src;genome=genomic;mol_type=viral cRNA;nat-host=Rhipicephalus bursa;old-name=Crimean-Congo hemorrhagic fever orthonairovirus;segment=S;strain=Malko Tarnovo-BG2012-T1302
+MK299338.1	Genbank	five_prime_UTR	1	54	.	+	.	ID=id-MK299338.1:1..54;gbkey=5'UTR
+MK299338.1	Genbank	CDS	55	1503	.	+	0	Name=NP;ID=cds-QHB49949.1;Dbxref=NCBI_GP:QHB49949.1;Name=QHB49949.1;gbkey=CDS;product=nucleocapsid protein;protein_id=QHB49949.1
+MK299338.1	Genbank	three_prime_UTR	1504	1680	.	+	.	ID=id-MK299338.1:1504..1680;gbkey=3'UTR

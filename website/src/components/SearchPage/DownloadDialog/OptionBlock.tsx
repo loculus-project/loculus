@@ -1,5 +1,7 @@
 import type { FC, ReactElement } from 'react';
 
+import { Select } from '../../common/Select';
+
 export type OptionBlockOption = {
     label: ReactElement;
     subOptions?: ReactElement;
@@ -65,7 +67,7 @@ export const DropdownOptionBlock: FC<OptionBlockProps> = ({
 }) => {
     return (
         <div className='max-w-80'>
-            <select
+            <Select
                 name={name}
                 title={title ?? name}
                 className='select select-bordered w-full max-w-xs min-h-0 h-auto py-0'
@@ -83,7 +85,7 @@ export const DropdownOptionBlock: FC<OptionBlockProps> = ({
                         {option.label}
                     </option>
                 ))}
-            </select>
+            </Select>
         </div>
     );
 };

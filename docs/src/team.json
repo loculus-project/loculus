@@ -90,6 +90,11 @@
             "name": "Felix Hennig",
             "description": "Freelance software engineer",
             "picture": "/images/team/felixHennig-square.jpg"
+        },
+        {
+            "name": "Max Verbiest",
+            "description": "Swiss TPH; SIB",
+            "picture": "/images/team/maxVerbiest-square.jpg"
         }
     ]
 }

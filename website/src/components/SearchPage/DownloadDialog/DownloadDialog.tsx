@@ -3,59 +3,65 @@ import { type FC, useEffect, useMemo, useState } from 'react';
 import { DownloadDialogButton } from './DowloadDialogButton.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
 import type { DownloadDataType } from './DownloadDataType.ts';
-import { DownloadForm, type DownloadFormState, getSequenceNames } from './DownloadForm.tsx';
+import { DownloadForm, type DownloadFormState } from './DownloadForm.tsx';
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { getDefaultSelectedFields } from './FieldSelector/FieldSelectorModal.tsx';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
-import type { ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { MetadataVisibility } from '../../../utils/search.ts';
-import type { GeneInfo, SegmentInfo } from '../../../utils/sequenceTypeHelpers.ts';
+import {
+    getSegmentAndGeneInfo,
+    segmentsWithMultipleReferences,
+    type GeneInfo,
+    type SegmentInfo,
+    type SegmentReferenceSelections,
+} from '../../../utils/sequenceTypeHelpers.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
 import { BaseDialog } from '../../common/BaseDialog.tsx';
 
 type DownloadDialogProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     sequenceFilter: SequenceFilter;
-    referenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
     schema: Schema;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
-    selectedSuborganism: string | null;
-    suborganismIdentifierField: string | undefined;
+    selectedReferenceNames?: SegmentReferenceSelections;
+    referenceIdentifierField: string | undefined;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
     downloadUrlGenerator,
     sequenceFilter,
-    referenceGenomesLightweightSchema,
+    referenceGenomesInfo,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
     schema,
     richFastaHeaderFields,
-    selectedSuborganism,
-    suborganismIdentifierField,
+    selectedReferenceNames,
+    referenceIdentifierField,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const { nucleotideSequences, genes, useMultiSegmentEndpoint, defaultFastaHeaderTemplate } = useMemo(
-        () => getSequenceNames(referenceGenomesLightweightSchema, selectedSuborganism),
-        [referenceGenomesLightweightSchema, selectedSuborganism],
+    const { nucleotideSegmentInfos, geneInfos } = useMemo(
+        () => getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferenceNames),
+        [referenceGenomesInfo, selectedReferenceNames],
     );
+    const useMultiSegmentEndpoint = referenceGenomesInfo.useLapisMultiSegmentedEndpoint;
 
     const [downloadFormState, setDownloadFormState] = useState<DownloadFormState>(
-        getDefaultDownloadFormState(nucleotideSequences, genes),
+        getDefaultDownloadFormState(nucleotideSegmentInfos, geneInfos),
     );
     useEffect(() => {
-        setDownloadFormState(getDefaultDownloadFormState(nucleotideSequences, genes));
-    }, [nucleotideSequences, genes]);
-
+        setDownloadFormState(getDefaultDownloadFormState(nucleotideSegmentInfos, geneInfos));
+    }, [nucleotideSegmentInfos, geneInfos]);
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
     const [selectedFields, setSelectedFields] = useState<Set<string>>(getDefaultSelectedFields(schema.metadata)); // This is here so that the state is persisted across closing and reopening the dialog
 
@@ -63,23 +69,26 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         return new Map(
             schema.metadata.map((field) => [
                 field.name,
-                new MetadataVisibility(selectedFields.has(field.name), field.onlyForSuborganism),
+                new MetadataVisibility(selectedFields.has(field.name), field.onlyForReference),
             ]),
         );
     }, [selectedFields, schema]);
 
     const downloadOption = getDownloadOption({
         downloadFormState,
-        nucleotideSequences,
-        genes,
+        nucleotideSegmentInfos,
+        geneInfos,
         useMultiSegmentEndpoint,
-        defaultFastaHeaderTemplate,
         getVisibleFields: () => [
             ...Array.from(downloadFieldVisibilities.entries())
-                .filter(([_, visibility]) => visibility.isVisible(selectedSuborganism))
+                .filter(([_, visibility]) => visibility.isVisible(referenceGenomesInfo, selectedReferenceNames, false))
                 .map(([name]) => name),
         ],
         metadata: schema.metadata,
+        defaultFastaHeaderTemplate:
+            segmentsWithMultipleReferences(referenceGenomesInfo).length > 0
+                ? `{${ACCESSION_VERSION_FIELD}}`
+                : undefined,
     });
 
     return (
@@ -94,7 +103,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         </div>
                     )}
                     <DownloadForm
-                        referenceGenomesLightweightSchema={referenceGenomesLightweightSchema}
+                        referenceGenomesInfo={referenceGenomesInfo}
                         downloadFormState={downloadFormState}
                         setDownloadFormState={setDownloadFormState}
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
@@ -103,8 +112,8 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         downloadFieldVisibilities={downloadFieldVisibilities}
                         onSelectedFieldsChange={setSelectedFields}
                         richFastaHeaderFields={richFastaHeaderFields}
-                        selectedSuborganism={selectedSuborganism}
-                        suborganismIdentifierField={suborganismIdentifierField}
+                        selectedReferenceNames={selectedReferenceNames}
+                        referenceIdentifierField={referenceIdentifierField}
                     />
                     {dataUseTermsEnabled && (
                         <div className='mb-4 py-4'>
@@ -144,14 +153,14 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     );
 };
 
-function getDefaultDownloadFormState(nucleotideSequences: SegmentInfo[], genes: GeneInfo[]): DownloadFormState {
+function getDefaultDownloadFormState(nucleotideSegmentInfos: SegmentInfo[], geneInfos: GeneInfo[]): DownloadFormState {
     return {
         includeRestricted: false,
         dataType: 'metadata',
         compression: undefined,
-        unalignedNucleotideSequence: nucleotideSequences[0]?.lapisName ?? '',
-        alignedNucleotideSequence: nucleotideSequences[0]?.lapisName ?? '',
-        alignedAminoAcidSequence: genes[0]?.lapisName ?? '',
+        unalignedNucleotideSequence: nucleotideSegmentInfos[0]?.lapisName ?? '',
+        alignedNucleotideSequence: nucleotideSegmentInfos[0]?.lapisName ?? '',
+        alignedAminoAcidSequence: geneInfos[0]?.lapisName ?? '',
         includeRichFastaHeaders: false,
     };
 }
@@ -159,17 +168,17 @@ function getDefaultDownloadFormState(nucleotideSequences: SegmentInfo[], genes: 
 function getDownloadOption({
     downloadFormState,
     useMultiSegmentEndpoint,
-    defaultFastaHeaderTemplate,
     getVisibleFields,
     metadata,
+    defaultFastaHeaderTemplate,
 }: {
     downloadFormState: DownloadFormState;
-    nucleotideSequences: SegmentInfo[];
-    genes: GeneInfo[];
+    nucleotideSegmentInfos: SegmentInfo[];
+    geneInfos: GeneInfo[];
     useMultiSegmentEndpoint: boolean;
-    defaultFastaHeaderTemplate: string | undefined;
     getVisibleFields: () => string[];
     metadata: Metadata[];
+    defaultFastaHeaderTemplate?: string;
 }): DownloadOption {
     const assembleDownloadDataType = (): DownloadDataType => {
         switch (downloadFormState.dataType) {

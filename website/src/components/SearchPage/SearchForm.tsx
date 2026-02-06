@@ -5,8 +5,7 @@ import { useMemo, useState } from 'react';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import { Button } from '../common/Button';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
-import { SuborganismSelector } from './SuborganismSelector.tsx';
-import { getDisplayState } from './TableColumnSelectorModal.tsx';
+import { ReferenceSelector } from './ReferenceSelector.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
@@ -18,13 +17,14 @@ import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
-import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
-import { getSuborganismSegmentAndGeneInfo } from '../../utils/getSuborganismSegmentAndGeneInfo.tsx';
+import { getReferenceIdentifier, type ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
+import { getSegmentAndGeneInfo, getSegmentNames } from '../../utils/sequenceTypeHelpers.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
-import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
+import { type FieldItem, FieldSelectorModal, getDisplayState } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import MaterialSymbolsTune from '~icons/material-symbols/tune';
@@ -41,12 +41,10 @@ interface SearchFormProps {
     lapisUrl: string;
     searchVisibilities: Map<string, MetadataVisibility>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
-    suborganismIdentifierField: string | undefined;
-    selectedSuborganism: string | null;
-    setSelectedSuborganism: (newValue: string | null) => void;
+    referenceSelection: ReferenceSelection;
 }
 
 export const SearchForm = ({
@@ -56,16 +54,31 @@ export const SearchForm = ({
     lapisUrl,
     searchVisibilities,
     setASearchVisibility,
-    referenceGenomeLightweightSchema,
+    referenceGenomesInfo,
     lapisSearchParameters,
     showMutationSearch,
-    suborganismIdentifierField,
-    selectedSuborganism,
-    setSelectedSuborganism,
+    referenceSelection,
 }: SearchFormProps) => {
-    const visibleFields = filterSchema.filters.filter(
-        (field) => searchVisibilities.get(field.name)?.isVisible(selectedSuborganism) ?? false,
-    );
+    const excluded = new Set<string>([
+        ACCESSION_FIELD,
+        ...(referenceSelection === undefined
+            ? []
+            : getSegmentNames(referenceGenomesInfo).map((segmentName) =>
+                  getReferenceIdentifier(
+                      referenceSelection.referenceIdentifierField,
+                      segmentName,
+                      referenceGenomesInfo.isMultiSegmented,
+                  ),
+              )),
+    ]);
+    const visibleFields = filterSchema.filters
+        .filter(
+            (field) =>
+                searchVisibilities
+                    .get(field.name)
+                    ?.isVisible(referenceGenomesInfo, referenceSelection?.selectedReferences) ?? false,
+        )
+        .filter((field) => !excluded.has(field.name));
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);
@@ -95,20 +108,24 @@ export const SearchForm = ({
     }, [filterSchema]);
 
     const fieldItems: FieldItem[] = filterSchema.filters
-        .filter((filter) => filter.name !== ACCESSION_FIELD) // Exclude accession field
-        .filter((filter) => filter.name !== suborganismIdentifierField)
+        .filter((filter) => !excluded.has(filter.name))
         .filter((filter) => !filter.notSearchable)
         .map((filter) => ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),
             header: filter.header,
-            displayState: getDisplayState(filter, selectedSuborganism, suborganismIdentifierField),
+            displayState: getDisplayState(
+                filter,
+                referenceGenomesInfo,
+                referenceSelection?.selectedReferences,
+                referenceSelection?.referenceIdentifierField,
+            ),
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
     const suborganismSegmentAndGeneInfo = useMemo(
-        () => getSuborganismSegmentAndGeneInfo(referenceGenomeLightweightSchema, selectedSuborganism),
-        [referenceGenomeLightweightSchema, selectedSuborganism],
+        () => getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
+        [referenceGenomesInfo, referenceSelection?.selectedReferences],
     );
 
     return (
@@ -169,13 +186,13 @@ export const SearchForm = ({
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
-                        {suborganismIdentifierField !== undefined && (
-                            <SuborganismSelector
+                        {referenceSelection !== undefined && (
+                            <ReferenceSelector
                                 filterSchema={filterSchema}
-                                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
-                                suborganismIdentifierField={suborganismIdentifierField}
-                                selectedSuborganism={selectedSuborganism}
-                                setSelectedSuborganism={setSelectedSuborganism}
+                                referenceGenomesInfo={referenceGenomesInfo}
+                                referenceIdentifierField={referenceSelection.referenceIdentifierField}
+                                selectedReferences={referenceSelection.selectedReferences}
+                                setSelectedReferences={referenceSelection.setSelectedReferences}
                             />
                         )}
                         <div className='mb-1'>
@@ -185,7 +202,7 @@ export const SearchForm = ({
                             />
                         </div>
 
-                        {showMutationSearch && suborganismSegmentAndGeneInfo !== null && (
+                        {showMutationSearch && (
                             <MutationField
                                 suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
                                 value={'mutation' in fieldValues ? fieldValues.mutation! : ''}

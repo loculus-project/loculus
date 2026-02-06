@@ -20,6 +20,19 @@ class FileMappingPreconditionValidator(
     private val s3Service: S3Service,
     private val filesDatabaseService: FilesDatabaseService,
 ) {
+    fun validateFilenameCharacters(fileCategoriesFilesMap: FileCategoryFilesMap?): FileMappingPreconditionValidator {
+        if (fileCategoriesFilesMap == null) {
+            return this
+        }
+
+        fileCategoriesFilesMap.forEach { (category, files) ->
+            files.forEach { file ->
+                validateFilename(file.name, category)
+            }
+        }
+        return this
+    }
+
     fun validateFilenamesAreUnique(fileCategoriesFilesMap: FileCategoryFilesMap?): FileMappingPreconditionValidator {
         if (fileCategoriesFilesMap == null) return this
         fileCategoriesFilesMap.categories.forEach { category: FileCategory ->
@@ -108,6 +121,44 @@ class FileMappingPreconditionValidator(
         return this
     }
 
+    /**
+     * This validates that the filename is not in violation with our defined restrictions, ensuring that the filenames
+     * are likely compatible with major operating systems.
+     *
+     * Restrictions:
+     * - ASCII control characters (code 0-31)
+     * - /\:*"?<>| and NUL: forbidden in NTFS (for Windows) and FAT32
+     * - More than 255 characters: ext4 and NTFS only allow 255 bytes
+     *
+     * References:
+     * - https://en.wikipedia.org/wiki/Comparison_of_file_systems#Limits
+     * - https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+     */
+    private fun validateFilename(filename: String, category: FileCategory) {
+        if (filename.isEmpty()) {
+            throw UnprocessableEntityException(
+                "Invalid filename '$filename' in category '$category': Filenames may not be empty",
+            )
+        }
+        if (filename.length > 255) {
+            throw UnprocessableEntityException(
+                "Invalid filename '$filename' in category '$category': Filenames may not exceed 255 characters",
+            )
+        }
+        if (filename.any { it in "<>:\"/\\|?*" }) {
+            throw UnprocessableEntityException(
+                "Invalid filename '$filename' in category '$category': Filenames may not contain " +
+                    "forbidden characters (< > : \" / \\ | ? *).",
+            )
+        }
+        if (filename.any { it.code in 0..31 }) {
+            throw UnprocessableEntityException(
+                "Invalid filename '$filename' in category '$category': Filenames may not contain " +
+                    "ASCII control characters 0-31.",
+            )
+        }
+    }
+
     private fun validateCategoriesMatchSchema(
         fileCategoriesFilesMap: FileCategoryFilesMap,
         allowedFileCategories: List<org.loculus.backend.config.FileCategory>,
@@ -132,6 +183,15 @@ class FileMappingPreconditionValidator(
 class SubmissionIdFilesMappingPreconditionValidator(
     private val fileMappingValidator: FileMappingPreconditionValidator,
 ) {
+    fun validateFilenameCharacters(
+        submissionIdFilesMap: SubmissionIdFilesMap?,
+    ): SubmissionIdFilesMappingPreconditionValidator {
+        submissionIdFilesMap?.values?.forEach {
+            fileMappingValidator.validateFilenameCharacters(it)
+        }
+        return this
+    }
+
     fun validateFilenamesAreUnique(
         submissionIdFilesMap: SubmissionIdFilesMap?,
     ): SubmissionIdFilesMappingPreconditionValidator {

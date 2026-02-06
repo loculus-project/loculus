@@ -5,7 +5,7 @@ import { routes } from '../../routes/routes';
 import { GroupManagementClient } from '../../services/groupManagementClient';
 import { KeycloakClientManager } from '../../utils/KeycloakClientManager';
 import { getAccessToken } from '../../utils/getAccessToken';
-import { urlForKeycloakAccountPage } from '../../utils/urlForKeycloakAccountPage';
+import { getUrlForKeycloakAccountPage } from '../../utils/getAuthUrl.ts';
 import ErrorBox from '../common/ErrorBox.tsx';
 import DashiconsGroups from '~icons/dashicons/groups';
 import IconoirOpenNewWindow from '~icons/iconoir/open-new-window';
@@ -22,7 +22,7 @@ const keycloakClient = await KeycloakClientManager.getClient();
 const keycloakLogoutUrl = keycloakClient!.endSessionUrl({
     post_logout_redirect_uri: logoutUrl.href, // eslint-disable-line @typescript-eslint/naming-convention
 });
-const accountPageUrl = urlForKeycloakAccountPage(keycloakClient!);
+const accountPageUrl = await getUrlForKeycloakAccountPage();
 const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
 ---
 

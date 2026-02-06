@@ -243,6 +243,7 @@ class SubmissionDatabaseService(
             }
             submittedProcessedData.data.files?.let { fileMapping ->
                 fileMappingPreconditionValidator
+                    .validateFilenameCharacters(fileMapping)
                     .validateFilenamesAreUnique(fileMapping)
                     .validateCategoriesMatchOutputSchema(fileMapping, organism)
                     .validateMultipartUploads(fileMapping.fileIds)
@@ -1076,6 +1077,7 @@ class SubmissionDatabaseService(
 
         editedSequenceEntryData.data.files?.let { fileMapping ->
             fileMappingPreconditionValidator
+                .validateFilenameCharacters(fileMapping)
                 .validateFilenamesAreUnique(fileMapping)
                 .validateCategoriesMatchSubmissionSchema(fileMapping, organism)
                 .validateMultipartUploads(fileMapping.fileIds)

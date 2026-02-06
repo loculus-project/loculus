@@ -179,10 +179,10 @@
             }
           }
         },
-        "onlyForSuborganism": {
+        "onlyForReference": {
           "groups": ["metadata"],
           "type": "string",
-          "description": "Optional. Affects the search page of the website: specify which suborganism the metadata field applies to, this metadata field will then only be visible if that suborganism is selected (in the search bar, as a table column, and in the metadata download). Must be a valid suborganism as defined in the reference genomes."
+          "description": "Optional. Affects the search page of the website: specify which reference the metadata field applies to, this metadata field will then only be visible if that reference is selected (in the search bar, as a table column, and in the metadata download). Must be a valid reference as defined in the reference genomes."
         },
         "ontology_id": {
           "groups": ["metadata"],
@@ -514,7 +514,7 @@
                   "enum": ["ascending", "descending"],
                   "description": "Default order direction."
                 },
-                "suborganismIdentifierField": {
+                "referenceIdentifierField": {
                   "groups": ["schema"],
                   "type": "string",
                   "description": "Must be set to use the sub-organism feature. This metadata field is used to determine which suborganism a sequence entry belongs to. N.B. the suborganism feature is incomplete and not ready for production use."
@@ -603,7 +603,7 @@
                     "groups": ["nextcladePipelineConfigFile"],
                     "docsIncludePrefix": false,
                     "type": "string",
-                    "enum": ["minimizer", "align"],
+                    "enum": ["minimizer", "align", "diamond"],
                     "description": "Method to classify segments for multi-segmented viruses"
                   },
                   "nextclade_dataset_server": {
@@ -612,56 +612,69 @@
                     "type": "string",
                     "description": "Server from which to download nextclade datasets."
                   },
-                  "nextclade_sequence_and_datasets": {
+                  "segments": {
                     "groups": ["nextcladePipelineConfigFile"],
                     "docsIncludePrefix": false,
                     "type": "array",
-                    "description": "Array of [nextcladeSequenceAndDataset](#nextclade-preprocessing-pipeline-sequence-and-dataset-objects-type) objects containing nucleotide sequence names and datasets.",
+                    "description": "Array of [segment](#nextclade-preprocessing-pipeline-segment-objects-type) objects containing nucleotide sequences, references and their corresponding nextclade datasets.",
                     "items": {
                       "type": "object",
                       "additionalProperties": false,
                       "properties": {
                         "name": {
-                          "groups": ["nextcladeSequenceAndDataset"],
+                          "groups": ["nextcladeSegment"],
                           "docsIncludePrefix": false,
                           "type": "string",
                           "description": "Name of the nucleotide sequence to which this dataset applies - defaults to 'main'."
                         },
-                        "nextclade_dataset_name": {
-                          "groups": ["nextcladeSequenceAndDataset"],
-                          "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Name of the nextclade dataset to use to align the sequence - required if this sequence should be aligned."
-                        },
-                        "nextclade_dataset_tag": {
-                          "groups": ["nextcladeSequenceAndDataset"],
-                          "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Optional. Tag of the nextclade dataset to use to align the sequence."
-                        },
-                        "nextclade_dataset_server": {
-                          "groups": ["nextcladeSequenceAndDataset"],
-                          "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Optional. Server from which to download the nextclade dataset to use to align the sequence. If not specified, use the global nextclade_dataset_server."
-                        },
-                        "accepted_sort_matches": {
-                          "groups": ["nextcladeSequenceAndDataset"],
+                        "references": {
+                          "groups": ["nextcladeSegment"],
                           "docsIncludePrefix": false,
                           "type": "array",
-                          "description": "Optional. Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use only accept matches with the same name or nextclade_dataset_name."
-                        },
-                        "genes": {
-                          "groups": ["nextcladeSequenceAndDataset"],
-                          "docsIncludePrefix": false,
-                          "type": "array",
-                          "description": "Array of strings. The names of the genes to be extracted from the sequence alignment results (should correspond to gene names in the nextclade dataset)."
-                        },
-                        "gene_prefix": {
-                          "groups": ["nextcladeSequenceAndDataset"],
-                          "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Optional. Prefix to add to extracted gene names when sending the processing results to the backend. For example, if the nucleotide sequence is for segment (or subtype) A of a multi-segmented virus, then setting gene_prefix to 'A_' will result in gene names 'A_gene1', 'A_gene2', etc."
+                          "description": "Details of the nextclade dataset for each reference",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["name"],
+                            "properties": {
+                              "name": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "string",
+                                "description": "Name of the reference to use for alignment  - set name to 'singleReference' if there is only one reference."
+                              },
+                              "nextclade_dataset_name": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "string",
+                                "description": "Name of the nextclade dataset to use to align the sequence - required if this sequence should be aligned."
+                              },
+                              "nextclade_dataset_tag": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "string",
+                                "description": "Optional. Tag of the nextclade dataset to use to align the sequence."
+                              },
+                              "nextclade_dataset_server": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "string",
+                                "description": "Optional. Server from which to download the nextclade dataset to use to align the sequence. If not specified, use the global nextclade_dataset_server."
+                              },
+                              "accepted_dataset_matches": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "array",
+                                "description": "Optional. Array of strings. The dataset names that are accepted as matches when using nextclade sort or diamond, if not specified use only accept matches with the same name or nextclade_dataset_name."
+                              },
+                              "genes": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "array",
+                                "description": "Array of strings. The names of the genes to be extracted from the sequence alignment results (should correspond to gene names in the nextclade dataset)."
+                              }
+                            }
+                          }
                         }
                       }
                     }
@@ -684,8 +697,7 @@
                     "type": "integer",
                     "description": "Timeout in seconds for requests to the backend server for data to process"
                   }
-                },
-                "required": ["nextclade_sequence_and_datasets"]
+                }
               }
             },
             "required": ["version", "image"]
@@ -792,71 +804,79 @@
         "referenceGenomes": {
           "groups": ["organism"],
           "docsIncludePrefix": false,
-          "type": "object",
-          "description": "An object where the keys are the suborganism names and the values are a [Reference Genome](#reference-genome-type). If there is only one suborganism, then the key must be \"singleReference\".",
-          "patternProperties": {
-            "^[a-zA-Z0-9_-]+$": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "nucleotideSequences": {
-                  "groups": ["reference-genome"],
-                  "docsIncludePrefix": false,
-                  "type": "array",
-                  "description": "Array of [Nucleotide sequence (type)](#nucleotidesequence-type)",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "groups": ["nucleotide-sequence"],
-                        "docsIncludePrefix": false,
-                        "type": "string",
-                        "description": "Name of the sequence"
-                      },
-                      "sequence": {
-                        "groups": ["nucleotide-sequence"],
-                        "docsIncludePrefix": false,
-                        "type": "string"
-                      },
-                      "insdcAccessionFull": {
-                        "groups": ["nucleotide-sequence"],
-                        "docsIncludePrefix": false,
-                        "type": "string",
-                        "description": "INSDC accession of the sequence"
-                      }
+          "type": "array",
+          "description": "Segment-first reference genome structure. Each segment must have a name and a list of reference genomes. Each reference contains a nucleotide sequence and optionally genes.",
+          "items": {
+            "type": "object",
+            "description": "Segment details, including name and references",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "groups": ["referenceGenomes"],
+                "docsIncludePrefix": false,
+                "type": "string",
+                "description": "Name of the segment (e.g., 'S', 'M', 'L', or 'main' for single-segmented organisms)"
+              },
+              "references": {
+                "type": "array",
+                "description": "Array of reference genomes for this segment",
+                "items": {
+                  "type": "object",
+                  "description": "Reference genome details",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "groups": ["nucleotide-sequence"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Name of the reference genome"
                     },
-                    "required": ["name", "sequence"]
-                  }
-                },
-                "genes": {
-                  "groups": ["reference-genome"],
-                  "docsIncludePrefix": false,
-                  "type": "array",
-                  "description": "Array of [Gene (type)](#gene-type)",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "groups": ["gene"],
-                        "docsIncludePrefix": false,
-                        "type": "string",
-                        "description": "Name of the sequence."
-                      },
-                      "sequence": {
-                        "groups": ["gene"],
-                        "docsIncludePrefix": false,
-                        "type": "string"
-                      }
+                    "sequence": {
+                      "groups": ["nucleotide-sequence"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "The nucleotide sequence for this segment/reference combination"
                     },
-                    "required": ["name", "sequence"]
-                  }
+                    "insdcAccessionFull": {
+                      "groups": ["nucleotide-sequence"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "INSDC accession of the sequence"
+                    },
+                    "genes": {
+                      "groups": ["gene"],
+                      "docsIncludePrefix": false,
+                      "type": "array",
+                      "description": "Genes for this segment/reference combination",
+                      "items": {
+                        "type": "object",
+                        "description": "Gene details, including name and references",
+                        "additionalProperties": false,
+                        "properties": {
+                          "name": {
+                            "groups": ["gene"],
+                            "docsIncludePrefix": false,
+                            "type": "string",
+                            "description": "The name of the gene"
+                          },
+                          "sequence": {
+                            "groups": ["gene"],
+                            "docsIncludePrefix": false,
+                            "type": "string",
+                            "description": "The amino acid or nucleotide sequence for this gene"
+                          }
+                        },
+                        "required": ["name", "sequence"]
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["name", "sequence"]
                 }
-              }
+              },
+              "additionalProperties": false
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "required": ["schema"]
@@ -1583,11 +1603,11 @@
     "images": {
       "groups": ["general"],
       "type": "object",
-      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `siloImporter`, `website` and `backend.`",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend.`",
       "properties": {
         "lapis": { "$ref": "#/definitions/imageSpec" },
         "lapisSilo": { "$ref": "#/definitions/imageSpec" },
-        "siloImporter": { "$ref": "#/definitions/imageSpec" },
+        "loculusSilo": { "$ref": "#/definitions/imageSpec" },
         "website": { "$ref": "#/definitions/imageSpec" },
         "backend": { "$ref": "#/definitions/imageSpec" }
       },

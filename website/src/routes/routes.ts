@@ -11,8 +11,6 @@ export type ContinueSubmissionIntent = {
 };
 
 export const approxMaxAcceptableUrlLength = 1900;
-export const SEARCH = 'SEARCH';
-export const MY_SEQUENCES = 'MY_SEQUENCES';
 
 export const routes = {
     apiDocumentationPage: () => '/api-documentation',
@@ -60,7 +58,6 @@ export const routes = {
     editGroupPage: (groupId: number) => `/group/${groupId}/edit`,
     userSequenceReviewPage: (organism: string, groupId: number) =>
         SubmissionRouteUtils.toUrl({ name: 'review', organism, groupId }),
-    versionPage: (accession: string) => `/seq/${accession}/versions`,
     seqSetsPage: (username?: string) => {
         const seqSetPagePath = `/seqsets`;
         return username === undefined ? seqSetPagePath : seqSetPagePath + `?user=${username}`;

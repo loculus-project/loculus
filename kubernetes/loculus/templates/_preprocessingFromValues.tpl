@@ -16,9 +16,6 @@
     {{- if .segment }}
     segment: {{ .segment }}
     {{- end }}
-    {{- if .useFirstSegment }}
-    useFirstSegment: {{ .useFirstSegment }}
-    {{- end }}
     {{- if .type }}
     type: {{ .type }}
     {{- end }}
@@ -44,9 +41,6 @@
     {{- if .segment }}
     segment: {{ .segment }}
     {{- end }}
-    {{- if .useFirstSegment }}
-    useFirstSegment: {{ .useFirstSegment }}
-    {{- end }}
     {{- if .type }}
     type: {{ .type }}
     {{- end }}
@@ -64,22 +58,20 @@
 {{- $metadata := .metadata }}
 {{- $referenceGenomes := .referenceGenomes}}
 
-{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" $referenceGenomes | fromYaml).segments }}
+{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" $referenceGenomes | fromYaml).segments }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 
-{{- $hasMultipleSuborganisms := gt (len $referenceGenomes) 1 }}
 {{- range $metadata }}
     {{- $currentItem := . }}
     {{- if and $isSegmented .perSegment }}
         {{- range $segment := $rawUniqueSegments }}
             {{- with $currentItem }}
-            {{- $args := deepCopy . | merge (dict "segment" $segment "key" (printf "%s_%s" .name $segment) "useFirstSegment" false) }}
+            {{- $args := deepCopy . | merge (dict "segment" $segment "key" (printf "%s_%s" .name $segment)) }}
             {{- include "loculus.sharedPreproSpecs" $args }}
             {{- end }}
         {{- end }}
     {{- else }}
-        {{- $useFirstSegment := and .perSegment $hasMultipleSuborganisms }}
-        {{- $args := deepCopy . | merge (dict "segment" "" "key" .name "useFirstSegment" $useFirstSegment) }}
+        {{- $args := deepCopy . | merge (dict "segment" "" "key" .name) }}
         {{- include "loculus.sharedPreproSpecs" $args }}
     {{- end }}
 {{- end }}

@@ -13,9 +13,9 @@ export const FileUploadComponent = <F extends ProcessedFile>({
     ariaLabel,
     fileKind,
     small = false,
-    initialValue = undefined,
+    initialValue,
     showUndo = false,
-    onDownload = undefined,
+    onDownload,
     downloadDisabled = false,
 }: {
     setFile: (file: F | undefined) => Promise<void> | void;
