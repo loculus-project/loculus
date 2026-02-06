@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: loculus-backend-config
+  name: loculus-backend-config-base
 data:
-  backend_config.json: |
+  backend_config_base.json: |
     {
       "accessionPrefix": "LOC_",
       "backendUrl": "https://backend-localhost:3000",
@@ -19,6 +19,20 @@ data:
         "outputFileUrlType": "backend"
       },
       "name": "Loculus",
+      "organisms": {},
+      "pipelineVersionUpgradeCheckIntervalSeconds": 10,
+      "websiteUrl": "https://localhost:3000",
+      "zstdCompressionLevel": 10
+    }
+---
+# Source: loculus/templates/loculus-backend-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-backend-config-cchf
+data:
+  backend_config_organism_cchf.json: |
+    {
       "organisms": {
         "cchf": {
           "referenceGenome": {
@@ -730,7 +744,766 @@ data:
               "maxSequencesPerEntry": 3
             }
           }
-        },
+        }
+      }
+    }
+---
+# Source: loculus/templates/loculus-backend-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-backend-config-cchf-multi-ref
+data:
+  backend_config_organism_cchf-multi-ref.json: |
+    {
+      "organisms": {
+        "cchf-multi-ref": {
+          "referenceGenome": {
+            "genes": [
+              {
+                "name": "RdRp",
+                "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
+              },
+              {
+                "name": "GPC-MH396653",
+                "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/MH396653/GPC.fasta]]"
+              },
+              {
+                "name": "GPC-OR047158",
+                "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/OR047158/GPC.fasta]]"
+              },
+              {
+                "name": "NP-1and6",
+                "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/NP.fasta]]"
+              },
+              {
+                "name": "NP-2to5",
+                "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/OL774851/NP.fasta]]"
+              }
+            ],
+            "nucleotideSequences": [
+              {
+                "name": "L",
+                "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
+              },
+              {
+                "name": "M-MH396653",
+                "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/MH396653/reference.fasta]]"
+              },
+              {
+                "name": "M-OR047158",
+                "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/OR047158/reference.fasta]]"
+              },
+              {
+                "name": "S-1and6",
+                "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/reference.fasta]]"
+              },
+              {
+                "name": "S-2to5",
+                "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/OL774851/reference.fasta]]"
+              }
+            ]
+          },
+          "schema": {
+            "earliestReleaseDate": {
+              "enabled": true,
+              "externalFields": [
+                "ncbiReleaseDate"
+              ]
+            },
+            "externalMetadata": [
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "bioprojectAccession",
+                "type": "string"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "biosampleAccession",
+                "type": "string"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "gcaAccession",
+                "type": "string"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "insdcAccessionBase_L",
+                "type": "string"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "insdcAccessionBase_M",
+                "type": "string"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "insdcAccessionBase_S",
+                "type": "string"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "insdcAccessionFull_L",
+                "type": "string"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "insdcAccessionFull_M",
+                "type": "string"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "insdcAccessionFull_S",
+                "type": "string"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "insdcRawReadsAccession",
+                "type": "string"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "insdcVersion_L",
+                "type": "int"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "insdcVersion_M",
+                "type": "int"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "insdcVersion_S",
+                "type": "int"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "ncbiReleaseDate",
+                "type": "date"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "ncbiSourceDb",
+                "type": "string"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "ncbiSubmitterCountry",
+                "type": "string"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "ncbiUpdateDate_L",
+                "type": "date"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "ncbiUpdateDate_M",
+                "type": "date"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "ncbiUpdateDate_S",
+                "type": "date"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "ncbiVirusName",
+                "type": "string"
+              },
+              {
+                "externalMetadataUpdater": "ena",
+                "name": "ncbiVirusTaxId",
+                "type": "int"
+              }
+            ],
+            "files": [
+              {
+                "name": "annotations"
+              }
+            ],
+            "metadata": [
+              {
+                "name": "ampliconPcrPrimerScheme",
+                "type": "string"
+              },
+              {
+                "name": "ampliconSize",
+                "type": "string"
+              },
+              {
+                "name": "anatomicalMaterial",
+                "type": "string"
+              },
+              {
+                "name": "anatomicalPart",
+                "type": "string"
+              },
+              {
+                "name": "authorAffiliations",
+                "type": "string"
+              },
+              {
+                "name": "authors",
+                "type": "authors"
+              },
+              {
+                "name": "bioprojectAccession",
+                "type": "string"
+              },
+              {
+                "name": "biosampleAccession",
+                "type": "string"
+              },
+              {
+                "name": "bodyProduct",
+                "type": "string"
+              },
+              {
+                "name": "breadthOfCoverage",
+                "type": "int"
+              },
+              {
+                "name": "cellLine",
+                "type": "string"
+              },
+              {
+                "name": "collectionDevice",
+                "type": "string"
+              },
+              {
+                "name": "collectionMethod",
+                "type": "string"
+              },
+              {
+                "name": "completeness_L",
+                "type": "float"
+              },
+              {
+                "name": "completeness_M",
+                "type": "float"
+              },
+              {
+                "name": "completeness_S",
+                "type": "float"
+              },
+              {
+                "name": "consensusSequenceSoftwareName",
+                "type": "string"
+              },
+              {
+                "name": "consensusSequenceSoftwareVersion",
+                "type": "string"
+              },
+              {
+                "name": "cultureId",
+                "type": "string"
+              },
+              {
+                "name": "dehostingMethod",
+                "type": "string"
+              },
+              {
+                "name": "depthOfCoverage",
+                "type": "int"
+              },
+              {
+                "name": "diagnosticMeasurementMethod",
+                "type": "string"
+              },
+              {
+                "name": "diagnosticMeasurementUnit",
+                "type": "string"
+              },
+              {
+                "name": "diagnosticMeasurementValue",
+                "type": "string"
+              },
+              {
+                "name": "diagnosticTargetGeneName",
+                "type": "string"
+              },
+              {
+                "name": "diagnosticTargetPresence",
+                "type": "string"
+              },
+              {
+                "name": "displayName",
+                "type": "string"
+              },
+              {
+                "name": "earliestReleaseDate",
+                "type": "date"
+              },
+              {
+                "name": "environmentalMaterial",
+                "type": "string"
+              },
+              {
+                "name": "environmentalSite",
+                "type": "string"
+              },
+              {
+                "name": "experimentalSpecimenRoleType",
+                "type": "string"
+              },
+              {
+                "name": "exposureDetails",
+                "type": "string"
+              },
+              {
+                "name": "exposureEvent",
+                "type": "string"
+              },
+              {
+                "name": "exposureSetting",
+                "type": "string"
+              },
+              {
+                "name": "foodProduct",
+                "type": "string"
+              },
+              {
+                "name": "foodProductProperties",
+                "type": "string"
+              },
+              {
+                "name": "frameShifts_L",
+                "type": "string"
+              },
+              {
+                "name": "frameShifts_M",
+                "type": "string"
+              },
+              {
+                "name": "frameShifts_S",
+                "type": "string"
+              },
+              {
+                "name": "gcaAccession",
+                "type": "string"
+              },
+              {
+                "name": "geoLocAdmin1",
+                "type": "string"
+              },
+              {
+                "name": "geoLocAdmin2",
+                "type": "string"
+              },
+              {
+                "name": "geoLocCity",
+                "type": "string"
+              },
+              {
+                "name": "geoLocCountry",
+                "type": "string"
+              },
+              {
+                "name": "geoLocLatitude",
+                "type": "float"
+              },
+              {
+                "name": "geoLocLongitude",
+                "type": "float"
+              },
+              {
+                "name": "geoLocSite",
+                "type": "string"
+              },
+              {
+                "name": "hostAge",
+                "type": "int"
+              },
+              {
+                "name": "hostAgeBin",
+                "type": "string"
+              },
+              {
+                "name": "hostDisease",
+                "type": "string"
+              },
+              {
+                "name": "hostGender",
+                "type": "string"
+              },
+              {
+                "name": "hostHealthOutcome",
+                "type": "string"
+              },
+              {
+                "name": "hostHealthState",
+                "type": "string"
+              },
+              {
+                "name": "hostNameCommon",
+                "type": "string"
+              },
+              {
+                "name": "hostNameScientific",
+                "type": "string"
+              },
+              {
+                "name": "hostOriginCountry",
+                "type": "string"
+              },
+              {
+                "name": "hostRole",
+                "type": "string"
+              },
+              {
+                "name": "hostTaxonId",
+                "type": "int"
+              },
+              {
+                "name": "hostVaccinationStatus",
+                "type": "string"
+              },
+              {
+                "name": "insdcAccessionBase_L",
+                "type": "string"
+              },
+              {
+                "name": "insdcAccessionBase_M",
+                "type": "string"
+              },
+              {
+                "name": "insdcAccessionBase_S",
+                "type": "string"
+              },
+              {
+                "name": "insdcAccessionFull_L",
+                "type": "string"
+              },
+              {
+                "name": "insdcAccessionFull_M",
+                "type": "string"
+              },
+              {
+                "name": "insdcAccessionFull_S",
+                "type": "string"
+              },
+              {
+                "name": "insdcRawReadsAccession",
+                "type": "string"
+              },
+              {
+                "name": "insdcVersion_L",
+                "type": "int"
+              },
+              {
+                "name": "insdcVersion_M",
+                "type": "int"
+              },
+              {
+                "name": "insdcVersion_S",
+                "type": "int"
+              },
+              {
+                "name": "isLabHost",
+                "type": "boolean"
+              },
+              {
+                "name": "length_L",
+                "type": "int"
+              },
+              {
+                "name": "length_M",
+                "type": "int"
+              },
+              {
+                "name": "length_S",
+                "type": "int"
+              },
+              {
+                "name": "ncbiReleaseDate",
+                "type": "date"
+              },
+              {
+                "name": "ncbiSourceDb",
+                "type": "string"
+              },
+              {
+                "name": "ncbiSubmitterCountry",
+                "type": "string"
+              },
+              {
+                "name": "ncbiUpdateDate_L",
+                "type": "date"
+              },
+              {
+                "name": "ncbiUpdateDate_M",
+                "type": "date"
+              },
+              {
+                "name": "ncbiUpdateDate_S",
+                "type": "date"
+              },
+              {
+                "name": "ncbiVirusName",
+                "type": "string"
+              },
+              {
+                "name": "ncbiVirusTaxId",
+                "type": "int"
+              },
+              {
+                "name": "passageMethod",
+                "type": "string"
+              },
+              {
+                "name": "passageNumber",
+                "type": "int"
+              },
+              {
+                "name": "presamplingActivity",
+                "type": "string"
+              },
+              {
+                "name": "previousInfectionDisease",
+                "type": "string"
+              },
+              {
+                "name": "previousInfectionOrganism",
+                "type": "string"
+              },
+              {
+                "name": "purposeOfSampling",
+                "type": "string"
+              },
+              {
+                "name": "purposeOfSequencing",
+                "type": "string"
+              },
+              {
+                "name": "qualityControlDetails",
+                "type": "string"
+              },
+              {
+                "name": "qualityControlDetermination",
+                "type": "string"
+              },
+              {
+                "name": "qualityControlIssues",
+                "type": "string"
+              },
+              {
+                "name": "qualityControlMethodName",
+                "type": "string"
+              },
+              {
+                "name": "qualityControlMethodVersion",
+                "type": "string"
+              },
+              {
+                "name": "rawSequenceDataProcessingMethod",
+                "type": "string"
+              },
+              {
+                "name": "reference_L",
+                "type": "string"
+              },
+              {
+                "name": "reference_M",
+                "type": "string"
+              },
+              {
+                "name": "reference_S",
+                "type": "string"
+              },
+              {
+                "name": "referenceGenomeAccession",
+                "type": "string"
+              },
+              {
+                "name": "sampleCollectionDate",
+                "type": "string"
+              },
+              {
+                "name": "sampleCollectionDateRangeLower",
+                "type": "date"
+              },
+              {
+                "name": "sampleCollectionDateRangeUpper",
+                "type": "date"
+              },
+              {
+                "name": "sampleReceivedDate",
+                "type": "date"
+              },
+              {
+                "name": "sampleType",
+                "type": "string"
+              },
+              {
+                "name": "sequencedByContactEmail",
+                "type": "string"
+              },
+              {
+                "name": "sequencedByContactName",
+                "type": "string"
+              },
+              {
+                "name": "sequencedByOrganization",
+                "type": "string"
+              },
+              {
+                "name": "sequencingAssayType",
+                "type": "string"
+              },
+              {
+                "name": "sequencingDate",
+                "type": "date"
+              },
+              {
+                "name": "sequencingInstrument",
+                "type": "string"
+              },
+              {
+                "name": "sequencingProtocol",
+                "type": "string"
+              },
+              {
+                "name": "signsAndSymptoms",
+                "type": "string"
+              },
+              {
+                "name": "specimenCollectorSampleId",
+                "type": "string"
+              },
+              {
+                "name": "specimenProcessing",
+                "type": "string"
+              },
+              {
+                "name": "specimenProcessingDetails",
+                "type": "string"
+              },
+              {
+                "name": "stopCodons_L",
+                "type": "string"
+              },
+              {
+                "name": "stopCodons_M",
+                "type": "string"
+              },
+              {
+                "name": "stopCodons_S",
+                "type": "string"
+              },
+              {
+                "name": "totalAmbiguousNucs_L",
+                "type": "int"
+              },
+              {
+                "name": "totalAmbiguousNucs_M",
+                "type": "int"
+              },
+              {
+                "name": "totalAmbiguousNucs_S",
+                "type": "int"
+              },
+              {
+                "name": "totalDeletedNucs_L",
+                "type": "int"
+              },
+              {
+                "name": "totalDeletedNucs_M",
+                "type": "int"
+              },
+              {
+                "name": "totalDeletedNucs_S",
+                "type": "int"
+              },
+              {
+                "name": "totalFrameShifts_L",
+                "type": "int"
+              },
+              {
+                "name": "totalFrameShifts_M",
+                "type": "int"
+              },
+              {
+                "name": "totalFrameShifts_S",
+                "type": "int"
+              },
+              {
+                "name": "totalInsertedNucs_L",
+                "type": "int"
+              },
+              {
+                "name": "totalInsertedNucs_M",
+                "type": "int"
+              },
+              {
+                "name": "totalInsertedNucs_S",
+                "type": "int"
+              },
+              {
+                "name": "totalSnps_L",
+                "type": "int"
+              },
+              {
+                "name": "totalSnps_M",
+                "type": "int"
+              },
+              {
+                "name": "totalSnps_S",
+                "type": "int"
+              },
+              {
+                "name": "totalStopCodons_L",
+                "type": "int"
+              },
+              {
+                "name": "totalStopCodons_M",
+                "type": "int"
+              },
+              {
+                "name": "totalStopCodons_S",
+                "type": "int"
+              },
+              {
+                "name": "totalUnknownNucs_L",
+                "type": "int"
+              },
+              {
+                "name": "totalUnknownNucs_M",
+                "type": "int"
+              },
+              {
+                "name": "totalUnknownNucs_S",
+                "type": "int"
+              },
+              {
+                "name": "travelHistory",
+                "type": "string"
+              },
+              {
+                "name": "versionComment",
+                "type": "string"
+              }
+            ],
+            "organismName": "CCHF (Multi-Ref)",
+            "submissionDataTypes": {
+              "consensusSequences": true,
+              "maxSequencesPerEntry": 3
+            }
+          }
+        }
+      }
+    }
+---
+# Source: loculus/templates/loculus-backend-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-backend-config-dummy-organism
+data:
+  backend_config_organism_dummy-organism.json: |
+    {
+      "organisms": {
         "dummy-organism": {
           "referenceGenome": {
             "genes": [
@@ -840,7 +1613,19 @@ data:
               "maxSequencesPerEntry": 1
             }
           }
-        },
+        }
+      }
+    }
+---
+# Source: loculus/templates/loculus-backend-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-backend-config-dummy-organism-with-files
+data:
+  backend_config_organism_dummy-organism-with-files.json: |
+    {
+      "organisms": {
         "dummy-organism-with-files": {
           "referenceGenome": {
             "genes": [],
@@ -908,7 +1693,19 @@ data:
               }
             }
           }
-        },
+        }
+      }
+    }
+---
+# Source: loculus/templates/loculus-backend-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-backend-config-ebola-sudan
+data:
+  backend_config_organism_ebola-sudan.json: |
+    {
+      "organisms": {
         "ebola-sudan": {
           "referenceGenome": {
             "genes": [
@@ -1471,195 +2268,207 @@ data:
               "maxSequencesPerEntry": 1
             }
           }
-        },
+        }
+      }
+    }
+---
+# Source: loculus/templates/loculus-backend-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-backend-config-enteroviruses
+data:
+  backend_config_organism_enteroviruses.json: |
+    {
+      "organisms": {
         "enteroviruses": {
           "referenceGenome": {
             "genes": [
               {
-                "name": "CV-A10-VP4",
-                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP4-cva10.fasta]]"
-              },
-              {
-                "name": "CV-A10-VP2",
-                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP2-cva10.fasta]]"
-              },
-              {
-                "name": "CV-A10-VP3",
-                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP3-cva10.fasta]]"
-              },
-              {
-                "name": "CV-A10-VP1",
-                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP1-cva10.fasta]]"
-              },
-              {
-                "name": "CV-A10-2A",
-                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2A-cva10.fasta]]"
-              },
-              {
-                "name": "CV-A10-2B",
-                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2B-cva10.fasta]]"
-              },
-              {
-                "name": "CV-A10-2C",
-                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2C-cva10.fasta]]"
-              },
-              {
-                "name": "CV-A10-3A",
-                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3A-cva10.fasta]]"
-              },
-              {
-                "name": "CV-A10-3B",
-                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3B-cva10.fasta]]"
-              },
-              {
-                "name": "CV-A10-3C",
-                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3C-cva10.fasta]]"
-              },
-              {
-                "name": "CV-A10-3D",
-                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3D-cva10.fasta]]"
-              },
-              {
-                "name": "CV-A16-VP4",
+                "name": "VP4-CV-A16",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP4-cva16.fasta]]"
               },
               {
-                "name": "CV-A16-VP2",
+                "name": "VP2-CV-A16",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP2-cva16.fasta]]"
               },
               {
-                "name": "CV-A16-VP3",
+                "name": "VP3-CV-A16",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP3-cva16.fasta]]"
               },
               {
-                "name": "CV-A16-VP1",
+                "name": "VP1-CV-A16",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP1-cva16.fasta]]"
               },
               {
-                "name": "CV-A16-2A",
+                "name": "2A-CV-A16",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2A-cva16.fasta]]"
               },
               {
-                "name": "CV-A16-2B",
+                "name": "2B-CV-A16",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2B-cva16.fasta]]"
               },
               {
-                "name": "CV-A16-2C",
+                "name": "2C-CV-A16",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2C-cva16.fasta]]"
               },
               {
-                "name": "CV-A16-3A",
+                "name": "3A-CV-A16",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3A-cva16.fasta]]"
               },
               {
-                "name": "CV-A16-3B",
+                "name": "3B-CV-A16",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3B-cva16.fasta]]"
               },
               {
-                "name": "CV-A16-3C",
+                "name": "3C-CV-A16",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3C-cva16.fasta]]"
               },
               {
-                "name": "CV-A16-3D",
+                "name": "3D-CV-A16",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3D-cva16.fasta]]"
               },
               {
-                "name": "EV-A71-VP4",
+                "name": "VP4-CV-A10",
+                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP4-cva10.fasta]]"
+              },
+              {
+                "name": "VP2-CV-A10",
+                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP2-cva10.fasta]]"
+              },
+              {
+                "name": "VP3-CV-A10",
+                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP3-cva10.fasta]]"
+              },
+              {
+                "name": "VP1-CV-A10",
+                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP1-cva10.fasta]]"
+              },
+              {
+                "name": "2A-CV-A10",
+                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2A-cva10.fasta]]"
+              },
+              {
+                "name": "2B-CV-A10",
+                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2B-cva10.fasta]]"
+              },
+              {
+                "name": "2C-CV-A10",
+                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2C-cva10.fasta]]"
+              },
+              {
+                "name": "3A-CV-A10",
+                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3A-cva10.fasta]]"
+              },
+              {
+                "name": "3B-CV-A10",
+                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3B-cva10.fasta]]"
+              },
+              {
+                "name": "3C-CV-A10",
+                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3C-cva10.fasta]]"
+              },
+              {
+                "name": "3D-CV-A10",
+                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3D-cva10.fasta]]"
+              },
+              {
+                "name": "VP4-EV-A71",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP4-eva71.fasta]]"
               },
               {
-                "name": "EV-A71-VP2",
+                "name": "VP2-EV-A71",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP2-eva71.fasta]]"
               },
               {
-                "name": "EV-A71-VP3",
+                "name": "VP3-EV-A71",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP3-eva71.fasta]]"
               },
               {
-                "name": "EV-A71-VP1",
+                "name": "VP1-EV-A71",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP1-eva71.fasta]]"
               },
               {
-                "name": "EV-A71-2A",
+                "name": "2A-EV-A71",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2A-eva71.fasta]]"
               },
               {
-                "name": "EV-A71-2B",
+                "name": "2B-EV-A71",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2B-eva71.fasta]]"
               },
               {
-                "name": "EV-A71-2C",
+                "name": "2C-EV-A71",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2C-eva71.fasta]]"
               },
               {
-                "name": "EV-A71-3A",
+                "name": "3A-EV-A71",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3A-eva71.fasta]]"
               },
               {
-                "name": "EV-A71-3B",
+                "name": "3B-EV-A71",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3B-eva71.fasta]]"
               },
               {
-                "name": "EV-A71-3C",
+                "name": "3C-EV-A71",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3C-eva71.fasta]]"
               },
               {
-                "name": "EV-A71-3D",
+                "name": "3D-EV-A71",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3D-eva71.fasta]]"
               },
               {
-                "name": "EV-D68-VP4",
+                "name": "VP4-EV-D68",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP4-evd68.fasta]]"
               },
               {
-                "name": "EV-D68-VP2",
+                "name": "VP2-EV-D68",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP2-evd68.fasta]]"
               },
               {
-                "name": "EV-D68-VP3",
+                "name": "VP3-EV-D68",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP3-evd68.fasta]]"
               },
               {
-                "name": "EV-D68-VP1",
+                "name": "VP1-EV-D68",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP1-evd68.fasta]]"
               },
               {
-                "name": "EV-D68-2A",
+                "name": "2A-EV-D68",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2A-evd68.fasta]]"
               },
               {
-                "name": "EV-D68-2B",
+                "name": "2B-EV-D68",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2B-evd68.fasta]]"
               },
               {
-                "name": "EV-D68-2C",
+                "name": "2C-EV-D68",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2C-evd68.fasta]]"
               },
               {
-                "name": "EV-D68-3A",
+                "name": "3A-EV-D68",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3A-evd68.fasta]]"
               },
               {
-                "name": "EV-D68-3B",
+                "name": "3B-EV-D68",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3B-evd68.fasta]]"
               },
               {
-                "name": "EV-D68-3C",
+                "name": "3C-EV-D68",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3C-evd68.fasta]]"
               },
               {
-                "name": "EV-D68-3D",
+                "name": "3D-EV-D68",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3D-evd68.fasta]]"
               }
             ],
             "nucleotideSequences": [
               {
-                "name": "CV-A10",
-                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/reference-cva10.fasta]]"
-              },
-              {
                 "name": "CV-A16",
                 "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/reference-cva16.fasta]]"
+              },
+              {
+                "name": "CV-A10",
+                "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/reference-cva10.fasta]]"
               },
               {
                 "name": "EV-A71",
@@ -2206,7 +3015,19 @@ data:
               "maxSequencesPerEntry": 1
             }
           }
-        },
+        }
+      }
+    }
+---
+# Source: loculus/templates/loculus-backend-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-backend-config-not-aligned-organism
+data:
+  backend_config_organism_not-aligned-organism.json: |
+    {
+      "organisms": {
         "not-aligned-organism": {
           "referenceGenome": {
             "genes": [],
@@ -2259,7 +3080,19 @@ data:
               "maxSequencesPerEntry": 1
             }
           }
-        },
+        }
+      }
+    }
+---
+# Source: loculus/templates/loculus-backend-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-backend-config-west-nile
+data:
+  backend_config_organism_west-nile.json: |
+    {
+      "organisms": {
         "west-nile": {
           "referenceGenome": {
             "genes": [
@@ -2835,9 +3668,6 @@ data:
             }
           }
         }
-      },
-      "pipelineVersionUpgradeCheckIntervalSeconds": 10,
-      "websiteUrl": "https://localhost:3000",
-      "zstdCompressionLevel": 10
+      }
     }
 ---

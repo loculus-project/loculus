@@ -208,7 +208,7 @@ data:
         - type: string
           generateIndex: true
           generateIndex: true
-          generateLineageIndex: true
+          generateLineageIndex: lineage_definitions
           name: lineage
         - type: date
           name: ncbiReleaseDate
@@ -347,94 +347,376 @@ data:
         - name: generalizedAdvancedQuery
 
   preprocessing_config.yaml: |
+    inputDirectory: /preprocessing/input
+    outputDirectory: /preprocessing/output
     ndjsonInputFilename: data.ndjson.zst
     referenceGenomeFilename: reference_genomes.json
-    lineageDefinitionsFilename: lineage_definitions.yaml
+    lineageDefinitionFilenames:
+      - lineage_definitions.yaml
 
   reference_genomes.json: |
-    {
-      "genes": [
-        {
-          "name": "RdRp",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
-        },
-        {
-          "name": "GPC",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"
-        },
-        {
-          "name": "NP",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
-        }
-      ],
-      "nucleotideSequences": [
-        {
-          "name": "L",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
-        },
-        {
-          "name": "M",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_M.fasta]]"
-        },
-        {
-          "name": "S",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_S.fasta]]"
-        }
-      ]
-    }
+    {"genes":[{"name":"RdRp","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"},{"name":"GPC","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"},{"name":"NP","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"}],"nucleotideSequences":[{"name":"L","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"},{"name":"M","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_M.fasta]]"},{"name":"S","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_S.fasta]]"}]}
+---
+# Source: loculus/templates/lapis-silo-database-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lapis-silo-database-config-cchf-multi-ref
+data:
+  database_config.yaml: |
+    
+    
+    schema:
+      instanceName: CCHF (Multi-Ref)
+      opennessLevel: OPEN
+      metadata:
+        - type: string
+          name: accessionVersion
+        - type: string
+          name: accession
+        - type: int
+          name: version
+        - type: string
+          name: submissionId
+        - type: boolean
+          name: isRevocation
+        - type: string
+          generateIndex: true
+          name: submitter
+        - type: string
+          generateIndex: true
+          name: groupName
+        - type: int
+          name: groupId
+        - type: int
+          name: submittedAtTimestamp
+        - type: string
+          generateIndex: true
+          name: submittedDate
+        - type: int
+          name: releasedAtTimestamp
+        - type: string
+          generateIndex: true
+          name: releasedDate
+        - type: string
+          generateIndex: true
+          name: dataUseTerms
+        - type: date
+          name: dataUseTermsRestrictedUntil
+        - type: string
+          name: dataUseTermsUrl
+        - type: string
+          name: versionStatus
+        - type: string
+          name: versionComment
+        - type: int
+          name: pipelineVersion
+        - type: string
+          name: ampliconPcrPrimerScheme
+        - type: string
+          name: ampliconSize
+        - type: string
+          name: anatomicalMaterial
+        - type: string
+          name: anatomicalPart
+        - type: string
+          name: authorAffiliations
+        - type: string
+          name: authors
+        - type: string
+          name: bioprojectAccession
+        - type: string
+          name: biosampleAccession
+        - type: string
+          name: bodyProduct
+        - type: int
+          name: breadthOfCoverage
+        - type: string
+          generateIndex: true
+          name: cellLine
+        - type: string
+          name: collectionDevice
+        - type: string
+          name: collectionMethod
+        - type: float
+          name: "completeness_L"
+        - type: float
+          name: "completeness_M"
+        - type: float
+          name: "completeness_S"
+        - type: string
+          name: consensusSequenceSoftwareName
+        - type: string
+          name: consensusSequenceSoftwareVersion
+        - type: string
+          name: cultureId
+        - type: string
+          name: dehostingMethod
+        - type: int
+          name: depthOfCoverage
+        - type: string
+          name: diagnosticMeasurementMethod
+        - type: string
+          name: diagnosticMeasurementUnit
+        - type: string
+          name: diagnosticMeasurementValue
+        - type: string
+          name: diagnosticTargetGeneName
+        - type: string
+          name: diagnosticTargetPresence
+        - type: string
+          name: displayName
+        - type: date
+          name: earliestReleaseDate
+        - type: string
+          name: environmentalMaterial
+        - type: string
+          name: environmentalSite
+        - type: string
+          name: experimentalSpecimenRoleType
+        - type: string
+          name: exposureDetails
+        - type: string
+          name: exposureEvent
+        - type: string
+          name: exposureSetting
+        - type: string
+          name: foodProduct
+        - type: string
+          name: foodProductProperties
+        - type: string
+          name: "frameShifts_L"
+        - type: string
+          name: "frameShifts_M"
+        - type: string
+          name: "frameShifts_S"
+        - type: string
+          name: gcaAccession
+        - type: string
+          generateIndex: true
+          name: geoLocAdmin1
+        - type: string
+          generateIndex: true
+          name: geoLocAdmin2
+        - type: string
+          generateIndex: true
+          name: geoLocCity
+        - type: string
+          generateIndex: true
+          name: geoLocCountry
+        - type: float
+          name: geoLocLatitude
+        - type: float
+          name: geoLocLongitude
+        - type: string
+          name: geoLocSite
+        - type: int
+          name: hostAge
+        - type: string
+          name: hostAgeBin
+        - type: string
+          name: hostDisease
+        - type: string
+          name: hostGender
+        - type: string
+          name: hostHealthOutcome
+        - type: string
+          name: hostHealthState
+        - type: string
+          generateIndex: true
+          name: hostNameCommon
+        - type: string
+          generateIndex: true
+          name: hostNameScientific
+        - type: string
+          name: hostOriginCountry
+        - type: string
+          name: hostRole
+        - type: int
+          name: hostTaxonId
+        - type: string
+          name: hostVaccinationStatus
+        - type: string
+          name: "insdcAccessionBase_L"
+        - type: string
+          name: "insdcAccessionBase_M"
+        - type: string
+          name: "insdcAccessionBase_S"
+        - type: string
+          name: "insdcAccessionFull_L"
+        - type: string
+          name: "insdcAccessionFull_M"
+        - type: string
+          name: "insdcAccessionFull_S"
+        - type: string
+          name: insdcRawReadsAccession
+        - type: int
+          name: "insdcVersion_L"
+        - type: int
+          name: "insdcVersion_M"
+        - type: int
+          name: "insdcVersion_S"
+        - type: boolean
+          name: isLabHost
+        - type: int
+          name: "length_L"
+        - type: int
+          name: "length_M"
+        - type: int
+          name: "length_S"
+        - type: date
+          name: ncbiReleaseDate
+        - type: string
+          generateIndex: true
+          name: ncbiSourceDb
+        - type: string
+          generateIndex: true
+          name: ncbiSubmitterCountry
+        - type: date
+          name: "ncbiUpdateDate_L"
+        - type: date
+          name: "ncbiUpdateDate_M"
+        - type: date
+          name: "ncbiUpdateDate_S"
+        - type: string
+          generateIndex: true
+          name: ncbiVirusName
+        - type: int
+          name: ncbiVirusTaxId
+        - type: string
+          generateIndex: true
+          name: passageMethod
+        - type: int
+          name: passageNumber
+        - type: string
+          name: presamplingActivity
+        - type: string
+          name: previousInfectionDisease
+        - type: string
+          name: previousInfectionOrganism
+        - type: string
+          name: purposeOfSampling
+        - type: string
+          name: purposeOfSequencing
+        - type: string
+          name: qualityControlDetails
+        - type: string
+          name: qualityControlDetermination
+        - type: string
+          name: qualityControlIssues
+        - type: string
+          name: qualityControlMethodName
+        - type: string
+          name: qualityControlMethodVersion
+        - type: string
+          name: rawSequenceDataProcessingMethod
+        - type: string
+          generateIndex: true
+          name: "reference_L"
+        - type: string
+          generateIndex: true
+          name: "reference_M"
+        - type: string
+          generateIndex: true
+          name: "reference_S"
+        - type: string
+          name: referenceGenomeAccession
+        - type: string
+          name: sampleCollectionDate
+        - type: date
+          name: sampleCollectionDateRangeLower
+        - type: date
+          name: sampleCollectionDateRangeUpper
+        - type: date
+          name: sampleReceivedDate
+        - type: string
+          name: sampleType
+        - type: string
+          name: sequencedByContactEmail
+        - type: string
+          name: sequencedByContactName
+        - type: string
+          name: sequencedByOrganization
+        - type: string
+          name: sequencingAssayType
+        - type: date
+          name: sequencingDate
+        - type: string
+          name: sequencingInstrument
+        - type: string
+          name: sequencingProtocol
+        - type: string
+          name: signsAndSymptoms
+        - type: string
+          name: specimenCollectorSampleId
+        - type: string
+          name: specimenProcessing
+        - type: string
+          name: specimenProcessingDetails
+        - type: string
+          name: "stopCodons_L"
+        - type: string
+          name: "stopCodons_M"
+        - type: string
+          name: "stopCodons_S"
+        - type: int
+          name: "totalAmbiguousNucs_L"
+        - type: int
+          name: "totalAmbiguousNucs_M"
+        - type: int
+          name: "totalAmbiguousNucs_S"
+        - type: int
+          name: "totalDeletedNucs_L"
+        - type: int
+          name: "totalDeletedNucs_M"
+        - type: int
+          name: "totalDeletedNucs_S"
+        - type: int
+          name: "totalFrameShifts_L"
+        - type: int
+          name: "totalFrameShifts_M"
+        - type: int
+          name: "totalFrameShifts_S"
+        - type: int
+          name: "totalInsertedNucs_L"
+        - type: int
+          name: "totalInsertedNucs_M"
+        - type: int
+          name: "totalInsertedNucs_S"
+        - type: int
+          name: "totalSnps_L"
+        - type: int
+          name: "totalSnps_M"
+        - type: int
+          name: "totalSnps_S"
+        - type: int
+          name: "totalStopCodons_L"
+        - type: int
+          name: "totalStopCodons_M"
+        - type: int
+          name: "totalStopCodons_S"
+        - type: int
+          name: "totalUnknownNucs_L"
+        - type: int
+          name: "totalUnknownNucs_M"
+        - type: int
+          name: "totalUnknownNucs_S"
+        - type: string
+          name: travelHistory
+        - type: string
+          name: annotations
+      primaryKey: accessionVersion
+      features:
+        - name: generalizedAdvancedQuery
 
-  silo_import_wrapper.sh: |
-    
-    #!/bin/sh
-    set -eu
-    
-    log() {
-      echo "$(date '+%Y-%m-%dT%H:%M:%S%z') [silo-runner] $*"
-    }
-    
-    INPUT_DIR="/preprocessing/input"
-    RUN_FILE="$INPUT_DIR/run_silo"
-    DONE_FILE="$INPUT_DIR/silo_done"
-    SLEEP_SECONDS="${SILO_RUNNER_SLEEP_SECONDS:-1}"
-    
-    say_completion() {
-      run_id="$1"
-      status="$2"
-      message="$3"
-      {
-        printf 'run_id=%s\n' "$run_id"
-        printf 'status=%s\n' "$status"
-        if [ -n "$message" ]; then
-          printf 'message=%s\n' "$message"
-        fi
-      } >"$DONE_FILE"
-    }
-    
-    while true; do
-      if [ -f "$RUN_FILE" ]; then
-        run_id=$(grep '^run_id=' "$RUN_FILE" | head -n 1 | cut -d'=' -f2-)
-        if [ -z "$run_id" ]; then
-          log "Found run sentinel without run_id; sleeping"
-          sleep "$SLEEP_SECONDS"
-          continue
-        fi
-    
-        rm -f "$RUN_FILE"
-        log "Starting SILO preprocessing for run $run_id"
-    
-        if /app/silo preprocessing; then
-          log "SILO preprocessing completed for run $run_id"
-          say_completion "$run_id" "success" ""
-        else
-          exit_code=$?
-          log "SILO preprocessing failed for run $run_id (exit $exit_code)"
-          say_completion "$run_id" "error" "SILO exited with code $exit_code"
-          exit "$exit_code"
-        fi
-      else
-        sleep "$SLEEP_SECONDS"
-      fi
-    done
+  preprocessing_config.yaml: |
+    inputDirectory: /preprocessing/input
+    outputDirectory: /preprocessing/output
+    ndjsonInputFilename: data.ndjson.zst
+    referenceGenomeFilename: reference_genomes.json
+
+  reference_genomes.json: |
+    {"genes":[{"name":"RdRp","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"},{"name":"GPC-MH396653","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/MH396653/GPC.fasta]]"},{"name":"GPC-OR047158","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/OR047158/GPC.fasta]]"},{"name":"NP-1and6","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/NP.fasta]]"},{"name":"NP-2to5","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/OL774851/NP.fasta]]"}],"nucleotideSequences":[{"name":"L","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"},{"name":"M-MH396653","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/MH396653/reference.fasta]]"},{"name":"M-OR047158","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/OR047158/reference.fasta]]"},{"name":"S-1and6","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/reference.fasta]]"},{"name":"S-2to5","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/OL774851/reference.fasta]]"}]}
 ---
 # Source: loculus/templates/lapis-silo-database-config.yaml
 apiVersion: v1
@@ -506,7 +788,7 @@ data:
           name: lineage
         - type: string
           generateIndex: true
-          generateLineageIndex: true
+          generateLineageIndex: lineage_definitions
           name: pangoLineage
         - type: string
           generateIndex: true
@@ -516,122 +798,15 @@ data:
         - name: generalizedAdvancedQuery
 
   preprocessing_config.yaml: |
+    inputDirectory: /preprocessing/input
+    outputDirectory: /preprocessing/output
     ndjsonInputFilename: data.ndjson.zst
     referenceGenomeFilename: reference_genomes.json
-    lineageDefinitionsFilename: lineage_definitions.yaml
+    lineageDefinitionFilenames:
+      - lineage_definitions.yaml
 
   reference_genomes.json: |
-    {
-      "genes": [
-        {
-          "name": "E",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/E.fasta]]"
-        },
-        {
-          "name": "M",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/M.fasta]]"
-        },
-        {
-          "name": "N",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/N.fasta]]"
-        },
-        {
-          "name": "ORF1a",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1a.fasta]]"
-        },
-        {
-          "name": "ORF1b",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1b.fasta]]"
-        },
-        {
-          "name": "ORF3a",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF3a.fasta]]"
-        },
-        {
-          "name": "ORF6",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF6.fasta]]"
-        },
-        {
-          "name": "ORF7a",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7a.fasta]]"
-        },
-        {
-          "name": "ORF7b",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7b.fasta]]"
-        },
-        {
-          "name": "ORF8",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF8.fasta]]"
-        },
-        {
-          "name": "ORF9b",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF9b.fasta]]"
-        },
-        {
-          "name": "S",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
-        }
-      ],
-      "nucleotideSequences": [
-        {
-          "name": "main",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
-        }
-      ]
-    }
-
-  silo_import_wrapper.sh: |
-    
-    #!/bin/sh
-    set -eu
-    
-    log() {
-      echo "$(date '+%Y-%m-%dT%H:%M:%S%z') [silo-runner] $*"
-    }
-    
-    INPUT_DIR="/preprocessing/input"
-    RUN_FILE="$INPUT_DIR/run_silo"
-    DONE_FILE="$INPUT_DIR/silo_done"
-    SLEEP_SECONDS="${SILO_RUNNER_SLEEP_SECONDS:-1}"
-    
-    say_completion() {
-      run_id="$1"
-      status="$2"
-      message="$3"
-      {
-        printf 'run_id=%s\n' "$run_id"
-        printf 'status=%s\n' "$status"
-        if [ -n "$message" ]; then
-          printf 'message=%s\n' "$message"
-        fi
-      } >"$DONE_FILE"
-    }
-    
-    while true; do
-      if [ -f "$RUN_FILE" ]; then
-        run_id=$(grep '^run_id=' "$RUN_FILE" | head -n 1 | cut -d'=' -f2-)
-        if [ -z "$run_id" ]; then
-          log "Found run sentinel without run_id; sleeping"
-          sleep "$SLEEP_SECONDS"
-          continue
-        fi
-    
-        rm -f "$RUN_FILE"
-        log "Starting SILO preprocessing for run $run_id"
-    
-        if /app/silo preprocessing; then
-          log "SILO preprocessing completed for run $run_id"
-          say_completion "$run_id" "success" ""
-        else
-          exit_code=$?
-          log "SILO preprocessing failed for run $run_id (exit $exit_code)"
-          say_completion "$run_id" "error" "SILO exited with code $exit_code"
-          exit "$exit_code"
-        fi
-      else
-        sleep "$SLEEP_SECONDS"
-      fi
-    done
+    {"genes":[{"name":"E","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/E.fasta]]"},{"name":"M","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/M.fasta]]"},{"name":"N","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/N.fasta]]"},{"name":"ORF1a","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1a.fasta]]"},{"name":"ORF1b","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1b.fasta]]"},{"name":"ORF3a","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF3a.fasta]]"},{"name":"ORF6","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF6.fasta]]"},{"name":"ORF7a","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7a.fasta]]"},{"name":"ORF7b","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7b.fasta]]"},{"name":"ORF8","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF8.fasta]]"},{"name":"ORF9b","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF9b.fasta]]"},{"name":"S","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"}],"nucleotideSequences":[{"name":"main","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"}]}
 ---
 # Source: loculus/templates/lapis-silo-database-config.yaml
 apiVersion: v1
@@ -703,7 +878,7 @@ data:
           name: lineage
         - type: string
           generateIndex: true
-          generateLineageIndex: true
+          generateLineageIndex: lineage_definitions
           name: pangoLineage
         - type: string
           generateIndex: true
@@ -715,68 +890,15 @@ data:
         - name: generalizedAdvancedQuery
 
   preprocessing_config.yaml: |
+    inputDirectory: /preprocessing/input
+    outputDirectory: /preprocessing/output
     ndjsonInputFilename: data.ndjson.zst
     referenceGenomeFilename: reference_genomes.json
-    lineageDefinitionsFilename: lineage_definitions.yaml
+    lineageDefinitionFilenames:
+      - lineage_definitions.yaml
 
   reference_genomes.json: |
-    {
-      "genes": [],
-      "nucleotideSequences": []
-    }
-
-  silo_import_wrapper.sh: |
-    
-    #!/bin/sh
-    set -eu
-    
-    log() {
-      echo "$(date '+%Y-%m-%dT%H:%M:%S%z') [silo-runner] $*"
-    }
-    
-    INPUT_DIR="/preprocessing/input"
-    RUN_FILE="$INPUT_DIR/run_silo"
-    DONE_FILE="$INPUT_DIR/silo_done"
-    SLEEP_SECONDS="${SILO_RUNNER_SLEEP_SECONDS:-1}"
-    
-    say_completion() {
-      run_id="$1"
-      status="$2"
-      message="$3"
-      {
-        printf 'run_id=%s\n' "$run_id"
-        printf 'status=%s\n' "$status"
-        if [ -n "$message" ]; then
-          printf 'message=%s\n' "$message"
-        fi
-      } >"$DONE_FILE"
-    }
-    
-    while true; do
-      if [ -f "$RUN_FILE" ]; then
-        run_id=$(grep '^run_id=' "$RUN_FILE" | head -n 1 | cut -d'=' -f2-)
-        if [ -z "$run_id" ]; then
-          log "Found run sentinel without run_id; sleeping"
-          sleep "$SLEEP_SECONDS"
-          continue
-        fi
-    
-        rm -f "$RUN_FILE"
-        log "Starting SILO preprocessing for run $run_id"
-    
-        if /app/silo preprocessing; then
-          log "SILO preprocessing completed for run $run_id"
-          say_completion "$run_id" "success" ""
-        else
-          exit_code=$?
-          log "SILO preprocessing failed for run $run_id (exit $exit_code)"
-          say_completion "$run_id" "error" "SILO exited with code $exit_code"
-          exit "$exit_code"
-        fi
-      else
-        sleep "$SLEEP_SECONDS"
-      fi
-    done
+    {"genes":[],"nucleotideSequences":[]}
 ---
 # Source: loculus/templates/lapis-silo-database-config.yaml
 apiVersion: v1
@@ -1062,109 +1184,13 @@ data:
         - name: generalizedAdvancedQuery
 
   preprocessing_config.yaml: |
+    inputDirectory: /preprocessing/input
+    outputDirectory: /preprocessing/output
     ndjsonInputFilename: data.ndjson.zst
     referenceGenomeFilename: reference_genomes.json
 
   reference_genomes.json: |
-    {
-      "genes": [
-        {
-          "name": "NP",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
-        },
-        {
-          "name": "VP35",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP35.fasta]]"
-        },
-        {
-          "name": "VP40",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP40.fasta]]"
-        },
-        {
-          "name": "GP",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/GP.fasta]]"
-        },
-        {
-          "name": "ssGP",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/ssGP.fasta]]"
-        },
-        {
-          "name": "sGP",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/sGP.fasta]]"
-        },
-        {
-          "name": "VP30",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP30.fasta]]"
-        },
-        {
-          "name": "VP24",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP24.fasta]]"
-        },
-        {
-          "name": "L",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
-        }
-      ],
-      "nucleotideSequences": [
-        {
-          "name": "main",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
-        }
-      ]
-    }
-
-  silo_import_wrapper.sh: |
-    
-    #!/bin/sh
-    set -eu
-    
-    log() {
-      echo "$(date '+%Y-%m-%dT%H:%M:%S%z') [silo-runner] $*"
-    }
-    
-    INPUT_DIR="/preprocessing/input"
-    RUN_FILE="$INPUT_DIR/run_silo"
-    DONE_FILE="$INPUT_DIR/silo_done"
-    SLEEP_SECONDS="${SILO_RUNNER_SLEEP_SECONDS:-1}"
-    
-    say_completion() {
-      run_id="$1"
-      status="$2"
-      message="$3"
-      {
-        printf 'run_id=%s\n' "$run_id"
-        printf 'status=%s\n' "$status"
-        if [ -n "$message" ]; then
-          printf 'message=%s\n' "$message"
-        fi
-      } >"$DONE_FILE"
-    }
-    
-    while true; do
-      if [ -f "$RUN_FILE" ]; then
-        run_id=$(grep '^run_id=' "$RUN_FILE" | head -n 1 | cut -d'=' -f2-)
-        if [ -z "$run_id" ]; then
-          log "Found run sentinel without run_id; sleeping"
-          sleep "$SLEEP_SECONDS"
-          continue
-        fi
-    
-        rm -f "$RUN_FILE"
-        log "Starting SILO preprocessing for run $run_id"
-    
-        if /app/silo preprocessing; then
-          log "SILO preprocessing completed for run $run_id"
-          say_completion "$run_id" "success" ""
-        else
-          exit_code=$?
-          log "SILO preprocessing failed for run $run_id (exit $exit_code)"
-          say_completion "$run_id" "error" "SILO exited with code $exit_code"
-          exit "$exit_code"
-        fi
-      else
-        sleep "$SLEEP_SECONDS"
-      fi
-    done
+    {"genes":[{"name":"NP","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"},{"name":"VP35","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP35.fasta]]"},{"name":"VP40","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP40.fasta]]"},{"name":"GP","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/GP.fasta]]"},{"name":"ssGP","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/ssGP.fasta]]"},{"name":"sGP","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/sGP.fasta]]"},{"name":"VP30","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP30.fasta]]"},{"name":"VP24","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP24.fasta]]"},{"name":"L","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"}],"nucleotideSequences":[{"name":"main","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"}]}
 ---
 # Source: loculus/templates/lapis-silo-database-config.yaml
 apiVersion: v1
@@ -1465,261 +1491,13 @@ data:
         - name: generalizedAdvancedQuery
 
   preprocessing_config.yaml: |
+    inputDirectory: /preprocessing/input
+    outputDirectory: /preprocessing/output
     ndjsonInputFilename: data.ndjson.zst
     referenceGenomeFilename: reference_genomes.json
 
   reference_genomes.json: |
-    {
-      "genes": [
-        {
-          "name": "CV-A10-VP4",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP4-cva10.fasta]]"
-        },
-        {
-          "name": "CV-A10-VP2",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP2-cva10.fasta]]"
-        },
-        {
-          "name": "CV-A10-VP3",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP3-cva10.fasta]]"
-        },
-        {
-          "name": "CV-A10-VP1",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP1-cva10.fasta]]"
-        },
-        {
-          "name": "CV-A10-2A",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2A-cva10.fasta]]"
-        },
-        {
-          "name": "CV-A10-2B",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2B-cva10.fasta]]"
-        },
-        {
-          "name": "CV-A10-2C",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2C-cva10.fasta]]"
-        },
-        {
-          "name": "CV-A10-3A",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3A-cva10.fasta]]"
-        },
-        {
-          "name": "CV-A10-3B",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3B-cva10.fasta]]"
-        },
-        {
-          "name": "CV-A10-3C",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3C-cva10.fasta]]"
-        },
-        {
-          "name": "CV-A10-3D",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3D-cva10.fasta]]"
-        },
-        {
-          "name": "CV-A16-VP4",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP4-cva16.fasta]]"
-        },
-        {
-          "name": "CV-A16-VP2",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP2-cva16.fasta]]"
-        },
-        {
-          "name": "CV-A16-VP3",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP3-cva16.fasta]]"
-        },
-        {
-          "name": "CV-A16-VP1",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP1-cva16.fasta]]"
-        },
-        {
-          "name": "CV-A16-2A",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2A-cva16.fasta]]"
-        },
-        {
-          "name": "CV-A16-2B",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2B-cva16.fasta]]"
-        },
-        {
-          "name": "CV-A16-2C",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2C-cva16.fasta]]"
-        },
-        {
-          "name": "CV-A16-3A",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3A-cva16.fasta]]"
-        },
-        {
-          "name": "CV-A16-3B",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3B-cva16.fasta]]"
-        },
-        {
-          "name": "CV-A16-3C",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3C-cva16.fasta]]"
-        },
-        {
-          "name": "CV-A16-3D",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3D-cva16.fasta]]"
-        },
-        {
-          "name": "EV-A71-VP4",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP4-eva71.fasta]]"
-        },
-        {
-          "name": "EV-A71-VP2",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP2-eva71.fasta]]"
-        },
-        {
-          "name": "EV-A71-VP3",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP3-eva71.fasta]]"
-        },
-        {
-          "name": "EV-A71-VP1",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP1-eva71.fasta]]"
-        },
-        {
-          "name": "EV-A71-2A",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2A-eva71.fasta]]"
-        },
-        {
-          "name": "EV-A71-2B",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2B-eva71.fasta]]"
-        },
-        {
-          "name": "EV-A71-2C",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2C-eva71.fasta]]"
-        },
-        {
-          "name": "EV-A71-3A",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3A-eva71.fasta]]"
-        },
-        {
-          "name": "EV-A71-3B",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3B-eva71.fasta]]"
-        },
-        {
-          "name": "EV-A71-3C",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3C-eva71.fasta]]"
-        },
-        {
-          "name": "EV-A71-3D",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3D-eva71.fasta]]"
-        },
-        {
-          "name": "EV-D68-VP4",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP4-evd68.fasta]]"
-        },
-        {
-          "name": "EV-D68-VP2",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP2-evd68.fasta]]"
-        },
-        {
-          "name": "EV-D68-VP3",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP3-evd68.fasta]]"
-        },
-        {
-          "name": "EV-D68-VP1",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP1-evd68.fasta]]"
-        },
-        {
-          "name": "EV-D68-2A",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2A-evd68.fasta]]"
-        },
-        {
-          "name": "EV-D68-2B",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2B-evd68.fasta]]"
-        },
-        {
-          "name": "EV-D68-2C",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2C-evd68.fasta]]"
-        },
-        {
-          "name": "EV-D68-3A",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3A-evd68.fasta]]"
-        },
-        {
-          "name": "EV-D68-3B",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3B-evd68.fasta]]"
-        },
-        {
-          "name": "EV-D68-3C",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3C-evd68.fasta]]"
-        },
-        {
-          "name": "EV-D68-3D",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3D-evd68.fasta]]"
-        }
-      ],
-      "nucleotideSequences": [
-        {
-          "name": "CV-A10",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/reference-cva10.fasta]]"
-        },
-        {
-          "name": "CV-A16",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/reference-cva16.fasta]]"
-        },
-        {
-          "name": "EV-A71",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/reference-eva71.fasta]]"
-        },
-        {
-          "name": "EV-D68",
-          "sequence": "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/reference-evd68.fasta]]"
-        }
-      ]
-    }
-
-  silo_import_wrapper.sh: |
-    
-    #!/bin/sh
-    set -eu
-    
-    log() {
-      echo "$(date '+%Y-%m-%dT%H:%M:%S%z') [silo-runner] $*"
-    }
-    
-    INPUT_DIR="/preprocessing/input"
-    RUN_FILE="$INPUT_DIR/run_silo"
-    DONE_FILE="$INPUT_DIR/silo_done"
-    SLEEP_SECONDS="${SILO_RUNNER_SLEEP_SECONDS:-1}"
-    
-    say_completion() {
-      run_id="$1"
-      status="$2"
-      message="$3"
-      {
-        printf 'run_id=%s\n' "$run_id"
-        printf 'status=%s\n' "$status"
-        if [ -n "$message" ]; then
-          printf 'message=%s\n' "$message"
-        fi
-      } >"$DONE_FILE"
-    }
-    
-    while true; do
-      if [ -f "$RUN_FILE" ]; then
-        run_id=$(grep '^run_id=' "$RUN_FILE" | head -n 1 | cut -d'=' -f2-)
-        if [ -z "$run_id" ]; then
-          log "Found run sentinel without run_id; sleeping"
-          sleep "$SLEEP_SECONDS"
-          continue
-        fi
-    
-        rm -f "$RUN_FILE"
-        log "Starting SILO preprocessing for run $run_id"
-    
-        if /app/silo preprocessing; then
-          log "SILO preprocessing completed for run $run_id"
-          say_completion "$run_id" "success" ""
-        else
-          exit_code=$?
-          log "SILO preprocessing failed for run $run_id (exit $exit_code)"
-          say_completion "$run_id" "error" "SILO exited with code $exit_code"
-          exit "$exit_code"
-        fi
-      else
-        sleep "$SLEEP_SECONDS"
-      fi
-    done
+    {"genes":[{"name":"VP4-CV-A16","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP4-cva16.fasta]]"},{"name":"VP2-CV-A16","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP2-cva16.fasta]]"},{"name":"VP3-CV-A16","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP3-cva16.fasta]]"},{"name":"VP1-CV-A16","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP1-cva16.fasta]]"},{"name":"2A-CV-A16","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2A-cva16.fasta]]"},{"name":"2B-CV-A16","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2B-cva16.fasta]]"},{"name":"2C-CV-A16","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2C-cva16.fasta]]"},{"name":"3A-CV-A16","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3A-cva16.fasta]]"},{"name":"3B-CV-A16","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3B-cva16.fasta]]"},{"name":"3C-CV-A16","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3C-cva16.fasta]]"},{"name":"3D-CV-A16","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3D-cva16.fasta]]"},{"name":"VP4-CV-A10","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP4-cva10.fasta]]"},{"name":"VP2-CV-A10","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP2-cva10.fasta]]"},{"name":"VP3-CV-A10","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP3-cva10.fasta]]"},{"name":"VP1-CV-A10","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP1-cva10.fasta]]"},{"name":"2A-CV-A10","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2A-cva10.fasta]]"},{"name":"2B-CV-A10","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2B-cva10.fasta]]"},{"name":"2C-CV-A10","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2C-cva10.fasta]]"},{"name":"3A-CV-A10","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3A-cva10.fasta]]"},{"name":"3B-CV-A10","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3B-cva10.fasta]]"},{"name":"3C-CV-A10","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3C-cva10.fasta]]"},{"name":"3D-CV-A10","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3D-cva10.fasta]]"},{"name":"VP4-EV-A71","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP4-eva71.fasta]]"},{"name":"VP2-EV-A71","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP2-eva71.fasta]]"},{"name":"VP3-EV-A71","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP3-eva71.fasta]]"},{"name":"VP1-EV-A71","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP1-eva71.fasta]]"},{"name":"2A-EV-A71","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2A-eva71.fasta]]"},{"name":"2B-EV-A71","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2B-eva71.fasta]]"},{"name":"2C-EV-A71","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2C-eva71.fasta]]"},{"name":"3A-EV-A71","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3A-eva71.fasta]]"},{"name":"3B-EV-A71","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3B-eva71.fasta]]"},{"name":"3C-EV-A71","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3C-eva71.fasta]]"},{"name":"3D-EV-A71","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3D-eva71.fasta]]"},{"name":"VP4-EV-D68","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP4-evd68.fasta]]"},{"name":"VP2-EV-D68","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP2-evd68.fasta]]"},{"name":"VP3-EV-D68","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP3-evd68.fasta]]"},{"name":"VP1-EV-D68","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP1-evd68.fasta]]"},{"name":"2A-EV-D68","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2A-evd68.fasta]]"},{"name":"2B-EV-D68","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2B-evd68.fasta]]"},{"name":"2C-EV-D68","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2C-evd68.fasta]]"},{"name":"3A-EV-D68","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3A-evd68.fasta]]"},{"name":"3B-EV-D68","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3B-evd68.fasta]]"},{"name":"3C-EV-D68","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3C-evd68.fasta]]"},{"name":"3D-EV-D68","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3D-evd68.fasta]]"}],"nucleotideSequences":[{"name":"CV-A16","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/reference-cva16.fasta]]"},{"name":"CV-A10","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/reference-cva10.fasta]]"},{"name":"EV-A71","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/reference-eva71.fasta]]"},{"name":"EV-D68","sequence":"[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/reference-evd68.fasta]]"}]}
 ---
 # Source: loculus/templates/lapis-silo-database-config.yaml
 apiVersion: v1
@@ -1787,7 +1565,7 @@ data:
           name: host
         - type: string
           generateIndex: true
-          generateLineageIndex: true
+          generateLineageIndex: lineage_definitions
           name: lineage
         - type: string
           generateIndex: true
@@ -1797,73 +1575,15 @@ data:
         - name: generalizedAdvancedQuery
 
   preprocessing_config.yaml: |
+    inputDirectory: /preprocessing/input
+    outputDirectory: /preprocessing/output
     ndjsonInputFilename: data.ndjson.zst
     referenceGenomeFilename: reference_genomes.json
-    lineageDefinitionsFilename: lineage_definitions.yaml
+    lineageDefinitionFilenames:
+      - lineage_definitions.yaml
 
   reference_genomes.json: |
-    {
-      "genes": [],
-      "nucleotideSequences": [
-        {
-          "name": "main",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
-        }
-      ]
-    }
-
-  silo_import_wrapper.sh: |
-    
-    #!/bin/sh
-    set -eu
-    
-    log() {
-      echo "$(date '+%Y-%m-%dT%H:%M:%S%z') [silo-runner] $*"
-    }
-    
-    INPUT_DIR="/preprocessing/input"
-    RUN_FILE="$INPUT_DIR/run_silo"
-    DONE_FILE="$INPUT_DIR/silo_done"
-    SLEEP_SECONDS="${SILO_RUNNER_SLEEP_SECONDS:-1}"
-    
-    say_completion() {
-      run_id="$1"
-      status="$2"
-      message="$3"
-      {
-        printf 'run_id=%s\n' "$run_id"
-        printf 'status=%s\n' "$status"
-        if [ -n "$message" ]; then
-          printf 'message=%s\n' "$message"
-        fi
-      } >"$DONE_FILE"
-    }
-    
-    while true; do
-      if [ -f "$RUN_FILE" ]; then
-        run_id=$(grep '^run_id=' "$RUN_FILE" | head -n 1 | cut -d'=' -f2-)
-        if [ -z "$run_id" ]; then
-          log "Found run sentinel without run_id; sleeping"
-          sleep "$SLEEP_SECONDS"
-          continue
-        fi
-    
-        rm -f "$RUN_FILE"
-        log "Starting SILO preprocessing for run $run_id"
-    
-        if /app/silo preprocessing; then
-          log "SILO preprocessing completed for run $run_id"
-          say_completion "$run_id" "success" ""
-        else
-          exit_code=$?
-          log "SILO preprocessing failed for run $run_id (exit $exit_code)"
-          say_completion "$run_id" "error" "SILO exited with code $exit_code"
-          exit "$exit_code"
-        fi
-      else
-        sleep "$SLEEP_SECONDS"
-      fi
-    done
+    {"genes":[],"nucleotideSequences":[{"name":"main","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"}]}
 ---
 # Source: loculus/templates/lapis-silo-database-config.yaml
 apiVersion: v1
@@ -2152,115 +1872,11 @@ data:
         - name: generalizedAdvancedQuery
 
   preprocessing_config.yaml: |
+    inputDirectory: /preprocessing/input
+    outputDirectory: /preprocessing/output
     ndjsonInputFilename: data.ndjson.zst
     referenceGenomeFilename: reference_genomes.json
 
   reference_genomes.json: |
-    {
-      "genes": [
-        {
-          "name": "2K",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/2K.fasta]]"
-        },
-        {
-          "name": "NS1",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS1.fasta]]"
-        },
-        {
-          "name": "NS2A",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2A.fasta]]"
-        },
-        {
-          "name": "NS2B",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2B.fasta]]"
-        },
-        {
-          "name": "NS3",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS3.fasta]]"
-        },
-        {
-          "name": "NS4A",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4A.fasta]]"
-        },
-        {
-          "name": "NS4B",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4B.fasta]]"
-        },
-        {
-          "name": "NS5",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS5.fasta]]"
-        },
-        {
-          "name": "capsid",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/capsid.fasta]]"
-        },
-        {
-          "name": "env",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/env.fasta]]"
-        },
-        {
-          "name": "prM",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"
-        }
-      ],
-      "nucleotideSequences": [
-        {
-          "name": "main",
-          "sequence": "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/reference.fasta]]"
-        }
-      ]
-    }
-
-  silo_import_wrapper.sh: |
-    
-    #!/bin/sh
-    set -eu
-    
-    log() {
-      echo "$(date '+%Y-%m-%dT%H:%M:%S%z') [silo-runner] $*"
-    }
-    
-    INPUT_DIR="/preprocessing/input"
-    RUN_FILE="$INPUT_DIR/run_silo"
-    DONE_FILE="$INPUT_DIR/silo_done"
-    SLEEP_SECONDS="${SILO_RUNNER_SLEEP_SECONDS:-1}"
-    
-    say_completion() {
-      run_id="$1"
-      status="$2"
-      message="$3"
-      {
-        printf 'run_id=%s\n' "$run_id"
-        printf 'status=%s\n' "$status"
-        if [ -n "$message" ]; then
-          printf 'message=%s\n' "$message"
-        fi
-      } >"$DONE_FILE"
-    }
-    
-    while true; do
-      if [ -f "$RUN_FILE" ]; then
-        run_id=$(grep '^run_id=' "$RUN_FILE" | head -n 1 | cut -d'=' -f2-)
-        if [ -z "$run_id" ]; then
-          log "Found run sentinel without run_id; sleeping"
-          sleep "$SLEEP_SECONDS"
-          continue
-        fi
-    
-        rm -f "$RUN_FILE"
-        log "Starting SILO preprocessing for run $run_id"
-    
-        if /app/silo preprocessing; then
-          log "SILO preprocessing completed for run $run_id"
-          say_completion "$run_id" "success" ""
-        else
-          exit_code=$?
-          log "SILO preprocessing failed for run $run_id (exit $exit_code)"
-          say_completion "$run_id" "error" "SILO exited with code $exit_code"
-          exit "$exit_code"
-        fi
-      else
-        sleep "$SLEEP_SECONDS"
-      fi
-    done
+    {"genes":[{"name":"2K","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/2K.fasta]]"},{"name":"NS1","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS1.fasta]]"},{"name":"NS2A","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2A.fasta]]"},{"name":"NS2B","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2B.fasta]]"},{"name":"NS3","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS3.fasta]]"},{"name":"NS4A","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4A.fasta]]"},{"name":"NS4B","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4B.fasta]]"},{"name":"NS5","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS5.fasta]]"},{"name":"capsid","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/capsid.fasta]]"},{"name":"env","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/env.fasta]]"},{"name":"prM","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"}],"nucleotideSequences":[{"name":"main","sequence":"[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/reference.fasta]]"}]}
 ---

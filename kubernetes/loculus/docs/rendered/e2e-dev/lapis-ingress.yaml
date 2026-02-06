@@ -4,7 +4,7 @@ kind: Ingress
 metadata:
   name: lapis-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "default-cors-all-origins@kubernetescrd,default-strip-cchf-prefix@kubernetescrd,default-strip-dummy-organism-prefix@kubernetescrd,default-strip-dummy-organism-with-files-prefix@kubernetescrd,default-strip-ebola-sudan-prefix@kubernetescrd,default-strip-enteroviruses-prefix@kubernetescrd,default-strip-not-aligned-organism-prefix@kubernetescrd,default-strip-west-nile-prefix@kubernetescrd"
+    traefik.ingress.kubernetes.io/router.middlewares: "default-cors-all-origins@kubernetescrd,default-strip-cchf-prefix@kubernetescrd,default-strip-cchf-multi-ref-prefix@kubernetescrd,default-strip-dummy-organism-prefix@kubernetescrd,default-strip-dummy-organism-with-files-prefix@kubernetescrd,default-strip-ebola-sudan-prefix@kubernetescrd,default-strip-enteroviruses-prefix@kubernetescrd,default-strip-not-aligned-organism-prefix@kubernetescrd,default-strip-west-nile-prefix@kubernetescrd"
 spec:
   rules:
   - host: lapis-localhost:3000
@@ -15,6 +15,13 @@ spec:
         backend:
           service:
             name: loculus-lapis-service-cchf
+            port:
+              number: 8080
+      - path: /cchf-multi-ref/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: loculus-lapis-service-cchf-multi-ref
             port:
               number: 8080
       - path: /dummy-organism/
@@ -80,6 +87,16 @@ spec:
     http:
       paths:
       - path: /cchf
+        pathType: Exact
+        backend:
+          # An Ingress path requires a backend. Since the redirect happens before
+          # the request is forwarded, we can point all paths to the first
+          # organism's service as a placeholder.
+          service:
+            name: loculus-lapis-service-cchf
+            port:
+              number: 8080
+      - path: /cchf-multi-ref
         pathType: Exact
         backend:
           # An Ingress path requires a backend. Since the redirect happens before
@@ -177,6 +194,16 @@ spec:
   stripPrefix:
     prefixes:
       - /cchf/
+---
+# Source: loculus/templates/lapis-ingress.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-cchf-multi-ref-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /cchf-multi-ref/
 ---
 # Source: loculus/templates/lapis-ingress.yaml
 apiVersion: traefik.containo.us/v1alpha1

@@ -90,6 +90,80 @@ data:
           - externalMetadataUpdater: ena
             name: ncbiVirusTaxId
             type: int
+      cchf-multi-ref:
+        
+        molecule_type: genomic RNA
+        scientific_name: Orthonairovirus haemorrhagiae
+        taxon_id: 3052518
+        organismName: "CCHF (Multi-Ref)"
+        segments: 
+          - L
+          - M
+          - S
+        externalMetadata:
+          - externalMetadataUpdater: ena
+            name: bioprojectAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: biosampleAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: gcaAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcAccessionBase_L
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcAccessionBase_M
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcAccessionBase_S
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcAccessionFull_L
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcAccessionFull_M
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcAccessionFull_S
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcRawReadsAccession
+            type: string
+          - externalMetadataUpdater: ena
+            name: insdcVersion_L
+            type: int
+          - externalMetadataUpdater: ena
+            name: insdcVersion_M
+            type: int
+          - externalMetadataUpdater: ena
+            name: insdcVersion_S
+            type: int
+          - externalMetadataUpdater: ena
+            name: ncbiReleaseDate
+            type: date
+          - externalMetadataUpdater: ena
+            name: ncbiSourceDb
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiSubmitterCountry
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiUpdateDate_L
+            type: date
+          - externalMetadataUpdater: ena
+            name: ncbiUpdateDate_M
+            type: date
+          - externalMetadataUpdater: ena
+            name: ncbiUpdateDate_S
+            type: date
+          - externalMetadataUpdater: ena
+            name: ncbiVirusName
+            type: string
+          - externalMetadataUpdater: ena
+            name: ncbiVirusTaxId
+            type: int
       ebola-sudan:
         
         molecule_type: genomic RNA
@@ -144,7 +218,7 @@ data:
         molecule_type: genomic RNA
         scientific_name: Coxsackievirus A10
         taxon_id: 42769
-        suborganismIdentifierField: "genotype"
+        referenceIdentifierField: "genotype"
         organismName: "Enterovirus"
         segments: 
           - main
@@ -194,7 +268,7 @@ data:
         molecule_type: genomic RNA
         scientific_name: Coxsackievirus A16
         taxon_id: 31704
-        suborganismIdentifierField: "genotype"
+        referenceIdentifierField: "genotype"
         organismName: "Enterovirus"
         segments: 
           - main
@@ -244,7 +318,7 @@ data:
         molecule_type: genomic RNA
         scientific_name: Enterovirus A71
         taxon_id: 39054
-        suborganismIdentifierField: "genotype"
+        referenceIdentifierField: "genotype"
         organismName: "Enterovirus"
         segments: 
           - main
@@ -294,7 +368,7 @@ data:
         molecule_type: genomic RNA
         scientific_name: Enterovirus D68
         taxon_id: 42789
-        suborganismIdentifierField: "genotype"
+        referenceIdentifierField: "genotype"
         organismName: "Enterovirus"
         segments: 
           - main

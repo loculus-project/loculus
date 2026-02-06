@@ -18,6 +18,22 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: loculus-lapis-service-cchf-multi-ref
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: lapis-cchf-multi-ref
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+---
+# Source: loculus/templates/lapis-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
   name: loculus-lapis-service-dummy-organism
 spec:
   type: ClusterIP

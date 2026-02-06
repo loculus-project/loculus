@@ -18,6 +18,22 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: loculus-silo-service-cchf-multi-ref
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: silo-cchf-multi-ref
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+      name: http
+---
+# Source: loculus/templates/silo-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
   name: loculus-silo-service-dummy-organism
 spec:
   type: ClusterIP

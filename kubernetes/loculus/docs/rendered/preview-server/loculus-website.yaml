@@ -107,8 +107,26 @@ spec:
       volumes:
 
         - name: loculus-website-config
-          configMap:
-            name: loculus-website-config
+          projected:
+            sources:
+              - configMap:
+                  name: loculus-website-config-base
+              - configMap:
+                  name: loculus-website-config-cchf
+              - configMap:
+                  name: loculus-website-config-cchf-multi-ref
+              - configMap:
+                  name: loculus-website-config-dummy-organism
+              - configMap:
+                  name: loculus-website-config-dummy-organism-with-files
+              - configMap:
+                  name: loculus-website-config-ebola-sudan
+              - configMap:
+                  name: loculus-website-config-enteroviruses
+              - configMap:
+                  name: loculus-website-config-not-aligned-organism
+              - configMap:
+                  name: loculus-website-config-west-nile
         - name: loculus-website-config-processed
           emptyDir: {}
 ---

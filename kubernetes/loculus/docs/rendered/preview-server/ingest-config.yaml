@@ -47,6 +47,51 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  name: loculus-ingest-config-cchf-multi-ref
+data:
+  config.yaml: |
+    segment_identification:
+      method: align
+      nextclade_dataset_name: community/pathoplexus/cchfv
+    taxon_id: 3052518
+    nucleotide_sequences:
+    - L
+    - M
+    - S
+    verify_loculus_version_is: latest
+    check_ena_deposition: true
+    ena_deposition_url: http://loculus-ena-submission-service:5000
+    organism: cchf-multi-ref
+    backend_url: https://backend-%!s(<nil>)
+    keycloak_token_url: http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token
+    ncbi_gateway_url: https://ncbi-temp-proxy.api.taxonium.org/datasets/v2
+    mirror_bucket: https://hel1.your-objectstorage.com/loculus-public/mirror/
+    rename:
+      bioprojects: bioprojectAccession
+      country: geoLocCountry
+      division: geoLocAdmin1
+      genbankAccession: insdcAccessionFull
+      ncbiCollectionDate: sampleCollectionDate
+      ncbiHostCommonName: hostNameCommon
+      ncbiHostName: hostNameScientific
+      ncbiHostSex: hostGender
+      ncbiHostTaxId: hostTaxonId
+      ncbiIsLabHost: isLabHost
+      ncbiIsolateName: specimenCollectorSampleId
+      ncbiPurposeOfSampling: purposeOfSampling
+      ncbiSraAccessions: insdcRawReadsAccession
+      ncbiSubmitterAffiliation: authorAffiliations
+      ncbiSubmitterNames: authors
+    insdc_segment_specific_fields:
+      - insdcAccessionBase
+      - insdcAccessionFull
+      - insdcVersion
+      - ncbiUpdateDate
+---
+# Source: loculus/templates/ingest-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
   name: loculus-ingest-config-ebola-sudan
 data:
   config.yaml: |
