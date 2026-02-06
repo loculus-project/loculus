@@ -1,5 +1,7 @@
 package org.loculus.backend.service.files
 
+import org.apache.http.conn.ssl.NoopHostnameVerifier
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory
 import org.loculus.backend.config.S3BucketConfig
 import org.loculus.backend.config.S3Config
 import org.loculus.backend.controller.BadRequestException
@@ -7,6 +9,8 @@ import org.loculus.backend.controller.UnprocessableEntityException
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.http.SdkHttpClient
+import software.amazon.awssdk.http.apache.ApacheHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.S3Configuration
@@ -28,7 +32,11 @@ import software.amazon.awssdk.services.s3.presigner.model.HeadObjectPresignReque
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest
 import software.amazon.awssdk.services.s3.presigner.model.UploadPartPresignRequest
 import java.net.URI
+import java.security.cert.X509Certificate
 import java.time.Duration
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 private const val PRESIGNED_URL_EXPIRY_SECONDS = 60 * 30
 
@@ -55,19 +63,31 @@ class S3Service(private val s3Config: S3Config) {
 
     fun initiateMultipartUploadAndCreateUrlsToUpload(fileId: FileId, numberParts: Int): MultipartUploadHandler =
         s3ErrorMapping {
+            println("----- 030")
             if (numberParts <= 0 || numberParts > 10000) {
                 throw BadRequestException("The number of parts must between 1 and 10000.")
             }
 
             val config = getS3BucketConfig()
 
-            val uploadId = s3Client.createMultipartUpload(
-                CreateMultipartUploadRequest.builder()
+            println("----- 040")
+            val uploadId = try {
+
+                println("----- 041")
+                val x = CreateMultipartUploadRequest.builder()
                     .bucket(config.bucket)
                     .key(getFileIdPath(fileId))
-                    .build(),
-            ).uploadId()
-
+                    .build()
+                println("----- 042")
+                s3Client.createMultipartUpload(
+                    x,
+                ).uploadId()
+            } catch (e: Throwable) {
+                println("----- 045 EXCEPTION: ${e.javaClass.name}: ${e.message}")
+                e.printStackTrace()
+                throw e
+            }
+            println("----- 050")
             val urls = (1..numberParts).map { part ->
                 val uploadPartRequest = UploadPartRequest.builder()
                     .bucket(config.bucket)
@@ -83,7 +103,7 @@ class S3Service(private val s3Config: S3Config) {
 
                 presigner.presignUploadPart(presignRequest).url().toString()
             }
-
+            println("----- 060")
             MultipartUploadHandler(uploadId, urls)
         }
 
@@ -195,6 +215,7 @@ class S3Service(private val s3Config: S3Config) {
         .region(Region.of(bucketConfig.region))
         .credentialsProvider(createCredentialProvider(bucketConfig))
         .serviceConfiguration(createServiceConfiguration())
+        .httpClient(createTrustAllHttpClient())
         .build()
 
     private fun createPresigner(bucketConfig: S3BucketConfig): S3Presigner = S3Presigner.builder()
@@ -203,6 +224,25 @@ class S3Service(private val s3Config: S3Config) {
         .credentialsProvider(createCredentialProvider(bucketConfig))
         .serviceConfiguration(createServiceConfiguration())
         .build()
+
+    private fun createTrustAllHttpClient(): SdkHttpClient {
+        val trustAllCerts = arrayOf<TrustManager>(
+            object : X509TrustManager {
+                override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+                override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+            },
+        )
+
+        val sslContext = SSLContext.getInstance("TLS")
+        sslContext.init(null, trustAllCerts, java.security.SecureRandom())
+
+        val socketFactory = SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE)
+
+        return ApacheHttpClient.builder()
+            .socketFactory(socketFactory)
+            .build()
+    }
 
     private fun createCredentialProvider(bucketConfig: S3BucketConfig) = StaticCredentialsProvider.create(
         AwsBasicCredentials.create(bucketConfig.accessKey, bucketConfig.secretKey),
