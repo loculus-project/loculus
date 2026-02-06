@@ -39,11 +39,14 @@ test.describe('Search', () => {
     test('multi-segment mutation filter can be added and removed', async ({ page }) => {
         const mutation = 'S:G100A';
         await searchPage.cchf();
-        const details = page.locator('details', {
+        const outer = page.locator('details', {
+            has: page.locator('summary', { hasText: 'Sequence Metadata Filters' }),
+        });
+        const innerS = outer.locator('details', {
             has: page.locator('summary', { hasText: /^S$/ }),
         });
-        await details.locator('summary', { hasText: /^S$/ }).click();
-        await expect(details).toHaveAttribute('open', '');
+        await innerS.locator('summary', { hasText: /^S$/ }).click();
+        await expect(innerS).toHaveAttribute('open', '');
         await searchPage.enterMutation(mutation);
         await expect(page.getByText(`mutation:${mutation}`)).toBeVisible();
         await page.getByLabel('remove filter').click();
