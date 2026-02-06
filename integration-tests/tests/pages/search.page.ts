@@ -60,6 +60,11 @@ export class SearchPage {
 
     async selectReference(fieldLabel: string, option: string) {
         const select = this.page.getByRole('combobox', { name: fieldLabel });
+        await select.focus();
+        await expect(async () => {
+            const options = await select.locator('option:not([value=\"\"])').count();
+            expect(options).toBeGreaterThan(0);
+        }).toPass({ timeout: 10000 });
         await select.selectOption({ value: option });
         await expect(select).toHaveValue(option);
 
