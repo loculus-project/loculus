@@ -2,10 +2,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: loculus-website-config
+  name: loculus-website-config-base
 data:
-  website_config.json: |
-{{ include "loculus.generateWebsiteConfig" . | fromYaml | toPrettyJson | indent 4 }}
+  website_config_base.json: |
+{{ include "loculus.generateWebsiteConfigBase" . | fromYaml | toPrettyJson | indent 4 }}
   runtime_config.json: |
     {
         "name" : "{{ $.Values.name }}",
@@ -28,3 +28,15 @@ data:
         },
         "backendKeycloakClientSecret" : "[[backendKeycloakClientSecret]]"
     }
+{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $key := $item.key }}
+{{- $instance := $item.contents }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-website-config-{{ $key }}
+data:
+  website_config_organism_{{ $key }}.json: |
+{{ include "loculus.generateWebsiteConfigOrganism" (dict "key" $key "instance" $instance "root" $) | fromYaml | toPrettyJson | indent 4 }}
+{{- end }}

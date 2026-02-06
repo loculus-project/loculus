@@ -263,6 +263,118 @@ organisms:
   {{- end }}
 {{- end }}
 
+{{/* Generate website config base (globals only, no organisms) */}}
+{{- define "loculus.generateWebsiteConfigBase" }}
+name: {{ quote $.Values.name }}
+logo: {{ $.Values.logo | toYaml | nindent 6 }}
+{{ if $.Values.sequenceFlagging }}
+sequenceFlagging: {{ $.Values.sequenceFlagging | toYaml | nindent 6 }}
+{{ end }}
+{{ if $.Values.gitHubMainUrl }}
+gitHubMainUrl: {{ quote $.Values.gitHubMainUrl }}
+{{ end }}
+{{ if $.Values.bannerMessageURL }}
+bannerMessageURL: {{ quote $.Values.bannerMessageURL }}
+{{ end }}
+{{ if $.Values.bannerMessage }}
+bannerMessage: {{ quote $.Values.bannerMessage }}
+{{ else if or $.Values.runDevelopmentMainDatabase $.Values.runDevelopmentKeycloakDatabase }}
+bannerMessage: "Warning: Development or Keycloak main database is enabled. Development environment only."
+{{ end }}
+{{ if $.Values.submissionBannerMessageURL }}
+submissionBannerMessageURL: {{ quote $.Values.submissionBannerMessageURL }}
+{{ end }}
+{{ if $.Values.submissionBannerMessage }}
+submissionBannerMessage: {{ quote $.Values.submissionBannerMessage }}
+{{ end }}
+{{ if $.Values.gitHubEditLink }}
+gitHubEditLink: {{ quote $.Values.gitHubEditLink }}
+{{ end }}
+{{ if $.Values.welcomeMessageHTML }}
+welcomeMessageHTML: {{ quote $.Values.welcomeMessageHTML }}
+{{end}}
+{{ if $.Values.additionalHeadHTML }}
+additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}
+{{end}}
+
+enableLoginNavigationItem: {{ $.Values.website.websiteConfig.enableLoginNavigationItem }}
+enableSubmissionNavigationItem: {{ $.Values.website.websiteConfig.enableSubmissionNavigationItem }}
+enableSubmissionPages: {{ $.Values.website.websiteConfig.enableSubmissionPages }}
+enableSeqSets: {{ $.Values.seqSets.enabled }}
+{{- if $.Values.seqSets.fieldsToDisplay }}
+seqSetsFieldsToDisplay: {{ $.Values.seqSets.fieldsToDisplay | toJson }}
+{{- end }}
+enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
+accessionPrefix: {{ quote $.Values.accessionPrefix }}
+organisms: {}
+{{- end }}
+
+{{/* Generate website config for a single organism */}}
+{{- define "loculus.generateWebsiteConfigOrganism" }}
+{{- $key := .key }}
+{{- $instance := .instance }}
+{{- $commonMetadata := (include "loculus.commonMetadata" .root | fromYaml).fields }}
+organisms:
+  {{ $key }}:
+    schema:
+      {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
+      organismName: {{ quote .organismName }}
+      {{ if .linkOuts }}
+      linkOuts:
+        {{- range $linkOut := .linkOuts }}
+        - name: {{ quote $linkOut.name }}
+          url: {{ quote $linkOut.url }}
+          {{- if $linkOut.maxNumberOfRecommendedEntries }}
+          maxNumberOfRecommendedEntries: {{ $linkOut.maxNumberOfRecommendedEntries }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
+      {{ if .richFastaHeaderFields}}
+      richFastaHeaderFields: {{ toJson .richFastaHeaderFields }}
+      {{ end }}
+      {{- include "loculus.submissionDataTypes" . | nindent 6 }}
+      {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
+      {{ if .image }}
+      image: {{ .image }}
+      {{ end }}
+      {{ if .description }}
+      description: {{ quote .description }}
+      {{ end }}
+      primaryKey: accessionVersion
+      inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
+        - name: versionComment
+          displayName: Version comment
+          definition: "Reason for revising sequences or other general comments concerning a specific version"
+          example: "Fixed an issue in previous version where low-coverage nucleotides were erroneously filled with reference sequence"
+          desired: true
+      {{ if .files }}
+      files: {{ .files | toYaml | nindent 8 }}
+      {{ end }}
+      metadata:
+        {{- $args := dict "metadata" (concat $commonMetadata .metadata) "referenceGenomes" $instance.referenceGenomes}}
+        {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
+        {{ $metadata.fields | toYaml | nindent 8 }}
+        {{ if .files }}
+        {{- range .files }}
+        - name: {{ .name }}
+          type: string
+          header: "Files"
+          noInput: true
+          customDisplay:
+            type: fileList
+        {{- end }}
+        {{ end }}
+      {{ if .metadataTemplate }}
+      metadataTemplate:
+        {{ .metadataTemplate | toYaml | nindent 8}}
+      {{ end }}
+      {{ .website | toYaml | nindent 6 }}
+      {{- end }}
+    referenceGenomes:
+      {{ $instance.referenceGenomes | toYaml | nindent 6 }}
+{{- end }}
+
 {{- define "loculus.standardWebsiteMetadata" }}
 - type: {{ .type | default "string" | quote }}
   {{- if .autocomplete }}
@@ -410,6 +522,58 @@ organisms:
       {{- $referenceGenome := include "loculus.mergeReferenceGenomes" $instance.referenceGenomes | fromYaml }}
       {{ $referenceGenome | toYaml | nindent 10 }}
   {{- end }}
+{{- end }}
+
+{{/* Generate backend config base (globals only, no organisms) */}}
+{{- define "loculus.generateBackendConfigBase" }}
+accessionPrefix: {{ quote $.Values.accessionPrefix }}
+zstdCompressionLevel: {{ $.Values.zstdCompressionLevel }}
+pipelineVersionUpgradeCheckIntervalSeconds: {{ $.Values.pipelineVersionUpgradeCheckIntervalSeconds }}
+name: {{ quote $.Values.name }}
+dataUseTerms:
+  {{$.Values.dataUseTerms | toYaml | nindent 2}}
+{{- if .Values.fileSharing }}
+fileSharing:
+  {{ .Values.fileSharing | toYaml | nindent 2 }}
+{{- end }}
+websiteUrl: {{ include "loculus.websiteUrl" . }}
+backendUrl: {{ include "loculus.backendUrl" . }}
+organisms: {}
+{{- end }}
+
+{{/* Generate backend config for a single organism */}}
+{{- define "loculus.generateBackendConfigOrganism" }}
+{{- $key := .key }}
+{{- $instance := .instance }}
+organisms:
+  {{ $key }}:
+    schema:
+      {{- with $instance.schema }}
+      organismName: {{ quote .organismName }}
+      {{- include "loculus.submissionDataTypes" . | nindent 6 }}
+      {{- if .files }}
+      files:
+        {{ .files | toYaml | nindent 8 }}
+      {{- end }}
+      metadata:
+        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "referenceGenomes" $instance.referenceGenomes }}
+        {{- $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
+        {{ $metadata.fields | toYaml | nindent 8 }}
+      externalMetadata:
+        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "referenceGenomes" $instance.referenceGenomes }}
+        {{- $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
+        {{ $metadata.fields | default list | toYaml | nindent 8 }}
+      earliestReleaseDate:
+      {{- if .earliestReleaseDate }}
+        {{ .earliestReleaseDate | toYaml | nindent 8 }}
+      {{- else }}
+        enabled: false
+        externalFields: []
+      {{- end }}
+      {{- end }}
+    referenceGenome:
+      {{- $referenceGenome := include "loculus.mergeReferenceGenomes" $instance.referenceGenomes | fromYaml }}
+      {{ $referenceGenome | toYaml | nindent 10 }}
 {{- end }}
 
 {{- define "loculus.generateReferenceGenome" }}
