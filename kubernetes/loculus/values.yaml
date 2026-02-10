@@ -1440,6 +1440,7 @@ defaultOrganisms:
     preprocessing:
       - <<: *preprocessing
         version: 1
+        replicas: 4
         configFile:
           <<: *preprocessingConfigFile
           segments:
