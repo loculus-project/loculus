@@ -211,21 +211,50 @@ class SubmissionDatabaseService(
                     )
                 }
                 updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
-                chunkOfUnprocessedData
             }
             .flatten()
     }
 
-    private fun updateStatusToProcessing(sequenceEntries: List<UnprocessedData>, pipelineVersion: Long) {
+    private fun updateStatusToProcessing(
+        sequenceEntries: List<UnprocessedData>,
+        pipelineVersion: Long,
+    ): List<UnprocessedData> {
         log.info { "updating status to processing. Number of sequence entries: ${sequenceEntries.size}" }
 
-        SequenceEntriesPreprocessedDataTable.batchInsert(sequenceEntries) {
-            this[SequenceEntriesPreprocessedDataTable.accessionColumn] = it.accession
-            this[SequenceEntriesPreprocessedDataTable.versionColumn] = it.version
-            this[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] = pipelineVersion
-            this[SequenceEntriesPreprocessedDataTable.processingStatusColumn] = IN_PROCESSING.name
-            this[SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn] = dateProvider.getCurrentDateTime()
+        val table = SequenceEntriesPreprocessedDataTable
+        val now = dateProvider.getCurrentDateTime()
+
+        table.batchInsert(sequenceEntries, ignore = true, shouldReturnGeneratedValues = false) {
+            this[table.accessionColumn] = it.accession
+            this[table.versionColumn] = it.version
+            this[table.pipelineVersionColumn] = pipelineVersion
+            this[table.processingStatusColumn] = IN_PROCESSING.name
+            this[table.startedProcessingAtColumn] = now
         }
+
+        // Query back to reliably determine which entries were actually claimed by this pipeline.
+        // We match on the exact startedProcessingAt timestamp to distinguish our inserts
+        // from entries claimed by concurrent pipelines.
+        val claimedKeys = table
+            .select(table.accessionColumn, table.versionColumn)
+            .where {
+                (table.pipelineVersionColumn eq pipelineVersion) and
+                    (table.startedProcessingAtColumn eq now) and
+                    (table.accessionColumn to table.versionColumn).inList(
+                        sequenceEntries.map { it.accession to it.version },
+                    )
+            }
+            .map { Pair(it[table.accessionColumn], it[table.versionColumn]) }
+            .toSet()
+
+        if (claimedKeys.size < sequenceEntries.size) {
+            val skippedCount = sequenceEntries.size - claimedKeys.size
+            log.warn {
+                "$skippedCount entries were already claimed by another pipeline and will be skipped."
+            }
+        }
+
+        return sequenceEntries.filter { Pair(it.accession, it.version) in claimedKeys }
     }
 
     fun updateProcessedData(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
