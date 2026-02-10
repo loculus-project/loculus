@@ -240,7 +240,9 @@ class SubmissionDatabaseService(
             .where {
                 (table.pipelineVersionColumn eq pipelineVersion) and
                     (table.startedProcessingAtColumn eq now) and
-                    (table.accessionColumn.inList(sequenceEntries.map { it.accession }))
+                    (table.accessionColumn to table.versionColumn).inList(
+                        sequenceEntries.map { it.accession to it.version },
+                    )
             }
             .map { Pair(it[table.accessionColumn], it[table.versionColumn]) }
             .toSet()
