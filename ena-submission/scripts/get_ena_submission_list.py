@@ -197,6 +197,8 @@ def filter_for_submission(
         else:
             revoked_entries.discard(accession_version.accession)
 
+    logger.debug("Finished processing of data from Loculus backend")
+
     return SubmissionResults(
         entries_to_submit={
             entry["metadata"]["accessionVersion"]: entry

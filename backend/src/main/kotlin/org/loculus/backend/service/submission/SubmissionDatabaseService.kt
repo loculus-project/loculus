@@ -45,6 +45,7 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.EditedSequenceEntryData
+import org.loculus.backend.api.EnaDepositionStatus
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileIdAndMaybeReleasedAt
@@ -724,7 +725,10 @@ class SubmissionDatabaseService(
     }
 
     // Make sure to keep in sync with countReleasedSubmissions query
-    fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = SequenceEntriesView.join(
+    fun streamReleasedSubmissions(
+        organism: Organism,
+        filterForEnaDeposition: Boolean = false,
+    ): Sequence<RawProcessedData> = SequenceEntriesView.join(
         DataUseTermsTable,
         JoinType.LEFT,
         additionalConstraint = {
@@ -748,9 +752,15 @@ class SubmissionDatabaseService(
             DataUseTermsTable.restrictedUntilColumn,
         )
         .where {
-            SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
-                organism,
-            )
+            SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and
+                SequenceEntriesView.organismIs(organism) and
+                (
+                    if (filterForEnaDeposition) {
+                        (SequenceEntriesView.enDepositionStatusIs(EnaDepositionStatus.READY))
+                    } else {
+                        Op.TRUE
+                    }
+                    )
         }
         .orderBy(
             SequenceEntriesView.accessionColumn to SortOrder.ASC,

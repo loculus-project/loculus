@@ -6,6 +6,7 @@ import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.notNullValue
+import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
@@ -89,6 +90,9 @@ class SubmitExternalMetadataEndpointTest(
 
         assertThat(releasedSequenceEntry.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
         assertThat(releasedSequenceEntry.metadata, hasEntry("other_db_accession", TextNode("DB1.1")))
+        val filteredReleasedSequenceEntry = convenienceClient.getReleasedData(filterForEnaDeposition = "true")
+            .find { it.metadata["accession"]?.textValue() == accession }
+        assertThat(filteredReleasedSequenceEntry, nullValue())
     }
 
     @Test

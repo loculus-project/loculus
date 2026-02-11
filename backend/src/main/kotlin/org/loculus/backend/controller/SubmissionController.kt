@@ -310,6 +310,15 @@ open class SubmissionController(
         @PathVariable @Valid organism: Organism,
         @RequestParam compression: CompressionFormat?,
         @Parameter(
+            description = "(Optional) Filter to return only sequences ready for ENA deposition " +
+                "(excludes already deposited and ingested sequences)",
+        )
+        @RequestParam(
+            name = "filterForEnaDeposition",
+            required = false,
+            defaultValue = "false",
+        ) filterForEnaDeposition: Boolean,
+        @Parameter(
             description = "(Optional) Only retrieve all released data if Etag has changed.",
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
@@ -334,7 +343,7 @@ open class SubmissionController(
         // Alternatively, we could read once to file while counting and then stream the file
 
         val streamBody = streamTransactioned(compression, endpoint = "get-released-data", organism = organism) {
-            releasedDataModel.getReleasedData(organism)
+            releasedDataModel.getReleasedData(organism, filterForEnaDeposition)
         }
         return ResponseEntity.ok().headers(headers).body(streamBody)
     }
