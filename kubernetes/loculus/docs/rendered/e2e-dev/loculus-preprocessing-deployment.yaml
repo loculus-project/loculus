@@ -1,0 +1,474 @@
+# Source: loculus/templates/loculus-preprocessing-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-preprocessing-cchf-v1-0
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-preprocessing-cchf-v1-0
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: loculus-preprocessing-cchf-v1-0
+    spec:
+      
+      containers:
+        - name: preprocessing-cchf
+          image: ghcr.io/loculus-project/preprocessing-nextclade:latest
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              memory: 3Gi
+            requests:
+              cpu: 50m
+              memory: 300Mi
+          env:
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+          args:
+            - "prepro"
+            - "--backend-host=http://loculus-backend-service:8079/cchf"
+            - "--keycloak-host=http://loculus-keycloak-service:8083"
+            - "--pipeline-version=1"
+            - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
+            - "--config=/etc/config/preprocessing-config.yaml"
+          volumeMounts:
+            - name: preprocessing-config-volume-cchf-v1-0
+              mountPath: /etc/config
+      volumes:
+        - name: preprocessing-config-volume-cchf-v1-0
+          configMap:
+            name: loculus-preprocessing-config-cchf-v1-0
+---
+# Source: loculus/templates/loculus-preprocessing-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-preprocessing-cchf-multi-ref-v1-0
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-preprocessing-cchf-multi-ref-v1-0
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: loculus-preprocessing-cchf-multi-ref-v1-0
+    spec:
+      
+      containers:
+        - name: preprocessing-cchf-multi-ref
+          image: ghcr.io/loculus-project/preprocessing-nextclade:latest
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              memory: 3Gi
+            requests:
+              cpu: 50m
+              memory: 300Mi
+          env:
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+          args:
+            - "prepro"
+            - "--backend-host=http://loculus-backend-service:8079/cchf-multi-ref"
+            - "--keycloak-host=http://loculus-keycloak-service:8083"
+            - "--pipeline-version=1"
+            - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
+            - "--config=/etc/config/preprocessing-config.yaml"
+          volumeMounts:
+            - name: preprocessing-config-volume-cchf-multi-ref-v1-0
+              mountPath: /etc/config
+      volumes:
+        - name: preprocessing-config-volume-cchf-multi-ref-v1-0
+          configMap:
+            name: loculus-preprocessing-config-cchf-multi-ref-v1-0
+---
+# Source: loculus/templates/loculus-preprocessing-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-preprocessing-dummy-organism-v2-0
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-preprocessing-dummy-organism-v2-0
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: loculus-preprocessing-dummy-organism-v2-0
+    spec:
+      
+      containers:
+        - name: preprocessing-dummy-organism
+          image: ghcr.io/loculus-project/preprocessing-dummy:latest
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              memory: 3Gi
+            requests:
+              cpu: 50m
+              memory: 300Mi
+          env:
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+          args:
+            - "--watch"
+            - "--withWarnings"
+            - "--withErrors"
+            - "--randomWarnError"
+            - "--backend-host=http://loculus-backend-service:8079/dummy-organism"
+            - "--keycloak-host=http://loculus-keycloak-service:8083"
+            - "--pipeline-version=2"
+            - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
+---
+# Source: loculus/templates/loculus-preprocessing-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-preprocessing-dummy-organism-with-files-v1-0
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-preprocessing-dummy-organism-with-files-v1-0
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: loculus-preprocessing-dummy-organism-with-files-v1-0
+    spec:
+      
+      containers:
+        - name: preprocessing-dummy-organism-with-files
+          image: ghcr.io/loculus-project/preprocessing-dummy:latest
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              memory: 3Gi
+            requests:
+              cpu: 50m
+              memory: 300Mi
+          env:
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+          args:
+            - "--watch"
+            - "--disableConsensusSequences"
+            - "--backend-host=http://loculus-backend-service:8079/dummy-organism-with-files"
+            - "--keycloak-host=http://loculus-keycloak-service:8083"
+            - "--pipeline-version=1"
+            - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
+---
+# Source: loculus/templates/loculus-preprocessing-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-preprocessing-ebola-sudan-v1-0
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-preprocessing-ebola-sudan-v1-0
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: loculus-preprocessing-ebola-sudan-v1-0
+    spec:
+      
+      containers:
+        - name: preprocessing-ebola-sudan
+          image: ghcr.io/loculus-project/preprocessing-nextclade:latest
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              memory: 3Gi
+            requests:
+              cpu: 50m
+              memory: 300Mi
+          env:
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+          args:
+            - "prepro"
+            - "--backend-host=http://loculus-backend-service:8079/ebola-sudan"
+            - "--keycloak-host=http://loculus-keycloak-service:8083"
+            - "--pipeline-version=1"
+            - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
+            - "--config=/etc/config/preprocessing-config.yaml"
+          volumeMounts:
+            - name: preprocessing-config-volume-ebola-sudan-v1-0
+              mountPath: /etc/config
+      volumes:
+        - name: preprocessing-config-volume-ebola-sudan-v1-0
+          configMap:
+            name: loculus-preprocessing-config-ebola-sudan-v1-0
+---
+# Source: loculus/templates/loculus-preprocessing-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-preprocessing-ebola-sudan-v2-1
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-preprocessing-ebola-sudan-v2-1
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: loculus-preprocessing-ebola-sudan-v2-1
+    spec:
+      
+      containers:
+        - name: preprocessing-ebola-sudan
+          image: ghcr.io/loculus-project/preprocessing-nextclade:latest
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              memory: 3Gi
+            requests:
+              cpu: 50m
+              memory: 300Mi
+          env:
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+          args:
+            - "prepro"
+            - "--backend-host=http://loculus-backend-service:8079/ebola-sudan"
+            - "--keycloak-host=http://loculus-keycloak-service:8083"
+            - "--pipeline-version=2"
+            - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
+            - "--config=/etc/config/preprocessing-config.yaml"
+          volumeMounts:
+            - name: preprocessing-config-volume-ebola-sudan-v2-1
+              mountPath: /etc/config
+      volumes:
+        - name: preprocessing-config-volume-ebola-sudan-v2-1
+          configMap:
+            name: loculus-preprocessing-config-ebola-sudan-v2-1
+---
+# Source: loculus/templates/loculus-preprocessing-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-preprocessing-enteroviruses-v1-0
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-preprocessing-enteroviruses-v1-0
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: loculus-preprocessing-enteroviruses-v1-0
+    spec:
+      
+      containers:
+        - name: preprocessing-enteroviruses
+          image: ghcr.io/loculus-project/preprocessing-nextclade:latest
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              memory: 3Gi
+            requests:
+              cpu: 50m
+              memory: 300Mi
+          env:
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+          args:
+            - "prepro"
+            - "--backend-host=http://loculus-backend-service:8079/enteroviruses"
+            - "--keycloak-host=http://loculus-keycloak-service:8083"
+            - "--pipeline-version=1"
+            - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
+            - "--config=/etc/config/preprocessing-config.yaml"
+          volumeMounts:
+            - name: preprocessing-config-volume-enteroviruses-v1-0
+              mountPath: /etc/config
+      volumes:
+        - name: preprocessing-config-volume-enteroviruses-v1-0
+          configMap:
+            name: loculus-preprocessing-config-enteroviruses-v1-0
+---
+# Source: loculus/templates/loculus-preprocessing-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-preprocessing-not-aligned-organism-v4-0
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-preprocessing-not-aligned-organism-v4-0
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: loculus-preprocessing-not-aligned-organism-v4-0
+    spec:
+      
+      containers:
+        - name: preprocessing-not-aligned-organism
+          image: ghcr.io/loculus-project/preprocessing-nextclade:latest
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              memory: 3Gi
+            requests:
+              cpu: 50m
+              memory: 300Mi
+          env:
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+          args:
+            - "prepro"
+            - "--backend-host=http://loculus-backend-service:8079/not-aligned-organism"
+            - "--keycloak-host=http://loculus-keycloak-service:8083"
+            - "--pipeline-version=4"
+            - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
+            - "--config=/etc/config/preprocessing-config.yaml"
+          volumeMounts:
+            - name: preprocessing-config-volume-not-aligned-organism-v4-0
+              mountPath: /etc/config
+      volumes:
+        - name: preprocessing-config-volume-not-aligned-organism-v4-0
+          configMap:
+            name: loculus-preprocessing-config-not-aligned-organism-v4-0
+---
+# Source: loculus/templates/loculus-preprocessing-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-preprocessing-west-nile-v1-0
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-preprocessing-west-nile-v1-0
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: loculus-preprocessing-west-nile-v1-0
+    spec:
+      
+      containers:
+        - name: preprocessing-west-nile
+          image: ghcr.io/loculus-project/preprocessing-nextclade:latest
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              memory: 3Gi
+            requests:
+              cpu: 50m
+              memory: 300Mi
+          env:
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+          args:
+            - "prepro"
+            - "--backend-host=http://loculus-backend-service:8079/west-nile"
+            - "--keycloak-host=http://loculus-keycloak-service:8083"
+            - "--pipeline-version=1"
+            - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
+            - "--config=/etc/config/preprocessing-config.yaml"
+          volumeMounts:
+            - name: preprocessing-config-volume-west-nile-v1-0
+              mountPath: /etc/config
+      volumes:
+        - name: preprocessing-config-volume-west-nile-v1-0
+          configMap:
+            name: loculus-preprocessing-config-west-nile-v1-0
+---
