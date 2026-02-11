@@ -104,6 +104,12 @@ fields:
     hideOnSequenceDetailsPage: true
     header: Data use terms
     orderOnDetailsPage: 620
+  - name: dataBecameOpenAt
+    type: date
+    displayName: Date data became open
+    hideOnSequenceDetailsPage: true
+    header: Data use terms
+    orderOnDetailsPage: 625
   {{- if $.Values.dataUseTerms.urls }}
   - name: dataUseTermsUrl
     displayName: Data use terms URL
