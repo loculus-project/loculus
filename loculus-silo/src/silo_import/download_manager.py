@@ -78,7 +78,7 @@ class DownloadResult:
     directory: Path
     transformed_path: Path
     etag: str
-    pipeline_versions: set[int]
+    pipeline_version: int | None
 
 
 def _download_file(
@@ -244,7 +244,7 @@ class DownloadManager:
                 directory=download_dir,
                 transformed_path=transformed_path,
                 etag=etag_value,
-                pipeline_versions=analysis.pipeline_versions,
+                pipeline_version=analysis.pipeline_version,
             )
 
         except (

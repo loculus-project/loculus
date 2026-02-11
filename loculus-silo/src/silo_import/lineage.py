@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def update_lineage_definitions(
-    pipeline_versions: set[int],
+    pipeline_version: int | None,
     config: ImporterConfig,
     paths: ImporterPaths,
 ) -> None:
@@ -20,17 +20,12 @@ def update_lineage_definitions(
         logger.info("LINEAGE_DEFINITIONS not provided; skipping lineage configuration")
         return
 
-    if not pipeline_versions:
+    if not pipeline_version:
         # required for dummy organisms
         logger.info("No pipeline version found; writing empty lineage definitions")
         _write_text(paths.lineage_definition_file, "{}\n")
         return
 
-    if len(pipeline_versions) > 1:
-        msg = "Multiple pipeline versions found in released data"
-        raise RuntimeError(msg)
-
-    pipeline_version = next(iter(pipeline_versions))
     lineage_url: str | None = config.lineage_definitions.get(int(pipeline_version))
     if not lineage_url:
         msg = f"No lineage definition URL configured for pipeline version {pipeline_version}"
