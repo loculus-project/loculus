@@ -56,11 +56,17 @@ export class SearchPage {
     }
 
     async select(fieldLabel: string, option: string) {
-        await this.selectFromAutocomplete(this.page.getByRole('combobox', { name: fieldLabel }).first(), option);
+        await this.selectFromAutocomplete(
+            this.page.getByRole('combobox', { name: fieldLabel }).first(),
+            option,
+        );
     }
 
     async selectReference(fieldLabel: string, option: string) {
-        await this.selectFromAutocomplete(this.page.getByLabel(fieldLabel, { exact: true }), option);
+        await this.selectFromAutocomplete(
+            this.page.getByLabel(fieldLabel, { exact: true }),
+            option,
+        );
 
         const mutations = this.page.getByRole('combobox', { name: 'Mutations' }).first();
         await expect(mutations).toBeVisible();
