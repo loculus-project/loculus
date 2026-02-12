@@ -401,7 +401,7 @@ describe('SearchFullUI', () => {
             const input = await referenceInput();
             await userEvent.click(input);
             const options = await screen.findAllByRole('option');
-            const option = options.find((opt) => opt.textContent!.includes(refName));
+            const option = options.find((opt) => opt.textContent.includes(refName));
             await userEvent.click(option!);
         }
 

@@ -178,7 +178,7 @@ describe('SearchForm', () => {
 
         await userEvent.click(referenceInput);
         const options = await screen.findAllByRole('option');
-        const ref1Option = options.find((opt) => opt.textContent!.includes('ref1'));
+        const ref1Option = options.find((opt) => opt.textContent.includes('ref1'));
         await userEvent.click(ref1Option!);
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['My genotype', 'ref1']);
