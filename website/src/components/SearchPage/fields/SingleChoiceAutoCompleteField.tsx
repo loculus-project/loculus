@@ -17,8 +17,6 @@ import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiChevronUpDown from '~icons/mdi/chevron-up-down';
 import MdiTick from '~icons/mdi/tick';
 
-const logger = getClientLogger('AsyncComboBox');
-
 const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
     <TextField
         ref={ref}
@@ -33,6 +31,8 @@ const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputEl
 ));
 
 export type CustomInputElement = React.ElementRef<typeof CustomInput>;
+
+const logger = getClientLogger('SingleChoiceAutoCompleteField');
 
 type Option = { option: string; value: string | number | null; count?: number };
 
@@ -50,8 +50,6 @@ type SingleChoiceAutoCompleteFieldProps<TValue extends string | number | null> =
     displayValue?: (value: TValue) => string;
     renderOptionLabel?: (opt: Option) => ReactNode;
 
-    isClearVisible?: (value: TValue | undefined, query: string) => boolean;
-
     maxDisplayedOptions?: number;
 };
 
@@ -64,7 +62,6 @@ export const SingleChoiceAutoCompleteField = <TValue extends string | number | n
     onClear,
     displayValue,
     renderOptionLabel,
-    isClearVisible,
     maxDisplayedOptions = 1000,
 }: SingleChoiceAutoCompleteFieldProps<TValue>) => {
     const [query, setQuery] = useState('');
@@ -107,8 +104,6 @@ export const SingleChoiceAutoCompleteField = <TValue extends string | number | n
         else onChange('' as TValue);
     };
 
-    const clearVisible = isClearVisible?.(value, query) ?? (String(value ?? '') !== '' || query !== '');
-
     return (
         <Combobox value={value} onChange={handleSelect} immediate>
             <div className='relative'>
@@ -121,11 +116,11 @@ export const SingleChoiceAutoCompleteField = <TValue extends string | number | n
                     placeholder={placeholder}
                 />
 
-                {clearVisible && (
+                {(String(value ?? '') !== '' || query !== '') && (
                     <Button
                         className='absolute top-2 right-8 flex items-center pr-2 h-5 bg-white rounded-sm'
                         onClick={handleClear}
-                        aria-label='Clear'
+                        aria-label={`Clear ${placeholder}`}
                         type='button'
                     >
                         <MaterialSymbolsClose className='w-5 h-5 text-gray-400' />

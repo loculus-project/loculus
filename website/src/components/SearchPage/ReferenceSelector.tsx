@@ -101,7 +101,6 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                             }
                             optionsProvider={optionsProvidersBySegment[segment]}
                             placeholder={`Select ${formatLabel(labelsBySegment[segment] ?? '')}...`}
-                            isClearVisible={(val) => (val ?? '') !== ''}
                         />
                         {selectedReferences[segment] == null && (
                             <p className='text-xs text-gray-600 mt-2'>
