@@ -341,7 +341,6 @@ organisms:
   {{- end }}
 {{- end }}
 
-{{/* Generate website metadata from passed metadata array */}}
 {{- define "loculus.generateWebsiteHeaders" }}
 {{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).segments }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
