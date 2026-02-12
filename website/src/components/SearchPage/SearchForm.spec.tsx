@@ -137,8 +137,8 @@ describe('SearchForm', () => {
         mockUseAggregated.mockReturnValue({
             data: {
                 data: [
-                    { 'My genotype': 'ref1', count: 100 },
-                    { 'My genotype': 'ref2', count: 200 },
+                    { 'My genotype': 'ref1', 'count': 100 },
+                    { 'My genotype': 'ref2', 'count': 200 },
                 ],
             },
             isPending: false,

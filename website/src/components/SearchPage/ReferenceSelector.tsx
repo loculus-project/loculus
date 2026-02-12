@@ -6,10 +6,7 @@ import type { FieldValues, MetadataFilter, SetSomeFieldValues } from '../../type
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
-import {
-    getSegmentNames,
-    segmentsWithMultipleReferences,
-} from '../../utils/sequenceTypeHelpers.ts';
+import { getSegmentNames, segmentsWithMultipleReferences } from '../../utils/sequenceTypeHelpers.ts';
 
 type ReferenceSelectorProps = {
     filterSchema: MetadataFilterSchema;
