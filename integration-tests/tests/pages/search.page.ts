@@ -59,7 +59,7 @@ export class SearchPage {
     }
 
     async selectReference(fieldLabel: string, option: string) {
-        await this.page.getByRole('textbox', { name: fieldLabel }).click();
+        await this.page.locator('label', { hasText: fieldLabel }).click();
         await expect(this.page.getByRole('option', { name: option })).toBeVisible();
         await this.page.getByRole('option', { name: option }).click();
 
