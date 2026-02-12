@@ -225,6 +225,38 @@ test_case_definitions = [
         expected_warnings=[],
     ),
     Case(
+        name="regex_empty_capture_group",
+        input_metadata={
+            "submissionId": "date_only_year",
+            "collection_date": "2023-01-01",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "regex_field": "EPI_ISL_",
+        },
+        accession_id="6",
+        expected_metadata={
+            "collection_date": "2023-01-01",
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_6.1/2022-11-01",
+            "regex_field": None,
+            "extracted_regex_field": None,
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["regex_field"],
+                    ["regex_field"],
+                    (
+                        "The value 'EPI_ISL_' does not match the expected regex pattern: "
+                        "'^EPI_ISL_[0-9]+$'."
+                    ),
+                )
+            ]
+        ),
+        expected_warnings=[],
+    ),
+    Case(
         name="regex_match",
         input_metadata={
             "submissionId": "date_only_year",
@@ -257,7 +289,7 @@ test_case_definitions = [
                     ["extracted_regex_field"],
                     (
                         "The value 'EPIISL_123456' does not match the expected regex pattern: "
-                        "'^EPI_ISL_(?P<id>[0-9]+)$'."
+                        "'^EPI_ISL_(?P<id>[0-9]+)?$'."
                     ),
                 ),
             ]

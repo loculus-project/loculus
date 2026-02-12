@@ -87,7 +87,7 @@ processing_spec:
   extracted_regex_field:
     function: extract_regex
     args:
-      pattern: "^EPI_ISL_(?P<id>[0-9]+)$"
+      pattern: "^EPI_ISL_(?P<id>[0-9]+)?$"  # Note the optional group to allow for testing of missing values
       capture_group: id
     inputs:
       regex_field: regex_field
