@@ -1,23 +1,21 @@
-import { type FC, useId, useMemo } from 'react';
+import { type FC, useMemo } from 'react';
 
+import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
+import { SingleChoiceAutoCompleteField } from './fields/SingleChoiceAutoCompleteField.tsx';
+import type { FieldValues, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
-import {
-    getSegmentNames,
-    segmentsWithMultipleReferences,
-    type SegmentReferenceSelections,
-} from '../../utils/sequenceTypeHelpers.ts';
-import { Button } from '../common/Button.tsx';
-import { Select } from '../common/Select.tsx';
-import MaterialSymbolsClose from '~icons/material-symbols/close';
+import { getSegmentNames, segmentsWithMultipleReferences } from '../../utils/sequenceTypeHelpers.ts';
 
 type ReferenceSelectorProps = {
     filterSchema: MetadataFilterSchema;
     referenceGenomesInfo: ReferenceGenomesInfo;
     referenceIdentifierField: string;
-    setSelectedReferences: (newValues: SegmentReferenceSelections) => void;
-    selectedReferences: SegmentReferenceSelections;
+    fieldValues: FieldValues;
+    setSomeFieldValues: SetSomeFieldValues;
+    lapisUrl: string;
+    lapisSearchParameters: LapisSearchParameters;
 };
 
 /**
@@ -30,85 +28,61 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
     filterSchema,
     referenceGenomesInfo,
     referenceIdentifierField,
-    selectedReferences,
-    setSelectedReferences,
+    fieldValues,
+    setSomeFieldValues,
+    lapisUrl,
+    lapisSearchParameters,
 }) => {
-    const baseSelectId = useId();
-
     const segments = getSegmentNames(referenceGenomesInfo);
+    const multiRefSegments = segmentsWithMultipleReferences(referenceGenomesInfo);
 
-    if (segmentsWithMultipleReferences(referenceGenomesInfo).length === 0) {
-        return null;
-    }
-
-    const labelsBySegment = useMemo(() => {
-        return segments.reduce<Record<string, string | undefined>>((acc, segmentName) => {
-            const identifier = getReferenceIdentifier(
+    const fieldInfoBySegment = useMemo(() => {
+        return segments.reduce<Record<string, { label: string; fieldName: string }>>((acc, segmentName) => {
+            const fieldName = getReferenceIdentifier(
                 referenceIdentifierField,
                 segmentName,
                 referenceGenomesInfo.isMultiSegmented,
             );
 
-            acc[segmentName] = identifier ? filterSchema.filterNameToLabelMap()[identifier] : undefined;
+            const label = fieldName ? (filterSchema.filterNameToLabelMap()[fieldName] ?? '') : '';
+
+            acc[segmentName] = { label, fieldName };
 
             return acc;
         }, {});
     }, [filterSchema, referenceIdentifierField, referenceGenomesInfo]);
 
+    if (multiRefSegments.length === 0) {
+        return null;
+    }
+
     return (
         <>
-            {segmentsWithMultipleReferences(referenceGenomesInfo).map((segment) => {
-                const selectId = `${baseSelectId}-${segment}`;
+            {multiRefSegments.map((segment) => {
+                const { label, fieldName } = fieldInfoBySegment[segment];
+
+                const field: MetadataFilter = {
+                    name: fieldName,
+                    displayName: label,
+                    type: 'string',
+                };
 
                 return (
                     <div key={segment} className='bg-gray-50 border border-gray-300 rounded-md p-3 mb-3'>
-                        <label className='block text-xs font-semibold text-gray-700 mb-1' htmlFor={selectId}>
-                            {labelsBySegment[segment]}
-                        </label>
-
-                        <div className='relative'>
-                            <Select
-                                id={selectId}
-                                value={selectedReferences[segment] ?? ''}
-                                onChange={(e) =>
-                                    setSelectedReferences({
-                                        ...selectedReferences,
-                                        [segment]: e.target.value,
-                                    })
-                                }
-                                className='w-full px-2 py-1.5 rounded border border-gray-300 text-sm bg-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200'
-                            >
-                                <option value='' disabled>
-                                    Select {formatLabel(labelsBySegment[segment] ?? '')}...
-                                </option>
-
-                                {Object.keys(referenceGenomesInfo.segmentReferenceGenomes[segment]).map((reference) => (
-                                    <option key={reference} value={reference}>
-                                        {reference}
-                                    </option>
-                                ))}
-                            </Select>
-
-                            {selectedReferences[segment] != null && (
-                                <Button
-                                    className='absolute top-2 right-6 flex items-center pr-2 h-5 bg-white rounded-sm'
-                                    onClick={() =>
-                                        setSelectedReferences({
-                                            ...selectedReferences,
-                                            [segment]: null,
-                                        })
-                                    }
-                                    aria-label={`Clear ${labelsBySegment[segment] ?? ''}`}
-                                    type='button'
-                                >
-                                    <MaterialSymbolsClose className='w-5 h-5 text-gray-400' />
-                                </Button>
-                            )}
-                        </div>
+                        <SingleChoiceAutoCompleteField
+                            field={field}
+                            optionsProvider={{
+                                type: 'generic',
+                                lapisUrl,
+                                lapisSearchParameters,
+                                fieldName,
+                            }}
+                            setSomeFieldValues={setSomeFieldValues}
+                            fieldValue={(fieldValues[fieldName] as string | undefined) ?? ''}
+                        />
 
                         <p className='text-xs text-gray-600 mt-2'>
-                            Select a {formatLabel(labelsBySegment[segment] ?? '')} to enable mutation search and
-                            download of aligned sequences
+                            Select a {formatLabel(label)} to enable mutation search and download of aligned sequences
                         </p>
                     </div>
                 );

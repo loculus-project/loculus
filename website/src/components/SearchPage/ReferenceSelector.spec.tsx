@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ReferenceSelector } from './ReferenceSelector.tsx';
+import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import {
     MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
@@ -10,7 +11,23 @@ import {
 } from '../../types/referenceGenomes.spec.ts';
 import { MetadataFilterSchema } from '../../utils/search.ts';
 
+vi.mock('../../services/serviceHooks.ts');
+vi.mock('../../clientLogger.ts', () => ({
+    getClientLogger: () => ({
+        error: vi.fn(),
+    }),
+}));
+
+const mockUseAggregated = vi.fn();
+// @ts-expect-error mock implementation for test double
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+lapisClientHooks.mockReturnValue({
+    useAggregated: mockUseAggregated,
+});
+
 const referenceIdentifierField = 'genotype';
+const lapisUrl = 'http://lapis.dummy.url';
+const lapisSearchParameters = {};
 
 const filterSchema = new MetadataFilterSchema([
     {
@@ -34,83 +51,135 @@ const multiSegmentFilterSchema = new MetadataFilterSchema([
 ]);
 
 describe('ReferenceSelector', () => {
+    beforeEach(() => {
+        mockUseAggregated.mockReset();
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { genotype: 'ref1', count: 100 },
+                    { genotype: 'ref2', count: 200 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
+        });
+    });
+
     it('renders nothing in single reference case', () => {
         const { container } = render(
             <ReferenceSelector
                 filterSchema={filterSchema}
                 referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
-                selectedReferences={{ main: null }}
-                setSelectedReferences={vi.fn()}
+                fieldValues={{}}
+                setSomeFieldValues={vi.fn()}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
         expect(container).toBeEmptyDOMElement();
     });
 
-    it('renders selector UI in multi-reference case', () => {
-        const setSelected = vi.fn();
+    it('renders autocomplete UI in multi-reference case', async () => {
         render(
             <ReferenceSelector
                 filterSchema={filterSchema}
                 referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
-                selectedReferences={{ main: null }}
-                setSelectedReferences={setSelected}
+                fieldValues={{}}
+                setSomeFieldValues={vi.fn()}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
-        expect(screen.getByText('My Genotype')).toBeInTheDocument();
-        expect(screen.getByRole('combobox')).toBeInTheDocument();
-        expect(screen.getAllByRole('option')).toHaveLength(3); // Includes disabled option
+        const input = screen.getByLabelText('My Genotype');
+        expect(input).toBeInTheDocument();
+
+        await userEvent.click(input);
+
+        const options = await screen.findAllByRole('option');
+        expect(options).toHaveLength(2);
     });
 
-    it('renders selector UI in multi-segment multi-reference case', () => {
-        const setSelected = vi.fn();
+    it('renders autocomplete UI in multi-segment multi-reference case', async () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    { genotype_L: 'ref1', count: 50 },
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    { genotype_L: 'ref2', count: 75 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
+        });
+
         render(
             <ReferenceSelector
                 filterSchema={multiSegmentFilterSchema}
                 referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
-                selectedReferences={{ main: null }}
-                setSelectedReferences={setSelected}
+                fieldValues={{}}
+                setSomeFieldValues={vi.fn()}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
-        expect(screen.getByText('My Genotype L')).toBeInTheDocument();
-        expect(screen.getByRole('combobox')).toBeInTheDocument();
-        expect(screen.getAllByRole('option')).toHaveLength(3); // Includes disabled option
+        const input = screen.getByLabelText('My Genotype L');
+        expect(input).toBeInTheDocument();
+
+        await userEvent.click(input);
+
+        const options = await screen.findAllByRole('option');
+        expect(options).toHaveLength(2);
     });
 
-    it('updates selection when changed', async () => {
-        const setSelected = vi.fn();
+    it('updates selection when an option is clicked', async () => {
+        const setSomeFieldValues = vi.fn();
         render(
             <ReferenceSelector
                 filterSchema={filterSchema}
                 referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
-                selectedReferences={{ main: null }}
-                setSelectedReferences={setSelected}
+                fieldValues={{}}
+                setSomeFieldValues={setSomeFieldValues}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
-        await userEvent.selectOptions(screen.getByRole('combobox'), 'ref1');
-        expect(setSelected).toHaveBeenCalledWith({ main: 'ref1' });
+        const input = screen.getByLabelText('My Genotype');
+        await userEvent.click(input);
+
+        const options = await screen.findAllByRole('option');
+        await userEvent.click(options[0]);
+
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['genotype', 'ref1']);
     });
 
-    it('shows clear button and clears selection', async () => {
-        const setSelected = vi.fn();
+    it('clears selection when clear button is clicked', async () => {
+        const setSomeFieldValues = vi.fn();
         render(
             <ReferenceSelector
                 filterSchema={filterSchema}
                 referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceIdentifierField={referenceIdentifierField}
-                selectedReferences={{ main: 'ref1' }}
-                setSelectedReferences={setSelected}
+                fieldValues={{ genotype: 'ref1' }}
+                setSomeFieldValues={setSomeFieldValues}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
-        await userEvent.click(screen.getByRole('button'));
-        expect(setSelected).toHaveBeenCalledWith({ main: null });
+        const clearButton = screen.getByLabelText('Clear My Genotype');
+        await userEvent.click(clearButton);
+
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['genotype', '']);
     });
 });

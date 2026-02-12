@@ -191,8 +191,10 @@ export const SearchForm = ({
                                 filterSchema={filterSchema}
                                 referenceGenomesInfo={referenceGenomesInfo}
                                 referenceIdentifierField={referenceSelection.referenceIdentifierField}
-                                selectedReferences={referenceSelection.selectedReferences}
-                                setSelectedReferences={referenceSelection.setSelectedReferences}
+                                fieldValues={fieldValues}
+                                setSomeFieldValues={setSomeFieldValues}
+                                lapisUrl={lapisUrl}
+                                lapisSearchParameters={lapisSearchParameters}
                             />
                         )}
                         <div className='mb-1'>

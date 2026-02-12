@@ -151,7 +151,6 @@ export function useSearchPageState({
         referenceGenomesInfo,
         referenceIdentifierField: schema.referenceIdentifierField,
         state,
-        setSomeFieldValues,
     });
 
     const removeFilter = useCallback(
