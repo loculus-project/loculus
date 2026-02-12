@@ -67,7 +67,6 @@ export const LineageField: FC<LineageFieldProps> = ({
                     includeSublineages,
                 }}
                 placeholder={field.displayName ?? field.name}
-                isClearVisible={(val, query) => (val !== '' && val !== undefined) || query !== ''}
             />
             <div className='flex flex-row justify-end'>
                 <label>
