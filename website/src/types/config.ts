@@ -119,6 +119,7 @@ export type GroupedMetadataFilter = {
     notSearchable?: boolean;
     initiallyVisible?: boolean;
     header?: string;
+    orderOnDetailsPage?: number;
 };
 
 export const linkOut = z.object({

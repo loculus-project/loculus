@@ -80,6 +80,11 @@ export const SearchForm = ({
         )
         .filter((field) => !excluded.has(field.name));
 
+    visibleFields.sort(
+        (a, b) =>
+            (a.orderOnDetailsPage ?? Number.POSITIVE_INFINITY) - (b.orderOnDetailsPage ?? Number.POSITIVE_INFINITY),
+    );
+
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
