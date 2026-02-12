@@ -5,6 +5,7 @@ import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGen
 import { type SequenceFilter } from './SequenceFilters';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
+import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers';
 import { processTemplate, matchPlaceholders } from '../../../utils/templateProcessor';
 import { Button } from '../../common/Button';
 import BasicModal from '../../common/Modal';
@@ -26,6 +27,7 @@ type LinkOutMenuProps = {
     sequenceCount?: number;
     linkOuts: LinkOut[];
     dataUseTermsEnabled: boolean;
+    segmentAndGeneInfo: SegmentAndGeneInfo;
 };
 
 export const LinkOutMenu: FC<LinkOutMenuProps> = ({
@@ -34,6 +36,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
     sequenceCount,
     linkOuts,
     dataUseTermsEnabled,
+    segmentAndGeneInfo,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isDataUseTermsModalVisible, setDataUseTermsModalVisible] = useState(false);
@@ -56,12 +59,16 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
         if (dataUseTermsEnabled) {
             setDataUseTermsModalVisible(true);
         } else {
-            const url = generateLinkOutUrl(currentLinkOut.current);
+            const url = generateLinkOutUrl(currentLinkOut.current, segmentAndGeneInfo);
             openUrl(url);
         }
     };
 
-    const generateLinkOutUrl = (linkOut: LinkOut, includeRestricted = false) => {
+    const generateLinkOutUrl = (
+        linkOut: LinkOut,
+        segmentAndGeneInfo: SegmentAndGeneInfo,
+        includeRestricted = false,
+    ) => {
         const placeholders = matchPlaceholders(linkOut.url);
 
         const urlMap: Record<string, string> = {};
@@ -89,7 +96,11 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                 dataFormat: dataFormat,
             };
 
-            const { url } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);
+            const { url } = downloadUrlGenerator.generateDownloadUrl(
+                sequenceFilter,
+                downloadOption,
+                segmentAndGeneInfo,
+            );
             urlMap[fullMatch.slice(1, -1)] = url;
         }
 
@@ -107,7 +118,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
 
     const handleIncludeRestricted = () => {
         if (currentLinkOut.current) {
-            const url = generateLinkOutUrl(currentLinkOut.current, true);
+            const url = generateLinkOutUrl(currentLinkOut.current, segmentAndGeneInfo, true);
             openUrl(url);
         }
         setDataUseTermsModalVisible(false);
@@ -115,7 +126,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
 
     const handleOpenLinkWithOpenOnly = () => {
         if (currentLinkOut.current) {
-            const url = generateLinkOutUrl(currentLinkOut.current, false);
+            const url = generateLinkOutUrl(currentLinkOut.current, segmentAndGeneInfo, false);
             openUrl(url);
         }
         setDataUseTermsModalVisible(false);

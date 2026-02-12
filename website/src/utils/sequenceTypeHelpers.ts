@@ -24,6 +24,7 @@ export type GeneInfo = {
     lapisName: string;
     /** the gene name as it should be displayed in the UI */
     name: string;
+    segmentName?: string;
 };
 
 export type SegmentAndGeneInfo = {
@@ -81,6 +82,7 @@ export function getGeneLapisName(geneName: string, referenceName: string, isMult
 
 export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGenomesInfo {
     const genomes: SegmentReferenceGenomes = {};
+    const segmentDisplayNames: Record<SegmentName, string> = {};
 
     const isMultiSegmented = (values?.length ?? 0) > 1;
     let useLapisMultiSegmentedEndpoint = isMultiSegmented;
@@ -90,6 +92,7 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
         const isMultiReferenced = segmentData.references.length > 1;
 
         genomes[segmentName] ??= {};
+        segmentDisplayNames[segmentName] = segmentData.displayName ?? segmentName;
 
         if (isMultiReferenced) {
             useLapisMultiSegmentedEndpoint = true;
@@ -105,6 +108,7 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
                           lapisName: getGeneLapisName(gene.name, ref.name, isMultiReferenced),
                       }))
                     : [],
+                displayName: ref.displayName,
             };
         }
     }
@@ -113,6 +117,7 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
         segmentReferenceGenomes: genomes,
         isMultiSegmented,
         useLapisMultiSegmentedEndpoint,
+        segmentDisplayNames,
     };
 }
 
@@ -141,14 +146,14 @@ export function getSegmentAndGeneInfo(
 
         if (isSingleReference) {
             nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentName });
-            geneInfos.push(...segmentData[Object.keys(segmentData)[0]].genes);
+            geneInfos.push(...segmentData[Object.keys(segmentData)[0]].genes.map((gene) => ({ ...gene, segmentName })));
             continue;
         }
         if (!selectedRef || !(selectedRef in segmentData)) {
             continue;
         }
         nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentData[selectedRef].lapisName });
-        geneInfos.push(...segmentData[selectedRef].genes);
+        geneInfos.push(...segmentData[selectedRef].genes.map((gene) => ({ ...gene, segmentName })));
     }
 
     return {

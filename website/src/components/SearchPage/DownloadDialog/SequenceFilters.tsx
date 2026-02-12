@@ -1,7 +1,9 @@
 import { type FieldValues } from '../../../types/config.ts';
+import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { intoMutationSearchParams } from '../../../utils/mutation.ts';
-import { MetadataFilterSchema } from '../../../utils/search.ts';
-import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
+import { getReferenceIdentifier } from '../../../utils/referenceSelection.ts';
+import { MetadataFilterSchema, MUTATION_KEY } from '../../../utils/search.ts';
+import { type SegmentAndGeneInfo, getSegmentNames } from '../../../utils/sequenceTypeHelpers.ts';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
@@ -22,12 +24,12 @@ export interface SequenceFilter {
     /**
      * Return the filter as params to use in API Queries.
      */
-    toApiParams(): LapisSearchParameters;
+    toApiParams(segmentAndGeneInfo: SegmentAndGeneInfo): LapisSearchParameters;
 
     /**
      * Return the filter as params to build a URL from.
      */
-    toUrlSearchParams(): [string, string | string[]][];
+    toUrlSearchParams(segmentAndGeneInfo: SegmentAndGeneInfo): [string, string | string[]][];
 
     /**
      * Return a map of keys to human-readable descriptions of the filters to apply.
@@ -44,7 +46,7 @@ export class FieldFilterSet implements SequenceFilter {
     private readonly filterSchema: MetadataFilterSchema;
     private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
-    private readonly suborganismSegmentAndGeneInfo: SegmentAndGeneInfo | null;
+    private readonly referenceGenomesInfo: ReferenceGenomesInfo;
 
     /**
      * @param filterSchema The {@link MetadataFilterSchema} to use. Provides labels and other
@@ -52,18 +54,18 @@ export class FieldFilterSet implements SequenceFilter {
      * @param fieldValues The {@link FieldValues} that are used to filter sequence entries.
      * @param hiddenFieldValues key-value combinations of fields that should be hidden when converting
      *     displaying the field values (because these are default values).
-     * @param suborganismSegmentAndGeneInfo Necessary to construct mutation API params.
+     * @param referenceGenomesInfo Necessary to construct mutation API params.
      */
     constructor(
         filterSchema: MetadataFilterSchema,
         fieldValues: FieldValues,
         hiddenFieldValues: FieldValues,
-        suborganismSegmentAndGeneInfo: SegmentAndGeneInfo | null,
+        referenceGenomesInfo: ReferenceGenomesInfo,
     ) {
         this.filterSchema = filterSchema;
         this.fieldValues = fieldValues;
         this.hiddenFieldValues = hiddenFieldValues;
-        this.suborganismSegmentAndGeneInfo = suborganismSegmentAndGeneInfo;
+        this.referenceGenomesInfo = referenceGenomesInfo;
     }
 
     /**
@@ -71,7 +73,17 @@ export class FieldFilterSet implements SequenceFilter {
      * This is a convenience function, mostly used for testing.
      */
     public static empty() {
-        return new FieldFilterSet(new MetadataFilterSchema([]), {}, {}, { nucleotideSegmentInfos: [], geneInfos: [] });
+        return new FieldFilterSet(
+            new MetadataFilterSchema([]),
+            {},
+            {},
+            {
+                isMultiSegmented: false,
+                segmentReferenceGenomes: {},
+                segmentDisplayNames: {},
+                useLapisMultiSegmentedEndpoint: false,
+            },
+        );
     }
 
     public sequenceCount(): number | undefined {
@@ -82,10 +94,13 @@ export class FieldFilterSet implements SequenceFilter {
         return this.toDisplayStrings().size === 0;
     }
 
-    public toApiParams(): LapisSearchParameters {
+    public toApiParams(segmentAndGeneInfo: SegmentAndGeneInfo): LapisSearchParameters {
+        const mutationSearchIdentifiers = getSegmentNames(this.referenceGenomesInfo).map((segmentName) =>
+            getReferenceIdentifier(MUTATION_KEY, segmentName, this.referenceGenomesInfo.isMultiSegmented),
+        );
         const sequenceFilters = Object.fromEntries(
             Object.entries(this.fieldValues as Record<string, any>).filter(
-                ([, value]) => value !== undefined && value !== '',
+                ([key, value]) => value !== undefined && value !== '' && !mutationSearchIdentifiers.includes(key),
             ),
         );
         for (const filterName of Object.keys(sequenceFilters)) {
@@ -101,10 +116,9 @@ export class FieldFilterSet implements SequenceFilter {
             sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
         }
 
-        delete sequenceFilters.mutation;
         const mutationSearchParams =
-            this.suborganismSegmentAndGeneInfo !== null
-                ? intoMutationSearchParams(this.fieldValues.mutation, this.suborganismSegmentAndGeneInfo)
+            this.referenceGenomesInfo.isMultiSegmented && Object.keys(segmentAndGeneInfo).length > 0
+                ? intoMutationSearchParams(this.fieldValues, segmentAndGeneInfo)
                 : {
                       aminoAcidInsertions: [],
                       aminoAcidMutations: [],
@@ -118,7 +132,7 @@ export class FieldFilterSet implements SequenceFilter {
         };
     }
 
-    public toUrlSearchParams(): [string, string | string[]][] {
+    public toUrlSearchParams(segmentAndGeneInfo: SegmentAndGeneInfo): [string, string | string[]][] {
         const result: [string, string | string[]][] = [];
 
         // keys that need special handling
@@ -131,7 +145,7 @@ export class FieldFilterSet implements SequenceFilter {
         ];
         const skipKeys = mutationKeys.concat([accessionKey]);
 
-        const lapisSearchParameters = this.toApiParams();
+        const lapisSearchParameters = this.toApiParams(segmentAndGeneInfo);
 
         // accession
         if (lapisSearchParameters.accession !== undefined) {

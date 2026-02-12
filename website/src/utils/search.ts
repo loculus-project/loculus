@@ -1,7 +1,8 @@
 import { sentenceCase } from 'change-case';
 
 import { validateSingleValue } from './extractFieldValue';
-import { segmentReferenceSelected, type SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
+import { getReferenceIdentifier } from './referenceSelection.ts';
+import { getSegmentNames, segmentReferenceSelected, type SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
 import type {
@@ -277,7 +278,11 @@ export class MetadataFilterSchema {
      * @param queryState the key-values set in the URL.
      * @param hiddenFieldValues The default settings to use for all {@link FieldValues} as a starting point.
      */
-    public getFieldValuesFromQuery(queryState: QueryState, hiddenFieldValues: FieldValues): FieldValues {
+    public getFieldValuesFromQuery(
+        queryState: QueryState,
+        hiddenFieldValues: FieldValues,
+        referenceGenomesInfo: ReferenceGenomesInfo,
+    ): FieldValues {
         const values: FieldValues = { ...hiddenFieldValues };
         for (const field of this.ungroupedMetadataFilters()) {
             const value = queryState[field.name];
@@ -296,9 +301,16 @@ export class MetadataFilterSchema {
             const val = validateSingleValue(queryState.accession, 'accession');
             values.accession = val === '' ? undefined : val;
         }
-        if (MUTATION_KEY in queryState) {
-            const val = validateSingleValue(queryState.mutation, MUTATION_KEY);
-            values.mutation = val === '' ? undefined : val;
+        for (const segmentName of getSegmentNames(referenceGenomesInfo)) {
+            const mutationParamName = getReferenceIdentifier(
+                MUTATION_KEY,
+                segmentName,
+                referenceGenomesInfo.isMultiSegmented,
+            );
+            if (mutationParamName in queryState) {
+                const val = validateSingleValue(queryState[mutationParamName], mutationParamName);
+                values[mutationParamName] = val;
+            }
         }
         return values;
     }

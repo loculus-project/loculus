@@ -167,7 +167,6 @@ describe('SearchForm', () => {
                     referenceSelection={{
                         referenceIdentifierField: 'My genotype',
                         selectedReferences: {},
-                        setSelectedReferences,
                     }}
                 />
             </QueryClientProvider>,

@@ -128,8 +128,8 @@ export const InnerSearchFullUI = ({
      * and the initial `state` (URL search params).
      */
     const fieldValues = useMemo(() => {
-        return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
-    }, [state, hiddenFieldValues, filterSchema]);
+        return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues, referenceGenomesInfo);
+    }, [state, hiddenFieldValues, filterSchema, referenceGenomesInfo]);
 
     useEffect(() => {
         if (showEditDataUseTermsControls && dataUseTermsEnabled) {
@@ -154,21 +154,23 @@ export const InnerSearchFullUI = ({
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
     const tableFilter = useMemo(
-        () =>
-            new FieldFilterSet(
-                filterSchema,
-                fieldValues,
-                hiddenFieldValues,
-                getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
-            ),
-        [fieldValues, hiddenFieldValues, referenceGenomesInfo, referenceSelection?.selectedReferences, filterSchema],
+        () => new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesInfo),
+        [fieldValues, hiddenFieldValues, referenceGenomesInfo, filterSchema],
+    );
+
+    const segmentAndGeneInfo = useMemo(
+        () => getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
+        [referenceGenomesInfo, referenceSelection?.selectedReferences],
     );
 
     /**
      * The `lapisSearchParameters` are derived from the `fieldValues` (the search boxes).
      * Some values are modified slightly or expanded based on field definitions.
      */
-    const lapisSearchParameters = useMemo(() => tableFilter.toApiParams(), [tableFilter]);
+    const lapisSearchParameters = useMemo(
+        () => tableFilter.toApiParams(segmentAndGeneInfo),
+        [tableFilter, segmentAndGeneInfo],
+    );
 
     const downloadFilter: SequenceFilter = sequencesSelected ? new SequenceEntrySelection(selectedSeqs) : tableFilter;
 
@@ -326,6 +328,7 @@ export const InnerSearchFullUI = ({
                                     clientConfig={clientConfig}
                                     accessToken={accessToken}
                                     sequenceFilter={downloadFilter}
+                                    segmentAndGeneInfo={segmentAndGeneInfo}
                                 />
                             )}
                             <Button
@@ -361,6 +364,7 @@ export const InnerSearchFullUI = ({
                                     sequenceCount={linkOutSequenceCount}
                                     linkOuts={linkOuts}
                                     dataUseTermsEnabled={dataUseTermsEnabled}
+                                    segmentAndGeneInfo={segmentAndGeneInfo}
                                 />
                             )}
                         </div>

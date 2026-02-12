@@ -1,4 +1,7 @@
+import { getReferenceIdentifier } from './referenceSelection';
+import { MUTATION_KEY } from './search';
 import { type BaseType, type SegmentAndGeneInfo, type SegmentInfo } from './sequenceTypeHelpers';
+import type { FieldValues } from '../types/config';
 
 export type MutationType = 'substitutionOrDeletion' | 'insertion';
 
@@ -21,19 +24,6 @@ export type MutationSearchParams = {
     aminoAcidMutations: string[];
     nucleotideInsertions: string[];
     aminoAcidInsertions: string[];
-};
-
-export const removeMutationQueries = (
-    mutations: string,
-    suborganismSegmentAndGeneInfo: SegmentAndGeneInfo,
-    baseType: BaseType,
-    mutationType: MutationType,
-): string => {
-    const mutationQueries = parseMutationsString(mutations, suborganismSegmentAndGeneInfo);
-    const filteredMutationQueries = mutationQueries.filter(
-        (mq) => !(mq.baseType === baseType && mq.mutationType === mutationType),
-    );
-    return serializeMutationQueries(filteredMutationQueries);
 };
 
 export const parseMutationsString = (
@@ -74,10 +64,29 @@ export const serializeMutationQueries = (selectedOptions: MutationQuery[]): stri
 };
 
 export const intoMutationSearchParams = (
-    mutation: string | undefined,
+    fieldValues: FieldValues,
     suborganismSegmentAndGeneInfo: SegmentAndGeneInfo,
 ): MutationSearchParams => {
-    const mutationFilter = parseMutationsString(mutation ?? '', suborganismSegmentAndGeneInfo);
+    let mutationFilter: MutationQuery[] = [];
+    for (const segment of suborganismSegmentAndGeneInfo.nucleotideSegmentInfos) {
+        const mutationParamName = getReferenceIdentifier(
+            MUTATION_KEY,
+            segment.name,
+            suborganismSegmentAndGeneInfo.multiSegmented === true,
+        );
+        const filteredSegmentAndGeneInfo: SegmentAndGeneInfo = {
+            ...suborganismSegmentAndGeneInfo,
+            nucleotideSegmentInfos: [segment],
+            geneInfos: suborganismSegmentAndGeneInfo.geneInfos.filter(
+                (geneInfo) => geneInfo.segmentName === segment.name,
+            ),
+        };
+        const segmentMutationFilter = parseMutationsString(
+            String(fieldValues[mutationParamName] ?? ''),
+            filteredSegmentAndGeneInfo,
+        );
+        mutationFilter = mutationFilter.concat(segmentMutationFilter);
+    }
 
     return {
         nucleotideMutations: mutationFilter
@@ -171,28 +180,20 @@ const isValidNucleotideInsertionQuery = (
     suborganismSegmentAndGeneInfo: SegmentAndGeneInfo,
 ): MutationTestResult => {
     try {
-        const multiSegmented = suborganismSegmentAndGeneInfo.multiSegmented === true;
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
             return INVALID;
         }
         const query = textUpper.slice(4);
         const split = query.split(':');
-        if ((!multiSegmented && split.length > 2) || (multiSegmented && split.length > 3)) {
+        if (split.length > 2) {
             return INVALID;
         }
-        const [segment, position, insertion] = multiSegmented
-            ? split
-            : ([undefined, ...split] as [undefined | string, string, string]);
+        const [position, insertion] = split;
 
-        const segmentInfo =
-            segment !== undefined
-                ? suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.find(
-                      (info) => info.name.toUpperCase() === segment,
-                  )
-                : suborganismSegmentAndGeneInfo.nucleotideSegmentInfos[0];
+        const segment = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos[0];
 
-        if (segmentInfo === undefined || !Number.isInteger(Number(position)) || !/^[A-Z?]+$/.test(insertion)) {
+        if (!Number.isInteger(Number(position)) || !/^[A-Z?]+$/.test(insertion)) {
             return INVALID;
         }
         return {
@@ -200,7 +201,7 @@ const isValidNucleotideInsertionQuery = (
             text,
             lapisQuery:
                 suborganismSegmentAndGeneInfo.useLapisMultiSegmentedEndpoint === true
-                    ? `ins_${segmentInfo.lapisName}:${position}:${insertion}`
+                    ? `ins_${segment.lapisName}:${position}:${insertion}`
                     : `ins_${position}:${insertion}`,
         };
     } catch (_) {
@@ -214,18 +215,10 @@ const isValidNucleotideMutationQuery = (
 ): MutationTestResult => {
     try {
         const textUpper = text.toUpperCase();
-        let mutation = textUpper;
-        let segmentInfo: SegmentInfo | undefined = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos[0];
+        const mutation = textUpper;
+        const segmentInfo: SegmentInfo | undefined = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos[0];
 
-        if (suborganismSegmentAndGeneInfo.multiSegmented === true) {
-            const [segment, _mutation] = textUpper.split(':');
-            segmentInfo = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.find(
-                (info) => info.name.toUpperCase() === segment,
-            );
-            mutation = _mutation;
-        }
-
-        if (segmentInfo === undefined || !/^[A-Z]?[0-9]+[A-Z-.]?$/.test(mutation)) {
+        if (!/^[A-Z]?[0-9]+[A-Z-.]?$/.test(mutation)) {
             return INVALID;
         }
 

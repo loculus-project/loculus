@@ -40,7 +40,7 @@ const queryClient = new QueryClient();
 
 const SearchSectionHeader: FC<{ title: string }> = ({ title }) => (
     <div className='flex items-center gap-2 mb-2'>
-        <h3 className='text-xs uppercase tracking-wide text-primary-700'>{title}</h3>
+        <h3 className='text-sm tracking-wide text-primary-700'>{title}</h3>
     </div>
 );
 
@@ -200,6 +200,13 @@ export const SearchForm = ({
         }, {});
     }, [referenceGenomesInfo, referenceSelection?.selectedReferences]);
 
+    const mutationParamMap = useMemo(() => {
+        return getSegmentNames(referenceGenomesInfo).reduce<Record<string, string>>((acc, segmentName) => {
+            acc[segmentName] = getReferenceIdentifier(MUTATION_KEY, segmentName, referenceGenomesInfo.isMultiSegmented);
+            return acc;
+        }, {});
+    }, [referenceGenomesInfo]);
+
     const segmentNames = getSegmentNames(referenceGenomesInfo);
 
     const renderSegmentContents = (segmentName: string) => (
@@ -221,8 +228,12 @@ export const SearchForm = ({
                 segmentReferenceSelected(segmentName, referenceGenomesInfo, referenceSelection?.selectedReferences) && (
                     <MutationField
                         suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo[segmentName]}
-                        value={'mutation' in fieldValues ? (fieldValues.mutation ?? '') : ''}
-                        onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
+                        value={
+                            mutationParamMap[segmentName] in fieldValues
+                                ? String(fieldValues[mutationParamMap[segmentName]] ?? '')
+                                : ''
+                        }
+                        onChange={(value) => setSomeFieldValues([mutationParamMap[segmentName], value])}
                     />
                 )}
 
@@ -330,7 +341,7 @@ export const SearchForm = ({
                                     segmentNames.map((segmentName) => (
                                         <CollapsibleSection
                                             key={segmentName}
-                                            title={segmentName}
+                                            title={referenceGenomesInfo.segmentDisplayNames[segmentName] ?? segmentName}
                                             open={false}
                                             subgroups
                                         >

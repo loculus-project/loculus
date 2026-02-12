@@ -123,6 +123,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: date
         initiallyVisible: true
         hideInSearchResultsTable: true
+        hideOnSequenceDetailsPage: true
         header: Sample details
         orderOnDetailsPage: 220
         preprocessing:
@@ -142,6 +143,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: date
         initiallyVisible: true
         hideInSearchResultsTable: true
+        hideOnSequenceDetailsPage: true
         header: Sample details
         orderOnDetailsPage: 240
         preprocessing:
@@ -1944,6 +1946,7 @@ defaultOrganisms:
           molecule_type: "genomic RNA"
     referenceGenomes:
       - name: L
+        displayName: L segment
         references:
           - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
@@ -1952,28 +1955,34 @@ defaultOrganisms:
               - name: RdRp
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
       - name: M
+        displayName: M segment
         references:
           - name: MH396653
+            displayName: "M (MH396653.1)"
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/MH396653/reference.fasta]]"
             insdcAccessionFull: MH396653.1
             genes:
               - name: GPC
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/MH396653/GPC.fasta]]"
           - name: OR047158
+            displayName: "M (OR047158.1)"
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/OR047158/reference.fasta]]"
             insdcAccessionFull: OR047158.1
             genes:
               - name: GPC
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/OR047158/GPC.fasta]]"
       - name: S
+        displayName: S segment
         references:
           - name: 1and6
+            displayName: "S (MK299338.1)"
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/reference.fasta]]"
             insdcAccessionFull: MK299338.1
             genes:
               - name: NP
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/NP.fasta]]"
           - name: 2to5
+            displayName: "S (OL774851.1)"
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/OL774851/reference.fasta]]"
             insdcAccessionFull: OL774851.1
             genes:
