@@ -38,6 +38,7 @@ type SingleChoiceAutoCompleteFieldProps = {
     optionsProvider: OptionsProvider;
     setSomeFieldValues: SetSomeFieldValues;
     fieldValue?: string | number | null;
+    fieldDisplayNameMap?: Map<string, string>;
     maxDisplayedOptions?: number;
 };
 
@@ -46,6 +47,7 @@ export const SingleChoiceAutoCompleteField = ({
     optionsProvider,
     setSomeFieldValues,
     fieldValue,
+    fieldDisplayNameMap,
     maxDisplayedOptions = 1000,
 }: SingleChoiceAutoCompleteFieldProps) => {
     const [query, setQuery] = useState('');
@@ -137,7 +139,7 @@ export const SingleChoiceAutoCompleteField = ({
                                                             option.option === '(blank)' ? 'italic' : ''
                                                         }`}
                                                     >
-                                                        {option.option}
+                                                        {fieldDisplayNameMap?.get(option.option) ?? option.option}
                                                     </span>
                                                     {option.count !== undefined && (
                                                         <span className='inline-block ml-1'>

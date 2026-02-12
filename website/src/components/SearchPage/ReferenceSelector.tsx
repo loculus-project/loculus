@@ -45,6 +45,16 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
         return fieldName ? filterSchema.filterNameToLabelMap()[fieldName] : undefined;
     }, [filterSchema, referenceIdentifierField]);
 
+    const referenceDisplayNameMap = useMemo(
+        () =>
+            new Map(
+                Object.entries(referenceGenomesInfo.segmentReferenceGenomes[segmentName]).map(
+                    ([ref, refData]) => [ref, refData.displayName ?? ref] as const,
+                ),
+            ),
+        [referenceGenomesInfo.segmentReferenceGenomes, segmentName],
+    );
+
     return (
         <div key={segmentName} className='bg-gray-50 border border-gray-300 rounded-md p-3 mb-3'>
             <SingleChoiceAutoCompleteField
@@ -61,6 +71,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                 }}
                 setSomeFieldValues={setSomeFieldValues}
                 fieldValue={(fieldValues[fieldName] as string | undefined) ?? ''}
+                fieldDisplayNameMap={referenceDisplayNameMap}
             />
 
             <p className='text-xs text-gray-600 mt-2'>
