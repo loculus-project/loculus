@@ -503,6 +503,23 @@
                   },
                   "description": "Columns to display in the browse table"
                 },
+                "detailsPageHeaders": {
+                  "groups": ["schema"],
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "order": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": ["name"]
+                  },
+                  "description": "Headers of metadata field groups to display on the sequence details page."
+                },
                 "defaultOrderBy": {
                   "groups": ["schema"],
                   "type": "string",

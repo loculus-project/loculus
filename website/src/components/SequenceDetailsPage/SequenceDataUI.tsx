@@ -58,7 +58,7 @@ export const SequenceDataUI: FC<Props> = ({
 
     const loadSequencesAutomatically = schema.loadSequencesAutomatically === true;
 
-    const dataTableData = getDataTableData(tableData);
+    const dataTableData = getDataTableData(tableData, schema);
 
     const reportUrl = getGitHubReportUrl(sequenceFlaggingConfig, organism, accessionVersion);
 

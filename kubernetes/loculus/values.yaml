@@ -1322,6 +1322,29 @@ defaultOrganismConfig: &defaultOrganismConfig
         - length
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
+      detailsPageHeaders:
+        - name: "Sample details"
+          order: 1
+        - name: "Submission details"
+          order: 10
+        - name: "Data use terms"
+          order: 20
+        - name: "Authors"
+          order: 30
+        - name: "Host"
+          order: 40
+        - name: "INSDC"
+          order: 50
+        - name: "Lineage"
+          order: 60
+        - name: "Alignment and QC metrics"
+          order: 70
+        - name: "Nucleotide mutations"
+          order: 80
+        - name: "Amino acid mutations"
+          order: 90
+        - name: "Files"
+          order: 100
     extraInputFields: []
   preprocessing:
     - &preprocessing

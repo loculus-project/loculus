@@ -1,4 +1,5 @@
 import type { TableDataEntry } from './types.ts';
+import type { Schema } from '../../types/config.ts';
 
 export type DataTableData = {
     topmatter: {
@@ -58,7 +59,7 @@ function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
     });
 }
 
-export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTableData {
+export function getDataTableData(listTableDataEntries: TableDataEntry[], schema: Schema): DataTableData {
     const result: DataTableData = {
         topmatter: {
             authors: undefined,
@@ -104,21 +105,21 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
         tableHeaderMap.get(entry.header)!.push(entry);
     }
 
-    const headerGroups: { header: string; rows: TableDataEntry[]; meanOrder: number }[] = [];
+    const headerGroups: { header: string; rows: TableDataEntry[] }[] = [];
     for (const [header, rows] of tableHeaderMap.entries()) {
         rows.sort(
             (a, b) =>
                 (a.orderOnDetailsPage ?? Number.POSITIVE_INFINITY) - (b.orderOnDetailsPage ?? Number.POSITIVE_INFINITY),
         );
-        const definedOrders = rows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
-        const meanOrder =
-            definedOrders.length > 0
-                ? definedOrders.reduce((sum, o) => sum + o, 0) / definedOrders.length
-                : Number.POSITIVE_INFINITY;
-        headerGroups.push({ header, rows, meanOrder });
+        headerGroups.push({ header, rows });
     }
 
-    headerGroups.sort((a, b) => a.meanOrder - b.meanOrder);
+    headerGroups.sort((a, b) => {
+        const aOrder = schema.detailsPageHeaders?.find((h) => h.name === a.header)?.order ?? Number.POSITIVE_INFINITY;
+        const bOrder = schema.detailsPageHeaders?.find((h) => h.name === b.header)?.order ?? Number.POSITIVE_INFINITY;
+        return aOrder - bOrder;
+    });
+
     result.table = headerGroups.map(({ header, rows }) => ({ header, rows }));
 
     return result;

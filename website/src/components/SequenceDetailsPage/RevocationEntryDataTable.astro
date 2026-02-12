@@ -17,6 +17,7 @@ import {
     DATA_USE_TERMS_FIELD,
 } from '../../settings';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
+import type { Schema } from '../../types/config';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers';
 
@@ -25,9 +26,10 @@ interface Props {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     referenceGenomesInfo: ReferenceGenomesInfo;
     segmentReferences?: SegmentReferenceSelections;
+    schema: Schema;
 }
 
-const { tableData, dataUseTermsHistory, referenceGenomesInfo, segmentReferences } = Astro.props;
+const { tableData, dataUseTermsHistory, referenceGenomesInfo, segmentReferences, schema } = Astro.props;
 const relevantFieldsForRevocationVersions = [
     ACCESSION_VERSION_FIELD,
     ACCESSION_FIELD,
@@ -44,7 +46,7 @@ const relevantFieldsForRevocationVersions = [
 ];
 
 const relevantData = tableData.filter((entry) => relevantFieldsForRevocationVersions.includes(entry.name));
-const dataTableData = getDataTableData(relevantData);
+const dataTableData = getDataTableData(relevantData, schema);
 ---
 
 <DataTable

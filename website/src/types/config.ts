@@ -148,6 +148,11 @@ export const submissionDataTypesSchema = z.object({
 
 export type SubmissionDataTypes = z.infer<typeof submissionDataTypesSchema>;
 
+export const headers = z.object({
+    name: z.string(),
+    order: z.number(),
+});
+
 export const schema = z.object({
     organismName: z.string(),
     image: z.string().optional(),
@@ -164,6 +169,7 @@ export const schema = z.object({
     richFastaHeaderFields: z.array(z.string()).optional(),
     linkOuts: z.array(linkOut).optional(),
     referenceIdentifierField: z.string().optional(),
+    detailsPageHeaders: z.array(headers).optional(),
 });
 export type Schema = z.infer<typeof schema>;
 
