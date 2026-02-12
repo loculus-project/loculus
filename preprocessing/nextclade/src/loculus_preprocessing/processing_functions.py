@@ -901,7 +901,7 @@ class ProcessingFunctions:
         if match:
             try:
                 result = match.group(capture_group)
-                if uppercase:
+                if result is not None and uppercase:
                     result = result.upper()
                 return ProcessingResult(datum=result, warnings=warnings, errors=errors)
             except IndexError:
