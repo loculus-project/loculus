@@ -312,6 +312,9 @@ open class SubmissionController(
         @Parameter(
             description = "(Optional) Only retrieve all released data if Etag has changed.",
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
+        @Parameter(
+            description = "(Optional) Only retrieve data released after this ISO-8601 timestamp (e.g. 2024-01-15T10:30:00).",
+        ) @RequestParam(required = false) releasedSince: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
             RELEASED_DATA_RELATED_TABLES,
@@ -320,12 +323,23 @@ open class SubmissionController(
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
         }
 
+        val parsedReleasedSince = releasedSince?.let {
+            try {
+                kotlinx.datetime.LocalDateTime.parse(it)
+            } catch (e: IllegalArgumentException) {
+                throw org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid releasedSince format. Expected ISO-8601 (e.g. 2024-01-15T10:30:00): $it",
+                )
+            }
+        }
+
         val headers = HttpHeaders()
         headers.eTag = lastDatabaseWriteETag
         headers.contentType = MediaType.APPLICATION_NDJSON
         compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
 
-        val totalRecords = submissionDatabaseService.countReleasedSubmissions(organism)
+        val totalRecords = submissionDatabaseService.countReleasedSubmissions(organism, parsedReleasedSince)
         headers.add(X_TOTAL_RECORDS, totalRecords.toString())
         // TODO(https://github.com/loculus-project/loculus/issues/2778)
         // There's a possibility that the totalRecords change between the count and the actual query
@@ -334,7 +348,7 @@ open class SubmissionController(
         // Alternatively, we could read once to file while counting and then stream the file
 
         val streamBody = streamTransactioned(compression, endpoint = "get-released-data", organism = organism) {
-            releasedDataModel.getReleasedData(organism)
+            releasedDataModel.getReleasedData(organism, parsedReleasedSince)
         }
         return ResponseEntity.ok().headers(headers).body(streamBody)
     }

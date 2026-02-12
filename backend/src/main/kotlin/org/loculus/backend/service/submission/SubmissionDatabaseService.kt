@@ -710,21 +710,24 @@ class SubmissionDatabaseService(
     }
 
     // Make sure to keep in sync with streamReleasedSubmissions query
-    fun countReleasedSubmissions(organism: Organism): Long {
+    fun countReleasedSubmissions(organism: Organism, releasedSince: LocalDateTime? = null): Long {
         val startTime = dateProvider.getCurrentInstant()
         val result = SequenceEntriesView.select(
             SequenceEntriesView.accessionColumn,
         ).where {
-            SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
-                organism,
-            )
+            var condition = SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and
+                SequenceEntriesView.organismIs(organism)
+            if (releasedSince != null) {
+                condition = condition and (SequenceEntriesView.releasedAtTimestampColumn greater releasedSince)
+            }
+            condition
         }.count()
         log.info { "Counting released submissions for $organism took ${durationTillNowInMs(startTime)} ms" }
         return result
     }
 
     // Make sure to keep in sync with countReleasedSubmissions query
-    fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = SequenceEntriesView.join(
+    fun streamReleasedSubmissions(organism: Organism, releasedSince: LocalDateTime? = null): Sequence<RawProcessedData> = SequenceEntriesView.join(
         DataUseTermsTable,
         JoinType.LEFT,
         additionalConstraint = {
@@ -749,9 +752,12 @@ class SubmissionDatabaseService(
             DataUseTermsTable.changeDateColumn,
         )
         .where {
-            SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
-                organism,
-            )
+            var condition = SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and
+                SequenceEntriesView.organismIs(organism)
+            if (releasedSince != null) {
+                condition = condition and (SequenceEntriesView.releasedAtTimestampColumn greater releasedSince)
+            }
+            condition
         }
         .orderBy(
             SequenceEntriesView.accessionColumn to SortOrder.ASC,
