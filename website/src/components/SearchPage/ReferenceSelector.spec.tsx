@@ -69,7 +69,7 @@ describe('ReferenceSelector', () => {
         expect(container).toBeEmptyDOMElement();
     });
 
-    it('renders selector UI in multi-reference case', () => {
+    it('renders selector UI in multi-reference case', async () => {
         mockUseAggregated.mockReturnValue({
             data: {
                 data: [
@@ -95,14 +95,15 @@ describe('ReferenceSelector', () => {
         );
 
         expect(screen.getByText('My Genotype')).toBeInTheDocument();
-        expect(screen.getByRole('combobox')).toBeInTheDocument();
-        expect(screen.getAllByRole('option')).toHaveLength(3); // Includes disabled option
+        await userEvent.click(screen.getByLabelText('Select my Genotype...'));
+
+        expect(screen.getAllByRole('option')).toHaveLength(2);
         const options = screen.getAllByRole('option');
         const optionTexts = options.map((option) => option.textContent);
-        expect(optionTexts).toEqual(expect.arrayContaining(['ref1 (10)', 'ref2(20)']));
+        expect(optionTexts).toEqual(expect.arrayContaining(['ref1(10)', 'ref2(20)']));
     });
 
-    it('renders selector UI in multi-segment multi-reference case', () => {
+    it('renders selector UI in multi-segment multi-reference case', async () => {
         mockUseAggregated.mockReturnValue({
             data: {
                 data: [
@@ -128,8 +129,9 @@ describe('ReferenceSelector', () => {
         );
 
         expect(screen.getByText('My Genotype L')).toBeInTheDocument();
-        expect(screen.getByRole('combobox')).toBeInTheDocument();
-        expect(screen.getAllByRole('option')).toHaveLength(3); // Includes disabled option
+        await userEvent.click(screen.getByLabelText('Select my Genotype L...'));
+
+        expect(screen.getAllByRole('option')).toHaveLength(2);
     });
 
     it('updates selection when changed', async () => {
@@ -157,8 +159,12 @@ describe('ReferenceSelector', () => {
             />,
         );
 
-        await userEvent.selectOptions(screen.getByRole('combobox'), 'ref1');
-        expect(setSelected).toHaveBeenCalledWith({ main: 'ref1' });
+        await userEvent.click(screen.getByLabelText('Select my Genotype...'));
+
+        const options = await screen.findAllByRole('option');
+        expect(options.length).toBe(2);
+        await userEvent.click(options[1]);
+        expect(setSelected).toHaveBeenCalledWith({ main: 'ref2' });
     });
 
     it('shows clear button and clears selection', async () => {
@@ -186,7 +192,7 @@ describe('ReferenceSelector', () => {
             />,
         );
 
-        await userEvent.click(screen.getByRole('button'));
+        await userEvent.click(screen.getByRole('button', { name: /clear select my genotype/i }));
         expect(setSelected).toHaveBeenCalledWith({ main: null });
     });
 });
