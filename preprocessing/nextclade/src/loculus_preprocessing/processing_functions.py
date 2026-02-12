@@ -1263,7 +1263,8 @@ def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> In
         data = ast.literal_eval(input)
         for entry in data:
             if entry.get("name") == name:
-                return InputData(datum=str(entry.get("value")))
+                value = entry.get("value")
+                return InputData(datum=str(value) if value is not None else None)
     except Exception as e:
         msg = (
             "Was unable to process phenotype values - this is likely an internal error. "
