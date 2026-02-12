@@ -24,6 +24,7 @@ export type GeneInfo = {
     lapisName: string;
     /** the gene name as it should be displayed in the UI */
     name: string;
+    segmentName?: string;
 };
 
 export type SegmentAndGeneInfo = {
@@ -81,6 +82,7 @@ export function getGeneLapisName(geneName: string, referenceName: string, isMult
 
 export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGenomesInfo {
     const genomes: SegmentReferenceGenomes = {};
+    const segmentDisplayNames: Record<SegmentName, string> = {};
 
     const isMultiSegmented = (values?.length ?? 0) > 1;
     let useLapisMultiSegmentedEndpoint = isMultiSegmented;
@@ -90,6 +92,7 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
         const isMultiReferenced = segmentData.references.length > 1;
 
         genomes[segmentName] ??= {};
+        segmentDisplayNames[segmentName] = segmentData.displayName ?? segmentName;
 
         if (isMultiReferenced) {
             useLapisMultiSegmentedEndpoint = true;
@@ -105,6 +108,7 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
                           lapisName: getGeneLapisName(gene.name, ref.name, isMultiReferenced),
                       }))
                     : [],
+                displayName: ref.displayName,
             };
         }
     }
@@ -113,6 +117,7 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
         segmentReferenceGenomes: genomes,
         isMultiSegmented,
         useLapisMultiSegmentedEndpoint,
+        segmentDisplayNames,
     };
 }
 
@@ -127,24 +132,28 @@ export const getSegmentNames = (genomes: ReferenceGenomesInfo) => Object.keys(ge
 export function getSegmentAndGeneInfo(
     referenceGenomesInfo: ReferenceGenomesInfo,
     selectedReferences?: SegmentReferenceSelections,
+    segment?: string,
 ): SegmentAndGeneInfo {
     const nucleotideSegmentInfos: SegmentInfo[] = [];
     const geneInfos: GeneInfo[] = [];
 
     for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
+        if (segment && segmentName !== segment) {
+            continue;
+        }
         const isSingleReference = Object.keys(segmentData).length === 1;
         const selectedRef = selectedReferences?.[segmentName] ?? null;
 
         if (isSingleReference) {
             nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentName });
-            geneInfos.push(...segmentData[Object.keys(segmentData)[0]].genes);
+            geneInfos.push(...segmentData[Object.keys(segmentData)[0]].genes.map((gene) => ({ ...gene, segmentName })));
             continue;
         }
         if (!selectedRef || !(selectedRef in segmentData)) {
             continue;
         }
         nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentData[selectedRef].lapisName });
-        geneInfos.push(...segmentData[selectedRef].genes);
+        geneInfos.push(...segmentData[selectedRef].genes.map((gene) => ({ ...gene, segmentName })));
     }
 
     return {
@@ -201,14 +210,28 @@ export function segmentsWithMultipleReferences(referenceGenomesInfo: ReferenceGe
     );
 }
 
-export function stillRequiresReferenceNameSelection(
+export function notAllReferencesSelected(
     referenceGenomesInfo: ReferenceGenomesInfo,
     selectedReferenceNames?: SegmentReferenceSelections,
-) {
+): boolean {
     if (selectedReferenceNames === undefined) {
         return false;
     }
     return segmentsWithMultipleReferences(referenceGenomesInfo).some(
         (segment) => selectedReferenceNames[segment] === null,
     );
+}
+
+export function segmentReferenceSelected(
+    segmentName: SegmentName,
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    selectedReferenceNames?: SegmentReferenceSelections,
+): boolean {
+    if (!segmentsWithMultipleReferences(referenceGenomesInfo).includes(segmentName)) {
+        return true;
+    }
+    if (selectedReferenceNames === undefined) {
+        return true;
+    }
+    return selectedReferenceNames[segmentName] !== null;
 }

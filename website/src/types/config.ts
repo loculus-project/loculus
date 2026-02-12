@@ -16,6 +16,8 @@ export const metadataPossibleTypes = z.enum([
     'authors',
 ] as const);
 
+export const metadataScopeTypes = z.enum(['sample', 'sequence'] as const);
+
 export const mutationBadgeData = mutationProportionCount.pick({
     sequenceName: true,
     mutationFrom: true,
@@ -28,6 +30,11 @@ export const segmentedMutations = z.object({
     mutations: z.array(mutationBadgeData),
 });
 
+export const segmentedMutationStrings = z.object({
+    segment: z.string(),
+    mutations: z.array(z.string()),
+});
+
 export const linkMenuItem = z.object({
     name: z.string(),
     url: z.string(),
@@ -37,7 +44,8 @@ export const customDisplay = z.object({
     type: z.string(),
     url: z.string().optional(),
     html: z.string().optional(),
-    value: z.array(segmentedMutations).optional(),
+    badge: z.array(segmentedMutations).optional(),
+    list: z.array(segmentedMutationStrings).optional(),
     displayGroup: z.string().optional(),
     label: z.string().optional(),
     linkMenuItems: z.array(linkMenuItem).optional(),
@@ -76,6 +84,8 @@ export const metadata = z.object({
     orderOnDetailsPage: z.number().optional(),
     includeInDownloadsByDefault: z.boolean().optional(),
     onlyForReference: z.string().optional(),
+    metadataScope: metadataScopeTypes.optional(),
+    sequenceMetadataScope: z.string().optional(),
 });
 
 export const inputFieldOption = z.object({
@@ -102,6 +112,7 @@ export type Metadata = z.infer<typeof metadata>;
 export type MetadataType = z.infer<typeof metadataPossibleTypes>;
 export type MutationBadgeData = z.infer<typeof mutationBadgeData>;
 export type SegmentedMutations = z.infer<typeof segmentedMutations>;
+export type SegmentedMutationStrings = z.infer<typeof segmentedMutationStrings>;
 
 export type MetadataFilter = Metadata & {
     fieldGroup?: string;
@@ -120,6 +131,8 @@ export type GroupedMetadataFilter = {
     notSearchable?: boolean;
     initiallyVisible?: boolean;
     header?: string;
+    metadataScope?: Metadata['metadataScope'];
+    sequenceMetadataScope?: Metadata['sequenceMetadataScope'];
 };
 
 export const linkOut = z.object({
@@ -223,7 +236,6 @@ export type FieldValue = string | null | (string | null)[];
 export type FieldValueUpdate = [string, FieldValue];
 
 export type FieldValues = {
-    mutation?: string;
     accession?: string;
 } & Record<string, FieldValue>;
 export type SetSomeFieldValues = (...fieldValuesToSet: FieldValueUpdate[]) => void;

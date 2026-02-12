@@ -222,7 +222,11 @@ describe('FieldSelectorModal', () => {
                     new Map(
                         metadata.map((field) => [
                             field.name,
-                            new MetadataVisibility(result.current[0].has(field.name), field.onlyForReference),
+                            new MetadataVisibility(
+                                result.current[0].has(field.name),
+                                field.onlyForReference,
+                                field.sequenceMetadataScope,
+                            ),
                         ]),
                     )
                 }

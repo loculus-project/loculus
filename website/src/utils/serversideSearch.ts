@@ -35,9 +35,9 @@ export const performLapisSearchQueries = async (
     const suborganismSegmentAndGeneInfo = getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferences);
 
     const filterSchema = new MetadataFilterSchema(schema.metadata);
-    const fieldValues = filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
-    const fieldFilter = new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, suborganismSegmentAndGeneInfo);
-    const lapisSearchParameters = fieldFilter.toApiParams();
+    const fieldValues = filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues, referenceGenomesInfo);
+    const fieldFilter = new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesInfo);
+    const lapisSearchParameters = fieldFilter.toApiParams(suborganismSegmentAndGeneInfo);
 
     // Extract single-value parameters using validation
     const orderByField = ORDER_KEY in state ? validateSingleValue(state[ORDER_KEY], ORDER_KEY) : schema.defaultOrderBy;

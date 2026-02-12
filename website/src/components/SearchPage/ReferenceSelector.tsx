@@ -2,11 +2,11 @@ import { type FC, useMemo } from 'react';
 
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
 import { SingleChoiceAutoCompleteField } from './fields/SingleChoiceAutoCompleteField.tsx';
-import type { FieldValues, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
+import type { FieldValues, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
-import { getSegmentNames, segmentsWithMultipleReferences } from '../../utils/sequenceTypeHelpers.ts';
+import { segmentsWithMultipleReferences } from '../../utils/sequenceTypeHelpers.ts';
 
 type ReferenceSelectorProps = {
     filterSchema: MetadataFilterSchema;
@@ -16,6 +16,7 @@ type ReferenceSelectorProps = {
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
     lapisSearchParameters: LapisSearchParameters;
+    segmentName: string;
 };
 
 /**
@@ -32,62 +33,40 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
     setSomeFieldValues,
     lapisUrl,
     lapisSearchParameters,
+    segmentName,
 }) => {
-    const segments = getSegmentNames(referenceGenomesInfo);
     const multiRefSegments = segmentsWithMultipleReferences(referenceGenomesInfo);
-
-    const fieldInfoBySegment = useMemo(() => {
-        return segments.reduce<Record<string, { label: string; fieldName: string }>>((acc, segmentName) => {
-            const fieldName = getReferenceIdentifier(
-                referenceIdentifierField,
-                segmentName,
-                referenceGenomesInfo.isMultiSegmented,
-            );
-
-            const label = fieldName ? (filterSchema.filterNameToLabelMap()[fieldName] ?? '') : '';
-
-            acc[segmentName] = { label, fieldName };
-
-            return acc;
-        }, {});
-    }, [filterSchema, referenceIdentifierField, referenceGenomesInfo]);
-
-    if (multiRefSegments.length === 0) {
-        return null;
-    }
+    if (multiRefSegments.length === 0) return null;
+    if (!multiRefSegments.includes(segmentName)) return null;
+    const fieldName = useMemo(() => {
+        return getReferenceIdentifier(referenceIdentifierField, segmentName, referenceGenomesInfo.isMultiSegmented);
+    }, [referenceIdentifierField, segmentName, referenceGenomesInfo.isMultiSegmented]);
+    const label = useMemo(() => {
+        return fieldName ? filterSchema.filterNameToLabelMap()[fieldName] : undefined;
+    }, [filterSchema, referenceIdentifierField]);
 
     return (
-        <>
-            {multiRefSegments.map((segment) => {
-                const { label, fieldName } = fieldInfoBySegment[segment];
-
-                const field: MetadataFilter = {
+        <div key={segmentName} className='bg-gray-50 border border-gray-300 rounded-md p-3 mb-3'>
+            <SingleChoiceAutoCompleteField
+                field={{
                     name: fieldName,
                     displayName: label,
                     type: 'string',
-                };
+                }}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName,
+                }}
+                setSomeFieldValues={setSomeFieldValues}
+                fieldValue={(fieldValues[fieldName] as string | undefined) ?? ''}
+            />
 
-                return (
-                    <div key={segment} className='bg-gray-50 border border-gray-300 rounded-md p-3 mb-3'>
-                        <SingleChoiceAutoCompleteField
-                            field={field}
-                            optionsProvider={{
-                                type: 'generic',
-                                lapisUrl,
-                                lapisSearchParameters,
-                                fieldName,
-                            }}
-                            setSomeFieldValues={setSomeFieldValues}
-                            fieldValue={(fieldValues[fieldName] as string | undefined) ?? ''}
-                        />
-
-                        <p className='text-xs text-gray-600 mt-2'>
-                            Select a {formatLabel(label)} to enable mutation search and download of aligned sequences
-                        </p>
-                    </div>
-                );
-            })}
-        </>
+            <p className='text-xs text-gray-600 mt-2'>
+                Select a {formatLabel(label ?? '')} to enable mutation search and download of aligned sequences
+            </p>
+        </div>
     );
 };
 

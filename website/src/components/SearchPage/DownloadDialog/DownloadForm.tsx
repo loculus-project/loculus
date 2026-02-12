@@ -8,10 +8,12 @@ import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from '.
 import { routes } from '../../../routes/routes.ts';
 import type { Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
+import { getReferenceIdentifier } from '../../../utils/referenceSelection.ts';
 import { MetadataFilterSchema, type MetadataVisibility } from '../../../utils/search.ts';
 import {
     getSegmentAndGeneInfo,
-    stillRequiresReferenceNameSelection,
+    notAllReferencesSelected,
+    segmentsWithMultipleReferences,
     type SegmentReferenceSelections,
 } from '../../../utils/sequenceTypeHelpers.ts';
 
@@ -58,10 +60,21 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         [referenceGenomesInfo, selectedReferenceNames],
     );
 
-    const disableAlignedSequences = stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames);
-
     const metadataSchema = schema.metadata;
     const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
+
+    const noReferenceSelected = nucleotideSegmentInfos.length === 0 && geneInfos.length === 0;
+    const notSelectedIdentifiers = useMemo(
+        () =>
+            segmentsWithMultipleReferences(referenceGenomesInfo)
+                .filter((segment) => selectedReferenceNames?.[segment] === null)
+                .map((segment) =>
+                    getReferenceIdentifier(referenceIdentifierField!, segment, referenceGenomesInfo.isMultiSegmented),
+                )
+                .map((identifier) => filterSchema.filterNameToLabelMap()[identifier])
+                .join(', ') || '',
+        [referenceGenomesInfo, selectedReferenceNames, referenceIdentifierField, filterSchema],
+    );
 
     function getDataTypeOptions(): OptionBlockOption[] {
         const metadataOption = {
@@ -127,7 +140,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             return [metadataOption];
         }
 
-        if (disableAlignedSequences) {
+        if (noReferenceSelected) {
             return [metadataOption, rawNucleotideSequencesOption];
         }
 
@@ -227,12 +240,19 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                         }))
                     }
                 />
-                {disableAlignedSequences && referenceIdentifierField !== undefined && (
+                {noReferenceSelected && referenceIdentifierField !== undefined && (
                     <div className='text-sm text-gray-400 mt-4 max-w-60'>
-                        Or select a {filterSchema.filterNameToLabelMap()[referenceIdentifierField]} with the search UI
-                        to enable download of aligned sequences.
+                        Select {notSelectedIdentifiers} with the search UI to enable download of aligned sequences.
                     </div>
                 )}
+                {!noReferenceSelected &&
+                    notAllReferencesSelected(referenceGenomesInfo, selectedReferenceNames) &&
+                    referenceIdentifierField !== undefined && (
+                        <div className='text-sm text-gray-400 mt-4 max-w-60'>
+                            Select {notSelectedIdentifiers} with the search UI to enable download of more aligned
+                            sequences.
+                        </div>
+                    )}
             </div>
 
             <RadioOptionBlock

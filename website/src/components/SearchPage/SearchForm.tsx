@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type FC } from 'react';
 
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import { Button } from '../common/Button';
@@ -22,15 +22,53 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { getReferenceIdentifier, type ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
-import { getSegmentAndGeneInfo, getSegmentNames } from '../../utils/sequenceTypeHelpers.ts';
+import {
+    getSegmentAndGeneInfo,
+    getSegmentNames,
+    segmentReferenceSelected,
+    type SegmentAndGeneInfo,
+} from '../../utils/sequenceTypeHelpers.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal, getDisplayState } from '../common/FieldSelectorModal.tsx';
+import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import MaterialSymbolsTune from '~icons/material-symbols/tune';
 import StreamlineWrench from '~icons/streamline/wrench';
 
 const queryClient = new QueryClient();
+
+const SearchSectionHeader: FC<{ title: string }> = ({ title }) => (
+    <div className='flex items-center gap-2 mb-2'>
+        <h3 className='text-sm tracking-wide text-primary-700'>{title}</h3>
+    </div>
+);
+
+type CollapsibleSectionProps = {
+    title: React.ReactNode;
+    open?: boolean;
+    children: React.ReactNode;
+    subgroups?: boolean;
+};
+
+function CollapsibleSection({ title, open = true, children, subgroups = false }: CollapsibleSectionProps) {
+    const className = subgroups ? 'group/inner rounded-lg border px-4 pt-4' : 'group px-2 pt-2';
+    const arrowClassName = subgroups ? 'group-open/inner:rotate-180' : 'group-open:rotate-180';
+    return (
+        <details className={className} open={open}>
+            <summary className='flex w-full items-center list-none cursor-pointer'>
+                <div className='flex items-center'>
+                    {typeof title === 'string' ? <SearchSectionHeader title={title} /> : title}
+                </div>
+                <IwwaArrowDown
+                    className={`ml-auto h-5 w-5 transition-transform duration-200 text-primary-700 ${arrowClassName}`}
+                    aria-hidden='true'
+                />
+            </summary>
+            {children}
+        </details>
+    );
+}
 
 interface SearchFormProps {
     organism: string;
@@ -123,9 +161,93 @@ export const SearchForm = ({
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
-    const suborganismSegmentAndGeneInfo = useMemo(
-        () => getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
-        [referenceGenomesInfo, referenceSelection?.selectedReferences],
+    const { sampleFields, sequenceFieldsBySegment } = useMemo(() => {
+        const sampleFields: (GroupedMetadataFilter | MetadataFilter)[] = [];
+        const sequenceFieldsBySegment: Record<string, (GroupedMetadataFilter | MetadataFilter)[]> = {};
+        getSegmentNames(referenceGenomesInfo).map((segmentName) => {
+            sequenceFieldsBySegment[segmentName] = [];
+        });
+
+        for (const field of visibleFields) {
+            const metadataScope =
+                'metadataScope' in field && field.metadataScope != null ? field.metadataScope : 'sample';
+
+            if (metadataScope !== 'sequence') {
+                sampleFields.push(field);
+                continue;
+            }
+
+            const sequenceScope =
+                'sequenceMetadataScope' in field && field.sequenceMetadataScope != null
+                    ? field.sequenceMetadataScope
+                    : 'main';
+
+            sequenceFieldsBySegment[sequenceScope] ??= [];
+            sequenceFieldsBySegment[sequenceScope].push(field);
+        }
+
+        return { sampleFields, sequenceFieldsBySegment };
+    }, [visibleFields]);
+
+    const suborganismSegmentAndGeneInfo = useMemo(() => {
+        return getSegmentNames(referenceGenomesInfo).reduce<Record<string, SegmentAndGeneInfo>>((acc, segmentName) => {
+            acc[segmentName] = getSegmentAndGeneInfo(
+                referenceGenomesInfo,
+                referenceSelection?.selectedReferences,
+                segmentName,
+            );
+            return acc;
+        }, {});
+    }, [referenceGenomesInfo, referenceSelection?.selectedReferences]);
+
+    const mutationParamMap = useMemo(() => {
+        return getSegmentNames(referenceGenomesInfo).reduce<Record<string, string>>((acc, segmentName) => {
+            acc[segmentName] = getReferenceIdentifier(MUTATION_KEY, segmentName, referenceGenomesInfo.isMultiSegmented);
+            return acc;
+        }, {});
+    }, [referenceGenomesInfo]);
+
+    const segmentNames = getSegmentNames(referenceGenomesInfo);
+
+    const renderSegmentContents = (segmentName: string) => (
+        <>
+            {referenceSelection !== undefined && (
+                <ReferenceSelector
+                    filterSchema={filterSchema}
+                    referenceGenomesInfo={referenceGenomesInfo}
+                    referenceIdentifierField={referenceSelection.referenceIdentifierField}
+                    fieldValues={fieldValues}
+                    setSomeFieldValues={setSomeFieldValues}
+                    lapisUrl={lapisUrl}
+                    lapisSearchParameters={lapisSearchParameters}
+                    segmentName={segmentName}
+                />
+            )}
+
+            {showMutationSearch &&
+                segmentReferenceSelected(segmentName, referenceGenomesInfo, referenceSelection?.selectedReferences) && (
+                    <MutationField
+                        suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo[segmentName]}
+                        value={
+                            mutationParamMap[segmentName] in fieldValues
+                                ? String(fieldValues[mutationParamMap[segmentName]] ?? '')
+                                : ''
+                        }
+                        onChange={(value) => setSomeFieldValues([mutationParamMap[segmentName], value])}
+                    />
+                )}
+
+            {sequenceFieldsBySegment[segmentName].map((filter) => (
+                <SearchField
+                    key={filter.name}
+                    field={filter}
+                    lapisUrl={lapisUrl}
+                    fieldValues={fieldValues}
+                    setSomeFieldValues={setSomeFieldValues}
+                    lapisSearchParameters={lapisSearchParameters}
+                />
+            ))}
+        </>
     );
 
     return (
@@ -186,17 +308,6 @@ export const SearchForm = ({
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
-                        {referenceSelection !== undefined && (
-                            <ReferenceSelector
-                                filterSchema={filterSchema}
-                                referenceGenomesInfo={referenceGenomesInfo}
-                                referenceIdentifierField={referenceSelection.referenceIdentifierField}
-                                fieldValues={fieldValues}
-                                setSomeFieldValues={setSomeFieldValues}
-                                lapisUrl={lapisUrl}
-                                lapisSearchParameters={lapisSearchParameters}
-                            />
-                        )}
                         <div className='mb-1'>
                             <AccessionField
                                 textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
@@ -204,23 +315,41 @@ export const SearchForm = ({
                             />
                         </div>
 
-                        {showMutationSearch && (
-                            <MutationField
-                                suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
-                                value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
-                                onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
-                            />
-                        )}
-                        {visibleFields.map((filter) => (
-                            <SearchField
-                                field={filter}
-                                lapisUrl={lapisUrl}
-                                fieldValues={fieldValues}
-                                setSomeFieldValues={setSomeFieldValues}
-                                key={filter.name}
-                                lapisSearchParameters={lapisSearchParameters}
-                            />
-                        ))}
+                        <section className='flex flex-col gap-1.5'>
+                            <CollapsibleSection title='Sample Metadata Filters' open>
+                                {sampleFields.map((filter) => (
+                                    <SearchField
+                                        key={filter.name}
+                                        field={filter}
+                                        lapisUrl={lapisUrl}
+                                        fieldValues={fieldValues}
+                                        setSomeFieldValues={setSomeFieldValues}
+                                        lapisSearchParameters={lapisSearchParameters}
+                                    />
+                                ))}
+                            </CollapsibleSection>
+                        </section>
+
+                        <section className='flex flex-col gap-1.5 mb-4'>
+                            <CollapsibleSection title='Sequence Metadata Filters' open>
+                                {!referenceGenomesInfo.isMultiSegmented &&
+                                    segmentNames.map((segmentName) => (
+                                        <div key={segmentName}>{renderSegmentContents(segmentName)}</div>
+                                    ))}
+
+                                {referenceGenomesInfo.isMultiSegmented &&
+                                    segmentNames.map((segmentName) => (
+                                        <CollapsibleSection
+                                            key={segmentName}
+                                            title={referenceGenomesInfo.segmentDisplayNames[segmentName] ?? segmentName}
+                                            open={false}
+                                            subgroups
+                                        >
+                                            {renderSegmentContents(segmentName)}
+                                        </CollapsibleSection>
+                                    ))}
+                            </CollapsibleSection>
+                        </section>
                     </div>
                 </div>
             </div>
