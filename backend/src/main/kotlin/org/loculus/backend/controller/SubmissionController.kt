@@ -327,8 +327,7 @@ open class SubmissionController(
             try {
                 kotlinx.datetime.LocalDateTime.parse(it)
             } catch (e: IllegalArgumentException) {
-                throw org.springframework.web.server.ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+                throw BadRequestException(
                     "Invalid releasedSince format. Expected ISO-8601 (e.g. 2024-01-15T10:30:00): $it",
                 )
             }
