@@ -108,8 +108,10 @@ describe('ReferenceSelector', () => {
         mockUseAggregated.mockReturnValue({
             data: {
                 data: [
-                    { 'genotype_L': 'ref1', count: 50 },
-                    { 'genotype_L': 'ref2', count: 75 },
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    { genotype_L: 'ref1', count: 50 },
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    { genotype_L: 'ref2', count: 75 },
                 ],
             },
             isPending: false,

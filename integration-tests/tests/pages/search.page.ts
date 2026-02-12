@@ -59,7 +59,19 @@ export class SearchPage {
     }
 
     async selectReference(fieldLabel: string, option: string) {
-        await this.select(fieldLabel, option);
+        const input = this.page.getByLabel(fieldLabel, { exact: true });
+
+        await input.click();
+        await input.focus();
+        await input.press('Control+a');
+        await input.pressSequentially(option);
+
+        await this.page.waitForTimeout(500);
+
+        await this.page.getByRole('option').first().click({ timeout: 15000 });
+
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(200);
 
         const mutations = this.page.getByRole('combobox', { name: 'Mutations' }).first();
         await expect(mutations).toBeVisible();
