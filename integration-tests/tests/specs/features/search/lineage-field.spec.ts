@@ -53,12 +53,12 @@ test('Lineage field lineage counts', async ({ page, groupId }) => {
     await page.getByRole('checkbox', { name: 'include sublineages' }).check();
     await page.getByRole('textbox', { name: 'Lineage' }).click();
     // check diamond structure of A is correct
-    await expect(page.getByRole('option', { name: 'A (3)' })).toBeVisible();
-    await expect(page.getByRole('option', { name: 'A.1 (2)' })).toBeVisible();
-    await expect(page.getByRole('option', { name: 'A.2 (2)' })).toBeVisible();
-    await expect(page.getByRole('option', { name: 'A.1.1 (1)' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'A(3)' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'A.1(2)' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'A.2(2)' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'A.1.1(1)' })).toBeVisible();
     // check alias with B/C works correctly
-    await expect(page.getByRole('option', { name: 'B.1 (3)' })).toBeVisible();
-    await expect(page.getByRole('option', { name: 'B.1.1 (2)' })).toBeVisible();
-    await expect(page.getByRole('option', { name: 'C.1 (1)' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'B.1(3)' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'B.1.1(2)' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'C.1(1)' })).toBeVisible();
 });
