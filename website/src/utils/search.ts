@@ -1,7 +1,7 @@
 import { sentenceCase } from 'change-case';
 
 import { validateSingleValue } from './extractFieldValue';
-import { stillRequiresReferenceNameSelection, type SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
+import { segmentReferenceSelected, type SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
 import type {
@@ -40,10 +40,12 @@ type VisiblitySelectableAccessor = (field: MetadataFilter) => boolean;
 export class MetadataVisibility {
     public readonly isChecked: boolean;
     private readonly onlyForReference: string | undefined;
+    private readonly segmentName: string | undefined;
 
-    constructor(isChecked: boolean, onlyForReference: string | undefined) {
+    constructor(isChecked: boolean, onlyForReference: string | undefined, segmentName: string | undefined) {
         this.isChecked = isChecked;
         this.onlyForReference = onlyForReference;
+        this.segmentName = segmentName;
     }
 
     public isVisible(
@@ -62,7 +64,7 @@ export class MetadataVisibility {
         }
         if (
             !hideIfStillRequiresReferenceSelection &&
-            stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames)
+            !segmentReferenceSelected(this.segmentName!, referenceGenomesInfo, selectedReferenceNames)
         ) {
             return true;
         }
@@ -103,6 +105,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
         const visibility = new MetadataVisibility(
             explicitVisibilitiesInUrlByFieldName.get(fieldName) ?? initiallyVisibleAccessor(field),
             field.onlyForReference,
+            field.sequenceMetadataScope,
         );
 
         visibilities.set(fieldName, visibility);
@@ -198,6 +201,8 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
                     displayName: filter.fieldGroupDisplayName,
                     initiallyVisible: filter.initiallyVisible,
                     header: filter.header,
+                    metadataScope: filter.metadataScope,
+                    sequenceMetadataScope: filter.sequenceMetadataScope,
                 };
                 fieldList.push(fieldForGroup);
                 groupsMap.set(filter.fieldGroup, fieldForGroup);

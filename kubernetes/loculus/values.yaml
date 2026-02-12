@@ -1135,15 +1135,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Diagnostic measurement unit
         orderOnDetailsPage: 2600
         header: Diagnostics
-      - name: length
-        type: int
-        header: "Alignment and QC metrics"
-        noInput: true
-        rangeSearch: true
-        initiallyVisible: true
-        perSegment: true
-        displayName: Length
-        orderOnDetailsPage: 2700
       - name: hostNameScientific
         generateIndex: true
         autocomplete: true
@@ -1216,8 +1207,19 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         orderOnDetailsPage: 1120
         ingest: ncbiSraAccessions
+      - name: length
+        type: int
+        metadataScope: sequence
+        header: "Alignment and QC metrics"
+        noInput: true
+        rangeSearch: true
+        initiallyVisible: true
+        perSegment: true
+        displayName: Length
+        orderOnDetailsPage: 2700
       - name: totalSnps
         type: int
+        metadataScope: sequence
         header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
@@ -1228,6 +1230,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs: {input: nextclade.totalSubstitutions}
       - name: totalInsertedNucs
         type: int
+        metadataScope: sequence
         header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
@@ -1238,6 +1241,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs: {input: nextclade.totalInsertions}
       - name: totalDeletedNucs
         type: int
+        metadataScope: sequence
         header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
@@ -1248,6 +1252,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Total deleted nucs
       - name: totalAmbiguousNucs
         type: int
+        metadataScope: sequence
         header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
@@ -1259,6 +1264,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: totalUnknownNucs
         orderOnDetailsPage: 2800
         type: int
+        metadataScope: sequence
         header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
@@ -1267,6 +1273,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         preprocessing:
           inputs: {input: nextclade.totalMissing}
       - name: totalFrameShifts
+        metadataScope: sequence
         type: int
         rangeSearch: true
         header: "Alignment and QC metrics"
@@ -1277,6 +1284,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         preprocessing:
           inputs: {input: nextclade.totalFrameShifts}
       - name: frameShifts
+        metadataScope: sequence
         header: "Alignment and QC metrics"
         noInput: true
         perSegment: true
@@ -1285,6 +1293,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         preprocessing:
           inputs: {input: nextclade.frameShifts}
       - name: totalStopCodons
+        metadataScope: sequence
         perSegment: true
         displayName: Total stop codons
         type: int
@@ -1293,6 +1302,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         preprocessing:
           inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
       - name: stopCodons
+        metadataScope: sequence
         perSegment: true
         displayName: Stop codons
         header: "Alignment and QC metrics"
@@ -1300,6 +1310,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         preprocessing:
           inputs: {input: nextclade.qc.stopCodons.stopCodons}
       - name: completeness
+        metadataScope: sequence
         type: float
         header: "Alignment and QC metrics"
         noInput: true
@@ -1416,6 +1427,7 @@ defaultOrganisms:
           url: "https://mapoplexus.genomium.org/?url={{[metadata+accessionVersion,accession,version,geoLocAdmin1,geoLocAdmin2,geoLocCity,geoLocCountry,geoLocSite,hostNameCommon,hostNameScientific,authors,sampleCollectionDate]}}"
       metadataAdd:
         - name: lineage
+          metadataScope: sequence
           header: "Lineage"
           noInput: true
           generateIndex: true
@@ -1533,9 +1545,11 @@ defaultOrganisms:
           autocomplete: true
           header: "Collection Details"
         - name: lineage
+          metadataScope: sequence
           initiallyVisible: false
           notSearchable: true
         - name: pangoLineage
+          metadataScope: sequence
           initiallyVisible: true
           displayName: "Pango lineage"
           autocomplete: true
@@ -1647,6 +1661,7 @@ defaultOrganisms:
             inputs:
               date: date
         - name: lineage
+          metadataScope: sequence
           initiallyVisible: true
           displayName: "Lineage"
           autocomplete: true
@@ -1740,6 +1755,8 @@ defaultOrganisms:
           ingest: ncbiHostName
           initiallyVisible: true
         - name: lineage
+          metadataScope: sequence
+          sequenceMetadataScope: S
           displayName: "Segment S Lineage"
           header: "Lineage"
           noInput: true
@@ -1854,6 +1871,7 @@ defaultOrganisms:
           ingest: ncbiHostName
           initiallyVisible: true
         - name: reference
+          metadataScope: sequence
           displayName: Reference
           noInput: true
           generateIndex: true
@@ -1980,6 +1998,8 @@ defaultOrganisms:
       metadataAdd:
         - &evMetadataAdd
           name: clade_cv_a16
+          metadataScope: sequence
+          sequenceMetadataScope: main
           displayName: Clade CV-A16
           onlyForReference: CV-A16
           header: "Clade"
@@ -1994,6 +2014,8 @@ defaultOrganisms:
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_cv_a10
+          metadataScope: sequence
+          sequenceMetadataScope: main
           displayName: Clade CV-A10
           onlyForReference: CV-A10
           preprocessing:
@@ -2002,6 +2024,8 @@ defaultOrganisms:
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_ev_a71
+          metadataScope: sequence
+          sequenceMetadataScope: main
           displayName: Clade EV-A71
           onlyForReference: EV-A71
           preprocessing:
@@ -2010,6 +2034,8 @@ defaultOrganisms:
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_ev_d68
+          metadataScope: sequence
+          sequenceMetadataScope: main
           displayName: Clade EV-D68
           onlyForReference: EV-D68
           preprocessing:
@@ -2017,6 +2043,7 @@ defaultOrganisms:
               reference: EV-D68
             inputs: {input: nextclade.clade}
         - name: genotype
+          metadataScope: sequence
           displayName: Genotype
           header: "Genotype"
           noInput: true
