@@ -199,7 +199,9 @@ def test_runner_incremental_append_after_initial_full(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """After a full preprocessing run, the next cycle should use incremental append."""
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"}, hard_refresh_interval=10000)
+    config = make_config(
+        tmp_path, lineage_definitions={1: "http://lineage"}, hard_refresh_interval=10000
+    )
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -252,7 +254,9 @@ def test_runner_append_fallback_to_full_on_failure(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """If incremental append fails, fall back to full preprocessing."""
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"}, hard_refresh_interval=10000)
+    config = make_config(
+        tmp_path, lineage_definitions={1: "http://lineage"}, hard_refresh_interval=10000
+    )
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -308,7 +312,9 @@ def test_runner_hard_refresh_forces_full_preprocessing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Hard refresh should always trigger full preprocessing even if SILO DB exists."""
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"}, hard_refresh_interval=1)
+    config = make_config(
+        tmp_path, lineage_definitions={1: "http://lineage"}, hard_refresh_interval=1
+    )
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -362,7 +368,9 @@ def test_runner_incremental_skips_when_not_modified(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Incremental append should skip when backend returns 304 Not Modified."""
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"}, hard_refresh_interval=10000)
+    config = make_config(
+        tmp_path, lineage_definitions={1: "http://lineage"}, hard_refresh_interval=10000
+    )
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 

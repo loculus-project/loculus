@@ -33,9 +33,7 @@ class SiloRunner:
             msg = f"SILO preprocessing timed out after {timeout_seconds}s"
             raise TimeoutError(msg) from e
 
-    def run_append(
-        self, append_file: Path, silo_directory: Path, timeout_seconds: int
-    ) -> None:
+    def run_append(self, append_file: Path, silo_directory: Path, timeout_seconds: int) -> None:
         logger.info("Starting SILO append from %s into %s", append_file, silo_directory)
         try:
             result = subprocess.run(  # noqa: S603

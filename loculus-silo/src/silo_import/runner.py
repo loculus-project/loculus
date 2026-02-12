@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import shutil
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from .config import ImporterConfig
 from .constants import SPECIAL_ETAG_NONE
@@ -50,13 +50,11 @@ class ImporterRunner:
             return True
         if self.last_successful_import_time is None:
             return True
-        if time.time() - self.last_hard_refresh >= self.config.hard_refresh_interval:
-            return True
-        return False
+        return time.time() - self.last_hard_refresh >= self.config.hard_refresh_interval
 
     def _current_timestamp_iso(self) -> str:
         """Return the current UTC time as an ISO-8601 string."""
-        return datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        return datetime.now(tz=UTC).strftime("%Y-%m-%dT%H:%M:%S")
 
     def run_once(self) -> None:
         prune_timestamped_directories(self.paths.output_dir)

@@ -727,7 +727,10 @@ class SubmissionDatabaseService(
     }
 
     // Make sure to keep in sync with countReleasedSubmissions query
-    fun streamReleasedSubmissions(organism: Organism, releasedSince: LocalDateTime? = null): Sequence<RawProcessedData> = SequenceEntriesView.join(
+    fun streamReleasedSubmissions(
+        organism: Organism,
+        releasedSince: LocalDateTime? = null,
+    ): Sequence<RawProcessedData> = SequenceEntriesView.join(
         DataUseTermsTable,
         JoinType.LEFT,
         additionalConstraint = {
