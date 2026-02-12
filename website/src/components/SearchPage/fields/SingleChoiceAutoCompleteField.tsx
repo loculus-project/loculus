@@ -27,6 +27,7 @@ const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputEl
         autoComplete='off'
         placeholder={props.placeholder ?? ''}
         label={props.placeholder ?? ''}
+        floatingLabelClassName='bg-white'
     />
 ));
 

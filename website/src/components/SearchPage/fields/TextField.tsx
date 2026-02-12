@@ -24,10 +24,22 @@ interface TextFieldProps {
     multiline?: boolean;
     onBlur?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     type?: string;
+    floatingLabelClassName?: string;
 }
 
 export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldProps>(function (props, ref) {
-    const { label, disabled, onChange, autoComplete, fieldValue, className, onFocus, multiline, onBlur } = props;
+    const {
+        label,
+        disabled,
+        onChange,
+        autoComplete,
+        fieldValue,
+        className,
+        onFocus,
+        multiline,
+        onBlur,
+        floatingLabelClassName,
+    } = props;
     const id = useId();
     const [isTransitionEnabled, setIsTransitionEnabled] = useState(false);
     const [hasFocus, setHasFocus] = useState(false);
@@ -121,7 +133,15 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             label: label ?? '',
             step: props.type === 'int' ? 1 : undefined,
         };
-        return <FloatingLabel {...inputProps} variant='outlined' type={inputType} value={fieldValue} />;
+        return (
+            <FloatingLabel
+                {...inputProps}
+                variant='outlined'
+                type={inputType}
+                value={fieldValue}
+                className={floatingLabelClassName}
+            />
+        );
     }
     const refTextArea = ref as ForwardedRef<HTMLTextAreaElement>;
 
