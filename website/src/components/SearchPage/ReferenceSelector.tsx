@@ -37,10 +37,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
     lapisSearchParameters,
 }) => {
     const segments = getSegmentNames(referenceGenomesInfo);
-
-    if (segmentsWithMultipleReferences(referenceGenomesInfo).length === 0) {
-        return null;
-    }
+    const multiRefSegments = segmentsWithMultipleReferences(referenceGenomesInfo);
 
     const fieldInfoBySegment = useMemo(() => {
         return segments.reduce<Record<string, { label: string; fieldName: string }>>((acc, segmentName) => {
@@ -58,9 +55,13 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
         }, {});
     }, [filterSchema, referenceIdentifierField, referenceGenomesInfo]);
 
+    if (multiRefSegments.length === 0) {
+        return null;
+    }
+
     return (
         <>
-            {segmentsWithMultipleReferences(referenceGenomesInfo).map((segment) => {
+            {multiRefSegments.map((segment) => {
                 const { label, fieldName } = fieldInfoBySegment[segment];
 
                 const field: MetadataFilter = {
