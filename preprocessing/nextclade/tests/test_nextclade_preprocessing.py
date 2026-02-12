@@ -1256,6 +1256,13 @@ def test_process_phenotype_values():
         ).datum
         == "0.0"
     )
+    assert (
+        process_phenotype_values(
+            '[{"name": "NAI","cds": "NA","value": None}, {"name": "Other","cds": "NA","value": 1.0}]',
+            {"name": "NAI"},
+        ).datum
+        is None
+    )
     assert process_phenotype_values('[{"name": "NAI","cds": "NA","value": 0.0}]', {}).datum is None
     invalid = process_phenotype_values("Malformed JSON", {"name": "NAI"})
     assert invalid.datum is None
