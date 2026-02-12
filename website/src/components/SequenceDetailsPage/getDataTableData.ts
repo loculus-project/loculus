@@ -59,7 +59,7 @@ function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
     });
 }
 
-export function getDataTableData(listTableDataEntries: TableDataEntry[], detailsPageHeader?: Header[]): DataTableData {
+export function getDataTableData(listTableDataEntries: TableDataEntry[], detailsPageHeaders?: Header[]): DataTableData {
     const result: DataTableData = {
         topmatter: {
             authors: undefined,
@@ -115,8 +115,8 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[], details
     }
 
     headerGroups.sort((a, b) => {
-        const aOrder = detailsPageHeader?.find((h) => h.name === a.header)?.order ?? Number.POSITIVE_INFINITY;
-        const bOrder = detailsPageHeader?.find((h) => h.name === b.header)?.order ?? Number.POSITIVE_INFINITY;
+        const aOrder = detailsPageHeaders?.find((h) => h.name === a.header)?.order ?? Number.POSITIVE_INFINITY;
+        const bOrder = detailsPageHeaders?.find((h) => h.name === b.header)?.order ?? Number.POSITIVE_INFINITY;
         return aOrder - bOrder;
     });
 
