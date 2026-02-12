@@ -427,6 +427,14 @@ describe('SearchFullUI', () => {
             { fieldLabel: 'Reference', value: 'ref1' },
             { fieldLabel: 'mutation', value: '345' },
         ]);
+
+        // remove reference via its filter badge and expect mutations to be cleared
+        const badges = await screen.findAllByTestId(ACTIVE_FILTER_BADGE_TEST_ID);
+        const referenceBadge = badges.find((badge) => {
+            return within(badge).queryByText(`Reference:`) !== null;
+        });
+        await userEvent.click(await within(referenceBadge!).findByRole('button', { name: 'remove filter' }));
+        expect(screen.queryByTestId(ACTIVE_FILTER_BADGE_TEST_ID)).not.toBeInTheDocument();
     });
 
     async function assertActiveFilterBadgesAre(expected: { fieldLabel: string; value: string }[]) {
