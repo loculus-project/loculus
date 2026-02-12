@@ -12,12 +12,12 @@ from pathlib import Path
 from typing import Any
 
 import click
+from ena_deposition.call_loculus import get_group_info
 from ena_deposition.config import Config, get_config
 from ena_deposition.create_assembly import create_manifest_object
 from ena_deposition.create_project import construct_project_set_object
 from ena_deposition.create_sample import construct_sample_set_object
 from ena_deposition.ena_submission_helper import create_manifest, get_project_xml, get_sample_xml
-from ena_deposition.loculus_models import Address, Group
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -91,22 +91,8 @@ def local_ena_submission_generator(
             "unaligned_nucleotide_sequences": data["unalignedNucleotideSequences"],
         }
 
-    group_info = Group(
-        groupId=123,
-        groupName="GROUP_NAME",
-        institution=center_name,
-        contactEmail="someemail@example.com",
-        address=Address(
-            line1="ADDRESS_LINE_1",
-            line2="ADDRESS_LINE_2",
-            city="CITY",
-            state="STATE",
-            postalCode="POSTAL_CODE",
-            country="COUNTRY",
-        ),
-    )
-
     if mode == "project":
+        group_info = get_group_info(config, entry["group_id"])
         project_set = construct_project_set_object(group_info, config, entry)
         project_xml = get_project_xml(project_set)
 
@@ -172,7 +158,7 @@ def local_ena_submission_generator(
             "-manifest assembly/manifest.tsv -submit "
             f"-centername {center_name}"
             "\n Remember to submit with -test if you do not want to submit to production"
-            "\n Remember to add `is_broker=true` to config and modify ADDRESS "
+            "\n Remember to add `is_broker=true` to config"
             "if you are submitting as a broker"
         )
 
