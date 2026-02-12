@@ -3,6 +3,7 @@ import kebabCase from 'just-kebab-case';
 import { dataTypeForFilename, type DownloadDataType } from './DownloadDataType.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { metadataDefaultDownloadDataFormat, sequenceDefaultDownloadDataFormat } from '../../../settings.ts';
+import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
 
 export type Compression = 'zstd' | 'gzip' | undefined;
 
@@ -35,7 +36,11 @@ export class DownloadUrlGenerator {
         private readonly richFastaHeaderFields?: string[],
     ) {}
 
-    public generateDownloadUrl(downloadParameters: SequenceFilter, option: DownloadOption) {
+    public generateDownloadUrl(
+        downloadParameters: SequenceFilter,
+        option: DownloadOption,
+        segmentAndGeneInfo: SegmentAndGeneInfo,
+    ) {
         const baseUrl = this.downloadEndpoint(option.dataType);
         const params = new URLSearchParams();
         const excludedParams = new Set<string>();
@@ -80,7 +85,7 @@ export class DownloadUrlGenerator {
         }
 
         downloadParameters
-            .toUrlSearchParams()
+            .toUrlSearchParams(segmentAndGeneInfo)
             .filter(([name]) => !excludedParams.has(name))
             .forEach(([name, value]) => {
                 if (Array.isArray(value)) {

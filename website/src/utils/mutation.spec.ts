@@ -5,7 +5,6 @@ import {
     type MutationQuery,
     parseMutationsString,
     parseMutationString,
-    removeMutationQueries,
     serializeMutationQueries,
 } from './mutation';
 import type { SegmentAndGeneInfo } from './sequenceTypeHelpers';
@@ -302,16 +301,6 @@ describe('mutation', () => {
                 },
             ]);
             expect(serialized).toBe('GENE1:A23T, SEQ1:123C');
-        });
-
-        it('removes specified mutation queries', () => {
-            const result = removeMutationQueries(
-                'label-GENE1:A23T, label-SEQ1:123C',
-                mockSegmentAndGeneInfo,
-                'aminoAcid',
-                'substitutionOrDeletion',
-            );
-            expect(result).toBe('label-SEQ1:123C');
         });
 
         it('converts mutations to search params', () => {

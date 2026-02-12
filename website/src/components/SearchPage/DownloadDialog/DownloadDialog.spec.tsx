@@ -371,7 +371,7 @@ describe('DownloadDialog', () => {
                 referenceIdentifierField: 'genotype',
             });
 
-            expect(screen.getByText('select a genotype display name', { exact: false })).toBeVisible();
+            expect(screen.getByText('select genotype display name', { exact: false })).toBeVisible();
             expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
             expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
         });
@@ -452,6 +452,7 @@ describe('DownloadDialog', () => {
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
                 onlyForReference: 'ref1',
+                sequenceMetadataScope: 'main',
             },
             {
                 name: 'field2',
@@ -460,6 +461,7 @@ describe('DownloadDialog', () => {
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
                 onlyForReference: 'ref2',
+                sequenceMetadataScope: 'main',
             },
             {
                 name: ACCESSION_VERSION_FIELD,

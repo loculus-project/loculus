@@ -60,8 +60,8 @@ const defaultSearchFormFilters: MetadataFilter[] = [
 ];
 
 const defaultSearchVisibilities = new Map<string, MetadataVisibility>([
-    ['field1', new MetadataVisibility(true, undefined)],
-    ['field3', new MetadataVisibility(true, undefined)],
+    ['field1', new MetadataVisibility(true, undefined, undefined)],
+    ['field3', new MetadataVisibility(true, undefined, undefined)],
 ]);
 
 const setSomeFieldValues = vi.fn();
@@ -217,8 +217,8 @@ describe('SearchForm', () => {
             },
         ]);
         const searchVisibilities = new Map<string, MetadataVisibility>([
-            ['field1', new MetadataVisibility(true, 'suborganism1')],
-            ['field2', new MetadataVisibility(true, 'suborganism2')],
+            ['field1', new MetadataVisibility(true, 'suborganism1', 'main')],
+            ['field2', new MetadataVisibility(true, 'suborganism2', 'main')],
         ]);
 
         const field1 = () => screen.queryByLabelText('Field 1');

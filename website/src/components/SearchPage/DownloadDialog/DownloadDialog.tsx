@@ -50,18 +50,20 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const { nucleotideSegmentInfos, geneInfos } = useMemo(
+    const segmentAndGeneInfo = useMemo(
         () => getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferenceNames),
         [referenceGenomesInfo, selectedReferenceNames],
     );
     const useMultiSegmentEndpoint = referenceGenomesInfo.useLapisMultiSegmentedEndpoint;
 
     const [downloadFormState, setDownloadFormState] = useState<DownloadFormState>(
-        getDefaultDownloadFormState(nucleotideSegmentInfos, geneInfos),
+        getDefaultDownloadFormState(segmentAndGeneInfo.nucleotideSegmentInfos, segmentAndGeneInfo.geneInfos),
     );
     useEffect(() => {
-        setDownloadFormState(getDefaultDownloadFormState(nucleotideSegmentInfos, geneInfos));
-    }, [nucleotideSegmentInfos, geneInfos]);
+        setDownloadFormState(
+            getDefaultDownloadFormState(segmentAndGeneInfo.nucleotideSegmentInfos, segmentAndGeneInfo.geneInfos),
+        );
+    }, [segmentAndGeneInfo.nucleotideSegmentInfos, segmentAndGeneInfo.geneInfos]);
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
     const [selectedFields, setSelectedFields] = useState<Set<string>>(getDefaultSelectedFields(schema.metadata)); // This is here so that the state is persisted across closing and reopening the dialog
 
@@ -69,15 +71,19 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         return new Map(
             schema.metadata.map((field) => [
                 field.name,
-                new MetadataVisibility(selectedFields.has(field.name), field.onlyForReference),
+                new MetadataVisibility(
+                    selectedFields.has(field.name),
+                    field.onlyForReference,
+                    field.sequenceMetadataScope,
+                ),
             ]),
         );
     }, [selectedFields, schema]);
 
     const downloadOption = getDownloadOption({
         downloadFormState,
-        nucleotideSegmentInfos,
-        geneInfos,
+        nucleotideSegmentInfos: segmentAndGeneInfo.nucleotideSegmentInfos,
+        geneInfos: segmentAndGeneInfo.geneInfos,
         useMultiSegmentEndpoint,
         getVisibleFields: () => [
             ...Array.from(downloadFieldVisibilities.entries())
@@ -146,6 +152,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         sequenceFilter={sequenceFilter}
                         disabled={!agreedToDataUseTerms}
                         onClick={closeDialog}
+                        segmentAndGeneInfo={segmentAndGeneInfo}
                     />
                 </div>
             </BaseDialog>

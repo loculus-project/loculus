@@ -3,6 +3,7 @@ import { type FC, type MouseEvent, type MouseEventHandler, useMemo, useState } f
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
+import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
 import { Button } from '../../common/Button';
 import MaterialSymbolsContentCopyOutline from '~icons/material-symbols/content-copy-outline';
 
@@ -12,6 +13,7 @@ type DownloadButtonProps = {
     sequenceFilter: SequenceFilter;
     disabled?: boolean;
     onClick?: () => void;
+    segmentAndGeneInfo: SegmentAndGeneInfo;
 };
 
 export const CopyUrlButton: FC<{ url: string }> = ({ url }) => {
@@ -47,6 +49,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
     sequenceFilter,
     disabled = false,
     onClick,
+    segmentAndGeneInfo,
 }) => {
     const {
         downloadUrl,
@@ -67,7 +70,11 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
             };
         }
 
-        const { url, baseUrl, params } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);
+        const { url, baseUrl, params } = downloadUrlGenerator.generateDownloadUrl(
+            sequenceFilter,
+            downloadOption,
+            segmentAndGeneInfo,
+        );
         const useGet = url.length <= approxMaxAcceptableUrlLength;
         if (useGet) {
             return {
@@ -100,7 +107,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
             },
             isGetRequest: false,
         };
-    }, [downloadUrlGenerator, downloadOption, disabled, sequenceFilter, onClick]);
+    }, [downloadUrlGenerator, downloadOption, disabled, sequenceFilter, onClick, segmentAndGeneInfo]);
 
     return (
         <div className='flex items-center'>

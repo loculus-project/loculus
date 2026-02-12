@@ -108,7 +108,7 @@ export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGen
                                 }`}
                             />
                             <div className='absolute top-1/2 -translate-y-1/2 right-1'>
-                                <DisplaySearchDocs />
+                                <DisplaySearchDocs geneInfos={suborganismSegmentAndGeneInfo.geneInfos} />
                             </div>
                         </div>
                     </FloatingLabelContainer>

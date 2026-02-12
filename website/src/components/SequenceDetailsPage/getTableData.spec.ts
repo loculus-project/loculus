@@ -610,7 +610,7 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
         header: nucleotideMutationsHeader,
         customDisplay: {
             type: 'badge',
-            value: [],
+            badge: [],
         },
         type: { kind: 'mutation' },
     },
@@ -635,7 +635,7 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
         header: aminoAcidMutationsHeader,
         customDisplay: {
             type: 'badge',
-            value: [],
+            badge: [],
         },
         type: { kind: 'mutation' },
     },

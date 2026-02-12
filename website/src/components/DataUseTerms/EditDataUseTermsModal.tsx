@@ -16,6 +16,7 @@ import type { Details } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber';
+import type { SegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers';
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import { ActiveFilters } from '../common/ActiveFilters';
 import { BaseDialog } from '../common/BaseDialog';
@@ -26,6 +27,7 @@ interface EditDataUseTermsModalProps {
     clientConfig: ClientConfig;
     accessToken?: string;
     sequenceFilter: SequenceFilter;
+    segmentAndGeneInfo: SegmentAndGeneInfo;
 }
 
 type LoadingState = {
@@ -96,6 +98,7 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
     clientConfig,
     accessToken,
     sequenceFilter,
+    segmentAndGeneInfo,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const openDialog = () => setIsOpen(true);
@@ -105,10 +108,10 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
 
     useEffect(() => {
         detailsHook.mutate({
-            ...sequenceFilter.toApiParams(),
+            ...sequenceFilter.toApiParams(segmentAndGeneInfo),
             fields: ['accession', DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD],
         });
-    }, [sequenceFilter]);
+    }, [sequenceFilter, segmentAndGeneInfo]);
 
     const [state, setState] = useState<DataState>({ type: 'loading' });
 

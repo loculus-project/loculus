@@ -7,6 +7,8 @@ export function getReferenceIdentifier(identifier: string, segmentName: string, 
     return multipleSegments ? `${identifier}_${segmentName}` : identifier;
 }
 
+export type SetSelectedReferences = (segmentName: string, value: string | null) => void;
+
 type GetSegmentSelectionsOpts = {
     segments: string[];
     referenceIdentifierField: string;
