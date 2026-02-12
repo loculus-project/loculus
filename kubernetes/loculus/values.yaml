@@ -1339,6 +1339,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           order: 60
         - name: "Alignment and QC metrics"
           order: 70
+          perSegment: true
         - name: "Nucleotide mutations"
           order: 80
         - name: "Amino acid mutations"

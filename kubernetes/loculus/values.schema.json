@@ -514,6 +514,10 @@
                       },
                       "order": {
                         "type": "integer"
+                      },
+                      "perSegment": {
+                        "type": "boolean",
+                        "description": "Whether this is a metadata field that should exist for each segment. If so fields will be created as fieldName_A, fieldName_B in the case of an organism with segments A and B."
                       }
                     },
                     "required": ["name"]

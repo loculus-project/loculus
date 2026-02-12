@@ -262,7 +262,13 @@ organisms:
       metadataTemplate:
         {{ .metadataTemplate | toYaml | nindent 8}}
       {{ end }}
-      {{ .website | toYaml | nindent 6 }}
+      {{ omit .website "detailsPageHeaders" | toYaml | nindent 6 }}
+      {{ if .website.detailsPageHeaders }}
+      detailsPageHeaders:
+        {{- $args := dict "detailsPageHeaders" .website.detailsPageHeaders "referenceGenomes" $instance.referenceGenomes}}
+        {{ $headers := include "loculus.generateWebsiteHeaders" $args | fromYaml }}
+        {{ $headers.detailsPageHeaders | toYaml | nindent 8 }}
+      {{- end }}
       {{- end }}
     referenceGenomes:
       {{ $instance.referenceGenomes | toYaml | nindent 6 }}
@@ -334,6 +340,29 @@ organisms:
     {{- end }}
   {{- end }}
 {{- end }}
+
+{{/* Generate website metadata from passed metadata array */}}
+{{- define "loculus.generateWebsiteHeaders" }}
+{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).segments }}
+{{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
+{{- $headers := .detailsPageHeaders }}
+detailsPageHeaders:
+{{- range $headers }}
+{{- if and $isSegmented .perSegment }}
+{{- $currentItem := . }}
+{{- range $segment := $rawUniqueSegments }}
+{{- with $currentItem }}
+  - name: {{ printf "%s %s" .name $segment | quote }}
+    order: {{ .order }}
+{{- end }}
+{{- end }}
+{{- else }}
+  - name: {{ quote .name }}
+    order: {{ .order }}
+{{- end}}
+{{- end}}
+{{- end}}
+
 
 {{/* Generate website metadata from passed metadata array */}}
 {{- define "loculus.generateWebsiteMetadata" }}
