@@ -142,7 +142,7 @@
         "orderOnDetailsPage": {
           "groups": ["metadata"],
           "type": "number",
-          "description": "Determines the order on the sequence details page."
+          "description": "Determines the order on the sequence details page. Lower numbers come first. Missing values are treated as infinity, and fields will be ordered in the same order as they are defined in the config after all fields with an order value."
         },
         "hideInSearchResultsTable": {
           "groups": ["metadata"],
@@ -502,6 +502,28 @@
                     "type": "string"
                   },
                   "description": "Columns to display in the browse table"
+                },
+                "detailsPageHeaders": {
+                  "groups": ["schema"],
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "order": {
+                        "type": "integer"
+                      },
+                      "perSegment": {
+                        "type": "boolean",
+                        "description": "Whether this is a metadata field that should exist for each segment. If so fields will be created as fieldName_A, fieldName_B in the case of an organism with segments A and B.",
+                        "default": "false"
+                      }
+                    },
+                    "required": ["name"]
+                  },
+                  "description": "Headers of metadata field groups to display on the sequence details page."
                 },
                 "defaultOrderBy": {
                   "groups": ["schema"],

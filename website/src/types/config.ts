@@ -119,6 +119,7 @@ export type GroupedMetadataFilter = {
     notSearchable?: boolean;
     initiallyVisible?: boolean;
     header?: string;
+    orderOnDetailsPage?: number;
 };
 
 export const linkOut = z.object({
@@ -148,6 +149,13 @@ export const submissionDataTypesSchema = z.object({
 
 export type SubmissionDataTypes = z.infer<typeof submissionDataTypesSchema>;
 
+export const header = z.object({
+    name: z.string(),
+    order: z.number(),
+});
+
+export type Header = z.infer<typeof header>;
+
 export const schema = z.object({
     organismName: z.string(),
     image: z.string().optional(),
@@ -164,6 +172,7 @@ export const schema = z.object({
     richFastaHeaderFields: z.array(z.string()).optional(),
     linkOuts: z.array(linkOut).optional(),
     referenceIdentifierField: z.string().optional(),
+    detailsPageHeaders: z.array(header).optional(),
 });
 export type Schema = z.infer<typeof schema>;
 

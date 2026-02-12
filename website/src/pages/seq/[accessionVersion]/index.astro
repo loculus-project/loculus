@@ -79,6 +79,7 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                                     dataUseTermsHistory={result.dataUseTermsHistory}
                                     referenceGenomesInfo={getReferenceGenomes(organism)}
                                     segmentReferences={result.segmentReferences}
+                                    schema={getSchema(organism)}
                                 />
                             ) : (
                                 <SequenceDataUI
