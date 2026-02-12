@@ -59,9 +59,7 @@ export class SearchPage {
     }
 
     async selectReference(fieldLabel: string, option: string) {
-        const select = this.page.getByRole('combobox', { name: fieldLabel });
-        await select.selectOption({ value: option });
-        await expect(select).toHaveValue(option);
+        await this.select(fieldLabel, option);
 
         const mutations = this.page.getByRole('combobox', { name: 'Mutations' }).first();
         await expect(mutations).toBeVisible();
