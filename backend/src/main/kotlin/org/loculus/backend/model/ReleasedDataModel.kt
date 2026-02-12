@@ -64,8 +64,12 @@ open class ReleasedDataModel(
     private val objectMapper: ObjectMapper,
 ) {
     @Transactional(readOnly = true)
-    open fun getReleasedData(organism: Organism): Sequence<ReleasedData> {
-        log.info { "Fetching released submissions from database for organism $organism" }
+    open fun getReleasedData(
+        organism: Organism,
+        releasedSince: kotlinx.datetime.LocalDateTime? = null,
+    ): Sequence<ReleasedData> {
+        log.info { "Fetching released submissions from database for organism $organism" +
+            (releasedSince?.let { " since $it" } ?: "") }
 
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
         val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
@@ -78,7 +82,7 @@ open class ReleasedDataModel(
         }
 
         log.info { "Starting to stream released submissions for organism $organism" }
-        return submissionDatabaseService.streamReleasedSubmissions(organism)
+        return submissionDatabaseService.streamReleasedSubmissions(organism, releasedSince)
             .map {
                 computeAdditionalMetadataFields(
                     it,

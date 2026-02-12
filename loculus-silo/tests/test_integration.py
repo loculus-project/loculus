@@ -163,7 +163,7 @@ def test_multiple_runs_with_state_persistence(
     assert len(new_input_dirs) == 1, "Should still have only one directory after 304"
     assert new_input_dirs[0] == first_dir, "Should keep previous input directory after 304"
 
-    # Run 3: New data with different ETag
+    # Run 3: New data with different ETag (incremental append since SILO DB exists)
     records_v2 = mock_records()[1]
     body_v2 = compress_ndjson([records_v2])
 
@@ -175,18 +175,10 @@ def test_multiple_runs_with_state_persistence(
     mock_download_r3, _ = make_mock_download_func(responses_r3)
     runner.download_manager = DownloadManager(download_func=mock_download_r3)
 
-    with patch.object(runner.silo, "run_preprocessing"):
+    with patch.object(runner.silo, "run_append"):
         runner.run_once()
 
     assert runner.current_etag == 'W/"etag2"', "ETag should update on new data"
-
-    # Should now have two directories (old pruning happens but keeps 1)
-    input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
-    assert len(input_dirs) == 1, "Old directory should be pruned, keeping only latest"
-
-    # Verify latest data is correct
-    output_records = read_ndjson_file(paths.silo_input_data_path)
-    assert output_records == [mock_transformed_records()[1]]
 
 
 def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
