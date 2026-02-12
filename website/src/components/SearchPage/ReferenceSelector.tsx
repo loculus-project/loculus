@@ -1,8 +1,8 @@
 import { type FC, useId, useMemo } from 'react';
 
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
-import { AsyncCombobox } from './fields/AsyncCombobox.tsx';
 import { type OptionsProvider } from './fields/AutoCompleteOptions.ts';
+import { SingleChoiceAutoCompleteField } from './fields/SingleChoiceAutoCompleteField.tsx';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema } from '../../utils/search.ts';
@@ -84,7 +84,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                         >
                             {labelsBySegment[segment]}
                         </label>
-                        <AsyncCombobox<string>
+                        <SingleChoiceAutoCompleteField<string>
                             inputId={`${baseSelectId}-${segment}`}
                             value={selectedReferences[segment] ?? ''}
                             onChange={(next) =>

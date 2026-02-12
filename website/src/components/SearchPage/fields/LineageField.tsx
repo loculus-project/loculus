@@ -2,6 +2,7 @@ import { useEffect, useState, type FC } from 'react';
 
 import { SingleChoiceAutoCompleteField } from './SingleChoiceAutoCompleteField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
+import { NULL_QUERY_VALUE } from '../../../utils/search';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters';
 
 interface LineageFieldProps {
@@ -43,10 +44,21 @@ export const LineageField: FC<LineageFieldProps> = ({
         setSomeFieldValues([field.name, queryText(includeSublineages, newValue)]);
     }
 
+    const handleChange = (v: string | null) => {
+        const finalValue = v === NULL_QUERY_VALUE ? null : (v ?? '');
+        setInputText(finalValue!);
+    };
+
+    const handleClear = () => {
+        setInputText('');
+    };
+
     return (
         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
-            <SingleChoiceAutoCompleteField
-                field={field}
+            <SingleChoiceAutoCompleteField<string | null>
+                value={inputText}
+                onChange={handleChange}
+                onClear={handleClear}
                 optionsProvider={{
                     type: 'lineage',
                     lapisUrl,
@@ -54,10 +66,8 @@ export const LineageField: FC<LineageFieldProps> = ({
                     fieldName: field.name,
                     includeSublineages,
                 }}
-                setSomeFieldValues={([_, value]) => {
-                    setInputText(value as string);
-                }}
-                fieldValue={inputText}
+                placeholder={field.displayName ?? field.name}
+                isClearVisible={(val, query) => (val !== '' && val !== undefined) || query !== ''}
             />
             <div className='flex flex-row justify-end'>
                 <label>

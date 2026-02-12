@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SingleChoiceAutoCompleteField } from './SingleChoiceAutoCompleteField';
+import { SingleChoiceAutoCompleteField } from './SingleChoiceAutoCompleteField.tsx';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { MetadataFilter } from '../../../types/config.ts';
 
@@ -50,14 +50,15 @@ describe('SingleChoiceAutoCompleteField', () => {
         });
         render(
             <SingleChoiceAutoCompleteField
-                field={field}
+                placeholder={field.displayName ?? field.name}
+                value={field.name}
+                onChange={(v) => setSomeFieldValues([field.name, v])}
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
-                setSomeFieldValues={setSomeFieldValues}
             />,
         );
 
@@ -86,14 +87,15 @@ describe('SingleChoiceAutoCompleteField', () => {
         });
         render(
             <SingleChoiceAutoCompleteField
-                field={field}
+                placeholder={field.displayName ?? field.name}
+                value={field.name}
+                onChange={(v) => setSomeFieldValues([field.name, v])}
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
-                setSomeFieldValues={setSomeFieldValues}
             />,
         );
 
@@ -116,14 +118,15 @@ describe('SingleChoiceAutoCompleteField', () => {
         });
         render(
             <SingleChoiceAutoCompleteField
-                field={field}
+                placeholder={field.displayName ?? field.name}
+                value={field.name}
+                onChange={(v) => setSomeFieldValues([field.name, v])}
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
-                setSomeFieldValues={setSomeFieldValues}
             />,
         );
 
@@ -142,14 +145,15 @@ describe('SingleChoiceAutoCompleteField', () => {
         });
         render(
             <SingleChoiceAutoCompleteField
-                field={field}
+                placeholder={field.displayName ?? field.name}
+                value={field.name}
+                onChange={(v) => setSomeFieldValues([field.name, v])}
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
-                setSomeFieldValues={setSomeFieldValues}
             />,
         );
 
@@ -173,14 +177,15 @@ describe('SingleChoiceAutoCompleteField', () => {
         });
         render(
             <SingleChoiceAutoCompleteField
-                field={field}
+                placeholder={field.displayName ?? field.name}
+                value={field.name}
+                onChange={(v) => setSomeFieldValues([field.name, v])}
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
-                setSomeFieldValues={setSomeFieldValues}
             />,
         );
 
@@ -207,15 +212,15 @@ describe('SingleChoiceAutoCompleteField', () => {
         });
         render(
             <SingleChoiceAutoCompleteField
-                field={field}
+                placeholder={field.displayName ?? field.name}
+                value={'Option 1'}
+                onChange={(v) => setSomeFieldValues([field.name, v])}
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
-                setSomeFieldValues={setSomeFieldValues}
-                fieldValue='Option 1'
             />,
         );
 
@@ -239,14 +244,15 @@ describe('SingleChoiceAutoCompleteField', () => {
         });
         render(
             <SingleChoiceAutoCompleteField
-                field={field}
+                placeholder={field.displayName ?? field.name}
+                value={field.name}
+                onChange={(v) => setSomeFieldValues([field.name, v])}
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
-                setSomeFieldValues={setSomeFieldValues}
             />,
         );
 
@@ -274,15 +280,15 @@ describe('SingleChoiceAutoCompleteField', () => {
         });
         render(
             <SingleChoiceAutoCompleteField
-                field={field}
+                placeholder={field.displayName ?? field.name}
+                value={'Option 1'}
+                onChange={(v) => setSomeFieldValues([field.name, v])}
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
-                setSomeFieldValues={setSomeFieldValues}
-                fieldValue='Option 1'
                 maxDisplayedOptions={50}
             />,
         );
