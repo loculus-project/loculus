@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SingleChoiceAutoCompleteField } from './SingleChoiceAutoCompleteField.tsx';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { MetadataFilter } from '../../../types/config.ts';
+import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 
 vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({
@@ -277,7 +278,7 @@ describe('SingleChoiceAutoCompleteField', () => {
         const options = await screen.findAllByRole('option');
         expect(options[0]).toHaveTextContent('(blank)(5)');
         await userEvent.click(options[0]);
-        expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', null]);
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', NULL_QUERY_VALUE]);
     });
 
     it('limits the number of displayed options', async () => {
