@@ -17,6 +17,7 @@ export const SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
             },
         },
     },
+    segmentDisplayNames: {},
     isMultiSegmented: false,
     useLapisMultiSegmentedEndpoint: false,
 };
@@ -55,6 +56,7 @@ export const MULTI_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
             },
         },
     },
+    segmentDisplayNames: {},
     isMultiSegmented: true,
     useLapisMultiSegmentedEndpoint: true,
 };
@@ -105,6 +107,7 @@ export const SINGLE_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
             },
         },
     },
+    segmentDisplayNames: {},
     isMultiSegmented: false,
     useLapisMultiSegmentedEndpoint: true,
 };
@@ -166,6 +169,7 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
             },
         },
     },
+    segmentDisplayNames: {},
     isMultiSegmented: true,
     useLapisMultiSegmentedEndpoint: true,
 };
