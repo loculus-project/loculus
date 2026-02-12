@@ -361,6 +361,19 @@ describe('SearchFullUI', () => {
     });
 
     it('should reset reference specific search fields when changing the selected reference', async () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { reference: 'ref1', count: 100 },
+                    { reference: 'ref2', count: 200 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            isError: false,
+            mutate: vi.fn(),
+        });
+
         renderSearchFullUI({
             referenceIdentifierField: 'reference',
             searchFormFilters: [
@@ -380,13 +393,21 @@ describe('SearchFullUI', () => {
             referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
         });
 
-        const referenceSelector = () => screen.findByLabelText('Reference');
+        const referenceInput = () => screen.findByLabelText('Reference');
         const mutationsField = () => screen.findByLabelText('Mutations');
         const field1 = () => screen.findByLabelText('Field 1');
 
+        async function selectReference(refName: string) {
+            const input = await referenceInput();
+            await userEvent.click(input);
+            const options = await screen.findAllByRole('option');
+            const option = options.find((opt) => opt.textContent?.includes(refName));
+            await userEvent.click(option!);
+        }
+
         // select reference1 and set mutations and field1
-        expect(await referenceSelector()).toBeVisible();
-        await userEvent.selectOptions(await referenceSelector(), 'ref1');
+        expect(await referenceInput()).toBeVisible();
+        await selectReference('ref1');
 
         expect(await mutationsField()).toBeVisible();
         await userEvent.type(await mutationsField(), '123{enter}');
@@ -401,7 +422,7 @@ describe('SearchFullUI', () => {
         ]);
 
         // change to reference2 and expect field1 and mutations to be cleared
-        await userEvent.selectOptions(await referenceSelector(), 'ref2');
+        await selectReference('ref2');
         await assertActiveFilterBadgesAre([{ fieldLabel: 'Reference', value: 'ref2' }]);
 
         // set mutations again for reference2
@@ -413,11 +434,11 @@ describe('SearchFullUI', () => {
         ]);
 
         // clear reference in reference selector and expect mutations to be cleared
-        await userEvent.click(await screen.findByRole('button', { name: 'Clear Reference' }));
+        await userEvent.click(screen.getByLabelText('Clear Reference'));
         expect(screen.queryByTestId(ACTIVE_FILTER_BADGE_TEST_ID)).not.toBeInTheDocument();
 
         // set reference1 again and set mutations again
-        await userEvent.selectOptions(await referenceSelector(), 'ref1');
+        await selectReference('ref1');
         expect(await mutationsField()).toBeVisible();
         await userEvent.type(await mutationsField(), '345{enter}');
         await assertActiveFilterBadgesAre([

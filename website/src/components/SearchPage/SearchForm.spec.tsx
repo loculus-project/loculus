@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
+import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { MetadataFilter } from '../../types/config.ts';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
@@ -13,6 +14,25 @@ import {
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
+
+vi.mock('../../services/serviceHooks.ts');
+vi.mock('../../clientLogger.ts', () => ({
+    getClientLogger: () => ({
+        error: vi.fn(),
+    }),
+}));
+
+const mockUseAggregated = vi.fn().mockReturnValue({
+    data: { data: [] },
+    isPending: false,
+    error: null,
+    mutate: vi.fn(),
+});
+// @ts-expect-error mock implementation for test double
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+lapisClientHooks.mockReturnValue({
+    useAggregated: mockUseAggregated,
+});
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
     observe() {}
@@ -114,7 +134,18 @@ describe('SearchForm', () => {
     });
 
     it('should render the reference selector in the multiReference case', async () => {
-        const setSelectedReferences = vi.fn();
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { 'My genotype': 'ref1', count: 100 },
+                    { 'My genotype': 'ref2', count: 200 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
+        });
+
         render(
             <QueryClientProvider client={queryClient}>
                 <SearchForm
@@ -134,17 +165,21 @@ describe('SearchForm', () => {
                     referenceSelection={{
                         referenceIdentifierField: 'My genotype',
                         selectedReferences: {},
-                        setSelectedReferences,
+                        setSelectedReferences: vi.fn(),
                     }}
                 />
             </QueryClientProvider>,
         );
 
-        const referenceSelector = await screen.findByRole('combobox', { name: 'My genotype' });
-        expect(referenceSelector).toBeInTheDocument();
-        await userEvent.selectOptions(referenceSelector, 'ref1');
+        const referenceInput = await screen.findByLabelText('My genotype');
+        expect(referenceInput).toBeInTheDocument();
 
-        expect(setSelectedReferences).toHaveBeenCalledWith({ main: 'ref1' });
+        await userEvent.click(referenceInput);
+        const options = await screen.findAllByRole('option');
+        const ref1Option = options.find((opt) => opt.textContent?.includes('ref1'));
+        await userEvent.click(ref1Option!);
+
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['My genotype', 'ref1']);
     });
 
     it('opens advanced options modal with version status and revocation fields', async () => {
