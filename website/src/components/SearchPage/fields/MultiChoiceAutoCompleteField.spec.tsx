@@ -137,7 +137,7 @@ describe('MultiChoiceAutoCompleteField', () => {
         await userEvent.click(input);
 
         const options = await screen.findAllByRole('option');
-        expect(options[0]).toHaveTextContent('(blank) (5)');
+        expect(options[0]).toHaveTextContent('(blank)(5)');
         await userEvent.click(options[0]);
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', [null]]);

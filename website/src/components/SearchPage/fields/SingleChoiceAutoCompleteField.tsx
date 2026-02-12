@@ -28,16 +28,14 @@ export const SingleChoiceAutoCompleteField = ({
     };
 
     return (
-        <div className='w-full'>
-            <AsyncCombobox<string | null>
-                value={fieldValue}
-                onChange={handleChange}
-                onClear={handleClear}
-                optionsProvider={optionsProvider}
-                maxDisplayedOptions={maxDisplayedOptions}
-                placeholder={field.displayName ?? field.name}
-                isClearVisible={(val, query) => (val !== '' && val !== undefined) || query !== ''}
-            />
-        </div>
+        <AsyncCombobox<string | null>
+            value={fieldValue}
+            onChange={handleChange}
+            onClear={handleClear}
+            optionsProvider={optionsProvider}
+            maxDisplayedOptions={maxDisplayedOptions}
+            placeholder={field.displayName ?? field.name}
+            isClearVisible={(val, query) => (val !== '' && val !== undefined) || query !== ''}
+        />
     );
 };

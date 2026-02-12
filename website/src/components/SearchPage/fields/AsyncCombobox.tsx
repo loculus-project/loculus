@@ -91,7 +91,7 @@ export const AsyncCombobox = <TValue extends string | number | null>({
 
     const defaultRenderOptionLabel = (opt: Option) => {
         const label =
-            opt.count !== undefined ? `${opt.option} (${formatNumberWithDefaultLocale(opt.count)})` : opt.option;
+            opt.count !== undefined ? `${opt.option}(${formatNumberWithDefaultLocale(opt.count)})` : opt.option;
 
         return <span className={`inline-block ${opt.option === '(blank)' ? 'italic' : ''}`}>{label}</span>;
     };
@@ -142,8 +142,6 @@ export const AsyncCombobox = <TValue extends string | number | null>({
                 >
                     {isPending ? (
                         <div className='px-4 py-2 text-gray-500'>Loading...</div>
-                    ) : error ? (
-                        <div className='px-4 py-2 text-gray-500'>Failed to load options</div>
                     ) : filteredOptions.length === 0 ? (
                         <div className='px-4 py-2 text-gray-500'>No options available</div>
                     ) : (
