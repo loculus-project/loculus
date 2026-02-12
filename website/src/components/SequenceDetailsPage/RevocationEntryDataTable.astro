@@ -46,7 +46,7 @@ const relevantFieldsForRevocationVersions = [
 ];
 
 const relevantData = tableData.filter((entry) => relevantFieldsForRevocationVersions.includes(entry.name));
-const dataTableData = getDataTableData(relevantData, schema);
+const dataTableData = getDataTableData(relevantData, schema.detailsPageHeaders);
 ---
 
 <DataTable
