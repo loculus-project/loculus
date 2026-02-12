@@ -68,8 +68,10 @@ open class ReleasedDataModel(
         organism: Organism,
         releasedSince: kotlinx.datetime.LocalDateTime? = null,
     ): Sequence<ReleasedData> {
-        log.info { "Fetching released submissions from database for organism $organism" +
-            (releasedSince?.let { " since $it" } ?: "") }
+        log.info {
+            "Fetching released submissions from database for organism $organism" +
+                (releasedSince?.let { " since $it" } ?: "")
+        }
 
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
         val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)

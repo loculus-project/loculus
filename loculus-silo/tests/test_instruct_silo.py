@@ -1,3 +1,4 @@
+# ruff: noqa: S101
 from __future__ import annotations
 
 import subprocess  # noqa: S404
