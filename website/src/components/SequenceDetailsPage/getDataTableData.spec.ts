@@ -29,16 +29,8 @@ describe('getDataTableData', () => {
         ).toBeUndefined();
     });
 
-    test('should order headers and rows by orderOnDetailsPage and headerOrder', () => {
+    test('should order headers and rows by orderOnDetailsPage and detailsPageHeaders', () => {
         const entries: TableDataEntry[] = [
-            {
-                label: 'A1',
-                name: 'a1',
-                value: 'v1',
-                header: 'Header 1',
-                type: { kind: 'metadata', metadataType: 'string' },
-                orderOnDetailsPage: 20,
-            },
             {
                 label: 'B1',
                 name: 'b1',
@@ -46,6 +38,14 @@ describe('getDataTableData', () => {
                 header: 'Header 2',
                 type: { kind: 'metadata', metadataType: 'string' },
                 orderOnDetailsPage: 5,
+            },
+            {
+                label: 'A1',
+                name: 'a1',
+                value: 'v1',
+                header: 'Header 1',
+                type: { kind: 'metadata', metadataType: 'string' },
+                orderOnDetailsPage: 20,
             },
             {
                 label: 'A2',
@@ -61,6 +61,40 @@ describe('getDataTableData', () => {
 
         expect(data.table.map((t) => t.header)).toStrictEqual(['Header 1', 'Header 2']);
         expect(data.table[0].rows.map((r) => r.name)).toStrictEqual(['a2', 'a1']);
+    });
+
+    test('should order headers and rows by orderOnDetailsPage when detailsPageHeaders is empty', () => {
+        const entries: TableDataEntry[] = [
+            {
+                label: 'B1',
+                name: 'b1',
+                value: 'v2',
+                header: 'Header 2',
+                type: { kind: 'metadata', metadataType: 'string' },
+                orderOnDetailsPage: 5,
+            },
+            {
+                label: 'A1',
+                name: 'a1',
+                value: 'v1',
+                header: 'Header 1',
+                type: { kind: 'metadata', metadataType: 'string' },
+                orderOnDetailsPage: 20,
+            },
+            {
+                label: 'A2',
+                name: 'a2',
+                value: 'v3',
+                header: 'Header 1',
+                type: { kind: 'metadata', metadataType: 'string' },
+                orderOnDetailsPage: 10,
+            },
+        ];
+
+        const data = getDataTableData(entries);
+
+        expect(data.table.map((t) => t.header)).toStrictEqual(['Header 2', 'Header 1']);
+        expect(data.table[1].rows.map((r) => r.name)).toStrictEqual(['a2', 'a1']);
     });
 });
 
