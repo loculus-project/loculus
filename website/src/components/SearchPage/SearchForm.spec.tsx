@@ -171,7 +171,7 @@ describe('SearchForm', () => {
             </QueryClientProvider>,
         );
 
-        expect(screen.getByText('My genotype')).toBeInTheDocument();
+        expect(screen.getByText(referenceIdentifierField)).toBeInTheDocument();
         await userEvent.click(screen.getByLabelText('Select my genotype...'));
         const options = screen.getAllByRole('option');
         await userEvent.click(options[1]);
@@ -225,7 +225,7 @@ describe('SearchForm', () => {
                 filterSchema,
                 searchVisibilities,
                 referenceSelection: {
-                    referenceIdentifierField: 'My genotype',
+                    referenceIdentifierField: referenceIdentifierField,
 
                     selectedReferences: { main: 'suborganism1' },
                     setSelectedReferences: vi.fn(),
