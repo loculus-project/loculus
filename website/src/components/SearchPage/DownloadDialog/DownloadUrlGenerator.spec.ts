@@ -2,6 +2,18 @@ import { describe, expect, it } from 'vitest';
 
 import { DownloadUrlGenerator } from './DownloadUrlGenerator';
 import { FieldFilterSet } from './SequenceFilters';
+import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers';
+
+const mockSegmentAndGeneInfo: SegmentAndGeneInfo = {
+            nucleotideSegmentInfos: [
+                {
+                    lapisName: 'lapisName-main',
+                    name: 'label-main',
+                },
+            ],
+            geneInfos: [],
+            useLapisMultiSegmentedEndpoint: false,
+        }
 
 describe('DownloadUrlGenerator', () => {
     const organism = 'test-organism';
@@ -15,7 +27,7 @@ describe('DownloadUrlGenerator', () => {
             dataType: { type: 'metadata', fields: ['field1', 'field2', 'field3'] },
             includeRestricted: false,
             compression: undefined,
-        });
+        }, mockSegmentAndGeneInfo);
 
         expect(result.params.get('fields')).toBe('field1,field2,field3');
     });
@@ -27,7 +39,7 @@ describe('DownloadUrlGenerator', () => {
             dataType: { type: 'unalignedNucleotideSequences', richFastaHeaders: { include: false } },
             includeRestricted: false,
             compression: undefined,
-        });
+        }, mockSegmentAndGeneInfo);
 
         expect(result.params.has('fields')).toBe(false);
     });
@@ -39,7 +51,7 @@ describe('DownloadUrlGenerator', () => {
             dataType: { type: 'metadata', fields: [] },
             includeRestricted: false,
             compression: undefined,
-        });
+        }, mockSegmentAndGeneInfo);
 
         expect(result.params.has('fields')).toBe(false);
     });

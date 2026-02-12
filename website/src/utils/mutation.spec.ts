@@ -305,7 +305,7 @@ describe('mutation', () => {
 
         it('converts mutations to search params', () => {
             const params = intoMutationSearchParams(
-                'label-GENE1:A23T, label-SEQ1:123C, INS_label-SEQ1:100:G',
+                {'mutation_SEQ1': 'label-GENE1:A23T, label-SEQ1:123C, INS_label-SEQ1:100:G'},
                 mockSegmentAndGeneInfo,
             );
             expect(params).toEqual({

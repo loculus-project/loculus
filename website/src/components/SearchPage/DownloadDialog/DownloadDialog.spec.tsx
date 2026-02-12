@@ -47,6 +47,13 @@ const mockMetadata: Metadata[] = [
     },
 ];
 
+const mockReferenceGenomesInfo: ReferenceGenomesInfo = {
+    isMultiSegmented: false,
+    segmentReferenceGenomes: {},
+    segmentDisplayNames: {},
+    useLapisMultiSegmentedEndpoint: false,
+};
+
 async function renderDialog({
     downloadParams = new SequenceEntrySelection(new Set()),
     allowSubmissionOfConsensusSequences = true,
@@ -154,7 +161,7 @@ describe('DownloadDialog', () => {
                     field1: 'value1',
                 },
                 {},
-                { nucleotideSegmentInfos: [], geneInfos: [] },
+                mockReferenceGenomesInfo,
             ),
         });
         await checkAgreement();
@@ -299,7 +306,7 @@ describe('DownloadDialog', () => {
                     field2: 'value2',
                 },
                 {},
-                { nucleotideSegmentInfos: [], geneInfos: [] },
+                mockReferenceGenomesInfo,
             ),
         });
         await checkAgreement();
@@ -348,7 +355,7 @@ describe('DownloadDialog', () => {
                         field1: 'value1',
                     },
                     {},
-                    { nucleotideSegmentInfos: [], geneInfos: [] },
+                    mockReferenceGenomesInfo,
                 ),
             });
 
