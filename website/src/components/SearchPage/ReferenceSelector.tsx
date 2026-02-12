@@ -8,42 +8,6 @@ import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema } from '../../utils/search.ts';
 import { segmentsWithMultipleReferences, type SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 
-type SegmentReferenceSelectorProps = {
-    selectId: string;
-    label: string | undefined;
-    value: string | null | undefined;
-    onChange: (next: string) => void;
-    onClear: () => void;
-    optionsProvider: OptionsProvider;
-    maxDisplayedOptions?: number;
-};
-
-const SegmentReferenceSelector: FC<SegmentReferenceSelectorProps> = ({
-    selectId,
-    label,
-    value,
-    onChange,
-    onClear,
-    optionsProvider,
-    maxDisplayedOptions = 1000,
-}) => {
-    const selectedValue = (value ?? '');
-
-    return (
-        <AsyncCombobox<string>
-            inputId={selectId}
-            value={selectedValue}
-            onChange={(next) => onChange(next)}
-            onClear={onClear}
-            optionsProvider={optionsProvider}
-            maxDisplayedOptions={maxDisplayedOptions}
-            placeholder={`Select ${formatLabel(label ?? '')}...`}
-            inputClassName='w-full px-2 py-1.5 rounded border border-gray-300 text-sm bg-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200'
-            isClearVisible={(val) => (val ?? '') !== ''}
-        />
-    );
-};
-
 type ReferenceSelectorProps = {
     lapisSearchParameters: LapisSearchParameters;
     lapisUrl: string;
@@ -110,22 +74,23 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
         <>
             {multiRefSegments.map((segment) => {
                 return (
-                    <div className='bg-gray-50 border border-gray-300 rounded-md p-3 mb-3'>
+                    <div
+                        key={`${baseSelectId}-${segment}`}
+                        className='bg-gray-50 border border-gray-300 rounded-md p-3 mb-3'
+                    >
                         <label
                             className='block text-xs font-semibold text-gray-700 mb-1'
                             htmlFor={`${baseSelectId}-${segment}`}
                         >
                             {labelsBySegment[segment]}
                         </label>
-                        <SegmentReferenceSelector
-                            key={segment}
-                            label={labelsBySegment[segment]}
-                            selectId={`${baseSelectId}-${segment}`}
-                            value={selectedReferences[segment]}
-                            onChange={(e) =>
+                        <AsyncCombobox<string>
+                            inputId={`${baseSelectId}-${segment}`}
+                            value={selectedReferences[segment] ?? ''}
+                            onChange={(next) =>
                                 setSelectedReferences({
                                     ...selectedReferences,
-                                    [segment]: e,
+                                    [segment]: next,
                                 })
                             }
                             onClear={() =>
@@ -135,6 +100,8 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                                 })
                             }
                             optionsProvider={optionsProvidersBySegment[segment]}
+                            placeholder={`Select ${formatLabel(labelsBySegment[segment] ?? '')}...`}
+                            isClearVisible={(val) => (val ?? '') !== ''}
                         />
                         {selectedReferences[segment] == null && (
                             <p className='text-xs text-gray-600 mt-2'>

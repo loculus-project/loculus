@@ -68,8 +68,8 @@ describe('SingleChoiceAutoCompleteField', () => {
 
         const options = await screen.findAllByRole('option');
         expect(options).toHaveLength(2);
-        expect(options[0]).toHaveTextContent('Option 1(10)');
-        expect(options[1]).toHaveTextContent('Option 2(20)');
+        expect(options[0]).toHaveTextContent('Option 1 (10)');
+        expect(options[1]).toHaveTextContent('Option 2 (20)');
     });
 
     it('filters options based on query', async () => {
@@ -104,7 +104,7 @@ describe('SingleChoiceAutoCompleteField', () => {
 
         const options = await screen.findAllByRole('option');
         expect(options).toHaveLength(1);
-        expect(options[0]).toHaveTextContent('Option 2(20)');
+        expect(options[0]).toHaveTextContent('Option 2 (20)');
     });
 
     it('displays loading state when aggregated endpoint is loading', async () => {
@@ -254,7 +254,7 @@ describe('SingleChoiceAutoCompleteField', () => {
         await userEvent.click(input);
 
         const options = await screen.findAllByRole('option');
-        expect(options[0]).toHaveTextContent('(blank)(5)');
+        expect(options[0]).toHaveTextContent('(blank) (5)');
         await userEvent.click(options[0]);
         expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', null]);
     });
