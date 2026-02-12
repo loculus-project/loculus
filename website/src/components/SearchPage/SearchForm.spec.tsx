@@ -171,11 +171,12 @@ describe('SearchForm', () => {
             </QueryClientProvider>,
         );
 
-        const referenceSelector = await screen.findByRole('combobox', { name: referenceIdentifierField });
-        expect(referenceSelector).toBeInTheDocument();
-        await userEvent.selectOptions(referenceSelector, 'ref1');
+        expect(screen.getByText('My genotype')).toBeInTheDocument();
+        await userEvent.click(screen.getByLabelText('Select my genotype...'));
+        const options = screen.getAllByRole('option');
+        await userEvent.click(options[1]);
 
-        expect(setSelectedReferences).toHaveBeenCalledWith({ main: 'ref1' });
+        expect(setSelectedReferences).toHaveBeenCalledWith({ main: 'ref2' });
     });
 
     it('opens advanced options modal with version status and revocation fields', async () => {

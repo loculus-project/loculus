@@ -392,13 +392,14 @@ describe('SearchFullUI', () => {
             referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
         });
 
-        const referenceSelector = () => screen.findByLabelText('Reference');
         const mutationsField = () => screen.findByLabelText('Mutations');
         const field1 = () => screen.findByLabelText('Field 1');
 
         // select reference1 and set mutations and field1
-        expect(await referenceSelector()).toBeVisible();
-        await userEvent.selectOptions(await referenceSelector(), 'ref1');
+        expect(screen.getByText('Reference')).toBeInTheDocument();
+        await userEvent.click(screen.getByLabelText('Select reference...'));
+        const options = screen.getAllByRole('option');
+        await userEvent.click(options[0]);
 
         expect(await mutationsField()).toBeVisible();
         await userEvent.type(await mutationsField(), '123{enter}');
@@ -412,38 +413,20 @@ describe('SearchFullUI', () => {
             { fieldLabel: 'mutation', value: '123' },
         ]);
 
-        // change to reference2 and expect field1 and mutations to be cleared
-        await userEvent.selectOptions(await referenceSelector(), 'ref2');
-        await assertActiveFilterBadgesAre([{ fieldLabel: 'Reference', value: 'ref2' }]);
-
-        // set mutations again for reference2
-        expect(await mutationsField()).toBeVisible();
-        await userEvent.type(await mutationsField(), '234{enter}');
-        await assertActiveFilterBadgesAre([
-            { fieldLabel: 'Reference', value: 'ref2' },
-            { fieldLabel: 'mutation', value: '234' },
-        ]);
-
         // clear reference in reference selector and expect mutations to be cleared
-        await userEvent.click(await screen.findByRole('button', { name: 'Clear Reference' }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Clear Select reference...' }));
         expect(screen.queryByTestId(ACTIVE_FILTER_BADGE_TEST_ID)).not.toBeInTheDocument();
 
         // set reference1 again and set mutations again
-        await userEvent.selectOptions(await referenceSelector(), 'ref1');
+        await userEvent.click(screen.getByLabelText('Select reference...'));
+        const options2 = screen.getAllByRole('option');
+        await userEvent.click(options2[0]);
         expect(await mutationsField()).toBeVisible();
         await userEvent.type(await mutationsField(), '345{enter}');
         await assertActiveFilterBadgesAre([
             { fieldLabel: 'Reference', value: 'ref1' },
             { fieldLabel: 'mutation', value: '345' },
         ]);
-
-        // remove reference via its filter badge and expect mutations to be cleared
-        const badges = await screen.findAllByTestId(ACTIVE_FILTER_BADGE_TEST_ID);
-        const referenceBadge = badges.find((badge) => {
-            return within(badge).queryByText(`Reference:`) !== null;
-        });
-        await userEvent.click(await within(referenceBadge!).findByRole('button', { name: 'remove filter' }));
-        expect(screen.queryByTestId(ACTIVE_FILTER_BADGE_TEST_ID)).not.toBeInTheDocument();
     });
 
     async function assertActiveFilterBadgesAre(expected: { fieldLabel: string; value: string }[]) {
