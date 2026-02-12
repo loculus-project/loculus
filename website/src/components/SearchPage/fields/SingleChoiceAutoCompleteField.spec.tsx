@@ -27,6 +27,7 @@ describe('SingleChoiceAutoCompleteField', () => {
         type: 'string',
         autocomplete: true,
     };
+    const fieldValue = 'Option 1'
     const setSomeFieldValues = vi.fn();
     const lapisUrl = 'https://example.com/api';
     const lapisSearchParameters = { param1: 'value1' };
@@ -51,7 +52,7 @@ describe('SingleChoiceAutoCompleteField', () => {
         render(
             <SingleChoiceAutoCompleteField
                 placeholder={field.displayName ?? field.name}
-                value={field.name}
+                value={fieldValue}
                 onChange={(v) => setSomeFieldValues([field.name, v])}
                 optionsProvider={{
                     type: 'generic',
@@ -88,7 +89,7 @@ describe('SingleChoiceAutoCompleteField', () => {
         render(
             <SingleChoiceAutoCompleteField
                 placeholder={field.displayName ?? field.name}
-                value={field.name}
+                value={fieldValue}
                 onChange={(v) => setSomeFieldValues([field.name, v])}
                 optionsProvider={{
                     type: 'generic',
@@ -119,7 +120,7 @@ describe('SingleChoiceAutoCompleteField', () => {
         render(
             <SingleChoiceAutoCompleteField
                 placeholder={field.displayName ?? field.name}
-                value={field.name}
+                value={fieldValue}
                 onChange={(v) => setSomeFieldValues([field.name, v])}
                 optionsProvider={{
                     type: 'generic',
@@ -146,7 +147,7 @@ describe('SingleChoiceAutoCompleteField', () => {
         render(
             <SingleChoiceAutoCompleteField
                 placeholder={field.displayName ?? field.name}
-                value={field.name}
+                value={fieldValue}
                 onChange={(v) => setSomeFieldValues([field.name, v])}
                 optionsProvider={{
                     type: 'generic',
@@ -178,7 +179,7 @@ describe('SingleChoiceAutoCompleteField', () => {
         render(
             <SingleChoiceAutoCompleteField
                 placeholder={field.displayName ?? field.name}
-                value={field.name}
+                value={fieldValue}
                 onChange={(v) => setSomeFieldValues([field.name, v])}
                 optionsProvider={{
                     type: 'generic',
@@ -245,7 +246,7 @@ describe('SingleChoiceAutoCompleteField', () => {
         render(
             <SingleChoiceAutoCompleteField
                 placeholder={field.displayName ?? field.name}
-                value={field.name}
+                value={fieldValue}
                 onChange={(v) => setSomeFieldValues([field.name, v])}
                 optionsProvider={{
                     type: 'generic',
