@@ -40,9 +40,9 @@ test.describe('Search', () => {
         const mutation = 'G100A';
         await searchPage.cchf();
         await searchPage.enterSegmentedMutation(mutation, 'S');
-        await expect(page.getByText(`mutation:${mutation}`)).toBeVisible();
+        await expect(page.getByText(`mutation_S:${mutation}`)).toBeVisible();
         await page.getByLabel('remove filter').click();
-        await expect(page.getByText(`mutation:${mutation}`)).toBeHidden();
+        await expect(page.getByText(`mutation_S:${mutation}`)).toBeHidden();
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
 
