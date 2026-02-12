@@ -1,7 +1,6 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { getSegmentNames, type SegmentReferenceSelections } from './sequenceTypeHelpers';
-import type { SetSomeFieldValues } from '../types/config';
 import type { ReferenceGenomesInfo } from '../types/referencesGenomes';
 
 export function getReferenceIdentifier(identifier: string, segmentName: string, multipleSegments: boolean) {
@@ -57,14 +56,12 @@ type UseReferenceSelectionArgs = {
     referenceGenomesInfo: ReferenceGenomesInfo;
     referenceIdentifierField: string | undefined;
     state: Record<string, unknown>;
-    setSomeFieldValues: SetSomeFieldValues;
 };
 
 export type ReferenceSelection =
     | {
           referenceIdentifierField: string;
           selectedReferences: SegmentReferenceSelections;
-          setSelectedReferences: (selections: SegmentReferenceSelections) => void;
       }
     | undefined;
 
@@ -72,7 +69,6 @@ export function useReferenceSelection({
     referenceGenomesInfo,
     referenceIdentifierField,
     state,
-    setSomeFieldValues,
 }: UseReferenceSelectionArgs): ReferenceSelection {
     if (!referenceIdentifierField) {
         return undefined;
@@ -91,15 +87,5 @@ export function useReferenceSelection({
         [segments, referenceIdentifierField, state],
     );
 
-    const setSelectedReferences = useCallback(
-        (updates: SegmentReferenceSelections) => {
-            Object.entries(updates).forEach(([segmentName, value]) => {
-                const identifier = getReferenceIdentifier(referenceIdentifierField, segmentName, segments.length > 1);
-                setSomeFieldValues([identifier, value]);
-            });
-        },
-        [setSomeFieldValues, segments, referenceIdentifierField],
-    );
-
-    return { referenceIdentifierField, selectedReferences, setSelectedReferences };
+    return { referenceIdentifierField, selectedReferences };
 }

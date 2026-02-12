@@ -167,7 +167,6 @@ describe('SearchForm', () => {
                     referenceSelection={{
                         referenceIdentifierField: 'My genotype',
                         selectedReferences: {},
-                        setSelectedReferences: vi.fn(),
                     }}
                 />
             </QueryClientProvider>,
@@ -233,7 +232,6 @@ describe('SearchForm', () => {
                     referenceIdentifierField: 'My genotype',
 
                     selectedReferences: { main: 'suborganism1' },
-                    setSelectedReferences: vi.fn(),
                 },
             });
 
