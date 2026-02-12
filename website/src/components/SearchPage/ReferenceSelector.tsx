@@ -78,7 +78,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                                 fieldName,
                             }}
                             setSomeFieldValues={setSomeFieldValues}
-                            fieldValue={(fieldValues[fieldName] as string) ?? ''}
+                            fieldValue={(fieldValues[fieldName] as string | undefined) ?? ''}
                         />
 
                         <p className='text-xs text-gray-600 mt-2'>

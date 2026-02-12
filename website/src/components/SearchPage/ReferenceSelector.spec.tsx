@@ -108,8 +108,8 @@ describe('ReferenceSelector', () => {
         mockUseAggregated.mockReturnValue({
             data: {
                 data: [
-                    { genotype_L: 'ref1', count: 50 },
-                    { genotype_L: 'ref2', count: 75 },
+                    { 'genotype_L': 'ref1', count: 50 },
+                    { 'genotype_L': 'ref2', count: 75 },
                 ],
             },
             isPending: false,

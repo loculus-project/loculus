@@ -137,7 +137,9 @@ describe('SearchForm', () => {
         mockUseAggregated.mockReturnValue({
             data: {
                 data: [
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
                     { 'My genotype': 'ref1', 'count': 100 },
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
                     { 'My genotype': 'ref2', 'count': 200 },
                 ],
             },
@@ -176,7 +178,7 @@ describe('SearchForm', () => {
 
         await userEvent.click(referenceInput);
         const options = await screen.findAllByRole('option');
-        const ref1Option = options.find((opt) => opt.textContent?.includes('ref1'));
+        const ref1Option = options.find((opt) => opt.textContent!.includes('ref1'));
         await userEvent.click(ref1Option!);
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['My genotype', 'ref1']);
