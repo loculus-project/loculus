@@ -98,7 +98,6 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
     clientConfig,
     accessToken,
     sequenceFilter,
-    segmentAndGeneInfo,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const openDialog = () => setIsOpen(true);
@@ -108,10 +107,10 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
 
     useEffect(() => {
         detailsHook.mutate({
-            ...sequenceFilter.toApiParams(segmentAndGeneInfo),
+            ...sequenceFilter.toApiParams(),
             fields: ['accession', DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD],
         });
-    }, [sequenceFilter, segmentAndGeneInfo]);
+    }, [sequenceFilter]);
 
     const [state, setState] = useState<DataState>({ type: 'loading' });
 

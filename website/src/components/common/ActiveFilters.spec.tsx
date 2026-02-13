@@ -4,12 +4,24 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActiveFilters } from './ActiveFilters';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { MetadataFilterSchema } from '../../utils/search';
+import type { SegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers';
 import { FieldFilterSet, SequenceEntrySelection } from '../SearchPage/DownloadDialog/SequenceFilters';
 
 const mockReferenceGenomesInfo: ReferenceGenomesInfo = {
     isMultiSegmented: false,
     segmentReferenceGenomes: {},
     segmentDisplayNames: {},
+    useLapisMultiSegmentedEndpoint: false,
+};
+
+const mockSegmentAndGeneInfo: SegmentAndGeneInfo = {
+    nucleotideSegmentInfos: [
+        {
+            lapisName: 'lapisName-main',
+            name: 'label-main',
+        },
+    ],
+    geneInfos: [],
     useLapisMultiSegmentedEndpoint: false,
 };
 
@@ -28,6 +40,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: 'value1', mutations: 'A123T,G234C,gene:A345T' },
                             {},
+                            mockSegmentAndGeneInfo,
                             mockReferenceGenomesInfo,
                         )
                     }
@@ -42,7 +55,13 @@ describe('ActiveFilters', () => {
             render(
                 <ActiveFilters
                     sequenceFilter={
-                        new FieldFilterSet(new MetadataFilterSchema([]), { field1: null }, {}, mockReferenceGenomesInfo)
+                        new FieldFilterSet(
+                            new MetadataFilterSchema([]),
+                            { field1: null },
+                            {},
+                            mockSegmentAndGeneInfo,
+                            mockReferenceGenomesInfo,
+                        )
                     }
                 />,
             );
@@ -64,6 +83,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: 'value1' },
                             {},
+                            mockSegmentAndGeneInfo,
                             mockReferenceGenomesInfo,
                         )
                     }
@@ -87,6 +107,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([{ name: 'releaseTimestamp', type: 'timestamp' }]),
                             { releaseTimestamp: '1742288104' },
                             {},
+                            mockSegmentAndGeneInfo,
                             mockReferenceGenomesInfo,
                         )
                     }
@@ -107,6 +128,7 @@ describe('ActiveFilters', () => {
                             ]),
                             { authorAffiliations: 'foo' },
                             {},
+                            mockSegmentAndGeneInfo,
                             mockReferenceGenomesInfo,
                         )
                     }

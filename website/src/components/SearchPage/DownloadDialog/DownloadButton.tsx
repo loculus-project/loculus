@@ -70,11 +70,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
             };
         }
 
-        const { url, baseUrl, params } = downloadUrlGenerator.generateDownloadUrl(
-            sequenceFilter,
-            downloadOption,
-            segmentAndGeneInfo,
-        );
+        const { url, baseUrl, params } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);
         const useGet = url.length <= approxMaxAcceptableUrlLength;
         if (useGet) {
             return {

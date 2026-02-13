@@ -15,7 +15,7 @@ import {
 } from '../../../types/referenceGenomes.spec.ts';
 import { type ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
-import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
+import type { SegmentAndGeneInfo, SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 
 const defaultLapisUrl = 'https://lapis';
 const defaultOrganism = 'ebola';
@@ -51,6 +51,17 @@ const mockReferenceGenomesInfo: ReferenceGenomesInfo = {
     isMultiSegmented: false,
     segmentReferenceGenomes: {},
     segmentDisplayNames: {},
+    useLapisMultiSegmentedEndpoint: false,
+};
+
+const mockSegmentAndGeneInfo: SegmentAndGeneInfo = {
+    nucleotideSegmentInfos: [
+        {
+            lapisName: 'lapisName-main',
+            name: 'label-main',
+        },
+    ],
+    geneInfos: [],
     useLapisMultiSegmentedEndpoint: false,
 };
 
@@ -161,6 +172,7 @@ describe('DownloadDialog', () => {
                     field1: 'value1',
                 },
                 {},
+                mockSegmentAndGeneInfo,
                 mockReferenceGenomesInfo,
             ),
         });
@@ -306,6 +318,7 @@ describe('DownloadDialog', () => {
                     field2: 'value2',
                 },
                 {},
+                mockSegmentAndGeneInfo,
                 mockReferenceGenomesInfo,
             ),
         });
@@ -355,6 +368,7 @@ describe('DownloadDialog', () => {
                         field1: 'value1',
                     },
                     {},
+                    mockSegmentAndGeneInfo,
                     mockReferenceGenomesInfo,
                 ),
             });

@@ -153,24 +153,22 @@ export const InnerSearchFullUI = ({
     const sequencesSelected = selectedSeqs.size > 0;
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
-    const tableFilter = useMemo(
-        () => new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesInfo),
-        [fieldValues, hiddenFieldValues, referenceGenomesInfo, filterSchema],
-    );
-
     const segmentAndGeneInfo = useMemo(
         () => getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
         [referenceGenomesInfo, referenceSelection?.selectedReferences],
+    );
+
+    const tableFilter = useMemo(
+        () =>
+            new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, segmentAndGeneInfo, referenceGenomesInfo),
+        [fieldValues, hiddenFieldValues, referenceGenomesInfo, filterSchema],
     );
 
     /**
      * The `lapisSearchParameters` are derived from the `fieldValues` (the search boxes).
      * Some values are modified slightly or expanded based on field definitions.
      */
-    const lapisSearchParameters = useMemo(
-        () => tableFilter.toApiParams(segmentAndGeneInfo),
-        [tableFilter, segmentAndGeneInfo],
-    );
+    const lapisSearchParameters = useMemo(() => tableFilter.toApiParams(), [tableFilter]);
 
     const downloadFilter: SequenceFilter = sequencesSelected ? new SequenceEntrySelection(selectedSeqs) : tableFilter;
 
@@ -364,7 +362,6 @@ export const InnerSearchFullUI = ({
                                     sequenceCount={linkOutSequenceCount}
                                     linkOuts={linkOuts}
                                     dataUseTermsEnabled={dataUseTermsEnabled}
-                                    segmentAndGeneInfo={segmentAndGeneInfo}
                                 />
                             )}
                         </div>
