@@ -12,6 +12,7 @@ import { versionStatuses } from '../../../types/lapis';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+    MOCK_REFERENCE_GENOMES_INFO,
 } from '../../../types/referenceGenomes.spec.ts';
 import { type ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
@@ -47,23 +48,7 @@ const mockMetadata: Metadata[] = [
     },
 ];
 
-const mockReferenceGenomesInfo: ReferenceGenomesInfo = {
-    isMultiSegmented: false,
-    segmentReferenceGenomes: {},
-    segmentDisplayNames: {},
-    useLapisMultiSegmentedEndpoint: false,
-};
-
-const mockSegmentAndGeneInfo: SegmentAndGeneInfo = {
-    nucleotideSegmentInfos: [
-        {
-            lapisName: 'lapisName-main',
-            name: 'label-main',
-        },
-    ],
-    geneInfos: [],
-    useLapisMultiSegmentedEndpoint: false,
-};
+const mockSegmentAndGeneInfo: SegmentAndGeneInfo = { nucleotideSegmentInfos: [], geneInfos: [] };
 
 async function renderDialog({
     downloadParams = new SequenceEntrySelection(new Set()),
@@ -173,7 +158,7 @@ describe('DownloadDialog', () => {
                 },
                 {},
                 mockSegmentAndGeneInfo,
-                mockReferenceGenomesInfo,
+                MOCK_REFERENCE_GENOMES_INFO,
             ),
         });
         await checkAgreement();
@@ -319,7 +304,7 @@ describe('DownloadDialog', () => {
                 },
                 {},
                 mockSegmentAndGeneInfo,
-                mockReferenceGenomesInfo,
+                MOCK_REFERENCE_GENOMES_INFO,
             ),
         });
         await checkAgreement();
@@ -369,7 +354,7 @@ describe('DownloadDialog', () => {
                     },
                     {},
                     mockSegmentAndGeneInfo,
-                    mockReferenceGenomesInfo,
+                    MOCK_REFERENCE_GENOMES_INFO,
                 ),
             });
 

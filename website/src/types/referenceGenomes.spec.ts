@@ -216,6 +216,13 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSchema
     },
 ];
 
+export const MOCK_REFERENCE_GENOMES_INFO: ReferenceGenomesInfo = {
+    isMultiSegmented: false,
+    segmentReferenceGenomes: {},
+    segmentDisplayNames: {},
+    useLapisMultiSegmentedEndpoint: false,
+};
+
 describe('toReferenceGenomes', () => {
     it('maps single segment + single reference', () => {
         expect(toReferenceGenomes(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES_SCHEMA)).toEqual(
