@@ -30,7 +30,7 @@ export const SequencesViewer: FC<Props> = ({
         useLapisMultiSegmentedEndpoint,
     );
 
-    if (error !== null) {
+    if (error !== null && data === undefined) {
         return (
             <div className='text-error'>
                 Failed to load {noCase(sequenceType.type)} sequence {sequenceType.name.lapisName}:{' '}
