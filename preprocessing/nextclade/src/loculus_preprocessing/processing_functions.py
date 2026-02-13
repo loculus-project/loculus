@@ -666,6 +666,7 @@ class ProcessingFunctions:
         accession_version: str = args["accession_version"]
         order = args["order"]
         type = args["type"]
+        fallback_value = str(args.get("fallbackValue", "")).strip()
 
         def add_errors():
             errors.append(
@@ -720,22 +721,23 @@ class ProcessingFunctions:
                         {"date": input_data[order[i]]}, output_field, input_fields, args
                     )
                     formatted_input_data.append(
-                        "" if processed.datum is None else str(processed.datum)
+                        fallback_value if processed.datum is None else str(processed.datum)
                     )
                 elif type[i] == "timestamp":
                     processed = ProcessingFunctions.parse_timestamp(
                         {"timestamp": input_data[order[i]]}, output_field, input_fields, args
                     )
                     formatted_input_data.append(
-                        "" if processed.datum is None else str(processed.datum)
+                        fallback_value if processed.datum is None else str(processed.datum)
                     )
                 elif order[i] in input_data:
                     formatted_input_data.append(
-                        "" if input_data[order[i]] is None else str(input_data[order[i]]).strip()
+                        fallback_value
+                        if not input_data[order[i]]
+                        else str(input_data[order[i]]).strip()
                     )
                 else:
                     formatted_input_data.append(accession_version)
-            logger.debug(f"formatted input data:{formatted_input_data}")
 
             result = "/".join(formatted_input_data)
             # To avoid downstream issues do not let the result start or end in a "/"
