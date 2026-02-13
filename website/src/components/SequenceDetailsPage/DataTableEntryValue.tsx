@@ -3,7 +3,7 @@ import sanitizeHtml from 'sanitize-html';
 
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
 import { LinkWithMenuComponent } from './LinkWithMenuComponent';
-import { SubstitutionsContainers } from './MutationBadge';
+import { MutationStringContainers, SubstitutionsContainers } from './MutationBadge';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
 import { Button } from '../common/Button';
@@ -83,10 +83,16 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 {!customDisplay && <PlainValueDisplay value={value} />}
                 {customDisplay?.type === 'percentage' && typeof value === 'number' && `${(100 * value).toFixed(2)}%`}
                 {customDisplay?.type === 'badge' &&
-                    (customDisplay.value === undefined ? (
+                    (customDisplay.value === undefined || customDisplay.value.length === 0 ? (
                         <span className='italic'>N/A</span>
                     ) : (
                         <SubstitutionsContainers values={customDisplay.value} />
+                    ))}
+                {customDisplay?.type === 'list' &&
+                    (customDisplay.list === undefined || customDisplay.list.length === 0 ? (
+                        <span className='italic'>N/A</span>
+                    ) : (
+                        <MutationStringContainers values={customDisplay.list} />
                     ))}
                 {customDisplay?.type === 'link' && customDisplay.url !== undefined && (
                     <a

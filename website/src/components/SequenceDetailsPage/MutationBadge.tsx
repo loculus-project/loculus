@@ -1,6 +1,6 @@
 import { type FC, type ReactElement, useMemo, useState } from 'react';
 
-import type { MutationBadgeData, SegmentedMutations } from '../../types/config';
+import type { MutationBadgeData, SegmentedMutations, SegmentedMutationStrings } from '../../types/config';
 import { Button } from '../common/Button';
 
 export type SubProps = {
@@ -81,6 +81,15 @@ export const SubstitutionsContainers = ({ values }: { values: SegmentedMutations
         <div key={segment}>
             <h2 className='py-1 my-1 font-semibold border-b'>{segment}</h2>
             <SubstitutionsContainer values={mutations} />
+        </div>
+    ));
+};
+
+export const MutationStringContainers = ({ values }: { values: SegmentedMutationStrings[] }) => {
+    return values.map(({ segment, mutations }) => (
+        <div key={segment}>
+            <h2 className='py-1 my-1 font-semibold border-b'>{segment}</h2>
+            {mutations.join(', ')}
         </div>
     ));
 };

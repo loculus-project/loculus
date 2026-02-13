@@ -185,7 +185,6 @@ describe('getTableData', () => {
         gene = 'gene1',
     ) {
         const data = result._unsafeUnwrap().data;
-        const segmentPart = segment ? `${segment}:` : '';
         expect(data).toContainEqual({
             label: 'Substitutions',
             name: 'nucleotideSubstitutions',
@@ -218,8 +217,17 @@ describe('getTableData', () => {
         expect(data).toContainEqual({
             label: 'Deletions',
             name: 'nucleotideDeletions',
-            value: `${segmentPart}20, ${segmentPart}21, ${segmentPart}39-45, ${segmentPart}400`,
+            value: '',
             header: nucleotideMutationsHeader,
+            customDisplay: {
+                type: 'list',
+                list: [
+                    {
+                        segment: segment,
+                        mutations: ['20', '21', '39-45', '400'],
+                    },
+                ],
+            },
             type: { kind: 'mutation' },
         });
         expect(data).toContainEqual({
@@ -254,7 +262,16 @@ describe('getTableData', () => {
         expect(data).toContainEqual({
             label: 'Deletions',
             name: 'aminoAcidDeletions',
-            value: `${gene}:20-23, ${gene}:40`,
+            value: '',
+            customDisplay: {
+                type: 'list',
+                list: [
+                    {
+                        segment: gene,
+                        mutations: [`${gene}:20-23`, `${gene}:40`],
+                    },
+                ],
+            },
             header: aminoAcidMutationsHeader,
             type: { kind: 'mutation' },
         });
@@ -293,22 +310,64 @@ describe('getTableData', () => {
         gene1 = 'gene1',
         gene2 = 'gene1',
     ) {
-        const segmentPart1 = segment1 ? `${segment1}:` : '';
-        const segmentPart2 = segment2 ? `${segment2}:` : '';
         const data = result._unsafeUnwrap().data;
+        const nucInsertionsList =
+            segment1 !== segment2
+                ? [
+                      {
+                          mutations: ['ins_123:AAA'],
+                          segment: segment1,
+                      },
+                      {
+                          mutations: ['ins_456:GCT'],
+                          segment: segment2,
+                      },
+                  ]
+                : [
+                      {
+                          mutations: ['ins_123:AAA', 'ins_456:GCT'],
+                          segment: segment1,
+                      },
+                  ];
+        const aaInsertionsList =
+            gene1 !== gene2
+                ? [
+                      {
+                          mutations: [`ins_${gene1}:123:AAA`],
+                          segment: gene1,
+                      },
+                      {
+                          mutations: [`ins_${gene2}:456:TTT`],
+                          segment: gene2,
+                      },
+                  ]
+                : [
+                      {
+                          mutations: [`ins_${gene1}:123:AAA`, `ins_${gene2}:456:TTT`],
+                          segment: gene1,
+                      },
+                  ];
         expect(data).toContainEqual({
             label: 'Insertions',
             name: 'nucleotideInsertions',
-            value: `ins_${segmentPart1}123:AAA, ins_${segmentPart2}456:GCT`,
+            value: '',
             header: nucleotideMutationsHeader,
             type: { kind: 'mutation' },
+            customDisplay: {
+                type: 'list',
+                list: nucInsertionsList,
+            },
         });
         expect(data).toContainEqual({
             label: 'Insertions',
             name: 'aminoAcidInsertions',
-            value: `ins_${gene1}:123:AAA, ins_${gene2}:456:TTT`,
+            value: '',
             header: aminoAcidMutationsHeader,
             type: { kind: 'mutation' },
+            customDisplay: {
+                type: 'list',
+                list: aaInsertionsList,
+            },
         });
     }
 
@@ -618,6 +677,10 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
         label: 'Deletions',
         name: 'nucleotideDeletions',
         value: '',
+        customDisplay: {
+            type: 'list',
+            list: [],
+        },
         header: nucleotideMutationsHeader,
         type: { kind: 'mutation' },
     },
@@ -625,6 +688,10 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
         label: 'Insertions',
         name: 'nucleotideInsertions',
         value: '',
+        customDisplay: {
+            type: 'list',
+            list: [],
+        },
         header: nucleotideMutationsHeader,
         type: { kind: 'mutation' },
     },
@@ -643,6 +710,10 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
         label: 'Deletions',
         name: 'aminoAcidDeletions',
         value: '',
+        customDisplay: {
+            type: 'list',
+            list: [],
+        },
         header: aminoAcidMutationsHeader,
         type: { kind: 'mutation' },
     },
@@ -650,6 +721,10 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
         label: 'Insertions',
         name: 'aminoAcidInsertions',
         value: '',
+        customDisplay: {
+            type: 'list',
+            list: [],
+        },
         header: aminoAcidMutationsHeader,
         type: { kind: 'mutation' },
     },
