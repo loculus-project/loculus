@@ -12,6 +12,7 @@ interface Props {
 }
 
 const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } = Astro.props;
+const isTotalSequenceUnavailable = organismStatistics.totalSequences === -1;
 ---
 
 <a
@@ -29,7 +30,15 @@ const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } =
         <h3 class='font-semibold mb-2'>{displayName}</h3>
         <p class='text-sm leading-7'>
             <span class='font-bold'>
-                {formatNumberWithDefaultLocale(organismStatistics.totalSequences)}
+                {
+                    isTotalSequenceUnavailable ? (
+                        <span class='inline-flex h-5 w-5 items-center rounded bg-slate-200 align-middle animate-pulse'>
+                            <span class='sr-only'>Sequence count unavailable</span>
+                        </span>
+                    ) : (
+                        formatNumberWithDefaultLocale(organismStatistics.totalSequences)
+                    )
+                }
             </span>
             sequences
             <br />
