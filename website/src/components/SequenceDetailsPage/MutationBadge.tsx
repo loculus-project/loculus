@@ -76,19 +76,31 @@ export function getColor(code: string): string {
 
 const MAX_INITIAL_NUMBER_BADGES = 20;
 
-export const SubstitutionsContainers = ({ values }: { values: SegmentedMutations[] }) => {
+export const SubstitutionsContainers = ({
+    values,
+    segmentDisplayNameMap,
+}: {
+    values: SegmentedMutations[];
+    segmentDisplayNameMap?: Record<string, string>;
+}) => {
     return values.map(({ segment, mutations }) => (
         <div key={segment}>
-            <h2 className='py-1 my-1 font-semibold border-b'>{segment}</h2>
+            <h2 className='py-1 my-1 font-semibold border-b'>{segmentDisplayNameMap?.[segment] ?? segment}</h2>
             <SubstitutionsContainer values={mutations} />
         </div>
     ));
 };
 
-export const MutationStringContainers = ({ values }: { values: SegmentedMutationStrings[] }) => {
+export const MutationStringContainers = ({
+    values,
+    segmentDisplayNameMap,
+}: {
+    values: SegmentedMutationStrings[];
+    segmentDisplayNameMap?: Record<string, string>;
+}) => {
     return values.map(({ segment, mutations }) => (
         <div key={segment}>
-            <h2 className='py-1 my-1 font-semibold border-b'>{segment}</h2>
+            <h2 className='py-1 my-1 font-semibold border-b'>{segmentDisplayNameMap?.[segment] ?? segment}</h2>
             {mutations.flat().join(', ')}
         </div>
     ));
