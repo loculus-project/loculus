@@ -137,17 +137,81 @@ class EndpointTestExtension :
     }
 
     override fun testPlanExecutionStarted(testPlan: TestPlan) {
-        println("DEBUG: testPlanExecutionStarted called")
-        println("DEBUG: Flyway version: ${org.flywaydb.core.api.FlywayException::class.java.`package`?.implementationVersion ?: "unknown"}")
-        println("DEBUG: PostgreSQL driver version: ${org.postgresql.Driver::class.java.`package`?.implementationVersion ?: "unknown"}")
+        println("DEBUG: ====== testPlanExecutionStarted called ======")
+        println("DEBUG: Java version: ${System.getProperty("java.version")}")
+        println("DEBUG: Java home: ${System.getProperty("java.home")}")
+        println("DEBUG: Working directory: ${System.getProperty("user.dir")}")
+        println("DEBUG: useNonDockerInfra: ${env.useNonDockerInfra}")
+
+        try {
+            println(
+                "DEBUG: Flyway version: ${
+                    org.flywaydb.core.api.FlywayException::class.java.`package`?.implementationVersion ?: "unknown"
+                }",
+            )
+            println(
+                "DEBUG: Flyway jar location: ${
+                    org.flywaydb.core.api.FlywayException::class.java.protectionDomain?.codeSource?.location
+                }",
+            )
+        } catch (e: Exception) {
+            println("DEBUG: Failed to get Flyway version: ${e.message}")
+        }
+
+        try {
+            println(
+                "DEBUG: PostgreSQL driver version: ${
+                    org.postgresql.Driver::class.java.`package`?.implementationVersion ?: "unknown"
+                }",
+            )
+        } catch (e: Exception) {
+            println("DEBUG: Failed to get PostgreSQL driver version: ${e.message}")
+        }
+
+        println("DEBUG: isStarted=$isStarted")
+        println("DEBUG: Test plan roots: ${testPlan.roots.size}")
+        for (root in testPlan.roots) {
+            println("DEBUG: Root: ${root.displayName} (${root.uniqueId})")
+            val children = testPlan.getChildren(root)
+            println("DEBUG:   Children count: ${children.size}")
+            children.forEach { child ->
+                println("DEBUG:   Child: ${child.displayName} (${child.uniqueId})")
+                child.source.ifPresent { source ->
+                    println("DEBUG:     Source type: ${source::class.simpleName}")
+                    when (source) {
+                        is ClassSource -> {
+                            val cls = Class.forName(source.className)
+                            val hasAnnotation = cls.isAnnotationPresent(EndpointTest::class.java)
+                            println("DEBUG:     Class: ${source.className}, hasEndpointTest=$hasAnnotation")
+                            println("DEBUG:     All annotations: ${cls.annotations.map { it.annotationClass.simpleName }}")
+                        }
+                        is MethodSource -> {
+                            println("DEBUG:     Method: ${source.className}#${source.methodName}")
+                        }
+                        else -> {
+                            println("DEBUG:     Other source: $source")
+                        }
+                    }
+                }
+            }
+        }
+
         if (!isStarted) {
-            println("DEBUG: isStarted=false, checking for @EndpointTest annotation...")
+            println("DEBUG: isStarted=false, scanning for @EndpointTest annotation...")
             isAnnotatedWithEndpointTest(testPlan) {
-                println("DEBUG: Found @EndpointTest, starting environment...")
-                env.start()
-                println("DEBUG: Environment started successfully")
+                println("DEBUG: Found @EndpointTest! Starting environment...")
+                try {
+                    env.start()
+                    println("DEBUG: Environment started successfully")
+                } catch (e: Exception) {
+                    println("DEBUG: FAILED to start environment: ${e.message}")
+                    e.printStackTrace(System.out)
+                    throw e
+                }
                 isStarted = true
+                println("DEBUG: isStarted set to true")
                 if (!isBucketCreated) {
+                    println("DEBUG: Creating MinIO bucket...")
                     createBucket(
                         env.minio.s3Url,
                         env.minio.accessKey,
@@ -156,25 +220,29 @@ class EndpointTestExtension :
                         MINIO_TEST_BUCKET,
                     )
                     isBucketCreated = true
+                    println("DEBUG: MinIO bucket created")
                 }
             }
+            println("DEBUG: After annotation scan, isStarted=$isStarted")
         }
 
-        if (env.useNonDockerInfra) {
-            log.info { "Started local Postgres: ${env.postgres.jdbcUrl}" }
-            log.info { "Started local MinIO: ${env.minio.s3Url}" }
-        } else {
-            log.info {
-                "Started Postgres container: ${env.postgres.jdbcUrl}, user ${env.postgres.username}, pw ${env.postgres.password}"
-            }
-            log.info {
-                "Started MinIO container: ${env.minio.s3Url}, user ${env.minio.accessKey}, pw ${env.minio.secretKey}"
-            }
+        if (!isStarted) {
+            println("DEBUG: WARNING - environment was NOT started! No @EndpointTest found in test plan")
+            println("DEBUG: System properties before set:")
+            println("DEBUG:   spring.datasource.url = ${System.getProperty(SPRING_DATASOURCE_URL)}")
+            return
         }
 
-        System.setProperty(SPRING_DATASOURCE_URL, env.postgres.jdbcUrl)
-        System.setProperty(SPRING_DATASOURCE_USERNAME, env.postgres.username)
-        System.setProperty(SPRING_DATASOURCE_PASSWORD, env.postgres.password)
+        println("DEBUG: Setting system properties...")
+        val jdbcUrl = env.postgres.jdbcUrl
+        val username = env.postgres.username
+        val password = env.postgres.password
+        println("DEBUG: JDBC URL: $jdbcUrl")
+        println("DEBUG: Username: $username")
+
+        System.setProperty(SPRING_DATASOURCE_URL, jdbcUrl)
+        System.setProperty(SPRING_DATASOURCE_USERNAME, username)
+        System.setProperty(SPRING_DATASOURCE_PASSWORD, password)
 
         System.setProperty(BackendSpringProperty.S3_ENABLED, "true")
         System.setProperty(BackendSpringProperty.S3_BUCKET_ENDPOINT, env.minio.s3Url)
@@ -182,9 +250,14 @@ class EndpointTestExtension :
         System.setProperty(BackendSpringProperty.S3_BUCKET_BUCKET, MINIO_TEST_BUCKET)
         System.setProperty(BackendSpringProperty.S3_BUCKET_ACCESS_KEY, env.minio.accessKey)
         System.setProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY, env.minio.secretKey)
+
+        println("DEBUG: All system properties set successfully")
+        println("DEBUG: Verifying: spring.datasource.url = ${System.getProperty(SPRING_DATASOURCE_URL)}")
+        println("DEBUG: ====== testPlanExecutionStarted complete ======")
     }
 
     private fun isAnnotatedWithEndpointTest(testPlan: TestPlan, callback: () -> Unit) {
+        var found = false
         for (root in testPlan.roots) {
             testPlan.getChildren(root).forEach { testIdentifier ->
                 testIdentifier.source.ifPresent { testSource ->
@@ -193,28 +266,44 @@ class EndpointTestExtension :
                             val testClass = Class.forName(testSource.className)
                             val method = testClass.getMethod(testSource.methodName)
                             if (method.isAnnotationPresent(EndpointTest::class.java)) {
-                                callback()
+                                if (!found) {
+                                    println("DEBUG: isAnnotatedWithEndpointTest: found via method ${testSource.className}#${testSource.methodName}")
+                                    callback()
+                                    found = true
+                                }
                             }
                         }
 
                         is ClassSource -> {
                             val testClass = Class.forName(testSource.className)
                             if (testClass.isAnnotationPresent(EndpointTest::class.java)) {
-                                callback()
+                                if (!found) {
+                                    println("DEBUG: isAnnotatedWithEndpointTest: found via class ${testSource.className}")
+                                    callback()
+                                    found = true
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        if (!found) {
+            println("DEBUG: isAnnotatedWithEndpointTest: NO @EndpointTest found in any test plan entry!")
+        }
     }
 
     override fun beforeEach(context: ExtensionContext) {
-        log.debug("Clearing database")
+        println("DEBUG: beforeEach called for ${context.displayName}, isStarted=$isStarted")
+        println("DEBUG: spring.datasource.url = ${System.getProperty(SPRING_DATASOURCE_URL)}")
+        if (!isStarted) {
+            println("DEBUG: WARNING - beforeEach called but environment not started!")
+        }
         env.postgres.exec(clearDatabaseStatement())
     }
 
     override fun testPlanExecutionFinished(testPlan: TestPlan) {
+        println("DEBUG: testPlanExecutionFinished called")
         env.stop()
 
         System.clearProperty(SPRING_DATASOURCE_URL)
@@ -227,6 +316,7 @@ class EndpointTestExtension :
         System.clearProperty(BackendSpringProperty.S3_BUCKET_BUCKET)
         System.clearProperty(BackendSpringProperty.S3_BUCKET_ACCESS_KEY)
         System.clearProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY)
+        println("DEBUG: testPlanExecutionFinished complete")
     }
 }
 

@@ -5,6 +5,10 @@ import org.testcontainers.containers.PostgreSQLContainer
 import java.io.File
 
 class DockerPostgres : PostgresProvider {
+    init {
+        println("DEBUG: DockerPostgres init, creating PostgreSQLContainer with image postgres:17")
+    }
+
     private val container = PostgreSQLContainer<Nothing>("postgres:17")
 
     override val jdbcUrl: String
@@ -15,10 +19,18 @@ class DockerPostgres : PostgresProvider {
         get() = container.password
 
     override fun start() {
+        println("DEBUG: DockerPostgres.start() called")
+        println("DEBUG: Docker image: postgres:17")
+        val startTime = System.currentTimeMillis()
         container.start()
+        val elapsed = System.currentTimeMillis() - startTime
+        println("DEBUG: DockerPostgres.start() completed in ${elapsed}ms")
+        println("DEBUG: Container JDBC URL: ${container.jdbcUrl}")
+        println("DEBUG: Container running: ${container.isRunning}")
     }
 
     override fun stop() {
+        println("DEBUG: DockerPostgres.stop() called")
         container.stop()
     }
 

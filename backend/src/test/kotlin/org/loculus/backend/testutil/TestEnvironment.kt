@@ -10,17 +10,40 @@ import java.net.Socket
 class TestEnvironment {
     val useNonDockerInfra: Boolean = System.getenv("USE_NONDOCKER_INFRA") == "true"
 
-    val postgres: PostgresProvider = if (useNonDockerInfra) LocalPostgres() else DockerPostgres()
-    val minio: MinioProvider = if (useNonDockerInfra) LocalMinio() else DockerMinio()
+    init {
+        println("DEBUG: TestEnvironment init, USE_NONDOCKER_INFRA=$useNonDockerInfra")
+        println("DEBUG: All USE_NONDOCKER_INFRA env: '${System.getenv("USE_NONDOCKER_INFRA")}'")
+    }
+
+    val postgres: PostgresProvider = if (useNonDockerInfra) {
+        println("DEBUG: Creating LocalPostgres")
+        LocalPostgres()
+    } else {
+        println("DEBUG: Creating DockerPostgres")
+        DockerPostgres()
+    }
+    val minio: MinioProvider = if (useNonDockerInfra) {
+        println("DEBUG: Creating LocalMinio")
+        LocalMinio()
+    } else {
+        println("DEBUG: Creating DockerMinio")
+        DockerMinio()
+    }
 
     fun start() {
+        println("DEBUG: TestEnvironment.start() called")
+        println("DEBUG: Starting postgres...")
         postgres.start()
+        println("DEBUG: Postgres started, starting minio...")
         minio.start()
+        println("DEBUG: TestEnvironment.start() complete")
     }
 
     fun stop() {
+        println("DEBUG: TestEnvironment.stop() called")
         postgres.stop()
         minio.stop()
+        println("DEBUG: TestEnvironment.stop() complete")
     }
 }
 
