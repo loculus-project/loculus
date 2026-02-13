@@ -60,3 +60,9 @@ class ImporterConfig:
     @property
     def released_data_endpoint(self) -> str:
         return f"{self.backend_base_url}/get-released-data?compression=zstd"
+
+    def released_data_since_endpoint(self, released_since: str) -> str:
+        return (
+            f"{self.backend_base_url}/get-released-data"
+            f"?compression=zstd&releasedSince={released_since}"
+        )
