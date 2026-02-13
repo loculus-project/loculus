@@ -677,8 +677,8 @@ def add_to_submission_table(
 
 def is_revision(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> bool:
     """Check if the entry is a revision"""
-    version = seq_key.version
-    if version == "1":
+    version = int(seq_key.version)
+    if version == 1:
         return False
     accession = {"accession": seq_key.accession}
     sample_data_in_submission_table = find_conditions_in_db(
