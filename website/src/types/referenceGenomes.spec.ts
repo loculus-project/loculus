@@ -169,7 +169,7 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
             },
         },
     },
-    segmentDisplayNames: {},
+    segmentDisplayNames: {'S': 'S (segment)', 'L': 'L (segment)'},
     isMultiSegmented: true,
     useLapisMultiSegmentedEndpoint: true,
 };
@@ -177,6 +177,7 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
 export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSchema = [
     {
         name: 'L',
+        displayName: 'L (segment)',
         references: [
             {
                 name: 'ref1',
@@ -200,6 +201,7 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSchema
     },
     {
         name: 'S',
+        displayName: 'S (segment)',
         references: [
             {
                 name: 'singleReference',
@@ -244,6 +246,7 @@ describe('toReferenceGenomes', () => {
 
         expect(toReferenceGenomes(input)).toEqual({
             segmentReferenceGenomes: {},
+            segmentDisplayNames: {},
             isMultiSegmented: false,
             useLapisMultiSegmentedEndpoint: false,
         });
