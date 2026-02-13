@@ -3,21 +3,18 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
 import { MutationField } from './MutationField.tsx';
-import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
+import type { SingleSegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
 
-const singleReferenceSegmentAndGeneInfo: SegmentAndGeneInfo = {
-    nucleotideSegmentInfos: [{ lapisName: 'main', name: 'main' }],
+const singleReferenceSegmentAndGeneInfo: SingleSegmentAndGeneInfo = {
+    nucleotideSegmentInfo: { lapisName: 'main', name: 'main' },
     geneInfos: [
         { lapisName: 'gene1', name: 'gene1' },
         { lapisName: 'gene2', name: 'gene2' },
     ],
 };
 
-const singleSegMultiRefGenomesMap: SegmentAndGeneInfo = {
-    nucleotideSegmentInfos: [
-        { lapisName: 'ref1', name: 'main' },
-        { lapisName: 'ref2', name: 'main' },
-    ],
+const singleSegMultiRefGenomesMap: SingleSegmentAndGeneInfo = {
+    nucleotideSegmentInfo: { lapisName: 'ref1', name: 'main' },
     geneInfos: [
         { lapisName: 'gene1', name: 'gene1' },
         { lapisName: 'gene2', name: 'gene2' },
@@ -27,11 +24,8 @@ const singleSegMultiRefGenomesMap: SegmentAndGeneInfo = {
 };
 
 // This test also covers the multi-segmented, multi-reference case
-const multiSegmentedGenomesMap: SegmentAndGeneInfo = {
-    nucleotideSegmentInfos: [
-        { lapisName: 'seg1', name: 'seg1' },
-        { lapisName: 'seg2', name: 'seg2' },
-    ],
+const multiSegmentedGenomesMap: SingleSegmentAndGeneInfo = {
+    nucleotideSegmentInfo: { lapisName: 'seg1', name: 'seg1' },
     geneInfos: [
         { lapisName: 'gene1', name: 'gene1' },
         { lapisName: 'gene2', name: 'gene2' },
@@ -43,15 +37,9 @@ const multiSegmentedGenomesMap: SegmentAndGeneInfo = {
 function renderField(
     value: string,
     onChange: (mutationFilter: string) => void,
-    suborganismSegmentAndGeneInfo: SegmentAndGeneInfo,
+    segmentAndGeneInfo: SingleSegmentAndGeneInfo,
 ) {
-    render(
-        <MutationField
-            value={value}
-            onChange={onChange}
-            suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
-        />,
-    );
+    render(<MutationField value={value} onChange={onChange} singleSegmentAndGeneInfo={segmentAndGeneInfo} />);
 }
 
 describe('MutationField', () => {

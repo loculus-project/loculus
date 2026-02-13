@@ -34,6 +34,13 @@ export type SegmentAndGeneInfo = {
     multiSegmented?: boolean;
 };
 
+export type SingleSegmentAndGeneInfo = {
+    nucleotideSegmentInfo: SegmentInfo;
+    geneInfos: GeneInfo[];
+    useLapisMultiSegmentedEndpoint?: boolean;
+    multiSegmented?: boolean;
+};
+
 export const unalignedSequenceSegment = (segmentInfo: SegmentInfo): SequenceType => ({
     type: 'nucleotide',
     aligned: false,
@@ -132,15 +139,11 @@ export const getSegmentNames = (genomes: ReferenceGenomesInfo) => Object.keys(ge
 export function getSegmentAndGeneInfo(
     referenceGenomesInfo: ReferenceGenomesInfo,
     selectedReferences?: SegmentReferenceSelections,
-    segment?: string,
 ): SegmentAndGeneInfo {
     const nucleotideSegmentInfos: SegmentInfo[] = [];
     const geneInfos: GeneInfo[] = [];
 
     for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
-        if (segment && segmentName !== segment) {
-            continue;
-        }
         const isSingleReference = Object.keys(segmentData).length === 1;
         const selectedRef = selectedReferences?.[segmentName] ?? null;
 
@@ -159,6 +162,28 @@ export function getSegmentAndGeneInfo(
     return {
         nucleotideSegmentInfos,
         geneInfos,
+        useLapisMultiSegmentedEndpoint: referenceGenomesInfo.useLapisMultiSegmentedEndpoint,
+        multiSegmented: referenceGenomesInfo.isMultiSegmented,
+    };
+}
+
+export function getSingleSegmentAndGeneInfo(
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    segment: string,
+    selectedReferences?: SegmentReferenceSelections,
+): SingleSegmentAndGeneInfo | null {
+    const segmentData = referenceGenomesInfo.segmentReferenceGenomes[segment];
+
+    const refs = Object.keys(segmentData);
+    const selectedRef = refs.length === 1 ? refs[0] : selectedReferences?.[segment];
+
+    if (!selectedRef || !(selectedRef in segmentData)) return null;
+
+    const refData = segmentData[selectedRef];
+
+    return {
+        nucleotideSegmentInfo: { name: segment, lapisName: refData.lapisName },
+        geneInfos: refData.genes.map((gene) => ({ ...gene, segmentName: segment })),
         useLapisMultiSegmentedEndpoint: referenceGenomesInfo.useLapisMultiSegmentedEndpoint,
         multiSegmented: referenceGenomesInfo.isMultiSegmented,
     };
