@@ -283,7 +283,7 @@ function deletionsMap(
     mutationData: MutationProportionCount[],
     referenceGenomesInfo: ReferenceGenomesInfo,
     nucleotide: boolean = false,
-): SegmentedMutationStrings[] | undefined {
+): SegmentedMutationStrings[] {
     const segmentPositions = new Map<string | null, number[]>();
     const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomesInfo);
     mutationData
@@ -297,7 +297,7 @@ function deletionsMap(
             segmentPositions.get(segment)!.push(position);
         });
     if (segmentPositions.size === 0) {
-        return undefined;
+        return [];
     }
     const segmentRanges = [...segmentPositions.entries()].map(([segment, positions]) => {
         const sortedPositions = positions.sort((a, b) => a - b);
@@ -340,7 +340,7 @@ function insertionsMap(
     insertionData: InsertionCount[],
     referenceGenomesInfo: ReferenceGenomesInfo,
     nucleotide: boolean = false,
-): SegmentedMutationStrings[] | undefined {
+): SegmentedMutationStrings[] {
     const result: SegmentedMutationStrings[] = [];
     const insertions = new Map<string, string[]>();
     const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomesInfo);
@@ -356,7 +356,7 @@ function insertionsMap(
         };
     });
     if (segmentInsertionsMap.length === 0) {
-        return undefined;
+        return [];
     }
     for (const { segment, insertion } of segmentInsertionsMap) {
         if (!insertions.has(segment)) {

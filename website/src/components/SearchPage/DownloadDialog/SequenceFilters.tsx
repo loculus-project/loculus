@@ -117,7 +117,7 @@ export class FieldFilterSet implements SequenceFilter {
         }
 
         const mutationSearchParams =
-            Object.keys(segmentAndGeneInfo).length > 0
+            Object.keys(segmentAndGeneInfo.nucleotideSegmentInfos).length > 0
                 ? intoMutationSearchParams(this.fieldValues, segmentAndGeneInfo)
                 : {
                       aminoAcidInsertions: [],
