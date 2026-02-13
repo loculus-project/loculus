@@ -235,15 +235,15 @@ export function segmentsWithMultipleReferences(referenceGenomesInfo: ReferenceGe
     );
 }
 
-export function notAllReferencesSelected(
+export function allReferencesSelected(
     referenceGenomesInfo: ReferenceGenomesInfo,
     selectedReferenceNames?: SegmentReferenceSelections,
 ): boolean {
     if (selectedReferenceNames === undefined) {
-        return false;
+        return true;
     }
-    return segmentsWithMultipleReferences(referenceGenomesInfo).some(
-        (segment) => selectedReferenceNames[segment] === null,
+    return segmentsWithMultipleReferences(referenceGenomesInfo).every(
+        (segment) => selectedReferenceNames[segment] !== null,
     );
 }
 
