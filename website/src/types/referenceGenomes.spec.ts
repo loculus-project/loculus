@@ -17,6 +17,7 @@ export const SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
             },
         },
     },
+    segmentDisplayNames: {},
     isMultiSegmented: false,
     useLapisMultiSegmentedEndpoint: false,
 };
@@ -55,6 +56,7 @@ export const MULTI_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
             },
         },
     },
+    segmentDisplayNames: {},
     isMultiSegmented: true,
     useLapisMultiSegmentedEndpoint: true,
 };
@@ -105,6 +107,7 @@ export const SINGLE_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
             },
         },
     },
+    segmentDisplayNames: {},
     isMultiSegmented: false,
     useLapisMultiSegmentedEndpoint: true,
 };
@@ -166,6 +169,7 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
             },
         },
     },
+    segmentDisplayNames: {},
     isMultiSegmented: true,
     useLapisMultiSegmentedEndpoint: true,
 };
@@ -240,6 +244,7 @@ describe('toReferenceGenomes', () => {
 
         expect(toReferenceGenomes(input)).toEqual({
             segmentReferenceGenomes: {},
+            segmentDisplayNames: {},
             isMultiSegmented: false,
             useLapisMultiSegmentedEndpoint: false,
         });
@@ -294,5 +299,26 @@ describe('toReferenceGenomes', () => {
 
         expect(out.segmentReferenceGenomes.main.dup.insdcAccessionFull).toBe('second');
         expect(out.segmentReferenceGenomes.main.dup.genes.map((g) => g.name)).toEqual(['gene2']);
+    });
+
+    it('maps segment and reference display names', () => {
+        const input: ReferenceGenomesSchema = [
+            {
+                name: 'L',
+                displayName: 'L segment',
+                references: [
+                    {
+                        name: 'ref1',
+                        displayName: 'Ref 1 label',
+                        sequence: 'ATGC',
+                    },
+                ],
+            },
+        ];
+
+        const out = toReferenceGenomes(input);
+
+        expect(out.segmentDisplayNames).toEqual({ L: 'L segment' });
+        expect(out.segmentReferenceGenomes.L.ref1.displayName).toBe('Ref 1 label');
     });
 });

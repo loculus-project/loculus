@@ -86,6 +86,7 @@ export class FieldFilterSet implements SequenceFilter {
             {
                 isMultiSegmented: false,
                 segmentReferenceGenomes: {},
+                segmentDisplayNames: {},
                 useLapisMultiSegmentedEndpoint: false,
             },
         );

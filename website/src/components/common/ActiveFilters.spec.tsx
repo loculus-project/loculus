@@ -9,6 +9,7 @@ import { FieldFilterSet, SequenceEntrySelection } from '../SearchPage/DownloadDi
 const mockReferenceGenomesInfo: ReferenceGenomesInfo = {
     isMultiSegmented: false,
     segmentReferenceGenomes: {},
+    segmentDisplayNames: {},
     useLapisMultiSegmentedEndpoint: false,
 };
 

@@ -828,6 +828,12 @@
                 "type": "string",
                 "description": "Name of the segment (e.g., 'S', 'M', 'L', or 'main' for single-segmented organisms)"
               },
+              "displayName": {
+                "groups": ["referenceGenomes"],
+                "docsIncludePrefix": false,
+                "type": "string",
+                "description": "Display name of the segment used in the website UI."
+              },
               "references": {
                 "type": "array",
                 "description": "Array of reference genomes for this segment",
@@ -841,6 +847,12 @@
                       "docsIncludePrefix": false,
                       "type": "string",
                       "description": "Name of the reference genome"
+                    },
+                    "displayName": {
+                      "groups": ["nucleotide-sequence"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Display name of the reference genome used in the website UI."
                     },
                     "sequence": {
                       "groups": ["nucleotide-sequence"],

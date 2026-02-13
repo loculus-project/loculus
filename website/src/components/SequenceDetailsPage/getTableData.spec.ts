@@ -185,6 +185,7 @@ describe('getTableData', () => {
         gene = 'gene1',
     ) {
         const data = result._unsafeUnwrap().data;
+        const segmentPart = segment ? `${segment}:` : '';
         expect(data).toContainEqual({
             label: 'Substitutions',
             name: 'nucleotideSubstitutions',
@@ -217,7 +218,7 @@ describe('getTableData', () => {
         expect(data).toContainEqual({
             label: 'Deletions',
             name: 'nucleotideDeletions',
-            value: '20, 21, 39-45, 400',
+            value: `${segmentPart}20, ${segmentPart}21, ${segmentPart}39-45, ${segmentPart}400`,
             header: nucleotideMutationsHeader,
             type: { kind: 'mutation' },
         });
@@ -287,16 +288,18 @@ describe('getTableData', () => {
 
     function expectInsertionsMatch(
         result: Result<GetTableDataResult, ProblemDetail>,
-        _segment1 = '',
-        _segment2 = '',
+        segment1 = '',
+        segment2 = '',
         gene1 = 'gene1',
         gene2 = 'gene1',
     ) {
+        const segmentPart1 = segment1 ? `${segment1}:` : '';
+        const segmentPart2 = segment2 ? `${segment2}:` : '';
         const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
             label: 'Insertions',
             name: 'nucleotideInsertions',
-            value: 'ins_123:AAA, ins_456:GCT',
+            value: `ins_${segmentPart1}123:AAA, ins_${segmentPart2}456:GCT`,
             header: nucleotideMutationsHeader,
             type: { kind: 'mutation' },
         });

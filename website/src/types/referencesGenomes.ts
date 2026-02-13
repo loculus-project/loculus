@@ -25,6 +25,7 @@ export type ReferenceGenomeInfo = {
     lapisName: string;
     genes: GeneInfo[];
     insdcAccessionFull: string | null;
+    displayName?: string;
 };
 
 export type ReferenceGenomeMap = Record<ReferenceName, ReferenceGenomeInfo>;
@@ -33,6 +34,7 @@ export type SegmentReferenceGenomes = Record<SegmentName, ReferenceGenomeMap>;
 
 export type ReferenceGenomesInfo = {
     segmentReferenceGenomes: SegmentReferenceGenomes;
+    segmentDisplayNames: Record<SegmentName, string>;
     isMultiSegmented: boolean;
     useLapisMultiSegmentedEndpoint: boolean;
 };
@@ -41,9 +43,11 @@ export const referenceGenomesSchema = z
     .array(
         z.object({
             name: z.string(),
+            displayName: z.string().optional(),
             references: z.array(
                 z.object({
                     name: z.string(),
+                    displayName: z.string().optional(),
                     sequence: z.string(),
                     insdcAccessionFull: z.string().optional(),
                     genes: z.array(z.object({ name: z.string(), sequence: z.string() })).optional(),

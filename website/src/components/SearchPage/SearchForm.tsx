@@ -337,7 +337,9 @@ export const SearchForm = ({
                                 segmentNames.map((segmentName) => (
                                     <details key={segmentName} className='group px-2 pt-2'>
                                         <summary className='flex w-full items-center list-none cursor-pointer'>
-                                            <SearchSectionHeader title={segmentName} />
+                                            <SearchSectionHeader
+                                                title={referenceGenomesInfo.segmentDisplayNames[segmentName] ?? segmentName}
+                                            />
                                             <IwwaArrowDown
                                                 className='ml-auto h-5 w-5 transition-transform duration-200 text-primary-700 group-open:rotate-180'
                                                 aria-hidden='true'

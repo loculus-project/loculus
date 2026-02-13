@@ -38,6 +38,7 @@ type SingleChoiceAutoCompleteFieldProps = {
     optionsProvider: OptionsProvider;
     setSomeFieldValues: SetSomeFieldValues;
     fieldValue?: string | number | null;
+    fieldDisplayNameMap?: Map<string, string>;
     maxDisplayedOptions?: number;
 };
 
@@ -46,6 +47,7 @@ export const SingleChoiceAutoCompleteField = ({
     optionsProvider,
     setSomeFieldValues,
     fieldValue,
+    fieldDisplayNameMap,
     maxDisplayedOptions = 1000,
 }: SingleChoiceAutoCompleteFieldProps) => {
     const [query, setQuery] = useState('');
@@ -59,13 +61,21 @@ export const SingleChoiceAutoCompleteField = ({
         }
     }, [error]);
 
+    const getDisplayValue = (value: string | number | null) => {
+        if (value === null || value === NULL_QUERY_VALUE) {
+            return '(blank)';
+        }
+        const raw = String(value);
+        return fieldDisplayNameMap?.get(raw) ?? raw;
+    };
+
     const filteredOptions = useMemo(() => {
         const allMatchedOptions =
             query === ''
                 ? options
-                : options.filter((option) => option.option.toLowerCase().includes(query.toLowerCase()));
+                : options.filter((option) => getDisplayValue(option.value).toLowerCase().includes(query.toLowerCase()));
         return allMatchedOptions.slice(0, maxDisplayedOptions);
-    }, [options, query, maxDisplayedOptions]);
+    }, [options, query, maxDisplayedOptions, fieldDisplayNameMap]);
 
     const handleChange = (value: string | null) => {
         const finalValue = value === NULL_QUERY_VALUE ? null : (value ?? '');
@@ -84,10 +94,7 @@ export const SingleChoiceAutoCompleteField = ({
                     <>
                         <ComboboxInput
                             displayValue={(value: string | number | null) => {
-                                if (value === null || value === NULL_QUERY_VALUE) {
-                                    return '(blank)';
-                                }
-                                return String(value);
+                                return getDisplayValue(value);
                             }}
                             onChange={(event) => setQuery(event.target.value)}
                             onFocus={load}
@@ -137,7 +144,7 @@ export const SingleChoiceAutoCompleteField = ({
                                                             option.option === '(blank)' ? 'italic' : ''
                                                         }`}
                                                     >
-                                                        {option.option}
+                                                        {getDisplayValue(option.value)}
                                                     </span>
                                                     {option.count !== undefined && (
                                                         <span className='inline-block ml-1'>

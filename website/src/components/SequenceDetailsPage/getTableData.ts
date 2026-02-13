@@ -132,14 +132,14 @@ function mutationDetails(
         {
             label: 'Deletions',
             name: 'nucleotideDeletions',
-            value: deletionsToCommaSeparatedString(nucleotideMutations, referenceGenomesInfo, true),
+            value: deletionsToCommaSeparatedString(nucleotideMutations, referenceGenomesInfo),
             header: 'Nucleotide mutations',
             type: { kind: 'mutation' },
         },
         {
             label: 'Insertions',
             name: 'nucleotideInsertions',
-            value: insertionsToCommaSeparatedString(nucleotideInsertions, referenceGenomesInfo, true),
+            value: insertionsToCommaSeparatedString(nucleotideInsertions, referenceGenomesInfo),
             header: 'Nucleotide mutations',
             type: { kind: 'mutation' },
         },

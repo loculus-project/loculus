@@ -374,7 +374,7 @@ describe('DownloadDialog', () => {
                 referenceIdentifierField: 'genotype',
             });
 
-            expect(screen.getByText('select a genotype display name', { exact: false })).toBeVisible();
+            expect(screen.getByText(/select .*genotype display name/i)).toBeVisible();
             expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
             expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
         });
@@ -500,6 +500,55 @@ describe('DownloadDialog', () => {
 
             const { query } = parseDownloadHref();
             expect(query).toMatch(/fields=accessionVersion%2Cfield2$/);
+        });
+
+        test('should show aligned download options for selected segments and hint for unresolved segments', async () => {
+            const twoMultiRefSegments: ReferenceGenomesInfo = {
+                isMultiSegmented: true,
+                useLapisMultiSegmentedEndpoint: true,
+                segmentDisplayNames: {},
+                segmentReferenceGenomes: {
+                    L: {
+                        ref1: {
+                            lapisName: 'L-ref1',
+                            insdcAccessionFull: null,
+                            genes: [{ lapisName: 'geneL-ref1', name: 'geneL' }],
+                        },
+                        ref2: {
+                            lapisName: 'L-ref2',
+                            insdcAccessionFull: null,
+                            genes: [{ lapisName: 'geneL-ref2', name: 'geneL' }],
+                        },
+                    },
+                    S: {
+                        ref1: {
+                            lapisName: 'S-ref1',
+                            insdcAccessionFull: null,
+                            genes: [{ lapisName: 'geneS-ref1', name: 'geneS' }],
+                        },
+                        ref2: {
+                            lapisName: 'S-ref2',
+                            insdcAccessionFull: null,
+                            genes: [{ lapisName: 'geneS-ref2', name: 'geneS' }],
+                        },
+                    },
+                },
+            };
+
+            await renderDialog({
+                referenceGenomesInfo: twoMultiRefSegments,
+                selectedReferenceNames: { L: 'ref1', S: null },
+                referenceIdentifierField: 'genotype',
+                metadata: [
+                    ...mockMetadata,
+                    { name: 'genotype_L', displayName: 'Genotype L', type: 'string' },
+                    { name: 'genotype_S', displayName: 'Genotype S', type: 'string' },
+                ],
+            });
+
+            expect(screen.getByLabelText(alignedNucleotideSequencesLabel)).toBeEnabled();
+            expect(screen.getByLabelText(alignedAminoAcidSequencesLabel)).toBeEnabled();
+            expect(screen.getByText(/select genotype s .*more aligned sequences/i)).toBeVisible();
         });
     });
 });
