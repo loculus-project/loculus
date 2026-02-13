@@ -137,9 +137,15 @@ class EndpointTestExtension :
     }
 
     override fun testPlanExecutionStarted(testPlan: TestPlan) {
+        println("DEBUG: testPlanExecutionStarted called")
+        println("DEBUG: Flyway version: ${org.flywaydb.core.api.FlywayException::class.java.`package`?.implementationVersion ?: "unknown"}")
+        println("DEBUG: PostgreSQL driver version: ${org.postgresql.Driver::class.java.`package`?.implementationVersion ?: "unknown"}")
         if (!isStarted) {
+            println("DEBUG: isStarted=false, checking for @EndpointTest annotation...")
             isAnnotatedWithEndpointTest(testPlan) {
+                println("DEBUG: Found @EndpointTest, starting environment...")
                 env.start()
+                println("DEBUG: Environment started successfully")
                 isStarted = true
                 if (!isBucketCreated) {
                     createBucket(
