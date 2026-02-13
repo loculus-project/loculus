@@ -110,7 +110,7 @@ tasks.named('test') {
     }
     useJUnitPlatform()
     testLogging {
-        events TestLogEvent.FAILED
+        events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR
         exceptionFormat = TestExceptionFormat.FULL
         showExceptions = true
     }
