@@ -100,7 +100,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
             expect.objectContaining({
                 includeRestricted: false,
             }),
-            mockSegmentAndGeneInfo
+            mockSegmentAndGeneInfo,
         );
     });
 
@@ -128,7 +128,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
             expect.objectContaining({
                 includeRestricted: true,
             }),
-            mockSegmentAndGeneInfo
+            mockSegmentAndGeneInfo,
         );
     });
 
@@ -178,7 +178,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
             expect.objectContaining({
                 dataType: { type: 'metadata', fields: ['fieldA', 'fieldB'] },
             }),
-            mockSegmentAndGeneInfo
+            mockSegmentAndGeneInfo,
         );
     });
 
@@ -204,7 +204,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
         expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
             expect.objectContaining({ dataType: { type: 'metadata', fields: ['fieldA'] } }),
-            mockSegmentAndGeneInfo
+            mockSegmentAndGeneInfo,
         );
     });
 });
