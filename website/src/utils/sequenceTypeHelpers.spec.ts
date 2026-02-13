@@ -7,7 +7,7 @@ import {
     getInsdcAccessionsFromSegmentReferences,
     lapisNameToDisplayName,
     segmentsWithMultipleReferences,
-    notAllReferencesSelected,
+    allReferencesSelected,
 } from './sequenceTypeHelpers';
 import {
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
@@ -168,18 +168,18 @@ describe('segmentsWithMultipleReferences', () => {
     });
 });
 
-describe('notAllReferencesSelected', () => {
+describe('allReferencesSelected', () => {
     it('false when there are no multi-reference segments', () => {
-        expect(notAllReferencesSelected(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { main: null })).toBe(false);
+        expect(allReferencesSelected(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { main: null })).toBe(true);
 
-        expect(notAllReferencesSelected(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { S: null, L: null })).toBe(false);
+        expect(allReferencesSelected(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { S: null, L: null })).toBe(true);
     });
 
     it('true when a multi-reference segment has null selection', () => {
-        expect(notAllReferencesSelected(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: null })).toBe(true);
+        expect(allReferencesSelected(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: null })).toBe(false);
     });
 
     it('false when all multi-reference segments have a selection', () => {
-        expect(notAllReferencesSelected(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: 'ref1' })).toBe(false);
+        expect(allReferencesSelected(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: 'ref1' })).toBe(true);
     });
 });

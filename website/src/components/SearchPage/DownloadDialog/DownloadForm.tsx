@@ -12,7 +12,7 @@ import { getReferenceIdentifier } from '../../../utils/referenceSelection.ts';
 import { MetadataFilterSchema, type MetadataVisibility } from '../../../utils/search.ts';
 import {
     getSegmentAndGeneInfo,
-    notAllReferencesSelected,
+    allReferencesSelected,
     segmentsWithMultipleReferences,
     type SegmentReferenceSelections,
 } from '../../../utils/sequenceTypeHelpers.ts';
@@ -63,7 +63,10 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     const metadataSchema = schema.metadata;
     const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
 
-    const noReferenceSelected = nucleotideSegmentInfos.length === 0 && geneInfos.length === 0;
+    const referenceSelected = useMemo(
+        () => nucleotideSegmentInfos.length !== 0,
+        [nucleotideSegmentInfos, geneInfos],
+    );
     const notSelectedIdentifiers = useMemo(
         () =>
             segmentsWithMultipleReferences(referenceGenomesInfo)
@@ -140,7 +143,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             return [metadataOption];
         }
 
-        if (noReferenceSelected) {
+        if (!referenceSelected) {
             return [metadataOption, rawNucleotideSequencesOption];
         }
 
@@ -240,13 +243,13 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                         }))
                     }
                 />
-                {noReferenceSelected && referenceIdentifierField !== undefined && (
+                {!referenceSelected && referenceIdentifierField !== undefined && (
                     <div className='text-sm text-gray-400 mt-4 max-w-60'>
                         Select {notSelectedIdentifiers} with the search UI to enable download of aligned sequences.
                     </div>
                 )}
-                {!noReferenceSelected &&
-                    notAllReferencesSelected(referenceGenomesInfo, selectedReferenceNames) &&
+                {referenceSelected &&
+                    !allReferencesSelected(referenceGenomesInfo, selectedReferenceNames) &&
                     referenceIdentifierField !== undefined && (
                         <div className='text-sm text-gray-400 mt-4 max-w-60'>
                             Select {notSelectedIdentifiers} with the search UI to enable download of more aligned
