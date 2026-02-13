@@ -4,7 +4,6 @@ import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator';
 import { LinkOutMenu } from './LinkOutMenu';
 import { FieldFilterSet } from './SequenceFilters';
-import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers';
 
 const originalWindowOpen = window.open;
 beforeEach(() => {
@@ -45,17 +44,6 @@ const linkOuts = [
     { name: 'Invalid', url: 'http://example.com/tool?data=[invalidType]&valid=[metadata]' },
 ];
 
-const mockSegmentAndGeneInfo: SegmentAndGeneInfo = {
-    nucleotideSegmentInfos: [
-        {
-            lapisName: 'lapisName-main',
-            name: 'label-main',
-        },
-    ],
-    geneInfos: [],
-    useLapisMultiSegmentedEndpoint: false,
-};
-
 describe('LinkOutMenu with enabled data use terms', () => {
     test('opens modal when a tool is clicked', () => {
         render(
@@ -65,7 +53,6 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={true}
-                segmentAndGeneInfo={mockSegmentAndGeneInfo}
             />,
         );
 
@@ -86,7 +73,6 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={true}
-                segmentAndGeneInfo={mockSegmentAndGeneInfo}
             />,
         );
 
@@ -100,7 +86,6 @@ describe('LinkOutMenu with enabled data use terms', () => {
             expect.objectContaining({
                 includeRestricted: false,
             }),
-            mockSegmentAndGeneInfo,
         );
     });
 
@@ -114,7 +99,6 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={true}
-                segmentAndGeneInfo={mockSegmentAndGeneInfo}
             />,
         );
 
@@ -128,7 +112,6 @@ describe('LinkOutMenu with enabled data use terms', () => {
             expect.objectContaining({
                 includeRestricted: true,
             }),
-            mockSegmentAndGeneInfo,
         );
     });
 
@@ -142,7 +125,6 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={[{ name: 'Basic', url: 'http://example.com/tool?data=[unalignedNucleotideSequences]' }]}
                 dataUseTermsEnabled={true}
-                segmentAndGeneInfo={mockSegmentAndGeneInfo}
             />,
         );
 
@@ -165,7 +147,6 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={[{ name: 'MetadataFields', url: 'http://example.com/tool?data=[metadata+fieldA,fieldB]' }]}
                 dataUseTermsEnabled={true}
-                segmentAndGeneInfo={mockSegmentAndGeneInfo}
             />,
         );
 
@@ -178,7 +159,6 @@ describe('LinkOutMenu with enabled data use terms', () => {
             expect.objectContaining({
                 dataType: { type: 'metadata', fields: ['fieldA', 'fieldB'] },
             }),
-            mockSegmentAndGeneInfo,
         );
     });
 
@@ -193,7 +173,6 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={[{ name: 'MetadataSingle', url: 'http://example.com/tool?data=[metadata+fieldA]' }]}
                 dataUseTermsEnabled={true}
-                segmentAndGeneInfo={mockSegmentAndGeneInfo}
             />,
         );
 
@@ -204,7 +183,6 @@ describe('LinkOutMenu with enabled data use terms', () => {
         expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
             expect.objectContaining({ dataType: { type: 'metadata', fields: ['fieldA'] } }),
-            mockSegmentAndGeneInfo,
         );
     });
 });
@@ -218,7 +196,6 @@ describe('LinkOutMenu with disabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={false}
-                segmentAndGeneInfo={mockSegmentAndGeneInfo}
             />,
         );
 

@@ -24,12 +24,12 @@ export interface SequenceFilter {
     /**
      * Return the filter as params to use in API Queries.
      */
-    toApiParams(segmentAndGeneInfo: SegmentAndGeneInfo): LapisSearchParameters;
+    toApiParams(): LapisSearchParameters;
 
     /**
      * Return the filter as params to build a URL from.
      */
-    toUrlSearchParams(segmentAndGeneInfo: SegmentAndGeneInfo): [string, string | string[]][];
+    toUrlSearchParams(): [string, string | string[]][];
 
     /**
      * Return a map of keys to human-readable descriptions of the filters to apply.
@@ -46,6 +46,7 @@ export class FieldFilterSet implements SequenceFilter {
     private readonly filterSchema: MetadataFilterSchema;
     private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
+    private readonly segmentAndGeneInfo: SegmentAndGeneInfo;
     private readonly referenceGenomesInfo: ReferenceGenomesInfo;
 
     /**
@@ -54,17 +55,20 @@ export class FieldFilterSet implements SequenceFilter {
      * @param fieldValues The {@link FieldValues} that are used to filter sequence entries.
      * @param hiddenFieldValues key-value combinations of fields that should be hidden when converting
      *     displaying the field values (because these are default values).
+     * @param segmentAndGeneInfo Necessary to construct mutation API params.
      * @param referenceGenomesInfo Necessary to construct mutation API params.
      */
     constructor(
         filterSchema: MetadataFilterSchema,
         fieldValues: FieldValues,
         hiddenFieldValues: FieldValues,
+        segmentAndGeneInfo: SegmentAndGeneInfo,
         referenceGenomesInfo: ReferenceGenomesInfo,
     ) {
         this.filterSchema = filterSchema;
         this.fieldValues = fieldValues;
         this.hiddenFieldValues = hiddenFieldValues;
+        this.segmentAndGeneInfo = segmentAndGeneInfo;
         this.referenceGenomesInfo = referenceGenomesInfo;
     }
 
@@ -77,6 +81,7 @@ export class FieldFilterSet implements SequenceFilter {
             new MetadataFilterSchema([]),
             {},
             {},
+            { nucleotideSegmentInfos: [], geneInfos: [] },
             {
                 isMultiSegmented: false,
                 segmentReferenceGenomes: {},
@@ -94,7 +99,7 @@ export class FieldFilterSet implements SequenceFilter {
         return this.toDisplayStrings().size === 0;
     }
 
-    public toApiParams(segmentAndGeneInfo: SegmentAndGeneInfo): LapisSearchParameters {
+    public toApiParams(): LapisSearchParameters {
         const mutationSearchIdentifiers = getSegmentNames(this.referenceGenomesInfo).map((segmentName) =>
             getReferenceIdentifier(MUTATION_KEY, segmentName, this.referenceGenomesInfo.isMultiSegmented),
         );
@@ -117,8 +122,8 @@ export class FieldFilterSet implements SequenceFilter {
         }
 
         const mutationSearchParams =
-            Object.keys(segmentAndGeneInfo.nucleotideSegmentInfos).length > 0
-                ? intoMutationSearchParams(this.fieldValues, segmentAndGeneInfo)
+            Object.keys(this.segmentAndGeneInfo.nucleotideSegmentInfos).length > 0
+                ? intoMutationSearchParams(this.fieldValues, this.segmentAndGeneInfo)
                 : {
                       aminoAcidInsertions: [],
                       aminoAcidMutations: [],
@@ -132,7 +137,7 @@ export class FieldFilterSet implements SequenceFilter {
         };
     }
 
-    public toUrlSearchParams(segmentAndGeneInfo: SegmentAndGeneInfo): [string, string | string[]][] {
+    public toUrlSearchParams(): [string, string | string[]][] {
         const result: [string, string | string[]][] = [];
 
         // keys that need special handling
@@ -145,7 +150,7 @@ export class FieldFilterSet implements SequenceFilter {
         ];
         const skipKeys = mutationKeys.concat([accessionKey]);
 
-        const lapisSearchParameters = this.toApiParams(segmentAndGeneInfo);
+        const lapisSearchParameters = this.toApiParams();
 
         // accession
         if (lapisSearchParameters.accession !== undefined) {
