@@ -270,6 +270,7 @@ export function substitutionsMap(
         }
         segmentMutationsMap
             .get(sequenceKey)!
+            // Do not show the segment name in the nucleotide mutation badges
             .push({ sequenceName: nucleotide ? null : sequenceDisplayName, mutationFrom, position, mutationTo });
     }
     for (const [segment, mutations] of segmentMutationsMap.entries()) {
