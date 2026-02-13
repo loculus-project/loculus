@@ -123,75 +123,57 @@ function mutationDetails(
     aminoAcidInsertions: InsertionCount[],
     referenceGenomesInfo: ReferenceGenomesInfo,
 ): TableDataEntry[] {
-    const data: TableDataEntry[] = [
+    const mutationRows = [
         {
-            label: 'Substitutions',
-            name: 'nucleotideSubstitutions',
-            value: '',
+            prefix: 'nucleotide',
             header: 'Nucleotide mutations',
-            customDisplay: {
-                type: 'badge',
-                value: substitutionsMap(nucleotideMutations, referenceGenomesInfo, true),
-            },
-            type: { kind: 'mutation' },
+            mutations: nucleotideMutations,
+            insertions: nucleotideInsertions,
+            hideSegmentPrefix: true,
         },
         {
-            label: 'Deletions',
-            name: 'nucleotideDeletions',
-            value: '',
-            header: 'Nucleotide mutations',
-            customDisplay: {
-                type: 'list',
-                list: deletionsMap(nucleotideMutations, referenceGenomesInfo, true),
-            },
-            type: { kind: 'mutation' },
-        },
-        {
-            label: 'Insertions',
-            name: 'nucleotideInsertions',
-            value: '',
-            header: 'Nucleotide mutations',
-            customDisplay: {
-                type: 'list',
-                list: insertionsMap(nucleotideInsertions, referenceGenomesInfo, true),
-            },
-            type: { kind: 'mutation' },
-        },
-        {
-            label: 'Substitutions',
-            name: 'aminoAcidSubstitutions',
-            value: '',
+            prefix: 'aminoAcid',
             header: 'Amino acid mutations',
-            customDisplay: {
-                type: 'badge',
-                value: substitutionsMap(aminoAcidMutations, referenceGenomesInfo),
-            },
-            type: { kind: 'mutation' },
-        },
-        {
-            label: 'Deletions',
-            name: 'aminoAcidDeletions',
-            value: '',
-            header: 'Amino acid mutations',
-            customDisplay: {
-                type: 'list',
-                list: deletionsMap(aminoAcidMutations, referenceGenomesInfo),
-            },
-            type: { kind: 'mutation' },
-        },
-        {
-            label: 'Insertions',
-            name: 'aminoAcidInsertions',
-            value: '',
-            header: 'Amino acid mutations',
-            customDisplay: {
-                type: 'list',
-                list: insertionsMap(aminoAcidInsertions, referenceGenomesInfo),
-            },
-            type: { kind: 'mutation' },
+            mutations: aminoAcidMutations,
+            insertions: aminoAcidInsertions,
+            hideSegmentPrefix: false,
         },
     ];
-    return data;
+
+    return mutationRows.flatMap(({ prefix, header, mutations, insertions, hideSegmentPrefix }) => [
+        mutationEntry('Substitutions', `${prefix}Substitutions`, header, {
+            type: 'badge',
+            value: substitutionsMap(mutations, referenceGenomesInfo, hideSegmentPrefix),
+        }),
+        mutationEntry('Deletions', `${prefix}Deletions`, header, {
+            type: 'list',
+            list: deletionsMap(mutations, referenceGenomesInfo, hideSegmentPrefix),
+        }),
+        mutationEntry('Insertions', `${prefix}Insertions`, header, {
+            type: 'list',
+            list: insertionsMap(insertions, referenceGenomesInfo, hideSegmentPrefix),
+        }),
+    ]);
+}
+
+function mutationEntry(label: string, name: string, header: string, customDisplay: TableDataEntry['customDisplay']) {
+    return {
+        label,
+        name,
+        value: '',
+        header,
+        customDisplay,
+        type: { kind: 'mutation' as const },
+    };
+}
+
+function pushMapArrayEntry<K, V>(map: Map<K, V[]>, key: K, value: V) {
+    const values = map.get(key);
+    if (values === undefined) {
+        map.set(key, [value]);
+        return;
+    }
+    values.push(value);
 }
 
 function toTableData(
@@ -255,7 +237,6 @@ export function substitutionsMap(
     referenceGenomesInfo: ReferenceGenomesInfo,
     hideSegmentPrefix = false,
 ): SegmentedMutations[] {
-    const result: SegmentedMutations[] = [];
     const substitutionData = mutationData.filter((m) => m.mutationTo !== '-');
     const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomesInfo);
 
@@ -265,23 +246,14 @@ export function substitutionsMap(
         const sequenceDisplayName = sequenceName ? (lapisNameToDisplayNameMap.get(sequenceName) ?? null) : null;
 
         const sequenceKey = sequenceDisplayName ?? '';
-        if (!segmentMutationsMap.has(sequenceKey)) {
-            segmentMutationsMap.set(sequenceKey, []);
-        }
-        segmentMutationsMap
-            .get(sequenceKey)!
-            .push({
-                sequenceName: hideSegmentPrefix ? null : sequenceDisplayName,
-                mutationFrom,
-                position,
-                mutationTo,
-            });
+        pushMapArrayEntry(segmentMutationsMap, sequenceKey, {
+            sequenceName: hideSegmentPrefix ? null : sequenceDisplayName,
+            mutationFrom,
+            position,
+            mutationTo,
+        });
     }
-    for (const [segment, mutations] of segmentMutationsMap.entries()) {
-        result.push({ segment, mutations });
-    }
-
-    return result;
+    return Array.from(segmentMutationsMap, ([segment, mutations]) => ({ segment, mutations }));
 }
 
 function deletionsMap(
@@ -295,11 +267,7 @@ function deletionsMap(
         .filter((m) => m.mutationTo === '-')
         .forEach((m) => {
             const segment = m.sequenceName ? (lapisNameToDisplayNameMap.get(m.sequenceName) ?? null) : null;
-            const position = m.position;
-            if (!segmentPositions.has(segment)) {
-                segmentPositions.set(segment, []);
-            }
-            segmentPositions.get(segment)!.push(position);
+            pushMapArrayEntry(segmentPositions, segment, m.position);
         });
     if (segmentPositions.size === 0) {
         return [];
@@ -346,31 +314,18 @@ function insertionsMap(
     referenceGenomesInfo: ReferenceGenomesInfo,
     hideSegmentPrefix = false,
 ) {
-    const result: SegmentedMutationStrings[] = [];
     const insertions = new Map<string, string[]>();
     const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomesInfo);
-    const segmentInsertionsMap = insertionData.map((insertion) => {
-        const sequenceDisplayName = insertion.sequenceName ? lapisNameToDisplayNameMap.get(insertion.sequenceName) : null;
-
+    for (const insertion of insertionData) {
+        const sequenceDisplayName = insertion.sequenceName
+            ? lapisNameToDisplayNameMap.get(insertion.sequenceName)
+            : null;
         const sequenceNamePart = !hideSegmentPrefix && sequenceDisplayName ? sequenceDisplayName + ':' : '';
-        return {
-            segment: sequenceDisplayName ?? '',
-            insertion: `ins_${sequenceNamePart}${insertion.position}:${insertion.insertedSymbols}`,
-        };
-    });
-    if (segmentInsertionsMap.length === 0) {
-        return [];
+        pushMapArrayEntry(
+            insertions,
+            sequenceDisplayName ?? '',
+            `ins_${sequenceNamePart}${insertion.position}:${insertion.insertedSymbols}`,
+        );
     }
-    for (const { segment, insertion } of segmentInsertionsMap) {
-        if (!insertions.has(segment)) {
-            insertions.set(segment, []);
-        }
-        insertions.get(segment)!.push(insertion);
-    }
-
-    for (const [segment, mutations] of insertions.entries()) {
-        result.push({ segment, mutations });
-    }
-
-    return result;
+    return Array.from(insertions, ([segment, mutations]) => ({ segment, mutations }));
 }

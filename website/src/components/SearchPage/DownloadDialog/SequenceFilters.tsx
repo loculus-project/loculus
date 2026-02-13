@@ -11,6 +11,16 @@ import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
 
 export type LapisSearchParameters = Record<string, any>;
 
+const mutationSearchParamNames = [
+    'nucleotideMutations',
+    'aminoAcidMutations',
+    'nucleotideInsertions',
+    'aminoAcidInsertions',
+] as const;
+
+type MutationSearchParamName = (typeof mutationSearchParamNames)[number];
+type MutationSearchParams = Record<MutationSearchParamName, string[]>;
+
 export interface SequenceFilter {
     /**
      * Whether this filter is actually filtering anything or not.
@@ -101,13 +111,15 @@ export class FieldFilterSet implements SequenceFilter {
     }
 
     public toApiParams(): LapisSearchParameters {
-        const mutationSearchIdentifiers = getSegmentNames(this.referenceGenomesInfo).map((segmentName) =>
-            getReferenceIdentifier(MUTATION_KEY, segmentName, this.referenceGenomesInfo.isMultiSegmented),
+        const mutationSearchIdentifiers = new Set(
+            getSegmentNames(this.referenceGenomesInfo).map((segmentName) =>
+                getReferenceIdentifier(MUTATION_KEY, segmentName, this.referenceGenomesInfo.isMultiSegmented),
+            ),
         );
 
         const sequenceFilters = Object.fromEntries(
             Object.entries(this.fieldValues as Record<string, any>).filter(
-                ([key, value]) => value !== undefined && value !== '' && !mutationSearchIdentifiers.includes(key),
+                ([key, value]) => value !== undefined && value !== '' && !mutationSearchIdentifiers.has(key),
             ),
         );
         for (const filterName of Object.keys(sequenceFilters)) {
@@ -123,12 +135,7 @@ export class FieldFilterSet implements SequenceFilter {
             sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
         }
 
-        const mutationSearchParams = {
-            aminoAcidInsertions: [] as string[],
-            aminoAcidMutations: [] as string[],
-            nucleotideInsertions: [] as string[],
-            nucleotideMutations: [] as string[],
-        };
+        const mutationSearchParams = emptyMutationSearchParams();
         for (const segmentInfo of this.segmentAndGeneInfo.nucleotideSegmentInfos) {
             const mutationFieldName = getReferenceIdentifier(
                 MUTATION_KEY,
@@ -147,10 +154,7 @@ export class FieldFilterSet implements SequenceFilter {
                 this.fieldValues[mutationFieldName] as string | undefined,
                 singleSegmentAndGeneInfo,
             );
-            mutationSearchParams.aminoAcidInsertions.push(...segmentMutationParams.aminoAcidInsertions);
-            mutationSearchParams.aminoAcidMutations.push(...segmentMutationParams.aminoAcidMutations);
-            mutationSearchParams.nucleotideInsertions.push(...segmentMutationParams.nucleotideInsertions);
-            mutationSearchParams.nucleotideMutations.push(...segmentMutationParams.nucleotideMutations);
+            appendMutationSearchParams(mutationSearchParams, segmentMutationParams);
         }
 
         return {
@@ -164,13 +168,7 @@ export class FieldFilterSet implements SequenceFilter {
 
         // keys that need special handling
         const accessionKey = 'accession';
-        const mutationKeys = [
-            'nucleotideMutations',
-            'aminoAcidMutations',
-            'nucleotideInsertions',
-            'aminoAcidInsertions',
-        ];
-        const skipKeys = mutationKeys.concat([accessionKey]);
+        const skipKeys = new Set([...mutationSearchParamNames, accessionKey]);
 
         const lapisSearchParameters = this.toApiParams();
 
@@ -180,7 +178,7 @@ export class FieldFilterSet implements SequenceFilter {
         }
 
         // mutations
-        mutationKeys.forEach((key) => {
+        mutationSearchParamNames.forEach((key) => {
             if (lapisSearchParameters[key] !== undefined) {
                 (lapisSearchParameters[key] as string[]).forEach((m) => result.push([key, m]));
             }
@@ -188,7 +186,7 @@ export class FieldFilterSet implements SequenceFilter {
 
         // default keys
         for (const [key, value] of Object.entries(lapisSearchParameters)) {
-            if (skipKeys.includes(key)) {
+            if (skipKeys.has(key)) {
                 continue;
             }
 
@@ -209,9 +207,7 @@ export class FieldFilterSet implements SequenceFilter {
     }
 
     private isHiddenFieldValue(fieldName: string, fieldValue: unknown) {
-        return (
-            Object.keys(this.hiddenFieldValues).includes(fieldName) && this.hiddenFieldValues[fieldName] === fieldValue
-        );
+        return fieldName in this.hiddenFieldValues && this.hiddenFieldValues[fieldName] === fieldValue;
     }
 
     public toDisplayStrings(): Map<string, [string, string | (string | null)[] | null]> {
@@ -246,6 +242,21 @@ export class FieldFilterSet implements SequenceFilter {
     }
 }
 /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
+
+function emptyMutationSearchParams(): MutationSearchParams {
+    return {
+        aminoAcidInsertions: [],
+        aminoAcidMutations: [],
+        nucleotideInsertions: [],
+        nucleotideMutations: [],
+    };
+}
+
+function appendMutationSearchParams(target: MutationSearchParams, source: MutationSearchParams): void {
+    mutationSearchParamNames.forEach((key) => {
+        target[key].push(...source[key]);
+    });
+}
 
 const textAccessionsToList = (text: string): string[] => {
     const accessions = text
