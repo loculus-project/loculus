@@ -317,7 +317,7 @@ export const SearchForm = ({
                         </div>
 
                         <section className='flex flex-col gap-1.5'>
-                            <CollapsibleSection title='Sample Metadata Filters' open>
+                            <CollapsibleSection title='Metadata Filters' open>
                                 {sampleFields.map((filter) => (
                                     <SearchField
                                         key={filter.name}
@@ -332,7 +332,7 @@ export const SearchForm = ({
                         </section>
 
                         <section className='flex flex-col gap-1.5 mb-4'>
-                            <CollapsibleSection title='Sequence Metadata Filters' open>
+                            <CollapsibleSection title='Sequence Filters' open>
                                 {!referenceGenomesInfo.isMultiSegmented &&
                                     segmentNames.map((segmentName) => (
                                         <div key={segmentName}>{renderSegmentContents(segmentName)}</div>
