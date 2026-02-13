@@ -142,8 +142,6 @@ class EndpointTestExtension :
                 try {
                     env.start()
                 } catch (e: Exception) {
-                    System.err.println("ERROR: Failed to start test environment: ${e.message}")
-                    e.printStackTrace(System.err)
                     log.error(e) { "Failed to start test environment. This may be a Docker compatibility issue." }
                     throw e
                 }
