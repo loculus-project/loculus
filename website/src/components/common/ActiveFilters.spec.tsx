@@ -2,28 +2,12 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ActiveFilters } from './ActiveFilters';
-import type { ReferenceGenomesInfo } from '../../types/referencesGenomes';
+import { MOCK_REFERENCE_GENOMES_INFO } from '../../types/referenceGenomes.spec';
 import { MetadataFilterSchema } from '../../utils/search';
 import type { SegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers';
 import { FieldFilterSet, SequenceEntrySelection } from '../SearchPage/DownloadDialog/SequenceFilters';
 
-const mockReferenceGenomesInfo: ReferenceGenomesInfo = {
-    isMultiSegmented: false,
-    segmentReferenceGenomes: {},
-    segmentDisplayNames: {},
-    useLapisMultiSegmentedEndpoint: false,
-};
-
-const mockSegmentAndGeneInfo: SegmentAndGeneInfo = {
-    nucleotideSegmentInfos: [
-        {
-            lapisName: 'lapisName-main',
-            name: 'label-main',
-        },
-    ],
-    geneInfos: [],
-    useLapisMultiSegmentedEndpoint: false,
-};
+const mockSegmentAndGeneInfo: SegmentAndGeneInfo = { nucleotideSegmentInfos: [], geneInfos: [] };
 
 describe('ActiveFilters', () => {
     describe('with LAPIS filters', () => {
@@ -41,7 +25,7 @@ describe('ActiveFilters', () => {
                             { field1: 'value1', mutations: 'A123T,G234C,gene:A345T' },
                             {},
                             mockSegmentAndGeneInfo,
-                            mockReferenceGenomesInfo,
+                            MOCK_REFERENCE_GENOMES_INFO,
                         )
                     }
                 />,
@@ -60,7 +44,7 @@ describe('ActiveFilters', () => {
                             { field1: null },
                             {},
                             mockSegmentAndGeneInfo,
-                            mockReferenceGenomesInfo,
+                            MOCK_REFERENCE_GENOMES_INFO,
                         )
                     }
                 />,
@@ -84,7 +68,7 @@ describe('ActiveFilters', () => {
                             { field1: 'value1' },
                             {},
                             mockSegmentAndGeneInfo,
-                            mockReferenceGenomesInfo,
+                            MOCK_REFERENCE_GENOMES_INFO,
                         )
                     }
                     removeFilter={mockRemoveFilter}
@@ -108,7 +92,7 @@ describe('ActiveFilters', () => {
                             { releaseTimestamp: '1742288104' },
                             {},
                             mockSegmentAndGeneInfo,
-                            mockReferenceGenomesInfo,
+                            MOCK_REFERENCE_GENOMES_INFO,
                         )
                     }
                 />,
@@ -129,7 +113,7 @@ describe('ActiveFilters', () => {
                             { authorAffiliations: 'foo' },
                             {},
                             mockSegmentAndGeneInfo,
-                            mockReferenceGenomesInfo,
+                            MOCK_REFERENCE_GENOMES_INFO,
                         )
                     }
                 />,
