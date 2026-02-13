@@ -12,6 +12,7 @@ from psycopg2.pool import SimpleConnectionPool
 
 from .config import Config
 from .submission_db_helper import (
+    AccessionVersion,
     SubmissionTableEntry,
     add_to_submission_table,
     db_init,
@@ -23,12 +24,15 @@ logger = logging.getLogger(__name__)
 
 def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]):
     for full_accession, data in sequences_to_upload.items():
-        accession, version = full_accession.split(".")
-        if in_submission_table(db_config, {"accession": accession, "version": int(version)}):
+        accession_version = AccessionVersion.from_string(full_accession)
+        if in_submission_table(
+            db_config,
+            {"accession": accession_version.accession, "version": accession_version.version},
+        ):
             continue
         entry = SubmissionTableEntry(
-            accession=accession,
-            version=int(version),
+            accession=accession_version.accession,
+            version=accession_version.version,
             group_id=data["metadata"]["groupId"],
             organism=data["organism"],
             metadata=data["metadata"],
