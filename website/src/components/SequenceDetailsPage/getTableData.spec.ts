@@ -217,19 +217,14 @@ describe('getTableData', () => {
         expect(data).toContainEqual({
             label: 'Deletions',
             name: 'nucleotideDeletions',
-            value: "",
+            value: '',
             header: nucleotideMutationsHeader,
             customDisplay: {
                 type: 'list',
                 list: [
                     {
                         segment: segment,
-                        mutations: [
-                            "20",
-                            "21",
-                            "30-45",
-                            "400"
-                        ],
+                        mutations: ['20', '21', '30-45', '400'],
                     },
                 ],
             },
@@ -273,10 +268,7 @@ describe('getTableData', () => {
                 list: [
                     {
                         segment: gene,
-                        mutations: [
-                            `${gene}:20-23`,
-                            `${gene}:40`,
-                        ],
+                        mutations: [`${gene}:20-23`, `${gene}:40`],
                     },
                 ],
             },
