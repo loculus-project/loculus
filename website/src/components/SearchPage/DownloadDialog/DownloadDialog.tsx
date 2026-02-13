@@ -152,7 +152,6 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         sequenceFilter={sequenceFilter}
                         disabled={!agreedToDataUseTerms}
                         onClick={closeDialog}
-                        segmentAndGeneInfo={segmentAndGeneInfo}
                     />
                 </div>
             </BaseDialog>
