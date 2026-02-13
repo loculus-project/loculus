@@ -23,10 +23,9 @@ import { extractArrayValue, validateSingleValue } from '../../utils/extractField
 import { getReferenceIdentifier, type ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
 import {
-    getSegmentAndGeneInfo,
     getSegmentNames,
-    segmentReferenceSelected,
-    type SegmentAndGeneInfo,
+    getSingleSegmentAndGeneInfo,
+    type SingleSegmentAndGeneInfo,
 } from '../../utils/sequenceTypeHelpers.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal, getDisplayState } from '../common/FieldSelectorModal.tsx';
@@ -189,15 +188,18 @@ export const SearchForm = ({
         return { sampleFields, sequenceFieldsBySegment };
     }, [visibleFields]);
 
-    const suborganismSegmentAndGeneInfo = useMemo(() => {
-        return getSegmentNames(referenceGenomesInfo).reduce<Record<string, SegmentAndGeneInfo>>((acc, segmentName) => {
-            acc[segmentName] = getSegmentAndGeneInfo(
-                referenceGenomesInfo,
-                referenceSelection?.selectedReferences,
-                segmentName,
-            );
-            return acc;
-        }, {});
+    const segmentAndGeneInfo = useMemo(() => {
+        return getSegmentNames(referenceGenomesInfo).reduce<Record<string, SingleSegmentAndGeneInfo | null>>(
+            (acc, segmentName) => {
+                acc[segmentName] = getSingleSegmentAndGeneInfo(
+                    referenceGenomesInfo,
+                    segmentName,
+                    referenceSelection?.selectedReferences,
+                );
+                return acc;
+            },
+            {},
+        );
     }, [referenceGenomesInfo, referenceSelection?.selectedReferences]);
 
     const mutationParamMap = useMemo(() => {
@@ -224,18 +226,17 @@ export const SearchForm = ({
                 />
             )}
 
-            {showMutationSearch &&
-                segmentReferenceSelected(segmentName, referenceGenomesInfo, referenceSelection?.selectedReferences) && (
-                    <MutationField
-                        suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo[segmentName]}
-                        value={
-                            mutationParamMap[segmentName] in fieldValues
-                                ? String(fieldValues[mutationParamMap[segmentName]] ?? '')
-                                : ''
-                        }
-                        onChange={(value) => setSomeFieldValues([mutationParamMap[segmentName], value])}
-                    />
-                )}
+            {showMutationSearch && segmentAndGeneInfo[segmentName] && (
+                <MutationField
+                    singleSegmentAndGeneInfo={segmentAndGeneInfo[segmentName]}
+                    value={
+                        mutationParamMap[segmentName] in fieldValues
+                            ? String(fieldValues[mutationParamMap[segmentName]] ?? '')
+                            : ''
+                    }
+                    onChange={(value) => setSomeFieldValues([mutationParamMap[segmentName], value])}
+                />
+            )}
 
             {sequenceFieldsBySegment[segmentName].map((filter) => (
                 <SearchField

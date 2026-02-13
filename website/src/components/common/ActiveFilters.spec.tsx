@@ -42,12 +42,7 @@ describe('ActiveFilters', () => {
             render(
                 <ActiveFilters
                     sequenceFilter={
-                        new FieldFilterSet(
-                            new MetadataFilterSchema([]),
-                            { field1: null },
-                            {},
-                            mockReferenceGenomesInfo,
-                        )
+                        new FieldFilterSet(new MetadataFilterSchema([]), { field1: null }, {}, mockReferenceGenomesInfo)
                     }
                 />,
             );
