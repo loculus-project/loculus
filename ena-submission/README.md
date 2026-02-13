@@ -204,7 +204,7 @@ python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/
 ```
 
 > **_NOTE:_**
-> If you want to run the ena deposition pod with the [Pathoplexus](https://github.com/pathoplexus/pathoplexus) staging or production config you can create the config locally by running:
+> If you want to run the ena deposition pod with the [Pathoplexus](https://github.com/pathoplexus/pathoplexus) staging or production config you can create the config locally by running or by downloading the config from argocd:
 >
 > ```bash
 > cd ..

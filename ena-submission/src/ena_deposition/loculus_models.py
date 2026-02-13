@@ -22,8 +22,8 @@ class Group(BaseModel):
     group_name: str = Field(..., alias="groupName", description="The display name of the group.")
     institution: str = Field(..., description="The name of the institution.")
     address: Address = Field(..., description="The address of the institution.")
-    contact_email: str = Field(
-        ..., alias="contactEmail", description="The contact email for the group."
+    contact_email: str | None = Field(
+        None, alias="contactEmail", description="The contact email for the group."
     )
 
     @classmethod
@@ -51,4 +51,4 @@ class User(BaseModel):
 
 class GroupDetails(BaseModel):
     group: Group
-    users: list[User]
+    users: list[User] | None = None
