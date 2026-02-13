@@ -107,7 +107,7 @@ export class SearchPage {
 
     async enterSegmentedMutation(mutation: string, segment: string) {
         const outer = this.page.locator('details', {
-            has: this.page.locator('summary', { hasText: 'Sequence Metadata Filters' }),
+            has: this.page.locator('summary', { hasText: 'Sequence Filters' }),
         });
         const innerS = outer.locator('details', {
             has: this.page.locator('summary', { hasText: new RegExp(`^${segment}$`) }),
