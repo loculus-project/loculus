@@ -76,6 +76,7 @@ describe('ReferenceSelector', () => {
                 setSomeFieldValues={vi.fn()}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                segmentName='main'
             />,
         );
 
@@ -92,6 +93,7 @@ describe('ReferenceSelector', () => {
                 setSomeFieldValues={vi.fn()}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                segmentName='main'
             />,
         );
 
@@ -128,6 +130,7 @@ describe('ReferenceSelector', () => {
                 setSomeFieldValues={vi.fn()}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                segmentName='L'
             />,
         );
 
@@ -151,6 +154,7 @@ describe('ReferenceSelector', () => {
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                segmentName='main'
             />,
         );
 
@@ -174,6 +178,7 @@ describe('ReferenceSelector', () => {
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                segmentName='main'
             />,
         );
 

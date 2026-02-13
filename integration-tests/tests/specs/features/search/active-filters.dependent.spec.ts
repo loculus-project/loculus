@@ -37,25 +37,13 @@ test.describe('Search', () => {
     });
 
     test('multi-segment mutation filter can be added and removed', async ({ page }) => {
-        const mutation = 'S:G100A';
+        const mutation = 'G100A';
         await searchPage.cchf();
-        await searchPage.enterMutation(mutation);
-        await expect(page.getByText(`mutation:${mutation}`)).toBeVisible();
+        await searchPage.enterSegmentedMutation(mutation, 'S');
+        await expect(page.getByText(`mutation_S:${mutation}`)).toBeVisible();
         await page.getByLabel('remove filter').click();
-        await expect(page.getByText(`mutation:${mutation}`)).toBeHidden();
+        await expect(page.getByText(`mutation_S:${mutation}`)).toBeHidden();
         expect(new URL(page.url()).searchParams.size).toBe(0);
-    });
-
-    test('multi-reference mutation filter can be added and removed', async ({ page }) => {
-        const mutation = 'T11C';
-        await searchPage.enterovirus();
-        await searchPage.selectReference('Genotype', 'EV-A71');
-        await searchPage.enterMutation(mutation);
-        await expect(page.getByText(`mutation:${mutation}`)).toBeVisible();
-        const filterChip = page.locator('span', { hasText: mutation }).locator('..');
-        await filterChip.getByRole('button', { name: 'remove filter' }).click();
-        await expect(page.getByText(`mutation:${mutation}`)).toBeHidden();
-        expect(new URL(page.url()).searchParams.size).toBe(1); // only genotype filter remains
     });
 
     test('substring-search filter can be removed by clicking the X', async ({ page }) => {

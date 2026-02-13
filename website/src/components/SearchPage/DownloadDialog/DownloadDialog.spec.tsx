@@ -12,10 +12,11 @@ import { versionStatuses } from '../../../types/lapis';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+    MOCK_REFERENCE_GENOMES_INFO,
 } from '../../../types/referenceGenomes.spec.ts';
 import { type ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
-import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
+import type { SegmentAndGeneInfo, SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 
 const defaultLapisUrl = 'https://lapis';
 const defaultOrganism = 'ebola';
@@ -46,6 +47,8 @@ const mockMetadata: Metadata[] = [
         includeInDownloadsByDefault: true,
     },
 ];
+
+const mockSegmentAndGeneInfo: SegmentAndGeneInfo = { nucleotideSegmentInfos: [], geneInfos: [] };
 
 async function renderDialog({
     downloadParams = new SequenceEntrySelection(new Set()),
@@ -154,7 +157,8 @@ describe('DownloadDialog', () => {
                     field1: 'value1',
                 },
                 {},
-                { nucleotideSegmentInfos: [], geneInfos: [] },
+                mockSegmentAndGeneInfo,
+                MOCK_REFERENCE_GENOMES_INFO,
             ),
         });
         await checkAgreement();
@@ -299,7 +303,8 @@ describe('DownloadDialog', () => {
                     field2: 'value2',
                 },
                 {},
-                { nucleotideSegmentInfos: [], geneInfos: [] },
+                mockSegmentAndGeneInfo,
+                MOCK_REFERENCE_GENOMES_INFO,
             ),
         });
         await checkAgreement();
@@ -348,7 +353,8 @@ describe('DownloadDialog', () => {
                         field1: 'value1',
                     },
                     {},
-                    { nucleotideSegmentInfos: [], geneInfos: [] },
+                    mockSegmentAndGeneInfo,
+                    MOCK_REFERENCE_GENOMES_INFO,
                 ),
             });
 
@@ -371,7 +377,7 @@ describe('DownloadDialog', () => {
                 referenceIdentifierField: 'genotype',
             });
 
-            expect(screen.getByText('select a genotype display name', { exact: false })).toBeVisible();
+            expect(screen.getByText('select genotype display name', { exact: false })).toBeVisible();
             expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
             expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
         });
@@ -452,6 +458,7 @@ describe('DownloadDialog', () => {
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
                 onlyForReference: 'ref1',
+                sequenceMetadataScope: 'main',
             },
             {
                 name: 'field2',
@@ -460,6 +467,7 @@ describe('DownloadDialog', () => {
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
                 onlyForReference: 'ref2',
+                sequenceMetadataScope: 'main',
             },
             {
                 name: ACCESSION_VERSION_FIELD,

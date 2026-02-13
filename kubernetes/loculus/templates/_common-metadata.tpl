@@ -333,6 +333,12 @@ organisms:
     html: {{ .customDisplay.html }}
     {{- end }}
   {{- end }}
+  {{- if .metadataScope }}
+  metadataScope: {{ .metadataScope }}
+  {{- end }}
+  {{- if .sequenceMetadataScope }}
+  sequenceMetadataScope: {{ .sequenceMetadataScope }}
+  {{- end }}
 {{- end }}
 
 {{/* Generate website metadata from passed metadata array */}}
@@ -355,6 +361,9 @@ fields:
   header: {{ (default "Other" .header) | quote }}
   {{- else }}
   header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
+  {{- end }}
+  {{- if eq .metadataScope "sequence" }}
+  sequenceMetadataScope: {{ $segment }}
   {{- end }}
 {{- end }}
 {{- end }}

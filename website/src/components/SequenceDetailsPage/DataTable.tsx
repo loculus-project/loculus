@@ -76,7 +76,12 @@ const DataTableComponent: React.FC<Props> = ({
                         )}
                         <div className='mt-4'>
                             {rows.map((entry: TableDataEntry, index: number) => (
-                                <DataTableEntry key={index} data={entry} dataUseTermsHistory={dataUseTermsHistory} />
+                                <DataTableEntry
+                                    key={index}
+                                    data={entry}
+                                    dataUseTermsHistory={dataUseTermsHistory}
+                                    segmentDisplayNameMap={referenceGenomesInfo.segmentDisplayNames}
+                                />
                             ))}
                         </div>
                     </div>
