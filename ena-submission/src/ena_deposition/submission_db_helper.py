@@ -142,6 +142,9 @@ class AccessionVersion:
             version=int(version_str),
         )
 
+    def __post_init__(self):
+        object.__setattr__(self, "version", int(self.version))
+
 
 @dataclass(frozen=True)
 class ProjectId:
