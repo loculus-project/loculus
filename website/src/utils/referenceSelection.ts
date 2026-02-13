@@ -7,6 +7,12 @@ export function getReferenceIdentifier(identifier: string, segmentName: string, 
     return multipleSegments ? `${identifier}_${segmentName}` : identifier;
 }
 
+export function expectStringOrNull(value: unknown, label: string): string | null {
+    if (value === undefined || value === null) return null;
+    if (typeof value === 'string') return value;
+    throw new Error(`Expected string or null for ${label}, got ${typeof value}`);
+}
+
 type GetSegmentSelectionsOpts = {
     segments: string[];
     referenceIdentifierField: string;
@@ -24,8 +30,7 @@ export function getSegmentReferenceSelections({
 
     for (const segmentName of segments) {
         const referenceIdentifier = getReferenceIdentifier(referenceIdentifierField, segmentName, isMultiSegmented);
-        // TODO(5891): it would be better to avoid this typecast
-        result[segmentName] = (state[referenceIdentifier] as string | null | undefined) ?? null;
+        result[segmentName] = expectStringOrNull(state[referenceIdentifier], referenceIdentifier);
     }
 
     return result;
