@@ -8,9 +8,7 @@ title: Search sequences
 
 A nucleotide mutation has the format `<position><base>` or `<base_ref><position><base>`. A `<base>` can be one of the four nucleotides `A`, `T`, `C`, and `G`. It can also be `-` for deletion and `N` for unknown. For example if the reference sequence is `A` at position 23 both: `23T` and `A23T` will yield the same results.
 
-If your organism is multi-segmented you must append the name of the segment to the start of the mutation, e.g. `S:23T` and `S:A23T` for a mutation in segment `S`.
-
-Insertions can be searched for in the same manner, they just need to have `ins_` appended to the start of the mutation. Example `ins_10462:A` or if the organism is multi-segmented `ins_S:10462:A`.
+Insertions can be searched for in the same manner, they just need to have `ins_` appended to the start of the mutation. Example `ins_10462:A`.
 
 ### Amino acid mutations and insertions
 
@@ -20,9 +18,9 @@ Insertions can be searched for in the same manner, they just need to have `ins_`
 
 ### Insertion wildcards
 
-Loculus supports insertion queries that contain wildcards `?`. For example `ins_S:214:?EP?` will match all cases where segment `S` has an insertion of `EP` between the positions 214 and 215 but also an insertion of other AAs which include the `EP`, e.g. the insertion `EPE` will be matched.
+Loculus supports insertion queries that contain wildcards `?`. For example `ins_G:214:?EP?` will match all cases where gene `G` has an insertion of `EP` between the positions 214 and 215 but also an insertion of other AAs which include the `EP`, e.g. the insertion `EPE` will be matched.
 
-You can also use wildcards to match any insertion at a given position. For example `ins_S:214:?:` will match any (but at least one) insertion between the positions 214 and 215.
+You can also use wildcards to match any insertion at a given position. For example `ins_G:214:?:` will match any (but at least one) insertion between the positions 214 and 215.
 
 ### Multiple mutations
 

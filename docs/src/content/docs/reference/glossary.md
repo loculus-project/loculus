@@ -21,7 +21,7 @@ The "Loculus backend" is the central server service of Loculus and responsible f
 
 ### Deletion
 
-A deletion is a type of [mutation](#mutation) where a nucleotide or amino acid is present in a reference sequence but not present in the sample sequence. The notation for a deletion in the case of a single-segmented nucleotide sequence is `<base of reference genome><position>-` (e.g., C100-). A mutation in the case of a [multi-segmented](#segment) nucleotide sequence or an amino acid sequence is further prefixed with the segment or gene name by adding `<segment/gene name>:` (e.g., E:S100-).
+A deletion is a type of [mutation](#mutation) where a nucleotide or amino acid is present in a reference sequence but not present in the sample sequence. The notation for a deletion in the case of a single-segmented nucleotide sequence is `<base of reference genome><position>-` (e.g., C100-). A mutation in the case of an amino acid sequence is further prefixed with the gene name by adding `<gene name>:` (e.g., E:S100-).
 
 ### File category
 
@@ -139,7 +139,7 @@ In Loculus, every [sequence entry](#sequence-entry) belongs to a submitting grou
 
 ### Substitution
 
-A substitution is a type of [mutation](#mutation) where at a given position in a sample a nucleotide or amino acid differs from the reference sequence. The notation for a mutation in the case of a single-segmented nucleotide sequence is `<base of reference genome><position><base of the sequence>` (e.g., C100T). A mutation in the case of a [multi-segmented](#segment) nucleotide sequence or an amino acid sequence is further prefixed with the segment or gene name by adding `<segment/gene name>:` (e.g., E:S100K).
+A substitution is a type of [mutation](#mutation) where at a given position in a sample a nucleotide or amino acid differs from the reference sequence. The notation for a mutation in the case of a single-segmented nucleotide sequence is `<base of reference genome><position><base of the sequence>` (e.g., C100T). A mutation in the case of an amino acid sequence is further prefixed with the gene name by adding `<gene name>:` (e.g., E:S100K).
 
 ### Superuser
 
