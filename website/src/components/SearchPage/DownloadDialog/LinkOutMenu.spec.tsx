@@ -46,15 +46,15 @@ const linkOuts = [
 ];
 
 const mockSegmentAndGeneInfo: SegmentAndGeneInfo = {
-            nucleotideSegmentInfos: [
-                {
-                    lapisName: 'lapisName-main',
-                    name: 'label-main',
-                },
-            ],
-            geneInfos: [],
-            useLapisMultiSegmentedEndpoint: false,
-        }
+    nucleotideSegmentInfos: [
+        {
+            lapisName: 'lapisName-main',
+            name: 'label-main',
+        },
+    ],
+    geneInfos: [],
+    useLapisMultiSegmentedEndpoint: false,
+};
 
 describe('LinkOutMenu with enabled data use terms', () => {
     test('opens modal when a tool is clicked', () => {
@@ -173,7 +173,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
 
         expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
-            expect.objectContaining({ dataType: { type: 'metadata', fields: ['fieldA', 'fieldB'] } }),
+            expect.objectContaining({ dataType: { type: 'metadata', fields: ['fieldA', 'fieldB'] }, mockSegmentAndGeneInfo}),
         );
     });
 
@@ -198,7 +198,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
 
         expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
-            expect.objectContaining({ dataType: { type: 'metadata', fields: ['fieldA'] } }),
+            expect.objectContaining({ dataType: { type: 'metadata', fields: ['fieldA'] }, mockSegmentAndGeneInfo }),
         );
     });
 });
