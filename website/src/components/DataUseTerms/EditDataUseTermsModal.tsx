@@ -16,7 +16,6 @@ import type { Details } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber';
-import type { SegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers';
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import { ActiveFilters } from '../common/ActiveFilters';
 import { BaseDialog } from '../common/BaseDialog';
@@ -27,7 +26,6 @@ interface EditDataUseTermsModalProps {
     clientConfig: ClientConfig;
     accessToken?: string;
     sequenceFilter: SequenceFilter;
-    segmentAndGeneInfo: SegmentAndGeneInfo;
 }
 
 type LoadingState = {
