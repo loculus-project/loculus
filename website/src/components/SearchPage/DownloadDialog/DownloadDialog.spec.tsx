@@ -155,6 +155,7 @@ describe('DownloadDialog', () => {
                 },
                 {},
                 { nucleotideSegmentInfos: [], geneInfos: [] },
+                SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
             ),
         });
         await checkAgreement();
@@ -300,6 +301,7 @@ describe('DownloadDialog', () => {
                 },
                 {},
                 { nucleotideSegmentInfos: [], geneInfos: [] },
+                SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
             ),
         });
         await checkAgreement();
@@ -349,6 +351,7 @@ describe('DownloadDialog', () => {
                     },
                     {},
                     { nucleotideSegmentInfos: [], geneInfos: [] },
+                    SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
                 ),
             });
 

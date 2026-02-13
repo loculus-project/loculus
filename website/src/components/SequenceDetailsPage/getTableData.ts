@@ -125,21 +125,21 @@ function mutationDetails(
             header: 'Nucleotide mutations',
             customDisplay: {
                 type: 'badge',
-                value: substitutionsMap(nucleotideMutations, referenceGenomesInfo),
+                value: substitutionsMap(nucleotideMutations, referenceGenomesInfo, true),
             },
             type: { kind: 'mutation' },
         },
         {
             label: 'Deletions',
             name: 'nucleotideDeletions',
-            value: deletionsToCommaSeparatedString(nucleotideMutations, referenceGenomesInfo),
+            value: deletionsToCommaSeparatedString(nucleotideMutations, referenceGenomesInfo, true),
             header: 'Nucleotide mutations',
             type: { kind: 'mutation' },
         },
         {
             label: 'Insertions',
             name: 'nucleotideInsertions',
-            value: insertionsToCommaSeparatedString(nucleotideInsertions, referenceGenomesInfo),
+            value: insertionsToCommaSeparatedString(nucleotideInsertions, referenceGenomesInfo, true),
             header: 'Nucleotide mutations',
             type: { kind: 'mutation' },
         },
@@ -231,6 +231,7 @@ function mapValueToDisplayedValue(value: undefined | null | string | number | bo
 export function substitutionsMap(
     mutationData: MutationProportionCount[],
     referenceGenomesInfo: ReferenceGenomesInfo,
+    hideSegmentPrefix = false,
 ): SegmentedMutations[] {
     const result: SegmentedMutations[] = [];
     const substitutionData = mutationData.filter((m) => m.mutationTo !== '-');
@@ -247,7 +248,12 @@ export function substitutionsMap(
         }
         segmentMutationsMap
             .get(sequenceKey)!
-            .push({ sequenceName: sequenceDisplayName, mutationFrom, position, mutationTo });
+            .push({
+                sequenceName: hideSegmentPrefix ? null : sequenceDisplayName,
+                mutationFrom,
+                position,
+                mutationTo,
+            });
     }
     for (const [segment, mutations] of segmentMutationsMap.entries()) {
         result.push({ segment, mutations });
@@ -259,6 +265,7 @@ export function substitutionsMap(
 function deletionsToCommaSeparatedString(
     mutationData: MutationProportionCount[],
     referenceGenomesInfo: ReferenceGenomesInfo,
+    hideSegmentPrefix = false,
 ) {
     const segmentPositions = new Map<string | null, number[]>();
     const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomesInfo);
@@ -304,12 +311,18 @@ function deletionsToCommaSeparatedString(
         }
     });
     return segmentRanges
-        .map(({ segment, ranges }) => ranges.map((range) => `${segment !== null ? segment + ':' : ''}${range}`))
+        .map(({ segment, ranges }) =>
+            ranges.map((range) => `${!hideSegmentPrefix && segment !== null ? segment + ':' : ''}${range}`),
+        )
         .flat()
         .join(', ');
 }
 
-function insertionsToCommaSeparatedString(insertionData: InsertionCount[], referenceGenomesInfo: ReferenceGenomesInfo) {
+function insertionsToCommaSeparatedString(
+    insertionData: InsertionCount[],
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    hideSegmentPrefix = false,
+) {
     const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomesInfo);
     return insertionData
         .map((insertion) => {
@@ -317,7 +330,7 @@ function insertionsToCommaSeparatedString(insertionData: InsertionCount[], refer
                 ? lapisNameToDisplayNameMap.get(insertion.sequenceName)
                 : null;
 
-            const sequenceNamePart = sequenceDisplayName ? sequenceDisplayName + ':' : '';
+            const sequenceNamePart = !hideSegmentPrefix && sequenceDisplayName ? sequenceDisplayName + ':' : '';
             return `ins_${sequenceNamePart}${insertion.position}:${insertion.insertedSymbols}`;
         })
         .join(', ');

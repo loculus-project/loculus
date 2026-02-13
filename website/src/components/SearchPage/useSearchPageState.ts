@@ -101,7 +101,12 @@ export function useSearchPageState({
                                     referenceGenomesInfo.isMultiSegmented,
                                 )
                             ) {
-                                delete newState[MUTATION_KEY];
+                                const mutationKey = getReferenceIdentifier(
+                                    MUTATION_KEY,
+                                    segmentName,
+                                    referenceGenomesInfo.isMultiSegmented,
+                                );
+                                delete newState[mutationKey];
                                 const referenceNames = Object.keys(
                                     referenceGenomesInfo.segmentReferenceGenomes[segmentName],
                                 );

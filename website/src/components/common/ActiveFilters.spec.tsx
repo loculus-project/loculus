@@ -2,8 +2,15 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ActiveFilters } from './ActiveFilters';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { MetadataFilterSchema } from '../../utils/search';
 import { FieldFilterSet, SequenceEntrySelection } from '../SearchPage/DownloadDialog/SequenceFilters';
+
+const mockReferenceGenomesInfo: ReferenceGenomesInfo = {
+    isMultiSegmented: false,
+    segmentReferenceGenomes: {},
+    useLapisMultiSegmentedEndpoint: false,
+};
 
 describe('ActiveFilters', () => {
     describe('with LAPIS filters', () => {
@@ -24,6 +31,7 @@ describe('ActiveFilters', () => {
                                 nucleotideSegmentInfos: [{ lapisName: 'main', name: 'main' }],
                                 geneInfos: [{ lapisName: 'gene', name: 'gene' }],
                             },
+                            mockReferenceGenomesInfo,
                         )
                     }
                 />,
@@ -42,6 +50,7 @@ describe('ActiveFilters', () => {
                             { field1: null },
                             {},
                             { nucleotideSegmentInfos: [], geneInfos: [] },
+                            mockReferenceGenomesInfo,
                         )
                     }
                 />,
@@ -65,6 +74,7 @@ describe('ActiveFilters', () => {
                             { field1: 'value1' },
                             {},
                             { nucleotideSegmentInfos: [], geneInfos: [] },
+                            mockReferenceGenomesInfo,
                         )
                     }
                     removeFilter={mockRemoveFilter}
@@ -88,6 +98,7 @@ describe('ActiveFilters', () => {
                             { releaseTimestamp: '1742288104' },
                             {},
                             { nucleotideSegmentInfos: [], geneInfos: [] },
+                            mockReferenceGenomesInfo,
                         )
                     }
                 />,
@@ -108,6 +119,7 @@ describe('ActiveFilters', () => {
                             { authorAffiliations: 'foo' },
                             {},
                             { nucleotideSegmentInfos: [], geneInfos: [] },
+                            mockReferenceGenomesInfo,
                         )
                     }
                 />,

@@ -62,15 +62,9 @@ const DisplaySearchDocs: React.FC = () => {
                                             <b>23T</b> and <b>A23T</b> will yield the same results.
                                         </p>
                                         <p className='mb-2'>
-                                            If your organism is multi-segmented you must append the name of the segment
-                                            to the start of the mutation, e.g. <b>S:23T</b> and <b>S:A23T</b> for a
-                                            mutation in segment <b>S</b>.
-                                        </p>
-                                        <p className='mb-2'>
                                             Insertions can be searched for in the same manner, they just need to have{' '}
                                             <b>ins_</b> appended to the start of the mutation. Example{' '}
-                                            <b>ins_10462:A</b> or if the organism is multi-segmented{' '}
-                                            <b>ins_S:10462:A</b>.
+                                            <b>ins_10462:A</b>.
                                         </p>
                                     </div>
 
@@ -96,14 +90,14 @@ const DisplaySearchDocs: React.FC = () => {
                                         <h4 className='font-bold text-l mb-4 text-primary-700'>Insertion wildcards</h4>
                                         <p className='mb-2'>
                                             Loculus supports insertion queries that contain wildcards <b>?</b>. For
-                                            example <b>ins_S:214:?EP?</b> will match all cases where segment <b>S</b>{' '}
-                                            has an insertion of <b>EP</b> between the positions 214 and 215 but also an
+                                            example <b>ins_G:214:?EP?</b> will match all cases where gene <b>G</b> has
+                                            an insertion of <b>EP</b> between the positions 214 and 215 but also an
                                             insertion of other AAs which include the <b>EP</b>, e.g. the insertion{' '}
                                             <b>EPE</b> will be matched.
                                         </p>
                                         <p className='mb-2'>
                                             You can also use wildcards to match any insertion at a given position. For
-                                            example <b>ins_S:214:?</b> will match any (but at least one) insertion
+                                            example <b>ins_G:214:?</b> will match any (but at least one) insertion
                                             between the positions 214 and 215.
                                         </p>
                                     </div>

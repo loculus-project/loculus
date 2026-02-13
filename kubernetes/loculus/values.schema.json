@@ -134,6 +134,17 @@
           "type": "boolean",
           "description": "If true, the field is initially visible in the UI."
         },
+        "metadataScope": {
+          "groups": ["metadata"],
+          "type": "string",
+          "enum": ["sequence"],
+          "description": "If set to 'sequence', this metadata field is treated as sequence-level metadata in the website. If omitted, it is treated as sample-level metadata."
+        },
+        "sequenceMetadataScope": {
+          "groups": ["metadata"],
+          "type": "string",
+          "description": "Optional segment name for sequence-level metadata. For per-segment fields this is generated automatically."
+        },
         "hideOnSequenceDetailsPage": {
           "groups": ["metadata"],
           "type": "boolean",

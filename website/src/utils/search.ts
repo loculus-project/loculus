@@ -1,7 +1,13 @@
 import { sentenceCase } from 'change-case';
 
 import { validateSingleValue } from './extractFieldValue';
-import { stillRequiresReferenceNameSelection, type SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
+import { getReferenceIdentifier } from './referenceSelection.ts';
+import {
+    getSegmentNames,
+    segmentReferenceSelected,
+    stillRequiresReferenceNameSelection,
+    type SegmentReferenceSelections,
+} from './sequenceTypeHelpers.ts';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
 import type {
@@ -40,10 +46,12 @@ type VisiblitySelectableAccessor = (field: MetadataFilter) => boolean;
 export class MetadataVisibility {
     public readonly isChecked: boolean;
     private readonly onlyForReference: string | undefined;
+    private readonly segmentName: string | undefined;
 
-    constructor(isChecked: boolean, onlyForReference: string | undefined) {
+    constructor(isChecked: boolean, onlyForReference: string | undefined, segmentName: string | undefined) {
         this.isChecked = isChecked;
         this.onlyForReference = onlyForReference;
+        this.segmentName = segmentName;
     }
 
     public isVisible(
@@ -60,11 +68,19 @@ export class MetadataVisibility {
         if (selectedReferenceNames === undefined) {
             return false;
         }
-        if (
-            !hideIfStillRequiresReferenceSelection &&
-            stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames)
-        ) {
-            return true;
+        if (!hideIfStillRequiresReferenceSelection) {
+            if (
+                this.segmentName !== undefined &&
+                !segmentReferenceSelected(this.segmentName, referenceGenomesInfo, selectedReferenceNames)
+            ) {
+                return true;
+            }
+            if (
+                this.segmentName === undefined &&
+                stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames)
+            ) {
+                return true;
+            }
         }
         for (const value of Object.values(selectedReferenceNames)) {
             if (this.onlyForReference === value) {
@@ -103,6 +119,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
         const visibility = new MetadataVisibility(
             explicitVisibilitiesInUrlByFieldName.get(fieldName) ?? initiallyVisibleAccessor(field),
             field.onlyForReference,
+            field.sequenceMetadataScope,
         );
 
         visibilities.set(fieldName, visibility);
@@ -198,6 +215,8 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
                     displayName: filter.fieldGroupDisplayName,
                     initiallyVisible: filter.initiallyVisible,
                     header: filter.header,
+                    metadataScope: filter.metadataScope,
+                    sequenceMetadataScope: filter.sequenceMetadataScope,
                 };
                 fieldList.push(fieldForGroup);
                 groupsMap.set(filter.fieldGroup, fieldForGroup);
@@ -272,7 +291,11 @@ export class MetadataFilterSchema {
      * @param queryState the key-values set in the URL.
      * @param hiddenFieldValues The default settings to use for all {@link FieldValues} as a starting point.
      */
-    public getFieldValuesFromQuery(queryState: QueryState, hiddenFieldValues: FieldValues): FieldValues {
+    public getFieldValuesFromQuery(
+        queryState: QueryState,
+        hiddenFieldValues: FieldValues,
+        referenceGenomesInfo: ReferenceGenomesInfo,
+    ): FieldValues {
         const values: FieldValues = { ...hiddenFieldValues };
         for (const field of this.ungroupedMetadataFilters()) {
             const value = queryState[field.name];
@@ -291,9 +314,16 @@ export class MetadataFilterSchema {
             const val = validateSingleValue(queryState.accession, 'accession');
             values.accession = val === '' ? undefined : val;
         }
-        if (MUTATION_KEY in queryState) {
-            const val = validateSingleValue(queryState.mutation, MUTATION_KEY);
-            values.mutation = val === '' ? undefined : val;
+        for (const segmentName of getSegmentNames(referenceGenomesInfo)) {
+            const mutationParamName = getReferenceIdentifier(
+                MUTATION_KEY,
+                segmentName,
+                referenceGenomesInfo.isMultiSegmented,
+            );
+            if (mutationParamName in queryState) {
+                const val = validateSingleValue(queryState[mutationParamName], mutationParamName);
+                values[mutationParamName] = val;
+            }
         }
         return values;
     }

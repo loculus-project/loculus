@@ -313,6 +313,12 @@ organisms:
   {{- if .onlyForReference }}
   onlyForReference: {{ .onlyForReference }}
   {{- end }}
+  {{- if .metadataScope }}
+  metadataScope: {{ .metadataScope }}
+  {{- end }}
+  {{- if .sequenceMetadataScope }}
+  sequenceMetadataScope: {{ .sequenceMetadataScope }}
+  {{- end }}
   {{- if .customDisplay }}
   customDisplay:
     type: {{ quote .customDisplay.type }}
@@ -356,6 +362,8 @@ fields:
   {{- else }}
   header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
   {{- end }}
+  metadataScope: "sequence"
+  sequenceMetadataScope: {{ $segment | quote }}
 {{- end }}
 {{- end }}
 {{- else }}
