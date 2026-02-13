@@ -329,23 +329,24 @@ describe('getTableData', () => {
                           segment: segment1,
                       },
                   ];
-        const aaInsertionsList = gene1 !== gene2 ?
-        [
-                    {
-                        mutations: [`ins_${gene1}:123:AAA`],
-                        segment: gene1,
-                    },
-                    {
-                        mutations: [`ins_${gene2}:456:TTT`],
-                        segment: gene2,
-                    },
-                ]
+        const aaInsertionsList =
+            gene1 !== gene2
+                ? [
+                      {
+                          mutations: [`ins_${gene1}:123:AAA`],
+                          segment: gene1,
+                      },
+                      {
+                          mutations: [`ins_${gene2}:456:TTT`],
+                          segment: gene2,
+                      },
+                  ]
                 : [
-                    {
-                        mutations: [`ins_${gene1}:123:AAA`, `ins_${gene2}:456:TTT`],
-                        segment: gene1,
-                    },
-                ]
+                      {
+                          mutations: [`ins_${gene1}:123:AAA`, `ins_${gene2}:456:TTT`],
+                          segment: gene1,
+                      },
+                  ];
         expect(data).toContainEqual({
             label: 'Insertions',
             name: 'nucleotideInsertions',
