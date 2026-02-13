@@ -24,8 +24,8 @@ describe('getSegmentAndGeneInfo', () => {
         expect(out).toEqual({
             nucleotideSegmentInfos: [{ name: 'main', lapisName: 'main' }],
             geneInfos: [
-                { lapisName: 'gene1', name: 'gene1', segmentName: "main" },
-                { lapisName: 'gene2', name: 'gene2', segmentName: "main" },
+                { lapisName: 'gene1', name: 'gene1', segmentName: 'main' },
+                { lapisName: 'gene2', name: 'gene2', segmentName: 'main' },
             ],
             useLapisMultiSegmentedEndpoint: false,
             multiSegmented: false,
@@ -43,8 +43,8 @@ describe('getSegmentAndGeneInfo', () => {
         ]);
 
         expect(out.geneInfos).toEqual([
-            { lapisName: 'gene1', name: 'gene1', segmentName: "S" },
-            { lapisName: 'gene2', name: 'gene2', segmentName: "L" },
+            { lapisName: 'gene1', name: 'gene1', segmentName: 'S' },
+            { lapisName: 'gene2', name: 'gene2', segmentName: 'L' },
         ]);
 
         expect(out.useLapisMultiSegmentedEndpoint).toBe(true);
@@ -58,8 +58,8 @@ describe('getSegmentAndGeneInfo', () => {
 
         expect(out.nucleotideSegmentInfos).toEqual([{ name: 'main', lapisName: 'ref2' }]);
         expect(out.geneInfos).toEqual([
-            { lapisName: 'gene1-ref2', name: 'gene1', segmentName: "main" },
-            { lapisName: 'gene2-ref2', name: 'gene2', segmentName: "main"},
+            { lapisName: 'gene1-ref2', name: 'gene1', segmentName: 'main' },
+            { lapisName: 'gene2-ref2', name: 'gene2', segmentName: 'main' },
         ]);
         expect(out.useLapisMultiSegmentedEndpoint).toBe(true);
         expect(out.multiSegmented).toBe(false);
