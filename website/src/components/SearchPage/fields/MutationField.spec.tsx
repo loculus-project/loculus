@@ -71,8 +71,8 @@ describe('MutationField', () => {
         const handleChange = vi.fn();
         renderField('', handleChange, multiSegmentedGenomesMap);
 
-        await userEvent.type(screen.getByLabelText('Mutations'), 'seg1:G100A{enter}');
-        expect(handleChange).toHaveBeenCalledWith('seg1:G100A');
+        await userEvent.type(screen.getByLabelText('Mutations'), 'G100A{enter}');
+        expect(handleChange).toHaveBeenCalledWith('G100A');
     });
 
     test('should reject invalid input', async () => {

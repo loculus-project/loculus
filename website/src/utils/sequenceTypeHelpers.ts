@@ -99,7 +99,7 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
         const isMultiReferenced = segmentData.references.length > 1;
 
         genomes[segmentName] ??= {};
-        segmentDisplayNames[segmentName] = segmentData.displayName ?? segmentName;
+        segmentData.displayName && (segmentDisplayNames[segmentName] = segmentData.displayName);
 
         if (isMultiReferenced) {
             useLapisMultiSegmentedEndpoint = true;
