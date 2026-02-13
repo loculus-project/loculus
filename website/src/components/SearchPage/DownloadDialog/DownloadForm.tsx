@@ -63,10 +63,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     const metadataSchema = schema.metadata;
     const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
 
-    const referenceSelected = useMemo(
-        () => nucleotideSegmentInfos.length !== 0,
-        [nucleotideSegmentInfos, geneInfos],
-    );
+    const referenceSelected = useMemo(() => nucleotideSegmentInfos.length !== 0, [nucleotideSegmentInfos, geneInfos]);
     const notSelectedIdentifiers = useMemo(
         () =>
             segmentsWithMultipleReferences(referenceGenomesInfo)
