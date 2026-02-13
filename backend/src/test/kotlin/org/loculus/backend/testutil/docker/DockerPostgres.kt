@@ -1,11 +1,11 @@
 package org.loculus.backend.testutil.docker
 
 import org.loculus.backend.testutil.PostgresProvider
-import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.postgresql.PostgreSQLContainer
 import java.io.File
 
 class DockerPostgres : PostgresProvider {
-    private val container = PostgreSQLContainer<Nothing>("postgres:latest")
+    private val container = PostgreSQLContainer("postgres:latest")
 
     override val jdbcUrl: String
         get() = container.jdbcUrl
