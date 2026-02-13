@@ -134,9 +134,7 @@ def filter_for_submission(
     entries_with_external_metadata: set[Accession] = set()
     revoked_entries: set[Accession] = set()
     logger.debug("Querying ENA db for latest version of submissions")
-    highest_submitted_version = highest_version_in_submission_table(
-        db_conn_pool=db_pool
-    )
+    highest_submitted_version = highest_version_in_submission_table(db_conn_pool=db_pool)
     logger.debug("Starting processing of data from Loculus backend")
     suppressed_accessions = fetch_suppressed_accessions(config)
     for idx, entry in enumerate(entries_iterator):
@@ -155,7 +153,7 @@ def filter_for_submission(
             continue
 
         # Ignore if a higher version of this entry is already to be submitted
-        version_already_to_submit = int(
+        version_already_to_submit = (
             entries_to_submit.get(accession_version.accession, {})
             .get("metadata", {})
             .get("version", -1)
