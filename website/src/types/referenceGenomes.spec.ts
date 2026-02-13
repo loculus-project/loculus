@@ -169,7 +169,7 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
             },
         },
     },
-    segmentDisplayNames: {'S': 'S (segment)', 'L': 'L (segment)'},
+    segmentDisplayNames: { S: 'S (segment)', L: 'L (segment)' },
     isMultiSegmented: true,
     useLapisMultiSegmentedEndpoint: true,
 };
