@@ -47,8 +47,11 @@ const DataTableComponent: React.FC<Props> = ({
 
     console.log('dataTableData', dataTableData);
     // Categorize sections
+    const authorSection = dataTableData.table.filter(({ header }) =>
+        header.toLowerCase().includes('authors')
+    );
     const generalSections = dataTableData.table.filter(({ header }) =>
-        !header.toLowerCase().includes('alignment') && !header.toLowerCase().includes('mutation')
+        !header.toLowerCase().includes('alignment') && !header.toLowerCase().includes('mutation') && !header.toLowerCase().includes('authors')
     );
     const alignmentSections = dataTableData.table.filter(({ header }) =>
         header.toLowerCase().includes('alignment')
@@ -56,7 +59,7 @@ const DataTableComponent: React.FC<Props> = ({
     const mutationSections = dataTableData.table.filter(({ header }) =>
         header.toLowerCase().includes('mutation')
     );
-
+    console.log('Author Sections', authorSection);
     return (
         <div>
             {dataTableData.topmatter.sequenceDisplayName !== undefined && (
@@ -65,6 +68,11 @@ const DataTableComponent: React.FC<Props> = ({
             {dataTableData.topmatter.authors !== undefined && dataTableData.topmatter.authors.length > 0 && (
                 <div className='pr-6 mb-4'>
                     <AuthorList authors={dataTableData.topmatter.authors} />
+                    {authorSection.flatMap(({ rows }) => rows).map((entry: TableDataEntry, index: number) => (
+                        <h4 key={index} className='text-sm text-gray-500'>
+                            {entry.value}
+                        </h4>
+                    ))}
                 </div>
             )}
 
