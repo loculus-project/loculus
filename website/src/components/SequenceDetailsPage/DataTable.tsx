@@ -89,16 +89,22 @@ const DataTableComponent: React.FC<Props> = ({
             {/* Divider before Alignment section */}
             {alignmentSections.length > 0 && <hr className='my-8 border-t-2 border-gray-200' />}
 
+            {/* Alignment Section Header */}
+            {alignmentSections.length > 0 && (
+                <div>
+                <h2 className='text-xl font-bold mb-2'>Alignment and QC
+                {hasReferenceAccession && (
+                    <ReferenceSequenceLinkButton reference={references} />
+                )}</h2>
+                </div>
+            )}
+
             {/* Alignment Metadata */}
             {alignmentSections.length > 0 && (
-                <div className='grid gap-x-6' style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 32rem), 1fr))' }}>
+                <div className='grid gap-x-6' style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 20rem), 1fr))' }}>
                     {alignmentSections.map(({ header, rows }) => (
-                        <div key={header} className='p-4 pl-0'>
+                        <div key={header} className='p-4 pl-0 max-w-xs'>
                             <div className='flex flex-row'>
-                                <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
-                                {hasReferenceAccession && header.includes('Alignment') && (
-                                    <ReferenceSequenceLinkButton reference={references} />
-                                )}
                             </div>
                             <div className='mt-4'>
                                 {rows.map((entry: TableDataEntry, index: number) => (
@@ -121,7 +127,7 @@ const DataTableComponent: React.FC<Props> = ({
                             <div className='flex flex-row'>
                                 <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
                             </div>
-                            {hasReferenceAccession && header.includes('mutation') && (
+                            {hasReferenceAccession && (
                                 <h2 className='pt-2 text-xs text-gray-500'>
                                     <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
                                     Mutations called relative to the <ReferenceDisplay reference={references} /> reference
