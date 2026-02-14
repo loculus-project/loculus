@@ -733,7 +733,7 @@ class ProcessingFunctions:
                 elif type[i] == "str":
                     formatted_input_data.append(
                         fallback_value
-                        if not input_data[order[i]]
+                        if not input_data[order[i]]  # returns True for '', as well as for None
                         else str(input_data[order[i]]).strip()
                     )
                 elif order[i] in input_data:
