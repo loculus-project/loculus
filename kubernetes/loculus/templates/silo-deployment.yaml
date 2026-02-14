@@ -14,7 +14,7 @@ metadata:
     # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
     argocd.argoproj.io/sync-options: Replace=true{{ if (and (not $.Values.developmentDatabasePersistence) $.Values.runDevelopmentMainDatabase) }},Force=true{{ end }}
 spec:
-  replicas: 1
+  replicas: {{ $.Values.replicas.silo | default 1 }}
   selector:
     matchLabels:
       app: loculus
@@ -27,6 +27,22 @@ spec:
         app: loculus
         component: silo-{{ $key }}
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - loculus
+                    - key: component
+                      operator: In
+                      values:
+                        - silo-{{ $key }}
+                topologyKey: kubernetes.io/hostname
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
@@ -115,4 +131,15 @@ spec:
           emptyDir: {}
         - name: lapis-silo-input-data-cache
           emptyDir: {}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: loculus-silo-{{ $key }}-pdb
+spec:
+  maxUnavailable: {{ $.Values.pdb.silo.maxUnavailable | default 1 }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: silo-{{ $key }}
 {{- end }}

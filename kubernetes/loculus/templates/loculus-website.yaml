@@ -21,6 +21,22 @@ spec:
         app: loculus
         component: website
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - loculus
+                    - key: component
+                      operator: In
+                      values:
+                        - website
+                topologyKey: kubernetes.io/hostname
       {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
@@ -50,4 +66,15 @@ spec:
         - name: custom-website-sealed-secret
       volumes:
 {{ include "loculus.configVolume" (dict "name" "loculus-website-config") | nindent 8 }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: loculus-website-pdb
+spec:
+  maxUnavailable: {{ .Values.pdb.website.maxUnavailable | default 1 }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: website
 {{- end }}

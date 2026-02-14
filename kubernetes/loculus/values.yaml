@@ -2315,6 +2315,16 @@ replicas:
   website: 1
   backend: 1
   lapis: 1
+  silo: 1
+pdb:
+  website:
+    maxUnavailable: 1
+  backend:
+    maxUnavailable: 1
+  lapis:
+    maxUnavailable: 1
+  silo:
+    maxUnavailable: 1
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
 gitHubMainUrl: https://github.com/loculus-project/loculus
 resources:

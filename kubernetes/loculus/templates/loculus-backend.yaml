@@ -21,6 +21,22 @@ spec:
         app: loculus
         component: backend
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - loculus
+                    - key: component
+                      operator: In
+                      values:
+                        - backend
+                topologyKey: kubernetes.io/hostname
       {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
@@ -155,4 +171,15 @@ spec:
               mountPath: /config
       volumes:
 {{ include "loculus.configVolume" (dict "name" "loculus-backend-config") | nindent 8 }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: loculus-backend-pdb
+spec:
+  maxUnavailable: {{ .Values.pdb.backend.maxUnavailable | default 1 }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: backend
 {{- end }}
