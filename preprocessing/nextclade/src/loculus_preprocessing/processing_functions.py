@@ -730,10 +730,16 @@ class ProcessingFunctions:
                     formatted_input_data.append(
                         fallback_value if processed.datum is None else str(processed.datum)
                     )
-                elif order[i] in input_data:
+                elif type[i] == "str":
                     formatted_input_data.append(
                         fallback_value
                         if not input_data[order[i]]
+                        else str(input_data[order[i]]).strip()
+                    )
+                elif order[i] in input_data:
+                    formatted_input_data.append(
+                        fallback_value
+                        if input_data[order[i]] is None
                         else str(input_data[order[i]]).strip()
                     )
                 else:
