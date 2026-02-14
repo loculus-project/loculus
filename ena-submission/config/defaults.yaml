@@ -18,6 +18,7 @@ time_between_iterations: 10
 min_between_github_requests: 2
 min_between_ena_checks: 5
 ena_http_timeout_seconds: 60
+backend_http_timeout_seconds: 3600
 ena_public_search_timeout_seconds: 120
 ncbi_public_search_timeout_seconds: 120
 ena_http_get_retry_attempts: 3
