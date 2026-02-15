@@ -58,6 +58,7 @@ dependencies {
     implementation "org.keycloak:keycloak-admin-client:26.0.7"
     implementation("io.minio:minio:8.6.0")
     implementation("software.amazon.awssdk:s3:2.40.10")
+    implementation("software.amazon.awssdk:apache-client:2.40.10")
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
