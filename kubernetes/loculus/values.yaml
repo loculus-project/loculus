@@ -625,6 +625,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         orderOnDetailsPage: 1040
         ingest: genbankAccession
+        enableSubstringSearch: true
         noInput: true
         perSegment: true
         oneHeader: true
