@@ -58,7 +58,7 @@ const DataTableComponent: React.FC<Props> = ({
     const mutationSections = dataTableData.table.filter(({ header }) =>
         header.toLowerCase().includes('mutation')
     );
-
+    console.log("DataTable", dataTableData)
     return (
         <div>
             {dataTableData.topmatter.sequenceDisplayName !== undefined && (

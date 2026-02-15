@@ -115,6 +115,10 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
         let combinedRows = combineAlignmentLengthAndCompleteness(rows);
         // Combine host fields
         combinedRows = combineHostFields(combinedRows);
+        // Suppress collection date bounds if equal
+        combinedRows = suppressEqualCollectionDateBounds(combinedRows);
+        // Combine geo-location fields
+        combinedRows = combineGeoLocationFields(combinedRows);
 
         const definedOrders = combinedRows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
         const meanOrder =
@@ -187,7 +191,7 @@ function combineHostFields(rows: TableDataEntry[]): TableDataEntry[] {
 
         if (isHostTaxonId) {
             const hostTaxonId = currentRow.value.toString();
-            
+
             // Look for hostNameScientific and hostNameCommon entries
             const hostNameScientificIndex = rows.findIndex(
                 (row, idx) =>
@@ -207,7 +211,7 @@ function combineHostFields(rows: TableDataEntry[]): TableDataEntry[] {
             const hostNameCommon = hostNameCommonIndex !== -1 ? rows[hostNameCommonIndex].value.toString() : undefined;
 
             let displayValue: string;
-            
+
             if (hostNameCommon && hostNameScientific) {
                 displayValue = `${hostNameCommon} (${hostNameScientific})`;
             } else if (hostNameCommon) {
@@ -237,6 +241,110 @@ function combineHostFields(rows: TableDataEntry[]): TableDataEntry[] {
                 processedIndices.add(hostNameCommonIndex);
             }
         } else if (currentRow.name !== 'hostNameScientific' && currentRow.name !== 'hostNameCommon') {
+            result.push(currentRow);
+        }
+
+        processedIndices.add(i);
+    }
+
+    return result;
+}
+
+function suppressEqualCollectionDateBounds(rows: TableDataEntry[]): TableDataEntry[] {
+    const lowerBoundIndex = rows.findIndex((row) => row.name === 'sampleCollectionDateRangeLower');
+    const upperBoundIndex = rows.findIndex((row) => row.name === 'sampleCollectionDateRangeUpper');
+    const collectionDateIndex = rows.findIndex((row) => row.name === 'sampleCollectionDate');
+
+    if (lowerBoundIndex !== -1 && upperBoundIndex !== -1) {
+        const lowerValue = rows[lowerBoundIndex].value.toString();
+        const upperValue = rows[upperBoundIndex].value.toString();
+
+        if (lowerValue === upperValue) {
+            // Add "(exact)" to sampleCollectionDate if it exists
+            let result = rows.filter((_, index) => index !== lowerBoundIndex && index !== upperBoundIndex);
+            
+            if (collectionDateIndex !== -1) {
+                const collectionDateRow = rows[collectionDateIndex];
+                const newRows = result.map((row) => {
+                    if (row.name === 'sampleCollectionDate') {
+                        return {
+                            ...row,
+                            value: `${row.value} (exact)`,
+                        };
+                    }
+                    return row;
+                });
+                return newRows;
+            }
+            
+            return result;
+        }
+    }
+
+    return rows;
+}
+
+function combineGeoLocationFields(rows: TableDataEntry[]): TableDataEntry[] {
+    const result: TableDataEntry[] = [];
+    const processedIndices = new Set<number>();
+
+    for (let i = 0; i < rows.length; i++) {
+        if (processedIndices.has(i)) {
+            continue;
+        }
+
+        const currentRow = rows[i];
+        const isGeoLocCountry = currentRow.name === 'geoLocCountry';
+
+        if (isGeoLocCountry) {
+            const country = currentRow.value.toString();
+
+            // Look for geoLocAdmin1 and geoLocAdmin2 entries
+            const geoLocAdmin1Index = rows.findIndex(
+                (row, idx) =>
+                    idx > i &&
+                    row.name === 'geoLocAdmin1' &&
+                    row.header === currentRow.header
+            );
+
+            const geoLocAdmin2Index = rows.findIndex(
+                (row, idx) =>
+                    idx > i &&
+                    row.name === 'geoLocAdmin2' &&
+                    row.header === currentRow.header
+            );
+
+            const geoLocAdmin1 = geoLocAdmin1Index !== -1 ? rows[geoLocAdmin1Index].value.toString() : undefined;
+            const geoLocAdmin2 = geoLocAdmin2Index !== -1 ? rows[geoLocAdmin2Index].value.toString() : undefined;
+
+            let displayValue: string;
+
+            if (geoLocAdmin2 || geoLocAdmin1) {
+                const adminParts: string[] = [];
+                if (geoLocAdmin2) {
+                    adminParts.push(geoLocAdmin2);
+                }
+                if (geoLocAdmin1) {
+                    adminParts.push(geoLocAdmin1);
+                }
+                displayValue = `${country} (${adminParts.join(', ')})`;
+            } else {
+                displayValue = country;
+            }
+
+            result.push({
+                ...currentRow,
+                label: 'Sampling Location',
+                value: displayValue,
+            });
+
+            if (geoLocAdmin1Index !== -1) {
+                processedIndices.add(geoLocAdmin1Index);
+            }
+            if (geoLocAdmin2Index !== -1) {
+                processedIndices.add(geoLocAdmin2Index);
+            }
+        } else if (currentRow.name !== 'geoLocAdmin1' && currentRow.name !== 'geoLocAdmin2') {
             result.push(currentRow);
         }
 
