@@ -110,16 +110,63 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
             (a, b) =>
                 (a.orderOnDetailsPage ?? Number.POSITIVE_INFINITY) - (b.orderOnDetailsPage ?? Number.POSITIVE_INFINITY),
         );
-        const definedOrders = rows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
+
+        // Combine length and completeness entries
+        const combinedRows = combineAlignmentLengthAndCompleteness(rows);
+
+        const definedOrders = combinedRows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
         const meanOrder =
             definedOrders.length > 0
                 ? definedOrders.reduce((sum, o) => sum + o, 0) / definedOrders.length
                 : Number.POSITIVE_INFINITY;
-        headerGroups.push({ header, rows, meanOrder });
+        headerGroups.push({ header, rows: combinedRows, meanOrder });
     }
 
     headerGroups.sort((a, b) => a.meanOrder - b.meanOrder);
     result.table = headerGroups.map(({ header, rows }) => ({ header, rows }));
+
+    return result;
+}
+
+function combineAlignmentLengthAndCompleteness(rows: TableDataEntry[]): TableDataEntry[] {
+    const result: TableDataEntry[] = [];
+    const processedIndices = new Set<number>();
+
+    for (let i = 0; i < rows.length; i++) {
+        if (processedIndices.has(i)) {
+            continue;
+        }
+
+        const currentRow = rows[i];
+        const isLengthEntry = currentRow.name.includes('length');
+
+        if (isLengthEntry) {
+            // Look for a corresponding completeness entry
+            const completenessIndex = rows.findIndex(
+                (row, idx) =>
+                    idx > i &&
+                    row.name.includes('completeness') &&
+                    row.header === currentRow.header
+            );
+
+            if (completenessIndex !== -1) {
+                const completenessRow = rows[completenessIndex];
+                const completenessPercent = parseFloat((Number(completenessRow.value) * 100).toPrecision(3));
+                const combinedValue = `${currentRow.value} (${completenessPercent}%)`;
+                result.push({
+                    ...currentRow,
+                    value: combinedValue,
+                });
+                processedIndices.add(completenessIndex);
+            } else {
+                result.push(currentRow);
+            }
+        } else if (!currentRow.name.includes('completeness')) {
+            result.push(currentRow);
+        }
+
+        processedIndices.add(i);
+    }
 
     return result;
 }

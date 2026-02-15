@@ -11,7 +11,6 @@ interface Props {
 
 const DataTableComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
     const { label, type } = data;
-    console.log('DataTableEntryValue data', data);
     return (
         <>
             {type.kind === 'metadata' && data.value !== undefined && data.value !== 0 && (
