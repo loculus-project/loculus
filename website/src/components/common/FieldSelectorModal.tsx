@@ -93,9 +93,27 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
         acc[header].push(field);
         return acc;
     }, {});
+    console.log('fieldsByHeader', fieldsByHeader);
+    // Sort headers with custom priority
+    const headerPriority: Record<string, number> = {
+        'Data use terms': 1,
+        'Sample details': 2,
+        'Authors': 3,
+        'Submission details': 4,
+        'Lineage': 5,
+        'Host': 6,
+    };
 
-    // Sort headers alphabetically, but keep "Other" at the end
     const sortedHeaders = Object.keys(fieldsByHeader).sort((a, b) => {
+        const priorityA = headerPriority[a] ?? Number.POSITIVE_INFINITY;
+        const priorityB = headerPriority[b] ?? Number.POSITIVE_INFINITY;
+
+        // If either has priority, use priority ordering
+        if (priorityA !== Number.POSITIVE_INFINITY || priorityB !== Number.POSITIVE_INFINITY) {
+            return priorityA - priorityB;
+        }
+
+        // Other headers sorted alphabetically
         if (a === 'Other') return 1;
         if (b === 'Other') return -1;
         return a.localeCompare(b);
@@ -121,6 +139,14 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                         Select none
                     </Button>
                 </div>
+                <Button
+                    type='button'
+                    className='btn loculusColor text-white -py-1'
+                    onClick={onClose}
+                    data-testid='field-selector-close-button'
+                >
+                    Close
+                </Button>
             </div>
             <div className='mt-2 max-h-[60vh] overflow-y-auto p-2'>
                 {sortedHeaders.map((header) => (
@@ -155,17 +181,6 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                         </div>
                     </div>
                 ))}
-
-                <div className='mt-6 flex justify-end'>
-                    <Button
-                        type='button'
-                        className='btn loculusColor text-white -py-1'
-                        onClick={onClose}
-                        data-testid='field-selector-close-button'
-                    >
-                        Close
-                    </Button>
-                </div>
             </div>
         </BaseDialog>
     );
