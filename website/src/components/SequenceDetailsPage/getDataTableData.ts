@@ -112,7 +112,9 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
         );
 
         // Combine length and completeness entries
-        const combinedRows = combineAlignmentLengthAndCompleteness(rows);
+        let combinedRows = combineAlignmentLengthAndCompleteness(rows);
+        // Combine host fields
+        combinedRows = combineHostFields(combinedRows);
 
         const definedOrders = combinedRows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
         const meanOrder =
@@ -162,6 +164,79 @@ function combineAlignmentLengthAndCompleteness(rows: TableDataEntry[]): TableDat
                 result.push(currentRow);
             }
         } else if (!currentRow.name.includes('completeness')) {
+            result.push(currentRow);
+        }
+
+        processedIndices.add(i);
+    }
+
+    return result;
+}
+
+function combineHostFields(rows: TableDataEntry[]): TableDataEntry[] {
+    const result: TableDataEntry[] = [];
+    const processedIndices = new Set<number>();
+
+    for (let i = 0; i < rows.length; i++) {
+        if (processedIndices.has(i)) {
+            continue;
+        }
+
+        const currentRow = rows[i];
+        const isHostTaxonId = currentRow.name === 'hostTaxonId';
+
+        if (isHostTaxonId) {
+            const hostTaxonId = currentRow.value.toString();
+            
+            // Look for hostNameScientific and hostNameCommon entries
+            const hostNameScientificIndex = rows.findIndex(
+                (row, idx) =>
+                    idx > i &&
+                    row.name === 'hostNameScientific' &&
+                    row.header === currentRow.header
+            );
+
+            const hostNameCommonIndex = rows.findIndex(
+                (row, idx) =>
+                    idx > i &&
+                    row.name === 'hostNameCommon' &&
+                    row.header === currentRow.header
+            );
+
+            const hostNameScientific = hostNameScientificIndex !== -1 ? rows[hostNameScientificIndex].value.toString() : undefined;
+            const hostNameCommon = hostNameCommonIndex !== -1 ? rows[hostNameCommonIndex].value.toString() : undefined;
+
+            let displayValue: string;
+            
+            if (hostNameCommon && hostNameScientific) {
+                displayValue = `${hostNameCommon} (${hostNameScientific})`;
+            } else if (hostNameCommon) {
+                displayValue = hostNameCommon;
+            } else if (hostNameScientific) {
+                displayValue = hostNameScientific;
+            } else {
+                displayValue = hostTaxonId;
+            }
+
+            const ncbiUrl = `https://www.ncbi.nlm.nih.gov/taxonomy/${hostTaxonId}`;
+
+            result.push({
+                ...currentRow,
+                label: 'Host species',
+                value: displayValue,
+                customDisplay: {
+                    type: 'link',
+                    url: ncbiUrl,
+                },
+            });
+
+            if (hostNameScientificIndex !== -1) {
+                processedIndices.add(hostNameScientificIndex);
+            }
+            if (hostNameCommonIndex !== -1) {
+                processedIndices.add(hostNameCommonIndex);
+            }
+        } else if (currentRow.name !== 'hostNameScientific' && currentRow.name !== 'hostNameCommon') {
             result.push(currentRow);
         }
 
