@@ -262,7 +262,31 @@ organisms:
       metadataTemplate:
         {{ .metadataTemplate | toYaml | nindent 8}}
       {{ end }}
-      {{ .website | toYaml | nindent 6 }}
+      {{ omit .website "multiFieldSearches" | toYaml | nindent 6 }}
+      {{- if .website.multiFieldSearches }}
+      {{- $perSegmentFields := dict }}
+      {{- range (concat $commonMetadata .metadata) }}
+      {{- if .perSegment }}{{- $_ := set $perSegmentFields .name true }}{{- end }}
+      {{- end }}
+      {{- $segments := (include "loculus.getNucleotideSegmentNames" $instance.referenceGenomes | fromYaml).segments }}
+      {{- $isSegmented := gt (len $segments) 1 }}
+      multiFieldSearches:
+      {{- range .website.multiFieldSearches }}
+        - name: {{ .name }}
+          displayName: {{ .displayName }}
+          fields:
+          {{- range .fields }}
+          {{- if and $isSegmented (hasKey $perSegmentFields .) }}
+          {{- $field := . }}
+          {{- range $segments }}
+            - {{ printf "%s_%s" $field . }}
+          {{- end }}
+          {{- else }}
+            - {{ . }}
+          {{- end }}
+          {{- end }}
+      {{- end }}
+      {{- end }}
       {{- end }}
     referenceGenomes:
       {{ $instance.referenceGenomes | toYaml | nindent 6 }}
