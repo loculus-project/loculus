@@ -64,7 +64,7 @@ const DataTableComponent: React.FC<Props> = ({
                     {authorSection
                         .flatMap(({ rows }) => rows)
                         .map((entry: TableDataEntry, index: number) => (
-                            <h4 key={index} className='text-sm text-gray-500' title={entry.label}>
+                            <h4 key={index} className='text-sm text-gray-500 mt-1' title={entry.label}>
                                 {entry.value}
                             </h4>
                         ))}
