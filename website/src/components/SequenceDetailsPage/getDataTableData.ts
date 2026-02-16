@@ -108,8 +108,7 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
                 (a.orderOnDetailsPage ?? Number.POSITIVE_INFINITY) - (b.orderOnDetailsPage ?? Number.POSITIVE_INFINITY),
         );
 
-        let combinedRows = combineAlignmentLengthAndCompleteness(rows);
-        combinedRows = suppressEqualCollectionDateBounds(combinedRows);
+        const combinedRows = combineAlignmentLengthAndCompleteness(rows);
 
         const definedOrders = combinedRows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
         const meanOrder =
@@ -162,36 +161,4 @@ function combineAlignmentLengthAndCompleteness(rows: TableDataEntry[]): TableDat
     }
 
     return result;
-}
-
-function suppressEqualCollectionDateBounds(rows: TableDataEntry[]): TableDataEntry[] {
-    const lowerBoundIndex = rows.findIndex((row) => row.name === 'sampleCollectionDateRangeLower');
-    const upperBoundIndex = rows.findIndex((row) => row.name === 'sampleCollectionDateRangeUpper');
-    const collectionDateIndex = rows.findIndex((row) => row.name === 'sampleCollectionDate');
-
-    if (lowerBoundIndex !== -1 && upperBoundIndex !== -1) {
-        const lowerValue = rows[lowerBoundIndex].value.toString();
-        const upperValue = rows[upperBoundIndex].value.toString();
-
-        if (lowerValue === upperValue) {
-            const result = rows.filter((_, index) => index !== lowerBoundIndex && index !== upperBoundIndex);
-
-            if (collectionDateIndex !== -1) {
-                const newRows = result.map((row) => {
-                    if (row.name === 'sampleCollectionDate') {
-                        return {
-                            ...row,
-                            value: `${row.value} (exact)`,
-                        };
-                    }
-                    return row;
-                });
-                return newRows;
-            }
-
-            return result;
-        }
-    }
-
-    return rows;
 }
