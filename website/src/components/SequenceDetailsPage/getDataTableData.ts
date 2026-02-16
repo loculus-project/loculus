@@ -26,7 +26,6 @@ function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
         if (entry.customDisplay?.displayGroup !== undefined) {
             if (!groupedEntries.has(entry.customDisplay.displayGroup)) {
                 groupedEntries.set(entry.customDisplay.displayGroup, []);
-                // Add a placeholder for the grouped entry
                 result.push({
                     name: entry.customDisplay.displayGroup,
                     type: {
@@ -46,7 +45,6 @@ function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
         }
     }
 
-    // Replace placeholders with actual grouped entries
     return result.map((entry) => {
         if (groupedEntries.has(entry.name)) {
             return {
@@ -71,7 +69,6 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
 
     const tableHeaderMap = new Map<string, TableDataEntry[]>();
     for (const entry of listTableDataEntriesAfterGrouping) {
-        // Move the first entry with type authors to the topmatter
         if (
             result.topmatter.authors === undefined &&
             entry.type.kind === 'metadata' &&
@@ -111,13 +108,9 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
                 (a.orderOnDetailsPage ?? Number.POSITIVE_INFINITY) - (b.orderOnDetailsPage ?? Number.POSITIVE_INFINITY),
         );
 
-        // Combine length and completeness entries
         let combinedRows = combineAlignmentLengthAndCompleteness(rows);
-        // Combine host fields
         combinedRows = combineHostFields(combinedRows);
-        // Suppress collection date bounds if equal
         combinedRows = suppressEqualCollectionDateBounds(combinedRows);
-        // Combine geo-location fields
         combinedRows = combineGeoLocationFields(combinedRows);
 
         const definedOrders = combinedRows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
@@ -147,12 +140,8 @@ function combineAlignmentLengthAndCompleteness(rows: TableDataEntry[]): TableDat
         const isLengthEntry = currentRow.name.includes('length');
 
         if (isLengthEntry) {
-            // Look for a corresponding completeness entry
             const completenessIndex = rows.findIndex(
-                (row, idx) =>
-                    idx > i &&
-                    row.name.includes('completeness') &&
-                    row.header === currentRow.header
+                (row, idx) => idx > i && row.name.includes('completeness') && row.header === currentRow.header,
             );
 
             if (completenessIndex !== -1) {
@@ -192,22 +181,16 @@ function combineHostFields(rows: TableDataEntry[]): TableDataEntry[] {
         if (isHostTaxonId) {
             const hostTaxonId = currentRow.value.toString();
 
-            // Look for hostNameScientific and hostNameCommon entries
             const hostNameScientificIndex = rows.findIndex(
-                (row, idx) =>
-                    idx > i &&
-                    row.name === 'hostNameScientific' &&
-                    row.header === currentRow.header
+                (row, idx) => idx > i && row.name === 'hostNameScientific' && row.header === currentRow.header,
             );
 
             const hostNameCommonIndex = rows.findIndex(
-                (row, idx) =>
-                    idx > i &&
-                    row.name === 'hostNameCommon' &&
-                    row.header === currentRow.header
+                (row, idx) => idx > i && row.name === 'hostNameCommon' && row.header === currentRow.header,
             );
 
-            const hostNameScientific = hostNameScientificIndex !== -1 ? rows[hostNameScientificIndex].value.toString() : undefined;
+            const hostNameScientific =
+                hostNameScientificIndex !== -1 ? rows[hostNameScientificIndex].value.toString() : undefined;
             const hostNameCommon = hostNameCommonIndex !== -1 ? rows[hostNameCommonIndex].value.toString() : undefined;
 
             let displayValue: string;
@@ -260,11 +243,9 @@ function suppressEqualCollectionDateBounds(rows: TableDataEntry[]): TableDataEnt
         const upperValue = rows[upperBoundIndex].value.toString();
 
         if (lowerValue === upperValue) {
-            // Add "(exact)" to sampleCollectionDate if it exists
-            let result = rows.filter((_, index) => index !== lowerBoundIndex && index !== upperBoundIndex);
-            
+            const result = rows.filter((_, index) => index !== lowerBoundIndex && index !== upperBoundIndex);
+
             if (collectionDateIndex !== -1) {
-                const collectionDateRow = rows[collectionDateIndex];
                 const newRows = result.map((row) => {
                     if (row.name === 'sampleCollectionDate') {
                         return {
@@ -276,7 +257,7 @@ function suppressEqualCollectionDateBounds(rows: TableDataEntry[]): TableDataEnt
                 });
                 return newRows;
             }
-            
+
             return result;
         }
     }
@@ -299,19 +280,12 @@ function combineGeoLocationFields(rows: TableDataEntry[]): TableDataEntry[] {
         if (isGeoLocCountry) {
             const country = currentRow.value.toString();
 
-            // Look for geoLocAdmin1 and geoLocAdmin2 entries
             const geoLocAdmin1Index = rows.findIndex(
-                (row, idx) =>
-                    idx > i &&
-                    row.name === 'geoLocAdmin1' &&
-                    row.header === currentRow.header
+                (row, idx) => idx > i && row.name === 'geoLocAdmin1' && row.header === currentRow.header,
             );
 
             const geoLocAdmin2Index = rows.findIndex(
-                (row, idx) =>
-                    idx > i &&
-                    row.name === 'geoLocAdmin2' &&
-                    row.header === currentRow.header
+                (row, idx) => idx > i && row.name === 'geoLocAdmin2' && row.header === currentRow.header,
             );
 
             const geoLocAdmin1 = geoLocAdmin1Index !== -1 ? rows[geoLocAdmin1Index].value.toString() : undefined;

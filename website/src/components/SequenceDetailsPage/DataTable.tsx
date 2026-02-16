@@ -2,7 +2,6 @@ import React from 'react';
 
 import { AuthorList } from './AuthorList';
 import DataTableEntry from './DataTableEntry';
-import ReferenceSequenceLinkButton from './ReferenceSequenceLinkButton';
 import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
@@ -45,20 +44,15 @@ const DataTableComponent: React.FC<Props> = ({
     const references = getInsdcAccessionsFromSegmentReferences(referenceGenomesInfo, segmentReferences);
     const hasReferenceAccession = references.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
 
-    // Categorize sections
-    const authorSection = dataTableData.table.filter(({ header }) =>
-        header.toLowerCase().includes('authors')
+    const authorSection = dataTableData.table.filter(({ header }) => header.toLowerCase().includes('authors'));
+    const generalSections = dataTableData.table.filter(
+        ({ header }) =>
+            !header.toLowerCase().includes('alignment') &&
+            !header.toLowerCase().includes('mutation') &&
+            !header.toLowerCase().includes('authors'),
     );
-    const generalSections = dataTableData.table.filter(({ header }) =>
-        !header.toLowerCase().includes('alignment') && !header.toLowerCase().includes('mutation') && !header.toLowerCase().includes('authors')
-    );
-    const alignmentSections = dataTableData.table.filter(({ header }) =>
-        header.toLowerCase().includes('alignment')
-    );
-    const mutationSections = dataTableData.table.filter(({ header }) =>
-        header.toLowerCase().includes('mutation')
-    );
-    console.log("DataTable", dataTableData)
+    const alignmentSections = dataTableData.table.filter(({ header }) => header.toLowerCase().includes('alignment'));
+    const mutationSections = dataTableData.table.filter(({ header }) => header.toLowerCase().includes('mutation'));
     return (
         <div>
             {dataTableData.topmatter.sequenceDisplayName !== undefined && (
@@ -67,17 +61,21 @@ const DataTableComponent: React.FC<Props> = ({
             {dataTableData.topmatter.authors !== undefined && dataTableData.topmatter.authors.length > 0 && (
                 <div className='pr-6 mb-4'>
                     <AuthorList authors={dataTableData.topmatter.authors} />
-                    {authorSection.flatMap(({ rows }) => rows).map((entry: TableDataEntry, index: number) => (
-                        <h4 key={index} className='text-sm text-gray-500'>
-                            {entry.value}
-                        </h4>
-                    ))}
+                    {authorSection
+                        .flatMap(({ rows }) => rows)
+                        .map((entry: TableDataEntry, index: number) => (
+                            <h4 key={index} className='text-sm text-gray-500'>
+                                {entry.value}
+                            </h4>
+                        ))}
                 </div>
             )}
 
-            {/* General Metadata */}
             {generalSections.length > 0 && (
-                <div className='grid gap-x-6' style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 32rem), 1fr))' }}>
+                <div
+                    className='grid gap-x-6'
+                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 32rem), 1fr))' }}
+                >
                     {generalSections.map(({ header, rows }) => (
                         <div key={header} className='p-4 pl-0'>
                             <div className='flex flex-row'>
@@ -85,7 +83,11 @@ const DataTableComponent: React.FC<Props> = ({
                             </div>
                             <div className='mt-4'>
                                 {rows.map((entry: TableDataEntry, index: number) => (
-                                    <DataTableEntry key={index} data={entry} dataUseTermsHistory={dataUseTermsHistory} />
+                                    <DataTableEntry
+                                        key={index}
+                                        data={entry}
+                                        dataUseTermsHistory={dataUseTermsHistory}
+                                    />
                                 ))}
                             </div>
                         </div>
@@ -93,29 +95,29 @@ const DataTableComponent: React.FC<Props> = ({
                 </div>
             )}
 
-            {/* Divider before Alignment section */}
             {alignmentSections.length > 0 && <hr className='my-8 border-t-2 border-gray-200' />}
 
-            {/* Alignment Section Header */}
             {alignmentSections.length > 0 && (
                 <div>
-                <h2 className='text-xl font-bold mb-2'>Alignment and QC
-                {hasReferenceAccession && (
-                    <ReferenceSequenceLinkButton reference={references} />
-                )}</h2>
+                    <h2 className='text-xl font-bold mb-2'>Alignment and QC</h2>
                 </div>
             )}
 
-            {/* Alignment Metadata */}
             {alignmentSections.length > 0 && (
-                <div className='grid gap-x-6' style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 20rem), 1fr))' }}>
+                <div
+                    className='grid gap-x-6'
+                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 20rem), 1fr))' }}
+                >
                     {alignmentSections.map(({ header, rows }) => (
                         <div key={header} className='p-4 pl-0 max-w-xs'>
-                            <div className='flex flex-row'>
-                            </div>
+                            <div className='flex flex-row'></div>
                             <div className='mt-4'>
                                 {rows.map((entry: TableDataEntry, index: number) => (
-                                    <DataTableEntry key={index} data={entry} dataUseTermsHistory={dataUseTermsHistory} />
+                                    <DataTableEntry
+                                        key={index}
+                                        data={entry}
+                                        dataUseTermsHistory={dataUseTermsHistory}
+                                    />
                                 ))}
                             </div>
                         </div>
@@ -123,12 +125,13 @@ const DataTableComponent: React.FC<Props> = ({
                 </div>
             )}
 
-            {/* Divider before Mutations section */}
             {mutationSections.length > 0 && <hr className='my-8 border-t-2 border-gray-200' />}
 
-            {/* Mutations Metadata */}
             {mutationSections.length > 0 && (
-                <div className='grid gap-x-6' style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 32rem), 1fr))' }}>
+                <div
+                    className='grid gap-x-6'
+                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 32rem), 1fr))' }}
+                >
                     {mutationSections.map(({ header, rows }) => (
                         <div key={header} className='p-4 pl-0'>
                             <div className='flex flex-row'>
@@ -137,13 +140,18 @@ const DataTableComponent: React.FC<Props> = ({
                             {hasReferenceAccession && (
                                 <h2 className='pt-2 text-xs text-gray-500'>
                                     <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
-                                    Mutations called relative to the <ReferenceDisplay reference={references} /> reference
+                                    Mutations called relative to the <ReferenceDisplay reference={references} />{' '}
+                                    reference
                                     {references.length > 1 ? 's' : ''}
                                 </h2>
                             )}
                             <div className='mt-4'>
                                 {rows.map((entry: TableDataEntry, index: number) => (
-                                    <DataTableEntry key={index} data={entry} dataUseTermsHistory={dataUseTermsHistory} />
+                                    <DataTableEntry
+                                        key={index}
+                                        data={entry}
+                                        dataUseTermsHistory={dataUseTermsHistory}
+                                    />
                                 ))}
                             </div>
                         </div>
