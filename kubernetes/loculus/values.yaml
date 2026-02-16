@@ -108,10 +108,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         order: 10
         orderOnDetailsPage: 200
         includeInDownloadsByDefault: true
-        customDisplay:
-          type: collectionDate
-          displayGroup: collectionDate
-          label: Collection date
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -127,12 +123,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: date
         initiallyVisible: true
         hideInSearchResultsTable: true
+        hideOnSequenceDetailsPage: true
         header: Sample details
-        orderOnDetailsPage: 220
-        customDisplay:
-          type: collectionDate
-          displayGroup: collectionDate
-          label: Collection date
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -150,12 +142,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: date
         initiallyVisible: true
         hideInSearchResultsTable: true
+        hideOnSequenceDetailsPage: true
         header: Sample details
-        orderOnDetailsPage: 240
-        customDisplay:
-          type: collectionDate
-          displayGroup: collectionDate
-          label: Collection date
         preprocessing:
           function: parse_date_into_range
           inputs:
