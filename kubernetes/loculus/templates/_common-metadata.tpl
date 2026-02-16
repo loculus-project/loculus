@@ -329,6 +329,9 @@ organisms:
     {{- if .customDisplay.displayGroup }}
     displayGroup: {{ quote .customDisplay.displayGroup }}
     {{- end }}
+    {{- if .customDisplay.label }}
+    label: {{ quote .customDisplay.label }}
+    {{- end }}
     {{- if .customDisplay.html }}
     html: {{ .customDisplay.html }}
     {{- end }}
@@ -355,6 +358,14 @@ fields:
   header: {{ (default "Other" .header) | quote }}
   {{- else }}
   header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
+  {{- end }}
+  {{- if and .customDisplay .customDisplay.displayGroup }}
+  customDisplay:
+    type: {{ quote .customDisplay.type }}
+    displayGroup: {{ printf "%s_%s" .customDisplay.displayGroup $segment | quote }}
+    {{- if .customDisplay.label }}
+    label: {{ printf "%s %s" .customDisplay.label $segment | quote }}
+    {{- end }}
   {{- end }}
 {{- end }}
 {{- end }}

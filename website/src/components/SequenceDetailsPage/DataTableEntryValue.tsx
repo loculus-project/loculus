@@ -25,6 +25,66 @@ const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
     );
 };
 
+const HostSpeciesComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+    const entries = JSON.parse(jsonString) as TableDataEntry[];
+
+    const hostTaxonId = entries.find((e) => e.name === 'hostTaxonId')?.value.toString();
+    const hostNameScientific = entries.find((e) => e.name === 'hostNameScientific')?.value.toString();
+    const hostNameCommon = entries.find((e) => e.name === 'hostNameCommon')?.value.toString();
+
+    let displayText: string;
+    if (hostNameCommon && hostNameScientific) {
+        displayText = `${hostNameCommon} (${hostNameScientific})`;
+    } else if (hostNameCommon) {
+        displayText = hostNameCommon;
+    } else if (hostNameScientific) {
+        displayText = hostNameScientific;
+    } else if (hostTaxonId) {
+        displayText = hostTaxonId;
+    } else {
+        displayText = '';
+    }
+
+    if (hostTaxonId) {
+        return (
+            <a href={`https://www.ncbi.nlm.nih.gov/taxonomy/${hostTaxonId}`} target='_blank' className='underline'>
+                {displayText}
+            </a>
+        );
+    }
+
+    return <>{displayText}</>;
+};
+
+const LengthCompletenessComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+    const entries = JSON.parse(jsonString) as TableDataEntry[];
+    const length = entries.find((e) => e.name.includes('length'))?.value;
+    const completeness = entries.find((e) => e.name.includes('completeness'))?.value;
+
+    if (length !== undefined && completeness !== undefined) {
+        const completenessPercent = parseFloat((Number(completeness) * 100).toPrecision(3));
+        return <>{`${length} (${completenessPercent}%)`}</>;
+    }
+    return <>{length ?? ''}</>;
+};
+
+const GeoLocationComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+    const entries = JSON.parse(jsonString) as TableDataEntry[];
+
+    const country = entries.find((e) => e.name === 'geoLocCountry')?.value.toString();
+    const admin1 = entries.find((e) => e.name === 'geoLocAdmin1')?.value.toString();
+    const admin2 = entries.find((e) => e.name === 'geoLocAdmin2')?.value.toString();
+
+    if (!country) {
+        return <>{admin1 ?? admin2 ?? ''}</>;
+    }
+
+    const adminParts = [admin2, admin1].filter(Boolean);
+    const displayText = adminParts.length > 0 ? `${country} (${adminParts.join(', ')})` : country;
+
+    return <>{displayText}</>;
+};
+
 type FileEntry = {
     fileId: string;
     name: string;
@@ -115,6 +175,15 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 )}
                 {customDisplay?.type === 'submittingGroup' && typeof value == 'string' && (
                     <GroupComponent jsonString={value} />
+                )}
+                {customDisplay?.type === 'hostSpecies' && typeof value == 'string' && (
+                    <HostSpeciesComponent jsonString={value} />
+                )}
+                {customDisplay?.type === 'lengthCompleteness' && typeof value == 'string' && (
+                    <LengthCompletenessComponent jsonString={value} />
+                )}
+                {customDisplay?.type === 'geoLocation' && typeof value == 'string' && (
+                    <GeoLocationComponent jsonString={value} />
                 )}
                 {customDisplay?.type === 'fileList' && typeof value == 'string' && (
                     <FileListComponent jsonString={value} />

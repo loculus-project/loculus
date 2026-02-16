@@ -123,8 +123,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: date
         initiallyVisible: true
         hideInSearchResultsTable: true
+        hideOnSequenceDetailsPage: true
         header: Sample details
-        orderOnDetailsPage: 220
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -142,8 +142,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: date
         initiallyVisible: true
         hideInSearchResultsTable: true
+        hideOnSequenceDetailsPage: true
         header: Sample details
-        orderOnDetailsPage: 240
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -216,6 +216,10 @@ defaultOrganismConfig: &defaultOrganismConfig
         autocomplete: true
         initiallyVisible: true
         includeInDownloadsByDefault: true
+        customDisplay:
+          type: geoLocation
+          displayGroup: geoLocation
+          label: Sampling location
         header: Sample details
         order: 20
         orderOnDetailsPage: 400
@@ -535,6 +539,10 @@ defaultOrganismConfig: &defaultOrganismConfig
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
+        customDisplay:
+          type: geoLocation
+          displayGroup: geoLocation
+          label: Sampling location
         header: Sample details
         order: 30
         orderOnDetailsPage: 460
@@ -544,6 +552,10 @@ defaultOrganismConfig: &defaultOrganismConfig
         desired: true
         generateIndex: true
         autocomplete: true
+        customDisplay:
+          type: geoLocation
+          displayGroup: geoLocation
+          label: Sampling location
         header: Sample details
         orderOnDetailsPage: 480
       - name: geoLocCity
@@ -1144,9 +1156,29 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         displayName: Length
         orderOnDetailsPage: 2700
+        customDisplay:
+          type: lengthCompleteness
+          displayGroup: lengthCompleteness
+          label: Length
+      - name: hostTaxonId
+        type: int
+        autocomplete: true
+        displayName: "Host species"
+        customDisplay:
+          type: hostSpecies
+          displayGroup: hostSpecies
+          label: Host
+        header: "Host"
+        ingest: ncbiHostTaxId
+        desired: true
+        orderOnDetailsPage: 1540
       - name: hostNameScientific
         generateIndex: true
         autocomplete: true
+        customDisplay:
+          type: hostSpecies
+          displayGroup: hostSpecies
+          label: Host
         header: "Host"
         ingest: ncbiHostName
         desired: true
@@ -1154,19 +1186,13 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: hostNameCommon
         generateIndex: true
         autocomplete: true
+        customDisplay:
+          type: hostSpecies
+          displayGroup: hostSpecies
+          label: Host
         header: "Host"
         ingest: ncbiHostCommonName
         orderOnDetailsPage: 1580
-      - name: hostTaxonId
-        type: int
-        autocomplete: true
-        customDisplay:
-          type: link
-          url: "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=info&id=__value__"
-        header: "Host"
-        ingest: ncbiHostTaxId
-        desired: true
-        orderOnDetailsPage: 1540
       - name: isLabHost
         type: boolean
         autocomplete: true
@@ -1308,7 +1334,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         orderOnDetailsPage: 2860
         customDisplay:
-          type: percentage
+          type: lengthCompleteness
+          displayGroup: lengthCompleteness
+          label: Length
         preprocessing:
           inputs: {input: nextclade.coverage}
     website: &website
@@ -1736,6 +1764,10 @@ defaultOrganisms:
         - name: hostNameScientific
           generateIndex: true
           autocomplete: true
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
+            label: Host
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
@@ -1850,6 +1882,10 @@ defaultOrganisms:
         - name: hostNameScientific
           generateIndex: true
           autocomplete: true
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
+            label: Host
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
