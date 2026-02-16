@@ -1,8 +1,10 @@
+import type { SegmentLapisNames } from '../../../utils/sequenceTypeHelpers';
+
 export type DownloadDataType =
     | { type: 'metadata'; fields: string[] }
     | {
           type: 'unalignedNucleotideSequences';
-          segment?: string;
+          segmentLapisNames?: SegmentLapisNames;
           richFastaHeaders: IncludeRichFastaHeaders;
       }
     | { type: 'alignedNucleotideSequences'; segment?: string; richFastaHeaders: IncludeRichFastaHeaders }
@@ -25,7 +27,7 @@ export const dataTypeForFilename = (dataType: DownloadDataType): string => {
             return 'metadata';
         case 'unalignedNucleotideSequences':
             // segment is undefined in case of single segmented (not e.g. main)
-            return dataType.segment !== undefined ? `nuc-${dataType.segment}` : 'nuc';
+            return dataType.segmentLapisNames !== undefined ? `nuc-${dataType.segmentLapisNames.name}` : 'nuc';
         case 'alignedNucleotideSequences':
             return dataType.segment !== undefined ? `aligned-nuc-${dataType.segment}` : 'aligned-nuc';
         case 'alignedAminoAcidSequences':

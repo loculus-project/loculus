@@ -13,6 +13,7 @@ import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
     MOCK_REFERENCE_GENOMES_INFO,
+    MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
 } from '../../../types/referenceGenomes.spec.ts';
 import { type ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
@@ -392,8 +393,23 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
 
             const { path, query } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences/`);
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
             expect(query).contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
+        });
+
+        test('should download all unaligned segments when no reference is selected for multi-segmented reference genomes', async () => {
+            await renderDialog({
+                referenceGenomesInfo: MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceIdentifierField: 'genotype',
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
+
+            const { path, query } = parseDownloadHref();
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            expect(query).contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
+            expect(query).contains('segments=L-ref1%2CL-ref2');
         });
 
         test('should enable the aligned sequence downloads when reference is selected', async () => {
@@ -418,7 +434,9 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
 
             const { path } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences/ref1`);
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            const { query } = parseDownloadHref();
+            expect(query).toMatch(/segments=ref1/);
         });
 
         test('should download only the selected aligned reference sequences when reference is selected', async () => {
