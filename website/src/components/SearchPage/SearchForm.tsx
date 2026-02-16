@@ -71,12 +71,14 @@ export const SearchForm = ({
                   ),
               )),
     ]);
-    const visibleFields = filterSchema.filters.filter(
-        (field) =>
-            searchVisibilities
-                .get(field.name)
-                ?.isVisible(referenceGenomesInfo, referenceSelection?.selectedReferences) ?? false,
-    );
+    const visibleFields = filterSchema.filters
+        .filter(
+            (field) =>
+                searchVisibilities
+                    .get(field.name)
+                    ?.isVisible(referenceGenomesInfo, referenceSelection?.selectedReferences) ?? false,
+        )
+        .filter((field) => !excluded.has(field.name));
 
     visibleFields.sort(
         (a, b) =>
