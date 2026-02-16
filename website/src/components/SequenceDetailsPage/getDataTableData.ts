@@ -26,6 +26,7 @@ function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
         if (entry.customDisplay?.displayGroup !== undefined) {
             if (!groupedEntries.has(entry.customDisplay.displayGroup)) {
                 groupedEntries.set(entry.customDisplay.displayGroup, []);
+                // Add a placeholder for the grouped entry
                 result.push({
                     name: entry.customDisplay.displayGroup,
                     type: {
@@ -45,6 +46,7 @@ function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
         }
     }
 
+    // Replace placeholders with actual grouped entries
     return result.map((entry) => {
         if (groupedEntries.has(entry.name)) {
             return {
