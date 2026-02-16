@@ -88,8 +88,6 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
     };
 
     // Group fields by header
-    // TODO: also sort the fields here (can remove code from below)
-    const headerGroups: { header: string; meanOrder: number }[] = [];
     const fieldsByHeader = fields.reduce<Record<string, FieldItem[]>>((acc, field) => {
         const header = field.header ?? 'Other';
         acc[header] = acc[header] ?? [];
@@ -98,6 +96,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
     }, {});
 
     // Sort headers by mean order of their fields
+    const headerGroups: { header: string; meanOrder: number, rows: FieldItem[] }[] = [];
     for (const [header, rows] of Object.entries(fieldsByHeader)) {
         rows.sort(
             (a, b) =>
@@ -108,11 +107,9 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
             definedOrders.length > 0
                 ? definedOrders.reduce((sum, o) => sum + o, 0) / definedOrders.length
                 : Number.POSITIVE_INFINITY;
-        headerGroups.push({ header, meanOrder });
+        headerGroups.push({ header, meanOrder, rows });
     }
-    const sortedHeaders = Object.keys(fieldsByHeader).sort((a, b) => 
-        headerGroups.find(h => h.header === a)!.meanOrder - headerGroups.find(h => h.header === b)!.meanOrder,
-    );
+    headerGroups.sort((a, b) => a.meanOrder - b.meanOrder);
 
     return (
         <BaseDialog title={title} isOpen={isOpen} onClose={onClose} fullWidth={false}>
@@ -136,28 +133,11 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                 </div>
             </div>
             <div className='mt-2 max-h-[60vh] overflow-y-auto p-2'>
-                {sortedHeaders.map((header) => (
-                    <div key={header} className='mb-6'>
-                        <h3 className='font-medium text-lg mb-2 text-gray-700'>{header}</h3>
+                {headerGroups.map((group) => (
+                    <div key={group.header} className='mb-6'>
+                        <h3 className='font-medium text-lg mb-2 text-gray-700'>{group.header}</h3>
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2'>
-                            {fieldsByHeader[header]
-                                .sort((a, b) => {
-                                    type WithOptionalOrder = { order?: number };
-                                    const aOrder = 'order' in a ? (a as WithOptionalOrder).order : undefined;
-                                    const bOrder = 'order' in b ? (b as WithOptionalOrder).order : undefined;
-
-                                    if (aOrder !== undefined && bOrder !== undefined) {
-                                        return aOrder - bOrder;
-                                    } else if (aOrder !== undefined) {
-                                        return -1;
-                                    } else if (bOrder !== undefined) {
-                                        return 1;
-                                    }
-
-                                    const aDisplay = a.displayName ?? a.name;
-                                    const bDisplay = b.displayName ?? b.name;
-                                    return aDisplay.localeCompare(bDisplay);
-                                })
+                            {group.rows
                                 .map((field) => (
                                     <FieldSelectorModalField
                                         key={field.name}
