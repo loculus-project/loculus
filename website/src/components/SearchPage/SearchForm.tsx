@@ -124,6 +124,7 @@ export const SearchForm = ({
                 referenceSelection?.referenceIdentifierField,
             ),
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
+            orderOnDetailsPage: filter.orderOnDetailsPage,
         }));
 
     const suborganismSegmentAndGeneInfo = useMemo(
