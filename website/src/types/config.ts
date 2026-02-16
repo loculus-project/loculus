@@ -197,7 +197,7 @@ const fieldToDisplay = z.object({
 
 export const websiteConfig = z.object({
     accessionPrefix: z.string(),
-    organisms: z.record(instanceConfig),
+    organisms: z.record(z.string(), instanceConfig),
     name: z.string(),
     logo: logoConfig,
     bannerMessage: z.string().optional(),

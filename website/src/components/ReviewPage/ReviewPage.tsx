@@ -142,7 +142,14 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     }
 
     if (hooks.getSequences.isError) {
-        return <div>Error: {hooks.getSequences.error.message}</div>;
+        return (
+            <div>
+                Error:{' '}
+                {hooks.getSequences.error instanceof Error
+                    ? hooks.getSequences.error.message
+                    : String(hooks.getSequences.error)}
+            </div>
+        );
     }
     if (sequencesData === undefined) {
         return <div>Loading..</div>;

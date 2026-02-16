@@ -49,7 +49,7 @@ const getTotalAndLastUpdatedAt = async (
 ): Promise<{ total: number; lastUpdatedAt: DateTime | undefined }> => {
     const client = LapisClient.createForOrganism(organism);
     return (
-        await client.call('aggregated', {
+        await client.getAggregated({
             [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
             [IS_REVOCATION_FIELD]: 'false',
         })
@@ -76,7 +76,7 @@ const getRecent = async (organism: string, numberDaysAgo: number): Promise<numbe
     const recentTimestamp = Math.floor(Date.now() / 1000 - numberDaysAgo * 24 * 60 * 60);
     const client = LapisClient.createForOrganism(organism);
     const recentlyReleasedTotal = (
-        await client.call('aggregated', {
+        await client.getAggregated({
             [`${RELEASED_AT_FIELD}From`]: recentTimestamp,
             version: 1,
         })
@@ -84,7 +84,7 @@ const getRecent = async (organism: string, numberDaysAgo: number): Promise<numbe
         .map((x) => x.data[0].count)
         .unwrapOr(0);
     const recentlyReleasedThenRevokedTotal = (
-        await client.call('aggregated', {
+        await client.getAggregated({
             [`${RELEASED_AT_FIELD}From`]: recentTimestamp,
             version: 1,
             [VERSION_STATUS_FIELD]: versionStatuses.revoked,

@@ -183,7 +183,6 @@ export const InnerSearchFullUI = ({
                 type: orderDirection,
             },
         ];
-        // @ts-expect-error because the hooks don't accept OrderBy
         detailsHook.mutate({
             ...lapisSearchParameters,
             fields: [...columnsToShow, schema.primaryKey],
@@ -279,8 +278,8 @@ export const InnerSearchFullUI = ({
                                 <summary className='text-xs cursor-pointer py-2'>More details</summary>
                                 <p className='text-xs'>{JSON.stringify(detailsHook.error)}</p>
 
-                                <p>{detailsHook.error?.message}</p>
-                                <p>{aggregatedHook.error?.message}</p>
+                                <p>{detailsHook.error instanceof Error ? detailsHook.error.message : ''}</p>
+                                <p>{aggregatedHook.error instanceof Error ? aggregatedHook.error.message : ''}</p>
                             </details>
                         </div>
                     ))}
