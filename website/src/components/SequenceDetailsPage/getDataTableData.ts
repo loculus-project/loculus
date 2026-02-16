@@ -93,7 +93,7 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
             continue;
         }
 
-        if (entry.type.kind === 'metadata' && entry.name.startsWith('length') && entry.value === 0) {
+        if (entry.type.kind === 'metadata' && entry.value === 0 && entry.header.toLowerCase().includes('alignment')) {
             continue;
         }
 
