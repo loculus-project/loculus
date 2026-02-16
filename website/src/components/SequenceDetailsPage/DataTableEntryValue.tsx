@@ -56,6 +56,23 @@ const HostSpeciesComponent: React.FC<{ jsonString: string }> = ({ jsonString }) 
     return <>{displayText}</>;
 };
 
+const GeoLocationComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+    const entries = JSON.parse(jsonString) as TableDataEntry[];
+
+    const country = entries.find((e) => e.name === 'geoLocCountry')?.value.toString();
+    const admin1 = entries.find((e) => e.name === 'geoLocAdmin1')?.value.toString();
+    const admin2 = entries.find((e) => e.name === 'geoLocAdmin2')?.value.toString();
+
+    if (!country) {
+        return <>{admin1 ?? admin2 ?? ''}</>;
+    }
+
+    const adminParts = [admin2, admin1].filter(Boolean);
+    const displayText = adminParts.length > 0 ? `${country} (${adminParts.join(', ')})` : country;
+
+    return <>{displayText}</>;
+};
+
 type FileEntry = {
     fileId: string;
     name: string;
@@ -149,6 +166,9 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 )}
                 {customDisplay?.type === 'hostSpecies' && typeof value == 'string' && (
                     <HostSpeciesComponent jsonString={value} />
+                )}
+                {customDisplay?.type === 'geoLocation' && typeof value == 'string' && (
+                    <GeoLocationComponent jsonString={value} />
                 )}
                 {customDisplay?.type === 'fileList' && typeof value == 'string' && (
                     <FileListComponent jsonString={value} />

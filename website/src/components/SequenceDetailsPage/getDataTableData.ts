@@ -110,7 +110,6 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
 
         let combinedRows = combineAlignmentLengthAndCompleteness(rows);
         combinedRows = suppressEqualCollectionDateBounds(combinedRows);
-        combinedRows = combineGeoLocationFields(combinedRows);
 
         const definedOrders = combinedRows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
         const meanOrder =
@@ -195,67 +194,4 @@ function suppressEqualCollectionDateBounds(rows: TableDataEntry[]): TableDataEnt
     }
 
     return rows;
-}
-
-function combineGeoLocationFields(rows: TableDataEntry[]): TableDataEntry[] {
-    const result: TableDataEntry[] = [];
-    const processedIndices = new Set<number>();
-
-    for (let i = 0; i < rows.length; i++) {
-        if (processedIndices.has(i)) {
-            continue;
-        }
-
-        const currentRow = rows[i];
-        const isGeoLocCountry = currentRow.name === 'geoLocCountry';
-
-        if (isGeoLocCountry) {
-            const country = currentRow.value.toString();
-
-            const geoLocAdmin1Index = rows.findIndex(
-                (row, idx) => idx > i && row.name === 'geoLocAdmin1' && row.header === currentRow.header,
-            );
-
-            const geoLocAdmin2Index = rows.findIndex(
-                (row, idx) => idx > i && row.name === 'geoLocAdmin2' && row.header === currentRow.header,
-            );
-
-            const geoLocAdmin1 = geoLocAdmin1Index !== -1 ? rows[geoLocAdmin1Index].value.toString() : undefined;
-            const geoLocAdmin2 = geoLocAdmin2Index !== -1 ? rows[geoLocAdmin2Index].value.toString() : undefined;
-
-            let displayValue: string;
-
-            if (geoLocAdmin2 || geoLocAdmin1) {
-                const adminParts: string[] = [];
-                if (geoLocAdmin2) {
-                    adminParts.push(geoLocAdmin2);
-                }
-                if (geoLocAdmin1) {
-                    adminParts.push(geoLocAdmin1);
-                }
-                displayValue = `${country} (${adminParts.join(', ')})`;
-            } else {
-                displayValue = country;
-            }
-
-            result.push({
-                ...currentRow,
-                label: 'Sampling Location',
-                value: displayValue,
-            });
-
-            if (geoLocAdmin1Index !== -1) {
-                processedIndices.add(geoLocAdmin1Index);
-            }
-            if (geoLocAdmin2Index !== -1) {
-                processedIndices.add(geoLocAdmin2Index);
-            }
-        } else if (currentRow.name !== 'geoLocAdmin1' && currentRow.name !== 'geoLocAdmin2') {
-            result.push(currentRow);
-        }
-
-        processedIndices.add(i);
-    }
-
-    return result;
 }

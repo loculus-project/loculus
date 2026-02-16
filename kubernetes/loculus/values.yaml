@@ -211,11 +211,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 440
         guidance: Geo-coordinate longitude in decimal degree (WGS84) format, i.e. values in range -180 to 180, where positive values are east of the Prime Meridian.
       - name: geoLocCountry
-        displayName: Collection country
+        displayName: Sampling location
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
         includeInDownloadsByDefault: true
+        customDisplay:
+          type: geoLocation
+          displayGroup: geoLocation
         header: Sample details
         order: 20
         orderOnDetailsPage: 400
@@ -535,6 +538,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
+        customDisplay:
+          type: geoLocation
+          displayGroup: geoLocation
         header: Sample details
         order: 30
         orderOnDetailsPage: 460
@@ -544,6 +550,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         desired: true
         generateIndex: true
         autocomplete: true
+        customDisplay:
+          type: geoLocation
+          displayGroup: geoLocation
         header: Sample details
         orderOnDetailsPage: 480
       - name: geoLocCity
