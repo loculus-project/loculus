@@ -56,28 +56,6 @@ const HostSpeciesComponent: React.FC<{ jsonString: string }> = ({ jsonString }) 
     return <>{displayText}</>;
 };
 
-const CollectionDateComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
-    const entries = JSON.parse(jsonString) as TableDataEntry[];
-
-    const collectionDate = entries.find((e) => e.name === 'sampleCollectionDate')?.value.toString();
-    const lowerBound = entries.find((e) => e.name === 'sampleCollectionDateRangeLower')?.value.toString();
-    const upperBound = entries.find((e) => e.name === 'sampleCollectionDateRangeUpper')?.value.toString();
-
-    if (lowerBound && upperBound && lowerBound === upperBound) {
-        return <>{collectionDate ?? lowerBound} (exact)</>;
-    }
-
-    if (collectionDate && lowerBound && upperBound) {
-        return (
-            <>
-                {collectionDate} ({lowerBound} – {upperBound})
-            </>
-        );
-    }
-
-    return <>{collectionDate ?? lowerBound ?? upperBound ?? ''}</>;
-};
-
 const GeoLocationComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
     const entries = JSON.parse(jsonString) as TableDataEntry[];
 
@@ -191,9 +169,6 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 )}
                 {customDisplay?.type === 'geoLocation' && typeof value == 'string' && (
                     <GeoLocationComponent jsonString={value} />
-                )}
-                {customDisplay?.type === 'collectionDate' && typeof value == 'string' && (
-                    <CollectionDateComponent jsonString={value} />
                 )}
                 {customDisplay?.type === 'fileList' && typeof value == 'string' && (
                     <FileListComponent jsonString={value} />
