@@ -37,7 +37,7 @@ test.describe('Single segment multi-reference submission flow', () => {
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.1`);
         const expectedDisplayName = new RegExp(
-            `^Display Name: Uganda/${firstAccessionVersion.accession}\\.1`,
+            `^Uganda/${firstAccessionVersion.accession}\\.1`,
         );
         await expect(page.getByText(expectedDisplayName)).toBeVisible();
         await expect(
@@ -123,7 +123,7 @@ test.describe('Single segment multi-reference submission flow', () => {
         await releasedPage.expectResultTableCellText(authorAffiliations);
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.2`);
         const expectedDisplayName = new RegExp(
-            `^Display Name: Uganda/${firstAccessionVersion.accession}\\.2`,
+            `^Uganda/${firstAccessionVersion.accession}\\.2`,
         );
         await expect(page.getByText(expectedDisplayName)).toBeVisible();
     });

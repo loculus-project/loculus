@@ -56,7 +56,7 @@ const DataTableComponent: React.FC<Props> = ({
     return (
         <div>
             {dataTableData.topmatter.sequenceDisplayName !== undefined && (
-                <div className='pr-6 mb-4 italic'>Isolate: {dataTableData.topmatter.sequenceDisplayName}</div>
+                <div className='pr-6 mb-4 italic'>{dataTableData.topmatter.sequenceDisplayName}</div>
             )}
             {dataTableData.topmatter.authors !== undefined && dataTableData.topmatter.authors.length > 0 && (
                 <div className='pr-6 mb-4'>

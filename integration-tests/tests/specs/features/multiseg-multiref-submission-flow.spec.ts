@@ -41,7 +41,7 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.1`);
         const expectedDisplayName = new RegExp(
-            `^Display Name: Laos/${firstAccessionVersion.accession}\\.1`,
+            `^Laos/${firstAccessionVersion.accession}\\.1`,
         );
         await expect(page.getByText(expectedDisplayName)).toBeVisible();
         await expect(
@@ -133,7 +133,7 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         await releasedPage.expectResultTableCellText(authorAffiliations);
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.2`);
         const expectedDisplayName = new RegExp(
-            `^Display Name: Laos/${firstAccessionVersion.accession}\\.2`,
+            `^Laos/${firstAccessionVersion.accession}\\.2`,
         );
         await expect(page.getByText(expectedDisplayName)).toBeVisible();
     });
