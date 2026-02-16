@@ -329,6 +329,9 @@ organisms:
     {{- if .customDisplay.displayGroup }}
     displayGroup: {{ quote .customDisplay.displayGroup }}
     {{- end }}
+    {{- if .customDisplay.label }}
+    label: {{ quote .customDisplay.label }}
+    {{- end }}
     {{- if .customDisplay.html }}
     html: {{ .customDisplay.html }}
     {{- end }}
