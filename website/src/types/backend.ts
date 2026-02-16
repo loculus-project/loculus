@@ -326,7 +326,8 @@ export type Info = z.infer<typeof info>;
 
 export const requestMultipartUploadResponse = z.array(
     z.object({
-        fileId: z.uuid(),
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- z.uuid() not available via zod v3 compat layer
+        fileId: z.string().uuid(),
         urls: z.array(z.string()),
     }),
 );
@@ -335,7 +336,8 @@ export type RequestMultipartUploadResponse = z.infer<typeof requestMultipartUplo
 
 export const completeMultipartUploadRequest = z.array(
     z.object({
-        fileId: z.uuid(),
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- z.uuid() not available via zod v3 compat layer
+        fileId: z.string().uuid(),
         etags: z.array(z.string()),
     }),
 );
