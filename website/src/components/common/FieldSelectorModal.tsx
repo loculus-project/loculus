@@ -10,6 +10,7 @@ import {
     stillRequiresReferenceNameSelection,
     type SegmentReferenceSelections,
 } from '../../utils/sequenceTypeHelpers.ts';
+import { buildHeaderGroups } from '../SequenceDetailsPage/getDataTableData.ts';
 
 export type FieldItem = {
     name: string;
@@ -96,20 +97,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
     }, {});
 
     // Sort headers by mean order of their fields
-    const headerGroups: { header: string; meanOrder: number, rows: FieldItem[] }[] = [];
-    for (const [header, rows] of Object.entries(fieldsByHeader)) {
-        rows.sort(
-            (a, b) =>
-                (a.orderOnDetailsPage ?? Number.POSITIVE_INFINITY) - (b.orderOnDetailsPage ?? Number.POSITIVE_INFINITY),
-        );
-        const definedOrders = rows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
-        const meanOrder =
-            definedOrders.length > 0
-                ? definedOrders.reduce((sum, o) => sum + o, 0) / definedOrders.length
-                : Number.POSITIVE_INFINITY;
-        headerGroups.push({ header, meanOrder, rows });
-    }
-    headerGroups.sort((a, b) => a.meanOrder - b.meanOrder);
+    const headerGroups = buildHeaderGroups<FieldItem>(fieldsByHeader);
 
     return (
         <BaseDialog title={title} isOpen={isOpen} onClose={onClose} fullWidth={false}>
