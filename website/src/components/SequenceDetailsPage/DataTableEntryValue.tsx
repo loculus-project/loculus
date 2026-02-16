@@ -56,6 +56,18 @@ const HostSpeciesComponent: React.FC<{ jsonString: string }> = ({ jsonString }) 
     return <>{displayText}</>;
 };
 
+const LengthCompletenessComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+    const entries = JSON.parse(jsonString) as TableDataEntry[];
+    const length = entries.find((e) => e.name.includes('length'))?.value;
+    const completeness = entries.find((e) => e.name.includes('completeness'))?.value;
+
+    if (length !== undefined && completeness !== undefined) {
+        const completenessPercent = parseFloat((Number(completeness) * 100).toPrecision(3));
+        return <>{`${length} (${completenessPercent}%)`}</>;
+    }
+    return <>{length ?? ''}</>;
+};
+
 const GeoLocationComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
     const entries = JSON.parse(jsonString) as TableDataEntry[];
 
@@ -166,6 +178,9 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 )}
                 {customDisplay?.type === 'hostSpecies' && typeof value == 'string' && (
                     <HostSpeciesComponent jsonString={value} />
+                )}
+                {customDisplay?.type === 'lengthCompleteness' && typeof value == 'string' && (
+                    <LengthCompletenessComponent jsonString={value} />
                 )}
                 {customDisplay?.type === 'geoLocation' && typeof value == 'string' && (
                     <GeoLocationComponent jsonString={value} />

@@ -1156,6 +1156,10 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         displayName: Length
         orderOnDetailsPage: 2700
+        customDisplay:
+          type: lengthCompleteness
+          displayGroup: lengthCompleteness
+          label: Length
       - name: hostTaxonId
         type: int
         autocomplete: true
@@ -1330,7 +1334,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         orderOnDetailsPage: 2860
         customDisplay:
-          type: percentage
+          type: lengthCompleteness
+          displayGroup: lengthCompleteness
+          label: Length
         preprocessing:
           inputs: {input: nextclade.coverage}
     website: &website
