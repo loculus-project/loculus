@@ -78,7 +78,11 @@ export const SearchForm = ({
                     .get(field.name)
                     ?.isVisible(referenceGenomesInfo, referenceSelection?.selectedReferences) ?? false,
         )
-        .filter((field) => !excluded.has(field.name));
+        
+    visibleFields.sort(
+        (a, b) =>
+            (a.orderOnDetailsPage ?? Number.POSITIVE_INFINITY) - (b.orderOnDetailsPage ?? Number.POSITIVE_INFINITY),
+    );
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);

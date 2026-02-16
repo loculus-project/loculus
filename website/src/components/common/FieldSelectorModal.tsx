@@ -17,6 +17,7 @@ export type FieldItem = {
     header?: string;
     displayState?: FieldItemDisplayState;
     isChecked: boolean;
+    orderOnDetailsPage?: number;
 };
 
 export const fieldItemDisplayStateType = {
@@ -87,6 +88,8 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
     };
 
     // Group fields by header
+    // TODO: also sort the fields here (can remove code from below)
+    const headerGroups: { header: string; meanOrder: number }[] = [];
     const fieldsByHeader = fields.reduce<Record<string, FieldItem[]>>((acc, field) => {
         const header = field.header ?? 'Other';
         acc[header] = acc[header] ?? [];
@@ -94,12 +97,22 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
         return acc;
     }, {});
 
-    // Sort headers alphabetically, but keep "Other" at the end
-    const sortedHeaders = Object.keys(fieldsByHeader).sort((a, b) => {
-        if (a === 'Other') return 1;
-        if (b === 'Other') return -1;
-        return a.localeCompare(b);
-    });
+    // Sort headers by mean order of their fields
+    for (const [header, rows] of Object.entries(fieldsByHeader)) {
+        rows.sort(
+            (a, b) =>
+                (a.orderOnDetailsPage ?? Number.POSITIVE_INFINITY) - (b.orderOnDetailsPage ?? Number.POSITIVE_INFINITY),
+        );
+        const definedOrders = rows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
+        const meanOrder =
+            definedOrders.length > 0
+                ? definedOrders.reduce((sum, o) => sum + o, 0) / definedOrders.length
+                : Number.POSITIVE_INFINITY;
+        headerGroups.push({ header, meanOrder });
+    }
+    const sortedHeaders = Object.keys(fieldsByHeader).sort((a, b) => 
+        headerGroups.find(h => h.header === a)!.meanOrder - headerGroups.find(h => h.header === b)!.meanOrder,
+    );
 
     return (
         <BaseDialog title={title} isOpen={isOpen} onClose={onClose} fullWidth={false}>
