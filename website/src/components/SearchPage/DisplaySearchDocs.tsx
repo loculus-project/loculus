@@ -101,7 +101,7 @@ const DisplaySearchDocs: React.FC<{ geneInfos: GeneInfo[] }> = ({ geneInfos }) =
                                         </p>
                                         <p className='mb-2'>
                                             You can also use wildcards to match any insertion at a given position. For
-                                            example <b>ins_:214:?</b> will match any (but at least one) nucleotide
+                                            example <b>ins_214:?</b> will match any (but at least one) nucleotide
                                             insertion between the positions 214 and 215.
                                         </p>
                                     </div>

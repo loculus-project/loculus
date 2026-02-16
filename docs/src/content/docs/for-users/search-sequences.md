@@ -20,7 +20,7 @@ Insertions can be searched for in the same manner, they just need to have `ins_`
 
 Loculus supports insertion queries that contain wildcards `?`. For example `ins_G:214:?EP?` will match all cases where gene `G` has an insertion of `EP` between the positions 214 and 215 but also an insertion of other AAs which include the `EP`, e.g. the insertion `EPE` will be matched.
 
-You can also use wildcards to match any insertion at a given position. For example `ins_G:214:?:` will match any (but at least one) insertion between the positions 214 and 215.
+You can also use wildcards to match any insertion at a given position. For example `ins_G:214:?` will match any (but at least one) insertion between the positions 214 and 215.
 
 ### Multiple mutations
 
