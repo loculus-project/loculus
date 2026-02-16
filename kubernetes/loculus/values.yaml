@@ -1473,17 +1473,7 @@ defaultOrganisms:
           initiallyVisible: false
           includeInDownloadsByDefault: false
           preprocessing:
-            inputs: {input: "nextclade.founderMuts['clade'].aaSubstitutions"}
-        - name: deletions_from_founder
-          header: "Alignment and QC metrics"
-          displayName: "Amino Acid Deletions from founder clade"
-          noInput: true
-          generateIndex: false
-          autocomplete: false
-          initiallyVisible: false
-          includeInDownloadsByDefault: false
-          preprocessing:
-            inputs: {input: "nextclade.founderMuts['clade'].aaDeletions"}
+            inputs: {input: "nextclade.cladeFounderInfo.aaMutations"}
       website:
         <<: *website
         tableColumns:
