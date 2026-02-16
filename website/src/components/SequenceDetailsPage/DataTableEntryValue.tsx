@@ -25,6 +25,37 @@ const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
     );
 };
 
+const HostSpeciesComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+    const entries = JSON.parse(jsonString) as TableDataEntry[];
+
+    const hostTaxonId = entries.find((e) => e.name === 'hostTaxonId')?.value.toString();
+    const hostNameScientific = entries.find((e) => e.name === 'hostNameScientific')?.value.toString();
+    const hostNameCommon = entries.find((e) => e.name === 'hostNameCommon')?.value.toString();
+
+    let displayText: string;
+    if (hostNameCommon && hostNameScientific) {
+        displayText = `${hostNameCommon} (${hostNameScientific})`;
+    } else if (hostNameCommon) {
+        displayText = hostNameCommon;
+    } else if (hostNameScientific) {
+        displayText = hostNameScientific;
+    } else if (hostTaxonId) {
+        displayText = hostTaxonId;
+    } else {
+        displayText = '';
+    }
+
+    if (hostTaxonId) {
+        return (
+            <a href={`https://www.ncbi.nlm.nih.gov/taxonomy/${hostTaxonId}`} target='_blank' className='underline'>
+                {displayText}
+            </a>
+        );
+    }
+
+    return <>{displayText}</>;
+};
+
 type FileEntry = {
     fileId: string;
     name: string;
@@ -115,6 +146,9 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 )}
                 {customDisplay?.type === 'submittingGroup' && typeof value == 'string' && (
                     <GroupComponent jsonString={value} />
+                )}
+                {customDisplay?.type === 'hostSpecies' && typeof value == 'string' && (
+                    <HostSpeciesComponent jsonString={value} />
                 )}
                 {customDisplay?.type === 'fileList' && typeof value == 'string' && (
                     <FileListComponent jsonString={value} />

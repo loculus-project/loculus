@@ -1144,9 +1144,23 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         displayName: Length
         orderOnDetailsPage: 2700
+      - name: hostTaxonId
+        type: int
+        autocomplete: true
+        displayName: "Host species"
+        customDisplay:
+          type: hostSpecies
+          displayGroup: hostSpecies
+        header: "Host"
+        ingest: ncbiHostTaxId
+        desired: true
+        orderOnDetailsPage: 1540
       - name: hostNameScientific
         generateIndex: true
         autocomplete: true
+        customDisplay:
+          type: hostSpecies
+          displayGroup: hostSpecies
         header: "Host"
         ingest: ncbiHostName
         desired: true
@@ -1154,19 +1168,12 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: hostNameCommon
         generateIndex: true
         autocomplete: true
+        customDisplay:
+          type: hostSpecies
+          displayGroup: hostSpecies
         header: "Host"
         ingest: ncbiHostCommonName
         orderOnDetailsPage: 1580
-      - name: hostTaxonId
-        type: int
-        autocomplete: true
-        customDisplay:
-          type: link
-          url: "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=info&id=__value__"
-        header: "Host"
-        ingest: ncbiHostTaxId
-        desired: true
-        orderOnDetailsPage: 1540
       - name: isLabHost
         type: boolean
         autocomplete: true
@@ -1736,6 +1743,9 @@ defaultOrganisms:
         - name: hostNameScientific
           generateIndex: true
           autocomplete: true
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
@@ -1850,6 +1860,9 @@ defaultOrganisms:
         - name: hostNameScientific
           generateIndex: true
           autocomplete: true
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
