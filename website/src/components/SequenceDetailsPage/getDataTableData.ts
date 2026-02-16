@@ -61,43 +61,36 @@ function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
 type HasOrder = { orderOnDetailsPage?: number };
 
 export type HeaderGroup<T> = {
-  header: string;
-  rows: T[];
-  meanOrder: number;
+    header: string;
+    rows: T[];
+    meanOrder: number;
 };
 
-function getEntries<T>(
-  source: Record<string, T[]> | Map<string, T[]>,
-): Iterable<[string, T[]]> {
-  return source instanceof Map ? source.entries() : Object.entries(source);
-}
-
 export function buildHeaderGroups<T extends HasOrder>(
-  source: Record<string, T[]> | Map<string, T[]>,
+    source: Record<string, T[]> | Map<string, T[]>,
 ): HeaderGroup<T>[] {
-  const headerGroups: HeaderGroup<T>[] = [];
+    const headerGroups: HeaderGroup<T>[] = [];
 
-  for (const [header, rows] of getEntries(source)) {
-    rows.sort(
-      (a, b) =>
-        (a.orderOnDetailsPage ?? Number.POSITIVE_INFINITY) -
-        (b.orderOnDetailsPage ?? Number.POSITIVE_INFINITY),
-    );
+    const entries: Iterable<[string, T[]]> = source instanceof Map ? source.entries() : Object.entries(source);
 
-    const definedOrders = rows
-      .map(r => r.orderOnDetailsPage)
-      .filter((o): o is number => o !== undefined);
+    for (const [header, rows] of entries) {
+        rows.sort(
+            (a, b) =>
+                (a.orderOnDetailsPage ?? Number.POSITIVE_INFINITY) - (b.orderOnDetailsPage ?? Number.POSITIVE_INFINITY),
+        );
 
-    const meanOrder =
-      definedOrders.length > 0
-        ? definedOrders.reduce((sum, o) => sum + o, 0) / definedOrders.length
-        : Number.POSITIVE_INFINITY;
+        const definedOrders = rows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
 
-    headerGroups.push({ header, rows, meanOrder });
-  }
+        const meanOrder =
+            definedOrders.length > 0
+                ? definedOrders.reduce((sum, o) => sum + o, 0) / definedOrders.length
+                : Number.POSITIVE_INFINITY;
 
-  headerGroups.sort((a, b) => a.meanOrder - b.meanOrder);
-  return headerGroups;
+        headerGroups.push({ header, rows, meanOrder });
+    }
+
+    headerGroups.sort((a, b) => a.meanOrder - b.meanOrder);
+    return headerGroups;
 }
 
 export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTableData {

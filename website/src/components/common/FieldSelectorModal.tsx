@@ -125,14 +125,13 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                     <div key={group.header} className='mb-6'>
                         <h3 className='font-medium text-lg mb-2 text-gray-700'>{group.header}</h3>
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2'>
-                            {group.rows
-                                .map((field) => (
-                                    <FieldSelectorModalField
-                                        key={field.name}
-                                        field={field}
-                                        handleToggleField={handleToggleField}
-                                    />
-                                ))}
+                            {group.rows.map((field) => (
+                                <FieldSelectorModalField
+                                    key={field.name}
+                                    field={field}
+                                    handleToggleField={handleToggleField}
+                                />
+                            ))}
                         </div>
                     </div>
                 ))}
