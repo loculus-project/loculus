@@ -1464,6 +1464,26 @@ defaultOrganisms:
           includeInDownloadsByDefault: true
           preprocessing:
             inputs: {input: nextclade.clade}
+        - name: mutations_from_founder
+          header: "Alignment and QC metrics"
+          displayName: "Amino Acid Mutations from founder clade"
+          noInput: true
+          generateIndex: false
+          autocomplete: false
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          preprocessing:
+            inputs: {input: "nextclade.founderMuts['clade'].aaSubstitutions"}
+        - name: deletions_from_founder
+          header: "Alignment and QC metrics"
+          displayName: "Amino Acid Deletions from founder clade"
+          noInput: true
+          generateIndex: false
+          autocomplete: false
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          preprocessing:
+            inputs: {input: "nextclade.founderMuts['clade'].aaDeletions"}
       website:
         <<: *website
         tableColumns:
