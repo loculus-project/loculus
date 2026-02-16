@@ -67,20 +67,17 @@ export type HeaderGroup<T> = {
 };
 
 export function buildHeaderGroups<T extends HasOrder>(
-    source: Record<string, T[]> | Map<string, T[]>,
+    source: Map<string, T[]>,
 ): HeaderGroup<T>[] {
     const headerGroups: HeaderGroup<T>[] = [];
 
-    const entries: Iterable<[string, T[]]> = source instanceof Map ? source.entries() : Object.entries(source);
-
-    for (const [header, rows] of entries) {
+    for (const [header, rows] of source.entries()) {
         rows.sort(
             (a, b) =>
                 (a.orderOnDetailsPage ?? Number.POSITIVE_INFINITY) - (b.orderOnDetailsPage ?? Number.POSITIVE_INFINITY),
         );
 
         const definedOrders = rows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
-
         const meanOrder =
             definedOrders.length > 0
                 ? definedOrders.reduce((sum, o) => sum + o, 0) / definedOrders.length

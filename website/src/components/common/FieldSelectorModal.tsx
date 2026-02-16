@@ -89,12 +89,14 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
     };
 
     // Group fields by header
-    const fieldsByHeader = fields.reduce<Record<string, FieldItem[]>>((acc, field) => {
+    const fieldsByHeader = fields.reduce<Map<string, FieldItem[]>>((map, field) => {
         const header = field.header ?? 'Other';
-        acc[header] = acc[header] ?? [];
-        acc[header].push(field);
-        return acc;
-    }, {});
+        if (!map.has(header)) {
+            map.set(header, []);
+        }
+        map.get(header)!.push(field);
+        return map;
+    }, new Map());
 
     // Sort headers by mean order of their fields
     const headerGroups = buildHeaderGroups<FieldItem>(fieldsByHeader);
