@@ -66,9 +66,7 @@ export type HeaderGroup<T> = {
     meanOrder: number;
 };
 
-export function buildHeaderGroups<T extends HasOrder>(
-    source: Map<string, T[]>,
-): HeaderGroup<T>[] {
+export function buildHeaderGroups<T extends HasOrder>(source: Map<string, T[]>): HeaderGroup<T>[] {
     const headerGroups: HeaderGroup<T>[] = [];
 
     for (const [header, rows] of source.entries()) {
