@@ -36,7 +36,9 @@ test.describe('Single segment multi-reference submission flow', () => {
         const accessionVersions = await releasedPage.waitForSequencesInSearch(1);
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.1`);
-        const expectedDisplayName = new RegExp(`^Uganda/${firstAccessionVersion.accession}\\.1`);
+        const expectedDisplayName = new RegExp(
+            `^Display Name: Uganda/${firstAccessionVersion.accession}\\.1`,
+        );
         await expect(page.getByText(expectedDisplayName)).toBeVisible();
         await expect(
             page.getByTestId('sequence-preview-modal').getByText('Clade EV-A71', { exact: true }),
@@ -120,7 +122,9 @@ test.describe('Single segment multi-reference submission flow', () => {
         await releasedPage.waitForAccessionVersionInSearch(firstAccessionVersion.accession, 2);
         await releasedPage.expectResultTableCellText(authorAffiliations);
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.2`);
-        const expectedDisplayName = new RegExp(`^Uganda/${firstAccessionVersion.accession}\\.2`);
+        const expectedDisplayName = new RegExp(
+            `^Display Name: Uganda/${firstAccessionVersion.accession}\\.2`,
+        );
         await expect(page.getByText(expectedDisplayName)).toBeVisible();
     });
 });

@@ -176,6 +176,11 @@
             "url": {
               "groups": ["metadata"],
               "type": "string"
+            },
+            "label": {
+              "groups": ["metadata"],
+              "type": "string",
+              "description": "Label to display for grouped fields on the sequence details page. Overrides the field's displayName when fields are grouped via displayGroup."
             }
           }
         },

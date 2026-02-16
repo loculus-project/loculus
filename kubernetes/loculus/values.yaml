@@ -220,7 +220,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 440
         guidance: Geo-coordinate longitude in decimal degree (WGS84) format, i.e. values in range -180 to 180, where positive values are east of the Prime Meridian.
       - name: geoLocCountry
-        displayName: Sampling location
+        displayName: Collection country
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
@@ -228,6 +228,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         customDisplay:
           type: geoLocation
           displayGroup: geoLocation
+          label: Sampling location
         header: Sample details
         order: 20
         orderOnDetailsPage: 400

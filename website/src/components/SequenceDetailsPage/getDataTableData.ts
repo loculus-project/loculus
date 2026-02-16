@@ -36,7 +36,7 @@ function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
                     value: '[]',
                     header: entry.header,
                     customDisplay: entry.customDisplay,
-                    label: entry.label,
+                    label: entry.customDisplay.label ?? entry.label,
                     orderOnDetailsPage: entry.orderOnDetailsPage,
                 });
             }

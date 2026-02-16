@@ -39,6 +39,7 @@ export const customDisplay = z.object({
     html: z.string().optional(),
     value: z.array(segmentedMutations).optional(),
     displayGroup: z.string().optional(),
+    label: z.string().optional(),
     linkMenuItems: z.array(linkMenuItem).optional(),
 });
 
