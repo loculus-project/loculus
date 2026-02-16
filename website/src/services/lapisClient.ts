@@ -67,17 +67,13 @@ export class LapisClient extends ApiClient {
         });
     }
 
-    public async getSequenceEntryVersionDetailsTsv(accessionVersion: string): Promise<Result<string, ProblemDetail>> {
-        const result = await this.request('post', '/sample/details', detailsResponse, {
+    public getSequenceEntryVersionDetailsTsv(accessionVersion: string): Promise<Result<string, ProblemDetail>> {
+        return this.request('post', '/sample/details', stringSchema, {
             data: {
                 [this.schema.primaryKey]: accessionVersion,
                 dataFormat: 'TSV',
             },
         });
-        // This type cast isn't pretty, but if the API would be typed correctly, the union type
-        // of the actual details response and the potential 'string' would pollute the whole API,
-        // so I (@fhennig) decided to just do this cast here. We know that the return value is a TSV string.
-        return result.map((data) => data as unknown as string);
     }
 
     public async getLatestAccessionVersion(accession: string): Promise<Result<AccessionVersion, ProblemDetail>> {
