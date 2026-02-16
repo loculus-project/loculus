@@ -111,6 +111,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         customDisplay:
           type: collectionDate
           displayGroup: collectionDate
+          label: Collection date
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -131,6 +132,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         customDisplay:
           type: collectionDate
           displayGroup: collectionDate
+          label: Collection date
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -153,6 +155,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         customDisplay:
           type: collectionDate
           displayGroup: collectionDate
+          label: Collection date
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -551,6 +554,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         customDisplay:
           type: geoLocation
           displayGroup: geoLocation
+          label: Sampling location
         header: Sample details
         order: 30
         orderOnDetailsPage: 460
@@ -563,6 +567,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         customDisplay:
           type: geoLocation
           displayGroup: geoLocation
+          label: Sampling location
         header: Sample details
         orderOnDetailsPage: 480
       - name: geoLocCity
@@ -1170,6 +1175,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         customDisplay:
           type: hostSpecies
           displayGroup: hostSpecies
+          label: Host
         header: "Host"
         ingest: ncbiHostTaxId
         desired: true
@@ -1180,6 +1186,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         customDisplay:
           type: hostSpecies
           displayGroup: hostSpecies
+          label: Host
         header: "Host"
         ingest: ncbiHostName
         desired: true
@@ -1190,6 +1197,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         customDisplay:
           type: hostSpecies
           displayGroup: hostSpecies
+          label: Host
         header: "Host"
         ingest: ncbiHostCommonName
         orderOnDetailsPage: 1580
@@ -1765,6 +1773,7 @@ defaultOrganisms:
           customDisplay:
             type: hostSpecies
             displayGroup: hostSpecies
+            label: Host
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
@@ -1882,6 +1891,7 @@ defaultOrganisms:
           customDisplay:
             type: hostSpecies
             displayGroup: hostSpecies
+            label: Host
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
