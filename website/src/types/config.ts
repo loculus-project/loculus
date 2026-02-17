@@ -16,7 +16,6 @@ export const metadataPossibleTypes = z.enum([
     'authors',
 ] as const);
 
-
 export const mutationBadgeData = mutationProportionCount.pick({
     sequenceName: true,
     mutationFrom: true,
