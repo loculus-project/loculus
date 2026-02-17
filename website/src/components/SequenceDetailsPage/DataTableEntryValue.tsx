@@ -147,7 +147,7 @@ type MutationInfo = {
 
 export function parseMutation(input: string): MutationInfo {
     const regex = /^([a-zA-Z]+):([A-Z])(\d+)([A-Z])$/;
-    const match = input.match(regex);
+    const match = regex.exec(input);
 
     if (!match) return null;
 
