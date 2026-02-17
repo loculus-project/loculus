@@ -123,6 +123,9 @@ export class DownloadUrlGenerator {
             case 'metadata':
                 return this.lapisUrl + '/sample/details';
             case 'unalignedNucleotideSequences':
+                if (dataType.segment !== undefined) {
+                    return this.lapisUrl + '/sample/unalignedNucleotideSequences/' + dataType.segment;
+                }
                 return this.lapisUrl + '/sample/unalignedNucleotideSequences';
             case 'alignedNucleotideSequences':
                 return this.lapisUrl + '/sample/alignedNucleotideSequences' + segmentPath(dataType.segment);
