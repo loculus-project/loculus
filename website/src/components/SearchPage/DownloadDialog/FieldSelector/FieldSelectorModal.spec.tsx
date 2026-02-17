@@ -225,7 +225,7 @@ describe('FieldSelectorModal', () => {
                             new MetadataVisibility(
                                 result.current[0].has(field.name),
                                 field.onlyForReference,
-                                field.sequenceMetadataScope,
+                                field.relatesToSegment,
                             ),
                         ]),
                     )

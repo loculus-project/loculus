@@ -16,7 +16,6 @@ export const metadataPossibleTypes = z.enum([
     'authors',
 ] as const);
 
-export const metadataScopeTypes = z.enum(['sample', 'sequence'] as const);
 
 export const mutationBadgeData = mutationProportionCount.pick({
     sequenceName: true,
@@ -84,8 +83,8 @@ export const metadata = z.object({
     orderOnDetailsPage: z.number().optional(),
     includeInDownloadsByDefault: z.boolean().optional(),
     onlyForReference: z.string().optional(),
-    metadataScope: metadataScopeTypes.optional(),
-    sequenceMetadataScope: z.string().optional(),
+    isSequenceFilter: z.boolean().optional(),
+    relatesToSegment: z.string().optional(),
 });
 
 export const inputFieldOption = z.object({
@@ -131,8 +130,8 @@ export type GroupedMetadataFilter = {
     notSearchable?: boolean;
     initiallyVisible?: boolean;
     header?: string;
-    metadataScope?: Metadata['metadataScope'];
-    sequenceMetadataScope?: Metadata['sequenceMetadataScope'];
+    isSequenceFilter?: Metadata['isSequenceFilter'];
+    relatesToSegment?: Metadata['relatesToSegment'];
 };
 
 export const linkOut = z.object({

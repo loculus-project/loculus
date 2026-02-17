@@ -168,18 +168,15 @@ export const SearchForm = ({
         });
 
         for (const field of visibleFields) {
-            const metadataScope =
-                'metadataScope' in field && field.metadataScope != null ? field.metadataScope : 'sample';
+            const isSeqFilter = 'isSequenceFilter' in field && field.isSequenceFilter === true;
 
-            if (metadataScope !== 'sequence') {
+            if (!isSeqFilter) {
                 sampleFields.push(field);
                 continue;
             }
 
             const sequenceScope =
-                'sequenceMetadataScope' in field && field.sequenceMetadataScope != null
-                    ? field.sequenceMetadataScope
-                    : 'main';
+                'relatesToSegment' in field && field.relatesToSegment != null ? field.relatesToSegment : 'main';
 
             sequenceFieldsBySegment[sequenceScope] ??= [];
             sequenceFieldsBySegment[sequenceScope].push(field);

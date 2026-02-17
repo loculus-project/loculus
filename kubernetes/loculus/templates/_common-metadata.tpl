@@ -336,11 +336,11 @@ organisms:
     html: {{ .customDisplay.html }}
     {{- end }}
   {{- end }}
-  {{- if .metadataScope }}
-  metadataScope: {{ .metadataScope }}
+  {{- if .isSequenceFilter }}
+  isSequenceFilter: {{ .isSequenceFilter }}
   {{- end }}
-  {{- if .sequenceMetadataScope }}
-  sequenceMetadataScope: {{ .sequenceMetadataScope }}
+  {{- if .relatesToSegment }}
+  relatesToSegment: {{ .relatesToSegment }}
   {{- end }}
 {{- end }}
 
@@ -365,8 +365,9 @@ fields:
   {{- else }}
   header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
   {{- end }}
-  {{- if eq .metadataScope "sequence" }}
-  sequenceMetadataScope: {{ $segment }}
+  relatesToSegment: {{ $segment }}
+  {{- if .isSequenceFilter }}
+  isSequenceFilter: true
   {{- end }}
   {{- if and .customDisplay .customDisplay.displayGroup }}
   customDisplay:

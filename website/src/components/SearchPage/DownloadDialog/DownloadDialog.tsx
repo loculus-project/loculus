@@ -74,7 +74,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                 new MetadataVisibility(
                     selectedFields.has(field.name),
                     field.onlyForReference,
-                    field.sequenceMetadataScope,
+                    field.relatesToSegment,
                 ),
             ]),
         );
