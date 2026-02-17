@@ -12,6 +12,8 @@ import type { MutationBadgeData } from '../../types/config.ts';
 interface Props {
     data: TableDataEntry;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
+    referenceGenomesInfo: ReferenceGenomesInfo;
+    segmentAndGeneInfo: SegmentAndGeneInfo; 
     segmentDisplayNameMap?: Record<string, string>;
 }
 
@@ -136,6 +138,7 @@ const prettyFormatBytes = (bytes: number): string => {
     return (bytes / 1000 ** i).toFixed() + ' ' + sizes[i];
 };
 
+
 export function parseMutation(input: string): MutationBadgeData | null {
     const regex = /^([a-zA-Z0-9]+):([A-Z*-])(\d+)([A-Z*-])$/;
     const match = regex.exec(input);
@@ -160,7 +163,7 @@ export function parseMutations(input: string): MutationBadgeData[] {
         .filter((m): m is MutationBadgeData => m !== null);
 }
 
-const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, segmentDisplayNameMap }) => {
+const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, referenceGenomesInfo, segmentAndGeneInfo, segmentDisplayNameMap }) => {
     const { value, customDisplay } = data;
 
     return (
