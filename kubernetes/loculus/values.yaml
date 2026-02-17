@@ -1931,7 +1931,7 @@ defaultOrganisms:
           - length_L
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
-        referenceIdentifierField: genotype
+        referenceIdentifierField: reference
     preprocessing:
       - <<: *preprocessing
         configFile:
