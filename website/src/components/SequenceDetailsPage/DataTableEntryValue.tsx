@@ -4,13 +4,19 @@ import sanitizeHtml from 'sanitize-html';
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
 import { LinkWithMenuComponent } from './LinkWithMenuComponent';
 import { MutationStringContainers, SubstitutionsContainers } from './MutationBadge';
+import { substitutionsMap } from './getTableData.ts';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
+import { parseMutationsString } from '../../utils/mutation.ts';
+import type { SegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
 import { Button } from '../common/Button';
 
 interface Props {
     data: TableDataEntry;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
+    referenceGenomesInfo: ReferenceGenomesInfo;
+    segmentAndGeneInfo: SegmentAndGeneInfo; 
     segmentDisplayNameMap?: Record<string, string>;
 }
 
@@ -135,7 +141,7 @@ const prettyFormatBytes = (bytes: number): string => {
     return (bytes / 1000 ** i).toFixed() + ' ' + sizes[i];
 };
 
-const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, segmentDisplayNameMap }) => {
+const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, referenceGenomesInfo, segmentAndGeneInfo, segmentDisplayNameMap }) => {
     const { value, customDisplay } = data;
 
     return (
@@ -160,6 +166,12 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, se
                             values={customDisplay.list}
                             segmentDisplayNameMap={segmentDisplayNameMap}
                         />
+                    ))}
+                {customDisplay?.type === 'generatedBadge' &&
+                    (value === undefined ? (
+                        <span className='italic'>N/A</span>
+                    ) : (
+                        <SubstitutionsContainers values={substitutionsMap(parseMutationsString(value, segmentAndGeneInfo), referenceGenomesInfo)} />
                     ))}
                 {customDisplay?.type === 'link' && customDisplay.url !== undefined && (
                     <a

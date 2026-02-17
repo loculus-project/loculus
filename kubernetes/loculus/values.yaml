@@ -1467,6 +1467,8 @@ defaultOrganisms:
         - name: mutations_from_founder
           header: "Alignment and QC metrics"
           displayName: "Amino Acid Mutations from founder clade"
+          customDisplay:
+            type: generatedBadge
           noInput: true
           generateIndex: false
           autocomplete: false

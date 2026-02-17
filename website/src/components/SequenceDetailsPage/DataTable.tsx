@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { AuthorList } from './AuthorList';
 import DataTableEntry from './DataTableEntry';
@@ -8,6 +8,7 @@ import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { type ReferenceAccession, type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import {
     getInsdcAccessionsFromSegmentReferences,
+    getSegmentAndGeneInfo,
     type SegmentReferenceSelections,
 } from '../../utils/sequenceTypeHelpers';
 import AkarInfo from '~icons/ri/information-line';
@@ -43,6 +44,10 @@ const DataTableComponent: React.FC<Props> = ({
 }) => {
     const references = getInsdcAccessionsFromSegmentReferences(referenceGenomesInfo, segmentReferences);
     const hasReferenceAccession = references.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
+    const segmentAndGeneInfo = useMemo(
+            () => getSegmentAndGeneInfo(referenceGenomesInfo, segmentReferences),
+            [referenceGenomesInfo, segmentReferences],
+        );
 
     const authorSection = dataTableData.table.filter(({ header }) => header.toLowerCase().includes('authors'));
     const generalSections = dataTableData.table.filter(
@@ -88,6 +93,8 @@ const DataTableComponent: React.FC<Props> = ({
                                         data={entry}
                                         dataUseTermsHistory={dataUseTermsHistory}
                                         segmentDisplayNameMap={referenceGenomesInfo.segmentDisplayNames}
+                                        segmentAndGeneInfo={segmentAndGeneInfo}
+                                        referenceGenomesInfo={referenceGenomesInfo}
                                     />
                                 ))}
                             </div>
@@ -119,6 +126,8 @@ const DataTableComponent: React.FC<Props> = ({
                                         data={entry}
                                         dataUseTermsHistory={dataUseTermsHistory}
                                         segmentDisplayNameMap={referenceGenomesInfo.segmentDisplayNames}
+                                        segmentAndGeneInfo={segmentAndGeneInfo}
+                                        referenceGenomesInfo={referenceGenomesInfo}
                                     />
                                 ))}
                             </div>
@@ -154,6 +163,8 @@ const DataTableComponent: React.FC<Props> = ({
                                         data={entry}
                                         dataUseTermsHistory={dataUseTermsHistory}
                                         segmentDisplayNameMap={referenceGenomesInfo.segmentDisplayNames}
+                                        segmentAndGeneInfo={segmentAndGeneInfo}
+                                        referenceGenomesInfo={referenceGenomesInfo}
                                     />
                                 ))}
                             </div>
