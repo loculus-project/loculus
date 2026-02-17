@@ -10,6 +10,7 @@ import {
     stillRequiresReferenceNameSelection,
     type SegmentReferenceSelections,
 } from '../../utils/sequenceTypeHelpers.ts';
+import { buildHeaderGroups } from '../SequenceDetailsPage/getDataTableData.ts';
 
 export type FieldItem = {
     name: string;
@@ -17,6 +18,7 @@ export type FieldItem = {
     header?: string;
     displayState?: FieldItemDisplayState;
     isChecked: boolean;
+    orderOnDetailsPage?: number;
 };
 
 export const fieldItemDisplayStateType = {
@@ -87,19 +89,17 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
     };
 
     // Group fields by header
-    const fieldsByHeader = fields.reduce<Record<string, FieldItem[]>>((acc, field) => {
+    const fieldsByHeader = fields.reduce<Map<string, FieldItem[]>>((map, field) => {
         const header = field.header ?? 'Other';
-        acc[header] = acc[header] ?? [];
-        acc[header].push(field);
-        return acc;
-    }, {});
+        if (!map.has(header)) {
+            map.set(header, []);
+        }
+        map.get(header)!.push(field);
+        return map;
+    }, new Map());
 
-    // Sort headers alphabetically, but keep "Other" at the end
-    const sortedHeaders = Object.keys(fieldsByHeader).sort((a, b) => {
-        if (a === 'Other') return 1;
-        if (b === 'Other') return -1;
-        return a.localeCompare(b);
-    });
+    // Sort headers by mean order of their fields
+    const headerGroups = buildHeaderGroups<FieldItem>(fieldsByHeader);
 
     return (
         <BaseDialog title={title} isOpen={isOpen} onClose={onClose} fullWidth={false}>
@@ -123,35 +123,17 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                 </div>
             </div>
             <div className='mt-2 max-h-[60vh] overflow-y-auto p-2'>
-                {sortedHeaders.map((header) => (
-                    <div key={header} className='mb-6'>
-                        <h3 className='font-medium text-lg mb-2 text-gray-700'>{header}</h3>
+                {headerGroups.map((group) => (
+                    <div key={group.header} className='mb-6'>
+                        <h3 className='font-medium text-lg mb-2 text-gray-700'>{group.header}</h3>
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2'>
-                            {fieldsByHeader[header]
-                                .sort((a, b) => {
-                                    type WithOptionalOrder = { order?: number };
-                                    const aOrder = 'order' in a ? (a as WithOptionalOrder).order : undefined;
-                                    const bOrder = 'order' in b ? (b as WithOptionalOrder).order : undefined;
-
-                                    if (aOrder !== undefined && bOrder !== undefined) {
-                                        return aOrder - bOrder;
-                                    } else if (aOrder !== undefined) {
-                                        return -1;
-                                    } else if (bOrder !== undefined) {
-                                        return 1;
-                                    }
-
-                                    const aDisplay = a.displayName ?? a.name;
-                                    const bDisplay = b.displayName ?? b.name;
-                                    return aDisplay.localeCompare(bDisplay);
-                                })
-                                .map((field) => (
-                                    <FieldSelectorModalField
-                                        key={field.name}
-                                        field={field}
-                                        handleToggleField={handleToggleField}
-                                    />
-                                ))}
+                            {group.rows.map((field) => (
+                                <FieldSelectorModalField
+                                    key={field.name}
+                                    field={field}
+                                    handleToggleField={handleToggleField}
+                                />
+                            ))}
                         </div>
                     </div>
                 ))}

@@ -56,6 +56,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
             false,
         ),
         isChecked: downloadFieldVisibilities.get(field.name)?.isChecked ?? false,
+        orderOnDetailsPage: field.orderOnDetailsPage,
     }));
 
     return (
