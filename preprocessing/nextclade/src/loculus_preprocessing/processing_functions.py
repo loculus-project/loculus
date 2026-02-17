@@ -1265,7 +1265,7 @@ def process_mutations_from_clade_founder(input: str | None, args: FunctionArgs |
             if not value.get("privateSubstitutions"):
                 continue
             for mutation in value["privateSubstitutions"]:
-                substitution = f"{mutation.get('cdsName')}:{mutation.get('refAa')}:{mutation.get('pos')}:{mutation.get('qryAa')}"
+                substitution = f"{mutation.get('cdsName')}:{mutation.get('refAa')}{mutation.get('pos')}{mutation.get('qryAa')}"
                 mutations.append(substitution)
         if mutations:
             return InputData(datum=" ".join(mutations))
