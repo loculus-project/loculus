@@ -1278,6 +1278,37 @@ def format_stop_codon(result: str | None) -> str | None:
     return ",".join(stop_codon_strings)
 
 
+def process_mutations_from_clade_founder(input: str | None, args: FunctionArgs | None) -> InputData:
+    """Processes phenotype values string to InputData for processing"""
+    if input is None:
+        return InputData(datum=None)
+    try:
+        data = ast.literal_eval(input)
+        mutations = []
+        for value in data.values():
+            if not value.get("privateSubstitutions"):
+                continue
+            for mutation in value["privateSubstitutions"]:
+                substitution = f"{mutation.get('cdsName')}:{mutation.get('refAa')}:{mutation.get('pos')}:{mutation.get('qryAa')}"
+                mutations.append(substitution)
+        if mutations:
+            return InputData(datum=" ".join(mutations))
+    except Exception as e:
+        msg = (
+            "Was unable to process mutations from clade founder - this is likely an internal error. "
+            "Please contact the administrator."
+        )
+        logger.error(msg + f" Error: {e}")
+        return InputData(
+            datum=None,
+            errors=single_metadata_annotation(
+                "mutationsFromCladeFounder",
+                msg,
+            ),
+        )
+    return InputData(datum=None)
+
+
 def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> InputData:
     """Processes phenotype values string to InputData for processing"""
     if input is None:
