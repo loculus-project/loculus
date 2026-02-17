@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - "website/**"
+      - "kubernetes/cdk8s/**"
       - "deploy.py"
       - generate_local_test_config.sh
       - .github/workflows/website-playwright-dev-test.yml
@@ -36,6 +37,11 @@ jobs:
         uses: astral-sh/setup-uv@v6
       - name: Checkout repository
         uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Install CDK8s dependencies
+        run: cd kubernetes/cdk8s && npm ci
       - name: Install yaml package
         run: uv pip install --system PyYAML requests
       - name: Generate local test config
