@@ -8,15 +8,12 @@ import { substitutionsMap } from './getTableData.ts';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
-import { parseMutationsString } from '../../utils/mutation.ts';
-import type { SegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
 import { Button } from '../common/Button';
 
 interface Props {
     data: TableDataEntry;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     referenceGenomesInfo: ReferenceGenomesInfo;
-    segmentAndGeneInfo: SegmentAndGeneInfo; 
     segmentDisplayNameMap?: Record<string, string>;
 }
 
@@ -141,7 +138,43 @@ const prettyFormatBytes = (bytes: number): string => {
     return (bytes / 1000 ** i).toFixed() + ' ' + sizes[i];
 };
 
-const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, referenceGenomesInfo, segmentAndGeneInfo, segmentDisplayNameMap }) => {
+type MutationInfo = {
+    segmentName: string;
+    mutationFrom: string;
+    position: number;
+    mutationTo: string;
+} | null;
+
+export function parseMutation(input: string): MutationInfo {
+    const regex = /^([a-zA-Z]+):([A-Z])(\d+)([A-Z])$/;
+    const match = input.match(regex);
+
+    if (!match) return null;
+
+    const [, segmentName, mutationFrom, position, mutationTo] = match;
+
+    return {
+        segmentName,
+        mutationFrom,
+        position: Number(position),
+        mutationTo,
+    };
+}
+
+export function parseMutations(input: string): MutationInfo[] {
+  return input
+    .trim()
+    .split(/\s+/)            // split on spaces
+    .map(parseMutation)
+    .filter((m): m is MutationInfo => m !== null); // remove invalid entries
+}
+
+const CustomDisplayComponent: React.FC<Props> = ({
+    data,
+    dataUseTermsHistory,
+    referenceGenomesInfo,
+    segmentDisplayNameMap,
+}) => {
     const { value, customDisplay } = data;
 
     return (
@@ -171,7 +204,12 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, re
                     (value === undefined ? (
                         <span className='italic'>N/A</span>
                     ) : (
-                        <SubstitutionsContainers values={substitutionsMap(parseMutationsString(value, segmentAndGeneInfo), referenceGenomesInfo)} />
+                        <SubstitutionsContainers
+                            values={substitutionsMap(
+                                parseMutations(value),
+                                referenceGenomesInfo,
+                            )}
+                        />
                     ))}
                 {customDisplay?.type === 'link' && customDisplay.url !== undefined && (
                     <a
