@@ -4,9 +4,9 @@ import { AuthorList } from './AuthorList';
 import DataTableEntry from './DataTableEntry';
 import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
-import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { type ReferenceAccession, type ReferenceGenomesInfo } from '../../types/referencesGenomes';
+import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import {
     getInsdcAccessionsFromSegmentReferences,
     type SegmentReferenceSelections,

@@ -29,7 +29,7 @@ function formatField(value: unknown, type: string, fieldName?: string): string {
         return value ? 'True' : 'False';
     } else {
         const stringValue = value as string;
-        if (fieldName !== undefined && fieldName.toLowerCase().includes('affiliation')) {
+        if (fieldName?.toLowerCase().includes('affiliation')) {
             return deduplicateSemicolonSeparated(stringValue);
         }
         // @ts-expect-error: TODO(#3451) add proper types
