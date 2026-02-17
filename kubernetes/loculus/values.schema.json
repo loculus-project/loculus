@@ -134,16 +134,15 @@
           "type": "boolean",
           "description": "If true, the field is initially visible in the UI."
         },
-        "metadataScope": {
+        "isSequenceFilter": {
           "groups": ["metadata"],
-          "type": "string",
-          "enum": ["sample", "sequence"],
-          "description": "The scope of the metadata field, e.g., sample or sequence. Sample is the default."
+          "type": "boolean",
+          "description": "If true, this field will appear under 'Sequence Filters' on the search page instead of 'Metadata Filters'. Defaults to false."
         },
-        "sequenceMetadataScope": {
+        "relatesToSegment": {
           "groups": ["metadata"],
           "type": "string",
-          "description": "The scope of the sequence metadata field, can be set to any of the segment names defined for the organism."
+          "description": "Which segment this metadata field relates to. Can be set to any of the segment names defined for the organism."
         },
         "hideOnSequenceDetailsPage": {
           "groups": ["metadata"],

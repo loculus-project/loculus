@@ -106,7 +106,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
         const visibility = new MetadataVisibility(
             explicitVisibilitiesInUrlByFieldName.get(fieldName) ?? initiallyVisibleAccessor(field),
             field.onlyForReference,
-            field.sequenceMetadataScope,
+            field.relatesToSegment,
         );
 
         visibilities.set(fieldName, visibility);
@@ -202,8 +202,8 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
                     displayName: filter.fieldGroupDisplayName,
                     initiallyVisible: filter.initiallyVisible,
                     header: filter.header,
-                    metadataScope: filter.metadataScope,
-                    sequenceMetadataScope: filter.sequenceMetadataScope,
+                    isSequenceFilter: filter.isSequenceFilter,
+                    relatesToSegment: filter.relatesToSegment,
                 };
                 fieldList.push(fieldForGroup);
                 groupsMap.set(filter.fieldGroup, fieldForGroup);

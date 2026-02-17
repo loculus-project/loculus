@@ -458,7 +458,7 @@ describe('DownloadDialog', () => {
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
                 onlyForReference: 'ref1',
-                sequenceMetadataScope: 'main',
+                relatesToSegment: 'main',
             },
             {
                 name: 'field2',
@@ -467,7 +467,7 @@ describe('DownloadDialog', () => {
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
                 onlyForReference: 'ref2',
-                sequenceMetadataScope: 'main',
+                relatesToSegment: 'main',
             },
             {
                 name: ACCESSION_VERSION_FIELD,

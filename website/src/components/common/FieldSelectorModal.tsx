@@ -264,7 +264,7 @@ export function getDisplayState(
 
     if (
         field.onlyForReference !== undefined &&
-        !segmentReferenceSelected(field.sequenceMetadataScope!, referenceGenomesInfo, selectedReferenceNames)
+        !segmentReferenceSelected(field.relatesToSegment!, referenceGenomesInfo, selectedReferenceNames)
     ) {
         if (greyOutIfStillRequiresReferenceSelection) {
             return {

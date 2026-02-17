@@ -16,6 +16,9 @@
     {{- if .segment }}
     segment: {{ .segment }}
     {{- end }}
+    {{- if .onlyForReference }}
+    reference: {{ .onlyForReference }}
+    {{- end }}
     {{- if .type }}
     type: {{ .type }}
     {{- end }}
@@ -40,6 +43,9 @@
   args:
     {{- if .segment }}
     segment: {{ .segment }}
+    {{- end }}
+    {{- if .onlyForReference }}
+    reference: {{ .onlyForReference }}
     {{- end }}
     {{- if .type }}
     type: {{ .type }}
@@ -71,7 +77,11 @@
             {{- end }}
         {{- end }}
     {{- else }}
-        {{- $args := deepCopy . | merge (dict "segment" "" "key" .name) }}
+        {{- $segment := "" }}
+        {{- if .relatesToSegment }}
+        {{- $segment = .relatesToSegment }}
+        {{- end }}
+        {{- $args := deepCopy . | merge (dict "segment" $segment "key" .name) }}
         {{- include "loculus.sharedPreproSpecs" $args }}
     {{- end }}
 {{- end }}
