@@ -4,7 +4,7 @@ import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx
 import { SingleChoiceAutoCompleteField } from './fields/SingleChoiceAutoCompleteField.tsx';
 import type { FieldValues, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
-import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
+import { expectStringOrNull, getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
 import { getSegmentNames, segmentsWithMultipleReferences } from '../../utils/sequenceTypeHelpers.ts';
 
@@ -78,7 +78,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                                 fieldName,
                             }}
                             setSomeFieldValues={setSomeFieldValues}
-                            fieldValue={(fieldValues[fieldName] as string | undefined) ?? ''}
+                            fieldValue={expectStringOrNull(fieldValues[fieldName], fieldName) ?? ''}
                         />
 
                         <p className='text-xs text-gray-600 mt-2'>
