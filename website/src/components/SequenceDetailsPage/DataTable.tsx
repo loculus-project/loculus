@@ -4,6 +4,7 @@ import { AuthorList } from './AuthorList';
 import DataTableEntry from './DataTableEntry';
 import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
+import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { type ReferenceAccession, type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import {
@@ -65,7 +66,9 @@ const DataTableComponent: React.FC<Props> = ({
                         .flatMap(({ rows }) => rows)
                         .map((entry: TableDataEntry, index: number) => (
                             <h4 key={index} className='text-sm text-gray-500 mt-1' title={entry.label}>
-                                {entry.value}
+                                {typeof entry.value === 'string'
+                                    ? deduplicateSemicolonSeparated(entry.value)
+                                    : entry.value}
                             </h4>
                         ))}
                 </div>
