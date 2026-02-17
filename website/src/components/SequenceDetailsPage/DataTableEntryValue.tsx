@@ -6,6 +6,7 @@ import { LinkWithMenuComponent } from './LinkWithMenuComponent';
 import { MutationStringContainers, SubstitutionsContainer, SubstitutionsContainers } from './MutationBadge';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
+import type { MutationBadgeData } from '../../types/config.ts';
 import { Button } from '../common/Button';
 
 interface Props {
@@ -135,14 +136,7 @@ const prettyFormatBytes = (bytes: number): string => {
     return (bytes / 1000 ** i).toFixed() + ' ' + sizes[i];
 };
 
-type MutationInfo = {
-    sequenceName: string;
-    mutationFrom: string;
-    position: number;
-    mutationTo: string;
-} | null;
-
-export function parseMutation(input: string): MutationInfo {
+export function parseMutation(input: string): MutationBadgeData | null {
     const regex = /^([a-zA-Z]+):([A-Z])(\d+)([A-Z])$/;
     const match = regex.exec(input);
 
@@ -158,19 +152,15 @@ export function parseMutation(input: string): MutationInfo {
     };
 }
 
-export function parseMutations(input: string): MutationInfo[] {
-  return input
-    .trim()
-    .split(/\s+/)            // split on spaces
-    .map(parseMutation)
-    .filter((m): m is MutationInfo => m !== null); // remove invalid entries
+export function parseMutations(input: string): MutationBadgeData[] {
+    return input
+        .trim()
+        .split(/\s+/)
+        .map(parseMutation)
+        .filter((m): m is MutationBadgeData => m !== null);
 }
 
-const CustomDisplayComponent: React.FC<Props> = ({
-    data,
-    dataUseTermsHistory,
-    segmentDisplayNameMap,
-}) => {
+const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, segmentDisplayNameMap }) => {
     const { value, customDisplay } = data;
 
     return (
@@ -197,13 +187,15 @@ const CustomDisplayComponent: React.FC<Props> = ({
                         />
                     ))}
                 {customDisplay?.type === 'generatedBadge' &&
-                    (value === undefined ? (
-                        <span className='italic'>N/A</span>
-                    ) : (
-                        <SubstitutionsContainer
-                            values={parseMutations(value)}
-                        />
-                    ))}
+                    typeof value === 'string' &&
+                    (() => {
+                        const mutations = parseMutations(value);
+                        return mutations.length === 0 ? (
+                            <span className='italic'>N/A</span>
+                        ) : (
+                            <SubstitutionsContainer values={mutations} />
+                        );
+                    })()}
                 {customDisplay?.type === 'link' && customDisplay.url !== undefined && (
                     <a
                         href={customDisplay.url.replace('__value__', value.toString())}
