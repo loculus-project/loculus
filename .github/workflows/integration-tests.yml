@@ -74,17 +74,6 @@ jobs:
       - uses: azure/setup-helm@v4
         with:
           version: v3.18.3
-      - name: Create k3d cluster
-        run: |
-          ./deploy.py --verbose cluster --bind-all
-      - name: Deploy with Helm
-        run: |
-          ./deploy.py --verbose helm \
-            --branch ${{ github.ref_name }} \
-            --sha ${{ env.sha }} \
-            --for-e2e \
-            --enablePreprocessing \
-            --use-localhost-ip
       - uses: actions/setup-node@v6
         with:
           node-version-file: ./integration-tests/.nvmrc
@@ -92,8 +81,21 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('integration-tests/**/package-lock.json') }}
-      - name: Install dependencies
+          key: ${{ runner.os }}-node-${{ hashFiles('integration-tests/**/package-lock.json', 'kubernetes/cdk8s/package-lock.json') }}
+      - name: Install CDK8s dependencies
+        run: cd kubernetes/cdk8s && npm ci
+      - name: Create k3d cluster
+        run: |
+          ./deploy.py --verbose cluster --bind-all
+      - name: Deploy with CDK8s
+        run: |
+          ./deploy.py --verbose deploy \
+            --branch ${{ github.ref_name }} \
+            --sha ${{ env.sha }} \
+            --for-e2e \
+            --enablePreprocessing \
+            --use-localhost-ip
+      - name: Install integration test dependencies
         run: cd integration-tests && npm ci
       - name: Install Python
         uses: actions/setup-python@v6

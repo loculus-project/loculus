@@ -235,7 +235,7 @@ The tests perform the same tests as described in the section on testing submissi
 
 ```sh
 ../deploy.py cluster --dev
-../deploy.py helm --dev --enablePreprocessing
+../deploy.py deploy --dev --enablePreprocessing
 ../generate_local_test_config.sh
 cd ../backend
 ./start_dev.sh &

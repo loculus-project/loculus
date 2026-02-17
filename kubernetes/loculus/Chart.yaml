@@ -1,5 +1,0 @@
-apiVersion: v2
-name: loculus
-description: A Helm chart for loculus
-version: 0.1.0
-icon: https://loculus.org/favicon.svg
