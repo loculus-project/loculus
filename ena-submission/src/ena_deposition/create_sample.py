@@ -280,12 +280,12 @@ def submission_table_update(db_config: SimpleConnectionPool):
 
 def is_old_version(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> bool:
     """Check if entry is incorrectly added older version - error and do not submit"""
-    version = int(seq_key.version)
+    version = seq_key.version
     accession = {"accession": seq_key.accession}
     sample_data_in_submission_table = find_conditions_in_db(
         db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )
-    all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
+    all_versions = sorted([entry["version"] for entry in sample_data_in_submission_table])
 
     if version < all_versions[-1]:
         update_values = {
