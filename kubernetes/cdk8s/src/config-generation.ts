@@ -24,7 +24,7 @@ import {
 } from './urls';
 
 /** Common metadata fields required for all organisms */
-function commonMetadataFields(values: LoculusValues): MetadataField[] {
+export function commonMetadataFields(values: LoculusValues): MetadataField[] {
   const fields: MetadataField[] = [
     {
       name: 'accessionVersion',
