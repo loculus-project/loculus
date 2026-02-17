@@ -55,7 +55,7 @@ export class MainIngress extends Construct {
     // Ingress resources are only created in server mode
     if (values.environment !== 'server') return;
 
-    const ns = 'default';
+    const ns = values.releaseNamespace;
     const backendHost = `backend${values.subdomainSeparator || '.'}${values.host}`;
     const keycloakHost = `authentication${values.subdomainSeparator || '.'}${values.host}`;
     const minioHost = `s3${values.subdomainSeparator || '.'}${values.host}`;

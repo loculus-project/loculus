@@ -132,6 +132,7 @@ export interface ImageConfig {
 }
 
 export interface LoculusValues {
+  releaseNamespace: string;
   environment: string;
   imagePullPolicy: string;
   localHost: string;

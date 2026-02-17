@@ -112,7 +112,7 @@ export class LapisIngress extends Construct {
 
     const organisms = getEnabledOrganisms(values);
     const organismKeys = organisms.map((o) => o.key);
-    const ns = 'default'; // Release namespace equivalent
+    const ns = values.releaseNamespace;
 
     // CORS middleware
     new ApiObject(this, 'cors', {

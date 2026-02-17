@@ -18,8 +18,9 @@ import { Docs } from './constructs/docs';
 import { MainIngress } from './constructs/ingress';
 
 export class LoculusChart extends Chart {
-  constructor(scope: Construct, id: string, values: LoculusValues) {
-    super(scope, id);
+  constructor(scope: Construct, id: string, values: LoculusValues, namespace: string) {
+    super(scope, id, { namespace });
+    values.releaseNamespace = namespace;
 
     // Secrets
     new Secrets(this, 'secrets', values);
