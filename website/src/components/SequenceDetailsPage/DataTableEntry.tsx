@@ -7,9 +7,10 @@ import { type DataUseTermsHistoryEntry } from '../../types/backend';
 interface Props {
     data: TableDataEntry;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
+    segmentDisplayNameMap: Record<string, string>;
 }
 
-const DataTableComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
+const DataTableComponent: React.FC<Props> = ({ data, dataUseTermsHistory, segmentDisplayNameMap }) => {
     const { label, type } = data;
     return (
         <>
@@ -23,7 +24,11 @@ const DataTableComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
             {type.kind === 'mutation' && (
                 <div className='text-sm my-1'>
                     <div className='font-medium text-gray-900 break-inside-avoid py-2'>{label}</div>
-                    <DataTableEntryValue data={data} dataUseTermsHistory={dataUseTermsHistory} />
+                    <DataTableEntryValue
+                        data={data}
+                        dataUseTermsHistory={dataUseTermsHistory}
+                        segmentDisplayNameMap={segmentDisplayNameMap}
+                    />
                 </div>
             )}
         </>

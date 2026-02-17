@@ -87,6 +87,7 @@ const DataTableComponent: React.FC<Props> = ({
                                         key={index}
                                         data={entry}
                                         dataUseTermsHistory={dataUseTermsHistory}
+                                        segmentDisplayNameMap={referenceGenomesInfo.segmentDisplayNames}
                                     />
                                 ))}
                             </div>
@@ -117,6 +118,7 @@ const DataTableComponent: React.FC<Props> = ({
                                         key={index}
                                         data={entry}
                                         dataUseTermsHistory={dataUseTermsHistory}
+                                        segmentDisplayNameMap={referenceGenomesInfo.segmentDisplayNames}
                                     />
                                 ))}
                             </div>
@@ -137,7 +139,7 @@ const DataTableComponent: React.FC<Props> = ({
                             <div className='flex flex-row'>
                                 <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
                             </div>
-                            {hasReferenceAccession && (
+                            {hasReferenceAccession && header.includes('mutation') && (
                                 <h2 className='pt-2 text-xs text-gray-500'>
                                     <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
                                     Mutations called relative to the <ReferenceDisplay reference={references} />{' '}
@@ -151,6 +153,7 @@ const DataTableComponent: React.FC<Props> = ({
                                         key={index}
                                         data={entry}
                                         dataUseTermsHistory={dataUseTermsHistory}
+                                        segmentDisplayNameMap={referenceGenomesInfo.segmentDisplayNames}
                                     />
                                 ))}
                             </div>

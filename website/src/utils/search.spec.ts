@@ -13,32 +13,44 @@ const multiSegmentNames = ['L', 'S'];
 describe('MetadataFilterSchema', () => {
     it('decodes _null_ values from query state for single values', () => {
         const schema = new MetadataFilterSchema([{ name: 'field1', type: 'string' }]);
-        const result = schema.getFieldValuesFromQuery({ field1: NULL_QUERY_VALUE }, {});
+        const result = schema.getFieldValuesFromQuery(
+            { field1: NULL_QUERY_VALUE },
+            {},
+            SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+        );
         expect(result.field1).toBeNull();
     });
 
     it('decodes _null_ values from query state for array values', () => {
         const schema = new MetadataFilterSchema([{ name: 'field1', type: 'string' }]);
-        const result = schema.getFieldValuesFromQuery({ field1: ['value1', NULL_QUERY_VALUE, 'value2'] }, {});
+        const result = schema.getFieldValuesFromQuery(
+            { field1: ['value1', NULL_QUERY_VALUE, 'value2'] },
+            {},
+            SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+        );
         expect(result.field1).toEqual(['value1', null, 'value2']);
     });
 
     it('handles empty arrays correctly', () => {
         const schema = new MetadataFilterSchema([{ name: 'field1', type: 'string' }]);
-        const result = schema.getFieldValuesFromQuery({ field1: [] }, {});
+        const result = schema.getFieldValuesFromQuery({ field1: [] }, {}, SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES);
         expect(result.field1).toEqual([]);
     });
 
     it('handles arrays with only _null_ values', () => {
         const schema = new MetadataFilterSchema([{ name: 'field1', type: 'string' }]);
-        const result = schema.getFieldValuesFromQuery({ field1: [NULL_QUERY_VALUE, NULL_QUERY_VALUE] }, {});
+        const result = schema.getFieldValuesFromQuery(
+            { field1: [NULL_QUERY_VALUE, NULL_QUERY_VALUE] },
+            {},
+            SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+        );
         expect(result.field1).toEqual([null, null]);
     });
 });
 
 describe('MetadataVisibility', () => {
     it('should return false when isChecked is false', () => {
-        const visibility = new MetadataVisibility(false, undefined);
+        const visibility = new MetadataVisibility(false, undefined, undefined);
 
         // Single segment single references
         expect(visibility.isVisible(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { [singleSegmentName]: null })).toBe(false);
@@ -65,7 +77,7 @@ describe('MetadataVisibility', () => {
     });
 
     it('should return true when isChecked is true and onlyForReference is undefined', () => {
-        const visibility = new MetadataVisibility(true, undefined);
+        const visibility = new MetadataVisibility(true, undefined, undefined);
 
         // Single segment single references
         expect(visibility.isVisible(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { [singleSegmentName]: null })).toBe(true);
@@ -90,7 +102,7 @@ describe('MetadataVisibility', () => {
     });
 
     it('should return true when isChecked is true and selectedReference matches or is not set', () => {
-        let visibility = new MetadataVisibility(true, 'singleReference');
+        let visibility = new MetadataVisibility(true, 'singleReference', 'main');
 
         // Single segment single references
         expect(visibility.isVisible(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { [singleSegmentName]: null })).toBe(false);
@@ -98,7 +110,7 @@ describe('MetadataVisibility', () => {
             visibility.isVisible(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { [singleSegmentName]: 'singleReference' }),
         ).toBe(true);
 
-        visibility = new MetadataVisibility(true, 'ref1');
+        visibility = new MetadataVisibility(true, 'ref1', 'main');
 
         // Single segment multiple references
         expect(visibility.isVisible(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { [singleSegmentName]: null })).toBe(false);

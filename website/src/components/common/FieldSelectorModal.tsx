@@ -6,10 +6,7 @@ import { ACCESSION_VERSION_FIELD } from '../../settings.ts';
 import type { Metadata } from '../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
-import {
-    stillRequiresReferenceNameSelection,
-    type SegmentReferenceSelections,
-} from '../../utils/sequenceTypeHelpers.ts';
+import { segmentReferenceSelected, type SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 
 export type FieldItem = {
     name: string;
@@ -267,7 +264,7 @@ export function getDisplayState(
 
     if (
         field.onlyForReference !== undefined &&
-        stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames)
+        !segmentReferenceSelected(field.relatesToSegment!, referenceGenomesInfo, selectedReferenceNames)
     ) {
         if (greyOutIfStillRequiresReferenceSelection) {
             return {

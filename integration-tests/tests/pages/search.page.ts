@@ -105,6 +105,28 @@ export class SearchPage {
         await this.page.keyboard.press('Escape');
     }
 
+    async enterSegmentedMutation(mutation: string, segment: string) {
+        const outer = this.page.locator('details', {
+            has: this.page.locator('summary', { hasText: 'Sequence Filters' }),
+        });
+        const innerS = outer.locator('details', {
+            has: this.page.locator('summary', { hasText: new RegExp(`^${segment}$`) }),
+        });
+        await innerS.locator('summary', { hasText: new RegExp(`^${segment}$`) }).click();
+        await expect(innerS).toHaveAttribute('open', '');
+        await expect(innerS.getByText('Mutations', { exact: true })).toBeVisible();
+        const locator = 'input#mutField' + (segment ? `_${segment}` : '');
+        const input = innerS.locator(locator);
+        await expect(input).toBeVisible();
+        await expect(input).toBeEditable();
+        await input.click();
+        await input.fill(mutation);
+        const optionRegex = new RegExp(`^${mutation}(\\([0-9,]+\\))?$`);
+        const matchingOption = innerS.getByRole('option', { name: optionRegex }).first();
+        await matchingOption.click({ timeout: 2000 });
+        await this.page.keyboard.press('Escape');
+    }
+
     async enterAccessions(accessions: string) {
         // Target the main accession textbox (avoid header/nav widgets)
         const accessionField = this.page.getByRole('textbox', {

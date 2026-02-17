@@ -29,7 +29,7 @@ import {
     getFieldVisibilitiesFromQuery,
     MetadataFilterSchema,
 } from '../../utils/search.ts';
-import { getSegmentAndGeneInfo, stillRequiresReferenceNameSelection } from '../../utils/sequenceTypeHelpers.ts';
+import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
@@ -128,8 +128,8 @@ export const InnerSearchFullUI = ({
      * and the initial `state` (URL search params).
      */
     const fieldValues = useMemo(() => {
-        return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
-    }, [state, hiddenFieldValues, filterSchema]);
+        return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues, referenceGenomesInfo);
+    }, [state, hiddenFieldValues, filterSchema, referenceGenomesInfo]);
 
     useEffect(() => {
         if (showEditDataUseTermsControls && dataUseTermsEnabled) {
@@ -153,15 +153,15 @@ export const InnerSearchFullUI = ({
     const sequencesSelected = selectedSeqs.size > 0;
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
+    const segmentAndGeneInfo = useMemo(
+        () => getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
+        [referenceGenomesInfo, referenceSelection?.selectedReferences],
+    );
+
     const tableFilter = useMemo(
         () =>
-            new FieldFilterSet(
-                filterSchema,
-                fieldValues,
-                hiddenFieldValues,
-                getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
-            ),
-        [fieldValues, hiddenFieldValues, referenceGenomesInfo, referenceSelection?.selectedReferences, filterSchema],
+            new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, segmentAndGeneInfo, referenceGenomesInfo),
+        [fieldValues, hiddenFieldValues, referenceGenomesInfo, filterSchema],
     );
 
     /**
@@ -215,9 +215,7 @@ export const InnerSearchFullUI = ({
         }
     }, [aggregatedHook.data?.data, oldCount]);
 
-    const showMutationSearch =
-        schema.submissionDataTypes.consensusSequences &&
-        !stillRequiresReferenceNameSelection(referenceGenomesInfo, referenceSelection?.selectedReferences);
+    const showMutationSearch = schema.submissionDataTypes.consensusSequences;
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>

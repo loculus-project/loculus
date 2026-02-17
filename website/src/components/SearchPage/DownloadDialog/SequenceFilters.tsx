@@ -1,7 +1,9 @@
 import { type FieldValues } from '../../../types/config.ts';
+import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { intoMutationSearchParams } from '../../../utils/mutation.ts';
-import { MetadataFilterSchema } from '../../../utils/search.ts';
-import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
+import { getReferenceIdentifier } from '../../../utils/referenceSelection.ts';
+import { MetadataFilterSchema, MUTATION_KEY } from '../../../utils/search.ts';
+import { type SegmentAndGeneInfo, getSegmentNames } from '../../../utils/sequenceTypeHelpers.ts';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
@@ -44,7 +46,8 @@ export class FieldFilterSet implements SequenceFilter {
     private readonly filterSchema: MetadataFilterSchema;
     private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
-    private readonly suborganismSegmentAndGeneInfo: SegmentAndGeneInfo | null;
+    private readonly segmentAndGeneInfo: SegmentAndGeneInfo;
+    private readonly referenceGenomesInfo: ReferenceGenomesInfo;
 
     /**
      * @param filterSchema The {@link MetadataFilterSchema} to use. Provides labels and other
@@ -52,18 +55,21 @@ export class FieldFilterSet implements SequenceFilter {
      * @param fieldValues The {@link FieldValues} that are used to filter sequence entries.
      * @param hiddenFieldValues key-value combinations of fields that should be hidden when converting
      *     displaying the field values (because these are default values).
-     * @param suborganismSegmentAndGeneInfo Necessary to construct mutation API params.
+     * @param segmentAndGeneInfo Necessary to construct mutation API params.
+     * @param referenceGenomesInfo Necessary to construct mutation API params.
      */
     constructor(
         filterSchema: MetadataFilterSchema,
         fieldValues: FieldValues,
         hiddenFieldValues: FieldValues,
-        suborganismSegmentAndGeneInfo: SegmentAndGeneInfo | null,
+        segmentAndGeneInfo: SegmentAndGeneInfo,
+        referenceGenomesInfo: ReferenceGenomesInfo,
     ) {
         this.filterSchema = filterSchema;
         this.fieldValues = fieldValues;
         this.hiddenFieldValues = hiddenFieldValues;
-        this.suborganismSegmentAndGeneInfo = suborganismSegmentAndGeneInfo;
+        this.segmentAndGeneInfo = segmentAndGeneInfo;
+        this.referenceGenomesInfo = referenceGenomesInfo;
     }
 
     /**
@@ -71,7 +77,18 @@ export class FieldFilterSet implements SequenceFilter {
      * This is a convenience function, mostly used for testing.
      */
     public static empty() {
-        return new FieldFilterSet(new MetadataFilterSchema([]), {}, {}, { nucleotideSegmentInfos: [], geneInfos: [] });
+        return new FieldFilterSet(
+            new MetadataFilterSchema([]),
+            {},
+            {},
+            { nucleotideSegmentInfos: [], geneInfos: [] },
+            {
+                isMultiSegmented: false,
+                segmentReferenceGenomes: {},
+                segmentDisplayNames: {},
+                useLapisMultiSegmentedEndpoint: false,
+            },
+        );
     }
 
     public sequenceCount(): number | undefined {
@@ -83,9 +100,12 @@ export class FieldFilterSet implements SequenceFilter {
     }
 
     public toApiParams(): LapisSearchParameters {
+        const mutationSearchIdentifiers = getSegmentNames(this.referenceGenomesInfo).map((segmentName) =>
+            getReferenceIdentifier(MUTATION_KEY, segmentName, this.referenceGenomesInfo.isMultiSegmented),
+        );
         const sequenceFilters = Object.fromEntries(
             Object.entries(this.fieldValues as Record<string, any>).filter(
-                ([, value]) => value !== undefined && value !== '',
+                ([key, value]) => value !== undefined && value !== '' && !mutationSearchIdentifiers.includes(key),
             ),
         );
         for (const filterName of Object.keys(sequenceFilters)) {
@@ -101,10 +121,9 @@ export class FieldFilterSet implements SequenceFilter {
             sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
         }
 
-        delete sequenceFilters.mutation;
         const mutationSearchParams =
-            this.suborganismSegmentAndGeneInfo !== null
-                ? intoMutationSearchParams(this.fieldValues.mutation, this.suborganismSegmentAndGeneInfo)
+            Object.keys(this.segmentAndGeneInfo.nucleotideSegmentInfos).length > 0
+                ? intoMutationSearchParams(this.fieldValues, this.segmentAndGeneInfo)
                 : {
                       aminoAcidInsertions: [],
                       aminoAcidMutations: [],

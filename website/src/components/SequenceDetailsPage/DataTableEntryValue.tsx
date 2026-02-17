@@ -3,7 +3,7 @@ import sanitizeHtml from 'sanitize-html';
 
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
 import { LinkWithMenuComponent } from './LinkWithMenuComponent';
-import { SubstitutionsContainers } from './MutationBadge';
+import { MutationStringContainers, SubstitutionsContainers } from './MutationBadge';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
 import { Button } from '../common/Button';
@@ -11,6 +11,7 @@ import { Button } from '../common/Button';
 interface Props {
     data: TableDataEntry;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
+    segmentDisplayNameMap?: Record<string, string>;
 }
 
 const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
@@ -134,7 +135,7 @@ const prettyFormatBytes = (bytes: number): string => {
     return (bytes / 1000 ** i).toFixed() + ' ' + sizes[i];
 };
 
-const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
+const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, segmentDisplayNameMap }) => {
     const { value, customDisplay } = data;
 
     return (
@@ -143,10 +144,22 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 {!customDisplay && <PlainValueDisplay value={value} />}
                 {customDisplay?.type === 'percentage' && typeof value === 'number' && `${(100 * value).toFixed(2)}%`}
                 {customDisplay?.type === 'badge' &&
-                    (customDisplay.value === undefined ? (
+                    (customDisplay.badge === undefined || customDisplay.badge.length == 0 ? (
                         <span className='italic'>N/A</span>
                     ) : (
-                        <SubstitutionsContainers values={customDisplay.value} />
+                        <SubstitutionsContainers
+                            values={customDisplay.badge}
+                            segmentDisplayNameMap={segmentDisplayNameMap}
+                        />
+                    ))}
+                {customDisplay?.type === 'list' &&
+                    (customDisplay.list === undefined || customDisplay.list.length == 0 ? (
+                        <span className='italic'>N/A</span>
+                    ) : (
+                        <MutationStringContainers
+                            values={customDisplay.list}
+                            segmentDisplayNameMap={segmentDisplayNameMap}
+                        />
                     ))}
                 {customDisplay?.type === 'link' && customDisplay.url !== undefined && (
                     <a

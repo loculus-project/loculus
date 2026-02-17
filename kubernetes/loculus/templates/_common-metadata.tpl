@@ -336,6 +336,12 @@ organisms:
     html: {{ .customDisplay.html }}
     {{- end }}
   {{- end }}
+  {{- if .isSequenceFilter }}
+  isSequenceFilter: {{ .isSequenceFilter }}
+  {{- end }}
+  {{- if .relatesToSegment }}
+  relatesToSegment: {{ .relatesToSegment }}
+  {{- end }}
 {{- end }}
 
 {{/* Generate website metadata from passed metadata array */}}
@@ -358,6 +364,10 @@ fields:
   header: {{ (default "Other" .header) | quote }}
   {{- else }}
   header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
+  {{- end }}
+  relatesToSegment: {{ $segment }}
+  {{- if .isSequenceFilter }}
+  isSequenceFilter: true
   {{- end }}
   {{- if and .customDisplay .customDisplay.displayGroup }}
   customDisplay:

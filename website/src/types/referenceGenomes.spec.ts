@@ -17,6 +17,7 @@ export const SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
             },
         },
     },
+    segmentDisplayNames: {},
     isMultiSegmented: false,
     useLapisMultiSegmentedEndpoint: false,
 };
@@ -55,6 +56,7 @@ export const MULTI_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
             },
         },
     },
+    segmentDisplayNames: {},
     isMultiSegmented: true,
     useLapisMultiSegmentedEndpoint: true,
 };
@@ -105,6 +107,7 @@ export const SINGLE_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
             },
         },
     },
+    segmentDisplayNames: {},
     isMultiSegmented: false,
     useLapisMultiSegmentedEndpoint: true,
 };
@@ -166,6 +169,7 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
             },
         },
     },
+    segmentDisplayNames: { S: 'S (segment)', L: 'L (segment)' },
     isMultiSegmented: true,
     useLapisMultiSegmentedEndpoint: true,
 };
@@ -173,6 +177,7 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
 export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSchema = [
     {
         name: 'L',
+        displayName: 'L (segment)',
         references: [
             {
                 name: 'ref1',
@@ -196,6 +201,7 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSchema
     },
     {
         name: 'S',
+        displayName: 'S (segment)',
         references: [
             {
                 name: 'singleReference',
@@ -209,6 +215,13 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSchema
         ],
     },
 ];
+
+export const MOCK_REFERENCE_GENOMES_INFO: ReferenceGenomesInfo = {
+    isMultiSegmented: false,
+    segmentReferenceGenomes: {},
+    segmentDisplayNames: {},
+    useLapisMultiSegmentedEndpoint: false,
+};
 
 describe('toReferenceGenomes', () => {
     it('maps single segment + single reference', () => {
@@ -240,6 +253,7 @@ describe('toReferenceGenomes', () => {
 
         expect(toReferenceGenomes(input)).toEqual({
             segmentReferenceGenomes: {},
+            segmentDisplayNames: {},
             isMultiSegmented: false,
             useLapisMultiSegmentedEndpoint: false,
         });

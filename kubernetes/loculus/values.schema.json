@@ -134,6 +134,16 @@
           "type": "boolean",
           "description": "If true, the field is initially visible in the UI."
         },
+        "isSequenceFilter": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "If true, this field will appear under 'Sequence Filters' on the search page instead of 'Metadata Filters'. Defaults to false."
+        },
+        "relatesToSegment": {
+          "groups": ["metadata"],
+          "type": "string",
+          "description": "Which segment this metadata field relates to. Can be set to any of the segment names defined for the organism."
+        },
         "hideOnSequenceDetailsPage": {
           "groups": ["metadata"],
           "type": "boolean",
@@ -822,6 +832,12 @@
                 "type": "string",
                 "description": "Name of the segment (e.g., 'S', 'M', 'L', or 'main' for single-segmented organisms)"
               },
+              "displayName": {
+                "groups": ["referenceGenomes"],
+                "docsIncludePrefix": false,
+                "type": "string",
+                "description": "Display name of the segment used on the website (e.g., 'S', 'M', 'L', or 'main' for single-segmented organisms)"
+              },
               "references": {
                 "type": "array",
                 "description": "Array of reference genomes for this segment",
@@ -835,6 +851,12 @@
                       "docsIncludePrefix": false,
                       "type": "string",
                       "description": "Name of the reference genome"
+                    },
+                    "displayName": {
+                      "groups": ["nucleotide-sequence"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Display name of the reference genome used on the website (e.g., 'h1n1pdm/California/07/2009')"
                     },
                     "sequence": {
                       "groups": ["nucleotide-sequence"],
