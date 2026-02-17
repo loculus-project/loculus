@@ -56,6 +56,10 @@ export const MutationField: FC<MutationFieldProps> = ({ singleSegmentAndGeneInfo
         onChange(serializeMutationQueries(newSelectedOptions));
     };
 
+    const domId = singleSegmentAndGeneInfo.useLapisMultiSegmentedEndpoint
+        ? 'mutField_' + singleSegmentAndGeneInfo.nucleotideSegmentInfo.name
+        : 'mutField';
+
     return (
         <div className='flex relative mb-2 flex-row w-full'>
             <Combobox value={selectedOptions} onChange={handleOptionClick}>
@@ -66,7 +70,7 @@ export const MutationField: FC<MutationFieldProps> = ({ singleSegmentAndGeneInfo
                         hasContent={selectedOptions.length > 0 || inputValue !== ''}
                         borderClassName={hasFocus ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'}
                         className='shadow-sm'
-                        htmlFor='mutField'
+                        htmlFor={domId}
                     >
                         {selectedOptions.length > 0 && (
                             <div className='flex flex-wrap gap-1 p-1 pt-3'>
@@ -102,7 +106,7 @@ export const MutationField: FC<MutationFieldProps> = ({ singleSegmentAndGeneInfo
                                 onChange={handleInputChange}
                                 displayValue={(option: MutationQuery) => option.text}
                                 value={inputValue}
-                                id='mutField'
+                                id={domId}
                                 className={`block w-full text-sm text-gray-900 bg-transparent focus:outline-none focus:ring-0 border-0 ${
                                     selectedOptions.length === 0 ? 'px-2.5 pb-1.5 pt-3' : 'px-3 pb-1.5 pt-1'
                                 }`}
