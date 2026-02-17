@@ -3,17 +3,14 @@ import sanitizeHtml from 'sanitize-html';
 
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
 import { LinkWithMenuComponent } from './LinkWithMenuComponent';
-import { MutationStringContainers, SubstitutionsContainers } from './MutationBadge';
-import { substitutionsMap } from './getTableData.ts';
+import { MutationStringContainers, SubstitutionsContainer, SubstitutionsContainers } from './MutationBadge';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
-import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { Button } from '../common/Button';
 
 interface Props {
     data: TableDataEntry;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    referenceGenomesInfo: ReferenceGenomesInfo;
     segmentDisplayNameMap?: Record<string, string>;
 }
 
@@ -139,7 +136,7 @@ const prettyFormatBytes = (bytes: number): string => {
 };
 
 type MutationInfo = {
-    segmentName: string;
+    sequenceName: string;
     mutationFrom: string;
     position: number;
     mutationTo: string;
@@ -151,10 +148,10 @@ export function parseMutation(input: string): MutationInfo {
 
     if (!match) return null;
 
-    const [, segmentName, mutationFrom, position, mutationTo] = match;
+    const [, sequenceName, mutationFrom, position, mutationTo] = match;
 
     return {
-        segmentName,
+        sequenceName,
         mutationFrom,
         position: Number(position),
         mutationTo,
@@ -172,7 +169,6 @@ export function parseMutations(input: string): MutationInfo[] {
 const CustomDisplayComponent: React.FC<Props> = ({
     data,
     dataUseTermsHistory,
-    referenceGenomesInfo,
     segmentDisplayNameMap,
 }) => {
     const { value, customDisplay } = data;
@@ -204,11 +200,8 @@ const CustomDisplayComponent: React.FC<Props> = ({
                     (value === undefined ? (
                         <span className='italic'>N/A</span>
                     ) : (
-                        <SubstitutionsContainers
-                            values={substitutionsMap(
-                                parseMutations(value),
-                                referenceGenomesInfo,
-                            )}
+                        <SubstitutionsContainer
+                            values={parseMutations(value)}
                         />
                     ))}
                 {customDisplay?.type === 'link' && customDisplay.url !== undefined && (
