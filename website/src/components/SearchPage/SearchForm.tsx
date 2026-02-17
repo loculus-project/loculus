@@ -27,6 +27,7 @@ import {
     getSingleSegmentAndGeneInfo,
     type SingleSegmentAndGeneInfo,
 } from '../../utils/sequenceTypeHelpers.ts';
+import DisabledUntilHydrated from '../DisabledUntilHydrated.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal, getDisplayState } from '../common/FieldSelectorModal.tsx';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
@@ -54,18 +55,20 @@ function CollapsibleSection({ title, open = true, children, subgroups = false }:
     const className = subgroups ? 'group/inner rounded-lg border px-4 pt-4' : 'group px-2 pt-2';
     const arrowClassName = subgroups ? 'group-open/inner:rotate-180' : 'group-open:rotate-180';
     return (
-        <details className={className} open={open}>
-            <summary className='flex w-full items-center list-none cursor-pointer'>
-                <div className='flex items-center'>
-                    {typeof title === 'string' ? <SearchSectionHeader title={title} /> : title}
-                </div>
-                <IwwaArrowDown
-                    className={`ml-auto h-5 w-5 transition-transform duration-200 text-primary-700 ${arrowClassName}`}
-                    aria-hidden='true'
-                />
-            </summary>
-            {children}
-        </details>
+        <DisabledUntilHydrated>
+            <details className={className} open={open}>
+                <summary className='flex w-full items-center list-none cursor-pointer'>
+                    <div className='flex items-center'>
+                        {typeof title === 'string' ? <SearchSectionHeader title={title} /> : title}
+                    </div>
+                    <IwwaArrowDown
+                        className={`ml-auto h-5 w-5 transition-transform duration-200 text-primary-700 ${arrowClassName}`}
+                        aria-hidden='true'
+                    />
+                </summary>
+                {children}
+            </details>
+        </DisabledUntilHydrated>
     );
 }
 
