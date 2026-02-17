@@ -15,13 +15,15 @@ import {
     allReferencesSelected,
     segmentsWithMultipleReferences,
     type SegmentReferenceSelections,
+    getSegmentLapisNames,
+    type SegmentLapisNames,
 } from '../../../utils/sequenceTypeHelpers.ts';
 
 export type DownloadFormState = {
     includeRestricted: boolean;
     dataType: DownloadDataType['type'];
     compression: Compression;
-    unalignedNucleotideSequence: string;
+    unalignedNucleotideSequence: SegmentLapisNames;
     alignedNucleotideSequence: string;
     alignedAminoAcidSequence: string;
     includeRichFastaHeaders: boolean;
@@ -57,6 +59,11 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const { nucleotideSegmentInfos, geneInfos } = useMemo(
         () => getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferenceNames),
+        [referenceGenomesInfo, selectedReferenceNames],
+    );
+
+    const segments = useMemo(
+        () => getSegmentLapisNames(referenceGenomesInfo, selectedReferenceNames),
         [referenceGenomesInfo, selectedReferenceNames],
     );
 
@@ -101,16 +108,20 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                     {referenceGenomesInfo.isMultiSegmented ? (
                         <DropdownOptionBlock
                             name='unalignedNucleotideSequences'
-                            options={nucleotideSegmentInfos.map((segment) => ({
+                            options={segments.map((segment) => ({
                                 label: <>{segment.name}</>,
                             }))}
-                            selected={nucleotideSegmentInfos.findIndex(
-                                (info) => info.lapisName === downloadFormState.unalignedNucleotideSequence,
-                            )}
+                            selected={segments.findIndex((info) => {
+                                const currentSet = new Set(downloadFormState.unalignedNucleotideSequence.lapisNames);
+                                return (
+                                    info.lapisNames.length === currentSet.size &&
+                                    info.lapisNames.every((name) => currentSet.has(name))
+                                );
+                            })}
                             onSelect={(value) =>
                                 setDownloadFormState((previous) => ({
                                     ...previous,
-                                    unalignedNucleotideSequence: nucleotideSegmentInfos[value].lapisName,
+                                    unalignedNucleotideSequence: segments[value],
                                 }))
                             }
                             disabled={downloadFormState.dataType !== 'unalignedNucleotideSequences'}

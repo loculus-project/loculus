@@ -19,6 +19,13 @@ export type SegmentInfo = {
     name: string;
 };
 
+export type SegmentLapisNames = {
+    /** the segment name as it is called in LAPIS */
+    lapisNames: string[];
+    /** the segment name as it should be displayed in the UI */
+    name: string;
+};
+
 export type GeneInfo = {
     /** the gene name as it is called in LAPIS */
     lapisName: string;
@@ -165,6 +172,39 @@ export function getSegmentAndGeneInfo(
         useLapisMultiSegmentedEndpoint: referenceGenomesInfo.useLapisMultiSegmentedEndpoint,
         multiSegmented: referenceGenomesInfo.isMultiSegmented,
     };
+}
+
+/**
+ * Get all lapis names for a specific segment, if a reference is selected filter the lapis names.
+ * @param referenceGenomesInfo - The reference genome lightweight schema
+ * @param selectedReferences - Map of segment names to selected references
+ * @returns Array of SegmentLapisNames with all segments and their LAPIS names
+ */
+export function getSegmentLapisNames(
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    selectedReferences?: SegmentReferenceSelections,
+): SegmentLapisNames[] {
+    const nucleotideSegmentInfos: SegmentLapisNames[] = [];
+
+    for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
+        const isSingleReference = Object.keys(segmentData).length === 1;
+        if (isSingleReference) {
+            nucleotideSegmentInfos.push({ name: segmentName, lapisNames: [segmentName] });
+            continue;
+        }
+
+        const selectedRef = selectedReferences?.[segmentName] ?? null;
+        if (!selectedRef || !(selectedRef in segmentData)) {
+            nucleotideSegmentInfos.push({
+                name: segmentName,
+                lapisNames: Object.values(segmentData).map((info) => info.lapisName),
+            });
+            continue;
+        }
+        nucleotideSegmentInfos.push({ name: segmentName, lapisNames: [segmentData[selectedRef].lapisName] });
+    }
+
+    return nucleotideSegmentInfos;
 }
 
 export function getSingleSegmentAndGeneInfo(
