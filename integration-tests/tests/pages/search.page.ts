@@ -115,7 +115,8 @@ export class SearchPage {
         await innerS.locator('summary', { hasText: new RegExp(`^${segment}$`) }).click();
         await expect(innerS).toHaveAttribute('open', '');
         await expect(innerS.getByText('Mutations', { exact: true })).toBeVisible();
-        const input = innerS.locator('input#mutField');
+        const locator = 'input#mutField' + (segment ? `_${segment}` : '');
+        const input = innerS.locator(locator);
         await expect(input).toBeVisible();
         await expect(input).toBeEditable();
         await input.click();
