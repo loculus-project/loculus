@@ -45,9 +45,9 @@ npm --version
 # Create values file to use host.k3d.internal
 echo 'localHost: host.k3d.internal' > /tmp/k3d-values.yaml
 
-# Deploy with Helm
+# Deploy with CDK8s
 SHA=$(git rev-parse HEAD | cut -c1-7)
-./deploy.py --verbose helm --branch main --sha $SHA --for-e2e --enablePreprocessing --values /tmp/k3d-values.yaml
+./deploy.py --verbose deploy --branch main --sha $SHA --for-e2e --enablePreprocessing --values /tmp/k3d-values.yaml
 
 # Add host entry so the browser can resolve host.k3d.internal
 # (requires sudo - add this line to /etc/hosts if not already present)

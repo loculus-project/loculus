@@ -21,16 +21,3 @@ repos:
       entry: npx prettier@3.6.2 --write
       language: system
       files: ^kubernetes/loculus/values\.schema\.json$
-    - id: helm-lint
-      name: helm lint
-      entry: bash
-      args:
-        - -c
-        - |
-          set -euo pipefail
-          helm lint kubernetes/loculus -f kubernetes/loculus/values.yaml
-          helm lint kubernetes/loculus -f kubernetes/loculus/values.yaml -f kubernetes/loculus/values_e2e_and_dev.yaml
-          helm lint kubernetes/loculus -f kubernetes/loculus/values.yaml -f kubernetes/loculus/values_preview_server.yaml
-      language: system
-      pass_filenames: false
-      files: ^kubernetes/loculus/

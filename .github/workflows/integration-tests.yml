@@ -89,7 +89,7 @@ jobs:
           ./deploy.py --verbose cluster --bind-all
       - name: Deploy with CDK8s
         run: |
-          ./deploy.py --verbose helm \
+          ./deploy.py --verbose deploy \
             --branch ${{ github.ref_name }} \
             --sha ${{ env.sha }} \
             --for-e2e \

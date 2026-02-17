@@ -1,7 +1,7 @@
 # Kubernetes setup
 
-This directory contains a Helm chart to deploy Loculus instances for several purposes.
-The Helm variable `environment` reflects those purposes:
+This directory contains the CDK8s (TypeScript) configuration to deploy Loculus instances for several purposes.
+The `environment` variable reflects those purposes:
 
 - `local`: Running locally with ports
 - `server`: Running on a server with domain name
@@ -12,7 +12,7 @@ _For development, follow the k3d instructions lower down the page._
 
 ### Prerequisites
 
-Install [helm](https://helm.sh/) and use [traefik](https://traefik.io/traefik/) for ingress.
+Install [helm](https://helm.sh/) (needed for the secret generator dependency), [Node.js](https://nodejs.org/) (for CDK8s), and use [traefik](https://traefik.io/traefik/) for ingress.
 
 Create a long-lived managed database: [to be documented as part of: https://github.com/loculus-project/loculus/issues/793]
 
@@ -20,18 +20,24 @@ Create your own configuration, by copying the `loculus/values.yaml` file and edi
 
 ### Deployment
 
-Install the Helm chart:
+Deploy using the deploy script:
 
 ```shell
-helm install loculus kubernetes/loculus -f my-values.yaml
+./deploy.py deploy --values my-values.yaml
 ```
 
 ## Local development/testing with k3d
 
 ### Prerequisites
 
-Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
+Install [k3d](https://k3d.io/v5.6.0/), [helm](https://helm.sh/) (for the secret generator), and [Node.js](https://nodejs.org/).
 We also recommend installing [k9s](https://k9scli.io/) to inspect cluster resources.
+
+Install the CDK8s dependencies:
+
+```shell
+cd cdk8s && npm ci && cd ..
+```
 
 We deploy to kubernetes via the `../deploy.py` script. It requires you to have python 3.9 or higher and the packages `pyyaml` and `requests` installed. To create a virtual environment with the required dependencies run:
 
@@ -49,14 +55,14 @@ NOTE: On MacOS, make sure that you have configured enough RAM in Docker, we reco
 
 ```shell
 ../deploy.py cluster --dev
-../deploy.py helm --dev
+../deploy.py deploy --dev
 ```
 
 Start the [backend](/backend/README.md) and the [website](/website/README.md) locally. Note that by default the deploy script will also start a Loculus deployment without preprocessing and ingest, to add preprocessing and ingest add the `--enablePreprocessing` and `--enableIngest` flags. To run either of these deployments locally you will need to use the generated configs.
 
 ##### The `deploy.py` script
 
-The `deploy.py` script wraps the most important `k3d` and `helm` commands.
+The `deploy.py` script wraps the most important `k3d` and CDK8s commands.
 Check the help for more information:
 
 ```shell
@@ -74,10 +80,10 @@ Create a cluster that doesn't expose the ports of the backend and the website:
 ../deploy.py cluster --dev
 ```
 
-Install the chart with some port forwarding disabled to link to local manual runs of the backend and website:
+Deploy the chart with some port forwarding disabled to link to local manual runs of the backend and website:
 
 ```shell
-../deploy.py helm --dev
+../deploy.py deploy --dev
 ```
 
 Start the website and the backend locally.
@@ -97,7 +103,7 @@ kubectl get events
 
 might help to see the reason.
 
-Redeploy after changing the Helm chart:
+Redeploy after changing the CDK8s code:
 
 ```shell
 ../deploy.py upgrade
@@ -109,7 +115,7 @@ You can also delete the cluster with:
 ../deploy.py cluster --delete
 ```
 
-With helm based commands you can customise the values yaml file with `--values [file.yaml]`.
+You can customise the values yaml file with `--values [file.yaml]`.
 
 ## Full deployment for E2E testing
 
@@ -122,10 +128,10 @@ Create a cluster with ports for all services exposed:
 ../deploy.py cluster
 ```
 
-Install the chart to deploy the services:
+Deploy the services:
 
 ```shell
-../deploy.py helm --branch [your_branch]
+../deploy.py deploy --branch [your_branch]
 ```
 
 ## Argo CD

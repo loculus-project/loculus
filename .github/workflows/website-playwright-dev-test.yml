@@ -27,9 +27,6 @@ jobs:
         exclude:
           - os: ${{ github.ref != 'refs/heads/main' && 'macos-latest' }}
     steps:
-      - uses: azure/setup-helm@v4
-        with:
-          version: v3.18.3
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'

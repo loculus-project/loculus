@@ -31,7 +31,7 @@ ROOT_DIR = script_path.parent
 
 CLUSTER_NAME = "testCluster"
 CDK8S_DIR = ROOT_DIR / "kubernetes" / "cdk8s"
-HELM_CHART_DIR = ROOT_DIR / "kubernetes" / "loculus"  # Still used for values files and secret generator
+VALUES_DIR = ROOT_DIR / "kubernetes" / "loculus"
 
 WEBSITE_PORT_MAPPING = "-p 127.0.0.1:3000:30081@agent:0"
 BACKEND_PORT_MAPPING = "-p 127.0.0.1:8079:30082@agent:0"
@@ -49,7 +49,7 @@ PORTS = [
     S3_PORT_MAPPING,
 ]
 
-parser = argparse.ArgumentParser(description="Manage k3d cluster and helm installations.")
+parser = argparse.ArgumentParser(description="Manage k3d cluster and CDK8s deployments.")
 subparsers = parser.add_subparsers(dest="subcommand", required=True, help="Subcommands")
 parser.add_argument(
     "--dry-run", action="store_true", help="Print commands instead of executing them"
@@ -69,44 +69,44 @@ cluster_parser.add_argument(
 cluster_parser.add_argument("--delete", action="store_true", help="Delete the cluster")
 cluster_parser.add_argument("--bind-all", action="store_true", help="Bind to all interfaces")
 
-helm_parser = subparsers.add_parser("helm", help="Install the Helm chart to the k3d cluster")
-helm_parser.add_argument(
+deploy_parser = subparsers.add_parser("deploy", help="Deploy to the k3d cluster using CDK8s")
+deploy_parser.add_argument(
     "--dev",
     action="store_true",
     help="Set up a development environment for running the website and the backend locally",
 )
-helm_parser.add_argument("--branch", help="Set the branch to deploy with the Helm chart")
-helm_parser.add_argument("--sha", help="Set the commit sha to deploy with the Helm chart")
-helm_parser.add_argument("--uninstall", action="store_true", help="Uninstall installation")
-helm_parser.add_argument(
+deploy_parser.add_argument("--branch", help="Set the branch to deploy")
+deploy_parser.add_argument("--sha", help="Set the commit sha to deploy")
+deploy_parser.add_argument("--uninstall", action="store_true", help="Uninstall installation")
+deploy_parser.add_argument(
     "--enablePreprocessing",
     action="store_true",
     help="Include deployment of preprocessing pipelines",
 )
-helm_parser.add_argument(
+deploy_parser.add_argument(
     "--enableIngest", action="store_true", help="Include deployment of ingest pipelines"
 )
 
-helm_parser.add_argument(
+deploy_parser.add_argument(
     "--values",
     action="append",
-    help="Values file for helm chart (can be specified multiple times)",
+    help="Values file (can be specified multiple times)",
 )
-helm_parser.add_argument(
+deploy_parser.add_argument(
     "--template",
     help="Just template and print out the YAML produced",
     action="store_true",
 )
-helm_parser.add_argument(
-    "--for-e2e", action="store_true", help="Use the E2E values file, skip schema validation"
+deploy_parser.add_argument(
+    "--for-e2e", action="store_true", help="Use the E2E values file"
 )
-helm_parser.add_argument(
+deploy_parser.add_argument(
     "--use-localhost-ip",
     action="store_true",
     help="Use the local IP address instead of 'localhost' in the config files",
 )
 
-upgrade_parser = subparsers.add_parser("upgrade", help="Upgrade helm installation")
+upgrade_parser = subparsers.add_parser("upgrade", help="Re-synth and re-apply deployment")
 
 config_parser = subparsers.add_parser("config", help="Generate config files")
 
@@ -126,7 +126,7 @@ config_parser.add_argument(
 config_parser.add_argument(
     "--values",
     action="append",
-    help="Values file for helm chart (can be specified multiple times)",
+    help="Values file (can be specified multiple times)",
 )
 
 
@@ -151,10 +151,10 @@ def run_command(command: list[str], **kwargs):
 def main():
     if args.subcommand == "cluster":
         handle_cluster()
-    elif args.subcommand == "helm":
-        handle_helm()
+    elif args.subcommand == "deploy":
+        handle_deploy()
     elif args.subcommand == "upgrade":
-        handle_helm_upgrade()
+        handle_upgrade()
     elif args.subcommand == "config":
         generate_configs(
             args.from_live,
@@ -214,7 +214,7 @@ def cluster_exists(cluster_name):
     return cluster_name in result.stdout
 
 
-def handle_helm():  # noqa: C901
+def handle_deploy():  # noqa: C901
     if args.uninstall:
         # Delete all resources created by cdk8s
         output_file = CDK8S_DIR / "dist" / "loculus.k8s.yaml"
@@ -236,7 +236,7 @@ def handle_helm():  # noqa: C901
     cdk8s_args += ["--set", "environment=local", "--set", f"branch={branch}"]
 
     if args.for_e2e or args.dev:
-        cdk8s_args += ["--values", str(HELM_CHART_DIR / "values_e2e_and_dev.yaml")]
+        cdk8s_args += ["--values", str(VALUES_DIR / "values_e2e_and_dev.yaml")]
     if args.sha:
         cdk8s_args += ["--set", f"sha={args.sha[:7]}"]
 
@@ -264,7 +264,7 @@ def handle_helm():  # noqa: C901
         }
         cdk8s_args += ["--set-json", f"public={json.dumps(public_runtime_config)}"]
 
-    cdk8s_args += ["--base-dir", str(HELM_CHART_DIR)]
+    cdk8s_args += ["--base-dir", str(VALUES_DIR)]
 
     # Synth YAML using cdk8s
     synth_command = [
@@ -284,11 +284,11 @@ def handle_helm():  # noqa: C901
     run_command(["kubectl", "apply", "-f", str(output_file), "--server-side", "--force-conflicts"])
 
 
-def handle_helm_upgrade():
+def handle_upgrade():
     # Re-synth and re-apply (cdk8s is declarative, so upgrade = synth + apply)
     synth_command = [
         "npx", "ts-node", "src/main.ts",
-        "--base-dir", str(HELM_CHART_DIR),
+        "--base-dir", str(VALUES_DIR),
     ]
     run_command(synth_command, cwd=str(CDK8S_DIR))
 
@@ -383,7 +383,7 @@ def generate_configs(from_live, live_host, enable_ena, values_files=None):
         }
         cdk8s_args += ["--set-json", f"public={json.dumps(public_runtime_config)}"]
 
-    cdk8s_args += ["--base-dir", str(HELM_CHART_DIR)]
+    cdk8s_args += ["--base-dir", str(VALUES_DIR)]
 
     # Synth all resources
     synth_command = ["npx", "ts-node", "src/main.ts"] + cdk8s_args
