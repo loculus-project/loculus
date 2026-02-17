@@ -1906,7 +1906,7 @@ defaultOrganisms:
           initiallyVisible: true
         - name: reference
           isSequenceFilter: true
-          displayName: Reference
+          displayName: Closest Reference
           noInput: true
           generateIndex: true
           autocomplete: true
@@ -1931,7 +1931,7 @@ defaultOrganisms:
           - length_L
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
-        referenceIdentifierField: reference
+        referenceIdentifierField: genotype
     preprocessing:
       - <<: *preprocessing
         configFile:
