@@ -30,8 +30,8 @@ ROOT_DIR = script_path.parent
 
 
 CLUSTER_NAME = "testCluster"
-HELM_RELEASE_NAME = "preview"
-HELM_CHART_DIR = ROOT_DIR / "kubernetes" / "loculus"
+CDK8S_DIR = ROOT_DIR / "kubernetes" / "cdk8s"
+HELM_CHART_DIR = ROOT_DIR / "kubernetes" / "loculus"  # Still used for values files and secret generator
 
 WEBSITE_PORT_MAPPING = "-p 127.0.0.1:3000:30081@agent:0"
 BACKEND_PORT_MAPPING = "-p 127.0.0.1:8079:30082@agent:0"
@@ -216,66 +216,84 @@ def cluster_exists(cluster_name):
 
 def handle_helm():  # noqa: C901
     if args.uninstall:
-        run_command(["helm", "uninstall", HELM_RELEASE_NAME])
+        # Delete all resources created by cdk8s
+        output_file = CDK8S_DIR / "dist" / "loculus.k8s.yaml"
+        if output_file.exists():
+            run_command(["kubectl", "delete", "-f", str(output_file), "--ignore-not-found"])
+        else:
+            print("No cdk8s output file found to uninstall.")
         return
 
     branch = args.branch or "latest"
 
-    parameters = [
-        "helm",
-        "template" if args.template else "install",
-        HELM_RELEASE_NAME,
-        HELM_CHART_DIR,
-    ]
+    # Build the cdk8s CLI args
+    cdk8s_args = []
 
     if args.values:
         for values_file in args.values:
-            parameters += ["-f", values_file]
+            cdk8s_args += ["--values", values_file]
 
-    parameters += [
-        "--set",
-        "environment=local",
-        "--set",
-        f"branch={branch}",
-    ]
+    cdk8s_args += ["--set", "environment=local", "--set", f"branch={branch}"]
 
     if args.for_e2e or args.dev:
-        parameters += ["-f", HELM_CHART_DIR / "values_e2e_and_dev.yaml"]
-        parameters += ["--skip-schema-validation"]
+        cdk8s_args += ["--values", str(HELM_CHART_DIR / "values_e2e_and_dev.yaml")]
     if args.sha:
-        parameters += ["--set", f"sha={args.sha[:7]}"]
+        cdk8s_args += ["--set", f"sha={args.sha[:7]}"]
 
     if args.dev:
-        parameters += ["--set", "disableBackend=true"]
-        parameters += ["--set", "disableWebsite=true"]
+        cdk8s_args += ["--set", "disableBackend=true", "--set", "disableWebsite=true"]
 
     if not args.enablePreprocessing:
-        parameters += ["--set", "disablePreprocessing=true"]
+        cdk8s_args += ["--set", "disablePreprocessing=true"]
 
     if not args.enableIngest:
-        parameters += ["--set", "disableIngest=true"]
+        cdk8s_args += ["--set", "disableIngest=true"]
 
     if args.enableEnaSubmission:
-        parameters += ["--set", "disableEnaSubmission=false"]
+        cdk8s_args += ["--set", "disableEnaSubmission=false"]
 
     if args.use_localhost_ip:
-        parameters += ["--set", f"localHost={get_local_ip()}"]
+        cdk8s_args += ["--set", f"localHost={get_local_ip()}"]
     elif get_codespace_name():
-        parameters += get_codespace_params(get_codespace_name())
+        codespace_name = get_codespace_name()
+        public_runtime_config = {
+            "websiteUrl": f"https://{codespace_name}-3000.app.github.dev",
+            "backendUrl": f"https://{codespace_name}-8079.app.github.dev",
+            "lapisUrlTemplate": f"https://{codespace_name}-8080.app.github.dev/%organism%",
+            "keycloakUrl": f"https://{codespace_name}-8083.app.github.dev",
+        }
+        cdk8s_args += ["--set-json", f"public={json.dumps(public_runtime_config)}"]
 
-    output = run_command(parameters)
+    cdk8s_args += ["--base-dir", str(HELM_CHART_DIR)]
+
+    # Synth YAML using cdk8s
+    synth_command = [
+        "npx", "ts-node", "src/main.ts",
+    ] + cdk8s_args
+
+    run_command(synth_command, cwd=str(CDK8S_DIR))
+
+    output_file = CDK8S_DIR / "dist" / "loculus.k8s.yaml"
+
     if args.template:
-        print(output.stdout)
+        with open(output_file) as f:
+            print(f.read())
+        return
+
+    # Apply the generated YAML
+    run_command(["kubectl", "apply", "-f", str(output_file), "--server-side", "--force-conflicts"])
 
 
 def handle_helm_upgrade():
-    parameters = [
-        "helm",
-        "upgrade",
-        HELM_RELEASE_NAME,
-        HELM_CHART_DIR,
+    # Re-synth and re-apply (cdk8s is declarative, so upgrade = synth + apply)
+    synth_command = [
+        "npx", "ts-node", "src/main.ts",
+        "--base-dir", str(HELM_CHART_DIR),
     ]
-    run_command(parameters)
+    run_command(synth_command, cwd=str(CDK8S_DIR))
+
+    output_file = CDK8S_DIR / "dist" / "loculus.k8s.yaml"
+    run_command(["kubectl", "apply", "-f", str(output_file), "--server-side", "--force-conflicts"])
 
 
 def get_local_ip_mac() -> str:
@@ -328,86 +346,118 @@ def generate_configs(from_live, live_host, enable_ena, values_files=None):
 
     print(f"Unprocessed config available in temp dir: {temp_dir_path}")
 
-    helm_chart = str(HELM_CHART_DIR)
     codespace_name = get_codespace_name()
 
     output_dir = ROOT_DIR / "website" / "tests" / "config"
 
-    backend_config_path = temp_dir_path / "backend_config.json"
-    generate_config(
-        helm_chart,
-        "templates/loculus-backend-config.yaml",
-        backend_config_path,
-        codespace_name,
-        from_live,
-        live_host,
-        values_files=values_files,
-    )
+    # Build cdk8s args for config generation
+    cdk8s_args = []
 
-    website_config_path = temp_dir_path / "website_config.json"
-    generate_config(
-        helm_chart,
-        "templates/loculus-website-config.yaml",
-        website_config_path,
-        codespace_name,
-        from_live,
-        live_host,
-        values_files=values_files,
-    )
+    if values_files:
+        for values_file in values_files:
+            cdk8s_args += ["--values", values_file]
 
-    runtime_config_path = temp_dir_path / "runtime_config.json"
-    generate_config(
-        helm_chart,
-        "templates/loculus-website-config.yaml",
-        runtime_config_path,
-        codespace_name,
-        from_live,
-        live_host,
-        values_files=values_files,
-    )
+    cdk8s_args += ["--set", "disableWebsite=true", "--set", "disableBackend=true"]
+
+    if from_live:
+        if live_host:
+            number_of_dots = live_host.count(".")
+            if number_of_dots < 2:
+                raise ValueError("Currently only subdomains are supported as live-hosts")
+        cdk8s_args += ["--set", "environment=server"]
+        cdk8s_args += ["--set", f"host={live_host}"]
+        cdk8s_args += ["--set", "usePublicRuntimeConfigAsServerSide=true"]
+    else:
+        cdk8s_args += ["--set", "environment=local"]
+        cdk8s_args += ["--set", "testconfig=true"]
 
     if enable_ena:
-        ena_submission_configmap_path = temp_dir_path / "config.yaml"
-        ena_submission_configout_path = temp_dir_path / "ena-submission-config.yaml"
-        generate_config(
-            helm_chart,
-            "templates/ena-submission-config.yaml",
-            ena_submission_configmap_path,
-            codespace_name,
-            from_live,
-            live_host,
-            ena_submission_configout_path,
-            values_files=values_files,
-            enableEnaSubmission=True,
-        )
+        cdk8s_args += ["--set", "disableEnaSubmission=false"]
 
-    ingest_configmap_path = temp_dir_path / "config.yaml"
-    ingest_template_path = "templates/ingest-config.yaml"
-    ingest_configout_path = temp_dir_path / "ingest-config.yaml"
-    generate_config(
-        helm_chart,
-        ingest_template_path,
-        ingest_configmap_path,
-        codespace_name,
-        from_live,
-        live_host,
-        ingest_configout_path,
-        values_files=values_files,
-    )
+    if codespace_name:
+        public_runtime_config = {
+            "websiteUrl": f"https://{codespace_name}-3000.app.github.dev",
+            "backendUrl": f"https://{codespace_name}-8079.app.github.dev",
+            "lapisUrlTemplate": f"https://{codespace_name}-8080.app.github.dev/%organism%",
+            "keycloakUrl": f"https://{codespace_name}-8083.app.github.dev",
+        }
+        cdk8s_args += ["--set-json", f"public={json.dumps(public_runtime_config)}"]
 
-    prepro_configmap_path = temp_dir_path / "preprocessing-config.yaml"
-    prepro_template_path = "templates/loculus-preprocessing-config.yaml"
-    prepro_configout_path = temp_dir_path / "preprocessing-config.yaml"
-    generate_config(
-        helm_chart,
-        prepro_template_path,
-        prepro_configmap_path,
-        codespace_name,
-        from_live,
-        live_host,
-        prepro_configout_path,
-        values_files=values_files,
-    )
+    cdk8s_args += ["--base-dir", str(HELM_CHART_DIR)]
+
+    # Synth all resources
+    synth_command = ["npx", "ts-node", "src/main.ts"] + cdk8s_args
+    run_command(synth_command, cwd=str(CDK8S_DIR))
+
+    if args.dry_run:
+        return
+
+    # Parse the generated YAML and extract configs
+    output_file = CDK8S_DIR / "dist" / "loculus.k8s.yaml"
+    with open(output_file) as f:
+        all_docs = list(yaml.full_load_all(f.read()))
+
+    # Extract ConfigMaps by name
+    configmaps = {}
+    for doc in all_docs:
+        if doc and doc.get("kind") == "ConfigMap":
+            name = doc.get("metadata", {}).get("name", "")
+            configmaps[name] = doc
+
+    # Backend config
+    if "loculus-backend-config" in configmaps:
+        config_data = configmaps["loculus-backend-config"]["data"]["backend_config.json"]
+        backend_config_path = temp_dir_path / "backend_config.json"
+        with open(backend_config_path, "w") as f:
+            f.write(config_data)
+        print(f"Wrote config to {backend_config_path}")
+
+    # Website config
+    if "loculus-website-config" in configmaps:
+        config_data = configmaps["loculus-website-config"]["data"]["website_config.json"]
+        website_config_path = temp_dir_path / "website_config.json"
+        with open(website_config_path, "w") as f:
+            f.write(config_data)
+        print(f"Wrote config to {website_config_path}")
+
+    # Runtime config
+    if "loculus-website-config" in configmaps:
+        config_data = configmaps["loculus-website-config"]["data"]["runtime_config.json"]
+        runtime_config_path = temp_dir_path / "runtime_config.json"
+        with open(runtime_config_path, "w") as f:
+            f.write(config_data)
+        print(f"Wrote config to {runtime_config_path}")
+
+    # ENA submission config
+    if enable_ena:
+        for name, doc in configmaps.items():
+            if "ena-submission" in name and "config" in name:
+                if "config.yaml" in doc.get("data", {}):
+                    config_data = doc["data"]["config.yaml"]
+                    ena_path = temp_dir_path / "ena-submission-config.yaml"
+                    with open(ena_path, "w") as f:
+                        f.write(config_data)
+                    print(f"Wrote config to {ena_path}")
+
+    # Ingest configs (per-organism)
+    for name, doc in configmaps.items():
+        if name.startswith("ingest-config-") and "config.yaml" in doc.get("data", {}):
+            config_data = yaml.safe_load(doc["data"]["config.yaml"])
+            organism = config_data.get("organism", name.replace("ingest-config-", ""))
+            ingest_path = temp_dir_path / f"ingest-config.{organism}.yaml"
+            with open(ingest_path, "w") as f:
+                yaml.dump(config_data, f)
+            print(f"Wrote config to {ingest_path}")
+
+    # Preprocessing configs (per-organism)
+    for name, doc in configmaps.items():
+        if name.startswith("loculus-preprocessing-config-") and "preprocessing-config.yaml" in doc.get("data", {}):
+            config_data = yaml.safe_load(doc["data"]["preprocessing-config.yaml"])
+            organism = config_data.get("organism", name.replace("loculus-preprocessing-config-", ""))
+            prepro_path = temp_dir_path / f"preprocessing-config.{organism}.yaml"
+            with open(prepro_path, "w") as f:
+                yaml.dump(config_data, f)
+            print(f"Wrote config to {prepro_path}")
 
     run_command(
         [
@@ -418,87 +468,6 @@ def generate_configs(from_live, live_host, enable_ena, values_files=None):
         ]
     )
     print(f"Config generation succeeded, processed config files available in {output_dir}")
-
-
-def generate_config(
-    helm_chart,
-    template,
-    configmap_path,
-    codespace_name=None,
-    from_live=False,
-    live_host=None,
-    output_path=None,
-    values_files=None,
-    enableEnaSubmission=False,
-):
-    if from_live and live_host:
-        number_of_dots = live_host.count(".")
-        if number_of_dots < 2:  # this is an imperfect hack
-            raise ValueError("Currently only subdomains are supported as live-hosts")
-            # To be able to cope with top level domains we need more logic to use the right subdomain separator - but we should probably avoid this anyway as we shouldn't use production domains
-    helm_template_cmd = [
-        "helm",
-        "template",
-        "name-does-not-matter",
-        helm_chart,
-        "--show-only",
-        template,
-    ]
-
-    if values_files:
-        for values_file in values_files:
-            helm_template_cmd.extend(["-f", values_file])
-
-    helm_template_cmd.append("--skip-schema-validation")
-
-    if not output_path:
-        output_path = configmap_path
-
-    if codespace_name:
-        helm_template_cmd.extend(get_codespace_params(codespace_name))
-
-    helm_template_cmd.extend(["--set", "disableWebsite=true"])
-    helm_template_cmd.extend(["--set", "disableBackend=true"])
-    if from_live:
-        helm_template_cmd.extend(["--set", "environment=server"])
-        helm_template_cmd.extend(["--set", f"host={live_host}"])
-        helm_template_cmd.extend(["--set", "usePublicRuntimeConfigAsServerSide=true"])
-    else:
-        helm_template_cmd.extend(["--set", "environment=local"])
-        helm_template_cmd.extend(["--set", "testconfig=true"])
-    if enableEnaSubmission:
-        helm_template_cmd.extend(["--set", "disableEnaSubmission=false"])
-    helm_output = run_command(helm_template_cmd, capture_output=True, text=True).stdout
-    if args.dry_run:
-        return
-
-    parsed_yaml = list(yaml.full_load_all(helm_output))
-    if len(parsed_yaml) == 1:
-        config_data = parsed_yaml[0]["data"][configmap_path.name]
-
-        with open(output_path, "w") as f:
-            f.write(config_data)
-
-        print(f"Wrote config to {output_path}")
-    elif any(substring in template for substring in ["ingest", "preprocessing"]):
-        for doc in parsed_yaml:
-            config_data = yaml.safe_load(doc["data"][configmap_path.name])
-            with open(output_path.with_suffix(f".{config_data['organism']}.yaml"), "w") as f:
-                yaml.dump(config_data, f)
-                print(f"Wrote config to {f.name}")
-
-
-def get_codespace_params(codespace_name):
-    public_runtime_config = {
-        "websiteUrl": f"https://{codespace_name}-3000.app.github.dev",
-        "backendUrl": f"https://{codespace_name}-8079.app.github.dev",
-        "lapisUrlTemplate": f"https://{codespace_name}-8080.app.github.dev/%organism%",
-        "keycloakUrl": f"https://{codespace_name}-8083.app.github.dev",
-    }
-    return [
-        "--set-json",
-        f"public={json.dumps(public_runtime_config)}",
-    ]
 
 
 def install_secret_generator():
