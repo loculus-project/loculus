@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { AuthorList } from './AuthorList';
 import DataTableEntry from './DataTableEntry';
@@ -9,7 +9,6 @@ import { type ReferenceAccession, type ReferenceGenomesInfo } from '../../types/
 import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import {
     getInsdcAccessionsFromSegmentReferences,
-    getSegmentAndGeneInfo,
     type SegmentReferenceSelections,
 } from '../../utils/sequenceTypeHelpers';
 import AkarInfo from '~icons/ri/information-line';
