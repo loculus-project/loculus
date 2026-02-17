@@ -124,7 +124,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         initiallyVisible: true
         hideInSearchResultsTable: true
         hideOnSequenceDetailsPage: true
-        hideOnSequenceDetailsPage: true
         header: Sample details
         preprocessing:
           function: parse_date_into_range
@@ -1151,6 +1150,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: length
         type: int
         header: "Alignment and QC metrics"
+        metadataScope: sequence
         noInput: true
         rangeSearch: true
         initiallyVisible: true
@@ -1243,16 +1243,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         orderOnDetailsPage: 1120
         ingest: ncbiSraAccessions
-      - name: length
-        type: int
-        metadataScope: sequence
-        header: "Alignment and QC metrics"
-        noInput: true
-        rangeSearch: true
-        initiallyVisible: true
-        perSegment: true
-        displayName: Length
-        orderOnDetailsPage: 2700
       - name: totalSnps
         type: int
         metadataScope: sequence
