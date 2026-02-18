@@ -13,6 +13,7 @@ from factory_methods import (
 from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import (
     FunctionArgs,
+    InputMetadata,
     ProcessedEntry,
     UnprocessedData,
     UnprocessedEntry,
@@ -901,24 +902,31 @@ def test_parse_date_into_range() -> None:
 
 
 def test_concatentate() -> None:
+    input_data: InputMetadata = {
+        "someInt": "0",
+        "geoLocCountry": "",
+        "sampleCollectionDate": "2025",
+    }
+    output_field: str = "displayName"
+    input_fields: list[str] = ["geoLocCountry", "sampleCollectionDate"]
     args: FunctionArgs = {
         "accession_version": "version.1",
         "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
         "type": ["integer", "string", "ACCESSION_VERSION", "string"],
     }
     res_no_fallback = ProcessingFunctions.concatenate(
-        input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
-        output_field="displayName",
-        input_fields=["geoLocCountry", "sampleCollectionDate"],
-        args=args,
+        input_data,
+        output_field,
+        input_fields,
+        args,
     )
 
     args["fallback_value"] = "unknown"
     res_fallback = ProcessingFunctions.concatenate(
-        input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
-        output_field="displayName",
-        input_fields=["geoLocCountry", "sampleCollectionDate"],
-        args=args,
+        input_data,
+        output_field,
+        input_fields,
+        args,
     )
 
     assert res_no_fallback.datum == "0//version.1/2025"
