@@ -899,5 +899,30 @@ def test_parse_date_into_range() -> None:
     ), "dateRangeLower: empty date should be returned as None."
 
 
+def test_concatentate() -> None:
+    args = {
+        "accession_version": "version.1",
+        "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
+        "type": ["integer", "string", "ACCESSION_VERSION", "string"],
+    }
+    res_no_fallback = ProcessingFunctions.concatenate(
+        input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
+        output_field="displayName",
+        input_fields=["geoLocCountry", "sampleCollectionDate"],
+        args=args,
+    )
+
+    args["fallback_value"] = "unknown"
+    res_fallback = ProcessingFunctions.concatenate(
+        input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
+        output_field="displayName",
+        input_fields=["geoLocCountry", "sampleCollectionDate"],
+        args=args,
+    )
+
+    assert res_no_fallback.datum == "0//version.1/2025"
+    assert res_fallback.datum == "0/unknown/version.1/2025"
+
+
 if __name__ == "__main__":
     pytest.main()

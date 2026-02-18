@@ -163,8 +163,8 @@ defaultOrganismConfig: &defaultOrganismConfig
             geoLocCountry: geoLocCountry
             sampleCollectionDate: sampleCollectionDate
           args:
-            order: [geoLocCountry, accession_version, sampleCollectionDate]
-            type: [string, string, string]
+            order: [geoLocCountry, ACCESSION_VERSION, sampleCollectionDate]
+            type: [string, ACCESSION_VERSION, string]
         noInput: true
       - name: ncbiReleaseDate
         displayName: NCBI release date

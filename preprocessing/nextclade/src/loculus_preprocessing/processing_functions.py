@@ -9,6 +9,7 @@ import json
 import logging
 import math
 import re
+from typing import Any
 import unicodedata
 from dataclasses import dataclass
 from datetime import datetime
@@ -666,7 +667,7 @@ class ProcessingFunctions:
         accession_version: str = args["accession_version"]
         order = args["order"]
         type = args["type"]
-        fallback_value = str(args.get("fallbackValue", "")).strip()
+        fallback_value = str(args.get("fallback_value", "")).strip()
 
         def add_errors():
             errors.append(
@@ -721,29 +722,38 @@ class ProcessingFunctions:
                         {"date": input_data[order[i]]}, output_field, input_fields, args
                     )
                     formatted_input_data.append(
-                        fallback_value if processed.datum is None else str(processed.datum)
+                        fallback_value
+                        if null_per_backend(processed.datum)
+                        else str(processed.datum)
                     )
                 elif type[i] == "timestamp":
                     processed = ProcessingFunctions.parse_timestamp(
                         {"timestamp": input_data[order[i]]}, output_field, input_fields, args
                     )
                     formatted_input_data.append(
-                        fallback_value if processed.datum is None else str(processed.datum)
-                    )
-                elif type[i] == "str":
-                    formatted_input_data.append(
                         fallback_value
-                        if not input_data[order[i]]  # returns True for '', as well as for None
-                        else str(input_data[order[i]]).strip()
+                        if null_per_backend(processed.datum)
+                        else str(processed.datum)
                     )
+                elif type[i] == "ACCESSION_VERSION":
+                    formatted_input_data.append(accession_version)
                 elif order[i] in input_data:
                     formatted_input_data.append(
                         fallback_value
-                        if input_data[order[i]] is None
+                        if null_per_backend(input_data[order[i]])
                         else str(input_data[order[i]]).strip()
                     )
                 else:
-                    formatted_input_data.append(accession_version)
+                    logger.error(
+                        f"Concatenate: cannot find field {order[i]} in input_data"
+                        f"This is probably a configuration error. (accession_version: {accession_version})"
+                    )
+                    add_errors()
+                    return ProcessingResult(
+                        datum=None,
+                        warnings=warnings,
+                        errors=errors,
+                    )
 
             result = "/".join(formatted_input_data)
             # To avoid downstream issues do not let the result start or end in a "/"
@@ -1300,3 +1310,13 @@ def trim_ns(sequence: str) -> str:
         str: The trimmed sequence.
     """
     return sequence.strip("Nn")
+
+
+def null_per_backend(x: Any) -> bool:
+    match x:
+        case None:
+            return True
+        case "":
+            return True
+        case _:
+            return False

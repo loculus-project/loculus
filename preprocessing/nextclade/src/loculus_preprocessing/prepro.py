@@ -53,6 +53,7 @@ from .processing_functions import (
     process_frameshifts,
     process_phenotype_values,
     process_stop_codons,
+    null_per_backend,
 )
 from .sequence_checks import errors_if_non_iupac
 
@@ -67,14 +68,14 @@ def version_from_str(id_str: AccessionVersion) -> int:
     return int(id_str.split(".")[1])
 
 
-def null_per_backend(x: Any) -> bool:
-    match x:
-        case None:
-            return True
-        case "":
-            return True
-        case _:
-            return False
+# def null_per_backend(x: Any) -> bool:
+#     match x:
+#         case None:
+#             return True
+#         case "":
+#             return True
+#         case _:
+#             return False
 
 
 class MultipleSequencesPerSegmentError(Exception):
