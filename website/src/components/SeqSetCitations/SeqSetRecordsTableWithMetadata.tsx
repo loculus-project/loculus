@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { type FC, useMemo } from 'react';
 
+import { versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSetRecord, SeqSetRecordType } from '../../types/seqSetCitation';
 
@@ -24,6 +25,11 @@ type SeqSetRecordsTableWithMetadataProps = {
     organismDisplayNames?: Record<string, string>;
 };
 
+type MetadataEntry = {
+    record: Record<string, unknown>;
+    key: string;
+};
+
 const fetchRecordsMetadata = async (
     records: SeqSetRecord[],
     clientConfig: ClientConfig,
@@ -34,6 +40,10 @@ const fetchRecordsMetadata = async (
     if (accessions.length === 0) {
         return new Map();
     }
+
+    // Split accessions into versioned (contain '.') and bare (no '.')
+    const versionedAccessions = accessions.filter((acc) => acc.includes('.'));
+    const bareAccessions = accessions.filter((acc) => !acc.includes('.'));
 
     // Extract just the field names for the API request
     const fields = fieldsToDisplay.map((f) => f.field);
@@ -47,34 +57,69 @@ const fetchRecordsMetadata = async (
 
     // Query all LAPIS instances in parallel
     const lapisPromises = Object.entries(lapisUrlsWithoutDummies).map(async ([organism, lapisUrl]) => {
-        try {
-            const detailsResponse = await axios.post(`${lapisUrl}/sample/details`, {
-                accessionVersion: accessions,
-                fields: ['accessionVersion', ...fields],
-                dataFormat: 'json',
-            });
+        const results: MetadataEntry[] = [];
 
-            // Add organism to each record
-            const responseData = detailsResponse.data as { data?: Record<string, unknown>[] } | undefined;
-            const data = responseData?.data ?? [];
-            return data.map((record) => ({
-                ...record,
-                organism,
-            }));
-        } catch (_error) {
-            return [];
+        const queries: Promise<void>[] = [];
+
+        // Query versioned accessions by accessionVersion
+        if (versionedAccessions.length > 0) {
+            queries.push(
+                axios
+                    .post(`${lapisUrl}/sample/details`, {
+                        accessionVersion: versionedAccessions,
+                        fields: ['accessionVersion', ...fields],
+                        dataFormat: 'json',
+                    })
+                    .then((response) => {
+                        const data =
+                            (response.data as { data?: Record<string, unknown>[] } | undefined)?.data ?? [];
+                        for (const record of data) {
+                            results.push({
+                                record: { ...record, organism },
+                                key: String(record.accessionVersion),
+                            });
+                        }
+                    })
+                    .catch(() => {}),
+            );
         }
+
+        // Query bare accessions by accession, filtering for the latest version
+        if (bareAccessions.length > 0) {
+            queries.push(
+                axios
+                    .post(`${lapisUrl}/sample/details`, {
+                        accession: bareAccessions,
+                        versionStatus: versionStatuses.latestVersion,
+                        fields: ['accession', 'accessionVersion', ...fields],
+                        dataFormat: 'json',
+                    })
+                    .then((response) => {
+                        const data =
+                            (response.data as { data?: Record<string, unknown>[] } | undefined)?.data ?? [];
+                        for (const record of data) {
+                            results.push({
+                                record: { ...record, organism },
+                                key: String(record.accession),
+                            });
+                        }
+                    })
+                    .catch(() => {}),
+            );
+        }
+
+        await Promise.all(queries);
+        return results;
     });
 
     const allResults = await Promise.all(lapisPromises);
     const combinedData = allResults.flat();
 
-    // Create a map for easy lookup
+    // Create a map for easy lookup, keyed by the original accession form
     const metadataMap = new Map<string, RecordMetadata>();
-    combinedData.forEach((record) => {
-        const recordData = record as Record<string, unknown>;
+    combinedData.forEach(({ record: recordData, key }) => {
         const metadata: RecordMetadata = {
-            accession: String(recordData.accessionVersion),
+            accession: key,
             organism: String(recordData.organism),
         };
 
@@ -83,7 +128,7 @@ const fetchRecordsMetadata = async (
             metadata[field] = recordData[field];
         });
 
-        metadataMap.set(String(recordData.accessionVersion), metadata);
+        metadataMap.set(key, metadata);
     });
 
     return metadataMap;
