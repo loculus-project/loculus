@@ -6,6 +6,7 @@ import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { type ReferenceAccession, type ReferenceGenomesInfo } from '../../types/referencesGenomes';
+import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import {
     getInsdcAccessionsFromSegmentReferences,
     type SegmentReferenceSelections,
@@ -65,7 +66,9 @@ const DataTableComponent: React.FC<Props> = ({
                         .flatMap(({ rows }) => rows)
                         .map((entry: TableDataEntry, index: number) => (
                             <h4 key={index} className='text-sm text-gray-500 mt-1' title={entry.label}>
-                                {entry.value}
+                                {typeof entry.value === 'string'
+                                    ? deduplicateSemicolonSeparated(entry.value)
+                                    : entry.value}
                             </h4>
                         ))}
                 </div>

@@ -7,6 +7,7 @@ import ScrollContainer from './ScrollContainer.jsx';
 import { routes } from '../../routes/routes.ts';
 import type { Schema } from '../../types/config.ts';
 import type { Metadatum, OrderBy, OrderDirection } from '../../types/lapis.ts';
+import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiTriangle from '~icons/mdi/triangle';
@@ -18,7 +19,7 @@ export type TableSequenceData = {
     [key: string]: Metadatum;
 };
 
-function formatField(value: unknown, type: string): string {
+function formatField(value: unknown, type: string, fieldName?: string): string {
     if (typeof value === 'number' && Number.isInteger(value)) {
         if (type === 'timestamp') {
             return new Date(value * 1000).toISOString().slice(0, 10);
@@ -27,6 +28,10 @@ function formatField(value: unknown, type: string): string {
     } else if (typeof value === 'boolean') {
         return value ? 'True' : 'False';
     } else {
+        const stringValue = value as string;
+        if (fieldName?.toLowerCase().includes('affiliation')) {
+            return deduplicateSemicolonSeparated(stringValue);
+        }
         // @ts-expect-error: TODO(#3451) add proper types
         return value;
     }
@@ -52,9 +57,10 @@ type CellContentProps = {
     value: Metadatum;
     type: string;
     columnWidth: number | undefined;
+    fieldName: string;
 };
 
-const CellContent: FC<CellContentProps> = ({ value, type, columnWidth }) => {
+const CellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName }) => {
     const textRef = useRef<HTMLSpanElement>(null);
     const [isTruncated, setIsTruncated] = useState(false);
 
@@ -64,7 +70,7 @@ const CellContent: FC<CellContentProps> = ({ value, type, columnWidth }) => {
         }
     }, [value]);
 
-    const formattedValue = formatField(value, type);
+    const formattedValue = formatField(value, type, fieldName);
     const tooltipText =
         typeof formattedValue === 'string'
             ? formattedValue.slice(0, MAX_TOOLTIP_LENGTH) + (formattedValue.length > MAX_TOOLTIP_LENGTH ? '..' : '')
@@ -308,6 +314,7 @@ export const Table: FC<TableProps> = ({
                                                 value={row[c.field]}
                                                 type={c.type}
                                                 columnWidth={c.columnWidth}
+                                                fieldName={c.field}
                                             />
                                         </td>
                                     ))}
