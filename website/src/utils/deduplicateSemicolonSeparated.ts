@@ -3,7 +3,10 @@
  * and rejoins them with '; '.
  */
 export function deduplicateSemicolonSeparated(value: string): string {
-    const parts = value.split(';').map((s) => s.trim()).filter((s) => s.length > 0);
+    const parts = value
+        .split(';')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
     const unique = [...new Set(parts)];
     return unique.join('; ');
 }
