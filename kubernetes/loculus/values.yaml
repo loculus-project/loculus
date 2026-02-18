@@ -1464,6 +1464,16 @@ defaultOrganisms:
           includeInDownloadsByDefault: true
           preprocessing:
             inputs: {input: nextclade.clade}
+        - name: displayName
+          preprocessing:
+            function: concatenate
+            inputs:
+              geoLocCountry: geoLocCountry
+              sampleCollectionDate: sampleCollectionDate
+            args:
+              order: [hostNameCommon, geoLocCountry, ACCESSION_VERSION, sampleCollectionDate]
+              type: [string, string, ACCESSION_VERSION, string]
+              fallback_value: unknown
       website:
         <<: *website
         tableColumns:
