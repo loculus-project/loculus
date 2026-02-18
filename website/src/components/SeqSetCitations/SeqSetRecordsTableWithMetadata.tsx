@@ -77,11 +77,10 @@ const fetchRecordsMetadata = async (
         // Query versioned accessions by accessionVersion
         if (versionedAccessions.length > 0) {
             queries.push(
-                queryLapisDetails(
-                    lapisUrl,
-                    { accessionVersion: versionedAccessions },
-                    ['accessionVersion', ...fields],
-                ).then((data) => ({ data, keyField: 'accessionVersion' })),
+                queryLapisDetails(lapisUrl, { accessionVersion: versionedAccessions }, [
+                    'accessionVersion',
+                    ...fields,
+                ]).then((data) => ({ data, keyField: 'accessionVersion' })),
             );
         }
 
