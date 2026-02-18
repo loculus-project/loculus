@@ -21,6 +21,14 @@ describe('deduplicateSemicolonSeparated', () => {
         expect(deduplicateSemicolonSeparated('')).toBe('');
     });
 
+    test('should handle null', () => {
+        expect(deduplicateSemicolonSeparated(null)).toBe('');
+    });
+
+    test('should handle undefined', () => {
+        expect(deduplicateSemicolonSeparated(undefined)).toBe('');
+    });
+
     test('should filter out empty entries from consecutive semicolons', () => {
         expect(deduplicateSemicolonSeparated('Uni A;; Uni B')).toBe('Uni A; Uni B');
     });
