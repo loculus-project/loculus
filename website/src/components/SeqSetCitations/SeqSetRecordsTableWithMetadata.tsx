@@ -91,7 +91,7 @@ const fetchRecordsMetadata = async (
                 queryLapisDetails(
                     lapisUrl,
                     { accession: bareAccessions, versionStatus: versionStatuses.latestVersion },
-                    ['accession', 'accessionVersion', ...fields],
+                    ['accession', ...fields],
                 ).then((data) => ({ data, keyField: 'accession' })),
             );
         }
