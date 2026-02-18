@@ -50,10 +50,10 @@ from .nextclade import (
 )
 from .processing_functions import (
     ProcessingFunctions,
+    null_per_backend,
     process_frameshifts,
     process_phenotype_values,
     process_stop_codons,
-    null_per_backend,
 )
 from .sequence_checks import errors_if_non_iupac
 

@@ -9,10 +9,10 @@ import json
 import logging
 import math
 import re
-from typing import Any
 import unicodedata
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 import dateutil.parser as dateutil
 import pytz
