@@ -12,6 +12,7 @@ from factory_methods import (
 
 from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import (
+    FunctionArgs,
     ProcessedEntry,
     UnprocessedData,
     UnprocessedEntry,
@@ -900,7 +901,7 @@ def test_parse_date_into_range() -> None:
 
 
 def test_concatentate() -> None:
-    args = {
+    args: FunctionArgs = {
         "accession_version": "version.1",
         "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
         "type": ["integer", "string", "ACCESSION_VERSION", "string"],
