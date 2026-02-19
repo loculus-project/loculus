@@ -239,8 +239,7 @@ export const SearchForm = ({
                 />
             )}
 
-            {segmentName !== 'ALL' &&
-                sequenceFieldsBySegment[segmentName].map((filter) => (
+            {sequenceFieldsBySegment[segmentName].map((filter) => (
                     <SearchField
                         key={filter.name}
                         field={filter}
@@ -335,7 +334,7 @@ export const SearchForm = ({
 
                         <section className='flex flex-col gap-1.5 mb-4'>
                             <CollapsibleSection title='Sequence Filters' open>
-                                {renderSegmentContents('ALL')}
+                                {'ALL' in sequenceFieldsBySegment && renderSegmentContents('ALL')}
                                 {!referenceGenomesInfo.isMultiSegmented &&
                                     segmentNames.map((segmentName) => (
                                         <div key={segmentName}>{renderSegmentContents(segmentName)}</div>
