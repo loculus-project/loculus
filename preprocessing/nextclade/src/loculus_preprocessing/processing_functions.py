@@ -1133,7 +1133,7 @@ class ProcessingFunctions:
         if not input_datum or not isinstance(input_datum, (int, float, str)):
             return ProcessingResult(datum=None, warnings=[], errors=[])
         try:
-            threshold = int(args["threshold"])  # type: ignore
+            threshold = float(args["threshold"])  # type: ignore
             input = int(input_datum)
         except (ValueError, TypeError):
             return ProcessingResult(
