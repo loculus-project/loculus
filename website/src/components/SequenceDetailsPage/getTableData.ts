@@ -161,7 +161,7 @@ function mutationDetails(
             label: 'Substitutions',
             name: 'aminoAcidSubstitutions',
             value: '',
-            header: 'Amino acid mutations',
+            header: 'Amino acid substitutions',
             customDisplay: {
                 type: 'badge',
                 badge: substitutionsMap(aminoAcidMutations, referenceGenomesInfo),
@@ -172,7 +172,7 @@ function mutationDetails(
             label: 'Deletions',
             name: 'aminoAcidDeletions',
             value: '',
-            header: 'Amino acid mutations',
+            header: 'Amino acid substitutions',
             customDisplay: {
                 type: 'list',
                 list: deletionsMap(aminoAcidMutations, referenceGenomesInfo),
@@ -183,7 +183,7 @@ function mutationDetails(
             label: 'Insertions',
             name: 'aminoAcidInsertions',
             value: '',
-            header: 'Amino acid mutations',
+            header: 'Amino acid substitutions',
             customDisplay: {
                 type: 'list',
                 list: insertionsMap(aminoAcidInsertions, referenceGenomesInfo),

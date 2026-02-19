@@ -1824,6 +1824,18 @@ defaultOrganisms:
           lineageSystem: cchfS
           preprocessing:
             inputs: {input: nextclade.clade}
+        - name: reference
+          isSequenceFilter: true
+          displayName: Reference
+          noInput: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          fieldPresets:
+            "Homo sapiens":
+              hostNameScientific: "Homo sapiens"
+          preprocessing:
+            inputs: {input: hostNameScientific}
       website:
         <<: *website
         tableColumns:
@@ -2108,6 +2120,7 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
+          perSegment: true
           preprocessing:
             inputs: {input: ASSIGNED_REFERENCE}
       website:
