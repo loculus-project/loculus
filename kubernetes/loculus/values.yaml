@@ -1834,10 +1834,10 @@ defaultOrganisms:
           autocomplete: true
           initiallyVisible: true
           fieldPresets:
-            I:
+            "Homo sapiens":
               hostNameScientific: "Homo sapiens"
           preprocessing:
-            inputs: {input: ASSIGNED_REFERENCE}
+            inputs: {input: hostNameScientific}
       website:
         <<: *website
         tableColumns:
