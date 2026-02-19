@@ -1111,6 +1111,45 @@ class ProcessingFunctions:
             )
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
 
+    @staticmethod
+    def is_above_threshold(
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    ) -> ProcessingResult:
+        """Flag if input value is above a threshold specified in args"""
+        if "threshold" not in args:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(f"Field {output_field} is missing threshold argument."),
+                    )
+                ],
+            )
+        input_datum = input_data["input"]
+        if not input_datum:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+        try:
+            threshold = int(args["threshold"])  # type: ignore
+            input = int(input_datum)
+        except (ValueError, TypeError):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(f"Field {output_field} has non-numeric threshold value."),
+                    )
+                ],
+            )
+        return ProcessingResult(datum=input > threshold, warnings=[], errors=[])
+
 
 def single_metadata_annotation(
     source_name: str,
