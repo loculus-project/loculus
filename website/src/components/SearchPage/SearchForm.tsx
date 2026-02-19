@@ -239,16 +239,17 @@ export const SearchForm = ({
                 />
             )}
 
-            {sequenceFieldsBySegment[segmentName].map((filter) => (
-                <SearchField
-                    key={filter.name}
-                    field={filter}
-                    lapisUrl={lapisUrl}
-                    fieldValues={fieldValues}
-                    setSomeFieldValues={setSomeFieldValues}
-                    lapisSearchParameters={lapisSearchParameters}
-                />
-            ))}
+            {segmentName !== 'ALL' &&
+                sequenceFieldsBySegment[segmentName].map((filter) => (
+                    <SearchField
+                        key={filter.name}
+                        field={filter}
+                        lapisUrl={lapisUrl}
+                        fieldValues={fieldValues}
+                        setSomeFieldValues={setSomeFieldValues}
+                        lapisSearchParameters={lapisSearchParameters}
+                    />
+                ))}
         </>
     );
 
