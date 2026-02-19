@@ -639,7 +639,9 @@ class ProcessingFunctions:
         args: FunctionArgs,
     ) -> ProcessingResult:
         """Concatenates input fields with accession_version using the "/" separator in the order
-        specified by the order argument.
+        specified by the order argument. Optionally, a 'fallback_value' argument can be provided.
+        This should be a string to use in place of metadata that is not available. If fallback_value
+        is not provided, the empty string will be used in place of missing metadata.
         """
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
