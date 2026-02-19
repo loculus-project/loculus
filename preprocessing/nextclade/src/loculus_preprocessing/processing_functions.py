@@ -1185,7 +1185,7 @@ class ProcessingFunctions:
                         "uppercase": True,
                         "capture_group": "subtype",
                     },
-                    {"segment_name": segment_name},
+                    {"regex_field": segment_name},
                     "output_field",
                     ["segment_name"],
                 )
@@ -1196,7 +1196,7 @@ class ProcessingFunctions:
                         "uppercase": True,
                         "capture_group": "info",
                     },
-                    {"segment_name": segment_name},
+                    {"regex_field": segment_name},
                     "output_field",
                     ["segment_name"],
                 )
