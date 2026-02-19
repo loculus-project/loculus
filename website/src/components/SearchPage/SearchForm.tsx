@@ -13,6 +13,7 @@ import { LineageField } from './fields/LineageField.tsx';
 import { MultiChoiceAutoCompleteField } from './fields/MultiChoiceAutoCompleteField';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
+import { SingleChoiceAutoCompleteField } from './fields/SingleChoiceAutoCompleteField.tsx';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
@@ -35,7 +36,6 @@ import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import MaterialSymbolsTune from '~icons/material-symbols/tune';
 import StreamlineWrench from '~icons/streamline/wrench';
-import { ReferencePresetsField } from './fields/ReferencePresetsField.tsx';
 
 const queryClient = new QueryClient();
 
@@ -240,15 +240,15 @@ export const SearchForm = ({
             )}
 
             {sequenceFieldsBySegment[segmentName].map((filter) => (
-                    <SearchField
-                        key={filter.name}
-                        field={filter}
-                        lapisUrl={lapisUrl}
-                        fieldValues={fieldValues}
-                        setSomeFieldValues={setSomeFieldValues}
-                        lapisSearchParameters={lapisSearchParameters}
-                    />
-                ))}
+                <SearchField
+                    key={filter.name}
+                    field={filter}
+                    lapisUrl={lapisUrl}
+                    fieldValues={fieldValues}
+                    setSomeFieldValues={setSomeFieldValues}
+                    lapisSearchParameters={lapisSearchParameters}
+                />
+            ))}
         </>
     );
 
@@ -412,17 +412,24 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
         default:
             if (field.fieldPresets) {
                 return (
-                    <ReferencePresetsField
-                        type={field.type}
-                        field={field}
-                        fieldValue={validateSingleValue(fieldValues[field.name], field.name)}
+                    <SingleChoiceAutoCompleteField
+                        field={{
+                            name: field.name,
+                            displayName: field.displayName ?? field.name,
+                            type: 'string',
+                        }}
+                        optionsProvider={{
+                            type: 'generic',
+                            lapisUrl,
+                            lapisSearchParameters,
+                            fieldName: field.name,
+                        }}
                         setSomeFieldValues={setSomeFieldValues}
-                        fieldPresets={field.fieldPresets}
+                        fieldValue={(fieldValues[field.name] as string | undefined) ?? ''}
                     />
                 );
             }
             if (field.lineageSearch) {
-                console.log("field.lineageSearch", field.name, field.fieldPresets);
                 return (
                     <LineageField
                         field={field}
