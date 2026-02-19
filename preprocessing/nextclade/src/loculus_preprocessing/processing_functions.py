@@ -1151,7 +1151,7 @@ class ProcessingFunctions:
         return ProcessingResult(datum=(input > threshold), warnings=[], errors=[])
 
     @staticmethod
-    def assign_flu_lineage(
+    def assign_custom_lineage(
         input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
     ) -> ProcessingResult:
         """Assign flu lineage based on seg4 and seg6"""
