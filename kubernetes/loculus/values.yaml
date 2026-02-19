@@ -1821,14 +1821,23 @@ defaultOrganisms:
           noInput: true
           generateIndex: true
           autocomplete: true
-          fieldPresets:
-            I:
-              hostNameScientific: "Homo sapiens"
           initiallyVisible: true
           includeInDownloadsByDefault: true
           lineageSystem: cchfS
           preprocessing:
             inputs: {input: nextclade.clade}
+        - name: reference
+          isSequenceFilter: true
+          displayName: Reference
+          noInput: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          fieldPresets:
+            I:
+              hostNameScientific: "Homo sapiens"
+          preprocessing:
+            inputs: {input: ASSIGNED_REFERENCE}
       website:
         <<: *website
         tableColumns:
