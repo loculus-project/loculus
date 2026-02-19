@@ -212,10 +212,11 @@ def add_assigned_reference(
     for segment in config.segments:
         logger.debug(f"Finding assigned reference for segment {segment.name}")
         name = get_dataset_name(segment.name, unprocessed.nextcladeMetadata, config)
-        logger.debug(f"Assigned reference for segment {segment.name} is {name}")
         if not name:
             continue
-        references[segment.name] = name
+        reference = config.get_dataset_by_name(name).reference_name
+        logger.debug(f"Assigned reference for segment {segment.name} is {reference}")
+        references[segment.name] = reference
     if not references:
         return InputData(datum=None)
     return InputData(datum=references)
