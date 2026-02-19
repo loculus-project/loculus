@@ -1476,6 +1476,20 @@ defaultOrganisms:
           includeInDownloadsByDefault: false
           preprocessing:
             inputs: {input: "nextclade.cladeFounderInfo.aaMutations"}
+        - name: variant
+          header: "Alignment and QC metrics"
+          displayName: "Variant"
+          type: boolean
+          noInput: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          preprocessing:
+            function: is_above_threshold
+            args:
+              threshold: 5
+            inputs: {input: "nextclade.privateNucMutations.totalPrivateSubstitutions"}
       website:
         <<: *website
         tableColumns:
