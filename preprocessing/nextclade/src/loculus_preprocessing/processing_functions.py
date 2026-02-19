@@ -1197,11 +1197,12 @@ class ProcessingFunctions:
             )
         try:
             subtypes = {}
+            infos: set[str] = set()
             for segment in input_datum:
                 if segment not in {"seg4", "seg6"}:
                     continue
                 segment_name = input_datum[segment]
-                processing_result = ProcessingFunctions.call_function(
+                subtype = ProcessingFunctions.call_function(
                     "extract_regex",
                     {
                         "pattern": r"^(?P<subtype>[^_\-]+)_(?P<info>[^_\-]+)$",
@@ -1212,11 +1213,29 @@ class ProcessingFunctions:
                     "output_field",
                     ["segment_name"],
                 )
-                if processing_result.datum:
-                    subtypes[segment] = processing_result.datum
+                info = ProcessingFunctions.call_function(
+                    "extract_regex",
+                    {
+                        "pattern": r"^(?P<subtype>[^_\-]+)_(?P<info>[^_\-]+)$",
+                        "uppercase": True,
+                        "capture_group": "info",
+                    },
+                    {"segment_name": segment_name},
+                    "output_field",
+                    ["segment_name"],
+                )
+                if subtype.datum:
+                    subtypes[segment] = subtype.datum
+                if info.datum:
+                    infos.add(info.datum)
             if not subtypes:
                 return ProcessingResult(datum=None, warnings=[], errors=[])
             lineage = f"{subtypes.get('seg4', 'H*')}{subtypes.get('seg6', 'N*')}"
+            if lineage in {"H1N1", "H3N2"}:
+                if len(infos) > 1:
+                    lineage += " recombinant"
+                if infos.pop() == "h1n1pdm":
+                    lineage += "pdm"
             return ProcessingResult(datum=lineage, warnings=[], errors=[])
         except (ValueError, TypeError):
             return ProcessingResult(
@@ -1227,7 +1246,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=(f"Field {output_field} has non-numeric threshold value."),
+                        message=(f"Internal error processing custom lineage for field {output_field}."),
                     )
                 ],
             )
