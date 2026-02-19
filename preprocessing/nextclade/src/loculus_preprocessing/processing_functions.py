@@ -1180,6 +1180,7 @@ class ProcessingFunctions:
     ) -> ProcessingResult:
         """Assign flu lineage based on seg4 and seg6"""
         input_datum = input_data["input"]
+        logger.info(f"Assigning custom lineage for input datum: {input_datum}")
         if not input_datum:
             return ProcessingResult(datum=None, warnings=[], errors=[])
         if not isinstance(input_datum, dict):
