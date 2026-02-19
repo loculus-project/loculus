@@ -1231,7 +1231,7 @@ class ProcessingFunctions:
             if not subtypes:
                 return ProcessingResult(datum=None, warnings=[], errors=[])
             lineage = f"{subtypes.get('seg4', 'H*')}{subtypes.get('seg6', 'N*')}"
-            if lineage in {"H1N1", "H3N2"}:
+            if lineage in {"H1N1", "H3N2", "H2N2"}:
                 if len(infos) > 1:
                     lineage += " recombinant"
                 if infos.pop() == "h1n1pdm":
