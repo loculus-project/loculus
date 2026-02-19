@@ -20,7 +20,9 @@ def download_ncbi_archive(
     logger.info(f"downloading NCBI taxonomy archive from: {full_url}")
 
     with urllib.request.urlopen(full_url) as response:
-        zip_bytes = io.BytesIO(response.read())
+        zip_bytes = io.BytesIO(
+            response.read()
+        )  # read the whole archive into memory (it's around 69M)
 
     logger.info("successfully downloaded NCBI taxonomy archive")
     return zip_bytes
