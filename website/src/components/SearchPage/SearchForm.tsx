@@ -411,17 +411,6 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 />
             );
         default:
-            if (field.lineageSearch) {
-                return (
-                    <LineageField
-                        field={field}
-                        fieldValue={(fieldValues[field.name] ?? '') as string}
-                        setSomeFieldValues={setSomeFieldValues}
-                        lapisUrl={lapisUrl}
-                        lapisSearchParameters={lapisSearchParameters}
-                    />
-                );
-            }
             if (field.fieldPresets) {
                 return (
                     <ReferencePresetsField
@@ -430,6 +419,18 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                         fieldValue={validateSingleValue(fieldValues[field.name], field.name)}
                         setSomeFieldValues={setSomeFieldValues}
                         fieldPresets={field.fieldPresets}
+                    />
+                );
+            }
+            if (field.lineageSearch) {
+                console.log("field.lineageSearch", field.name, field.fieldPresets);
+                return (
+                    <LineageField
+                        field={field}
+                        fieldValue={(fieldValues[field.name] ?? '') as string}
+                        setSomeFieldValues={setSomeFieldValues}
+                        lapisUrl={lapisUrl}
+                        lapisSearchParameters={lapisSearchParameters}
                     />
                 );
             }

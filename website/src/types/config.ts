@@ -132,6 +132,7 @@ export type GroupedMetadataFilter = {
     header?: string;
     isSequenceFilter?: Metadata['isSequenceFilter'];
     relatesToSegment?: Metadata['relatesToSegment'];
+    fieldPresets?: Metadata['fieldPresets'];
 };
 
 export const linkOut = z.object({

@@ -31,12 +31,9 @@ export const ReferencePresetsField = forwardRef<HTMLInputElement, ReferencePrese
           onBlur={onBlur}
           onChange={(e) => {
             const nextValue = e.target.value;
-
-            // Always update the edited field
             const updates: FieldValueUpdate[] = [[field.name, nextValue]];
 
-            // If there are presets for this field name, apply them
-            const preset = fieldPresets?.[field.name];
+            const preset = fieldPresets?.[nextValue];
             if (preset) {
               updates.push(
                 ...Object.entries(preset).map(([k, v]) => [k, v] as FieldValueUpdate)
