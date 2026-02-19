@@ -2108,6 +2108,7 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
+          perSegment: true
           preprocessing:
             inputs: {input: ASSIGNED_REFERENCE}
       website:
