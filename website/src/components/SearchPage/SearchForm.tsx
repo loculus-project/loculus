@@ -426,6 +426,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                         }}
                         setSomeFieldValues={setSomeFieldValues}
                         fieldValue={(fieldValues[field.name] as string | undefined) ?? ''}
+                        fieldPresets={field.fieldPresets}
                     />
                 );
             }
