@@ -1199,33 +1199,44 @@ class ProcessingFunctions:
             subtypes = {}
             infos: set[str] = set()
             for segment in input_datum:
-                if segment not in {"seg4", "seg6"}:
-                    continue
                 segment_name = input_datum[segment]
-                subtype = ProcessingFunctions.call_function(
-                    "extract_regex",
-                    {
-                        "pattern": r"^(?P<subtype>[^_\-]+)_(?P<info>[^_\-]+)$",
-                        "uppercase": True,
-                        "capture_group": "subtype",
-                    },
-                    {"regex_field": segment_name},
-                    "output_field",
-                    ["segment_name"],
-                )
-                info = ProcessingFunctions.call_function(
-                    "extract_regex",
-                    {
-                        "pattern": r"^(?P<subtype>[^_\-]+)_(?P<info>[^_\-]+)$",
-                        "uppercase": True,
-                        "capture_group": "info",
-                    },
-                    {"regex_field": segment_name},
-                    "output_field",
-                    ["segment_name"],
-                )
-                if subtype.datum:
-                    subtypes[segment] = subtype.datum
+                if segment not in {"seg4", "seg6"}:
+                    info = ProcessingFunctions.call_function(
+                        "extract_regex",
+                        {
+                            "pattern": r"^(?P<subtype>[^_\-]+)_(?P<info>[^_\-]+)$",
+                            "uppercase": False,
+                            "capture_group": "info",
+                        },
+                        {"regex_field": segment_name},
+                        "output_field",
+                        ["segment_name"],
+                    )
+                else:
+                    subtype = ProcessingFunctions.call_function(
+                        "extract_regex",
+                        {
+                            "pattern": r"^(?P<subtype>[^_\-]+)_(?P<info>[^_\-]+)$",
+                            "uppercase": True,
+                            "capture_group": "subtype",
+                        },
+                        {"regex_field": segment_name},
+                        "output_field",
+                        ["segment_name"],
+                    )
+                    info = ProcessingFunctions.call_function(
+                        "extract_regex",
+                        {
+                            "pattern": r"^(?P<subtype>[^_\-]+)_(?P<info>[^_\-]+)$",
+                            "uppercase": False,
+                            "capture_group": "info",
+                        },
+                        {"regex_field": segment_name},
+                        "output_field",
+                        ["segment_name"],
+                    )
+                    if subtype.datum:
+                        subtypes[segment] = subtype.datum
                 if info.datum:
                     infos.add(info.datum)
             if not subtypes:
@@ -1234,7 +1245,7 @@ class ProcessingFunctions:
             if lineage in {"H1N1", "H3N2", "H2N2"}:
                 if len(infos) > 1:
                     lineage += " reassortant"
-                if infos.pop() == "h1n1pdm":
+                elif infos.pop() == "h1n1pdm":
                     lineage += "pdm"
             return ProcessingResult(datum=lineage, warnings=[], errors=[])
         except (ValueError, TypeError):
