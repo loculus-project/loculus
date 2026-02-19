@@ -1481,7 +1481,6 @@ defaultOrganisms:
           displayName: "Variant"
           type: boolean
           noInput: true
-          generateIndex: true
           autocomplete: true
           initiallyVisible: false
           includeInDownloadsByDefault: false
