@@ -1233,7 +1233,7 @@ class ProcessingFunctions:
             lineage = f"{subtypes.get('seg4', 'H*')}{subtypes.get('seg6', 'N*')}"
             if lineage in {"H1N1", "H3N2", "H2N2"}:
                 if len(infos) > 1:
-                    lineage += " recombinant"
+                    lineage += " reassortant"
                 if infos.pop() == "h1n1pdm":
                     lineage += "pdm"
             return ProcessingResult(datum=lineage, warnings=[], errors=[])
