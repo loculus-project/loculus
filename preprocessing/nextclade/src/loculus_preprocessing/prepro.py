@@ -51,6 +51,8 @@ from .nextclade import (
 from .processing_functions import (
     ProcessingFunctions,
     process_frameshifts,
+    process_labeled_mutations,
+    process_mutations_from_clade_founder,
     process_phenotype_values,
     process_stop_codons,
 )
@@ -180,6 +182,12 @@ def add_nextclade_metadata(
         case "phenotypeValues":
             result = None if raw is None else str(raw)
             return process_phenotype_values(result, spec.args)
+        case "cladeFounderInfo.aaMutations":
+            result = None if raw is None else str(raw)
+            return process_mutations_from_clade_founder(result, spec.args)
+        case "privateAaMutations":
+            result = None if raw is None else str(raw)
+            return process_labeled_mutations(result, spec.args)
         case _:
             return InputData(datum=str(raw))
 

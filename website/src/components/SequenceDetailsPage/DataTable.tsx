@@ -109,11 +109,15 @@ const DataTableComponent: React.FC<Props> = ({
 
             {alignmentSections.length > 0 && (
                 <div
-                    className='grid gap-x-6'
-                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 20rem), 1fr))' }}
+                    className={alignmentSections.length === 1 ? '' : 'grid gap-x-6'}
+                    style={
+                        alignmentSections.length === 1
+                            ? undefined
+                            : { gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 20rem), 1fr))' }
+                    }
                 >
                     {alignmentSections.map(({ header, rows }) => (
-                        <div key={header} className='p-4 pl-0 max-w-xs'>
+                        <div key={header} className='p-4 pl-0'>
                             <div className='flex flex-row'></div>
                             <div className='mt-4'>
                                 {rows.map((entry: TableDataEntry, index: number) => (

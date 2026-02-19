@@ -113,14 +113,14 @@ export const SubstitutionsContainer: FC<Props> = ({ values }) => {
         let alwaysVisible: ReactElement[] = [];
         let initiallyHidden: ReactElement[] = [];
         const elements = values.map(({ mutationFrom, mutationTo, position, sequenceName }, index) => (
-            <span key={index}>
+            <li className='inline-block' key={index}>
                 <SubBadge
                     sequenceName={sequenceName}
                     mutationFrom={mutationFrom}
                     position={position}
                     mutationTo={mutationTo}
-                />{' '}
-            </span>
+                />
+            </li>
         ));
         if (elements.length <= MAX_INITIAL_NUMBER_BADGES) {
             alwaysVisible = elements;
@@ -132,7 +132,7 @@ export const SubstitutionsContainer: FC<Props> = ({ values }) => {
     }, [values]);
 
     return (
-        <div>
+        <ul className='list-none p-0 m-0 flex flex-wrap gap-1'>
             {alwaysVisible}
             {initiallyHidden.length > 0 &&
                 (showMore ? (
@@ -152,6 +152,6 @@ export const SubstitutionsContainer: FC<Props> = ({ values }) => {
                         Show more
                     </Button>
                 ))}
-        </div>
+        </ul>
     );
 };
