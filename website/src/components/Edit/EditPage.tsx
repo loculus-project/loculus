@@ -1,4 +1,3 @@
-import { isErrorFromAlias } from '@zodios/core';
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -7,13 +6,13 @@ import { EditableMetadata, MetadataForm, SubmissionIdRow, Subtitle } from './Met
 import { SequencesForm } from './SequencesForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
-import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type FilesBySubmissionId, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
+import { isAxiosErrorWithProblemDetail } from '../../utils/isAxiosErrorWithProblemDetail.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
 import { Button } from '../common/Button';
@@ -34,10 +33,7 @@ const logger = getClientLogger('EditPage');
  * Extracts the detail field from a backend error response
  */
 function getErrorDetail(error: unknown): string {
-    if (
-        isErrorFromAlias(backendApi, 'revise', error) ||
-        isErrorFromAlias(backendApi, 'submitReviewedSequence', error)
-    ) {
+    if (isAxiosErrorWithProblemDetail(error)) {
         return error.response.data.detail;
     }
     return JSON.stringify(error);
@@ -205,16 +201,16 @@ function useSubmitRevision(
             headers: createAuthorizationHeader(accessToken),
         },
         {
-            onSuccess: async () => {
-                await logger.info('Successfully submitted revision for ' + getAccessionVersionString(reviewData));
+            onSuccess: () => {
+                void logger.info('Successfully submitted revision for ' + getAccessionVersionString(reviewData));
                 location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
             },
-            onError: async (error) => {
+            onError: (error) => {
                 const errorDetail = getErrorDetail(error);
                 const message = `Failed to submit revision for ${getAccessionVersionString(
                     reviewData,
                 )}: ${errorDetail}`;
-                await logger.info(message);
+                void logger.info(message);
                 openErrorFeedback(message);
             },
         },
@@ -234,16 +230,16 @@ function useSubmitEdit(
             params: { organism },
         },
         {
-            onSuccess: async () => {
-                await logger.info('Successfully submitted edited data ' + getAccessionVersionString(reviewData));
+            onSuccess: () => {
+                void logger.info('Successfully submitted edited data ' + getAccessionVersionString(reviewData));
                 location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
             },
-            onError: async (error) => {
+            onError: (error) => {
                 const errorDetail = getErrorDetail(error);
                 const message = `Failed to submit edited data for ${getAccessionVersionString(
                     reviewData,
                 )}: ${errorDetail}`;
-                await logger.info(message);
+                void logger.info(message);
                 openErrorFeedback(message);
             },
         },

@@ -10,11 +10,9 @@ export type ServiceUrls = z.infer<typeof serviceUrls>;
 
 export type ClientConfig = z.infer<typeof serviceUrls>;
 
-export const serverConfig = serviceUrls.merge(
-    z.object({
-        keycloakUrl: z.string(),
-    }),
-);
+export const serverConfig = serviceUrls.extend({
+    keycloakUrl: z.string(),
+});
 
 export const runtimeConfig = z.object({
     public: serviceUrls,
