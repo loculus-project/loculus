@@ -209,11 +209,11 @@ def add_assigned_reference(
             return InputData(datum=None)
         return InputData(datum=reference)
     references: dict[str, str] = {}
-    for segment_name, data in unprocessed.nextcladeMetadata.items():
-        if not data:
+    for segment in config.segments:
+        name = get_dataset_name(segment, unprocessed.nextcladeMetadata, config)
+        if not name:
             continue
-        segment = config.get_dataset_by_name(segment_name).segment
-        references[segment] = segment_name
+        references[segment] = name
     if not references:
         return InputData(datum=None)
     return InputData(datum=references)

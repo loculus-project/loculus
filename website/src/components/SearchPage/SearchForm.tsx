@@ -226,7 +226,7 @@ export const SearchForm = ({
                 />
             )}
 
-            {showMutationSearch && segmentAndGeneInfo[segmentName] && (
+            {showMutationSearch && segmentAndGeneInfo[segmentName] && segmentName !== 'ALL' && (
                 <MutationField
                     singleSegmentAndGeneInfo={segmentAndGeneInfo[segmentName]}
                     value={
@@ -420,6 +420,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                     />
                 );
             }
+
             if (field.autocomplete === true) {
                 const fieldValuesArray = extractArrayValue(fieldValues[field.name]);
 
