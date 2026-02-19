@@ -36,7 +36,6 @@ jobs:
         run: |
           git config --global user.name 'Loculus bot'
           git config --global user.email 'bot@loculus.org'
-          git checkout -- website/package-lock.json
           git add -A
           git commit -m "Automated code formatting" || echo "No changes to commit"
           git push origin HEAD:${{ github.head_ref }}
