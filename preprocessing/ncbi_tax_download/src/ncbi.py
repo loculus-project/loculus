@@ -28,7 +28,7 @@ def download_ncbi_archive(
     return zip_bytes
 
 
-def extract_ncbi_taxonomy_file(archive: io.BytesIO, target_file: str = "names.dmp") -> pd.DataFrame:
+def extract_ncbi_taxonomy_file(archive: io.BytesIO, target_file: str) -> pd.DataFrame:
     with zipfile.ZipFile(archive) as z:
         if target_file not in z.namelist():
             msg = f"{target_file} does not exist in NCBI archive"
