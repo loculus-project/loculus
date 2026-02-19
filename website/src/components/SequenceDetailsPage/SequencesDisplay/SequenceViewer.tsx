@@ -48,8 +48,8 @@ export const SequencesViewer: FC<Props> = ({
         return <span className='text-gray-600 italic'>None</span>;
     }
 
-    const header = '>' + data.name + (sequenceType.name.name === 'main' ? '' : `_${sequenceType.name.name}`);
     const sequenceName = data.name + (sequenceType.name.name === 'main' ? '' : `_${sequenceType.name.name}`);
+    const header = '>' + sequenceName;
 
     return (
         <div className='relative'>
