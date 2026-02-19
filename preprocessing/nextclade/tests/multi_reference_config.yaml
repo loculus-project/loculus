@@ -20,6 +20,7 @@ processing_spec:
   subtype:
     args:
       type: str
+      segment: main
     function: identity
     inputs:
       input: ASSIGNED_REFERENCE
