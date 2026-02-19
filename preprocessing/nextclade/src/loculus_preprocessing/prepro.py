@@ -197,17 +197,24 @@ def add_assigned_reference(
 ) -> InputData:
     if not unprocessed.nextcladeMetadata:
         return InputData(datum=None)
-    segment = spec.args.get("segment", "main") if spec.args else "main"
-    if not isinstance(segment, str):
-        msg = f"add_assigned_reference: segment must be str, got {type(segment)}"
-        raise TypeError(msg)
-    name = get_dataset_name(segment, unprocessed.nextcladeMetadata, config)
-    if not name:
+    segment = spec.args.get("segment") if spec.args else None
+    if isinstance(segment, str):
+        name = get_dataset_name(segment, unprocessed.nextcladeMetadata, config)
+        if not name:
+            return InputData(datum=None)
+        reference = config.get_dataset_by_name(name).reference_name
+        if not reference:
+            return InputData(datum=None)
+        return InputData(datum=reference)
+    references: dict[str, str] = {}
+    for segment_name, data in unprocessed.nextcladeMetadata.items():
+        if not data:
+            continue
+        segment = config.get_dataset_by_name(segment_name).segment
+        references[segment] = segment_name
+    if not references:
         return InputData(datum=None)
-    reference = config.get_dataset_by_name(name).reference_name
-    if not reference:
-        return InputData(datum=None)
-    return InputData(datum=reference)
+    return InputData(datum=references)
 
 
 def add_input_metadata(
@@ -355,7 +362,7 @@ def get_output_metadata(
                 warnings.extend(input_metadata.warnings)
                 input_fields.append(input_path)
                 group_id = (
-                    int(unprocessed.inputMetadata["group_id"])
+                    int(unprocessed.inputMetadata["group_id"])  # type: ignore
                     if unprocessed.inputMetadata["group_id"]
                     else None
                 )
