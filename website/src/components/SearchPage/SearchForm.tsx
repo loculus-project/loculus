@@ -35,6 +35,7 @@ import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import MaterialSymbolsTune from '~icons/material-symbols/tune';
 import StreamlineWrench from '~icons/streamline/wrench';
+import { ReferencePresetsField } from './fields/ReferencePresetsField.tsx';
 
 const queryClient = new QueryClient();
 
@@ -417,6 +418,17 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
                         lapisSearchParameters={lapisSearchParameters}
+                    />
+                );
+            }
+            if (field.fieldPresets) {
+                return (
+                    <ReferencePresetsField
+                        type={field.type}
+                        field={field}
+                        fieldValue={validateSingleValue(fieldValues[field.name], field.name)}
+                        setSomeFieldValues={setSomeFieldValues}
+                        fieldPresets={field.fieldPresets}
                     />
                 );
             }
