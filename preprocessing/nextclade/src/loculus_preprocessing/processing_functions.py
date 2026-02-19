@@ -1172,7 +1172,7 @@ class ProcessingFunctions:
                     )
                 ],
             )
-        return ProcessingResult(datum=input > threshold, warnings=[], errors=[])
+        return ProcessingResult(datum=(input > threshold), warnings=[], errors=[])
 
 
 def single_metadata_annotation(
