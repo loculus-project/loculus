@@ -210,12 +210,10 @@ def add_assigned_reference(
         return InputData(datum=reference)
     references: dict[str, str] = {}
     for segment in config.segments:
-        logger.debug(f"Finding assigned reference for segment {segment.name}")
         name = get_dataset_name(segment.name, unprocessed.nextcladeMetadata, config)
         if not name:
             continue
         reference = config.get_dataset_by_name(name).reference_name
-        logger.debug(f"Assigned reference for segment {segment.name} is {reference}")
         references[segment.name] = reference
     if not references:
         return InputData(datum=None)
