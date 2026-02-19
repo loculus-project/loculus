@@ -1204,7 +1204,7 @@ class ProcessingFunctions:
                     info = ProcessingFunctions.call_function(
                         "extract_regex",
                         {
-                            "pattern": r"^(?P<subtype>[^_\-]+)_(?P<info>[^_\-]+)$",
+                            "pattern": r"^(?P<info>[^_\-]+)$",
                             "uppercase": False,
                             "capture_group": "info",
                         },
