@@ -268,6 +268,14 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     nucleotide_insertions: dict[SequenceName, list[NucleotideInsertion]] = {}
     amino_acid_insertions: dict[GeneName, list[AminoAcidInsertion]] = {}
 
+    # Convert files format from backend (list of dicts) to FileIdAndName objects
+    files_output = None
+    if unprocessed.files:
+        files_output = {
+            category: [FileIdAndName(fileId=f["fileId"], name=f["name"]) for f in file_list]
+            for category, file_list in unprocessed.files.items()
+        }
+
     return SubmissionData(
         processed_entry=ProcessedEntry(
             accession=accession_from_str(accession_version),
@@ -280,6 +288,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
                 alignedAminoAcidSequences=aligned_aminoacid_sequences,
                 aminoAcidInsertions=amino_acid_insertions,
                 sequenceNameToFastaId=sequenceNameToFastaId,
+                files=files_output,
             ),
             errors=errors,
             warnings=warnings,

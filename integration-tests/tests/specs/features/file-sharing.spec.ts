@@ -7,7 +7,7 @@ import { SearchPage } from '../../pages/search.page';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
 const ORGANISM_NAME = 'Test organism (with files)';
-const ORGANISM_URL_NAME = 'dummy-organism-with-files';
+const ORGANISM_URL_NAME = 'test-organism-files';
 const RAW_READS = 'raw_reads';
 const METADATA_HEADERS = ['submissionId', 'country', 'date'];
 const COUNTRY_1 = 'Norway';
@@ -26,7 +26,7 @@ test('submit single seq w/ 2 files thru single seq submission form', async ({
     void groupId;
     const submissionPage = new SingleSequenceSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.fillSubmissionFormDummyOrganism({
+    await submissionPage.fillSubmissionFormFilesOrganism({
         submissionId: ID_1,
         country: COUNTRY_1,
         date: '2023-10-15',
@@ -175,7 +175,7 @@ test('single revise seq with files via edit page', async ({ page, groupId, tmpDi
     // Step 1: Submit and release a sequence
     const submissionPage = new SingleSequenceSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.fillSubmissionFormDummyOrganism({
+    await submissionPage.fillSubmissionFormFilesOrganism({
         submissionId: 'single-rev',
         country: COUNTRY_1,
         date: '2023-01-01',
