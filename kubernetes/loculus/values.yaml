@@ -1819,6 +1819,9 @@ defaultOrganisms:
           noInput: true
           generateIndex: true
           autocomplete: true
+          fieldPresets:
+            I:
+              hostNameScientific: "Homo sapiens"
           initiallyVisible: true
           includeInDownloadsByDefault: true
           lineageSystem: cchfS
