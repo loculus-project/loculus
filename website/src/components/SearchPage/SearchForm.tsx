@@ -179,7 +179,7 @@ export const SearchForm = ({
             }
 
             const sequenceScope =
-                'relatesToSegment' in field && field.relatesToSegment != null ? field.relatesToSegment : 'main';
+                'relatesToSegment' in field && field.relatesToSegment != null ? field.relatesToSegment : 'ALL';
 
             sequenceFieldsBySegment[sequenceScope] ??= [];
             sequenceFieldsBySegment[sequenceScope].push(field);
@@ -213,7 +213,7 @@ export const SearchForm = ({
 
     const renderSegmentContents = (segmentName: string) => (
         <>
-            {referenceSelection !== undefined && (
+            {referenceSelection !== undefined && segmentName !== 'ALL' && (
                 <ReferenceSelector
                     filterSchema={filterSchema}
                     referenceGenomesInfo={referenceGenomesInfo}
@@ -333,6 +333,7 @@ export const SearchForm = ({
 
                         <section className='flex flex-col gap-1.5 mb-4'>
                             <CollapsibleSection title='Sequence Filters' open>
+                                {renderSegmentContents('ALL')}
                                 {!referenceGenomesInfo.isMultiSegmented &&
                                     segmentNames.map((segmentName) => (
                                         <div key={segmentName}>{renderSegmentContents(segmentName)}</div>
