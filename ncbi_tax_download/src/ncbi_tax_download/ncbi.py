@@ -3,6 +3,7 @@ import logging
 import sqlite3
 import urllib.request
 import zipfile
+from pathlib import Path
 from urllib.parse import urljoin
 
 import pandas as pd
@@ -125,6 +126,8 @@ def extract_names_df(archive: io.BytesIO) -> pd.DataFrame:
         .rename(columns={"scientific name": "scientific_name", "common name": "common_name"})
     )
 
+    df_wide.columns.name = None
+
     return df_wide
 
 
@@ -141,7 +144,7 @@ def extract_nodes_df(archive: io.BytesIO) -> pd.DataFrame:
     return df
 
 
-def write_to_sqlite(df_names: pd.DataFrame, df_nodes: pd.DataFrame, output_db: str) -> None:
+def write_to_sqlite(df_names: pd.DataFrame, df_nodes: pd.DataFrame, output_db: Path) -> None:
     logger.info(f"saving NCBI taxonomic names to {output_db}")
 
     df_rank_levels = pd.DataFrame(list(NCBI_RANK_ORDER.items()), columns=["rank", "rank_level"])
