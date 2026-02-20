@@ -163,8 +163,8 @@ defaultOrganismConfig: &defaultOrganismConfig
             geoLocCountry: geoLocCountry
             sampleCollectionDate: sampleCollectionDate
           args:
-            order: [geoLocCountry, accession_version, sampleCollectionDate]
-            type: [string, string, string]
+            order: [geoLocCountry, ACCESSION_VERSION, sampleCollectionDate]
+            type: [string, ACCESSION_VERSION, string]
         noInput: true
       - name: ncbiReleaseDate
         displayName: NCBI release date
@@ -1464,6 +1464,17 @@ defaultOrganisms:
           includeInDownloadsByDefault: true
           preprocessing:
             inputs: {input: nextclade.clade}
+        - name: displayName
+          preprocessing:
+            function: concatenate
+            inputs:
+              nextclade.clade: nextclade.clade
+              geoLocCountry: geoLocCountry
+              sampleCollectionDate: sampleCollectionDate
+            args:
+              order: [nextclade.clade, geoLocCountry, ACCESSION_VERSION, sampleCollectionDate]
+              type: [string, string, ACCESSION_VERSION, string]
+              fallback_value: unknown
       website:
         <<: *website
         tableColumns:

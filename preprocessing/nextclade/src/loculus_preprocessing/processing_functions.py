@@ -12,6 +12,7 @@ import re
 import unicodedata
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 import dateutil.parser as dateutil
 import pytz
@@ -638,7 +639,9 @@ class ProcessingFunctions:
         args: FunctionArgs,
     ) -> ProcessingResult:
         """Concatenates input fields with accession_version using the "/" separator in the order
-        specified by the order argument.
+        specified by the order argument. Optionally, a 'fallback_value' argument can be provided.
+        This should be a string to use in place of metadata that is not available. If fallback_value
+        is not provided, the empty string will be used in place of missing metadata.
         """
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
@@ -666,6 +669,7 @@ class ProcessingFunctions:
         accession_version: str = args["accession_version"]
         order = args["order"]
         type = args["type"]
+        fallback_value = str(args.get("fallback_value", "")).strip()
 
         def add_errors():
             errors.append(
@@ -720,22 +724,38 @@ class ProcessingFunctions:
                         {"date": input_data[order[i]]}, output_field, input_fields, args
                     )
                     formatted_input_data.append(
-                        "" if processed.datum is None else str(processed.datum)
+                        fallback_value
+                        if null_per_backend(processed.datum)
+                        else str(processed.datum)
                     )
                 elif type[i] == "timestamp":
                     processed = ProcessingFunctions.parse_timestamp(
                         {"timestamp": input_data[order[i]]}, output_field, input_fields, args
                     )
                     formatted_input_data.append(
-                        "" if processed.datum is None else str(processed.datum)
+                        fallback_value
+                        if null_per_backend(processed.datum)
+                        else str(processed.datum)
                     )
+                elif type[i] == "ACCESSION_VERSION":
+                    formatted_input_data.append(accession_version)
                 elif order[i] in input_data:
                     formatted_input_data.append(
-                        "" if input_data[order[i]] is None else str(input_data[order[i]]).strip()
+                        fallback_value
+                        if null_per_backend(input_data[order[i]])
+                        else str(input_data[order[i]]).strip()
                     )
                 else:
-                    formatted_input_data.append(accession_version)
-            logger.debug(f"formatted input data:{formatted_input_data}")
+                    logger.error(
+                        f"Concatenate: cannot find field {order[i]} in input_data"
+                        f"This is probably a configuration error. (accession_version: {accession_version})"
+                    )
+                    add_errors()
+                    return ProcessingResult(
+                        datum=None,
+                        warnings=warnings,
+                        errors=errors,
+                    )
 
             result = "/".join(formatted_input_data)
             # To avoid downstream issues do not let the result start or end in a "/"
@@ -1292,3 +1312,13 @@ def trim_ns(sequence: str) -> str:
         str: The trimmed sequence.
     """
     return sequence.strip("Nn")
+
+
+def null_per_backend(x: Any) -> bool:
+    match x:
+        case None:
+            return True
+        case "":
+            return True
+        case _:
+            return False
