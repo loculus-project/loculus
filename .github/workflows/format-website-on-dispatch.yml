@@ -30,7 +30,7 @@ jobs:
       - name: NPM install and format website
         working-directory: website
         run: |
-          npm install
+          npm ci
           npm run format
       - name: Commit and Push Changes
         run: |
