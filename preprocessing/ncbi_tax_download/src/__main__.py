@@ -2,10 +2,10 @@ import logging
 import sys
 
 from .ncbi import (
-    df_names_to_sqlite,
+    write_to_sqlite,
     download_ncbi_archive,
-    extract_ncbi_taxonomy_file,
-    format_names_df,
+    extract_names_df,
+    extract_nodes_df,
 )
 
 logger = logging.getLogger(__name__)
@@ -16,9 +16,15 @@ def run() -> None:
 
     try:
         archive = download_ncbi_archive()
-        df_names = extract_ncbi_taxonomy_file(archive, "names.dmp")
-        df_names_reformat = format_names_df(df_names)
-        df_names_to_sqlite(df_names_reformat, "tests/ncbi_scientific_names.sql")
+        df_names = extract_names_df(archive)
+        df_nodes = extract_nodes_df(archive)
+
+        df_names = df_names.merge(
+            df_nodes.loc[:, ["tax_id", "rank_level"]], on="tax_id", how="left"
+        )
+        df_nodes = df_nodes.drop("rank_level", axis=1)
+
+        write_to_sqlite(df_names, df_nodes, "tests/ncbi_scientific_names.sqlite")
     except:
         logger.exception("NCBI taxonomy download pipeline failed")
         sys.exit(1)
