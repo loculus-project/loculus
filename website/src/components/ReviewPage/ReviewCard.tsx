@@ -25,12 +25,12 @@ import { getAccessionVersionString } from '../../utils/extractAccessionVersion.t
 import { Button } from '../common/Button';
 import BiTrash from '~icons/bi/trash';
 import ClarityNoteEditLine from '~icons/clarity/note-edit-line';
+import FolderFilesOutline from '~icons/ep/files';
 import Note from '~icons/fluent/note-24-filled';
 import QuestionMark from '~icons/fluent/tag-question-mark-24-filled';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 import EmptyCircle from '~icons/grommet-icons/empty-circle';
-import FolderFilesOutline from '~icons/ep/files';
 import RiDna from '~icons/mdi/dna';
 import TickOutline from '~icons/mdi/tick-outline';
 import WpfPaperPlane from '~icons/wpf/paper-plane';
