@@ -13,7 +13,7 @@ test('Download metadata TSV for a single sequence', async ({ page }) => {
     await page.goto(`/seq/${accessionVersion}`);
     await expect(page.getByRole('heading', { name: accessionVersion })).toBeVisible();
 
-    await page.getByText('Download', { exact: true }).click();
+    await page.getByTestId('metadata-download-dropdown').click();
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('link', { name: 'Download metadata TSV' }).click();
     const download = await downloadPromise;
