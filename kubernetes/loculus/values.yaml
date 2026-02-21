@@ -14,6 +14,7 @@ seqSets:
       displayName: "Collection Date"
     - field: "authors"
       displayName: "Authors"
+useSequlus: false
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
@@ -2334,6 +2335,9 @@ images:
     pullPolicy: Always
   loculusSilo:
     repository: "ghcr.io/loculus-project/loculus-silo"
+    pullPolicy: Always
+  sequlus:
+    repository: "ghcr.io/loculus-project/sequlus"
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
