@@ -25,7 +25,7 @@ env:
   sha: ${{ github.event.pull_request.head.sha || github.sha }}
 defaults:
   run:
-    working-directory: ./lapis-rs
+    working-directory: ./sequlus
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-sequlus-${{github.event.inputs.build_arm}}
   cancel-in-progress: true
@@ -63,7 +63,7 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
-          context: ./lapis-rs
+          context: ./sequlus
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=sequlus-${{ github.ref }}

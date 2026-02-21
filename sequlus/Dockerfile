@@ -7,5 +7,5 @@ RUN cargo build --release
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /app/target/release/lapis-rs /usr/local/bin/lapis-rs
-ENTRYPOINT ["lapis-rs"]
+COPY --from=builder /app/target/release/sequlus /usr/local/bin/sequlus
+ENTRYPOINT ["sequlus"]
