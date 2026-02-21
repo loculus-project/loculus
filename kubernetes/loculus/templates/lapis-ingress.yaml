@@ -27,7 +27,11 @@ kind: Ingress
 metadata:
   name: lapis-ingress
   annotations:
+    {{- if $.Values.useSequlus }}
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd"
+    {{- else }}
     traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd,{{- $first := true }}{{- range $key := $organismKeys }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
+    {{- end }}
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
@@ -38,9 +42,15 @@ spec:
         pathType: {{ ternary "ImplementationSpecific" "Prefix" (eq $.Values.environment "server") }}
         backend:
           service:
+            {{- if $.Values.useSequlus }}
+            name: loculus-sequlus-service
+            port:
+              number: 8090
+            {{- else }}
             name: {{ template "loculus.lapisServiceName" $key }}
             port:
               number: 8080
+            {{- end }}
       {{- end }}
   {{- if eq $.Values.environment "server" }}
   tls:
@@ -48,6 +58,7 @@ spec:
     - {{ $lapisHost }}
   {{- end }}
 
+{{- if not $.Values.useSequlus }}
 {{- range $key := $organismKeys }}
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -58,6 +69,7 @@ spec:
   stripPrefix:
     prefixes:
       - /{{ $key }}/
+{{- end }}
 {{- end }}
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -98,7 +110,13 @@ spec:
           # the request is forwarded, we can point all paths to the first
           # organism's service as a placeholder.
           service:
+            {{- if $.Values.useSequlus }}
+            name: loculus-sequlus-service
+            port:
+              number: 8090
+            {{- else }}
             name: {{ template "loculus.lapisServiceName" (first $organismKeys) }}
             port:
               number: 8080
+            {{- end }}
       {{- end }}
