@@ -2400,6 +2400,7 @@ runDevelopmentS3: true
 developmentDatabasePersistence: false
 enforceHTTPS: true
 traefikVersion: 2
+clusterIssuer: ""
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 

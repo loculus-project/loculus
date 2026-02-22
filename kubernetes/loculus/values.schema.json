@@ -1469,6 +1469,12 @@
       "default": 2,
       "description": "Traefik major version for CRD API group. Use 2 for traefik.containo.us/v1alpha1 (Traefik v2) or 3 for traefik.io/v1alpha1 (Traefik v3)."
     },
+    "clusterIssuer": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "",
+      "description": "cert-manager.io/cluster-issuer name to annotate on Ingress resources for automatic TLS certificate provisioning. Leave empty to disable."
+    },
     "ingestLimitSeconds": {
       "type": "integer",
       "default": 1800,

@@ -29,6 +29,9 @@ metadata:
   name: lapis-ingress
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd,{{- $first := true }}{{- range $key := $organismKeys }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
+    {{- if $.Values.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ $.Values.clusterIssuer | quote }}
+    {{- end }}
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
@@ -86,6 +89,9 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $redirectMiddlewareList }}"
     # High priority to ensure this rule is evaluated first
     traefik.ingress.kubernetes.io/router.priority: "500"
+    {{- if $.Values.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ $.Values.clusterIssuer | quote }}
+    {{- end }}
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}

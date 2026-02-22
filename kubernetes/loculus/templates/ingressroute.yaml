@@ -74,6 +74,9 @@ metadata:
   name: loculus-website-ingress
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForWebsite }}"
+    {{- if $.Values.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ $.Values.clusterIssuer | quote }}
+    {{- end }}
 spec:
   rules:
     - host: "{{ .Values.host }}"
@@ -107,6 +110,9 @@ metadata:
   name: loculus-backend-ingress
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
+    {{- if $.Values.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ $.Values.clusterIssuer | quote }}
+    {{- end }}
 spec:
   rules:
     - host: "{{ $backendHost }}"
@@ -129,6 +135,9 @@ metadata:
   name: loculus-keycloak-ingress
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForKeycloak }}"
+    {{- if $.Values.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ $.Values.clusterIssuer | quote }}
+    {{- end }}
 spec:
   rules:
     - host: "{{ $keycloakHost }}"
@@ -152,6 +161,9 @@ metadata:
   name: minio-ingress
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
+    {{- if $.Values.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ $.Values.clusterIssuer | quote }}
+    {{- end }}
 spec:
   rules:
     - host: "{{ $minioHost }}"
