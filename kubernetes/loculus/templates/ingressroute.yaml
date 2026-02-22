@@ -1,11 +1,12 @@
-apiVersion: traefik.containo.us/v1alpha1
+{{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (eq (int $.Values.traefikVersion) 3) -}}
+apiVersion: {{ $traefikApiVersion }}
 kind: Middleware
 metadata:
   name: compression-middleware
 spec:
   compress: {}
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: {{ $traefikApiVersion }}
 kind: Middleware
 metadata:
   name: redirect-middleware
@@ -15,7 +16,7 @@ spec:
     permanent: true
 {{ if $.Values.secrets.basicauth }}
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: {{ $traefikApiVersion }}
 kind: Middleware
 metadata:
   name: basic-auth
@@ -25,7 +26,7 @@ spec:
 {{ end  }}
 {{ if $.Values.robotsNoindexHeader }}
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: {{ $traefikApiVersion }}
 kind: Middleware
 metadata:
   name: noindex-robots-header
@@ -35,7 +36,7 @@ spec:
       X-Robots-Tag: "noindex, nofollow"
 {{ end }}
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: {{ $traefikApiVersion }}
 kind: Middleware
 metadata:
   name: redirect-www-middleware
