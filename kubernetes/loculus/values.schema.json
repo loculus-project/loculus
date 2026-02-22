@@ -1475,6 +1475,12 @@
       "default": "",
       "description": "cert-manager.io/cluster-issuer name to annotate on Ingress resources for automatic TLS certificate provisioning. Leave empty to disable."
     },
+    "generateTlsSecrets": {
+      "groups": ["general"],
+      "type": "boolean",
+      "default": false,
+      "description": "Generate secretName fields in Ingress TLS sections. Required for cert-manager to store provisioned certificates."
+    },
     "ingestLimitSeconds": {
       "type": "integer",
       "default": 1800,

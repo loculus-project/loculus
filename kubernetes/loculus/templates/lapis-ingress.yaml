@@ -50,6 +50,9 @@ spec:
   tls:
   - hosts:
     - {{ $lapisHost }}
+    {{- if $.Values.generateTlsSecrets }}
+    secretName: lapis-tls
+    {{- end }}
   {{- end }}
 
 {{- range $key := $organismKeys }}

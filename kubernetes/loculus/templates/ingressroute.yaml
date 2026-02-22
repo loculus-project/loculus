@@ -103,6 +103,9 @@ spec:
   - hosts:
     - "{{ .Values.host }}"
     - "www.{{ .Values.host }}"
+    {{- if $.Values.generateTlsSecrets }}
+    secretName: loculus-website-tls
+    {{- end }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -128,6 +131,9 @@ spec:
   tls:
   - hosts:
     - "{{ $backendHost }}"
+    {{- if $.Values.generateTlsSecrets }}
+    secretName: loculus-backend-tls
+    {{- end }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -153,6 +159,9 @@ spec:
   tls:
   - hosts:
     - "{{ $keycloakHost }}"
+    {{- if $.Values.generateTlsSecrets }}
+    secretName: loculus-keycloak-tls
+    {{- end }}
 ---
 {{- if and .Values.s3.enabled .Values.runDevelopmentS3 }}
 apiVersion: networking.k8s.io/v1
@@ -179,5 +188,8 @@ spec:
   tls:
     - hosts:
         - "{{ $minioHost }}"
+      {{- if $.Values.generateTlsSecrets }}
+      secretName: minio-tls
+      {{- end }}
 {{- end }}
 {{- end }}

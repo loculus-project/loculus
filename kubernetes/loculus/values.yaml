@@ -2401,6 +2401,7 @@ developmentDatabasePersistence: false
 enforceHTTPS: true
 traefikVersion: 2
 clusterIssuer: ""
+generateTlsSecrets: false
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
