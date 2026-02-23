@@ -1,0 +1,62 @@
+name: Build and Upload a SQLite DB of NCBI taxonomy information
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 1 * *" # First of every month, 03:00 UTC
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: db-build
+          create-args: >
+            -c conda-forge python=3.14.3 pandas s3cmd
+          cache-environment: true
+
+      - name: Install NCBI taxonomy package
+        shell: bash -l {0}
+        run: |
+          pip install -e ./ncbi_tax_download
+
+      - name: Create taxonomy DB
+        shell: bash -l {0}
+        run: |
+          taxonomy-download --output_db ncbi_taxonomy.sqlite
+          ls -lh ncbi_taxonomy.sqlite
+
+      - name: Create S3cmd config
+        run: |
+          cat <<EOF > ~/.s3cfg
+          [default]
+          access_key = ${{ secrets.HETZNER_S3_ACCESS_KEY }}
+          secret_key = ${{ secrets.HETZNER_S3_SECRET_KEY }}
+          host_base = hel1.your-objectstorage.com
+          host_bucket = %(bucket)s.hel1.your-objectstorage.com
+          verbosity = DEBUG
+          EOF
+
+      - name: Upload taxonomy DB
+        shell: bash -l {0}
+        run: |
+          s3cmd put --multipart-chunk-size-mb=100 \
+            ncbi_taxonomy.sqlite \
+            s3://loculus-public/taxonomy/ncbi_taxonomy.sqlite
+
+  notify_on_failure:
+    needs: build-and-upload
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Send Slack Notification
+        env:
+          SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "🚨 Failed to build and upload NCBI taxonomy DB: ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+          }' $SLACK_HOOK

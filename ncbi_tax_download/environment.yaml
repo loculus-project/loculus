@@ -1,0 +1,6 @@
+name: loculus-ncbi-taxonomy
+channels:
+  - conda-forge
+dependencies:
+  - pandas
+  - pytest
