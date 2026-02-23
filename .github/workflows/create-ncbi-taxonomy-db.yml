@@ -41,12 +41,13 @@ jobs:
           verbosity = DEBUG
           EOF
 
-      - name: Upload taxonomy DB
+      - name: Compress and upload taxonomy DB
         shell: bash -l {0}
         run: |
+          gzip -9 ncbi_taxonomy.sqlite
           s3cmd put --multipart-chunk-size-mb=100 \
-            ncbi_taxonomy.sqlite \
-            s3://loculus-public/taxonomy/ncbi_taxonomy.sqlite
+            ncbi_taxonomy.sqlite.gz \
+            s3://loculus-public/taxonomy/ncbi_taxonomy.sqlite.gz
 
   notify_on_failure:
     needs: build-and-upload
