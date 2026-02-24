@@ -141,7 +141,6 @@ export const SubstitutionsContainer: FC<Props> = ({ values }) => {
     );
 };
 
-
 export const MutationStringContainers = ({
     values,
     segmentDisplayNameMap,
