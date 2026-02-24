@@ -5,45 +5,40 @@ on:
     branches:
       - main
 jobs:
-  build-and-upload:
+  build-and-deploy:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
-
+    timeout-minutes: 15
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v6
-      - uses: mamba-org/setup-micromamba@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
         with:
-          environment-name: db-build
-          create-args: >
-            -c conda-forge python=3.14.3 pandas s3cmd
-          cache-environment: true
+          node-version-file: ./docs/.nvmrc
 
-      - name: Install NCBI taxonomy package
-        shell: bash -l {0}
-        run: |
-          pip install -e ./ncbi_tax_download
+      - name: Navigate to docs directory
+        run: cd docs
 
-      - name: Create taxonomy DB
-        shell: bash -l {0}
-        run: |
-          taxonomy-download --output_db ncbi_taxonomy.sqlite
-          ls -lh ncbi_taxonomy.sqlite
+      - name: Copy Kubernetes schema to docs
+        run: npm run copy-schema
+        working-directory: ./docs
 
-      - name: Create S3cmd config
-        run: |
-          cat <<EOF > ~/.s3cfg
-          [default]
-          access_key = ${{ secrets.HETZNER_S3_ACCESS_KEY }}
-          secret_key = ${{ secrets.HETZNER_S3_SECRET_KEY }}
-          host_base = hel1.your-objectstorage.com
-          host_bucket = %(bucket)s.hel1.your-objectstorage.com
-          verbosity = DEBUG
-          EOF
+      - name: Install Dependencies
+        run: npm install
+        working-directory: ./docs
 
-      - name: Compress and upload taxonomy DB
-        shell: bash -l {0}
-        run: |
-          gzip -9 ncbi_taxonomy.sqlite
-          s3cmd put --multipart-chunk-size-mb=100 \
-            ncbi_taxonomy.sqlite.gz \
-            s3://loculus-public/taxonomy/ncbi_taxonomy.sqlite.gz
+      - name: Build Project
+        run: npm run build
+        working-directory: ./docs
+
+      - name: Add CNAME for Custom Domain
+        run: echo "loculus.org" > ./docs/dist/CNAME
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/dist # Adjust if your build output directory is different
