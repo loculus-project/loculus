@@ -1,6 +1,6 @@
 import { type FC, type ReactElement, useMemo, useState } from 'react';
 
-import { PlainValueDisplay } from './DataTableEntryValue';
+import { PlainValueDisplay } from './PlainValueDisplay';
 import type { MutationBadgeData, SegmentedMutations, SegmentedMutationStrings } from '../../types/config';
 import { Button } from '../common/Button';
 
@@ -99,14 +99,13 @@ export const SubstitutionsContainer: FC<Props> = ({ values }) => {
         let alwaysVisible: ReactElement[] = [];
         let initiallyHidden: ReactElement[] = [];
         const elements = values.map(({ mutationFrom, mutationTo, position, sequenceName }, index) => (
-            <li className='inline-block' key={index}>
-                <SubBadge
-                    sequenceName={sequenceName}
-                    mutationFrom={mutationFrom}
-                    position={position}
-                    mutationTo={mutationTo}
-                />
-            </li>
+            <SubBadge
+                key={index}
+                sequenceName={sequenceName}
+                mutationFrom={mutationFrom}
+                position={position}
+                mutationTo={mutationTo}
+            />
         ));
         if (elements.length <= MAX_INITIAL_NUMBER_BADGES) {
             alwaysVisible = elements;
