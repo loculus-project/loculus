@@ -1295,10 +1295,7 @@ def test_process_clade_founder_values():
 
 def test_process_labeled_mutations():
     json_string = Path(LABELED_PRIVATE_MUTATIONS).read_text(encoding="utf-8")
-    assert (
-        process_labeled_mutations(json_string, {}).datum
-        == "NA:H275Y"
-    )
+    assert process_labeled_mutations(json_string, {}).datum == "NA:H275Y"
 
 
 def test_create_flatfile():
