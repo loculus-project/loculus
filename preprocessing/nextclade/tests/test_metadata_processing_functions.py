@@ -901,9 +901,9 @@ def test_parse_date_into_range() -> None:
     ), "dateRangeLower: empty date should be returned as None."
 
 
-def test_concatentate() -> None:
+def test_concatenate() -> None:
     input_data: InputMetadata = {
-        "someInt": "0",
+        "someInt": "",
         "geoLocCountry": "",
         "sampleCollectionDate": "2025",
     }
@@ -914,6 +914,15 @@ def test_concatentate() -> None:
         "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
         "type": ["integer", "string", "ACCESSION_VERSION", "string"],
     }
+
+    res_no_fallback_no_int = ProcessingFunctions.concatenate(
+        input_data,
+        output_field,
+        input_fields,
+        args,
+    )
+
+    input_data["someInt"] = "0"
     res_no_fallback = ProcessingFunctions.concatenate(
         input_data,
         output_field,
@@ -929,6 +938,7 @@ def test_concatentate() -> None:
         args,
     )
 
+    assert res_no_fallback_no_int.datum == "version.1/2025"
     assert res_no_fallback.datum == "0//version.1/2025"
     assert res_fallback.datum == "0/unknown/version.1/2025"
 
