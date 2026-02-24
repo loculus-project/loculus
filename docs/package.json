@@ -17,7 +17,7 @@
         "@astrojs/starlight": "^0.37.6",
         "@astrojs/starlight-tailwind": "^3.0.1",
         "@astrojs/tailwind": "^6.0.2",
-        "astro": "^5.17.1",
+        "astro": "^5.17.3",
         "prettier": "^3.8.1",
         "prettier-plugin-astro": "^0.14.1",
         "prettier-plugin-tailwindcss": "^0.7.2",
