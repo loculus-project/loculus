@@ -198,7 +198,7 @@ Example of using the `parse_date_into_range` below. The same function is called 
 
 ### Nextclade results
 
-Metadata fields that are created from the results of the nextclade analysis require the input field to be prefaced with `nextclade.` For example:
+Metadata fields that are created from the results of the nextclade analysis require the input field to be prefaced with `nextclade.` and should include to the metadata field name and structure in the nextclade results.json. For example:
 
 ```yaml
 - name: totalSnps
@@ -208,7 +208,7 @@ Metadata fields that are created from the results of the nextclade analysis requ
   preprocessing:
     inputs: {input: nextclade.totalSubstitutions}
 ```
-Note that adding the `perSegment` field will mean that for a multi-segmented organism, preprocessing will create a `totalSnps_<segment>` field for each segment containing the nextclade results of that specific segment. In general, all nextclade metadata fields should be `perSegment`. 
+Note that adding the `perSegment` field will mean that for a multi-segmented organism, preprocessing will create a `totalSnps_<segment>` field for each segment containing the nextclade results of that specific segment. In general, all nextclade metadata fields should be `perSegment`.
 
 ## Deployment
 
