@@ -137,12 +137,12 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
 
 export const getSegmentNames = (genomes: ReferenceGenomesInfo) => Object.keys(genomes.segmentReferenceGenomes);
 
-export function mapReferenceNameToLapisName(info: ReferenceGenomesInfo): Record<ReferenceName, string> {
+export function mapLapisNameToSegmentName(info: ReferenceGenomesInfo): Record<ReferenceName, string> {
     const result: Record<ReferenceName, string> = {} as Record<ReferenceName, string>;
 
-    for (const referenceGenomeMap of Object.values(info.segmentReferenceGenomes)) {
-        for (const [referenceName, genomeInfo] of Object.entries(referenceGenomeMap)) {
-            result[referenceName] = genomeInfo.lapisName;
+    for (const [segment, referenceGenomeMap] of Object.entries(info.segmentReferenceGenomes)) {
+        for (const genomeInfo of Object.values(referenceGenomeMap)) {
+            result[genomeInfo.lapisName] = segment;
         }
     }
 

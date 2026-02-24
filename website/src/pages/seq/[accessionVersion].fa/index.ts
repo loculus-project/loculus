@@ -5,7 +5,7 @@ import { routes } from '../../../routes/routes.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import { createDownloadAPIRoute } from '../../../utils/createDownloadAPIRoute.ts';
-import { getSegmentNames, mapReferenceNameToLapisName } from '../../../utils/sequenceTypeHelpers.ts';
+import { getSegmentNames, mapLapisNameToSegmentName } from '../../../utils/sequenceTypeHelpers.ts';
 
 export const GET: APIRoute = createDownloadAPIRoute(
     'text/x-fasta',
@@ -22,7 +22,7 @@ export const GET: APIRoute = createDownloadAPIRoute(
                     fastaHeaderTemplate: `{${ACCESSION_VERSION_FIELD}}`,
                 });
             }
-            const referenceNameMap = mapReferenceNameToLapisName(referenceGenomesInfo);
+            const referenceNameMap = mapLapisNameToSegmentName(referenceGenomesInfo);
             return lapisClient.getMultiSegmentSequenceFasta(
                 accessionVersion,
                 Object.keys(referenceNameMap),
