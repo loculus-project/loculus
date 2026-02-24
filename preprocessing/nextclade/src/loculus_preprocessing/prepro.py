@@ -68,16 +68,6 @@ def version_from_str(id_str: AccessionVersion) -> int:
     return int(id_str.split(".")[1])
 
 
-# def null_per_backend(x: Any) -> bool:
-#     match x:
-#         case None:
-#             return True
-#         case "":
-#             return True
-#         case _:
-#             return False
-
-
 class MultipleSequencesPerSegmentError(Exception):
     def __init__(self, references: list[str]):
         self.references = references
