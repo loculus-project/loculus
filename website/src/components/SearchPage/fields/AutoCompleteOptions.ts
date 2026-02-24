@@ -71,7 +71,7 @@ const createGenericOptionsHook = (
                 count: it.count,
             }))
             .sort((a, b) =>
-                a.option.localeCompare(b.option, undefined, {
+                a.option.localeCompare(b.option, 'en', {
                     numeric: true,
                     sensitivity: 'base',
                 }),

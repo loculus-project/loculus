@@ -70,7 +70,7 @@ export const SingleChoiceAutoCompleteField = ({
         const displayedOptions = allMatchedOptions.sort((a, b) =>
             (fieldDisplayNameMap?.get(a.option) ?? a.option).localeCompare(
                 fieldDisplayNameMap?.get(b.option) ?? b.option,
-                undefined,
+                'en',
                 {
                     numeric: true,
                     sensitivity: 'base',
