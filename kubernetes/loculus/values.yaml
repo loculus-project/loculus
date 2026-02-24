@@ -1350,6 +1350,21 @@ defaultOrganismConfig: &defaultOrganismConfig
           label: Length
         preprocessing:
           inputs: {input: nextclade.coverage}
+      - name: variant
+        isSequenceFilter: true
+        perSegment: true
+        header: "Alignment and QC metrics"
+        displayName: "Variant"
+        type: boolean
+        noInput: true
+        autocomplete: true
+        initiallyVisible: false
+        includeInDownloadsByDefault: false
+        preprocessing:
+          function: is_above_threshold
+          args:
+            threshold: 5
+          inputs: {input: "nextclade.privateNucMutations.totalPrivateSubstitutions"}
     website: &website
       tableColumns:
         - sampleCollectionDate
@@ -1476,19 +1491,6 @@ defaultOrganisms:
           includeInDownloadsByDefault: false
           preprocessing:
             inputs: {input: "nextclade.cladeFounderInfo.aaMutations"}
-        - name: variant
-          header: "Alignment and QC metrics"
-          displayName: "Variant"
-          type: boolean
-          noInput: true
-          autocomplete: true
-          initiallyVisible: false
-          includeInDownloadsByDefault: false
-          preprocessing:
-            function: is_above_threshold
-            args:
-              threshold: 5
-            inputs: {input: "nextclade.privateNucMutations.totalPrivateSubstitutions"}
       website:
         <<: *website
         tableColumns:
