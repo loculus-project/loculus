@@ -137,7 +137,7 @@ const prettyFormatBytes = (bytes: number): string => {
 };
 
 export function parseMutation(input: string): MutationBadgeData | null {
-    const regex = /^([a-zA-Z0-9]+):([A-Z])(\d+)([A-Z])$/;
+    const regex = /^([a-zA-Z0-9]+):([A-Z*-])(\d+)([A-Z*-])$/;
     const match = regex.exec(input);
 
     if (!match) return null;
