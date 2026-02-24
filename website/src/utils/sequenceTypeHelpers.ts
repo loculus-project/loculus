@@ -137,6 +137,18 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
 
 export const getSegmentNames = (genomes: ReferenceGenomesInfo) => Object.keys(genomes.segmentReferenceGenomes);
 
+export function getReferenceNames(info: ReferenceGenomesInfo): ReferenceName[] {
+    const names = new Set<ReferenceName>();
+
+    for (const referenceGenomeMap of Object.values(info.segmentReferenceGenomes)) {
+        for (const referenceName of Object.keys(referenceGenomeMap) as ReferenceName[]) {
+            names.add(referenceName);
+        }
+    }
+
+    return Array.from(names);
+}
+
 /**
  * Get segment and gene info where each segment can have its own reference.
  * @param referenceGenomesInfo - The reference genome lightweight schema
