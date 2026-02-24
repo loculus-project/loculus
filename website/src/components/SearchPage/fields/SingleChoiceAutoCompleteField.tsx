@@ -66,8 +66,19 @@ export const SingleChoiceAutoCompleteField = ({
             query === ''
                 ? options
                 : options.filter((option) => option.option.toLowerCase().includes(query.toLowerCase()));
-        return allMatchedOptions.slice(0, maxDisplayedOptions);
-    }, [options, query, maxDisplayedOptions]);
+        // Sort options by display name if displayNameMap is provided, otherwise by option value
+        const displayedOptions = allMatchedOptions.sort((a, b) =>
+            (fieldDisplayNameMap?.get(a.option) ?? a.option).localeCompare(
+                fieldDisplayNameMap?.get(b.option) ?? b.option,
+                'en',
+                {
+                    numeric: true,
+                    sensitivity: 'base',
+                },
+            ),
+        );
+        return displayedOptions.slice(0, maxDisplayedOptions);
+    }, [options, query, maxDisplayedOptions, fieldDisplayNameMap]);
 
     const handleChange = (value: string | null) => {
         const finalValue = value === NULL_QUERY_VALUE ? null : (value ?? '');

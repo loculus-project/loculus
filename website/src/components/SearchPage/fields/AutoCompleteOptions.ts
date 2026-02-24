@@ -70,7 +70,12 @@ const createGenericOptionsHook = (
                 value: it[fieldName] === null ? NULL_QUERY_VALUE : it[fieldName].toString(),
                 count: it.count,
             }))
-            .sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
+            .sort((a, b) =>
+                a.option.localeCompare(b.option, 'en', {
+                    numeric: true,
+                    sensitivity: 'base',
+                }),
+            );
 
         return {
             options,

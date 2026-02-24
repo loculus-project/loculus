@@ -2007,14 +2007,14 @@ defaultOrganisms:
         displayName: S segment
         references:
           - name: 1and6
-            displayName: "S (MK299338.1)"
+            displayName: "S11 (MK299338.1)"
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/reference.fasta]]"
             insdcAccessionFull: MK299338.1
             genes:
               - name: NP
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/NP.fasta]]"
           - name: 2to5
-            displayName: "S (OL774851.1)"
+            displayName: "S1 (OL774851.1)"
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/OL774851/reference.fasta]]"
             insdcAccessionFull: OL774851.1
             genes:
