@@ -49,18 +49,20 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         await expect(
             page.getByTestId('sequence-preview-modal').getByText('Length L'),
         ).toBeVisible();
-        
-        await page.goto(`/seq/${firstAccessionVersion}`);
-        await expect(page.getByRole('heading', { name: firstAccessionVersion.accessionVersion })).toBeVisible();
-    
+
+        await page.goto(`/seq/${firstAccessionVersion.accessionVersion}`);
+        await expect(
+            page.getByRole('heading', { name: firstAccessionVersion.accessionVersion }),
+        ).toBeVisible();
+
         await page.getByText('Download', { exact: true }).click();
         const downloadPromise = page.waitForEvent('download');
         await page.getByRole('link', { name: 'Download metadata TSV' }).click();
         const download = await downloadPromise;
-    
+
         const downloadPath = await download.path();
         expect(downloadPath).toBeTruthy();
-    
+
         const fileContent = fs.readFileSync(downloadPath, 'utf8');
         const lines = fileContent.split('\n');
         expect(lines.length).toBe(4);
