@@ -265,7 +265,7 @@ const computePreviewString = (value: string): string => {
     return value.slice(0, searchEnd).trim();
 };
 
-const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value }) => {
+export const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value }) => {
     const [showMore, setShowMore] = React.useState(false);
 
     const preview = React.useMemo(() => {
