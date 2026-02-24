@@ -1490,7 +1490,7 @@ defaultOrganisms:
           initiallyVisible: false
           includeInDownloadsByDefault: false
           preprocessing:
-            inputs: {input: "nextclade.cladeFounderInfo.aaMutations"}
+            inputs: {input: "nextclade.cladeFounderInfo.aaMutations.*.privateSubstitutions"}
       website:
         <<: *website
         tableColumns:

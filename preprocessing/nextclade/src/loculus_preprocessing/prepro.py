@@ -121,6 +121,13 @@ def get_dataset_name(
     return lapis_names[0]
 
 
+def truncate_after_wildcard(path: str, separator: str = ".") -> str:
+    parts = path.split(separator)
+    if "*" in parts:
+        return separator.join(parts[: parts.index("*")])
+    return path
+
+
 def add_nextclade_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
@@ -158,7 +165,7 @@ def add_nextclade_metadata(
 
     raw: str | None = dpath.get(
         unprocessed.nextcladeMetadata[sequence_name],
-        nextclade_path,
+        truncate_after_wildcard(nextclade_path),
         separator=".",
         default=None,
     )  # type: ignore[assignment]
@@ -173,10 +180,10 @@ def add_nextclade_metadata(
         case "phenotypeValues":
             result = None if raw is None else str(raw)
             return process_phenotype_values(result, spec.args)
-        case "cladeFounderInfo.aaMutations":
+        case "cladeFounderInfo.aaMutations.*.privateSubstitutions":
             result = None if raw is None else str(raw)
             return process_mutations_from_clade_founder(result, spec.args)
-        case "privateAaMutations":
+        case "privateAaMutations.*.labeledSubstitutions.substitutions":
             result = None if raw is None else str(raw)
             return process_labeled_mutations(result, spec.args)
         case _:
