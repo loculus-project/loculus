@@ -141,7 +141,7 @@ export function getReferenceNames(info: ReferenceGenomesInfo): ReferenceName[] {
     const names = new Set<ReferenceName>();
 
     for (const referenceGenomeMap of Object.values(info.segmentReferenceGenomes)) {
-        for (const referenceName of Object.keys(referenceGenomeMap) as ReferenceName[]) {
+        for (const referenceName of Object.keys(referenceGenomeMap)) {
             names.add(referenceName);
         }
     }
