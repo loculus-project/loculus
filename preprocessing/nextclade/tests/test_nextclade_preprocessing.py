@@ -31,6 +31,7 @@ from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
     format_stop_codon,
+    process_labeled_mutations,
     process_mutations_from_clade_founder,
     process_phenotype_values,
 )
@@ -50,6 +51,7 @@ CCHF_DATASET = "tests/cchfv"
 
 SINGLE_SEGMENT_EMBL = "tests/flatfiles/single_segment.embl"
 MUTATIONS_FROM_FOUNDER_CLADE = "tests/mutationsFromFounderClade.json"
+LABELED_PRIVATE_MUTATIONS = "tests/labeledPrivateMutations.json"
 
 
 def consensus_sequence(
@@ -1288,6 +1290,14 @@ def test_process_clade_founder_values():
     assert (
         process_mutations_from_clade_founder(json_string, {}).datum
         == "HA1:N63K HA1:F79V HA1:S144N HA1:N158D HA1:I160K HA1:T328A"
+    )
+
+
+def test_process_labeled_mutations():
+    json_string = Path(LABELED_PRIVATE_MUTATIONS).read_text(encoding="utf-8")
+    assert (
+        process_labeled_mutations(json_string, {}).datum
+        == "NA:H275Y"
     )
 
 
