@@ -55,7 +55,7 @@ test.describe('Multi-segment multi-reference submission flow', () => {
             page.getByRole('heading', { name: firstAccessionVersion.accessionVersion }),
         ).toBeVisible();
 
-        await page.getByText('Download', { exact: true }).click();
+        await page.getByTestId('download-sequence-button').click();
         const downloadPromise = page.waitForEvent('download');
         await page.getByRole('link', { name: 'Download metadata TSV' }).click();
         const download = await downloadPromise;
