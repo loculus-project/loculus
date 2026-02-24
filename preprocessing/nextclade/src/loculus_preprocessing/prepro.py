@@ -183,7 +183,7 @@ def add_nextclade_metadata(
         case "cladeFounderInfo.aaMutations.*.privateSubstitutions":
             result = None if raw is None else str(raw)
             return process_mutations_from_clade_founder(result, spec.args)
-        case "privateAaMutations.*.labeledSubstitutions.substitutions":
+        case "privateAaMutations.*.labeledSubstitutions.substitution":
             result = None if raw is None else str(raw)
             return process_labeled_mutations(result, spec.args)
         case _:
