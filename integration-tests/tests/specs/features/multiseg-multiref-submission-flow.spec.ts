@@ -55,7 +55,8 @@ test.describe('Multi-segment multi-reference submission flow', () => {
             page.getByRole('heading', { name: firstAccessionVersion.accessionVersion }),
         ).toBeVisible();
 
-        await page.getByTestId('download-sequence-button').click();
+        await page.getByTestId('metadata-download-dropdown').click();
+        await page.getByRole('link', { name: 'Download FASTA' }).click();
         const download = await page.waitForEvent('download');
 
         const downloadPath = await download.path();
