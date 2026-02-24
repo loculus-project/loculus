@@ -1,4 +1,4 @@
-name: Build and Upload a SQLite DB of NCBI taxonomy information
+name: Create and Upload NCBI taxonomy DB
 
 on:
   workflow_dispatch:
