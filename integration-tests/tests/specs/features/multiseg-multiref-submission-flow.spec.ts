@@ -56,14 +56,16 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         ).toBeVisible();
 
         await page.getByTestId('metadata-download-dropdown').click();
+        const downloadPromise = page.waitForEvent('download');
         await page.getByRole('link', { name: 'Download FASTA' }).click();
-        const download = await page.waitForEvent('download');
+        const download = await downloadPromise;
 
         const downloadPath = await download.path();
         expect(downloadPath).toBeTruthy();
 
         const fileContent = fs.readFileSync(downloadPath, 'utf8');
-        const lines = fileContent.split('\n');
+        const lines = fileContent.trim().split('\n');
+
         expect(lines.length).toBe(4);
     });
 
