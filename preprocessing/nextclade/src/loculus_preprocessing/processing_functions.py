@@ -668,8 +668,10 @@ class ProcessingFunctions:
 
         accession_version: str = args["accession_version"]
         order = args["order"]
-        type = args["type"]
-        fallback_value = str(args.get("fallback_value", "")).strip()
+        field_types = args["type"]
+        fallback_value = (
+            str(args["fallback_value"]).strip() if args.get("fallback_value") is not None else ""
+        )
 
         def add_errors():
             errors.append(
@@ -704,7 +706,7 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=errors,
             )
-        if not isinstance(type, list):
+        if not isinstance(field_types, list):
             logger.error(
                 f"Concatenate: Expected type field to be a list. "
                 f"This is probably a configuration error. (accession_version: {accession_version})"
@@ -719,7 +721,7 @@ class ProcessingFunctions:
         formatted_input_data: list[str] = []
         try:
             for i in range(len(order)):
-                if type[i] == "date":
+                if field_types[i] == "date":
                     processed = ProcessingFunctions.parse_and_assert_past_date(
                         {"date": input_data[order[i]]}, output_field, input_fields, args
                     )
@@ -728,7 +730,7 @@ class ProcessingFunctions:
                         if null_per_backend(processed.datum)
                         else str(processed.datum)
                     )
-                elif type[i] == "timestamp":
+                elif field_types[i] == "timestamp":
                     processed = ProcessingFunctions.parse_timestamp(
                         {"timestamp": input_data[order[i]]}, output_field, input_fields, args
                     )
@@ -737,7 +739,7 @@ class ProcessingFunctions:
                         if null_per_backend(processed.datum)
                         else str(processed.datum)
                     )
-                elif type[i] == "ACCESSION_VERSION":
+                elif field_types[i] == "ACCESSION_VERSION":
                     formatted_input_data.append(accession_version)
                 elif order[i] in input_data:
                     formatted_input_data.append(
