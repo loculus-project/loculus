@@ -5,7 +5,7 @@ import { routes } from '../../../routes/routes.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import { createDownloadAPIRoute } from '../../../utils/createDownloadAPIRoute.ts';
-import { getSegmentNames } from '../../../utils/sequenceTypeHelpers.ts';
+import { getSegmentNames, mapLapisNameToSegmentName } from '../../../utils/sequenceTypeHelpers.ts';
 
 export const GET: APIRoute = createDownloadAPIRoute(
     'text/x-fasta',
@@ -17,14 +17,17 @@ export const GET: APIRoute = createDownloadAPIRoute(
         const referenceGenomesInfo = getReferenceGenomes(organism);
 
         if (referenceGenomesInfo.useLapisMultiSegmentedEndpoint) {
-            const segmentNames = getSegmentNames(referenceGenomesInfo);
-            if (segmentNames.length > 1) {
-                return lapisClient.getMultiSegmentSequenceFasta(accessionVersion, segmentNames);
+            if (getSegmentNames(referenceGenomesInfo).length === 1) {
+                return lapisClient.getSequenceFasta(accessionVersion, {
+                    fastaHeaderTemplate: `{${ACCESSION_VERSION_FIELD}}`,
+                });
             }
-
-            return lapisClient.getSequenceFasta(accessionVersion, {
-                fastaHeaderTemplate: `{${ACCESSION_VERSION_FIELD}}`,
-            });
+            const referenceNameMap = mapLapisNameToSegmentName(referenceGenomesInfo);
+            return lapisClient.getMultiSegmentSequenceFasta(
+                accessionVersion,
+                Object.keys(referenceNameMap),
+                referenceNameMap,
+            );
         }
 
         return lapisClient.getSequenceFasta(accessionVersion);

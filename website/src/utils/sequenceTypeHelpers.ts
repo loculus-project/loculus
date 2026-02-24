@@ -137,6 +137,18 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
 
 export const getSegmentNames = (genomes: ReferenceGenomesInfo) => Object.keys(genomes.segmentReferenceGenomes);
 
+export function mapLapisNameToSegmentName(info: ReferenceGenomesInfo): Record<string, string> {
+    const result: Record<string, string> = {} as Record<string, string>;
+
+    for (const [segment, referenceGenomeMap] of Object.entries(info.segmentReferenceGenomes)) {
+        for (const genomeInfo of Object.values(referenceGenomeMap)) {
+            result[genomeInfo.lapisName] = segment;
+        }
+    }
+
+    return result;
+}
+
 /**
  * Get segment and gene info where each segment can have its own reference.
  * @param referenceGenomesInfo - The reference genome lightweight schema

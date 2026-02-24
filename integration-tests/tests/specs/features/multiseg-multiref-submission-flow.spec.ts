@@ -6,6 +6,7 @@ import {
     CCHF_M_SEGMENT_FULL_SEQUENCE,
     CCHF_S_SEGMENT_FULL_SEQUENCE,
 } from '../../test-helpers/test-data';
+import fs from 'fs';
 
 test.describe('Multi-segment multi-reference submission flow', () => {
     test('submit single sequence, edit and release', async ({ page, groupId }) => {
@@ -48,6 +49,24 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         await expect(
             page.getByTestId('sequence-preview-modal').getByText('Length L'),
         ).toBeVisible();
+
+        await page.goto(`/seq/${firstAccessionVersion.accessionVersion}`);
+        await expect(
+            page.getByRole('heading', { name: firstAccessionVersion.accessionVersion }),
+        ).toBeVisible();
+
+        await page.getByTestId('metadata-download-dropdown').click();
+        const downloadPromise = page.waitForEvent('download');
+        await page.getByRole('link', { name: 'Download FASTA' }).click();
+        const download = await downloadPromise;
+
+        const downloadPath = await download.path();
+        expect(downloadPath).toBeTruthy();
+
+        const fileContent = fs.readFileSync(downloadPath, 'utf8');
+        const lines = fileContent.trim().split('\n');
+
+        expect(lines.length).toBe(4);
     });
 
     test('revoke a sequence', async ({ page, groupId }) => {
