@@ -125,7 +125,7 @@ export const SingleChoiceAutoCompleteField = ({
                                     <ComboboxOption
                                         key={option.option}
                                         className={({ focus }) =>
-                                            `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                                            `relative cursor-default select-none py-2 pl-4 pr-2 ${
                                                 focus ? 'bg-blue-500 text-white' : 'text-gray-900'
                                             }`
                                         }
