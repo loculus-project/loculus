@@ -10,10 +10,6 @@ export type SubProps = {
     sequenceName: string | null;
 };
 
-export type Props = {
-    values: MutationBadgeData[];
-};
-
 export const SubBadge: FC<SubProps> = ({ position, mutationTo, mutationFrom, sequenceName }) => {
     return (
         <li key={position} className='inline-block'>
@@ -91,19 +87,8 @@ export const SubstitutionsContainers = ({
     ));
 };
 
-export const MutationStringContainers = ({
-    values,
-    segmentDisplayNameMap,
-}: {
-    values: SegmentedMutationStrings[];
-    segmentDisplayNameMap?: Record<string, string>;
-}) => {
-    return values.map(({ segment, mutations }) => (
-        <div key={segment}>
-            <h2 className='py-1 my-1 font-semibold border-b'>{segmentDisplayNameMap?.[segment] ?? segment}</h2>
-            {mutations.flat().join(', ')}
-        </div>
-    ));
+export type Props = {
+    values: MutationBadgeData[];
 };
 
 export const SubstitutionsContainer: FC<Props> = ({ values }) => {
@@ -120,6 +105,71 @@ export const SubstitutionsContainer: FC<Props> = ({ values }) => {
                     position={position}
                     mutationTo={mutationTo}
                 />
+            </li>
+        ));
+        if (elements.length <= MAX_INITIAL_NUMBER_BADGES) {
+            alwaysVisible = elements;
+        } else {
+            alwaysVisible = elements.slice(0, MAX_INITIAL_NUMBER_BADGES - 2);
+            initiallyHidden = elements.slice(MAX_INITIAL_NUMBER_BADGES - 2);
+        }
+        return { alwaysVisible, initiallyHidden };
+    }, [values]);
+
+    return (
+        <ul className='list-none p-0 m-0 flex flex-wrap gap-1'>
+            {alwaysVisible}
+            {initiallyHidden.length > 0 &&
+                (showMore ? (
+                    <>
+                        {initiallyHidden}
+                        <Button onClick={() => setShowMore(false)} className='underline'>
+                            Show less
+                        </Button>
+                    </>
+                ) : (
+                    <Button
+                        onClick={() => {
+                            setShowMore(true);
+                        }}
+                        className='underline'
+                    >
+                        Show more
+                    </Button>
+                ))}
+        </ul>
+    );
+};
+
+
+export const MutationStringContainers = ({
+    values,
+    segmentDisplayNameMap,
+}: {
+    values: SegmentedMutationStrings[];
+    segmentDisplayNameMap?: Record<string, string>;
+}) => {
+    return values.map(({ segment, mutations }) => (
+        <div key={segment}>
+            <h2 className='py-1 my-1 font-semibold border-b'>{segmentDisplayNameMap?.[segment] ?? segment}</h2>
+            <MutationStringContainer values={mutations} />
+        </div>
+    ));
+};
+
+export type StringProps = {
+    values: string[];
+};
+
+export const MutationStringContainer: FC<StringProps> = ({ values }) => {
+    const [showMore, setShowMore] = useState(false);
+
+    const { alwaysVisible, initiallyHidden } = useMemo(() => {
+        let alwaysVisible: ReactElement[] = [];
+        let initiallyHidden: ReactElement[] = [];
+        const elements = values.map((value, index) => (
+            <li className='inline-block' key={index}>
+                {value}
             </li>
         ));
         if (elements.length <= MAX_INITIAL_NUMBER_BADGES) {
