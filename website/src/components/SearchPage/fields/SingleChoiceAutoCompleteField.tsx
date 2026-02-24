@@ -78,7 +78,7 @@ export const SingleChoiceAutoCompleteField = ({
             ),
         );
         return displayedOptions.slice(0, maxDisplayedOptions);
-    }, [options, query, maxDisplayedOptions]);
+    }, [options, query, maxDisplayedOptions, fieldDisplayNameMap]);
 
     const handleChange = (value: string | null) => {
         const finalValue = value === NULL_QUERY_VALUE ? null : (value ?? '');
