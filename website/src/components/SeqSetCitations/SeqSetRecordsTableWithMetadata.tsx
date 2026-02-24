@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { type FC, useMemo } from 'react';
 
+import { versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSetRecord, SeqSetRecordType } from '../../types/seqSetCitation';
 
@@ -24,6 +25,24 @@ type SeqSetRecordsTableWithMetadataProps = {
     organismDisplayNames?: Record<string, string>;
 };
 
+async function queryLapisDetails(
+    lapisUrl: string,
+    filter: Record<string, unknown>,
+    fields: string[],
+): Promise<Record<string, unknown>[]> {
+    try {
+        const response = await axios.post(`${lapisUrl}/sample/details`, {
+            ...filter,
+            fields,
+            dataFormat: 'json',
+        });
+        const responseData = response.data as { data?: Record<string, unknown>[] } | undefined;
+        return responseData?.data ?? [];
+    } catch (_error) {
+        return [];
+    }
+}
+
 const fetchRecordsMetadata = async (
     records: SeqSetRecord[],
     clientConfig: ClientConfig,
@@ -35,6 +54,10 @@ const fetchRecordsMetadata = async (
         return new Map();
     }
 
+    // Split accessions into versioned (contain '.') and bare (no '.')
+    const versionedAccessions = accessions.filter((acc) => acc.includes('.'));
+    const bareAccessions = accessions.filter((acc) => !acc.includes('.'));
+
     // Extract just the field names for the API request
     const fields = fieldsToDisplay.map((f) => f.field);
 
@@ -45,46 +68,50 @@ const fetchRecordsMetadata = async (
         Object.entries(clientConfig.lapisUrls).filter(([organism]) => !organism.includes('organism')),
     );
 
+    const metadataMap = new Map<string, RecordMetadata>();
+
     // Query all LAPIS instances in parallel
     const lapisPromises = Object.entries(lapisUrlsWithoutDummies).map(async ([organism, lapisUrl]) => {
-        try {
-            const detailsResponse = await axios.post(`${lapisUrl}/sample/details`, {
-                accessionVersion: accessions,
-                fields: ['accessionVersion', ...fields],
-                dataFormat: 'json',
-            });
+        const queries: Promise<{ data: Record<string, unknown>[]; keyField: string }>[] = [];
 
-            // Add organism to each record
-            const responseData = detailsResponse.data as { data?: Record<string, unknown>[] } | undefined;
-            const data = responseData?.data ?? [];
-            return data.map((record) => ({
-                ...record,
-                organism,
-            }));
-        } catch (_error) {
-            return [];
+        // Query versioned accessions by accessionVersion
+        if (versionedAccessions.length > 0) {
+            queries.push(
+                queryLapisDetails(lapisUrl, { accessionVersion: versionedAccessions }, [
+                    'accessionVersion',
+                    ...fields,
+                ]).then((data) => ({ data, keyField: 'accessionVersion' })),
+            );
+        }
+
+        // Query bare accessions by accession, filtering for the latest version
+        if (bareAccessions.length > 0) {
+            queries.push(
+                queryLapisDetails(
+                    lapisUrl,
+                    { accession: bareAccessions, versionStatus: versionStatuses.latestVersion },
+                    ['accession', ...fields],
+                ).then((data) => ({ data, keyField: 'accession' })),
+            );
+        }
+
+        const results = await Promise.all(queries);
+        for (const { data, keyField } of results) {
+            for (const record of data) {
+                const key = String(record[keyField]);
+                const metadata: RecordMetadata = {
+                    accession: key,
+                    organism,
+                };
+                for (const field of fields) {
+                    metadata[field] = record[field];
+                }
+                metadataMap.set(key, metadata);
+            }
         }
     });
 
-    const allResults = await Promise.all(lapisPromises);
-    const combinedData = allResults.flat();
-
-    // Create a map for easy lookup
-    const metadataMap = new Map<string, RecordMetadata>();
-    combinedData.forEach((record) => {
-        const recordData = record as Record<string, unknown>;
-        const metadata: RecordMetadata = {
-            accession: String(recordData.accessionVersion),
-            organism: String(recordData.organism),
-        };
-
-        // Copy all requested fields
-        fields.forEach((field) => {
-            metadata[field] = recordData[field];
-        });
-
-        metadataMap.set(String(recordData.accessionVersion), metadata);
-    });
+    await Promise.all(lapisPromises);
 
     return metadataMap;
 };
