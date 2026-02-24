@@ -1363,7 +1363,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         preprocessing:
           function: is_above_threshold
           args:
-            threshold: 5
+            threshold: 50
           inputs: {input: "nextclade.privateNucMutations.totalPrivateSubstitutions"}
     website: &website
       tableColumns:
