@@ -1157,8 +1157,8 @@ class ProcessingFunctions:
         if not input_datum:
             return ProcessingResult(datum=None, warnings=[], errors=[])
         try:
-            threshold = int(args["threshold"])  # type: ignore
-            input = int(input_datum)
+            threshold = float(args["threshold"])  # type: ignore
+            input = float(input_datum)
         except (ValueError, TypeError):
             return ProcessingResult(
                 datum=None,
@@ -1317,6 +1317,10 @@ def format_stop_codon(result: str | None) -> str | None:
     return ",".join(stop_codon_strings)
 
 
+def _format_aa_substitution(mutation: dict) -> str:
+    return f"{mutation.get('cdsName')}:{mutation.get('refAa')}{int(mutation.get('pos')) + 1}{mutation.get('qryAa')}"
+
+
 def process_mutations_from_clade_founder(input: str | None, args: FunctionArgs | None) -> InputData:
     """Processes substitutions from clade founder InputData for processing"""
     if input is None:
@@ -1328,7 +1332,7 @@ def process_mutations_from_clade_founder(input: str | None, args: FunctionArgs |
             if not value.get("privateSubstitutions"):
                 continue
             for mutation in value["privateSubstitutions"]:
-                substitution = f"{mutation.get('cdsName')}:{mutation.get('refAa')}{int(mutation.get('pos')) + 1}{mutation.get('qryAa')}"
+                substitution = _format_aa_substitution(mutation)
                 mutations.append(substitution)
         if mutations:
             return InputData(datum=" ".join(mutations))
@@ -1362,7 +1366,7 @@ def process_labeled_mutations(input: str | None, args: FunctionArgs | None) -> I
                 if not labeled_mutation.get("substitution"):
                     continue
                 mutation = labeled_mutation["substitution"]
-                substitution = f"{mutation.get('cdsName')}:{mutation.get('refAa')}{int(mutation.get('pos')) + 1}{mutation.get('qryAa')}"
+                substitution = _format_aa_substitution(mutation)
                 mutations.append(substitution)
         if mutations:
             return InputData(datum=" ".join(mutations))

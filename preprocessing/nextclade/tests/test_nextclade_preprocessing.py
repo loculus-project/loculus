@@ -176,6 +176,7 @@ single_segment_case_definitions = [
             "totalDeletedNucs": 0,
             "length": len(consensus_sequence("single")),
             "nonExistentField": "None",
+            "variant": True,
         },
         expected_errors=[],
         expected_warnings=[],
@@ -203,6 +204,7 @@ single_segment_case_definitions = [
             "totalDeletedNucs": 0,
             "length": len(sequence_with_insertion("single")),
             "nonExistentField": "None",
+            "variant": False,
         },
         expected_errors=[],
         expected_warnings=[],
@@ -230,6 +232,7 @@ single_segment_case_definitions = [
             "totalDeletedNucs": 3,
             "length": len(consensus_sequence("single")) - 3,
             "nonExistentField": "None",
+            "variant": False,
         },
         expected_errors=[],
         expected_warnings=[],
@@ -264,6 +267,7 @@ single_segment_failed_case_definitions = [
             "totalDeletedNucs": None,
             "length": len(invalid_sequence()),
             "nonExistentField": None,
+            "variant": None,
         },
         expected_errors=build_processing_annotations(
             [
@@ -299,6 +303,7 @@ single_segment_failed_with_require_sort_case_definitions = [
             "totalSnps": None,
             "totalDeletedNucs": None,
             "length": len(invalid_sequence()),
+            "variant": None,
         },
         expected_errors=build_processing_annotations(
             [
@@ -338,6 +343,7 @@ single_segment_failed_with_require_sort_case_definitions = [
             "totalSnps": None,
             "totalDeletedNucs": None,
             "length": len(consensus_sequence("ebola-zaire")),
+            "variant": None,
         },
         expected_errors=build_processing_annotations(
             [
