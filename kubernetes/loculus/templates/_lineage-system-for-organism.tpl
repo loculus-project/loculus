@@ -7,3 +7,4 @@
     {{- $lineageSystems = append $lineageSystems $entry.lineageSystem }}
   {{- end }}
 {{- end }}
+{{- end }}
