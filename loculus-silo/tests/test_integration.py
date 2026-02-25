@@ -25,7 +25,7 @@ from silo_import.runner import ImporterRunner
 
 def make_config(
     tmp_path: Path,
-    lineage_definitions: dict[int, str] | None = None,
+    lineage_definitions: dict[str, dict[int, str]] | None = None,
     hard_refresh_interval: int = 1000,
     silo_run_timeout: int = 5,
 ) -> ImporterConfig:
@@ -51,7 +51,7 @@ def test_full_import_cycle_with_real_zstd_data(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test complete import cycle with real zstd-compressed data."""
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    config = make_config(tmp_path, lineage_definitions={"pangoLineage": {1: "http://lineage"}})
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -90,8 +90,9 @@ def test_full_import_cycle_with_real_zstd_data(
     assert runner.last_hard_refresh > 0, "Hard refresh timestamp should be set"
 
     # Verify lineage file was downloaded
-    assert paths.lineage_definition_file.exists(), "Lineage file should exist"
-    assert paths.lineage_definition_file.read_text() == "lineage: test-data\n"
+    lineage_file = paths.lineage_definition_file("pangoLineage")
+    assert lineage_file.exists(), "Lineage file should exist"
+    assert lineage_file.read_text() == "lineage: test-data\n"
 
     # Verify timestamped directory was created and processing flag removed
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
@@ -106,7 +107,7 @@ def test_multiple_runs_with_state_persistence(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test multiple sequential runs maintain state correctly."""
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    config = make_config(tmp_path, lineage_definitions={"pangoLineage": {1: "http://lineage"}})
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -185,7 +186,9 @@ def test_multiple_runs_with_state_persistence(
 def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test hard refresh forces re-download even with valid ETag."""
     config = make_config(
-        tmp_path, lineage_definitions={1: "http://lineage"}, hard_refresh_interval=2
+        tmp_path,
+        lineage_definitions={"pangoLineage": {1: "http://lineage"}},
+        hard_refresh_interval=2,
     )
     paths = make_paths(tmp_path)
     paths.ensure_directories()
@@ -238,7 +241,11 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
 
 def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that errors during import properly clean up artifacts."""
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"}, silo_run_timeout=2)
+    config = make_config(
+        tmp_path,
+        lineage_definitions={"pangoLineage": {1: "http://lineage"}},
+        silo_run_timeout=2,
+    )
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -279,7 +286,7 @@ def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.M
 
 def test_lineage_download_failure_cleanup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that lineage download failure properly cleans up downloaded data."""
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    config = make_config(tmp_path, lineage_definitions={"pangoLineage": {1: "http://lineage"}})
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -320,7 +327,7 @@ def test_interrupted_run_cleanup_and_hash_skip(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test that download directories are cleaned on startup and hash matching still works."""
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    config = make_config(tmp_path, lineage_definitions={"pangoLineage": {1: "http://lineage"}})
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -377,3 +384,54 @@ def test_interrupted_run_cleanup_and_hash_skip(
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 1, "Should have one directory after successful run"
     assert input_dirs[0] != first_dir, "Should be a new directory"
+
+
+def test_multiple_lineage_systems(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that multiple lineage systems each get their own definition file."""
+    config = make_config(
+        tmp_path,
+        lineage_definitions={
+            "pangoLineage": {1: "http://pango-lineage"},
+            "alternativeLineage": {1: "http://alt-lineage"},
+        },
+    )
+    paths = make_paths(tmp_path)
+    paths.ensure_directories()
+
+    records = mock_records()
+    body = compress_ndjson(records)
+
+    responses = [
+        MockHttpResponse(
+            status=200,
+            headers={"ETag": 'W/"multi"', "x-total-records": str(len(records))},
+            body=body,
+        )
+    ]
+    mock_download, _ = make_mock_download_func(responses)
+
+    downloaded_urls: list[str] = []
+
+    def mock_lineage_download(url: str, path: Path) -> None:
+        downloaded_urls.append(url)
+        path.write_text(f"lineage data from {url}\n")
+
+    monkeypatch.setattr(lineage, "_download_lineage_file", mock_lineage_download)
+
+    runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(download_func=mock_download)
+
+    with patch.object(runner.silo, "run_preprocessing"):
+        runner.run_once()
+
+    # Verify both lineage files were downloaded
+    pango_file = paths.lineage_definition_file("pangoLineage")
+    alt_file = paths.lineage_definition_file("alternativeLineage")
+
+    assert pango_file.exists(), "Pango lineage file should exist"
+    assert alt_file.exists(), "Alternative lineage file should exist"
+
+    assert pango_file.read_text() == "lineage data from http://pango-lineage\n"
+    assert alt_file.read_text() == "lineage data from http://alt-lineage\n"
+
+    assert set(downloaded_urls) == {"http://pango-lineage", "http://alt-lineage"}

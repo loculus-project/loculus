@@ -20,23 +20,36 @@ def update_lineage_definitions(
         logger.info("LINEAGE_DEFINITIONS not provided; skipping lineage configuration")
         return
 
-    if not pipeline_version:
-        # required for dummy organisms
-        logger.info("No pipeline version found; writing empty lineage definitions")
-        _write_text(paths.lineage_definition_file, "{}\n")
-        return
+    for system_name, version_urls in config.lineage_definitions.items():
+        dest = paths.lineage_definition_file(system_name)
 
-    lineage_url: str | None = config.lineage_definitions.get(int(pipeline_version))
-    if not lineage_url:
-        msg = f"No lineage definition URL configured for pipeline version {pipeline_version}"
-        raise RuntimeError(msg)
+        if not pipeline_version:
+            # required for dummy organisms
+            logger.info(
+                "No pipeline version found; writing empty lineage definitions for %s",
+                system_name,
+            )
+            _write_text(dest, "{}\n")
+            continue
 
-    logger.info("Downloading lineage definitions for pipeline version %s", pipeline_version)
-    try:
-        _download_lineage_file(lineage_url, paths.lineage_definition_file)
-    except requests.RequestException as exc:
-        msg = f"Failed to download lineage definitions: {exc}"
-        raise RuntimeError(msg) from exc
+        lineage_url: str | None = version_urls.get(int(pipeline_version))
+        if not lineage_url:
+            msg = (
+                f"No lineage definition URL configured for pipeline version "
+                f"{pipeline_version} in system {system_name}"
+            )
+            raise RuntimeError(msg)
+
+        logger.info(
+            "Downloading lineage definitions for %s pipeline version %s",
+            system_name,
+            pipeline_version,
+        )
+        try:
+            _download_lineage_file(lineage_url, dest)
+        except requests.RequestException as exc:
+            msg = f"Failed to download lineage definitions for {system_name}: {exc}"
+            raise RuntimeError(msg) from exc
 
 
 def _download_lineage_file(url: str, destination: Path) -> None:
