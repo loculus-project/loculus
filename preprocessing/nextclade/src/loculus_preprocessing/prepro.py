@@ -227,7 +227,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     args = dict(spec.args) if spec.args else {}
     args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
     args["submittedAt"] = submitted_at
-    args["accession_version"] = accession_version
+    args["ACCESSION_VERSION"] = accession_version
 
     try:
         processing_result = ProcessingFunctions.call_function(

@@ -910,7 +910,7 @@ def test_concatenate() -> None:
     output_field: str = "displayName"
     input_fields: list[str] = ["geoLocCountry", "sampleCollectionDate"]
     args: FunctionArgs = {
-        "accession_version": "version.1",
+        "ACCESSION_VERSION": "version.1",
         "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
         "type": ["integer", "string", "ACCESSION_VERSION", "date"],
     }

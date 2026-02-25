@@ -648,7 +648,7 @@ class ProcessingFunctions:
 
         number_fields = len(input_data.keys()) + 1
 
-        if not isinstance(args["accession_version"], str):
+        if not isinstance(args["ACCESSION_VERSION"], str):
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -666,7 +666,7 @@ class ProcessingFunctions:
                 ],
             )
 
-        accession_version: str = args["accession_version"]
+        accession_version: str = args["ACCESSION_VERSION"]
         order = args["order"]
         field_types = args["type"]
         fallback_value = (
@@ -687,7 +687,7 @@ class ProcessingFunctions:
         if not isinstance(order, list):
             logger.error(
                 f"Concatenate: Expected order field to be a list. "
-                f"This is probably a configuration error. (accession_version: {accession_version})"
+                f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
             )
             add_errors()
             return ProcessingResult(
@@ -698,7 +698,7 @@ class ProcessingFunctions:
         if number_fields != len(order):
             logger.error(
                 f"Concatenate: Expected {len(order)} fields, got {number_fields}. "
-                f"This is probably a configuration error. (accession_version: {accession_version})"
+                f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
             )
             add_errors()
             return ProcessingResult(
@@ -709,7 +709,7 @@ class ProcessingFunctions:
         if not isinstance(field_types, list):
             logger.error(
                 f"Concatenate: Expected type field to be a list. "
-                f"This is probably a configuration error. (accession_version: {accession_version})"
+                f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
             )
             add_errors()
             return ProcessingResult(
@@ -750,7 +750,7 @@ class ProcessingFunctions:
                 else:
                     logger.error(
                         f"Concatenate: cannot find field {order[i]} in input_data"
-                        f"This is probably a configuration error. (accession_version: {accession_version})"
+                        f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
                     )
                     add_errors()
                     return ProcessingResult(
@@ -766,7 +766,7 @@ class ProcessingFunctions:
 
             return ProcessingResult(datum=result, warnings=warnings, errors=errors)
         except ValueError as e:
-            logger.error(f"Concatenate failed with {e} (accession_version: {accession_version})")
+            logger.error(f"Concatenate failed with {e} (ACCESSION_VERSION: {accession_version})")
             errors.append(
                 ProcessingAnnotation.from_fields(
                     input_fields,
