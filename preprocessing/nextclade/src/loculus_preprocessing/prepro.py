@@ -50,6 +50,7 @@ from .nextclade import (
 )
 from .processing_functions import (
     ProcessingFunctions,
+    null_per_backend,
     process_frameshifts,
     process_phenotype_values,
     process_stop_codons,
@@ -65,16 +66,6 @@ def accession_from_str(id_str: AccessionVersion) -> str:
 
 def version_from_str(id_str: AccessionVersion) -> int:
     return int(id_str.split(".")[1])
-
-
-def null_per_backend(x: Any) -> bool:
-    match x:
-        case None:
-            return True
-        case "":
-            return True
-        case _:
-            return False
 
 
 class MultipleSequencesPerSegmentError(Exception):
@@ -236,7 +227,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     args = dict(spec.args) if spec.args else {}
     args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
     args["submittedAt"] = submitted_at
-    args["accession_version"] = accession_version
+    args["ACCESSION_VERSION"] = accession_version
 
     try:
         processing_result = ProcessingFunctions.call_function(

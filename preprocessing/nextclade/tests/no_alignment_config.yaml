@@ -69,8 +69,8 @@ processing_spec:
   concatenated_string:
     function: concatenate
     args:
-      order: [continent, accession_version, required_collection_date]
-      type: [string, string, date]
+      order: [continent, ACCESSION_VERSION, required_collection_date]
+      type: [string, ACCESSION_VERSION, date]
     inputs:
       continent: continent
       required_collection_date: ncbi_required_collection_date

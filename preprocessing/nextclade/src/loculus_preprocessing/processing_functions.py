@@ -12,6 +12,7 @@ import re
 import unicodedata
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 import dateutil.parser as dateutil
 import pytz
@@ -637,15 +638,15 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        """Concatenates input fields with accession_version using the "/" separator in the order
-        specified by the order argument.
+        """Concatenates input fields using the "/" separator in the order
+        specified by the order argument. Optionally, a 'fallback_value' argument can be provided.
+        This should be a string to use in place of metadata that is not available. If fallback_value
+        is not provided, the empty string will be used in place of missing metadata.
         """
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
 
-        number_fields = len(input_data.keys()) + 1
-
-        if not isinstance(args["accession_version"], str):
+        if not isinstance(args["ACCESSION_VERSION"], str):
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -663,9 +664,12 @@ class ProcessingFunctions:
                 ],
             )
 
-        accession_version: str = args["accession_version"]
+        accession_version: str = args["ACCESSION_VERSION"]
         order = args["order"]
-        type = args["type"]
+        field_types = args["type"]
+        fallback_value = (
+            str(args["fallback_value"]).strip() if args.get("fallback_value") is not None else ""
+        )
 
         def add_errors():
             errors.append(
@@ -681,7 +685,7 @@ class ProcessingFunctions:
         if not isinstance(order, list):
             logger.error(
                 f"Concatenate: Expected order field to be a list. "
-                f"This is probably a configuration error. (accession_version: {accession_version})"
+                f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
             )
             add_errors()
             return ProcessingResult(
@@ -689,10 +693,14 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=errors,
             )
-        if number_fields != len(order):
+
+        n_inputs = len(input_data.keys())
+        # exclude ACCESSION_VERSION as it's provided by _call_preprocessing_function() and should not be an input_metadata field
+        n_expected = len([i for i in order if i != "ACCESSION_VERSION"])
+        if n_inputs != n_expected:
             logger.error(
-                f"Concatenate: Expected {len(order)} fields, got {number_fields}. "
-                f"This is probably a configuration error. (accession_version: {accession_version})"
+                f"Concatenate: Expected {n_expected} fields, got {n_inputs}. "
+                f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
             )
             add_errors()
             return ProcessingResult(
@@ -700,10 +708,10 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=errors,
             )
-        if not isinstance(type, list):
+        if not isinstance(field_types, list):
             logger.error(
                 f"Concatenate: Expected type field to be a list. "
-                f"This is probably a configuration error. (accession_version: {accession_version})"
+                f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
             )
             add_errors()
             return ProcessingResult(
@@ -715,27 +723,43 @@ class ProcessingFunctions:
         formatted_input_data: list[str] = []
         try:
             for i in range(len(order)):
-                if type[i] == "date":
+                if field_types[i] == "date":
                     processed = ProcessingFunctions.parse_and_assert_past_date(
                         {"date": input_data[order[i]]}, output_field, input_fields, args
                     )
                     formatted_input_data.append(
-                        "" if processed.datum is None else str(processed.datum)
+                        fallback_value
+                        if null_per_backend(processed.datum)
+                        else str(processed.datum)
                     )
-                elif type[i] == "timestamp":
+                elif field_types[i] == "timestamp":
                     processed = ProcessingFunctions.parse_timestamp(
                         {"timestamp": input_data[order[i]]}, output_field, input_fields, args
                     )
                     formatted_input_data.append(
-                        "" if processed.datum is None else str(processed.datum)
+                        fallback_value
+                        if null_per_backend(processed.datum)
+                        else str(processed.datum)
                     )
+                elif field_types[i] == "ACCESSION_VERSION":
+                    formatted_input_data.append(accession_version)
                 elif order[i] in input_data:
                     formatted_input_data.append(
-                        "" if input_data[order[i]] is None else str(input_data[order[i]]).strip()
+                        fallback_value
+                        if null_per_backend(input_data[order[i]])
+                        else str(input_data[order[i]]).strip()
                     )
                 else:
-                    formatted_input_data.append(accession_version)
-            logger.debug(f"formatted input data:{formatted_input_data}")
+                    logger.error(
+                        f"Concatenate: cannot find field {order[i]} in input_data"
+                        f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
+                    )
+                    add_errors()
+                    return ProcessingResult(
+                        datum=None,
+                        warnings=warnings,
+                        errors=errors,
+                    )
 
             result = "/".join(formatted_input_data)
             # To avoid downstream issues do not let the result start or end in a "/"
@@ -744,7 +768,7 @@ class ProcessingFunctions:
 
             return ProcessingResult(datum=result, warnings=warnings, errors=errors)
         except ValueError as e:
-            logger.error(f"Concatenate failed with {e} (accession_version: {accession_version})")
+            logger.error(f"Concatenate failed with {e} (ACCESSION_VERSION: {accession_version})")
             errors.append(
                 ProcessingAnnotation.from_fields(
                     input_fields,
@@ -1292,3 +1316,13 @@ def trim_ns(sequence: str) -> str:
         str: The trimmed sequence.
     """
     return sequence.strip("Nn")
+
+
+def null_per_backend(x: Any) -> bool:
+    match x:
+        case None:
+            return True
+        case "":
+            return True
+        case _:
+            return False

@@ -12,6 +12,8 @@ from factory_methods import (
 
 from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import (
+    FunctionArgs,
+    InputMetadata,
     ProcessedEntry,
     UnprocessedData,
     UnprocessedEntry,
@@ -897,6 +899,71 @@ def test_parse_date_into_range() -> None:
         ).datum
         is None
     ), "dateRangeLower: empty date should be returned as None."
+
+
+def test_concatenate() -> None:
+    input_data: InputMetadata = {
+        "someInt": "",
+        "geoLocCountry": "",
+        "sampleCollectionDate": "2025",
+    }
+    output_field: str = "displayName"
+    input_fields: list[str] = ["geoLocCountry", "sampleCollectionDate"]
+    args: FunctionArgs = {
+        "ACCESSION_VERSION": "version.1",
+        "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
+        "type": ["integer", "string", "ACCESSION_VERSION", "date"],
+    }
+    args_no_accession_version: FunctionArgs = {
+        "ACCESSION_VERSION": "version.1",
+        "order": ["someInt", "geoLocCountry", "sampleCollectionDate"],
+        "type": ["integer", "string", "date"],
+        "fallback_value": "unknown",
+    }
+
+    res_no_fallback_no_int = ProcessingFunctions.concatenate(
+        input_data,
+        output_field,
+        input_fields,
+        args,
+    )
+
+    input_data["someInt"] = "0"
+    res_no_fallback = ProcessingFunctions.concatenate(
+        input_data,
+        output_field,
+        input_fields,
+        args,
+    )
+
+    args["fallback_value"] = "unknown"
+    res_fallback = ProcessingFunctions.concatenate(
+        input_data,
+        output_field,
+        input_fields,
+        args,
+    )
+
+    res_fallback_no_accession_version = ProcessingFunctions.concatenate(
+        input_data,
+        output_field,
+        input_fields,
+        args_no_accession_version,
+    )
+
+    input_data["sampleCollectionDate"] = None
+    res_fallback_explicit_null = ProcessingFunctions.concatenate(
+        input_data,
+        output_field,
+        input_fields,
+        args,
+    )
+
+    assert res_no_fallback_no_int.datum == "version.1/2025-01-01"
+    assert res_no_fallback.datum == "0//version.1/2025-01-01"
+    assert res_fallback.datum == "0/unknown/version.1/2025-01-01"
+    assert res_fallback_no_accession_version.datum == "0/unknown/2025-01-01"
+    assert res_fallback_explicit_null.datum == "0/unknown/version.1/unknown"
 
 
 if __name__ == "__main__":
