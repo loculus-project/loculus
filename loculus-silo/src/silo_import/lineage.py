@@ -26,7 +26,7 @@ def update_lineage_definitions(
         _write_text(paths.lineage_definition_file, "{}\n")
         return
 
-    for item in config.lineage_definitions:
+    for lineage, item in config.lineage_definitions.items():
         lineage_url: str | None = item.get(int(pipeline_version))
         if not lineage_url:
             msg = f"No lineage definition URL configured for pipeline version {pipeline_version}"
@@ -34,7 +34,7 @@ def update_lineage_definitions(
 
         logger.info("Downloading lineage definitions for pipeline version %s", pipeline_version)
         try:
-            _download_lineage_file(lineage_url, paths.lineage_definition_file)
+            _download_lineage_file(lineage_url, paths.input_dir / f"{lineage}.yaml")
         except requests.RequestException as exc:
             msg = f"Failed to download lineage definitions: {exc}"
             raise RuntimeError(msg) from exc

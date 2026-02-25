@@ -7,5 +7,5 @@
     {{- $lineageSystems = append $lineageSystems $entry.lineageSystem }}
   {{- end }}
 {{- end }}
-{{- $lineageSystems -}}
+{{- $lineageSystems | toYaml -}}
 {{- end }}

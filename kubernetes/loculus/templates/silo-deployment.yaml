@@ -4,7 +4,7 @@
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 {{- $organismContent := $item.contents }}
-{{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" }}
+{{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" | fromYaml }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -82,12 +82,12 @@ spec:
               value: "http://loculus-backend-service:8079/{{ $key }}"
               {{- end }}
             {{- if $lineageSystem }}
+              {{- $defsBySystem := dict -}}
+              {{- range $ls := $lineageSystem }}
+                {{- $defsBySystem = set $defsBySystem $ls (index $.Values.lineageSystemDefinitions $ls) -}}
+              {{- end }}
             - name: LINEAGE_DEFINITIONS
-              value: {{- $defs := list -}}
-                {{- range $ls := $lineageSystem }}
-                  {{- $defs = append $defs (index $.Values.lineageSystemDefinitions $ls) -}}
-                {{- end -}}
-                {{ $defs | toJson | quote }}
+              value: {{ $defsBySystem | toJson | quote }}
             {{- end }}
             - name: SILO_RUN_TIMEOUT_SECONDS
               value: {{ $.Values.siloImport.siloTimeoutSeconds | quote }}
