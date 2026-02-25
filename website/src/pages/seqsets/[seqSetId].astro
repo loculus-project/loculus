@@ -1,22 +1,26 @@
 ---
-import { seqSetsAreEnabled } from '../../config';
-import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
+import { getRuntimeConfig, seqSetsAreEnabled } from '../../config';
+import { seqSets } from '../../types/seqSetCitation';
 
 if (!seqSetsAreEnabled()) {
     return Astro.rewrite('/404');
 }
 
 const { seqSetId = '' } = Astro.params;
-const seqSetClient = SeqSetCitationClient.create();
+const backendUrl = getRuntimeConfig().serverSide.backendUrl;
 
-const seqSetResponse = await seqSetClient.call('getSeqSet', {
-    params: { seqSetId, version: '1' },
-});
-
-const latestVersion =
-    seqSetResponse.isOk() && seqSetResponse.value.length > 0
-        ? Math.max(...seqSetResponse.value.map((s) => s.seqSetVersion))
-        : 1;
+let latestVersion = 1;
+try {
+    const response = await fetch(`${backendUrl}/get-seqset?seqSetId=${encodeURIComponent(seqSetId)}`);
+    if (response.ok) {
+        const versions = seqSets.parse(await response.json());
+        if (versions.length > 0) {
+            latestVersion = Math.max(...versions.map((s) => s.seqSetVersion));
+        }
+    }
+} catch {
+    // Fall back to version 1
+}
 
 return Astro.redirect(`/seqsets/${seqSetId}.${latestVersion}`);
 ---
