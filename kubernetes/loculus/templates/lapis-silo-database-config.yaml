@@ -4,7 +4,7 @@
 {{- $key := $item.key }}
 {{- $organismContent := $item.contents }}
 
-{{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" | fromYaml }}
+{{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" | fromYamlArray }}
 ---
 apiVersion: v1
 kind: ConfigMap
