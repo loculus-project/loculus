@@ -1886,17 +1886,25 @@ defaultOrganisms:
         maxSequencesPerEntry: 3
       organismName: "CCHF (Multi-Ref)"
       image: "/images/organisms/cchf_small.jpg"
-      linkOuts: #TODO: refactor for multi-seg, multi-ref
+      linkOuts:
         - name: "Nextclade (L)"
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/L"
         - name: "Nextclade (M MH396653)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M-MH396653+rich|fasta]}}&dataset-name=cchfv/M-MH396653&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=cchfv/M-MH396653&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
+          onlyForReferences:
+            M: MH396653
         - name: "Nextclade (M OR047158)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M-OR047158+rich|fasta]}}&dataset-name=cchfv/M-OR047158&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=cchfv/M-OR047158&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
+          onlyForReferences:
+            M: OR047158
         - name: "Nextclade (S 1and6)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S-1and6+rich|fasta]}}&dataset-name=cchfv/S-1and6&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=cchfv/S-1and6&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
+          onlyForReferences:
+            S: 1and6
         - name: "Nextclade (S 2to5)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S-2to5+rich|fasta]}}&dataset-name=cchfv/S-2to5&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=cchfv/S-2to5&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
+          onlyForReferences:
+            S: 2to5
       metadataAdd:
         - name: hostNameScientific
           generateIndex: true
@@ -2033,13 +2041,21 @@ defaultOrganisms:
       image: "/images/organisms/enterovirus.jpg"
       linkOuts:
         - name: "Nextclade (CV-A16)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A16+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a16&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:main+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a16&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
+          onlyForReferences:
+            main: CV-A16
         - name: "Nextclade (CV-A10)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A10+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a10&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:main+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a10&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
+          onlyForReferences:
+            main: CV-A10
         - name: "Nextclade (EV-A71)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-A71+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-a71&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:main+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-a71&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
+          onlyForReferences:
+            main: EV-A71
         - name: "Nextclade (EV-D68)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-D68+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-d68"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:main+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-d68"
+          onlyForReferences:
+            main: EV-D68
       metadataAdd:
         - &evMetadataAdd
           name: clade_cv_a16

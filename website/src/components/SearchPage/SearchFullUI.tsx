@@ -361,6 +361,8 @@ export const InnerSearchFullUI = ({
                                     sequenceCount={linkOutSequenceCount}
                                     linkOuts={linkOuts}
                                     dataUseTermsEnabled={dataUseTermsEnabled}
+                                    referenceSelection={referenceSelection}
+                                    segmentAndGeneInfo={segmentAndGeneInfo}
                                 />
                             )}
                         </div>

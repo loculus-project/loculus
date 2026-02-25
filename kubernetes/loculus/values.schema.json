@@ -477,6 +477,11 @@
                   "maxNumberOfRecommendedEntries": {
                     "type": "integer",
                     "description": "Optional maximum number of recommended entries for the tool beyond which a warning will be shown.'"
+                  },
+                  "onlyForReferences": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" },
+                    "description": "Optional filter: maps segment name to reference name. When specified, this linkOut is only shown in the tool dropdown when the user has selected a matching reference (or no reference) for each listed segment. Use this to avoid showing reference-specific Nextclade datasets for the wrong reference in multi-reference organisms. Example: {main: CV-A16} or {M: MH396653}."
                   }
                 },
                 "required": ["name", "url"]

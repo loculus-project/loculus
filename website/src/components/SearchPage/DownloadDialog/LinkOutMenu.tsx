@@ -1,10 +1,12 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { type MutableRefObject, type FC, useState, useRef } from 'react';
+import { type MutableRefObject, type FC, useState, useRef, useMemo } from 'react';
 
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator';
 import { type SequenceFilter } from './SequenceFilters';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
+import type { ReferenceSelection } from '../../../utils/referenceSelection';
+import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers';
 import { processTemplate, matchPlaceholders } from '../../../utils/templateProcessor';
 import { Button } from '../../common/Button';
 import BasicModal from '../../common/Modal';
@@ -18,6 +20,7 @@ type LinkOut = {
     name: string;
     url: string;
     maxNumberOfRecommendedEntries?: number;
+    onlyForReferences?: Record<string, string>;
 };
 
 type LinkOutMenuProps = {
@@ -26,6 +29,8 @@ type LinkOutMenuProps = {
     sequenceCount?: number;
     linkOuts: LinkOut[];
     dataUseTermsEnabled: boolean;
+    referenceSelection?: ReferenceSelection;
+    segmentAndGeneInfo?: SegmentAndGeneInfo;
 };
 
 export const LinkOutMenu: FC<LinkOutMenuProps> = ({
@@ -34,10 +39,35 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
     sequenceCount,
     linkOuts,
     dataUseTermsEnabled,
+    referenceSelection,
+    segmentAndGeneInfo,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isDataUseTermsModalVisible, setDataUseTermsModalVisible] = useState(false);
     const currentLinkOut = useRef<LinkOut | null>(null);
+
+    const selectedReferences = referenceSelection?.selectedReferences;
+
+    // Map from segment display name → lapisName based on the currently selected references.
+    // This lets URL templates use plain segment names (e.g. "M") and have them automatically
+    // resolved to the correct lapisName (e.g. "M-MH396653") for the current selection.
+    const segmentNameToLapisName = useMemo(
+        () => new Map(segmentAndGeneInfo?.nucleotideSegmentInfos.map((s) => [s.name, s.lapisName]) ?? []),
+        [segmentAndGeneInfo],
+    );
+
+    const filteredLinkOuts = useMemo(
+        () =>
+            linkOuts.filter((linkOut) => {
+                if (!linkOut.onlyForReferences) return true;
+                if (!selectedReferences) return true;
+                return Object.entries(linkOut.onlyForReferences).every(
+                    ([segment, refName]) =>
+                        selectedReferences[segment] === null || selectedReferences[segment] === refName,
+                );
+            }),
+        [linkOuts, selectedReferences],
+    );
 
     const handleLinkClick = (linkOut: LinkOut) => {
         currentLinkOut.current = linkOut;
@@ -72,6 +102,12 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                 continue;
             }
 
+            // Resolve segment display name to lapisName if possible (e.g. "M" → "M-MH396653").
+            // Falls back to the original value if no resolution is available (e.g. no reference
+            // selected yet, or the value is already a lapisName).
+            const resolvedSegment =
+                segment !== undefined ? (segmentNameToLapisName.get(segment) ?? segment) : undefined;
+
             const downloadOption: DownloadOption = {
                 includeRestricted: includeRestricted,
                 dataType:
@@ -82,7 +118,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                           }
                         : {
                               type: dataType as 'unalignedNucleotideSequences' | 'alignedNucleotideSequences',
-                              segment: segment,
+                              segment: resolvedSegment,
                               richFastaHeaders: { include: richHeaders === true },
                           },
                 compression: undefined,
@@ -121,6 +157,46 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
         setDataUseTermsModalVisible(false);
     };
 
+    // When multi-segmented, group filtered linkOuts: global tools first, then per-segment sections.
+    // A linkOut is "segment-specific" when onlyForReferences targets exactly one segment.
+    const isMultiSegmented = segmentAndGeneInfo?.multiSegmented === true;
+    const groupedLinkOuts = useMemo(() => {
+        if (!isMultiSegmented) return null;
+
+        const globalItems: LinkOut[] = [];
+        const segmentMap = new Map<string, LinkOut[]>();
+
+        for (const lo of filteredLinkOuts) {
+            const segments = lo.onlyForReferences ? Object.keys(lo.onlyForReferences) : [];
+            if (segments.length === 1) {
+                const seg = segments[0];
+                if (!segmentMap.has(seg)) segmentMap.set(seg, []);
+                segmentMap.get(seg)!.push(lo);
+            } else {
+                globalItems.push(lo);
+            }
+        }
+
+        return { globalItems, segmentMap };
+    }, [isMultiSegmented, filteredLinkOuts]);
+
+    const renderLinkOutButton = (linkOut: LinkOut) => (
+        <MenuItem key={linkOut.name}>
+            {({ focus }) => (
+                <Button
+                    onClick={() => handleLinkClick(linkOut)}
+                    className={`
+                        ${focus ? 'bg-gray-100 text-gray-900' : 'text-gray-700'}
+                        flex items-center justify-between px-4 py-2 text-sm w-full text-left
+                    `}
+                >
+                    {linkOut.name}
+                    <DashiconsExternal className='h-4 w-4 ml-2' />
+                </Button>
+            )}
+        </MenuItem>
+    );
+
     return (
         <>
             <Menu as='div' className='ml-2 relative inline-block text-left'>
@@ -138,22 +214,21 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                             Analyze {sequenceCount !== undefined ? formatNumberWithDefaultLocale(sequenceCount) : '...'}{' '}
                             sequences with:
                         </div>
-                        {linkOuts.map((linkOut) => (
-                            <MenuItem key={linkOut.name}>
-                                {({ focus }) => (
-                                    <Button
-                                        onClick={() => handleLinkClick(linkOut)}
-                                        className={`
-                                            ${focus ? 'bg-gray-100 text-gray-900' : 'text-gray-700'}
-                                            flex items-center justify-between px-4 py-2 text-sm w-full text-left
-                                        `}
-                                    >
-                                        {linkOut.name}
-                                        <DashiconsExternal className='h-4 w-4 ml-2' />
-                                    </Button>
-                                )}
-                            </MenuItem>
-                        ))}
+                        {groupedLinkOuts !== null ? (
+                            <>
+                                {groupedLinkOuts.globalItems.map(renderLinkOutButton)}
+                                {Array.from(groupedLinkOuts.segmentMap.entries()).map(([segment, items]) => (
+                                    <div key={segment}>
+                                        <div className='px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider'>
+                                            {segment}
+                                        </div>
+                                        {items.map(renderLinkOutButton)}
+                                    </div>
+                                ))}
+                            </>
+                        ) : (
+                            filteredLinkOuts.map(renderLinkOutButton)
+                        )}
                     </div>
                 </MenuItems>
             </Menu>
