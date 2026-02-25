@@ -172,8 +172,10 @@ export class FieldFilterSet implements SequenceFilter {
 
             if (Array.isArray(value)) {
                 if (value.length > 0) {
-                    result.push([key, value]);
+                    result.push([key, value.map((v: any) => (v === null ? '' : v))]);
                 }
+            } else if (value === null) {
+                result.push([key, '']);
             } else {
                 const stringValue = String(value);
                 const trimmedValue = stringValue.trim();
