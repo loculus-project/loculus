@@ -9,18 +9,18 @@ if (!seqSetsAreEnabled()) {
 const { seqSetId = '' } = Astro.params;
 const backendUrl = getRuntimeConfig().serverSide.backendUrl;
 
-let latestVersion = 1;
 try {
     const response = await fetch(`${backendUrl}/get-seqset?seqSetId=${encodeURIComponent(seqSetId)}`);
     if (response.ok) {
         const versions = seqSets.parse(await response.json());
         if (versions.length > 0) {
-            latestVersion = Math.max(...versions.map((s) => s.seqSetVersion));
+            const latestVersion = Math.max(...versions.map((s) => s.seqSetVersion));
+            return Astro.redirect(`/seqsets/${seqSetId}.${latestVersion}`);
         }
     }
 } catch {
-    // Fall back to version 1
+    // Fall through to 404
 }
 
-return Astro.redirect(`/seqsets/${seqSetId}.${latestVersion}`);
+return Astro.rewrite('/404');
 ---
