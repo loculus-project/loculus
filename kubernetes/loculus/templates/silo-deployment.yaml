@@ -4,7 +4,7 @@
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 {{- $organismContent := $item.contents }}
-{{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" | fromYaml }}
+{{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" | fromYamlArray }}
 ---
 apiVersion: apps/v1
 kind: Deployment
