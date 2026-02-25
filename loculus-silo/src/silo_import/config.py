@@ -39,7 +39,7 @@ class ImporterConfig:
                             f"Each item in LINEAGE_DEFINITIONS must be a dictionary, "
                             f"received: {lineage_definitions_raw}"
                         )
-                        raise RuntimeError(msg)
+                        raise TypeError(msg)
 
             except json.JSONDecodeError as exc:
                 msg = "LINEAGE_DEFINITIONS must be valid JSON"
