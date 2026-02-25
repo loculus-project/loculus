@@ -914,6 +914,12 @@ def test_concatenate() -> None:
         "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
         "type": ["integer", "string", "ACCESSION_VERSION", "date"],
     }
+    args_no_accession_version: FunctionArgs = {
+        "ACCESSION_VERSION": "version.1",
+        "order": ["someInt", "geoLocCountry", "sampleCollectionDate"],
+        "type": ["integer", "string", "date"],
+        "fallback_value": "unknown",
+    }
 
     res_no_fallback_no_int = ProcessingFunctions.concatenate(
         input_data,
@@ -938,6 +944,13 @@ def test_concatenate() -> None:
         args,
     )
 
+    res_fallback_no_accession_version = ProcessingFunctions.concatenate(
+        input_data,
+        output_field,
+        input_fields,
+        args_no_accession_version,
+    )
+
     input_data["sampleCollectionDate"] = None
     res_fallback_explicit_null = ProcessingFunctions.concatenate(
         input_data,
@@ -949,6 +962,7 @@ def test_concatenate() -> None:
     assert res_no_fallback_no_int.datum == "version.1/2025-01-01"
     assert res_no_fallback.datum == "0//version.1/2025-01-01"
     assert res_fallback.datum == "0/unknown/version.1/2025-01-01"
+    assert res_fallback_no_accession_version.datum == "0/unknown/2025-01-01"
     assert res_fallback_explicit_null.datum == "0/unknown/version.1/unknown"
 
 
