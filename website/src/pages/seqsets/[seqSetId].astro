@@ -1,6 +1,9 @@
 ---
 import { getRuntimeConfig, seqSetsAreEnabled } from '../../config';
+import { getInstanceLogger } from '../../logger';
 import { seqSets } from '../../types/seqSetCitation';
+
+const logger = getInstanceLogger('seqSetRedirect');
 
 if (!seqSetsAreEnabled()) {
     return Astro.rewrite('/404');
@@ -18,8 +21,8 @@ try {
             return Astro.redirect(`/seqsets/${seqSetId}.${latestVersion}`);
         }
     }
-} catch {
-    // Fall through to 404
+} catch (error) {
+    logger.error(`Failed to fetch versions for seqset ${seqSetId}: ${error}`);
 }
 
 return Astro.rewrite('/404');
