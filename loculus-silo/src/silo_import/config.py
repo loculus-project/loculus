@@ -44,6 +44,8 @@ class ImporterConfig:
             except json.JSONDecodeError as exc:
                 msg = "LINEAGE_DEFINITIONS must be valid JSON"
                 raise RuntimeError(msg) from exc
+            except TypeError as exc:
+                raise RuntimeError(str(exc)) from exc
 
         hard_refresh_interval = int(env.get("HARD_REFRESH_INTERVAL", "3600"))
         poll_interval = int(env.get("SILO_IMPORT_POLL_INTERVAL_SECONDS", "30"))

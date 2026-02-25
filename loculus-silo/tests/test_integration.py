@@ -51,7 +51,10 @@ def test_full_import_cycle_with_real_zstd_data(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test complete import cycle with real zstd-compressed data."""
-    config = make_config(tmp_path, lineage_definitions={"test": {1: "http://lineage"}})
+    config = make_config(
+        tmp_path,
+        lineage_definitions={"test": {1: "http://lineage"}, "other": {1: "http://lineage2"}},
+    )
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -89,9 +92,12 @@ def test_full_import_cycle_with_real_zstd_data(
     assert runner.current_etag == 'W/"abc123"', "ETag should be updated"
     assert runner.last_hard_refresh > 0, "Hard refresh timestamp should be set"
 
-    # Verify lineage file was downloaded
+    # Verify lineage files were downloaded
     lineage_file = paths.input_dir / "test.yaml"
     assert lineage_file.exists(), "Lineage file should exist"
+    assert lineage_file.read_text() == "lineage: test-data\n"
+    lineage_file = paths.input_dir / "other.yaml"
+    assert lineage_file.exists(), "Other lineage file should exist"
     assert lineage_file.read_text() == "lineage: test-data\n"
 
     # Verify timestamped directory was created and processing flag removed

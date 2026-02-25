@@ -84,7 +84,11 @@ spec:
             {{- if $lineageSystem }}
               {{- $defsBySystem := dict -}}
               {{- range $ls := $lineageSystem }}
-                {{- $defsBySystem = set $defsBySystem $ls (index $.Values.lineageSystemDefinitions $ls) -}}
+                {{- $def := index $.Values.lineageSystemDefinitions $ls -}}
+                {{- if not $def -}}
+                  {{- fail (printf "lineageSystemDefinitions missing entry for lineage system '%s'" $ls) -}}
+                {{- end -}}
+                {{- $defsBySystem = set $defsBySystem $ls $def -}}
               {{- end }}
             - name: LINEAGE_DEFINITIONS
               value: {{ $defsBySystem | toJson | quote }}

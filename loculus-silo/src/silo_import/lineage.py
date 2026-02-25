@@ -30,7 +30,10 @@ def update_lineage_definitions(
     for lineage, item in config.lineage_definitions.items():
         lineage_url: str | None = item.get(int(pipeline_version))
         if not lineage_url:
-            msg = f"No lineage definition URL configured for pipeline version {pipeline_version}"
+            msg = (
+                f"No lineage definition URL configured for pipeline version {pipeline_version} "
+                f"and lineage system '{lineage}'"
+            )
             raise RuntimeError(msg)
 
         logger.info("Downloading lineage definitions for pipeline version %s", pipeline_version)
