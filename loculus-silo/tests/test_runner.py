@@ -23,7 +23,7 @@ from silo_import.runner import ImporterRunner
 
 def make_config(
     tmp_path: Path,
-    lineage_definitions: dict[int, str] | None = None,
+    lineage_definitions: dict[str, dict[int, str]] | None = None,
     hard_refresh_interval: int = 1,
 ) -> ImporterConfig:
     return ImporterConfig(
@@ -45,7 +45,7 @@ def make_paths(tmp_path: Path) -> ImporterPaths:
 
 
 def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    config = make_config(tmp_path, lineage_definitions={"test": {1: "http://lineage"}})
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -107,7 +107,7 @@ def test_runner_skips_on_not_modified(tmp_path: Path) -> None:
 def test_runner_skips_on_hash_match_updates_etag(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    config = make_config(tmp_path, lineage_definitions={"test": {1: "http://lineage"}})
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 

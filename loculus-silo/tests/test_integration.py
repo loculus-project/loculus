@@ -25,7 +25,7 @@ from silo_import.runner import ImporterRunner
 
 def make_config(
     tmp_path: Path,
-    lineage_definitions: dict[int, str] | None = None,
+    lineage_definitions: dict[str, dict[int, str]] | None = None,
     hard_refresh_interval: int = 1000,
     silo_run_timeout: int = 5,
 ) -> ImporterConfig:
@@ -51,7 +51,7 @@ def test_full_import_cycle_with_real_zstd_data(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test complete import cycle with real zstd-compressed data."""
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    config = make_config(tmp_path, lineage_definitions={"test": {1: "http://lineage"}})
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -106,7 +106,7 @@ def test_multiple_runs_with_state_persistence(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test multiple sequential runs maintain state correctly."""
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    config = make_config(tmp_path, lineage_definitions={"test": {1: "http://lineage"}})
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -185,7 +185,7 @@ def test_multiple_runs_with_state_persistence(
 def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test hard refresh forces re-download even with valid ETag."""
     config = make_config(
-        tmp_path, lineage_definitions={1: "http://lineage"}, hard_refresh_interval=2
+        tmp_path, lineage_definitions={"test": {1: "http://lineage"}}, hard_refresh_interval=2
     )
     paths = make_paths(tmp_path)
     paths.ensure_directories()
@@ -238,7 +238,7 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
 
 def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that errors during import properly clean up artifacts."""
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"}, silo_run_timeout=2)
+    config = make_config(tmp_path, lineage_definitions={"test": {1: "http://lineage"}}, silo_run_timeout=2)
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -279,7 +279,7 @@ def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.M
 
 def test_lineage_download_failure_cleanup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that lineage download failure properly cleans up downloaded data."""
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    config = make_config(tmp_path, lineage_definitions={"test": {1: "http://lineage"}})
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -320,7 +320,7 @@ def test_interrupted_run_cleanup_and_hash_skip(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test that download directories are cleaned on startup and hash matching still works."""
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    config = make_config(tmp_path, lineage_definitions={"test": {1: "http://lineage"}})
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
