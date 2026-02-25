@@ -90,8 +90,9 @@ def test_full_import_cycle_with_real_zstd_data(
     assert runner.last_hard_refresh > 0, "Hard refresh timestamp should be set"
 
     # Verify lineage file was downloaded
-    assert paths.lineage_definition_file.exists(), "Lineage file should exist"
-    assert paths.lineage_definition_file.read_text() == "lineage: test-data\n"
+    lineage_file = paths.input_dir / "test.yaml"
+    assert lineage_file.exists(), "Lineage file should exist"
+    assert lineage_file.read_text() == "lineage: test-data\n"
 
     # Verify timestamped directory was created and processing flag removed
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]

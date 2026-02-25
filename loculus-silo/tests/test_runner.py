@@ -76,7 +76,8 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert records_out == mock_transformed_records()
     assert runner.current_etag == 'W/"123"'
     assert runner.last_hard_refresh > 0
-    assert paths.lineage_definition_file.read_text(encoding="utf-8") == "lineage: data"
+    lineage_definition_file = paths.input_dir / "test.yaml"
+    assert lineage_definition_file.read_text(encoding="utf-8") == "lineage: data"
 
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 1

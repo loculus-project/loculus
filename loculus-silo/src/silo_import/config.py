@@ -35,7 +35,10 @@ class ImporterConfig:
                     if isinstance(value, dict):
                         lineage_definitions[key] = {int(k): v for k, v in value.items()}
                     else:
-                        msg = f"Each item in LINEAGE_DEFINITIONS must be a dictionary, received: {lineage_definitions_raw}"
+                        msg = (
+                            f"Each item in LINEAGE_DEFINITIONS must be a dictionary, "
+                            f"received: {lineage_definitions_raw}"
+                        )
                         raise RuntimeError(msg)
 
             except json.JSONDecodeError as exc:
