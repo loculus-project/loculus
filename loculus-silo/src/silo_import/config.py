@@ -9,7 +9,7 @@ from pathlib import Path
 @dataclass(frozen=True)
 class ImporterConfig:
     backend_base_url: str
-    lineage_definitions: dict[int, str] | None
+    lineage_definitions: list[dict[int, str]] | None
     hard_refresh_interval: int
     poll_interval: int
     silo_run_timeout: int
@@ -26,11 +26,16 @@ class ImporterConfig:
             raise RuntimeError(msg)
 
         lineage_definitions_raw = env.get("LINEAGE_DEFINITIONS")
-        lineage_definitions: dict[int, str] | None = None
+        lineage_definitions: list[dict[int, str]] | None = None
         if lineage_definitions_raw:
             try:
                 data = json.loads(lineage_definitions_raw)
-                lineage_definitions = {int(k): v for k, v in data.items()}
+                lineage_definitions = []
+                for item in data:
+                    if isinstance(item, dict):
+                        lineage_definitions.append({int(k): v for k, v in item.items()})
+                    else:
+                        raise RuntimeError("Each item in LINEAGE_DEFINITIONS must be a dictionary")
 
             except json.JSONDecodeError as exc:
                 msg = "LINEAGE_DEFINITIONS must be valid JSON"

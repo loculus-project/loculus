@@ -26,17 +26,18 @@ def update_lineage_definitions(
         _write_text(paths.lineage_definition_file, "{}\n")
         return
 
-    lineage_url: str | None = config.lineage_definitions.get(int(pipeline_version))
-    if not lineage_url:
-        msg = f"No lineage definition URL configured for pipeline version {pipeline_version}"
-        raise RuntimeError(msg)
+    for item in config.lineage_definitions:
+        lineage_url: str | None = item.get(int(pipeline_version))
+        if not lineage_url:
+            msg = f"No lineage definition URL configured for pipeline version {pipeline_version}"
+            raise RuntimeError(msg)
 
-    logger.info("Downloading lineage definitions for pipeline version %s", pipeline_version)
-    try:
-        _download_lineage_file(lineage_url, paths.lineage_definition_file)
-    except requests.RequestException as exc:
-        msg = f"Failed to download lineage definitions: {exc}"
-        raise RuntimeError(msg) from exc
+        logger.info("Downloading lineage definitions for pipeline version %s", pipeline_version)
+        try:
+            _download_lineage_file(lineage_url, paths.lineage_definition_file)
+        except requests.RequestException as exc:
+            msg = f"Failed to download lineage definitions: {exc}"
+            raise RuntimeError(msg) from exc
 
 
 def _download_lineage_file(url: str, destination: Path) -> None:

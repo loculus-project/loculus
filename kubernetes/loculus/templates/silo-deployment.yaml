@@ -83,7 +83,12 @@ spec:
               {{- end }}
             {{- if $lineageSystem }}
             - name: LINEAGE_DEFINITIONS
-              value: "[{{- range $index, $ls := $lineageSystem }}{{ if $index }}, {{ end }}{{ index $.Values.lineageSystemDefinitions $ls | toJson | quote }}{{- end }}]"
+              value: {{- $defs := list -}}
+                {{- range $ls := $lineageSystem }}
+                  {{- $defs = append $defs (index $.Values.lineageSystemDefinitions $ls) -}}
+                {{- end -}}
+                {{ $defs | toJson | quote }}
+            {{- end }}
             - name: SILO_RUN_TIMEOUT_SECONDS
               value: {{ $.Values.siloImport.siloTimeoutSeconds | quote }}
             - name: HARD_REFRESH_INTERVAL
