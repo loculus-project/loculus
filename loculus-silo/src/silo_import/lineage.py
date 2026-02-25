@@ -23,7 +23,8 @@ def update_lineage_definitions(
     if not pipeline_version:
         # required for dummy organisms
         logger.info("No pipeline version found; writing empty lineage definitions")
-        _write_text(paths.lineage_definition_file, "{}\n")
+        for lineage in config.lineage_definitions:
+            _write_text(paths.input_dir / f"{lineage}.yaml", "{}\n")
         return
 
     for lineage, item in config.lineage_definitions.items():
