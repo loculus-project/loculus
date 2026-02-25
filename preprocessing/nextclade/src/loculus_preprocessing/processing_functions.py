@@ -638,15 +638,13 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        """Concatenates input fields with accession_version using the "/" separator in the order
+        """Concatenates input fields using the "/" separator in the order
         specified by the order argument. Optionally, a 'fallback_value' argument can be provided.
         This should be a string to use in place of metadata that is not available. If fallback_value
         is not provided, the empty string will be used in place of missing metadata.
         """
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
-
-        number_fields = len(input_data.keys()) + 1
 
         if not isinstance(args["ACCESSION_VERSION"], str):
             return ProcessingResult(
@@ -695,9 +693,13 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=errors,
             )
-        if number_fields != len(order):
+
+        n_inputs = len(input_data.keys())
+        # exclude ACCESSION_VERSION as it's provided by _call_preprocessing_function() and should not be an input_metadata field
+        n_expected = len([i for i in order if i != "ACCESSION_VERSION"])
+        if n_inputs != n_expected:
             logger.error(
-                f"Concatenate: Expected {len(order)} fields, got {number_fields}. "
+                f"Concatenate: Expected {n_expected} fields, got {n_inputs}. "
                 f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
             )
             add_errors()
