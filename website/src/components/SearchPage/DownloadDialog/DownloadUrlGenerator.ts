@@ -93,11 +93,9 @@ export class DownloadUrlGenerator {
             .forEach(([name, value]) => {
                 if (Array.isArray(value)) {
                     value.forEach((val) => {
-                        if (val && val.length > 0) {
-                            params.append(name, val);
-                        }
+                        params.append(name, val);
                     });
-                } else if (value && value.length > 0) {
+                } else {
                     params.append(name, value);
                 }
             });
