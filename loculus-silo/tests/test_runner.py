@@ -336,7 +336,7 @@ def test_runner_redownloads_lineage_when_pipeline_version_changes(
 
     def mock_download_lineage(url: str, path: Path) -> None:
         download_calls.append(url)
-        path.write_text("lineage: data")
+        path.write_text("lineage: data", encoding="utf-8")
 
     monkeypatch.setattr(
         lineage,
@@ -358,7 +358,8 @@ def test_runner_redownloads_lineage_when_pipeline_version_changes(
     with patch.object(runner.silo, "run_append"):
         runner.run_once()
 
-    assert len(download_calls) == 2
+    expected_download_count = 2
+    assert len(download_calls) == expected_download_count
     assert download_calls[1] == "http://lineage-v2"
     assert not responses_list
 
@@ -392,7 +393,7 @@ def test_runner_skips_lineage_download_when_version_unchanged(
     def counting_download(url: str, path: Path) -> None:  # noqa: ARG001
         nonlocal download_count
         download_count += 1
-        path.write_text("lineage: data")
+        path.write_text("lineage: data", encoding="utf-8")
 
     monkeypatch.setattr(lineage, "_download_lineage_file", counting_download)
 
