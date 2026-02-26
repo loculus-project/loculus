@@ -165,18 +165,18 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
     // Group filtered linkOuts by their optional `category` field.
     // LinkOuts without a category appear at the top; those with a category are grouped under labelled sections.
     const groupedLinkOuts = useMemo(() => {
-        const hasAnyCategory = filteredLinkOuts.some((lo) => lo.category);
+        const hasAnyCategory = filteredLinkOuts.some((linkOut) => linkOut.category);
         if (!hasAnyCategory) return null;
 
         const uncategorizedItems: LinkOut[] = [];
         const categoryMap = new Map<string, LinkOut[]>();
 
-        for (const lo of filteredLinkOuts) {
-            if (lo.category) {
-                if (!categoryMap.has(lo.category)) categoryMap.set(lo.category, []);
-                categoryMap.get(lo.category)!.push(lo);
+        for (const linkOut of filteredLinkOuts) {
+            if (linkOut.category) {
+                if (!categoryMap.has(linkOut.category)) categoryMap.set(linkOut.category, []);
+                categoryMap.get(linkOut.category)!.push(linkOut);
             } else {
-                uncategorizedItems.push(lo);
+                uncategorizedItems.push(linkOut);
             }
         }
 
