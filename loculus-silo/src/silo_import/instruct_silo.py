@@ -52,6 +52,7 @@ class SiloRunner:
             )
             if result.returncode != 0:
                 logger.error("SILO append stderr: %s", result.stderr)
+                logger.error("SILO append stdout: %s", result.stdout)
                 msg = f"SILO append failed with exit code {result.returncode}"
                 raise RuntimeError(msg)
             logger.info("SILO append completed successfully")
