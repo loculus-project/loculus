@@ -6,70 +6,14 @@ import zipfile
 from pathlib import Path
 from urllib.parse import urljoin
 
+import networkx as nx
+import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
 
 NCBI_URL = "https://ftp.ncbi.nih.gov/pub/taxonomy/"
 TAXONOMY_ARCHIVE = "taxdmp.zip"
-# Ordering of ranks in nodes.dmp as per ChatGPT -- not authoritative
-NCBI_RANK_ORDER = {
-    # we will order from specific -> general, so
-    # setting `no rank` to -1 means it will always come last
-    "no rank": -1,
-    # very high-level / viral and cellular roots
-    "acellular root": 1,
-    "cellular root": 2,
-    "root": 3,  # sometimes appears in NCBI
-    "superkingdom": 4,  # potentially, superkingdom and domain are synonyms in NCBI
-    "domain": 5,
-    "kingdom": 6,
-    "subkingdom": 7,
-    "superphylum": 8,
-    "phylum": 9,
-    "subphylum": 10,
-    "superclass": 11,
-    "class": 12,
-    "subclass": 13,
-    "infraclass": 14,
-    "cohort": 15,
-    "subcohort": 16,
-    "superorder": 17,
-    "order": 18,
-    "suborder": 19,
-    "infraorder": 20,
-    "parvorder": 21,
-    "superfamily": 22,
-    "family": 23,
-    "subfamily": 24,
-    "tribe": 25,
-    "subtribe": 26,
-    "genus": 27,
-    "subgenus": 28,
-    # between genus and species
-    "section": 29,
-    "subsection": 30,
-    "series": 31,
-    "species group": 32,
-    "species subgroup": 33,
-    # species level and below
-    "species": 34,
-    "subspecies": 35,
-    "varietas": 36,
-    "subvariety": 37,
-    "forma": 38,
-    "forma specialis": 39,
-    "strain": 40,
-    "isolate": 41,
-    "genotype": 42,
-    "serogroup": 43,
-    "serotype": 44,
-    "biotype": 45,
-    "pathogroup": 46,
-    "morph": 47,
-    # informal / flexible
-    # "clade": 48,
-}
 
 
 def download_ncbi_archive(
@@ -134,31 +78,58 @@ def extract_names_df(archive: io.BytesIO) -> pd.DataFrame:
 def extract_nodes_df(archive: io.BytesIO) -> pd.DataFrame:
     df = (
         extract_ncbi_taxonomy_file(archive, "nodes.dmp")
-        .rename(columns={0: "tax_id", 1: "parent_id", 2: "rank"})
-        .astype({"tax_id": "int", "parent_id": "int", "rank": "category"})
-        # entries with no/unrecognized ranks get assigned -1 -> 'no rank'
-        .assign(rank_level=lambda x: x["rank"].map(NCBI_RANK_ORDER).fillna(-1))
-        .loc[:, ["tax_id", "parent_id", "rank_level"]]
+        .rename(columns={0: "tax_id", 1: "parent_id"})
+        .astype({"tax_id": "int", "parent_id": "int"})
+        .loc[:, ["tax_id", "parent_id"]]
     )
+
+    compute_tree_depth(df, root_id=1)
+    if df[df["depth"] == -1].shape[0] > 0:
+        raise ValueError("nodes.dmp contains orphan nodes, this should not happen")
 
     return df
 
 
-def write_to_sqlite(df_names: pd.DataFrame, df_nodes: pd.DataFrame, output_db: Path) -> None:
-    logger.info(f"saving NCBI taxonomic names to {output_db}")
+def compute_tree_depth(df: pd.DataFrame, root_id: int):
+    if len(df.columns) != 2 or not all(df.columns.values == np.array(["tax_id", "parent_id"])):
+        raise ValueError(
+            f"Expected pd.DataFrame with columns '['tax_id', 'parent_id']', got '{df.columns}'"
+        )
+    if not df["tax_id"].nunique() == df.shape[0]:
+        raise ValueError("At least one tax_id has multiple parents, this should not be possible")
 
-    df_rank_levels = pd.DataFrame(list(NCBI_RANK_ORDER.items()), columns=["rank", "rank_level"])
+    # Build a directed graph from the dataframe
+    # Include all tax_ids, but since the root is specified as
+    # it's own parent in nodes.dmp, we exclude that edge to avoid cycles
+    G = nx.DiGraph()
+
+    G.add_nodes_from(df["tax_id"])
+
+    edges: pd.DataFrame = df[df["tax_id"] != root_id][["parent_id", "tax_id"]]
+    G.add_edges_from(edges.itertuples(index=False, name=None))
+
+    depth_map: dict[int, int] = nx.single_source_shortest_path_length(G, root_id)
+
+    df["depth"] = df["tax_id"].map(depth_map).fillna(-1).astype(int)
+
+
+def create_taxonomy_df(archive: io.BytesIO) -> pd.DataFrame:
+    df_names = extract_names_df(archive)
+    df_nodes = extract_nodes_df(archive)
+
+    return df_names.merge(df_nodes, on="tax_id", how="inner")
+
+
+def write_to_sqlite(df: pd.DataFrame, output_db: Path) -> None:
+    logger.info(f"saving NCBI taxonomy to {output_db}")
 
     with sqlite3.connect(output_db) as conn:
-        df_names.to_sql("tax_id_names_table", conn, if_exists="replace", index=False)
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_scientific_name ON tax_id_names_table(scientific_name);"
-        )
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_tax_id_names ON tax_id_names_table(tax_id);")
+        df.to_sql("taxonomy", conn, if_exists="replace", index=False)
 
-        df_nodes.to_sql("parent_mappings_table", conn, if_exists="replace", index=False)
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_tax_id_pmap ON parent_mappings_table(tax_id);")
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_tax_id ON taxonomy(tax_id);")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_parent_id ON taxonomy(parent_id);")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_scientific_name ON taxonomy(scientific_name);")
 
-        df_rank_levels.to_sql("rank_levels_table", conn, if_exists="replace", index=False)
+        conn.execute("ANALYZE;")
 
     logger.info("successfully created database")
