@@ -368,5 +368,7 @@ describe('LinkOutMenu grouping with onlyForReferences in multi-segmented organis
         expect(screen.getByText('GlobalTool')).toBeInTheDocument();
         expect(screen.queryByText('SegmentLTool')).not.toBeInTheDocument();
         expect(screen.getByText('SegmentSTool')).toBeInTheDocument();
+        expect(screen.queryByText('L')).not.toBeInTheDocument();
+        expect(screen.getByText('S')).toBeInTheDocument();
     });
 });

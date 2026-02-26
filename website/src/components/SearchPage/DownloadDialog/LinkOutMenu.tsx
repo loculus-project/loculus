@@ -4,6 +4,7 @@ import { type MutableRefObject, type FC, useState, useRef, useMemo } from 'react
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator';
 import { type SequenceFilter } from './SequenceFilters';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes';
+import type { LinkOut } from '../../../types/config';
 import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
 import type { ReferenceSelection } from '../../../utils/referenceSelection';
@@ -16,13 +17,6 @@ import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 const DATA_TYPES = ['unalignedNucleotideSequences', 'metadata', 'alignedNucleotideSequences'] as const;
 type DataType = (typeof DATA_TYPES)[number];
-
-type LinkOut = {
-    name: string;
-    url: string;
-    maxNumberOfRecommendedEntries?: number;
-    onlyForReferences?: Record<string, string>;
-};
 
 type LinkOutMenuProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
