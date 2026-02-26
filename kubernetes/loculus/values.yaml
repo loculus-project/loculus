@@ -1889,6 +1889,8 @@ defaultOrganisms:
       linkOuts:
         - name: "Nextclade (L)"
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/L"
+          onlyForReferences:
+            L: singleReference
         - name: "Nextclade (M MH396653)"
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=cchfv/M-MH396653&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
           onlyForReferences:
