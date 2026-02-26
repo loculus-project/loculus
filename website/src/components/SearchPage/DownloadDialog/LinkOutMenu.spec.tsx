@@ -211,6 +211,7 @@ describe('LinkOutMenu filtering with onlyForReferences', () => {
     const filteredLinkOut = {
         name: 'FilteredTool',
         url: 'http://example.com/tool?data=[unalignedNucleotideSequences]',
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         onlyForReferences: { S: 'ref1' },
     };
     const unfilteredLinkOut = {
@@ -242,6 +243,7 @@ describe('LinkOutMenu filtering with onlyForReferences', () => {
                 sequenceCount={1}
                 linkOuts={[filteredLinkOut, unfilteredLinkOut]}
                 dataUseTermsEnabled={false}
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 referenceSelection={{ referenceIdentifierField: 'reference', selectedReferences: { S: 'ref1' } }}
             />,
         );
@@ -259,6 +261,7 @@ describe('LinkOutMenu filtering with onlyForReferences', () => {
                 sequenceCount={1}
                 linkOuts={[filteredLinkOut, unfilteredLinkOut]}
                 dataUseTermsEnabled={false}
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 referenceSelection={{ referenceIdentifierField: 'reference', selectedReferences: { S: 'ref2' } }}
             />,
         );
@@ -276,6 +279,7 @@ describe('LinkOutMenu filtering with onlyForReferences', () => {
                 sequenceCount={1}
                 linkOuts={[filteredLinkOut, unfilteredLinkOut]}
                 dataUseTermsEnabled={false}
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 referenceSelection={{ referenceIdentifierField: 'reference', selectedReferences: { S: null } }}
             />,
         );
@@ -304,11 +308,13 @@ describe('LinkOutMenu grouping with onlyForReferences in multi-segmented organis
         {
             name: 'SegmentLTool',
             url: 'http://example.com/tool?data=[unalignedNucleotideSequences:L]',
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             onlyForReferences: { L: 'ref1' },
         },
         {
             name: 'SegmentSTool',
             url: 'http://example.com/tool?data=[unalignedNucleotideSequences:S]',
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             onlyForReferences: { S: 'ref2' },
         },
     ];
@@ -345,6 +351,7 @@ describe('LinkOutMenu grouping with onlyForReferences in multi-segmented organis
                 segmentAndGeneInfo={multiSegmentInfo}
                 referenceSelection={{
                     referenceIdentifierField: 'reference',
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
                     selectedReferences: { L: 'other', S: null },
                 }}
             />,
