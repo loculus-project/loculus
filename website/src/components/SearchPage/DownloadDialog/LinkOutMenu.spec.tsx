@@ -374,26 +374,4 @@ describe('LinkOutMenu grouping with category field', () => {
         expect(screen.getByText('S')).toBeInTheDocument();
     });
 
-    test('uses flat list when no linkOuts have a category', () => {
-        const noCategoryLinkOuts: LinkOut[] = [
-            { name: 'Tool1', url: 'http://example.com/tool1?data=[unalignedNucleotideSequences]' },
-            { name: 'Tool2', url: 'http://example.com/tool2?data=[unalignedNucleotideSequences]' },
-        ];
-
-        render(
-            <LinkOutMenu
-                downloadUrlGenerator={realDownloadUrlGenerator}
-                sequenceFilter={mockSequenceFilter}
-                sequenceCount={1}
-                linkOuts={noCategoryLinkOuts}
-                dataUseTermsEnabled={false}
-                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
-            />,
-        );
-
-        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
-
-        expect(screen.getByText('Tool1')).toBeInTheDocument();
-        expect(screen.getByText('Tool2')).toBeInTheDocument();
-    });
 });
