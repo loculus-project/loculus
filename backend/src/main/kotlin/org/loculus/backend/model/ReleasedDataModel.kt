@@ -107,8 +107,9 @@ open class ReleasedDataModel(
         val lastUpdateTime = query
             .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
             .maxOrNull()
-            // Replace not strictly necessary but does no harm and a) shows UTC, b) simplifies silo import script logic
-            ?.replace(" ", "Z")
+            // Replace space with T so timestamp is valid ISO-8601 (e.g. 2024-01-15T10:30:00)
+            // This allows silo-import to parse the ETag as a releasedSince timestamp
+            ?.replace(" ", "T")
             ?: ""
         return "\"$lastUpdateTime\"" // ETag must be enclosed in double quotes
     }

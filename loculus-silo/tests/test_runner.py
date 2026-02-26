@@ -238,7 +238,7 @@ def test_runner_incremental_append_after_initial_full(
         mock_preprocess.assert_called_once()
 
     assert runner.has_existing_silo_db is True
-    assert runner.last_successful_import_time is not None
+    assert runner.last_successful_import_time == "111"
     assert runner.current_etag == 'W/"111"'
 
     # Second run: should do incremental append
@@ -571,3 +571,16 @@ def test_runner_incremental_skips_when_not_modified(
     # ETag should still be from the first run since 304 doesn't carry a new ETag
     assert runner.current_etag == 'W/"111"'
     assert not responses_list
+
+
+@pytest.mark.parametrize(
+    ("etag", "expected"),
+    [
+        ('"2024-01-15T10:30:00"', "2024-01-15T10:30:00"),
+        ('W/"2024-01-15T10:30:00.123456"', "2024-01-15T10:30:00.123456"),
+        ('"some-value"', "some-value"),
+        ('W/"111"', "111"),
+    ],
+)
+def test_parse_etag_timestamp(etag: str, expected: str) -> None:
+    assert ImporterRunner._parse_etag_timestamp(etag) == expected
