@@ -220,6 +220,9 @@ organisms:
           {{- if $linkOut.maxNumberOfRecommendedEntries }}
           maxNumberOfRecommendedEntries: {{ $linkOut.maxNumberOfRecommendedEntries }}
           {{- end }}
+          {{- if $linkOut.onlyForReferences }}
+          onlyForReferences: {{ $linkOut.onlyForReferences | toYaml | nindent 12 }}
+          {{- end }}
         {{- end }}
       {{- end }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
