@@ -25,6 +25,7 @@ class SiloRunner:
             )
             if result.returncode != 0:
                 logger.error("SILO preprocessing stderr: %s", result.stderr)
+                logger.error("SILO preprocessing stdout: %s", result.stdout)
                 msg = f"SILO preprocessing failed with exit code {result.returncode}"
                 raise RuntimeError(msg)
             logger.info("SILO preprocessing completed successfully")
