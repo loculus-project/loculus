@@ -167,6 +167,13 @@ class ImporterRunner:
             return
 
         try:
+            update_lineage_definitions(download.pipeline_version, self.config, self.paths)
+        except Exception:
+            logger.exception("Failed to download lineage definitions during incremental append; cleaning up")
+            safe_remove(download.directory)
+            raise
+
+        try:
             self.silo.run_append(
                 download.transformed_path,
                 self.paths.output_dir,

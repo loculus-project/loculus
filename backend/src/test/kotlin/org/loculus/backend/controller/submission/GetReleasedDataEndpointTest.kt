@@ -451,6 +451,72 @@ class GetReleasedDataEndpointTest(
             .forEach { assertThat(it, equalTo(it.sorted())) }
     }
 
+    @Test
+    fun `GIVEN released data WHEN releasedSince is far in the past THEN returns all data`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+
+        val response = submissionControllerClient.getReleasedData(
+            releasedSince = "2000-01-01T00:00:00",
+        )
+        val responseBody = response.expectNdjsonAndGetContent<ReleasedData>()
+        assertThat(responseBody.size, `is`(NUMBER_OF_SEQUENCES))
+        response.andExpect(header().string("x-total-records", NUMBER_OF_SEQUENCES.toString()))
+    }
+
+    @Test
+    fun `GIVEN released data WHEN releasedSince is in the future THEN returns empty response`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+
+        val futureTimestamp = LocalDateTime(
+            date = LocalDate(2099, 1, 1),
+            time = LocalTime(0, 0, 0),
+        ).toString()
+
+        val response = submissionControllerClient.getReleasedData(
+            releasedSince = futureTimestamp,
+        )
+        val responseBody = response.expectNdjsonAndGetContent<ReleasedData>()
+        assertThat(responseBody, `is`(emptyList()))
+        response.andExpect(header().string("x-total-records", `is`("0")))
+    }
+
+    @Test
+    fun `GIVEN released data WHEN releasedSince is not provided THEN returns all data`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+
+        val responseWithout = submissionControllerClient.getReleasedData()
+            .expectNdjsonAndGetContent<ReleasedData>()
+
+        val responseWith = submissionControllerClient.getReleasedData(
+            releasedSince = "2000-01-01T00:00:00",
+        ).expectNdjsonAndGetContent<ReleasedData>()
+
+        assertThat(responseWithout.size, `is`(responseWith.size))
+    }
+
+    @Test
+    fun `GIVEN released data WHEN releasedSince is invalid format THEN returns 400`() {
+        submissionControllerClient.getReleasedData(
+            releasedSince = "not-a-timestamp",
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `GIVEN released data WHEN releasedSince filters strictly THEN x-total-records header matches body`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+
+        val futureTimestamp = LocalDateTime(
+            date = LocalDate(2099, 1, 1),
+            time = LocalTime(0, 0, 0),
+        ).toString()
+
+        val response = submissionControllerClient.getReleasedData(
+            releasedSince = futureTimestamp,
+        )
+        val responseBody = response.expectNdjsonAndGetContent<ReleasedData>()
+        response.andExpect(header().string("x-total-records", responseBody.size.toString()))
+    }
+
     private fun prepareRevokedAndRevocationAndRevisedVersions(): PreparedVersions {
         val preparedSubmissions = convenienceClient.prepareDataTo(Status.APPROVED_FOR_RELEASE)
         convenienceClient.reviseAndProcessDefaultSequenceEntries(preparedSubmissions.map { it.accession })

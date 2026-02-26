@@ -250,6 +250,56 @@ def test_runner_incremental_append_after_initial_full(
     assert not responses_list
 
 
+def test_runner_incremental_append_calls_update_lineage_definitions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Incremental append should also call update_lineage_definitions."""
+    config = make_config(
+        tmp_path, lineage_definitions={"test": {1: "http://lineage"}}, hard_refresh_interval=10000
+    )
+    paths = make_paths(tmp_path)
+    paths.ensure_directories()
+
+    records = mock_records()
+    body = compress_ndjson(records)
+    incremental_records = [records[0]]
+    incremental_body = compress_ndjson(incremental_records)
+
+    responses = [
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"111"', "x-total-records": "3"}, body=body
+        ),
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"222"', "x-total-records": "1"}, body=incremental_body
+        ),
+    ]
+    mock_download, responses_list = make_mock_download_func(responses)
+
+    monkeypatch.setattr(
+        lineage,
+        "_download_lineage_file",
+        lambda url, path: path.write_text("lineage: data"),  # noqa: ARG005
+    )
+
+    runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(download_func=mock_download)
+
+    # First run: full preprocessing
+    with patch.object(runner.silo, "run_preprocessing"):
+        runner.run_once()
+
+    # Second run: incremental append - verify update_lineage_definitions is called
+    with (
+        patch.object(runner.silo, "run_append") as mock_append,
+        patch("silo_import.runner.update_lineage_definitions") as mock_lineage,
+    ):
+        runner.run_once()
+        mock_append.assert_called_once()
+        mock_lineage.assert_called_once()
+
+    assert not responses_list
+
+
 def test_runner_append_fallback_to_full_on_failure(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
