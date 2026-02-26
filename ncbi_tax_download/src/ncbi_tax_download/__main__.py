@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 
 from .ncbi import (
+    create_taxonomy_df,
     write_to_sqlite,
     download_ncbi_archive,
     extract_names_df,
@@ -27,22 +28,14 @@ def run() -> None:
     logging.basicConfig(level=logging.INFO)
 
     args = parse_cl()
-    # output_path = Path(args.output_db)
     parent = args.output_db.parent if args.output_db.parent != Path("") else Path(".")
     if not parent.exists():
         raise FileNotFoundError(f"directory {parent} does not exist.")
 
     try:
         archive = download_ncbi_archive()
-        df_names = extract_names_df(archive)
-        df_nodes = extract_nodes_df(archive)
-
-        df_names = df_names.merge(
-            df_nodes.loc[:, ["tax_id", "rank_level"]], on="tax_id", how="left"
-        )
-        df_nodes = df_nodes.drop("rank_level", axis=1)
-
-        write_to_sqlite(df_names, df_nodes, args.output_db)
+        df_taxonomy = create_taxonomy_df(archive)
+        write_to_sqlite(df_taxonomy, args.output_db)
     except:
         logger.exception("NCBI taxonomy download pipeline failed")
         sys.exit(1)

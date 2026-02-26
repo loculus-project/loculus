@@ -2,5 +2,7 @@ name: loculus-ncbi-taxonomy
 channels:
   - conda-forge
 dependencies:
+  - networkx
+  - numpy
   - pandas
   - pytest
