@@ -137,6 +137,12 @@ export const linkOut = z.object({
     name: z.string(),
     url: z.string(),
     maxNumberOfRecommendedEntries: z.number().int().positive().optional(),
+    /**
+     * Optional filter: maps segment name to reference name. When specified, this linkOut is only
+     * shown in the tool dropdown when the user has selected a matching reference (or no reference)
+     * for each specified segment.
+     */
+    onlyForReferences: z.record(z.string(), z.string()).optional(),
 });
 
 export type LinkOut = z.infer<typeof linkOut>;

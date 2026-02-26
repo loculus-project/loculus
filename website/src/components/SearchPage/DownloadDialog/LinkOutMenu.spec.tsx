@@ -4,6 +4,11 @@ import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator';
 import { LinkOutMenu } from './LinkOutMenu';
 import { FieldFilterSet } from './SequenceFilters';
+import type { LinkOut } from '../../../types/config';
+import {
+    MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
+    SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+} from '../../../types/referenceGenomes.spec';
 
 const originalWindowOpen = window.open;
 beforeEach(() => {
@@ -53,6 +58,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -73,6 +79,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -99,6 +106,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -125,6 +133,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={[{ name: 'Basic', url: 'http://example.com/tool?data=[unalignedNucleotideSequences]' }]}
                 dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -147,6 +156,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={[{ name: 'MetadataFields', url: 'http://example.com/tool?data=[metadata+fieldA,fieldB]' }]}
                 dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -173,6 +183,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={[{ name: 'MetadataSingle', url: 'http://example.com/tool?data=[metadata+fieldA]' }]}
                 dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -196,6 +207,7 @@ describe('LinkOutMenu with disabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={false}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -203,5 +215,160 @@ describe('LinkOutMenu with disabled data use terms', () => {
         fireEvent.click(screen.getByText('Basic'));
 
         expect(window.open).toHaveBeenCalled();
+    });
+});
+
+describe('LinkOutMenu filtering with onlyForReferences', () => {
+    const filteredLinkOut = {
+        name: 'FilteredTool',
+        url: 'http://example.com/tool?data=[unalignedNucleotideSequences]',
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        onlyForReferences: { S: 'ref1' },
+    };
+    const unfilteredLinkOut = {
+        name: 'UnfilteredTool',
+        url: 'http://example.com/tool?data=[unalignedNucleotideSequences]',
+    };
+
+    test('shows linkOut with onlyForReferences when no referenceSelection is provided', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={[filteredLinkOut, unfilteredLinkOut]}
+                dataUseTermsEnabled={false}
+                referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        expect(screen.getByText('FilteredTool')).toBeInTheDocument();
+        expect(screen.getByText('UnfilteredTool')).toBeInTheDocument();
+    });
+
+    test('shows linkOut with onlyForReferences when the selected reference matches', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={[filteredLinkOut, unfilteredLinkOut]}
+                dataUseTermsEnabled={false}
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                referenceSelection={{ referenceIdentifierField: 'reference', selectedReferences: { S: 'ref1' } }}
+                referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        expect(screen.getByText('FilteredTool')).toBeInTheDocument();
+        expect(screen.getByText('UnfilteredTool')).toBeInTheDocument();
+    });
+
+    test('hides linkOut with onlyForReferences when the selected reference does not match', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={[filteredLinkOut, unfilteredLinkOut]}
+                dataUseTermsEnabled={false}
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                referenceSelection={{ referenceIdentifierField: 'reference', selectedReferences: { S: 'ref2' } }}
+                referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        expect(screen.queryByText('FilteredTool')).not.toBeInTheDocument();
+        expect(screen.getByText('UnfilteredTool')).toBeInTheDocument();
+    });
+
+    test('shows linkOut with onlyForReferences when the segment reference is null (no selection)', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={[filteredLinkOut, unfilteredLinkOut]}
+                dataUseTermsEnabled={false}
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                referenceSelection={{ referenceIdentifierField: 'reference', selectedReferences: { S: null } }}
+                referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        expect(screen.getByText('FilteredTool')).toBeInTheDocument();
+        expect(screen.getByText('UnfilteredTool')).toBeInTheDocument();
+    });
+});
+
+describe('LinkOutMenu grouping with onlyForReferences in multi-segmented organisms', () => {
+    const multiSegmentLinkOuts: LinkOut[] = [
+        {
+            name: 'GlobalTool',
+            url: 'http://example.com/tool?data=[unalignedNucleotideSequences]',
+        },
+        {
+            name: 'SegmentLTool',
+            url: 'http://example.com/tool?data=[unalignedNucleotideSequences:L]',
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            onlyForReferences: { L: 'ref1' },
+        },
+        {
+            name: 'SegmentSTool',
+            url: 'http://example.com/tool?data=[unalignedNucleotideSequences:S]',
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            onlyForReferences: { S: 'ref2' },
+        },
+    ];
+
+    test('places segment-specific linkOuts into per-segment sections and global tools at the top', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={multiSegmentLinkOuts}
+                dataUseTermsEnabled={false}
+                referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+
+        expect(screen.getByText('GlobalTool')).toBeInTheDocument();
+        expect(screen.getByText('L')).toBeInTheDocument();
+        expect(screen.getByText('SegmentLTool')).toBeInTheDocument();
+        expect(screen.getByText('S')).toBeInTheDocument();
+        expect(screen.getByText('SegmentSTool')).toBeInTheDocument();
+    });
+
+    test('hides a segment-specific linkOut when its reference does not match the selection', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={multiSegmentLinkOuts}
+                dataUseTermsEnabled={false}
+                referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
+                referenceSelection={{
+                    referenceIdentifierField: 'reference',
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    selectedReferences: { L: 'other', S: null },
+                }}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+
+        expect(screen.getByText('GlobalTool')).toBeInTheDocument();
+        expect(screen.queryByText('SegmentLTool')).not.toBeInTheDocument();
+        expect(screen.getByText('SegmentSTool')).toBeInTheDocument();
+        expect(screen.queryByText('L')).not.toBeInTheDocument();
+        expect(screen.getByText('S')).toBeInTheDocument();
     });
 });
