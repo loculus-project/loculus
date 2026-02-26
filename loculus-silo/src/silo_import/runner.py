@@ -60,12 +60,10 @@ class ImporterRunner:
         The backend ETag format is ``"<timestamp>"`` (with double quotes),
         where ``<timestamp>`` is a UTC ISO-8601 string such as
         ``2024-01-15T10:30:00.123456``.  This method strips the surrounding
-        quotes so the value can be passed directly as a ``releasedSince``
-        parameter.
+        quotes and weak-validator prefix (W/) so the value can be passed
+        directly as a ``releasedSince`` parameter.
         """
-        # Strip optional weak-validator prefix (W/) and surrounding double quotes
-        stripped = re.sub(r'^(?:W/)?"(.*)"$', r"\1", etag)
-        return stripped
+        return re.sub(r'^(?:W/)?"(.*)"$', r"\1", etag)
 
     def _update_lineage_if_needed(
         self, pipeline_version: int | None, hard_refresh: bool = False
