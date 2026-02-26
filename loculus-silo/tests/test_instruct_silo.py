@@ -59,9 +59,9 @@ def test_silo_runner_append_success(tmp_path: Path) -> None:
         assert cmd == [
             str(silo_binary),
             "append",
-            "--appendFile",
+            "--append-file",
             str(append_file),
-            "--siloDirectory",
+            "--silo-directory",
             str(silo_directory),
         ]
 
