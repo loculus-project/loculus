@@ -14,7 +14,7 @@ seqSets:
       displayName: "Collection Date"
     - field: "authors"
       displayName: "Authors"
-useSequlus: false
+useSequlus: true
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
