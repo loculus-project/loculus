@@ -1728,7 +1728,7 @@
         "keycloak": { "$ref": "#/definitions/resourceSpec" },
         "silo": { "$ref": "#/definitions/resourceSpec" },
         "lapis": { "$ref": "#/definitions/resourceSpec" },
-        "silo-preprocessing": { "$ref": "#/definitions/resourceSpec" },
+        "silo-importer": { "$ref": "#/definitions/resourceSpec" },
         "backend": { "$ref": "#/definitions/resourceSpec" },
         "preprocessing": { "$ref": "#/definitions/resourceSpec" },
         "organismSpecific": {
@@ -1746,7 +1746,7 @@
                 "keycloak": { "$ref": "#/definitions/resourceSpec" },
                 "silo": { "$ref": "#/definitions/resourceSpec" },
                 "lapis": { "$ref": "#/definitions/resourceSpec" },
-                "silo-preprocessing": { "$ref": "#/definitions/resourceSpec" },
+                "silo-importer": { "$ref": "#/definitions/resourceSpec" },
                 "backend": { "$ref": "#/definitions/resourceSpec" },
                 "preprocessing": { "$ref": "#/definitions/resourceSpec" }
               },

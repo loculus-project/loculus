@@ -2427,7 +2427,7 @@ resources:
       cpu: "100m"
     limits:
       memory: "5Gi"
-  silo-preprocessing:
+  silo-importer:
     requests:
       memory: "20Mi"
       cpu: "20m"
