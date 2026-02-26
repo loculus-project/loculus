@@ -223,6 +223,9 @@ organisms:
           {{- if $linkOut.onlyForReferences }}
           onlyForReferences: {{ $linkOut.onlyForReferences | toYaml | nindent 12 }}
           {{- end }}
+          {{- if $linkOut.category }}
+          category: {{ quote $linkOut.category }}
+          {{- end }}
         {{- end }}
       {{- end }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}

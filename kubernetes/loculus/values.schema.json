@@ -482,6 +482,10 @@
                     "type": "object",
                     "additionalProperties": { "type": "string" },
                     "description": "Optional filter: maps segment name to reference name. When specified, this linkOut is only shown in the tool dropdown when the user has selected a matching reference (or no reference) for each listed segment. Use this to avoid showing reference-specific Nextclade datasets for the wrong reference in multi-reference organisms. Example: {main: CV-A16} or {M: MH396653}."
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Optional grouping category for the tool dropdown. LinkOuts with the same category are grouped under a labelled section. LinkOuts without a category appear at the top without a header. Can be set to segment names (e.g. 'L', 'M', 'S') or any label (e.g. 'Geographic visualisation', 'Sequence analysis')."
                   }
                 },
                 "required": ["name", "url"]
