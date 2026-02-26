@@ -4,6 +4,7 @@ import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator';
 import { LinkOutMenu } from './LinkOutMenu';
 import { FieldFilterSet } from './SequenceFilters';
+import type { LinkOut } from '../../../types/config';
 
 const originalWindowOpen = window.open;
 beforeEach(() => {
@@ -203,5 +204,156 @@ describe('LinkOutMenu with disabled data use terms', () => {
         fireEvent.click(screen.getByText('Basic'));
 
         expect(window.open).toHaveBeenCalled();
+    });
+});
+
+describe('LinkOutMenu filtering with onlyForReferences', () => {
+    const filteredLinkOut = {
+        name: 'FilteredTool',
+        url: 'http://example.com/tool?data=[unalignedNucleotideSequences]',
+        onlyForReferences: { S: 'ref1' },
+    };
+    const unfilteredLinkOut = {
+        name: 'UnfilteredTool',
+        url: 'http://example.com/tool?data=[unalignedNucleotideSequences]',
+    };
+
+    test('shows linkOut with onlyForReferences when no referenceSelection is provided', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={[filteredLinkOut, unfilteredLinkOut]}
+                dataUseTermsEnabled={false}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        expect(screen.getByText('FilteredTool')).toBeInTheDocument();
+        expect(screen.getByText('UnfilteredTool')).toBeInTheDocument();
+    });
+
+    test('shows linkOut with onlyForReferences when the selected reference matches', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={[filteredLinkOut, unfilteredLinkOut]}
+                dataUseTermsEnabled={false}
+                referenceSelection={{ referenceIdentifierField: 'reference', selectedReferences: { S: 'ref1' } }}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        expect(screen.getByText('FilteredTool')).toBeInTheDocument();
+        expect(screen.getByText('UnfilteredTool')).toBeInTheDocument();
+    });
+
+    test('hides linkOut with onlyForReferences when the selected reference does not match', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={[filteredLinkOut, unfilteredLinkOut]}
+                dataUseTermsEnabled={false}
+                referenceSelection={{ referenceIdentifierField: 'reference', selectedReferences: { S: 'ref2' } }}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        expect(screen.queryByText('FilteredTool')).not.toBeInTheDocument();
+        expect(screen.getByText('UnfilteredTool')).toBeInTheDocument();
+    });
+
+    test('shows linkOut with onlyForReferences when the segment reference is null (no selection)', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={[filteredLinkOut, unfilteredLinkOut]}
+                dataUseTermsEnabled={false}
+                referenceSelection={{ referenceIdentifierField: 'reference', selectedReferences: { S: null } }}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        expect(screen.getByText('FilteredTool')).toBeInTheDocument();
+        expect(screen.getByText('UnfilteredTool')).toBeInTheDocument();
+    });
+});
+
+describe('LinkOutMenu grouping with onlyForReferences in multi-segmented organisms', () => {
+    const multiSegmentInfo = {
+        nucleotideSegmentInfos: [
+            { name: 'L', lapisName: 'L' },
+            { name: 'S', lapisName: 'S' },
+        ],
+        geneInfos: [],
+        multiSegmented: true as const,
+    };
+
+    const multiSegmentLinkOuts: LinkOut[] = [
+        {
+            name: 'GlobalTool',
+            url: 'http://example.com/tool?data=[unalignedNucleotideSequences]',
+        },
+        {
+            name: 'SegmentLTool',
+            url: 'http://example.com/tool?data=[unalignedNucleotideSequences:L]',
+            onlyForReferences: { L: 'ref1' },
+        },
+        {
+            name: 'SegmentSTool',
+            url: 'http://example.com/tool?data=[unalignedNucleotideSequences:S]',
+            onlyForReferences: { S: 'ref2' },
+        },
+    ];
+
+    test('places segment-specific linkOuts into per-segment sections and global tools at the top', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={multiSegmentLinkOuts}
+                dataUseTermsEnabled={false}
+                segmentAndGeneInfo={multiSegmentInfo}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+
+        expect(screen.getByText('GlobalTool')).toBeInTheDocument();
+        expect(screen.getByText('L')).toBeInTheDocument();
+        expect(screen.getByText('SegmentLTool')).toBeInTheDocument();
+        expect(screen.getByText('S')).toBeInTheDocument();
+        expect(screen.getByText('SegmentSTool')).toBeInTheDocument();
+    });
+
+    test('hides a segment-specific linkOut when its reference does not match the selection', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={multiSegmentLinkOuts}
+                dataUseTermsEnabled={false}
+                segmentAndGeneInfo={multiSegmentInfo}
+                referenceSelection={{
+                    referenceIdentifierField: 'reference',
+                    selectedReferences: { L: 'other', S: null },
+                }}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+
+        expect(screen.getByText('GlobalTool')).toBeInTheDocument();
+        expect(screen.queryByText('SegmentLTool')).not.toBeInTheDocument();
+        expect(screen.getByText('SegmentSTool')).toBeInTheDocument();
     });
 });
