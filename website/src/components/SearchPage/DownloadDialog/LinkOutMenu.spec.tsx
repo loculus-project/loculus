@@ -373,5 +373,4 @@ describe('LinkOutMenu grouping with category field', () => {
         expect(screen.queryByText('L')).not.toBeInTheDocument();
         expect(screen.getByText('S')).toBeInTheDocument();
     });
-
 });
