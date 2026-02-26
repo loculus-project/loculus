@@ -313,7 +313,7 @@ open class SubmissionController(
             description = "(Optional) Only retrieve all released data if Etag has changed.",
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
         @Parameter(
-            description = "(Optional) Only retrieve data released after this " +
+            description = "(Optional) Only retrieve data released strictly after this " +
                 "ISO-8601 timestamp (e.g. 2024-01-15T10:30:00).",
         ) @RequestParam(required = false) releasedSince: String?,
     ): ResponseEntity<StreamingResponseBody> {

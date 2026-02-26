@@ -152,7 +152,7 @@ class DownloadManager:
             config: Importer configuration
             paths: Importer paths
             last_etag: ETag from previous download for conditional request
-            released_since: Optional ISO-8601 timestamp to only fetch data released after
+            released_since: Optional ISO-8601 timestamp to only fetch data released strictly after
 
         Returns:
             DownloadResult with paths and metadata
