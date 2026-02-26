@@ -34,6 +34,7 @@ class ImporterRunner:
         self.last_hard_refresh: float = 0
         self.last_successful_import_time: str | None = None
         self.has_existing_silo_db: bool = False
+        self._last_lineage_pipeline_version: int | None = None
 
     def _clear_download_directories(self) -> None:
         """Clear all timestamped download directories on startup."""
@@ -56,6 +57,17 @@ class ImporterRunner:
         """Return the current UTC time as an ISO-8601 string."""
         return datetime.now(tz=UTC).strftime("%Y-%m-%dT%H:%M:%S")
 
+    def _update_lineage_if_needed(self, pipeline_version: int | None) -> None:
+        """Download lineage definitions only when the pipeline version has changed."""
+        if pipeline_version == self._last_lineage_pipeline_version:
+            logger.info(
+                "Pipeline version %s unchanged; skipping lineage definition download",
+                pipeline_version,
+            )
+            return
+        update_lineage_definitions(pipeline_version, self.config, self.paths)
+        self._last_lineage_pipeline_version = pipeline_version
+
     def run_once(self) -> None:
         prune_timestamped_directories(self.paths.output_dir)
 
@@ -75,6 +87,7 @@ class ImporterRunner:
         hard_refresh = time.time() - self.last_hard_refresh >= self.config.hard_refresh_interval
 
         if hard_refresh:
+            self._last_lineage_pipeline_version = None
             logger.info(
                 f"Hard refresh triggered: "
                 f"time_since_last={time.time() - self.last_hard_refresh:.1f}s, "
@@ -104,7 +117,7 @@ class ImporterRunner:
             return
 
         try:
-            update_lineage_definitions(download.pipeline_version, self.config, self.paths)
+            self._update_lineage_if_needed(download.pipeline_version)
         except Exception:
             logger.exception("Failed to download lineage definitions; cleaning up input")
             safe_remove(self.paths.silo_input_data_path)
@@ -161,6 +174,15 @@ class ImporterRunner:
             safe_remove(download.directory)
             self.current_etag = download.etag
             return
+
+        try:
+            self._update_lineage_if_needed(download.pipeline_version)
+        except Exception:
+            logger.exception(
+                "Failed to download lineage definitions during incremental append; cleaning up"
+            )
+            safe_remove(download.directory)
+            raise
 
         try:
             self.silo.run_append(
