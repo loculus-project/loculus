@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import logging
+import re
 import shutil
 import time
-from datetime import UTC, datetime
 
 from .config import ImporterConfig
 from .constants import SPECIAL_ETAG_NONE
@@ -53,9 +53,17 @@ class ImporterRunner:
             return True
         return time.time() - self.last_hard_refresh >= self.config.hard_refresh_interval
 
-    def _current_timestamp_iso(self) -> str:
-        """Return the current UTC time as an ISO-8601 string."""
-        return datetime.now(tz=UTC).strftime("%Y-%m-%dT%H:%M:%S")
+    @staticmethod
+    def _parse_etag_timestamp(etag: str) -> str:
+        """Extract the ISO-8601 timestamp from a backend ETag.
+
+        The backend ETag format is ``"<timestamp>"`` (with double quotes),
+        where ``<timestamp>`` is a UTC ISO-8601 string such as
+        ``2024-01-15T10:30:00.123456``.  This method strips the surrounding
+        quotes and weak-validator prefix (W/) so the value can be passed
+        directly as a ``releasedSince`` parameter.
+        """
+        return re.sub(r'^(?:W/)?"(.*)"$', r"\1", etag)
 
     def _update_lineage_if_needed(
         self, pipeline_version: int | None, hard_refresh: bool = False
@@ -144,7 +152,7 @@ class ImporterRunner:
         # Mark success and update state
         self.current_etag = download.etag
         self.has_existing_silo_db = True
-        self.last_successful_import_time = self._current_timestamp_iso()
+        self.last_successful_import_time = self._parse_etag_timestamp(download.etag)
 
         if hard_refresh:
             self.last_hard_refresh = time.time()
@@ -202,7 +210,7 @@ class ImporterRunner:
 
         # Mark success and update state
         self.current_etag = download.etag
-        self.last_successful_import_time = self._current_timestamp_iso()
+        self.last_successful_import_time = self._parse_etag_timestamp(download.etag)
 
         logger.info(
             "Incremental append complete (%d records); waiting %s seconds",

@@ -18,7 +18,9 @@ def test_config_from_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setenv("BACKEND_BASE_URL", backend_url)
     monkeypatch.setenv("LINEAGE_DEFINITIONS", lineage_json)
     monkeypatch.setenv("HARD_REFRESH_INTERVAL", str(HARD_REFRESH_INTERVAL))
-    monkeypatch.setenv("LOCULUS_SILO_IMPORT_POLL_INTERVAL_SECONDS", str(LOCULUS_SILO_IMPORT_POLL_INTERVAL_SECONDS))
+    monkeypatch.setenv(
+        "LOCULUS_SILO_IMPORT_POLL_INTERVAL_SECONDS", str(LOCULUS_SILO_IMPORT_POLL_INTERVAL_SECONDS)
+    )
     monkeypatch.setenv("LOCULUS_SILO_RUN_TIMEOUT_SECONDS", str(LOCULUS_SILO_RUN_TIMEOUT_SECONDS))
     monkeypatch.setenv("ROOT_DIR", str(tmp_path))
 
