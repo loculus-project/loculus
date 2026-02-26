@@ -57,9 +57,14 @@ class ImporterRunner:
         """Return the current UTC time as an ISO-8601 string."""
         return datetime.now(tz=UTC).strftime("%Y-%m-%dT%H:%M:%S")
 
-    def _update_lineage_if_needed(self, pipeline_version: int | None) -> None:
-        """Download lineage definitions only when the pipeline version has changed."""
-        if pipeline_version == self._last_lineage_pipeline_version:
+    def _update_lineage_if_needed(
+        self, pipeline_version: int | None, hard_refresh: bool = False
+    ) -> None:
+        """
+        Download lineage definitions only when the pipeline
+        version has changed or hard refresh is requested.
+        """
+        if pipeline_version == self._last_lineage_pipeline_version and not hard_refresh:
             logger.info(
                 "Pipeline version %s unchanged; skipping lineage definition download",
                 pipeline_version,
@@ -117,7 +122,7 @@ class ImporterRunner:
             return
 
         try:
-            self._update_lineage_if_needed(download.pipeline_version)
+            self._update_lineage_if_needed(download.pipeline_version, hard_refresh)
         except Exception:
             logger.exception("Failed to download lineage definitions; cleaning up input")
             safe_remove(self.paths.silo_input_data_path)
