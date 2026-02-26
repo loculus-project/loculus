@@ -263,7 +263,7 @@ class ProcessingFunctions:
         """
         date = input_data["date"]
 
-        if not date:
+        if not date or not isinstance(date, str):
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -323,7 +323,7 @@ class ProcessingFunctions:
 
         release_date_str = input_data.get("releaseDate", "") or ""
         try:
-            release_date = dateutil.parse(release_date_str).replace(tzinfo=pytz.utc)
+            release_date = dateutil.parse(release_date_str).replace(tzinfo=pytz.utc)  # type: ignore
         except Exception:
             release_date = None
 
@@ -349,7 +349,7 @@ class ProcessingFunctions:
 
         max_upper_limit = min(submitted_at, release_date) if release_date else submitted_at
 
-        if not input_date_str:
+        if not input_date_str or not isinstance(input_date_str, str):
             return ProcessingResult(
                 datum=max_upper_limit.strftime("%Y-%m-%d")
                 if args["fieldType"] == "dateRangeUpper"
@@ -499,7 +499,7 @@ class ProcessingFunctions:
         logger.debug(f"input_data: {input_data}")
         date_str = input_data["date"]
 
-        if not date_str:
+        if not date_str or not isinstance(date_str, str):
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -507,7 +507,7 @@ class ProcessingFunctions:
             )
         release_date_str = input_data.get("release_date", "") or ""
         try:
-            release_date = dateutil.parse(release_date_str)
+            release_date = dateutil.parse(release_date_str)  # type: ignore
         except Exception:
             release_date = None
         logger.debug(f"release_date: {release_date}")
@@ -597,7 +597,7 @@ class ProcessingFunctions:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
 
-        if not timestamp:
+        if not timestamp or not isinstance(timestamp, str):
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -806,7 +806,7 @@ class ProcessingFunctions:
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
 
-        if not authors:
+        if not authors or not isinstance(authors, str):
             return ProcessingResult(
                 datum=None,
                 warnings=warnings,
@@ -899,7 +899,7 @@ class ProcessingFunctions:
         capture_group = args.get("capture_group")
         uppercase = args.get("uppercase", False)
 
-        if not regex_field:
+        if not regex_field or not isinstance(regex_field, str):
             return ProcessingResult(datum=None, warnings=warnings, errors=errors)
         if not isinstance(pattern, str):
             errors.append(
@@ -973,7 +973,7 @@ class ProcessingFunctions:
 
         pattern = args["pattern"]
 
-        if not regex_field:
+        if not regex_field or not isinstance(regex_field, str):
             return ProcessingResult(datum=None, warnings=warnings, errors=errors)
         if not isinstance(pattern, str):
             errors.append(
@@ -1020,7 +1020,7 @@ class ProcessingFunctions:
                 ],
             )
         input_datum = input_data["input"]
-        if not input_datum:
+        if not input_datum or not isinstance(input_datum, (str, int, float)):
             return ProcessingResult(datum=None, warnings=[], errors=[])
 
         errors: list[ProcessingAnnotation] = []
@@ -1092,7 +1092,7 @@ class ProcessingFunctions:
                 ],
             )
         input_datum = input_data["input"]
-        if not input_datum:
+        if not input_datum or not isinstance(input_datum, str):
             return ProcessingResult(datum=None, warnings=[], errors=[])
 
         output_datum: ProcessedMetadataValue
@@ -1154,7 +1154,7 @@ class ProcessingFunctions:
                 ],
             )
         input_datum = input_data["input"]
-        if not input_datum:
+        if not input_datum or not isinstance(input_datum, (int, float, str)):
             return ProcessingResult(datum=None, warnings=[], errors=[])
         try:
             threshold = float(args["threshold"])  # type: ignore
@@ -1173,6 +1173,96 @@ class ProcessingFunctions:
                 ],
             )
         return ProcessingResult(datum=(input > threshold), warnings=[], errors=[])
+
+    @staticmethod
+    def assign_custom_lineage(
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    ) -> ProcessingResult:
+        """Assign flu lineage based on seg4 and seg6"""
+        input_datum = input_data["input"]
+        if not input_datum:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+        if not isinstance(input_datum, dict):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(f"Field {output_field} expected input of type dict."),
+                    )
+                ],
+            )
+        try:
+            subtypes = {}
+            infos: set[str] = set()
+            for segment in input_datum:
+                segment_name = input_datum[segment]
+                if segment not in {"seg4", "seg6"}:
+                    info = ProcessingFunctions.call_function(
+                        "extract_regex",
+                        {
+                            "pattern": r"^(?P<info>[^_\-]+)$",
+                            "uppercase": False,
+                            "capture_group": "info",
+                        },
+                        {"regex_field": segment_name},
+                        "output_field",
+                        ["segment_name"],
+                    )
+                else:
+                    subtype = ProcessingFunctions.call_function(
+                        "extract_regex",
+                        {
+                            "pattern": r"^(?P<subtype>[^_\-]+)_(?P<info>[^_\-]+)$",
+                            "uppercase": True,
+                            "capture_group": "subtype",
+                        },
+                        {"regex_field": segment_name},
+                        "output_field",
+                        ["segment_name"],
+                    )
+                    info = ProcessingFunctions.call_function(
+                        "extract_regex",
+                        {
+                            "pattern": r"^(?P<subtype>[^_\-]+)_(?P<info>[^_\-]+)$",
+                            "uppercase": False,
+                            "capture_group": "info",
+                        },
+                        {"regex_field": segment_name},
+                        "output_field",
+                        ["segment_name"],
+                    )
+                    if subtype.datum:
+                        subtypes[segment] = subtype.datum
+                if info.datum:
+                    infos.add(info.datum)
+            if not subtypes:
+                return ProcessingResult(datum=None, warnings=[], errors=[])
+            lineage = f"{subtypes.get('seg4', 'H*')}{subtypes.get('seg6', 'N*')}"
+            if lineage in {"H1N1", "H3N2", "H2N2"}:
+                if len(infos) > 1:
+                    lineage += " reassortant"
+                elif infos.pop() == "h1n1pdm":
+                    lineage += "pdm"
+            return ProcessingResult(datum=lineage, warnings=[], errors=[])
+        except (ValueError, TypeError):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"Internal error processing custom lineage for field {output_field}."
+                        ),
+                    )
+                ],
+            )
 
 
 def single_metadata_annotation(
