@@ -48,7 +48,6 @@ class SiloRunner:
                 capture_output=True,
                 text=True,
                 timeout=timeout_seconds,
-                env={},
                 check=False,
             )
             if result.returncode != 0:
