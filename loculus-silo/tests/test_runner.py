@@ -333,10 +333,15 @@ def test_runner_redownloads_lineage_when_pipeline_version_changes(
     mock_download, responses_list = make_mock_download_func(responses)
 
     download_calls: list[str] = []
+
+    def mock_download_lineage(url: str, path: Path) -> None:
+        download_calls.append(url)
+        path.write_text("lineage: data")
+
     monkeypatch.setattr(
         lineage,
         "_download_lineage_file",
-        lambda url, path: (download_calls.append(url), path.write_text("lineage: data")),
+        mock_download_lineage,
     )
 
     runner = ImporterRunner(config, paths)

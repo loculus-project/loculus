@@ -182,7 +182,9 @@ class ImporterRunner:
         try:
             self._update_lineage_if_needed(download.pipeline_version)
         except Exception:
-            logger.exception("Failed to download lineage definitions during incremental append; cleaning up")
+            logger.exception(
+                "Failed to download lineage definitions during incremental append; cleaning up"
+            )
             safe_remove(download.directory)
             raise
 
