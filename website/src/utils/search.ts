@@ -162,12 +162,14 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 displayName: 'To',
             });
         } else if (field.rangeSearch === true) {
+            const baseDisplayName = field.displayName ?? sentenceCase(field.name);
+            const groupDisplayName = field.percentage === true ? `${baseDisplayName} (%)` : baseDisplayName;
             const fromField = {
                 ...field,
                 name: `${field.name}From`,
                 displayName: 'From',
                 fieldGroup: field.name,
-                fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                fieldGroupDisplayName: groupDisplayName,
                 header: field.header,
             };
             const toField = {
@@ -175,7 +177,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 name: `${field.name}To`,
                 displayName: 'To',
                 fieldGroup: field.name,
-                fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                fieldGroupDisplayName: groupDisplayName,
                 header: field.header,
             };
             result.push(fromField);
@@ -261,6 +263,13 @@ export class MetadataFilterSchema {
         return (
             this.ungroupedMetadataFilters().find((metadataFilter) => metadataFilter.name === fieldName)
                 ?.substringSearch === true
+        );
+    }
+
+    public isPercentage(fieldName: string): boolean {
+        return (
+            this.ungroupedMetadataFilters().find((metadataFilter) => metadataFilter.name === fieldName)?.percentage ===
+            true
         );
     }
 
