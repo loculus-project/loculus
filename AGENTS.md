@@ -3,7 +3,7 @@ The `backend`, `website`, and `integration-tests` directories each contain their
 Use conventional commits as titles for PRs, e.g. feat(deployment):xx, fix!(website):xx, chore(backend):xx.
 Components include: website, backend, deployment, preprocessing, ingest, deposition.
 
-Write detailed PR summaries, not just short bullet points.
+Write detailed PR summaries, not just short bullet points. When creating PRs, you should generally create them as a draft PR.
 
 ## Preventing flaky Playwright tests (website)
 
