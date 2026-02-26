@@ -323,7 +323,7 @@ class ProcessingFunctions:
 
         release_date_str = input_data.get("releaseDate", "") or ""
         try:
-            release_date = dateutil.parse(release_date_str).replace(tzinfo=pytz.utc) # type: ignore
+            release_date = dateutil.parse(release_date_str).replace(tzinfo=pytz.utc)  # type: ignore
         except Exception:
             release_date = None
 
@@ -507,7 +507,7 @@ class ProcessingFunctions:
             )
         release_date_str = input_data.get("release_date", "") or ""
         try:
-            release_date = dateutil.parse(release_date_str) # type: ignore
+            release_date = dateutil.parse(release_date_str)  # type: ignore
         except Exception:
             release_date = None
         logger.debug(f"release_date: {release_date}")
@@ -1257,7 +1257,9 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=(f"Internal error processing custom lineage for field {output_field}."),
+                        message=(
+                            f"Internal error processing custom lineage for field {output_field}."
+                        ),
                     )
                 ],
             )
