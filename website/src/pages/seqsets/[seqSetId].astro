@@ -1,4 +1,29 @@
 ---
-const { seqSetId: _seqSetId = '' } = Astro.params;
-return Astro.redirect(`/seqsets/${_seqSetId}.1`);
+import { getRuntimeConfig, seqSetsAreEnabled } from '../../config';
+import { getInstanceLogger } from '../../logger';
+import { seqSets } from '../../types/seqSetCitation';
+
+const logger = getInstanceLogger('seqSetRedirect');
+
+if (!seqSetsAreEnabled()) {
+    return Astro.rewrite('/404');
+}
+
+const { seqSetId = '' } = Astro.params;
+const backendUrl = getRuntimeConfig().serverSide.backendUrl;
+
+try {
+    const response = await fetch(`${backendUrl}/get-seqset?seqSetId=${encodeURIComponent(seqSetId)}`);
+    if (response.ok) {
+        const versions = seqSets.parse(await response.json());
+        if (versions.length > 0) {
+            const latestVersion = Math.max(...versions.map((s) => s.seqSetVersion));
+            return Astro.redirect(`/seqsets/${seqSetId}.${latestVersion}`);
+        }
+    }
+} catch (error) {
+    logger.error(`Failed to fetch versions for seqset ${seqSetId}: ${error}`);
+}
+
+return Astro.rewrite('/404');
 ---
