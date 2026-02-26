@@ -190,11 +190,8 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, se
                     typeof value === 'string' &&
                     (() => {
                         const mutations = parseMutations(value);
-                        return mutations.length === 0 ? (
-                            <span className='italic'>N/A</span>
-                        ) : (
-                            <SubstitutionsContainer values={mutations} />
-                        );
+                        if (mutations.length === 0) return null;
+                        return <SubstitutionsContainer values={mutations} />;
                     })()}
                 {customDisplay?.type === 'link' && customDisplay.url !== undefined && (
                     <a
