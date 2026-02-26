@@ -101,8 +101,6 @@ class ImporterRunner:
             return
         except (DecompressionFailedError, RecordCountMismatchError) as skip:
             logger.warning("Skipping run: %s", skip)
-            if skip.new_etag is not None:
-                self.current_etag = skip.new_etag
             return
 
         try:
@@ -156,8 +154,6 @@ class ImporterRunner:
             return
         except (DecompressionFailedError, RecordCountMismatchError) as skip:
             logger.warning("Skipping incremental append: %s", skip)
-            if skip.new_etag is not None:
-                self.current_etag = skip.new_etag
             return
 
         if download.record_count == 0:
