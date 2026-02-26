@@ -1321,7 +1321,7 @@ def format_stop_codon(result: str | None) -> str | None:
 
 
 def _format_aa_substitution(mutation: dict) -> str:
-    return f"{mutation.get('cdsName')}:{mutation.get('refAa')}{int(mutation.get('pos')) + 1}{mutation.get('qryAa')}"  # type: ignore[arg-type]
+    return f"{mutation['cdsName']}:{mutation['refAa']}{int(mutation['pos']) + 1}{mutation['qryAa']}"
 
 
 def process_mutations_from_clade_founder(input: str | None, args: FunctionArgs | None) -> InputData:
