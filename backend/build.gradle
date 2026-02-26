@@ -55,7 +55,7 @@ dependencies {
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.7.1-0.6.x-compat"
     implementation "org.hibernate.validator:hibernate-validator"
-    implementation "org.keycloak:keycloak-admin-client:26.0.7"
+    implementation "org.keycloak:keycloak-admin-client:26.0.8"
     implementation("io.minio:minio:8.6.0")
     implementation("software.amazon.awssdk:s3:2.42.2")
 
