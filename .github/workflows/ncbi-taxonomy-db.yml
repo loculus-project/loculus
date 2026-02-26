@@ -12,12 +12,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+
+      - name: Set versioned filenames
+        run: |
+          VERSIONED_NAME="ncbi_taxonomy_$(date +'%Y-%m-%d').sqlite"
+          ZIPPED_NAME="${VERSIONED_NAME}.gz"
+
+          echo "DB_VERSIONED=${VERSIONED_NAME}" >> $GITHUB_ENV
+          echo "DB_ZIPPED=${ZIPPED_NAME}" >> $GITHUB_ENV
+          echo "DB_LATEST=ncbi_taxonomy_latest.sqlite.gz" >> $GITHUB_ENV
+
       - uses: mamba-org/setup-micromamba@v2
         with:
-          environment-name: db-build
-          create-args: >
-            -c conda-forge python=3.14.3 pandas s3cmd
+          environment-file: ./ncbi_tax_download/environment.yaml
           cache-environment: true
+          create-args: >
+            s3cmd
 
       - name: Install NCBI taxonomy package
         shell: bash -l {0}
@@ -27,8 +37,8 @@ jobs:
       - name: Create taxonomy DB
         shell: bash -l {0}
         run: |
-          taxonomy-download --output_db ncbi_taxonomy.sqlite
-          ls -lh ncbi_taxonomy.sqlite
+          taxonomy-download --output_db "${DB_VERSIONED}"
+          ls -lh "${DB_VERSIONED}"
 
       - name: Create S3cmd config
         run: |
@@ -44,10 +54,11 @@ jobs:
       - name: Compress and upload taxonomy DB
         shell: bash -l {0}
         run: |
-          gzip -9 ncbi_taxonomy.sqlite
-          s3cmd put --multipart-chunk-size-mb=100 \
-            ncbi_taxonomy.sqlite.gz \
-            s3://loculus-public/taxonomy/ncbi_taxonomy.sqlite.gz
+          gzip -9 "${DB_VERSIONED}"
+          s3cmd put "${DB_ZIPPED}" s3://loculus-public/taxonomy/"${DB_ZIPPED}"
+
+          s3cmd cp s3://loculus-public/taxonomy/"${DB_ZIPPED}" \
+            s3://loculus-public/taxonomy/"${DB_LATEST}"
 
   notify_on_failure:
     needs: build-and-upload
