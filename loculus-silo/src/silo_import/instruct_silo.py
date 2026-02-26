@@ -40,9 +40,9 @@ class SiloRunner:
                 [
                     str(self._silo_binary),
                     "append",
-                    "--appendFile",
+                    "--append-file",
                     str(append_file),
-                    "--siloDirectory",
+                    "--silo-directory",
                     str(silo_directory),
                 ],
                 capture_output=True,
