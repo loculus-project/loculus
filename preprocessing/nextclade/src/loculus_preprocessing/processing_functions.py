@@ -1149,7 +1149,10 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=(f"Field {output_field} is missing threshold argument."),
+                        message=(
+                            f"Field {output_field} is missing threshold argument."
+                            " Please report this error to the administrator."
+                        ),
                     )
                 ],
             )

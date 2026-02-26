@@ -16,7 +16,7 @@ FunctionName = str  # Name of function present in processing_functions
 ArgName = str  # Name of argument present in processing_functions
 ArgValue = (
     list[str] | str | bool | int | float | None
-)  # Name of argument value present in processing_functions
+)  # Value of an argument passed to processing_functions
 InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
 ProcessedMetadataValue = str | int | float | bool | None
 ProcessedMetadata = dict[str, ProcessedMetadataValue]
