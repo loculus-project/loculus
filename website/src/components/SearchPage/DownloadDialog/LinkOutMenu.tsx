@@ -8,7 +8,7 @@ import type { LinkOut } from '../../../types/config';
 import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
 import type { ReferenceSelection } from '../../../utils/referenceSelection';
-import { getSegmentAndGeneInfo, getSegmentLapisNames } from '../../../utils/sequenceTypeHelpers';
+import { getSegmentLapisNames } from '../../../utils/sequenceTypeHelpers';
 import { processTemplate, matchPlaceholders } from '../../../utils/templateProcessor';
 import { Button } from '../../common/Button';
 import BasicModal from '../../common/Modal';
@@ -42,11 +42,6 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
     const currentLinkOut = useRef<LinkOut | null>(null);
 
     const selectedReferences = referenceSelection?.selectedReferences;
-    const segmentAndGeneInfo = useMemo(
-        () => getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferences),
-        [referenceGenomesInfo, selectedReferences],
-    );
-
     const segmentLapisNames = useMemo(
         () => getSegmentLapisNames(referenceGenomesInfo, selectedReferences),
         [referenceGenomesInfo, selectedReferences],
@@ -167,28 +162,26 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
         setDataUseTermsModalVisible(false);
     };
 
-    // When multi-segmented, group filtered linkOuts: global tools first, then per-segment sections.
-    // A linkOut is "segment-specific" when onlyForReferences targets exactly one segment.
-    const isMultiSegmented = segmentAndGeneInfo.multiSegmented === true;
+    // Group filtered linkOuts by their optional `category` field.
+    // LinkOuts without a category appear at the top; those with a category are grouped under labelled sections.
     const groupedLinkOuts = useMemo(() => {
-        if (!isMultiSegmented) return null;
+        const hasAnyCategory = filteredLinkOuts.some((lo) => lo.category);
+        if (!hasAnyCategory) return null;
 
-        const globalItems: LinkOut[] = [];
-        const segmentMap = new Map<string, LinkOut[]>();
+        const uncategorizedItems: LinkOut[] = [];
+        const categoryMap = new Map<string, LinkOut[]>();
 
         for (const lo of filteredLinkOuts) {
-            const segments = lo.onlyForReferences ? Object.keys(lo.onlyForReferences) : [];
-            if (segments.length === 1) {
-                const seg = segments[0];
-                if (!segmentMap.has(seg)) segmentMap.set(seg, []);
-                segmentMap.get(seg)!.push(lo);
+            if (lo.category) {
+                if (!categoryMap.has(lo.category)) categoryMap.set(lo.category, []);
+                categoryMap.get(lo.category)!.push(lo);
             } else {
-                globalItems.push(lo);
+                uncategorizedItems.push(lo);
             }
         }
 
-        return { globalItems, segmentMap };
-    }, [isMultiSegmented, filteredLinkOuts]);
+        return { uncategorizedItems, categoryMap };
+    }, [filteredLinkOuts]);
 
     const renderLinkOutButton = (linkOut: LinkOut) => (
         <MenuItem key={linkOut.name}>
@@ -226,11 +219,11 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                         </div>
                         {groupedLinkOuts !== null ? (
                             <>
-                                {groupedLinkOuts.globalItems.map(renderLinkOutButton)}
-                                {Array.from(groupedLinkOuts.segmentMap.entries()).map(([segment, items]) => (
-                                    <div key={segment}>
+                                {groupedLinkOuts.uncategorizedItems.map(renderLinkOutButton)}
+                                {Array.from(groupedLinkOuts.categoryMap.entries()).map(([category, items]) => (
+                                    <div key={category}>
                                         <div className='px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider'>
-                                            {segment}
+                                            {category}
                                         </div>
                                         {items.map(renderLinkOutButton)}
                                     </div>

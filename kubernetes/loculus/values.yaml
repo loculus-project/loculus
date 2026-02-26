@@ -1918,22 +1918,27 @@ defaultOrganisms:
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/L"
           onlyForReferences:
             L: singleReference
+          category: "L"
         - name: "Nextclade (M MH396653)"
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=cchfv/M-MH396653&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
           onlyForReferences:
             M: MH396653
+          category: "M"
         - name: "Nextclade (M OR047158)"
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=cchfv/M-OR047158&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
           onlyForReferences:
             M: OR047158
+          category: "M"
         - name: "Nextclade (S 1and6)"
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=cchfv/S-1and6&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
           onlyForReferences:
             S: 1and6
+          category: "S"
         - name: "Nextclade (S 2to5)"
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=cchfv/S-2to5&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
           onlyForReferences:
             S: 2to5
+          category: "S"
       metadataAdd:
         - name: hostNameScientific
           generateIndex: true

@@ -305,8 +305,8 @@ describe('LinkOutMenu filtering with onlyForReferences', () => {
     });
 });
 
-describe('LinkOutMenu grouping with onlyForReferences in multi-segmented organisms', () => {
-    const multiSegmentLinkOuts: LinkOut[] = [
+describe('LinkOutMenu grouping with category field', () => {
+    const categorizedLinkOuts: LinkOut[] = [
         {
             name: 'GlobalTool',
             url: 'http://example.com/tool?data=[unalignedNucleotideSequences]',
@@ -316,22 +316,24 @@ describe('LinkOutMenu grouping with onlyForReferences in multi-segmented organis
             url: 'http://example.com/tool?data=[unalignedNucleotideSequences:L]',
             // eslint-disable-next-line @typescript-eslint/naming-convention
             onlyForReferences: { L: 'ref1' },
+            category: 'L',
         },
         {
             name: 'SegmentSTool',
             url: 'http://example.com/tool?data=[unalignedNucleotideSequences:S]',
             // eslint-disable-next-line @typescript-eslint/naming-convention
             onlyForReferences: { S: 'ref2' },
+            category: 'S',
         },
     ];
 
-    test('places segment-specific linkOuts into per-segment sections and global tools at the top', () => {
+    test('places categorized linkOuts into labelled sections and uncategorized tools at the top', () => {
         render(
             <LinkOutMenu
                 downloadUrlGenerator={realDownloadUrlGenerator}
                 sequenceFilter={mockSequenceFilter}
                 sequenceCount={1}
-                linkOuts={multiSegmentLinkOuts}
+                linkOuts={categorizedLinkOuts}
                 dataUseTermsEnabled={false}
                 referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
             />,
@@ -346,13 +348,13 @@ describe('LinkOutMenu grouping with onlyForReferences in multi-segmented organis
         expect(screen.getByText('SegmentSTool')).toBeInTheDocument();
     });
 
-    test('hides a segment-specific linkOut when its reference does not match the selection', () => {
+    test('hides a categorized linkOut when its reference does not match, removing empty category headers', () => {
         render(
             <LinkOutMenu
                 downloadUrlGenerator={realDownloadUrlGenerator}
                 sequenceFilter={mockSequenceFilter}
                 sequenceCount={1}
-                linkOuts={multiSegmentLinkOuts}
+                linkOuts={categorizedLinkOuts}
                 dataUseTermsEnabled={false}
                 referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceSelection={{
@@ -370,5 +372,28 @@ describe('LinkOutMenu grouping with onlyForReferences in multi-segmented organis
         expect(screen.getByText('SegmentSTool')).toBeInTheDocument();
         expect(screen.queryByText('L')).not.toBeInTheDocument();
         expect(screen.getByText('S')).toBeInTheDocument();
+    });
+
+    test('uses flat list when no linkOuts have a category', () => {
+        const noCategoryLinkOuts: LinkOut[] = [
+            { name: 'Tool1', url: 'http://example.com/tool1?data=[unalignedNucleotideSequences]' },
+            { name: 'Tool2', url: 'http://example.com/tool2?data=[unalignedNucleotideSequences]' },
+        ];
+
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={noCategoryLinkOuts}
+                dataUseTermsEnabled={false}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+
+        expect(screen.getByText('Tool1')).toBeInTheDocument();
+        expect(screen.getByText('Tool2')).toBeInTheDocument();
     });
 });

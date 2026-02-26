@@ -143,6 +143,13 @@ export const linkOut = z.object({
      * for each specified segment.
      */
     onlyForReferences: z.record(z.string(), z.string()).optional(),
+    /**
+     * Optional grouping category for the tool dropdown. LinkOuts with the same category are
+     * grouped under a labelled section. LinkOuts without a category appear at the top without
+     * a header. Can be set to segment names (e.g. "L", "M", "S") or any label
+     * (e.g. "Geographic visualisation", "Sequence analysis").
+     */
+    category: z.string().optional(),
 });
 
 export type LinkOut = z.infer<typeof linkOut>;
