@@ -198,7 +198,7 @@ Example of using the `parse_date_into_range` below. The same function is called 
 
 ### Nextclade results
 
-Metadata fields that are created from the results of the nextclade analysis require the input field to be prefaced with `nextclade.` and should include to the metadata field name and structure in the nextclade results.json. For example:
+Metadata fields that are created from the results of the nextclade analysis require the input field to be prefaced with `nextclade.` and should include the metadata field name and structure in the nextclade results.json. For example:
 
 ```yaml
 - name: totalSnps
