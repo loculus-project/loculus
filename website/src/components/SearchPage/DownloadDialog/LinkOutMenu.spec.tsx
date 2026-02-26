@@ -5,6 +5,10 @@ import { DownloadUrlGenerator } from './DownloadUrlGenerator';
 import { LinkOutMenu } from './LinkOutMenu';
 import { FieldFilterSet } from './SequenceFilters';
 import type { LinkOut } from '../../../types/config';
+import {
+    MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
+    SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+} from '../../../types/referenceGenomes.spec';
 
 const originalWindowOpen = window.open;
 beforeEach(() => {
@@ -54,6 +58,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -74,6 +79,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -100,6 +106,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -126,6 +133,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={[{ name: 'Basic', url: 'http://example.com/tool?data=[unalignedNucleotideSequences]' }]}
                 dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -148,6 +156,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={[{ name: 'MetadataFields', url: 'http://example.com/tool?data=[metadata+fieldA,fieldB]' }]}
                 dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -174,6 +183,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={[{ name: 'MetadataSingle', url: 'http://example.com/tool?data=[metadata+fieldA]' }]}
                 dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -197,6 +207,7 @@ describe('LinkOutMenu with disabled data use terms', () => {
                 sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={false}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -227,6 +238,7 @@ describe('LinkOutMenu filtering with onlyForReferences', () => {
                 sequenceCount={1}
                 linkOuts={[filteredLinkOut, unfilteredLinkOut]}
                 dataUseTermsEnabled={false}
+                referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -245,6 +257,7 @@ describe('LinkOutMenu filtering with onlyForReferences', () => {
                 dataUseTermsEnabled={false}
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 referenceSelection={{ referenceIdentifierField: 'reference', selectedReferences: { S: 'ref1' } }}
+                referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -263,6 +276,7 @@ describe('LinkOutMenu filtering with onlyForReferences', () => {
                 dataUseTermsEnabled={false}
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 referenceSelection={{ referenceIdentifierField: 'reference', selectedReferences: { S: 'ref2' } }}
+                referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -281,6 +295,7 @@ describe('LinkOutMenu filtering with onlyForReferences', () => {
                 dataUseTermsEnabled={false}
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 referenceSelection={{ referenceIdentifierField: 'reference', selectedReferences: { S: null } }}
+                referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -291,15 +306,6 @@ describe('LinkOutMenu filtering with onlyForReferences', () => {
 });
 
 describe('LinkOutMenu grouping with onlyForReferences in multi-segmented organisms', () => {
-    const multiSegmentInfo = {
-        nucleotideSegmentInfos: [
-            { name: 'L', lapisName: 'L' },
-            { name: 'S', lapisName: 'S' },
-        ],
-        geneInfos: [],
-        multiSegmented: true as const,
-    };
-
     const multiSegmentLinkOuts: LinkOut[] = [
         {
             name: 'GlobalTool',
@@ -327,7 +333,7 @@ describe('LinkOutMenu grouping with onlyForReferences in multi-segmented organis
                 sequenceCount={1}
                 linkOuts={multiSegmentLinkOuts}
                 dataUseTermsEnabled={false}
-                segmentAndGeneInfo={multiSegmentInfo}
+                referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
             />,
         );
 
@@ -348,7 +354,7 @@ describe('LinkOutMenu grouping with onlyForReferences in multi-segmented organis
                 sequenceCount={1}
                 linkOuts={multiSegmentLinkOuts}
                 dataUseTermsEnabled={false}
-                segmentAndGeneInfo={multiSegmentInfo}
+                referenceGenomesInfo={MULTI_SEG_MULTI_REF_REFERENCEGENOMES}
                 referenceSelection={{
                     referenceIdentifierField: 'reference',
                     // eslint-disable-next-line @typescript-eslint/naming-convention

@@ -4,9 +4,10 @@ import { type MutableRefObject, type FC, useState, useRef, useMemo } from 'react
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator';
 import { type SequenceFilter } from './SequenceFilters';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes';
+import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
 import type { ReferenceSelection } from '../../../utils/referenceSelection';
-import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers';
+import { getSegmentAndGeneInfo, getSegmentLapisNames } from '../../../utils/sequenceTypeHelpers';
 import { processTemplate, matchPlaceholders } from '../../../utils/templateProcessor';
 import { Button } from '../../common/Button';
 import BasicModal from '../../common/Modal';
@@ -29,8 +30,8 @@ type LinkOutMenuProps = {
     sequenceCount?: number;
     linkOuts: LinkOut[];
     dataUseTermsEnabled: boolean;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     referenceSelection?: ReferenceSelection;
-    segmentAndGeneInfo?: SegmentAndGeneInfo;
 };
 
 export const LinkOutMenu: FC<LinkOutMenuProps> = ({
@@ -39,23 +40,23 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
     sequenceCount,
     linkOuts,
     dataUseTermsEnabled,
+    referenceGenomesInfo,
     referenceSelection,
-    segmentAndGeneInfo,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isDataUseTermsModalVisible, setDataUseTermsModalVisible] = useState(false);
     const currentLinkOut = useRef<LinkOut | null>(null);
 
     const selectedReferences = referenceSelection?.selectedReferences;
-
-    // Map from segment display name → lapisName based on the currently selected references.
-    // This lets URL templates use plain segment names (e.g. "M") and have them automatically
-    // resolved to the correct lapisName (e.g. "M-MH396653") for the current selection.
-    const segmentNameToLapisName = useMemo(
-        () => new Map(segmentAndGeneInfo?.nucleotideSegmentInfos.map((s) => [s.name, s.lapisName]) ?? []),
-        [segmentAndGeneInfo],
+    const segmentAndGeneInfo = useMemo(
+        () => getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferences),
+        [referenceGenomesInfo, selectedReferences],
     );
 
+    const segmentLapisNames = useMemo(
+        () => getSegmentLapisNames(referenceGenomesInfo, selectedReferences),
+        [referenceGenomesInfo, selectedReferences],
+    );
     const filteredLinkOuts = useMemo(
         () =>
             linkOuts.filter((linkOut) => {
@@ -63,6 +64,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                 if (!selectedReferences) return true;
                 return Object.entries(linkOut.onlyForReferences).every(
                     ([segment, refName]) =>
+                        // Do not filter out linkOuts that are only for specific references when no reference is selected.
                         selectedReferences[segment] === null || selectedReferences[segment] === refName,
                 );
             }),
@@ -102,25 +104,39 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                 continue;
             }
 
-            // Resolve segment display name to lapisName if possible (e.g. "M" → "M-MH396653").
-            // Falls back to the original value if no resolution is available (e.g. no reference
-            // selected yet, or the value is already a lapisName).
-            const resolvedSegment =
-                segment !== undefined ? (segmentNameToLapisName.get(segment) ?? segment) : undefined;
+            let dataTypeOption: DownloadOption['dataType'];
+
+            switch (dataType) {
+                case 'metadata':
+                    dataTypeOption = {
+                        type: 'metadata',
+                        fields: columns ?? [],
+                    };
+                    break;
+
+                case 'unalignedNucleotideSequences':
+                    dataTypeOption = {
+                        type: 'unalignedNucleotideSequences',
+                        segmentLapisNames: segment ? segmentLapisNames.find((sln) => sln.name === segment) : undefined,
+                        richFastaHeaders: { include: richHeaders === true },
+                    };
+                    break;
+
+                case 'alignedNucleotideSequences':
+                    dataTypeOption = {
+                        type: 'alignedNucleotideSequences',
+                        segment: segment,
+                        richFastaHeaders: { include: richHeaders === true },
+                    };
+                    break;
+
+                default:
+                    throw new Error(`Unsupported dataType: ${dataType}`);
+            }
 
             const downloadOption: DownloadOption = {
                 includeRestricted: includeRestricted,
-                dataType:
-                    dataType === 'metadata'
-                        ? {
-                              type: 'metadata',
-                              fields: columns ?? [],
-                          }
-                        : {
-                              type: dataType as 'unalignedNucleotideSequences' | 'alignedNucleotideSequences',
-                              segment: resolvedSegment,
-                              richFastaHeaders: { include: richHeaders === true },
-                          },
+                dataType: dataTypeOption,
                 compression: undefined,
                 dataFormat: dataFormat,
             };
@@ -159,7 +175,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
 
     // When multi-segmented, group filtered linkOuts: global tools first, then per-segment sections.
     // A linkOut is "segment-specific" when onlyForReferences targets exactly one segment.
-    const isMultiSegmented = segmentAndGeneInfo?.multiSegmented === true;
+    const isMultiSegmented = segmentAndGeneInfo.multiSegmented === true;
     const groupedLinkOuts = useMemo(() => {
         if (!isMultiSegmented) return null;
 
