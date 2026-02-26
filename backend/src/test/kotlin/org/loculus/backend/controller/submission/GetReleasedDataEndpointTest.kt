@@ -485,14 +485,10 @@ class GetReleasedDataEndpointTest(
     fun `GIVEN released data WHEN releasedSince is not provided THEN returns all data`() {
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
 
-        val responseWithout = submissionControllerClient.getReleasedData()
-            .expectNdjsonAndGetContent<ReleasedData>()
-
-        val responseWith = submissionControllerClient.getReleasedData(
-            releasedSince = "2000-01-01T00:00:00",
-        ).expectNdjsonAndGetContent<ReleasedData>()
-
-        assertThat(responseWithout.size, `is`(responseWith.size))
+        val response = submissionControllerClient.getReleasedData()
+        val responseBody = response.expectNdjsonAndGetContent<ReleasedData>()
+        assertThat(responseBody.size, `is`(NUMBER_OF_SEQUENCES))
+        response.andExpect(header().string("x-total-records", NUMBER_OF_SEQUENCES.toString()))
     }
 
     @Test
