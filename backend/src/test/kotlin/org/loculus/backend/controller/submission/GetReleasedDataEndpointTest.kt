@@ -467,8 +467,9 @@ class GetReleasedDataEndpointTest(
     fun `GIVEN released data WHEN releasedSince is in the future THEN returns empty response`() {
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
 
+        val today = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
         val futureTimestamp = LocalDateTime(
-            date = LocalDate(2099, 1, 1),
+            date = today.plus(50, DateTimeUnit.YEAR),
             time = LocalTime(0, 0, 0),
         ).toString()
 
@@ -505,8 +506,9 @@ class GetReleasedDataEndpointTest(
     fun `GIVEN released data WHEN releasedSince filters strictly THEN x-total-records header matches body`() {
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
 
+        val today = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
         val futureTimestamp = LocalDateTime(
-            date = LocalDate(2099, 1, 1),
+            date = today.plus(50, DateTimeUnit.YEAR),
             time = LocalTime(0, 0, 0),
         ).toString()
 
