@@ -1135,6 +1135,48 @@ class ProcessingFunctions:
             )
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
 
+    @staticmethod
+    def is_above_threshold(
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    ) -> ProcessingResult:
+        """Flag if input value is above a threshold specified in args"""
+        if "threshold" not in args:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"Field {output_field} is missing threshold argument."
+                            " Please report this error to the administrator."
+                        ),
+                    )
+                ],
+            )
+        input_datum = input_data["input"]
+        if not input_datum:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+        try:
+            threshold = float(args["threshold"])  # type: ignore
+            input = float(input_datum)
+        except (ValueError, TypeError):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(f"Field {output_field} has non-numeric threshold value."),
+                    )
+                ],
+            )
+        return ProcessingResult(datum=(input > threshold), warnings=[], errors=[])
+
 
 def single_metadata_annotation(
     source_name: str,
@@ -1276,6 +1318,75 @@ def format_stop_codon(result: str | None) -> str | None:
         stop_codon_string = f"{stop_codon['cdsName']}:{stop_codon['codon'] + 1}"
         stop_codon_strings.append(stop_codon_string)
     return ",".join(stop_codon_strings)
+
+
+def _format_aa_substitution(mutation: dict) -> str:
+    return f"{mutation['cdsName']}:{mutation['refAa']}{int(mutation['pos']) + 1}{mutation['qryAa']}"
+
+
+def process_mutations_from_clade_founder(input: str | None, args: FunctionArgs | None) -> InputData:
+    """Processes substitutions from clade founder InputData for processing"""
+    if input is None:
+        return InputData(datum=None)
+    try:
+        data = ast.literal_eval(input)
+        mutations = []
+        for value in data.values():
+            if not value.get("privateSubstitutions"):
+                continue
+            for mutation in value["privateSubstitutions"]:
+                substitution = _format_aa_substitution(mutation)
+                mutations.append(substitution)
+        if mutations:
+            return InputData(datum=" ".join(mutations))
+    except Exception as e:
+        msg = (
+            "Was unable to process mutations from clade founder - this is likely an internal error. "
+            "Please contact the administrator."
+        )
+        logger.error(msg + f" Error: {e}")
+        return InputData(
+            datum=None,
+            errors=single_metadata_annotation(
+                "mutationsFromCladeFounder",
+                msg,
+            ),
+        )
+    return InputData(datum=None)
+
+
+def process_labeled_mutations(input: str | None, args: FunctionArgs | None) -> InputData:
+    """Processes labeledMutations from privateMutations list for processing"""
+    if input is None:
+        return InputData(datum=None)
+    try:
+        data = ast.literal_eval(input)
+        mutations = []
+        for value in data.values():
+            if not value.get("labeledSubstitutions"):
+                continue
+            for labeled_mutation in value["labeledSubstitutions"]:
+                if not labeled_mutation.get("substitution"):
+                    continue
+                mutation = labeled_mutation["substitution"]
+                substitution = _format_aa_substitution(mutation)
+                mutations.append(substitution)
+        if mutations:
+            return InputData(datum=" ".join(mutations))
+    except Exception as e:
+        msg = (
+            "Was unable to process labeled mutations - this is likely an internal error. "
+            "Please contact the administrator."
+        )
+        logger.error(msg + f" Error: {e}")
+        return InputData(
+            datum=None,
+            errors=single_metadata_annotation(
+                "labeledMutations",
+                msg,
+            ),
+        )
+    return InputData(datum=None)
 
 
 def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> InputData:

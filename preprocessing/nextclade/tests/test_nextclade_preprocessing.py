@@ -31,6 +31,8 @@ from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
     format_stop_codon,
+    process_labeled_mutations,
+    process_mutations_from_clade_founder,
     process_phenotype_values,
 )
 
@@ -48,6 +50,8 @@ MULTI_EBOLA_DATASET = "tests/ebola-multipath-dataset"
 CCHF_DATASET = "tests/cchfv"
 
 SINGLE_SEGMENT_EMBL = "tests/flatfiles/single_segment.embl"
+MUTATIONS_FROM_FOUNDER_CLADE = "tests/mutationsFromFounderClade.json"
+LABELED_PRIVATE_MUTATIONS = "tests/labeledPrivateMutations.json"
 
 
 def consensus_sequence(
@@ -172,6 +176,7 @@ single_segment_case_definitions = [
             "totalDeletedNucs": 0,
             "length": len(consensus_sequence("single")),
             "nonExistentField": "None",
+            "variant": True,
         },
         expected_errors=[],
         expected_warnings=[],
@@ -199,6 +204,7 @@ single_segment_case_definitions = [
             "totalDeletedNucs": 0,
             "length": len(sequence_with_insertion("single")),
             "nonExistentField": "None",
+            "variant": False,
         },
         expected_errors=[],
         expected_warnings=[],
@@ -226,6 +232,7 @@ single_segment_case_definitions = [
             "totalDeletedNucs": 3,
             "length": len(consensus_sequence("single")) - 3,
             "nonExistentField": "None",
+            "variant": False,
         },
         expected_errors=[],
         expected_warnings=[],
@@ -260,6 +267,7 @@ single_segment_failed_case_definitions = [
             "totalDeletedNucs": None,
             "length": len(invalid_sequence()),
             "nonExistentField": None,
+            "variant": None,
         },
         expected_errors=build_processing_annotations(
             [
@@ -295,6 +303,7 @@ single_segment_failed_with_require_sort_case_definitions = [
             "totalSnps": None,
             "totalDeletedNucs": None,
             "length": len(invalid_sequence()),
+            "variant": None,
         },
         expected_errors=build_processing_annotations(
             [
@@ -334,6 +343,7 @@ single_segment_failed_with_require_sort_case_definitions = [
             "totalSnps": None,
             "totalDeletedNucs": None,
             "length": len(consensus_sequence("ebola-zaire")),
+            "variant": None,
         },
         expected_errors=build_processing_annotations(
             [
@@ -1279,6 +1289,19 @@ def test_reformat_authors_from_loculus_to_embl_style():
     result_extended = reformat_authors_from_loculus_to_embl_style(extended_latin_authors)
     desired_result_extended = "Perez J., Bailley F., Moller A., Walesa L."
     assert result_extended == desired_result_extended
+
+
+def test_process_clade_founder_values():
+    json_string = Path(MUTATIONS_FROM_FOUNDER_CLADE).read_text(encoding="utf-8")
+    assert (
+        process_mutations_from_clade_founder(json_string, {}).datum
+        == "HA1:N63K HA1:F79V HA1:S144N HA1:N158D HA1:I160K HA1:T328A"
+    )
+
+
+def test_process_labeled_mutations():
+    json_string = Path(LABELED_PRIVATE_MUTATIONS).read_text(encoding="utf-8")
+    assert process_labeled_mutations(json_string, {}).datum == "NA:H275Y"
 
 
 def test_create_flatfile():

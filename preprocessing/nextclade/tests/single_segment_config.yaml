@@ -48,3 +48,10 @@ processing_spec:
     function: identity
     inputs:
       input: length
+  variant:
+    function: is_above_threshold
+    args:
+      threshold: 0
+      type: bool
+    inputs:
+      input: "nextclade.totalSubstitutions"
