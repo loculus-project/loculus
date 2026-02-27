@@ -27,7 +27,7 @@ pub fn discover_organisms(ref_dir: &str) -> Result<Vec<String>, Box<dyn std::err
     Ok(orgs)
 }
 
-fn create_duckdb_tables(conn: &duckdb::Connection) -> Result<(), duckdb::Error> {
+pub fn create_duckdb_tables(conn: &duckdb::Connection) -> Result<(), duckdb::Error> {
     conn.execute_batch("
         CREATE TABLE IF NOT EXISTS metadata (
             accession_version TEXT PRIMARY KEY,
@@ -152,6 +152,25 @@ fn process_record(
     }
 
     Ok(())
+}
+
+/// Try to open existing DuckDB file with data; fall back to empty in-memory DB.
+/// Returns (connection, has_data).
+pub fn open_or_create_duckdb(db_path: &str) -> (duckdb::Connection, bool) {
+    if std::path::Path::new(db_path).exists() {
+        if let Ok(conn) = duckdb::Connection::open(db_path) {
+            if let Ok(count) = conn.prepare("SELECT COUNT(*) FROM metadata")
+                .and_then(|mut s| s.query_row([], |row| row.get::<_, i64>(0)))
+            {
+                if count > 0 {
+                    return (conn, true);
+                }
+            }
+        }
+    }
+    let conn = duckdb::Connection::open_in_memory().unwrap();
+    create_duckdb_tables(&conn).unwrap();
+    (conn, false)
 }
 
 /// ETL: Stream NDJSON from backend API, compute mutations, write to DuckDB.

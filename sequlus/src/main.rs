@@ -54,7 +54,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Loading organisms: {:?}", organisms);
 
+    // Pre-populate organism stores instantly — reuse existing DuckDB files or create empty in-memory DBs.
+    // This lets the server start immediately; background ETL fills in missing data.
     let mut organism_stores = std::collections::HashMap::new();
+    let mut needs_etl = Vec::new();
 
     for organism in &organisms {
         let ref_path = Path::new(&config.reference_genomes_dir).join(format!("{}.json", organism));
@@ -66,31 +69,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
 
-        info!("Running ETL for {}...", organism);
-        match loader::etl_organism(&config.backend_url, organism, &reference, &config.data_dir).await {
-            Ok(conn) => {
-                let count: i64 = conn.prepare("SELECT COUNT(*) FROM metadata").and_then(|mut s| s.query_row([], |row| row.get(0))).unwrap_or(0);
-                info!("Loaded {} with {} sequences into DuckDB", organism, count);
+        let db_path = format!("{}/{}.duckdb", config.data_dir, organism);
+        let (conn, has_data) = loader::open_or_create_duckdb(&db_path);
 
-                let data_version: String = sqlx::query_scalar(
-                    "SELECT COALESCE(MAX(started_using_at)::text, 'unknown') FROM current_processing_pipeline WHERE organism = $1"
-                )
-                .bind(organism)
-                .fetch_one(&pg_pool)
-                .await
-                .unwrap_or_else(|_| "unknown".to_string());
+        let data_version = if has_data {
+            let count: i64 = conn.prepare("SELECT COUNT(*) FROM metadata")
+                .and_then(|mut s| s.query_row([], |row| row.get(0))).unwrap_or(0);
+            info!("Loaded {} with {} sequences from existing DuckDB", organism, count);
 
-                organism_stores.insert(organism.clone(), OrganismStore {
-                    duckdb: Mutex::new(conn),
-                    reference,
-                    data_version: Mutex::new(data_version),
-                    organism_name: organism.clone(),
-                });
-            }
-            Err(e) => {
-                error!("Failed ETL for {}: {}", organism, e);
-            }
-        }
+            sqlx::query_scalar(
+                "SELECT COALESCE(MAX(started_using_at)::text, 'unknown') FROM current_processing_pipeline WHERE organism = $1"
+            )
+            .bind(organism)
+            .fetch_one(&pg_pool)
+            .await
+            .unwrap_or_else(|_| "unknown".to_string())
+        } else {
+            info!("No data for {} — will ETL in background", organism);
+            needs_etl.push(organism.clone());
+            "loading".to_string()
+        };
+
+        organism_stores.insert(organism.clone(), OrganismStore {
+            duckdb: Mutex::new(conn),
+            reference,
+            data_version: Mutex::new(data_version),
+            organism_name: organism.clone(),
+        });
     }
 
     let lineage_definitions = lineage::load_lineage_definitions(&pg_pool, &organisms).await;
@@ -100,6 +105,65 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         pg_pool: pg_pool.clone(),
         lineage_definitions,
     });
+
+    // Spawn background initial ETL for organisms without existing data
+    if !needs_etl.is_empty() {
+        let etl_state = shared_state.clone();
+        let backend_url = config.backend_url.clone();
+        let data_dir = config.data_dir.clone();
+        let ref_genomes_dir = config.reference_genomes_dir.clone();
+
+        tokio::spawn(async move {
+            for organism in &needs_etl {
+                let org_store = match etl_state.organisms.get(organism) {
+                    Some(s) => s,
+                    None => continue,
+                };
+
+                info!("Background ETL starting for {}...", organism);
+                let ref_path = Path::new(&ref_genomes_dir).join(format!("{}.json", organism));
+                let reference = match loader::load_reference_genomes(&ref_path) {
+                    Ok(r) => r,
+                    Err(e) => { error!("Background ETL: failed to load reference for {}: {}", organism, e); continue; }
+                };
+
+                // ETL result contains !Send types (duckdb::Connection, Box<dyn Error>).
+                // Fully consume it before any subsequent .await.
+                let etl_ok = match loader::etl_organism(&backend_url, organism, &reference, &data_dir).await {
+                    Ok(new_conn) => {
+                        let count: i64 = new_conn.prepare("SELECT COUNT(*) FROM metadata")
+                            .and_then(|mut s| s.query_row([], |row| row.get(0))).unwrap_or(0);
+                        {
+                            let mut duckdb = org_store.duckdb.lock().unwrap();
+                            *duckdb = new_conn;
+                        }
+                        info!("Background ETL: loaded {} with {} sequences", organism, count);
+                        true
+                    }
+                    Err(e) => {
+                        error!("Background ETL failed for {}: {}", organism, e);
+                        false
+                    }
+                };
+
+                if etl_ok {
+                    let dv: String = sqlx::query_scalar(
+                        "SELECT COALESCE(MAX(started_using_at)::text, 'unknown') FROM current_processing_pipeline WHERE organism = $1"
+                    )
+                    .bind(organism)
+                    .fetch_one(&etl_state.pg_pool)
+                    .await
+                    .unwrap_or_else(|_| "unknown".to_string());
+
+                    {
+                        let mut version = org_store.data_version.lock().unwrap();
+                        *version = dv;
+                    }
+                }
+            }
+            info!("Background ETL complete for all organisms");
+        });
+    }
 
     // Spawn auto-refresh background task
     let refresh_state = shared_state.clone();
