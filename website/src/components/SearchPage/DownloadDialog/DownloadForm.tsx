@@ -8,8 +8,7 @@ import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from '.
 import { routes } from '../../../routes/routes.ts';
 import type { Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
-import { getReferenceIdentifier } from '../../../utils/referenceSelection.ts';
-import { MetadataFilterSchema, type MetadataVisibility } from '../../../utils/search.ts';
+import { type MetadataVisibility } from '../../../utils/search.ts';
 import {
     getSegmentAndGeneInfo,
     allReferencesSelected,
@@ -67,21 +66,17 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         [referenceGenomesInfo, selectedReferenceNames],
     );
 
-    const metadataSchema = schema.metadata;
-    const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
-
     const referenceSelected = useMemo(() => nucleotideSegmentInfos.length !== 0, [nucleotideSegmentInfos, geneInfos]);
-    const notSelectedIdentifiers = useMemo(
-        () =>
-            segmentsWithMultipleReferences(referenceGenomesInfo)
-                .filter((segment) => selectedReferenceNames?.[segment] === null)
-                .map((segment) =>
-                    getReferenceIdentifier(referenceIdentifierField!, segment, referenceGenomesInfo.isMultiSegmented),
-                )
-                .map((identifier) => filterSchema.filterNameToLabelMap()[identifier])
-                .join(', ') || '',
-        [referenceGenomesInfo, selectedReferenceNames, referenceIdentifierField, filterSchema],
-    );
+    const notSelectedSegmentsText = useMemo(() => {
+        const names = segmentsWithMultipleReferences(referenceGenomesInfo)
+            .filter((segment) => selectedReferenceNames?.[segment] === null)
+            .map((segment) => referenceGenomesInfo.segmentDisplayNames[segment] ?? segment);
+
+        if (names.length === 0) return '';
+        if (names.length <= 2) return names.join(', ');
+
+        return `${names[0]}, ..., ${names[names.length - 1]}`;
+    }, [referenceGenomesInfo, selectedReferenceNames]);
 
     function getDataTypeOptions(): OptionBlockOption[] {
         const metadataOption = {
@@ -253,15 +248,16 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 />
                 {!referenceSelected && referenceIdentifierField !== undefined && (
                     <div className='text-sm text-gray-400 mt-4 max-w-60'>
-                        Select {notSelectedIdentifiers} with the search UI to enable download of aligned sequences.
+                        Select a {referenceIdentifierField} for the segments {notSelectedSegmentsText} with the search
+                        UI to enable download of aligned sequences.
                     </div>
                 )}
                 {referenceSelected &&
                     !allReferencesSelected(referenceGenomesInfo, selectedReferenceNames) &&
                     referenceIdentifierField !== undefined && (
                         <div className='text-sm text-gray-400 mt-4 max-w-60'>
-                            Select {notSelectedIdentifiers} with the search UI to enable download of more aligned
-                            sequences.
+                            Select a {referenceIdentifierField} for the segments {notSelectedSegmentsText} with the
+                            search UI to enable download of more aligned sequences.
                         </div>
                     )}
             </div>
