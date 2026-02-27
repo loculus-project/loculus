@@ -378,9 +378,21 @@ describe('DownloadDialog', () => {
                 referenceIdentifierField: 'genotype',
             });
 
-            expect(screen.getByText('select genotype display name', { exact: false })).toBeVisible();
+            expect(screen.getByText('Select a genotype for the segment: main with the search UI to enable download of aligned sequences.', { exact: false })).toBeVisible();
             expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
             expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
+        });
+
+        test('should partially disable the aligned sequence downloads when no reference is selected', async () => {
+            await renderDialog({
+                referenceGenomesInfo: MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceIdentifierField: 'genotype',
+                selectedReferenceNames: { L: null, S: 'singleReference' },
+            });
+
+            expect(screen.getByText('Select a genotype for the segment: L (segment) with the search UI to enable download of more aligned sequences.', { exact: false })).toBeVisible();
+            expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).toBeInTheDocument();
+            expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).toBeInTheDocument();
         });
 
         test('should download all raw segments when no reference is selected', async () => {
