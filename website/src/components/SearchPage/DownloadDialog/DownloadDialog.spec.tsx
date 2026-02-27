@@ -378,7 +378,12 @@ describe('DownloadDialog', () => {
                 referenceIdentifierField: 'genotype',
             });
 
-            expect(screen.getByText('Select a genotype for the segment: main with the search UI to enable download of aligned sequences.', { exact: false })).toBeVisible();
+            expect(
+                screen.getByText(
+                    'Select a genotype for the segment: main with the search UI to enable download of aligned sequences.',
+                    { exact: false },
+                ),
+            ).toBeVisible();
             expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
             expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
         });
@@ -391,7 +396,12 @@ describe('DownloadDialog', () => {
                 selectedReferenceNames: { L: null, S: 'singleReference' },
             });
 
-            expect(screen.getByText('Select a genotype for the segment: L (segment) with the search UI to enable download of more aligned sequences.', { exact: false })).toBeVisible();
+            expect(
+                screen.getByText(
+                    'Select a genotype for the segment: L (segment) with the search UI to enable download of more aligned sequences.',
+                    { exact: false },
+                ),
+            ).toBeVisible();
             expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).toBeInTheDocument();
             expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).toBeInTheDocument();
         });
