@@ -1,4 +1,4 @@
-use axum::{Router, routing::{get, post}};
+use axum::{Router, Json, routing::{get, post}};
 use tower_http::cors::CorsLayer;
 
 use crate::store::SharedStore;
@@ -6,6 +6,10 @@ use crate::endpoints::{details, aggregated, mutations, insertions, sequences, in
 
 async fn health() -> &'static str {
     "OK"
+}
+
+async fn lineage_definition() -> Json<serde_json::Value> {
+    Json(serde_json::json!({}))
 }
 
 pub fn create_router(state: SharedStore) -> Router {
@@ -22,6 +26,7 @@ pub fn create_router(state: SharedStore) -> Router {
         .route("/{organism}/sample/alignedNucleotideSequences", post(sequences::handle_aligned_nuc_sequences).get(sequences::handle_aligned_nuc_sequences))
         .route("/{organism}/sample/alignedNucleotideSequences/{segment}", post(sequences::handle_aligned_nuc_sequences_seg).get(sequences::handle_aligned_nuc_sequences_seg))
         .route("/{organism}/sample/alignedAminoAcidSequences/{gene}", post(sequences::handle_aligned_aa_sequences).get(sequences::handle_aligned_aa_sequences))
+        .route("/{organism}/sample/lineageDefinition/{column}", get(lineage_definition))
         .route("/{organism}/sample/info", get(info::handle_info))
         .layer(CorsLayer::permissive())
         .with_state(state)
