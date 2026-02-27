@@ -154,6 +154,11 @@
           "type": "number",
           "description": "Determines the order on the sequence details page."
         },
+        "orderInSearchDisplay": {
+          "groups": ["metadata"],
+          "type": "number",
+          "description": "Determines the order in the search bar. Lower numbers come first. Fallback value is `order` (if defined) or infinity (if not defined)."
+        },
         "hideInSearchResultsTable": {
           "groups": ["metadata"],
           "type": "boolean",
