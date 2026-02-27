@@ -157,7 +157,7 @@
         "orderInSearchDisplay": {
           "groups": ["metadata"],
           "type": "number",
-          "description": "Determines the order in the search bar. Lower numbers come first. Missing values are treated as infinity, and fields will be ordered in the same order as they are defined in the config after all fields with an order value."
+          "description": "Determines the order in the search bar. Lower numbers come first. Fallback value is `order` (if defined) or infinity (if not defined)."
         },
         "hideInSearchResultsTable": {
           "groups": ["metadata"],
