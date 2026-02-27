@@ -387,6 +387,7 @@ describe('DownloadDialog', () => {
             await renderDialog({
                 referenceGenomesInfo: MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
                 referenceIdentifierField: 'genotype',
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 selectedReferenceNames: { L: null, S: 'singleReference' },
             });
 
