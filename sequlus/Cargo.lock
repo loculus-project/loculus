@@ -1392,28 +1392,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sequlus"
-version = "0.2.0"
-dependencies = [
- "axum",
- "bitvec",
- "chrono",
- "clap",
- "duckdb",
- "futures",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "sqlx",
- "tokio",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2272,6 +2250,28 @@ name = "semver"
 version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d767eb0aabc880b29956c35734170f26ed551a859dbd361d140cdbeca61ab1e2"
+
+[[package]]
+name = "sequlus"
+version = "0.2.0"
+dependencies = [
+ "axum",
+ "bitvec",
+ "chrono",
+ "clap",
+ "duckdb",
+ "futures",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
 
 [[package]]
 name = "serde"

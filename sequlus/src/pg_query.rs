@@ -1,6 +1,19 @@
 use serde_json::Value;
 use crate::types::{LapisRequest, CONTROL_PARAMS};
 
+/// System fields that map to actual database columns rather than metadata JSON.
+const SYSTEM_FIELDS: &[&str] = &[
+    "groupId", "groupName", "isRevocation", "versionStatus",
+    "accessionVersion", "accession", "version", "submitter",
+    "submittedAtTimestamp", "releasedAtTimestamp", "versionComment",
+    "dataUseTerms", "dataUseTermsRestrictedUntil",
+];
+
+/// Check if a field is a system field (stored as a DB column, not in metadata JSON).
+fn is_system_field(key: &str) -> bool {
+    SYSTEM_FIELDS.contains(&key)
+}
+
 /// Build a Postgres WHERE clause from LAPIS request filters.
 /// Returns (where_clause_string, bind_values).
 pub fn build_metadata_filter(
@@ -17,8 +30,14 @@ pub fn build_metadata_filter(
     for (key, value) in &request.filters {
         if CONTROL_PARAMS.contains(&key.as_str()) { continue; }
 
+        // Handle system field filters
+        if handle_system_filter(key, value, &mut conditions, &mut bind_values) {
+            continue;
+        }
+
         if key.ends_with(".regex") {
             let field_name = &key[..key.len() - 6];
+            if is_system_field(field_name) { continue; } // Skip regex on system fields
             if let Some(pattern) = value.as_str() {
                 bind_values.push(pattern.to_string());
                 conditions.push(format!(
@@ -31,6 +50,20 @@ pub fn build_metadata_filter(
 
         if key.ends_with("From") {
             let field_name = &key[..key.len() - 4];
+            if is_system_field(field_name) {
+                // Handle range filters on system timestamp fields
+                if let Some(val) = value_to_string(value) {
+                    if field_name == "submittedAtTimestamp" || field_name == "releasedAtTimestamp" {
+                        let col = if field_name == "submittedAtTimestamp" { "se.submitted_at" } else { "se.released_at" };
+                        bind_values.push(val);
+                        conditions.push(format!(
+                            "{col} >= to_timestamp(${n}::double precision / 1000)",
+                            n = bind_values.len()
+                        ));
+                    }
+                }
+                continue;
+            }
             if let Some(val) = value_to_string(value) {
                 bind_values.push(val);
                 conditions.push(format!(
@@ -43,6 +76,19 @@ pub fn build_metadata_filter(
 
         if key.ends_with("To") {
             let field_name = &key[..key.len() - 2];
+            if is_system_field(field_name) {
+                if let Some(val) = value_to_string(value) {
+                    if field_name == "submittedAtTimestamp" || field_name == "releasedAtTimestamp" {
+                        let col = if field_name == "submittedAtTimestamp" { "se.submitted_at" } else { "se.released_at" };
+                        bind_values.push(val);
+                        conditions.push(format!(
+                            "{col} <= to_timestamp(${n}::double precision / 1000)",
+                            n = bind_values.len()
+                        ));
+                    }
+                }
+                continue;
+            }
             if let Some(val) = value_to_string(value) {
                 bind_values.push(val);
                 conditions.push(format!(
@@ -106,6 +152,110 @@ pub fn build_metadata_filter(
     (where_clause, bind_values)
 }
 
+/// Handle system field filters that map to database columns.
+/// Returns true if the key was handled.
+fn handle_system_filter(
+    key: &str,
+    value: &Value,
+    conditions: &mut Vec<String>,
+    bind_values: &mut Vec<String>,
+) -> bool {
+    match key {
+        "groupId" => {
+            if let Some(val) = value_to_string(value) {
+                bind_values.push(val);
+                conditions.push(format!("se.group_id = ${}::int", bind_values.len()));
+            }
+            true
+        }
+        "versionStatus" => {
+            if let Some(val) = value.as_str() {
+                match val {
+                    "LATEST_VERSION" => conditions.push(
+                        "se.version = (SELECT MAX(se2.version) FROM sequence_entries se2 \
+                         WHERE se2.accession = se.accession AND se2.released_at IS NOT NULL)".to_string()
+                    ),
+                    "REVISED" => conditions.push(
+                        "se.version < (SELECT MAX(se2.version) FROM sequence_entries se2 \
+                         WHERE se2.accession = se.accession AND se2.released_at IS NOT NULL) \
+                         AND NOT EXISTS (SELECT 1 FROM sequence_entries se3 \
+                         WHERE se3.accession = se.accession AND se3.version > se.version \
+                         AND se3.is_revocation = TRUE AND se3.released_at IS NOT NULL)".to_string()
+                    ),
+                    "REVOKED" => conditions.push(
+                        "EXISTS (SELECT 1 FROM sequence_entries se3 \
+                         WHERE se3.accession = se.accession AND se3.version > se.version \
+                         AND se3.is_revocation = TRUE AND se3.released_at IS NOT NULL)".to_string()
+                    ),
+                    _ => {}
+                }
+            }
+            true
+        }
+        "isRevocation" => {
+            if let Some(val) = value_to_string(value) {
+                let bool_val = val == "true";
+                conditions.push(format!("se.is_revocation = {}", bool_val));
+            }
+            true
+        }
+        "accessionVersion" => {
+            if let Some(val) = value_to_string(value) {
+                bind_values.push(val);
+                conditions.push(format!(
+                    "se.accession || '.' || se.version::text = ${}",
+                    bind_values.len()
+                ));
+            }
+            true
+        }
+        "accession" => {
+            if let Some(val) = value_to_string(value) {
+                bind_values.push(val);
+                conditions.push(format!("se.accession = ${}", bind_values.len()));
+            }
+            true
+        }
+        "version" => {
+            if let Some(val) = value_to_string(value) {
+                bind_values.push(val);
+                conditions.push(format!("se.version = ${}::bigint", bind_values.len()));
+            }
+            true
+        }
+        "submitter" => {
+            if let Some(val) = value_to_string(value) {
+                bind_values.push(val);
+                conditions.push(format!("se.submitter = ${}", bind_values.len()));
+            }
+            true
+        }
+        "groupName" => {
+            if let Some(val) = value_to_string(value) {
+                bind_values.push(val);
+                conditions.push(format!("gt.group_name = ${}", bind_values.len()));
+            }
+            true
+        }
+        "versionComment" => {
+            if let Some(val) = value_to_string(value) {
+                bind_values.push(val);
+                conditions.push(format!("se.version_comment = ${}", bind_values.len()));
+            }
+            true
+        }
+        "submittedAtTimestamp" | "releasedAtTimestamp" => {
+            // Exact match on timestamps (range handled separately via From/To suffixes)
+            true
+        }
+        "dataUseTerms" | "dataUseTermsRestrictedUntil" => {
+            // These require a JOIN to data_use_terms_table; skip for now
+            true
+        }
+        _ => false,
+    }
+}
+
 /// Build an additional SQL clause restricting by accession_version.
 /// Returns empty string if None.
 fn acc_version_clause(accession_versions: Option<&[String]>) -> String {
@@ -128,7 +278,34 @@ const BASE_JOIN: &str = "\
     LEFT JOIN sequence_entries_preprocessed_data sepd \
       ON se.accession = sepd.accession \
       AND se.version = sepd.version \
-      AND sepd.pipeline_version = cpp.version";
+      AND sepd.pipeline_version = cpp.version \
+    LEFT JOIN groups_table gt \
+      ON se.group_id = gt.group_id";
+
+/// SQL expression that builds the full metadata JSON including system fields.
+const METADATA_SELECT: &str = "\
+    jsonb_build_object(\
+        'accessionVersion', se.accession || '.' || se.version::text, \
+        'accession', se.accession, \
+        'version', se.version, \
+        'groupId', se.group_id, \
+        'groupName', gt.group_name, \
+        'submitter', se.submitter, \
+        'isRevocation', se.is_revocation, \
+        'submittedAtTimestamp', EXTRACT(EPOCH FROM se.submitted_at) * 1000, \
+        'releasedAtTimestamp', EXTRACT(EPOCH FROM se.released_at) * 1000, \
+        'versionComment', se.version_comment, \
+        'versionStatus', CASE \
+            WHEN se.version = (SELECT MAX(se2.version) FROM sequence_entries se2 \
+                WHERE se2.accession = se.accession AND se2.released_at IS NOT NULL) \
+            THEN 'LATEST_VERSION' \
+            WHEN EXISTS (SELECT 1 FROM sequence_entries se3 \
+                WHERE se3.accession = se.accession AND se3.version > se.version \
+                AND se3.is_revocation = TRUE AND se3.released_at IS NOT NULL) \
+            THEN 'REVOKED' \
+            ELSE 'REVISED' \
+        END\
+    ) || COALESCE(sepd.processed_data->'metadata', '{}'::jsonb)";
 
 /// Get accession versions matching metadata filters from Postgres.
 /// Optionally restrict to a pre-filtered set of accession_versions (from DuckDB).
@@ -163,7 +340,7 @@ pub async fn get_metadata_details(
 
     let sql = format!(
         "SELECT se.accession || '.' || se.version as accession_version, \
-                COALESCE(sepd.processed_data->'metadata', '{{}}'::jsonb)::text as metadata \
+                ({METADATA_SELECT})::text as metadata \
          {BASE_JOIN} WHERE {where_clause}{av_clause}"
     );
 
@@ -191,6 +368,33 @@ pub async fn get_filtered_count(
     query.fetch_one(pool).await
 }
 
+/// SQL expression for a system field value (for aggregation).
+fn system_field_select(field: &str) -> Option<String> {
+    match field {
+        "accessionVersion" => Some("se.accession || '.' || se.version::text".to_string()),
+        "accession" => Some("se.accession".to_string()),
+        "version" => Some("se.version::text".to_string()),
+        "groupId" => Some("se.group_id::text".to_string()),
+        "groupName" => Some("gt.group_name".to_string()),
+        "submitter" => Some("se.submitter".to_string()),
+        "isRevocation" => Some("se.is_revocation::text".to_string()),
+        "versionComment" => Some("se.version_comment".to_string()),
+        "versionStatus" => Some(
+            "CASE \
+                WHEN se.version = (SELECT MAX(se2.version) FROM sequence_entries se2 \
+                    WHERE se2.accession = se.accession AND se2.released_at IS NOT NULL) \
+                THEN 'LATEST_VERSION' \
+                WHEN EXISTS (SELECT 1 FROM sequence_entries se3 \
+                    WHERE se3.accession = se.accession AND se3.version > se.version \
+                    AND se3.is_revocation = TRUE AND se3.released_at IS NOT NULL) \
+                THEN 'REVOKED' \
+                ELSE 'REVISED' \
+            END".to_string()
+        ),
+        _ => None,
+    }
+}
+
 /// Get metadata JSON grouped by fields for the aggregated endpoint.
 pub async fn get_aggregated(
     pool: &sqlx::PgPool,
@@ -208,7 +412,11 @@ pub async fn get_aggregated(
     }
 
     let field_selects: Vec<String> = fields.iter().map(|f| {
-        format!("sepd.processed_data->'metadata'->>'{field}' as \"{field}\"", field = escape_field(f))
+        if let Some(expr) = system_field_select(f) {
+            format!("{expr} as \"{field}\"", field = escape_field(f))
+        } else {
+            format!("sepd.processed_data->'metadata'->>'{field}' as \"{field}\"", field = escape_field(f))
+        }
     }).collect();
 
     let group_by: Vec<String> = (1..=fields.len()).map(|i| i.to_string()).collect();
