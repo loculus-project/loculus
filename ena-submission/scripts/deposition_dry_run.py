@@ -152,7 +152,7 @@ def local_ena_submission_generator(
         logger.info(f"Writing results to {directory}")
 
         manifest_object = create_manifest_object(
-            config, biosample, bioproject, entry, dir=directory, test=config.test
+            config, biosample, bioproject, entry, dir=directory
         )
         create_manifest(manifest_object, is_broker=config.is_broker, dir=directory)
         logger.info(
