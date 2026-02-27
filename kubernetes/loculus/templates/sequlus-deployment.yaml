@@ -21,6 +21,9 @@ spec:
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
+        - name: wait-for-backend
+          image: busybox
+          command: ["sh", "-c", "until wget -q -O- http://loculus-backend-service:8079/actuator/health > /dev/null 2>&1; do echo 'Waiting for backend...'; sleep 5; done; echo 'Backend is ready'"]
         {{- range $_, $item := $enabledOrganismsList }}
         {{- $key := $item.key }}
         - name: copy-ref-genomes-{{ $key }}
