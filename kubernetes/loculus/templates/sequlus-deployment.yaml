@@ -41,14 +41,17 @@ spec:
           command: ["sh", "-c", "until wget -q -O- http://loculus-backend-service:8079/actuator/health > /dev/null 2>&1; do echo 'Waiting for backend...'; sleep 5; done; echo 'Backend is ready'"]
         {{- range $_, $item := $enabledOrganismsList }}
         {{- $key := $item.key }}
-        - name: copy-ref-genomes-{{ $key }}
-          image: busybox
-          command: ["sh", "-c", "cp /configmap/reference_genomes.json /reference_genomes/{{ $key }}.json"]
+        - name: process-ref-genomes-{{ $key }}
+          image: ghcr.io/loculus-project/config-processor:{{ include "loculus.dockerTag" $.Values }}
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
+          command: ["sh", "-c", "python3 /app/config-processor.py /input /output && cp /output/reference_genomes.json /reference_genomes/{{ $key }}.json"]
           volumeMounts:
+            - name: configmap-{{ $key }}
+              mountPath: /input
+            - name: configmap-{{ $key }}-processed
+              mountPath: /output
             - name: reference-genomes
               mountPath: /reference_genomes
-            - name: configmap-{{ $key }}
-              mountPath: /configmap
         {{- end }}
       containers:
         - name: sequlus
@@ -130,5 +133,7 @@ spec:
             items:
               - key: reference_genomes.json
                 path: reference_genomes.json
+        - name: configmap-{{ $key }}-processed
+          emptyDir: {}
         {{- end }}
 {{- end }}
