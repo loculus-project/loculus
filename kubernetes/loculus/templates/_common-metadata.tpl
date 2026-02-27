@@ -98,6 +98,7 @@ fields:
       type: dataUseTerms
     header: Data use terms
     orderOnDetailsPage: 610
+    orderInSearchDisplay: 10
   - name: dataUseTermsRestrictedUntil
     type: date
     displayName: Data use terms restricted until
