@@ -1,0 +1,27 @@
+# Mirror configuration with SHA256 digests for immutability
+# Format: source → destination with SHA digest
+
+images:
+  # Flyway images (Docker Hub)
+  - source: flyway/flyway:10-alpine
+    destination: ghcr.io/loculus-project/flyway:10-alpine
+    digest: "sha256:f736d2d71e8a120d3950a67c1b4cdf155cf3a6d8be149b4ec784f24dbf22f50f"
+  
+  - source: flyway/flyway:11.10.0-alpine-mongo
+    destination: ghcr.io/loculus-project/flyway:11.10.0-alpine-mongo
+    digest: "sha256:1398d6a9223ae0f2164d15282c029614d60df826c500f6b78d86498422837945"
+  
+  # MinIO (Quay.io)
+  - source: quay.io/minio/minio:latest
+    destination: ghcr.io/loculus-project/minio:latest
+    digest: "sha256:9966a92a734f9411e32f4f41d7d9d826fcdc0f68c4e20b70295bd4e7c11f8a2f"
+  
+  # Keycloak (Quay.io)
+  - source: quay.io/keycloak/keycloak:23.0
+    destination: ghcr.io/loculus-project/keycloak:23.0
+    digest: "sha256:461bdabba2bd2de667b19b0c1831754cb0f1c6c1d1c85cd35ccfa65335078962"
+  
+  # Busybox (K8s registry)
+  - source: registry.k8s.io/busybox:latest
+    destination: ghcr.io/loculus-project/busybox:latest
+    digest: "sha256:d8d3bc2c183ed2f9f10e7258f84971202325ee6011ba137112e01e30f206de67"

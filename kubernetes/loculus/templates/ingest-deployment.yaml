@@ -30,7 +30,7 @@ spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
         - name: version-check
-          image: busybox
+          image: ghcr.io/loculus-project/busybox@sha256:d8d3bc2c183ed2f9f10e7258f84971202325ee6011ba137112e01e30f206de67
           {{- include "loculus.resources" (list "ingest-init" $.Values) | nindent 10 }}
           command: ['sh', '-c', '
             CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");

@@ -19,7 +19,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15
+        image: ghcr.io/cloudnative-pg/postgresql@sha256:8e08e8d876545a0ce1cd5aa3c13923181f1d51d419cb618bc52832f4c89fda06
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: postgres
@@ -40,7 +40,7 @@ jobs:
         fetch-depth: 0
 
     - name: Run Flyway migrations
-      uses: docker://flyway/flyway:10-alpine
+      uses: docker://ghcr.io/loculus-project/flyway@sha256:f736d2d71e8a120d3950a67c1b4cdf155cf3a6d8be149b4ec784f24dbf22f50f
       env:
         FLYWAY_URL: jdbc:postgresql://postgres:5432/postgres
         FLYWAY_USER: postgres
@@ -49,7 +49,7 @@ jobs:
         args: -locations=filesystem:./backend/src/main/resources/db/migration/ migrate
 
     - name: Generate new schema
-      uses: docker://postgres:16
+      uses: docker://ghcr.io/cloudnative-pg/postgresql@sha256:8e08e8d876545a0ce1cd5aa3c13923181f1d51d419cb618bc52832f4c89fda06
       with:
         args: >
           bash -c "PGPASSWORD=postgres pg_dump 
