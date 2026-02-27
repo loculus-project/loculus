@@ -66,6 +66,8 @@ jobs:
           context: ./sequlus
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
-          cache-from: type=gha,scope=sequlus-${{ github.ref }}
+          cache-from: |
+            type=gha,scope=sequlus-${{ github.ref }}
+            type=gha,scope=sequlus-refs/heads/main
           cache-to: type=gha,mode=max,scope=sequlus-${{ github.ref }}
           platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}

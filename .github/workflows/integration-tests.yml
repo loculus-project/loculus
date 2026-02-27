@@ -81,13 +81,13 @@ jobs:
       - name: Wait for sequlus Docker image
         run: |
           echo "Waiting for ghcr.io/loculus-project/sequlus:commit-${{ env.sha }} to be available..."
-          for i in $(seq 1 60); do
+          for i in $(seq 1 120); do
             if docker pull ghcr.io/loculus-project/sequlus:commit-${{ env.sha }} > /dev/null 2>&1; then
               echo "Image available after $((i * 10)) seconds"
               break
             fi
-            if [ $i -eq 60 ]; then
-              echo "Timed out waiting for sequlus image"
+            if [ $i -eq 120 ]; then
+              echo "Timed out waiting for sequlus image after 20 minutes"
               exit 1
             fi
             sleep 10
