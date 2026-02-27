@@ -94,10 +94,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
 
     const headerGroups: { header: string; rows: FieldItem[]; meanOrder: number }[] = [];
     for (const [header, rows] of Object.entries(fieldsByHeader)) {
-        rows.sort(
-            (a, b) =>
-                (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY),
-        );
+        rows.sort((a, b) => (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY));
 
         const definedOrders = rows.map((r) => r.order).filter((o): o is number => o !== undefined);
         const meanOrder =
@@ -135,14 +132,13 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                     <div key={headerGroup.header} className='mb-6'>
                         <h3 className='font-medium text-lg mb-2 text-gray-700'>{headerGroup.header}</h3>
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2'>
-                            {headerGroup.rows
-                                .map((field) => (
-                                    <FieldSelectorModalField
-                                        key={field.name}
-                                        field={field}
-                                        handleToggleField={handleToggleField}
-                                    />
-                                ))}
+                            {headerGroup.rows.map((field) => (
+                                <FieldSelectorModalField
+                                    key={field.name}
+                                    field={field}
+                                    handleToggleField={handleToggleField}
+                                />
+                            ))}
                         </div>
                     </div>
                 ))}
