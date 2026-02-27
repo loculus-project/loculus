@@ -46,6 +46,8 @@ logging.basicConfig(
     type=click.Choice(["project", "sample", "assembly"]),
 )
 @click.option("--center-name", required=False, type=str, default="CENTER_NAME")
+@click.option("--bioproject", required=False, type=str, default="BIOPROJECT_ACCESSION")
+@click.option("--biosample", required=False, type=str, default="BIOSAMPLE_ACCESSION")
 @click.option(
     "--revision",
     required=False,
@@ -61,6 +63,8 @@ def local_ena_submission_generator(
     config_file,
     data_to_submit,
     center_name,
+    bioproject,
+    biosample,
     mode,
     revision,
     log_level,
@@ -148,7 +152,7 @@ def local_ena_submission_generator(
         logger.info(f"Writing results to {directory}")
 
         manifest_object = create_manifest_object(
-            config, "BIOSAMPLE_ACCESSION", "BIOPROJECT_ACCESSION", entry, dir=directory
+            config, biosample, bioproject, entry, dir=directory, test=config.test
         )
         create_manifest(manifest_object, is_broker=config.is_broker, dir=directory)
         logger.info(
