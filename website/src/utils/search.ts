@@ -182,6 +182,12 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
             };
             result.push(fromField);
             result.push(toField);
+        } else if (field.percentage === true) {
+            const baseDisplayName = field.displayName ?? sentenceCase(field.name);
+            result.push({
+                ...field,
+                displayName: `${baseDisplayName} (%)`,
+            });
         } else {
             result.push(field);
         }
