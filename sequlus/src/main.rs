@@ -1,6 +1,7 @@
 mod config;
 mod duckdb_query;
 mod endpoints;
+mod lineage;
 mod loader;
 mod mutations;
 mod pg_query;
@@ -92,9 +93,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    let lineage_definitions = lineage::load_lineage_definitions(&pg_pool, &organisms).await;
+
     let shared_state: SharedStore = Arc::new(DataStore {
         organisms: organism_stores,
         pg_pool: pg_pool.clone(),
+        lineage_definitions,
     });
 
     // Spawn auto-refresh background task

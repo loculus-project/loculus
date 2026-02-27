@@ -200,7 +200,19 @@ fn handle_system_filter(
             true
         }
         "accessionVersion" => {
-            if let Some(val) = value_to_string(value) {
+            if let Some(arr) = value.as_array() {
+                let values: Vec<String> = arr.iter().filter_map(|v| v.as_str().map(String::from)).collect();
+                if !values.is_empty() {
+                    let phs: Vec<String> = values.iter().map(|v| {
+                        bind_values.push(v.clone());
+                        format!("${}", bind_values.len())
+                    }).collect();
+                    conditions.push(format!(
+                        "se.accession || '.' || se.version::text IN ({})",
+                        phs.join(", ")
+                    ));
+                }
+            } else if let Some(val) = value_to_string(value) {
                 bind_values.push(val);
                 conditions.push(format!(
                     "se.accession || '.' || se.version::text = ${}",
@@ -210,7 +222,16 @@ fn handle_system_filter(
             true
         }
         "accession" => {
-            if let Some(val) = value_to_string(value) {
+            if let Some(arr) = value.as_array() {
+                let values: Vec<String> = arr.iter().filter_map(|v| v.as_str().map(String::from)).collect();
+                if !values.is_empty() {
+                    let phs: Vec<String> = values.iter().map(|v| {
+                        bind_values.push(v.clone());
+                        format!("${}", bind_values.len())
+                    }).collect();
+                    conditions.push(format!("se.accession IN ({})", phs.join(", ")));
+                }
+            } else if let Some(val) = value_to_string(value) {
                 bind_values.push(val);
                 conditions.push(format!("se.accession = ${}", bind_values.len()));
             }
@@ -248,8 +269,15 @@ fn handle_system_filter(
             // Exact match on timestamps (range handled separately via From/To suffixes)
             true
         }
-        "dataUseTerms" | "dataUseTermsRestrictedUntil" => {
-            // These require a JOIN to data_use_terms_table; skip for now
+        "dataUseTerms" => {
+            if let Some(val) = value_to_string(value) {
+                bind_values.push(val);
+                conditions.push(format!("latest_dut.data_use_terms_type = ${}", bind_values.len()));
+            }
+            true
+        }
+        "dataUseTermsRestrictedUntil" => {
+            // Handled via LATERAL JOIN; skip exact match for now
             true
         }
         _ => false,
@@ -280,7 +308,14 @@ const BASE_JOIN: &str = "\
       AND se.version = sepd.version \
       AND sepd.pipeline_version = cpp.version \
     LEFT JOIN groups_table gt \
-      ON se.group_id = gt.group_id";
+      ON se.group_id = gt.group_id \
+    LEFT JOIN LATERAL ( \
+      SELECT data_use_terms_type, restricted_until \
+      FROM data_use_terms_table dut \
+      WHERE dut.accession = se.accession \
+      ORDER BY dut.change_date DESC \
+      LIMIT 1 \
+    ) latest_dut ON TRUE";
 
 /// SQL expression that builds the full metadata JSON including system fields.
 const METADATA_SELECT: &str = "\
@@ -295,6 +330,8 @@ const METADATA_SELECT: &str = "\
         'submittedAtTimestamp', EXTRACT(EPOCH FROM se.submitted_at) * 1000, \
         'releasedAtTimestamp', EXTRACT(EPOCH FROM se.released_at) * 1000, \
         'versionComment', se.version_comment, \
+        'dataUseTerms', COALESCE(latest_dut.data_use_terms_type, 'OPEN'), \
+        'dataUseTermsRestrictedUntil', latest_dut.restricted_until, \
         'versionStatus', CASE \
             WHEN se.version = (SELECT MAX(se2.version) FROM sequence_entries se2 \
                 WHERE se2.accession = se.accession AND se2.released_at IS NOT NULL) \
@@ -379,6 +416,7 @@ fn system_field_select(field: &str) -> Option<String> {
         "submitter" => Some("se.submitter".to_string()),
         "isRevocation" => Some("se.is_revocation::text".to_string()),
         "versionComment" => Some("se.version_comment".to_string()),
+        "dataUseTerms" => Some("COALESCE(latest_dut.data_use_terms_type, 'OPEN')".to_string()),
         "versionStatus" => Some(
             "CASE \
                 WHEN se.version = (SELECT MAX(se2.version) FROM sequence_entries se2 \

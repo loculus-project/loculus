@@ -18,6 +18,8 @@ impl OrganismStore {
 pub struct DataStore {
     pub organisms: HashMap<String, OrganismStore>,
     pub pg_pool: sqlx::PgPool,
+    /// Lineage definitions: "organism/column" → parsed JSON lineage definition
+    pub lineage_definitions: HashMap<String, serde_json::Value>,
 }
 
 pub type SharedStore = Arc<DataStore>;

@@ -1,4 +1,5 @@
 use axum::{Router, Json, routing::{get, post}};
+use axum::extract::{Path, State};
 use tower_http::cors::CorsLayer;
 
 use crate::store::SharedStore;
@@ -8,8 +9,15 @@ async fn health() -> &'static str {
     "OK"
 }
 
-async fn lineage_definition() -> Json<serde_json::Value> {
-    Json(serde_json::json!({}))
+async fn lineage_definition(
+    State(store): State<SharedStore>,
+    Path((organism, column)): Path<(String, String)>,
+) -> Json<serde_json::Value> {
+    let key = format!("{}/{}", organism, column);
+    match store.lineage_definitions.get(&key) {
+        Some(def) => Json(def.clone()),
+        None => Json(serde_json::json!({})),
+    }
 }
 
 pub fn create_router(state: SharedStore) -> Router {

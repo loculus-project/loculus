@@ -46,10 +46,19 @@ async fn get_filtered_accs(
     }
 }
 
-fn fasta_response(fasta: String, data_version: &str) -> Response {
+fn fasta_response(fasta: String, data_version: &str, request: &crate::types::LapisRequest) -> Response {
     let mut resp = ([(header::CONTENT_TYPE, "text/x-fasta")], fasta).into_response();
     if let Ok(val) = data_version.parse() {
         resp.headers_mut().insert("Lapis-Data-Version", val);
+    }
+    let download = request.filters.get("downloadAsFile")
+        .and_then(|v| v.as_str()) == Some("true");
+    if download {
+        let basename = request.filters.get("downloadFileBasename")
+            .and_then(|v| v.as_str()).unwrap_or("sequences");
+        if let Ok(val) = format!("attachment; filename={}.fasta", basename).parse() {
+            resp.headers_mut().insert(header::CONTENT_DISPOSITION, val);
+        }
     }
     resp
 }
@@ -65,7 +74,7 @@ pub async fn handle_unaligned_nuc_sequences(State(store): State<SharedStore>, Pa
     let page: Vec<String> = accs.into_iter().skip(offset).take(limit).collect();
     let dv = org.data_version();
     let fasta = { let c = org.duckdb.lock().unwrap(); let seqs = duckdb_query::get_sequences(&c, &page, "unaligned_nuc_sequences", "segment", &seg).map_err(|e| { error!("DuckDB: {}", e); AppError::internal(format!("Sequence error: {}", e)) })?; format_fasta(&seqs) };
-    Ok(fasta_response(fasta, &dv))
+    Ok(fasta_response(fasta, &dv, &req))
 }
 
 pub async fn handle_unaligned_nuc_sequences_seg(State(store): State<SharedStore>, Path((organism, segment)): Path<(String, String)>, Query(qp): Query<HashMap<String, String>>, body: Option<axum::Json<Value>>) -> Result<Response, AppError> {
@@ -81,7 +90,7 @@ pub async fn handle_unaligned_nuc_sequences_seg(State(store): State<SharedStore>
     let page: Vec<String> = accs.into_iter().skip(offset).take(limit).collect();
     let dv = org.data_version();
     let fasta = { let c = org.duckdb.lock().unwrap(); let seqs = duckdb_query::get_sequences(&c, &page, "unaligned_nuc_sequences", "segment", &segment).map_err(|e| { error!("DuckDB: {}", e); AppError::internal(format!("Sequence error: {}", e)) })?; format_fasta(&seqs) };
-    Ok(fasta_response(fasta, &dv))
+    Ok(fasta_response(fasta, &dv, &req))
 }
 
 pub async fn handle_aligned_nuc_sequences(State(store): State<SharedStore>, Path(organism): Path<String>, Query(qp): Query<HashMap<String, String>>, body: Option<axum::Json<Value>>) -> Result<Response, AppError> {
@@ -98,7 +107,7 @@ pub async fn handle_aligned_nuc_sequences(State(store): State<SharedStore>, Path
     let page: Vec<String> = accs.into_iter().skip(offset).take(limit).collect();
     let dv = org.data_version();
     let fasta = { let c = org.duckdb.lock().unwrap(); let seqs = duckdb_query::get_sequences_with_fill(&c, &page, "aligned_nuc_sequences", "segment", &seg, 'N', fill_len).map_err(|e| { error!("DuckDB: {}", e); AppError::internal(format!("Sequence error: {}", e)) })?; format_fasta(&seqs) };
-    Ok(fasta_response(fasta, &dv))
+    Ok(fasta_response(fasta, &dv, &req))
 }
 
 pub async fn handle_aligned_nuc_sequences_seg(State(store): State<SharedStore>, Path((organism, segment)): Path<(String, String)>, Query(qp): Query<HashMap<String, String>>, body: Option<axum::Json<Value>>) -> Result<Response, AppError> {
@@ -115,7 +124,7 @@ pub async fn handle_aligned_nuc_sequences_seg(State(store): State<SharedStore>, 
     let page: Vec<String> = accs.into_iter().skip(offset).take(limit).collect();
     let dv = org.data_version();
     let fasta = { let c = org.duckdb.lock().unwrap(); let seqs = duckdb_query::get_sequences_with_fill(&c, &page, "aligned_nuc_sequences", "segment", &segment, 'N', fill_len).map_err(|e| { error!("DuckDB: {}", e); AppError::internal(format!("Sequence error: {}", e)) })?; format_fasta(&seqs) };
-    Ok(fasta_response(fasta, &dv))
+    Ok(fasta_response(fasta, &dv, &req))
 }
 
 pub async fn handle_aligned_aa_sequences(State(store): State<SharedStore>, Path((organism, gene)): Path<(String, String)>, Query(qp): Query<HashMap<String, String>>, body: Option<axum::Json<Value>>) -> Result<Response, AppError> {
@@ -132,5 +141,5 @@ pub async fn handle_aligned_aa_sequences(State(store): State<SharedStore>, Path(
     let page: Vec<String> = accs.into_iter().skip(offset).take(limit).collect();
     let dv = org.data_version();
     let fasta = { let c = org.duckdb.lock().unwrap(); let seqs = duckdb_query::get_sequences_with_fill(&c, &page, "aligned_aa_sequences", "gene", &gene, 'X', fill_len).map_err(|e| { error!("DuckDB: {}", e); AppError::internal(format!("Sequence error: {}", e)) })?; format_fasta(&seqs) };
-    Ok(fasta_response(fasta, &dv))
+    Ok(fasta_response(fasta, &dv, &req))
 }

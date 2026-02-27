@@ -1,6 +1,21 @@
 {{- if .Values.useSequlus }}
 {{- $enabledOrganismsResult := (include "loculus.enabledOrganisms" . | fromJson) }}
 {{- $enabledOrganismsList := $enabledOrganismsResult.organisms }}
+{{- $lineageConfig := dict }}
+{{- range $_, $item := $enabledOrganismsList }}
+  {{- $key := $item.key }}
+  {{- $organismContent := $item.contents }}
+  {{- $schema := $organismContent.schema | include "loculus.patchMetadataSchema" | fromYaml }}
+  {{- range $entry := $schema.metadata }}
+    {{- if hasKey $entry "lineageSystem" }}
+      {{- $lineageSystem := $entry.lineageSystem }}
+      {{- $configKey := printf "%s/%s" $key $entry.name }}
+      {{- if hasKey $.Values.lineageSystemDefinitions $lineageSystem }}
+        {{- $_ := set $lineageConfig $configKey (index $.Values.lineageSystemDefinitions $lineageSystem) }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -71,6 +86,10 @@ spec:
                   key: password
             - name: DATABASE_URL
               value: "postgres://$(DB_USERNAME):$(DB_PASSWORD)@loculus-database-service:5432/loculus"
+            {{- if $lineageConfig }}
+            - name: LINEAGE_CONFIG
+              value: {{ $lineageConfig | toJson | quote }}
+            {{- end }}
           volumeMounts:
             - name: reference-genomes
               mountPath: /reference_genomes
