@@ -4,8 +4,13 @@ use tower_http::cors::CorsLayer;
 use crate::store::SharedStore;
 use crate::endpoints::{details, aggregated, mutations, insertions, sequences, info};
 
+async fn health() -> &'static str {
+    "OK"
+}
+
 pub fn create_router(state: SharedStore) -> Router {
     Router::new()
+        .route("/health", get(health))
         .route("/{organism}/sample/details", post(details::handle_details).get(details::handle_details))
         .route("/{organism}/sample/aggregated", post(aggregated::handle_aggregated).get(aggregated::handle_aggregated))
         .route("/{organism}/sample/nucleotideMutations", post(mutations::handle_nucleotide_mutations).get(mutations::handle_nucleotide_mutations))

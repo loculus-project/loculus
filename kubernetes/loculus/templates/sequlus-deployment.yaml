@@ -74,25 +74,25 @@ spec:
               mountPath: /data
           startupProbe:
             httpGet:
-              path: /{{ $firstOrganism }}/sample/info
+              path: /health
               port: 8090
-            initialDelaySeconds: 10
-            periodSeconds: 10
+            initialDelaySeconds: 5
+            periodSeconds: 5
             failureThreshold: 60
-            timeoutSeconds: 5
+            timeoutSeconds: 3
           readinessProbe:
             httpGet:
               path: /{{ $firstOrganism }}/sample/info
               port: 8090
             periodSeconds: 10
-            failureThreshold: 3
+            failureThreshold: 120
             timeoutSeconds: 5
           livenessProbe:
             httpGet:
-              path: /{{ $firstOrganism }}/sample/info
+              path: /health
               port: 8090
             periodSeconds: 10
-            failureThreshold: 3
+            failureThreshold: 6
             timeoutSeconds: 5
       volumes:
         - name: reference-genomes
