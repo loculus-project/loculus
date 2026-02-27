@@ -1,11 +1,10 @@
 use serde_json::Value;
-use tracing::info;
 use crate::types::{LapisRequest, CONTROL_PARAMS};
 
 /// System fields that map to actual database columns rather than metadata JSON.
 const SYSTEM_FIELDS: &[&str] = &[
     "groupId", "groupName", "isRevocation", "versionStatus",
-    "accessionVersion", "accession", "version", "submitter",
+    "accessionVersion", "accession", "version", "submitter", "submissionId",
     "submittedAtTimestamp", "releasedAtTimestamp", "versionComment",
     "dataUseTerms", "dataUseTermsRestrictedUntil",
 ];
@@ -38,13 +37,14 @@ pub fn build_metadata_filter(
 
         if key.ends_with(".regex") {
             let field_name = &key[..key.len() - 6];
-            if is_system_field(field_name) { continue; } // Skip regex on system fields
             if let Some(pattern) = value.as_str() {
+                let col_expr = if let Some(expr) = system_field_select(field_name) {
+                    expr
+                } else {
+                    format!("sepd.processed_data->'metadata'->>'{}'", escape_field(field_name))
+                };
                 bind_values.push(pattern.to_string());
-                conditions.push(format!(
-                    "sepd.processed_data->'metadata'->>'{field}' ~ ${n}",
-                    field = escape_field(field_name), n = bind_values.len()
-                ));
+                conditions.push(format!("{} ~ ${}", col_expr, bind_values.len()));
             }
             continue;
         }
@@ -252,6 +252,13 @@ fn handle_system_filter(
             }
             true
         }
+        "submissionId" => {
+            if let Some(val) = value_to_string(value) {
+                bind_values.push(val);
+                conditions.push(format!("se.submission_id = ${}", bind_values.len()));
+            }
+            true
+        }
         "groupName" => {
             if let Some(val) = value_to_string(value) {
                 bind_values.push(val);
@@ -333,8 +340,6 @@ pub async fn get_filtered_accessions(
         "SELECT se.accession || '.' || se.version as accession_version {BASE_JOIN} WHERE {where_clause}{av_clause}"
     );
 
-    info!("PG filter SQL: {}", sql);
-    info!("PG filter binds: {:?}", bind_values);
     let mut query = sqlx::query_scalar::<_, String>(&sql);
     for val in &bind_values { query = query.bind(val); }
     query.fetch_all(pool).await
@@ -368,6 +373,7 @@ fn system_field_select(field: &str) -> Option<String> {
         "groupId" => Some("se.group_id::text".to_string()),
         "groupName" => Some("gt.group_name".to_string()),
         "submitter" => Some("se.submitter".to_string()),
+        "submissionId" => Some("se.submission_id".to_string()),
         "isRevocation" => Some("se.is_revocation::text".to_string()),
         "versionComment" => Some("se.version_comment".to_string()),
         "dataUseTerms" => Some("COALESCE(latest_dut.data_use_terms_type, 'OPEN')".to_string()),
