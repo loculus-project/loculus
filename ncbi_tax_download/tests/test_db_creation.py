@@ -1,17 +1,25 @@
 from io import BytesIO
+from pathlib import Path
+
+import pytest
+
 from ncbi_tax_download.ncbi import (
     create_taxonomy_df,
     extract_names_df,
     extract_nodes_df,
 )
 
-TEST_ZIP = "tests/taxdmp.zip"
-with open(TEST_ZIP, "rb") as f:
-    ARCHIVE = BytesIO(f.read())
+TEST_ZIP = Path(__file__).parent / "taxdmp.zip"
 
 
-def test_names_df_creation():
-    df_names = extract_names_df(ARCHIVE)
+@pytest.fixture
+def archive():
+    with open(TEST_ZIP, "rb") as f:
+        return BytesIO(f.read())
+
+
+def test_names_df_creation(archive: BytesIO):
+    df_names = extract_names_df(archive)
 
     expected_shape = (14, 3)
     expected_columns = ["tax_id", "common_name", "scientific_name"]
@@ -20,8 +28,8 @@ def test_names_df_creation():
     assert all([i == j for i, j in zip(df_names.columns, expected_columns)])
 
 
-def test_nodes_df_creation():
-    df_nodes = extract_nodes_df(ARCHIVE)
+def test_nodes_df_creation(archive: BytesIO):
+    df_nodes = extract_nodes_df(archive)
 
     expected_shape = (8, 3)
     expected_columns = ["tax_id", "parent_id", "depth"]
@@ -30,7 +38,7 @@ def test_nodes_df_creation():
     assert all([i == j for i, j in zip(df_nodes.columns, expected_columns)])
 
 
-def test_taxonomy_df_creation():
+def test_taxonomy_df_creation(archive: BytesIO):
     r""" Tree should have shape
                 1
               /   \ 
@@ -40,7 +48,7 @@ def test_taxonomy_df_creation():
       /
     7
     """
-    df_taxonomy = create_taxonomy_df(ARCHIVE)
+    df_taxonomy = create_taxonomy_df(archive)
 
     expected_shape = (7, 5)
     expected_columns = ["tax_id", "common_name", "scientific_name", "parent_id", "depth"]

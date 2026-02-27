@@ -7,8 +7,6 @@ from .ncbi import (
     create_taxonomy_df,
     write_to_sqlite,
     download_ncbi_archive,
-    extract_names_df,
-    extract_nodes_df,
 )
 
 logger = logging.getLogger(__name__)
@@ -36,7 +34,7 @@ def run() -> None:
         archive = download_ncbi_archive()
         df_taxonomy = create_taxonomy_df(archive)
         write_to_sqlite(df_taxonomy, args.output_db)
-    except:
+    except Exception:
         logger.exception("NCBI taxonomy download pipeline failed")
         sys.exit(1)
 

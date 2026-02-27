@@ -22,7 +22,7 @@ def download_ncbi_archive(
     full_url = urljoin(ftp_server.rstrip("/") + "/", target_archive)
     logger.info(f"downloading NCBI taxonomy archive from: {full_url}")
 
-    with urllib.request.urlopen(full_url) as response:
+    with urllib.request.urlopen(full_url, timeout=300) as response:
         zip_bytes = io.BytesIO(
             response.read()
         )  # read the whole archive into memory (it's around 69M)
@@ -83,14 +83,14 @@ def extract_nodes_df(archive: io.BytesIO) -> pd.DataFrame:
         .loc[:, ["tax_id", "parent_id"]]
     )
 
-    compute_tree_depth(df, root_id=1)
+    add_tree_depth(df, root_id=1)
     if df[df["depth"] == -1].shape[0] > 0:
         raise ValueError("nodes.dmp contains orphan nodes, this should not happen")
 
     return df
 
 
-def compute_tree_depth(df: pd.DataFrame, root_id: int):
+def add_tree_depth(df: pd.DataFrame, root_id: int):
     if len(df.columns) != 2 or not all(df.columns.values == np.array(["tax_id", "parent_id"])):
         raise ValueError(
             f"Expected pd.DataFrame with columns '['tax_id', 'parent_id']', got '{df.columns}'"
@@ -117,7 +117,11 @@ def create_taxonomy_df(archive: io.BytesIO) -> pd.DataFrame:
     df_names = extract_names_df(archive)
     df_nodes = extract_nodes_df(archive)
 
-    return df_names.merge(df_nodes, on="tax_id", how="inner")
+    df_taxonomy = df_names.merge(df_nodes, on="tax_id", how="inner")
+    if df_taxonomy.shape[0] < df_names.shape[0]:
+        logger.warning("One or more taxa had no parent in the taxonomy and were dropped")
+
+    return df_taxonomy
 
 
 def write_to_sqlite(df: pd.DataFrame, output_db: Path) -> None:
