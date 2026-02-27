@@ -161,19 +161,16 @@ def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) ->
     return assembly_values
 
 
-def make_assembly_name(accession: str, version: str, test: bool = False) -> str:
+def make_assembly_name(accession: str, version: str) -> str:
     """
-    Create a unique assembly name based on accession and version.
-    If test=True, add a timestamp to the alias suffix to allow for multiple submissions of the same
-    manifest for testing.
+    Create a unique assembly name based on accession, version and timestamp.
+    Add a timestamp to the alias suffix.
 
     Unlike biosample revisions, assembly revisions require a new assemblyName.
     """
-    if test:
-        entropy = "".join(random.choices(string.ascii_letters + string.digits, k=4))  # noqa: S311
-        timestamp = datetime.now(tz=pytz.utc).strftime("%Y%m%d_%H%M%S")
-        return f"{accession}.{version}_{timestamp}_{entropy}"
-    return f"{accession}.{version}"
+    entropy = "".join(random.choices(string.ascii_letters + string.digits, k=4))  # noqa: S311
+    timestamp = datetime.now(tz=pytz.utc).strftime("%Y%m%d_%H%M%S")
+    return f"{accession}.{version}_{timestamp}_{entropy}"
 
 
 def create_manifest_object(
@@ -181,7 +178,6 @@ def create_manifest_object(
     sample_accession: str,
     study_accession: str,
     submission_table_entry: dict[str, Any],
-    test=False,
     dir: str | None = None,
 ) -> AssemblyManifest:
     """
@@ -200,7 +196,6 @@ def create_manifest_object(
     assembly_name = make_assembly_name(
         submission_table_entry["accession"],
         submission_table_entry["version"],
-        test=test,
     )
 
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
@@ -546,7 +541,7 @@ def get_project_and_sample_results(
     return sample_accession, study_accession
 
 
-def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test: bool = False):
+def assembly_table_create(db_config: SimpleConnectionPool, config: Config):
     """
     1. Find all entries in assembly_table in state READY
     2. Create temporary files: chromosome_list_file, embl_file, manifest_file
@@ -554,8 +549,7 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
     4. If (create_ena_assembly succeeds): update state to SUBMITTED with results
     3. Else update state to HAS_ERRORS with error messages
 
-    If test=True: add a timestamp to the alias suffix to allow for multiple submissions of the same
-    manifest for testing AND use the test ENA webin-cli endpoint for submission.
+    If config.test=True: use the test ENA webin-cli endpoint for submission.
     """
     conditions = {"status": Status.READY}
     ready_to_submit_assembly = find_conditions_in_db(
@@ -593,7 +587,6 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
                 sample_accession,
                 study_accession,
                 sample_data_in_submission_table[0],
-                test,
             )
             manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
         except Exception as e:
@@ -626,7 +619,6 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
             config=config,
             manifest_filename=manifest_file,
             center_name=center_name,
-            test=test,
         )
         if assembly_creation_results.result:
             assembly_creation_results.result["segment_order"] = segment_order
@@ -807,7 +799,7 @@ def create_assembly(config: Config, stop_event: threading.Event):
         submission_table_start(db_config, config)
         submission_table_update(db_config)
 
-        assembly_table_create(db_config, config, test=config.test)
+        assembly_table_create(db_config, config)
         assembly_table_update(db_config, config, time_threshold=config.min_between_ena_checks)
         last_retry_time = assembly_table_handle_errors(
             db_config, config, slack_config, last_retry_time

@@ -572,10 +572,9 @@ def post_webin_cli(
     manifest_filename,
     tmpdir: tempfile.TemporaryDirectory,
     center_name=None,
-    test=True,
 ) -> subprocess.CompletedProcess:
     logger.debug(
-        f"Posting manifest {manifest_filename} to ENA Webin CLI with test={test} and "
+        f"Posting manifest {manifest_filename} to ENA Webin CLI with test={config.test} and "
         f"center_name={center_name}"
     )
     subprocess_args_with_emtpy_strings: Final[list[str]] = [
@@ -586,7 +585,7 @@ def post_webin_cli(
         "-context=genome",
         f"-manifest={manifest_filename}",
         f"-outputdir={tmpdir.name}",
-        "-test" if test else "",
+        "-test" if config.test else "",
         f"-password={config.ena_submission_password}",
     ]
     # Remove empty strings from the list
@@ -609,15 +608,13 @@ def post_webin_cli(
     )
 
 
-def create_ena_assembly(
-    config: Config, manifest_filename: str, center_name=None, test=True
-) -> CreationResult:
+def create_ena_assembly(config: Config, manifest_filename: str, center_name=None) -> CreationResult:
     """
     This is equivalent to running:
     ena-webin-cli -username {params.ena_submission_username} \\
         -password {params.ena_submission_password} -context genome \\
         -manifest {manifest_file} -submit
-    test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
+    config.test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
     """
     errors: list[str] = []
     warnings: list[str] = []
@@ -628,7 +625,7 @@ def create_ena_assembly(
     output_tmpdir = tempfile.TemporaryDirectory()
 
     response = post_webin_cli(
-        config, manifest_filename, tmpdir=output_tmpdir, center_name=center_name, test=test
+        config, manifest_filename, tmpdir=output_tmpdir, center_name=center_name
     )
 
     # Happy path: webin-cli succeeded and returned ERZ accession
