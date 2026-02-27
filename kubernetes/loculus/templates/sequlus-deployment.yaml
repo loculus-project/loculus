@@ -72,11 +72,18 @@ spec:
               mountPath: /reference_genomes
             - name: sequlus-data
               mountPath: /data
+          startupProbe:
+            httpGet:
+              path: /{{ $firstOrganism }}/sample/info
+              port: 8090
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 60
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /{{ $firstOrganism }}/sample/info
               port: 8090
-            initialDelaySeconds: 30
             periodSeconds: 10
             failureThreshold: 3
             timeoutSeconds: 5
@@ -84,7 +91,6 @@ spec:
             httpGet:
               path: /{{ $firstOrganism }}/sample/info
               port: 8090
-            initialDelaySeconds: 60
             periodSeconds: 10
             failureThreshold: 3
             timeoutSeconds: 5
