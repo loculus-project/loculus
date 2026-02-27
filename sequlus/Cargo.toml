@@ -22,6 +22,8 @@ bitvec = "1"
 futures = "0.3"
 serde_yaml = "0.9"
 form_urlencoded = "1"
+flate2 = "1"
+zstd = "0.13"
 
 [profile.release]
 opt-level = 3

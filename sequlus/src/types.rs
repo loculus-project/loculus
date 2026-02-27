@@ -108,5 +108,5 @@ pub const CONTROL_PARAMS: &[&str] = &[
     "nucleotideMutations", "aminoAcidMutations",
     "nucleotideInsertions", "aminoAcidInsertions",
     "minProportion", "downloadAsFile", "downloadFileBasename",
-    "dataFormat", "compression",
+    "dataFormat", "compression", "fastaHeaderTemplate",
 ];
