@@ -73,9 +73,16 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             .map((segment) => referenceGenomesInfo.segmentDisplayNames[segment] ?? segment);
 
         if (names.length === 0) return '';
-        if (names.length <= 2) return names.join(', ');
 
-        return `${names[0]}, ..., ${names[names.length - 1]}`;
+        let joined: string;
+        if (names.length <= 2) {
+            joined = names.join(', ');
+        } else {
+            joined = `${names[0]}, ..., ${names[names.length - 1]}`;
+        }
+
+        const label = names.length === 1 ? 'segment' : 'segments';
+        return `${label}: ${joined}`;
     }, [referenceGenomesInfo, selectedReferenceNames]);
 
     function getDataTypeOptions(): OptionBlockOption[] {
@@ -248,16 +255,16 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 />
                 {!referenceSelected && referenceIdentifierField !== undefined && (
                     <div className='text-sm text-gray-400 mt-4 max-w-60'>
-                        Select a {referenceIdentifierField} for the segments: {notSelectedSegmentsText} with the search
-                        UI to enable download of aligned sequences.
+                        Select a {referenceIdentifierField} for the {notSelectedSegmentsText} with the search UI to
+                        enable download of aligned sequences.
                     </div>
                 )}
                 {referenceSelected &&
                     !allReferencesSelected(referenceGenomesInfo, selectedReferenceNames) &&
                     referenceIdentifierField !== undefined && (
                         <div className='text-sm text-gray-400 mt-4 max-w-60'>
-                            Select a {referenceIdentifierField} for the segments: {notSelectedSegmentsText} with the
-                            search UI to enable download of more aligned sequences.
+                            Select a {referenceIdentifierField} for the {notSelectedSegmentsText} with the search UI to
+                            enable download of more aligned sequences.
                         </div>
                     )}
             </div>
