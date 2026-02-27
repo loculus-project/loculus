@@ -1343,6 +1343,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         displayName: Completeness
         rangeSearch: true
+        percentage: true
         orderOnDetailsPage: 2860
         customDisplay:
           type: lengthCompleteness

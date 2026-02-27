@@ -84,6 +84,7 @@ export const metadata = z.object({
     onlyForReference: z.string().optional(),
     isSequenceFilter: z.boolean().optional(),
     relatesToSegment: z.string().optional(),
+    percentage: z.boolean().optional(),
 });
 
 export const inputFieldOption = z.object({

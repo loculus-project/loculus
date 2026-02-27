@@ -115,6 +115,12 @@ export class FieldFilterSet implements SequenceFilter {
                 );
                 delete sequenceFilters[filterName];
             }
+            if (this.filterSchema.isPercentage(filterName) && sequenceFilters[filterName] !== undefined) {
+                const numVal = Number(sequenceFilters[filterName]);
+                if (!isNaN(numVal)) {
+                    sequenceFilters[filterName] = numVal / 100;
+                }
+            }
         }
 
         if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
@@ -218,6 +224,9 @@ export class FieldFilterSet implements SequenceFilter {
         if (this.filterSchema.getType(fieldName) === 'timestamp') {
             const date = new Date(Number(value) * 1000);
             result = date.toISOString().split('T')[0]; // Extract YYYY-MM-DD
+        }
+        if (this.filterSchema.isPercentage(fieldName) && result !== undefined && result !== '') {
+            return `${result}%`;
         }
         if (typeof result === 'string' && result.length > 40) {
             result = `${result.substring(0, 37)}...`;

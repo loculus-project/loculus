@@ -144,6 +144,11 @@
           "type": "string",
           "description": "Which segment this metadata field relates to. Can be set to any of the segment names defined for the organism."
         },
+        "percentage": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "If true, the field value (expected to be between 0 and 1) is displayed as a percentage in the search filter and on the details page."
+        },
         "hideOnSequenceDetailsPage": {
           "groups": ["metadata"],
           "type": "boolean",
