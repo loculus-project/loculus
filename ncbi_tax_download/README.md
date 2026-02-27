@@ -18,7 +18,7 @@ micromamba env create -n loculus-ncbi-taxonomy -f environment.yml
 Installing the module provides the `taxonomy-download` command, which can be used to run this module by providing the desired name of the output database:
 
 ```bash
-micromamba activate loculus-nextclade
+micromamba activate loculus-ncbi-taxonomy
 pip install -e .
 taxonomy-download --output_db <DATABASE_NAME>
 ```
