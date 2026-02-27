@@ -122,7 +122,8 @@ export const SearchForm = ({
 
     visibleFields.sort(
         (a, b) =>
-            (a.orderInSearchDisplay ?? a.order ?? Number.POSITIVE_INFINITY) - (b.orderInSearchDisplay ?? b.order ?? Number.POSITIVE_INFINITY),
+            (a.orderInSearchDisplay ?? a.order ?? Number.POSITIVE_INFINITY) -
+            (b.orderInSearchDisplay ?? b.order ?? Number.POSITIVE_INFINITY),
     );
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
