@@ -9,10 +9,10 @@ use crate::response::{AppError, build_response};
 use crate::store::SharedStore;
 use crate::endpoints::details::{merge_request, apply_sequence_filters, has_sequence_filters};
 
-pub async fn handle_aggregated(State(store): State<SharedStore>, Path(organism): Path<String>, Query(query_params): Query<HashMap<String, String>>, body: Option<axum::Json<Value>>) -> Result<Response, AppError> {
+pub async fn handle_aggregated(State(store): State<SharedStore>, Path(organism): Path<String>, Query(query_params): Query<HashMap<String, String>>, body: axum::body::Bytes) -> Result<Response, AppError> {
     let org_store = store.organisms.get(&organism)
         .ok_or_else(|| AppError::not_found(format!("Unknown organism: {}", organism)))?;
-    let request = merge_request(query_params, body);
+    let request = merge_request(query_params, &body);
     let fields = if let Some(val) = request.filters.get("fields") { if let Value::Array(arr) = val { arr.iter().filter_map(|v| v.as_str().map(String::from)).collect::<Vec<_>>() } else if let Value::String(s) = val { s.split(',').map(|x| x.trim().to_string()).collect() } else { vec![] } } else { vec![] };
 
     let seq_filtered = if has_sequence_filters(&request) {

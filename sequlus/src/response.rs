@@ -49,10 +49,11 @@ impl IntoResponse for AppError {
 pub fn build_response(data: Value, data_version: &str, total_count: usize, request: &LapisRequest) -> Response {
     let data_format = request.filters.get("dataFormat")
         .and_then(|v| v.as_str())
-        .unwrap_or("json");
+        .unwrap_or("json")
+        .to_ascii_lowercase();
 
-    let mut response = match data_format {
-        "csv" | "tsv" => build_delimited_response(&data, data_format, request),
+    let mut response = match data_format.as_str() {
+        "csv" | "tsv" => build_delimited_response(&data, &data_format, request),
         _ => build_json_response(data, data_version, total_count),
     };
 

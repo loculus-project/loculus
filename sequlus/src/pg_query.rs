@@ -317,33 +317,6 @@ const BASE_JOIN: &str = "\
       LIMIT 1 \
     ) latest_dut ON TRUE";
 
-/// SQL expression that builds the full metadata JSON including system fields.
-const METADATA_SELECT: &str = "\
-    jsonb_build_object(\
-        'accessionVersion', se.accession || '.' || se.version::text, \
-        'accession', se.accession, \
-        'version', se.version, \
-        'groupId', se.group_id, \
-        'groupName', gt.group_name, \
-        'submitter', se.submitter, \
-        'isRevocation', se.is_revocation, \
-        'submittedAtTimestamp', EXTRACT(EPOCH FROM se.submitted_at) * 1000, \
-        'releasedAtTimestamp', EXTRACT(EPOCH FROM se.released_at) * 1000, \
-        'versionComment', se.version_comment, \
-        'dataUseTerms', COALESCE(latest_dut.data_use_terms_type, 'OPEN'), \
-        'dataUseTermsRestrictedUntil', latest_dut.restricted_until, \
-        'versionStatus', CASE \
-            WHEN se.version = (SELECT MAX(se2.version) FROM sequence_entries se2 \
-                WHERE se2.accession = se.accession AND se2.released_at IS NOT NULL) \
-            THEN 'LATEST_VERSION' \
-            WHEN EXISTS (SELECT 1 FROM sequence_entries se3 \
-                WHERE se3.accession = se.accession AND se3.version > se.version \
-                AND se3.is_revocation = TRUE AND se3.released_at IS NOT NULL) \
-            THEN 'REVOKED' \
-            ELSE 'REVISED' \
-        END\
-    ) || COALESCE(sepd.processed_data->'metadata', '{}'::jsonb)";
-
 /// Get accession versions matching metadata filters from Postgres.
 /// Optionally restrict to a pre-filtered set of accession_versions (from DuckDB).
 pub async fn get_filtered_accessions(
@@ -360,28 +333,6 @@ pub async fn get_filtered_accessions(
     );
 
     let mut query = sqlx::query_scalar::<_, String>(&sql);
-    for val in &bind_values { query = query.bind(val); }
-    query.fetch_all(pool).await
-}
-
-/// Get accession versions + metadata JSON from Postgres.
-/// Optionally restrict to a pre-filtered set of accession_versions.
-pub async fn get_metadata_details(
-    pool: &sqlx::PgPool,
-    request: &LapisRequest,
-    organism: &str,
-    accession_versions: Option<&[String]>,
-) -> Result<Vec<(String, String)>, sqlx::Error> {
-    let (where_clause, bind_values) = build_metadata_filter(request, organism);
-    let av_clause = acc_version_clause(accession_versions);
-
-    let sql = format!(
-        "SELECT se.accession || '.' || se.version as accession_version, \
-                ({METADATA_SELECT})::text as metadata \
-         {BASE_JOIN} WHERE {where_clause}{av_clause}"
-    );
-
-    let mut query = sqlx::query_as::<_, (String, String)>(&sql);
     for val in &bind_values { query = query.bind(val); }
     query.fetch_all(pool).await
 }

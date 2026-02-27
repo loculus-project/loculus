@@ -2260,6 +2260,7 @@ dependencies = [
  "chrono",
  "clap",
  "duckdb",
+ "form_urlencoded",
  "futures",
  "regex",
  "reqwest",

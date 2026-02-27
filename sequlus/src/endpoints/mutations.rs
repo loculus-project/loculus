@@ -1,6 +1,6 @@
 use axum::extract::{Path, Query, State};
 use axum::response::Response;
-use serde_json::{json, Value};
+use serde_json::json;
 use std::collections::HashMap;
 use tracing::error;
 use crate::duckdb_query;
@@ -10,10 +10,10 @@ use crate::response::{AppError, build_response};
 use crate::store::SharedStore;
 use crate::endpoints::details::{merge_request, apply_sequence_filters, has_sequence_filters, has_metadata_filters};
 
-pub async fn handle_nucleotide_mutations(State(store): State<SharedStore>, Path(organism): Path<String>, Query(query_params): Query<HashMap<String, String>>, body: Option<axum::Json<Value>>) -> Result<Response, AppError> {
+pub async fn handle_nucleotide_mutations(State(store): State<SharedStore>, Path(organism): Path<String>, Query(query_params): Query<HashMap<String, String>>, body: axum::body::Bytes) -> Result<Response, AppError> {
     let org_store = store.organisms.get(&organism)
         .ok_or_else(|| AppError::not_found(format!("Unknown organism: {}", organism)))?;
-    let request = merge_request(query_params, body);
+    let request = merge_request(query_params, &body);
     let min_proportion = request.filters.get("minProportion").and_then(|v| v.as_f64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(0.05);
 
     let accessions: Option<Vec<String>> = if has_metadata_filters(&request) || has_sequence_filters(&request) {
@@ -50,10 +50,10 @@ pub async fn handle_nucleotide_mutations(State(store): State<SharedStore>, Path(
     Ok(build_response(json!(records), &org_store.data_version(), total_count, &request))
 }
 
-pub async fn handle_amino_acid_mutations(State(store): State<SharedStore>, Path(organism): Path<String>, Query(query_params): Query<HashMap<String, String>>, body: Option<axum::Json<Value>>) -> Result<Response, AppError> {
+pub async fn handle_amino_acid_mutations(State(store): State<SharedStore>, Path(organism): Path<String>, Query(query_params): Query<HashMap<String, String>>, body: axum::body::Bytes) -> Result<Response, AppError> {
     let org_store = store.organisms.get(&organism)
         .ok_or_else(|| AppError::not_found(format!("Unknown organism: {}", organism)))?;
-    let request = merge_request(query_params, body);
+    let request = merge_request(query_params, &body);
     let min_proportion = request.filters.get("minProportion").and_then(|v| v.as_f64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(0.05);
 
     let accessions: Option<Vec<String>> = if has_metadata_filters(&request) || has_sequence_filters(&request) {

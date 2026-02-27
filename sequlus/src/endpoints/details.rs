@@ -1,3 +1,4 @@
+use axum::body::Bytes;
 use axum::extract::{Path, Query, State};
 use axum::response::Response;
 use serde_json::{json, Value};
@@ -15,11 +16,11 @@ pub async fn handle_details(
     State(store): State<SharedStore>,
     Path(organism): Path<String>,
     Query(query_params): Query<HashMap<String, String>>,
-    body: Option<axum::Json<Value>>,
+    body: Bytes,
 ) -> Result<Response, AppError> {
     let org_store = store.organisms.get(&organism)
         .ok_or_else(|| AppError::not_found(format!("Unknown organism: {}", organism)))?;
-    let request = merge_request(query_params, body);
+    let request = merge_request(query_params, &body);
     let offset = request.filters.get("offset").and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(0) as usize;
     let limit = request.filters.get("limit").and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(100) as usize;
     let fields = parse_fields(&request.filters);
@@ -35,12 +36,20 @@ pub async fn handle_details(
         None
     };
 
-    let rows = pg_query::get_metadata_details(
+    // Use Postgres for filtering, DuckDB for full metadata (includes file refs etc.)
+    let filtered_accs = pg_query::get_filtered_accessions(
         &store.pg_pool, &request, &organism, acc_filter.as_deref(),
     ).await.map_err(|e| { error!("Postgres: {}", e); AppError::internal(format!("Database error: {}", e)) })?;
 
-    let total_count = rows.len();
-    let mut metadata_rows: Vec<Value> = rows.into_iter()
+    // Get full metadata from DuckDB (which has complete released data including files)
+    let duckdb_rows = {
+        let conn = org_store.duckdb.lock().unwrap();
+        duckdb_query::get_metadata(&conn, &filtered_accs)
+            .map_err(|e| { error!("DuckDB: {}", e); AppError::internal(format!("DuckDB error: {}", e)) })?
+    };
+
+    let total_count = duckdb_rows.len();
+    let mut metadata_rows: Vec<Value> = duckdb_rows.into_iter()
         .filter_map(|(_, json_str)| serde_json::from_str(&json_str).ok())
         .collect();
 
@@ -138,7 +147,7 @@ pub fn apply_sequence_filters(conn: &duckdb::Connection, accessions: Option<&[St
     }
 }
 
-pub fn merge_request(query_params: HashMap<String, String>, body: Option<axum::Json<Value>>) -> LapisRequest {
+pub fn merge_request(query_params: HashMap<String, String>, body: &[u8]) -> LapisRequest {
     let mut merged = HashMap::new();
     for (k, v) in &query_params {
         if v.contains(',') && matches!(k.as_str(), "fields"|"nucleotideMutations"|"aminoAcidMutations"|"nucleotideInsertions"|"aminoAcidInsertions") {
@@ -148,7 +157,25 @@ pub fn merge_request(query_params: HashMap<String, String>, body: Option<axum::J
             merged.insert(k.clone(), Value::String(v.clone()));
         }
     }
-    if let Some(axum::Json(body_val)) = body { if let Value::Object(map) = body_val { for (k, v) in map { merged.insert(k, v); } } }
+    // Parse body: try JSON first, then form-urlencoded
+    if !body.is_empty() {
+        if let Ok(Value::Object(map)) = serde_json::from_slice(body) {
+            for (k, v) in map { merged.insert(k, v); }
+        } else if let Ok(text) = std::str::from_utf8(body) {
+            for (k, v) in form_urlencoded::parse(text.as_bytes()) {
+                let k = k.to_string();
+                let v = v.to_string();
+                if let Some(existing) = merged.get_mut(&k) {
+                    match existing {
+                        Value::Array(arr) => arr.push(Value::String(v)),
+                        _ => { let old = existing.clone(); *existing = Value::Array(vec![old, Value::String(v)]); }
+                    }
+                } else {
+                    merged.insert(k, Value::String(v));
+                }
+            }
+        }
+    }
     let nuc_muts = merged.remove("nucleotideMutations").and_then(|v| match v { Value::Array(arr) => Some(arr.into_iter().filter_map(|x| x.as_str().map(String::from)).collect()), Value::String(s) => Some(s.split(',').map(|x| x.trim().to_string()).collect()), _ => None });
     let aa_muts = merged.remove("aminoAcidMutations").and_then(|v| match v { Value::Array(arr) => Some(arr.into_iter().filter_map(|x| x.as_str().map(String::from)).collect()), Value::String(s) => Some(s.split(',').map(|x| x.trim().to_string()).collect()), _ => None });
     let nuc_ins = merged.remove("nucleotideInsertions").and_then(|v| match v { Value::Array(arr) => Some(arr.into_iter().filter_map(|x| x.as_str().map(String::from)).collect()), Value::String(s) => Some(s.split(',').map(|x| x.trim().to_string()).collect()), _ => None });

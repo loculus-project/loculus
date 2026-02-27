@@ -1,7 +1,6 @@
 use axum::extract::{Path, Query, State};
 use axum::http::header;
 use axum::response::{IntoResponse, Response};
-use serde_json::Value;
 use std::collections::HashMap;
 use tracing::error;
 use crate::duckdb_query;
@@ -63,10 +62,10 @@ fn fasta_response(fasta: String, data_version: &str, request: &crate::types::Lap
     resp
 }
 
-pub async fn handle_unaligned_nuc_sequences(State(store): State<SharedStore>, Path(organism): Path<String>, Query(qp): Query<HashMap<String, String>>, body: Option<axum::Json<Value>>) -> Result<Response, AppError> {
+pub async fn handle_unaligned_nuc_sequences(State(store): State<SharedStore>, Path(organism): Path<String>, Query(qp): Query<HashMap<String, String>>, body: axum::body::Bytes) -> Result<Response, AppError> {
     let org = store.organisms.get(&organism)
         .ok_or_else(|| AppError::not_found(format!("Unknown organism: {}", organism)))?;
-    let req = merge_request(qp, body);
+    let req = merge_request(qp, &body);
     let offset = req.filters.get("offset").and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(0) as usize;
     let limit = req.filters.get("limit").and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(100) as usize;
     let seg = org.reference.nucleotide_sequences.first().map(|s| s.name.clone()).unwrap_or_default();
@@ -77,13 +76,13 @@ pub async fn handle_unaligned_nuc_sequences(State(store): State<SharedStore>, Pa
     Ok(fasta_response(fasta, &dv, &req))
 }
 
-pub async fn handle_unaligned_nuc_sequences_seg(State(store): State<SharedStore>, Path((organism, segment)): Path<(String, String)>, Query(qp): Query<HashMap<String, String>>, body: Option<axum::Json<Value>>) -> Result<Response, AppError> {
+pub async fn handle_unaligned_nuc_sequences_seg(State(store): State<SharedStore>, Path((organism, segment)): Path<(String, String)>, Query(qp): Query<HashMap<String, String>>, body: axum::body::Bytes) -> Result<Response, AppError> {
     let org = store.organisms.get(&organism)
         .ok_or_else(|| AppError::not_found(format!("Unknown organism: {}", organism)))?;
     if !org.reference.nucleotide_sequences.iter().any(|s| s.name == segment) {
         return Err(AppError::bad_request(format!("Unknown segment: {}", segment)));
     }
-    let req = merge_request(qp, body);
+    let req = merge_request(qp, &body);
     let offset = req.filters.get("offset").and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(0) as usize;
     let limit = req.filters.get("limit").and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(100) as usize;
     let accs = get_filtered_accs(&store, org, &organism, &req).await?;
@@ -93,10 +92,10 @@ pub async fn handle_unaligned_nuc_sequences_seg(State(store): State<SharedStore>
     Ok(fasta_response(fasta, &dv, &req))
 }
 
-pub async fn handle_aligned_nuc_sequences(State(store): State<SharedStore>, Path(organism): Path<String>, Query(qp): Query<HashMap<String, String>>, body: Option<axum::Json<Value>>) -> Result<Response, AppError> {
+pub async fn handle_aligned_nuc_sequences(State(store): State<SharedStore>, Path(organism): Path<String>, Query(qp): Query<HashMap<String, String>>, body: axum::body::Bytes) -> Result<Response, AppError> {
     let org = store.organisms.get(&organism)
         .ok_or_else(|| AppError::not_found(format!("Unknown organism: {}", organism)))?;
-    let req = merge_request(qp, body);
+    let req = merge_request(qp, &body);
     let offset = req.filters.get("offset").and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(0) as usize;
     let limit = req.filters.get("limit").and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(100) as usize;
     let ref_seg = org.reference.nucleotide_sequences.first()
@@ -110,13 +109,13 @@ pub async fn handle_aligned_nuc_sequences(State(store): State<SharedStore>, Path
     Ok(fasta_response(fasta, &dv, &req))
 }
 
-pub async fn handle_aligned_nuc_sequences_seg(State(store): State<SharedStore>, Path((organism, segment)): Path<(String, String)>, Query(qp): Query<HashMap<String, String>>, body: Option<axum::Json<Value>>) -> Result<Response, AppError> {
+pub async fn handle_aligned_nuc_sequences_seg(State(store): State<SharedStore>, Path((organism, segment)): Path<(String, String)>, Query(qp): Query<HashMap<String, String>>, body: axum::body::Bytes) -> Result<Response, AppError> {
     let org = store.organisms.get(&organism)
         .ok_or_else(|| AppError::not_found(format!("Unknown organism: {}", organism)))?;
     if !org.reference.nucleotide_sequences.iter().any(|s| s.name == segment) {
         return Err(AppError::bad_request(format!("Unknown segment: {}", segment)));
     }
-    let req = merge_request(qp, body);
+    let req = merge_request(qp, &body);
     let offset = req.filters.get("offset").and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(0) as usize;
     let limit = req.filters.get("limit").and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(100) as usize;
     let fill_len = org.reference.nucleotide_sequences.iter().find(|s| s.name == segment).map(|s| s.sequence.len()).unwrap_or(0);
@@ -127,13 +126,13 @@ pub async fn handle_aligned_nuc_sequences_seg(State(store): State<SharedStore>, 
     Ok(fasta_response(fasta, &dv, &req))
 }
 
-pub async fn handle_aligned_aa_sequences(State(store): State<SharedStore>, Path((organism, gene)): Path<(String, String)>, Query(qp): Query<HashMap<String, String>>, body: Option<axum::Json<Value>>) -> Result<Response, AppError> {
+pub async fn handle_aligned_aa_sequences(State(store): State<SharedStore>, Path((organism, gene)): Path<(String, String)>, Query(qp): Query<HashMap<String, String>>, body: axum::body::Bytes) -> Result<Response, AppError> {
     let org = store.organisms.get(&organism)
         .ok_or_else(|| AppError::not_found(format!("Unknown organism: {}", organism)))?;
     if !org.reference.genes.iter().any(|g| g.name == gene) {
         return Err(AppError::bad_request(format!("Unknown gene: {}", gene)));
     }
-    let req = merge_request(qp, body);
+    let req = merge_request(qp, &body);
     let offset = req.filters.get("offset").and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(0) as usize;
     let limit = req.filters.get("limit").and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(100) as usize;
     let fill_len = org.reference.genes.iter().find(|g| g.name == gene).map(|g| g.sequence.len()).unwrap_or(0);

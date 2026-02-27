@@ -451,6 +451,18 @@ pub fn get_aa_insertion_counts(conn: &duckdb::Connection, accessions: Option<&[S
     Ok(records)
 }
 
+/// Get full metadata JSON for given accession versions from DuckDB.
+pub fn get_metadata(conn: &duckdb::Connection, accessions: &[String]) -> Result<Vec<(String, String)>, duckdb::Error> {
+    if accessions.is_empty() { return Ok(vec![]); }
+    let af = acc_filter(Some(accessions));
+    let sql = format!("SELECT accession_version, metadata_json FROM metadata WHERE TRUE{af}");
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map([], |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)))?;
+    let mut result = Vec::new();
+    for row in rows { result.push(row?); }
+    Ok(result)
+}
+
 pub fn get_sequences(conn: &duckdb::Connection, accessions: &[String], table: &str, name_col: &str, name_value: &str) -> Result<Vec<(String, String)>, duckdb::Error> {
     if accessions.is_empty() { return Ok(vec![]); }
     let af = acc_filter(Some(accessions));
