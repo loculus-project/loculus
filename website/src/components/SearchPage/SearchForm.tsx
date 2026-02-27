@@ -161,6 +161,7 @@ export const SearchForm = ({
                 referenceSelection?.referenceIdentifierField,
             ),
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
+            order: filter.order ?? Number.POSITIVE_INFINITY,
         }));
 
     const { sampleFields, sequenceFieldsBySegment } = useMemo(() => {
