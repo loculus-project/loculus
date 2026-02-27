@@ -385,6 +385,20 @@ class AssemblyCreationTests(unittest.TestCase):
         )
         self.assertEqual(data["MOLECULETYPE"], "genomic RNA")
         self.assertTrue(data["ASSEMBLYNAME"].startswith("LOC_0001TLY.1"))
+        expected_keys = {
+            "STUDY",
+            "SAMPLE",
+            "ASSEMBLYNAME",
+            "ASSEMBLY_TYPE",
+            "COVERAGE",
+            "PROGRAM",
+            "PLATFORM",
+            "DESCRIPTION",
+            "MOLECULETYPE",
+            "AUTHORS",
+            "ADDRESS",
+        }
+        self.assertEqual(set(data.keys()), expected_keys)
 
     def test_get_chromsome_accessions(self):
         insdc_accession_range = "OZ189935-OZ189936"
