@@ -1,4 +1,5 @@
 use serde_json::Value;
+use tracing::info;
 use crate::types::{LapisRequest, CONTROL_PARAMS};
 
 /// System fields that map to actual database columns rather than metadata JSON.
@@ -332,6 +333,8 @@ pub async fn get_filtered_accessions(
         "SELECT se.accession || '.' || se.version as accession_version {BASE_JOIN} WHERE {where_clause}{av_clause}"
     );
 
+    info!("PG filter SQL: {}", sql);
+    info!("PG filter binds: {:?}", bind_values);
     let mut query = sqlx::query_scalar::<_, String>(&sql);
     for val in &bind_values { query = query.bind(val); }
     query.fetch_all(pool).await

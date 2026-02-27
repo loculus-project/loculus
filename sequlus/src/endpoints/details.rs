@@ -3,7 +3,7 @@ use axum::extract::{Path, Query, State};
 use axum::response::Response;
 use serde_json::{json, Value};
 use std::collections::HashMap;
-use tracing::error;
+use tracing::{error, info};
 
 use crate::duckdb_query;
 use crate::pg_query;
@@ -21,6 +21,7 @@ pub async fn handle_details(
     let org_store = store.organisms.get(&organism)
         .ok_or_else(|| AppError::not_found(format!("Unknown organism: {}", organism)))?;
     let request = merge_request(query_params, &body);
+    info!("Details {}: filters={:?}", organism, request.filters.keys().collect::<Vec<_>>());
     let offset = request.filters.get("offset").and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(0) as usize;
     let limit = request.filters.get("limit").and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))).unwrap_or(100) as usize;
     let fields = parse_fields(&request.filters);
@@ -40,6 +41,7 @@ pub async fn handle_details(
     let filtered_accs = pg_query::get_filtered_accessions(
         &store.pg_pool, &request, &organism, acc_filter.as_deref(),
     ).await.map_err(|e| { error!("Postgres: {}", e); AppError::internal(format!("Database error: {}", e)) })?;
+    info!("Details {}: pg_filtered={} accessions", organism, filtered_accs.len());
 
     // Get full metadata from DuckDB (which has complete released data including files)
     let duckdb_rows = {
