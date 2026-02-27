@@ -372,13 +372,16 @@ class AssemblyCreationTests(unittest.TestCase):
         self.assertEqual(data["SAMPLE"], sample_accession)
         self.assertEqual(data["ADDRESS"], "Fake center name, Basel, BS, Switzerland")
         self.assertEqual(data["ASSEMBLY_TYPE"], "isolate")
-        self.assertEqual(data["AUTHORS"], "Umair M., Haider S.A., Jamal Z., Ammar M., Hakim R., Ali Q., Salman M.;")
+        self.assertEqual(
+            data["AUTHORS"],
+            ("Umair M., Haider S.A., Jamal Z., Ammar M., Hakim R., Ali Q., Salman M.;"),
+        )
         self.assertEqual(data["COVERAGE"], "1")
         self.assertEqual(data["PROGRAM"], "Ivar")
         self.assertEqual(data["PLATFORM"], "Illumina")
         self.assertEqual(
             data["DESCRIPTION"],
-            "Original sequence submitted to Loculus with accession: LOC_0001TLY, version: 1"
+            "Original sequence submitted to Loculus with accession: LOC_0001TLY, version: 1",
         )
         self.assertEqual(data["MOLECULETYPE"], "genomic RNA")
         self.assertTrue(data["ASSEMBLYNAME"].startswith("LOC_0001TLY.1"))
