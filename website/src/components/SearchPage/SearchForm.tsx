@@ -6,6 +6,7 @@ import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import { Button } from '../common/Button';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
 import { ReferenceSelector } from './ReferenceSelector.tsx';
+import { SegmentFilter } from './SegmentFilter.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
@@ -333,6 +334,15 @@ export const SearchForm = ({
 
                         <section className='flex flex-col gap-1.5 mb-4'>
                             <CollapsibleSection title='Sequence Filters' open>
+                                {referenceGenomesInfo.isMultiSegmented && (
+                                    <SegmentFilter
+                                        referenceGenomesInfo={referenceGenomesInfo}
+                                        fieldValues={fieldValues}
+                                        setSomeFieldValues={setSomeFieldValues}
+                                        filterSchema={filterSchema}
+                                    />
+                                )}
+
                                 {!referenceGenomesInfo.isMultiSegmented &&
                                     segmentNames.map((segmentName) => (
                                         <div key={segmentName}>{renderSegmentContents(segmentName)}</div>
