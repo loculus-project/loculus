@@ -200,7 +200,7 @@ pytest --ignore=./scripts/test_ena_submission_integration.py --ignore=./scripts/
 You can also use the `deposition_dry_run.py` script to produce the same output files/XMLs that the pipeline would produce in order to submit to ENA. This is a good test if you would like to first verify what your submission to ENA will look like. Make sure that you have the same `config.yaml` that will be used in production (use `../deploy.py` to generate this). Also note that the generator can only produce output for one submission at a time.
 
 ```sh
-python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/approved_ena_submission_list.json --mode=assembly --center-name="Yale" --config-file=config/config.yaml
+python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/approved_ena_submission_list.json --mode=assembly --center-name="Stellenbosch University" --bioproject="PRJEB108342" --biosample="SAMEA121577075" --config-file=config/config.yaml
 ```
 
 > **_NOTE:_**
