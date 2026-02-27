@@ -152,7 +152,7 @@
         "orderOnDetailsPage": {
           "groups": ["metadata"],
           "type": "number",
-          "description": "Determines the order on the sequence details page."
+          "description": "Determines the order on the sequence details page. Lower numbers come first. Missing values are treated as infinity, and fields will be ordered in the same order as they are defined in the config after all fields with an order value."
         },
         "hideInSearchResultsTable": {
           "groups": ["metadata"],
