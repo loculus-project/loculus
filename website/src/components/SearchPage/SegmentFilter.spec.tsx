@@ -99,11 +99,8 @@ describe('SegmentFilter', () => {
             />,
         );
 
-        // S comes before L alphabetically; find by label text via surrounding label
-        const labels = screen.getAllByText(/^[SL]$/);
-        const sLabel = labels.find((el) => el.textContent === 'S')!;
-        const sCheckbox = sLabel.closest('label')!.querySelector('input[type="checkbox"]')!;
-        expect(sCheckbox.checked).toBe(true);
+        const sCheckbox = screen.getByRole('checkbox', { name: 'S' });
+        expect(sCheckbox).toBeChecked();
     });
 
     it('renders checkbox as unchecked when length field value is empty', () => {
