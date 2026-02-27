@@ -116,6 +116,7 @@ export type SegmentedMutationStrings = z.infer<typeof segmentedMutationStrings>;
 export type MetadataFilter = Metadata & {
     fieldGroup?: string;
     grouped?: false;
+    order?: number;
     orderInSearchDisplay?: number;
     fieldGroupDisplayName?: string;
     isVisible?: boolean;
@@ -133,6 +134,7 @@ export type GroupedMetadataFilter = {
     header?: string;
     isSequenceFilter?: Metadata['isSequenceFilter'];
     relatesToSegment?: Metadata['relatesToSegment'];
+    order?: number;
     orderInSearchDisplay?: number;
 };
 
