@@ -40,7 +40,7 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
                         schema.referenceIdentifierField,
                     ),
                     isChecked: columnVisibilities.get(field.name)?.isChecked ?? false,
-                    order: field.order ?? Number.POSITIVE_INFINITY,
+                    order: field.order,
                 })),
         [
             schema.metadata,
