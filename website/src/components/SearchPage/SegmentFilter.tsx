@@ -1,4 +1,4 @@
-import { type FC } from 'react';
+import { useMemo, type FC } from 'react';
 
 import type { FieldValues, SetSomeFieldValues } from '../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
@@ -25,7 +25,7 @@ export const SegmentFilter: FC<SegmentFilterProps> = ({
 }) => {
     const segmentNames = getSegmentNames(referenceGenomesInfo);
 
-    const ungroupedFilters = filterSchema.ungroupedMetadataFilters();
+    const ungroupedFilters = useMemo(() => filterSchema.ungroupedMetadataFilters(), [filterSchema]);
 
     // Only show segments that have a length filter field in the schema
     const segmentsWithLengthFields = segmentNames.filter((segmentName) => {
