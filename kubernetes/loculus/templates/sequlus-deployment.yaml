@@ -1,7 +1,6 @@
 {{- if .Values.useSequlus }}
 {{- $enabledOrganismsResult := (include "loculus.enabledOrganisms" . | fromJson) }}
 {{- $enabledOrganismsList := $enabledOrganismsResult.organisms }}
-{{- $firstOrganism := (first $enabledOrganismsList).key }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -82,10 +81,10 @@ spec:
             timeoutSeconds: 3
           readinessProbe:
             httpGet:
-              path: /{{ $firstOrganism }}/sample/info
+              path: /health
               port: 8090
             periodSeconds: 10
-            failureThreshold: 120
+            failureThreshold: 6
             timeoutSeconds: 5
           livenessProbe:
             httpGet:
