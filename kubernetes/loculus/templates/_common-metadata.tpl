@@ -314,6 +314,9 @@ organisms:
   {{- if .orderOnDetailsPage }}
   orderOnDetailsPage: {{ .orderOnDetailsPage }}
   {{- end }}
+  {{- if .orderInSearchDisplay }}
+  orderInSearchDisplay: {{ .orderInSearchDisplay }}
+  {{- end }}
   {{- if .includeInDownloadsByDefault }}
   includeInDownloadsByDefault: {{ .includeInDownloadsByDefault }}
   {{- end }}
