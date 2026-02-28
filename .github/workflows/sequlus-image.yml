@@ -1,0 +1,73 @@
+name: sequlus-image
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      build_arm:
+        type: boolean
+        description: "Build for ARM as well"
+        default: false
+        required: true
+  workflow_call:
+    inputs:
+      build_arm:
+        type: string
+        description: "Build for ARM as well"
+        default: "false"
+        required: true
+env:
+  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/sequlus
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+  BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
+  sha: ${{ github.event.pull_request.head.sha || github.sha }}
+defaults:
+  run:
+    working-directory: ./sequlus
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-sequlus-${{github.event.inputs.build_arm}}
+  cancel-in-progress: true
+jobs:
+  sequlus-image:
+    name: Build sequlus Docker Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+      checks: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Shorten sha
+        run: echo "sha=${sha::7}" >> $GITHUB_ENV
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Docker metadata
+        id: dockerMetadata
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ env.BRANCH_NAME }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=commit-${{ env.sha }}
+            type=raw,value=${{ env.BRANCH_NAME }}-arm,enable=${{ env.BUILD_ARM }}
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./sequlus
+          push: true
+          tags: ${{ steps.dockerMetadata.outputs.tags }}
+          cache-from: |
+            type=gha,scope=sequlus-${{ github.ref }}
+            type=gha,scope=sequlus-refs/heads/main
+          cache-to: type=gha,mode=max,scope=sequlus-${{ github.ref }}
+          platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}

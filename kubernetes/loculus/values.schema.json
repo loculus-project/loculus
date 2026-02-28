@@ -1420,6 +1420,12 @@
       "default": false,
       "description": "If true, disables ENA (European Nucleotide Archive) submission service."
     },
+    "useSequlus": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, deploys sequlus (Rust-based LAPIS replacement) instead of per-organism LAPIS+SILO pairs."
+    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",
@@ -1639,11 +1645,12 @@
     "images": {
       "groups": ["general"],
       "type": "object",
-      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend.`",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `sequlus`, `website` and `backend.`",
       "properties": {
         "lapis": { "$ref": "#/definitions/imageSpec" },
         "lapisSilo": { "$ref": "#/definitions/imageSpec" },
         "loculusSilo": { "$ref": "#/definitions/imageSpec" },
+        "sequlus": { "$ref": "#/definitions/imageSpec" },
         "website": { "$ref": "#/definitions/imageSpec" },
         "backend": { "$ref": "#/definitions/imageSpec" }
       },
