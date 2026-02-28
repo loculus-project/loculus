@@ -2,6 +2,7 @@ package org.loculus.backend.service.crossref
 
 import mu.KotlinLogging
 import org.jsoup.Jsoup
+import org.loculus.backend.service.jacksonObjectMapper
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -12,6 +13,10 @@ import java.io.PrintWriter
 import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URLEncoder
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -22,6 +27,7 @@ private val log = KotlinLogging.logger { }
 @ConfigurationProperties(prefix = "crossref")
 data class CrossRefServiceProperties(
     val endpoint: String?,
+    val eventEndpoint: String?,
     val username: String?,
     val password: String?,
     val doiPrefix: String?,
@@ -217,5 +223,40 @@ class CrossRefService(final val properties: CrossRefServiceProperties) {
         } else {
             throw RuntimeException("DOI creation request returned a " + responseCode.toString() + " response status")
         }
+    }
+
+    fun getCitationsPerYear(doi: String): Map<Long, Long> {
+        val client = HttpClient.newHttpClient()
+        val citations = mutableMapOf<Long, Long>()
+        var cursor = "*"
+
+        while (true) {
+            val url = (properties.eventEndpoint ?: "https://api.eventdata.crossref.org") +
+                "/v1/events?obj-id=doi:${URLEncoder.encode(doi, "UTF-8")}&source=crossref&rows=1000&cursor=" +
+                URLEncoder.encode(cursor, "UTF-8")
+            val request = HttpRequest.newBuilder(URI(url)).GET().build()
+            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+            if (response.statusCode() != 200) {
+                log.warn { "Failed to fetch CrossRef citations for $doi: ${response.statusCode()}" }
+                break
+            }
+
+            val root = jacksonObjectMapper.readTree(response.body())
+            val message = root["message"]
+            val events = message["events"]
+            events.forEach { node ->
+                val occurredAt = node["occurred_at"].asText()
+                val year = Instant.parse(occurredAt).atZone(ZoneId.of("UTC")).year.toLong()
+                citations[year] = (citations[year] ?: 0) + 1
+            }
+
+            val nextCursor = message["next-cursor"].asText()
+            if (nextCursor == cursor || events.isEmpty()) {
+                break
+            }
+            cursor = nextCursor
+        }
+
+        return citations
     }
 }
