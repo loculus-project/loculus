@@ -1,0 +1,91 @@
+{{- if .Values.podDisruptionBudgets.enabled }}
+{{- if not .Values.disableBackend }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: loculus-backend-pdb
+spec:
+  minAvailable: {{ .Values.podDisruptionBudgets.backend.minAvailable | default 1 }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: backend
+{{- end }}
+{{- if not .Values.disableWebsite }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: loculus-website-pdb
+spec:
+  minAvailable: {{ .Values.podDisruptionBudgets.website.minAvailable | default 1 }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: website
+{{- end }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: keycloak-pdb
+spec:
+  minAvailable: {{ .Values.podDisruptionBudgets.keycloak.minAvailable | default 1 }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: keycloak
+{{- if .Values.minio.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: minio-pdb
+spec:
+  minAvailable: {{ .Values.podDisruptionBudgets.minio.minAvailable | default 1 }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: minio
+{{- end }}
+{{- range $key, $organism := .Values.organisms }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: loculus-silo-{{ $key }}-pdb
+spec:
+  minAvailable: {{ $.Values.podDisruptionBudgets.silo.minAvailable | default 1 }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: silo-{{ $key }}
+{{- end }}
+{{- if .Values.ena.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ena-submission-pdb
+spec:
+  minAvailable: {{ .Values.podDisruptionBudgets.enaSubmission.minAvailable | default 1 }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-ena-submission
+{{- end }}
+{{- range $key, $organism := .Values.organisms }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: loculus-lapis-{{ $key }}-pdb
+spec:
+  minAvailable: {{ $.Values.podDisruptionBudgets.lapis.minAvailable | default 1 }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: lapis-{{ $key }}
+{{- end }}
+{{- end }}

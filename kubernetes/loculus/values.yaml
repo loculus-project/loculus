@@ -2515,3 +2515,36 @@ defaultResources:
 ingest:
   ncbiGatewayUrl: null
   mirrorBucket: null
+podDisruptionBudgets:
+  enabled: true
+  backend:
+    minAvailable: 1
+  website:
+    minAvailable: 1
+  keycloak:
+    minAvailable: 1
+  minio:
+    minAvailable: 1
+  silo:
+    minAvailable: 1
+  enaSubmission:
+    minAvailable: 1
+  lapis:
+    minAvailable: 1
+autoscaling:
+  enabled: false
+  backend:
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  website:
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  lapis:
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
