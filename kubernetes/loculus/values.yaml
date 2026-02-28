@@ -1870,6 +1870,7 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 3052518
+        grouping_override: https://raw.githubusercontent.com/pathoplexus/curation_data/refs/heads/main/grouping_override/cchf/grouping.json
         segment_identification:
           method: "align"
           nextclade_dataset_name: community/pathoplexus/cchfv
