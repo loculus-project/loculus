@@ -1,8 +1,8 @@
 import type { APIContext } from 'astro';
 import { defineMiddleware } from 'astro/middleware';
-import jsonwebtoken from 'jsonwebtoken';
+import jsonwebtoken, { type JwtPayload } from 'jsonwebtoken';
 import JwksRsa from 'jwks-rsa';
-import { err, ok, ResultAsync } from 'neverthrow';
+import { err, ok } from 'neverthrow';
 import { type BaseClient, type TokenSet } from 'openid-client';
 
 import { getConfiguredOrganisms, getRuntimeConfig } from '../config.ts';
@@ -22,40 +22,40 @@ enum TokenVerificationError {
 
 const logger = getInstanceLogger('LoginMiddleware');
 
-async function getValidTokenAndUserInfoFromCookie(context: APIContext, client: BaseClient) {
-    logger.debug(`Trying to get token and user info from cookie`);
+async function getValidTokenAndVerifiedTokenFromCookie(context: APIContext, client: BaseClient) {
+    logger.debug(`Trying to get token and verified token from cookie`);
     const token = await getTokenFromCookie(context, client);
     if (token !== undefined) {
-        const userInfo = await getUserInfo(token, client);
+        const verifiedToken = await verifyToken(token.accessToken, client);
 
-        if (userInfo.isErr()) {
-            logger.debug(`Cookie token found but could not get user info`);
+        if (verifiedToken.isErr()) {
+            logger.debug(`Cookie token found but could not be verified`);
             deleteCookie(context);
             return undefined;
         }
-        logger.debug(`Token and valid user info found in cookie`);
+        logger.debug(`Token and verified token found in cookie`);
         return {
             token,
-            userInfo,
+            verifiedToken,
         };
     }
     return undefined;
 }
 
-async function getValidTokenAndUserInfoFromParams(context: APIContext, client: BaseClient) {
-    logger.debug(`Trying to get token and user info from params`);
+async function getValidTokenAndVerifiedTokenFromParams(context: APIContext, client: BaseClient) {
+    logger.debug(`Trying to get token and verified token from params`);
     const token = await getTokenFromParams(context, client);
     if (token !== undefined) {
-        const userInfo = await getUserInfo(token, client);
+        const verifiedToken = await verifyToken(token.accessToken, client);
 
-        if (userInfo.isErr()) {
-            logger.debug(`Token found in params but could not get user info`);
+        if (verifiedToken.isErr()) {
+            logger.debug(`Token found in params but could not be verified`);
             return undefined;
         }
-        logger.debug(`Token and valid user info found in params`);
+        logger.debug(`Token and verified token found in params`);
         return {
             token,
-            userInfo,
+            verifiedToken,
         };
     }
     return undefined;
@@ -63,18 +63,18 @@ async function getValidTokenAndUserInfoFromParams(context: APIContext, client: B
 
 export const authMiddleware = defineMiddleware(async (context, next) => {
     let token: TokenCookie | undefined;
-    let userInfo;
+    let verifiedToken;
 
     const client = await KeycloakClientManager.getClient();
     if (client !== undefined) {
         // Only run this when keycloak up
-        const cookieResult = await getValidTokenAndUserInfoFromCookie(context, client);
+        const cookieResult = await getValidTokenAndVerifiedTokenFromCookie(context, client);
         token = cookieResult?.token;
-        userInfo = cookieResult?.userInfo;
+        verifiedToken = cookieResult?.verifiedToken;
         if (token === undefined) {
-            const paramResult = await getValidTokenAndUserInfoFromParams(context, client);
+            const paramResult = await getValidTokenAndVerifiedTokenFromParams(context, client);
             token = paramResult?.token;
-            userInfo = paramResult?.userInfo;
+            verifiedToken = paramResult?.verifiedToken;
 
             if (token !== undefined) {
                 logger.debug(`Token found in params, setting cookie`);
@@ -91,7 +91,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         getConfiguredOrganisms().map((it) => it.key),
     );
 
-    if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {
+    if (enforceLogin && (verifiedToken === undefined || verifiedToken.isErr())) {
         if (client === undefined) {
             logger.error(`Keycloak client not available, cannot redirect to auth`);
             return context.redirect('/503?service=Authentication');
@@ -99,7 +99,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         return redirectToAuth(context);
     }
 
-    if (token === undefined || userInfo === undefined) {
+    if (token === undefined || verifiedToken === undefined) {
         context.locals.session = {
             isLoggedIn: false,
         };
@@ -107,11 +107,11 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         return next();
     }
 
-    if (userInfo.isErr()) {
+    if (verifiedToken.isErr()) {
         context.locals.session = {
             isLoggedIn: false,
         };
-        logger.debug(`Error getting user info: ${userInfo.error}`);
+        logger.debug(`Error verifying token: ${JSON.stringify(verifiedToken.error)}`);
         logger.debug(`Clearing auth cookies.`);
         deleteCookie(context);
         return next();
@@ -120,10 +120,10 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     context.locals.session = {
         isLoggedIn: true,
         user: {
-            name: userInfo.value.name ?? 'Name not set',
-            username: userInfo.value.preferred_username,
-            email: userInfo.value.email,
-            emailVerified: userInfo.value.email_verified,
+            name: verifiedToken.value.name ?? 'Name not set',
+            username: verifiedToken.value.preferred_username as string,
+            email: verifiedToken.value.email as string,
+            emailVerified: verifiedToken.value.email_verified as boolean,
         },
         token,
     };
@@ -181,7 +181,7 @@ async function verifyToken(accessToken: string, client: BaseClient) {
 
     try {
         const signingKey = await jwksClient.getSigningKey(kid);
-        return ok(jsonwebtoken.verify(accessToken, signingKey.getPublicKey()));
+        return ok(jsonwebtoken.verify(accessToken, signingKey.getPublicKey()) as JwtPayload);
     } catch (error) {
         logger.debug(`Error verifying token: ${error}`);
         switch ((error as Error).name) {
@@ -203,13 +203,6 @@ async function verifyToken(accessToken: string, client: BaseClient) {
                 });
         }
     }
-}
-
-async function getUserInfo(token: TokenCookie, client: BaseClient) {
-    return ResultAsync.fromPromise(client.userinfo(token.accessToken), (error) => {
-        logger.debug(`Error getting user info: ${error}`);
-        return error;
-    });
 }
 
 async function getTokenFromParams(context: APIContext, client: BaseClient): Promise<TokenCookie | undefined> {
