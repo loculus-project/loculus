@@ -52,6 +52,19 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState<DetailsJson | null>(null);
     const [isError, setIsError] = useState(false);
+    const [showLoading, setShowLoading] = useState(false);
+
+    useEffect(() => {
+        let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
+        if (isLoading) {
+            loadingTimeout = setTimeout(() => setShowLoading(true), 500);
+        } else {
+            setShowLoading(false);
+        }
+        return () => {
+            if (loadingTimeout) clearTimeout(loadingTimeout);
+        };
+    }, [isLoading]);
 
     useEffect(() => {
         if (seqId) {
@@ -83,7 +96,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                 />
             )}
 
-            {isLoading ? (
+            {showLoading ? (
                 <div>Loading...</div>
             ) : data !== null && !isError ? (
                 <div className='px-6'>
@@ -95,7 +108,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                         sequenceFlaggingConfig={data.isRevocation ? undefined : sequenceFlaggingConfig}
                     />
                 </div>
-            ) : (
+            ) : isLoading ? null : (
                 <div>Failed to load sequence data</div>
             )}
         </div>
