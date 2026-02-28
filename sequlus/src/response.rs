@@ -46,6 +46,16 @@ impl IntoResponse for AppError {
     }
 }
 
+/// Check if a JSON value represents a truthy "downloadAsFile" parameter.
+/// Handles both JSON boolean `true` and string `"true"`.
+pub fn is_download(request: &LapisRequest) -> bool {
+    match request.filters.get("downloadAsFile") {
+        Some(serde_json::Value::Bool(b)) => *b,
+        Some(serde_json::Value::String(s)) => s == "true",
+        _ => false,
+    }
+}
+
 /// Compress bytes with the requested compression algorithm.
 /// Returns (compressed_bytes, encoding_name, file_extension).
 pub fn compress_bytes(data: &[u8], compression: &str) -> Option<(Vec<u8>, &'static str, &'static str)> {
@@ -127,7 +137,7 @@ fn build_delimited_response(data: &Value, format: &str, request: &LapisRequest, 
     let text = values_to_delimited(data, delimiter, include_header);
     let ct = if base_format == "csv" { "text/csv;charset=UTF-8" } else { "text/tab-separated-values;charset=UTF-8" };
 
-    let download = request.filters.get("downloadAsFile").and_then(|v| v.as_str()) == Some("true");
+    let download = is_download(request);
     let basename = request.filters.get("downloadFileBasename")
         .and_then(|v| v.as_str()).unwrap_or("data");
 

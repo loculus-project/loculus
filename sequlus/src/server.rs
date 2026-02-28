@@ -36,6 +36,7 @@ pub fn create_router(state: SharedStore) -> Router {
         .route("/{organism}/sample/alignedAminoAcidSequences/{gene}", post(sequences::handle_aligned_aa_sequences).get(sequences::handle_aligned_aa_sequences))
         .route("/{organism}/sample/lineageDefinition/{column}", get(lineage_definition))
         .route("/{organism}/sample/info", get(info::handle_info))
+        .route("/{organism}/sample/referenceGenome", get(info::handle_reference_genome))
         .layer(CorsLayer::permissive())
         .with_state(state)
 }

@@ -4,6 +4,7 @@ use serde_json::json;
 use tracing::error;
 use crate::response::AppError;
 use crate::store::SharedStore;
+use crate::types::ReferenceGenomes;
 
 pub async fn handle_info(State(store): State<SharedStore>, Path(organism): Path<String>) -> Result<Response, AppError> {
     let org = store.organisms.get(&organism)
@@ -35,4 +36,10 @@ pub async fn handle_info(State(store): State<SharedStore>, Path(organism): Path<
         resp.headers_mut().insert("Lapis-Data-Version", val);
     }
     Ok(resp)
+}
+
+pub async fn handle_reference_genome(State(store): State<SharedStore>, Path(organism): Path<String>) -> Result<Json<ReferenceGenomes>, AppError> {
+    let org = store.organisms.get(&organism)
+        .ok_or_else(|| AppError::not_found(format!("Unknown organism: {}", organism)))?;
+    Ok(Json(org.reference.clone()))
 }

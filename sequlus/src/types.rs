@@ -17,7 +17,7 @@ pub struct ReleasedRecord {
     pub amino_acid_insertions: HashMap<String, Vec<String>>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ReferenceGenomes {
     #[serde(default, rename = "nucleotideSequences")]
     pub nucleotide_sequences: Vec<NamedSequence>,
@@ -25,7 +25,7 @@ pub struct ReferenceGenomes {
     pub genes: Vec<NamedSequence>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NamedSequence {
     pub name: String,
     pub sequence: String,

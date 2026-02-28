@@ -98,14 +98,13 @@ fn fasta_response(fasta: String, data_version: &str, request: &crate::types::Lap
         .unwrap_or("")
         .to_ascii_lowercase();
 
-    let download = request.filters.get("downloadAsFile")
-        .and_then(|v| v.as_str()) == Some("true");
+    let download = crate::response::is_download(request);
     let basename = request.filters.get("downloadFileBasename")
         .and_then(|v| v.as_str()).unwrap_or("sequences");
 
     let mut resp = if !compression.is_empty() {
         if let Some((compressed, encoding, ext)) = compress_bytes(fasta.as_bytes(), &compression) {
-            let mut r = ([(header::CONTENT_TYPE, "text/x-fasta")], compressed).into_response();
+            let mut r = ([(header::CONTENT_TYPE, "text/x-fasta;charset=UTF-8")], compressed).into_response();
             r.headers_mut().insert(header::CONTENT_ENCODING, encoding.parse().unwrap());
             if download {
                 if let Ok(val) = format!("attachment; filename={}.fasta{}", basename, ext).parse() {
@@ -114,10 +113,10 @@ fn fasta_response(fasta: String, data_version: &str, request: &crate::types::Lap
             }
             r
         } else {
-            ([(header::CONTENT_TYPE, "text/x-fasta")], fasta).into_response()
+            ([(header::CONTENT_TYPE, "text/x-fasta;charset=UTF-8")], fasta).into_response()
         }
     } else {
-        let mut r = ([(header::CONTENT_TYPE, "text/x-fasta")], fasta).into_response();
+        let mut r = ([(header::CONTENT_TYPE, "text/x-fasta;charset=UTF-8")], fasta).into_response();
         if download {
             if let Ok(val) = format!("attachment; filename={}.fasta", basename).parse() {
                 r.headers_mut().insert(header::CONTENT_DISPOSITION, val);
