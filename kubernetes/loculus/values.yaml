@@ -2429,6 +2429,20 @@ replicas:
   website: 1
   backend: 1
   lapis: 1
+  silo: 1
+  keycloak: 1
+podDisruptionBudgets:
+  enabled: false
+  backend:
+    minAvailable: 1
+  website:
+    minAvailable: 1
+  keycloak:
+    minAvailable: 1
+  silo:
+    minAvailable: 1
+  lapis:
+    minAvailable: 1
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
 gitHubMainUrl: https://github.com/loculus-project/loculus
 resources:
