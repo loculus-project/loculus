@@ -1,0 +1,5 @@
+.snakemake/
+results/
+.DS_Store
+.ruff_cache
+config/config.yaml

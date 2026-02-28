@@ -122,7 +122,7 @@ export function getConfiguredOrganisms() {
     }));
 }
 
-function getConfig(organism: string): InstanceConfig {
+export function getConfig(organism: string): InstanceConfig {
     const websiteConfig = getWebsiteConfig();
     if (!(organism in websiteConfig.organisms)) {
         throw new Error(`No configuration for organism ${organism}`);

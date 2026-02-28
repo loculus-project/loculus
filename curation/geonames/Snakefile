@@ -1,0 +1,34 @@
+
+rule download_geonames_table:
+    output:
+        results="results/allCountries.txt",
+    shell:
+        """
+        wget https://download.geonames.org/export/dump/allCountries.zip -O results/allCountries.zip 
+        unzip results/allCountries.zip -d results/
+        """
+
+
+rule filter_geonames_table:
+    input:
+        "results/allCountries.txt",
+    output:
+        "results/adm_dropped.tsv",
+    shell:
+        """
+        ./bin/tsv-filter --str-eq 7:A {input} | 
+        (echo -e "geonameid\tname\tasciiname\talternatenames\tlatitude\tlongitude\tfeature class\tfeature code\tcountry code\tcc2\tadmin1 code\tadmin2 code\tadmin3 code\tadmin4 code\tpopulation\televation\tdem\ttimezone\tmodification date" && cat) | 
+        ./bin/tsv-select -f 3,8,9,11,12 > {output}
+        """
+
+
+rule create_geonames_json:
+    input:
+        adm_tsv="results/adm_dropped.tsv",
+        country_code_map="insdc_country_code_mapping.yml",
+    output:
+        "results/admin_divisions_map.json",
+    shell:
+        """
+        python create_geolocation_json.py --geonames-tsv {input.adm_tsv} --insdc-country-code-map {input.country_code_map} --output-json {output}
+        """
