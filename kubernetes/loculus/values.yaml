@@ -1672,7 +1672,7 @@ defaultOrganisms:
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF9b.fasta]]"
               - name: S
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
-  dummy-organism-with-files:
+  test-organism-files:
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
       organismName: "Test organism (with files)"
@@ -1684,21 +1684,41 @@ defaultOrganisms:
             - name: raw_reads
       files:
         - name: raw_reads
-      metadata: *dummyMetadata
+      metadata:
+        - name: date
+          type: date
+          initiallyVisible: true
+          header: "Collection Details"
+        - name: country
+          initiallyVisible: true
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: "Collection Details"
       website:
         tableColumns:
           - country
-          - division
           - date
         defaultOrder: descending
         defaultOrderBy: date
     preprocessing:
       - version: 1
-        image: ghcr.io/loculus-project/preprocessing-dummy
+        image: ghcr.io/loculus-project/preprocessing-nextclade
         args:
-          - "--watch"
-          - "--disableConsensusSequences"
-    referenceGenomes: []
+          - "prepro"
+        configFile:
+          log_level: DEBUG
+          batch_size: 100
+          segments:
+            - name: main
+              references:
+              - name: singleReference
+                genes: []
+    referenceGenomes:
+      - name: main
+        references:
+          - name: singleReference
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
   not-aligned-organism:
     enabled: true
     schema:

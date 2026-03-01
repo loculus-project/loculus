@@ -96,7 +96,7 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         await this.page.getByLabel('Author affiliations').fill(authorAffiliations);
     }
 
-    async fillSubmissionFormDummyOrganism({
+    async fillSubmissionFormFilesOrganism({
         submissionId,
         country,
         date,
