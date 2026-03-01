@@ -1,0 +1,66 @@
+# Source: loculus/templates/loculus-database-standin.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-database-init
+data:
+  init-pg-stat.sql: |
+    CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+---
+# Source: loculus/templates/loculus-database-standin.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-database
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: database
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: database
+    spec:
+      containers:
+      - name: database
+        image: postgres:15.12
+        args:
+          - "-c"
+          - "shared_preload_libraries=pg_stat_statements"
+          - "-c"
+          - "pg_stat_statements.track=all"
+        resources:
+          requests:
+            memory: "200Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "unsecure"
+        - name: POSTGRES_DB
+          value: "loculus"
+        - name: POSTGRES_HOST_AUTH_METHOD
+          value: "trust"
+        
+        - name: LOCULUS_VERSION
+          value: latest
+        volumeMounts:
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+      - name: init-scripts
+        configMap:
+          name: loculus-database-init
+---

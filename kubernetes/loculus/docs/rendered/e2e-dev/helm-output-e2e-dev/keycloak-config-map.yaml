@@ -1,0 +1,1860 @@
+# Source: loculus/templates/keycloak-config-map.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-config
+data:
+  keycloak-config.json: |
+      {
+        "realm": "loculus",
+        "enabled": true,
+        "verifyEmail": false,
+        "resetPasswordAllowed": true,
+        "registrationAllowed": true,
+        "accessTokenLifespan": 36000,
+        "ssoSessionIdleTimeout": 36000,
+        "actionTokenGeneratedByUserLifespan": 1800,
+        "users": [
+          {
+            "username": "testuser_0_firefox",
+            "enabled": true,
+            "email": "testuser_0_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "0_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_0_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_1_firefox",
+            "enabled": true,
+            "email": "testuser_1_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "1_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_1_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_2_firefox",
+            "enabled": true,
+            "email": "testuser_2_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "2_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_2_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_3_firefox",
+            "enabled": true,
+            "email": "testuser_3_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "3_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_3_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_4_firefox",
+            "enabled": true,
+            "email": "testuser_4_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "4_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_4_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_5_firefox",
+            "enabled": true,
+            "email": "testuser_5_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "5_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_5_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_6_firefox",
+            "enabled": true,
+            "email": "testuser_6_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "6_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_6_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_7_firefox",
+            "enabled": true,
+            "email": "testuser_7_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "7_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_7_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_8_firefox",
+            "enabled": true,
+            "email": "testuser_8_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "8_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_8_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_9_firefox",
+            "enabled": true,
+            "email": "testuser_9_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "9_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_9_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_10_firefox",
+            "enabled": true,
+            "email": "testuser_10_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "10_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_10_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_11_firefox",
+            "enabled": true,
+            "email": "testuser_11_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "11_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_11_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_12_firefox",
+            "enabled": true,
+            "email": "testuser_12_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "12_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_12_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_13_firefox",
+            "enabled": true,
+            "email": "testuser_13_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "13_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_13_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_14_firefox",
+            "enabled": true,
+            "email": "testuser_14_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "14_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_14_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_15_firefox",
+            "enabled": true,
+            "email": "testuser_15_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "15_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_15_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_16_firefox",
+            "enabled": true,
+            "email": "testuser_16_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "16_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_16_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_17_firefox",
+            "enabled": true,
+            "email": "testuser_17_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "17_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_17_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_18_firefox",
+            "enabled": true,
+            "email": "testuser_18_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "18_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_18_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_19_firefox",
+            "enabled": true,
+            "email": "testuser_19_firefox@void.o",
+            "emailVerified": true,
+            "firstName": "19_firefox",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_19_firefox"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_0_webkit",
+            "enabled": true,
+            "email": "testuser_0_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "0_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_0_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_1_webkit",
+            "enabled": true,
+            "email": "testuser_1_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "1_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_1_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_2_webkit",
+            "enabled": true,
+            "email": "testuser_2_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "2_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_2_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_3_webkit",
+            "enabled": true,
+            "email": "testuser_3_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "3_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_3_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_4_webkit",
+            "enabled": true,
+            "email": "testuser_4_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "4_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_4_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_5_webkit",
+            "enabled": true,
+            "email": "testuser_5_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "5_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_5_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_6_webkit",
+            "enabled": true,
+            "email": "testuser_6_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "6_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_6_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_7_webkit",
+            "enabled": true,
+            "email": "testuser_7_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "7_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_7_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_8_webkit",
+            "enabled": true,
+            "email": "testuser_8_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "8_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_8_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_9_webkit",
+            "enabled": true,
+            "email": "testuser_9_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "9_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_9_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_10_webkit",
+            "enabled": true,
+            "email": "testuser_10_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "10_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_10_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_11_webkit",
+            "enabled": true,
+            "email": "testuser_11_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "11_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_11_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_12_webkit",
+            "enabled": true,
+            "email": "testuser_12_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "12_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_12_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_13_webkit",
+            "enabled": true,
+            "email": "testuser_13_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "13_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_13_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_14_webkit",
+            "enabled": true,
+            "email": "testuser_14_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "14_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_14_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_15_webkit",
+            "enabled": true,
+            "email": "testuser_15_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "15_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_15_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_16_webkit",
+            "enabled": true,
+            "email": "testuser_16_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "16_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_16_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_17_webkit",
+            "enabled": true,
+            "email": "testuser_17_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "17_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_17_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_18_webkit",
+            "enabled": true,
+            "email": "testuser_18_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "18_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_18_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_19_webkit",
+            "enabled": true,
+            "email": "testuser_19_webkit@void.o",
+            "emailVerified": true,
+            "firstName": "19_webkit",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_19_webkit"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_0_chromium",
+            "enabled": true,
+            "email": "testuser_0_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "0_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_0_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_1_chromium",
+            "enabled": true,
+            "email": "testuser_1_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "1_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_1_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_2_chromium",
+            "enabled": true,
+            "email": "testuser_2_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "2_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_2_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_3_chromium",
+            "enabled": true,
+            "email": "testuser_3_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "3_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_3_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_4_chromium",
+            "enabled": true,
+            "email": "testuser_4_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "4_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_4_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_5_chromium",
+            "enabled": true,
+            "email": "testuser_5_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "5_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_5_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_6_chromium",
+            "enabled": true,
+            "email": "testuser_6_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "6_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_6_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_7_chromium",
+            "enabled": true,
+            "email": "testuser_7_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "7_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_7_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_8_chromium",
+            "enabled": true,
+            "email": "testuser_8_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "8_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_8_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_9_chromium",
+            "enabled": true,
+            "email": "testuser_9_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "9_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_9_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_10_chromium",
+            "enabled": true,
+            "email": "testuser_10_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "10_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_10_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_11_chromium",
+            "enabled": true,
+            "email": "testuser_11_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "11_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_11_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_12_chromium",
+            "enabled": true,
+            "email": "testuser_12_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "12_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_12_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_13_chromium",
+            "enabled": true,
+            "email": "testuser_13_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "13_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_13_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_14_chromium",
+            "enabled": true,
+            "email": "testuser_14_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "14_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_14_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_15_chromium",
+            "enabled": true,
+            "email": "testuser_15_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "15_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_15_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_16_chromium",
+            "enabled": true,
+            "email": "testuser_16_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "16_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_16_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_17_chromium",
+            "enabled": true,
+            "email": "testuser_17_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "17_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_17_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_18_chromium",
+            "enabled": true,
+            "email": "testuser_18_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "18_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_18_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser_19_chromium",
+            "enabled": true,
+            "email": "testuser_19_chromium@void.o",
+            "emailVerified": true,
+            "firstName": "19_chromium",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_19_chromium"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "testuser",
+            "enabled": true,
+            "email": "testuser@void.o",
+            "emailVerified": true,
+            "firstName": "Test",
+            "lastName": "User",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "superuser",
+            "enabled": true,
+            "email": "superuser@void.o",
+            "emailVerified": true,
+            "firstName": "Dummy",
+            "lastName": "SuperUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "superuser"
+              }
+            ],
+            "realmRoles": [
+              "super_user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "insdc_ingest_user",
+            "enabled": true,
+            "email": "insdc_ingest_user@void.o",
+            "emailVerified": true,
+            "firstName": "INSDC Ingest",
+            "lastName": "User",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[insdcIngestUserPassword]]"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "preprocessing_pipeline",
+            "enabled": true,
+            "email": "preprocessing_pipeline@void.o",
+            "emailVerified": true,
+            "firstName": "Dummy",
+            "lastName": "Preprocessing",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[preprocessingPipelinePassword]]"
+              }
+            ],
+            "realmRoles": [
+              "preprocessing_pipeline",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "external_metadata_updater",
+            "enabled": true,
+            "email": "external_metadata_updater@void.o",
+            "emailVerified": true,
+            "firstName": "Dummy",
+            "lastName": "INSDC",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[externalMetadataUpdaterPassword]]"
+              }
+            ],
+            "realmRoles": [
+              "external_metadata_updater",
+              "get_released_data",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "backend",
+            "enabled": true,
+            "email": "nothing@void.o",
+            "emailVerified": true,
+            "firstName": "Backend",
+            "lastName": "Technical-User",
+            "attributes": {
+              "university": "University of Test"
+            },
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[backendUserPassword]]"
+              }
+            ],
+            "clientRoles": {
+              "realm-management": [
+                "view-users"
+              ],
+              "account": [
+                "manage-account"
+              ]
+            }
+          }
+        ],
+        "roles": {
+          "realm": [
+            {
+              "name": "user",
+              "description": "User privileges"
+            },
+            {
+              "name": "admin",
+              "description": "Administrator privileges"
+            },
+            {
+              "name": "preprocessing_pipeline",
+              "description": "Preprocessing pipeline privileges"
+            },
+            {
+              "name": "external_metadata_updater",
+              "description": "External Submitter privileges"
+            },
+            {
+              "name": "get_released_data",
+              "description": "Privileges for getting released data"
+            },
+            {
+              "name": "super_user",
+              "description": "Privileges for curators to modify sequence entries of any user"
+            }
+          ]
+        },
+        "clients": [
+          {
+            "clientId": "backend-client",
+            "enabled": true,
+            "publicClient": true,
+            "directAccessGrantsEnabled": true,
+            "redirectUris": [
+              "https://localhost:3000/*",
+              "http://localhost:3000/*",
+              "http://localhost:3000/*"
+            ]
+          },
+          {
+            "clientId": "account-console2",
+            "name": "${client_account-console}",
+            "description": "",
+            "rootUrl": "${authBaseUrl}",
+            "adminUrl": "",
+            "baseUrl": "/realms/loculus/account/",
+            "surrogateAuthRequired": false,
+            "enabled": true,
+            "alwaysDisplayInConsole": false,
+            "clientAuthenticatorType": "client-secret",
+            "redirectUris": [
+              "/realms/loculus/account/*"
+            ],
+            "webOrigins": [
+              "+"
+            ],
+            "notBefore": 0,
+            "bearerOnly": false,
+            "consentRequired": false,
+            "standardFlowEnabled": true,
+            "implicitFlowEnabled": false,
+            "directAccessGrantsEnabled": false,
+            "serviceAccountsEnabled": false,
+            "publicClient": true,
+            "frontchannelLogout": false,
+            "protocol": "openid-connect",
+            "attributes": {
+              "oidc.ciba.grant.enabled": "false",
+              "backchannel.logout.session.required": "true",
+              "post.logout.redirect.uris": "+",
+              "oauth2.device.authorization.grant.enabled": "false",
+              "display.on.consent.screen": "false",
+              "pkce.code.challenge.method": "S256",
+              "backchannel.logout.revoke.offline.tokens": "false"
+            },
+            "authenticationFlowBindingOverrides": {},
+            "fullScopeAllowed": false,
+            "nodeReRegistrationTimeout": 0,
+            "protocolMappers": [
+              {
+                "name": "audience resolve",
+                "protocol": "openid-connect",
+                "protocolMapper": "oidc-audience-resolve-mapper",
+                "consentRequired": false,
+                "config": {}
+              }
+            ],
+            "defaultClientScopes": [
+              "web-origins",
+              "acr",
+              "profile",
+              "roles",
+              "email"
+            ],
+            "optionalClientScopes": [
+              "address",
+              "phone",
+              "offline_access",
+              "microprofile-jwt"
+            ]
+          }
+        ],
+        "attributes": {
+          "frontendUrl": "https://authentication-localhost:3000",
+          "userProfileEnabled": "true"
+        },
+        "components": {
+          "org.keycloak.userprofile.UserProfileProvider": [
+            {
+              "providerId": "declarative-user-profile",
+              "subComponents": {},
+              "config": {
+                "kc.user.profile.config": [
+                  "{\"attributes\":[{\"name\":\"username\",\"displayName\":\"${username}\",\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{},\"up-username-not-idn-homograph\":{}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"email\",\"displayName\":\"${email}\",\"validations\":{\"email\":{},\"length\":{\"max\":255}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"firstName\",\"displayName\":\"${firstName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"lastName\",\"displayName\":\"${lastName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"university\",\"displayName\":\"University / Organisation\",\"validations\":{},\"annotations\":{},\"required\":{\"roles\":[\"admin\",\"user\"]},\"permissions\":{\"view\":[],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"orcid\",\"displayName\":\"\",\"permissions\":{\"edit\":[\"admin\"],\"view\":[\"admin\",\"user\"]},\"annotations\":{},\"validations\":{}}],\"groups\":[]}"
+                ]
+              }
+            }
+          ]
+        },
+        "loginTheme": "loculus",
+        "emailTheme": "loculus",
+        "identityProviders": [],
+        "identityProviderMappers": []
+      }
+---

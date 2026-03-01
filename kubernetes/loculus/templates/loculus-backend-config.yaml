@@ -2,7 +2,19 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: loculus-backend-config
+  name: loculus-backend-config-base
 data:
-  backend_config.json: |
-    {{ include "loculus.generateBackendConfig" . | fromYaml | toJson }}
+  backend_config_base.json: |
+{{ include "loculus.generateBackendConfigBase" . | fromYaml | toPrettyJson | indent 4 }}
+{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $key := $item.key }}
+{{- $instance := $item.contents }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-backend-config-{{ $key }}
+data:
+  backend_config_organism_{{ $key }}.json: |
+    {{ include "loculus.generateBackendConfigOrganism" (dict "key" $key "instance" $instance "root" $) | fromYaml | toJson }}
+{{- end }}

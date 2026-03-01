@@ -1,0 +1,1381 @@
+# Source: loculus/templates/silo-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-silo-cchf
+  annotations:
+    # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: silo-cchf
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: silo-cchf
+    spec:
+      
+      initContainers:
+        - name: config-processor-lapis-silo-database-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /input
+            - name: lapis-silo-database-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: silo
+          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          env:
+            - name: SPDLOG_LEVEL
+              value: "debug"
+          ports:
+            - containerPort: 8081
+          args:
+            - "api"
+            - "--api-threads-for-http-connections"
+            - "16"
+            - "--api-max-queued-http-connections"
+            - "1000"
+            - "--query-materialization-cutoff"
+            - "3276"
+          volumeMounts:
+            - name: lapis-silo-shared-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /info
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+        - name: silo-importer
+          image: "ghcr.io/loculus-project/silo-import:latest"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              cpu: 20m
+              memory: 1Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          env:
+            - name: BACKEND_BASE_URL
+              value: "http://loculus-backend-service:8079/cchf"
+            - name: LINEAGE_DEFINITIONS
+              value: "{\"1\":\"https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-12/lineages.yaml\"}"
+            - name: SILO_RUN_TIMEOUT_SECONDS
+              value: "3600"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+        - name: silo-preprocessing
+          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              cpu: 20m
+              memory: 20Mi
+          command:
+            - sh
+            - -c
+            - sh /silo_import_wrapper.sh
+          env:
+            - name: BACKEND_BASE_URL
+              value: "http://loculus-backend-service:8079/cchf"
+            - name: LINEAGE_DEFINITIONS
+              value: "{\"1\":\"https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-12/lineages.yaml\"}"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+            - name: lapis-silo-database-config-processed
+              mountPath: /silo_import_wrapper.sh
+              subPath: silo_import_wrapper.sh
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-cchf
+        - name: lapis-silo-database-config-processed
+          emptyDir: {}
+        - name: lapis-silo-shared-data
+          emptyDir: {}
+        - name: lapis-silo-input-data-cache
+          emptyDir: {}
+---
+# Source: loculus/templates/silo-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-silo-dummy-organism
+  annotations:
+    # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: silo-dummy-organism
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: silo-dummy-organism
+    spec:
+      
+      initContainers:
+        - name: config-processor-lapis-silo-database-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /input
+            - name: lapis-silo-database-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: silo
+          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          env:
+            - name: SPDLOG_LEVEL
+              value: "debug"
+          ports:
+            - containerPort: 8081
+          args:
+            - "api"
+            - "--api-threads-for-http-connections"
+            - "16"
+            - "--api-max-queued-http-connections"
+            - "1000"
+            - "--query-materialization-cutoff"
+            - "3276"
+          volumeMounts:
+            - name: lapis-silo-shared-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /info
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+        - name: silo-importer
+          image: "ghcr.io/loculus-project/silo-import:latest"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              cpu: 20m
+              memory: 1Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          env:
+            - name: BACKEND_BASE_URL
+              value: "http://loculus-backend-service:8079/dummy-organism"
+            - name: LINEAGE_DEFINITIONS
+              value: "{\"1\":\"https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml\",\"2\":\"https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml\"}"
+            - name: SILO_RUN_TIMEOUT_SECONDS
+              value: "3600"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+        - name: silo-preprocessing
+          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              cpu: 20m
+              memory: 20Mi
+          command:
+            - sh
+            - -c
+            - sh /silo_import_wrapper.sh
+          env:
+            - name: BACKEND_BASE_URL
+              value: "http://loculus-backend-service:8079/dummy-organism"
+            - name: LINEAGE_DEFINITIONS
+              value: "{\"1\":\"https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml\",\"2\":\"https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml\"}"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+            - name: lapis-silo-database-config-processed
+              mountPath: /silo_import_wrapper.sh
+              subPath: silo_import_wrapper.sh
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-dummy-organism
+        - name: lapis-silo-database-config-processed
+          emptyDir: {}
+        - name: lapis-silo-shared-data
+          emptyDir: {}
+        - name: lapis-silo-input-data-cache
+          emptyDir: {}
+---
+# Source: loculus/templates/silo-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-silo-dummy-organism-with-files
+  annotations:
+    # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: silo-dummy-organism-with-files
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: silo-dummy-organism-with-files
+    spec:
+      
+      initContainers:
+        - name: config-processor-lapis-silo-database-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /input
+            - name: lapis-silo-database-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: silo
+          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          env:
+            - name: SPDLOG_LEVEL
+              value: "debug"
+          ports:
+            - containerPort: 8081
+          args:
+            - "api"
+            - "--api-threads-for-http-connections"
+            - "16"
+            - "--api-max-queued-http-connections"
+            - "1000"
+            - "--query-materialization-cutoff"
+            - "3276"
+          volumeMounts:
+            - name: lapis-silo-shared-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /info
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+        - name: silo-importer
+          image: "ghcr.io/loculus-project/silo-import:latest"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              cpu: 20m
+              memory: 1Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          env:
+            - name: BACKEND_BASE_URL
+              value: "http://loculus-backend-service:8079/dummy-organism-with-files"
+            - name: LINEAGE_DEFINITIONS
+              value: "{\"1\":\"https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml\",\"2\":\"https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml\"}"
+            - name: SILO_RUN_TIMEOUT_SECONDS
+              value: "3600"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+        - name: silo-preprocessing
+          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              cpu: 20m
+              memory: 20Mi
+          command:
+            - sh
+            - -c
+            - sh /silo_import_wrapper.sh
+          env:
+            - name: BACKEND_BASE_URL
+              value: "http://loculus-backend-service:8079/dummy-organism-with-files"
+            - name: LINEAGE_DEFINITIONS
+              value: "{\"1\":\"https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml\",\"2\":\"https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml\"}"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+            - name: lapis-silo-database-config-processed
+              mountPath: /silo_import_wrapper.sh
+              subPath: silo_import_wrapper.sh
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-dummy-organism-with-files
+        - name: lapis-silo-database-config-processed
+          emptyDir: {}
+        - name: lapis-silo-shared-data
+          emptyDir: {}
+        - name: lapis-silo-input-data-cache
+          emptyDir: {}
+---
+# Source: loculus/templates/silo-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-silo-ebola-sudan
+  annotations:
+    # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: silo-ebola-sudan
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: silo-ebola-sudan
+    spec:
+      
+      initContainers:
+        - name: config-processor-lapis-silo-database-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /input
+            - name: lapis-silo-database-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: silo
+          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          env:
+            - name: SPDLOG_LEVEL
+              value: "debug"
+          ports:
+            - containerPort: 8081
+          args:
+            - "api"
+            - "--api-threads-for-http-connections"
+            - "16"
+            - "--api-max-queued-http-connections"
+            - "1000"
+            - "--query-materialization-cutoff"
+            - "3276"
+          volumeMounts:
+            - name: lapis-silo-shared-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /info
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+        - name: silo-importer
+          image: "ghcr.io/loculus-project/silo-import:latest"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              cpu: 20m
+              memory: 1Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          env:
+            - name: BACKEND_BASE_URL
+              value: "http://loculus-backend-service:8079/ebola-sudan"
+            - name: SILO_RUN_TIMEOUT_SECONDS
+              value: "3600"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+        - name: silo-preprocessing
+          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              cpu: 20m
+              memory: 20Mi
+          command:
+            - sh
+            - -c
+            - sh /silo_import_wrapper.sh
+          env:
+            - name: BACKEND_BASE_URL
+              value: "http://loculus-backend-service:8079/ebola-sudan"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+            - name: lapis-silo-database-config-processed
+              mountPath: /silo_import_wrapper.sh
+              subPath: silo_import_wrapper.sh
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-ebola-sudan
+        - name: lapis-silo-database-config-processed
+          emptyDir: {}
+        - name: lapis-silo-shared-data
+          emptyDir: {}
+        - name: lapis-silo-input-data-cache
+          emptyDir: {}
+---
+# Source: loculus/templates/silo-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-silo-enteroviruses
+  annotations:
+    # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: silo-enteroviruses
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: silo-enteroviruses
+    spec:
+      
+      initContainers:
+        - name: config-processor-lapis-silo-database-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /input
+            - name: lapis-silo-database-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: silo
+          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          env:
+            - name: SPDLOG_LEVEL
+              value: "debug"
+          ports:
+            - containerPort: 8081
+          args:
+            - "api"
+            - "--api-threads-for-http-connections"
+            - "16"
+            - "--api-max-queued-http-connections"
+            - "1000"
+            - "--query-materialization-cutoff"
+            - "3276"
+          volumeMounts:
+            - name: lapis-silo-shared-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /info
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+        - name: silo-importer
+          image: "ghcr.io/loculus-project/silo-import:latest"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              cpu: 20m
+              memory: 1Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          env:
+            - name: BACKEND_BASE_URL
+              value: "http://loculus-backend-service:8079/enteroviruses"
+            - name: SILO_RUN_TIMEOUT_SECONDS
+              value: "3600"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+        - name: silo-preprocessing
+          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              cpu: 20m
+              memory: 20Mi
+          command:
+            - sh
+            - -c
+            - sh /silo_import_wrapper.sh
+          env:
+            - name: BACKEND_BASE_URL
+              value: "http://loculus-backend-service:8079/enteroviruses"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+            - name: lapis-silo-database-config-processed
+              mountPath: /silo_import_wrapper.sh
+              subPath: silo_import_wrapper.sh
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-enteroviruses
+        - name: lapis-silo-database-config-processed
+          emptyDir: {}
+        - name: lapis-silo-shared-data
+          emptyDir: {}
+        - name: lapis-silo-input-data-cache
+          emptyDir: {}
+---
+# Source: loculus/templates/silo-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-silo-not-aligned-organism
+  annotations:
+    # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: silo-not-aligned-organism
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: silo-not-aligned-organism
+    spec:
+      
+      initContainers:
+        - name: config-processor-lapis-silo-database-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /input
+            - name: lapis-silo-database-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: silo
+          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          env:
+            - name: SPDLOG_LEVEL
+              value: "debug"
+          ports:
+            - containerPort: 8081
+          args:
+            - "api"
+            - "--api-threads-for-http-connections"
+            - "16"
+            - "--api-max-queued-http-connections"
+            - "1000"
+            - "--query-materialization-cutoff"
+            - "3276"
+          volumeMounts:
+            - name: lapis-silo-shared-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /info
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+        - name: silo-importer
+          image: "ghcr.io/loculus-project/silo-import:latest"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              cpu: 20m
+              memory: 1Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          env:
+            - name: BACKEND_BASE_URL
+              value: "http://loculus-backend-service:8079/not-aligned-organism"
+            - name: LINEAGE_DEFINITIONS
+              value: "{\"4\":\"https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml\"}"
+            - name: SILO_RUN_TIMEOUT_SECONDS
+              value: "3600"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+        - name: silo-preprocessing
+          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              cpu: 20m
+              memory: 20Mi
+          command:
+            - sh
+            - -c
+            - sh /silo_import_wrapper.sh
+          env:
+            - name: BACKEND_BASE_URL
+              value: "http://loculus-backend-service:8079/not-aligned-organism"
+            - name: LINEAGE_DEFINITIONS
+              value: "{\"4\":\"https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml\"}"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+            - name: lapis-silo-database-config-processed
+              mountPath: /silo_import_wrapper.sh
+              subPath: silo_import_wrapper.sh
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-not-aligned-organism
+        - name: lapis-silo-database-config-processed
+          emptyDir: {}
+        - name: lapis-silo-shared-data
+          emptyDir: {}
+        - name: lapis-silo-input-data-cache
+          emptyDir: {}
+---
+# Source: loculus/templates/silo-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-silo-west-nile
+  annotations:
+    # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: silo-west-nile
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: silo-west-nile
+    spec:
+      
+      initContainers:
+        - name: config-processor-lapis-silo-database-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /input
+            - name: lapis-silo-database-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: silo
+          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          env:
+            - name: SPDLOG_LEVEL
+              value: "debug"
+          ports:
+            - containerPort: 8081
+          args:
+            - "api"
+            - "--api-threads-for-http-connections"
+            - "16"
+            - "--api-max-queued-http-connections"
+            - "1000"
+            - "--query-materialization-cutoff"
+            - "3276"
+          volumeMounts:
+            - name: lapis-silo-shared-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /info
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+        - name: silo-importer
+          image: "ghcr.io/loculus-project/silo-import:latest"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              cpu: 20m
+              memory: 1Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          env:
+            - name: BACKEND_BASE_URL
+              value: "http://loculus-backend-service:8079/west-nile"
+            - name: SILO_RUN_TIMEOUT_SECONDS
+              value: "3600"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+        - name: silo-preprocessing
+          image: "ghcr.io/genspectrum/lapis-silo:v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              cpu: 20m
+              memory: 20Mi
+          command:
+            - sh
+            - -c
+            - sh /silo_import_wrapper.sh
+          env:
+            - name: BACKEND_BASE_URL
+              value: "http://loculus-backend-service:8079/west-nile"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+            - name: lapis-silo-database-config-processed
+              mountPath: /silo_import_wrapper.sh
+              subPath: silo_import_wrapper.sh
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-west-nile
+        - name: lapis-silo-database-config-processed
+          emptyDir: {}
+        - name: lapis-silo-shared-data
+          emptyDir: {}
+        - name: lapis-silo-input-data-cache
+          emptyDir: {}
+---

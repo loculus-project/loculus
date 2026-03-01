@@ -1,0 +1,750 @@
+# Source: loculus/templates/ingest-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-ingest-deployment-cchf
+  annotations:
+    argocd.argoproj.io/sync-options: Force=true,Replace=true
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-ingest-deployment-cchf
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: loculus-ingest-deployment-cchf
+    spec:
+      
+      initContainers:
+        - name: version-check
+          image: busybox
+          
+          resources:
+            limits:
+              cpu: 20m
+              memory: 1Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          command: ['sh', '-c', '
+            CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
+            DOCKER_TAG="latest";
+            echo "Config version: $CONFIG_VERSION";
+            echo "Docker tag: $DOCKER_TAG";
+            if [ "$CONFIG_VERSION" != "$DOCKER_TAG" ]; then
+              echo "Version mismatch: ConfigMap version $CONFIG_VERSION does not match docker tag $DOCKER_TAG";
+              exit 1;
+            else
+              echo "Version match confirmed";
+            fi
+          ']
+          volumeMounts:
+            - name: loculus-ingest-config-volume-cchf
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      containers:
+        - name: ingest-cchf
+          image: ghcr.io/loculus-project/ingest:latest
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              cpu: "1"
+              memory: 10Gi
+            requests:
+              cpu: 200m
+              memory: 200Mi
+          env:
+            - name: KEYCLOAK_INGEST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: SLACK_HOOK
+              valueFrom:
+                secretKeyRef:
+                  name: slack-notifications
+                  key: slack-hook
+            - name: NCBI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ingest-ncbi
+                  key: api-key
+          args:
+            - snakemake
+            - results/submitted
+            - results/revised
+            - results/approved
+            - --all-temp # Reduce disk usage by not keeping files around
+          volumeMounts:
+            - name: loculus-ingest-config-volume-cchf
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: loculus-ingest-config-volume-cchf
+          configMap:
+            name: loculus-ingest-config-cchf
+---
+# Source: loculus/templates/ingest-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-ingest-deployment-cchf-multi-ref
+  annotations:
+    argocd.argoproj.io/sync-options: Force=true,Replace=true
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-ingest-deployment-cchf-multi-ref
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: loculus-ingest-deployment-cchf-multi-ref
+    spec:
+      
+      initContainers:
+        - name: version-check
+          image: busybox
+          
+          resources:
+            limits:
+              cpu: 20m
+              memory: 1Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          command: ['sh', '-c', '
+            CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
+            DOCKER_TAG="latest";
+            echo "Config version: $CONFIG_VERSION";
+            echo "Docker tag: $DOCKER_TAG";
+            if [ "$CONFIG_VERSION" != "$DOCKER_TAG" ]; then
+              echo "Version mismatch: ConfigMap version $CONFIG_VERSION does not match docker tag $DOCKER_TAG";
+              exit 1;
+            else
+              echo "Version match confirmed";
+            fi
+          ']
+          volumeMounts:
+            - name: loculus-ingest-config-volume-cchf-multi-ref
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      containers:
+        - name: ingest-cchf-multi-ref
+          image: ghcr.io/loculus-project/ingest:latest
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              cpu: "1"
+              memory: 10Gi
+            requests:
+              cpu: 200m
+              memory: 200Mi
+          env:
+            - name: KEYCLOAK_INGEST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: SLACK_HOOK
+              valueFrom:
+                secretKeyRef:
+                  name: slack-notifications
+                  key: slack-hook
+            - name: NCBI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ingest-ncbi
+                  key: api-key
+          args:
+            - snakemake
+            - results/submitted
+            - results/revised
+            - results/approved
+            - --all-temp # Reduce disk usage by not keeping files around
+          volumeMounts:
+            - name: loculus-ingest-config-volume-cchf-multi-ref
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: loculus-ingest-config-volume-cchf-multi-ref
+          configMap:
+            name: loculus-ingest-config-cchf-multi-ref
+---
+# Source: loculus/templates/ingest-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-ingest-deployment-ebola-sudan
+  annotations:
+    argocd.argoproj.io/sync-options: Force=true,Replace=true
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-ingest-deployment-ebola-sudan
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: loculus-ingest-deployment-ebola-sudan
+    spec:
+      
+      initContainers:
+        - name: version-check
+          image: busybox
+          
+          resources:
+            limits:
+              cpu: 20m
+              memory: 1Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          command: ['sh', '-c', '
+            CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
+            DOCKER_TAG="latest";
+            echo "Config version: $CONFIG_VERSION";
+            echo "Docker tag: $DOCKER_TAG";
+            if [ "$CONFIG_VERSION" != "$DOCKER_TAG" ]; then
+              echo "Version mismatch: ConfigMap version $CONFIG_VERSION does not match docker tag $DOCKER_TAG";
+              exit 1;
+            else
+              echo "Version match confirmed";
+            fi
+          ']
+          volumeMounts:
+            - name: loculus-ingest-config-volume-ebola-sudan
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      containers:
+        - name: ingest-ebola-sudan
+          image: ghcr.io/loculus-project/ingest:latest
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              cpu: "1"
+              memory: 10Gi
+            requests:
+              cpu: 200m
+              memory: 200Mi
+          env:
+            - name: KEYCLOAK_INGEST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: SLACK_HOOK
+              valueFrom:
+                secretKeyRef:
+                  name: slack-notifications
+                  key: slack-hook
+            - name: NCBI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ingest-ncbi
+                  key: api-key
+          args:
+            - snakemake
+            - results/submitted
+            - results/revised
+            - results/approved
+            - --all-temp # Reduce disk usage by not keeping files around
+          volumeMounts:
+            - name: loculus-ingest-config-volume-ebola-sudan
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: loculus-ingest-config-volume-ebola-sudan
+          configMap:
+            name: loculus-ingest-config-ebola-sudan
+---
+# Source: loculus/templates/ingest-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-ingest-deployment-enteroviruses
+  annotations:
+    argocd.argoproj.io/sync-options: Force=true,Replace=true
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-ingest-deployment-enteroviruses
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: loculus-ingest-deployment-enteroviruses
+    spec:
+      
+      initContainers:
+        - name: version-check
+          image: busybox
+          
+          resources:
+            limits:
+              cpu: 20m
+              memory: 1Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          command: ['sh', '-c', '
+            CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
+            DOCKER_TAG="latest";
+            echo "Config version: $CONFIG_VERSION";
+            echo "Docker tag: $DOCKER_TAG";
+            if [ "$CONFIG_VERSION" != "$DOCKER_TAG" ]; then
+              echo "Version mismatch: ConfigMap version $CONFIG_VERSION does not match docker tag $DOCKER_TAG";
+              exit 1;
+            else
+              echo "Version match confirmed";
+            fi
+          ']
+          volumeMounts:
+            - name: loculus-ingest-config-volume-enteroviruses
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      containers:
+        - name: ingest-enteroviruses
+          image: ghcr.io/loculus-project/ingest:latest
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              cpu: "1"
+              memory: 10Gi
+            requests:
+              cpu: 200m
+              memory: 200Mi
+          env:
+            - name: KEYCLOAK_INGEST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: SLACK_HOOK
+              valueFrom:
+                secretKeyRef:
+                  name: slack-notifications
+                  key: slack-hook
+            - name: NCBI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ingest-ncbi
+                  key: api-key
+          args:
+            - snakemake
+            - results/submitted
+            - results/revised
+            - results/approved
+            - --all-temp # Reduce disk usage by not keeping files around
+          volumeMounts:
+            - name: loculus-ingest-config-volume-enteroviruses
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: loculus-ingest-config-volume-enteroviruses
+          configMap:
+            name: loculus-ingest-config-enteroviruses
+---
+# Source: loculus/templates/ingest-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-ingest-deployment-west-nile
+  annotations:
+    argocd.argoproj.io/sync-options: Force=true,Replace=true
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-ingest-deployment-west-nile
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: loculus-ingest-deployment-west-nile
+    spec:
+      
+      initContainers:
+        - name: version-check
+          image: busybox
+          
+          resources:
+            limits:
+              cpu: 20m
+              memory: 1Gi
+            requests:
+              cpu: 20m
+              memory: 200Mi
+          command: ['sh', '-c', '
+            CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
+            DOCKER_TAG="latest";
+            echo "Config version: $CONFIG_VERSION";
+            echo "Docker tag: $DOCKER_TAG";
+            if [ "$CONFIG_VERSION" != "$DOCKER_TAG" ]; then
+              echo "Version mismatch: ConfigMap version $CONFIG_VERSION does not match docker tag $DOCKER_TAG";
+              exit 1;
+            else
+              echo "Version match confirmed";
+            fi
+          ']
+          volumeMounts:
+            - name: loculus-ingest-config-volume-west-nile
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      containers:
+        - name: ingest-west-nile
+          image: ghcr.io/loculus-project/ingest:latest
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              cpu: "1"
+              memory: 10Gi
+            requests:
+              cpu: 200m
+              memory: 200Mi
+          env:
+            - name: KEYCLOAK_INGEST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: SLACK_HOOK
+              valueFrom:
+                secretKeyRef:
+                  name: slack-notifications
+                  key: slack-hook
+            - name: NCBI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ingest-ncbi
+                  key: api-key
+          args:
+            - snakemake
+            - results/submitted
+            - results/revised
+            - results/approved
+            - --all-temp # Reduce disk usage by not keeping files around
+          volumeMounts:
+            - name: loculus-ingest-config-volume-west-nile
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: loculus-ingest-config-volume-west-nile
+          configMap:
+            name: loculus-ingest-config-west-nile
+---
+# Source: loculus/templates/ingest-deployment.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: loculus-revoke-and-regroup-cronjob-cchf
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  schedule: "0 0 31 2 *" # Never runs without manual trigger
+  suspend: true
+  startingDeadlineSeconds: 60
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app: loculus
+            component: loculus-ingest-cronjob-cchf
+        spec:
+          
+          restartPolicy: Never
+          containers:
+            - name: ingest-cchf
+              image: ghcr.io/loculus-project/ingest:latest
+              imagePullPolicy: Always
+              resources:
+                requests:
+                  memory: "1Gi"
+                  cpu: "200m"
+                limits:
+                  cpu: "200m"
+                  memory: "10Gi"
+              env:
+                - name: KEYCLOAK_INGEST_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: service-accounts
+                      key: insdcIngestUserPassword
+              args:
+                - snakemake
+                - results/submitted
+                - results/revised
+                - results/revoked
+                - results/approved
+                - --all-temp # Reduce disk usage by not keeping files around
+              volumeMounts:
+                - name: loculus-ingest-config-volume-cchf
+                  mountPath: /package/config/config.yaml
+                  subPath: config.yaml
+          volumes:
+            - name: loculus-ingest-config-volume-cchf
+              configMap:
+                name: loculus-ingest-config-cchf
+---
+# Source: loculus/templates/ingest-deployment.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: loculus-revoke-and-regroup-cronjob-cchf-multi-ref
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  schedule: "0 0 31 2 *" # Never runs without manual trigger
+  suspend: true
+  startingDeadlineSeconds: 60
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app: loculus
+            component: loculus-ingest-cronjob-cchf-multi-ref
+        spec:
+          
+          restartPolicy: Never
+          containers:
+            - name: ingest-cchf-multi-ref
+              image: ghcr.io/loculus-project/ingest:latest
+              imagePullPolicy: Always
+              resources:
+                requests:
+                  memory: "1Gi"
+                  cpu: "200m"
+                limits:
+                  cpu: "200m"
+                  memory: "10Gi"
+              env:
+                - name: KEYCLOAK_INGEST_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: service-accounts
+                      key: insdcIngestUserPassword
+              args:
+                - snakemake
+                - results/submitted
+                - results/revised
+                - results/revoked
+                - results/approved
+                - --all-temp # Reduce disk usage by not keeping files around
+              volumeMounts:
+                - name: loculus-ingest-config-volume-cchf-multi-ref
+                  mountPath: /package/config/config.yaml
+                  subPath: config.yaml
+          volumes:
+            - name: loculus-ingest-config-volume-cchf-multi-ref
+              configMap:
+                name: loculus-ingest-config-cchf-multi-ref
+---
+# Source: loculus/templates/ingest-deployment.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: loculus-revoke-and-regroup-cronjob-ebola-sudan
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  schedule: "0 0 31 2 *" # Never runs without manual trigger
+  suspend: true
+  startingDeadlineSeconds: 60
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app: loculus
+            component: loculus-ingest-cronjob-ebola-sudan
+        spec:
+          
+          restartPolicy: Never
+          containers:
+            - name: ingest-ebola-sudan
+              image: ghcr.io/loculus-project/ingest:latest
+              imagePullPolicy: Always
+              resources:
+                requests:
+                  memory: "1Gi"
+                  cpu: "200m"
+                limits:
+                  cpu: "200m"
+                  memory: "10Gi"
+              env:
+                - name: KEYCLOAK_INGEST_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: service-accounts
+                      key: insdcIngestUserPassword
+              args:
+                - snakemake
+                - results/submitted
+                - results/revised
+                - results/revoked
+                - results/approved
+                - --all-temp # Reduce disk usage by not keeping files around
+              volumeMounts:
+                - name: loculus-ingest-config-volume-ebola-sudan
+                  mountPath: /package/config/config.yaml
+                  subPath: config.yaml
+          volumes:
+            - name: loculus-ingest-config-volume-ebola-sudan
+              configMap:
+                name: loculus-ingest-config-ebola-sudan
+---
+# Source: loculus/templates/ingest-deployment.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: loculus-revoke-and-regroup-cronjob-enteroviruses
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  schedule: "0 0 31 2 *" # Never runs without manual trigger
+  suspend: true
+  startingDeadlineSeconds: 60
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app: loculus
+            component: loculus-ingest-cronjob-enteroviruses
+        spec:
+          
+          restartPolicy: Never
+          containers:
+            - name: ingest-enteroviruses
+              image: ghcr.io/loculus-project/ingest:latest
+              imagePullPolicy: Always
+              resources:
+                requests:
+                  memory: "1Gi"
+                  cpu: "200m"
+                limits:
+                  cpu: "200m"
+                  memory: "10Gi"
+              env:
+                - name: KEYCLOAK_INGEST_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: service-accounts
+                      key: insdcIngestUserPassword
+              args:
+                - snakemake
+                - results/submitted
+                - results/revised
+                - results/revoked
+                - results/approved
+                - --all-temp # Reduce disk usage by not keeping files around
+              volumeMounts:
+                - name: loculus-ingest-config-volume-enteroviruses
+                  mountPath: /package/config/config.yaml
+                  subPath: config.yaml
+          volumes:
+            - name: loculus-ingest-config-volume-enteroviruses
+              configMap:
+                name: loculus-ingest-config-enteroviruses
+---
+# Source: loculus/templates/ingest-deployment.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: loculus-revoke-and-regroup-cronjob-west-nile
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  schedule: "0 0 31 2 *" # Never runs without manual trigger
+  suspend: true
+  startingDeadlineSeconds: 60
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app: loculus
+            component: loculus-ingest-cronjob-west-nile
+        spec:
+          
+          restartPolicy: Never
+          containers:
+            - name: ingest-west-nile
+              image: ghcr.io/loculus-project/ingest:latest
+              imagePullPolicy: Always
+              resources:
+                requests:
+                  memory: "1Gi"
+                  cpu: "200m"
+                limits:
+                  cpu: "200m"
+                  memory: "10Gi"
+              env:
+                - name: KEYCLOAK_INGEST_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: service-accounts
+                      key: insdcIngestUserPassword
+              args:
+                - snakemake
+                - results/submitted
+                - results/revised
+                - results/revoked
+                - results/approved
+                - --all-temp # Reduce disk usage by not keeping files around
+              volumeMounts:
+                - name: loculus-ingest-config-volume-west-nile
+                  mountPath: /package/config/config.yaml
+                  subPath: config.yaml
+          volumes:
+            - name: loculus-ingest-config-volume-west-nile
+              configMap:
+                name: loculus-ingest-config-west-nile
+---
