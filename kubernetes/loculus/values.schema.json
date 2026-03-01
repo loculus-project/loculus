@@ -1002,6 +1002,13 @@
       "default": "LOC_",
       "description": "Prefix used for accession numbers"
     },
+    "metadataItemForCumulativeGroupGraph": {
+      "groups": ["general"],
+      "group": "general",
+      "type": ["string", "null"],
+      "default": null,
+      "description": "The metadata field used to plot cumulative submissions over time on the group page. Set to null to disable the chart."
+    },
     "zstdCompressionLevel": {
       "groups": ["general"],
       "group": "general",

@@ -240,6 +240,7 @@ export const websiteConfig = z.object({
     enableSubmissionPages: z.boolean(),
     enableDataUseTerms: z.boolean(),
     sequenceFlagging: sequenceFlaggingConfig.optional(),
+    metadataItemForCumulativeGroupGraph: z.string().nullable(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 

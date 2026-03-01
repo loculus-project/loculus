@@ -14,6 +14,7 @@ const defaultConfig: WebsiteConfig = {
     logo: { url: '', width: 0, height: 0 },
     name: '',
     organisms: {},
+    metadataItemForCumulativeGroupGraph: null,
 };
 
 describe('validateWebsiteConfig', () => {

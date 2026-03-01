@@ -203,6 +203,7 @@ seqSetsFieldsToDisplay: {{ $.Values.seqSets.fieldsToDisplay | toJson }}
 {{- end }}
 enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
+metadataItemForCumulativeGroupGraph: {{ quote $.Values.metadataItemForCumulativeGroupGraph }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
   {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
