@@ -1,8 +1,5 @@
-import { isErrorFromAlias } from '@zodios/core';
-import type { AxiosError } from 'axios';
 import { useMemo, useState } from 'react';
 
-import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
 import {
     type Group,
@@ -16,6 +13,7 @@ import {
 } from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
+import { isAxiosErrorWithProblemDetail } from '../utils/isAxiosErrorWithProblemDetail.ts';
 import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
 
 export function useSubmissionOperations(
@@ -59,14 +57,14 @@ export function useSubmissionOperations(
     const useDeleteSequenceEntries = hooks.useDeleteSequences(
         { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
-            onSuccess: () => useGetSequences.refetch(),
+            onSuccess: () => void useGetSequences.refetch(),
             onError: (error) => openErrorFeedback(deleteSequenceEntriesErrorMessage(error)),
         },
     );
     const useApproveProcessedData = hooks.useApproveProcessedData(
         { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
-            onSuccess: () => useGetSequences.refetch(),
+            onSuccess: () => void useGetSequences.refetch(),
             onError: (error) => openErrorFeedback(approveProcessedDataErrorMessage(error)),
         },
     );
@@ -82,22 +80,22 @@ export function useSubmissionOperations(
     };
 }
 
-function deleteSequenceEntriesErrorMessage(error: unknown | AxiosError) {
-    if (isErrorFromAlias(backendApi, 'deleteSequences', error)) {
+function deleteSequenceEntriesErrorMessage(error: unknown) {
+    if (isAxiosErrorWithProblemDetail(error)) {
         return 'Failed to delete sequence entries: ' + error.response.data.detail;
     }
     return 'Failed to delete sequence entries: ' + stringifyMaybeAxiosError(error);
 }
 
-function approveProcessedDataErrorMessage(error: unknown | AxiosError) {
-    if (isErrorFromAlias(backendApi, 'approveProcessedData', error)) {
+function approveProcessedDataErrorMessage(error: unknown) {
+    if (isAxiosErrorWithProblemDetail(error)) {
         return 'Failed to approve processed sequence entries: ' + error.response.data.detail;
     }
     return 'Failed to approve processed sequence entries: ' + stringifyMaybeAxiosError(error);
 }
 
-function getSequencesErrorMessage(error: unknown | AxiosError) {
-    if (isErrorFromAlias(backendApi, 'getSequences', error)) {
+function getSequencesErrorMessage(error: unknown) {
+    if (isAxiosErrorWithProblemDetail(error)) {
         return 'Failed to query sequences: ' + error.response.data.detail;
     }
     return 'Failed to query sequences: ' + stringifyMaybeAxiosError(error);

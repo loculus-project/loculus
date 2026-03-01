@@ -44,13 +44,13 @@ const processingAnnotation = z.object({
 });
 export type ProcessingAnnotation = z.infer<typeof processingAnnotation>;
 
-const unprocessedMetadataRecord = z.record(z.string());
+const unprocessedMetadataRecord = z.record(z.string(), z.string());
 export type UnprocessedMetadataRecord = z.infer<typeof unprocessedMetadataRecord>;
 
 export const metadataField = z.union([z.string(), z.number(), z.date(), z.null(), z.boolean()]);
 export type MetadataField = z.infer<typeof metadataField>;
 
-const metadataRecord = z.record(metadataField);
+const metadataRecord = z.record(z.string(), metadataField);
 export type MetadataRecord = z.infer<typeof metadataRecord>;
 
 export const accession = z.string();
@@ -73,29 +73,25 @@ export const accessionVersionsFilter = z.object({
 export const approveAllDataScope = z.literal('ALL');
 export const approveProcessedDataWithoutWarningsScope = z.literal('WITHOUT_WARNINGS');
 
-export const accessionVersionsFilterWithApprovalScope = accessionVersionsFilter.merge(
-    z.object({
-        groupIdsFilter: z.array(z.number()),
-        scope: z.union([approveAllDataScope, approveProcessedDataWithoutWarningsScope]),
-    }),
-);
+export const accessionVersionsFilterWithApprovalScope = accessionVersionsFilter.extend({
+    groupIdsFilter: z.array(z.number()),
+    scope: z.union([approveAllDataScope, approveProcessedDataWithoutWarningsScope]),
+});
 
 export const deleteAllDataScope = z.literal('ALL');
 export const deleteProcessedAndRevocationConfirmationDataScope = z.literal('ALL_PROCESSED_AND_REVOCATIONS');
 export const deleteProcessedDataWithErrorsScope = z.literal('PROCESSED_WITH_ERRORS');
 export const deleteProcessedDataWithWarningsScope = z.literal('PROCESSED_WITH_WARNINGS');
 
-export const accessionVersionsFilterWithDeletionScope = accessionVersionsFilter.merge(
-    z.object({
-        groupIdsFilter: z.array(z.number()),
-        scope: z.union([
-            deleteAllDataScope,
-            deleteProcessedAndRevocationConfirmationDataScope,
-            deleteProcessedDataWithErrorsScope,
-            deleteProcessedDataWithWarningsScope,
-        ]),
-    }),
-);
+export const accessionVersionsFilterWithDeletionScope = accessionVersionsFilter.extend({
+    groupIdsFilter: z.array(z.number()),
+    scope: z.union([
+        deleteAllDataScope,
+        deleteProcessedAndRevocationConfirmationDataScope,
+        deleteProcessedDataWithErrorsScope,
+        deleteProcessedDataWithWarningsScope,
+    ]),
+});
 
 export const openDataUseTermsOption = 'OPEN';
 
@@ -130,28 +126,26 @@ export const dataUseTermsHistoryEntry = z.object({
 
 export type DataUseTermsHistoryEntry = z.infer<typeof dataUseTermsHistoryEntry>;
 
-export const sequenceEntryStatus = accessionVersion.merge(
-    z.object({
-        status: sequenceEntryStatusNames,
-        processingResult: sequenceEntryProcessingResultNames.nullable(),
-        submissionId: z.string(),
-        isRevocation: z.boolean(),
-        dataUseTerms,
-        groupId: z.number(),
-        submitter: z.string(),
-    }),
-);
+export const sequenceEntryStatus = accessionVersion.extend({
+    status: sequenceEntryStatusNames,
+    processingResult: sequenceEntryProcessingResultNames.nullable(),
+    submissionId: z.string(),
+    isRevocation: z.boolean(),
+    dataUseTerms,
+    groupId: z.number(),
+    submitter: z.string(),
+});
 
 export type SequenceEntryStatus = z.infer<typeof sequenceEntryStatus>;
 
-export const statusCounts = z.record(z.number()).refine(
+export const statusCounts = z.record(z.string(), z.number()).refine(
     (entry) => {
         return Object.keys(entry).every((key) => sequenceEntryStatusNames.safeParse(key).success);
     },
     { message: 'Invalid status name in statusCounts' },
 );
 
-export const processingResultCounts = z.record(z.number()).refine(
+export const processingResultCounts = z.record(z.string(), z.number()).refine(
     (entry) => {
         return Object.keys(entry).every((key) => sequenceEntryProcessingResultNames.safeParse(key).success);
     },
@@ -165,21 +159,17 @@ export const getSequencesResponse = z.object({
 });
 export type GetSequencesResponse = z.infer<typeof getSequencesResponse>;
 
-export const submissionIdMapping = accessionVersion.merge(
-    z.object({
-        submissionId: z.string(),
-    }),
-);
+export const submissionIdMapping = accessionVersion.extend({
+    submissionId: z.string(),
+});
 export type SubmissionIdMapping = z.infer<typeof submissionIdMapping>;
 
-export const editedSequenceEntryData = accessionVersion.merge(
-    z.object({
-        data: z.object({
-            metadata: unprocessedMetadataRecord,
-            unalignedNucleotideSequences: z.record(z.string()),
-        }),
+export const editedSequenceEntryData = accessionVersion.extend({
+    data: z.object({
+        metadata: unprocessedMetadataRecord,
+        unalignedNucleotideSequences: z.record(z.string(), z.string()),
     }),
-);
+});
 export type EditedSequenceEntryData = z.infer<typeof editedSequenceEntryData>;
 
 export const revocationRequest = z.object({
@@ -189,21 +179,20 @@ export const revocationRequest = z.object({
 
 export type RevocationRequest = z.infer<typeof revocationRequest>;
 
-export const unprocessedData = accessionVersion.merge(
-    z.object({
-        data: z.object({
-            metadata: unprocessedMetadataRecord,
-            unalignedNucleotideSequences: z.record(z.string()),
-        }),
-        submissionId: z.string(),
-        submitter: z.string(),
-        groupId: z.number(),
-        submittedAt: z.number(),
+export const unprocessedData = accessionVersion.extend({
+    data: z.object({
+        metadata: unprocessedMetadataRecord,
+        unalignedNucleotideSequences: z.record(z.string(), z.string()),
     }),
-);
+    submissionId: z.string(),
+    submitter: z.string(),
+    groupId: z.number(),
+    submittedAt: z.number(),
+});
 export type UnprocessedData = z.infer<typeof unprocessedData>;
 
 const filesByCategory = z.record(
+    z.string(),
     z.array(
         z.object({
             fileId: z.string(),
@@ -212,33 +201,31 @@ const filesByCategory = z.record(
     ),
 );
 
-export const filesBySubmissionId = z.record(filesByCategory);
+export const filesBySubmissionId = z.record(z.string(), filesByCategory);
 export type FilesBySubmissionId = z.infer<typeof filesBySubmissionId>;
 
-export const sequenceEntryToEdit = accessionVersion.merge(
-    z.object({
-        status: sequenceEntryStatusNames,
-        groupId: z.number(),
-        submissionId: z.string(),
-        errors: z.array(processingAnnotation).nullable(),
-        warnings: z.array(processingAnnotation).nullable(),
-        originalData: z.object({
-            metadata: unprocessedMetadataRecord,
-            unalignedNucleotideSequences: z.record(z.string()),
-            files: filesByCategory.nullable(),
-        }),
-        processedData: z.object({
-            metadata: metadataRecord,
-            unalignedNucleotideSequences: z.record(z.string().nullable()),
-            alignedNucleotideSequences: z.record(z.string().nullable()),
-            nucleotideInsertions: z.record(z.array(z.string())),
-            alignedAminoAcidSequences: z.record(z.string().nullable()),
-            aminoAcidInsertions: z.record(z.array(z.string())),
-            sequenceNameToFastaId: z.record(z.string().nullable()),
-            files: filesByCategory.nullable(),
-        }),
+export const sequenceEntryToEdit = accessionVersion.extend({
+    status: sequenceEntryStatusNames,
+    groupId: z.number(),
+    submissionId: z.string(),
+    errors: z.array(processingAnnotation).nullable(),
+    warnings: z.array(processingAnnotation).nullable(),
+    originalData: z.object({
+        metadata: unprocessedMetadataRecord,
+        unalignedNucleotideSequences: z.record(z.string(), z.string()),
+        files: filesByCategory.nullable(),
     }),
-);
+    processedData: z.object({
+        metadata: metadataRecord,
+        unalignedNucleotideSequences: z.record(z.string(), z.string().nullable()),
+        alignedNucleotideSequences: z.record(z.string(), z.string().nullable()),
+        nucleotideInsertions: z.record(z.string(), z.array(z.string())),
+        alignedAminoAcidSequences: z.record(z.string(), z.string().nullable()),
+        aminoAcidInsertions: z.record(z.string(), z.array(z.string())),
+        sequenceNameToFastaId: z.record(z.string(), z.string().nullable()),
+        files: filesByCategory.nullable(),
+    }),
+});
 export type SequenceEntryToEdit = z.infer<typeof sequenceEntryToEdit>;
 
 export const mapErrorsAndWarnings = (
@@ -266,13 +253,11 @@ export const uploadFiles = z.object({
 });
 export type UploadFiles = z.infer<typeof uploadFiles>;
 
-export const submitFiles = uploadFiles.merge(
-    z.object({
-        groupId: z.number(),
-        dataUseTermsType: z.enum(dataUseTermsOptions),
-        restrictedUntil: z.string().nullable(),
-    }),
-);
+export const submitFiles = uploadFiles.extend({
+    groupId: z.number(),
+    dataUseTermsType: z.enum(dataUseTermsOptions),
+    restrictedUntil: z.string().nullable(),
+});
 
 export const problemDetail = z.object({
     type: z.string(),
@@ -341,6 +326,7 @@ export type Info = z.infer<typeof info>;
 
 export const requestMultipartUploadResponse = z.array(
     z.object({
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- z.uuid() not available via zod v3 compat layer
         fileId: z.string().uuid(),
         urls: z.array(z.string()),
     }),
@@ -350,6 +336,7 @@ export type RequestMultipartUploadResponse = z.infer<typeof requestMultipartUplo
 
 export const completeMultipartUploadRequest = z.array(
     z.object({
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- z.uuid() not available via zod v3 compat layer
         fileId: z.string().uuid(),
         etags: z.array(z.string()),
     }),
@@ -357,5 +344,5 @@ export const completeMultipartUploadRequest = z.array(
 
 export type CompleteMultipartUploadRequest = z.infer<typeof completeMultipartUploadRequest>;
 
-export const pipelineVersionStatistics = z.record(z.record(z.number()));
+export const pipelineVersionStatistics = z.record(z.string(), z.record(z.string(), z.number()));
 export type PipelineVersionStatistics = z.infer<typeof pipelineVersionStatistics>;
