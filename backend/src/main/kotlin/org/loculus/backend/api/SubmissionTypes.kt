@@ -328,6 +328,24 @@ data class AccessionVersionOriginalMetadata(
     val originalMetadata: Map<String, String?>?,
 ) : AccessionVersionInterface
 
+data class GetOriginalDataRequest(
+    @Schema(
+        description = "The group ID to download data for.",
+        required = true,
+    )
+    val groupId: Int,
+    @Schema(
+        description = "Filter by specific accessions. If not provided, all accessions for the group are returned.",
+    )
+    val accessionsFilter: List<Accession>? = null,
+)
+
+data class OriginalDataResponse(
+    override val accession: Accession,
+    override val version: Version,
+    val originalData: OriginalData<GeneticSequence>,
+) : AccessionVersionInterface
+
 enum class Status {
     @JsonProperty("RECEIVED")
     RECEIVED,

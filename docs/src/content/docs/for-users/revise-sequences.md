@@ -6,6 +6,21 @@ Sequences can be corrected or updated after they have been submitted to Loculus.
 
 The process of submitting revisions is very similar to original submission. The main difference is that you must provide an `accession` column in the metadata file, which contains the Loculus [accession number(s)](../../reference/glossary/#accession) assigned when the sequences were submitted originally.
 
+## Downloading original data for revision
+
+If you no longer have the original files you submitted, you can download them from Loculus. Note that Loculus stores your originally submitted data separately from the processed data shown on the website, so this download gives you the exact data you need for revisions.
+
+1. Navigate to your group's **Released sequences** page
+2. Filter or select specific sequences you want to revise
+3. Click the **Download original data** button on the top-right.
+
+This downloads a zip file containing:
+
+- `metadata.tsv` - your original metadata with an `accession` column already included
+- `sequences.fasta` - your original unaligned sequences (if the organism supports sequence files)
+
+You can then edit these files as needed and resubmit them as a revision. The download is limited to 500 sequences at a time.
+
 ## Preparing the metadata file
 
 The metadata file should include all the metadata fields that were originally included, **both** those that you wish to update and that should remain the same. (Not including a metadata column will set its value to 'empty'.)
