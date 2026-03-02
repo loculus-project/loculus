@@ -158,13 +158,15 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
       - name: displayName
         preprocessing:
-          function: concatenate
+          function: build_display_name
           inputs:
             geoLocCountry: geoLocCountry
             sampleCollectionDate: sampleCollectionDate
+            specimenCollectorSampleId: specimenCollectorSampleId
+            submissionId: submissionId
           args:
-            order: [geoLocCountry, ACCESSION_VERSION, sampleCollectionDate]
-            type: [string, ACCESSION_VERSION, string]
+            order: [geoLocCountry, IDENTIFIER, sampleCollectionDate]
+            type: [string, IDENTIFIER, string]
         noInput: true
       - name: ncbiReleaseDate
         displayName: NCBI release date
