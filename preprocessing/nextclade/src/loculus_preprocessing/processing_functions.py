@@ -1177,6 +1177,88 @@ class ProcessingFunctions:
             )
         return ProcessingResult(datum=(input > threshold), warnings=[], errors=[])
 
+    @staticmethod
+    def build_display_name(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        """Builds a displayName from input fields
+        This method wraps ProcessingFunctions.concatentate(), but adds some additional checks:
+            - submissionId must be in the input_data
+            - if submissionId is in a standardized format, it will extract the ID field using extract_id_field()
+            - if submissionId is in an unrecognized format, it will be replaced with the ACCESSION_VERSION
+            - if not provided, this method will add 'fallback_value': 'unknown' to the args before passing
+              them on to concatenate() to ensure fields in the '/'-delimited output string always have the same
+              meaning across all displayNames
+        """
+        submission_id = input_data.get("submissionId")
+        order = args.get("order")
+        field_types = args.get("type")
+        if submission_id is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=("'submissionId' is a required input for build_display_name()"),
+                    )
+                ],
+            )
+
+        if (
+            not isinstance(order, list)
+            or not isinstance(field_types, list)
+            or len(order) != len(field_types)
+        ):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=("'order' and 'type' must be lists of equal length"),
+                    )
+                ],
+            )
+
+        id = extract_id_field(submission_id)
+        if id is not None:
+            input_data["submissionId"] = id
+        else:
+            # Could not extract id field from submissionId: fall back to ACCESSION_VERSION
+            # To do this we have to modify the arguments and input_data before
+            # calling concatenate()
+            for i in range(len(order)):
+                if order[i] == "submissionId":
+                    order[i] = "ACCESSION_VERSION"
+                    field_types[i] = "ACCESSION_VERSION"
+                    break
+            input_data.pop("submissionId")
+
+        args["order"] = order
+        args["type"] = field_types
+        if args.get("fallback_value") is None:
+            args["fallback_value"] = "unknown"
+
+        concat_result = ProcessingFunctions.concatenate(
+            input_data, output_field, input_fields, args
+        )
+        if concat_result.warnings or concat_result.errors:
+            return concat_result
+
+        return ProcessingResult(
+            datum=concat_result.datum,
+            warnings=[],
+            errors=[],
+        )
+
 
 def single_metadata_annotation(
     source_name: str,
@@ -1437,3 +1519,22 @@ def null_per_backend(x: Any) -> bool:
             return True
         case _:
             return False
+
+
+def extract_id_field(submission_id: str) -> str | None:
+    """
+    If submission_id is made up of four fields separated by slashes, we assume that it
+    is in a standardized format where the second to last field contains an identifier to use in
+    the displayName.
+
+    If there are no slashes, we use the submission_id as is.
+
+    If there are a different number of slashes, we can't be sure which part to use for the
+    displayName and return None
+    """
+    if "/" in submission_id:
+        parts = submission_id.split("/")
+        if len(parts) == 4:
+            return parts[-2]
+        return None
+    return submission_id
