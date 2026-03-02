@@ -1198,6 +1198,7 @@ def test_preprocessing_without_metadata() -> None:
         data=UnprocessedData(
             group_id=2,
             submitter="test_submitter",
+            submissionId="test_submission_id",
             submittedAt=ts_from_ymd(2021, 12, 15),
             metadata={},
             unalignedNucleotideSequences={

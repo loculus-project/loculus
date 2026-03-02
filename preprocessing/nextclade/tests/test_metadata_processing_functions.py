@@ -709,6 +709,7 @@ def test_preprocessing_without_consensus_sequences(config: Config) -> None:
         accessionVersion="LOC_01.1",
         data=UnprocessedData(
             submitter="test_submitter",
+            submissionId="test_submission_id",
             group_id=2,
             submittedAt=ts_from_ymd(2021, 12, 15),
             metadata={
