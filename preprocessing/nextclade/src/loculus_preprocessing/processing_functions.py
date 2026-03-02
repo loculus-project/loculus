@@ -1197,8 +1197,7 @@ class ProcessingFunctions:
         """
         collector_id = input_data.pop("specimenCollectorSampleId", None)
         submission_id = input_data.pop("submissionId", None)
-        identifier = collector_id or submission_id
-        if identifier is None:
+        if submission_id is None:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1207,9 +1206,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=(
-                            "either 'submissionId' or 'specimenCollectorSampleId' must not be None for build_display_name()"
-                        ),
+                        message=("Internal Error: 'submissionId' must not be None for build_display_name(). Please contact the administrator."),
                     )
                 ],
             )
@@ -1220,7 +1217,7 @@ class ProcessingFunctions:
             not isinstance(order, list)
             or not isinstance(field_types, list)
             or len(order) != len(field_types)
-            or "specimenCollectorSampleId" not in order
+            or "IDENTIFIER" not in order
         ):
             print(order)
             print(field_types)
@@ -1233,32 +1230,35 @@ class ProcessingFunctions:
                         [output_field],
                         AnnotationSourceType.METADATA,
                         message=(
-                            "'order' and 'type' must be lists of equal length, and 'order' must contain specimenCollectorSampleId"
+                            "Internal Error: 'order' and 'type' must be lists of equal length, and 'order' must contain IDENTIFIER - this is required for build_display_name to function. Please contact the administrator."
                         ),
                     )
                 ],
             )
 
-        identifier = extract_id_field(identifier)
-        if args["is_insdc_ingest_group"] or identifier is None:
-            # If the sequence was ingested from INSDC or if we could not extract id field from
-            # submissionId: fall back to ACCESSION_VERSION
-            # To do this we have to modify the arguments and input_data before
-            # calling concatenate()
-            for i in range(len(order)):
-                if order[i] == "specimenCollectorSampleId":
-                    order[i] = "ACCESSION_VERSION"
-                    field_types[i] = "ACCESSION_VERSION"
+        concatenate_order = order.copy()
+        concatenate_field_types = field_types.copy()
+        if args["is_insdc_ingest_group"]:
+            # If the sequence was ingested from INSDC use ACCESSION_VERSION
+            concatenate_order = ["ACCESSION_VERSION" if v == "IDENTIFIER" else v for v in order]
+            concatenate_field_types = [
+                "ACCESSION_VERSION" if v == "IDENTIFIER" else v for v in field_types
+            ]
         else:
-            input_data["specimenCollectorSampleId"] = identifier
-
-        args["order"] = order
-        args["type"] = field_types
-        if args.get("fallback_value") is None:
-            args["fallback_value"] = "unknown"
+            identifier = extract_id_field(collector_id or submission_id)
+            concatenate_field_types = ["string" if v == "IDENTIFIER" else v for v in field_types]
+            input_data["IDENTIFIER"] = identifier
 
         concat_result = ProcessingFunctions.concatenate(
-            input_data, output_field, input_fields, args
+            input_data,
+            output_field,
+            input_fields,
+            {
+                "order": concatenate_order,
+                "type": concatenate_field_types,
+                "fallback_value": args["fallback_value"] or "unknown",
+                "ACCESSION_VERSION": input_data.get("ACCESSION_VERSION"),
+            },
         )
         if concat_result.warnings or concat_result.errors:
             return concat_result
