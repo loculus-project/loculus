@@ -1197,7 +1197,7 @@ class ProcessingFunctions:
         """
         collector_id = input_data.pop("specimenCollectorSampleId", None)
         submission_id = input_data.pop("submissionId", None)
-        identifier = collector_id if collector_id else submission_id
+        identifier = collector_id or submission_id
         if identifier is None:
             return ProcessingResult(
                 datum=None,
