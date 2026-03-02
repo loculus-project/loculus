@@ -697,7 +697,7 @@ class ProcessingFunctions:
         n_inputs = len(input_data.keys())
         # exclude ACCESSION_VERSION as it's provided by _call_preprocessing_function() and should not be an input_metadata field
         n_expected = len([i for i in order if i != "ACCESSION_VERSION"])
-        if n_inputs != n_expected:
+        if n_inputs < n_expected:
             logger.error(
                 f"Concatenate: Expected {n_expected} fields, got {n_inputs}. "
                 f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
@@ -1195,8 +1195,8 @@ class ProcessingFunctions:
             - if fallback_value is not in args, { 'fallback_value': 'unknown' } is added to the args before passing
               them on to concatenate()
         """
-        collector_id = input_data.pop("specimenCollectorSampleId", None)
-        submission_id = input_data.pop("submissionId", None)
+        collector_id = input_data.get("specimenCollectorSampleId", None)
+        submission_id = input_data.get("submissionId", None)
         if submission_id is None:
             return ProcessingResult(
                 datum=None,
@@ -1240,15 +1240,23 @@ class ProcessingFunctions:
 
         concatenate_order = order.copy()
         concatenate_field_types = field_types.copy()
-        if args["is_insdc_ingest_group"]:
-            # If the sequence was ingested from INSDC use ACCESSION_VERSION
-            concatenate_order = ["ACCESSION_VERSION" if v == "IDENTIFIER" else v for v in order]
-            concatenate_field_types = [
-                "ACCESSION_VERSION" if v == "IDENTIFIER" else v for v in field_types
-            ]
-        else:
+
+        def replace_identifier(values, replacement):
+            return [replacement if v == "IDENTIFIER" else v for v in values]
+
+        use_accession = args["is_insdc_ingest_group"]
+
+        if not use_accession:
             identifier = extract_id_field(collector_id or submission_id)
-            concatenate_field_types = ["string" if v == "IDENTIFIER" else v for v in field_types]
+            use_accession = identifier is None
+
+        if use_accession:
+            # Use ACCESSION_VERSION instead of IDENTIFIER
+            concatenate_order = replace_identifier(order, "ACCESSION_VERSION")
+            concatenate_field_types = replace_identifier(field_types, "ACCESSION_VERSION")
+        else:
+            # Keep IDENTIFIER but treat it as string
+            concatenate_field_types = replace_identifier(field_types, "string")
             input_data["IDENTIFIER"] = identifier
 
         concat_result = ProcessingFunctions.concatenate(

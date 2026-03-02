@@ -975,6 +975,7 @@ def test_display_name_construction() -> None:
         "nextclade.clade": "DENV-1",
         "geoLocCountry": "Switzerland",
         "sampleCollectionDate": "2025",
+        "submissionId": submission_id,
     }
     output_field: str = "displayName"
 
@@ -983,6 +984,7 @@ def test_display_name_construction() -> None:
             "nextclade.clade",
             "geoLocCountry",
             "specimenCollectorSampleId",
+            "submissionId",
             "sampleCollectionDate",
         ]
 
@@ -990,16 +992,16 @@ def test_display_name_construction() -> None:
         return {
             "ACCESSION_VERSION": "version.1",
             "is_insdc_ingest_group": False,
-            "order": input_fields(),
-            "type": ["string", "string", "string", "string"],
+            "order": ["nextclade.clade", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
+            "type": ["string", "string", "IDENTIFIER", "string"],
         }
 
     res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
-    assert res.datum is None
-
-    input_data["specimenCollectorSampleId"] = submission_id
-    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
     assert res.datum == "DENV-1/Switzerland/mySample/2025"
+
+    input_data["specimenCollectorSampleId"] = "myCollectorSample"
+    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
+    assert res.datum == "DENV-1/Switzerland/myCollectorSample/2025"
 
     input_data["specimenCollectorSampleId"] = submission_id_formatted
     res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())

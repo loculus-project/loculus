@@ -1316,6 +1316,7 @@ def test_create_flatfile():
             submitter="test_submitter",
             group_id=2,
             submittedAt=ts_from_ymd(2021, 12, 15),
+            submissionId="test_submission_id",
             metadata={
                 "sampleCollectionDate": "2024-01-01",
                 "geoLocCountry": "Netherlands",
