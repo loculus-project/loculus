@@ -1184,19 +1184,21 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        """Builds a displayName from input fields
-        This method wraps ProcessingFunctions.concatentate(), but adds some additional checks:
-            - submissionId must be in the input_data
-            - if submissionId is in a standardized format, it will extract the ID field using extract_id_field()
-            - if submissionId is in an unrecognized format, it will be replaced with the ACCESSION_VERSION
-            - if not provided, this method will add 'fallback_value': 'unknown' to the args before passing
-              them on to concatenate() to ensure fields in the '/'-delimited output string always have the same
-              meaning across all displayNames
+        """Builds a displayName from input_fields. The identifier field in the displayName is based on
+        specimenCollectorSampleId or - if it is not set - submissionId.
+
+        This method wraps ProcessingFunctions.concatentate(), but adds some additional checks and requirements:
+            - submissionId and specimenCollectorSampleId must be in the input_data
+            - specimenCollectorSampleId must be in args['order']
+            - the identifier is processed using extract_id_field()
+            - if the identifier is in an unrecognized format, it will be replaced with the ACCESSION_VERSION
+            - if fallback_value is not in args, { 'fallback_value': 'unknown' } is added to the args before passing
+              them on to concatenate()
         """
-        submission_id = input_data.get("submissionId")
-        order = args.get("order")
-        field_types = args.get("type")
-        if submission_id is None:
+        collector_id = input_data.pop("specimenCollectorSampleId", None)
+        submission_id = input_data.pop("submissionId", None)
+        identifier = collector_id if collector_id else submission_id
+        if identifier is None:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1205,16 +1207,23 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=("'submissionId' is a required input for build_display_name()"),
+                        message=(
+                            "either 'submissionId' or 'specimenCollectorSampleId' must not be None for build_display_name()"
+                        ),
                     )
                 ],
             )
 
+        order = args.get("order")
+        field_types = args.get("type")
         if (
             not isinstance(order, list)
             or not isinstance(field_types, list)
             or len(order) != len(field_types)
+            or "specimenCollectorSampleId" not in order
         ):
+            print(order)
+            print(field_types)
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1223,24 +1232,25 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=("'order' and 'type' must be lists of equal length"),
+                        message=(
+                            "'order' and 'type' must be lists of equal length, and 'order' must contain specimenCollectorSampleId"
+                        ),
                     )
                 ],
             )
 
-        id = extract_id_field(submission_id)
-        if id is not None:
-            input_data["submissionId"] = id
-        else:
-            # Could not extract id field from submissionId: fall back to ACCESSION_VERSION
+        identifier = extract_id_field(identifier)
+        if args["is_insdc_ingest_group"] or identifier is None:
+            # If the sequence was ingested from INSDC or if we could not extract id field from
+            # submissionId: fall back to ACCESSION_VERSION
             # To do this we have to modify the arguments and input_data before
             # calling concatenate()
             for i in range(len(order)):
-                if order[i] == "submissionId":
+                if order[i] == "specimenCollectorSampleId":
                     order[i] = "ACCESSION_VERSION"
                     field_types[i] = "ACCESSION_VERSION"
-                    break
-            input_data.pop("submissionId")
+        else:
+            input_data["specimenCollectorSampleId"] = identifier
 
         args["order"] = order
         args["type"] = field_types

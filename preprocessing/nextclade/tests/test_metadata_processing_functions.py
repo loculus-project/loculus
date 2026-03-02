@@ -976,41 +976,50 @@ def test_display_name_construction() -> None:
         "sampleCollectionDate": "2025",
     }
     output_field: str = "displayName"
-    input_fields: list[str] = [
-        "nextclade.clade",
-        "geoLocCountry",
-        "submissionId",
-        "sampleCollectionDate",
-    ]
-    args: FunctionArgs = {
-        "ACCESSION_VERSION": "version.1",
-        "order": input_fields,
-        "type": ["string", "string", "string", "string"],
-    }
 
-    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields, args)
+    def input_fields():
+        return [
+            "nextclade.clade",
+            "geoLocCountry",
+            "specimenCollectorSampleId",
+            "sampleCollectionDate",
+        ]
+
+    def args():
+        return {
+            "ACCESSION_VERSION": "version.1",
+            "is_insdc_ingest_group": False,
+            "order": input_fields(),
+            "type": ["string", "string", "string", "string"],
+        }
+
+    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
     assert res.datum is None
 
-    input_data["submissionId"] = submission_id
-    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields, args)
+    input_data["specimenCollectorSampleId"] = submission_id
+    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
     assert res.datum == "DENV-1/Switzerland/mySample/2025"
 
-    input_data["submissionId"] = submission_id_formatted
-    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields, args)
+    input_data["specimenCollectorSampleId"] = submission_id_formatted
+    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
     assert res.datum == "DENV-1/Switzerland/myExtractedSample/2025"
 
-    input_data["submissionId"] = submission_id_formatted_unexpected
-    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields, args)
+    input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
+    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
     assert res.datum == "DENV-1/Switzerland/version.1/2025"
 
-    input_data["submissionId"] = submission_id_formatted_unexpected
+    input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
     input_data["geoLocCountry"] = ""
-    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields, args)
+    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
     assert res.datum == "DENV-1/unknown/version.1/2025"
 
-    input_data["submissionId"] = submission_id_formatted_unexpected
-    args["fallback_value"] = "another_fallback"
-    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields, args)
+    input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
+    res = ProcessingFunctions.build_display_name(
+        input_data,
+        output_field,
+        input_fields(),
+        {"fallback_value": "another_fallback"} | args(),
+    )
     assert res.datum == "DENV-1/another_fallback/version.1/2025"
 
 
