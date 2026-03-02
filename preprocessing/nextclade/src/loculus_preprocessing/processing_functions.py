@@ -1206,7 +1206,9 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=("Internal Error: 'submissionId' must not be None for build_display_name(). Please contact the administrator."),
+                        message=(
+                            "Internal Error: 'submissionId' must not be None for build_display_name(). Please contact the administrator."
+                        ),
                     )
                 ],
             )
