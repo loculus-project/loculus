@@ -1258,8 +1258,8 @@ class ProcessingFunctions:
             {
                 "order": concatenate_order,
                 "type": concatenate_field_types,
-                "fallback_value": args["fallback_value"] or "unknown",
-                "ACCESSION_VERSION": input_data.get("ACCESSION_VERSION"),
+                "fallback_value": args.get("fallback_value", "unknown"),
+                "ACCESSION_VERSION": args["ACCESSION_VERSION"],
             },
         )
         if concat_result.warnings or concat_result.errors:
