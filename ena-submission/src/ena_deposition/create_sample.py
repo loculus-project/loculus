@@ -80,12 +80,13 @@ def get_sample_attributes(
                         value = "false"
                 case "deduplicate":
                     # Split using ';', strip whitespace, deduplicate, and re-join using '; '
-                    unique_values = {
+                    unique_values = dict.fromkeys(
                         v.strip()
                         for value in loculus_metadata_field_values
                         if value is not None
                         for v in value.split(";")
-                    }
+                        if v.strip()
+                    )
                     value = "; ".join(unique_values)
                 case _:
                     logger.error(
