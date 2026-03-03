@@ -13,6 +13,7 @@ export type FieldItem = {
     displayName?: string;
     header?: string;
     displayState?: FieldItemDisplayState;
+    order?: number;
     isChecked: boolean;
 };
 
@@ -91,12 +92,19 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
         return acc;
     }, {});
 
-    // Sort headers alphabetically, but keep "Other" at the end
-    const sortedHeaders = Object.keys(fieldsByHeader).sort((a, b) => {
-        if (a === 'Other') return 1;
-        if (b === 'Other') return -1;
-        return a.localeCompare(b);
-    });
+    const headerGroups: { header: string; rows: FieldItem[]; meanOrder: number }[] = [];
+    for (const [header, rows] of Object.entries(fieldsByHeader)) {
+        rows.sort((a, b) => (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY));
+
+        const definedOrders = rows.map((r) => r.order).filter((o): o is number => o !== undefined);
+        const meanOrder =
+            definedOrders.length > 0
+                ? definedOrders.reduce((sum, o) => sum + o, 0) / definedOrders.length
+                : Number.POSITIVE_INFINITY;
+        headerGroups.push({ header, rows, meanOrder });
+    }
+
+    headerGroups.sort((a, b) => a.meanOrder - b.meanOrder);
 
     return (
         <BaseDialog title={title} isOpen={isOpen} onClose={onClose} fullWidth={false}>
@@ -120,35 +128,17 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                 </div>
             </div>
             <div className='mt-2 max-h-[60vh] overflow-y-auto p-2'>
-                {sortedHeaders.map((header) => (
-                    <div key={header} className='mb-6'>
-                        <h3 className='font-medium text-lg mb-2 text-gray-700'>{header}</h3>
+                {headerGroups.map((headerGroup) => (
+                    <div key={headerGroup.header} className='mb-6'>
+                        <h3 className='font-medium text-lg mb-2 text-gray-700'>{headerGroup.header}</h3>
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2'>
-                            {fieldsByHeader[header]
-                                .sort((a, b) => {
-                                    type WithOptionalOrder = { order?: number };
-                                    const aOrder = 'order' in a ? (a as WithOptionalOrder).order : undefined;
-                                    const bOrder = 'order' in b ? (b as WithOptionalOrder).order : undefined;
-
-                                    if (aOrder !== undefined && bOrder !== undefined) {
-                                        return aOrder - bOrder;
-                                    } else if (aOrder !== undefined) {
-                                        return -1;
-                                    } else if (bOrder !== undefined) {
-                                        return 1;
-                                    }
-
-                                    const aDisplay = a.displayName ?? a.name;
-                                    const bDisplay = b.displayName ?? b.name;
-                                    return aDisplay.localeCompare(bDisplay);
-                                })
-                                .map((field) => (
-                                    <FieldSelectorModalField
-                                        key={field.name}
-                                        field={field}
-                                        handleToggleField={handleToggleField}
-                                    />
-                                ))}
+                            {headerGroup.rows.map((field) => (
+                                <FieldSelectorModalField
+                                    key={field.name}
+                                    field={field}
+                                    handleToggleField={handleToggleField}
+                                />
+                            ))}
                         </div>
                     </div>
                 ))}

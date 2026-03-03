@@ -131,6 +131,7 @@ export type GroupedMetadataFilter = {
     header?: string;
     isSequenceFilter?: Metadata['isSequenceFilter'];
     relatesToSegment?: Metadata['relatesToSegment'];
+    order?: number;
 };
 
 export const linkOut = z.object({
