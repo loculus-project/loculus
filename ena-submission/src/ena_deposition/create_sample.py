@@ -57,7 +57,7 @@ def get_sample_attributes(
     for field_name, mapping in metadata_mapping.items():
         loculus_metadata_field_values = map(sample_metadata.get, mapping.loculus_fields)
 
-        # Fields with function and args are processed differently
+        # Fields with function are processed differently
         if mapping.function:
             function = mapping.function
             args = mapping.args or []
