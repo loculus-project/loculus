@@ -101,6 +101,15 @@ FunctionArgs = dict[ArgName, ArgValue]
 
 
 @dataclass
+class ProcessingFunctionCallArgs:
+    args: FunctionArgs
+    output_field: str
+    input_fields: list[str]
+    input_data: InputMetadata
+    internal_metadata: InternalMetadata
+
+
+@dataclass
 class UnprocessedAfterNextclade:
     inputMetadata: InputMetadata  # noqa: N815
     internal_metadata: InternalMetadata

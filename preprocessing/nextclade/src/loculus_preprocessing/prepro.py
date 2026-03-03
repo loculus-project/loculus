@@ -35,6 +35,7 @@ from .datatypes import (
     ProcessedMetadataValue,
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
+    ProcessingFunctionCallArgs,
     ProcessingResult,
     SegmentClassificationMethod,
     SegmentName,
@@ -240,16 +241,17 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
 ) -> ProcessingResult:
     args = dict(spec.args) if spec.args else {}
     args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == internal_metadata.group_id
-    args["submittedAt"] = internal_metadata.submitted_at
-    args["ACCESSION_VERSION"] = internal_metadata.accession_version
 
     try:
         processing_result = ProcessingFunctions.call_function(
-            spec.function,
-            args,
-            input_data,
-            output_field,
-            input_fields,
+            function_name=spec.function,
+            call_args=ProcessingFunctionCallArgs(
+                args=args,
+                output_field=output_field,
+                input_fields=input_fields,
+                input_data=input_data,
+                internal_metadata=internal_metadata,
+            ),
         )
     except Exception as e:
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
@@ -304,7 +306,6 @@ def get_sequence_length(
 
 
 def get_output_metadata(
-    accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
     config: Config,
 ) -> tuple[ProcessedMetadata, list[ProcessingAnnotation], list[ProcessingAnnotation]]:
@@ -471,9 +472,7 @@ def process_single(
         config,
     )
 
-    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
-        accession_version, unprocessed, config
-    )
+    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(unprocessed, config)
 
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
@@ -511,9 +510,7 @@ def process_single_unaligned(
     unprocessed.unalignedNucleotideSequences = segment_assignment.unalignedNucleotideSequences
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
-    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
-        accession_version, unprocessed, config
-    )
+    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(unprocessed, config)
 
     return processed_entry_no_alignment(
         accession_version=accession_version,
