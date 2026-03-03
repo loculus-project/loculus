@@ -7,7 +7,6 @@ from factory_methods import (
     ProcessingTestCase,
     build_processing_annotations,
     get_dummy_internal_metadata,
-    ts_from_ymd,
     verify_processed_entry,
 )
 
@@ -15,7 +14,6 @@ from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import (
     FunctionArgs,
     InputMetadata,
-    InternalMetadata,
     ProcessedEntry,
     ProcessingFunctionCallArgs,
     UnprocessedData,
@@ -30,8 +28,6 @@ from loculus_preprocessing.processing_functions import (
 
 # Config file used for testing
 NO_ALIGNMENT_CONFIG = "tests/no_alignment_config.yaml"
-
-dummy_internal_metadata = get_dummy_internal_metadata()
 
 
 test_case_definitions = [
@@ -713,13 +709,7 @@ def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
         data=UnprocessedData(
-            internal_metadata=InternalMetadata(
-                accession_version="LOC_01.1",
-                submission_id="test_submission_id",
-                submitter="test_submitter",
-                group_id=2,
-                submitted_at=ts_from_ymd(2021, 12, 15),
-            ),
+            internal_metadata=get_dummy_internal_metadata(),
             metadata={
                 "ncbi_required_collection_date": "2024-01-01",
                 "name_required": sequence_name,
@@ -771,7 +761,7 @@ def generate_call_args(input_data: InputMetadata, field_type: str) -> Processing
         args={
             "fieldType": field_type,
         },
-        internal_metadata=dummy_internal_metadata,
+        internal_metadata=get_dummy_internal_metadata(),
     )
 
 
@@ -870,7 +860,7 @@ def test_concatenate() -> None:
             output_field,
             input_fields,
             input_data,
-            dummy_internal_metadata,
+            get_dummy_internal_metadata(),
         )
     )
 
@@ -881,7 +871,7 @@ def test_concatenate() -> None:
             output_field,
             input_fields,
             input_data,
-            dummy_internal_metadata,
+            get_dummy_internal_metadata(),
         )
     )
 
@@ -892,7 +882,7 @@ def test_concatenate() -> None:
             output_field,
             input_fields,
             input_data,
-            dummy_internal_metadata,
+            get_dummy_internal_metadata(),
         )
     )
 
@@ -902,7 +892,7 @@ def test_concatenate() -> None:
             output_field,
             input_fields,
             input_data,
-            dummy_internal_metadata,
+            get_dummy_internal_metadata(),
         )
     )
 
@@ -913,7 +903,7 @@ def test_concatenate() -> None:
             output_field,
             input_fields,
             input_data,
-            dummy_internal_metadata,
+            get_dummy_internal_metadata(),
         )
     )
 
