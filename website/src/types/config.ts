@@ -134,7 +134,6 @@ export type GroupedMetadataFilter = {
     relatesToSegment?: Metadata['relatesToSegment'];
     order?: number;
     orderInSearchDisplay?: number;
-    order?: number;
 };
 
 export const linkOut = z.object({
