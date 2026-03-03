@@ -524,7 +524,7 @@ def assign_segment_with_nextclade_align(
             best_hits,
             config,
         )
-        accession_version = entry.accessionVersion
+        accession_version = entry.internal_metadata.accession_version
         batch.sequenceNameToFastaId[accession_version] = sequence_assignment.sequenceNameToFastaId
         batch.unalignedNucleotideSequences[accession_version] = (
             sequence_assignment.unalignedNucleotideSequences
