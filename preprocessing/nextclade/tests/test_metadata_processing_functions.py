@@ -1015,6 +1015,11 @@ def test_display_name_construction() -> None:
     input_data["geoLocCountry"] = ""
     res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
     assert res.datum == "DENV-1/unknown/version.1/2025"
+    assert len(res.warnings) == 1
+    assert (
+        res.warnings[0].message
+        == "user-supplied identifier field could not be parsed: expected either no or exactly three slashes in identifier"
+    )
 
     input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
     res = ProcessingFunctions.build_display_name(
@@ -1024,6 +1029,11 @@ def test_display_name_construction() -> None:
         {"fallback_value": "another_fallback"} | args(),
     )
     assert res.datum == "DENV-1/another_fallback/version.1/2025"
+    assert len(res.warnings) == 1
+    assert (
+        res.warnings[0].message
+        == "user-supplied identifier field could not be parsed: expected either no or exactly three slashes in identifier"
+    )
 
 
 if __name__ == "__main__":

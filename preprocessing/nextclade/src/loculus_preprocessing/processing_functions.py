@@ -1197,6 +1197,7 @@ class ProcessingFunctions:
         """
         collector_id = input_data.get("specimenCollectorSampleId", None)
         submission_id = input_data.get("submissionId", None)
+        warnings = []
         if submission_id is None:
             return ProcessingResult(
                 datum=None,
@@ -1221,8 +1222,6 @@ class ProcessingFunctions:
             or len(order) != len(field_types)
             or "IDENTIFIER" not in order
         ):
-            print(order)
-            print(field_types)
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1244,13 +1243,22 @@ class ProcessingFunctions:
         def replace_identifier(values, replacement):
             return [replacement if v == "IDENTIFIER" else v for v in values]
 
-        use_accession = args["is_insdc_ingest_group"]
-
-        if not use_accession:
+        identifier = None
+        if not args["is_insdc_ingest_group"]:
             identifier = extract_id_field(collector_id or submission_id)
-            use_accession = identifier is None
+            if identifier is None:
+                warnings.append(
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            "user-supplied identifier field could not be parsed: expected either no or exactly three slashes in identifier"
+                        ),
+                    )
+                )
 
-        if use_accession:
+        if identifier is None:
             # Use ACCESSION_VERSION instead of IDENTIFIER
             concatenate_order = replace_identifier(order, "ACCESSION_VERSION")
             concatenate_field_types = replace_identifier(field_types, "ACCESSION_VERSION")
@@ -1275,7 +1283,7 @@ class ProcessingFunctions:
 
         return ProcessingResult(
             datum=concat_result.datum,
-            warnings=[],
+            warnings=warnings,
             errors=[],
         )
 
@@ -1542,7 +1550,8 @@ def null_per_backend(x: Any) -> bool:
 
 
 def extract_id_field(submission_id: str) -> str | None:
-    """
+    """Attempt to extract an identifier field from submission_id
+
     If submission_id is made up of four fields separated by slashes, we assume that it
     is in a standardized format where the second to last field contains an identifier to use in
     the displayName.
