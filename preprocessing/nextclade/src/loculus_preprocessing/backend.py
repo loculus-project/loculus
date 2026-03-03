@@ -14,9 +14,11 @@ from urllib.parse import urlparse
 import jwt
 import pytz
 import requests
+from pydantic import ValidationError
 
 from .config import Config
 from .datatypes import (
+    BackendEntry,
     FileUploadInfo,
     InternalMetadata,
     ProcessedEntry,
@@ -75,6 +77,28 @@ def get_jwt(config: Config) -> str:
         raise Exception(error_msg)
 
 
+def _backend_entry_to_unprocessed(entry: BackendEntry) -> UnprocessedEntry:
+    accession_version = f"{entry.accession}.{entry.version}"
+    trimmed_sequences = {
+        key: trim_ns(value) if value else None
+        for key, value in entry.data.unalignedNucleotideSequences.items()
+    }
+    return UnprocessedEntry(
+        accessionVersion=accession_version,
+        data=UnprocessedData(
+            internal_metadata=InternalMetadata(
+                accession_version=accession_version,
+                submitter=entry.submitter,
+                group_id=entry.groupId,
+                submitted_at=entry.submittedAt,
+                submission_id=entry.submissionId,
+            ),
+            metadata=entry.data.metadata,
+            unalignedNucleotideSequences=trimmed_sequences if entry.data.unalignedNucleotideSequences else {},
+        ),
+    )
+
+
 def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
     entries: list[UnprocessedEntry] = []
     if len(ndjson_data) == 0:
@@ -85,33 +109,11 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
         # Loculus currently cannot handle non-breaking spaces.
         json_str_processed = json_str.replace("\N{NO-BREAK SPACE}", " ")
         try:
-            json_object = json.loads(json_str_processed)
-        except json.JSONDecodeError as e:
+            backend_entry = BackendEntry.model_validate_json(json_str_processed)
+        except (json.JSONDecodeError, ValidationError) as e:
             error_msg = f"Failed to parse JSON: {json_str_processed}"
             raise ValueError(error_msg) from e
-        unaligned_nucleotide_sequences = json_object["data"]["unalignedNucleotideSequences"]
-        trimmed_unaligned_nucleotide_sequences = {
-            key: trim_ns(value) if value else None
-            for key, value in unaligned_nucleotide_sequences.items()
-        }
-        unprocessed_data = UnprocessedData(
-            internal_metadata=InternalMetadata(
-                accession_version=f"{json_object['accession']}.{json_object['version']}",
-                submitter=json_object["submitter"],
-                group_id=json_object["groupId"],
-                submitted_at=json_object["submittedAt"],
-                submission_id=json_object["submissionId"],
-            ),
-            metadata=json_object["data"]["metadata"],
-            unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
-            if unaligned_nucleotide_sequences
-            else {},
-        )
-        entry = UnprocessedEntry(
-            accessionVersion=f"{json_object['accession']}.{json_object['version']}",
-            data=unprocessed_data,
-        )
-        entries.append(entry)
+        entries.append(_backend_entry_to_unprocessed(backend_entry))
     return entries
 
 

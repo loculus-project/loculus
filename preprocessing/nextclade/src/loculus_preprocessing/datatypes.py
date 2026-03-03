@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from enum import StrEnum, unique
 from typing import Any, Final
 
+from pydantic import BaseModel
+
 AccessionVersion = str
 GeneName = str
 SegmentName = str
@@ -72,6 +74,22 @@ class ProcessingAnnotation:
     @classmethod
     def from_single(cls, name: str, type, message: str):
         return cls.from_fields([name], [name], type, message)
+
+
+class BackendEntryData(BaseModel):
+    metadata: InputMetadata
+    unalignedNucleotideSequences: dict[str, str | None]  # noqa: N815
+    files: dict[str, list[dict[str, str]]] | None = None  # filename to list of {fileId, name}
+
+
+class BackendEntry(BaseModel):
+    accession: str
+    version: int
+    submitter: str
+    groupId: int  # noqa: N815
+    submittedAt: str  # noqa: N815
+    submissionId: str  # noqa: N815
+    data: BackendEntryData
 
 
 @dataclass
