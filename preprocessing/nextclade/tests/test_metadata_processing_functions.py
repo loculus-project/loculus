@@ -17,7 +17,6 @@ from loculus_preprocessing.datatypes import (
     ProcessedEntry,
     ProcessingFunctionCallArgs,
     UnprocessedData,
-    UnprocessedEntry,
 )
 from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
@@ -706,16 +705,13 @@ def test_preprocessing(test_case_def: Case, config: Config, factory_custom: Proc
 
 def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     sequence_name = "entry without sequences"
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            internal_metadata=get_dummy_internal_metadata(),
-            metadata={
-                "ncbi_required_collection_date": "2024-01-01",
-                "name_required": sequence_name,
-            },
-            unalignedNucleotideSequences={},
-        ),
+    sequence_entry_data = UnprocessedData(
+        internal_metadata=get_dummy_internal_metadata(),
+        metadata={
+            "ncbi_required_collection_date": "2024-01-01",
+            "name_required": sequence_name,
+        },
+        unalignedNucleotideSequences={},
     )
 
     result = process_all([sequence_entry_data], "temp_dataset_dir", config)

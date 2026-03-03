@@ -108,12 +108,6 @@ class UnprocessedData:
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
 
 
-@dataclass
-class UnprocessedEntry:
-    accessionVersion: AccessionVersion  # {accession}.{version}  # noqa: N815
-    data: UnprocessedData
-
-
 FunctionInputs = dict[ArgName, InputField]
 FunctionArgs = dict[ArgName, ArgValue]
 

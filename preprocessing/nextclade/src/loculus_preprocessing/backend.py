@@ -23,7 +23,6 @@ from .datatypes import (
     InternalMetadata,
     ProcessedEntry,
     UnprocessedData,
-    UnprocessedEntry,
 )
 from .processing_functions import trim_ns
 
@@ -77,29 +76,26 @@ def get_jwt(config: Config) -> str:
         raise Exception(error_msg)
 
 
-def _backend_entry_to_unprocessed(entry: BackendEntry) -> UnprocessedEntry:
+def _backend_entry_to_unprocessed(entry: BackendEntry) -> UnprocessedData:
     accession_version = f"{entry.accession}.{entry.version}"
-    return UnprocessedEntry(
-        accessionVersion=accession_version,
-        data=UnprocessedData(
-            internal_metadata=InternalMetadata(
-                accession_version=accession_version,
-                submitter=entry.submitter,
-                group_id=entry.groupId,
-                submitted_at=entry.submittedAt,
-                submission_id=entry.submissionId,
-            ),
-            metadata=entry.data.metadata,
-            unalignedNucleotideSequences={
-                key: trim_ns(value) if value else None
-                for key, value in entry.data.unalignedNucleotideSequences.items()
-            },
+    return UnprocessedData(
+        internal_metadata=InternalMetadata(
+            accession_version=accession_version,
+            submitter=entry.submitter,
+            group_id=entry.groupId,
+            submitted_at=entry.submittedAt,
+            submission_id=entry.submissionId,
         ),
+        metadata=entry.data.metadata,
+        unalignedNucleotideSequences={
+            key: trim_ns(value) if value else None
+            for key, value in entry.data.unalignedNucleotideSequences.items()
+        },
     )
 
 
-def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
-    entries: list[UnprocessedEntry] = []
+def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedData]:
+    entries: list[UnprocessedData] = []
     if len(ndjson_data) == 0:
         return entries
     for json_str in ndjson_data.split("\n"):
@@ -118,7 +114,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
 
 def fetch_unprocessed_sequences(
     etag: str | None, config: Config
-) -> tuple[str | None, Sequence[UnprocessedEntry] | None]:
+) -> tuple[str | None, Sequence[UnprocessedData] | None]:
     request_id = str(uuid.uuid4())
     n = config.batch_size
     url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"

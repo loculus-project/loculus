@@ -18,7 +18,6 @@ from loculus_preprocessing.datatypes import (
     ProcessingAnnotationAlignment,
     SegmentName,
     UnprocessedData,
-    UnprocessedEntry,
 )
 
 
@@ -31,7 +30,7 @@ def ts_from_ymd(year: int, month: int, day: int) -> str:
 @dataclass
 class ProcessingTestCase:
     name: str
-    input: UnprocessedEntry
+    input: UnprocessedData
     expected_output: ProcessedEntry
 
 
@@ -83,25 +82,22 @@ def get_dummy_internal_metadata(
 
 
 @dataclass
-class UnprocessedEntryFactory:
+class UnprocessedDataFactory:
     @staticmethod
     def create_unprocessed_entry(
         metadata_dict: dict[str, str | None],
         accession_id: str,
         sequences: dict[SegmentName, NucleotideSequence | None],
         group_id: int = 2,
-    ) -> UnprocessedEntry:
-        return UnprocessedEntry(
-            accessionVersion=f"LOC_{accession_id}.1",
-            data=UnprocessedData(
-                metadata=metadata_dict,
-                internal_metadata=get_dummy_internal_metadata(
-                    accession=f"LOC_{accession_id}.1",
-                    group_id=group_id,
-                    submission_id=f"SUB_{accession_id}",
-                ),
-                unalignedNucleotideSequences=sequences,
+    ) -> UnprocessedData:
+        return UnprocessedData(
+            metadata=metadata_dict,
+            internal_metadata=get_dummy_internal_metadata(
+                accession=f"LOC_{accession_id}.1",
+                group_id=group_id,
+                submission_id=f"SUB_{accession_id}",
             ),
+            unalignedNucleotideSequences=sequences,
         )
 
 
@@ -186,7 +182,7 @@ class Case:
     def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
         if not self.expected_processed_alignment:
             self.expected_processed_alignment = ProcessedAlignment()
-        unprocessed_entry = UnprocessedEntryFactory.create_unprocessed_entry(
+        unprocessed_entry = UnprocessedDataFactory.create_unprocessed_entry(
             metadata_dict=self.input_metadata,
             accession_id=self.accession_id,
             sequences=self.input_sequence,
@@ -194,7 +190,7 @@ class Case:
         )
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
-            accession=unprocessed_entry.accessionVersion.split(".")[0],
+            accession=unprocessed_entry.internal_metadata.accession_version.split(".")[0],
             errors=self.expected_errors or [],
             warnings=self.expected_warnings or [],
             processed_alignment=self.expected_processed_alignment,

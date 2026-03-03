@@ -42,7 +42,6 @@ from .datatypes import (
     SubmissionData,
     UnprocessedAfterNextclade,
     UnprocessedData,
-    UnprocessedEntry,
 )
 from .embl import create_flatfile
 from .nextclade import (
@@ -130,7 +129,7 @@ def truncate_after_wildcard(path: str, separator: str = ".") -> str:
     return path
 
 
-def add_nextclade_metadata(
+def add_nextclade_metadata(  # noqa: PLR0911
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     nextclade_path: str,
@@ -260,8 +259,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     return processing_result
 
 
-def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
-    accession_version: AccessionVersion,
+def processed_entry_no_alignment(
     unprocessed: UnprocessedData,
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
@@ -269,7 +267,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     sequenceNameToFastaId: dict[SequenceName, str],  # noqa: N803
 ) -> SubmissionData:
     """Process a single sequence without alignment"""
-
+    accession_version = unprocessed.internal_metadata.accession_version
     aligned_nucleotide_sequences: dict[SequenceName, NucleotideSequence | None] = {}
     aligned_aminoacid_sequences: dict[GeneName, AminoAcidSequence | None] = {}
     nucleotide_insertions: dict[SequenceName, list[NucleotideInsertion]] = {}
@@ -498,7 +496,6 @@ def process_single(
 
 
 def process_single_unaligned(
-    accession_version: AccessionVersion,
     unprocessed: UnprocessedData,
     config: Config,
 ) -> SubmissionData:
@@ -513,7 +510,6 @@ def process_single_unaligned(
     output_metadata, metadata_errors, metadata_warnings = get_output_metadata(unprocessed, config)
 
     return processed_entry_no_alignment(
-        accession_version=accession_version,
         unprocessed=unprocessed,
         output_metadata=output_metadata,
         errors=list(set(iupac_errors + metadata_errors + segment_assignment.alert.errors)),
@@ -522,7 +518,8 @@ def process_single_unaligned(
     )
 
 
-def processed_entry_with_errors(id, internal_metadata: InternalMetadata) -> SubmissionData:
+def processed_entry_with_errors(internal_metadata: InternalMetadata) -> SubmissionData:
+    id = internal_metadata.accession_version
     return SubmissionData(
         processed_entry=ProcessedEntry(
             accession=accession_from_str(id),
@@ -553,7 +550,7 @@ def processed_entry_with_errors(id, internal_metadata: InternalMetadata) -> Subm
 
 
 def process_all(
-    unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
+    unprocessed: Sequence[UnprocessedData], dataset_dir: str, config: Config
 ) -> Sequence[SubmissionData]:
     processed_results = []
     logger.debug(f"Processing {len(unprocessed)} unprocessed sequences")
@@ -564,19 +561,17 @@ def process_all(
                 processed_single = process_single(id, result, config)
             except Exception as e:
                 logger.error(f"Processing failed for {id} with error: {e}")
-                processed_single = processed_entry_with_errors(id, result.internal_metadata)
+                processed_single = processed_entry_with_errors(result.internal_metadata)
             processed_results.append(processed_single)
     else:
         for entry in unprocessed:
             try:
-                processed_single = process_single_unaligned(
-                    entry.accessionVersion, entry.data, config
-                )
+                processed_single = process_single_unaligned(entry, config)
             except Exception as e:
-                logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
-                processed_single = processed_entry_with_errors(
-                    entry.accessionVersion, entry.data.internal_metadata
+                logger.error(
+                    f"Processing failed for {entry.internal_metadata.accession_version} with error: {e}"
                 )
+                processed_single = processed_entry_with_errors(entry.internal_metadata)
             processed_results.append(processed_single)
 
     return processed_results
