@@ -79,10 +79,6 @@ def get_jwt(config: Config) -> str:
 
 def _backend_entry_to_unprocessed(entry: BackendEntry) -> UnprocessedEntry:
     accession_version = f"{entry.accession}.{entry.version}"
-    trimmed_sequences = {
-        key: trim_ns(value) if value else None
-        for key, value in entry.data.unalignedNucleotideSequences.items()
-    }
     return UnprocessedEntry(
         accessionVersion=accession_version,
         data=UnprocessedData(
@@ -94,7 +90,10 @@ def _backend_entry_to_unprocessed(entry: BackendEntry) -> UnprocessedEntry:
                 submission_id=entry.submissionId,
             ),
             metadata=entry.data.metadata,
-            unalignedNucleotideSequences=trimmed_sequences if entry.data.unalignedNucleotideSequences else {},
+            unalignedNucleotideSequences={
+                key: trim_ns(value) if value else None
+                for key, value in entry.data.unalignedNucleotideSequences.items()
+            },
         ),
     )
 
