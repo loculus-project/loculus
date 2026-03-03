@@ -1197,7 +1197,7 @@ class ProcessingFunctions:
         """
         collector_id = input_data.get("specimenCollectorSampleId", None)
         submission_id = input_data.get("submissionId", None)
-        warnings = []
+        warnings: list[ProcessingAnnotation] = []
         if submission_id is None:
             return ProcessingResult(
                 datum=None,
@@ -1243,7 +1243,7 @@ class ProcessingFunctions:
         def replace_identifier(values, replacement):
             return [replacement if v == "IDENTIFIER" else v for v in values]
 
-        identifier = None
+        identifier: ProcessedMetadataValue = None
         if not args["is_insdc_ingest_group"]:
             identifier = collector_id or submission_id
             if "/" in identifier:
