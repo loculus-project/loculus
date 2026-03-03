@@ -582,9 +582,6 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
         accession = submission_data.processed_entry.accession
         version = submission_data.processed_entry.version
         try:
-            if submission_data.internal_metadata.group_id is None:
-                msg = "Group ID is required for EMBL file upload"
-                raise ValueError(msg)
             file_content = create_flatfile(config, submission_data)
             file_name = f"{accession}.{version}.embl"
             upload_info = request_upload(submission_data.internal_metadata.group_id, 1, config)[0]
