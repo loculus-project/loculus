@@ -26,6 +26,7 @@ from .datatypes import (
     FastaId,
     GeneName,
     GenericSequence,
+    InternalMetadata,
     NucleotideInsertion,
     NucleotideSequence,
     ProcessingAnnotation,
@@ -773,6 +774,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914
     and QC. The result is a mapping from each AccessionVersion to an
     `UnprocessedAfterNextclade(
             inputMetadata: InputMetadata
+            internal_metadata: InternalMetadata
             nextcladeMetadata: dict[SegmentName, Any] | None
             unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
             alignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
@@ -783,13 +785,10 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914
     )` object.
     """
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {
-        entry.accessionVersion: {
-            **entry.data.metadata,
-            "submitter": entry.data.submitter,
-            "submittedAt": entry.data.submittedAt,
-            "group_id": entry.data.group_id,
-        }
-        for entry in unprocessed
+        entry.accessionVersion: entry.data.metadata for entry in unprocessed
+    }
+    internal_metadata: dict[AccessionVersion, InternalMetadata] = {
+        entry.accessionVersion: entry.data.internal_metadata for entry in unprocessed
     }
 
     if not config.multi_datasets:
@@ -897,6 +896,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914
     return {
         id: UnprocessedAfterNextclade(
             inputMetadata=input_metadata[id],
+            internal_metadata=internal_metadata[id],
             nextcladeMetadata=nextclade_metadata[id],
             unalignedNucleotideSequences=unaligned_nucleotide_sequences[id],
             alignedNucleotideSequences=aligned_nucleotide_sequences[id],

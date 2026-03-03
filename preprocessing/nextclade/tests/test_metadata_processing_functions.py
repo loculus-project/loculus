@@ -14,6 +14,7 @@ from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import (
     FunctionArgs,
     InputMetadata,
+    InternalMetadata,
     ProcessedEntry,
     UnprocessedData,
     UnprocessedEntry,
@@ -708,9 +709,13 @@ def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
         data=UnprocessedData(
-            submitter="test_submitter",
-            group_id=2,
-            submittedAt=ts_from_ymd(2021, 12, 15),
+            internal_metadata=InternalMetadata(
+                accession_version="LOC_01.1",
+                submission_id="test_submission_id",
+                submitter="test_submitter",
+                group_id=2,
+                submitted_at=ts_from_ymd(2021, 12, 15),
+            ),
             metadata={
                 "ncbi_required_collection_date": "2024-01-01",
                 "name_required": sequence_name,

@@ -21,6 +21,7 @@ from factory_methods import (
 from loculus_preprocessing.config import AlignmentRequirement, Config, get_config
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
+    InternalMetadata,
     SegmentClassificationMethod,
     SubmissionData,
     UnprocessedData,
@@ -1196,9 +1197,13 @@ def test_preprocessing_without_metadata() -> None:
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
         data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submittedAt=ts_from_ymd(2021, 12, 15),
+            internal_metadata=InternalMetadata(
+                accession_version="LOC_01.1",
+                submission_id="SUB_01",
+                group_id=2,
+                submitter="test_submitter",
+                submitted_at=ts_from_ymd(2021, 12, 15),
+            ),
             metadata={},
             unalignedNucleotideSequences={
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
@@ -1312,9 +1317,13 @@ def test_create_flatfile():
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
         data=UnprocessedData(
-            submitter="test_submitter",
-            group_id=2,
-            submittedAt=ts_from_ymd(2021, 12, 15),
+            internal_metadata=InternalMetadata(
+                accession_version="LOC_01.1",
+                submission_id="SUB_01",
+                submitter="test_submitter",
+                group_id=2,
+                submitted_at=ts_from_ymd(2021, 12, 15),
+            ),
             metadata={
                 "sampleCollectionDate": "2024-01-01",
                 "geoLocCountry": "Netherlands",

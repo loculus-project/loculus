@@ -75,11 +75,18 @@ class ProcessingAnnotation:
 
 
 @dataclass
-class UnprocessedData:
+class InternalMetadata:
+    accession_version: AccessionVersion  # {accession}.{version}
     submitter: str
     group_id: int
-    submittedAt: str  # timestamp  # noqa: N815
+    submitted_at: str  # timestamp
+    submission_id: str
+
+
+@dataclass
+class UnprocessedData:
     metadata: InputMetadata
+    internal_metadata: InternalMetadata
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
 
 
@@ -96,6 +103,7 @@ FunctionArgs = dict[ArgName, ArgValue]
 @dataclass
 class UnprocessedAfterNextclade:
     inputMetadata: InputMetadata  # noqa: N815
+    internal_metadata: InternalMetadata
     # Derived metadata produced by Nextclade
     nextcladeMetadata: dict[SequenceName, Any] | None  # noqa: N815
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
@@ -156,8 +164,7 @@ class SubmissionData:
     but the annotations need to be uploaded separately."""
 
     processed_entry: ProcessedEntry
-    submitter: str | None
-    group_id: int | None = None
+    internal_metadata: InternalMetadata
     annotations: dict[str, Any] | None = None
 
 
