@@ -21,10 +21,10 @@ from loculus_preprocessing.datatypes import (
 )
 
 
-def ts_from_ymd(year: int, month: int, day: int) -> str:
-    """Convert a year, month, and day into a UTC timestamp string."""
+def ts_from_ymd(year: int, month: int, day: int) -> int:
+    """Convert a year, month, and day into a UTC timestamp integer."""
     dt = datetime(year, month, day, tzinfo=pytz.UTC)
-    return str(dt.timestamp())
+    return int(dt.timestamp())
 
 
 @dataclass
@@ -77,7 +77,7 @@ def get_dummy_internal_metadata(
         submission_id=submission_id,
         submitter="test_submitter",
         group_id=group_id,
-        submitted_at=ts_from_ymd(2021, 12, 15),
+        submitted_at=int(ts_from_ymd(2021, 12, 15)),
     )
 
 

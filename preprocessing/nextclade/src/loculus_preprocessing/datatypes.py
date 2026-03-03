@@ -87,7 +87,7 @@ class BackendEntry(BaseModel):
     version: int
     submitter: str
     groupId: int  # noqa: N815
-    submittedAt: str  # noqa: N815
+    submittedAt: int  # noqa: N815  # Unix timestamp
     submissionId: str  # noqa: N815
     data: BackendEntryData
 
@@ -97,7 +97,7 @@ class InternalMetadata:
     accession_version: AccessionVersion  # {accession}.{version}
     submitter: str
     group_id: int
-    submitted_at: str  # timestamp
+    submitted_at: int  # timestamp
     submission_id: str
 
 

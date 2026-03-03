@@ -320,7 +320,7 @@ class ProcessingFunctions:
 
         try:
             submitted_at = datetime.fromtimestamp(
-                float(str(call_args.internal_metadata.submitted_at)), tz=pytz.utc
+                call_args.internal_metadata.submitted_at, tz=pytz.utc
             )
         except Exception:
             return ProcessingResult(
