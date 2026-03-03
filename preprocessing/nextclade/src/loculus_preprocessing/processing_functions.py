@@ -1279,7 +1279,7 @@ class ProcessingFunctions:
         else:
             # Keep IDENTIFIER but treat it as string
             concatenate_field_types = replace_identifier(field_types, "string")
-            input_data["IDENTIFIER"] = identifier
+            input_data["IDENTIFIER"] = str(identifier)
 
         concat_result = ProcessingFunctions.concatenate(
             input_data,
