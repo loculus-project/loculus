@@ -10,7 +10,7 @@ import logging
 import math
 import re
 import unicodedata
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any
 
@@ -715,12 +715,9 @@ class ProcessingFunctions:
         try:
             for i in range(len(order)):
                 if field_types[i] == "date":
-                    new_call_args = ProcessingFunctionCallArgs(
+                    new_call_args = replace(
+                        call_args,
                         input_data={"date": call_args.input_data[order[i]]},
-                        input_fields=call_args.input_fields,
-                        output_field=call_args.output_field,
-                        internal_metadata=call_args.internal_metadata,
-                        args=call_args.args,  # pass through args to allow for fallback_value in date parsing
                     )
                     processed = ProcessingFunctions.parse_and_assert_past_date(new_call_args)
                     formatted_input_data.append(
@@ -729,12 +726,9 @@ class ProcessingFunctions:
                         else str(processed.datum)
                     )
                 elif field_types[i] == "timestamp":
-                    new_call_args = ProcessingFunctionCallArgs(
+                    new_call_args = replace(
+                        call_args,
                         input_data={"timestamp": call_args.input_data[order[i]]},
-                        input_fields=call_args.input_fields,
-                        output_field=call_args.output_field,
-                        internal_metadata=call_args.internal_metadata,
-                        args=call_args.args,  # pass through args to allow for fallback_value in timestamp parsing
                     )
                     processed = ProcessingFunctions.parse_timestamp(new_call_args)
                     formatted_input_data.append(
