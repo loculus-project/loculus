@@ -299,7 +299,7 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def parse_date_into_range(
+    def parse_date_into_range(  # noqa: C901, PLR0912, PLR0915
         call_args: ProcessingFunctionCallArgs,
     ) -> ProcessingResult:
         """Parse date string (`input.date`) formatted as one of YYYY | YYYY-MM | YYYY-MM-DD into
@@ -308,15 +308,11 @@ class ProcessingFunctions:
         fieldType: "dateRangeString" | "dateRangeLower" | "dateRangeUpper"
         Default fieldType is "dateRangeString"
         """
-        if not call_args.args:
-            call_args.args = {"fieldType": "dateRangeString"}
-
         logger.debug(f"input_data: {call_args.input_data}")
-        logger.debug(f"args: {call_args}")
 
         input_date_str = call_args.input_data["date"]
-
         release_date_str = call_args.input_data.get("releaseDate", "") or ""
+        args = call_args.args or {"fieldType": "dateRangeString"}
         try:
             release_date = dateutil.parse(release_date_str).replace(tzinfo=pytz.utc)
         except Exception:
@@ -349,7 +345,7 @@ class ProcessingFunctions:
         if not input_date_str:
             return ProcessingResult(
                 datum=max_upper_limit.strftime("%Y-%m-%d")
-                if call_args.args["fieldType"] == "dateRangeUpper"
+                if args["fieldType"] == "dateRangeUpper"
                 else None,
                 warnings=[],
                 errors=[],
@@ -449,7 +445,7 @@ class ProcessingFunctions:
                     )
                 )
 
-            match call_args.args["fieldType"]:
+            match args["fieldType"]:
                 case "dateRangeString":
                     return_value = datum.date_range_string
                 case "dateRangeLower":
@@ -462,7 +458,7 @@ class ProcessingFunctions:
                     return_value = datum.date_range_upper.strftime("%Y-%m-%d")
                     warnings = errors = []
                 case _:
-                    msg = f"Config error: Unknown fieldType: {call_args.args['fieldType']}"
+                    msg = f"Config error: Unknown fieldType: {args['fieldType']}"
                     raise ValueError(msg)
 
             return ProcessingResult(datum=return_value, warnings=warnings, errors=errors)
@@ -673,11 +669,13 @@ class ProcessingFunctions:
                 )
             )
 
-        if not isinstance(order, list):
+        def logger_error(message):
             logger.error(
-                f"Concatenate: Expected order field to be a list. "
-                f"This is probably a configuration error. (ACCESSION_VERSION: {call_args.internal_metadata.accession_version})"
+                f"{message} (ACCESSION_VERSION: {call_args.internal_metadata.accession_version}) "
             )
+
+        if not isinstance(order, list):
+            logger_error("Concatenate: Expected order field to be a list. ")
             add_errors()
             return ProcessingResult(
                 datum=None,
@@ -686,13 +684,10 @@ class ProcessingFunctions:
             )
 
         n_inputs = len(call_args.input_data.keys())
-        # exclude ACCESSION_VERSION as it's provided by _call_preprocessing_function() and should not be an input_metadata field
+        # exclude ACCESSION_VERSION as it's provided via internal_metadata and is not in input_metadata
         n_expected = len([i for i in order if i != "ACCESSION_VERSION"])
         if n_inputs != n_expected:
-            logger.error(
-                f"Concatenate: Expected {n_expected} fields, got {n_inputs}. "
-                f"This is probably a configuration error. (ACCESSION_VERSION: {call_args.internal_metadata.accession_version})"
-            )
+            logger_error(f"Concatenate: Expected {n_expected} fields, got {n_inputs}. ")
             add_errors()
             return ProcessingResult(
                 datum=None,
@@ -700,10 +695,7 @@ class ProcessingFunctions:
                 errors=errors,
             )
         if not isinstance(field_types, list):
-            logger.error(
-                f"Concatenate: Expected type field to be a list. "
-                f"This is probably a configuration error. (ACCESSION_VERSION: {call_args.internal_metadata.accession_version})"
-            )
+            logger_error("Concatenate: Expected type field to be a list. ")
             add_errors()
             return ProcessingResult(
                 datum=None,
@@ -745,10 +737,7 @@ class ProcessingFunctions:
                         else str(call_args.input_data[order[i]]).strip()
                     )
                 else:
-                    logger.error(
-                        f"Concatenate: cannot find field {order[i]} in input_data"
-                        f"This is probably a configuration error. (ACCESSION_VERSION: {call_args.internal_metadata.accession_version})"
-                    )
+                    logger_error(f"Concatenate: cannot find field {order[i]} in input_data")
                     add_errors()
                     return ProcessingResult(
                         datum=None,
@@ -763,9 +752,7 @@ class ProcessingFunctions:
 
             return ProcessingResult(datum=result, warnings=warnings, errors=errors)
         except ValueError as e:
-            logger.error(
-                f"Concatenate failed with {e} (ACCESSION_VERSION: {call_args.internal_metadata.accession_version})"
-            )
+            logger_error(f"Concatenate failed with {e} ")
             errors.append(
                 ProcessingAnnotation.from_fields(
                     call_args.input_fields,
