@@ -1245,7 +1245,21 @@ class ProcessingFunctions:
 
         identifier = None
         if not args["is_insdc_ingest_group"]:
-            identifier = extract_id_field(collector_id or submission_id)
+            identifier = collector_id or submission_id
+            if "/" in identifier:
+                # Try to extract identifier field using regex with constraints:
+                # - Cannot start with a slash
+                # - Four fields, separated by exactly three slashes
+                # - Last field is a date in format YYYY, YYYY-MM, or YYYY-MM-DD
+                # - Identifier is the second to last field (extracted through named capture group)
+                pattern = r"^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$"
+                extract_result = ProcessingFunctions.extract_regex(
+                    input_data={"regex_field": collector_id or submission_id},
+                    output_field="IDENTIFIER",
+                    input_fields=[],
+                    args={"pattern": pattern, "capture_group": "identifier"},
+                )
+                identifier = extract_result.datum
             if identifier is None:
                 warnings.append(
                     ProcessingAnnotation.from_fields(
