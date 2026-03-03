@@ -697,7 +697,7 @@ class ProcessingFunctions:
         n_inputs = len(input_data.keys())
         # exclude ACCESSION_VERSION as it's provided by _call_preprocessing_function() and should not be an input_metadata field
         n_expected = len([i for i in order if i != "ACCESSION_VERSION"])
-        if n_inputs != n_expected:
+        if n_inputs < n_expected:
             logger.error(
                 f"Concatenate: Expected {n_expected} fields, got {n_inputs}. "
                 f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
@@ -1195,10 +1195,9 @@ class ProcessingFunctions:
             - if fallback_value is not in args, { 'fallback_value': 'unknown' } is added to the args before passing
               them on to concatenate()
         """
-        collector_id = input_data.pop("specimenCollectorSampleId", None)
-        submission_id = input_data.pop("submissionId", None)
-        identifier = collector_id or submission_id
-        if identifier is None:
+        collector_id = input_data.get("specimenCollectorSampleId", None)
+        submission_id = input_data.get("submissionId", None)
+        if submission_id is None:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1208,7 +1207,7 @@ class ProcessingFunctions:
                         [output_field],
                         AnnotationSourceType.METADATA,
                         message=(
-                            "either 'submissionId' or 'specimenCollectorSampleId' must not be None for build_display_name()"
+                            "Internal Error: 'submissionId' must not be None for build_display_name(). Please contact the administrator."
                         ),
                     )
                 ],
@@ -1220,7 +1219,7 @@ class ProcessingFunctions:
             not isinstance(order, list)
             or not isinstance(field_types, list)
             or len(order) != len(field_types)
-            or "specimenCollectorSampleId" not in order
+            or "IDENTIFIER" not in order
         ):
             print(order)
             print(field_types)
@@ -1233,32 +1232,43 @@ class ProcessingFunctions:
                         [output_field],
                         AnnotationSourceType.METADATA,
                         message=(
-                            "'order' and 'type' must be lists of equal length, and 'order' must contain specimenCollectorSampleId"
+                            "Internal Error: 'order' and 'type' must be lists of equal length, and 'order' must contain IDENTIFIER - this is required for build_display_name to function. Please contact the administrator."
                         ),
                     )
                 ],
             )
 
-        identifier = extract_id_field(identifier)
-        if args["is_insdc_ingest_group"] or identifier is None:
-            # If the sequence was ingested from INSDC or if we could not extract id field from
-            # submissionId: fall back to ACCESSION_VERSION
-            # To do this we have to modify the arguments and input_data before
-            # calling concatenate()
-            for i in range(len(order)):
-                if order[i] == "specimenCollectorSampleId":
-                    order[i] = "ACCESSION_VERSION"
-                    field_types[i] = "ACCESSION_VERSION"
-        else:
-            input_data["specimenCollectorSampleId"] = identifier
+        concatenate_order = order.copy()
+        concatenate_field_types = field_types.copy()
 
-        args["order"] = order
-        args["type"] = field_types
-        if args.get("fallback_value") is None:
-            args["fallback_value"] = "unknown"
+        def replace_identifier(values, replacement):
+            return [replacement if v == "IDENTIFIER" else v for v in values]
+
+        use_accession = args["is_insdc_ingest_group"]
+
+        if not use_accession:
+            identifier = extract_id_field(collector_id or submission_id)
+            use_accession = identifier is None
+
+        if use_accession:
+            # Use ACCESSION_VERSION instead of IDENTIFIER
+            concatenate_order = replace_identifier(order, "ACCESSION_VERSION")
+            concatenate_field_types = replace_identifier(field_types, "ACCESSION_VERSION")
+        else:
+            # Keep IDENTIFIER but treat it as string
+            concatenate_field_types = replace_identifier(field_types, "string")
+            input_data["IDENTIFIER"] = identifier
 
         concat_result = ProcessingFunctions.concatenate(
-            input_data, output_field, input_fields, args
+            input_data,
+            output_field,
+            input_fields,
+            {
+                "order": concatenate_order,
+                "type": concatenate_field_types,
+                "fallback_value": args.get("fallback_value", "unknown"),
+                "ACCESSION_VERSION": args["ACCESSION_VERSION"],
+            },
         )
         if concat_result.warnings or concat_result.errors:
             return concat_result

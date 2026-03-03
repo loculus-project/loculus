@@ -79,6 +79,7 @@ class UnprocessedData:
     submitter: str
     group_id: int
     submittedAt: str  # timestamp  # noqa: N815
+    submissionId: str  # noqa: N815
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
 
