@@ -263,7 +263,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                     !allReferencesSelected(referenceGenomesInfo, selectedReferenceNames) &&
                     referenceIdentifierField !== undefined && (
                         <div className='text-sm text-gray-400 mt-4 max-w-60'>
-                            Select a {referenceIdentifierField} for the {notSelectedSegmentsText} with the search UI to
+                            No {referenceIdentifierField} has been selected for the {notSelectedSegmentsText}. Select one in the search UI to
                             enable download of more aligned sequences.
                         </div>
                     )}
