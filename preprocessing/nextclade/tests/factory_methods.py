@@ -70,12 +70,14 @@ class ProcessedAlignment:
     )
 
 
-def get_dummy_internal_metadata():
+def get_dummy_internal_metadata(
+    accession: str = "LOC_01.1", group_id: int = 2, submission_id: str = "test_submission_id"
+) -> InternalMetadata:
     return InternalMetadata(
-        accession_version="LOC_01.1",
-        submission_id="test_submission_id",
+        accession_version=accession,
+        submission_id=submission_id,
         submitter="test_submitter",
-        group_id=2,
+        group_id=group_id,
         submitted_at=ts_from_ymd(2021, 12, 15),
     )
 
@@ -93,15 +95,9 @@ class UnprocessedEntryFactory:
             accessionVersion=f"LOC_{accession_id}.1",
             data=UnprocessedData(
                 metadata=metadata_dict,
-                internal_metadata=InternalMetadata(
-                    accession_version=f"LOC_{accession_id}.1",
-                    submitter="test_submitter",
+                internal_metadata=get_dummy_internal_metadata(
+                    accession=f"LOC_{accession_id}.1",
                     group_id=group_id,
-                    submitted_at=str(
-                        datetime.strptime("2021-12-15", "%Y-%m-%d")
-                        .replace(tzinfo=pytz.utc)
-                        .timestamp()
-                    ),
                     submission_id=f"SUB_{accession_id}",
                 ),
                 unalignedNucleotideSequences=sequences,
