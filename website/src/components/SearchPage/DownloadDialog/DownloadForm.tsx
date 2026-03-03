@@ -264,7 +264,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                     referenceIdentifierField !== undefined && (
                         <div className='text-sm text-gray-400 mt-4 max-w-60'>
                             No {referenceIdentifierField} has been selected for the {notSelectedSegmentsText}. Select one in the search UI to
-                            enable download of more aligned sequences.
+                            enable download of aligned sequences for these segments.
                         </div>
                     )}
             </div>
