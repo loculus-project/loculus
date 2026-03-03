@@ -6,6 +6,7 @@ from factory_methods import (
     ProcessingAnnotationHelper,
     ProcessingTestCase,
     build_processing_annotations,
+    get_dummy_internal_metadata,
     ts_from_ymd,
     verify_processed_entry,
 )
@@ -30,13 +31,7 @@ from loculus_preprocessing.processing_functions import (
 # Config file used for testing
 NO_ALIGNMENT_CONFIG = "tests/no_alignment_config.yaml"
 
-dummy_internal_metadata = InternalMetadata(
-    accession_version="LOC_01.1",
-    submission_id="test_submission_id",
-    submitter="test_submitter",
-    group_id=2,
-    submitted_at=ts_from_ymd(2021, 12, 15),
-)
+dummy_internal_metadata = get_dummy_internal_metadata()
 
 
 test_case_definitions = [
@@ -768,158 +763,82 @@ def test_format_authors() -> None:
             raise AssertionError(msg)
 
 
+def generate_call_args(input_data: InputMetadata, field_type: str) -> ProcessingFunctionCallArgs:
+    return ProcessingFunctionCallArgs(
+        input_data=input_data,
+        output_field="field_name",
+        input_fields=["field_name"],
+        args={
+            "fieldType": field_type,
+        },
+        internal_metadata=dummy_internal_metadata,
+    )
+
+
 def test_parse_date_into_range() -> None:
     assert (
         ProcessingFunctions.parse_date_into_range(
-            ProcessingFunctionCallArgs(
-                input_data={"date": "2021-12"},
-                output_field="field_name",
-                input_fields=["field_name"],
-                args={
-                    "fieldType": "dateRangeString",
-                },
-                internal_metadata=dummy_internal_metadata,
-            )
+            generate_call_args({"date": "2021-12"}, "dateRangeString")
         ).datum
         == "2021-12"
     ), "dateRangeString: 2021-12 should be returned as is."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            ProcessingFunctionCallArgs(
-                input_data={"date": "2021-12"},
-                output_field="field_name",
-                input_fields=["field_name"],
-                args={
-                    "fieldType": "dateRangeLower",
-                },
-                internal_metadata=dummy_internal_metadata,
-            )
+            generate_call_args({"date": "2021-12"}, "dateRangeLower")
         ).datum
         == "2021-12-01"
     ), "dateRangeLower: 2021-12 should be returned as 2021-12-01."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            ProcessingFunctionCallArgs(
-                input_data={"date": "2020-12"},
-                output_field="field_name",
-                input_fields=["field_name"],
-                args={
-                    "fieldType": "dateRangeUpper",
-                },
-                internal_metadata=dummy_internal_metadata,
-            )
+            generate_call_args({"date": "2020-12"}, "dateRangeUpper")
         ).datum
         == "2020-12-31"
     ), "dateRangeUpper: 2020-12 should be returned as 2020-12-31."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            ProcessingFunctionCallArgs(
-                input_data={"date": "2021-12"},
-                output_field="field_name",
-                input_fields=["field_name"],
-                args={
-                    "fieldType": "dateRangeUpper",
-                },
-                internal_metadata=dummy_internal_metadata,
-            )
+            generate_call_args({"date": "2021-12"}, "dateRangeUpper")
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: 2021-12 should be returned as submittedAt time: 2021-12-15."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            ProcessingFunctionCallArgs(
-                input_data={"date": "2021-02"},
-                output_field="field_name",
-                input_fields=["field_name"],
-                args={
-                    "fieldType": "dateRangeUpper",
-                },
-                internal_metadata=dummy_internal_metadata,
-            )
+            generate_call_args({"date": "2021-02"}, "dateRangeUpper")
         ).datum
         == "2021-02-28"
     ), "dateRangeUpper: 2021-02 should be returned as 2021-02-28."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            ProcessingFunctionCallArgs(
-                input_data={"date": "2021"},
-                output_field="field_name",
-                input_fields=["field_name"],
-                args={
-                    "fieldType": "dateRangeUpper",
-                },
-                internal_metadata=dummy_internal_metadata,
-            )
+            generate_call_args({"date": "2021"}, "dateRangeUpper")
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: 2021 should be returned as 2021-12-15."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            ProcessingFunctionCallArgs(
-                input_data={"date": "2021-12", "releaseDate": "2021-12-14"},
-                output_field="field_name",
-                input_fields=["field_name"],
-                args={
-                    "fieldType": "dateRangeUpper",
-                },
-                internal_metadata=dummy_internal_metadata,
-            )
+            generate_call_args({"date": "2021-12", "releaseDate": "2021-12-14"}, "dateRangeUpper")
         ).datum
         == "2021-12-14"
     ), "dateRangeUpper: 2021-12 with releaseDate 2021-12-14 should be returned as 2021-12-14."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            ProcessingFunctionCallArgs(
-                input_data={"date": "", "releaseDate": "2021-12-14"},
-                output_field="field_name",
-                input_fields=["field_name"],
-                args={
-                    "fieldType": "dateRangeUpper",
-                },
-                internal_metadata=dummy_internal_metadata,
-            )
+            generate_call_args({"date": "", "releaseDate": "2021-12-14"}, "dateRangeUpper")
         ).datum
         == "2021-12-14"
     ), "dateRangeUpper: empty date with releaseDate 2021-12-14 should be returned as 2021-12-15."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            ProcessingFunctionCallArgs(
-                input_data={"date": ""},
-                output_field="field_name",
-                input_fields=["field_name"],
-                args={
-                    "fieldType": "dateRangeString",
-                },
-                internal_metadata=dummy_internal_metadata,
-            )
+            generate_call_args({"date": ""}, "dateRangeString")
         ).datum
         is None
     ), "dateRangeString: empty date should be returned as None."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            ProcessingFunctionCallArgs(
-                args={
-                    "fieldType": "dateRangeString",
-                },
-                output_field="field_name",
-                input_fields=["field_name"],
-                input_data={"date": "not.date"},
-                internal_metadata=dummy_internal_metadata,
-            )
+            generate_call_args({"date": "not.date"}, "dateRangeString")
         ).datum
         is None
     ), "dateRangeString: invalid date should be returned as None."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            ProcessingFunctionCallArgs(
-                args={
-                    "fieldType": "dateRangeLower",
-                },
-                output_field="field_name",
-                input_fields=["field_name"],
-                input_data={"date": "", "releaseDate": "2021-12-15"},
-                internal_metadata=dummy_internal_metadata,
-            )
+            generate_call_args({"date": "", "releaseDate": "2021-12-15"}, "dateRangeLower")
         ).datum
         is None
     ), "dateRangeLower: empty date should be returned as None."

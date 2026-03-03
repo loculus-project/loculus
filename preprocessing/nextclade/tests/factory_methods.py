@@ -70,6 +70,16 @@ class ProcessedAlignment:
     )
 
 
+def get_dummy_internal_metadata():
+    return InternalMetadata(
+        accession_version="LOC_01.1",
+        submission_id="test_submission_id",
+        submitter="test_submitter",
+        group_id=2,
+        submitted_at=ts_from_ymd(2021, 12, 15),
+    )
+
+
 @dataclass
 class UnprocessedEntryFactory:
     @staticmethod
