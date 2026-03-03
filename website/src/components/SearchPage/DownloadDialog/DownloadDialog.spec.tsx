@@ -398,7 +398,7 @@ describe('DownloadDialog', () => {
 
             expect(
                 screen.getByText(
-                    'Select a genotype for the segment: L (segment) with the search UI to enable download of more aligned sequences.',
+                    'No genotype has been selected for the segment: L (segment). Select one in the search UI to enable download of aligned sequences for these segments.',
                     { exact: false },
                 ),
             ).toBeVisible();
