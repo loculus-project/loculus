@@ -80,6 +80,7 @@ export const metadata = z.object({
     columnWidth: z.number().optional(),
     order: z.number().optional(),
     orderOnDetailsPage: z.number().optional(),
+    orderInSearchDisplay: z.number().optional(),
     includeInDownloadsByDefault: z.boolean().optional(),
     onlyForReference: z.string().optional(),
     isSequenceFilter: z.boolean().optional(),
@@ -132,6 +133,7 @@ export type GroupedMetadataFilter = {
     isSequenceFilter?: Metadata['isSequenceFilter'];
     relatesToSegment?: Metadata['relatesToSegment'];
     order?: number;
+    orderInSearchDisplay?: number;
 };
 
 export const linkOut = z.object({
