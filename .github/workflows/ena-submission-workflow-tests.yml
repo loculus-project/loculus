@@ -25,7 +25,10 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres" --health-interval 10s --health-timeout 5s --health-retries 5
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v6
       - name: Extract Flyway version
@@ -43,7 +46,7 @@ jobs:
           sudo mv flyway-$FLYWAY_VERSION /opt/flyway
           echo "/opt/flyway" >> $GITHUB_PATH
       - name: Run Flyway
-        run: |
+        run: | 
           flyway -url=jdbc:postgresql://localhost:5432/loculus \
             -schemas=ena_deposition_schema \
             -user=postgres \
@@ -52,19 +55,19 @@ jobs:
             migrate
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v2
-        with:
-          environment-file: ena-submission/environment.yml
-          micromamba-version: 'latest'
-          cache-environment: true
+        with: 
+            environment-file: ena-submission/environment.yml
+            micromamba-version: 'latest'
+            cache-environment: true
       - name: Install package
         run: |
-          uv pip install --system .
+            uv pip install --system .
         shell: micromamba-shell {0}
         working-directory: ena-submission
       - name: Run tests
         run: |
-          # The unit tests are run in ena-submission-unit-tests.yaml
-          pytest \
-            --ignore=./scripts/test_ena_submission.py
+            # The unit tests are run in ena-submission-unit-tests.yaml
+            pytest \
+              --ignore=./scripts/test_ena_submission.py
         shell: micromamba-shell {0}
         working-directory: ena-submission

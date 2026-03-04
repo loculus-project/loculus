@@ -8,8 +8,8 @@ db_name: "Loculus"
 segments:
   - name: main
     references:
-      - nextclade_dataset_name: ebola-sudan
-        genes: [NPEbolaSudan, VP35EbolaSudan]
+    - nextclade_dataset_name: ebola-sudan
+      genes: [NPEbolaSudan, VP35EbolaSudan]
 organism: ebola-sudan-test
 processing_spec:
   completeness:

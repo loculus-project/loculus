@@ -87,7 +87,7 @@ jobs:
           build-args: NODE_VERSION=${{ steps.get-node-version.outputs.NODE_VERSION }}
       - name: Tag and push image if cache hit
         if: env.CACHE_HIT == 'true'
-        run: |-
+        run: |
           TAGS=(${{ steps.dockerMetadata.outputs.tags }})
           for TAG in "${TAGS[@]}"; do
             docker buildx imagetools create --tag $TAG ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }}

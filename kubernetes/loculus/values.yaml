@@ -1391,8 +1391,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         segments:
           - name: main
             references:
-              - name: singleReference
-                genes: []
+            - name: singleReference
+              genes: []
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
@@ -1415,9 +1415,9 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-                - name: singleReference
-                  nextclade_dataset_name: nextstrain/ebola/sudan
-                  genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+              - name: singleReference
+                nextclade_dataset_name: nextstrain/ebola/sudan
+                genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
           taxon_id: 186540
           scientific_name: "Sudan ebolavirus"
@@ -1512,9 +1512,9 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-                - name: singleReference
-                  nextclade_dataset_name: nextstrain/wnv/all-lineages
-                  genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
+              - name: singleReference
+                nextclade_dataset_name: nextstrain/wnv/all-lineages
+                genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
           taxon_id: 11082
           scientific_name: "West Nile virus"
@@ -1611,7 +1611,7 @@ defaultOrganisms:
           required: true
           type: string
           lineageSystem: pangoLineage
-          options:
+          options: 
             - name: A
             - name: A.1
             - name: A.1.1
@@ -1723,7 +1723,7 @@ defaultOrganisms:
           required: true
           type: string
           lineageSystem: alternativeLineage
-          options:
+          options: 
             - name: A
             - name: A.1
             - name: A.1.1
@@ -1779,8 +1779,8 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-                - name: singleReference
-                  genes: []
+              - name: singleReference
+                genes: []
     referenceGenomes:
       - name: main
         references:
@@ -1853,19 +1853,19 @@ defaultOrganisms:
           segments:
             - name: L
               references:
-                - nextclade_dataset_name: community/pathoplexus/cchfv/L
-                  name: singleReference
-                  genes: [RdRp]
+              - nextclade_dataset_name: community/pathoplexus/cchfv/L
+                name: singleReference
+                genes: [RdRp]
             - name: M
               references:
-                - nextclade_dataset_name: community/pathoplexus/cchfv/M
-                  name: singleReference
-                  genes: [GPC]
+              - nextclade_dataset_name: community/pathoplexus/cchfv/M
+                name: singleReference
+                genes: [GPC]
             - name: S
               references:
-                - nextclade_dataset_name: community/pathoplexus/cchfv/S
-                  name: singleReference
-                  genes: [NP]
+              - nextclade_dataset_name: community/pathoplexus/cchfv/S
+                name: singleReference
+                genes: [NP]
     ingest:
       <<: *ingest
       configFile:
@@ -1990,32 +1990,32 @@ defaultOrganisms:
           segments:
             - name: L
               references:
-                - nextclade_dataset_name: cchfv/L
-                  name: singleReference
-                  genes: [RdRp]
+              - nextclade_dataset_name: cchfv/L
+                name: singleReference
+                genes: [RdRp]
             - name: M
               references:
-                - nextclade_dataset_name: cchfv/M-MH396653
-                  name: MH396653
-                  genes: [GPC]
-                - nextclade_dataset_name: cchfv/M-OR047158
-                  name: OR047158
-                  genes: [GPC]
+              - nextclade_dataset_name: cchfv/M-MH396653
+                name: MH396653
+                genes: [GPC]
+              - nextclade_dataset_name: cchfv/M-OR047158
+                name: OR047158
+                genes: [GPC]
             - name: S
               references:
-                - nextclade_dataset_name: cchfv/S-1and6
-                  name: 1and6
-                  genes: [NP]
-                - nextclade_dataset_name: cchfv/S-2to5
-                  name: 2to5
-                  genes: [NP]
+              - nextclade_dataset_name: cchfv/S-1and6
+                name: 1and6
+                genes: [NP]
+              - nextclade_dataset_name: cchfv/S-2to5
+                name: 2to5
+                genes: [NP]
     ingest:
       <<: *ingest
       configFile:
         taxon_id: 3052518
         segment_identification:
           method: "align"
-          nextclade_dataset_name: community/pathoplexus/cchfv #TODO: allow multiple ref in ingest grouping algo
+          nextclade_dataset_name: community/pathoplexus/cchfv  #TODO: allow multiple ref in ingest grouping algo
     enaDeposition:
       singleReference:
         configFile:
@@ -2164,23 +2164,23 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-                - name: CV-A16
-                  nextclade_dataset_name: enpen/enterovirus/cv-a16
-                  accepted_dataset_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
-                  genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-                - name: CV-A10
-                  nextclade_dataset_name: enpen/enterovirus/cv-a10
-                  accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
-                  genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-                - name: EV-A71
-                  nextclade_dataset_name: enpen/enterovirus/ev-a71
-                  accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71"]
-                  genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-                - name: EV-D68
-                  accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68"]
-                  genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-                  nextclade_dataset_name: enpen/enterovirus/ev-d68
-                  nextclade_dataset_server: https://data.clades.nextstrain.org/v3
+              - name: CV-A16
+                nextclade_dataset_name: enpen/enterovirus/cv-a16
+                accepted_dataset_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
+                genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+              - name: CV-A10
+                nextclade_dataset_name: enpen/enterovirus/cv-a10
+                accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
+                genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+              - name: EV-A71
+                nextclade_dataset_name: enpen/enterovirus/ev-a71
+                accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71"]
+                genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+              - name: EV-D68
+                accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68"]
+                genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+                nextclade_dataset_name: enpen/enterovirus/ev-d68
+                nextclade_dataset_server: https://data.clades.nextstrain.org/v3
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output
     ingest:
       <<: *ingest
@@ -2418,7 +2418,7 @@ enforceHTTPS: true
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
-enaDeposition:
+enaDeposition: 
   submitToEnaProduction: false
   enaDbName: Loculus
   enaUniqueSuffix: Loculus

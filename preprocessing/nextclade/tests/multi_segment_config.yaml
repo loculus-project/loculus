@@ -6,12 +6,12 @@ segment_classification_method: "minimizer"
 segments:
   - name: ebola-sudan
     references:
-      - nextclade_dataset_name: ebola-dataset/ebola-sudan
-        genes: [NPEbolaSudan, VP35EbolaSudan]
+    - nextclade_dataset_name: ebola-dataset/ebola-sudan
+      genes: [NPEbolaSudan, VP35EbolaSudan]
   - name: ebola-zaire
     references:
-      - nextclade_dataset_name: ebola-dataset/ebola-zaire
-        genes: [VP24EbolaZaire, LEbolaZaire]
+    - nextclade_dataset_name: ebola-dataset/ebola-zaire
+      genes: [VP24EbolaZaire, LEbolaZaire]
 organism: multi-ebola-test
 processing_spec:
   totalInsertedNucs_ebola-zaire:

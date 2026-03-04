@@ -8,18 +8,18 @@ jobs:
   update-pr-description:
     runs-on: ubuntu-latest
     # This workflow uses pull_request_target to access repo secrets in PRs from forks
-    # SECURITY: This workflow only uses PR metadata (labels, title, etc.)
+    # SECURITY: This workflow only uses PR metadata (labels, title, etc.) 
     # and does not check out any code from the fork, making it safe
     steps:
       - name: Update PR Description with Preview URL
         uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.LOCULUS_BOT_WRITE_PRS }}
-          script: |-
+          script: |
             const pr = context.payload.pull_request;
             const branchName = pr.head.ref;
             const hasPreviewLabel = pr.labels.some(label => label.name === 'preview');
-
+            
             // Format branch name exactly as in ArgoCD
             const shortBranchName = branchName.substring(0, 25)
               .replace(/_/g, "-")
@@ -27,24 +27,24 @@ jobs:
               .replace(/\./g, "-")
               .replace(/-+$/, "")
               .toLowerCase();
-
+            
             const previewUrl = `https://${shortBranchName}.loculus.org`;
             const prDesc = pr.body || '';
-
+            
             // Create preview line
-            const previewLine = hasPreviewLabel
+            const previewLine = hasPreviewLabel 
               ? `🚀 Preview: ${previewUrl}`
               : `🚀 Preview: Add \`preview\` label to enable`;
-
+              
             // Remove existing preview line if present
             const previewRegex = /🚀 Preview:.*/g;
             const descWithoutPreview = prDesc.replace(previewRegex, '').trim();
-
+            
             // Add new preview line
-            const updatedDesc = descWithoutPreview
+            const updatedDesc = descWithoutPreview 
               ? `${descWithoutPreview}\n\n${previewLine}`
               : previewLine;
-
+            
             // Update PR description
             await github.rest.pulls.update({
               owner: context.repo.owner,

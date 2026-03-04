@@ -100,7 +100,7 @@ jobs:
           done
       # Run smoke test to ensure the image is functional
       - name: Run smoke test (unit tests in docker)
-        run: |-
+        run: |
           docker run \
             --rm ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }} \
             pytest scripts/test_ena_submission.py

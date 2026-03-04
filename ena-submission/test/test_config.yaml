@@ -19,7 +19,7 @@ enaOrganisms:
     scientific_name: Orthonairovirus haemorrhagiae
     taxon_id: 3052518
     organismName: "Crimean-Congo Hemorrhagic Fever Virus"
-    segments:
+    segments: 
       - L
       - M
       - S
@@ -92,7 +92,7 @@ enaOrganisms:
     scientific_name: West Nile virus
     taxon_id: 11082
     organismName: "West Nile Virus"
-    segments:
+    segments: 
       - main
     externalMetadata:
       - externalMetadataUpdater: ena
