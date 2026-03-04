@@ -170,33 +170,18 @@ export function getSubmissionIdInputFields(schema: Schema): InputField[] {
     const maxSequencesPerEntry = schema.submissionDataTypes.maxSequencesPerEntry ?? Infinity;
     const idFieldFromConfig = schema.inputFields.find((f) => f.name === SUBMISSION_ID_INPUT_FIELD);
 
+    const idField: InputField = {
+        name: SUBMISSION_ID_INPUT_FIELD,
+        noEdit: true,
+        required: true,
+        ...idFieldFromConfig,
+    };
+
     if (maxSequencesPerEntry == 1) {
-        return [
-            {
-                name: SUBMISSION_ID_INPUT_FIELD,
-                displayName: idFieldFromConfig?.displayName ?? 'ID',
-                definition: idFieldFromConfig?.definition ?? 'FASTA ID',
-                guidance:
-                    idFieldFromConfig?.guidance ??
-                    "Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence.",
-                example: idFieldFromConfig?.example ?? 'GJP123',
-                noEdit: true,
-                required: true,
-            },
-        ];
+        return [idField];
     }
     return [
-        {
-            name: SUBMISSION_ID_INPUT_FIELD,
-            displayName: idFieldFromConfig?.displayName ?? 'ID',
-            definition: idFieldFromConfig?.definition ?? 'METADATA ID',
-            guidance:
-                idFieldFromConfig?.guidance ??
-                'Your sample identifier. If FASTA IDS column is provided, this sample ID will be used to associate the metadata with the sequence.',
-            example: idFieldFromConfig?.example ?? 'GJP123',
-            noEdit: true,
-            required: true,
-        },
+        idField,
         {
             name: FASTA_IDS_FIELD,
             displayName: 'FASTA IDS',
