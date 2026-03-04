@@ -242,30 +242,7 @@ organisms:
       description: {{ quote .description }}
       {{ end }}
       primaryKey: accessionVersion
-      inputFields:
-        {{- $maxSeq := 1 }}
-        {{- if and (hasKey . "submissionDataTypes") (hasKey .submissionDataTypes "maxSequencesPerEntry") }}
-          {{- $maxSeq = .submissionDataTypes.maxSequencesPerEntry }}
-        {{- end }}
-        {{- $hasIdField := false }}
-        {{- range (.extraInputFields | default list) }}
-          {{- if eq .name "id" }}
-            {{- $hasIdField = true }}
-          {{- end }}
-        {{- end }}
-        {{- if not $hasIdField }}
-        - name: id
-          displayName: ID
-          {{- if eq (int $maxSeq) 1 }}
-          definition: "Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence."
-          guidance: ""
-          {{- else }}
-          definition: "METADATA ID"
-          guidance: "Your sample identifier. (If no `fastaIds` column is provided, this sample ID will be used to associate the metadata with the sequence.)"
-          {{- end }}
-          example: "GJP123"
-        {{- end }}
-        {{- include "loculus.inputFields" . | nindent 8 }}
+      inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
         - name: versionComment
           displayName: Version comment
           definition: "Reason for revising sequences or other general comments concerning a specific version"
