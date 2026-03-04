@@ -1,0 +1,20 @@
+name: yamlfmt-lint
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - yamlfmt-lint # For testing
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/google/yamlfmt:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Run yamlfmt lint
+        run: yamlfmt -lint .
