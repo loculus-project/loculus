@@ -1,6 +1,7 @@
 import { Tooltip } from 'react-tooltip';
 
 import type { InputField } from '../../types/config';
+import { InlineCode } from '../common/InlineCode';
 
 interface InputFieldTooltipProps {
     id: string;
@@ -25,8 +26,16 @@ export const InputFieldTooltip = ({
         <p>
             <span className='font-mono font-semibold text-gray-300'>{field.name}</span>
         </p>
-        {field.definition && <p>{field.definition}</p>}
-        {field.guidance && <p>{field.guidance}</p>}
+        {field.definition && (
+            <p>
+                <InlineCode text={field.definition} />
+            </p>
+        )}
+        {field.guidance && (
+            <p>
+                <InlineCode text={field.guidance} />
+            </p>
+        )}
         {includeExample && field.example !== undefined && <p className='italic'>Example: {field.example}</p>}
     </Tooltip>
 );
