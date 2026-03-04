@@ -2364,7 +2364,7 @@ images:
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "v0.6.7@sha256:81907c25d22ae34da467a022c7e2e3c3e30131a189f701196584f181cced3b25
+    tag: "v0.6.7@sha256:81907c25d22ae34da467a022c7e2e3c3e30131a189f701196584f181cced3b25"
     pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"
