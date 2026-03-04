@@ -1239,7 +1239,7 @@ class ProcessingFunctions:
 
         regex_pattern = args.get("regex_pattern")
         if regex_pattern is not None:
-            if not "identifier" in re.compile(regex_pattern).groupindex:
+            if "identifier" not in re.compile(str(regex_pattern)).groupindex:
                 return ProcessingResult(
                     datum=None,
                     warnings=[],
