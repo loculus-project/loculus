@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - yamlfmt-lint # For testing
   workflow_dispatch:
 
 jobs:
