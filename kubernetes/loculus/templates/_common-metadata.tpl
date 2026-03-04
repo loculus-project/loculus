@@ -261,7 +261,7 @@ organisms:
           guidance: "Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence."
           {{- else }}
           definition: "METADATA ID"
-          guidance: "Your sample identifier. If FASTA IDS column is provided, this sample ID will be used to associate the metadata with the sequence."
+          guidance: "Your sample identifier. (If no `fastaIds` column is provided, this sample ID will be used to associate the metadata with the sequence.)"
           {{- end }}
           example: "GJP123"
         {{- end }}
