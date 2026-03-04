@@ -1,7 +1,7 @@
 import { Tooltip } from 'react-tooltip';
 
 import type { InputField } from '../../types/config';
-import { InlineCode } from '../common/InlineCode';
+import { FormattedText } from '../common/FormattedText';
 
 interface InputFieldTooltipProps {
     id: string;
@@ -28,12 +28,12 @@ export const InputFieldTooltip = ({
         </p>
         {field.definition && (
             <p>
-                <InlineCode text={field.definition} />
+                <FormattedText text={field.definition} />
             </p>
         )}
         {field.guidance && (
             <p>
-                <InlineCode text={field.guidance} />
+                <FormattedText text={field.guidance} />
             </p>
         )}
         {includeExample && field.example !== undefined && <p className='italic'>Example: {field.example}</p>}

@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 
 /**
- * Renders text with backtick-quoted segments as inline <code> elements.
- * E.g. "Use the `fastaIds` column" becomes: Use the <code>fastaIds</code> column
+ * Renders text with basic inline markdown formatting.
+ * Supports: `code`
  */
-export const InlineCode = ({ text }: { text: string }): ReactNode => {
+export const FormattedText = ({ text }: { text: string }): ReactNode => {
     const parts = text.split('`');
     if (parts.length < 3) {
         return text;

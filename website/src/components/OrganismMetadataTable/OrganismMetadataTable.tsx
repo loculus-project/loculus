@@ -1,7 +1,7 @@
 import { type FC, useState } from 'react';
 
 import type { OrganismMetadata } from './OrganismMetadataTableSelector.tsx';
-import { InlineCode } from '../common/InlineCode.tsx';
+import { FormattedText } from '../common/FormattedText.tsx';
 import { routes } from '../../routes/routes.ts';
 import type { InputField, Metadata } from '../../types/config.ts';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
@@ -81,7 +81,7 @@ const MetadataTable: FC<TableProps> = ({ fields, metadata }) => {
                             <td className='border border-gray-300 px-4 py-2'>{field.name}</td>
                             <td className='border border-gray-300 px-4 py-2'>{metadataEntry?.type ?? 'String'}</td>
                             <td className='border border-gray-300 px-4 py-2'>
-                                <InlineCode text={`${field.definition ?? ''} ${field.guidance ?? ''}`} />
+                                <FormattedText text={`${field.definition ?? ''} ${field.guidance ?? ''}`} />
                             </td>
                             <td className='border border-gray-300 px-4 py-2'>{field.example ?? ''}</td>
                         </tr>
