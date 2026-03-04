@@ -21,7 +21,7 @@
 
 {{- /* Add default id field first if not overridden */}}
 {{- if not $hasIdField }}
-  {{- $defaultIdField := dict "name" "id" "displayName" "ID" "example" "GJP123" }}
+  {{- $defaultIdField := dict "name" "id" "displayName" "ID" "example" "GJP123" "noEdit" true "required" true }}
   {{- if eq (int $maxSeq) 1 }}
     {{- $_ := set $defaultIdField "definition" "Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence." }}
   {{- else }}
@@ -46,6 +46,7 @@
     {{- $_ := set $defaultFastaIdsField "definition" "FASTA IDS" }}
     {{- $_ := set $defaultFastaIdsField "guidance" "Space-separated list of FASTA IDS of each sequence to be associated with this metadata entry." }}
     {{- $_ := set $defaultFastaIdsField "example" "GJP123 GJP124" }}
+    {{- $_ := set $defaultFastaIdsField "noEdit" true }}
     {{- $_ := set $defaultFastaIdsField "desired" true }}
     {{- $_ := set $fieldsDict (printf "%03d" $index) $defaultFastaIdsField }}
     {{- $index = add $index 1 }}
