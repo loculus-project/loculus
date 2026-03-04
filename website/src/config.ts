@@ -168,14 +168,7 @@ function getAccessionInputField(): InputField {
 
 export function getSubmissionIdInputFields(schema: Schema): InputField[] {
     const maxSequencesPerEntry = schema.submissionDataTypes.maxSequencesPerEntry ?? Infinity;
-    const idFieldFromConfig = schema.inputFields.find((f) => f.name === SUBMISSION_ID_INPUT_FIELD);
-
-    const idField: InputField = {
-        name: SUBMISSION_ID_INPUT_FIELD,
-        noEdit: true,
-        required: true,
-        ...idFieldFromConfig,
-    };
+    const idField = schema.inputFields.find((f) => f.name === SUBMISSION_ID_INPUT_FIELD)!;
 
     if (maxSequencesPerEntry == 1) {
         return [idField];
