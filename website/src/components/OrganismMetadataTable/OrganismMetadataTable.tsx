@@ -1,9 +1,9 @@
 import { type FC, useState } from 'react';
 
 import type { OrganismMetadata } from './OrganismMetadataTableSelector.tsx';
-import { FormattedText } from '../common/FormattedText.tsx';
 import { routes } from '../../routes/routes.ts';
 import type { InputField, Metadata } from '../../types/config.ts';
+import { FormattedText } from '../common/FormattedText.tsx';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 type Props = {
