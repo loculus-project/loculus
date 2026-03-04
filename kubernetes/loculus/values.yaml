@@ -167,6 +167,13 @@ defaultOrganismConfig: &defaultOrganismConfig
           args:
             order: [geoLocCountry, IDENTIFIER, sampleCollectionDate]
             type: [string, IDENTIFIER, string]
+            # regex pattern constraints:
+            # - Cannot start with a slash
+            # - Four fields, separated by exactly three slashes
+            # - Last field is a date in format YYYY, YYYY-MM, or YYYY-MM-DD
+            # - Identifier is the second to last field (extracted through named capture group)
+            regex_pattern: |
+              ^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$
         noInput: true
       - name: ncbiReleaseDate
         displayName: NCBI release date

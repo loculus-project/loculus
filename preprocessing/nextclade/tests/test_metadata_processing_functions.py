@@ -994,6 +994,7 @@ def test_display_name_construction() -> None:
             "is_insdc_ingest_group": False,
             "order": ["nextclade.clade", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
             "type": ["string", "string", "IDENTIFIER", "string"],
+            "regex_pattern": r"^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$",
         }
 
     res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
@@ -1018,7 +1019,7 @@ def test_display_name_construction() -> None:
     assert len(res.warnings) == 1
     assert (
         res.warnings[0].message
-        == "user-supplied identifier field could not be parsed: expected either no or exactly three slashes in identifier"
+        == "identifier string could not be parsed using provided regex_pattern"
     )
 
     input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
@@ -1032,7 +1033,7 @@ def test_display_name_construction() -> None:
     assert len(res.warnings) == 1
     assert (
         res.warnings[0].message
-        == "user-supplied identifier field could not be parsed: expected either no or exactly three slashes in identifier"
+        == "identifier string could not be parsed using provided regex_pattern"
     )
 
 
