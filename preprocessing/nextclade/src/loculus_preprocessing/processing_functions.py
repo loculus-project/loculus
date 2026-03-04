@@ -1265,7 +1265,6 @@ class ProcessingFunctions:
         if args["is_insdc_ingest_group"]:
             # For INSDC ingested sequence: use ID as is unless it contains ' ' or '/'
             # If it does: fall back to ACCESSION_VERSION
-            identifier = collector_id or submission_id
             if " " in identifier or "/" in identifier:
                 identifier = None
         elif "/" in identifier:
