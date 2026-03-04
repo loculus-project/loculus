@@ -7,3 +7,4 @@ formatter:
 gitignore_excludes: true
 exclude:
   - kubernetes/loculus/templates
+  - .github
