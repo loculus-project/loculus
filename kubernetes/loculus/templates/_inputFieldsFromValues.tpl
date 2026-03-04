@@ -42,7 +42,7 @@
   {{- if not $hasFastaIdsField }}
     {{- $defaultFastaIdsField := dict "name" "fastaIds" }}
     {{- $_ := set $defaultFastaIdsField "displayName" "FASTA IDS" }}
-    {{- $_ := set $defaultFastaIdsField "definition" "Space-separated list of FASTA IDS of each sequence to be associated with this metadata entry." }}
+    {{- $_ := set $defaultFastaIdsField "definition" "Space-separated list of FASTA IDs of each sequence to be associated with this metadata entry." }}
     {{- $_ := set $defaultFastaIdsField "example" "GJP123 GJP124" }}
     {{- $_ := set $defaultFastaIdsField "noEdit" true }}
     {{- $_ := set $defaultFastaIdsField "desired" true }}
