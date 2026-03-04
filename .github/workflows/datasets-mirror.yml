@@ -58,7 +58,7 @@ jobs:
       - name: Send Slack Notification
         env:
           SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
-        run: |
+        run: |-
           curl -X POST -H 'Content-type: application/json' --data '{
             "text": "🚨 Failed to mirror NCBI datasets: ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
           }' $SLACK_HOOK

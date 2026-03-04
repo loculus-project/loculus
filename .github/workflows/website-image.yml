@@ -156,7 +156,7 @@ jobs:
           docker buildx imagetools inspect ${{ env.DOCKER_IMAGE_NAME }}:${{ needs.check-cache.outputs.dir-hash }}
       - name: Retag and push existing image
         if: needs.check-cache.outputs.cache-hit == 'true'
-        run: |
+        run: |-
           METADATA='${{ steps.dockerMetadata.outputs.json }}'
           TAGS=$(jq -r '.tags[]' <<< "$METADATA")
           for TAG in $TAGS; do

@@ -80,7 +80,7 @@ jobs:
           platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
       - name: Retag and push existing image if cache hit
         if: env.CACHE_HIT == 'true'
-        run: |
+        run: |-
           TAGS=(${{ steps.dockerMetadata.outputs.tags }})
           for TAG in "${TAGS[@]}"; do
             docker buildx imagetools create --tag $TAG ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }}

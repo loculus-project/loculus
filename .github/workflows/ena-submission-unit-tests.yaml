@@ -58,9 +58,9 @@ jobs:
           cache-environment: true
       - name: Install package
         run: |
-            uv pip install --system .
+          uv pip install --system .
       - name: Run tests
-        run: |
+        run: |-
           # The integration tests are run in a separate workflow
           # They require postgres to be running
             pytest \

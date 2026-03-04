@@ -106,7 +106,7 @@ jobs:
             "head_short_sha_7": "${{ steps.get_sha.outputs.sha }}"
           }' > config.json
       - name: Commit and Push Changes
-        run: |
+        run: |-
           git config --global user.name 'Loculus bot'
           git config --global user.email 'bot@loculus.org'
           git add config.json

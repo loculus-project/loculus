@@ -168,5 +168,5 @@ jobs:
             - Be conservative when suggesting related issues
             - Do not duplicate information already in the PR description
 
-          claude_args: |
+          claude_args: |-
             --allowedTools "Bash(gh pr:*),Bash(gh issue list:*),Bash(gh label list)"

@@ -34,7 +34,7 @@ jobs:
         shell: micromamba-shell {0}
         working-directory: ena-submission
       - name: Commit and Push Changes
-        run: |
+        run: |-
           git config --global user.name 'Loculus bot'
           git config --global user.email 'bot@loculus.org'
           git add -A
