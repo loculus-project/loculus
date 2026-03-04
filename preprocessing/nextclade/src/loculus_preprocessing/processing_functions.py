@@ -1261,9 +1261,8 @@ class ProcessingFunctions:
         def replace_identifier(values, replacement):
             return [replacement if v == "IDENTIFIER" else v for v in values]
 
-        identifier = collector_id or submission_id
+        identifier: ProcessedMetadataValue = collector_id or submission_id
         if args["is_insdc_ingest_group"]:
-            print("got here")
             # For INSDC ingested sequence: use ID as is unless it contains ' ' or '/'
             # If it does: fall back to ACCESSION_VERSION
             identifier = collector_id or submission_id
