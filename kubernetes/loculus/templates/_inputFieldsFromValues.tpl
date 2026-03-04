@@ -41,7 +41,12 @@
     {{- end }}
   {{- end }}
   {{- if not $hasFastaIdsField }}
-    {{- $defaultFastaIdsField := dict "name" "fastaIds" "displayName" "FASTA IDS" "definition" "FASTA IDS" "guidance" "Space-separated list of FASTA IDS of each sequence to be associated with this metadata entry." "example" "GJP123 GJP124" "desired" true }}
+    {{- $defaultFastaIdsField := dict "name" "fastaIds" }}
+    {{- $_ := set $defaultFastaIdsField "displayName" "FASTA IDS" }}
+    {{- $_ := set $defaultFastaIdsField "definition" "FASTA IDS" }}
+    {{- $_ := set $defaultFastaIdsField "guidance" "Space-separated list of FASTA IDS of each sequence to be associated with this metadata entry." }}
+    {{- $_ := set $defaultFastaIdsField "example" "GJP123 GJP124" }}
+    {{- $_ := set $defaultFastaIdsField "desired" true }}
     {{- $_ := set $fieldsDict (printf "%03d" $index) $defaultFastaIdsField }}
     {{- $index = add $index 1 }}
   {{- end }}
