@@ -257,8 +257,8 @@ organisms:
         - name: id
           displayName: ID
           {{- if eq (int $maxSeq) 1 }}
-          definition: "FASTA ID"
-          guidance: "Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence."
+          definition: "Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence."
+          guidance: ""
           {{- else }}
           definition: "METADATA ID"
           guidance: "Your sample identifier. (If no `fastaIds` column is provided, this sample ID will be used to associate the metadata with the sequence.)"
