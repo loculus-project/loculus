@@ -168,18 +168,18 @@ function getAccessionInputField(): InputField {
 
 export function getSubmissionIdInputFields(schema: Schema): InputField[] {
     const maxSequencesPerEntry = schema.submissionDataTypes.maxSequencesPerEntry ?? Infinity;
-    const overrides = schema.idFieldOverrides ?? {};
+    const idFieldFromConfig = schema.inputFields.find((f) => f.name === SUBMISSION_ID_INPUT_FIELD);
 
     if (maxSequencesPerEntry == 1) {
         return [
             {
                 name: SUBMISSION_ID_INPUT_FIELD,
-                displayName: overrides.displayName ?? 'ID',
-                definition: overrides.definition ?? 'FASTA ID',
+                displayName: idFieldFromConfig?.displayName ?? 'ID',
+                definition: idFieldFromConfig?.definition ?? 'FASTA ID',
                 guidance:
-                    overrides.guidance ??
+                    idFieldFromConfig?.guidance ??
                     "Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence.",
-                example: overrides.example ?? 'GJP123',
+                example: idFieldFromConfig?.example ?? 'GJP123',
                 noEdit: true,
                 required: true,
             },
@@ -188,12 +188,12 @@ export function getSubmissionIdInputFields(schema: Schema): InputField[] {
     return [
         {
             name: SUBMISSION_ID_INPUT_FIELD,
-            displayName: overrides.displayName ?? 'ID',
-            definition: overrides.definition ?? 'METADATA ID',
+            displayName: idFieldFromConfig?.displayName ?? 'ID',
+            definition: idFieldFromConfig?.definition ?? 'METADATA ID',
             guidance:
-                overrides.guidance ??
+                idFieldFromConfig?.guidance ??
                 'Your sample identifier. If FASTA IDS column is provided, this sample ID will be used to associate the metadata with the sequence.',
-            example: overrides.example ?? 'GJP123',
+            example: idFieldFromConfig?.example ?? 'GJP123',
             noEdit: true,
             required: true,
         },
@@ -216,11 +216,13 @@ export function getGroupedInputFields(
 ): Map<string, InputField[]> {
     const schema = getConfig(organism).schema;
     const submissionIdInputFields = getSubmissionIdInputFields(schema);
+    const submissionIdFieldNames = new Set(submissionIdInputFields.map((f) => f.name));
+    const nonIdInputFields = schema.inputFields.filter((f) => !submissionIdFieldNames.has(f.name));
 
     const allFields = [
         ...submissionIdInputFields,
         ...(action === 'submit' ? [] : [getAccessionInputField()]),
-        ...schema.inputFields,
+        ...nonIdInputFields,
     ];
     const requiredFields = allFields.filter((meta) => meta.required);
     const desiredFields = allFields.filter((meta) => meta.desired);
@@ -234,7 +236,7 @@ export function getGroupedInputFields(
             .flatMap((fields) => fields.map((f) => f.name))
             .some((name) => name === fieldName);
 
-    schema.inputFields.forEach((field) => {
+    nonIdInputFields.forEach((field) => {
         const metadataEntry = schema.metadata.find((meta) => meta.name === field.name);
         const header = metadataEntry?.header ?? 'Uncategorized';
 

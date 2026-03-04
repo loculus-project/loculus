@@ -241,9 +241,6 @@ organisms:
       {{ if .description }}
       description: {{ quote .description }}
       {{ end }}
-      {{ if .idFieldOverrides }}
-      idFieldOverrides: {{ .idFieldOverrides | toYaml | nindent 8 }}
-      {{ end }}
       primaryKey: accessionVersion
       inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
         - name: versionComment

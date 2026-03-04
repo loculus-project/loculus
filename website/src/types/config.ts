@@ -176,14 +176,6 @@ export const submissionDataTypesSchema = z.object({
 
 export type SubmissionDataTypes = z.infer<typeof submissionDataTypesSchema>;
 
-export const idFieldOverrides = z.object({
-    displayName: z.string().optional(),
-    definition: z.string().optional(),
-    guidance: z.string().optional(),
-    example: z.union([z.string(), z.number()]).optional(),
-});
-export type IdFieldOverrides = z.infer<typeof idFieldOverrides>;
-
 export const schema = z.object({
     organismName: z.string(),
     image: z.string().optional(),
@@ -200,7 +192,6 @@ export const schema = z.object({
     richFastaHeaderFields: z.array(z.string()).optional(),
     linkOuts: z.array(linkOut).optional(),
     referenceIdentifierField: z.string().optional(),
-    idFieldOverrides: idFieldOverrides.optional(),
 });
 export type Schema = z.infer<typeof schema>;
 
