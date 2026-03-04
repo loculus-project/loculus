@@ -81,7 +81,7 @@ const MetadataTable: FC<TableProps> = ({ fields, metadata }) => {
                             <td className='border border-gray-300 px-4 py-2'>{field.name}</td>
                             <td className='border border-gray-300 px-4 py-2'>{metadataEntry?.type ?? 'String'}</td>
                             <td className='border border-gray-300 px-4 py-2'>
-                                <FormattedText text={`${field.definition ?? ''} ${field.guidance ?? ''}`} />
+                                <FormattedText text={[field.definition, field.guidance].filter(Boolean).join(' ')} />
                             </td>
                             <td className='border border-gray-300 px-4 py-2'>{field.example ?? ''}</td>
                         </tr>

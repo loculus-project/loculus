@@ -33,6 +33,12 @@ describe('FormattedText', () => {
         expect(container.querySelector('code')).toBeNull();
     });
 
+    it('handles odd number of backticks gracefully', () => {
+        const { container } = render(<FormattedText text='Set `foo` and `bar' />);
+        expect(container.textContent).toBe('Set foo and `bar');
+        expect(container.querySelectorAll('code')).toHaveLength(1);
+    });
+
     it('handles empty string', () => {
         const { container } = render(<FormattedText text='' />);
         expect(container.textContent).toBe('');

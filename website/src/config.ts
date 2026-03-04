@@ -167,7 +167,8 @@ function getAccessionInputField(): InputField {
 }
 
 export function getSubmissionIdInputFields(schema: Schema): InputField[] {
-    const idField = schema.inputFields.find((f) => f.name === SUBMISSION_ID_INPUT_FIELD)!;
+    const idField = schema.inputFields.find((f) => f.name === SUBMISSION_ID_INPUT_FIELD);
+    if (!idField) throw new Error(`Missing required '${SUBMISSION_ID_INPUT_FIELD}' input field in schema`);
     const fastaIdsField = schema.inputFields.find((f) => f.name === FASTA_IDS_FIELD);
 
     return fastaIdsField ? [idField, fastaIdsField] : [idField];
