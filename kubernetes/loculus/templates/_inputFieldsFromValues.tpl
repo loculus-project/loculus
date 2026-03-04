@@ -25,8 +25,7 @@
   {{- if eq (int $maxSeq) 1 }}
     {{- $_ := set $defaultIdField "definition" "Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence." }}
   {{- else }}
-    {{- $_ := set $defaultIdField "definition" "METADATA ID" }}
-    {{- $_ := set $defaultIdField "guidance" "Your sample identifier. (If no `fastaIds` column is provided, this sample ID will be used to associate the metadata with the sequence.)" }}
+    {{- $_ := set $defaultIdField "definition" "Your sample identifier. (If no `fastaIds` column is provided, this sample ID will be used to associate the metadata with the sequence.)" }}
   {{- end }}
   {{- $_ := set $fieldsDict (printf "%03d" $index) $defaultIdField }}
   {{- $index = add $index 1 }}
