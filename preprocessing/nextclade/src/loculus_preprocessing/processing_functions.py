@@ -1261,9 +1261,17 @@ class ProcessingFunctions:
         def replace_identifier(values, replacement):
             return [replacement if v == "IDENTIFIER" else v for v in values]
 
-        identifier: ProcessedMetadataValue = None
-        if not args["is_insdc_ingest_group"]:
+        identifier = collector_id or submission_id
+        if args["is_insdc_ingest_group"]:
+            print("got here")
+            # For INSDC ingested sequence: use ID as is unless it contains ' ' or '/'
+            # If it does: fall back to ACCESSION_VERSION
             identifier = collector_id or submission_id
+            if " " in identifier or "/" in identifier:
+                identifier = None
+        else:
+            # For direct submissions: try to extract ID field using regex if ID contains '/'
+            # Otherwise, use the ID as is
             if "/" in identifier:
                 if regex_pattern is None:
                     identifier = None
@@ -1286,6 +1294,7 @@ class ProcessingFunctions:
                     )
                     identifier = extract_result.datum
                     if identifier is None:
+                        # regex extraction of ID field failed, fall back to ACCESSION_VERSION
                         warnings.append(
                             ProcessingAnnotation.from_fields(
                                 input_fields,
