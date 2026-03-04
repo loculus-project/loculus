@@ -1405,7 +1405,7 @@ defaultOrganisms:
       image: "/images/organisms/ebolasudan_small.jpg"
       extraInputFields:
         - name: id
-          displayName: Sample ID
+          displayName: ID
           definition: "Unique identifier for your Ebola Sudan sample"
           guidance: "Use the sample ID assigned by your sequencing lab."
           example: "EBOV-SD-2024-001"
