@@ -4,7 +4,6 @@ import sqlite3
 import urllib.request
 import zipfile
 from pathlib import Path
-from urllib.parse import urljoin
 
 import networkx as nx
 import numpy as np
@@ -12,17 +11,13 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-NCBI_URL = "https://ftp.ncbi.nih.gov/pub/taxonomy/"
-TAXONOMY_ARCHIVE = "taxdmp.zip"
+NCBI_TAXONOMY_ARCHIVE = "https://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip"
 
 
-def download_ncbi_archive(
-    ftp_server: str = NCBI_URL, target_archive: str = TAXONOMY_ARCHIVE
-) -> io.BytesIO:
-    full_url = urljoin(ftp_server.rstrip("/") + "/", target_archive)
-    logger.info(f"downloading NCBI taxonomy archive from: {full_url}")
+def download_ncbi_archive(taxonomy_url: str = NCBI_TAXONOMY_ARCHIVE) -> io.BytesIO:
+    logger.info(f"downloading NCBI taxonomy archive from: {taxonomy_url}")
 
-    with urllib.request.urlopen(full_url, timeout=300) as response:
+    with urllib.request.urlopen(taxonomy_url, timeout=300) as response:
         zip_bytes = io.BytesIO(
             response.read()
         )  # read the whole archive into memory (it's around 69M)
@@ -40,7 +35,7 @@ def extract_ncbi_taxonomy_file(archive: io.BytesIO, target_file: str) -> pd.Data
             df = pd.read_csv(
                 f,
                 sep=r"\s*\|\s*",
-                engine="python",
+                engine="python",  # need to use Python engine to do regex separator
                 header=None,
             )
     logger.info(f"Extracted file '{target_file}' from archive")
@@ -48,6 +43,13 @@ def extract_ncbi_taxonomy_file(archive: io.BytesIO, target_file: str) -> pd.Data
 
 
 def extract_names_df(archive: io.BytesIO) -> pd.DataFrame:
+    """Extract 'names.dmp' from the NCBI taxonomy archive into a pd.DataFrame
+    Columns in the output df are:
+    - tax_id (int):             the NCBI taxon ID for this entry
+    - common_name (str):        '; ' separated common names for this taxon, sorted alphabetically
+                                    (taxa can have multiple common names)
+    - scientific_name (str):    the scientific name for this taxon
+    """
     df = (
         extract_ncbi_taxonomy_file(archive, "names.dmp")
         .rename(columns={0: "tax_id", 1: "name_txt", 3: "name_class"})
@@ -76,6 +78,11 @@ def extract_names_df(archive: io.BytesIO) -> pd.DataFrame:
 
 
 def extract_nodes_df(archive: io.BytesIO) -> pd.DataFrame:
+    """Extract 'nodes.dmp' from the NCBI taxonomy archive into a pd.DataFrame
+    Columns in the output df are:
+    - tax_id (int):     the NCBI taxon ID for this entry
+    - parent_id (int):  the NCBI taxon ID for this entry's parent in the taxonomy
+    """
     df = (
         extract_ncbi_taxonomy_file(archive, "nodes.dmp")
         .rename(columns={0: "tax_id", 1: "parent_id"})
@@ -83,15 +90,11 @@ def extract_nodes_df(archive: io.BytesIO) -> pd.DataFrame:
         .loc[:, ["tax_id", "parent_id"]]
     )
 
-    add_tree_depth(df, root_id=1)
-    if df[df["depth"] == -1].shape[0] > 0:
-        raise ValueError("nodes.dmp contains orphan nodes, this should not happen")
-
     return df
 
 
 def add_tree_depth(df: pd.DataFrame, root_id: int):
-    if len(df.columns) != 2 or not all(df.columns.values == np.array(["tax_id", "parent_id"])):
+    if df.columns.equals(["tax_id", "parent_id"]):
         raise ValueError(
             f"Expected pd.DataFrame with columns '['tax_id', 'parent_id']', got '{df.columns}'"
         )
@@ -102,11 +105,10 @@ def add_tree_depth(df: pd.DataFrame, root_id: int):
     # Include all tax_ids, but since the root is specified as
     # it's own parent in nodes.dmp, we exclude that edge to avoid cycles
     G = nx.DiGraph()
-
     G.add_nodes_from(df["tax_id"])
-
-    edges: pd.DataFrame = df[df["tax_id"] != root_id][["parent_id", "tax_id"]]
-    G.add_edges_from(edges.itertuples(index=False, name=None))
+    G.add_edges_from(
+        df[df["tax_id"] != root_id][["parent_id", "tax_id"]].itertuples(index=False, name=None)
+    )
 
     depth_map: dict[int, int] = nx.single_source_shortest_path_length(G, root_id)
 
@@ -116,6 +118,9 @@ def add_tree_depth(df: pd.DataFrame, root_id: int):
 def create_taxonomy_df(archive: io.BytesIO) -> pd.DataFrame:
     df_names = extract_names_df(archive)
     df_nodes = extract_nodes_df(archive)
+    add_tree_depth(df_nodes, root_id=1)
+    if df_nodes[df_nodes["depth"] == -1].shape[0] > 0:
+        raise ValueError("nodes.dmp contains orphan nodes, this should not happen")
 
     df_taxonomy = df_names.merge(df_nodes, on="tax_id", how="inner")
     if df_taxonomy.shape[0] < df_names.shape[0]:

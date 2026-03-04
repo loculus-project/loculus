@@ -9,7 +9,7 @@ This module retrieves taxonomic information from NCBI's [FTP server](https://ftp
 2. Install environment:
 
 ```sh
-micromamba env create -n loculus-ncbi-taxonomy -f environment.yml
+micromamba env create -n loculus-ncbi-taxonomy -f environment.yaml
 ```
 
 

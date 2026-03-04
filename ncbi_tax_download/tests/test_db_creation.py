@@ -25,17 +25,17 @@ def test_names_df_creation(archive: BytesIO):
     expected_columns = ["tax_id", "common_name", "scientific_name"]
 
     assert df_names.shape == expected_shape
-    assert all([i == j for i, j in zip(df_names.columns, expected_columns)])
+    assert list(df_names.columns) == expected_columns
 
 
 def test_nodes_df_creation(archive: BytesIO):
     df_nodes = extract_nodes_df(archive)
 
-    expected_shape = (8, 3)
-    expected_columns = ["tax_id", "parent_id", "depth"]
+    expected_shape = (8, 2)
+    expected_columns = ["tax_id", "parent_id"]
 
     assert df_nodes.shape == expected_shape
-    assert all([i == j for i, j in zip(df_nodes.columns, expected_columns)])
+    assert list(df_nodes.columns) == expected_columns
 
 
 def test_taxonomy_df_creation(archive: BytesIO):
@@ -52,13 +52,13 @@ def test_taxonomy_df_creation(archive: BytesIO):
 
     expected_shape = (7, 5)
     expected_columns = ["tax_id", "common_name", "scientific_name", "parent_id", "depth"]
-    expected_partents = [1, 1, 2, 6, 1, 9, 9]
+    expected_parents = [1, 1, 2, 6, 1, 9, 9]
     expected_depths = [0, 1, 2, 3, 1, 2, 2]
     expected_common_name = "bacteria; eubacteria"
 
     assert df_taxonomy.shape == expected_shape
-    assert all([i == j for i, j in zip(df_taxonomy.columns, expected_columns)])
+    assert list(df_taxonomy.columns) == expected_columns
 
-    assert all(df_taxonomy["parent_id"] == expected_partents)
+    assert all(df_taxonomy["parent_id"] == expected_parents)
     assert all(df_taxonomy["depth"] == expected_depths)
     assert df_taxonomy.set_index("tax_id").loc[2, "common_name"] == expected_common_name
