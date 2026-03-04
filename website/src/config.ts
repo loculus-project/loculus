@@ -167,24 +167,10 @@ function getAccessionInputField(): InputField {
 }
 
 export function getSubmissionIdInputFields(schema: Schema): InputField[] {
-    const maxSequencesPerEntry = schema.submissionDataTypes.maxSequencesPerEntry ?? Infinity;
     const idField = schema.inputFields.find((f) => f.name === SUBMISSION_ID_INPUT_FIELD)!;
+    const fastaIdsField = schema.inputFields.find((f) => f.name === FASTA_IDS_FIELD);
 
-    if (maxSequencesPerEntry == 1) {
-        return [idField];
-    }
-    return [
-        idField,
-        {
-            name: FASTA_IDS_FIELD,
-            displayName: 'FASTA IDS',
-            definition: 'FASTA IDS',
-            guidance: 'Space-separated list of FASTA IDS of each sequence to be associated with this metadata entry.',
-            example: 'GJP123 GJP124',
-            noEdit: true,
-            desired: true,
-        },
-    ];
+    return fastaIdsField ? [idField, fastaIdsField] : [idField];
 }
 
 export function getGroupedInputFields(

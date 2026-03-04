@@ -32,6 +32,21 @@
   {{- $index = add $index 1 }}
 {{- end }}
 
+{{- /* Add default fastaIds field for multi-segment organisms if not overridden */}}
+{{- if ne (int $maxSeq) 1 }}
+  {{- $hasFastaIdsField := false }}
+  {{- range ($extraFields | default list) }}
+    {{- if eq .name "fastaIds" }}
+      {{- $hasFastaIdsField = true }}
+    {{- end }}
+  {{- end }}
+  {{- if not $hasFastaIdsField }}
+    {{- $defaultFastaIdsField := dict "name" "fastaIds" "displayName" "FASTA IDS" "definition" "FASTA IDS" "guidance" "Space-separated list of FASTA IDS of each sequence to be associated with this metadata entry." "example" "GJP123 GJP124" "desired" true }}
+    {{- $_ := set $fieldsDict (printf "%03d" $index) $defaultFastaIdsField }}
+    {{- $index = add $index 1 }}
+  {{- end }}
+{{- end }}
+
 {{- /* Add fields with position "first" to the dict */}}
 {{- range $field := $extraFields }}
   {{- if eq $field.position "first" }}
