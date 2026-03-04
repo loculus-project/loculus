@@ -2,6 +2,8 @@
 formatter:
   type: basic
   drop_merge_tag: true
+  trim_trailing_whitespace: true
+  retain_line_breaks_single: true
 gitignore_excludes: true
 exclude:
   - kubernetes/loculus/templates
