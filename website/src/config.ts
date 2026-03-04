@@ -189,7 +189,7 @@ export function getSubmissionIdInputFields(schema: Schema): InputField[] {
             displayName: 'ID',
             definition: 'METADATA ID',
             guidance:
-                "Your sample identifier. If FASTA IDS column is provided, this sample ID will be used to associate the metadata with the sequence. Depending on it's format, this ID may be parsed and used in the display name of this sequence on the website (only if configured for this organism).",
+                "Your sample identifier. If no Fasta Ids are provided in the FASTA IDS column, this sample ID will be used as a FASTA ID to associate the metadata with the sequence. Depending on it's format, this ID may be parsed and used in the display name of this sequence on the website (only if configured for this organism).",
             example: 'GJP123',
             noEdit: true,
             required: true,
