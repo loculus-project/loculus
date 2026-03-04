@@ -1268,42 +1268,40 @@ class ProcessingFunctions:
             identifier = collector_id or submission_id
             if " " in identifier or "/" in identifier:
                 identifier = None
-        else:
-            # For direct submissions: try to extract ID field using regex if ID contains '/'
-            # Otherwise, use the ID as is
-            if "/" in identifier:
-                if regex_pattern is None:
-                    identifier = None
+        elif "/" in identifier:
+            # For direct submissions with "/": try to extrect ID field using regex
+            if regex_pattern is None:
+                identifier = None
+                warnings.append(
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            "identifier string contained '/' but no regex_pattern was provided"
+                        ),
+                    )
+                )
+            else:
+                extract_result = ProcessingFunctions.extract_regex(
+                    input_data={"regex_field": collector_id or submission_id},
+                    output_field="IDENTIFIER",
+                    input_fields=[],
+                    args={"pattern": regex_pattern, "capture_group": "identifier"},
+                )
+                identifier = extract_result.datum
+                if identifier is None:
+                    # regex extraction of ID field failed, fall back to ACCESSION_VERSION
                     warnings.append(
                         ProcessingAnnotation.from_fields(
                             input_fields,
                             [output_field],
                             AnnotationSourceType.METADATA,
                             message=(
-                                "identifier string contained '/' but no regex_pattern was provided"
+                                "identifier string could not be parsed using provided regex_pattern"
                             ),
                         )
                     )
-                else:
-                    extract_result = ProcessingFunctions.extract_regex(
-                        input_data={"regex_field": collector_id or submission_id},
-                        output_field="IDENTIFIER",
-                        input_fields=[],
-                        args={"pattern": regex_pattern, "capture_group": "identifier"},
-                    )
-                    identifier = extract_result.datum
-                    if identifier is None:
-                        # regex extraction of ID field failed, fall back to ACCESSION_VERSION
-                        warnings.append(
-                            ProcessingAnnotation.from_fields(
-                                input_fields,
-                                [output_field],
-                                AnnotationSourceType.METADATA,
-                                message=(
-                                    "identifier string could not be parsed using provided regex_pattern"
-                                ),
-                            )
-                        )
 
         if identifier is None:
             # Use ACCESSION_VERSION instead of IDENTIFIER
