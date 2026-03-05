@@ -1,3 +1,4 @@
+import os
 import shutil
 from io import BytesIO
 from pathlib import Path
@@ -16,15 +17,15 @@ INCORRECT_DATA = Path(__file__).parent / "incorrect"
 
 @pytest.fixture
 def archive_correct():
-    shutil.make_archive("correct", "zip", CORRECT_DATA)
-    with open("correct.zip", "rb") as f:
+    shutil.make_archive(str(CORRECT_DATA), "zip", CORRECT_DATA)
+    with open(f"{str(CORRECT_DATA)}.zip", "rb") as f:
         return BytesIO(f.read())
 
 
 @pytest.fixture
 def archive_incorrect():
-    shutil.make_archive("incorrect", "zip", INCORRECT_DATA)
-    with open("incorrect.zip", "rb") as f:
+    shutil.make_archive(str(INCORRECT_DATA), "zip", INCORRECT_DATA)
+    with open(f"{str(INCORRECT_DATA)}.zip", "rb") as f:
         return BytesIO(f.read())
 
 
