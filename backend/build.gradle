@@ -57,14 +57,14 @@ dependencies {
     implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.keycloak:keycloak-admin-client:26.0.8"
     implementation("io.minio:minio:8.6.0")
-    implementation("software.amazon.awssdk:s3:2.42.2")
+    implementation("software.amazon.awssdk:s3:2.42.5")
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
 
     implementation 'org.apache.commons:commons-compress'
     implementation 'com.github.luben:zstd-jni:1.5.7-7'
-    implementation 'org.tukaani:xz:1.11'
+    implementation 'org.tukaani:xz:1.12'
 
     implementation("org.redundent:kotlin-xml-builder:1.9.3")
     implementation("org.jsoup:jsoup:1.22.1")
