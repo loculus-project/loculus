@@ -18,23 +18,21 @@ INCORRECT_DATA = Path(__file__).parent / "incorrect"
 @pytest.fixture
 def archive_correct():
     zip_path = Path(shutil.make_archive(CORRECT_DATA, "zip", CORRECT_DATA))
-    try:
-        return BytesIO(zip_path.read_bytes())
-    finally:
-        # clean up zip archive when we're done
-        if zip_path.exists():
-            zip_path.unlink()
+
+    yield BytesIO(zip_path.read_bytes())
+
+    if zip_path.exists():
+        zip_path.unlink()
 
 
 @pytest.fixture
 def archive_incorrect():
     zip_path = Path(shutil.make_archive(INCORRECT_DATA, "zip", INCORRECT_DATA))
-    try:
-        return BytesIO(zip_path.read_bytes())
-    finally:
-        # clean up zip archive when we're done
-        if zip_path.exists():
-            zip_path.unlink()
+
+    yield BytesIO(zip_path.read_bytes())
+
+    if zip_path.exists():
+        zip_path.unlink()
 
 
 def test_names_df_creation(archive_correct: BytesIO):
