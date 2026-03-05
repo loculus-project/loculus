@@ -167,43 +167,11 @@ function getAccessionInputField(): InputField {
 }
 
 export function getSubmissionIdInputFields(schema: Schema): InputField[] {
-    const maxSequencesPerEntry = schema.submissionDataTypes.maxSequencesPerEntry ?? Infinity;
+    const idField = schema.inputFields.find((f) => f.name === SUBMISSION_ID_INPUT_FIELD);
+    if (!idField) throw new Error(`Missing required '${SUBMISSION_ID_INPUT_FIELD}' input field in schema`);
+    const fastaIdsField = schema.inputFields.find((f) => f.name === FASTA_IDS_FIELD);
 
-    if (maxSequencesPerEntry == 1) {
-        return [
-            {
-                name: SUBMISSION_ID_INPUT_FIELD,
-                displayName: 'ID',
-                definition: 'FASTA ID',
-                guidance:
-                    "Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence. Depending on it's format, this ID may be parsed and used in the display name of this sequence on the website (only if configured for this organism).",
-                example: 'GJP123',
-                noEdit: true,
-                required: true,
-            },
-        ];
-    }
-    return [
-        {
-            name: SUBMISSION_ID_INPUT_FIELD,
-            displayName: 'ID',
-            definition: 'METADATA ID',
-            guidance:
-                "Your sample identifier. If no Fasta Ids are provided in the FASTA IDS column, this sample ID will be used as a FASTA ID to associate the metadata with the sequence. Depending on it's format, this ID may be parsed and used in the display name of this sequence on the website (only if configured for this organism).",
-            example: 'GJP123',
-            noEdit: true,
-            required: true,
-        },
-        {
-            name: FASTA_IDS_FIELD,
-            displayName: 'FASTA IDS',
-            definition: 'FASTA IDS',
-            guidance: 'Space-separated list of FASTA IDS of each sequence to be associated with this metadata entry.',
-            example: 'GJP123 GJP124',
-            noEdit: true,
-            desired: true,
-        },
-    ];
+    return fastaIdsField ? [idField, fastaIdsField] : [idField];
 }
 
 export function getGroupedInputFields(
@@ -213,11 +181,13 @@ export function getGroupedInputFields(
 ): Map<string, InputField[]> {
     const schema = getConfig(organism).schema;
     const submissionIdInputFields = getSubmissionIdInputFields(schema);
+    const submissionIdFieldNames = new Set(submissionIdInputFields.map((f) => f.name));
+    const nonIdInputFields = schema.inputFields.filter((f) => !submissionIdFieldNames.has(f.name));
 
     const allFields = [
         ...submissionIdInputFields,
         ...(action === 'submit' ? [] : [getAccessionInputField()]),
-        ...schema.inputFields,
+        ...nonIdInputFields,
     ];
     const requiredFields = allFields.filter((meta) => meta.required);
     const desiredFields = allFields.filter((meta) => meta.desired);
@@ -231,7 +201,7 @@ export function getGroupedInputFields(
             .flatMap((fields) => fields.map((f) => f.name))
             .some((name) => name === fieldName);
 
-    schema.inputFields.forEach((field) => {
+    nonIdInputFields.forEach((field) => {
         const metadataEntry = schema.metadata.find((meta) => meta.name === field.name);
         const header = metadataEntry?.header ?? 'Uncategorized';
 

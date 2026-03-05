@@ -442,7 +442,8 @@
               }
             },
             "extraInputFields": {
-              "type": "array"
+              "type": "array",
+              "description": "Additional input fields for the submission form. If you add a field with name 'id' or 'fastaIds', it will overwrite the default 'id' or 'fastaIds' field. Note that the 'fastaIds' field is only automatically added if the organism has maxSequencesPerEntry > 1."
             },
             "nucleotideSequences": {
               "groups": ["schema"],
