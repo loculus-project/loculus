@@ -1299,6 +1299,7 @@ class ProcessingFunctions:
         input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
     ) -> ProcessingResult:
         """Assign flu lineage based on seg4 and seg6"""
+        logger.debug(f"Starting custom lineage assignment with input_data: {input_data} and args: {args}")
         if not input_data:
             return ProcessingResult(datum=None, warnings=[], errors=[])
         references = [f for f in input_data if f.startswith("reference_")]
