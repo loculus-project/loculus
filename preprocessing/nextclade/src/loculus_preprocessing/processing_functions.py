@@ -1187,13 +1187,16 @@ class ProcessingFunctions:
         """Builds a displayName from input_fields. The identifier field in the displayName is based on
         specimenCollectorSampleId or - if it is not set - submissionId.
 
-        This method wraps ProcessingFunctions.concatentate(), but adds some additional checks and requirements:
+        This method wraps ProcessingFunctions.concatenate(). Thus, it has the same required input
+        args, as well as adding some additional checks and requirements:
             - submissionId and specimenCollectorSampleId must be in the input_data
-            - specimenCollectorSampleId must be in args['order']
-            - the identifier is processed using extract_id_field()
-            - if the identifier is in an unrecognized format, it will be replaced with the ACCESSION_VERSION
+            - IDENTIFIER keyword must be in args['order']
+            - if the IDENTIFIER is in an unrecognized format, it will be replaced with the ACCESSION_VERSION
             - if fallback_value is not in args, { 'fallback_value': 'unknown' } is added to the args before passing
               them on to concatenate()
+            - for sequences ingested from INSDC, we will never try to parse the IDENTIFIER field using regex. We
+              will use the Isolate Name as IDENTIFIER field if it contains no slashes or spaces (otherwise we fall back to
+              ACCESSION_VERSION)
         """
         collector_id = input_data.get("specimenCollectorSampleId", None)
         submission_id = input_data.get("submissionId", None)
@@ -1285,7 +1288,7 @@ class ProcessingFunctions:
                 )
             else:
                 extract_result = ProcessingFunctions.extract_regex(
-                    input_data={"regex_field": collector_id or submission_id},
+                    input_data={"regex_field": identifier},
                     output_field="IDENTIFIER",
                     input_fields=[],
                     args={"pattern": regex_pattern, "capture_group": "identifier"},
@@ -1324,13 +1327,11 @@ class ProcessingFunctions:
                 "ACCESSION_VERSION": args["ACCESSION_VERSION"],
             },
         )
-        if concat_result.warnings or concat_result.errors:
-            return concat_result
 
         return ProcessingResult(
             datum=concat_result.datum,
-            warnings=warnings,
-            errors=[],
+            warnings=warnings + concat_result.warnings,
+            errors=concat_result.errors,
         )
 
 
@@ -1593,23 +1594,3 @@ def null_per_backend(x: Any) -> bool:
             return True
         case _:
             return False
-
-
-def extract_id_field(submission_id: str) -> str | None:
-    """Attempt to extract an identifier field from submission_id
-
-    If submission_id is made up of four fields separated by slashes, we assume that it
-    is in a standardized format where the second to last field contains an identifier to use in
-    the displayName.
-
-    If there are no slashes, we use the submission_id as is.
-
-    If there are a different number of slashes, we can't be sure which part to use for the
-    displayName and return None
-    """
-    if "/" in submission_id:
-        parts = submission_id.split("/")
-        if len(parts) == 4:
-            return parts[-2]
-        return None
-    return submission_id

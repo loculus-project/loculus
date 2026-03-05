@@ -1036,6 +1036,17 @@ def test_display_name_construction() -> None:
         == "identifier string could not be parsed using provided regex_pattern"
     )
 
+    input_data["specimenCollectorSampleId"] = "myCollectorSample"
+    fn_args = args()
+    fn_args["is_insdc_ingest_group"] = True
+    res = ProcessingFunctions.build_display_name(
+        input_data,
+        output_field,
+        input_fields(),
+        fn_args,
+    )
+    assert res.datum == "DENV-1/unknown/myCollectorSample/2025"
+
     input_data["specimenCollectorSampleId"] = submission_id_formatted
     fn_args = args()
     fn_args["is_insdc_ingest_group"] = True
