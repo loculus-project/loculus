@@ -1190,11 +1190,11 @@ class ProcessingFunctions:
         This method wraps ProcessingFunctions.concatenate(). Thus, it has the same required input
         args, as well as adding some additional checks and requirements:
             - submissionId and specimenCollectorSampleId must be in the input_data
-            - IDENTIFIER keyword must be in args['order']
+            - IDENTIFIER keyword must be in args['order'] and args['type']
             - if the IDENTIFIER is in an unrecognized format, it will be replaced with the ACCESSION_VERSION
             - if fallback_value is not in args, { 'fallback_value': 'unknown' } is added to the args before passing
               them on to concatenate()
-            - for sequences ingested from INSDC, we will never try to parse the IDENTIFIER field using regex. We
+            - for sequences ingested from INSDC, we do not try to parse the IDENTIFIER field using regex. We
               will use the Isolate Name as IDENTIFIER field if it contains no slashes or spaces (otherwise we fall back to
               ACCESSION_VERSION)
         """

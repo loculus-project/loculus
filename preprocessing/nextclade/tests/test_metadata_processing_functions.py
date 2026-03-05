@@ -997,30 +997,60 @@ def test_display_name_construction() -> None:
             "regex_pattern": r"^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$",
         }
 
+    def args_insdc():
+        return {
+            "ACCESSION_VERSION": "version.1",
+            "is_insdc_ingest_group": True,
+            "order": ["nextclade.clade", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
+            "type": ["string", "string", "IDENTIFIER", "string"],
+            "regex_pattern": r"^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$",
+        }
+
     res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
+    res_insdc = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_insdc()
+    )
     assert res.datum == "DENV-1/Switzerland/mySample/2025"
+    assert res_insdc.datum == "DENV-1/Switzerland/mySample/2025"
 
     input_data["specimenCollectorSampleId"] = "myCollectorSample"
     res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
+    res_insdc = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_insdc()
+    )
     assert res.datum == "DENV-1/Switzerland/myCollectorSample/2025"
+    assert res_insdc.datum == "DENV-1/Switzerland/myCollectorSample/2025"
 
     input_data["specimenCollectorSampleId"] = submission_id_formatted
     res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
+    res_insdc = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_insdc()
+    )
     assert res.datum == "DENV-1/Switzerland/myExtractedSample/2025"
+    assert res_insdc.datum == "DENV-1/Switzerland/version.1/2025"
 
     input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
     res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
+    res_insdc = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_insdc()
+    )
     assert res.datum == "DENV-1/Switzerland/version.1/2025"
+    assert res_insdc.datum == "DENV-1/Switzerland/version.1/2025"
 
     input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
     input_data["geoLocCountry"] = ""
     res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
+    res_insdc = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_insdc()
+    )
     assert res.datum == "DENV-1/unknown/version.1/2025"
     assert len(res.warnings) == 1
     assert (
         res.warnings[0].message
         == "identifier string could not be parsed using provided regex_pattern"
     )
+    assert res_insdc.datum == "DENV-1/unknown/version.1/2025"
+    assert len(res_insdc.warnings) == 0
 
     input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
     res = ProcessingFunctions.build_display_name(
@@ -1029,34 +1059,20 @@ def test_display_name_construction() -> None:
         input_fields(),
         {"fallback_value": "another_fallback"} | args(),
     )
+    res_insdc = ProcessingFunctions.build_display_name(
+        input_data,
+        output_field,
+        input_fields(),
+        {"fallback_value": "another_fallback"} | args_insdc(),
+    )
     assert res.datum == "DENV-1/another_fallback/version.1/2025"
     assert len(res.warnings) == 1
     assert (
         res.warnings[0].message
         == "identifier string could not be parsed using provided regex_pattern"
     )
-
-    input_data["specimenCollectorSampleId"] = "myCollectorSample"
-    fn_args = args()
-    fn_args["is_insdc_ingest_group"] = True
-    res = ProcessingFunctions.build_display_name(
-        input_data,
-        output_field,
-        input_fields(),
-        fn_args,
-    )
-    assert res.datum == "DENV-1/unknown/myCollectorSample/2025"
-
-    input_data["specimenCollectorSampleId"] = submission_id_formatted
-    fn_args = args()
-    fn_args["is_insdc_ingest_group"] = True
-    res = ProcessingFunctions.build_display_name(
-        input_data,
-        output_field,
-        input_fields(),
-        fn_args,
-    )
-    assert res.datum == "DENV-1/unknown/version.1/2025"
+    assert res_insdc.datum == "DENV-1/another_fallback/version.1/2025"
+    assert len(res_insdc.warnings) == 0
 
 
 if __name__ == "__main__":
