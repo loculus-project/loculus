@@ -291,12 +291,12 @@ def add_assigned_reference(  # noqa: PLR0911
     all_segments = spec.args.get("all_segments") if spec.args else None
     if not all_segments:
         return InputData(datum=None)
-    for segment in config.segments:
-        name = get_dataset_name(segment.name, unprocessed.nextcladeMetadata, config)
+    for seg in config.segments:
+        name = get_dataset_name(seg.name, unprocessed.nextcladeMetadata, config)
         if not name:
             continue
         reference = config.get_dataset_by_name(name).reference_name
-        references[segment.name] = reference
+        references[seg.name] = reference
     if not references:
         return InputData(datum=None)
     return InputData(datum_map=references, datum=None)
