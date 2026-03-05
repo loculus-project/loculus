@@ -697,7 +697,7 @@ class ProcessingFunctions:
         n_inputs = len(input_data.keys())
         # exclude ACCESSION_VERSION as it's provided by _call_preprocessing_function() and should not be an input_metadata field
         n_expected = len([i for i in order if i != "ACCESSION_VERSION"])
-        if n_inputs != n_expected:
+        if n_inputs < n_expected:
             logger.error(
                 f"Concatenate: Expected {n_expected} fields, got {n_inputs}. "
                 f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
@@ -1176,6 +1176,163 @@ class ProcessingFunctions:
                 ],
             )
         return ProcessingResult(datum=(input > threshold), warnings=[], errors=[])
+
+    @staticmethod
+    def build_display_name(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        """Builds a displayName from input_fields. The identifier field in the displayName is based on
+        specimenCollectorSampleId or - if it is not set - submissionId.
+
+        This method wraps ProcessingFunctions.concatenate(). Thus, it has the same required input
+        args, as well as adding some additional checks and requirements:
+            - submissionId and specimenCollectorSampleId must be in the input_data
+            - IDENTIFIER keyword must be in args['order'] and args['type']
+            - if the IDENTIFIER is in an unrecognized format, it will be replaced with the ACCESSION_VERSION
+            - if fallback_value is not in args, { 'fallback_value': 'unknown' } is added to the args before passing
+              them on to concatenate()
+            - for sequences ingested from INSDC, we do not try to parse the IDENTIFIER field using regex. We
+              will use the Isolate Name as IDENTIFIER field if it contains no slashes or spaces (otherwise we fall back to
+              ACCESSION_VERSION)
+        """
+        collector_id = input_data.get("specimenCollectorSampleId", None)
+        submission_id = input_data.get("submissionId", None)
+        warnings: list[ProcessingAnnotation] = []
+        if submission_id is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            "Internal Error: 'submissionId' must not be None for build_display_name(). Please contact the administrator."
+                        ),
+                    )
+                ],
+            )
+
+        order = args.get("order")
+        field_types = args.get("type")
+        if (
+            not isinstance(order, list)
+            or not isinstance(field_types, list)
+            or len(order) != len(field_types)
+            or "IDENTIFIER" not in order
+        ):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            "Internal Error: 'order' and 'type' must be lists of equal length, and 'order' must contain IDENTIFIER - this is required for build_display_name to function. Please contact the administrator."
+                        ),
+                    )
+                ],
+            )
+
+        regex_pattern = args.get("regex_pattern")
+        if regex_pattern is not None:
+            if "identifier" not in re.compile(str(regex_pattern)).groupindex:
+                return ProcessingResult(
+                    datum=None,
+                    warnings=[],
+                    errors=[
+                        ProcessingAnnotation.from_fields(
+                            input_fields,
+                            [output_field],
+                            AnnotationSourceType.METADATA,
+                            message=(
+                                "Internal Error: if provided, 'regex_pattern' must contain a named capture group called 'identifier'"
+                            ),
+                        )
+                    ],
+                )
+
+        concatenate_order = order.copy()
+        concatenate_field_types = field_types.copy()
+
+        def replace_identifier(values, replacement):
+            return [replacement if v == "IDENTIFIER" else v for v in values]
+
+        identifier: ProcessedMetadataValue = collector_id or submission_id
+        if not isinstance(identifier, str):
+            identifier = None
+        elif args["is_insdc_ingest_group"]:
+            # For INSDC ingested sequence: use ID as is unless it contains ' ' or '/'
+            # If it does: fall back to ACCESSION_VERSION
+            if " " in identifier or "/" in identifier:
+                identifier = None
+        elif "/" in identifier:
+            # For direct submissions with "/": try to extrect ID field using regex
+            if regex_pattern is None:
+                identifier = None
+                warnings.append(
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            "identifier string contained '/' but no regex_pattern was provided"
+                        ),
+                    )
+                )
+            else:
+                extract_result = ProcessingFunctions.extract_regex(
+                    input_data={"regex_field": identifier},
+                    output_field="IDENTIFIER",
+                    input_fields=[],
+                    args={"pattern": regex_pattern, "capture_group": "identifier"},
+                )
+                identifier = extract_result.datum
+                if identifier is None:
+                    # regex extraction of ID field failed, fall back to ACCESSION_VERSION
+                    warnings.append(
+                        ProcessingAnnotation.from_fields(
+                            input_fields,
+                            [output_field],
+                            AnnotationSourceType.METADATA,
+                            message=(
+                                "identifier string could not be parsed using provided regex_pattern"
+                            ),
+                        )
+                    )
+
+        if identifier is None:
+            # Use ACCESSION_VERSION instead of IDENTIFIER
+            concatenate_order = replace_identifier(order, "ACCESSION_VERSION")
+            concatenate_field_types = replace_identifier(field_types, "ACCESSION_VERSION")
+        else:
+            # Keep IDENTIFIER but treat it as string
+            concatenate_field_types = replace_identifier(field_types, "string")
+            input_data["IDENTIFIER"] = str(identifier)
+
+        concat_result = ProcessingFunctions.concatenate(
+            input_data,
+            output_field,
+            input_fields,
+            {
+                "order": concatenate_order,
+                "type": concatenate_field_types,
+                "fallback_value": args.get("fallback_value", "unknown"),
+                "ACCESSION_VERSION": args["ACCESSION_VERSION"],
+            },
+        )
+
+        return ProcessingResult(
+            datum=concat_result.datum,
+            warnings=warnings + concat_result.warnings,
+            errors=concat_result.errors,
+        )
 
 
 def single_metadata_annotation(

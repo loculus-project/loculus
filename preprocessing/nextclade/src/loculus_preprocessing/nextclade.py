@@ -787,6 +787,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914
             **entry.data.metadata,
             "submitter": entry.data.submitter,
             "submittedAt": entry.data.submittedAt,
+            "submissionId": entry.data.submissionId,
             "group_id": entry.data.group_id,
         }
         for entry in unprocessed

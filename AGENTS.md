@@ -3,7 +3,7 @@ The `backend`, `website`, and `integration-tests` directories each contain their
 Use conventional commits as titles for PRs, e.g. feat(deployment):xx, fix!(website):xx, chore(backend):xx.
 Components include: website, backend, deployment, preprocessing, ingest, deposition.
 
-Write detailed PR summaries, not just short bullet points. When creating PRs, you should generally create them as a draft PR.
+Write detailed PR summaries, not just short bullet points. When creating PRs, you should generally create them as a draft PR. If you have access to https://github.com/loculus-project/agent_store/ you can upload screenshots (which you might take using `playwright-cli` there to be able to use in PR descriptions, and maybe issue descriptions).
 
 ## Preventing flaky Playwright tests (website)
 
@@ -19,3 +19,4 @@ These wrappers automatically disable components until client-side hydration is c
 
 Conda dependencies in `environment.yml` files are not automatically updated by dependabot.
 The `maintenance-scripts/` folder contains utilities to help update conda environment versions.
+
