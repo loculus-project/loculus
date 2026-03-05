@@ -14,6 +14,7 @@ import { LineageField } from './fields/LineageField.tsx';
 import { MultiChoiceAutoCompleteField } from './fields/MultiChoiceAutoCompleteField';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
+import { SingleChoiceAutoCompleteField } from './fields/SingleChoiceAutoCompleteField.tsx';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
@@ -187,7 +188,7 @@ export const SearchForm = ({
             }
 
             const sequenceScope =
-                'relatesToSegment' in field && field.relatesToSegment != null ? field.relatesToSegment : 'main';
+                'relatesToSegment' in field && field.relatesToSegment != null ? field.relatesToSegment : 'ALL';
 
             sequenceFieldsBySegment[sequenceScope] ??= [];
             sequenceFieldsBySegment[sequenceScope].push(field);
@@ -221,7 +222,7 @@ export const SearchForm = ({
 
     const renderSegmentContents = (segmentName: string) => (
         <>
-            {referenceSelection !== undefined && (
+            {referenceSelection !== undefined && segmentName !== 'ALL' && (
                 <ReferenceSelector
                     filterSchema={filterSchema}
                     referenceGenomesInfo={referenceGenomesInfo}
@@ -234,7 +235,7 @@ export const SearchForm = ({
                 />
             )}
 
-            {showMutationSearch && segmentAndGeneInfo[segmentName] && (
+            {showMutationSearch && segmentAndGeneInfo[segmentName] && segmentName !== 'ALL' && (
                 <MutationField
                     singleSegmentAndGeneInfo={segmentAndGeneInfo[segmentName]}
                     value={
@@ -341,15 +342,7 @@ export const SearchForm = ({
 
                         <section className='flex flex-col gap-1.5 mb-4'>
                             <CollapsibleSection title='Sequence Filters' open>
-                                {referenceGenomesInfo.isMultiSegmented && (
-                                    <SegmentFilter
-                                        referenceGenomesInfo={referenceGenomesInfo}
-                                        fieldValues={fieldValues}
-                                        setSomeFieldValues={setSomeFieldValues}
-                                        filterSchema={filterSchema}
-                                    />
-                                )}
-
+                                {'ALL' in sequenceFieldsBySegment && renderSegmentContents('ALL')}
                                 {!referenceGenomesInfo.isMultiSegmented &&
                                     segmentNames.map((segmentName) => (
                                         <div key={segmentName}>{renderSegmentContents(segmentName)}</div>
@@ -425,6 +418,26 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 />
             );
         default:
+            if (field.fieldPresets) {
+                return (
+                    <SingleChoiceAutoCompleteField
+                        field={{
+                            name: field.name,
+                            displayName: field.displayName ?? field.name,
+                            type: 'string',
+                        }}
+                        optionsProvider={{
+                            type: 'generic',
+                            lapisUrl,
+                            lapisSearchParameters,
+                            fieldName: field.name,
+                        }}
+                        setSomeFieldValues={setSomeFieldValues}
+                        fieldValue={(fieldValues[field.name] as string | undefined) ?? ''}
+                        fieldPresets={field.fieldPresets}
+                    />
+                );
+            }
             if (field.lineageSearch) {
                 return (
                     <LineageField
@@ -436,6 +449,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                     />
                 );
             }
+
             if (field.autocomplete === true) {
                 const fieldValuesArray = extractArrayValue(fieldValues[field.name]);
 

@@ -54,7 +54,7 @@ const accessionVersion = 'accession';
 
 const lapisClient = LapisClient.create(testConfig.serverSide.lapisUrls[testOrganism], schema);
 
-const aminoAcidMutationsHeader = 'Amino acid mutations';
+const aminoAcidMutationsHeader = 'Amino acid substitutions'; //TODO: this should be configurable
 const nucleotideMutationsHeader = 'Nucleotide mutations';
 
 describe('getTableData', () => {

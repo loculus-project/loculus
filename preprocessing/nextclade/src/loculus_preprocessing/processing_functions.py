@@ -1134,51 +1134,9 @@ class ProcessingFunctions:
                 ],
             )
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
-
-    @staticmethod
-    def is_above_threshold(
-        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
-    ) -> ProcessingResult:
-        """Flag if input value is above a threshold specified in args"""
-        if "threshold" not in args:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=(
-                            f"Field {output_field} is missing threshold argument."
-                            " Please report this error to the administrator."
-                        ),
-                    )
-                ],
-            )
-        input_datum = input_data["input"]
-        if not input_datum:
-            return ProcessingResult(datum=None, warnings=[], errors=[])
-        try:
-            threshold = float(args["threshold"])  # type: ignore
-            input = float(input_datum)
-        except (ValueError, TypeError):
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=(f"Field {output_field} has non-numeric threshold value."),
-                    )
-                ],
-            )
-        return ProcessingResult(datum=(input > threshold), warnings=[], errors=[])
-
-    @staticmethod
-    def build_display_name(
+    
+        @staticmethod
+    def build_display_name(  # noqa: C901
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -1241,22 +1199,24 @@ class ProcessingFunctions:
             )
 
         regex_pattern = args.get("regex_pattern")
-        if regex_pattern is not None:
-            if "identifier" not in re.compile(str(regex_pattern)).groupindex:
-                return ProcessingResult(
-                    datum=None,
-                    warnings=[],
-                    errors=[
-                        ProcessingAnnotation.from_fields(
-                            input_fields,
-                            [output_field],
-                            AnnotationSourceType.METADATA,
-                            message=(
-                                "Internal Error: if provided, 'regex_pattern' must contain a named capture group called 'identifier'"
-                            ),
-                        )
-                    ],
-                )
+        if (
+            regex_pattern is not None
+            and "identifier" not in re.compile(str(regex_pattern)).groupindex
+        ):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            "Internal Error: if provided, 'regex_pattern' must contain a named capture group called 'identifier'"
+                        ),
+                    )
+                ],
+            )
 
         concatenate_order = order.copy()
         concatenate_field_types = field_types.copy()
@@ -1333,6 +1293,138 @@ class ProcessingFunctions:
             warnings=warnings + concat_result.warnings,
             errors=concat_result.errors,
         )
+
+    @staticmethod
+    def assign_custom_lineage(
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    ) -> ProcessingResult:
+        """Assign flu lineage based on seg4 and seg6"""
+        input_datum = input_data["input"]
+        if not input_datum:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+        if not isinstance(input_datum, dict):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(f"Field {output_field} expected input of type dict."),
+                    )
+                ],
+            )
+        try:
+            subtypes = {}
+            infos: set[str] = set()
+            for segment in input_datum:
+                segment_name = input_datum[segment]
+                if segment not in {"seg4", "seg6"}:
+                    info = ProcessingFunctions.call_function(
+                        "extract_regex",
+                        {
+                            "pattern": r"^(?P<info>[^_\-]+)$",
+                            "uppercase": False,
+                            "capture_group": "info",
+                        },
+                        {"regex_field": segment_name},
+                        "output_field",
+                        ["segment_name"],
+                    )
+                else:
+                    subtype = ProcessingFunctions.call_function(
+                        "extract_regex",
+                        {
+                            "pattern": r"^(?P<subtype>[^_\-]+)_(?P<info>[^_\-]+)$",
+                            "uppercase": True,
+                            "capture_group": "subtype",
+                        },
+                        {"regex_field": segment_name},
+                        "output_field",
+                        ["segment_name"],
+                    )
+                    info = ProcessingFunctions.call_function(
+                        "extract_regex",
+                        {
+                            "pattern": r"^(?P<subtype>[^_\-]+)_(?P<info>[^_\-]+)$",
+                            "uppercase": False,
+                            "capture_group": "info",
+                        },
+                        {"regex_field": segment_name},
+                        "output_field",
+                        ["segment_name"],
+                    )
+                    if subtype.datum:
+                        subtypes[segment] = subtype.datum
+                if info.datum:
+                    infos.add(info.datum)
+            if not subtypes:
+                return ProcessingResult(datum=None, warnings=[], errors=[])
+            lineage = f"{subtypes.get('seg4', 'H*')}{subtypes.get('seg6', 'N*')}"
+            if lineage in {"H1N1", "H3N2", "H2N2"}:
+                if len(infos) > 1:
+                    lineage += " reassortant"
+                elif infos.pop() == "h1n1pdm":
+                    lineage += "pdm"
+            return ProcessingResult(datum=lineage, warnings=[], errors=[])
+        except (ValueError, TypeError):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"Internal error processing custom lineage for field {output_field}."
+                        ),
+                    )
+                ],
+            )
+
+    @staticmethod
+    def is_above_threshold(
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    ) -> ProcessingResult:
+        """Flag if input value is above a threshold specified in args"""
+        if "threshold" not in args:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"Field {output_field} is missing threshold argument."
+                            " Please report this error to the administrator."
+                        ),
+                    )
+                ],
+            )
+        input_datum = input_data["input"]
+        if not input_datum:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+        try:
+            threshold = float(args["threshold"])  # type: ignore
+            input = float(input_datum)
+        except (ValueError, TypeError):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(f"Field {output_field} has non-numeric threshold value."),
+                    )
+                ],
+            )
+        return ProcessingResult(datum=(input > threshold), warnings=[], errors=[])
 
 
 def single_metadata_annotation(
