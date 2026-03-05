@@ -1,0 +1,9 @@
+name: loculus-ncbi-taxonomy
+channels:
+  - conda-forge
+dependencies:
+  - networkx=3.6.1
+  - numpy=2.4.2
+  - pandas=3.0.1
+  - pytest=9.0.2
+  - python=3.14.3
