@@ -1134,8 +1134,8 @@ class ProcessingFunctions:
                 ],
             )
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
-    
-        @staticmethod
+
+    @staticmethod
     def build_display_name(  # noqa: C901
         input_data: InputMetadata,
         output_field: str,
