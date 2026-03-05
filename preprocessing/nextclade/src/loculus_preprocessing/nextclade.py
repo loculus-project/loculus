@@ -26,6 +26,7 @@ from .datatypes import (
     FastaId,
     GeneName,
     GenericSequence,
+    InternalMetadata,
     NucleotideInsertion,
     NucleotideSequence,
     ProcessingAnnotation,
@@ -35,7 +36,7 @@ from .datatypes import (
     SequenceAssignment,
     SequenceAssignmentBatch,
     UnprocessedAfterNextclade,
-    UnprocessedEntry,
+    UnprocessedData,
 )
 
 # https://stackoverflow.com/questions/15063936
@@ -346,7 +347,7 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
 
 
 def write_nextclade_input_fasta(
-    unprocessed: Sequence[UnprocessedEntry], input_file: str
+    unprocessed: Sequence[UnprocessedData], input_file: str
 ) -> defaultdict[tuple[AccessionVersion, FastaId], str]:
     """
     Write unprocessed sequences to a fasta file for nextclade input
@@ -355,8 +356,8 @@ def write_nextclade_input_fasta(
     os.makedirs(os.path.dirname(input_file), exist_ok=True)
     with open(input_file, "w", encoding="utf-8") as f:
         for entry in unprocessed:
-            accession_version = entry.accessionVersion
-            for fasta_id, seq in entry.data.unalignedNucleotideSequences.items():
+            accession_version = entry.internal_metadata.accession_version
+            for fasta_id, seq in entry.unalignedNucleotideSequences.items():
                 id = f"{accession_version}__{fasta_id}"
                 id_map[accession_version, fasta_id] = id
                 f.write(f">{id}\n")
@@ -377,7 +378,7 @@ def is_valid_dataset_match(method, best_dataset_id, dataset):
 
 
 def assign_segment(  # noqa: C901
-    entry: UnprocessedEntry,
+    entry: UnprocessedData,
     id_map: dict[tuple[AccessionVersion, FastaId], str],
     best_hits: pd.DataFrame,
     config: Config,
@@ -398,8 +399,8 @@ def assign_segment(  # noqa: C901
     has_unaligned_sequence = False
     has_duplicate_segments = False
 
-    for fasta_id in entry.data.unalignedNucleotideSequences:
-        seq_id = id_map[entry.accessionVersion, fasta_id]
+    for fasta_id in entry.unalignedNucleotideSequences:
+        seq_id = id_map[entry.internal_metadata.accession_version, fasta_id]
         if seq_id not in best_hits[SequenceIdentifier].unique():
             has_unaligned_sequence = True
             method = config.segment_classification_method.display_name
@@ -454,7 +455,7 @@ def assign_segment(  # noqa: C901
 
         sequence_assignment.sequenceNameToFastaId[ids[0].name] = ids[0].fasta_id
         sequence_assignment.unalignedNucleotideSequences[ids[0].name] = (
-            entry.data.unalignedNucleotideSequences[ids[0].fasta_id]
+            entry.unalignedNucleotideSequences[ids[0].fasta_id]
         )
 
     if (
@@ -473,7 +474,7 @@ def assign_segment(  # noqa: C901
 
 
 def assign_segment_with_nextclade_align(
-    unprocessed: Sequence[UnprocessedEntry], config: Config, dataset_dir: str
+    unprocessed: Sequence[UnprocessedData], config: Config, dataset_dir: str
 ) -> SequenceAssignmentBatch:
     """
     Run nextclade align
@@ -523,7 +524,7 @@ def assign_segment_with_nextclade_align(
             best_hits,
             config,
         )
-        accession_version = entry.accessionVersion
+        accession_version = entry.internal_metadata.accession_version
         batch.sequenceNameToFastaId[accession_version] = sequence_assignment.sequenceNameToFastaId
         batch.unalignedNucleotideSequences[accession_version] = (
             sequence_assignment.unalignedNucleotideSequences
@@ -534,7 +535,7 @@ def assign_segment_with_nextclade_align(
 
 
 def assign_segment_with_nextclade_sort(
-    unprocessed: Sequence[UnprocessedEntry], config: Config, dataset_dir: str
+    unprocessed: Sequence[UnprocessedData], config: Config, dataset_dir: str
 ) -> SequenceAssignmentBatch:
     """
     Run nextclade sort
@@ -566,7 +567,7 @@ def assign_segment_with_nextclade_sort(
             best_hits,
             config,
         )
-        accession_version = entry.accessionVersion
+        accession_version = entry.internal_metadata.accession_version
         batch.sequenceNameToFastaId[accession_version] = sequence_assignment.sequenceNameToFastaId
         batch.unalignedNucleotideSequences[accession_version] = (
             sequence_assignment.unalignedNucleotideSequences
@@ -576,7 +577,7 @@ def assign_segment_with_nextclade_sort(
 
 
 def assign_segment_with_diamond(
-    unprocessed: Sequence[UnprocessedEntry], config: Config, dataset_dir: str
+    unprocessed: Sequence[UnprocessedData], config: Config, dataset_dir: str
 ) -> SequenceAssignmentBatch:
     """
     Run diamond
@@ -608,7 +609,7 @@ def assign_segment_with_diamond(
             best_hits,
             config,
         )
-        accession_version = entry.accessionVersion
+        accession_version = entry.internal_metadata.accession_version
         batch.sequenceNameToFastaId[accession_version] = sequence_assignment.sequenceNameToFastaId
         batch.unalignedNucleotideSequences[accession_version] = (
             sequence_assignment.unalignedNucleotideSequences
@@ -642,13 +643,13 @@ def assign_single_segment(
 
 
 def assign_all_single_segments(
-    unprocessed: Sequence[UnprocessedEntry], config: Config
+    unprocessed: Sequence[UnprocessedData], config: Config
 ) -> SequenceAssignmentBatch:
     batch = SequenceAssignmentBatch()
     for entry in unprocessed:
-        accession_version = entry.accessionVersion
+        accession_version = entry.internal_metadata.accession_version
         sequence_assignment = assign_single_segment(
-            entry.data.unalignedNucleotideSequences,
+            entry.unalignedNucleotideSequences,
             config=config,
         )
         batch.sequenceNameToFastaId[accession_version] = sequence_assignment.sequenceNameToFastaId
@@ -766,13 +767,14 @@ def load_aligned_aa_sequences(
 
 
 def enrich_with_nextclade(  # noqa: C901, PLR0914
-    unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
+    unprocessed: Sequence[UnprocessedData], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
     """
     For each unprocessed segment of each unprocessed sequence use nextclade run to perform alignment
     and QC. The result is a mapping from each AccessionVersion to an
     `UnprocessedAfterNextclade(
             inputMetadata: InputMetadata
+            internal_metadata: InternalMetadata
             nextcladeMetadata: dict[SegmentName, Any] | None
             unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
             alignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
@@ -783,13 +785,10 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914
     )` object.
     """
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {
-        entry.accessionVersion: {
-            **entry.data.metadata,
-            "submitter": entry.data.submitter,
-            "submittedAt": entry.data.submittedAt,
-            "group_id": entry.data.group_id,
-        }
-        for entry in unprocessed
+        entry.internal_metadata.accession_version: entry.metadata for entry in unprocessed
+    }
+    internal_metadata: dict[AccessionVersion, InternalMetadata] = {
+        entry.internal_metadata.accession_version: entry.internal_metadata for entry in unprocessed
     }
 
     if not config.multi_datasets:
@@ -897,6 +896,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914
     return {
         id: UnprocessedAfterNextclade(
             inputMetadata=input_metadata[id],
+            internal_metadata=internal_metadata[id],
             nextcladeMetadata=nextclade_metadata[id],
             unalignedNucleotideSequences=unaligned_nucleotide_sequences[id],
             alignedNucleotideSequences=aligned_nucleotide_sequences[id],

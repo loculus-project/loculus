@@ -26,6 +26,7 @@ from .datatypes import (
     GeneName,
     InputData,
     InputMetadata,
+    InternalMetadata,
     NucleotideInsertion,
     NucleotideSequence,
     ProcessedData,
@@ -34,13 +35,13 @@ from .datatypes import (
     ProcessedMetadataValue,
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
+    ProcessingFunctionCallArgs,
     ProcessingResult,
     SegmentClassificationMethod,
     SegmentName,
     SubmissionData,
     UnprocessedAfterNextclade,
     UnprocessedData,
-    UnprocessedEntry,
 )
 from .embl import create_flatfile
 from .nextclade import (
@@ -128,7 +129,7 @@ def truncate_after_wildcard(path: str, separator: str = ".") -> str:
     return path
 
 
-def add_nextclade_metadata(
+def add_nextclade_metadata(  # noqa: PLR0911
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     nextclade_path: str,
@@ -230,27 +231,26 @@ def add_input_metadata(
 
 
 def _call_processing_function(  # noqa: PLR0913, PLR0917
-    accession_version: AccessionVersion,
     spec: ProcessingSpec,
     output_field: str,
-    group_id: int | None,
-    submitted_at: str | None,
     input_data: InputMetadata,
+    internal_metadata: InternalMetadata,
     input_fields: list[str],
     config: Config,
 ) -> ProcessingResult:
     args = dict(spec.args) if spec.args else {}
-    args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
-    args["submittedAt"] = submitted_at
-    args["ACCESSION_VERSION"] = accession_version
+    args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == internal_metadata.group_id
 
     try:
         processing_result = ProcessingFunctions.call_function(
-            spec.function,
-            args,
-            input_data,
-            output_field,
-            input_fields,
+            function_name=spec.function,
+            call_args=ProcessingFunctionCallArgs(
+                args=args,
+                output_field=output_field,
+                input_fields=input_fields,
+                input_data=input_data,
+                internal_metadata=internal_metadata,
+            ),
         )
     except Exception as e:
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
@@ -259,8 +259,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     return processing_result
 
 
-def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
-    accession_version: AccessionVersion,
+def processed_entry_no_alignment(
     unprocessed: UnprocessedData,
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
@@ -268,7 +267,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     sequenceNameToFastaId: dict[SequenceName, str],  # noqa: N803
 ) -> SubmissionData:
     """Process a single sequence without alignment"""
-
+    accession_version = unprocessed.internal_metadata.accession_version
     aligned_nucleotide_sequences: dict[SequenceName, NucleotideSequence | None] = {}
     aligned_aminoacid_sequences: dict[GeneName, AminoAcidSequence | None] = {}
     nucleotide_insertions: dict[SequenceName, list[NucleotideInsertion]] = {}
@@ -290,7 +289,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
             errors=errors,
             warnings=warnings,
         ),
-        submitter=unprocessed.submitter,
+        internal_metadata=unprocessed.internal_metadata,
     )
 
 
@@ -305,7 +304,6 @@ def get_sequence_length(
 
 
 def get_output_metadata(
-    accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
     config: Config,
 ) -> tuple[ProcessedMetadata, list[ProcessingAnnotation], list[ProcessingAnnotation]]:
@@ -354,27 +352,17 @@ def get_output_metadata(
                 errors.extend(input_metadata.errors)
                 warnings.extend(input_metadata.warnings)
                 input_fields.append(input_path)
-                group_id = (
-                    int(unprocessed.inputMetadata["group_id"])
-                    if unprocessed.inputMetadata["group_id"]
-                    else None
-                )
-                submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
                 input_data[arg_name] = unprocessed.metadata.get(input_path)
                 input_fields.append(input_path)
-                group_id = unprocessed.group_id
-                submitted_at = unprocessed.submittedAt
 
         processing_result = _call_processing_function(
-            accession_version=accession_version,
             spec=spec,
             output_field=output_field,
-            group_id=group_id,
-            submitted_at=submitted_at,
             input_data=input_data,
             input_fields=input_fields,
             config=config,
+            internal_metadata=unprocessed.internal_metadata,
         )
 
         output_metadata[output_field] = processing_result.datum
@@ -383,7 +371,7 @@ def get_output_metadata(
         if (
             null_per_backend(processing_result.datum)
             and spec.required
-            and group_id != config.insdc_ingest_group_id
+            and unprocessed.internal_metadata.group_id != config.insdc_ingest_group_id
         ):
             errors.append(
                 ProcessingAnnotation.from_fields(
@@ -393,7 +381,7 @@ def get_output_metadata(
                     message=f"Metadata field {output_field} is required.",
                 )
             )
-    logger.debug(f"Processed {accession_version}: {output_metadata}")
+    logger.debug(f"Processed {unprocessed.internal_metadata.accession_version}: {output_metadata}")
     return output_metadata, errors, warnings
 
 
@@ -482,9 +470,7 @@ def process_single(
         config,
     )
 
-    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
-        accession_version, unprocessed, config
-    )
+    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(unprocessed, config)
 
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
@@ -505,13 +491,11 @@ def process_single(
     return SubmissionData(
         processed_entry=processed_entry,
         annotations=unpack_annotations(config, unprocessed.nextcladeMetadata),
-        group_id=int(str(unprocessed.inputMetadata["group_id"])),
-        submitter=str(unprocessed.inputMetadata["submitter"]),
+        internal_metadata=unprocessed.internal_metadata,
     )
 
 
 def process_single_unaligned(
-    accession_version: AccessionVersion,
     unprocessed: UnprocessedData,
     config: Config,
 ) -> SubmissionData:
@@ -523,12 +507,9 @@ def process_single_unaligned(
     unprocessed.unalignedNucleotideSequences = segment_assignment.unalignedNucleotideSequences
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
-    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
-        accession_version, unprocessed, config
-    )
+    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(unprocessed, config)
 
     return processed_entry_no_alignment(
-        accession_version=accession_version,
         unprocessed=unprocessed,
         output_metadata=output_metadata,
         errors=list(set(iupac_errors + metadata_errors + segment_assignment.alert.errors)),
@@ -537,7 +518,8 @@ def process_single_unaligned(
     )
 
 
-def processed_entry_with_errors(id) -> SubmissionData:
+def processed_entry_with_errors(internal_metadata: InternalMetadata) -> SubmissionData:
+    id = internal_metadata.accession_version
     return SubmissionData(
         processed_entry=ProcessedEntry(
             accession=accession_from_str(id),
@@ -563,12 +545,12 @@ def processed_entry_with_errors(id) -> SubmissionData:
             ],
             warnings=[],
         ),
-        submitter=None,
+        internal_metadata=internal_metadata,
     )
 
 
 def process_all(
-    unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
+    unprocessed: Sequence[UnprocessedData], dataset_dir: str, config: Config
 ) -> Sequence[SubmissionData]:
     processed_results = []
     logger.debug(f"Processing {len(unprocessed)} unprocessed sequences")
@@ -579,17 +561,17 @@ def process_all(
                 processed_single = process_single(id, result, config)
             except Exception as e:
                 logger.error(f"Processing failed for {id} with error: {e}")
-                processed_single = processed_entry_with_errors(id)
+                processed_single = processed_entry_with_errors(result.internal_metadata)
             processed_results.append(processed_single)
     else:
         for entry in unprocessed:
             try:
-                processed_single = process_single_unaligned(
-                    entry.accessionVersion, entry.data, config
-                )
+                processed_single = process_single_unaligned(entry, config)
             except Exception as e:
-                logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
-                processed_single = processed_entry_with_errors(entry.accessionVersion)
+                logger.error(
+                    f"Processing failed for {entry.internal_metadata.accession_version} with error: {e}"
+                )
+                processed_single = processed_entry_with_errors(entry.internal_metadata)
             processed_results.append(processed_single)
 
     return processed_results
@@ -600,12 +582,9 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
         accession = submission_data.processed_entry.accession
         version = submission_data.processed_entry.version
         try:
-            if submission_data.group_id is None:
-                msg = "Group ID is required for EMBL file upload"
-                raise ValueError(msg)
             file_content = create_flatfile(config, submission_data)
             file_name = f"{accession}.{version}.embl"
-            upload_info = request_upload(submission_data.group_id, 1, config)[0]
+            upload_info = request_upload(submission_data.internal_metadata.group_id, 1, config)[0]
             file_id = upload_info.fileId
             url = upload_info.url
             upload_embl_file_to_presigned_url(file_content, url)

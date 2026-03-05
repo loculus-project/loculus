@@ -14,7 +14,7 @@ from factory_methods import (
     ProcessingAnnotationHelper,
     ProcessingTestCase,
     build_processing_annotations,
-    ts_from_ymd,
+    get_dummy_internal_metadata,
     verify_processed_entry,
 )
 
@@ -24,7 +24,6 @@ from loculus_preprocessing.datatypes import (
     SegmentClassificationMethod,
     SubmissionData,
     UnprocessedData,
-    UnprocessedEntry,
 )
 from loculus_preprocessing.embl import create_flatfile, reformat_authors_from_loculus_to_embl_style
 from loculus_preprocessing.prepro import process_all
@@ -1193,18 +1192,13 @@ def test_preprocessing_multi_segment_none_requirement(test_case_def: Case):
 
 def test_preprocessing_without_metadata() -> None:
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-        ),
+    sequence_entry_data = UnprocessedData(
+        internal_metadata=get_dummy_internal_metadata(),
+        metadata={},
+        unalignedNucleotideSequences={
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+        },
     )
 
     config.processing_spec = {}
@@ -1309,21 +1303,16 @@ def test_create_flatfile():
     embl_fields = get_config(EMBL_METADATA, ignore_args=True).processing_spec
     config.processing_spec.update(embl_fields)
     config.create_embl_file = True
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            submitter="test_submitter",
-            group_id=2,
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={
-                "sampleCollectionDate": "2024-01-01",
-                "geoLocCountry": "Netherlands",
-                "geoLocAdmin1": "North Holland",
-                "geoLocCity": "Amsterdam",
-                "authors": "Smith, Doe A;",
-            },
-            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
-        ),
+    sequence_entry_data = UnprocessedData(
+        internal_metadata=get_dummy_internal_metadata(),
+        metadata={
+            "sampleCollectionDate": "2024-01-01",
+            "geoLocCountry": "Netherlands",
+            "geoLocAdmin1": "North Holland",
+            "geoLocCity": "Amsterdam",
+            "authors": "Smith, Doe A;",
+        },
+        unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
     )
 
     result = process_all([sequence_entry_data], EBOLA_SUDAN_DATASET, config)

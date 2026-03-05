@@ -6,7 +6,7 @@ from factory_methods import (
     ProcessingAnnotationHelper,
     ProcessingTestCase,
     build_processing_annotations,
-    ts_from_ymd,
+    get_dummy_internal_metadata,
     verify_processed_entry,
 )
 
@@ -15,8 +15,8 @@ from loculus_preprocessing.datatypes import (
     FunctionArgs,
     InputMetadata,
     ProcessedEntry,
+    ProcessingFunctionCallArgs,
     UnprocessedData,
-    UnprocessedEntry,
 )
 from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
@@ -705,18 +705,13 @@ def test_preprocessing(test_case_def: Case, config: Config, factory_custom: Proc
 
 def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     sequence_name = "entry without sequences"
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            submitter="test_submitter",
-            group_id=2,
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={
-                "ncbi_required_collection_date": "2024-01-01",
-                "name_required": sequence_name,
-            },
-            unalignedNucleotideSequences={},
-        ),
+    sequence_entry_data = UnprocessedData(
+        internal_metadata=get_dummy_internal_metadata(),
+        metadata={
+            "ncbi_required_collection_date": "2024-01-01",
+            "name_required": sequence_name,
+        },
+        unalignedNucleotideSequences={},
     )
 
     result = process_all([sequence_entry_data], "temp_dataset_dir", config)
@@ -754,148 +749,82 @@ def test_format_authors() -> None:
             raise AssertionError(msg)
 
 
+def generate_call_args(input_data: InputMetadata, field_type: str) -> ProcessingFunctionCallArgs:
+    return ProcessingFunctionCallArgs(
+        input_data=input_data,
+        output_field="field_name",
+        input_fields=["field_name"],
+        args={
+            "fieldType": field_type,
+        },
+        internal_metadata=get_dummy_internal_metadata(),
+    )
+
+
 def test_parse_date_into_range() -> None:
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2021, 12, 15),
-            },
+            generate_call_args({"date": "2021-12"}, "dateRangeString")
         ).datum
         == "2021-12"
     ), "dateRangeString: 2021-12 should be returned as is."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeLower",
-                "submittedAt": ts_from_ymd(2021, 12, 15),
-            },
+            generate_call_args({"date": "2021-12"}, "dateRangeLower")
         ).datum
         == "2021-12-01"
     ), "dateRangeLower: 2021-12 should be returned as 2021-12-01."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2022, 12, 15),
-            },
+            generate_call_args({"date": "2020-12"}, "dateRangeUpper")
         ).datum
-        == "2021-12-31"
-    ), "dateRangeUpper: 2021-12 should be returned as 2021-12-31."
+        == "2020-12-31"
+    ), "dateRangeUpper: 2020-12 should be returned as 2020-12-31."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2021, 12, 15),
-            },
+            generate_call_args({"date": "2021-12"}, "dateRangeUpper")
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: 2021-12 should be returned as submittedAt time: 2021-12-15."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-02"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2021, 3, 15),
-            },
+            generate_call_args({"date": "2021-02"}, "dateRangeUpper")
         ).datum
         == "2021-02-28"
     ), "dateRangeUpper: 2021-02 should be returned as 2021-02-28."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2021, 12, 15),
-            },
+            generate_call_args({"date": "2021"}, "dateRangeUpper")
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: 2021 should be returned as 2021-12-15."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2022, 1, 15),
-            },
+            generate_call_args({"date": "2021-12", "releaseDate": "2021-12-14"}, "dateRangeUpper")
         ).datum
-        == "2021-12-31"
-    ), "dateRangeUpper: 2021 should be returned as 2021-12-31."
+        == "2021-12-14"
+    ), "dateRangeUpper: 2021-12 with releaseDate 2021-12-14 should be returned as 2021-12-14."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12", "releaseDate": "2021-12-15"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2021, 12, 16),
-            },
+            generate_call_args({"date": "", "releaseDate": "2021-12-14"}, "dateRangeUpper")
         ).datum
-        == "2021-12-15"
-    ), "dateRangeUpper: 2021-12 with releaseDate 2021-12-15 should be returned as 2021-12-15."
+        == "2021-12-14"
+    ), "dateRangeUpper: empty date with releaseDate 2021-12-14 should be returned as 2021-12-15."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "", "releaseDate": "2021-12-15"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2021, 12, 16),
-            },
-        ).datum
-        == "2021-12-15"
-    ), "dateRangeUpper: empty date with releaseDate 2021-12-15 should be returned as 2021-12-15."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": ""},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2021, 12, 16),
-            },
+            generate_call_args({"date": ""}, "dateRangeString")
         ).datum
         is None
     ), "dateRangeString: empty date should be returned as None."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "not.date"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2021, 12, 16),
-            },
+            generate_call_args({"date": "not.date"}, "dateRangeString")
         ).datum
         is None
     ), "dateRangeString: invalid date should be returned as None."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "", "releaseDate": "2021-12-15"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeLower",
-                "submittedAt": ts_from_ymd(2021, 12, 16),
-            },
+            generate_call_args({"date": "", "releaseDate": "2021-12-15"}, "dateRangeLower")
         ).datum
         is None
     ), "dateRangeLower: empty date should be returned as None."
@@ -910,60 +839,75 @@ def test_concatenate() -> None:
     output_field: str = "displayName"
     input_fields: list[str] = ["geoLocCountry", "sampleCollectionDate"]
     args: FunctionArgs = {
-        "ACCESSION_VERSION": "version.1",
+        "ACCESSION_VERSION": "LOC_01.1",
         "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
         "type": ["integer", "string", "ACCESSION_VERSION", "date"],
     }
     args_no_accession_version: FunctionArgs = {
-        "ACCESSION_VERSION": "version.1",
+        "ACCESSION_VERSION": "LOC_01.1",
         "order": ["someInt", "geoLocCountry", "sampleCollectionDate"],
         "type": ["integer", "string", "date"],
         "fallback_value": "unknown",
     }
 
     res_no_fallback_no_int = ProcessingFunctions.concatenate(
-        input_data,
-        output_field,
-        input_fields,
-        args,
+        ProcessingFunctionCallArgs(
+            args,
+            output_field,
+            input_fields,
+            input_data,
+            get_dummy_internal_metadata(),
+        )
     )
 
     input_data["someInt"] = "0"
     res_no_fallback = ProcessingFunctions.concatenate(
-        input_data,
-        output_field,
-        input_fields,
-        args,
+        ProcessingFunctionCallArgs(
+            args,
+            output_field,
+            input_fields,
+            input_data,
+            get_dummy_internal_metadata(),
+        )
     )
 
     args["fallback_value"] = "unknown"
     res_fallback = ProcessingFunctions.concatenate(
-        input_data,
-        output_field,
-        input_fields,
-        args,
+        ProcessingFunctionCallArgs(
+            args,
+            output_field,
+            input_fields,
+            input_data,
+            get_dummy_internal_metadata(),
+        )
     )
 
     res_fallback_no_accession_version = ProcessingFunctions.concatenate(
-        input_data,
-        output_field,
-        input_fields,
-        args_no_accession_version,
+        ProcessingFunctionCallArgs(
+            args_no_accession_version,
+            output_field,
+            input_fields,
+            input_data,
+            get_dummy_internal_metadata(),
+        )
     )
 
     input_data["sampleCollectionDate"] = None
     res_fallback_explicit_null = ProcessingFunctions.concatenate(
-        input_data,
-        output_field,
-        input_fields,
-        args,
+        ProcessingFunctionCallArgs(
+            args,
+            output_field,
+            input_fields,
+            input_data,
+            get_dummy_internal_metadata(),
+        )
     )
 
-    assert res_no_fallback_no_int.datum == "version.1/2025-01-01"
-    assert res_no_fallback.datum == "0//version.1/2025-01-01"
-    assert res_fallback.datum == "0/unknown/version.1/2025-01-01"
+    assert res_no_fallback_no_int.datum == "LOC_01.1/2025-01-01"
+    assert res_no_fallback.datum == "0//LOC_01.1/2025-01-01"
+    assert res_fallback.datum == "0/unknown/LOC_01.1/2025-01-01"
     assert res_fallback_no_accession_version.datum == "0/unknown/2025-01-01"
-    assert res_fallback_explicit_null.datum == "0/unknown/version.1/unknown"
+    assert res_fallback_explicit_null.datum == "0/unknown/LOC_01.1/unknown"
 
 
 if __name__ == "__main__":

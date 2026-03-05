@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from enum import StrEnum, unique
 from typing import Any, Final
 
+from pydantic import BaseModel
+
 AccessionVersion = str
 GeneName = str
 SegmentName = str
@@ -74,19 +76,36 @@ class ProcessingAnnotation:
         return cls.from_fields([name], [name], type, message)
 
 
+class BackendEntryData(BaseModel):
+    metadata: InputMetadata
+    unalignedNucleotideSequences: dict[str, str | None]  # noqa: N815
+    files: dict[str, list[dict[str, str]]] | None = None  # filename to list of {fileId, name}
+
+
+class BackendEntry(BaseModel):
+    accession: str
+    version: int
+    submitter: str
+    groupId: int  # noqa: N815
+    submittedAt: int  # noqa: N815  # Unix timestamp
+    submissionId: str  # noqa: N815
+    data: BackendEntryData
+
+
 @dataclass
-class UnprocessedData:
+class InternalMetadata:
+    accession_version: AccessionVersion  # {accession}.{version}
     submitter: str
     group_id: int
-    submittedAt: str  # timestamp  # noqa: N815
-    metadata: InputMetadata
-    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
+    submitted_at: int  # timestamp
+    submission_id: str
 
 
 @dataclass
-class UnprocessedEntry:
-    accessionVersion: AccessionVersion  # {accession}.{version}  # noqa: N815
-    data: UnprocessedData
+class UnprocessedData:
+    metadata: InputMetadata
+    internal_metadata: InternalMetadata
+    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
 
 
 FunctionInputs = dict[ArgName, InputField]
@@ -94,8 +113,18 @@ FunctionArgs = dict[ArgName, ArgValue]
 
 
 @dataclass
+class ProcessingFunctionCallArgs:
+    args: FunctionArgs
+    output_field: str
+    input_fields: list[str]
+    input_data: InputMetadata
+    internal_metadata: InternalMetadata
+
+
+@dataclass
 class UnprocessedAfterNextclade:
     inputMetadata: InputMetadata  # noqa: N815
+    internal_metadata: InternalMetadata
     # Derived metadata produced by Nextclade
     nextcladeMetadata: dict[SequenceName, Any] | None  # noqa: N815
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
@@ -156,8 +185,7 @@ class SubmissionData:
     but the annotations need to be uploaded separately."""
 
     processed_entry: ProcessedEntry
-    submitter: str | None
-    group_id: int | None = None
+    internal_metadata: InternalMetadata
     annotations: dict[str, Any] | None = None
 
 
