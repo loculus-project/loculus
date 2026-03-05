@@ -1262,7 +1262,9 @@ class ProcessingFunctions:
             return [replacement if v == "IDENTIFIER" else v for v in values]
 
         identifier: ProcessedMetadataValue = collector_id or submission_id
-        if args["is_insdc_ingest_group"]:
+        if not isinstance(identifier, str):
+            identifier = None
+        elif args["is_insdc_ingest_group"]:
             # For INSDC ingested sequence: use ID as is unless it contains ' ' or '/'
             # If it does: fall back to ACCESSION_VERSION
             if " " in identifier or "/" in identifier:
