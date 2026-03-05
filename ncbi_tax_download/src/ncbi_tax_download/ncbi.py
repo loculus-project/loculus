@@ -49,6 +49,9 @@ def extract_names_df(archive: io.BytesIO) -> pd.DataFrame:
                                     (taxa can have multiple common names)
     - scientific_name (str):    the scientific name for this taxon
     """
+    # tax_id is the taxon id for this entry
+    # name_txt is the name for this entry, for example 'Culex', 'Aedes aegypti', 'House mouse', etc.
+    # name_class is the type of entry, for example 'scientific name'
     df = (
         extract_ncbi_taxonomy_file(archive, "names.dmp")
         .rename(columns={0: "tax_id", 1: "name_txt", 3: "name_class"})
