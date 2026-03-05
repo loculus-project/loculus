@@ -101,7 +101,7 @@ export const SingleChoiceAutoCompleteField = ({
 
         const preset = fieldPresets?.[value ?? ''];
         if (preset) {
-            const entries = Object.entries(preset) as Array<[string, unknown]>;
+            const entries = Object.entries(preset) as [key: string, value: string][];
             updates.push(...entries.map(([k, v]) => [k, v] as FieldValueUpdate));
             lastPresetKeysRef.current = entries.map(([k]) => k);
         } else {

@@ -3,11 +3,7 @@ import sanitizeHtml from 'sanitize-html';
 
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
 import { LinkWithMenuComponent } from './LinkWithMenuComponent';
-import {
-    MutationStringContainers,
-    SubstitutionsContainer,
-    SubstitutionsContainers,
-} from './MutationBadge';
+import { MutationStringContainers, SubstitutionsContainer, SubstitutionsContainers } from './MutationBadge';
 import { PlainValueDisplay } from './PlainValueDisplay.tsx';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
