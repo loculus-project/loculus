@@ -1,35 +1,45 @@
+import shutil
 from io import BytesIO
 from pathlib import Path
 
 import pytest
-
 from ncbi_tax_download.ncbi import (
     create_taxonomy_df,
     extract_names_df,
     extract_nodes_df,
 )
 
-TEST_ZIP = Path(__file__).parent / "taxdmp.zip"
+CORRECT_DATA = Path(__file__).parent / "correct"
+# has tax_ids that exist in names.dmp but not in nodes.dmp, which should cause create_taxonomy_df to error
+INCORRECT_DATA = Path(__file__).parent / "incorrect"
 
 
 @pytest.fixture
-def archive():
-    with open(TEST_ZIP, "rb") as f:
+def archive_correct():
+    shutil.make_archive("correct", "zip", CORRECT_DATA)
+    with open("correct.zip", "rb") as f:
         return BytesIO(f.read())
 
 
-def test_names_df_creation(archive: BytesIO):
-    df_names = extract_names_df(archive)
+@pytest.fixture
+def archive_incorrect():
+    shutil.make_archive("incorrect", "zip", INCORRECT_DATA)
+    with open("incorrect.zip", "rb") as f:
+        return BytesIO(f.read())
 
-    expected_shape = (14, 3)
+
+def test_names_df_creation(archive_correct: BytesIO):
+    df_names = extract_names_df(archive_correct)
+
+    expected_shape = (7, 3)
     expected_columns = ["tax_id", "common_name", "scientific_name"]
 
     assert df_names.shape == expected_shape
     assert list(df_names.columns) == expected_columns
 
 
-def test_nodes_df_creation(archive: BytesIO):
-    df_nodes = extract_nodes_df(archive)
+def test_nodes_df_creation(archive_correct: BytesIO):
+    df_nodes = extract_nodes_df(archive_correct)
 
     expected_shape = (8, 2)
     expected_columns = ["tax_id", "parent_id"]
@@ -38,7 +48,7 @@ def test_nodes_df_creation(archive: BytesIO):
     assert list(df_nodes.columns) == expected_columns
 
 
-def test_taxonomy_df_creation(archive: BytesIO):
+def test_taxonomy_df_creation(archive_correct: BytesIO, archive_incorrect: BytesIO):
     r""" Tree should have shape
                 1
               /   \ 
@@ -48,7 +58,10 @@ def test_taxonomy_df_creation(archive: BytesIO):
       /
     7
     """
-    df_taxonomy = create_taxonomy_df(archive)
+    with pytest.raises(ValueError):
+        df_taxonomy = create_taxonomy_df(archive_incorrect)
+
+    df_taxonomy = create_taxonomy_df(archive_correct)
 
     expected_shape = (7, 5)
     expected_columns = ["tax_id", "common_name", "scientific_name", "parent_id", "depth"]

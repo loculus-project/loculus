@@ -1,12 +1,12 @@
 import argparse
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from .ncbi import (
     create_taxonomy_df,
-    write_to_sqlite,
     download_ncbi_archive,
+    write_to_sqlite,
 )
 
 logger = logging.getLogger(__name__)

@@ -6,7 +6,6 @@ import zipfile
 from pathlib import Path
 
 import networkx as nx
-import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -124,7 +123,7 @@ def create_taxonomy_df(archive: io.BytesIO) -> pd.DataFrame:
 
     df_taxonomy = df_names.merge(df_nodes, on="tax_id", how="inner")
     if df_taxonomy.shape[0] < df_names.shape[0]:
-        logger.warning("One or more taxa had no parent in the taxonomy and were dropped")
+        raise ValueError("One or more taxa had no parent")
 
     return df_taxonomy
 
