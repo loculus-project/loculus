@@ -1,4 +1,4 @@
-import { type InputHTMLAttributes, useEffect, useMemo, useState, forwardRef } from 'react';
+import { type InputHTMLAttributes, useEffect, useMemo, useState, forwardRef, useRef } from 'react';
 
 import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteOptions.ts';
 import { TextField } from './TextField.tsx';
@@ -89,21 +89,36 @@ export const SingleChoiceAutoCompleteField = ({
         return displayedOptions.slice(0, maxDisplayedOptions);
     }, [options, query, maxDisplayedOptions, fieldDisplayNameMap]);
 
+    const lastPresetKeysRef = useRef<string[]>([]);
+
     const handleChange = (value: string | null) => {
         const finalValue = value === NULL_QUERY_VALUE ? null : (value ?? '');
         const updates: FieldValueUpdate[] = [[field.name, finalValue]];
 
+        for (const key of lastPresetKeysRef.current) {
+            updates.push([key, '']);
+        }
+
         const preset = fieldPresets?.[value ?? ''];
         if (preset) {
-            updates.push(...Object.entries(preset).map(([k, v]) => [k, v] as FieldValueUpdate));
+            const entries = Object.entries(preset) as Array<[string, unknown]>;
+            updates.push(...entries.map(([k, v]) => [k, v] as FieldValueUpdate));
+            lastPresetKeysRef.current = entries.map(([k]) => k);
+        } else {
+            lastPresetKeysRef.current = [];
         }
 
         setSomeFieldValues(...updates);
     };
 
     const handleClear = () => {
+        const updates: FieldValueUpdate[] = [[field.name, '']];
+        for (const key of lastPresetKeysRef.current) {
+            updates.push([key, '']);
+        }
+        lastPresetKeysRef.current = [];
         setQuery('');
-        setSomeFieldValues([field.name, '']);
+        setSomeFieldValues(...updates);
     };
 
     return (
