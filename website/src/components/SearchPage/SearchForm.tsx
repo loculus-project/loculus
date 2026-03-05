@@ -347,6 +347,15 @@ export const SearchForm = ({
                                     segmentNames.map((segmentName) => (
                                         <div key={segmentName}>{renderSegmentContents(segmentName)}</div>
                                     ))}
+                                
+                                {referenceGenomesInfo.isMultiSegmented && (
+                                    <SegmentFilter
+                                        referenceGenomesInfo={referenceGenomesInfo}
+                                        fieldValues={fieldValues}
+                                        setSomeFieldValues={setSomeFieldValues}
+                                        filterSchema={filterSchema}
+                                    />
+                                )}
 
                                 {referenceGenomesInfo.isMultiSegmented &&
                                     segmentNames.map((segmentName) => (
