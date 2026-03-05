@@ -1307,6 +1307,7 @@ class ProcessingFunctions:
             subtypes = {}
             infos: set[str] = set()
             for reference in references:
+                logger.debug(f"Processing reference field {reference} for custom lineage assignment")
                 segment = reference.split("_")[1]
                 segment_name = input_data[segment]
                 if segment not in {"seg4", "seg6"}:
@@ -1351,7 +1352,9 @@ class ProcessingFunctions:
             if not subtypes:
                 return ProcessingResult(datum=None, warnings=[], errors=[])
             lineage = f"{subtypes.get('seg4', 'H*')}{subtypes.get('seg6', 'N*')}"
+            logger.debug(f"Determined preliminary lineage {lineage} based on segments seg4 and seg6")
             if lineage in {"H1N1", "H3N2", "H2N2"}:
+                logger.debug(f"Lineage {lineage} is a human lineage, checking for reassortment and variants")
                 # only assign human lineages
                 if len(infos) > 1:
                     lineage += " reassortant"
@@ -1366,6 +1369,7 @@ class ProcessingFunctions:
                         input_fields=[],
                         args={"threshold": threshold},
                     )
+                    logger.debug(f"Checking if {total_mutations} with value {input_data[total_mutations]} is above threshold {threshold} for variant assignment")
                     if above_threshold.datum:
                         is_variant = True
                         break
