@@ -1295,31 +1295,20 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def assign_custom_lineage(
+    def assign_custom_lineage(  # noqa: C901, PLR0912
         input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
     ) -> ProcessingResult:
         """Assign flu lineage based on seg4 and seg6"""
-        input_datum = input_data["input"]
-        if not input_datum:
+        if not input_data:
             return ProcessingResult(datum=None, warnings=[], errors=[])
-        if not isinstance(input_datum, dict):
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=(f"Field {output_field} expected input of type dict."),
-                    )
-                ],
-            )
+        references = [f for f in input_data if f.startswith("reference_")]
+        private_mutations = [f for f in input_data if f.startswith("private_mutations_")]
         try:
             subtypes = {}
             infos: set[str] = set()
-            for segment in input_datum:
-                segment_name = input_datum[segment]
+            for reference in references:
+                segment = reference.split("_")[1]
+                segment_name = input_data[segment]
                 if segment not in {"seg4", "seg6"}:
                     info = ProcessingFunctions.call_function(
                         "extract_regex",
@@ -1357,17 +1346,32 @@ class ProcessingFunctions:
                     )
                     if subtype.datum:
                         subtypes[segment] = subtype.datum
-                if info.datum:
+                if info.datum and isinstance(info.datum, str):
                     infos.add(info.datum)
             if not subtypes:
                 return ProcessingResult(datum=None, warnings=[], errors=[])
             lineage = f"{subtypes.get('seg4', 'H*')}{subtypes.get('seg6', 'N*')}"
             if lineage in {"H1N1", "H3N2", "H2N2"}:
+                # only assign human lineages
                 if len(infos) > 1:
                     lineage += " reassortant"
                 elif infos.pop() == "h1n1pdm":
                     lineage += "pdm"
-            return ProcessingResult(datum=lineage, warnings=[], errors=[])
+                is_variant = False
+                for total_mutations in private_mutations:
+                    threshold = args[f"{reference.split('_')[1]}_threshold"]
+                    above_threshold = ProcessingFunctions.is_above_threshold(
+                        input_data={"input": input_data[total_mutations]},
+                        output_field="variant",
+                        input_fields=[],
+                        args={"threshold": threshold},
+                    )
+                    if above_threshold.datum:
+                        is_variant = True
+                        break
+                if is_variant:
+                    lineage += " (variant)"
+                return ProcessingResult(datum=lineage, warnings=[], errors=[])
         except (ValueError, TypeError):
             return ProcessingResult(
                 datum=None,
@@ -1383,6 +1387,7 @@ class ProcessingFunctions:
                     )
                 ],
             )
+        return ProcessingResult(datum=None, warnings=[], errors=[])
 
     @staticmethod
     def is_above_threshold(
