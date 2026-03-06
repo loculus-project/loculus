@@ -367,9 +367,9 @@ fields:
 {{- range $segment := $rawUniqueSegments }}
 {{- with $currentItem }}
 {{ include "loculus.standardWebsiteMetadata" . }}
+  {{- $segmentDisplayName := default $segment (get $displayNameMap $segment) -}}
   name: {{ printf "%s_%s" .name $segment | quote }}
   {{- if .displayName }}
-  {{- $segmentDisplayName := default $segment (get $displayNameMap $segment) -}}
   displayName: {{ printf "%s %s" .displayName $segmentDisplayName | quote }}
   {{- end }}
   {{- if (default false .oneHeader)}}

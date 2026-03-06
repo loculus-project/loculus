@@ -56,8 +56,6 @@
 {{- $segmentNames := list -}}
 {{- $displayNameMap := dict -}}
 
-displayNames:
-{{- $displayNameMap | toYaml | nindent 2 }}
 {{- range $segment := $segmentWithReferencesList -}}
   {{- if $segment.displayName -}}
     {{- $_ := set $displayNameMap $segment.name $segment.displayName -}}
@@ -67,4 +65,6 @@ displayNames:
 
 segments:
 {{- $segmentNames | sortAlpha | toYaml | nindent 2 -}}
+displayNames:
+{{- $displayNameMap | toYaml | nindent 2 -}}
 {{- end -}}
