@@ -2009,6 +2009,7 @@ defaultOrganisms:
               threshold: 50
             inputs: {input: "nextclade.privateNucMutations.totalPrivateSubstitutions"}
         - name: reference
+          oneHeader: true
           isSequenceFilter: true
           displayName: Closest Reference
           header: "Clade & Lineage"
