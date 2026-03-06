@@ -199,6 +199,33 @@ describe('SearchForm', () => {
         expect(await screen.findByLabelText('Is Revocation')).toBeInTheDocument();
     });
 
+    it('uses getDefaultDisplayName when no displayName is provided', () => {
+        renderSearchForm({
+            filterSchema: new MetadataFilterSchema([
+                {
+                    name: 'hostNameScientific',
+                    type: 'string',
+                    initiallyVisible: true,
+                },
+                {
+                    name: 'ncbiReleaseDate',
+                    type: 'string',
+                    displayName: 'NCBI release date',
+                    initiallyVisible: true,
+                },
+            ]),
+            searchVisibilities: new Map<string, MetadataVisibility>([
+                ['hostNameScientific', new MetadataVisibility(true, undefined, undefined)],
+                ['ncbiReleaseDate', new MetadataVisibility(true, undefined, undefined)],
+            ]),
+        });
+
+        // Field without displayName should use the auto-generated sentence case name
+        expect(screen.getByLabelText('Host name scientific')).toBeInTheDocument();
+        // Field with explicit displayName should use that
+        expect(screen.getByLabelText('NCBI release date')).toBeInTheDocument();
+    });
+
     describe('suborganism specific search fields', () => {
         const filterSchema = new MetadataFilterSchema([
             {
