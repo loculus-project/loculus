@@ -2002,7 +2002,7 @@ defaultOrganisms:
           includeInDownloadsByDefault: false
           customDisplay:
             type: variantReference
-            displayGroup: variant
+            displayGroup: reference
             label: Closest Reference
           preprocessing:
             function: is_above_threshold
