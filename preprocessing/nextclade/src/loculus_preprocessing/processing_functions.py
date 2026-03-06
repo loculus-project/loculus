@@ -1306,7 +1306,7 @@ class ProcessingFunctions:
         private_mutations = [f for f in input_data if f.startswith("private_mutations_")]
         try:
             subtypes = {}
-            infos: set[str] = set()
+            infos: dict[str, str] = {}
             for reference in references:
                 logger.debug(f"Processing reference field {reference} for custom lineage assignment")
                 segment = reference.split("_")[1]
@@ -1349,18 +1349,18 @@ class ProcessingFunctions:
                     if subtype.datum:
                         subtypes[segment] = subtype.datum
                 if info.datum and isinstance(info.datum, str):
-                    infos.add(info.datum)
+                    infos[segment] = info.datum
             if not subtypes:
                 return ProcessingResult(datum=None, warnings=[], errors=[])
             lineage = f"{subtypes.get('seg4', 'H*')}{subtypes.get('seg6', 'N*')}"
+            if infos.get("seg4") == "h1n1pdm" and infos.get("seg6") == "h1n1pdm":
+                lineage = "H1N1pdm"
             logger.debug(f"Determined preliminary lineage {lineage} based on segments seg4 and seg6")
-            if lineage in {"H1N1", "H3N2", "H2N2"}:
+            if lineage in {"H1N1", "H3N2", "H2N2", "H1N1pdm"}:
                 logger.debug(f"Lineage {lineage} is a human lineage, checking for reassortment and variants")
                 # only assign human lineages
                 if len(infos) > 1:
                     lineage += " reassortant"
-                elif infos.pop() == "h1n1pdm":
-                    lineage += "pdm"
                 is_variant = False
                 for total_mutations in private_mutations:
                     threshold = args[f"threshold_{reference.split('_')[1]}"]

@@ -357,6 +357,7 @@ organisms:
 {{/* Generate website metadata from passed metadata array */}}
 {{- define "loculus.generateWebsiteMetadata" }}
 {{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).segments }}
+{{- $displayNameMap := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).displayNames }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
 fields:
@@ -368,12 +369,13 @@ fields:
 {{ include "loculus.standardWebsiteMetadata" . }}
   name: {{ printf "%s_%s" .name $segment | quote }}
   {{- if .displayName }}
-  displayName: {{ printf "%s %s" .displayName $segment | quote }}
+  {{- $segmentDisplayName := default $segment (get $displayNameMap $segment) -}}
+  displayName: {{ printf "%s %s" .displayName $segmentDisplayName | quote }}
   {{- end }}
   {{- if (default false .oneHeader)}}
   header: {{ (default "Other" .header) | quote }}
   {{- else }}
-  header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
+  header: {{ printf "%s %s" (default "Other" .header) $segmentDisplayName | quote }}
   {{- end }}
   relatesToSegment: {{ $segment }}
   {{- if .fieldPresets }}

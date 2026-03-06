@@ -54,7 +54,14 @@
 
 {{/* Extract segment names directly from .name */}}
 {{- $segmentNames := list -}}
+{{- $displayNameMap := dict -}}
+
+displayNames:
+{{- $displayNameMap | toYaml | nindent 2 }}
 {{- range $segment := $segmentWithReferencesList -}}
+  {{- if $segment.displayName -}}
+    {{- $_ := set $displayNameMap $segment.name $segment.displayName -}}
+  {{- end -}}
   {{- $segmentNames = append $segmentNames $segment.name -}}
 {{- end -}}
 
