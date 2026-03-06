@@ -1299,7 +1299,9 @@ class ProcessingFunctions:
         input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
     ) -> ProcessingResult:
         """Assign flu lineage based on seg4 and seg6"""
-        logger.debug(f"Starting custom lineage assignment with input_data: {input_data} and args: {args}")
+        logger.debug(
+            f"Starting custom lineage assignment with input_data: {input_data} and args: {args}"
+        )
         if not input_data:
             return ProcessingResult(datum=None, warnings=[], errors=[])
         references = [f for f in input_data if f.startswith("reference_")]
@@ -1308,7 +1310,9 @@ class ProcessingFunctions:
             subtypes = {}
             infos: dict[str, str] = {}
             for reference in references:
-                logger.debug(f"Processing reference field {reference} for custom lineage assignment")
+                logger.debug(
+                    f"Processing reference field {reference} for custom lineage assignment"
+                )
                 segment = reference.split("_")[1]
                 segment_name = input_data[reference]
                 if segment not in {"seg4", "seg6"}:
@@ -1355,9 +1359,13 @@ class ProcessingFunctions:
             lineage = f"{subtypes.get('seg4', 'H*')}{subtypes.get('seg6', 'N*')}"
             if infos.get("seg4") == "h1n1pdm" and infos.get("seg6") == "h1n1pdm":
                 lineage = "H1N1pdm"
-            logger.debug(f"Determined preliminary lineage {lineage} based on segments seg4 and seg6")
+            logger.debug(
+                f"Determined preliminary lineage {lineage} based on segments seg4 and seg6"
+            )
             if lineage in {"H1N1", "H3N2", "H2N2", "H1N1pdm"}:
-                logger.debug(f"Lineage {lineage} is a human lineage, checking for reassortment and variants")
+                logger.debug(
+                    f"Lineage {lineage} is a human lineage, checking for reassortment and variants"
+                )
                 # only assign human lineages
                 if len(infos) > 1:
                     lineage += " reassortant"
@@ -1370,7 +1378,9 @@ class ProcessingFunctions:
                         input_fields=[],
                         args={"threshold": threshold},
                     )
-                    logger.debug(f"Checking if {total_mutations} with value {input_data[total_mutations]} is above threshold {threshold} for variant assignment")
+                    logger.debug(
+                        f"Checking if {total_mutations} with value {input_data[total_mutations]} is above threshold {threshold} for variant assignment"
+                    )
                     if above_threshold.datum:
                         is_variant = True
                         break
