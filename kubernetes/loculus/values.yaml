@@ -1989,6 +1989,24 @@ defaultOrganisms:
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
+        - name: variant
+          isSequenceFilter: true
+          perSegment: true
+          header: "Alignment and QC metrics"
+          displayName: "Variant"
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          customDisplay:
+            type: variantReference
+            displayGroup: variant
+          preprocessing:
+            function: is_above_threshold
+            args:
+              threshold: 50
+            inputs: {input: "nextclade.privateNucMutations.totalPrivateSubstitutions"}
         - name: reference
           isSequenceFilter: true
           displayName: Closest Reference
@@ -1996,7 +2014,9 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
-          hideOnSequenceDetailsPage: true
+          customDisplay:
+            type: variantReference
+            displayGroup: reference
           perSegment: true
           preprocessing:
             inputs: {input: ASSIGNED_REFERENCE}
