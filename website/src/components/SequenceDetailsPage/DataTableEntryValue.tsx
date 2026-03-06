@@ -93,19 +93,24 @@ const VariantReferenceComponent: React.FC<{ jsonString: string; segmentDisplayNa
 }) => {
     const entries = JSON.parse(jsonString) as TableDataEntry[];
 
+    let variant = false;
+    let reference: string | undefined = undefined;
     for (const segmentName in segmentDisplayNameMap) {
-        const variant =
+        variant =
             entries
                 .find((e) => e.name === 'variant_' + segmentName)
                 ?.value?.toString()
                 ?.toLowerCase() === 'true';
-        const reference = entries.find((e) => e.name === 'reference_' + segmentName)?.value.toString();
-
-        if (variant) {
-            return <>{reference ?? 'N/A'} (Variant)</>;
+        reference = entries.find((e) => e.name === 'reference_' + segmentName)?.value.toString();
+        if (reference) {
+            break;
         }
-        return <>{reference ?? 'N/A'}</>;
     }
+
+    if (variant) {
+        return <>{reference ?? 'N/A'} (Variant)</>;
+    }
+    return <>{reference ?? 'N/A'}</>;
 };
 
 type FileEntry = {
@@ -183,7 +188,6 @@ export function parseMutations(input: string): MutationBadgeData[] {
 
 const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, segmentDisplayNameMap }) => {
     const { value, customDisplay } = data;
-    console.log('Rendering CustomDisplayComponent with value:', value, 'and customDisplay:', customDisplay);
 
     return (
         <div className='whitespace-normal text-gray-600 break-inside-avoid'>

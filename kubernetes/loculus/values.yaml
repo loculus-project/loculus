@@ -2007,7 +2007,7 @@ defaultOrganisms:
           preprocessing:
             function: is_above_threshold
             args:
-              threshold: 50
+              threshold: 20
             inputs: {input: "nextclade.privateNucMutations.totalPrivateSubstitutions"}
         - name: reference
           oneHeader: true
