@@ -611,12 +611,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         header: "INSDC"
       - name: insdcAccessionBase
+        displayName: INSDC accession base
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
         perSegment: true
         oneHeader: true
       - name: insdcVersion
+        displayName: INSDC version
         type: int
         header: "INSDC"
         hideOnSequenceDetailsPage: true
@@ -641,6 +643,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         oneHeader: true
       - name: bioprojectAccession
+        displayName: BioProject accession
         customDisplay:
           type: linkWithMenu
           linkMenuItems:
@@ -666,6 +669,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         oneHeader: true
       - name: biosampleAccession
+        displayName: BioSample accession
         customDisplay:
           type: linkWithMenu
           linkMenuItems:
@@ -1174,6 +1178,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         desired: true
         orderOnDetailsPage: 1540
       - name: hostNameScientific
+        displayName: Host name - scientific
         generateIndex: true
         autocomplete: true
         customDisplay:
@@ -1185,6 +1190,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         desired: true
         orderOnDetailsPage: 1560
       - name: hostNameCommon
+        displayName: Host name - common
         generateIndex: true
         autocomplete: true
         customDisplay:
@@ -1215,18 +1221,21 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "Host"
         orderOnDetailsPage: 1980
       - name: ncbiSourceDb
+        displayName: NCBI source DB
         generateIndex: true
         autocomplete: true
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
       - name: ncbiVirusName
+        displayName: NCBI virus name
         generateIndex: true
         autocomplete: true
         hideOnSequenceDetailsPage: true
         noInput: true
         header: "INSDC"
       - name: ncbiVirusTaxId
+        displayName: NCBI virus tax ID
         type: int
         autocomplete: true
         customDisplay:
@@ -1831,6 +1840,7 @@ defaultOrganisms:
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/S"
       metadataAdd:
         - name: hostNameScientific
+          displayName: Host name - scientific
           generateIndex: true
           autocomplete: true
           customDisplay:
@@ -1968,6 +1978,7 @@ defaultOrganisms:
           category: "S"
       metadataAdd:
         - name: hostNameScientific
+          displayName: Host name - scientific
           generateIndex: true
           autocomplete: true
           customDisplay:
