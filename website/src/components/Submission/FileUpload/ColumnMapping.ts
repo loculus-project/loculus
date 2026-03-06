@@ -2,6 +2,7 @@ import Papa from 'papaparse';
 
 import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
+import { getDisplayName } from '../../../utils/getDisplayName';
 import stringSimilarity from '../../../utils/stringSimilarity';
 
 export class ColumnMapping {
@@ -13,7 +14,7 @@ export class ColumnMapping {
             .map((field): [string, number] => {
                 const score = Math.max(
                     stringSimilarity(sourceColumn, field.name),
-                    stringSimilarity(sourceColumn, field.displayName ?? ''),
+                    stringSimilarity(sourceColumn, getDisplayName(field)),
                 );
                 return [field.name, score];
             })
@@ -31,7 +32,7 @@ export class ColumnMapping {
         // assign exact matches first
         sourceColumns.forEach((sourceColumn) => {
             const foundField = availableFields.find(
-                (inputField) => inputField.name === sourceColumn || inputField.displayName === sourceColumn,
+                (inputField) => inputField.name === sourceColumn || getDisplayName(inputField) === sourceColumn,
             );
             if (foundField) {
                 mapping.set(sourceColumn, foundField.name);
