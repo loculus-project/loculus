@@ -1363,7 +1363,7 @@ class ProcessingFunctions:
                     lineage += "pdm"
                 is_variant = False
                 for total_mutations in private_mutations:
-                    threshold = args[f"{reference.split('_')[1]}_threshold"]
+                    threshold = args[f"threshold_{reference.split('_')[1]}"]
                     above_threshold = ProcessingFunctions.is_above_threshold(
                         input_data={"input": input_data[total_mutations]},
                         output_field="variant",
