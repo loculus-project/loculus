@@ -1992,7 +1992,8 @@ defaultOrganisms:
         - name: variant
           isSequenceFilter: true
           perSegment: true
-          header: "Alignment and QC metrics"
+          header: "Clade & Lineage"
+          oneHeader: true
           displayName: "Variant"
           type: boolean
           noInput: true
@@ -2010,6 +2011,7 @@ defaultOrganisms:
         - name: reference
           isSequenceFilter: true
           displayName: Closest Reference
+          header: "Clade & Lineage"
           noInput: true
           generateIndex: true
           autocomplete: true
