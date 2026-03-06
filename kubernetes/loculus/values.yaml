@@ -2003,6 +2003,7 @@ defaultOrganisms:
           customDisplay:
             type: variantReference
             displayGroup: variant
+            label: Closest Reference
           preprocessing:
             function: is_above_threshold
             args:
@@ -2020,6 +2021,7 @@ defaultOrganisms:
           customDisplay:
             type: variantReference
             displayGroup: reference
+            label: Closest Reference
           perSegment: true
           preprocessing:
             inputs: {input: ASSIGNED_REFERENCE}
