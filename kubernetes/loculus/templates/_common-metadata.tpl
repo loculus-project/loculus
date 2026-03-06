@@ -372,9 +372,9 @@ fields:
   name: {{ printf "%s_%s" .name $segment | quote }}
   {{- if .displayName }}
   {{- if (default false .oneHeader) }}
-  displayName: {{ .displayName | quote }}
-  {{- else }}
   displayName: {{ printf "%s %s" .displayName $segmentDisplayName | quote }}
+  {{- else }}
+  displayName: {{ .displayName | quote }}
   {{- end }}
   {{- end }}
   {{- if (default false .oneHeader)}}
