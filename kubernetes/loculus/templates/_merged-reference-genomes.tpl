@@ -64,7 +64,7 @@
 {{- end -}}
 
 segments:
-{{- $segmentNames | sortAlpha | toYaml | nindent 2 -}}
+{{- $segmentNames | sortAlpha | toYaml | nindent 2 }}
 displayNames:
-{{- $displayNameMap | toYaml | nindent 2 -}}
+{{- $displayNameMap | toYaml | nindent 2 }}
 {{- end -}}
