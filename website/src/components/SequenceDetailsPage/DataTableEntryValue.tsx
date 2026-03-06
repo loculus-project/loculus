@@ -99,8 +99,8 @@ const VariantReferenceComponent: React.FC<{ jsonString: string; segmentDisplayNa
         variant =
             entries
                 .find((e) => e.name === 'variant_' + segmentName)
-                ?.value?.toString()
-                ?.toLowerCase() === 'true';
+                ?.value.toString()
+                .toLowerCase() === 'true';
         reference = entries.find((e) => e.name === 'reference_' + segmentName)?.value.toString();
         if (reference) {
             break;
