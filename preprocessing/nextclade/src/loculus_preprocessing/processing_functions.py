@@ -1310,7 +1310,7 @@ class ProcessingFunctions:
             for reference in references:
                 logger.debug(f"Processing reference field {reference} for custom lineage assignment")
                 segment = reference.split("_")[1]
-                segment_name = input_data[segment]
+                segment_name = input_data[reference]
                 if segment not in {"seg4", "seg6"}:
                     info = ProcessingFunctions.call_function(
                         "extract_regex",
