@@ -10,7 +10,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/google/yamlfmt:latest
+      image: ghcr.io/google/yamlfmt:0.21.0
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
