@@ -199,7 +199,7 @@ describe('SearchForm', () => {
         expect(await screen.findByLabelText('Is Revocation')).toBeInTheDocument();
     });
 
-    it('uses getDefaultDisplayName when no displayName is provided', () => {
+    it('uses default displayName when no displayName is provided', () => {
         renderSearchForm({
             filterSchema: new MetadataFilterSchema([
                 {

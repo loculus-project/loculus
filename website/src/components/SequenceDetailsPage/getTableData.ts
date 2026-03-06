@@ -17,7 +17,7 @@ import {
     type MutationProportionCount,
 } from '../../types/lapis.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
-import { getDefaultDisplayName } from '../../utils/getDefaultDisplayName.ts';
+import { getDisplayName } from '../../utils/getDisplayName.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 import { getSelectedReferences } from '../../utils/referenceSelection.ts';
 import {
@@ -215,7 +215,7 @@ function toTableData(
         .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
         .filter((metadata) => details[metadata.name] !== null && metadata.name in details)
         .map((metadata) => ({
-            label: metadata.displayName ?? getDefaultDisplayName(metadata.name),
+            label: getDisplayName(metadata),
             name: metadata.name,
             customDisplay: metadata.customDisplay,
             value: mapValueToDisplayedValue(details[metadata.name], metadata),

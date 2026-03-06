@@ -5,7 +5,7 @@ import { FloatingLabelContainer } from './FloatingLabelContainer.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
-import { getDefaultDisplayName } from '../../../utils/getDefaultDisplayName.ts';
+import { getDisplayName } from '../../../utils/getDisplayName.ts';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import { Button } from '../../common/Button';
 import {
@@ -85,7 +85,7 @@ export const MultiChoiceAutoCompleteField = ({
             <Combobox immediate multiple value={multiSelectValue} onChange={handleChange}>
                 <div className='relative'>
                     <FloatingLabelContainer
-                        label={field.displayName ?? getDefaultDisplayName(field.name)}
+                        label={getDisplayName(field)}
                         isFocused={isFocused}
                         hasContent={selectedValues.size > 0 || query !== ''}
                         className='pr-16'
@@ -155,13 +155,13 @@ export const MultiChoiceAutoCompleteField = ({
                                 setQuery('');
                             }}
                             placeholder=''
-                            aria-label={field.displayName ?? getDefaultDisplayName(field.name)}
+                            aria-label={getDisplayName(field)}
                         />
                         {(selectedValues.size > 0 || query !== '') && (
                             <Button
                                 className='absolute inset-y-0 right-8 flex items-center pr-2'
                                 onClick={handleClear}
-                                aria-label={`Clear ${field.displayName ?? getDefaultDisplayName(field.name)}`}
+                                aria-label={`Clear ${getDisplayName(field)}`}
                                 type='button'
                             >
                                 <MaterialSymbolsClose className='w-5 h-5 text-gray-400' />

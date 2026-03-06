@@ -5,7 +5,7 @@ import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
-import { getDefaultDisplayName } from '../../../utils/getDefaultDisplayName.ts';
+import { getDisplayName } from '../../../utils/getDisplayName.ts';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import { Button } from '../../common/Button';
 import {
@@ -105,14 +105,14 @@ export const SingleChoiceAutoCompleteField = ({
                             }}
                             onChange={(event) => setQuery(event.target.value)}
                             onFocus={load}
-                            placeholder={field.displayName ?? getDefaultDisplayName(field.name)}
+                            placeholder={getDisplayName(field)}
                             as={CustomInput}
                         />
                         {((fieldValue !== '' && fieldValue !== undefined) || query !== '') && (
                             <Button
                                 className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
                                 onClick={handleClear}
-                                aria-label={`Clear ${field.displayName ?? getDefaultDisplayName(field.name)}`}
+                                aria-label={`Clear ${getDisplayName(field)}`}
                                 type='button'
                             >
                                 <MaterialSymbolsClose className='w-5 h-5 text-gray-400' />
