@@ -8,6 +8,7 @@ import { Tooltip } from 'react-tooltip';
 import { ColumnMapping } from './ColumnMapping';
 import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
+import { getDefaultDisplayName } from '../../../utils/getDefaultDisplayName';
 import { BaseDialog } from '../../common/BaseDialog';
 import { Button } from '../../common/Button';
 import { InputFieldTooltip } from '../InputFieldTooltip';
@@ -208,7 +209,7 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
             data-tooltip-id={`${header}-${field.name}-tooltip`}
         >
             <span className={usedOptions.includes(field.name) ? 'text-gray-400' : ''}>
-                {field.displayName ?? field.name}
+                {field.displayName ?? getDefaultDisplayName(field.name)}
             </span>
             <InputFieldTooltip id={`${header}-${field.name}-tooltip`} field={field} />
         </ListboxOption>

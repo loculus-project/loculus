@@ -6,6 +6,7 @@ import { ACCESSION_VERSION_FIELD } from '../../settings.ts';
 import type { Metadata } from '../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
+import { getDefaultDisplayName } from '../../utils/getDefaultDisplayName.ts';
 import { segmentReferenceSelected, type SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 
 export type FieldItem = {
@@ -188,7 +189,7 @@ const FieldSelectorModalField: FC<FieldSelectorModalFieldProps> = ({ field, hand
                 className={`ml-2 text-sm ${greyOutLabel ? 'text-gray-400' : 'text-gray-700'}`}
                 data-tooltip-id={tooltipId}
             >
-                {field.displayName ?? field.name}
+                {field.displayName ?? getDefaultDisplayName(field.name)}
                 {alwaysChecked ? ' (always included)' : ''}
                 {tooltip !== undefined && <CustomTooltip id={tooltipId} content={tooltip} />}
             </label>
