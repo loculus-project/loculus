@@ -40,7 +40,7 @@ export const SegmentFilter: FC<SegmentFilterProps> = ({
     return (
         <div className='mb-3 px-1'>
             <div className='text-sm text-gray-500 mb-1.5'>Required segments</div>
-            <div className='flex flex-wrap gap-x-4 gap-y-1.5'>
+            <div className='grid grid-cols-2 gap-x-4 gap-y-1.5'>
                 {segmentsWithLengthFields.map((segmentName) => {
                     const lengthFromFieldName = `length_${segmentName}From`;
                     const currentValue = fieldValues[lengthFromFieldName];
