@@ -1228,14 +1228,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         hideOnSequenceDetailsPage: true
         noInput: true
       - name: ncbiVirusName
-        displayName: NCBI virus name
+        displayName: NCBI Virus name
         generateIndex: true
         autocomplete: true
         hideOnSequenceDetailsPage: true
         noInput: true
         header: "INSDC"
       - name: ncbiVirusTaxId
-        displayName: NCBI virus tax ID
+        displayName: NCBI Virus tax ID
         type: int
         autocomplete: true
         customDisplay:
