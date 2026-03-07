@@ -10,6 +10,7 @@ import {
     MULTI_SEG_SINGLE_REF_REFERENCEGENOMES,
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+    THREE_SEG_SINGLE_REF_REFERENCEGENOMES,
 } from '../../../types/referenceGenomes.spec.ts';
 import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
@@ -201,6 +202,47 @@ describe('SequencesContainer', () => {
         });
     });
 
+    describe('with 3 or more segments', () => {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const threeSegRefs = { L: 'singleReference', M: 'singleReference', S: 'singleReference' };
+
+        test('uses collapsed tabs instead of per-segment tabs', () => {
+            renderSequenceViewer(THREE_SEG_SINGLE_REF_REFERENCEGENOMES, threeSegRefs);
+            click(LOAD_SEQUENCES_BUTTON);
+
+            expect(screen.getByRole(BUTTON_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
+            expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned nucleotide sequences' })).toBeVisible();
+            expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned amino acid sequences' })).toBeVisible();
+
+            expect(screen.queryByRole(BUTTON_ROLE, { name: /\(unaligned\)/ })).not.toBeInTheDocument();
+            expect(screen.queryByRole(BUTTON_ROLE, { name: /\(aligned\)/ })).not.toBeInTheDocument();
+        });
+
+        test('shows segment dropdown with display names when unaligned tab is active', () => {
+            renderSequenceViewer(THREE_SEG_SINGLE_REF_REFERENCEGENOMES, threeSegRefs);
+            click(LOAD_SEQUENCES_BUTTON);
+            click('Nucleotide sequences');
+
+            const options = screen.getAllByRole('option');
+            const optionLabels = options.map((o) => o.textContent);
+            expect(optionLabels).toContain('Large');
+            expect(optionLabels).toContain('Medium');
+            expect(optionLabels).toContain('Small');
+        });
+
+        test('shows segment dropdown with display names when aligned tab is active', () => {
+            renderSequenceViewer(THREE_SEG_SINGLE_REF_REFERENCEGENOMES, threeSegRefs);
+            click(LOAD_SEQUENCES_BUTTON);
+            click('Aligned nucleotide sequences');
+
+            const options = screen.getAllByRole('option');
+            const optionLabels = options.map((o) => o.textContent);
+            expect(optionLabels).toContain('Large');
+            expect(optionLabels).toContain('Medium');
+            expect(optionLabels).toContain('Small');
+        });
+    });
+
     function click(name: string) {
         act(() => screen.getByRole(BUTTON_ROLE, { name }).click());
     }
@@ -213,3 +255,4 @@ describe('SequencesContainer', () => {
         expect(screen.getByRole(BUTTON_ROLE, { name })).not.toHaveClass(TAB_ACTIVE_CLASS);
     }
 });
+
