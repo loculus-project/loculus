@@ -371,11 +371,8 @@ fields:
 {{ include "loculus.standardWebsiteMetadata" . }}
   name: {{ printf "%s_%s" .name $segment | quote }}
   {{- if .displayName }}
-  {{- if (default false .oneHeader) }}
   displayName: {{ printf "%s %s" .displayName $segmentDisplayName | quote }}
-  {{- else }}
-  displayName: {{ .displayName | quote }}
-  {{- end }}
+
   {{- end }}
   {{- if (default false .oneHeader)}}
   header: {{ (default "Other" .header) | quote }}
@@ -394,7 +391,7 @@ fields:
     type: {{ quote .customDisplay.type }}
     displayGroup: {{ printf "%s_%s" .customDisplay.displayGroup $segment | quote }}
     {{- if .customDisplay.label }}
-    label: {{ printf "%s %s" .customDisplay.label $segment | quote }}
+    label: {{ printf "%s %s" .customDisplay.label $segmentDisplayName | quote }}
     {{- end }}
   {{- end }}
 {{- end }}
