@@ -36,7 +36,7 @@ export class ColumnMapping {
             );
             if (foundField) {
                 mapping.set(sourceColumn, foundField.name);
-                availableFields = availableFields.filter((f) => f.name !== foundField.name);
+                availableFields = availableFields.filter((f) => f.name !== sourceColumn);
                 remainingSourceColumns = remainingSourceColumns.filter((f) => f !== sourceColumn);
             }
         });
