@@ -1,3 +1,4 @@
+import { sentenceCase } from 'change-case';
 import { err, ok, Result } from 'neverthrow';
 
 import type { TableDataEntry } from './types.js';
@@ -214,7 +215,7 @@ function toTableData(
         .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
         .filter((metadata) => details[metadata.name] !== null && metadata.name in details)
         .map((metadata) => ({
-            label: metadata.displayName ?? metadata.name,
+            label: metadata.displayName ?? sentenceCase(metadata.name),
             name: metadata.name,
             customDisplay: metadata.customDisplay,
             value: mapValueToDisplayedValue(details[metadata.name], metadata),
