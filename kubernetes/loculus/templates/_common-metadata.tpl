@@ -9,15 +9,18 @@ See https://github.com/loculus-project/loculus/pull/3141 for an example */}}
 {{- define "loculus.commonMetadata" }}
 fields:
   - name: accessionVersion
+    displayName: Accession version
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
     includeInDownloadsByDefault: true
   - name: accession
+    displayName: Accession
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
   - name: version
+    displayName: Version
     type: int
     hideOnSequenceDetailsPage: true
   - name: submissionId
@@ -33,6 +36,7 @@ fields:
     autocomplete: true
     hideOnSequenceDetailsPage: true
   - name: submitter
+    displayName: Submitter
     type: string
     generateIndex: true
     autocomplete: true
@@ -135,6 +139,7 @@ fields:
     header: Submission details
     orderOnDetailsPage: 5000
   - name: pipelineVersion
+    displayName: Pipeline version
     type: int
     notSearchable: true
     hideOnSequenceDetailsPage: true
