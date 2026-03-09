@@ -72,7 +72,6 @@ defaultOrganismConfig: &defaultOrganismConfig
     richFastaHeaderFields: ["displayName"]
     files:
       - name: annotations
-        displayName: Annotations
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
