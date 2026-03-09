@@ -611,12 +611,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         header: "INSDC"
       - name: insdcAccessionBase
+        displayName: INSDC accession base
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
         perSegment: true
         oneHeader: true
       - name: insdcVersion
+        displayName: INSDC version
         type: int
         header: "INSDC"
         hideOnSequenceDetailsPage: true
@@ -641,6 +643,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         oneHeader: true
       - name: bioprojectAccession
+        displayName: BioProject accession
         customDisplay:
           type: linkWithMenu
           linkMenuItems:
@@ -666,6 +669,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         oneHeader: true
       - name: biosampleAccession
+        displayName: BioSample accession
         customDisplay:
           type: linkWithMenu
           linkMenuItems:
@@ -705,6 +709,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sampling
         orderOnDetailsPage: 1200
       - name: purposeOfSampling
+        displayName: Purpose of sampling
         ontology_id: GENEPIO:0001198
         definition: The reason that the sample was collected.
         guidance: Select a value from the pick list in the template
@@ -1174,6 +1179,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         desired: true
         orderOnDetailsPage: 1540
       - name: hostNameScientific
+        displayName: Host name - scientific
         generateIndex: true
         autocomplete: true
         customDisplay:
@@ -1185,6 +1191,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         desired: true
         orderOnDetailsPage: 1560
       - name: hostNameCommon
+        displayName: Host name - common
         generateIndex: true
         autocomplete: true
         customDisplay:
@@ -1195,38 +1202,45 @@ defaultOrganismConfig: &defaultOrganismConfig
         ingest: ncbiHostCommonName
         orderOnDetailsPage: 1580
       - name: isLabHost
+        displayName: Is lab host
         type: boolean
         autocomplete: true
         header: "Host"
         ingest: ncbiIsLabHost
         orderOnDetailsPage: 1920
       - name: cellLine
+        displayName: Cell line
         generateIndex: true
         orderOnDetailsPage: 1940
         autocomplete: true
         header: "Host"
       - name: passageNumber
+        displayName: Passage number
         type: int
         header: "Host"
         orderOnDetailsPage: 1960
       - name: passageMethod
+        displayName: Passage method
         generateIndex: true
         autocomplete: true
         header: "Host"
         orderOnDetailsPage: 1980
       - name: ncbiSourceDb
+        displayName: NCBI source DB
         generateIndex: true
         autocomplete: true
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
       - name: ncbiVirusName
+        displayName: NCBI Virus name
         generateIndex: true
         autocomplete: true
         hideOnSequenceDetailsPage: true
         noInput: true
         header: "INSDC"
       - name: ncbiVirusTaxId
+        displayName: NCBI Virus tax ID
         type: int
         autocomplete: true
         customDisplay:
@@ -1497,6 +1511,7 @@ defaultOrganisms:
               regex_pattern: |
                 ^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$
         - name: lineage
+          displayName: Lineage
           isSequenceFilter: true
           header: "Lineage"
           noInput: true
@@ -1595,16 +1610,19 @@ defaultOrganisms:
         - date
       metadata: &dummyMetadata
         - name: date
+          displayName: Date
           type: date
           initiallyVisible: true
           header: "Collection Details"
         - name: region
+          displayName: Region
           type: string
           initiallyVisible: true
           generateIndex: true
           autocomplete: true
           header: "Collection Details"
         - name: country
+          displayName: Country
           initiallyVisible: true
           type: string
           generateIndex: true
@@ -1616,17 +1634,20 @@ defaultOrganisms:
             - name: Colombia
           header: "Collection Details"
         - name: division
+          displayName: Division
           initiallyVisible: true
           type: string
           generateIndex: true
           autocomplete: true
           header: "Collection Details"
         - name: host
+          displayName: Host
           initiallyVisible: true
           type: string
           autocomplete: true
           header: "Collection Details"
         - name: lineage
+          displayName: Lineage
           isSequenceFilter: true
           initiallyVisible: false
           notSearchable: true
@@ -1734,6 +1755,7 @@ defaultOrganisms:
       organismName: "Test organism (without alignment)"
       metadata:
         - name: date
+          displayName: Date
           type: date
           initiallyVisible: true
           header: "Collection Details"
@@ -1766,24 +1788,28 @@ defaultOrganisms:
             inputs:
               input: lineage
         - name: region
+          displayName: Region
           type: string
           initiallyVisible: true
           generateIndex: true
           autocomplete: true
           header: "Collection Details"
         - name: country
+          displayName: Country
           initiallyVisible: true
           type: string
           generateIndex: true
           autocomplete: true
           header: "Collection Details"
         - name: division
+          displayName: Division
           initiallyVisible: true
           type: string
           generateIndex: true
           autocomplete: true
           header: "Collection Details"
         - name: host
+          displayName: Host
           initiallyVisible: true
           type: string
           autocomplete: true
@@ -1831,6 +1857,7 @@ defaultOrganisms:
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/S"
       metadataAdd:
         - name: hostNameScientific
+          displayName: Host name - scientific
           generateIndex: true
           autocomplete: true
           customDisplay:
@@ -1968,6 +1995,7 @@ defaultOrganisms:
           category: "S"
       metadataAdd:
         - name: hostNameScientific
+          displayName: Host name - scientific
           generateIndex: true
           autocomplete: true
           customDisplay:
