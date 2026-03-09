@@ -272,8 +272,8 @@ function calculateMinWidthStyleFromPossibleOptions(options: Map<string, InputFie
     const maxOptionTextLength = Math.max(
         ...Array.from(options.values())
             .flat()
-            .flatMap((x) => [x.name, getDisplayName(x)])
-            .map((text) => text.length),
+            .flatMap((x) => [x.name, x.displayName])
+            .map((text) => text?.length ?? 0),
     );
 
     return { minWidth: `${Math.ceil(maxOptionTextLength / 2) + 2}rem` };
