@@ -2,7 +2,6 @@ import { forwardRef, type FocusEventHandler } from 'react';
 
 import { TextField } from './TextField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config.ts';
-import { getDefaultDisplayName } from '../../../utils/getDefaultDisplayName.ts';
 import DisabledUntilHydrated from '../../DisabledUntilHydrated';
 
 export type NormalFieldProps = {
@@ -21,7 +20,7 @@ export const NormalTextField = forwardRef<HTMLInputElement, NormalFieldProps>((p
     return (
         <DisabledUntilHydrated>
             <TextField
-                label={field.displayName ?? getDefaultDisplayName(field.name)}
+                label={field.displayName ?? field.name}
                 type={field.type}
                 fieldValue={fieldValue}
                 onFocus={onFocus}

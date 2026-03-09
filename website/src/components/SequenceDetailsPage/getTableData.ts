@@ -1,3 +1,4 @@
+import { sentenceCase } from 'change-case';
 import { err, ok, Result } from 'neverthrow';
 
 import type { TableDataEntry } from './types.js';
@@ -17,7 +18,6 @@ import {
     type MutationProportionCount,
 } from '../../types/lapis.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
-import { getDefaultDisplayName } from '../../utils/getDefaultDisplayName.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 import { getSelectedReferences } from '../../utils/referenceSelection.ts';
 import {
@@ -215,7 +215,7 @@ function toTableData(
         .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
         .filter((metadata) => details[metadata.name] !== null && metadata.name in details)
         .map((metadata) => ({
-            label: metadata.displayName ?? getDefaultDisplayName(metadata.name),
+            label: metadata.displayName ?? sentenceCase(metadata.name),
             name: metadata.name,
             customDisplay: metadata.customDisplay,
             value: mapValueToDisplayedValue(details[metadata.name], metadata),

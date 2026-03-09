@@ -2,7 +2,6 @@ import { type FC, useMemo } from 'react';
 
 import type { Schema } from '../../types/config.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
-import { getDefaultDisplayName } from '../../utils/getDefaultDisplayName.ts';
 import { type MetadataVisibility } from '../../utils/search.ts';
 import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { type FieldItem, FieldSelectorModal, getDisplayState } from '../common/FieldSelectorModal.tsx';
@@ -32,7 +31,7 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
                 .filter((field) => !(field.hideInSearchResultsTable ?? false))
                 .map((field) => ({
                     name: field.name,
-                    displayName: field.displayName ?? getDefaultDisplayName(field.name),
+                    displayName: field.displayName ?? field.name,
                     header: field.header,
                     displayState: getDisplayState(
                         field,

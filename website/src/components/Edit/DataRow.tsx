@@ -1,8 +1,8 @@
+import { sentenceCase } from 'change-case';
 import { type FC } from 'react';
 
 import { InputField as InputFieldComponent, type Row } from './InputField.tsx';
 import type { InputField } from '../../types/config.ts';
-import { getDefaultDisplayName } from '../../utils/getDefaultDisplayName.ts';
 import { InputFieldTooltip } from '../Submission/InputFieldTooltip.tsx';
 import WarningAmberIcon from '~icons/ic/baseline-warning-amber';
 import DangerousTwoToneIcon from '~icons/ic/twotone-dangerous';
@@ -21,7 +21,7 @@ export const EditableDataRow: FC<EditableRowProps> = ({ inputField, row, onChang
         (value) => value !== undefined,
     );
 
-    const label = inputField.displayName ?? getDefaultDisplayName(inputField.name);
+    const label = inputField.displayName ?? sentenceCase(inputField.name);
 
     // split label to attach icon later on to prevent the icon wrapping alone
     // (https://www.codemzy.com/blog/prevent-icon-wrap-javascript)
