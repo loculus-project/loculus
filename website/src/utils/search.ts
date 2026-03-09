@@ -1,5 +1,3 @@
-import { sentenceCase } from 'change-case';
-
 import { validateSingleValue } from './extractFieldValue';
 import { getReferenceIdentifier } from './referenceSelection.ts';
 import { getSegmentNames, segmentReferenceSelected, type SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
@@ -167,7 +165,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 name: `${field.name}From`,
                 displayName: 'From',
                 fieldGroup: field.name,
-                fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                fieldGroupDisplayName: field.displayName ?? field.name,
                 header: field.header,
             };
             const toField = {
@@ -175,7 +173,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 name: `${field.name}To`,
                 displayName: 'To',
                 fieldGroup: field.name,
-                fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                fieldGroupDisplayName: field.displayName ?? field.name,
                 header: field.header,
             };
             result.push(fromField);
@@ -267,7 +265,7 @@ export class MetadataFilterSchema {
     public filterNameToLabelMap(): Record<string, string> {
         return this.filters.reduce(
             (acc, field) => {
-                acc[field.name] = field.displayName ?? sentenceCase(field.name);
+                acc[field.name] = field.displayName ?? field.name;
                 return acc;
             },
             {} as Record<string, string>,

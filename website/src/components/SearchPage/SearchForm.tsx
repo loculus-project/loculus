@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { sentenceCase } from 'change-case';
 import { useMemo, useState, type FC } from 'react';
 
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
@@ -158,7 +157,7 @@ export const SearchForm = ({
         .filter((filter) => !filter.notSearchable)
         .map((filter) => ({
             name: filter.name,
-            displayName: filter.displayName ?? sentenceCase(filter.name),
+            displayName: filter.displayName ?? filter.name,
             header: filter.header,
             displayState: getDisplayState(
                 filter,
