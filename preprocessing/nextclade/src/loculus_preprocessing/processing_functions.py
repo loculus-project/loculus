@@ -1293,8 +1293,7 @@ class ProcessingFunctions:
                     input_fields=[],
                     args={"pattern": regex_pattern, "capture_group": "identifier"},
                 )
-                identifier = extract_result.datum
-                if identifier is None:
+                if extract_result.datum is None:
                     # regex extraction of ID field failed, fall back to ACCESSION_VERSION
                     warnings.append(
                         ProcessingAnnotation.from_fields(
@@ -1302,10 +1301,11 @@ class ProcessingFunctions:
                             [output_field],
                             AnnotationSourceType.METADATA,
                             message=(
-                                "identifier string could not be parsed using provided regex_pattern"
+                                f"identifier string '{identifier}' could not be parsed, using ACCESSION_VERSION in displayName instead"
                             ),
                         )
                     )
+                identifier = extract_result.datum
 
         if identifier is None:
             # Use ACCESSION_VERSION instead of IDENTIFIER

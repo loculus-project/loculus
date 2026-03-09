@@ -1047,7 +1047,7 @@ def test_display_name_construction() -> None:
     assert len(res.warnings) == 1
     assert (
         res.warnings[0].message
-        == "identifier string could not be parsed using provided regex_pattern"
+        == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
     )
     assert res_insdc.datum == "DENV-1/unknown/version.1/2025"
     assert len(res_insdc.warnings) == 0
@@ -1069,7 +1069,7 @@ def test_display_name_construction() -> None:
     assert len(res.warnings) == 1
     assert (
         res.warnings[0].message
-        == "identifier string could not be parsed using provided regex_pattern"
+        == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
     )
     assert res_insdc.datum == "DENV-1/another_fallback/version.1/2025"
     assert len(res_insdc.warnings) == 0
