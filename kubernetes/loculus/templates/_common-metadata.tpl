@@ -263,6 +263,9 @@ organisms:
         {{ if .files }}
         {{- range .files }}
         - name: {{ .name }}
+          {{ if .displayName }}
+          displayName: {{ quote .displayName }}
+          {{ end }}
           type: string
           header: "Files"
           noInput: true
