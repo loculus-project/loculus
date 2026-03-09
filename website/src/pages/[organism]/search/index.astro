@@ -49,7 +49,12 @@ const { data, totalCount } = await performLapisSearchQueries(
     cleanedOrganism.key,
 );
 
-const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
+const websiteConfig = getWebsiteConfig();
+const sequenceFlaggingConfig = websiteConfig.sequenceFlagging;
+const contactConfig = {
+    gitHubIssuesUrl: websiteConfig.gitHubIssuesUrl,
+    issuesEmail: websiteConfig.issuesEmail,
+};
 ---
 
 <BaseLayout title={`${cleanedOrganism.displayName} - Browse`} fullWidth withoutMargin>
@@ -68,5 +73,6 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
         dataUseTermsEnabled={dataUseTermsAreEnabled()}
         sequenceFlaggingConfig={sequenceFlaggingConfig}
         linkOuts={schema.linkOuts}
+        contactConfig={contactConfig}
     />
 </BaseLayout>

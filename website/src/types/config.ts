@@ -236,6 +236,8 @@ export const websiteConfig = z.object({
     additionalHeadHTML: z.string().optional(),
     gitHubEditLink: z.string().optional(),
     gitHubMainUrl: z.string().optional(),
+    gitHubIssuesUrl: z.string().optional(),
+    issuesEmail: z.string().optional(),
     enableSeqSets: z.boolean(),
     seqSetsFieldsToDisplay: z.array(fieldToDisplay).optional(),
     enableLoginNavigationItem: z.boolean(),

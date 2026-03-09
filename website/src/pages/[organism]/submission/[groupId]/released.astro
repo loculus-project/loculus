@@ -52,7 +52,12 @@ const { data, totalCount } = await performLapisSearchQueries(
     cleanedOrganism.key,
 );
 
-const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
+const websiteConfig = getWebsiteConfig();
+const sequenceFlaggingConfig = websiteConfig.sequenceFlagging;
+const contactConfig = {
+    gitHubIssuesUrl: websiteConfig.gitHubIssuesUrl,
+    issuesEmail: websiteConfig.issuesEmail,
+};
 ---
 
 <SubmissionPageWrapper groupsResult={groupsResult} title='Released sequences'>
@@ -70,6 +75,7 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
         initialQueryDict={initialQueryDict}
         dataUseTermsEnabled={dataUseTermsAreEnabled()}
         sequenceFlaggingConfig={sequenceFlaggingConfig}
+        contactConfig={contactConfig}
         showEditDataUseTermsControls
     />
 </SubmissionPageWrapper>
