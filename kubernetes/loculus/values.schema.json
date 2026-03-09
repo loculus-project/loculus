@@ -1171,6 +1171,18 @@
       "default": "https://github.com/loculus-project/loculus",
       "description": "The link that the GitHub icon in the footer points to"
     },
+    "gitHubIssuesUrl": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "https://github.com/loculus-project/loculus/issues",
+      "description": "Link to GitHub repository where users can submit issues"
+    },
+    "issuesEmail": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "",
+      "description": "Email address that users can submit issues to"
+    },
     "sequenceFlagging": {
       "type": "object",
       "properties": {
