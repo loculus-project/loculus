@@ -62,16 +62,16 @@ ncbi_mappings:
     - ncbiHostCommonName
     - ncbiPurposeOfSampling
     - ncbiHostSex
-group_name: insdc_ingest_group  # Used only to set the group name, never read
+group_name: insdc_ingest_group # Used only to set the group name, never read
 username: insdc_ingest_user
 password: insdc_ingest_user
 keycloak_client_id: backend-client
 subsample_fraction: 1.0
-approve_timeout_min: "25" # Cronjobs run every 30min, make approve stop before it is forced to stop by argocd 
+approve_timeout_min: "25" # Cronjobs run every 30min, make approve stop before it is forced to stop by argocd
 db_username: postgres
 db_password: unsecure
 db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"
-batch_chunk_size: 10000  # Batch size for submitting sequences to Loculus backend
+batch_chunk_size: 10000 # Batch size for submitting sequences to Loculus backend
 nextclade_dataset_server: https://data.clades.nextstrain.org/v3
 time_between_approve_requests_seconds: 60
 backend_request_timeout_seconds: 600
