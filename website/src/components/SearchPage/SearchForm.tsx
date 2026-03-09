@@ -19,7 +19,7 @@ import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldVa
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
-import { getDisplayName } from '../../utils/getDisplayName.ts';
+import { getDefaultDisplayName } from '../../utils/getDefaultDisplayName.ts';
 import { getReferenceIdentifier, type ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
 import {
@@ -158,7 +158,7 @@ export const SearchForm = ({
         .filter((filter) => !filter.notSearchable)
         .map((filter) => ({
             name: filter.name,
-            displayName: getDisplayName(filter),
+            displayName: filter.displayName ?? getDefaultDisplayName(filter.name),
             header: filter.header,
             displayState: getDisplayState(
                 filter,
@@ -380,7 +380,9 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
         } else {
             return (
                 <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
-                    <h3 className='text-gray-500 text-sm mb-1'>{getDisplayName(field)}</h3>
+                    <h3 className='text-gray-500 text-sm mb-1'>
+                        {field.displayName ?? getDefaultDisplayName(field.name)}
+                    </h3>
 
                     {field.groupedFields.map((f) => (
                         <SearchField

@@ -1,5 +1,5 @@
 import { validateSingleValue } from './extractFieldValue';
-import { getDisplayName } from './getDisplayName.ts';
+import { getDefaultDisplayName } from './getDefaultDisplayName.ts';
 import { getReferenceIdentifier } from './referenceSelection.ts';
 import { getSegmentNames, segmentReferenceSelected, type SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
 import type { TableSequenceData } from '../components/SearchPage/Table';
@@ -166,7 +166,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 name: `${field.name}From`,
                 displayName: 'From',
                 fieldGroup: field.name,
-                fieldGroupDisplayName: getDisplayName(field),
+                fieldGroupDisplayName: field.displayName ?? getDefaultDisplayName(field.name),
                 header: field.header,
             };
             const toField = {
@@ -174,7 +174,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 name: `${field.name}To`,
                 displayName: 'To',
                 fieldGroup: field.name,
-                fieldGroupDisplayName: getDisplayName(field),
+                fieldGroupDisplayName: field.displayName ?? getDefaultDisplayName(field.name),
                 header: field.header,
             };
             result.push(fromField);
@@ -266,7 +266,7 @@ export class MetadataFilterSchema {
     public filterNameToLabelMap(): Record<string, string> {
         return this.filters.reduce(
             (acc, field) => {
-                acc[field.name] = getDisplayName(field);
+                acc[field.name] = field.displayName ?? getDefaultDisplayName(field.name);
                 return acc;
             },
             {} as Record<string, string>,

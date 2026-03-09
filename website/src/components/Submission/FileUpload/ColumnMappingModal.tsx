@@ -8,7 +8,7 @@ import { Tooltip } from 'react-tooltip';
 import { ColumnMapping } from './ColumnMapping';
 import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
-import { getDisplayName } from '../../../utils/getDisplayName';
+import { getDefaultDisplayName } from '../../../utils/getDefaultDisplayName';
 import { BaseDialog } from '../../common/BaseDialog';
 import { Button } from '../../common/Button';
 import { InputFieldTooltip } from '../InputFieldTooltip';
@@ -196,10 +196,8 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
               .flat()
               .find((o) => o.name === selectedOption)
         : undefined;
-    const selectedOptionText = selectedField ? getDisplayName(selectedField) : '';
-    const isExactMatch = selectedField
-        ? getDisplayName(selectedField) === selectingFor || selectedField.name === selectingFor
-        : false;
+    const selectedOptionText = selectedField?.displayName ?? selectedField?.name;
+    const isExactMatch = selectedField?.displayName === selectingFor || selectedField?.name === selectingFor;
 
     const minWidthStyle = calculateMinWidthStyleFromPossibleOptions(options);
 
@@ -210,7 +208,9 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
             className={`data-[focus]:bg-primary-200 p-1 pl-3 rounded-sm ${selectedOption === field.name ? 'bg-gray-200' : ''}`}
             data-tooltip-id={`${header}-${field.name}-tooltip`}
         >
-            <span className={usedOptions.includes(field.name) ? 'text-gray-400' : ''}>{getDisplayName(field)}</span>
+            <span className={usedOptions.includes(field.name) ? 'text-gray-400' : ''}>
+                {field.displayName ?? getDefaultDisplayName(field.name)}
+            </span>
             <InputFieldTooltip id={`${header}-${field.name}-tooltip`} field={field} />
         </ListboxOption>
     );
