@@ -157,6 +157,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           bound: upper
         noInput: true
       - name: displayName
+        displayName: Display name
         preprocessing:
           function: concatenate
           inputs:
@@ -1493,6 +1494,7 @@ defaultOrganisms:
           url: "https://mapoplexus.genomium.org/?url={{[metadata+accessionVersion,accession,version,geoLocAdmin1,geoLocAdmin2,geoLocCity,geoLocCountry,geoLocSite,hostNameCommon,hostNameScientific,authors,sampleCollectionDate]}}"
       metadataAdd:
         - name: displayName
+          displayName: Display name
           preprocessing:
             function: build_display_name
             inputs:
