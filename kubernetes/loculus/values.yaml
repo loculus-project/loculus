@@ -1486,7 +1486,7 @@ defaultOrganisms:
               # - Last field is a date in format YYYY, YYYY-MM, or YYYY-MM-DD
               # - Identifier is the second to last field (extracted through named capture group)
               regex_pattern: |
-                ^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$
+                "^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$"
         - name: lineage
           isSequenceFilter: true
           header: "Lineage"
