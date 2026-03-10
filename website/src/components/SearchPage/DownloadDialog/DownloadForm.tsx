@@ -68,6 +68,9 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 
     const referenceSelected = useMemo(() => nucleotideSegmentInfos.length !== 0, [nucleotideSegmentInfos, geneInfos]);
     const notSelectedSegmentsText = useMemo(() => {
+        if (!referenceGenomesInfo.isMultiSegmented) {
+            return '';
+        }
         const names = segmentsWithMultipleReferences(referenceGenomesInfo)
             .filter((segment) => selectedReferenceNames?.[segment] === null)
             .map((segment) => referenceGenomesInfo.segmentDisplayNames[segment] ?? segment);
@@ -82,7 +85,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         }
 
         const label = names.length === 1 ? 'segment' : 'segments';
-        return `${label}: ${joined}`;
+        return ` for the ${label}: ${joined}`;
     }, [referenceGenomesInfo, selectedReferenceNames]);
 
     function getDataTypeOptions(): OptionBlockOption[] {
@@ -255,16 +258,16 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 />
                 {!referenceSelected && referenceIdentifierField !== undefined && (
                     <div className='text-sm text-gray-400 mt-4 max-w-60'>
-                        Select a {referenceIdentifierField} for the {notSelectedSegmentsText} with the search UI to
-                        enable download of aligned sequences.
+                        Select a {referenceIdentifierField}
+                        {notSelectedSegmentsText} with the search UI to enable download of aligned sequences.
                     </div>
                 )}
                 {referenceSelected &&
                     !allReferencesSelected(referenceGenomesInfo, selectedReferenceNames) &&
                     referenceIdentifierField !== undefined && (
                         <div className='text-sm text-gray-400 mt-4 max-w-60'>
-                            No {referenceIdentifierField} has been selected for the {notSelectedSegmentsText}. Select
-                            one in the search UI to enable download of aligned sequences for these segments.
+                            No {referenceIdentifierField} has been selected{notSelectedSegmentsText}. Select one in the
+                            search UI to enable download of aligned sequences for these segments.
                         </div>
                     )}
             </div>
