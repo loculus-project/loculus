@@ -66,7 +66,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         [referenceGenomesInfo, selectedReferenceNames],
     );
 
-    const referenceSelected = useMemo(() => nucleotideSegmentInfos.length !== 0, [nucleotideSegmentInfos, geneInfos]);
+    const referenceSelected = useMemo(() => nucleotideSegmentInfos.length !== 0, [nucleotideSegmentInfos]);
     const notSelectedSegmentsText = useMemo(() => {
         const names = segmentsWithMultipleReferences(referenceGenomesInfo)
             .filter((segment) => selectedReferenceNames?.[segment] === null)
