@@ -213,7 +213,7 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
                         setType(unalignedSequenceSegment(segmentName));
                         setActiveTab('unaligned');
                     }}
-                    label={`${segmentName.name} (unaligned)`}
+                    label={`${segmentName.displayName ?? segmentName.name} (unaligned)`}
                 />
             ))}
         </>
@@ -268,7 +268,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
                         setType(alignedSequenceSegment(segmentName));
                         setActiveTab('aligned');
                     }}
-                    label={`${segmentName.name} (aligned)`}
+                    label={`${segmentName.displayName ?? segmentName.name} (aligned)`}
                 />
             ))}
         </>
