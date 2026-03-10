@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { act } from 'react';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import { SequencesContainer } from './SequencesContainer.tsx';
 import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
@@ -10,7 +10,6 @@ import {
     MULTI_SEG_SINGLE_REF_REFERENCEGENOMES,
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
-    THREE_SEG_SINGLE_REF_REFERENCEGENOMES,
 } from '../../../types/referenceGenomes.spec.ts';
 import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
@@ -29,10 +28,6 @@ const TAB_ACTIVE_CLASS = 'tab-active';
 const LOAD_SEQUENCES_BUTTON = 'Load sequences';
 const ALIGNED_NUCLEOTIDE_SEQUENCE_TAB = 'Aligned nucleotide sequence';
 const NUCLEOTIDE_SEQUENCE_TAB = 'Nucleotide sequence';
-
-// Helper Functions for Dynamic Labels
-const getAlignedSegmentLabel = (segment: string) => `${segment} (aligned)`;
-const getUnalignedSegmentLabel = (segment: string) => `${segment} (unaligned)`;
 
 // Test Selectors
 const BUTTON_ROLE = 'button';
@@ -108,28 +103,21 @@ describe('SequencesContainer', () => {
             renderSequenceViewer(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { L: 'singleReference', S: 'singleReference' });
             click(LOAD_SEQUENCES_BUTTON);
 
-            click(getAlignedSegmentLabel('L'));
             await waitFor(() => {
-                expect(
-                    screen.getByText(multiSegmentSequence, {
-                        exact: false,
-                    }),
-                ).toBeVisible();
+                expect(screen.getByRole(BUTTON_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
             });
-            //Regression test for #5330
-            expectTabActive(getAlignedSegmentLabel('L'));
-            expectTabNotActive(getUnalignedSegmentLabel('L'));
+            expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned nucleotide sequences' })).toBeVisible();
+            expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned amino acid sequences' })).toBeVisible();
 
-            click(getUnalignedSegmentLabel('L'));
+            click('Nucleotide sequences');
+
             await waitFor(() => {
-                expect(
-                    screen.getByText(unalignedMultiSegmentSequence, {
-                        exact: false,
-                    }),
-                ).toBeVisible();
+                const options = screen.getAllByRole('option');
+                const optionLabels = options.map((o) => o.textContent);
+                expect(optionLabels).toContain('L');
+                expect(optionLabels).toContain('S');
+                expectTabNotActive('Aligned nucleotide sequences');
             });
-            expectTabActive(getUnalignedSegmentLabel('L'));
-            expectTabNotActive(getAlignedSegmentLabel('L'));
         });
     });
 
@@ -177,89 +165,19 @@ describe('SequencesContainer', () => {
             renderSequenceViewer(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { L: 'ref1', S: 'singleReference' });
             click(LOAD_SEQUENCES_BUTTON);
 
-            click(getAlignedSegmentLabel('L (segment)'));
-            await waitFor(() => {
-                expect(
-                    screen.getByText(multiSegmentSequence, {
-                        exact: false,
-                    }),
-                ).toBeVisible();
-            });
-            //Regression test for #5330
-            expectTabActive(getAlignedSegmentLabel('L (segment)'));
-            expectTabNotActive(getUnalignedSegmentLabel('L (segment)'));
-
-            click(getUnalignedSegmentLabel('L (segment)'));
-            await waitFor(() => {
-                expect(
-                    screen.getByText(unalignedMultiSegmentSequence, {
-                        exact: false,
-                    }),
-                ).toBeVisible();
-            });
-            expectTabActive(getUnalignedSegmentLabel('L (segment)'));
-            expectTabNotActive(getAlignedSegmentLabel('L (segment)'));
-        });
-    });
-
-    describe('with 3 or more segments', () => {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        const threeSegRefs = { L: 'singleReference', M: 'singleReference', S: 'singleReference' };
-
-        beforeEach(() => {
-            for (const segment of ['L', 'M', 'S']) {
-                mockRequest.lapis.alignedNucleotideSequencesMultiSegment(
-                    200,
-                    `>some\n${multiSegmentSequence}`,
-                    segment,
-                );
-                mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(
-                    200,
-                    `>some\n${unalignedMultiSegmentSequence}`,
-                    segment,
-                );
-            }
-        });
-
-        test('uses collapsed tabs instead of per-segment tabs', async () => {
-            renderSequenceViewer(THREE_SEG_SINGLE_REF_REFERENCEGENOMES, threeSegRefs);
-            click(LOAD_SEQUENCES_BUTTON);
-
             await waitFor(() => {
                 expect(screen.getByRole(BUTTON_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
             });
             expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned nucleotide sequences' })).toBeVisible();
             expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned amino acid sequences' })).toBeVisible();
 
-            expect(screen.queryByRole(BUTTON_ROLE, { name: /\(unaligned\)/ })).not.toBeInTheDocument();
-            expect(screen.queryByRole(BUTTON_ROLE, { name: /\(aligned\)/ })).not.toBeInTheDocument();
-        });
-
-        test('shows segment dropdown with display names when unaligned tab is active', async () => {
-            renderSequenceViewer(THREE_SEG_SINGLE_REF_REFERENCEGENOMES, threeSegRefs);
-            click(LOAD_SEQUENCES_BUTTON);
-            click('Nucleotide sequences');
-
-            await waitFor(() => {
-                const options = screen.getAllByRole('option');
-                const optionLabels = options.map((o) => o.textContent);
-                expect(optionLabels).toContain('Large');
-                expect(optionLabels).toContain('Medium');
-                expect(optionLabels).toContain('Small');
-            });
-        });
-
-        test('shows segment dropdown with display names when aligned tab is active', async () => {
-            renderSequenceViewer(THREE_SEG_SINGLE_REF_REFERENCEGENOMES, threeSegRefs);
-            click(LOAD_SEQUENCES_BUTTON);
             click('Aligned nucleotide sequences');
 
             await waitFor(() => {
                 const options = screen.getAllByRole('option');
                 const optionLabels = options.map((o) => o.textContent);
-                expect(optionLabels).toContain('Large');
-                expect(optionLabels).toContain('Medium');
-                expect(optionLabels).toContain('Small');
+                    expect(optionLabels).toContain('L (segment)');
+                expect(optionLabels).toContain('S (segment)');
             });
         });
     });
