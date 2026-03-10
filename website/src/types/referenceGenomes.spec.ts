@@ -216,6 +216,35 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA: ReferenceGenomesSchema
     },
 ];
 
+export const THREE_SEG_SINGLE_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
+    segmentReferenceGenomes: {
+        L: {
+            singleReference: {
+                lapisName: 'L',
+                insdcAccessionFull: null,
+                genes: [],
+            },
+        },
+        M: {
+            singleReference: {
+                lapisName: 'M',
+                insdcAccessionFull: null,
+                genes: [],
+            },
+        },
+        S: {
+            singleReference: {
+                lapisName: 'S',
+                insdcAccessionFull: null,
+                genes: [{ lapisName: 'gene1', name: 'gene1' }],
+            },
+        },
+    },
+    segmentDisplayNames: { L: 'Large', M: 'Medium', S: 'Small' },
+    isMultiSegmented: true,
+    useLapisMultiSegmentedEndpoint: true,
+};
+
 export const MOCK_REFERENCE_GENOMES_INFO: ReferenceGenomesInfo = {
     isMultiSegmented: false,
     segmentReferenceGenomes: {},
