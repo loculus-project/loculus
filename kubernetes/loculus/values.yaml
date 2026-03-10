@@ -1358,6 +1358,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         displayName: Completeness
         rangeSearch: true
+        percentage: true
         orderOnDetailsPage: 2860
         customDisplay:
           type: lengthCompleteness
@@ -1507,11 +1508,10 @@ defaultOrganisms:
               type: [string, IDENTIFIER, string]
               # regex pattern constraints:
               # - Cannot start with a slash
-              # - Four fields, separated by exactly three slashes
+              # - Four or three fields, separated by exactly two or three slashes
               # - Last field is a date in format YYYY, YYYY-MM, or YYYY-MM-DD
               # - Identifier is the second to last field (extracted through named capture group)
-              regex_pattern: |
-                ^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$
+              regex_pattern: '^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$'
         - name: lineage
           displayName: Lineage
           isSequenceFilter: true
@@ -2394,7 +2394,7 @@ images:
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "v0.6.3@sha256:07ece2d811ed14bcb706db832fa3071af662350b6dab8371748ef73fe6e8f628"
+    tag: "v0.6.8@sha256:6a18b82d554ea05ba58ff8630cc74cba17d07d798665f41a8a87edc9402987a2"
     pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"

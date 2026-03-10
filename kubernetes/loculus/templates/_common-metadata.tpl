@@ -357,6 +357,9 @@ organisms:
   {{- if .relatesToSegment }}
   relatesToSegment: {{ .relatesToSegment }}
   {{- end }}
+  {{- if .percentage }}
+  percentage: {{ .percentage }}
+  {{- end }}
 {{- end }}
 
 {{/* Generate website metadata from passed metadata array */}}
