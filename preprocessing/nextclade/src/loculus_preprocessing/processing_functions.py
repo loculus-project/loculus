@@ -921,7 +921,7 @@ class ProcessingFunctions:
                 )
             )
             return ProcessingResult(datum=None, warnings=warnings, errors=errors)
-        match = re.match(pattern.strip(), regex_field.strip())
+        match = re.match(pattern, regex_field.strip())
         if match:
             try:
                 result = match.group(capture_group)
