@@ -177,7 +177,7 @@ describe('SequencesContainer', () => {
             renderSequenceViewer(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { L: 'ref1', S: 'singleReference' });
             click(LOAD_SEQUENCES_BUTTON);
 
-            click(getAlignedSegmentLabel('L'));
+            click(getAlignedSegmentLabel('L (segment)'));
             await waitFor(() => {
                 expect(
                     screen.getByText(multiSegmentSequence, {
@@ -186,10 +186,10 @@ describe('SequencesContainer', () => {
                 ).toBeVisible();
             });
             //Regression test for #5330
-            expectTabActive(getAlignedSegmentLabel('L'));
-            expectTabNotActive(getUnalignedSegmentLabel('L'));
+            expectTabActive(getAlignedSegmentLabel('L (segment)'));
+            expectTabNotActive(getUnalignedSegmentLabel('L (segment)'));
 
-            click(getUnalignedSegmentLabel('L'));
+            click(getUnalignedSegmentLabel('L (segment)'));
             await waitFor(() => {
                 expect(
                     screen.getByText(unalignedMultiSegmentSequence, {
@@ -197,8 +197,8 @@ describe('SequencesContainer', () => {
                     }),
                 ).toBeVisible();
             });
-            expectTabActive(getUnalignedSegmentLabel('L'));
-            expectTabNotActive(getAlignedSegmentLabel('L'));
+            expectTabActive(getUnalignedSegmentLabel('L (segment)'));
+            expectTabNotActive(getAlignedSegmentLabel('L (segment)'));
         });
     });
 
