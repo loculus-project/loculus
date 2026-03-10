@@ -283,7 +283,12 @@ export function lapisNameToDisplayName(referenceGenomesInfo: ReferenceGenomesInf
     const map = new Map<string, string | undefined>();
     for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
         for (const refData of Object.values(segmentData)) {
-            map.set(refData.lapisName, referenceGenomesInfo.isMultiSegmented ? segmentName : undefined);
+            map.set(
+                refData.lapisName,
+                referenceGenomesInfo.isMultiSegmented
+                    ? (referenceGenomesInfo.segmentDisplayNames[segmentName] ?? segmentName)
+                    : undefined,
+            );
             for (const gene of refData.genes) {
                 map.set(gene.lapisName, gene.name);
             }
