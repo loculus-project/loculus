@@ -1201,7 +1201,6 @@ class ProcessingFunctions:
         collector_id = input_data.get("specimenCollectorSampleId", None)
         submission_id = input_data.get("submissionId", None)
         warnings: list[ProcessingAnnotation] = []
-        errors: list[ProcessingAnnotation] = []
         if submission_id is None:
             return ProcessingResult(
                 datum=None,
@@ -1306,7 +1305,6 @@ class ProcessingFunctions:
                             ),
                         )
                     )
-                    errors = errors + extract_result.errors
                 identifier = extract_result.datum
 
         if identifier is None:
@@ -1333,7 +1331,7 @@ class ProcessingFunctions:
         return ProcessingResult(
             datum=concat_result.datum,
             warnings=warnings + concat_result.warnings,
-            errors=errors + concat_result.errors,
+            errors=concat_result.errors,
         )
 
 
