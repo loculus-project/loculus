@@ -1831,6 +1831,7 @@ defaultOrganisms:
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/S"
       metadataAdd:
         - name: hostNameScientific
+          isSequenceFilter: true. # revert after testing
           generateIndex: true
           autocomplete: true
           customDisplay:
