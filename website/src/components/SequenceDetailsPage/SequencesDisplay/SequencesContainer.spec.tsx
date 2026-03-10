@@ -176,7 +176,7 @@ describe('SequencesContainer', () => {
             await waitFor(() => {
                 const options = screen.getAllByRole('option');
                 const optionLabels = options.map((o) => o.textContent);
-                    expect(optionLabels).toContain('L (segment)');
+                expect(optionLabels).toContain('L (segment)');
                 expect(optionLabels).toContain('S (segment)');
             });
         });
