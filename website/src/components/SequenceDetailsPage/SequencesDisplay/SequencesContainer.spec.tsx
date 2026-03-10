@@ -208,8 +208,16 @@ describe('SequencesContainer', () => {
 
         beforeEach(() => {
             for (const segment of ['L', 'M', 'S']) {
-                mockRequest.lapis.alignedNucleotideSequencesMultiSegment(200, `>some\n${multiSegmentSequence}`, segment);
-                mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(200, `>some\n${unalignedMultiSegmentSequence}`, segment);
+                mockRequest.lapis.alignedNucleotideSequencesMultiSegment(
+                    200,
+                    `>some\n${multiSegmentSequence}`,
+                    segment,
+                );
+                mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(
+                    200,
+                    `>some\n${unalignedMultiSegmentSequence}`,
+                    segment,
+                );
             }
         });
 
