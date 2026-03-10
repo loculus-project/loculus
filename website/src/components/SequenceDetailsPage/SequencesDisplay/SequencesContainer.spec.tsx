@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { act } from 'react';
-import { describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SequencesContainer } from './SequencesContainer.tsx';
 import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
@@ -206,11 +206,20 @@ describe('SequencesContainer', () => {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         const threeSegRefs = { L: 'singleReference', M: 'singleReference', S: 'singleReference' };
 
-        test('uses collapsed tabs instead of per-segment tabs', () => {
+        beforeEach(() => {
+            for (const segment of ['L', 'M', 'S']) {
+                mockRequest.lapis.alignedNucleotideSequencesMultiSegment(200, `>some\n${multiSegmentSequence}`, segment);
+                mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(200, `>some\n${unalignedMultiSegmentSequence}`, segment);
+            }
+        });
+
+        test('uses collapsed tabs instead of per-segment tabs', async () => {
             renderSequenceViewer(THREE_SEG_SINGLE_REF_REFERENCEGENOMES, threeSegRefs);
             click(LOAD_SEQUENCES_BUTTON);
 
-            expect(screen.getByRole(BUTTON_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
+            await waitFor(() => {
+                expect(screen.getByRole(BUTTON_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
+            });
             expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned nucleotide sequences' })).toBeVisible();
             expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned amino acid sequences' })).toBeVisible();
 
@@ -218,28 +227,32 @@ describe('SequencesContainer', () => {
             expect(screen.queryByRole(BUTTON_ROLE, { name: /\(aligned\)/ })).not.toBeInTheDocument();
         });
 
-        test('shows segment dropdown with display names when unaligned tab is active', () => {
+        test('shows segment dropdown with display names when unaligned tab is active', async () => {
             renderSequenceViewer(THREE_SEG_SINGLE_REF_REFERENCEGENOMES, threeSegRefs);
             click(LOAD_SEQUENCES_BUTTON);
             click('Nucleotide sequences');
 
-            const options = screen.getAllByRole('option');
-            const optionLabels = options.map((o) => o.textContent);
-            expect(optionLabels).toContain('Large');
-            expect(optionLabels).toContain('Medium');
-            expect(optionLabels).toContain('Small');
+            await waitFor(() => {
+                const options = screen.getAllByRole('option');
+                const optionLabels = options.map((o) => o.textContent);
+                expect(optionLabels).toContain('Large');
+                expect(optionLabels).toContain('Medium');
+                expect(optionLabels).toContain('Small');
+            });
         });
 
-        test('shows segment dropdown with display names when aligned tab is active', () => {
+        test('shows segment dropdown with display names when aligned tab is active', async () => {
             renderSequenceViewer(THREE_SEG_SINGLE_REF_REFERENCEGENOMES, threeSegRefs);
             click(LOAD_SEQUENCES_BUTTON);
             click('Aligned nucleotide sequences');
 
-            const options = screen.getAllByRole('option');
-            const optionLabels = options.map((o) => o.textContent);
-            expect(optionLabels).toContain('Large');
-            expect(optionLabels).toContain('Medium');
-            expect(optionLabels).toContain('Small');
+            await waitFor(() => {
+                const options = screen.getAllByRole('option');
+                const optionLabels = options.map((o) => o.textContent);
+                expect(optionLabels).toContain('Large');
+                expect(optionLabels).toContain('Medium');
+                expect(optionLabels).toContain('Small');
+            });
         });
     });
 
