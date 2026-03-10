@@ -236,6 +236,7 @@ export function getSingleSegmentAndGeneInfo(
     selectedReferences?: SegmentReferenceSelections,
 ): SingleSegmentAndGeneInfo | null {
     const segmentData = referenceGenomesInfo.segmentReferenceGenomes[segment];
+    const displayName = referenceGenomesInfo.segmentDisplayNames[segment];
 
     const refs = Object.keys(segmentData);
     const selectedRef = refs.length === 1 ? refs[0] : selectedReferences?.[segment];
@@ -245,7 +246,7 @@ export function getSingleSegmentAndGeneInfo(
     const refData = segmentData[selectedRef];
 
     return {
-        nucleotideSegmentInfo: { name: segment, lapisName: refData.lapisName },
+        nucleotideSegmentInfo: { name: segment, lapisName: refData.lapisName, displayName },
         geneInfos: refData.genes.map((gene) => ({ ...gene, segmentName: segment })),
         useLapisMultiSegmentedEndpoint: referenceGenomesInfo.useLapisMultiSegmentedEndpoint,
         multiSegmented: referenceGenomesInfo.isMultiSegmented,

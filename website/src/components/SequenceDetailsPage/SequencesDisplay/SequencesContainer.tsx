@@ -61,6 +61,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             setType={setSequenceType}
             genes={geneInfos}
             useLapisMultiSegmentedEndpoint={referenceGenomesInfo.useLapisMultiSegmentedEndpoint}
+            useCollapsedTabs={referenceGenomesInfo.isMultiSegmented}
         />
     );
 };
@@ -76,6 +77,7 @@ type SequenceTabsProps = {
     setType: Dispatch<SetStateAction<SequenceType>>;
     genes: GeneInfo[];
     useLapisMultiSegmentedEndpoint: boolean;
+    useCollapsedTabs: boolean;
 };
 
 const SequenceTabs: FC<SequenceTabsProps> = ({
@@ -87,6 +89,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
     sequenceType,
     setType,
     useLapisMultiSegmentedEndpoint,
+    useCollapsedTabs,
 }) => {
     const [activeTab, setActiveTab] = useState<'unaligned' | 'aligned' | 'gene'>('unaligned');
 
@@ -99,8 +102,6 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
             setActiveTab('gene');
         }
     }, [sequenceType]);
-
-    const useCollapsedTabs = segments.length >= 3;
 
     return (
         <>
