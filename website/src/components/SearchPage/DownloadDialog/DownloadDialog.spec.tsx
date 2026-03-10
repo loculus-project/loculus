@@ -380,7 +380,7 @@ describe('DownloadDialog', () => {
 
             expect(
                 screen.getByText(
-                    'Select a genotype for the segment: main with the search UI to enable download of aligned sequences.',
+                    'Select a genotype with the search UI to enable download of aligned sequences.',
                     { exact: false },
                 ),
             ).toBeVisible();
