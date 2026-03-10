@@ -12,7 +12,7 @@ const ErrorContactMessage: React.FC<ErrorContactMessageProps> = ({ gitHubIssuesU
 
     return (
         <div>
-            If the issues persists, feel free to
+            If the problem persists, feel free to
             {gitHubIssuesUrl && (
                 <>
                     {' '}
