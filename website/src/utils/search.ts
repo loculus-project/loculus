@@ -160,7 +160,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 displayName: 'To',
             });
         } else if (field.rangeSearch === true) {
-            const baseDisplayName = field.displayName ?? sentenceCase(field.name);
+            const baseDisplayName = field.displayName ?? field.name;
             const groupDisplayName = field.percentage === true ? `${baseDisplayName} (%)` : baseDisplayName;
             const fromField = {
                 ...field,
@@ -181,7 +181,7 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
             result.push(fromField);
             result.push(toField);
         } else if (field.percentage === true) {
-            const baseDisplayName = field.displayName ?? sentenceCase(field.name);
+            const baseDisplayName = field.displayName ?? field.name;
             result.push({
                 ...field,
                 displayName: `${baseDisplayName} (%)`,
