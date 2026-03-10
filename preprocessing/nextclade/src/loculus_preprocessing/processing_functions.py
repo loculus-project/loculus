@@ -1273,7 +1273,7 @@ class ProcessingFunctions:
             if " " in identifier or "/" in identifier:
                 identifier = None
         elif "/" in identifier:
-            # For direct submissions with "/": try to extrect ID field using regex
+            # For direct submissions with "/": try to extract ID field using regex
             if regex_pattern is None:
                 identifier = None
                 warnings.append(
