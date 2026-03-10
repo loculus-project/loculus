@@ -1863,6 +1863,7 @@ defaultOrganisms:
       metadataAdd:
         - name: hostNameScientific
           displayName: Host name - scientific
+          isSequenceFilter: true # revert after testing
           generateIndex: true
           autocomplete: true
           customDisplay:
