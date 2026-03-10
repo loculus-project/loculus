@@ -1185,7 +1185,6 @@
     "issuesEmail": {
       "groups": ["general"],
       "type": "string",
-      "default": "",
       "description": "Email address that users can submit issues to"
     },
     "sequenceFlagging": {
