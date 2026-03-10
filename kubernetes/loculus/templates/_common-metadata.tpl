@@ -55,7 +55,6 @@ fields:
       type: submittingGroup
       displayGroup: group
   - name: groupId
-    displayName: Group ID
     type: int
     autocomplete: true
     header: Submission details
