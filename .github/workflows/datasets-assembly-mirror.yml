@@ -20,15 +20,38 @@ jobs:
         with:
           environment-name: datasets
           create-args: ncbi-datasets-cli s3cmd
-      - name: Download NCBI Dataset
-        shell: bash -l {0}
+      - name: Download NCBI datasets
+        shell: bash
         run: |
-          datasets download genome taxon ${{ matrix.taxon_id }} --no-progressbar --assembly-source refseq --dehydrated --filename ${{ matrix.taxon_id }}-refseq.zip
-          unzip -o ${{ matrix.taxon_id }}-refseq.zip
-          tar -I 'zstd -T0 -18' -cvf ${{ matrix.taxon_id }}-refseq.tar.zst ncbi_dataset
-          datasets download genome taxon ${{ matrix.taxon_id }} --no-progressbar --assembly-source genbank --dehydrated --filename ${{ matrix.taxon_id }}-genbank.zip
-          unzip -o ${{ matrix.taxon_id }}-genbank.zip
-          tar -I 'zstd -T0 -18' -cvf ${{ matrix.taxon_id }}-genbank.tar.zst ncbi_dataset
+          set -Eeuo pipefail
+
+          taxon_id="${{ matrix.taxon_id }}"
+
+          download_and_pack() {
+            local source="$1"
+            local prefix="${taxon_id}-assembly-${source}"
+            local zipfile="${prefix}.zip"
+            local outdir="${prefix}"
+
+            datasets download genome taxon "${taxon_id}" \
+              --no-progressbar \
+              --assembly-source "${source}" \
+              --dehydrated \
+              --filename "${zipfile}"
+
+            unzip -o "${zipfile}" -d "${outdir}"
+
+            datasets rehydrate \
+              --directory "${outdir}" \
+              --no-progressbar
+
+            tar -I 'zstd -T0 -18' \
+              -cvf "${prefix}.tar.zst" \
+              -C "${outdir}" ncbi_dataset
+          }
+
+          download_and_pack refseq
+          download_and_pack genbank
       - name: Create S3cmd config
         run: |
           cat <<EOF > ~/.s3cfg
@@ -41,7 +64,7 @@ jobs:
       - name: Upload to Object Storage
         shell: bash -l {0}
         run: |
-          for file in ${{ matrix.taxon_id }}-refseq.zip ${{ matrix.taxon_id }}-genbank.zip ${{ matrix.taxon_id }}-refseq.tar.zst ${{ matrix.taxon_id }}-genbank.tar.zst ; do
+          for file in ${{ matrix.taxon_id }}-assembly-refseq.tar.zst ${{ matrix.taxon_id }}-assembly-genbank.tar.zst ; do
             s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
           done
   notify_on_failure:  # Runs only if 'build' job fails
