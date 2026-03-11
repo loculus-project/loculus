@@ -3,6 +3,7 @@ import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../components/SearchPage/SearchFullUI';
 import {
     dataUseTermsAreEnabled,
+    getContactConfig,
     getReferenceGenomes,
     getRuntimeConfig,
     getSchema,
@@ -51,10 +52,7 @@ const { data, totalCount } = await performLapisSearchQueries(
 
 const websiteConfig = getWebsiteConfig();
 const sequenceFlaggingConfig = websiteConfig.sequenceFlagging;
-const contactConfig = {
-    gitHubIssuesUrl: websiteConfig.gitHubIssuesUrl,
-    issuesEmail: websiteConfig.issuesEmail,
-};
+const contactConfig = getContactConfig(websiteConfig);
 ---
 
 <BaseLayout title={`${cleanedOrganism.displayName} - Browse`} fullWidth withoutMargin>
