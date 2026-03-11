@@ -134,6 +134,10 @@
     @apply text-lg font-semibold text-main my-3 border-t border-gray-300 mt-7 pt-5 mb-0;
 }
 
+.mdContainer blockquote {
+    @apply my-4 pl-4 border-l-4 border-gray-300 text-gray-600 italic;
+}
+
 .astro-code {
     @apply p-2;
 }
