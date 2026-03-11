@@ -418,41 +418,26 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             else
                 datasets download genome taxon {params.taxon_id} \
                     --assembly-source {wildcards.source} \
-                    --no-progressbar \
+                    --no-progressbar --dehydrated \
                     --filename {params.compressed_package_zip} \
                     {params.api_key} \
                     {params.gateway} \
                 && {params.unzip} \
                     -o {params.compressed_package_zip} \
-                    -d {params.package}
+                    -d {params.package} \
+                && datasets rehydrate \
+                    --directory {params.assembly_dir} \
+                    --no-progressbar \
+            &&
             fi
             touch {output.marker}
-            """
-
-    rule rehydrate_assemblies:
-        """
-        Unzips the downloaded, dehydrated assembly, and then rehydrates it. The rehydration can take quite a bit,
-        but it can be restarted. Run this rule with --rerun-incomplete to let snakemake know that it can be safely restarted.
-        """
-        input:
-            marker="results/{source}_assembly/.fetch_inflate_complete",
-        output:
-            marker="results/{source}_assembly/.rehydration_complete",
-        params:
-            assembly_dir="results/{source}_assembly",
-        shell:
-            """
-            datasets rehydrate \
-                --directory {params.assembly_dir} \
-                --no-progressbar \
-            && touch {output.marker}
             """
 
     rule get_assembly_groups:
         input:
             script="scripts/calculate_assembly_groups.py",
-            rehydration_genbank="results/genbank_assembly/.rehydration_complete",
-            rehydration_refseq="results/refseq_assembly/.rehydration_complete",
+            fetch_genbank="results/genbank_assembly/.fetch_inflate_complete",
+            fetch_refseq="results/refseq_assembly/.fetch_inflate_complete",
             ignore_list="results/grouping_ignore_list.txt",
             config_file="results/config.yaml",
         output:
