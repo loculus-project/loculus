@@ -1,5 +1,8 @@
 name: Mirror NCBI Assemblies to Object Storage
 on:
+  push:
+    branches:
+      - calculate_gca_groups_2
   workflow_dispatch:
   schedule:
     - cron: '12 2 * * *' # Runs daily at 02:12 UTC
