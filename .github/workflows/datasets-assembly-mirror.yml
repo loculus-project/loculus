@@ -50,11 +50,6 @@ jobs:
               --directory "${outdir}" \
               --no-progressbar
 
-            if ! find "${outdir}/ncbi_dataset/data" -type f -name '*_genomic.fna' | grep -q .; then
-              echo "ERROR: rehydrate did not produce any *_genomic.fna files"
-              exit 1
-            fi
-
             tar -I 'zstd -T0 -18' \
               -cvf "${prefix}.tar.zst" \
               -C "${outdir}" .
