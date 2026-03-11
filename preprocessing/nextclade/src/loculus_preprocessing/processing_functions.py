@@ -696,7 +696,7 @@ class ProcessingFunctions:
 
         n_inputs = len(input_data.keys())
         # exclude ACCESSION_VERSION as it's provided by _call_preprocessing_function() and should not be an input_metadata field
-        n_expected = len([i for i in order if i != "ACCESSION_VERSION"])
+        n_expected = len([i for i in order if i != "ACCESSION_VERSION" and not i.startswith("ARG:")])
         if n_inputs < n_expected:
             logger.error(
                 f"Concatenate: Expected {n_expected} fields, got {n_inputs}. "
@@ -743,6 +743,19 @@ class ProcessingFunctions:
                     )
                 elif field_types[i] == "ACCESSION_VERSION":
                     formatted_input_data.append(accession_version)
+                elif field_types[i].startswith("ARG:"):
+                    if field_types[i][4:] not in args:
+                        logger.error(
+                            f"Concatenate: Missing argument {field_types[i][4:]} in args. "
+                            f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
+                        )
+                        add_errors()
+                        return ProcessingResult(
+                            datum=None,
+                            warnings=warnings,
+                            errors=errors,
+                        )
+                    formatted_input_data.append(str(args[field_types[i][4:]]))
                 elif order[i] in input_data:
                     formatted_input_data.append(
                         fallback_value
@@ -1276,16 +1289,6 @@ class ProcessingFunctions:
             # For direct submissions with "/": try to extract ID field using regex
             if regex_pattern is None:
                 identifier = None
-                warnings.append(
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=(
-                            "identifier string contained '/' but no regex_pattern was provided"
-                        ),
-                    )
-                )
             else:
                 extract_result = ProcessingFunctions.extract_regex(
                     input_data={"regex_field": identifier},
