@@ -1,5 +1,8 @@
 name: Mirror NCBI Assemblies to Object Storage
 on:
+  push:
+    branches:
+      - calculate_gca_groups_2
   workflow_dispatch:
   schedule:
     - cron: '12 2 * * *' # Runs daily at 02:12 UTC
@@ -39,15 +42,22 @@ jobs:
               --dehydrated \
               --filename "${zipfile}"
 
+            rm -rf "${outdir}"
+            mkdir -p "${outdir}"
             unzip -o "${zipfile}" -d "${outdir}"
 
             datasets rehydrate \
               --directory "${outdir}" \
               --no-progressbar
 
+            if ! find "${outdir}/ncbi_dataset/data" -type f -name '*_genomic.fna' | grep -q .; then
+              echo "ERROR: rehydrate did not produce any *_genomic.fna files"
+              exit 1
+            fi
+
             tar -I 'zstd -T0 -18' \
               -cvf "${prefix}.tar.zst" \
-              -C "${outdir}" ncbi_dataset
+              -C "${outdir}" .
           }
 
           download_and_pack refseq
