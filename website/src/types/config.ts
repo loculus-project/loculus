@@ -249,6 +249,12 @@ export const websiteConfig = z.object({
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 
+const contactConfig = z.object({
+    gitHubIssuesUrl: z.string().optional(),
+    issuesEmail: z.string().optional(),
+});
+export type ContactConfig = z.infer<typeof contactConfig>;
+
 export type FieldValue = string | null | (string | null)[];
 export type FieldValueUpdate = [string, FieldValue];
 

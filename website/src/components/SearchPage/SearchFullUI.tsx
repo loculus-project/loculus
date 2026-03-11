@@ -18,7 +18,7 @@ import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import type { LinkOut } from '../../types/config.ts';
+import type { LinkOut, ContactConfig } from '../../types/config.ts';
 import { type FieldValues, type Schema, type SequenceFlaggingConfig } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
@@ -50,10 +50,7 @@ export interface InnerSearchFullUIProps {
     dataUseTermsEnabled?: boolean;
     sequenceFlaggingConfig?: SequenceFlaggingConfig;
     linkOuts?: LinkOut[];
-    contactConfig?: {
-        gitHubIssuesUrl?: string;
-        issuesEmail?: string;
-    };
+    contactConfig?: ContactConfig;
 }
 
 const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {

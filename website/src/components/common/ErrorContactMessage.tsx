@@ -1,11 +1,7 @@
 import React from 'react';
+import type { ContactConfig } from '../../types/config.ts';
 
-interface ErrorContactMessageProps {
-    gitHubIssuesUrl?: string;
-    issuesEmail?: string;
-}
-
-const ErrorContactMessage: React.FC<ErrorContactMessageProps> = ({ gitHubIssuesUrl, issuesEmail }) => {
+const ErrorContactMessage: React.FC<ContactConfig> = ({ gitHubIssuesUrl, issuesEmail }) => {
     if (!gitHubIssuesUrl && !issuesEmail) {
         return null;
     }
