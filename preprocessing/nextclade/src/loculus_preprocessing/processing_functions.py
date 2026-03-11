@@ -1324,12 +1324,14 @@ class ProcessingFunctions:
             input_data["IDENTIFIER"] = str(identifier)
 
         new_args = args.copy()
-        new_args.update({
-            "order": concatenate_order,
-            "type": concatenate_field_types,
-            "fallback_value": args.get("fallback_value", "unknown"),
-            "ACCESSION_VERSION": args["ACCESSION_VERSION"],
-        })
+        new_args.update(
+            {
+                "order": concatenate_order,
+                "type": concatenate_field_types,
+                "fallback_value": args.get("fallback_value", "unknown"),
+                "ACCESSION_VERSION": args["ACCESSION_VERSION"],
+            }
+        )
 
         concat_result = ProcessingFunctions.concatenate(
             input_data,
