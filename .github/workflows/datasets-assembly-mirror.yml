@@ -24,7 +24,7 @@ jobs:
           environment-name: datasets
           create-args: -c conda-forge -c bioconda ncbi-datasets-cli s3cmd
       - name: Download NCBI datasets and create tzst archives
-        shell: bash
+        shell: bash -l {0}
         run: |
           set -Eeuo pipefail
 
