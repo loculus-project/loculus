@@ -74,7 +74,7 @@ export function getContactConfig(websiteConfig: WebsiteConfig) {
     return {
         gitHubIssuesUrl: websiteConfig.gitHubIssuesUrl,
         issuesEmail: websiteConfig.issuesEmail,
-    }
+    };
 }
 
 /**
