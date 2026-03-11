@@ -766,7 +766,7 @@ class ProcessingFunctions:
                     )
                 else:
                     logger.error(
-                        f"Concatenate: cannot find field {order[i]} in input_data"
+                        f"Concatenate: cannot find field {order[i]} of {field_types[i]} in input_data"
                         f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
                     )
                     add_errors()
@@ -1193,7 +1193,7 @@ class ProcessingFunctions:
         return ProcessingResult(datum=(input > threshold), warnings=[], errors=[])
 
     @staticmethod
-    def build_display_name(
+    def build_display_name(  # noqa: C901
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -1323,16 +1323,19 @@ class ProcessingFunctions:
             concatenate_field_types = replace_identifier(field_types, "string")
             input_data["IDENTIFIER"] = str(identifier)
 
+        new_args = args.copy()
+        new_args.update({
+            "order": concatenate_order,
+            "type": concatenate_field_types,
+            "fallback_value": args.get("fallback_value", "unknown"),
+            "ACCESSION_VERSION": args["ACCESSION_VERSION"],
+        })
+
         concat_result = ProcessingFunctions.concatenate(
             input_data,
             output_field,
             input_fields,
-            {
-                "order": concatenate_order,
-                "type": concatenate_field_types,
-                "fallback_value": args.get("fallback_value", "unknown"),
-                "ACCESSION_VERSION": args["ACCESSION_VERSION"],
-            },
+            new_args,
         )
 
         return ProcessingResult(
