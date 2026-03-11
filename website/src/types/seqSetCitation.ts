@@ -6,6 +6,7 @@ export enum SeqSetRecordType {
 
 export const seqSetRecord = z.object({
     accession: z.string(),
+    // eslint-disable-next-line @typescript-eslint/no-deprecated, import/no-deprecated -- z.enum() doesn't accept native enums in zod v3 compat layer
     type: z.nativeEnum(SeqSetRecordType),
     isFocal: z.boolean(),
 });

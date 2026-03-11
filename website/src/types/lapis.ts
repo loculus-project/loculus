@@ -1,4 +1,4 @@
-import z, { type ZodTypeAny } from 'zod';
+import z from 'zod';
 
 import { accessionVersion, type ProblemDetail } from './backend.ts';
 import { parseUnixTimestamp } from '../utils/parseUnixTimestamp.ts';
@@ -56,7 +56,7 @@ export type InsertionsResponse = z.infer<typeof insertionsResponse>;
 const metadatum = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 export type Metadatum = z.infer<typeof metadatum>;
 
-const details = z.record(metadatum);
+const details = z.record(z.string(), metadatum);
 export type Details = z.infer<typeof details>;
 
 export const detailsResponse = makeLapisResponse(z.array(details));
@@ -66,6 +66,7 @@ const aggregatedItem = z
     .object({ count: z.number() })
     .catchall(z.union([z.string(), z.number(), z.boolean(), z.null()]));
 export const aggregatedResponse = makeLapisResponse(z.array(aggregatedItem));
+export type AggregatedResponse = z.infer<typeof aggregatedResponse>;
 
 const lineageDefinitionEntry = z.object({
     parents: z.array(z.string()).optional(),
@@ -74,7 +75,7 @@ const lineageDefinitionEntry = z.object({
 export const lineageDefinition = z.record(z.string(), lineageDefinitionEntry);
 export type LineageDefinition = z.infer<typeof lineageDefinition>;
 
-function makeLapisResponse<T extends ZodTypeAny>(data: T) {
+function makeLapisResponse<T extends z.ZodType>(data: T) {
     return z.object({
         data,
         info: z.object({
@@ -101,25 +102,21 @@ export const versionStatusSchema = z.enum([
 
 export type VersionStatus = z.infer<typeof versionStatusSchema>;
 
-const rawSequenceEntryHistoryEntry = accessionVersion.merge(
-    z.object({
-        accessionVersion: z.string(),
-        versionStatus: versionStatusSchema,
-        isRevocation: z.boolean(),
-        submittedAtTimestamp: z.number(),
-    }),
-);
+const rawSequenceEntryHistoryEntry = accessionVersion.extend({
+    accessionVersion: z.string(),
+    versionStatus: versionStatusSchema,
+    isRevocation: z.boolean(),
+    submittedAtTimestamp: z.number(),
+});
 
 export const sequenceEntryHistoryEntry = rawSequenceEntryHistoryEntry.transform((raw) => ({
     ...raw,
     submittedAtTimestamp: parseUnixTimestamp(raw.submittedAtTimestamp),
 }));
 
-export const parsedSequenceEntryHistoryEntrySchema = rawSequenceEntryHistoryEntry.merge(
-    z.object({
-        submittedAtTimestamp: z.string(),
-    }),
-);
+export const parsedSequenceEntryHistoryEntrySchema = rawSequenceEntryHistoryEntry.extend({
+    submittedAtTimestamp: z.string(),
+});
 
 export type SequenceEntryHistoryEntry = z.infer<typeof sequenceEntryHistoryEntry>;
 

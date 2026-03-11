@@ -80,7 +80,7 @@ const createGenericOptionsHook = (
         return {
             options,
             isPending,
-            error,
+            error: error instanceof Error ? error : error != null ? new Error(JSON.stringify(error)) : null,
             load: () => mutate(lapisParams),
         };
     };

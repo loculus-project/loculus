@@ -222,7 +222,7 @@ function useActionHooks(
     const create = hooks.useCreateSeqSet(
         { headers: createAuthorizationHeader(accessToken) },
         {
-            onSuccess: async (response) => {
+            onSuccess: async (response: { seqSetId: string; seqSetVersion: number }) => {
                 await logger.info(`Successfully created seqSet with seqSetId: ${response.seqSetId}`);
                 const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
                 location.href = redirectUrl;
@@ -241,7 +241,7 @@ function useActionHooks(
     const update = hooks.useUpdateSeqSet(
         { headers: createAuthorizationHeader(accessToken) },
         {
-            onSuccess: async (response) => {
+            onSuccess: async (response: { seqSetId: string; seqSetVersion: number }) => {
                 await logger.info(`Successfully updated seqSet with seqSetId: ${response.seqSetId}`);
                 const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
                 location.href = redirectUrl;
