@@ -696,7 +696,9 @@ class ProcessingFunctions:
 
         n_inputs = len(input_data.keys())
         # exclude ACCESSION_VERSION as it's provided by _call_preprocessing_function() and should not be an input_metadata field
-        n_expected = len([i for i in order if i != "ACCESSION_VERSION"])
+        n_expected = len(
+            [i for i in order if i != "ACCESSION_VERSION" and not i.startswith("ARG:")]
+        )
         if n_inputs < n_expected:
             logger.error(
                 f"Concatenate: Expected {n_expected} fields, got {n_inputs}. "
@@ -743,6 +745,19 @@ class ProcessingFunctions:
                     )
                 elif field_types[i] == "ACCESSION_VERSION":
                     formatted_input_data.append(accession_version)
+                elif field_types[i].startswith("ARG:"):
+                    if field_types[i][4:] not in args:
+                        logger.error(
+                            f"Concatenate: Missing argument {field_types[i][4:]} in args. "
+                            f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
+                        )
+                        add_errors()
+                        return ProcessingResult(
+                            datum=None,
+                            warnings=warnings,
+                            errors=errors,
+                        )
+                    formatted_input_data.append(str(args[field_types[i][4:]]))
                 elif order[i] in input_data:
                     formatted_input_data.append(
                         fallback_value
@@ -751,7 +766,7 @@ class ProcessingFunctions:
                     )
                 else:
                     logger.error(
-                        f"Concatenate: cannot find field {order[i]} in input_data"
+                        f"Concatenate: cannot find field {order[i]} of {field_types[i]} in input_data"
                         f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
                     )
                     add_errors()
@@ -1178,7 +1193,7 @@ class ProcessingFunctions:
         return ProcessingResult(datum=(input > threshold), warnings=[], errors=[])
 
     @staticmethod
-    def build_display_name(
+    def build_display_name(  # noqa: C901
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -1241,22 +1256,24 @@ class ProcessingFunctions:
             )
 
         regex_pattern = args.get("regex_pattern")
-        if regex_pattern is not None:
-            if "identifier" not in re.compile(str(regex_pattern)).groupindex:
-                return ProcessingResult(
-                    datum=None,
-                    warnings=[],
-                    errors=[
-                        ProcessingAnnotation.from_fields(
-                            input_fields,
-                            [output_field],
-                            AnnotationSourceType.METADATA,
-                            message=(
-                                "Internal Error: if provided, 'regex_pattern' must contain a named capture group called 'identifier'"
-                            ),
-                        )
-                    ],
-                )
+        if (
+            regex_pattern is not None
+            and "identifier" not in re.compile(str(regex_pattern)).groupindex
+        ):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            "Internal Error: if provided, 'regex_pattern' must contain a named capture group called 'identifier'"
+                        ),
+                    )
+                ],
+            )
 
         concatenate_order = order.copy()
         concatenate_field_types = field_types.copy()
@@ -1276,16 +1293,6 @@ class ProcessingFunctions:
             # For direct submissions with "/": try to extract ID field using regex
             if regex_pattern is None:
                 identifier = None
-                warnings.append(
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=(
-                            "identifier string contained '/' but no regex_pattern was provided"
-                        ),
-                    )
-                )
             else:
                 extract_result = ProcessingFunctions.extract_regex(
                     input_data={"regex_field": identifier},
@@ -1316,16 +1323,21 @@ class ProcessingFunctions:
             concatenate_field_types = replace_identifier(field_types, "string")
             input_data["IDENTIFIER"] = str(identifier)
 
-        concat_result = ProcessingFunctions.concatenate(
-            input_data,
-            output_field,
-            input_fields,
+        new_args = args.copy()
+        new_args.update(
             {
                 "order": concatenate_order,
                 "type": concatenate_field_types,
                 "fallback_value": args.get("fallback_value", "unknown"),
                 "ACCESSION_VERSION": args["ACCESSION_VERSION"],
-            },
+            }
+        )
+
+        concat_result = ProcessingFunctions.concatenate(
+            input_data,
+            output_field,
+            input_fields,
+            new_args,
         )
 
         return ProcessingResult(
