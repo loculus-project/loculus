@@ -18,12 +18,12 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: datasets
           create-args: -c conda-forge -c bioconda ncbi-datasets-cli s3cmd
-      - name: Download NCBI datasets
+      - name: Download NCBI datasets and create tzst archives
         shell: bash
         run: |
           set -Eeuo pipefail
