@@ -696,7 +696,9 @@ class ProcessingFunctions:
 
         n_inputs = len(input_data.keys())
         # exclude ACCESSION_VERSION as it's provided by _call_preprocessing_function() and should not be an input_metadata field
-        n_expected = len([i for i in order if i != "ACCESSION_VERSION" and not i.startswith("ARG:")])
+        n_expected = len(
+            [i for i in order if i != "ACCESSION_VERSION" and not i.startswith("ARG:")]
+        )
         if n_inputs < n_expected:
             logger.error(
                 f"Concatenate: Expected {n_expected} fields, got {n_inputs}. "
@@ -1254,22 +1256,24 @@ class ProcessingFunctions:
             )
 
         regex_pattern = args.get("regex_pattern")
-        if regex_pattern is not None:
-            if "identifier" not in re.compile(str(regex_pattern)).groupindex:
-                return ProcessingResult(
-                    datum=None,
-                    warnings=[],
-                    errors=[
-                        ProcessingAnnotation.from_fields(
-                            input_fields,
-                            [output_field],
-                            AnnotationSourceType.METADATA,
-                            message=(
-                                "Internal Error: if provided, 'regex_pattern' must contain a named capture group called 'identifier'"
-                            ),
-                        )
-                    ],
-                )
+        if (
+            regex_pattern is not None
+            and "identifier" not in re.compile(str(regex_pattern)).groupindex
+        ):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            "Internal Error: if provided, 'regex_pattern' must contain a named capture group called 'identifier'"
+                        ),
+                    )
+                ],
+            )
 
         concatenate_order = order.copy()
         concatenate_field_types = field_types.copy()
