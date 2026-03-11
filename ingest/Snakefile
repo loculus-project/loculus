@@ -413,7 +413,7 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
         shell:
             """
             if [[ "{params.use_mirror}" == "True" ]]; then
-                curl {params.mirror_url} -o {params.compressed_package_tzst}
+                curl {params.mirror_url} -o {params.compressed_package_tzst} && \
                 tar xvf {params.compressed_package_tzst} -C {params.package}
             else
                 datasets download genome taxon {params.taxon_id} \
@@ -427,8 +427,7 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
                     -d {params.package} \
                 && datasets rehydrate \
                     --directory {params.package} \
-                    --no-progressbar \
-            &&
+                    --no-progressbar
             fi
             touch {output.marker}
             """
