@@ -1,4 +1,5 @@
 import React from 'react';
+
 import type { ContactConfig } from '../../types/config.ts';
 
 const ErrorContactMessage: React.FC<ContactConfig> = ({ gitHubIssuesUrl, issuesEmail }) => {

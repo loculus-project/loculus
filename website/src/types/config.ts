@@ -249,7 +249,7 @@ export const websiteConfig = z.object({
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 
-const contactConfig = z.object({
+export const contactConfig = z.object({
     gitHubIssuesUrl: z.string().optional(),
     issuesEmail: z.string().optional(),
 });
