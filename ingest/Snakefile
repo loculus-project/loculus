@@ -405,7 +405,7 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             api_key=f"--api-key {NCBI_API_KEY}" if NCBI_API_KEY else "",
             gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
             use_mirror=bool(MIRROR_BUCKET),
-            mirror_url=lambda wc: f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}-{wc.source}.tar.zst",
+            mirror_url=lambda wc: f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}-assembly-{wc.source}.tar.zst",
             unzip=unzip,
             compressed_package_tzst="results/{source}_assembly.tar.zst",
             compressed_package_zip="results/{source}_assembly.zip",
