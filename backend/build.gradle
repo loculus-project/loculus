@@ -57,7 +57,7 @@ dependencies {
     implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.keycloak:keycloak-admin-client:26.0.8"
     implementation("io.minio:minio:8.6.0")
-    implementation("software.amazon.awssdk:s3:2.42.5")
+    implementation("software.amazon.awssdk:s3:2.42.10")
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
