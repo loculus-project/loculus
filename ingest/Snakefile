@@ -426,7 +426,7 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
                     -o {params.compressed_package_zip} \
                     -d {params.package} \
                 && datasets rehydrate \
-                    --directory {params.assembly_dir} \
+                    --directory {params.package} \
                     --no-progressbar \
             &&
             fi
