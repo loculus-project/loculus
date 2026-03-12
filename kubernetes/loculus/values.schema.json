@@ -1179,7 +1179,6 @@
     "gitHubIssuesUrl": {
       "groups": ["general"],
       "type": "string",
-      "default": "https://github.com/loculus-project/loculus/issues",
       "description": "Link to GitHub repository where users can submit issues"
     },
     "issuesEmail": {
