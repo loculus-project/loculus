@@ -1367,7 +1367,7 @@ class ProcessingFunctions:
                     f"Lineage {lineage} is a human lineage, checking for reassortment and variants"
                 )
                 # only assign human lineages
-                if len(infos) > 1:
+                if len(set(infos.keys())) > 1:
                     lineage += " reassortant"
                 is_variant = False
                 for total_mutations in private_mutations:
