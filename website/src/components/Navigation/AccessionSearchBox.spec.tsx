@@ -105,7 +105,7 @@ describe('AccessionSearchBox', () => {
         await userEvent.type(input, 'TEST_SS_ABC123.1');
         fireEvent.submit(form);
 
-        expect(window.location.href).toBe(routes.seqSetPage('TEST_SS_ABC123', '1'));
+        expect(window.location.href).toBe(routes.seqSetPage('TEST_SS_ABC123.1'));
     });
 
     it('trims whitespace from the input before navigation for accessions', async () => {
@@ -129,7 +129,7 @@ describe('AccessionSearchBox', () => {
         await userEvent.type(input, '  TEST_SS_ABC123.1  ');
         fireEvent.submit(form);
 
-        expect(window.location.href).toBe(routes.seqSetPage('TEST_SS_ABC123', '1'));
+        expect(window.location.href).toBe(routes.seqSetPage('TEST_SS_ABC123.1'));
     });
 
     it('does not navigate when submitting an empty input', () => {

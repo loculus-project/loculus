@@ -95,7 +95,7 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
     };
 
     const handleClick = (_: MouseEvent<unknown>, seqSetId: string, seqSetVersion: string) => {
-        window.location.href = routes.seqSetPage(seqSetId, seqSetVersion);
+        window.location.href = routes.seqSetPage(`${seqSetId}.${seqSetVersion}`);
     };
 
     const handleChangePage = (_: unknown, newPage: number) => {

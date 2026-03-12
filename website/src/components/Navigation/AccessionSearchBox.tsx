@@ -35,17 +35,10 @@ export const AccessionSearchBox: FC<Props> = ({
         return /^[A-Za-z0-9._-]+$/.test(input);
     }
 
-    // Evaluate if the accession is a seqSet, and if so, return the seqSetId and seqSetVersion
-    function parseSeqSet(accession: string): { seqSetId: string; seqSetVersion: string } | null {
+    // Evaluate if the accession is a seqSet
+    function isSeqSetAccession(accession: string): boolean {
         const seqSetPrefix = `${accessionPrefix}SS_`;
-        const accessionSplit = accession.split('.');
-
-        if (accession.startsWith(seqSetPrefix) && accessionSplit.length === 2) {
-            const [seqSetId, seqSetVersion] = accessionSplit;
-            return { seqSetId, seqSetVersion };
-        }
-
-        return null;
+        return accession.startsWith(seqSetPrefix);
     }
 
     const onSubmit = (e: FormEvent) => {
@@ -63,9 +56,7 @@ export const AccessionSearchBox: FC<Props> = ({
         setError(null);
         onSubmitSuccess?.();
 
-        const seqSet = parseSeqSet(v);
-
-        if (seqSet) window.location.href = routes.seqSetPage(seqSet.seqSetId, seqSet.seqSetVersion);
+        if (isSeqSetAccession(v)) window.location.href = routes.seqSetPage(v);
         else window.location.href = routes.sequenceEntryDetailsPage(v);
     };
 
