@@ -67,7 +67,7 @@ jobs:
           EXISTS=$(docker manifest inspect ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }} > /dev/null 2>&1 && echo "true" || echo "false")
           echo "CACHE_HIT=$EXISTS" >> $GITHUB_ENV
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
       - name: Get node version build arg
         if: env.CACHE_HIT == 'false'
         run: |
