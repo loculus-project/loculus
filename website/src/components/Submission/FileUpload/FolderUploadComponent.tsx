@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
 import type { FilesBySubmissionId } from '../../../types/backend';
+import { type FileCategory } from '../../../types/config';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import { calculatePartSizeAndCount, splitFileIntoParts, uploadPart } from '../../../utils/multipartUpload';
 import { Button } from '../../common/Button';
@@ -12,7 +13,6 @@ import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';
 import LucideLoader from '~icons/lucide/loader';
-import { fileCategory, type FileCategory } from '../../../types/config';
 
 type SubmissionId = string;
 
@@ -302,9 +302,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         }
     };
 
-    return <div>
-    <div>{fileCategory.displayName || fileCategory.name}</div>
-    {fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
+    return fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
         <div
             className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
             onDragEnter={(e) => {
@@ -345,7 +343,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                                 document.getElementById(fileCategory.name)?.click();
                             }}
                         >
-                            Upload folder
+                            Upload folder: {fileCategory.displayName ?? fileCategory.name}
                         </span>
                         {isClient && (
                             <input
@@ -353,7 +351,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                                 name={fileCategory.name}
                                 type='file'
                                 className='sr-only'
-                                aria-label={`Upload ${fileCategory.displayName || fileCategory.name} files`}
+                                aria-label={`Upload ${fileCategory.displayName ?? fileCategory.name} files`}
                                 data-testid={fileCategory.name}
                                 onChange={handleFolderSelect}
                                 /* The webkitdirectory attribute enables folder selection */
@@ -395,8 +393,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 Discard files
             </Button>
         </div>
-    )}
-    </div>
+    );
 };
 
 type FileListeItemProps = {
