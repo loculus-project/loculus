@@ -238,6 +238,8 @@ export const websiteConfig = z.object({
     additionalHeadHTML: z.string().optional(),
     gitHubEditLink: z.string().optional(),
     gitHubMainUrl: z.string().optional(),
+    gitHubIssuesUrl: z.string().optional(),
+    issuesEmail: z.string().optional(),
     enableSeqSets: z.boolean(),
     seqSetsFieldsToDisplay: z.array(fieldToDisplay).optional(),
     enableLoginNavigationItem: z.boolean(),
@@ -247,6 +249,12 @@ export const websiteConfig = z.object({
     sequenceFlagging: sequenceFlaggingConfig.optional(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
+
+export const contactConfig = z.object({
+    gitHubIssuesUrl: z.string().optional(),
+    issuesEmail: z.string().optional(),
+});
+export type ContactConfig = z.infer<typeof contactConfig>;
 
 export type FieldValue = string | null | (string | null)[];
 export type FieldValueUpdate = [string, FieldValue];

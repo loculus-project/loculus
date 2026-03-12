@@ -70,6 +70,13 @@ export function getWebsiteConfig(): WebsiteConfig {
     return _config;
 }
 
+export function getContactConfig(websiteConfig: WebsiteConfig) {
+    return {
+        gitHubIssuesUrl: websiteConfig.gitHubIssuesUrl,
+        issuesEmail: websiteConfig.issuesEmail,
+    };
+}
+
 /**
  * If sequence flagging is configured, returns a report URL to create a GitHub issue for the given
  * organism and accession version.

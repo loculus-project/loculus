@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { sentenceCase } from 'change-case';
 import { useMemo, useState, type FC } from 'react';
 
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
@@ -13,6 +12,7 @@ import { LineageField } from './fields/LineageField.tsx';
 import { MultiChoiceAutoCompleteField } from './fields/MultiChoiceAutoCompleteField';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
+import { SingleChoiceAutoCompleteField } from './fields/SingleChoiceAutoCompleteField.tsx';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
@@ -158,7 +158,7 @@ export const SearchForm = ({
         .filter((filter) => !filter.notSearchable)
         .map((filter) => ({
             name: filter.name,
-            displayName: filter.displayName ?? sentenceCase(filter.name),
+            displayName: filter.displayName ?? filter.name,
             header: filter.header,
             displayState: getDisplayState(
                 filter,
@@ -427,6 +427,22 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 );
             }
             if (field.autocomplete === true) {
+                if (field.type === 'int' || field.type === 'float') {
+                    return (
+                        <SingleChoiceAutoCompleteField
+                            field={field}
+                            fieldValue={validateSingleValue(fieldValues[field.name], field.name)}
+                            setSomeFieldValues={setSomeFieldValues}
+                            optionsProvider={{
+                                type: 'generic',
+                                lapisUrl,
+                                lapisSearchParameters,
+                                fieldName: field.name,
+                            }}
+                        />
+                    );
+                }
+
                 const fieldValuesArray = extractArrayValue(fieldValues[field.name]);
 
                 return (
