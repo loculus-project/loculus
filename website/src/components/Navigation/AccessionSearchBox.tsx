@@ -40,7 +40,7 @@ export const AccessionSearchBox: FC<Props> = ({
         const seqSetPrefix = `${accessionPrefix}SS_`;
         const accessionSplit = accession.split('.');
 
-        if (value.startsWith(seqSetPrefix) && accessionSplit.length === 2) {
+        if (accession.startsWith(seqSetPrefix) && accessionSplit.length === 2) {
             const [seqSetId, seqSetVersion] = accessionSplit;
             return { seqSetId, seqSetVersion };
         }
