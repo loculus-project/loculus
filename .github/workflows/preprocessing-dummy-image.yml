@@ -45,7 +45,7 @@ jobs:
           echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}" >> $GITHUB_ENV
       - name: Setup Docker metadata
         id: dockerMetadata
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.DOCKER_IMAGE_NAME }}
           tags: |

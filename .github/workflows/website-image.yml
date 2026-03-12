@@ -73,7 +73,7 @@ jobs:
           echo "NODE_VERSION=$NODE_VERSION" >> $GITHUB_OUTPUT
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.DOCKER_IMAGE_NAME }}
       - name: Login to GitHub Container Registry
@@ -120,7 +120,7 @@ jobs:
     steps:
       - name: Setup Docker metadata
         id: dockerMetadata
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.DOCKER_IMAGE_NAME }}
           tags: |
