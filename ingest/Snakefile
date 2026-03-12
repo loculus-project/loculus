@@ -341,12 +341,12 @@ rule prepare_metadata:
         ),
         sequence_hashes="results/sequence_hashes.ndjson",
         config="results/config.yaml",
+        # else is just a dummy
         segments=(
             "results/nextclade_merged.tsv"
             if (SEGMENTED or APPLY_MINIMIZER)
             else "results/config.yaml"
         ),
-        # else is just a dummy
     output:
         metadata="results/metadata_post_prepare.ndjson",
     params:
@@ -390,7 +390,7 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             grouping_ignore_list_url=config.get("grouping_ignore_list_url", ""),
         shell:
             """
-            if [[  -n "{params.grouping_ignore_list_url}" ]]; then
+            if [[ -n "{params.grouping_ignore_list_url}" ]]; then
                 curl -L -o {output.ignore_list} {params.grouping_ignore_list_url}
             else
                 touch {output.ignore_list}
@@ -414,6 +414,7 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             """
             if [[ "{params.use_mirror}" == "True" ]]; then
                 curl {params.mirror_url} -o {params.compressed_package_tzst} && \
+                mkdir -p {params.package} && \
                 tar xvf {params.compressed_package_tzst} -C {params.package}
             else
                 datasets download genome taxon {params.taxon_id} \

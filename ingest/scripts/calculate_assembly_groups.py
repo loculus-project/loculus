@@ -111,7 +111,8 @@ def main(config_file: str, dataset_dir: list[str], output_file: str, ignore_list
     config = Config(**relevant_config)
 
     if not config.segmented:
-        raise ValueError({"ERROR: You are running a function that was built for segmented data"})
+        msg = "ERROR: You are running a function that was built for segmented data"
+        raise ValueError(msg)
 
     with open(ignore_list, encoding="utf-8") as file:
         ignore = [line.strip() for line in file]
