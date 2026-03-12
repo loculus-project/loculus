@@ -827,6 +827,12 @@
                   "type": "boolean",
                   "description": "If multi-segmented organism, whether to calculate segment grouping overrides from assembly report data."
                 },
+                "grouping_ignore_list_url": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "string",
+                  "description": "If multi-segmented organism and calculate_groups_override_json is true, URL to text file with a list of accessions which should have their GCA segment grouping ignored"
+                },
                 "metadata_filter": {
                   "groups": ["ingest"],
                   "docsIncludePrefix": false,
