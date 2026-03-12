@@ -2459,7 +2459,7 @@ replicas:
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
 gitHubMainUrl: https://github.com/loculus-project/loculus
 gitHubIssuesUrl: https://github.com/loculus-project/loculus/issues
-# issuesEmail: "noreply@loculus.org"
+issuesEmail: noreply@loculus.org
 resources:
   website:
     requests:
