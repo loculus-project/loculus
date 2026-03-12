@@ -37,7 +37,7 @@ const mockOnError = vi.fn();
 const defaultProps = {
     fileCategory: {
         name: 'extraFiles',
-        displayName: 'Extra Files'
+        displayName: 'Extra Files',
     },
     inputMode: 'bulk' as const,
     accessToken: 'test-token',
