@@ -99,11 +99,7 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                     </>
                 );
             },
-            () => (
-                <ErrorBox title='Entry not found'>
-                    No data found for accession version {accessionVersion}
-                </ErrorBox>
-            ),
+            () => <ErrorBox title='Entry not found'>No data found for accession version {accessionVersion}</ErrorBox>,
         )
     }
 </BaseLayout>
