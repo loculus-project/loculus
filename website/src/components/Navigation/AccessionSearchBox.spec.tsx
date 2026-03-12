@@ -132,7 +132,6 @@ describe('AccessionSearchBox', () => {
         expect(window.location.href).toBe(routes.seqSetPage('TEST_SS_ABC123', '1'));
     });
 
-
     it('does not navigate when submitting an empty input', () => {
         render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} defaultOpen={true} />);
 
