@@ -175,6 +175,12 @@ sequenceFlagging: {{ $.Values.sequenceFlagging | toYaml | nindent 6 }}
 {{ if $.Values.gitHubMainUrl }}
 gitHubMainUrl: {{ quote $.Values.gitHubMainUrl }}
 {{ end }}
+{{ if $.Values.gitHubIssuesUrl }}
+gitHubIssuesUrl: {{ quote $.Values.gitHubIssuesUrl }}
+{{ end }}
+{{ if $.Values.issuesEmail }}
+issuesEmail: {{ quote $.Values.issuesEmail }}
+{{ end }}
 {{ if $.Values.bannerMessageURL }}
 bannerMessageURL: {{ quote $.Values.bannerMessageURL }}
 {{ end }}
