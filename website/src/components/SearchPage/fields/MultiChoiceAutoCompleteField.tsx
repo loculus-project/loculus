@@ -94,11 +94,9 @@ export const MultiChoiceAutoCompleteField = ({
                 const presetContributorCount: Record<string, number> = {};
                 for (const v of value) {
                     const preset = fieldPresets[v];
-                    if (preset) {
-                        for (const [k, pv] of Object.entries(preset)) {
-                            (presetAccumulator[k] ??= []).push(pv);
-                            presetContributorCount[k] = (presetContributorCount[k] ?? 0) + 1;
-                        }
+                    for (const [k, pv] of Object.entries(preset)) {
+                        (presetAccumulator[k] ??= []).push(pv);
+                        presetContributorCount[k] = (presetContributorCount[k] ?? 0) + 1;
                     }
                 }
 

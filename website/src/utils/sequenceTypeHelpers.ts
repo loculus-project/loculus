@@ -220,7 +220,11 @@ export function getSegmentLapisNames(
             });
             continue;
         }
-        nucleotideSegmentInfos.push({ name: segmentName, lapisNames: [segmentData[selectedRef].lapisName], displayName });
+        nucleotideSegmentInfos.push({
+            name: segmentName,
+            lapisNames: [segmentData[selectedRef].lapisName],
+            displayName,
+        });
     }
 
     return nucleotideSegmentInfos;

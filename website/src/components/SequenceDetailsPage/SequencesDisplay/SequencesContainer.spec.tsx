@@ -255,4 +255,3 @@ describe('SequencesContainer', () => {
         expect(screen.getByRole(BUTTON_ROLE, { name })).not.toHaveClass(TAB_ACTIVE_CLASS);
     }
 });
-

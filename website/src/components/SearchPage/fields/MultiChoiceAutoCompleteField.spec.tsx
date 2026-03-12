@@ -154,9 +154,11 @@ describe('MultiChoiceAutoCompleteField', () => {
 
     describe('fieldPresets', () => {
         const presets: FieldPresetMap = {
+            /* eslint-disable @typescript-eslint/naming-convention */
             'Option 1': { host: 'human', lineage: 'B.1' },
             'Option 2': { host: 'bat', lineage: 'BtCoV' },
             'Option 3': { host: 'human', lineage: 'H1N1' },
+            /* eslint-disable @typescript-eslint/naming-convention */
         };
 
         it('sets preset fields when an option with a preset is selected', async () => {
@@ -299,11 +301,7 @@ describe('MultiChoiceAutoCompleteField', () => {
             const clearButton = screen.getByLabelText('Clear Test Field');
             await userEvent.click(clearButton);
 
-            expect(setSomeFieldValues).toHaveBeenCalledWith(
-                ['testField', ''],
-                ['host', ''],
-                ['lineage', ''],
-            );
+            expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', ''], ['host', ''], ['lineage', '']);
         });
     });
 });

@@ -130,7 +130,12 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
             <BoxWithTabsBox>
                 {activeTab === 'gene' && <GeneDropdown genes={genes} sequenceType={sequenceType} setType={setType} />}
                 {useCollapsedTabs && activeTab === 'unaligned' && (
-                    <SegmentDropdown segments={segments} sequenceType={sequenceType} setType={setType} mode='unaligned' />
+                    <SegmentDropdown
+                        segments={segments}
+                        sequenceType={sequenceType}
+                        setType={setType}
+                        mode='unaligned'
+                    />
                 )}
                 {useCollapsedTabs && activeTab === 'aligned' && (
                     <SegmentDropdown segments={segments} sequenceType={sequenceType} setType={setType} mode='aligned' />
@@ -279,7 +284,7 @@ type SegmentDropdownProps = {
 
 const SegmentDropdown: FC<SegmentDropdownProps> = ({ segments, sequenceType, setType, mode }) => {
     const currentSegmentName =
-        (isUnalignedSequence(sequenceType) || isAlignedSequence(sequenceType)) ? sequenceType.name.name : '';
+        isUnalignedSequence(sequenceType) || isAlignedSequence(sequenceType) ? sequenceType.name.name : '';
 
     return (
         <div className='mb-4'>
@@ -289,7 +294,9 @@ const SegmentDropdown: FC<SegmentDropdownProps> = ({ segments, sequenceType, set
                 onChange={(e) => {
                     const segment = segments.find((s) => s.name === e.target.value);
                     if (segment !== undefined) {
-                        setType(mode === 'unaligned' ? unalignedSequenceSegment(segment) : alignedSequenceSegment(segment));
+                        setType(
+                            mode === 'unaligned' ? unalignedSequenceSegment(segment) : alignedSequenceSegment(segment),
+                        );
                     }
                 }}
             >
