@@ -351,7 +351,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                                 name={fileCategory.name}
                                 type='file'
                                 className='sr-only'
-                                aria-label={`Upload ${fileCategory.displayName ?? fileCategory.name} files`}
+                                aria-label={`Upload ${fileCategory.displayName ?? fileCategory.name}`}
                                 data-testid={fileCategory.name}
                                 onChange={handleFolderSelect}
                                 /* The webkitdirectory attribute enables folder selection */
