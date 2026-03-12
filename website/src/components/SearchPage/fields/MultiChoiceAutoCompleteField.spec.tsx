@@ -196,6 +196,34 @@ describe('MultiChoiceAutoCompleteField', () => {
             );
         });
 
+        it('skips a single-mode preset field when not all selected options have a preset for that field', async () => {
+            // Option 1 has host: 'bat', but Option 2 has no host preset at all
+            const partialPresets: FieldPresetMap = {
+                'Option 1': { host: 'bat' },
+                'Option 2': { lineage: 'B.1' },
+            };
+            renderField({
+                fieldValues: ['Option 1'],
+                fieldPresets: partialPresets,
+                fieldPresetTargetModes: { host: 'single' },
+            });
+
+            const input = screen.getByLabelText('Test Field');
+            await userEvent.click(input);
+
+            const options = await screen.findAllByRole('option');
+            await userEvent.click(options[1]); // Option 2 — has no host preset
+
+            expect(setSomeFieldValues).toHaveBeenCalledWith(
+                ['testField', ['Option 1', 'Option 2']],
+                ['lineage', 'B.1'],
+            );
+            expect(setSomeFieldValues).not.toHaveBeenCalledWith(
+                expect.anything(),
+                expect.arrayContaining([['host', expect.anything()]]),
+            );
+        });
+
         it('skips a single-mode preset field when selected options have conflicting values', async () => {
             // Option 1: host 'human', Option 2: host 'bat' → conflict, field should be skipped
             renderField({

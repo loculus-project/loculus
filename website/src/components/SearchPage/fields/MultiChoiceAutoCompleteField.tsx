@@ -91,11 +91,13 @@ export const MultiChoiceAutoCompleteField = ({
 
             if (fieldPresets) {
                 const presetAccumulator: Record<string, string[]> = {};
+                const presetContributorCount: Record<string, number> = {};
                 for (const v of value) {
                     const preset = fieldPresets[v];
                     if (preset) {
                         for (const [k, pv] of Object.entries(preset)) {
                             (presetAccumulator[k] ??= []).push(pv);
+                            presetContributorCount[k] = (presetContributorCount[k] ?? 0) + 1;
                         }
                     }
                 }
@@ -106,7 +108,7 @@ export const MultiChoiceAutoCompleteField = ({
                     const mode = fieldPresetTargetModes?.[k] ?? 'multi';
 
                     if (mode === 'single') {
-                        if (uniqueVals.length === 1) {
+                        if (uniqueVals.length === 1 && presetContributorCount[k] === value.length) {
                             updates.push([k, uniqueVals[0]]);
                             appliedKeys.push(k);
                         }
