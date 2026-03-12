@@ -72,6 +72,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     richFastaHeaderFields: ["displayName"]
     files:
       - name: annotations
+        displayName: Annotations
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
@@ -1709,8 +1710,10 @@ defaultOrganisms:
           enabled: true
           categories:
             - name: raw_reads
+              displayName: Raw reads
       files:
         - name: raw_reads
+          displayName: Raw reads
       metadata: *dummyMetadata
       website:
         tableColumns:

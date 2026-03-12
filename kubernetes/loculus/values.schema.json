@@ -414,6 +414,11 @@
                     "type": "string",
                     "description": "TODO"
                   },
+                  "displayName": {
+                    "groups": ["schema"],
+                    "type": "string",
+                    "description": "TODO"
+                  },
                   "multipleFiles": {
                     "groups": ["schema"],
                     "type": "boolean",

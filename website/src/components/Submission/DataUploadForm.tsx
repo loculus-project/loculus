@@ -303,7 +303,7 @@ export const ExtraFilesUpload = ({
                 {fileCategories.map((fileCategory) => (
                     <FolderUploadComponent
                         key={fileCategory.name}
-                        fileCategory={fileCategory.name}
+                        fileCategory={fileCategory}
                         inputMode={inputMode}
                         accessToken={accessToken}
                         clientConfig={clientConfig}

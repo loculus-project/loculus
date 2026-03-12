@@ -12,6 +12,7 @@ import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';
 import LucideLoader from '~icons/lucide/loader';
+import { fileCategory, type FileCategory } from '../../../types/config';
 
 type SubmissionId = string;
 
@@ -75,7 +76,7 @@ type Error = {
 };
 
 type FolderUploadComponentProps = {
-    fileCategory: string;
+    fileCategory: FileCategory;
     inputMode: InputMode;
     accessToken: string;
     clientConfig: ClientConfig;
@@ -85,7 +86,7 @@ type FolderUploadComponentProps = {
 };
 
 export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
-    fileCategory: fileField,
+    fileCategory,
     inputMode,
     accessToken,
     clientConfig,
@@ -170,7 +171,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     if (currentMapping !== undefined) {
                         return produce(currentMapping, (draft) => {
                             Object.keys(draft).forEach((submissionId) => {
-                                draft[submissionId][fileField] = [];
+                                draft[submissionId][fileCategory.name] = [];
                             });
                         });
                     } else {
@@ -179,7 +180,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 } else {
                     return produce(currentMapping ?? {}, (draft) => {
                         draft.dummySubmissionId = {
-                            [fileField]: [],
+                            [fileCategory.name]: [],
                         };
                     });
                 }
@@ -250,7 +251,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                             } else {
                                 draft[submissionId] = {};
                             }
-                            draft[submissionId][fileField] = files;
+                            draft[submissionId][fileCategory.name] = files;
                         });
                     }),
                 );
@@ -301,7 +302,9 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         }
     };
 
-    return fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
+    return <div>
+    <div>{fileCategory.displayName || fileCategory.name}</div>
+    {fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
         <div
             className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
             onDragEnter={(e) => {
@@ -339,19 +342,19 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         <span
                             onClick={(e) => {
                                 e.preventDefault();
-                                document.getElementById(fileField)?.click();
+                                document.getElementById(fileCategory.name)?.click();
                             }}
                         >
                             Upload folder
                         </span>
                         {isClient && (
                             <input
-                                id={fileField}
-                                name={fileField}
+                                id={fileCategory.name}
+                                name={fileCategory.name}
                                 type='file'
                                 className='sr-only'
-                                aria-label={`Upload ${fileField}`}
-                                data-testid={fileField}
+                                aria-label={`Upload ${fileCategory.displayName || fileCategory.name} files`}
+                                data-testid={fileCategory.name}
                                 onChange={handleFolderSelect}
                                 /* The webkitdirectory attribute enables folder selection */
                                 {...{ webkitdirectory: '', directory: '' }}
@@ -386,13 +389,14 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
             <Button
                 onClick={() => setFileUploadState(undefined)}
-                data-testid={`discard_${fileField}`}
+                data-testid={`discard_${fileCategory.name}_button`}
                 className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
             >
                 Discard files
             </Button>
         </div>
-    );
+    )}
+    </div>
 };
 
 type FileListeItemProps = {
