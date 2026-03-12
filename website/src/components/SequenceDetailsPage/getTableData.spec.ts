@@ -17,8 +17,8 @@ import {
 const schema: Schema = {
     organismName: 'instance name',
     metadata: [
-        { name: 'metadataField1', type: 'string', header: 'testHeader1' },
-        { name: 'metadataField2', type: 'string' },
+        { name: 'metadataField1', type: 'string', displayName: 'Metadata field1', header: 'testHeader1' },
+        { name: 'metadataField2', type: 'string', displayName: 'Metadata field2' },
         { name: 'timestampField', type: 'timestamp', displayName: 'Timestamp field' },
         { name: 'genotype', type: 'string' },
     ],
