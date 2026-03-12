@@ -35,6 +35,7 @@ import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import MaterialSymbolsTune from '~icons/material-symbols/tune';
 import StreamlineWrench from '~icons/streamline/wrench';
+import { SingleChoiceAutoCompleteField } from './fields/SingleChoiceAutoCompleteField.tsx';
 
 const queryClient = new QueryClient();
 
@@ -427,6 +428,21 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 );
             }
             if (field.autocomplete === true) {
+                if (field.type === 'int' || field.type === 'float') {
+                    return (
+                        <SingleChoiceAutoCompleteField
+                            field={field}
+                            setSomeFieldValues={setSomeFieldValues}
+                            optionsProvider={{
+                                type: 'generic',
+                                lapisUrl,
+                                lapisSearchParameters,
+                                fieldName: field.name,
+                            }}
+                        />
+                    );
+                }
+
                 const fieldValuesArray = extractArrayValue(fieldValues[field.name]);
 
                 return (
