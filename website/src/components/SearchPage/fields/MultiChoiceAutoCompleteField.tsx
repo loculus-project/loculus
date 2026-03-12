@@ -103,7 +103,7 @@ export const MultiChoiceAutoCompleteField = ({
                 const appliedKeys: string[] = [];
                 for (const [k, vals] of Object.entries(presetAccumulator)) {
                     const uniqueVals = [...new Set(vals)];
-                    const mode = fieldPresetTargetModes?.[k] ?? 'multi';
+                    const mode = fieldPresetTargetModes?.[k] ?? 'single';
 
                     if (mode === 'single') {
                         if (uniqueVals.length === 1 && presetContributorCount[k] === value.length) {

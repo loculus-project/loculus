@@ -428,8 +428,9 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
             );
         default:
             if (field.fieldPresets) {
+                const fieldValuesArray = extractArrayValue(fieldValues[field.name]);
                 return (
-                    <SingleChoiceAutoCompleteField
+                    <MultiChoiceAutoCompleteField
                         field={{
                             name: field.name,
                             displayName: field.displayName ?? field.name,
@@ -442,8 +443,8 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                             fieldName: field.name,
                         }}
                         setSomeFieldValues={setSomeFieldValues}
-                        fieldValue={(fieldValues[field.name] as string | undefined) ?? ''}
                         fieldPresets={field.fieldPresets}
+                        fieldValues={fieldValuesArray}
                     />
                 );
             }
