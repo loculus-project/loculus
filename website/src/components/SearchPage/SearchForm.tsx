@@ -432,6 +432,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                     return (
                         <SingleChoiceAutoCompleteField
                             field={field}
+                            fieldValue={validateSingleValue(fieldValues[field.name], field.name)}
                             setSomeFieldValues={setSomeFieldValues}
                             optionsProvider={{
                                 type: 'generic',
