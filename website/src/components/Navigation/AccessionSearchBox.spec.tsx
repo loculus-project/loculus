@@ -5,6 +5,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AccessionSearchBox } from './AccessionSearchBox';
 import { routes } from '../../routes/routes';
 
+const ACCESSION_PREFIX = 'TEST_';
+
 describe('AccessionSearchBox', () => {
     const originalLocation = window.location;
 
@@ -23,7 +25,7 @@ describe('AccessionSearchBox', () => {
     });
 
     it('renders the search icon button', () => {
-        render(<AccessionSearchBox />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} />);
 
         const searchButton = screen.getByRole('button', { name: /Open accession search/i });
         expect(searchButton).toBeInTheDocument();
@@ -31,14 +33,14 @@ describe('AccessionSearchBox', () => {
     });
 
     it('initially hides the input field when defaultOpen is false', () => {
-        render(<AccessionSearchBox />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} />);
 
         const input = screen.getByPlaceholderText('Search by accession');
         expect(input).toHaveClass('w-0', 'opacity-0', 'pointer-events-none');
     });
 
     it('shows the input field when defaultOpen is true', () => {
-        render(<AccessionSearchBox defaultOpen={true} />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} defaultOpen={true} />);
 
         const input = screen.getByPlaceholderText('Search by accession');
         expect(input).not.toHaveClass('w-0', 'opacity-0', 'pointer-events-none');
@@ -46,7 +48,7 @@ describe('AccessionSearchBox', () => {
     });
 
     it('opens the input field when the search button is clicked', async () => {
-        render(<AccessionSearchBox />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} />);
 
         const searchButton = screen.getByRole('button', { name: /Open accession search/i });
         const input = screen.getByPlaceholderText('Search by accession');
@@ -60,7 +62,7 @@ describe('AccessionSearchBox', () => {
     });
 
     it('focuses the input when opened', async () => {
-        render(<AccessionSearchBox />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} />);
 
         const searchButton = screen.getByRole('button', { name: /Open accession search/i });
         const input = screen.getByPlaceholderText('Search by accession');
@@ -73,7 +75,7 @@ describe('AccessionSearchBox', () => {
     });
 
     it('updates the input value when typing', async () => {
-        render(<AccessionSearchBox defaultOpen={true} />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} defaultOpen={true} />);
 
         const input = screen.getByPlaceholderText('Search by accession');
 
@@ -83,31 +85,43 @@ describe('AccessionSearchBox', () => {
     });
 
     it('navigates to the correct URL when submitting a valid accession', async () => {
-        render(<AccessionSearchBox defaultOpen={true} />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} defaultOpen={true} />);
 
         const input = screen.getByPlaceholderText('Search by accession');
         const form = screen.getByRole('search', { name: 'Accession search' });
 
-        await userEvent.type(input, 'ABC123.1');
+        await userEvent.type(input, 'TEST_ABC123.1');
         fireEvent.submit(form);
 
-        expect(window.location.href).toBe(routes.sequenceEntryDetailsPage('ABC123.1'));
+        expect(window.location.href).toBe(routes.sequenceEntryDetailsPage('TEST_ABC123.1'));
+    });
+
+    it('navigates to the correct URL when submitting a valid seqset accession', async () => {
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} defaultOpen={true} />);
+
+        const input = screen.getByPlaceholderText('Search by accession');
+        const form = screen.getByRole('search', { name: 'Accession search' });
+
+        await userEvent.type(input, 'TEST_SS_ABC123.1');
+        fireEvent.submit(form);
+
+        expect(window.location.href).toBe(routes.seqSetPage('TEST_SS_ABC123', '1'));
     });
 
     it('trims whitespace from the input before navigation', async () => {
-        render(<AccessionSearchBox defaultOpen={true} />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} defaultOpen={true} />);
 
         const input = screen.getByPlaceholderText('Search by accession');
         const form = screen.getByRole('search', { name: 'Accession search' });
 
-        await userEvent.type(input, '  ABC123.1  ');
+        await userEvent.type(input, '  TEST_ABC123.1  ');
         fireEvent.submit(form);
 
-        expect(window.location.href).toBe(routes.sequenceEntryDetailsPage('ABC123.1'));
+        expect(window.location.href).toBe(routes.sequenceEntryDetailsPage('TEST_ABC123.1'));
     });
 
     it('does not navigate when submitting an empty input', () => {
-        render(<AccessionSearchBox defaultOpen={true} />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} defaultOpen={true} />);
 
         const form = screen.getByRole('search', { name: 'Accession search' });
 
@@ -117,7 +131,7 @@ describe('AccessionSearchBox', () => {
     });
 
     it('keeps the input open when submitting empty input', async () => {
-        render(<AccessionSearchBox />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} />);
 
         const searchButton = screen.getByRole('button');
         const input = screen.getByPlaceholderText('Search by accession');
@@ -135,7 +149,13 @@ describe('AccessionSearchBox', () => {
 
     it('calls onSubmitSuccess callback before navigation', async () => {
         const onSubmitSuccess = vi.fn();
-        render(<AccessionSearchBox defaultOpen={true} onSubmitSuccess={onSubmitSuccess} />);
+        render(
+            <AccessionSearchBox
+                accessionPrefix={ACCESSION_PREFIX}
+                defaultOpen={true}
+                onSubmitSuccess={onSubmitSuccess}
+            />,
+        );
 
         const input = screen.getByPlaceholderText('Search by accession');
         const form = screen.getByRole('search', { name: 'Accession search' });
@@ -148,7 +168,7 @@ describe('AccessionSearchBox', () => {
     });
 
     it('closes the input when Escape key is pressed', () => {
-        render(<AccessionSearchBox defaultOpen={true} />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} defaultOpen={true} />);
 
         const input = screen.getByPlaceholderText('Search by accession');
 
@@ -160,7 +180,7 @@ describe('AccessionSearchBox', () => {
     });
 
     it('applies fullWidth class when fullWidth prop is true', () => {
-        render(<AccessionSearchBox defaultOpen={true} fullWidth={true} />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} defaultOpen={true} fullWidth={true} />);
 
         const input = screen.getByPlaceholderText('Search by accession');
 
@@ -168,7 +188,7 @@ describe('AccessionSearchBox', () => {
     });
 
     it('applies default width classes when fullWidth is false', () => {
-        render(<AccessionSearchBox defaultOpen={true} fullWidth={false} />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} defaultOpen={true} fullWidth={false} />);
 
         const input = screen.getByPlaceholderText('Search by accession');
 
@@ -177,7 +197,7 @@ describe('AccessionSearchBox', () => {
 
     it('applies custom className to the form element', () => {
         const customClass = 'custom-test-class';
-        render(<AccessionSearchBox className={customClass} />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} className={customClass} />);
 
         const form = screen.getByRole('search', { name: 'Accession search' });
 
@@ -185,7 +205,7 @@ describe('AccessionSearchBox', () => {
     });
 
     it('has proper ARIA attributes', () => {
-        render(<AccessionSearchBox defaultOpen={true} />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} defaultOpen={true} />);
 
         const form = screen.getByRole('search');
         const input = screen.getByPlaceholderText('Search by accession');
@@ -197,7 +217,7 @@ describe('AccessionSearchBox', () => {
     });
 
     it('changes button aria-label when open', async () => {
-        render(<AccessionSearchBox />);
+        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} />);
 
         const button = screen.getByRole('button');
 
