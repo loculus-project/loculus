@@ -6,7 +6,11 @@ import { type TableDataEntry } from './types.ts';
 import { mockRequest, testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import { DEFAULT_AA_MUTATION_DETAILS_HEADER, DEFAULT_NUC_MUTATION_DETAILS_HEADER, type Schema } from '../../types/config.ts';
+import {
+    DEFAULT_AA_MUTATION_DETAILS_HEADER,
+    DEFAULT_NUC_MUTATION_DETAILS_HEADER,
+    type Schema,
+} from '../../types/config.ts';
 import type { MutationProportionCount } from '../../types/lapis.ts';
 import {
     MULTI_SEG_MULTI_REF_REFERENCEGENOMES,

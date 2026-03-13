@@ -5,6 +5,11 @@ import DataTableEntry from './DataTableEntry';
 import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
+import {
+    DEFAULT_AA_MUTATION_DETAILS_HEADER,
+    DEFAULT_NUC_MUTATION_DETAILS_HEADER,
+    type Schema,
+} from '../../types/config';
 import { type ReferenceAccession, type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import {
@@ -12,11 +17,6 @@ import {
     type SegmentReferenceSelections,
 } from '../../utils/sequenceTypeHelpers';
 import AkarInfo from '~icons/ri/information-line';
-import {
-    DEFAULT_AA_MUTATION_DETAILS_HEADER,
-    DEFAULT_NUC_MUTATION_DETAILS_HEADER,
-    type Schema,
-} from '../../types/config';
 
 interface Props {
     dataTableData: DataTableData;
