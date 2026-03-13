@@ -189,10 +189,7 @@ describe('MultiChoiceAutoCompleteField', () => {
             const options = await screen.findAllByRole('option');
             await userEvent.click(options[2]); // Option 3
 
-            expect(setSomeFieldValues).toHaveBeenCalledWith(
-                ['testField', ['Option 1', 'Option 3']],
-                ['host', 'human'],
-            );
+            expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', ['Option 1', 'Option 3']], ['host', 'human']);
         });
 
         it('skips a preset field when not all selected options have a preset for that field', async () => {
@@ -212,9 +209,7 @@ describe('MultiChoiceAutoCompleteField', () => {
             const options = await screen.findAllByRole('option');
             await userEvent.click(options[1]); // Option 2 — has no host preset
 
-            expect(setSomeFieldValues).toHaveBeenCalledWith(
-                ['testField', ['Option 1', 'Option 2']],
-            );
+            expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', ['Option 1', 'Option 2']]);
             expect(setSomeFieldValues).not.toHaveBeenCalledWith(
                 expect.anything(),
                 expect.arrayContaining([['host', expect.anything()]]),
@@ -234,9 +229,7 @@ describe('MultiChoiceAutoCompleteField', () => {
             const options = await screen.findAllByRole('option');
             await userEvent.click(options[1]); // Option 2
 
-            expect(setSomeFieldValues).toHaveBeenCalledWith(
-                ['testField', ['Option 1', 'Option 2']],
-            );
+            expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', ['Option 1', 'Option 2']]);
             expect(setSomeFieldValues).not.toHaveBeenCalledWith(
                 expect.anything(),
                 expect.arrayContaining([['host', expect.anything()]]),
