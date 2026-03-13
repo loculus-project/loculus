@@ -2210,6 +2210,7 @@ defaultOrganisms:
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
         referenceIdentifierField: genotype
+        aaMutationDetailsHeader: "Amino Acid Mutations (custom)" #TODO: revert before merging
     preprocessing:
       - <<: *preprocessing
         configFile:
