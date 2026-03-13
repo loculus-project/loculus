@@ -79,6 +79,7 @@ class DownloadResult:
     transformed_path: Path
     etag: str
     pipeline_version: int | None
+    record_count: int = 0
 
 
 def _download_file(
@@ -142,6 +143,7 @@ class DownloadManager:
         config: ImporterConfig,
         paths: ImporterPaths,
         last_etag: str,
+        released_since: str | None = None,
     ) -> DownloadResult:
         """
         Download and validate a data release from the backend.
@@ -150,6 +152,7 @@ class DownloadManager:
             config: Importer configuration
             paths: Importer paths
             last_etag: ETag from previous download for conditional request
+            released_since: Optional ISO-8601 timestamp to only fetch data released strictly after
 
         Returns:
             DownloadResult with paths and metadata
@@ -169,9 +172,14 @@ class DownloadManager:
 
         try:
             # Download data from backend
-            logger.info("Requesting released data from %s", config.released_data_endpoint)
+            endpoint = (
+                config.released_data_since_endpoint(released_since)
+                if released_since
+                else config.released_data_endpoint
+            )
+            logger.info("Requesting released data from %s", endpoint)
             response = self.download_func(
-                config.released_data_endpoint,
+                endpoint,
                 data_path,
                 last_etag,
                 300,
@@ -234,8 +242,9 @@ class DownloadManager:
                 safe_remove(download_dir)
                 raise RecordCountMismatchError from err
 
-            # Check against previous download to avoid reprocessing
-            _handle_previous_directory(paths, download_dir, transformed_path, etag_value)
+            # Check against previous download to avoid reprocessing (skip for incremental)
+            if not released_since:
+                _handle_previous_directory(paths, download_dir, transformed_path, etag_value)
 
             # Prune old directories
             prune_timestamped_directories(paths.input_dir)
@@ -245,6 +254,7 @@ class DownloadManager:
                 transformed_path=transformed_path,
                 etag=etag_value,
                 pipeline_version=analysis.pipeline_version,
+                record_count=analysis.record_count,
             )
 
         except (
