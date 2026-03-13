@@ -123,7 +123,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
             </BoxWithTabsTabBar>
             <BoxWithTabsBox>
                 {activeTab === 'gene' && <GeneDropdown genes={genes} sequenceType={sequenceType} setType={setType} />}
-                {segments.length > 0 && activeTab === 'unaligned' && (
+                {segments.length > 1 && activeTab === 'unaligned' && (
                     <SegmentDropdown
                         segments={segments}
                         sequenceType={sequenceType}
@@ -131,7 +131,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                         mode='unaligned'
                     />
                 )}
-                {segments.length > 0 && activeTab === 'aligned' && (
+                {segments.length > 1 && activeTab === 'aligned' && (
                     <SegmentDropdown segments={segments} sequenceType={sequenceType} setType={setType} mode='aligned' />
                 )}
                 {activeTab !== 'gene' || isGeneSequence(sequenceType.name, sequenceType) ? (
