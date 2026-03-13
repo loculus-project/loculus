@@ -75,6 +75,7 @@ export const MultiChoiceAutoCompleteField = ({
     const handleChange = (value: string[] | null) => {
         const updates: FieldValueUpdate[] = [];
 
+        // Clear values from the last applied preset
         for (const key of lastPresetKeysRef.current) {
             updates.push([key, '']);
         }
@@ -101,6 +102,7 @@ export const MultiChoiceAutoCompleteField = ({
                 for (const [k, vals] of Object.entries(presetAccumulator)) {
                     const uniqueVals = [...new Set(vals)];
 
+                    // Only apply the preset value if all selected options contribute the same value for this key
                     if (uniqueVals.length === 1 && presetContributorCount[k] === value.length) {
                         updates.push([k, uniqueVals[0]]);
                         appliedKeys.push(k);
