@@ -3,7 +3,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteOptions.ts';
 import { FloatingLabelContainer } from './FloatingLabelContainer.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
-import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
+import {
+    type FieldValueUpdate,
+    type GroupedMetadataFilter,
+    type MetadataFilter,
+    type SetSomeFieldValues,
+} from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import { Button } from '../../common/Button';
@@ -18,6 +23,8 @@ import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiChevronUpDown from '~icons/mdi/chevron-up-down';
 import MdiTick from '~icons/mdi/tick';
 
+export type FieldPresetMap = Partial<Record<string, Record<string, string>>>;
+
 const logger = getClientLogger('MultiChoiceAutoCompleteField');
 
 type MultiChoiceAutoCompleteFieldProps = {
@@ -26,6 +33,7 @@ type MultiChoiceAutoCompleteFieldProps = {
     setSomeFieldValues: SetSomeFieldValues;
     fieldValues: (string | null)[];
     maxDisplayedOptions?: number;
+    fieldPresets?: FieldPresetMap;
 };
 
 export const MultiChoiceAutoCompleteField = ({
@@ -34,10 +42,12 @@ export const MultiChoiceAutoCompleteField = ({
     setSomeFieldValues,
     fieldValues,
     maxDisplayedOptions = 1000,
+    fieldPresets,
 }: MultiChoiceAutoCompleteFieldProps) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState('');
     const [isFocused, setIsFocused] = useState(false);
+    const lastPresetKeysRef = useRef<string[]>([]);
 
     // Maximum number of badges to show before switching to summary
     const MAX_VISIBLE_BADGES = 2;
@@ -63,17 +73,56 @@ export const MultiChoiceAutoCompleteField = ({
     }, [options, query, maxDisplayedOptions]);
 
     const handleChange = (value: string[] | null) => {
+        const updates: FieldValueUpdate[] = [];
+
+        for (const key of lastPresetKeysRef.current) {
+            updates.push([key, '']);
+        }
         if (!value || value.length === 0) {
-            setSomeFieldValues([field.name, '']);
+            updates.unshift([field.name, '']);
+            lastPresetKeysRef.current = [];
         } else {
             const convertedValues = value.map((v) => (v === NULL_QUERY_VALUE ? null : v));
-            setSomeFieldValues([field.name, convertedValues]);
+            updates.unshift([field.name, convertedValues]);
+
+            if (fieldPresets) {
+                const presetAccumulator: Record<string, string[]> = {};
+                const presetContributorCount: Record<string, number> = {};
+                for (const v of value) {
+                    const preset = fieldPresets[v];
+                    if (!preset) continue;
+                    for (const [k, pv] of Object.entries(preset)) {
+                        (presetAccumulator[k] ??= []).push(pv);
+                        presetContributorCount[k] = (presetContributorCount[k] ?? 0) + 1;
+                    }
+                }
+
+                const appliedKeys: string[] = [];
+                for (const [k, vals] of Object.entries(presetAccumulator)) {
+                    const uniqueVals = [...new Set(vals)];
+
+                    if (uniqueVals.length === 1 && presetContributorCount[k] === value.length) {
+                        updates.push([k, uniqueVals[0]]);
+                        appliedKeys.push(k);
+                    }
+                }
+                lastPresetKeysRef.current = appliedKeys;
+            } else {
+                lastPresetKeysRef.current = [];
+            }
         }
+
+        setSomeFieldValues(...updates);
     };
 
     const handleClear = () => {
+        const updates: FieldValueUpdate[] = [[field.name, '']];
+        for (const key of lastPresetKeysRef.current) {
+            updates.push([key, '']);
+        }
+        lastPresetKeysRef.current = [];
         setQuery('');
-        handleChange([]);
+        setSomeFieldValues(...updates);
     };
 
     // Convert selectedValues Set to array for Combobox value
