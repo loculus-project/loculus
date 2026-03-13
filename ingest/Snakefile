@@ -38,9 +38,12 @@ MIRROR_BUCKET = config.get("mirror_bucket", "")
 APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
 FILTER = config.get("metadata_filter", None)
-GROUPS_OVERRIDE_JSON = config.get(
-    "grouping_override", None
-)  # JSON map from group to segments' insdcAccessionFull
+CALCULATE_GROUPS_OVERRIDE_JSON = config.get(
+    "calculate_groups_override_json", False
+)  # Calculate the groups override JSON based on assembly report data.
+GROUPS_OVERRIDE_JSON = CALCULATE_GROUPS_OVERRIDE_JSON or config.get(
+    "grouping_override_url", False
+)
 
 
 if SEGMENTED:
@@ -365,17 +368,110 @@ rule prepare_metadata:
         """
 
 
-if GROUPS_OVERRIDE_JSON:
+if GROUPS_OVERRIDE_JSON and not CALCULATE_GROUPS_OVERRIDE_JSON:
 
     rule download_groups:
         output:
             results="results/groups.json",
         params:
-            grouping=config.get("grouping_override"),
+            grouping=config.get("grouping_override_url"),
         shell:
             """
             curl -L -o {output.results} {params.grouping}
             """
+
+
+if CALCULATE_GROUPS_OVERRIDE_JSON:
+
+    rule download_ignore_list:
+        output:
+            ignore_list="results/grouping_ignore_list.txt",
+        params:
+            grouping_ignore_list_url=config.get("grouping_ignore_list_url", ""),
+        shell:
+            """
+            if [[  -n "{params.grouping_ignore_list_url}" ]]; then
+                curl -L -o {output.ignore_list} {params.grouping_ignore_list_url}
+            else
+                touch {output.ignore_list}
+            fi
+            """
+
+    rule fetch_inflate_assemblies:
+        output:
+            marker="results/{source}_assembly/.fetch_inflate_complete",
+        params:
+            taxon_id=TAXON_ID,
+            api_key=f"--api-key {NCBI_API_KEY}" if NCBI_API_KEY else "",
+            gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
+            use_mirror=bool(MIRROR_BUCKET),
+            mirror_url=lambda wc: f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}-{wc.source}.tar.zst",
+            unzip=unzip,
+            compressed_package_tzst="results/{source}_assembly.tar.zst",
+            compressed_package_zip="results/{source}_assembly.zip",
+            package=directory("results/{source}_assembly"),
+        shell:
+            """
+            if [[ "{params.use_mirror}" == "True" ]]; then
+                curl {params.mirror_url} -o {params.compressed_package_tzst}
+                tar xvf {params.compressed_package_tzst} -C {params.package}
+            else
+                datasets download genome taxon {params.taxon_id} \
+                    --assembly-source {wildcards.source} \
+                    --no-progressbar \
+                    --filename {params.compressed_package_zip} \
+                    {params.api_key} \
+                    {params.gateway} \
+                && {params.unzip} \
+                    -o {params.compressed_package_zip} \
+                    -d {params.package}
+            fi
+            touch {output.marker}
+            """
+
+    rule rehydrate_assemblies:
+        """
+        Unzips the downloaded, dehydrated assembly, and then rehydrates it. The rehydration can take quite a bit,
+        but it can be restarted. Run this rule with --rerun-incomplete to let snakemake know that it can be safely restarted.
+        """
+        input:
+            marker="results/{source}_assembly/.fetch_inflate_complete",
+        output:
+            marker="results/{source}_assembly/.rehydration_complete",
+        params:
+            assembly_dir="results/{source}_assembly",
+        shell:
+            """
+            datasets rehydrate \
+                --directory {params.assembly_dir} \
+                --no-progressbar \
+            && touch {output.marker}
+            """
+
+    rule get_assembly_groups:
+        input:
+            script="scripts/calculate_assembly_groups.py",
+            rehydration_genbank="results/genbank_assembly/.rehydration_complete",
+            rehydration_refseq="results/refseq_assembly/.rehydration_complete",
+            ignore_list="results/grouping_ignore_list.txt",
+            config_file="results/config.yaml",
+        output:
+            groups_json="results/groups.json",
+        params:
+            genbank_dir="results/genbank_assembly/ncbi_dataset/data",
+            refseq_dir="results/refseq_assembly/ncbi_dataset/data",
+        shell:
+            """
+            python {input.script} \
+            --dataset-dir {params.genbank_dir} \
+            --dataset-dir {params.refseq_dir} \
+            --output-file {output.groups_json} \
+            --ignore-list {input.ignore_list} \
+            --config-file {input.config_file}
+            """
+
+
+if GROUPS_OVERRIDE_JSON:
 
     rule override_group_segments:
         """Group segments based on JSON map"""
