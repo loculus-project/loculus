@@ -134,6 +134,9 @@ def add_nextclade_metadata(
     nextclade_path: str,
     config: Config,
 ) -> InputData:
+    logger.debug(f"Adding Nextclade metadata for path: {nextclade_path} with spec: {spec}")
+    if nextclade_path.startswith("privateNucMutations"):
+        logger.debug(unprocessed.nextcladeMetadata)
     try:
         segment = spec.args.get("segment", "main") if spec.args else "main"
         if not isinstance(segment, str):
