@@ -95,6 +95,7 @@ export const SingleChoiceAutoCompleteField = ({
         const finalValue = value === NULL_QUERY_VALUE ? null : (value ?? '');
         const updates: FieldValueUpdate[] = [[field.name, finalValue]];
 
+        // Clear values from the last applied preset
         for (const key of lastPresetKeysRef.current) {
             updates.push([key, '']);
         }
