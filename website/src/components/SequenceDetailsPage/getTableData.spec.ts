@@ -31,7 +31,7 @@ const schema: Schema = {
         consensusSequences: true,
     },
     referenceIdentifierField: 'genotype',
-    nucMutationDetailsHeader: 'Nucleotide mutations',
+    nucMutationDetailsHeader: 'Custom Nucleotide mutations',
     aaMutationDetailsHeader: 'Custom amino acid mutations header',
 };
 
