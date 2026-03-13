@@ -113,7 +113,7 @@ const VariantReferenceComponent: React.FC<{ jsonString: string; referenceGenomes
     }
 
     if (variant) {
-        return <>{referenceDisplayName ?? reference ?? 'N/A'} (Variant)</>;
+        return <>{referenceDisplayName ?? reference ?? 'N/A'} (variant)</>;
     }
     return <>{referenceDisplayName ?? reference ?? 'N/A'}</>;
 };
