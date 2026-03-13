@@ -24,7 +24,7 @@ jobs:
 
       - uses: mamba-org/setup-micromamba@v2
         with:
-          environment-file: ./ncbi_tax_download/environment.yaml
+          environment-file: ./taxonomy/ncbi_tax_download/environment.yaml
           cache-environment: true
           create-args: >
             s3cmd
@@ -32,7 +32,7 @@ jobs:
       - name: Install NCBI taxonomy package
         shell: bash -l {0}
         run: |
-          pip install -e ./ncbi_tax_download
+          pip install -e ./taxonomy/ncbi_tax_download
 
       - name: Create taxonomy DB
         shell: bash -l {0}
