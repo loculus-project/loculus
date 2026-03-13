@@ -12,7 +12,6 @@ import type { MutationBadgeData } from '../../types/config.ts';
 interface Props {
     data: TableDataEntry;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    segmentDisplayNameMap?: Record<string, string>;
 }
 
 const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
@@ -160,7 +159,7 @@ export function parseMutations(input: string): MutationBadgeData[] {
         .filter((m): m is MutationBadgeData => m !== null);
 }
 
-const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, segmentDisplayNameMap }) => {
+const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
     const { value, customDisplay } = data;
 
     return (
@@ -172,19 +171,13 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, se
                     (customDisplay.badge === undefined || customDisplay.badge.length == 0 ? (
                         <span className='italic'>N/A</span>
                     ) : (
-                        <SubstitutionsContainers
-                            values={customDisplay.badge}
-                            segmentDisplayNameMap={segmentDisplayNameMap}
-                        />
+                        <SubstitutionsContainers values={customDisplay.badge} />
                     ))}
                 {customDisplay?.type === 'list' &&
                     (customDisplay.list === undefined || customDisplay.list.length == 0 ? (
                         <span className='italic'>N/A</span>
                     ) : (
-                        <MutationStringContainers
-                            values={customDisplay.list}
-                            segmentDisplayNameMap={segmentDisplayNameMap}
-                        />
+                        <MutationStringContainers values={customDisplay.list} />
                     ))}
                 {customDisplay?.type === 'generatedBadge' &&
                     typeof value === 'string' &&

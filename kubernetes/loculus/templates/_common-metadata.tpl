@@ -369,7 +369,9 @@ organisms:
 
 {{/* Generate website metadata from passed metadata array */}}
 {{- define "loculus.generateWebsiteMetadata" }}
-{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).segments }}
+{{- $segmentsData := include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml -}}
+{{- $rawUniqueSegments := $segmentsData.segments | default (list) -}}
+{{- $displayNameMap := $segmentsData.displayNames | default (dict) -}}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
 fields:
@@ -377,16 +379,17 @@ fields:
 {{- if and $isSegmented .perSegment }}
 {{- $currentItem := . }}
 {{- range $segment := $rawUniqueSegments }}
+{{- $segmentDisplayName := default $segment (get $displayNameMap $segment) -}}
 {{- with $currentItem }}
 {{ include "loculus.standardWebsiteMetadata" . }}
   name: {{ printf "%s_%s" .name $segment | quote }}
   {{- if .displayName }}
-  displayName: {{ printf "%s %s" .displayName $segment | quote }}
+  displayName: {{ printf "%s %s" .displayName $segmentDisplayName | quote }}
   {{- end }}
   {{- if (default false .oneHeader)}}
   header: {{ (default "Other" .header) | quote }}
   {{- else }}
-  header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
+  header: {{ printf "%s %s" (default "Other" .header) $segmentDisplayName | quote }}
   {{- end }}
   relatesToSegment: {{ $segment }}
   {{- if .isSequenceFilter }}
@@ -397,7 +400,7 @@ fields:
     type: {{ quote .customDisplay.type }}
     displayGroup: {{ printf "%s_%s" .customDisplay.displayGroup $segment | quote }}
     {{- if .customDisplay.label }}
-    label: {{ printf "%s %s" .customDisplay.label $segment | quote }}
+    label: {{ printf "%s %s" .customDisplay.label $segmentDisplayName | quote }}
     {{- end }}
   {{- end }}
 {{- end }}
