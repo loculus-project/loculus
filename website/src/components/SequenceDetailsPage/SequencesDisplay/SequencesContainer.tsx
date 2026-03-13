@@ -61,7 +61,6 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             setType={setSequenceType}
             genes={geneInfos}
             useLapisMultiSegmentedEndpoint={referenceGenomesInfo.useLapisMultiSegmentedEndpoint}
-            useCollapsedTabs={referenceGenomesInfo.isMultiSegmented}
         />
     );
 };
@@ -77,7 +76,6 @@ type SequenceTabsProps = {
     setType: Dispatch<SetStateAction<SequenceType>>;
     genes: GeneInfo[];
     useLapisMultiSegmentedEndpoint: boolean;
-    useCollapsedTabs: boolean;
 };
 
 const SequenceTabs: FC<SequenceTabsProps> = ({
@@ -89,7 +87,6 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
     sequenceType,
     setType,
     useLapisMultiSegmentedEndpoint,
-    useCollapsedTabs,
 }) => {
     const [activeTab, setActiveTab] = useState<'unaligned' | 'aligned' | 'gene'>('unaligned');
 
@@ -126,7 +123,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
             </BoxWithTabsTabBar>
             <BoxWithTabsBox>
                 {activeTab === 'gene' && <GeneDropdown genes={genes} sequenceType={sequenceType} setType={setType} />}
-                {useCollapsedTabs && activeTab === 'unaligned' && (
+                {segments.length > 0 && activeTab === 'unaligned' && (
                     <SegmentDropdown
                         segments={segments}
                         sequenceType={sequenceType}
@@ -134,7 +131,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                         mode='unaligned'
                     />
                 )}
-                {useCollapsedTabs && activeTab === 'aligned' && (
+                {segments.length > 0 && activeTab === 'aligned' && (
                     <SegmentDropdown segments={segments} sequenceType={sequenceType} setType={setType} mode='aligned' />
                 )}
                 {activeTab !== 'gene' || isGeneSequence(sequenceType.name, sequenceType) ? (
