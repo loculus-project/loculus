@@ -165,6 +165,7 @@ class SubmissionData:
 @dataclass
 class InputData:
     datum: InputMetadataValue
+    datum_map: dict[str, InputMetadataValue] | None = None
     warnings: list[ProcessingAnnotation] = field(default_factory=list)
     errors: list[ProcessingAnnotation] = field(default_factory=list)
 

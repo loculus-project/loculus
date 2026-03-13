@@ -187,7 +187,7 @@ export const SearchForm = ({
             }
 
             const sequenceScope =
-                'relatesToSegment' in field && field.relatesToSegment != null ? field.relatesToSegment : 'main';
+                'relatesToSegment' in field && field.relatesToSegment != null ? field.relatesToSegment : 'ALL';
 
             sequenceFieldsBySegment[sequenceScope] ??= [];
             sequenceFieldsBySegment[sequenceScope].push(field);
@@ -221,7 +221,7 @@ export const SearchForm = ({
 
     const renderSegmentContents = (segmentName: string) => (
         <>
-            {referenceSelection !== undefined && (
+            {referenceSelection !== undefined && segmentName !== 'ALL' && (
                 <ReferenceSelector
                     filterSchema={filterSchema}
                     referenceGenomesInfo={referenceGenomesInfo}
@@ -234,7 +234,7 @@ export const SearchForm = ({
                 />
             )}
 
-            {showMutationSearch && segmentAndGeneInfo[segmentName] && (
+            {showMutationSearch && segmentAndGeneInfo[segmentName] && segmentName !== 'ALL' && (
                 <MutationField
                     singleSegmentAndGeneInfo={segmentAndGeneInfo[segmentName]}
                     value={
@@ -341,6 +341,12 @@ export const SearchForm = ({
 
                         <section className='flex flex-col gap-1.5 mb-4'>
                             <CollapsibleSection title='Sequence Filters' open>
+                                {'ALL' in sequenceFieldsBySegment && renderSegmentContents('ALL')}
+                                {!referenceGenomesInfo.isMultiSegmented &&
+                                    segmentNames.map((segmentName) => (
+                                        <div key={segmentName}>{renderSegmentContents(segmentName)}</div>
+                                    ))}
+
                                 {referenceGenomesInfo.isMultiSegmented && (
                                     <SegmentFilter
                                         referenceGenomesInfo={referenceGenomesInfo}
@@ -349,11 +355,6 @@ export const SearchForm = ({
                                         filterSchema={filterSchema}
                                     />
                                 )}
-
-                                {!referenceGenomesInfo.isMultiSegmented &&
-                                    segmentNames.map((segmentName) => (
-                                        <div key={segmentName}>{renderSegmentContents(segmentName)}</div>
-                                    ))}
 
                                 {referenceGenomesInfo.isMultiSegmented &&
                                     segmentNames.map((segmentName) => (
@@ -425,6 +426,27 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 />
             );
         default:
+            if (field.fieldPresets) {
+                const fieldValuesArray = extractArrayValue(fieldValues[field.name]);
+                return (
+                    <MultiChoiceAutoCompleteField
+                        field={{
+                            name: field.name,
+                            displayName: field.displayName ?? field.name,
+                            type: 'string',
+                        }}
+                        optionsProvider={{
+                            type: 'generic',
+                            lapisUrl,
+                            lapisSearchParameters,
+                            fieldName: field.name,
+                        }}
+                        setSomeFieldValues={setSomeFieldValues}
+                        fieldPresets={field.fieldPresets}
+                        fieldValues={fieldValuesArray}
+                    />
+                );
+            }
             if (field.lineageSearch) {
                 return (
                     <LineageField
@@ -436,6 +458,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                     />
                 );
             }
+
             if (field.autocomplete === true) {
                 const fieldValuesArray = extractArrayValue(fieldValues[field.name]);
 

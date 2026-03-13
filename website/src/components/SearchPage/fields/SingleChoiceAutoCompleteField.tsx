@@ -1,9 +1,14 @@
-import { type InputHTMLAttributes, useEffect, useMemo, useState, forwardRef } from 'react';
+import { type InputHTMLAttributes, useEffect, useMemo, useState, forwardRef, useRef } from 'react';
 
 import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteOptions.ts';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
-import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
+import {
+    type FieldValueUpdate,
+    type GroupedMetadataFilter,
+    type MetadataFilter,
+    type SetSomeFieldValues,
+} from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import { Button } from '../../common/Button';
@@ -33,12 +38,15 @@ const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputEl
 
 const logger = getClientLogger('SingleChoiceAutoCompleteField');
 
+export type FieldPresetMap = Partial<Record<string, Record<string, string>>>;
+
 type SingleChoiceAutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;
     optionsProvider: OptionsProvider;
     setSomeFieldValues: SetSomeFieldValues;
     fieldValue?: string | number | null;
     fieldDisplayNameMap?: Map<string, string>;
+    fieldPresets?: FieldPresetMap;
     maxDisplayedOptions?: number;
 };
 
@@ -48,6 +56,7 @@ export const SingleChoiceAutoCompleteField = ({
     setSomeFieldValues,
     fieldValue,
     fieldDisplayNameMap,
+    fieldPresets,
     maxDisplayedOptions = 1000,
 }: SingleChoiceAutoCompleteFieldProps) => {
     const [query, setQuery] = useState('');
@@ -80,14 +89,36 @@ export const SingleChoiceAutoCompleteField = ({
         return displayedOptions.slice(0, maxDisplayedOptions);
     }, [options, query, maxDisplayedOptions, fieldDisplayNameMap]);
 
+    const lastPresetKeysRef = useRef<string[]>([]);
+
     const handleChange = (value: string | null) => {
         const finalValue = value === NULL_QUERY_VALUE ? null : (value ?? '');
-        setSomeFieldValues([field.name, finalValue]);
+        const updates: FieldValueUpdate[] = [[field.name, finalValue]];
+
+        for (const key of lastPresetKeysRef.current) {
+            updates.push([key, '']);
+        }
+
+        const preset = fieldPresets?.[value ?? ''];
+        if (preset) {
+            const entries = Object.entries(preset) as [key: string, value: string][];
+            updates.push(...entries.map(([k, v]) => [k, v] as FieldValueUpdate));
+            lastPresetKeysRef.current = entries.map(([k]) => k);
+        } else {
+            lastPresetKeysRef.current = [];
+        }
+
+        setSomeFieldValues(...updates);
     };
 
     const handleClear = () => {
+        const updates: FieldValueUpdate[] = [[field.name, '']];
+        for (const key of lastPresetKeysRef.current) {
+            updates.push([key, '']);
+        }
+        lastPresetKeysRef.current = [];
         setQuery('');
-        setSomeFieldValues([field.name, '']);
+        setSomeFieldValues(...updates);
     };
 
     return (

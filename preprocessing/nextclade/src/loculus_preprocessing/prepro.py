@@ -26,6 +26,7 @@ from .datatypes import (
     GeneName,
     InputData,
     InputMetadata,
+    InputMetadataValue,
     NucleotideInsertion,
     NucleotideSequence,
     ProcessedData,
@@ -128,47 +129,25 @@ def truncate_after_wildcard(path: str, separator: str = ".") -> str:
     return path
 
 
-def add_nextclade_metadata(
-    spec: ProcessingSpec,
-    unprocessed: UnprocessedAfterNextclade,
+def _process_nextclade_raw(
+    sequence_name: str,
     nextclade_path: str,
-    config: Config,
+    unprocessed: UnprocessedAfterNextclade,
+    spec: ProcessingSpec,
 ) -> InputData:
-    try:
-        segment = spec.args.get("segment", "main") if spec.args else "main"
-        if not isinstance(segment, str):
-            msg = f"add_nextclade_metadata: segment must be str, got {type(segment)}"
-            raise TypeError(msg)
-        reference = spec.args.get("reference", None) if spec.args else None
-        if not isinstance(reference, str) and reference is not None:
-            msg = f"add_nextclade_metadata: reference must be str, got {type(reference)}"
-            raise TypeError(msg)
-        sequence_name = get_dataset_name(
-            segment,
-            unprocessed.nextcladeMetadata,
-            config,
-            reference,
-        )
-    except MultipleSequencesPerSegmentError as e:
-        error_annotation = e.get_processing_annotation(
-            processed_field_name=nextclade_path, organism=config.organism
-        )
-        logger.error(error_annotation.message)
-        return InputData(datum=None, errors=[error_annotation])
-
     if (
         not unprocessed.nextcladeMetadata
         or sequence_name not in unprocessed.nextcladeMetadata
         or unprocessed.nextcladeMetadata[sequence_name] is None
     ):
-        return InputData(datum=None)
-
-    raw: str | None = dpath.get(
-        unprocessed.nextcladeMetadata[sequence_name],
-        truncate_after_wildcard(nextclade_path),
-        separator=".",
-        default=None,
-    )  # type: ignore[assignment]
+        raw = None
+    else:
+        raw = dpath.get(
+            unprocessed.nextcladeMetadata[sequence_name],
+            truncate_after_wildcard(nextclade_path),
+            separator=".",
+            default=None,
+        )  # type: ignore[assignment]
 
     match nextclade_path:
         case "frameShifts":
@@ -190,24 +169,137 @@ def add_nextclade_metadata(
             return InputData(datum=str(raw))
 
 
-def add_assigned_reference(
+def _get_segment_and_reference(spec: ProcessingSpec) -> tuple[str, str | None, bool]:
+    args = spec.args or {}
+
+    segment = args.get("segment", "main")
+    if not isinstance(segment, str):
+        raise TypeError(f"add_nextclade_metadata: segment must be str, got {type(segment)}")
+
+    reference = args.get("reference", None)
+    if reference is not None and not isinstance(reference, str):
+        raise TypeError(f"add_nextclade_metadata: reference must be str, got {type(reference)}")
+
+    all_segments = bool(args.get("all_segments", False))
+    return segment, reference, all_segments
+
+
+def add_nextclade_metadata(
+    spec: ProcessingSpec,
+    unprocessed: UnprocessedAfterNextclade,
+    nextclade_path: str,
+    config: Config,
+) -> InputData:
+    try:
+        segment, reference, all_segments = _get_segment_and_reference(spec)
+    except TypeError as e:
+        logger.error(str(e))
+        return InputData(
+            datum=None,
+            errors=[
+                ProcessingAnnotation.from_fields(
+                    input_fields=[],
+                    output_fields=[nextclade_path],
+                    type=AnnotationSourceType.METADATA,
+                    message=str(e),
+                )
+            ],
+        )
+
+    if all_segments:
+        datum_map: dict[str, InputMetadataValue] = {}
+        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
+
+        for seg_name in [seg.name for seg in config.segments]:
+            try:
+                sequence_name = get_dataset_name(
+                    seg_name,
+                    unprocessed.nextcladeMetadata,
+                    config,
+                    reference,
+                )
+            except MultipleSequencesPerSegmentError as e:
+                error_annotation = e.get_processing_annotation(
+                    processed_field_name=nextclade_path,
+                    organism=config.organism,
+                )
+                logger.error(error_annotation.message)
+                errors.append(error_annotation)
+                datum_map[seg_name] = None
+                continue
+
+            if not sequence_name:
+                datum_map[seg_name] = None
+                continue
+
+            processed = _process_nextclade_raw(
+                unprocessed=unprocessed,
+                sequence_name=sequence_name,
+                nextclade_path=nextclade_path,
+                spec=spec,
+            )
+
+            datum_map[seg_name] = processed.datum
+            warnings.extend(processed.warnings)
+            errors.extend(processed.errors)
+
+        return InputData(datum=None, datum_map=datum_map, warnings=warnings, errors=errors)
+
+    try:
+        sequence_name = get_dataset_name(
+            segment,
+            unprocessed.nextcladeMetadata,
+            config,
+            reference,
+        )
+    except MultipleSequencesPerSegmentError as e:
+        error_annotation = e.get_processing_annotation(
+            processed_field_name=nextclade_path, organism=config.organism
+        )
+        logger.error(error_annotation.message)
+        return InputData(datum=None, errors=[error_annotation])
+
+    if not sequence_name:
+        return InputData(datum=None)
+
+    return _process_nextclade_raw(
+        nextclade_path=nextclade_path,
+        unprocessed=unprocessed,
+        sequence_name=sequence_name,
+        spec=spec,
+    )
+
+
+def add_assigned_reference(  # noqa: PLR0911
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
 ) -> InputData:
     if not unprocessed.nextcladeMetadata:
         return InputData(datum=None)
-    segment = spec.args.get("segment", "main") if spec.args else "main"
-    if not isinstance(segment, str):
-        msg = f"add_assigned_reference: segment must be str, got {type(segment)}"
-        raise TypeError(msg)
-    name = get_dataset_name(segment, unprocessed.nextcladeMetadata, config)
-    if not name:
+    segment = spec.args.get("segment") if spec.args else None
+    if isinstance(segment, str):
+        name = get_dataset_name(segment, unprocessed.nextcladeMetadata, config)
+        if not name:
+            return InputData(datum=None)
+        reference = config.get_dataset_by_name(name).reference_name
+        if not reference:
+            return InputData(datum=None)
+        return InputData(datum=reference)
+    references: dict[str, InputMetadataValue] = {}
+    all_segments = spec.args.get("all_segments") if spec.args else None
+    if not all_segments:
         return InputData(datum=None)
-    reference = config.get_dataset_by_name(name).reference_name
-    if not reference:
+    for seg in config.segments:
+        name = get_dataset_name(seg.name, unprocessed.nextcladeMetadata, config)
+        if not name:
+            continue
+        reference = config.get_dataset_by_name(name).reference_name
+        references[seg.name] = reference
+    if not references:
         return InputData(datum=None)
-    return InputData(datum=reference)
+    return InputData(datum_map=references, datum=None)
 
 
 def add_input_metadata(
@@ -350,12 +442,17 @@ def get_output_metadata(
         for arg_name, input_path in spec.inputs.items():
             if isinstance(unprocessed, UnprocessedAfterNextclade):
                 input_metadata = add_input_metadata(spec, unprocessed, input_path, config=config)
-                input_data[arg_name] = input_metadata.datum
+                if input_metadata.datum_map:
+                    for key, value in input_metadata.datum_map.items():
+                        input_data[f"{arg_name}_{key}"] = value
+                        input_fields.extend(input_metadata.datum_map.keys())
+                else:
+                    input_data[arg_name] = input_metadata.datum
+                    input_fields.append(input_path)
                 errors.extend(input_metadata.errors)
                 warnings.extend(input_metadata.warnings)
-                input_fields.append(input_path)
                 group_id = (
-                    int(unprocessed.inputMetadata["group_id"])
+                    int(unprocessed.inputMetadata["group_id"])  # type: ignore
                     if unprocessed.inputMetadata["group_id"]
                     else None
                 )

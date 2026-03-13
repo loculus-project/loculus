@@ -139,6 +139,11 @@
           "type": "boolean",
           "description": "If true, this field will appear under 'Sequence Filters' on the search page instead of 'Metadata Filters'. Defaults to false."
         },
+        "fieldPresets": {
+          "groups": ["metadata"],
+          "type": "object",
+          "description": "Which additional fields a selection of this value will preset"
+        },
         "relatesToSegment": {
           "groups": ["metadata"],
           "type": "string",

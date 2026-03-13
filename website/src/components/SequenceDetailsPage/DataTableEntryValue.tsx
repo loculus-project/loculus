@@ -8,11 +8,13 @@ import { PlainValueDisplay } from './PlainValueDisplay.tsx';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
 import type { MutationBadgeData } from '../../types/config.ts';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
+import { getReferenceDisplayNameMap } from '../../utils/sequenceTypeHelpers.ts';
 
 interface Props {
     data: TableDataEntry;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    segmentDisplayNameMap?: Record<string, string>;
+    referenceGenomesInfo: ReferenceGenomesInfo;
 }
 
 const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
@@ -85,6 +87,35 @@ const GeoLocationComponent: React.FC<{ jsonString: string }> = ({ jsonString }) 
     const displayText = adminParts.length > 0 ? `${country} (${adminParts.join(', ')})` : country;
 
     return <>{displayText}</>;
+};
+
+const VariantReferenceComponent: React.FC<{ jsonString: string; referenceGenomesInfo: ReferenceGenomesInfo }> = ({
+    jsonString,
+    referenceGenomesInfo,
+}) => {
+    const entries = JSON.parse(jsonString) as TableDataEntry[];
+
+    let variant = false;
+    let reference: string | undefined = undefined;
+    let referenceDisplayName: string | undefined = undefined;
+    for (const segmentName in referenceGenomesInfo.segmentDisplayNames) {
+        variant =
+            entries
+                .find((e) => e.name === 'variant_' + segmentName)
+                ?.value.toString()
+                .toLowerCase() === 'true';
+        reference = entries.find((e) => e.name === 'reference_' + segmentName)?.value.toString();
+        if (reference) {
+            referenceDisplayName =
+                getReferenceDisplayNameMap(referenceGenomesInfo, segmentName).get(reference) ?? segmentName;
+            break;
+        }
+    }
+
+    if (variant) {
+        return <>{referenceDisplayName ?? reference ?? 'N/A'} (Variant)</>;
+    }
+    return <>{referenceDisplayName ?? reference ?? 'N/A'}</>;
 };
 
 type FileEntry = {
@@ -160,7 +191,7 @@ export function parseMutations(input: string): MutationBadgeData[] {
         .filter((m): m is MutationBadgeData => m !== null);
 }
 
-const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, segmentDisplayNameMap }) => {
+const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, referenceGenomesInfo }) => {
     const { value, customDisplay } = data;
 
     return (
@@ -174,7 +205,7 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, se
                     ) : (
                         <SubstitutionsContainers
                             values={customDisplay.badge}
-                            segmentDisplayNameMap={segmentDisplayNameMap}
+                            segmentDisplayNameMap={referenceGenomesInfo.segmentDisplayNames}
                         />
                     ))}
                 {customDisplay?.type === 'list' &&
@@ -183,7 +214,7 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, se
                     ) : (
                         <MutationStringContainers
                             values={customDisplay.list}
-                            segmentDisplayNameMap={segmentDisplayNameMap}
+                            segmentDisplayNameMap={referenceGenomesInfo.segmentDisplayNames}
                         />
                     ))}
                 {customDisplay?.type === 'generatedBadge' &&
@@ -226,6 +257,9 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, se
                 )}
                 {customDisplay?.type === 'lengthCompleteness' && typeof value == 'string' && (
                     <LengthCompletenessComponent jsonString={value} />
+                )}
+                {customDisplay?.type === 'variantReference' && typeof value == 'string' && (
+                    <VariantReferenceComponent jsonString={value} referenceGenomesInfo={referenceGenomesInfo} />
                 )}
                 {customDisplay?.type === 'geoLocation' && typeof value == 'string' && (
                     <GeoLocationComponent jsonString={value} />

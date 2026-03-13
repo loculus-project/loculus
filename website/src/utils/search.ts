@@ -204,6 +204,7 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
                     header: filter.header,
                     isSequenceFilter: filter.isSequenceFilter,
                     relatesToSegment: filter.relatesToSegment,
+                    fieldPresets: filter.fieldPresets,
                 };
                 fieldList.push(fieldForGroup);
                 groupsMap.set(filter.fieldGroup, fieldForGroup);

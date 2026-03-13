@@ -1853,6 +1853,18 @@ defaultOrganisms:
           lineageSystem: cchfS
           preprocessing:
             inputs: {input: nextclade.clade}
+        - name: reference
+          isSequenceFilter: true
+          displayName: Reference
+          noInput: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          fieldPresets:
+            "Homo sapiens":
+              hostNameScientific: "Homo sapiens"
+          preprocessing:
+            inputs: {input: hostNameScientific}
       website:
         <<: *website
         tableColumns:
@@ -1977,14 +1989,39 @@ defaultOrganisms:
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
+        - name: variant
+          isSequenceFilter: true
+          perSegment: true
+          header: "Clade & Lineage"
+          oneHeader: true
+          displayName: "Variant"
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          customDisplay:
+            type: variantReference
+            displayGroup: reference
+            label: Closest Reference
+          preprocessing:
+            function: is_above_threshold
+            args:
+              threshold: 20
+            inputs: {input: "nextclade.privateNucMutations.totalPrivateSubstitutions"}
         - name: reference
+          oneHeader: true
           isSequenceFilter: true
           displayName: Closest Reference
+          header: "Clade & Lineage"
           noInput: true
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
-          hideOnSequenceDetailsPage: true
+          customDisplay:
+            type: variantReference
+            displayGroup: reference
+            label: Closest Reference
           perSegment: true
           preprocessing:
             inputs: {input: ASSIGNED_REFERENCE}
@@ -2164,6 +2201,7 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
+          perSegment: true
           preprocessing:
             inputs: {input: ASSIGNED_REFERENCE}
       website:

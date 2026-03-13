@@ -3,21 +3,26 @@ import React from 'react';
 import DataTableEntryValue from './DataTableEntryValue';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes';
 
 interface Props {
     data: TableDataEntry;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    segmentDisplayNameMap: Record<string, string>;
+    referenceGenomesInfo: ReferenceGenomesInfo;
 }
 
-const DataTableComponent: React.FC<Props> = ({ data, dataUseTermsHistory, segmentDisplayNameMap }) => {
+const DataTableComponent: React.FC<Props> = ({ data, dataUseTermsHistory, referenceGenomesInfo }) => {
     const { label, type } = data;
     return (
         <>
             {type.kind === 'metadata' && (
                 <div className='text-sm grid my-1' style={{ gridTemplateColumns: '200px 1fr' }}>
                     <div className='font-medium text-gray-900 break-inside-avoid pr-4'>{label}</div>
-                    <DataTableEntryValue data={data} dataUseTermsHistory={dataUseTermsHistory} />
+                    <DataTableEntryValue
+                        data={data}
+                        dataUseTermsHistory={dataUseTermsHistory}
+                        referenceGenomesInfo={referenceGenomesInfo}
+                    />
                 </div>
             )}
 
@@ -27,7 +32,7 @@ const DataTableComponent: React.FC<Props> = ({ data, dataUseTermsHistory, segmen
                     <DataTableEntryValue
                         data={data}
                         dataUseTermsHistory={dataUseTermsHistory}
-                        segmentDisplayNameMap={segmentDisplayNameMap}
+                        referenceGenomesInfo={referenceGenomesInfo}
                     />
                 </div>
             )}

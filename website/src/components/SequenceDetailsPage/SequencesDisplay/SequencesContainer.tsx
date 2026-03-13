@@ -100,6 +100,8 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
         }
     }, [sequenceType]);
 
+    const useCollapsedTabs = segments.length >= 3;
+
     return (
         <>
             <BoxWithTabsTabBar>
@@ -109,6 +111,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                     setType={setType}
                     isActive={activeTab === 'unaligned'}
                     setActiveTab={setActiveTab}
+                    useCollapsedTab={useCollapsedTabs}
                 />
                 <AlignmentSequenceTabs
                     segments={segments}
@@ -116,6 +119,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                     setType={setType}
                     isActive={activeTab === 'aligned'}
                     setActiveTab={setActiveTab}
+                    useCollapsedTab={useCollapsedTabs}
                 />
                 <BoxWithTabsTab
                     isActive={activeTab === 'gene'}
@@ -125,6 +129,17 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
             </BoxWithTabsTabBar>
             <BoxWithTabsBox>
                 {activeTab === 'gene' && <GeneDropdown genes={genes} sequenceType={sequenceType} setType={setType} />}
+                {useCollapsedTabs && activeTab === 'unaligned' && (
+                    <SegmentDropdown
+                        segments={segments}
+                        sequenceType={sequenceType}
+                        setType={setType}
+                        mode='unaligned'
+                    />
+                )}
+                {useCollapsedTabs && activeTab === 'aligned' && (
+                    <SegmentDropdown segments={segments} sequenceType={sequenceType} setType={setType} mode='aligned' />
+                )}
                 {activeTab !== 'gene' || isGeneSequence(sequenceType.name, sequenceType) ? (
                     <SequencesViewer
                         organism={organism}
@@ -147,6 +162,7 @@ type NucleotideSequenceTabsProps = {
     setType: Dispatch<SetStateAction<SequenceType>>;
     isActive: boolean;
     setActiveTab: (tab: 'unaligned' | 'aligned' | 'gene') => void;
+    useCollapsedTab: boolean;
 };
 
 const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
@@ -155,6 +171,7 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
     setType,
     isActive,
     setActiveTab,
+    useCollapsedTab,
 }) => {
     if (segments.length === 1) {
         const onlySegment = segments[0];
@@ -167,6 +184,19 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
                     setActiveTab('unaligned');
                 }}
                 label='Nucleotide sequence'
+            />
+        );
+    }
+
+    if (useCollapsedTab) {
+        return (
+            <BoxWithTabsTab
+                isActive={isActive}
+                onClick={() => {
+                    if (!isActive) setType(unalignedSequenceSegment(segments[0]));
+                    setActiveTab('unaligned');
+                }}
+                label='Nucleotide sequences'
             />
         );
     }
@@ -196,6 +226,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
     setType,
     isActive,
     setActiveTab,
+    useCollapsedTab,
 }) => {
     if (segments.length === 1) {
         const onlySegment = segments[0];
@@ -208,6 +239,19 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
                     setActiveTab('aligned');
                 }}
                 label='Aligned nucleotide sequence'
+            />
+        );
+    }
+
+    if (useCollapsedTab) {
+        return (
+            <BoxWithTabsTab
+                isActive={isActive}
+                onClick={() => {
+                    if (!isActive) setType(alignedSequenceSegment(segments[0]));
+                    setActiveTab('aligned');
+                }}
+                label='Aligned nucleotide sequences'
             />
         );
     }
@@ -228,6 +272,41 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
                 />
             ))}
         </>
+    );
+};
+
+type SegmentDropdownProps = {
+    segments: SegmentInfo[];
+    sequenceType: SequenceType;
+    setType: Dispatch<SetStateAction<SequenceType>>;
+    mode: 'unaligned' | 'aligned';
+};
+
+const SegmentDropdown: FC<SegmentDropdownProps> = ({ segments, sequenceType, setType, mode }) => {
+    const currentSegmentName =
+        isUnalignedSequence(sequenceType) || isAlignedSequence(sequenceType) ? sequenceType.name.name : '';
+
+    return (
+        <div className='mb-4'>
+            <Select
+                className='select select-bordered w-full max-w-xs'
+                value={currentSegmentName}
+                onChange={(e) => {
+                    const segment = segments.find((s) => s.name === e.target.value);
+                    if (segment !== undefined) {
+                        setType(
+                            mode === 'unaligned' ? unalignedSequenceSegment(segment) : alignedSequenceSegment(segment),
+                        );
+                    }
+                }}
+            >
+                {segments.map((segment) => (
+                    <option key={segment.lapisName} value={segment.name}>
+                        {segment.displayName ?? segment.name}
+                    </option>
+                ))}
+            </Select>
+        </div>
     );
 };
 

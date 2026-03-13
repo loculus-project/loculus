@@ -85,6 +85,7 @@ export const metadata = z.object({
     onlyForReference: z.string().optional(),
     isSequenceFilter: z.boolean().optional(),
     relatesToSegment: z.string().optional(),
+    fieldPresets: z.record(z.record(z.string())).optional(),
 });
 
 export const inputFieldOption = z.object({
@@ -132,6 +133,7 @@ export type GroupedMetadataFilter = {
     header?: string;
     isSequenceFilter?: Metadata['isSequenceFilter'];
     relatesToSegment?: Metadata['relatesToSegment'];
+    fieldPresets?: Metadata['fieldPresets'];
     order?: number;
     orderInSearchDisplay?: number;
 };
