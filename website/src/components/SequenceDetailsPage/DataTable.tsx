@@ -12,12 +12,18 @@ import {
     type SegmentReferenceSelections,
 } from '../../utils/sequenceTypeHelpers';
 import AkarInfo from '~icons/ri/information-line';
+import {
+    DEFAULT_AA_MUTATION_DETAILS_HEADER,
+    DEFAULT_NUC_MUTATION_DETAILS_HEADER,
+    type Schema,
+} from '../../types/config';
 
 interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     referenceGenomesInfo: ReferenceGenomesInfo;
     segmentReferences?: SegmentReferenceSelections;
+    schema: Schema;
 }
 
 const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) => {
@@ -41,6 +47,7 @@ const DataTableComponent: React.FC<Props> = ({
     dataUseTermsHistory,
     referenceGenomesInfo,
     segmentReferences,
+    schema,
 }) => {
     const references = getInsdcAccessionsFromSegmentReferences(referenceGenomesInfo, segmentReferences);
     const hasReferenceAccession = references.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
@@ -49,7 +56,8 @@ const DataTableComponent: React.FC<Props> = ({
     const generalSections = dataTableData.table.filter(
         ({ header }) =>
             !header.toLowerCase().includes('alignment') &&
-            !header.toLowerCase().includes('mutation') &&
+            !header.toLowerCase().includes(schema.nucMutationDetailsHeader ?? DEFAULT_NUC_MUTATION_DETAILS_HEADER) &&
+            !header.toLowerCase().includes(schema.aaMutationDetailsHeader ?? DEFAULT_AA_MUTATION_DETAILS_HEADER) &&
             !header.toLowerCase().includes('authors'),
     );
     const alignmentSections = dataTableData.table.filter(({ header }) => header.toLowerCase().includes('alignment'));
@@ -146,14 +154,18 @@ const DataTableComponent: React.FC<Props> = ({
                             <div className='flex flex-row'>
                                 <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
                             </div>
-                            {hasReferenceAccession && header.includes('mutation') && (
-                                <h2 className='pt-2 text-xs text-gray-500'>
-                                    <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
-                                    Mutations called relative to the <ReferenceDisplay reference={references} />{' '}
-                                    reference
-                                    {references.length > 1 ? 's' : ''}
-                                </h2>
-                            )}
+                            {hasReferenceAccession &&
+                                (header.includes(DEFAULT_NUC_MUTATION_DETAILS_HEADER) ||
+                                    header.includes(DEFAULT_AA_MUTATION_DETAILS_HEADER)) && (
+                                    <h2 className='pt-2 text-xs text-gray-500'>
+                                        <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
+                                        Mutations called relative to the <ReferenceDisplay
+                                            reference={references}
+                                        />{' '}
+                                        reference
+                                        {references.length > 1 ? 's' : ''}
+                                    </h2>
+                                )}
                             <div className='mt-4'>
                                 {rows.map((entry: TableDataEntry, index: number) => (
                                     <DataTableEntry

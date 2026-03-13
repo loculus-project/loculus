@@ -70,6 +70,7 @@ export const SequenceDataUI: FC<Props> = ({
                 segmentReferences={segmentReferences}
                 dataUseTermsHistory={dataUseTermsHistory}
                 referenceGenomesInfo={referenceGenomesInfo}
+                schema={schema}
             />
             {schema.submissionDataTypes.consensusSequences && !isRevocation && (
                 <div className='mt-10'>
