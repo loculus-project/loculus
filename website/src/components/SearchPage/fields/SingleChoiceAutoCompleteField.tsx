@@ -3,7 +3,12 @@ import { type InputHTMLAttributes, useEffect, useMemo, useState, forwardRef, use
 import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteOptions.ts';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
-import { type FieldValueUpdate, type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
+import {
+    type FieldValueUpdate,
+    type GroupedMetadataFilter,
+    type MetadataFilter,
+    type SetSomeFieldValues,
+} from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import { Button } from '../../common/Button';
