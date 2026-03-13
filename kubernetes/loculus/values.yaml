@@ -2009,7 +2009,6 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
-          hideOnSequenceDetailsPage: true
           perSegment: true
           preprocessing:
             inputs: {input: ASSIGNED_REFERENCE}
