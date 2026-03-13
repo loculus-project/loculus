@@ -6,7 +6,7 @@ import type { FieldValues, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { getReferenceIdentifier } from '../../utils/referenceSelection.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
-import { segmentsWithMultipleReferences } from '../../utils/sequenceTypeHelpers.ts';
+import { getReferenceDisplayNameMap, segmentsWithMultipleReferences } from '../../utils/sequenceTypeHelpers.ts';
 
 type ReferenceSelectorProps = {
     filterSchema: MetadataFilterSchema;
@@ -46,12 +46,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
     }, [filterSchema, referenceIdentifierField]);
 
     const referenceDisplayNameMap = useMemo(
-        () =>
-            new Map(
-                Object.entries(referenceGenomesInfo.segmentReferenceGenomes[segmentName]).map(
-                    ([ref, refData]) => [ref, refData.displayName ?? ref] as const,
-                ),
-            ),
+        () => getReferenceDisplayNameMap(referenceGenomesInfo, segmentName),
         [referenceGenomesInfo.segmentReferenceGenomes, segmentName],
     );
 
