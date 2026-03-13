@@ -1976,9 +1976,35 @@ defaultOrganisms:
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
+        - name: variant
+          isSequenceFilter: true
+          perSegment: true
+          header: "Clade & Lineage"
+          oneHeader: true
+          displayName: "Variant"
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          customDisplay:
+            type: variantReference
+            displayGroup: reference
+            label: Closest Reference
+          preprocessing:
+            function: is_above_threshold
+            args:
+              threshold: 50
+            inputs: {input: "nextclade.privateNucMutations.totalPrivateSubstitutions"}
         - name: reference
+          oneHeader: true
+          header: "Clade & Lineage"
           isSequenceFilter: true
           displayName: Closest Reference
+          customDisplay:
+            type: variantReference
+            displayGroup: reference
+            label: Closest Reference
           noInput: true
           generateIndex: true
           autocomplete: true

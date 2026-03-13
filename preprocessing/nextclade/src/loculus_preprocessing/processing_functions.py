@@ -1157,12 +1157,14 @@ class ProcessingFunctions:
                 ],
             )
         input_datum = input_data["input"]
+        logger.info(f"Checking if {input_datum} is above threshold {args['threshold']} for field {output_field}")
         if not input_datum:
             return ProcessingResult(datum=None, warnings=[], errors=[])
         try:
             threshold = float(args["threshold"])  # type: ignore
             input = float(input_datum)
         except (ValueError, TypeError):
+            logger.error(f"Field {output_field} has non-numeric threshold value.")
             return ProcessingResult(
                 datum=None,
                 warnings=[],

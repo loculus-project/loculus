@@ -90,6 +90,7 @@ const DataTableComponent: React.FC<Props> = ({
                                         key={index}
                                         data={entry}
                                         dataUseTermsHistory={dataUseTermsHistory}
+                                        referenceGenomesInfo={referenceGenomesInfo}
                                     />
                                 ))}
                             </div>
@@ -124,6 +125,7 @@ const DataTableComponent: React.FC<Props> = ({
                                         key={index}
                                         data={entry}
                                         dataUseTermsHistory={dataUseTermsHistory}
+                                        referenceGenomesInfo={referenceGenomesInfo}
                                     />
                                 ))}
                             </div>
@@ -158,6 +160,7 @@ const DataTableComponent: React.FC<Props> = ({
                                         key={index}
                                         data={entry}
                                         dataUseTermsHistory={dataUseTermsHistory}
+                                        referenceGenomesInfo={referenceGenomesInfo}
                                     />
                                 ))}
                             </div>
