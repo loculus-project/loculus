@@ -274,6 +274,16 @@ export function getInsdcAccessionsFromSegmentReferences(
     return references;
 }
 
+export function getReferenceDisplayNameMap(
+    referenceGenomesInfo: ReferenceGenomesInfo, segmentName: string,
+): Map<string, string> {
+    return new Map(
+        Object.entries(referenceGenomesInfo.segmentReferenceGenomes[segmentName]).map(
+            ([ref, refData]) => [ref, refData.displayName ?? ref] as const,
+        ),
+    );
+}
+
 /**
  * @param referenceGenomesInfo - The reference genome lightweight schema
  * @returns Returns a map from LAPIS names to displayNames (segment or gene names).

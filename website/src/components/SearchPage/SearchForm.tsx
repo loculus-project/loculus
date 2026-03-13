@@ -14,7 +14,6 @@ import { LineageField } from './fields/LineageField.tsx';
 import { MultiChoiceAutoCompleteField } from './fields/MultiChoiceAutoCompleteField';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
-import { SingleChoiceAutoCompleteField } from './fields/SingleChoiceAutoCompleteField.tsx';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
