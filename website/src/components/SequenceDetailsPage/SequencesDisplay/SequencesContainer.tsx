@@ -108,19 +108,15 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
             <BoxWithTabsTabBar>
                 <UnalignedNucleotideSequenceTabs
                     segments={segments}
-                    sequenceType={sequenceType}
                     setType={setType}
                     isActive={activeTab === 'unaligned'}
                     setActiveTab={setActiveTab}
-                    useCollapsedTab={useCollapsedTabs}
                 />
                 <AlignmentSequenceTabs
                     segments={segments}
-                    sequenceType={sequenceType}
                     setType={setType}
                     isActive={activeTab === 'aligned'}
                     setActiveTab={setActiveTab}
-                    useCollapsedTab={useCollapsedTabs}
                 />
                 <BoxWithTabsTab
                     isActive={activeTab === 'gene'}
@@ -159,20 +155,16 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
 
 type NucleotideSequenceTabsProps = {
     segments: SegmentInfo[];
-    sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
     isActive: boolean;
     setActiveTab: (tab: 'unaligned' | 'aligned' | 'gene') => void;
-    useCollapsedTab: boolean;
 };
 
 const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
     segments,
-    sequenceType,
     setType,
     isActive,
     setActiveTab,
-    useCollapsedTab,
 }) => {
     if (segments.length === 1) {
         const onlySegment = segments[0];
@@ -189,46 +181,19 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
         );
     }
 
-    if (useCollapsedTab) {
-        return (
-            <BoxWithTabsTab
-                isActive={isActive}
-                onClick={() => {
-                    if (!isActive) setType(unalignedSequenceSegment(segments[0]));
-                    setActiveTab('unaligned');
-                }}
-                label='Nucleotide sequences'
-            />
-        );
-    }
-
     return (
-        <>
-            {segments.map((segmentName) => (
-                <BoxWithTabsTab
-                    key={segmentName.lapisName}
-                    isActive={
-                        isActive && isUnalignedSequence(sequenceType) && segmentName.name === sequenceType.name.name
-                    }
-                    onClick={() => {
-                        setType(unalignedSequenceSegment(segmentName));
-                        setActiveTab('unaligned');
-                    }}
-                    label={`${segmentName.displayName ?? segmentName.name} (unaligned)`}
-                />
-            ))}
-        </>
+        <BoxWithTabsTab
+            isActive={isActive}
+            onClick={() => {
+                if (!isActive) setType(unalignedSequenceSegment(segments[0]));
+                setActiveTab('unaligned');
+            }}
+            label='Nucleotide sequences'
+        />
     );
 };
 
-const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
-    segments,
-    sequenceType,
-    setType,
-    isActive,
-    setActiveTab,
-    useCollapsedTab,
-}) => {
+const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({ segments, setType, isActive, setActiveTab }) => {
     if (segments.length === 1) {
         const onlySegment = segments[0];
         return (
@@ -244,35 +209,15 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
         );
     }
 
-    if (useCollapsedTab) {
-        return (
-            <BoxWithTabsTab
-                isActive={isActive}
-                onClick={() => {
-                    if (!isActive) setType(alignedSequenceSegment(segments[0]));
-                    setActiveTab('aligned');
-                }}
-                label='Aligned nucleotide sequences'
-            />
-        );
-    }
-
     return (
-        <>
-            {segments.map((segmentName) => (
-                <BoxWithTabsTab
-                    key={segmentName.lapisName}
-                    isActive={
-                        isActive && isAlignedSequence(sequenceType) && segmentName.name === sequenceType.name.name
-                    }
-                    onClick={() => {
-                        setType(alignedSequenceSegment(segmentName));
-                        setActiveTab('aligned');
-                    }}
-                    label={`${segmentName.displayName ?? segmentName.name} (aligned)`}
-                />
-            ))}
-        </>
+        <BoxWithTabsTab
+            isActive={isActive}
+            onClick={() => {
+                if (!isActive) setType(alignedSequenceSegment(segments[0]));
+                setActiveTab('aligned');
+            }}
+            label='Aligned nucleotide sequences'
+        />
     );
 };
 
