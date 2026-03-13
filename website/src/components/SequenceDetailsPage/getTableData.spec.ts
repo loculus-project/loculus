@@ -417,7 +417,10 @@ describe('getTableData', () => {
         const data = result._unsafeUnwrap().data;
 
         const mutationTableEntries = data.filter((entry) =>
-            [schema.nucMutationDetailsHeader ?? 'Nucleotide mutations', schema.aaMutationDetailsHeader ?? 'Amino acid mutations'].includes(entry.header),
+            [
+                schema.nucMutationDetailsHeader ?? 'Nucleotide mutations',
+                schema.aaMutationDetailsHeader ?? 'Amino acid mutations',
+            ].includes(entry.header),
         );
 
         expect(data.length).greaterThanOrEqual(1, 'data.length');
