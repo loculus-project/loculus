@@ -38,7 +38,7 @@ const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputEl
 
 const logger = getClientLogger('SingleChoiceAutoCompleteField');
 
-export type FieldPresetMap = Record<string, Record<string, string>>;
+export type FieldPresetMap = Partial<Record<string, Record<string, string>>>;
 
 type SingleChoiceAutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;

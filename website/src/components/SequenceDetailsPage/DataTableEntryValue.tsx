@@ -106,7 +106,8 @@ const VariantReferenceComponent: React.FC<{ jsonString: string; referenceGenomes
                 .toLowerCase() === 'true';
         reference = entries.find((e) => e.name === 'reference_' + segmentName)?.value.toString();
         if (reference) {
-            referenceDisplayName = getReferenceDisplayNameMap(referenceGenomesInfo, segmentName).get(reference) ?? segmentName;
+            referenceDisplayName =
+                getReferenceDisplayNameMap(referenceGenomesInfo, segmentName).get(reference) ?? segmentName;
             break;
         }
     }

@@ -275,7 +275,8 @@ export function getInsdcAccessionsFromSegmentReferences(
 }
 
 export function getReferenceDisplayNameMap(
-    referenceGenomesInfo: ReferenceGenomesInfo, segmentName: string,
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    segmentName: string,
 ): Map<string, string> {
     return new Map(
         Object.entries(referenceGenomesInfo.segmentReferenceGenomes[segmentName]).map(
