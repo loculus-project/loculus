@@ -185,6 +185,8 @@ export const schema = z.object({
     metadataTemplate: z.array(z.string()).optional(),
     inputFields: z.array(inputField),
     tableColumns: z.array(z.string()),
+    nucMutationDetailsHeader: z.string().optional(),
+    aaMutationDetailsHeader: z.string().optional(),
     primaryKey: z.string(),
     defaultOrderBy: z.string(),
     defaultOrder: orderDirection,

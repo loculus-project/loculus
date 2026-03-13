@@ -538,6 +538,16 @@
                   },
                   "description": "Columns to display in the browse table"
                 },
+                "nucMutationDetailsHeader": {
+                  "groups": ["schema"],
+                  "type": "string",
+                  "description": "Header to display above the nucleotide mutation details on the sequence details page. If not set, the header `Nucleotide mutations` will be used."
+                },
+                "aaMutationDetailsHeader": {
+                  "groups": ["schema"],
+                  "type": "string",
+                  "description": "Header to display above the amino acid mutation details on the sequence details page. If not set, the header `Amino acid mutations` will be used."
+                },
                 "defaultOrderBy": {
                   "groups": ["schema"],
                   "type": "string",

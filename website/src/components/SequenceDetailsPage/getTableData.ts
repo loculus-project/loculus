@@ -121,13 +121,15 @@ function mutationDetails(
     nucleotideInsertions: InsertionCount[],
     aminoAcidInsertions: InsertionCount[],
     referenceGenomesInfo: ReferenceGenomesInfo,
+    nucMutationDetailsHeader?: string,
+    aaMutationDetailsHeader?: string,
 ): TableDataEntry[] {
     const data: TableDataEntry[] = [
         {
             label: 'Substitutions',
             name: 'nucleotideSubstitutions',
             value: '',
-            header: 'Nucleotide mutations',
+            header: nucMutationDetailsHeader ?? 'Nucleotide mutations',
             customDisplay: {
                 type: 'badge',
                 badge: substitutionsMap(nucleotideMutations, referenceGenomesInfo, true),
@@ -138,7 +140,7 @@ function mutationDetails(
             label: 'Deletions',
             name: 'nucleotideDeletions',
             value: '',
-            header: 'Nucleotide mutations',
+            header: nucMutationDetailsHeader ?? 'Nucleotide mutations',
             customDisplay: {
                 type: 'list',
                 list: deletionsMap(nucleotideMutations, referenceGenomesInfo, true),
@@ -149,7 +151,7 @@ function mutationDetails(
             label: 'Insertions',
             name: 'nucleotideInsertions',
             value: '',
-            header: 'Nucleotide mutations',
+            header: nucMutationDetailsHeader ?? 'Nucleotide mutations',
             customDisplay: {
                 type: 'list',
                 list: insertionsMap(nucleotideInsertions, referenceGenomesInfo, true),
@@ -160,7 +162,7 @@ function mutationDetails(
             label: 'Substitutions',
             name: 'aminoAcidSubstitutions',
             value: '',
-            header: 'Amino acid mutations',
+            header: aaMutationDetailsHeader ?? 'Amino acid mutations',
             customDisplay: {
                 type: 'badge',
                 badge: substitutionsMap(aminoAcidMutations, referenceGenomesInfo),
@@ -171,7 +173,7 @@ function mutationDetails(
             label: 'Deletions',
             name: 'aminoAcidDeletions',
             value: '',
-            header: 'Amino acid mutations',
+            header: aaMutationDetailsHeader ?? 'Amino acid mutations',
             customDisplay: {
                 type: 'list',
                 list: deletionsMap(aminoAcidMutations, referenceGenomesInfo),
@@ -182,7 +184,7 @@ function mutationDetails(
             label: 'Insertions',
             name: 'aminoAcidInsertions',
             value: '',
-            header: 'Amino acid mutations',
+            header: aaMutationDetailsHeader ?? 'Amino acid mutations',
             customDisplay: {
                 type: 'list',
                 list: insertionsMap(aminoAcidInsertions, referenceGenomesInfo),
@@ -230,6 +232,8 @@ function toTableData(
             nucleotideInsertions,
             aminoAcidInsertions,
             referenceGenomesInfo,
+            config.nucMutationDetailsHeader,
+            config.aaMutationDetailsHeader,
         );
         data.push(...mutations);
     }
