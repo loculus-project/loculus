@@ -1995,7 +1995,7 @@ defaultOrganisms:
             function: is_above_threshold
             args:
               threshold: 1000
-            inputs: {input: "nextclade.totalSubstitutions"}  #custom nextclade dataset does not have private mutations, so using total substitutions as a proxy for distance from reference
+            inputs: {input: "nextclade.totalSubstitutions"} #custom nextclade dataset does not have private mutations, so using total substitutions as a proxy for distance from reference
         - name: reference
           oneHeader: true
           header: "Clade & Lineage"
