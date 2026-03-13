@@ -91,7 +91,7 @@ jobs:
         run: ./gradlew bootJar
       - name: Build and push image if input files changed
         if: env.CACHE_HIT == 'false'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./backend
           push: true
