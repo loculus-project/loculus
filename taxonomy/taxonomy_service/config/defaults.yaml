@@ -1,7 +1,1 @@
-db_columns:
-  'tax_id': 0
-  'common_name': 1
-  'scientific_name': 2
-  'parent_id': 3
-  'depth': 4
-
+log_level: DEBUG
