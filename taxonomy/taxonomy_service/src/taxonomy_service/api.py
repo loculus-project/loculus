@@ -4,23 +4,11 @@ import sqlite3
 from fastapi import FastAPI, HTTPException
 import uvicorn
 
-from .config import Config, DbColumnMapping
+from .config import Config
 
 logger = logging.getLogger()
 
 app = FastAPI(title="Taxonomy service", description="Loculus taxonomy API for hostname validation")
-
-
-def init_app(config: Config):
-    app.state.config = config
-
-
-def db_row_to_dict(db_column_mapping: dict[str, DbColumnMapping], row) -> dict[str, str]:
-    if len(db_column_mapping) != len(row):
-        raise ValueError(
-            "DB row did not contain the expected number of columns. This may be configuration error"
-        )
-    return {k: row[v.idx] for k, v in db_column_mapping.items()}
 
 
 @app.get("/")
@@ -54,6 +42,28 @@ def get_taxon(tax_id: int):
         if not taxon:
             raise HTTPException(status_code=404, detail=f"Taxon {tax_id} not found")
         return dict(taxon)
+
+
+@app.get("/taxa/{tax_id}/common_name")
+def get_common_name(tax_id: int):
+    config = app.state.config
+    with sqlite3.connect(config.db_path) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        while tax_id > 0:
+            taxon = cursor.execute("SELECT * FROM taxonomy WHERE tax_id = ?", (tax_id,)).fetchone()
+            if taxon is None:
+                raise HTTPException(status_code=404, detail=f"Taxon {tax_id} not found")
+            elif taxon["common_name"] is not None:
+                return dict(taxon)
+            tax_id = taxon["parent_id"]
+        raise HTTPException(
+            status_code=404, detail=f"Unable to find common name for taxon {tax_id}"
+        )
+
+
+def init_app(config: Config):
+    app.state.config = config
 
 
 def start_api(config: Config):
