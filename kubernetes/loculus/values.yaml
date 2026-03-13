@@ -2042,10 +2042,9 @@ defaultOrganisms:
           segments:
             - name: L
               references:
-                - nextclade_dataset_name: community/pathoplexus/cchfv/L
+                - nextclade_dataset_name: cchfv/L
                   name: singleReference
                   genes: [RdRp]
-                  nextclade_dataset_server: https://data.clades.nextstrain.org/v3
             - name: M
               references:
                 - nextclade_dataset_name: cchfv/M-MH396653
