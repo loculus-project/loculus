@@ -548,6 +548,15 @@ defaultOrganismConfig: &defaultOrganismConfig
         order: 30
         orderOnDetailsPage: 460
         ingest: division
+        fieldPresets:
+          Punjab:
+            geoLocCountry: Pakistan
+          Karachi:
+            geoLocCountry: Pakistan
+          Washington:
+            geoLocCountry: USA
+          California:
+            geoLocCountry: USA
       - name: geoLocAdmin2
         displayName: Collection subdivision level 2
         desired: true

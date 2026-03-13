@@ -439,6 +439,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                                 lapisSearchParameters,
                                 fieldName: field.name,
                             }}
+                            fieldPresets={field.fieldPresets}
                         />
                     );
                 }
@@ -456,6 +457,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                             lapisSearchParameters,
                             fieldName: field.name,
                         }}
+                        fieldPresets={field.fieldPresets}
                     />
                 );
             }
