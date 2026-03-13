@@ -26,6 +26,7 @@ const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 const loginUrl = await getAuthUrl(Astro.url.toString());
 
 const topNavigationItems = navigationItems.top(isLoggedIn, loginUrl);
+const accessionPrefix = getWebsiteConfig().accessionPrefix;
 ---
 
 <div class='flex justify-end relative'>
@@ -47,11 +48,12 @@ const topNavigationItems = navigationItems.top(isLoggedIn, loginUrl);
                 })
             }
         </div>
-        <AccessionSearchBox client:load />
+        <AccessionSearchBox client:load accessionPrefix={accessionPrefix} />
     </div>
 
     <div class='lg:hidden flex items-center pb-3'>
         <SandwichMenu
+            accessionPrefix={accessionPrefix}
             topNavigationItems={topNavigationItems}
             currentOrganism={selectedOrganism}
             knownOrganisms={knownOrganisms}
