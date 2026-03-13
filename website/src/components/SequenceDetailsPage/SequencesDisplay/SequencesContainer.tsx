@@ -105,12 +105,14 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
             <BoxWithTabsTabBar>
                 <UnalignedNucleotideSequenceTabs
                     segments={segments}
+                    sequenceType={sequenceType}
                     setType={setType}
                     isActive={activeTab === 'unaligned'}
                     setActiveTab={setActiveTab}
                 />
                 <AlignmentSequenceTabs
                     segments={segments}
+                    sequenceType={sequenceType}
                     setType={setType}
                     isActive={activeTab === 'aligned'}
                     setActiveTab={setActiveTab}
@@ -152,13 +154,22 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
 
 type NucleotideSequenceTabsProps = {
     segments: SegmentInfo[];
+    sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
     isActive: boolean;
     setActiveTab: (tab: 'unaligned' | 'aligned' | 'gene') => void;
 };
 
+const getCurrentSegment = (segments: SegmentInfo[], sequenceType: SequenceType): SegmentInfo => {
+    if (isUnalignedSequence(sequenceType) || isAlignedSequence(sequenceType)) {
+        return segments.find((s) => s.name === sequenceType.name.name) ?? segments[0];
+    }
+    return segments[0];
+};
+
 const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
     segments,
+    sequenceType,
     setType,
     isActive,
     setActiveTab,
@@ -182,7 +193,7 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
         <BoxWithTabsTab
             isActive={isActive}
             onClick={() => {
-                if (!isActive) setType(unalignedSequenceSegment(segments[0]));
+                if (!isActive) setType(unalignedSequenceSegment(getCurrentSegment(segments, sequenceType)));
                 setActiveTab('unaligned');
             }}
             label='Nucleotide sequences'
@@ -190,7 +201,13 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
     );
 };
 
-const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({ segments, setType, isActive, setActiveTab }) => {
+const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
+    segments,
+    sequenceType,
+    setType,
+    isActive,
+    setActiveTab,
+}) => {
     if (segments.length === 1) {
         const onlySegment = segments[0];
         return (
@@ -210,7 +227,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({ segments, setT
         <BoxWithTabsTab
             isActive={isActive}
             onClick={() => {
-                if (!isActive) setType(alignedSequenceSegment(segments[0]));
+                if (!isActive) setType(alignedSequenceSegment(getCurrentSegment(segments, sequenceType)));
                 setActiveTab('aligned');
             }}
             label='Aligned nucleotide sequences'
