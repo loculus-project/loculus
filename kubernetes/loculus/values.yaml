@@ -1994,8 +1994,8 @@ defaultOrganisms:
           preprocessing:
             function: is_above_threshold
             args:
-              threshold: 50
-            inputs: {input: "nextclade.privateNucMutations.totalPrivateSubstitutions"}
+              threshold: 1000
+            inputs: {input: "nextclade.totalSubstitutions"}  #custom nextclade dataset does not have private mutations, so using total substitutions as a proxy for distance from reference
         - name: reference
           oneHeader: true
           header: "Clade & Lineage"
@@ -2042,9 +2042,10 @@ defaultOrganisms:
           segments:
             - name: L
               references:
-                - nextclade_dataset_name: cchfv/L
+                - nextclade_dataset_name: community/pathoplexus/cchfv/L
                   name: singleReference
                   genes: [RdRp]
+                  nextclade_dataset_server: https://data.clades.nextstrain.org/v3
             - name: M
               references:
                 - nextclade_dataset_name: cchfv/M-MH396653
