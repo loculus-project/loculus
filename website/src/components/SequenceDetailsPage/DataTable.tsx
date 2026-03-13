@@ -56,8 +56,8 @@ const DataTableComponent: React.FC<Props> = ({
     const generalSections = dataTableData.table.filter(
         ({ header }) =>
             !header.toLowerCase().includes('alignment') &&
-            !header.toLowerCase().includes(schema.nucMutationDetailsHeader ?? DEFAULT_NUC_MUTATION_DETAILS_HEADER) &&
-            !header.toLowerCase().includes(schema.aaMutationDetailsHeader ?? DEFAULT_AA_MUTATION_DETAILS_HEADER) &&
+            !header.includes(schema.nucMutationDetailsHeader ?? DEFAULT_NUC_MUTATION_DETAILS_HEADER) &&
+            !header.includes(schema.aaMutationDetailsHeader ?? DEFAULT_AA_MUTATION_DETAILS_HEADER) &&
             !header.toLowerCase().includes('authors'),
     );
     const alignmentSections = dataTableData.table.filter(({ header }) => header.toLowerCase().includes('alignment'));
