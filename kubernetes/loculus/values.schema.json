@@ -139,6 +139,18 @@
           "type": "boolean",
           "description": "If true, this field will appear under 'Sequence Filters' on the search page instead of 'Metadata Filters'. Defaults to false."
         },
+        "fieldPresets": {
+          "groups": ["metadata"],
+          "type": "object",
+          "description": "Map from a selected value to additional fields and their values that selecting that value should automatically apply.",
+          "additionalProperties": {
+            "type": "object",
+            "description": "Field/value pairs applied when this preset is selected.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
         "relatesToSegment": {
           "groups": ["metadata"],
           "type": "string",

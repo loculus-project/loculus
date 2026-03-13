@@ -395,6 +395,9 @@ fields:
   header: {{ printf "%s %s" (default "Other" .header) $segmentDisplayName | quote }}
   {{- end }}
   relatesToSegment: {{ $segment }}
+  {{- if .fieldPresets }}
+  fieldPresets: {{ .fieldPresets | toJson }}
+  {{- end }}
   {{- if .isSequenceFilter }}
   isSequenceFilter: true
   {{- end }}
@@ -415,6 +418,9 @@ fields:
   displayName: {{ quote .displayName }}
   {{- end }}
   header: {{ default "Other" .header }}
+  {{- if .fieldPresets }}
+  fieldPresets: {{ .fieldPresets | toJson }}
+  {{- end }}
 {{- end}}
 {{- end}}
 {{- end}}
