@@ -194,7 +194,6 @@ describe('MultiChoiceAutoCompleteField', () => {
             expect(setSomeFieldValues).toHaveBeenCalledWith(
                 ['testField', ['Option 1', 'Option 3']],
                 ['host', 'human'],
-                ['lineage', ['B.1', 'H1N1']],
             );
         });
 
@@ -218,7 +217,6 @@ describe('MultiChoiceAutoCompleteField', () => {
 
             expect(setSomeFieldValues).toHaveBeenCalledWith(
                 ['testField', ['Option 1', 'Option 2']],
-                ['lineage', 'B.1'],
             );
             expect(setSomeFieldValues).not.toHaveBeenCalledWith(
                 expect.anything(),
@@ -242,7 +240,6 @@ describe('MultiChoiceAutoCompleteField', () => {
 
             expect(setSomeFieldValues).toHaveBeenCalledWith(
                 ['testField', ['Option 1', 'Option 2']],
-                ['lineage', ['B.1', 'BtCoV']],
             );
             expect(setSomeFieldValues).not.toHaveBeenCalledWith(
                 expect.anything(),
@@ -267,7 +264,6 @@ describe('MultiChoiceAutoCompleteField', () => {
             expect(setSomeFieldValues).toHaveBeenCalledWith(
                 ['testField', ['Option 1', 'Option 2']],
                 ['host', ['human', 'bat']],
-                ['lineage', ['B.1', 'BtCoV']],
             );
         });
 
