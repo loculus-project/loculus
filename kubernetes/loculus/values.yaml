@@ -52,10 +52,10 @@ logo:
   width: 100
   height: 100
 lineageSystemDefinitions:
-  pangoLineage:
+  pango_Lineage:
     1: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
     2: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
-  alternativeLineage:
+  'alternative lineage system':
     4: https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml
   cchfS:
     1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml
@@ -1660,7 +1660,7 @@ defaultOrganisms:
           autocomplete: true
           required: true
           type: string
-          lineageSystem: pangoLineage
+          lineageSystem: pango_Lineage
           options:
             - name: A
             - name: A.1
@@ -1773,7 +1773,7 @@ defaultOrganisms:
           autocomplete: true
           required: true
           type: string
-          lineageSystem: alternativeLineage
+          lineageSystem: 'alternative lineage system'
           options:
             - name: A
             - name: A.1
