@@ -75,7 +75,7 @@ describe('VariantReferenceComponent', () => {
                     refA: { lapisName: 'main', insdcAccessionFull: null, genes: [] },
                 },
             },
-            segmentDisplayNames: { main: 'Main Segment' },
+            segmentDisplayNames: {},
             isMultiSegmented: false,
             useLapisMultiSegmentedEndpoint: false,
         };
@@ -83,23 +83,6 @@ describe('VariantReferenceComponent', () => {
         renderVariantReference([{ name: 'reference_main', value: 'refA' }], infoWithoutDisplayName);
 
         expect(screen.getByText('refA')).toBeInTheDocument();
-    });
-
-    it('shows "N/A" when segmentDisplayNames is empty (no segments to iterate)', () => {
-        const infoNoSegments: ReferenceGenomesInfo = {
-            segmentReferenceGenomes: {
-                main: {
-                    refA: { lapisName: 'main', insdcAccessionFull: null, genes: [], displayName: 'Reference A' },
-                },
-            },
-            segmentDisplayNames: {},
-            isMultiSegmented: false,
-            useLapisMultiSegmentedEndpoint: false,
-        };
-
-        renderVariantReference([{ name: 'reference_main', value: 'refA' }], infoNoSegments);
-
-        expect(screen.getByText('N/A')).toBeInTheDocument();
     });
 
     it('treats absent variant entry as non-variant', () => {

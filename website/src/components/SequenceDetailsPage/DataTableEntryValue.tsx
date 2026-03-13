@@ -98,7 +98,7 @@ const VariantReferenceComponent: React.FC<{ jsonString: string; referenceGenomes
     let variant = false;
     let reference: string | undefined = undefined;
     let referenceDisplayName: string | undefined = undefined;
-    for (const segmentName in referenceGenomesInfo.segmentDisplayNames) {
+    for (const segmentName of Object.keys(referenceGenomesInfo.segmentReferenceGenomes)) {
         variant =
             entries
                 .find((e) => e.name === 'variant_' + segmentName)
