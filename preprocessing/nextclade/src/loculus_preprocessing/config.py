@@ -6,7 +6,6 @@ from enum import StrEnum
 from types import UnionType
 from typing import Any, get_args
 
-from pandas._config.config import config_prefix
 import yaml
 from pydantic import BaseModel, Field, model_validator
 
