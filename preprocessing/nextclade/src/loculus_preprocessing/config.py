@@ -1,8 +1,8 @@
 import argparse
-from graphlib import TopologicalSorter
 import logging
 import os
 from enum import StrEnum
+from graphlib import TopologicalSorter
 from types import UnionType
 from typing import Any, get_args
 
@@ -237,7 +237,7 @@ def get_processing_order(config: Config) -> list[str]:
     dag: dict[str, set[str]] = {k: set() for k in config.processing_spec.keys()}
     for node, spec in config.processing_spec.items():
         for dependency in spec.inputs.values():
-            if dependency == node or dependency not in dag.keys():
+            if dependency == node or dependency not in dag:
                 continue
             dag[node].add(dependency)
     ts = TopologicalSorter(dag)
