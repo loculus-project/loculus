@@ -236,7 +236,6 @@ def get_processing_order(config: Config) -> list[str]:
             dag[node].add(dependency)
     ts = TopologicalSorter(dag)
     return list(ts.static_order())
-    # return list(config.processing_spec.keys())
 
 
 def get_config(config_file: str | None = None, ignore_args: bool = False) -> Config:
