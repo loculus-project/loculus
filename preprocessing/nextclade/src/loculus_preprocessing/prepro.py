@@ -354,7 +354,7 @@ def get_output_metadata(
                 # If it does not exists there, get it through add_input_metadata
                 processed = output_metadata.get(input_path)
                 if processed is not None:
-                    input_data[args_name] = processed  # type: ignore[assign]
+                    input_data[args_name] = processed  # type: ignore
                 else:
                     input_metadata = add_input_metadata(
                         spec, unprocessed, input_path, config=config
@@ -373,7 +373,7 @@ def get_output_metadata(
             else:
                 # Try to get required intput field from processed metadata values
                 # If it does not exists there, use the unprocessed value
-                input_data[arg_name] = output_metadata.get(input_path) or unprocessed.metadata.get(  # type: ignore[assign]
+                input_data[arg_name] = output_metadata.get(input_path) or unprocessed.metadata.get(  # type: ignore
                     input_path
                 )
                 input_fields.append(input_path)
