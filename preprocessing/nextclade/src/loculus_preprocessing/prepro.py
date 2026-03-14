@@ -313,7 +313,6 @@ def get_output_metadata(
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
-    print(config.processing_spec)
     for output_field in config.processing_order:
         spec = config.processing_spec[output_field]
         input_data: InputMetadata = {}
