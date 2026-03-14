@@ -82,6 +82,7 @@ class UnprocessedData:
     submissionId: str  # noqa: N815
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
+    files: dict[str, list[dict[str, str]]] | None = None  # External files attached to submission
 
 
 @dataclass
