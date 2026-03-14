@@ -228,6 +228,12 @@ def generate_argparse_from_model(config_cls: type[BaseModel]) -> argparse.Argume
 
 
 def get_processing_order(config: Config) -> list[str]:
+    """Return a valid order for processing metadata fields based on their dependencies.
+
+    Dependencies are derived from input fields in `config.processing_spec`. A DAG is
+    constructed and topologically sorted to ensure each field is processed after the
+    fields it depends on.
+    """
     dag: dict[str, set[str]] = {k: set() for k in config.processing_spec.keys()}
     for node, spec in config.processing_spec.items():
         for dependency in spec.inputs.values():
