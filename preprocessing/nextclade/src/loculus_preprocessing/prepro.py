@@ -313,7 +313,9 @@ def get_output_metadata(
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
-    for output_field, spec in config.processing_spec.items():
+    print(config.processing_spec)
+    for output_field in config.processing_order:
+        spec = config.processing_spec[output_field]
         input_data: InputMetadata = {}
         input_fields: list[str] = []
         if output_field == "length":
@@ -349,10 +351,17 @@ def get_output_metadata(
 
         for arg_name, input_path in spec.inputs.items():
             if isinstance(unprocessed, UnprocessedAfterNextclade):
-                input_metadata = add_input_metadata(spec, unprocessed, input_path, config=config)
-                input_data[arg_name] = input_metadata.datum
-                errors.extend(input_metadata.errors)
-                warnings.extend(input_metadata.warnings)
+                existing = output_metadata.get(input_path)
+                if existing is not None:
+                    input_data[args_name] = existing  # type: ignore[assign]
+                else:
+                    input_metadata = add_input_metadata(
+                        spec, unprocessed, input_path, config=config
+                    )
+                    input_data[arg_name] = input_metadata.datum
+                    errors.extend(input_metadata.errors)
+                    warnings.extend(input_metadata.warnings)
+
                 input_fields.append(input_path)
                 group_id = (
                     int(unprocessed.inputMetadata["group_id"])
@@ -361,7 +370,11 @@ def get_output_metadata(
                 )
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
-                input_data[arg_name] = unprocessed.metadata.get(input_path)
+                # Check if the required metadata field already exists in a processed state, if so use it.
+                # If not, get it from the unprocessed metadata.
+                input_data[arg_name] = output_metadata.get(input_path) or unprocessed.metadata.get(  # type: ignore[assign]
+                    input_path
+                )
                 input_fields.append(input_path)
                 group_id = unprocessed.group_id
                 submitted_at = unprocessed.submittedAt

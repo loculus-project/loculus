@@ -1,10 +1,12 @@
 import argparse
+from graphlib import TopologicalSorter
 import logging
 import os
 from enum import StrEnum
 from types import UnionType
 from typing import Any, get_args
 
+from pandas._config.config import config_prefix
 import yaml
 from pydantic import BaseModel, Field, model_validator
 
@@ -100,6 +102,7 @@ class Config(BaseModel):
     organism: str = "mpox"
     segments: list[Segment] = Field(default_factory=list)
     processing_spec: dict[str, ProcessingSpec] = Field(default_factory=dict)
+    processing_order: list[str] = []
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
     segment_classification_method: SegmentClassificationMethod = SegmentClassificationMethod.ALIGN
@@ -225,6 +228,18 @@ def generate_argparse_from_model(config_cls: type[BaseModel]) -> argparse.Argume
     return parser
 
 
+def get_processing_order(config: Config) -> list[str]:
+    dag: dict[str, set[str]] = {k: set() for k in config.processing_spec.keys()}
+    for node, spec in config.processing_spec.items():
+        for dependency in spec.inputs.values():
+            if dependency == node or dependency not in dag.keys():
+                continue
+            dag[node].add(dependency)
+    ts = TopologicalSorter(dag)
+    return list(ts.static_order())
+    # return list(config.processing_spec.keys())
+
+
 def get_config(config_file: str | None = None, ignore_args: bool = False) -> Config:
     """
     Config precedence: Direct function args > CLI args > ENV variables > config file > default
@@ -273,4 +288,6 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
     }
     if cli_overrides:
         config = Config(**{**config.model_dump(), **cli_overrides})
+
+    config.processing_order = get_processing_order(config)
     return config

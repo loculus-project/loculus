@@ -3,6 +3,21 @@ genes: []
 log_level: DEBUG
 organism: test-not-aligned-organism
 processing_spec:
+  depends_on_A:
+    function: concatenate
+    args:
+      order: [continent, ACCESSION_VERSION, A]
+      type: [string, ACCESSION_VERSION, string]
+    inputs:
+      continent: continent
+      A: A
+      required_collection_date: ncbi_required_collection_date
+  A:
+    args:
+      type: date
+    function: parse_and_assert_past_date
+    inputs:
+      date: A
   continent:
     args:
       options:
