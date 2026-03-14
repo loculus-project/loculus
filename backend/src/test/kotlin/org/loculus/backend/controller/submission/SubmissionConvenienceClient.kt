@@ -496,8 +496,11 @@ class SubmissionConvenienceClient(
         )
     }
 
-    fun getReleasedData(organism: String = DEFAULT_ORGANISM) =
-        client.getReleasedData(organism).expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+    fun getReleasedData(organism: String = DEFAULT_ORGANISM, filterForEnaDeposition: String = "false") =
+        client.getReleasedData(
+            organism,
+            filterForEnaDeposition,
+        ).expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
 
     fun getOriginalMetadata(
         organism: String = DEFAULT_ORGANISM,
