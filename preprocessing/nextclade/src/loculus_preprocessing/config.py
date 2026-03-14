@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 from enum import StrEnum
+from graphlib import TopologicalSorter
 from types import UnionType
 from typing import Any, get_args
 
@@ -100,6 +101,7 @@ class Config(BaseModel):
     organism: str = "mpox"
     segments: list[Segment] = Field(default_factory=list)
     processing_spec: dict[str, ProcessingSpec] = Field(default_factory=dict)
+    processing_order: list[str] = []
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
     segment_classification_method: SegmentClassificationMethod = SegmentClassificationMethod.ALIGN
@@ -225,6 +227,23 @@ def generate_argparse_from_model(config_cls: type[BaseModel]) -> argparse.Argume
     return parser
 
 
+def get_processing_order(config: Config) -> list[str]:
+    """Return a valid order for processing metadata fields based on their dependencies.
+
+    Dependencies are derived from input fields in `config.processing_spec`. A DAG is
+    constructed and topologically sorted to ensure each field is processed after the
+    fields it depends on.
+    """
+    dag: dict[str, set[str]] = {k: set() for k in config.processing_spec.keys()}
+    for node, spec in config.processing_spec.items():
+        for dependency in spec.inputs.values():
+            if dependency == node or dependency not in dag:
+                continue
+            dag[node].add(dependency)
+    ts = TopologicalSorter(dag)
+    return list(ts.static_order())
+
+
 def get_config(config_file: str | None = None, ignore_args: bool = False) -> Config:
     """
     Config precedence: Direct function args > CLI args > ENV variables > config file > default
@@ -273,4 +292,6 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
     }
     if cli_overrides:
         config = Config(**{**config.model_dump(), **cli_overrides})
+
+    config.processing_order = get_processing_order(config)
     return config

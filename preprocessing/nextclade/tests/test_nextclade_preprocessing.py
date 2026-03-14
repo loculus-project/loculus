@@ -18,7 +18,12 @@ from factory_methods import (
     verify_processed_entry,
 )
 
-from loculus_preprocessing.config import AlignmentRequirement, Config, get_config
+from loculus_preprocessing.config import (
+    AlignmentRequirement,
+    Config,
+    get_config,
+    get_processing_order,
+)
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
     SegmentClassificationMethod,
@@ -1209,6 +1214,7 @@ def test_preprocessing_without_metadata() -> None:
     )
 
     config.processing_spec = {}
+    config.processing_order = []
 
     result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
     processed_entry = result[0].processed_entry
@@ -1310,6 +1316,7 @@ def test_create_flatfile():
     embl_fields = get_config(EMBL_METADATA, ignore_args=True).processing_spec
     config.processing_spec.update(embl_fields)
     config.create_embl_file = True
+    config.processing_order = get_processing_order(config)
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
         data=UnprocessedData(
