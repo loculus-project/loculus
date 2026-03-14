@@ -1,0 +1,16 @@
+{{- if .Values.useSequlus }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-sequlus-service
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: sequlus
+  ports:
+    - port: 8090
+      targetPort: 8090
+      protocol: TCP
+      name: http
+{{- end }}

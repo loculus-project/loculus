@@ -1,0 +1,139 @@
+{{- if .Values.useSequlus }}
+{{- $enabledOrganismsResult := (include "loculus.enabledOrganisms" . | fromJson) }}
+{{- $enabledOrganismsList := $enabledOrganismsResult.organisms }}
+{{- $lineageConfig := dict }}
+{{- range $_, $item := $enabledOrganismsList }}
+  {{- $key := $item.key }}
+  {{- $organismContent := $item.contents }}
+  {{- $schema := $organismContent.schema | include "loculus.patchMetadataSchema" | fromYaml }}
+  {{- range $entry := $schema.metadata }}
+    {{- if hasKey $entry "lineageSystem" }}
+      {{- $lineageSystem := $entry.lineageSystem }}
+      {{- $configKey := printf "%s/%s" $key $entry.name }}
+      {{- if hasKey $.Values.lineageSystemDefinitions $lineageSystem }}
+        {{- $_ := set $lineageConfig $configKey (index $.Values.lineageSystemDefinitions $lineageSystem) }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-sequlus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: sequlus
+  template:
+    metadata:
+      annotations:
+        timestamp: {{ now | quote }}
+      labels:
+        app: loculus
+        component: sequlus
+    spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      initContainers:
+        - name: wait-for-backend
+          image: busybox
+          command: ["sh", "-c", "until wget -q -O- http://loculus-backend-service:8079/actuator/health > /dev/null 2>&1; do echo 'Waiting for backend...'; sleep 5; done; echo 'Backend is ready'"]
+        {{- range $_, $item := $enabledOrganismsList }}
+        {{- $key := $item.key }}
+        - name: process-ref-genomes-{{ $key }}
+          image: ghcr.io/loculus-project/config-processor:{{ include "loculus.dockerTag" $.Values }}
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
+          command: ["sh", "-c", "python3 /app/config-processor.py /input /output && cp /output/reference_genomes.json /reference_genomes/{{ $key }}.json"]
+          volumeMounts:
+            - name: configmap-{{ $key }}
+              mountPath: /input
+            - name: configmap-{{ $key }}-processed
+              mountPath: /output
+            - name: reference-genomes
+              mountPath: /reference_genomes
+        {{- end }}
+      containers:
+        - name: sequlus
+          image: "{{ .Values.images.sequlus.repository }}:{{ .Values.images.sequlus.tag | default (include "loculus.dockerTag" .Values) }}"
+          imagePullPolicy: "{{ .Values.images.sequlus.pullPolicy | default .Values.imagePullPolicy }}"
+          ports:
+            - containerPort: 8090
+          args:
+            - "--port"
+            - "8090"
+            - "--backend-url"
+            {{- if .Values.disableBackend }}
+            - "http://host.k3d.internal:8079"
+            {{- else }}
+            - "http://loculus-backend-service:8079"
+            {{- end }}
+            - "--database-url"
+            - "$(DATABASE_URL)"
+            - "--reference-genomes-dir"
+            - "/reference_genomes"
+            - "--data-dir"
+            - "/data"
+            - "--refresh-interval-secs"
+            - "10"
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: password
+            - name: DATABASE_URL
+              value: "postgres://$(DB_USERNAME):$(DB_PASSWORD)@loculus-database-service:5432/loculus"
+            {{- if $lineageConfig }}
+            - name: LINEAGE_CONFIG
+              value: {{ $lineageConfig | toJson | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: reference-genomes
+              mountPath: /reference_genomes
+            - name: sequlus-data
+              mountPath: /data
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 60
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            periodSeconds: 10
+            failureThreshold: 6
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            periodSeconds: 10
+            failureThreshold: 6
+            timeoutSeconds: 5
+      volumes:
+        - name: reference-genomes
+          emptyDir: {}
+        - name: sequlus-data
+          emptyDir: {}
+        {{- range $_, $item := $enabledOrganismsList }}
+        {{- $key := $item.key }}
+        - name: configmap-{{ $key }}
+          configMap:
+            name: lapis-silo-database-config-{{ $key }}
+            items:
+              - key: reference_genomes.json
+                path: reference_genomes.json
+        - name: configmap-{{ $key }}-processed
+          emptyDir: {}
+        {{- end }}
+{{- end }}

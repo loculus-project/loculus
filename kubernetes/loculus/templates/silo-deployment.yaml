@@ -1,3 +1,4 @@
+{{- if not .Values.useSequlus }}
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token" }}
 
@@ -123,4 +124,5 @@ spec:
           emptyDir: {}
         - name: lapis-silo-input-data-cache
           emptyDir: {}
+{{- end }}
 {{- end }}

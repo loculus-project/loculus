@@ -18,6 +18,7 @@ on:
       - "keycloak/**"
       - "kubernetes/**"
       - "preprocessing/**"
+      - "sequlus/**"
       - "website/**"
       - "deploy.py"
       - "integration-tests/**"
@@ -77,6 +78,20 @@ jobs:
       - name: Create k3d cluster
         run: |
           ./deploy.py --verbose cluster --bind-all
+      - name: Wait for sequlus Docker image
+        run: |
+          echo "Waiting for ghcr.io/loculus-project/sequlus:commit-${{ env.sha }} to be available..."
+          for i in $(seq 1 120); do
+            if docker pull ghcr.io/loculus-project/sequlus:commit-${{ env.sha }} > /dev/null 2>&1; then
+              echo "Image available after $((i * 10)) seconds"
+              break
+            fi
+            if [ $i -eq 120 ]; then
+              echo "Timed out waiting for sequlus image after 20 minutes"
+              exit 1
+            fi
+            sleep 10
+          done
       - name: Deploy with Helm
         run: |
           ./deploy.py --verbose helm \
