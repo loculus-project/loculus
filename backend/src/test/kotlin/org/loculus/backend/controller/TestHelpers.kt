@@ -6,6 +6,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.datetime.DateTimeUnit.Companion.MONTH
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import org.awaitility.Awaitility.await
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
 import org.hamcrest.Matchers.allOf
@@ -26,7 +27,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import org.testcontainers.shaded.org.awaitility.Awaitility.await
 import kotlin.time.Clock
 
 const val DEFAULT_ORGANISM = "dummyOrganism"

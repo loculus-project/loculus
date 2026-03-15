@@ -1,0 +1,47 @@
+1	|	all	|		|	synonym	|
+1	|	root	|		|	scientific name	|
+2	|	Bacteria	|	Bacteria <bacteria>	|	scientific name	|
+2	|	bacteria	|	bacteria <blast name>	|	blast name	|
+2	|	bacteria	|	bacteria <genbank common name>	|	genbank common name	|
+2	|	"Bacteria" Cavalier-Smith 1987	|		|	authority	|
+2	|	Bacteria (ex Cavalier-Smith 1987)	|		|	synonym	|
+2	|	Bacteria Woese et al. 2024	|		|	synonym	|
+2	|	"Bacteriobiota" Luketa 2012	|		|	authority	|
+2	|	Bacteriobiota	|		|	synonym	|
+2	|	eubacteria	|		|	common name	|
+2	|	Monera	|	Monera <bacteria>	|	in-part	|
+2	|	Procaryotae	|	Procaryotae <bacteria>	|	in-part	|
+2	|	Prokaryotae	|	Prokaryotae <bacteria>	|	in-part	|
+2	|	Prokaryota	|	Prokaryota <bacteria>	|	in-part	|
+2	|	prokaryote	|	prokaryote <bacteria>	|	in-part	|
+2	|	prokaryotes	|	prokaryotes <bacteria>	|	in-part	|
+6	|	Azorhizobium Dreyfus et al. 1988 emend. Lang et al. 2013	|		|	authority	|
+6	|	Azorhizobium	|		|	scientific name	|
+7	|	ATCC 43989	|	ATCC 43989 <type strain>	|	type material	|
+7	|	Azorhizobium caulinodans Dreyfus et al. 1988	|		|	authority	|
+7	|	Azorhizobium caulinodans	|		|	scientific name	|
+7	|	Azotirhizobium caulinodans	|		|	equivalent name	|
+7	|	CCUG 26647	|	CCUG 26647 <type strain>	|	type material	|
+7	|	DSM 5975	|	DSM 5975 <type strain>	|	type material	|
+7	|	IFO 14845	|	IFO 14845 <type strain>	|	type material	|
+7	|	JCM 20966	|	JCM 20966 <type strain>	|	type material	|
+7	|	LMG 6465	|	LMG 6465 <type strain>	|	type material	|
+7	|	LMG:6465	|	LMG:6465 <type strain>	|	type material	|
+7	|	NBRC 14845	|	NBRC 14845 <type strain>	|	type material	|
+7	|	ORS 571	|	ORS 571 <type strain>	|	type material	|
+9	|	Acyrthosiphon pisum symbiont P	|		|	includes	|
+9	|	Buchnera aphidicola Munson et al. 1991	|		|	authority	|
+9	|	Buchnera aphidicola	|		|	scientific name	|
+9	|	primary endosymbiont of Schizaphis graminum	|		|	includes	|
+9	|	strain Sg (ex Schizaphis graminum)	|	strain Sg (ex Schizaphis graminum) <type strain>	|	type material	|
+10	|	Cellvibrio (ex Winogradsky 1929) Blackall et al. 1986 emend. Humphry et al. 2003	|		|	authority	|
+10	|	Cellvibrio (ex Winogradsky 1929) Blackall et al. 1986 emend. Suarez et al. 2014	|		|	authority	|
+10	|	Cellvibrio	|		|	scientific name	|
+10	|	"Cellvibrio" Winogradsky 1929	|		|	authority	|
+11	|	ATCC 13127	|	ATCC 13127 <type strain>	|	type material	|
+11	|	"Cellulomonas gilvus" (Hulcher and King 1958) Christopherson et al. 2013	|		|	authority	|
+11	|	Cellulomonas gilvus	|		|	scientific name	|
+11	|	"Cellvibrio gilvus" Hulcher and King 1958	|		|	authority	|
+11	|	Cellvibrio gilvus	|		|	synonym	|
+11	|	culture-collection:NRRL:B:14078	|	culture-collection:NRRL:B:14078 <type strain>	|	type material	|
+11	|	NRRL B-14078	|	NRRL B-14078 <type strain>	|	type material	|

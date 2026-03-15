@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import { type Locator, type Page, expect } from '@playwright/test';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 import { EditPage } from './edit.page';
 import { ReviewPage } from './review.page';
@@ -41,14 +41,11 @@ export class SearchPage {
         await this.navigateToVirus('Test organism (without alignment)');
     }
 
-    async select(fieldLabel: string, option: string) {
-        const combo = this.page.getByRole('combobox', { name: fieldLabel }).first();
-
-        await combo.click();
-
-        await combo.focus();
-        await combo.press('Control+a');
-        await combo.pressSequentially(option);
+    private async selectFromAutocomplete(locator: Locator, option: string) {
+        await locator.click();
+        await locator.focus();
+        await locator.press('Control+a');
+        await locator.pressSequentially(option);
 
         await this.page.waitForTimeout(500);
 
@@ -58,10 +55,18 @@ export class SearchPage {
         await this.page.waitForTimeout(200);
     }
 
+    async select(fieldLabel: string, option: string) {
+        await this.selectFromAutocomplete(
+            this.page.getByRole('combobox', { name: fieldLabel }).first(),
+            option,
+        );
+    }
+
     async selectReference(fieldLabel: string, option: string) {
-        const select = this.page.getByRole('combobox', { name: fieldLabel });
-        await select.selectOption({ value: option });
-        await expect(select).toHaveValue(option);
+        await this.selectFromAutocomplete(
+            this.page.getByLabel(fieldLabel, { exact: true }),
+            option,
+        );
 
         const mutations = this.page.getByRole('combobox', { name: 'Mutations' }).first();
         await expect(mutations).toBeVisible();
@@ -97,6 +102,28 @@ export class SearchPage {
 
         await matchingOption.click({ timeout: 2000 });
 
+        await this.page.keyboard.press('Escape');
+    }
+
+    async enterSegmentedMutation(mutation: string, segment: string) {
+        const outer = this.page.locator('details', {
+            has: this.page.locator('summary', { hasText: 'Sequence Filters' }),
+        });
+        const innerS = outer.locator('details', {
+            has: this.page.locator('summary', { hasText: new RegExp(`^${segment}$`) }),
+        });
+        await innerS.locator('summary', { hasText: new RegExp(`^${segment}$`) }).click();
+        await expect(innerS).toHaveAttribute('open', '');
+        await expect(innerS.getByText('Mutations', { exact: true })).toBeVisible();
+        const locator = 'input#mutField' + (segment ? `_${segment}` : '');
+        const input = innerS.locator(locator);
+        await expect(input).toBeVisible();
+        await expect(input).toBeEditable();
+        await input.click();
+        await input.fill(mutation);
+        const optionRegex = new RegExp(`^${mutation}(\\([0-9,]+\\))?$`);
+        const matchingOption = innerS.getByRole('option', { name: optionRegex }).first();
+        await matchingOption.click({ timeout: 2000 });
         await this.page.keyboard.press('Escape');
     }
 

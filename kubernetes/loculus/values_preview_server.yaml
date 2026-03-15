@@ -110,7 +110,7 @@ resources:
       cpu: "30m"
     limits:
       memory: "5Gi"
-  silo-preprocessing:
+  silo-importer:
     requests:
       memory: "10Mi"
       cpu: "5m"

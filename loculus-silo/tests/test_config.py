@@ -14,7 +14,7 @@ SILO_RUN_TIMEOUT_SECONDS = 99
 
 def test_config_from_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     backend_url = "http://example.com/base"
-    lineage_json = '{"1": "http://example.com/lineage.yaml"}'
+    lineage_json = '{"test": {"1": "http://example.com/lineage.yaml"}}'
     monkeypatch.setenv("BACKEND_BASE_URL", backend_url)
     monkeypatch.setenv("LINEAGE_DEFINITIONS", lineage_json)
     monkeypatch.setenv("HARD_REFRESH_INTERVAL", str(HARD_REFRESH_INTERVAL))
@@ -26,7 +26,7 @@ def test_config_from_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
 
     assert config.backend_base_url == backend_url
     assert config.released_data_endpoint == f"{backend_url}/get-released-data?compression=zstd"
-    assert config.lineage_definitions == {1: "http://example.com/lineage.yaml"}
+    assert config.lineage_definitions == {"test": {1: "http://example.com/lineage.yaml"}}
     assert config.hard_refresh_interval == HARD_REFRESH_INTERVAL
     assert config.poll_interval == SILO_IMPORT_POLL_INTERVAL_SECONDS
     assert config.silo_run_timeout == SILO_RUN_TIMEOUT_SECONDS

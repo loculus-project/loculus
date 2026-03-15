@@ -23,7 +23,7 @@ from silo_import.runner import ImporterRunner
 
 def make_config(
     tmp_path: Path,
-    lineage_definitions: dict[int, str] | None = None,
+    lineage_definitions: dict[str, dict[int, str]] | None = None,
     hard_refresh_interval: int = 1,
 ) -> ImporterConfig:
     return ImporterConfig(
@@ -45,7 +45,7 @@ def make_paths(tmp_path: Path) -> ImporterPaths:
 
 
 def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    config = make_config(tmp_path, lineage_definitions={"test": {1: "http://lineage"}})
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
@@ -76,7 +76,8 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert records_out == mock_transformed_records()
     assert runner.current_etag == 'W/"123"'
     assert runner.last_hard_refresh > 0
-    assert paths.lineage_definition_file.read_text(encoding="utf-8") == "lineage: data"
+    lineage_definition_file = paths.input_dir / "test.yaml"
+    assert lineage_definition_file.read_text(encoding="utf-8") == "lineage: data"
 
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 1
@@ -107,7 +108,7 @@ def test_runner_skips_on_not_modified(tmp_path: Path) -> None:
 def test_runner_skips_on_hash_match_updates_etag(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    config = make_config(tmp_path, lineage_definitions={1: "http://lineage"})
+    config = make_config(tmp_path, lineage_definitions={"test": {1: "http://lineage"}})
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 

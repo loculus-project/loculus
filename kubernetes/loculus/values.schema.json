@@ -134,6 +134,21 @@
           "type": "boolean",
           "description": "If true, the field is initially visible in the UI."
         },
+        "isSequenceFilter": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "If true, this field will appear under 'Sequence Filters' on the search page instead of 'Metadata Filters'. Defaults to false."
+        },
+        "relatesToSegment": {
+          "groups": ["metadata"],
+          "type": "string",
+          "description": "Which segment this metadata field relates to. Can be set to any of the segment names defined for the organism."
+        },
+        "percentage": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "If true, the field value (expected to be between 0 and 1) is displayed as a percentage in the search filter and on the details page."
+        },
         "hideOnSequenceDetailsPage": {
           "groups": ["metadata"],
           "type": "boolean",
@@ -142,7 +157,12 @@
         "orderOnDetailsPage": {
           "groups": ["metadata"],
           "type": "number",
-          "description": "Determines the order on the sequence details page."
+          "description": "Determines the order on the sequence details page. Lower numbers come first. Missing values are treated as infinity, and fields will be ordered in the same order as they are defined in the config after all fields with an order value."
+        },
+        "orderInSearchDisplay": {
+          "groups": ["metadata"],
+          "type": "number",
+          "description": "Determines the order in the search bar. Lower numbers come first. Fallback value is `order` (if defined) or infinity (if not defined)."
         },
         "hideInSearchResultsTable": {
           "groups": ["metadata"],
@@ -176,6 +196,11 @@
             "url": {
               "groups": ["metadata"],
               "type": "string"
+            },
+            "label": {
+              "groups": ["metadata"],
+              "type": "string",
+              "description": "Label to display for grouped fields on the sequence details page. Overrides the field's displayName when fields are grouped via displayGroup."
             }
           }
         },
@@ -422,7 +447,8 @@
               }
             },
             "extraInputFields": {
-              "type": "array"
+              "type": "array",
+              "description": "Additional input fields for the submission form. If you add a field with name 'id' or 'fastaIds', it will overwrite the default 'id' or 'fastaIds' field. Note that the 'fastaIds' field is only automatically added if the organism has maxSequencesPerEntry > 1."
             },
             "nucleotideSequences": {
               "groups": ["schema"],
@@ -462,6 +488,15 @@
                   "maxNumberOfRecommendedEntries": {
                     "type": "integer",
                     "description": "Optional maximum number of recommended entries for the tool beyond which a warning will be shown.'"
+                  },
+                  "onlyForReferences": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" },
+                    "description": "Optional filter: maps segment name to reference name. When specified, this linkOut is only shown in the tool dropdown when the user has selected a matching reference (or no reference) for each listed segment. Use this to avoid showing reference-specific Nextclade datasets for the wrong reference in multi-reference organisms. Example: {main: CV-A16} or {M: MH396653}."
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Optional grouping category for the tool dropdown. LinkOuts with the same category are grouped under a labelled section. LinkOuts without a category appear at the top without a header. Can be set to segment names (e.g. 'L', 'M', 'S') or any label (e.g. 'Geographic visualisation', 'Sequence analysis')."
                   }
                 },
                 "required": ["name", "url"]
@@ -844,6 +879,12 @@
                 "type": "string",
                 "description": "Name of the segment (e.g., 'S', 'M', 'L', or 'main' for single-segmented organisms)"
               },
+              "displayName": {
+                "groups": ["referenceGenomes"],
+                "docsIncludePrefix": false,
+                "type": "string",
+                "description": "Display name of the segment used on the website (e.g., 'S', 'M', 'L', or 'main' for single-segmented organisms)"
+              },
               "references": {
                 "type": "array",
                 "description": "Array of reference genomes for this segment",
@@ -857,6 +898,12 @@
                       "docsIncludePrefix": false,
                       "type": "string",
                       "description": "Name of the reference genome"
+                    },
+                    "displayName": {
+                      "groups": ["nucleotide-sequence"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Display name of the reference genome used on the website (e.g., 'h1n1pdm/California/07/2009')"
                     },
                     "sequence": {
                       "groups": ["nucleotide-sequence"],
@@ -1155,6 +1202,16 @@
       "type": "string",
       "default": "https://github.com/loculus-project/loculus",
       "description": "The link that the GitHub icon in the footer points to"
+    },
+    "gitHubIssuesUrl": {
+      "groups": ["general"],
+      "type": "string",
+      "description": "Link to GitHub repository where users can submit issues"
+    },
+    "issuesEmail": {
+      "groups": ["general"],
+      "type": "string",
+      "description": "Email address that users can submit issues to"
     },
     "sequenceFlagging": {
       "type": "object",
@@ -1728,7 +1785,7 @@
         "keycloak": { "$ref": "#/definitions/resourceSpec" },
         "silo": { "$ref": "#/definitions/resourceSpec" },
         "lapis": { "$ref": "#/definitions/resourceSpec" },
-        "silo-preprocessing": { "$ref": "#/definitions/resourceSpec" },
+        "silo-importer": { "$ref": "#/definitions/resourceSpec" },
         "backend": { "$ref": "#/definitions/resourceSpec" },
         "preprocessing": { "$ref": "#/definitions/resourceSpec" },
         "organismSpecific": {
@@ -1746,7 +1803,7 @@
                 "keycloak": { "$ref": "#/definitions/resourceSpec" },
                 "silo": { "$ref": "#/definitions/resourceSpec" },
                 "lapis": { "$ref": "#/definitions/resourceSpec" },
-                "silo-preprocessing": { "$ref": "#/definitions/resourceSpec" },
+                "silo-importer": { "$ref": "#/definitions/resourceSpec" },
                 "backend": { "$ref": "#/definitions/resourceSpec" },
                 "preprocessing": { "$ref": "#/definitions/resourceSpec" }
               },

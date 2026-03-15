@@ -11,9 +11,9 @@ The importer downloads data from the Loculus backend, [transforms it into the fo
 ## Local development
 
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
-pip install -e .
+python -m pip install -e ".[test]"
 cargo install --git https://github.com/GenSpectrum/LAPIS-SILO.git --rev 8d38b2739524cca52857d9d09ff05e9373cea4df
 BACKEND_BASE_URL="http://localhost:8079/organism" python -m silo_import
 ```

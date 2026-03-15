@@ -1,11 +1,12 @@
 import { Dialog, Transition, TransitionChild, DialogPanel, DialogTitle } from '@headlessui/react';
 import React, { Fragment } from 'react';
 
+import type { GeneInfo } from '../../utils/sequenceTypeHelpers';
 import { Button } from '../common/Button';
 import X from '~icons/material-symbols/close';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 
-const DisplaySearchDocs: React.FC = () => {
+const DisplaySearchDocs: React.FC<{ geneInfos: GeneInfo[] }> = ({ geneInfos }) => {
     const [isOpen, setIsOpen] = React.useState(false);
 
     const openDialog = () => setIsOpen(true);
@@ -53,8 +54,7 @@ const DisplaySearchDocs: React.FC = () => {
                                             Nucleotide mutations and insertions
                                         </h4>
                                         <p className='mb-2'>
-                                            For a single-segmented organism, nucleotide mutations have the format{' '}
-                                            <b>&lt;position&gt;&lt;base&gt;</b> or{' '}
+                                            Nucleotide mutations have the format <b>&lt;position&gt;&lt;base&gt;</b> or{' '}
                                             <b>&lt;base_ref&gt;&lt;position&gt;&lt;base&gt;</b>. A <b>&lt;base&gt;</b>{' '}
                                             can be one of the four nucleotides <b>A</b>, <b>T</b>, <b>C</b>, and{' '}
                                             <b>G</b>. It can also be <b>-</b> for deletion and <b>N</b> for unknown. For
@@ -62,15 +62,9 @@ const DisplaySearchDocs: React.FC = () => {
                                             <b>23T</b> and <b>A23T</b> will yield the same results.
                                         </p>
                                         <p className='mb-2'>
-                                            If your organism is multi-segmented you must append the name of the segment
-                                            to the start of the mutation, e.g. <b>S:23T</b> and <b>S:A23T</b> for a
-                                            mutation in segment <b>S</b>.
-                                        </p>
-                                        <p className='mb-2'>
                                             Insertions can be searched for in the same manner, they just need to have{' '}
                                             <b>ins_</b> appended to the start of the mutation. Example{' '}
-                                            <b>ins_10462:A</b> or if the organism is multi-segmented{' '}
-                                            <b>ins_S:10462:A</b>.
+                                            <b>ins_10462:A</b>.
                                         </p>
                                     </div>
 
@@ -90,21 +84,25 @@ const DisplaySearchDocs: React.FC = () => {
                                             <b>ins_ </b>
                                             appended to the start of the mutation. Example <b>ins_NS4B:31:N</b>.
                                         </p>
+                                        <p className='mb-2'>
+                                            Valid gene names are: <b>{geneInfos.map((info) => info.name).join(', ')}</b>
+                                            .
+                                        </p>
                                     </div>
 
                                     <div className='mb-4'>
                                         <h4 className='font-bold text-l mb-4 text-primary-700'>Insertion wildcards</h4>
                                         <p className='mb-2'>
                                             Loculus supports insertion queries that contain wildcards <b>?</b>. For
-                                            example <b>ins_S:214:?EP?</b> will match all cases where segment <b>S</b>{' '}
-                                            has an insertion of <b>EP</b> between the positions 214 and 215 but also an
-                                            insertion of other AAs which include the <b>EP</b>, e.g. the insertion{' '}
-                                            <b>EPE</b> will be matched.
+                                            example <b>ins_S:214:?EP?</b> will match all cases where gene <b>S</b> has
+                                            an insertion of <b>EP</b> between the positions 214 and 215 but also an
+                                            insertion of other AAs which include <b>EP</b>, e.g. the insertion{' '}
+                                            <b>EPE</b> will also be matched.
                                         </p>
                                         <p className='mb-2'>
                                             You can also use wildcards to match any insertion at a given position. For
-                                            example <b>ins_S:214:?</b> will match any (but at least one) insertion
-                                            between the positions 214 and 215.
+                                            example <b>ins_214:?</b> will match any (but at least one) nucleotide
+                                            insertion between the positions 214 and 215.
                                         </p>
                                     </div>
 

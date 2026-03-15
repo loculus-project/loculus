@@ -57,12 +57,14 @@ def make_request(
     files: dict[str, Any] | None = None,
     json_body: dict[str, Any] | None = None,
     data: str | None = None,
+    auth: bool = True
 ) -> requests.Response:
     """Generic request function to handle repetitive tasks like fetching JWT and setting headers."""
     if headers is None:
         headers = {}
-    jwt = get_jwt(config)
-    headers["Authorization"] = f"Bearer {jwt}"
+    if auth:
+        jwt = get_jwt(config)
+        headers["Authorization"] = f"Bearer {jwt}"
 
     match method:
         case HTTPMethod.GET:
@@ -140,7 +142,7 @@ def get_group_info(config: Config, group_id: int) -> Group:
     headers = {"Content-Type": "application/json"}
 
     try:
-        response = make_request(HTTPMethod.GET, url, config, headers=headers)
+        response = make_request(HTTPMethod.GET, url, config, headers=headers, auth=False)
     except requests.exceptions.HTTPError as err:
         logger.error(f"Error fetching group info for {group_id} from Loculus: {err}")
         raise requests.exceptions.HTTPError from err

@@ -34,7 +34,7 @@ Also see the Swagger UI available in the backend at `<backendUrl>/swagger-ui/ind
 
 ### Pulling unpreprocessed data
 
-To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request to the backend's `/extract-unprocessed-data` with the request parameter `numberOfSequenceEntries` (integer) and `pipelineVersion` (integer). This returns a response in [NDJSON](http://ndjson.org/) containing at most the specified number of sequence entries. If there are no entries that require preprocessing, an empty file is returned.
+To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request to the backend's `/extract-unprocessed-data` with the request parameter `numberOfSequenceEntries` (integer) and `pipelineVersion` (integer). This returns a response in [NDJSON](https://github.com/ndjson/ndjson-spec) containing at most the specified number of sequence entries. If there are no entries that require preprocessing, an empty file is returned.
 
 In the unprocessed NDJSON, each line contains a sequence entry represented as a JSON object and looks as follows:
 

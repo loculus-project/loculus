@@ -21,7 +21,7 @@ The "Loculus backend" is the central server service of Loculus and responsible f
 
 ### Deletion
 
-A deletion is a type of [mutation](#mutation) where a nucleotide or amino acid is present in a reference sequence but not present in the sample sequence. The notation for a deletion in the case of a single-segmented nucleotide sequence is `<base of reference genome><position>-` (e.g., C100-). A mutation in the case of a [multi-segmented](#segment) nucleotide sequence or an amino acid sequence is further prefixed with the segment or gene name by adding `<segment/gene name>:` (e.g., E:S100-).
+A deletion is a type of [mutation](#mutation) where a nucleotide or amino acid is present in a reference sequence but not present in the sample sequence. The notation for a deletion in the case of a single-segmented nucleotide sequence is `<base of reference genome><position>-` (e.g., C100-). A mutation in the case of an amino acid sequence is further prefixed with the gene name by adding `<gene name>:` (e.g., E:S100-).
 
 ### File category
 
@@ -95,7 +95,7 @@ A revocation adds a new version that declares a [sequence entry](#sequence-entry
 
 ### S3 (Simple Storage Service)
 
-S3 refers to a class of object storage services. It is hosted by several cloud provider (e.g., [AWS S3](https://aws.amazon.com/s3/), [Cloudflare R2](https://www.cloudflare.com/developer-platform/solutions/s3-compatible-object-storage/), [Hetzner Object Storage](https://www.hetzner.com/storage/object-storage/)) and can be self-hosted (e.g., with [MinIO](https://github.com/minio/minio)). Loculus uses it for the [file sharing feature](#file-sharing-feature).
+S3 refers to a class of object storage services. It is hosted by several cloud provider (e.g., [AWS S3](https://aws.amazon.com/s3/), [Cloudflare R2](https://www.cloudflare.com/developer-platform/solutions/s3-compatible-object-storage/), [Hetzner Object Storage](https://www.hetzner.com/storage/object-storage/)) and can be self-hosted (e.g., with [Garage](https://garagehq.deuxfleurs.fr/)). Loculus uses S3 for the [file sharing feature](#file-sharing-feature).
 
 ### S3 credentials
 
@@ -139,7 +139,7 @@ In Loculus, every [sequence entry](#sequence-entry) belongs to a submitting grou
 
 ### Substitution
 
-A substitution is a type of [mutation](#mutation) where at a given position in a sample a nucleotide or amino acid differs from the reference sequence. The notation for a mutation in the case of a single-segmented nucleotide sequence is `<base of reference genome><position><base of the sequence>` (e.g., C100T). A mutation in the case of a [multi-segmented](#segment) nucleotide sequence or an amino acid sequence is further prefixed with the segment or gene name by adding `<segment/gene name>:` (e.g., E:S100K).
+A substitution is a type of [mutation](#mutation) where at a given position in a sample a nucleotide or amino acid differs from the reference sequence. The notation for a mutation in the case of a single-segmented nucleotide sequence is `<base of reference genome><position><base of the sequence>` (e.g., C100T). A mutation in the case of an amino acid sequence is further prefixed with the gene name by adding `<gene name>:` (e.g., E:S100K).
 
 ### Superuser
 

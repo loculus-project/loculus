@@ -1,7 +1,6 @@
-import { sentenceCase } from 'change-case';
-
 import { validateSingleValue } from './extractFieldValue';
-import { stillRequiresReferenceNameSelection, type SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
+import { getReferenceIdentifier } from './referenceSelection.ts';
+import { getSegmentNames, segmentReferenceSelected, type SegmentReferenceSelections } from './sequenceTypeHelpers.ts';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
 import type {
@@ -41,10 +40,12 @@ type VisiblitySelectableAccessor = (field: MetadataFilter) => boolean;
 export class MetadataVisibility {
     public readonly isChecked: boolean;
     private readonly onlyForReference: string | undefined;
+    private readonly segmentName: string | undefined;
 
-    constructor(isChecked: boolean, onlyForReference: string | undefined) {
+    constructor(isChecked: boolean, onlyForReference: string | undefined, segmentName: string | undefined) {
         this.isChecked = isChecked;
         this.onlyForReference = onlyForReference;
+        this.segmentName = segmentName;
     }
 
     public isVisible(
@@ -63,7 +64,7 @@ export class MetadataVisibility {
         }
         if (
             !hideIfStillRequiresReferenceSelection &&
-            stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames)
+            !segmentReferenceSelected(this.segmentName!, referenceGenomesInfo, selectedReferenceNames)
         ) {
             return true;
         }
@@ -104,6 +105,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
         const visibility = new MetadataVisibility(
             explicitVisibilitiesInUrlByFieldName.get(fieldName) ?? initiallyVisibleAccessor(field),
             field.onlyForReference,
+            field.relatesToSegment,
         );
 
         visibilities.set(fieldName, visibility);
@@ -159,12 +161,14 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 displayName: 'To',
             });
         } else if (field.rangeSearch === true) {
+            const baseDisplayName = field.displayName ?? field.name;
+            const groupDisplayName = field.percentage === true ? `${baseDisplayName} (%)` : baseDisplayName;
             const fromField = {
                 ...field,
                 name: `${field.name}From`,
                 displayName: 'From',
                 fieldGroup: field.name,
-                fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                fieldGroupDisplayName: groupDisplayName,
                 header: field.header,
             };
             const toField = {
@@ -172,11 +176,17 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
                 name: `${field.name}To`,
                 displayName: 'To',
                 fieldGroup: field.name,
-                fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                fieldGroupDisplayName: groupDisplayName,
                 header: field.header,
             };
             result.push(fromField);
             result.push(toField);
+        } else if (field.percentage === true) {
+            const baseDisplayName = field.displayName ?? field.name;
+            result.push({
+                ...field,
+                displayName: `${baseDisplayName} (%)`,
+            });
         } else {
             result.push(field);
         }
@@ -199,6 +209,8 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
                     displayName: filter.fieldGroupDisplayName,
                     initiallyVisible: filter.initiallyVisible,
                     header: filter.header,
+                    isSequenceFilter: filter.isSequenceFilter,
+                    relatesToSegment: filter.relatesToSegment,
                 };
                 fieldList.push(fieldForGroup);
                 groupsMap.set(filter.fieldGroup, fieldForGroup);
@@ -266,10 +278,17 @@ export class MetadataFilterSchema {
         );
     }
 
+    public isPercentage(fieldName: string): boolean {
+        return (
+            this.ungroupedMetadataFilters().find((metadataFilter) => metadataFilter.name === fieldName)?.percentage ===
+            true
+        );
+    }
+
     public filterNameToLabelMap(): Record<string, string> {
         return this.filters.reduce(
             (acc, field) => {
-                acc[field.name] = field.displayName ?? sentenceCase(field.name);
+                acc[field.name] = field.displayName ?? field.name;
                 return acc;
             },
             {} as Record<string, string>,
@@ -280,7 +299,11 @@ export class MetadataFilterSchema {
      * @param queryState the key-values set in the URL.
      * @param hiddenFieldValues The default settings to use for all {@link FieldValues} as a starting point.
      */
-    public getFieldValuesFromQuery(queryState: QueryState, hiddenFieldValues: FieldValues): FieldValues {
+    public getFieldValuesFromQuery(
+        queryState: QueryState,
+        hiddenFieldValues: FieldValues,
+        referenceGenomesInfo: ReferenceGenomesInfo,
+    ): FieldValues {
         const values: FieldValues = { ...hiddenFieldValues };
         for (const field of this.ungroupedMetadataFilters()) {
             const value = queryState[field.name];
@@ -299,9 +322,16 @@ export class MetadataFilterSchema {
             const val = validateSingleValue(queryState.accession, 'accession');
             values.accession = val === '' ? undefined : val;
         }
-        if (MUTATION_KEY in queryState) {
-            const val = validateSingleValue(queryState.mutation, MUTATION_KEY);
-            values.mutation = val === '' ? undefined : val;
+        for (const segmentName of getSegmentNames(referenceGenomesInfo)) {
+            const mutationParamName = getReferenceIdentifier(
+                MUTATION_KEY,
+                segmentName,
+                referenceGenomesInfo.isMultiSegmented,
+            );
+            if (mutationParamName in queryState) {
+                const val = validateSingleValue(queryState[mutationParamName], mutationParamName);
+                values[mutationParamName] = val;
+            }
         }
         for (const mfs of this.multiFieldSearches) {
             if (mfs.name in queryState) {

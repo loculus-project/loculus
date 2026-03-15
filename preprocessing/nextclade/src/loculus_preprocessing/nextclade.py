@@ -493,6 +493,7 @@ def assign_segment_with_nextclade_align(
             command = [
                 "nextclade3",
                 "run",
+                "--retry-reverse-complement=true",
                 f"--output-tsv={result_file_seg}",
                 f"--input-dataset={dataset_dir}/{name}",
                 "--jobs=1",
@@ -786,6 +787,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914
             **entry.data.metadata,
             "submitter": entry.data.submitter,
             "submittedAt": entry.data.submittedAt,
+            "submissionId": entry.data.submissionId,
             "group_id": entry.data.group_id,
         }
         for entry in unprocessed
@@ -857,6 +859,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914
             command = [
                 "nextclade3",
                 "run",
+                "--retry-reverse-complement=true",
                 f"--output-all={result_dir_seg}",
                 f"--input-dataset={dataset_dir}/{name}",
                 f"--output-translations={result_dir_seg}/nextclade.cds_translation.{{cds}}.fasta",

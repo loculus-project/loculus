@@ -60,8 +60,8 @@ function renderSubmissionForm({
                         'fooSection',
                         [
                             { name: SUBMISSION_ID_INPUT_FIELD, displayName: 'ID', noEdit: true },
-                            { name: 'foo' },
-                            { name: 'bar' },
+                            { name: 'foo', displayName: 'Foo' },
+                            { name: 'bar', displayName: 'Bar' },
                         ],
                     ],
                 ])

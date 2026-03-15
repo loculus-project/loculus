@@ -12,10 +12,12 @@ import { versionStatuses } from '../../../types/lapis';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+    MOCK_REFERENCE_GENOMES_INFO,
+    MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
 } from '../../../types/referenceGenomes.spec.ts';
 import { type ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
-import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
+import type { SegmentAndGeneInfo, SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 
 const defaultLapisUrl = 'https://lapis';
 const defaultOrganism = 'ebola';
@@ -46,6 +48,8 @@ const mockMetadata: Metadata[] = [
         includeInDownloadsByDefault: true,
     },
 ];
+
+const mockSegmentAndGeneInfo: SegmentAndGeneInfo = { nucleotideSegmentInfos: [], geneInfos: [] };
 
 async function renderDialog({
     downloadParams = new SequenceEntrySelection(new Set()),
@@ -154,7 +158,8 @@ describe('DownloadDialog', () => {
                     field1: 'value1',
                 },
                 {},
-                { nucleotideSegmentInfos: [], geneInfos: [] },
+                mockSegmentAndGeneInfo,
+                MOCK_REFERENCE_GENOMES_INFO,
             ),
         });
         await checkAgreement();
@@ -299,7 +304,8 @@ describe('DownloadDialog', () => {
                     field2: 'value2',
                 },
                 {},
-                { nucleotideSegmentInfos: [], geneInfos: [] },
+                mockSegmentAndGeneInfo,
+                MOCK_REFERENCE_GENOMES_INFO,
             ),
         });
         await checkAgreement();
@@ -348,7 +354,8 @@ describe('DownloadDialog', () => {
                         field1: 'value1',
                     },
                     {},
-                    { nucleotideSegmentInfos: [], geneInfos: [] },
+                    mockSegmentAndGeneInfo,
+                    MOCK_REFERENCE_GENOMES_INFO,
                 ),
             });
 
@@ -371,9 +378,31 @@ describe('DownloadDialog', () => {
                 referenceIdentifierField: 'genotype',
             });
 
-            expect(screen.getByText('select a genotype display name', { exact: false })).toBeVisible();
+            expect(
+                screen.getByText('Select a genotype with the search UI to enable download of aligned sequences.', {
+                    exact: false,
+                }),
+            ).toBeVisible();
             expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
             expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
+        });
+
+        test('should partially disable the aligned sequence downloads when no reference is selected', async () => {
+            await renderDialog({
+                referenceGenomesInfo: MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceIdentifierField: 'genotype',
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                selectedReferenceNames: { L: null, S: 'singleReference' },
+            });
+
+            expect(
+                screen.getByText(
+                    'No genotype has been selected for the segment: L (segment). Select one in the search UI to enable download of aligned sequences for these segments.',
+                    { exact: false },
+                ),
+            ).toBeVisible();
+            expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).toBeInTheDocument();
+            expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).toBeInTheDocument();
         });
 
         test('should download all raw segments when no reference is selected', async () => {
@@ -386,8 +415,23 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
 
             const { path, query } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences/`);
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
             expect(query).contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
+        });
+
+        test('should download all unaligned segments when no reference is selected for multi-segmented reference genomes', async () => {
+            await renderDialog({
+                referenceGenomesInfo: MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceIdentifierField: 'genotype',
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
+
+            const { path, query } = parseDownloadHref();
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            expect(query).contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
+            expect(query).contains('segments=L-ref1%2CL-ref2');
         });
 
         test('should enable the aligned sequence downloads when reference is selected', async () => {
@@ -412,7 +456,9 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
 
             const { path } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences/ref1`);
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            const { query } = parseDownloadHref();
+            expect(query).toMatch(/segments=ref1/);
         });
 
         test('should download only the selected aligned reference sequences when reference is selected', async () => {
@@ -452,6 +498,7 @@ describe('DownloadDialog', () => {
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
                 onlyForReference: 'ref1',
+                relatesToSegment: 'main',
             },
             {
                 name: 'field2',
@@ -460,6 +507,7 @@ describe('DownloadDialog', () => {
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
                 onlyForReference: 'ref2',
+                relatesToSegment: 'main',
             },
             {
                 name: ACCESSION_VERSION_FIELD,

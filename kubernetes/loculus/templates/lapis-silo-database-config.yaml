@@ -4,7 +4,7 @@
 {{- $key := $item.key }}
 {{- $organismContent := $item.contents }}
 
-{{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" }}
+{{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" | fromYamlArray }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -26,7 +26,9 @@ data:
     referenceGenomeFilename: reference_genomes.json
     {{- if $lineageSystem }}
     lineageDefinitionFilenames:
-      - lineage_definitions.yaml
+    {{- range $ls := $lineageSystem }}
+      - {{ printf "%s.yaml" $ls }}
+    {{- end }}
     {{- end }}
 
   reference_genomes.json: |

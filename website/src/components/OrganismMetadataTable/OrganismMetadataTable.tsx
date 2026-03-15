@@ -3,6 +3,7 @@ import { type FC, useState } from 'react';
 import type { OrganismMetadata } from './OrganismMetadataTableSelector.tsx';
 import { routes } from '../../routes/routes.ts';
 import type { InputField, Metadata } from '../../types/config.ts';
+import { FormattedText } from '../common/FormattedText.tsx';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 type Props = {
@@ -79,7 +80,9 @@ const MetadataTable: FC<TableProps> = ({ fields, metadata }) => {
                         <tr key={field.name}>
                             <td className='border border-gray-300 px-4 py-2'>{field.name}</td>
                             <td className='border border-gray-300 px-4 py-2'>{metadataEntry?.type ?? 'String'}</td>
-                            <td className='border border-gray-300 px-4 py-2'>{`${field.definition ?? ''} ${field.guidance ?? ''}`}</td>
+                            <td className='border border-gray-300 px-4 py-2'>
+                                <FormattedText text={[field.definition, field.guidance].filter(Boolean).join(' ')} />
+                            </td>
                             <td className='border border-gray-300 px-4 py-2'>{field.example ?? ''}</td>
                         </tr>
                     );

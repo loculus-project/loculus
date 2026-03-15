@@ -3,14 +3,16 @@ import sanitizeHtml from 'sanitize-html';
 
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
 import { LinkWithMenuComponent } from './LinkWithMenuComponent';
-import { SubstitutionsContainers } from './MutationBadge';
+import { MutationStringContainers, SubstitutionsContainer, SubstitutionsContainers } from './MutationBadge';
+import { PlainValueDisplay } from './PlainValueDisplay.tsx';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
-import { Button } from '../common/Button';
+import type { MutationBadgeData } from '../../types/config.ts';
 
 interface Props {
     data: TableDataEntry;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
+    segmentDisplayNameMap?: Record<string, string>;
 }
 
 const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
@@ -23,6 +25,66 @@ const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
             {groupName}
         </a>
     );
+};
+
+const HostSpeciesComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+    const entries = JSON.parse(jsonString) as TableDataEntry[];
+
+    const hostTaxonId = entries.find((e) => e.name === 'hostTaxonId')?.value.toString();
+    const hostNameScientific = entries.find((e) => e.name === 'hostNameScientific')?.value.toString();
+    const hostNameCommon = entries.find((e) => e.name === 'hostNameCommon')?.value.toString();
+
+    let displayText: string;
+    if (hostNameCommon && hostNameScientific) {
+        displayText = `${hostNameCommon} (${hostNameScientific})`;
+    } else if (hostNameCommon) {
+        displayText = hostNameCommon;
+    } else if (hostNameScientific) {
+        displayText = hostNameScientific;
+    } else if (hostTaxonId) {
+        displayText = hostTaxonId;
+    } else {
+        displayText = '';
+    }
+
+    if (hostTaxonId) {
+        return (
+            <a href={`https://www.ncbi.nlm.nih.gov/taxonomy/${hostTaxonId}`} target='_blank' className='underline'>
+                {displayText}
+            </a>
+        );
+    }
+
+    return <>{displayText}</>;
+};
+
+const LengthCompletenessComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+    const entries = JSON.parse(jsonString) as TableDataEntry[];
+    const length = entries.find((e) => e.name.includes('length'))?.value;
+    const completeness = entries.find((e) => e.name.includes('completeness'))?.value;
+
+    if (length !== undefined && completeness !== undefined) {
+        const completenessPercent = parseFloat((Number(completeness) * 100).toPrecision(3));
+        return <>{`${length} (${completenessPercent}%)`}</>;
+    }
+    return <>{length ?? ''}</>;
+};
+
+const GeoLocationComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+    const entries = JSON.parse(jsonString) as TableDataEntry[];
+
+    const country = entries.find((e) => e.name === 'geoLocCountry')?.value.toString();
+    const admin1 = entries.find((e) => e.name === 'geoLocAdmin1')?.value.toString();
+    const admin2 = entries.find((e) => e.name === 'geoLocAdmin2')?.value.toString();
+
+    if (!country) {
+        return <>{admin1 ?? admin2 ?? ''}</>;
+    }
+
+    const adminParts = [admin2, admin1].filter(Boolean);
+    const displayText = adminParts.length > 0 ? `${country} (${adminParts.join(', ')})` : country;
+
+    return <>{displayText}</>;
 };
 
 type FileEntry = {
@@ -74,7 +136,31 @@ const prettyFormatBytes = (bytes: number): string => {
     return (bytes / 1000 ** i).toFixed() + ' ' + sizes[i];
 };
 
-const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
+export function parseMutation(input: string): MutationBadgeData | null {
+    const regex = /^([a-zA-Z0-9]+):([A-Z*-])(\d+)([A-Z*-])$/;
+    const match = regex.exec(input);
+
+    if (!match) return null;
+
+    const [, sequenceName, mutationFrom, position, mutationTo] = match;
+
+    return {
+        sequenceName,
+        mutationFrom,
+        position: Number(position),
+        mutationTo,
+    };
+}
+
+export function parseMutations(input: string): MutationBadgeData[] {
+    return input
+        .trim()
+        .split(/\s+/)
+        .map(parseMutation)
+        .filter((m): m is MutationBadgeData => m !== null);
+}
+
+const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, segmentDisplayNameMap }) => {
     const { value, customDisplay } = data;
 
     return (
@@ -83,11 +169,30 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 {!customDisplay && <PlainValueDisplay value={value} />}
                 {customDisplay?.type === 'percentage' && typeof value === 'number' && `${(100 * value).toFixed(2)}%`}
                 {customDisplay?.type === 'badge' &&
-                    (customDisplay.value === undefined ? (
+                    (customDisplay.badge === undefined || customDisplay.badge.length == 0 ? (
                         <span className='italic'>N/A</span>
                     ) : (
-                        <SubstitutionsContainers values={customDisplay.value} />
+                        <SubstitutionsContainers
+                            values={customDisplay.badge}
+                            segmentDisplayNameMap={segmentDisplayNameMap}
+                        />
                     ))}
+                {customDisplay?.type === 'list' &&
+                    (customDisplay.list === undefined || customDisplay.list.length == 0 ? (
+                        <span className='italic'>N/A</span>
+                    ) : (
+                        <MutationStringContainers
+                            values={customDisplay.list}
+                            segmentDisplayNameMap={segmentDisplayNameMap}
+                        />
+                    ))}
+                {customDisplay?.type === 'generatedBadge' &&
+                    typeof value === 'string' &&
+                    (() => {
+                        const mutations = parseMutations(value);
+                        if (mutations.length === 0) return null;
+                        return <SubstitutionsContainer values={mutations} />;
+                    })()}
                 {customDisplay?.type === 'link' && customDisplay.url !== undefined && (
                     <a
                         href={customDisplay.url.replace('__value__', value.toString())}
@@ -116,68 +221,21 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 {customDisplay?.type === 'submittingGroup' && typeof value == 'string' && (
                     <GroupComponent jsonString={value} />
                 )}
+                {customDisplay?.type === 'hostSpecies' && typeof value == 'string' && (
+                    <HostSpeciesComponent jsonString={value} />
+                )}
+                {customDisplay?.type === 'lengthCompleteness' && typeof value == 'string' && (
+                    <LengthCompletenessComponent jsonString={value} />
+                )}
+                {customDisplay?.type === 'geoLocation' && typeof value == 'string' && (
+                    <GeoLocationComponent jsonString={value} />
+                )}
                 {customDisplay?.type === 'fileList' && typeof value == 'string' && (
                     <FileListComponent jsonString={value} />
                 )}
             </div>
         </div>
     );
-};
-
-const MAX_PLAIN_STRING_LENGTH = 400;
-const SHOW_MORE_LENGTH = 10; // 'Show more' text length
-
-// Preview ends at the last comma or semicolon in the last 50 characters preceding the display limit.
-// If there's no comma or semicolon, it will cut off at the last space before the display limit.
-// If no space is found, it will cut off at the display limit.
-// We reserve 13 characters for the 'Show more' text, so the preview is limited to 387 characters.
-const computePreviewString = (value: string): string => {
-    const searchStart = MAX_PLAIN_STRING_LENGTH - 50;
-    const searchEnd = MAX_PLAIN_STRING_LENGTH - 3 - SHOW_MORE_LENGTH; // 13 chars reserved
-
-    const commaIndex = Math.max(value.lastIndexOf(',', searchEnd), value.lastIndexOf(';', searchEnd));
-    if (commaIndex >= searchStart) {
-        return value.slice(0, commaIndex + 1).trim();
-    }
-
-    const spaceIndex = value.lastIndexOf(' ', searchEnd);
-    if (spaceIndex >= searchStart) {
-        return value.slice(0, spaceIndex).trim();
-    }
-
-    return value.slice(0, searchEnd).trim();
-};
-
-const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value }) => {
-    const [showMore, setShowMore] = React.useState(false);
-
-    const preview = React.useMemo(() => {
-        if (typeof value === 'string' && value.length > MAX_PLAIN_STRING_LENGTH) {
-            return computePreviewString(value);
-        }
-        return null;
-    }, [value]);
-
-    if (typeof value === 'boolean') {
-        return <span>{value ? 'True' : 'False'}</span>;
-    }
-
-    if (preview) {
-        return (
-            <span>
-                {showMore ? value : `${preview}...`}{' '}
-                <Button onClick={() => setShowMore(!showMore)} className={`underline${showMore ? ' block' : ''}`}>
-                    {showMore ? 'Show less' : 'Show more'}
-                </Button>
-            </span>
-        );
-    }
-
-    if (value !== '') {
-        return value;
-    }
-
-    return <span className='italic'>None</span>;
 };
 
 const generateCleanHtml = (trustedHtml: string, userValue: string): string => {

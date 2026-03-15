@@ -142,6 +142,12 @@ class AccessionVersion:
             version=int(version_str),
         )
 
+    def __post_init__(self):
+        if not isinstance(self.version, int):
+            msg = "version must be an int"
+            logger.error(msg)
+            raise TypeError(msg)
+
 
 @dataclass(frozen=True)
 class ProjectId:
@@ -255,7 +261,7 @@ def highest_version_in_submission_table(
             results = cur.fetchall()
     finally:
         db_conn_pool.putconn(con)
-    return {row["accession"]: int(row["version"]) for row in results}
+    return {row["accession"]: row["version"] for row in results}
 
 
 def delete_records_in_db(
@@ -678,13 +684,13 @@ def add_to_submission_table(
 def is_revision(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> bool:
     """Check if the entry is a revision"""
     version = seq_key.version
-    if version == "1":
+    if version == 1:
         return False
     accession = {"accession": seq_key.accession}
     sample_data_in_submission_table = find_conditions_in_db(
         db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )
-    all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
+    all_versions = sorted([entry["version"] for entry in sample_data_in_submission_table])
     return len(all_versions) > 1 and version == all_versions[-1]
 
 
@@ -695,5 +701,5 @@ def last_version(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> 
     sample_data_in_submission_table = find_conditions_in_db(
         db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )
-    all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
+    all_versions = sorted([entry["version"] for entry in sample_data_in_submission_table])
     return all_versions[-2]

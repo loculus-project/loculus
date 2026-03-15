@@ -9,15 +9,18 @@ See https://github.com/loculus-project/loculus/pull/3141 for an example */}}
 {{- define "loculus.commonMetadata" }}
 fields:
   - name: accessionVersion
+    displayName: Accession version
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
     includeInDownloadsByDefault: true
   - name: accession
+    displayName: Accession
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
   - name: version
+    displayName: Version
     type: int
     hideOnSequenceDetailsPage: true
   - name: submissionId
@@ -33,6 +36,7 @@ fields:
     autocomplete: true
     hideOnSequenceDetailsPage: true
   - name: submitter
+    displayName: Submitter
     type: string
     generateIndex: true
     autocomplete: true
@@ -51,7 +55,6 @@ fields:
       type: submittingGroup
       displayGroup: group
   - name: groupId
-    displayName: Group ID
     type: int
     autocomplete: true
     header: Submission details
@@ -98,12 +101,19 @@ fields:
       type: dataUseTerms
     header: Data use terms
     orderOnDetailsPage: 610
+    orderInSearchDisplay: 10
   - name: dataUseTermsRestrictedUntil
     type: date
     displayName: Data use terms restricted until
     hideOnSequenceDetailsPage: true
     header: Data use terms
     orderOnDetailsPage: 620
+  - name: dataBecameOpenAt
+    type: date
+    displayName: Date data became open
+    hideOnSequenceDetailsPage: true
+    header: Data use terms
+    orderOnDetailsPage: 625
   {{- if $.Values.dataUseTerms.urls }}
   - name: dataUseTermsUrl
     displayName: Data use terms URL
@@ -128,6 +138,7 @@ fields:
     header: Submission details
     orderOnDetailsPage: 5000
   - name: pipelineVersion
+    displayName: Pipeline version
     type: int
     notSearchable: true
     hideOnSequenceDetailsPage: true
@@ -163,6 +174,12 @@ sequenceFlagging: {{ $.Values.sequenceFlagging | toYaml | nindent 6 }}
 {{ end }}
 {{ if $.Values.gitHubMainUrl }}
 gitHubMainUrl: {{ quote $.Values.gitHubMainUrl }}
+{{ end }}
+{{ if $.Values.gitHubIssuesUrl }}
+gitHubIssuesUrl: {{ quote $.Values.gitHubIssuesUrl }}
+{{ end }}
+{{ if $.Values.issuesEmail }}
+issuesEmail: {{ quote $.Values.issuesEmail }}
 {{ end }}
 {{ if $.Values.bannerMessageURL }}
 bannerMessageURL: {{ quote $.Values.bannerMessageURL }}
@@ -213,6 +230,12 @@ organisms:
           url: {{ quote $linkOut.url }}
           {{- if $linkOut.maxNumberOfRecommendedEntries }}
           maxNumberOfRecommendedEntries: {{ $linkOut.maxNumberOfRecommendedEntries }}
+          {{- end }}
+          {{- if $linkOut.onlyForReferences }}
+          onlyForReferences: {{ $linkOut.onlyForReferences | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $linkOut.category }}
+          category: {{ quote $linkOut.category }}
           {{- end }}
         {{- end }}
       {{- end }}
@@ -325,6 +348,9 @@ organisms:
   {{- if .orderOnDetailsPage }}
   orderOnDetailsPage: {{ .orderOnDetailsPage }}
   {{- end }}
+  {{- if .orderInSearchDisplay }}
+  orderInSearchDisplay: {{ .orderInSearchDisplay }}
+  {{- end }}
   {{- if .includeInDownloadsByDefault }}
   includeInDownloadsByDefault: {{ .includeInDownloadsByDefault }}
   {{- end }}
@@ -347,9 +373,21 @@ organisms:
     {{- if .customDisplay.displayGroup }}
     displayGroup: {{ quote .customDisplay.displayGroup }}
     {{- end }}
+    {{- if .customDisplay.label }}
+    label: {{ quote .customDisplay.label }}
+    {{- end }}
     {{- if .customDisplay.html }}
     html: {{ .customDisplay.html }}
     {{- end }}
+  {{- end }}
+  {{- if .isSequenceFilter }}
+  isSequenceFilter: {{ .isSequenceFilter }}
+  {{- end }}
+  {{- if .relatesToSegment }}
+  relatesToSegment: {{ .relatesToSegment }}
+  {{- end }}
+  {{- if .percentage }}
+  percentage: {{ .percentage }}
   {{- end }}
 {{- end }}
 
@@ -373,6 +411,18 @@ fields:
   header: {{ (default "Other" .header) | quote }}
   {{- else }}
   header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
+  {{- end }}
+  relatesToSegment: {{ $segment }}
+  {{- if .isSequenceFilter }}
+  isSequenceFilter: true
+  {{- end }}
+  {{- if and .customDisplay .customDisplay.displayGroup }}
+  customDisplay:
+    type: {{ quote .customDisplay.type }}
+    displayGroup: {{ printf "%s_%s" .customDisplay.displayGroup $segment | quote }}
+    {{- if .customDisplay.label }}
+    label: {{ printf "%s %s" .customDisplay.label $segment | quote }}
+    {{- end }}
   {{- end }}
 {{- end }}
 {{- end }}

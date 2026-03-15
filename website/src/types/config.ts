@@ -28,6 +28,11 @@ export const segmentedMutations = z.object({
     mutations: z.array(mutationBadgeData),
 });
 
+export const segmentedMutationStrings = z.object({
+    segment: z.string(),
+    mutations: z.array(z.string()),
+});
+
 export const linkMenuItem = z.object({
     name: z.string(),
     url: z.string(),
@@ -37,8 +42,10 @@ export const customDisplay = z.object({
     type: z.string(),
     url: z.string().optional(),
     html: z.string().optional(),
-    value: z.array(segmentedMutations).optional(),
+    badge: z.array(segmentedMutations).optional(),
+    list: z.array(segmentedMutationStrings).optional(),
     displayGroup: z.string().optional(),
+    label: z.string().optional(),
     linkMenuItems: z.array(linkMenuItem).optional(),
 });
 
@@ -73,8 +80,12 @@ export const metadata = z.object({
     columnWidth: z.number().optional(),
     order: z.number().optional(),
     orderOnDetailsPage: z.number().optional(),
+    orderInSearchDisplay: z.number().optional(),
     includeInDownloadsByDefault: z.boolean().optional(),
     onlyForReference: z.string().optional(),
+    isSequenceFilter: z.boolean().optional(),
+    relatesToSegment: z.string().optional(),
+    percentage: z.boolean().optional(),
 });
 
 export const inputFieldOption = z.object({
@@ -101,6 +112,7 @@ export type Metadata = z.infer<typeof metadata>;
 export type MetadataType = z.infer<typeof metadataPossibleTypes>;
 export type MutationBadgeData = z.infer<typeof mutationBadgeData>;
 export type SegmentedMutations = z.infer<typeof segmentedMutations>;
+export type SegmentedMutationStrings = z.infer<typeof segmentedMutationStrings>;
 
 export type MetadataFilter = Metadata & {
     fieldGroup?: string;
@@ -119,12 +131,29 @@ export type GroupedMetadataFilter = {
     notSearchable?: boolean;
     initiallyVisible?: boolean;
     header?: string;
+    isSequenceFilter?: Metadata['isSequenceFilter'];
+    relatesToSegment?: Metadata['relatesToSegment'];
+    order?: number;
+    orderInSearchDisplay?: number;
 };
 
 export const linkOut = z.object({
     name: z.string(),
     url: z.string(),
     maxNumberOfRecommendedEntries: z.number().int().positive().optional(),
+    /**
+     * Optional filter: maps segment name to reference name. When specified, this linkOut is only
+     * shown in the tool dropdown when the user has selected a matching reference (or no reference)
+     * for each specified segment.
+     */
+    onlyForReferences: z.record(z.string(), z.string()).optional(),
+    /**
+     * Optional grouping category for the tool dropdown. LinkOuts with the same category are
+     * grouped under a labelled section. LinkOuts without a category appear at the top without
+     * a header. Can be set to segment names (e.g. "L", "M", "S") or any label
+     * (e.g. "Geographic visualisation", "Sequence analysis").
+     */
+    category: z.string().optional(),
 });
 
 export type LinkOut = z.infer<typeof linkOut>;
@@ -217,6 +246,8 @@ export const websiteConfig = z.object({
     additionalHeadHTML: z.string().optional(),
     gitHubEditLink: z.string().optional(),
     gitHubMainUrl: z.string().optional(),
+    gitHubIssuesUrl: z.string().optional(),
+    issuesEmail: z.string().optional(),
     enableSeqSets: z.boolean(),
     seqSetsFieldsToDisplay: z.array(fieldToDisplay).optional(),
     enableLoginNavigationItem: z.boolean(),
@@ -227,11 +258,16 @@ export const websiteConfig = z.object({
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 
+export const contactConfig = z.object({
+    gitHubIssuesUrl: z.string().optional(),
+    issuesEmail: z.string().optional(),
+});
+export type ContactConfig = z.infer<typeof contactConfig>;
+
 export type FieldValue = string | null | (string | null)[];
 export type FieldValueUpdate = [string, FieldValue];
 
 export type FieldValues = {
-    mutation?: string;
     accession?: string;
 } & Record<string, FieldValue>;
 export type SetSomeFieldValues = (...fieldValuesToSet: FieldValueUpdate[]) => void;

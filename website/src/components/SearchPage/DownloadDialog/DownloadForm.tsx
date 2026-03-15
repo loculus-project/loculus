@@ -8,18 +8,21 @@ import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from '.
 import { routes } from '../../../routes/routes.ts';
 import type { Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
-import { MetadataFilterSchema, type MetadataVisibility } from '../../../utils/search.ts';
+import { type MetadataVisibility } from '../../../utils/search.ts';
 import {
     getSegmentAndGeneInfo,
-    stillRequiresReferenceNameSelection,
+    allReferencesSelected,
+    segmentsWithMultipleReferences,
     type SegmentReferenceSelections,
+    getSegmentLapisNames,
+    type SegmentLapisNames,
 } from '../../../utils/sequenceTypeHelpers.ts';
 
 export type DownloadFormState = {
     includeRestricted: boolean;
     dataType: DownloadDataType['type'];
     compression: Compression;
-    unalignedNucleotideSequence: string;
+    unalignedNucleotideSequence: SegmentLapisNames;
     alignedNucleotideSequence: string;
     alignedAminoAcidSequence: string;
     includeRichFastaHeaders: boolean;
@@ -58,10 +61,32 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         [referenceGenomesInfo, selectedReferenceNames],
     );
 
-    const disableAlignedSequences = stillRequiresReferenceNameSelection(referenceGenomesInfo, selectedReferenceNames);
+    const segments = useMemo(
+        () => getSegmentLapisNames(referenceGenomesInfo, selectedReferenceNames),
+        [referenceGenomesInfo, selectedReferenceNames],
+    );
 
-    const metadataSchema = schema.metadata;
-    const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
+    const referenceSelected = useMemo(() => nucleotideSegmentInfos.length !== 0, [nucleotideSegmentInfos, geneInfos]);
+    const notSelectedSegmentsText = useMemo(() => {
+        if (!referenceGenomesInfo.isMultiSegmented) {
+            return '';
+        }
+        const names = segmentsWithMultipleReferences(referenceGenomesInfo)
+            .filter((segment) => selectedReferenceNames?.[segment] === null)
+            .map((segment) => referenceGenomesInfo.segmentDisplayNames[segment] ?? segment);
+
+        if (names.length === 0) return '';
+
+        let joined: string;
+        if (names.length <= 2) {
+            joined = names.join(', ');
+        } else {
+            joined = `${names[0]}, ..., ${names[names.length - 1]}`;
+        }
+
+        const label = names.length === 1 ? 'segment' : 'segments';
+        return ` for the ${label}: ${joined}`;
+    }, [referenceGenomesInfo, selectedReferenceNames]);
 
     function getDataTypeOptions(): OptionBlockOption[] {
         const metadataOption = {
@@ -88,16 +113,20 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                     {referenceGenomesInfo.isMultiSegmented ? (
                         <DropdownOptionBlock
                             name='unalignedNucleotideSequences'
-                            options={nucleotideSegmentInfos.map((segment) => ({
+                            options={segments.map((segment) => ({
                                 label: <>{segment.name}</>,
                             }))}
-                            selected={nucleotideSegmentInfos.findIndex(
-                                (info) => info.lapisName === downloadFormState.unalignedNucleotideSequence,
-                            )}
+                            selected={segments.findIndex((info) => {
+                                const currentSet = new Set(downloadFormState.unalignedNucleotideSequence.lapisNames);
+                                return (
+                                    info.lapisNames.length === currentSet.size &&
+                                    info.lapisNames.every((name) => currentSet.has(name))
+                                );
+                            })}
                             onSelect={(value) =>
                                 setDownloadFormState((previous) => ({
                                     ...previous,
-                                    unalignedNucleotideSequence: nucleotideSegmentInfos[value].lapisName,
+                                    unalignedNucleotideSequence: segments[value],
                                 }))
                             }
                             disabled={downloadFormState.dataType !== 'unalignedNucleotideSequences'}
@@ -127,7 +156,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             return [metadataOption];
         }
 
-        if (disableAlignedSequences) {
+        if (!referenceSelected) {
             return [metadataOption, rawNucleotideSequencesOption];
         }
 
@@ -227,12 +256,20 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                         }))
                     }
                 />
-                {disableAlignedSequences && referenceIdentifierField !== undefined && (
+                {!referenceSelected && referenceIdentifierField !== undefined && (
                     <div className='text-sm text-gray-400 mt-4 max-w-60'>
-                        Or select a {filterSchema.filterNameToLabelMap()[referenceIdentifierField]} with the search UI
-                        to enable download of aligned sequences.
+                        Select a {referenceIdentifierField}
+                        {notSelectedSegmentsText} with the search UI to enable download of aligned sequences.
                     </div>
                 )}
+                {referenceSelected &&
+                    !allReferencesSelected(referenceGenomesInfo, selectedReferenceNames) &&
+                    referenceIdentifierField !== undefined && (
+                        <div className='text-sm text-gray-400 mt-4 max-w-60'>
+                            No {referenceIdentifierField} has been selected{notSelectedSegmentsText}. Select one in the
+                            search UI to enable download of aligned sequences for these segments.
+                        </div>
+                    )}
             </div>
 
             <RadioOptionBlock

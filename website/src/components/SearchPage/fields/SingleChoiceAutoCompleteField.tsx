@@ -38,6 +38,7 @@ type SingleChoiceAutoCompleteFieldProps = {
     optionsProvider: OptionsProvider;
     setSomeFieldValues: SetSomeFieldValues;
     fieldValue?: string | number | null;
+    fieldDisplayNameMap?: Map<string, string>;
     maxDisplayedOptions?: number;
 };
 
@@ -46,6 +47,7 @@ export const SingleChoiceAutoCompleteField = ({
     optionsProvider,
     setSomeFieldValues,
     fieldValue,
+    fieldDisplayNameMap,
     maxDisplayedOptions = 1000,
 }: SingleChoiceAutoCompleteFieldProps) => {
     const [query, setQuery] = useState('');
@@ -64,8 +66,19 @@ export const SingleChoiceAutoCompleteField = ({
             query === ''
                 ? options
                 : options.filter((option) => option.option.toLowerCase().includes(query.toLowerCase()));
-        return allMatchedOptions.slice(0, maxDisplayedOptions);
-    }, [options, query, maxDisplayedOptions]);
+        // Sort options by display name if displayNameMap is provided, otherwise by option value
+        const displayedOptions = allMatchedOptions.sort((a, b) =>
+            (fieldDisplayNameMap?.get(a.option) ?? a.option).localeCompare(
+                fieldDisplayNameMap?.get(b.option) ?? b.option,
+                'en',
+                {
+                    numeric: true,
+                    sensitivity: 'base',
+                },
+            ),
+        );
+        return displayedOptions.slice(0, maxDisplayedOptions);
+    }, [options, query, maxDisplayedOptions, fieldDisplayNameMap]);
 
     const handleChange = (value: string | null) => {
         const finalValue = value === NULL_QUERY_VALUE ? null : (value ?? '');
@@ -137,7 +150,7 @@ export const SingleChoiceAutoCompleteField = ({
                                                             option.option === '(blank)' ? 'italic' : ''
                                                         }`}
                                                     >
-                                                        {option.option}
+                                                        {fieldDisplayNameMap?.get(option.option) ?? option.option}
                                                     </span>
                                                     {option.count !== undefined && (
                                                         <span className='inline-block ml-1'>

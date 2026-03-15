@@ -69,8 +69,8 @@ processing_spec:
   concatenated_string:
     function: concatenate
     args:
-      order: [continent, accession_version, required_collection_date]
-      type: [string, string, date]
+      order: [continent, ACCESSION_VERSION, required_collection_date]
+      type: [string, ACCESSION_VERSION, date]
     inputs:
       continent: continent
       required_collection_date: ncbi_required_collection_date
@@ -82,5 +82,12 @@ processing_spec:
     function: check_regex
     args:
       pattern: "^EPI_ISL_[0-9]+$"
+    inputs:
+      regex_field: regex_field
+  extracted_regex_field:
+    function: extract_regex
+    args:
+      pattern: "^EPI_ISL_(?P<id>[0-9]+)?$" # Note the optional group to allow for testing of missing values
+      capture_group: id
     inputs:
       regex_field: regex_field

@@ -65,6 +65,14 @@ export class DownloadUrlGenerator {
         }
 
         if (
+            option.dataType.type === 'unalignedNucleotideSequences' &&
+            option.dataType.segmentLapisNames?.lapisNames !== undefined &&
+            option.dataType.segmentLapisNames.lapisNames.length > 0
+        ) {
+            params.set('segments', option.dataType.segmentLapisNames.lapisNames.join(','));
+        }
+
+        if (
             (option.dataType.type === 'unalignedNucleotideSequences' ||
                 option.dataType.type === 'alignedNucleotideSequences' ||
                 option.dataType.type === 'alignedAminoAcidSequences') &&
@@ -85,11 +93,9 @@ export class DownloadUrlGenerator {
             .forEach(([name, value]) => {
                 if (Array.isArray(value)) {
                     value.forEach((val) => {
-                        if (val && val.length > 0) {
-                            params.append(name, val);
-                        }
+                        params.append(name, val);
                     });
-                } else if (value && value.length > 0) {
+                } else {
                     params.append(name, value);
                 }
             });
@@ -115,7 +121,10 @@ export class DownloadUrlGenerator {
             case 'metadata':
                 return this.lapisUrl + '/sample/details';
             case 'unalignedNucleotideSequences':
-                return this.lapisUrl + '/sample/unalignedNucleotideSequences' + segmentPath(dataType.segment);
+                if (dataType.segment !== undefined) {
+                    return this.lapisUrl + '/sample/unalignedNucleotideSequences/' + dataType.segment;
+                }
+                return this.lapisUrl + '/sample/unalignedNucleotideSequences';
             case 'alignedNucleotideSequences':
                 return this.lapisUrl + '/sample/alignedNucleotideSequences' + segmentPath(dataType.segment);
             case 'alignedAminoAcidSequences':

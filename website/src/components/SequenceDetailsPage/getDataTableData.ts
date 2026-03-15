@@ -36,7 +36,7 @@ function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
                     value: '[]',
                     header: entry.header,
                     customDisplay: entry.customDisplay,
-                    label: entry.label,
+                    label: entry.customDisplay.label ?? entry.label,
                     orderOnDetailsPage: entry.orderOnDetailsPage,
                 });
             }
@@ -67,11 +67,14 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
         table: [],
     };
 
-    const listTableDataEntriesAfterGrouping = grouping(listTableDataEntries);
+    const filteredEntries = listTableDataEntries.filter(
+        (entry) =>
+            !(entry.type.kind === 'metadata' && entry.value === 0 && entry.header.toLowerCase().includes('alignment')),
+    );
+    const listTableDataEntriesAfterGrouping = grouping(filteredEntries);
 
     const tableHeaderMap = new Map<string, TableDataEntry[]>();
     for (const entry of listTableDataEntriesAfterGrouping) {
-        // Move the first entry with type authors to the topmatter
         if (
             result.topmatter.authors === undefined &&
             entry.type.kind === 'metadata' &&
@@ -94,10 +97,6 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
             continue;
         }
 
-        if (entry.type.kind === 'metadata' && entry.name.startsWith('length') && entry.value === 0) {
-            continue;
-        }
-
         if (!tableHeaderMap.has(entry.header)) {
             tableHeaderMap.set(entry.header, []);
         }
@@ -110,6 +109,7 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
             (a, b) =>
                 (a.orderOnDetailsPage ?? Number.POSITIVE_INFINITY) - (b.orderOnDetailsPage ?? Number.POSITIVE_INFINITY),
         );
+
         const definedOrders = rows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
         const meanOrder =
             definedOrders.length > 0

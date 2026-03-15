@@ -1,0 +1,74 @@
+name: Create and Upload NCBI taxonomy DB
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 1 * *" # First of every month, 03:00 UTC
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set versioned filenames
+        run: |
+          VERSIONED_NAME="ncbi_taxonomy_$(date +'%Y-%m-%d').sqlite"
+          ZIPPED_NAME="${VERSIONED_NAME}.gz"
+
+          echo "DB_VERSIONED=${VERSIONED_NAME}" >> $GITHUB_ENV
+          echo "DB_ZIPPED=${ZIPPED_NAME}" >> $GITHUB_ENV
+          echo "DB_LATEST=ncbi_taxonomy_latest.sqlite.gz" >> $GITHUB_ENV
+
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: ./ncbi_tax_download/environment.yaml
+          cache-environment: true
+          create-args: >
+            s3cmd
+
+      - name: Install NCBI taxonomy package
+        shell: bash -l {0}
+        run: |
+          pip install -e ./ncbi_tax_download
+
+      - name: Create taxonomy DB
+        shell: bash -l {0}
+        run: |
+          taxonomy-download --output_db "${DB_VERSIONED}"
+          ls -lh "${DB_VERSIONED}"
+
+      - name: Create S3cmd config
+        run: |
+          cat <<EOF > ~/.s3cfg
+          [default]
+          access_key = ${{ secrets.HETZNER_S3_ACCESS_KEY }}
+          secret_key = ${{ secrets.HETZNER_S3_SECRET_KEY }}
+          host_base = hel1.your-objectstorage.com
+          host_bucket = %(bucket)s.hel1.your-objectstorage.com
+          verbosity = DEBUG
+          EOF
+
+      - name: Compress and upload taxonomy DB
+        shell: bash -l {0}
+        run: |
+          gzip -9 "${DB_VERSIONED}"
+          s3cmd put "${DB_ZIPPED}" s3://loculus-public/taxonomy/"${DB_ZIPPED}"
+
+          s3cmd cp s3://loculus-public/taxonomy/"${DB_ZIPPED}" \
+            s3://loculus-public/taxonomy/"${DB_LATEST}"
+
+  notify_on_failure:
+    needs: build-and-upload
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Send Slack Notification
+        env:
+          SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "🚨 Failed to build and upload NCBI taxonomy DB: ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+          }' $SLACK_HOOK

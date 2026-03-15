@@ -97,6 +97,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             submitter=json_object["submitter"],
             group_id=json_object["groupId"],
             submittedAt=json_object["submittedAt"],
+            submissionId=json_object["submissionId"],
             metadata=json_object["data"]["metadata"],
             unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
             if unaligned_nucleotide_sequences

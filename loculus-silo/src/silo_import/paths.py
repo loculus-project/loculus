@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .constants import (
-    LINEAGES_FILENAME,
     TRANSFORMED_DATA_FILENAME,
 )
 
@@ -14,7 +13,6 @@ class ImporterPaths:
     preprocessing_dir: Path
     input_dir: Path
     output_dir: Path
-    lineage_definition_file: Path
     silo_input_data_path: Path
     silo_binary: Path
     preprocessing_config: Path
@@ -28,7 +26,6 @@ class ImporterPaths:
             preprocessing_dir=preprocessing_dir,
             input_dir=input_dir,
             output_dir=output_dir,
-            lineage_definition_file=input_dir / LINEAGES_FILENAME,
             silo_input_data_path=input_dir / TRANSFORMED_DATA_FILENAME,
             silo_binary=silo_binary,
             preprocessing_config=preprocessing_config,

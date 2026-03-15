@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { sentenceCase } from 'change-case';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type FC } from 'react';
 
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import { Button } from '../common/Button';
@@ -14,6 +13,7 @@ import { MultiChoiceAutoCompleteField } from './fields/MultiChoiceAutoCompleteFi
 import { MultiFieldSearchField } from './fields/MultiFieldSearchField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
+import { SingleChoiceAutoCompleteField } from './fields/SingleChoiceAutoCompleteField.tsx';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
@@ -23,15 +23,55 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { getReferenceIdentifier, type ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
-import { getSegmentAndGeneInfo, getSegmentNames } from '../../utils/sequenceTypeHelpers.ts';
+import {
+    getSegmentNames,
+    getSingleSegmentAndGeneInfo,
+    type SingleSegmentAndGeneInfo,
+} from '../../utils/sequenceTypeHelpers.ts';
+import DisabledUntilHydrated from '../DisabledUntilHydrated.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal, getDisplayState } from '../common/FieldSelectorModal.tsx';
+import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import MaterialSymbolsTune from '~icons/material-symbols/tune';
 import StreamlineWrench from '~icons/streamline/wrench';
 
 const queryClient = new QueryClient();
+
+const SearchSectionHeader: FC<{ title: string }> = ({ title }) => (
+    <div className='flex items-center gap-2 mb-2'>
+        <h3 className='text-sm tracking-wide text-primary-700'>{title}</h3>
+    </div>
+);
+
+type CollapsibleSectionProps = {
+    title: React.ReactNode;
+    open?: boolean;
+    children: React.ReactNode;
+    subgroups?: boolean;
+};
+
+function CollapsibleSection({ title, open = true, children, subgroups = false }: CollapsibleSectionProps) {
+    const className = subgroups ? 'group/inner rounded-lg border px-4 pt-4' : 'group px-2 pt-2';
+    const arrowClassName = subgroups ? 'group-open/inner:rotate-180' : 'group-open:rotate-180';
+    return (
+        <DisabledUntilHydrated>
+            <details className={className} open={open}>
+                <summary className='flex w-full items-center list-none cursor-pointer'>
+                    <div className='flex items-center'>
+                        {typeof title === 'string' ? <SearchSectionHeader title={title} /> : title}
+                    </div>
+                    <IwwaArrowDown
+                        className={`ml-auto h-5 w-5 transition-transform duration-200 text-primary-700 ${arrowClassName}`}
+                        aria-hidden='true'
+                    />
+                </summary>
+                {children}
+            </details>
+        </DisabledUntilHydrated>
+    );
+}
 
 interface SearchFormProps {
     organism: string;
@@ -81,6 +121,12 @@ export const SearchForm = ({
         )
         .filter((field) => !excluded.has(field.name));
 
+    visibleFields.sort(
+        (a, b) =>
+            (a.orderInSearchDisplay ?? a.order ?? Number.POSITIVE_INFINITY) -
+            (b.orderInSearchDisplay ?? b.order ?? Number.POSITIVE_INFINITY),
+    );
+
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
@@ -113,7 +159,7 @@ export const SearchForm = ({
         .filter((filter) => !filter.notSearchable)
         .map((filter) => ({
             name: filter.name,
-            displayName: filter.displayName ?? sentenceCase(filter.name),
+            displayName: filter.displayName ?? filter.name,
             header: filter.header,
             displayState: getDisplayState(
                 filter,
@@ -122,11 +168,95 @@ export const SearchForm = ({
                 referenceSelection?.referenceIdentifierField,
             ),
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
+            order: filter.order,
         }));
 
-    const suborganismSegmentAndGeneInfo = useMemo(
-        () => getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
-        [referenceGenomesInfo, referenceSelection?.selectedReferences],
+    const { sampleFields, sequenceFieldsBySegment } = useMemo(() => {
+        const sampleFields: (GroupedMetadataFilter | MetadataFilter)[] = [];
+        const sequenceFieldsBySegment: Record<string, (GroupedMetadataFilter | MetadataFilter)[]> = {};
+        getSegmentNames(referenceGenomesInfo).map((segmentName) => {
+            sequenceFieldsBySegment[segmentName] = [];
+        });
+
+        for (const field of visibleFields) {
+            const isSeqFilter = 'isSequenceFilter' in field && field.isSequenceFilter === true;
+
+            if (!isSeqFilter) {
+                sampleFields.push(field);
+                continue;
+            }
+
+            const sequenceScope =
+                'relatesToSegment' in field && field.relatesToSegment != null ? field.relatesToSegment : 'main';
+
+            sequenceFieldsBySegment[sequenceScope] ??= [];
+            sequenceFieldsBySegment[sequenceScope].push(field);
+        }
+
+        return { sampleFields, sequenceFieldsBySegment };
+    }, [visibleFields]);
+
+    const segmentAndGeneInfo = useMemo(() => {
+        return getSegmentNames(referenceGenomesInfo).reduce<Record<string, SingleSegmentAndGeneInfo | null>>(
+            (acc, segmentName) => {
+                acc[segmentName] = getSingleSegmentAndGeneInfo(
+                    referenceGenomesInfo,
+                    segmentName,
+                    referenceSelection?.selectedReferences,
+                );
+                return acc;
+            },
+            {},
+        );
+    }, [referenceGenomesInfo, referenceSelection?.selectedReferences]);
+
+    const mutationParamMap = useMemo(() => {
+        return getSegmentNames(referenceGenomesInfo).reduce<Record<string, string>>((acc, segmentName) => {
+            acc[segmentName] = getReferenceIdentifier(MUTATION_KEY, segmentName, referenceGenomesInfo.isMultiSegmented);
+            return acc;
+        }, {});
+    }, [referenceGenomesInfo]);
+
+    const segmentNames = getSegmentNames(referenceGenomesInfo);
+
+    const renderSegmentContents = (segmentName: string) => (
+        <>
+            {referenceSelection !== undefined && (
+                <ReferenceSelector
+                    filterSchema={filterSchema}
+                    referenceGenomesInfo={referenceGenomesInfo}
+                    referenceIdentifierField={referenceSelection.referenceIdentifierField}
+                    fieldValues={fieldValues}
+                    setSomeFieldValues={setSomeFieldValues}
+                    lapisUrl={lapisUrl}
+                    lapisSearchParameters={lapisSearchParameters}
+                    segmentName={segmentName}
+                />
+            )}
+
+            {showMutationSearch && segmentAndGeneInfo[segmentName] && (
+                <MutationField
+                    singleSegmentAndGeneInfo={segmentAndGeneInfo[segmentName]}
+                    value={
+                        mutationParamMap[segmentName] in fieldValues
+                            ? String(fieldValues[mutationParamMap[segmentName]] ?? '')
+                            : ''
+                    }
+                    onChange={(value) => setSomeFieldValues([mutationParamMap[segmentName], value])}
+                />
+            )}
+
+            {sequenceFieldsBySegment[segmentName].map((filter) => (
+                <SearchField
+                    key={filter.name}
+                    field={filter}
+                    lapisUrl={lapisUrl}
+                    fieldValues={fieldValues}
+                    setSomeFieldValues={setSomeFieldValues}
+                    lapisSearchParameters={lapisSearchParameters}
+                />
+            ))}
+        </>
     );
 
     return (
@@ -187,15 +317,6 @@ export const SearchForm = ({
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
-                        {referenceSelection !== undefined && (
-                            <ReferenceSelector
-                                filterSchema={filterSchema}
-                                referenceGenomesInfo={referenceGenomesInfo}
-                                referenceIdentifierField={referenceSelection.referenceIdentifierField}
-                                selectedReferences={referenceSelection.selectedReferences}
-                                setSelectedReferences={referenceSelection.setSelectedReferences}
-                            />
-                        )}
                         <div className='mb-1'>
                             <AccessionField
                                 textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
@@ -203,31 +324,49 @@ export const SearchForm = ({
                             />
                         </div>
 
-                        {showMutationSearch && (
-                            <MutationField
-                                suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
-                                value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
-                                onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
-                            />
-                        )}
-                        {visibleFields.map((filter) => (
-                            <SearchField
-                                field={filter}
-                                lapisUrl={lapisUrl}
-                                fieldValues={fieldValues}
-                                setSomeFieldValues={setSomeFieldValues}
-                                key={filter.name}
-                                lapisSearchParameters={lapisSearchParameters}
-                            />
-                        ))}
-                        {filterSchema.multiFieldSearches.map((mfs) => (
-                            <MultiFieldSearchField
-                                key={mfs.name}
-                                multiFieldSearch={mfs}
-                                fieldValue={(fieldValues[mfs.name] as string | undefined) ?? ''}
-                                setSomeFieldValues={setSomeFieldValues}
-                            />
-                        ))}
+                        <section className='flex flex-col gap-1.5'>
+                            <CollapsibleSection title='Metadata Filters' open>
+                                {sampleFields.map((filter) => (
+                                    <SearchField
+                                        key={filter.name}
+                                        field={filter}
+                                        lapisUrl={lapisUrl}
+                                        fieldValues={fieldValues}
+                                        setSomeFieldValues={setSomeFieldValues}
+                                        lapisSearchParameters={lapisSearchParameters}
+                                    />
+                                ))}
+                                {filterSchema.multiFieldSearches.map((mfs) => (
+                                    <MultiFieldSearchField
+                                        key={mfs.name}
+                                        multiFieldSearch={mfs}
+                                        fieldValue={(fieldValues[mfs.name] as string | undefined) ?? ''}
+                                        setSomeFieldValues={setSomeFieldValues}
+                                    />
+                                ))}
+                            </CollapsibleSection>
+                        </section>
+
+                        <section className='flex flex-col gap-1.5 mb-4'>
+                            <CollapsibleSection title='Sequence Filters' open>
+                                {!referenceGenomesInfo.isMultiSegmented &&
+                                    segmentNames.map((segmentName) => (
+                                        <div key={segmentName}>{renderSegmentContents(segmentName)}</div>
+                                    ))}
+
+                                {referenceGenomesInfo.isMultiSegmented &&
+                                    segmentNames.map((segmentName) => (
+                                        <CollapsibleSection
+                                            key={segmentName}
+                                            title={referenceGenomesInfo.segmentDisplayNames[segmentName] ?? segmentName}
+                                            open={false}
+                                            subgroups
+                                        >
+                                            {renderSegmentContents(segmentName)}
+                                        </CollapsibleSection>
+                                    ))}
+                            </CollapsibleSection>
+                        </section>
                     </div>
                 </div>
             </div>
@@ -297,6 +436,22 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 );
             }
             if (field.autocomplete === true) {
+                if (field.type === 'int' || field.type === 'float') {
+                    return (
+                        <SingleChoiceAutoCompleteField
+                            field={field}
+                            fieldValue={validateSingleValue(fieldValues[field.name], field.name)}
+                            setSomeFieldValues={setSomeFieldValues}
+                            optionsProvider={{
+                                type: 'generic',
+                                lapisUrl,
+                                lapisSearchParameters,
+                                fieldName: field.name,
+                            }}
+                        />
+                    );
+                }
+
                 const fieldValuesArray = extractArrayValue(fieldValues[field.name]);
 
                 return (
