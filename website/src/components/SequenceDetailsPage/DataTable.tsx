@@ -155,8 +155,8 @@ const DataTableComponent: React.FC<Props> = ({
                                 <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
                             </div>
                             {hasReferenceAccession &&
-                                (header.includes(DEFAULT_NUC_MUTATION_DETAILS_HEADER) ||
-                                    header.includes(DEFAULT_AA_MUTATION_DETAILS_HEADER)) && (
+                                (header.includes(schema.nucMutationDetailsHeader ?? DEFAULT_NUC_MUTATION_DETAILS_HEADER) ||
+                                    header.includes(schema.aaMutationDetailsHeader ?? DEFAULT_AA_MUTATION_DETAILS_HEADER)) && (
                                     <h2 className='pt-2 text-xs text-gray-500'>
                                         <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
                                         Mutations called relative to the <ReferenceDisplay
