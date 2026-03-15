@@ -1394,7 +1394,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       defaultOrder: descending
       multiFieldSearches:
         - name: identifier
-          displayName: Identifier
+          displayName: Sample Identifier
           fields:
             - accessionVersion
             - submissionId
