@@ -16,38 +16,36 @@ def read_root():
     return {"message": "Taxonomy service is running"}
 
 
-@app.get("/taxa")
-def get_tax_id(scientific_name: str | None):
-    config = app.state.config
-    with sqlite3.connect(config.db_path) as conn:
+def fetch_by_sci_name(db_path: str, name: str):
+    with sqlite3.connect(db_path) as conn:
         conn.row_factory = sqlite3.Row
-        taxa = conn.execute(
-            "SELECT * FROM taxonomy WHERE scientific_name = ?", (scientific_name,)
-        ).fetchall()
-        if len(taxa) == 0:
-            raise HTTPException(
-                status_code=404, detail=f"Scientific name '{scientific_name}' not found"
-            )
-        taxon = max(taxa, key=lambda x: x["depth"])
+        taxa = conn.execute("SELECT * FROM taxonomy WHERE scientific_name = ?", (name,)).fetchall()
 
-        return dict(taxon)
+        if not taxa:
+            return None
+
+        return dict(max(taxa, key=lambda x: x["depth"]))
 
 
-@app.get("/taxa/{tax_id}")
-def get_taxon(tax_id: int):
-    config = app.state.config
-    with sqlite3.connect(config.db_path) as conn:
+def fetch_by_id(db_path: str, tax_id: int):
+    with sqlite3.connect(db_path) as conn:
         conn.row_factory = sqlite3.Row
         taxon = conn.execute("SELECT * FROM taxonomy WHERE tax_id = ?", (tax_id,)).fetchone()
         if not taxon:
-            raise HTTPException(status_code=404, detail=f"Taxon {tax_id} not found")
+            return None
         return dict(taxon)
 
 
-@app.get("/taxa/{tax_id}/common_name")
-def get_common_name(tax_id: int):
-    config = app.state.config
-    with sqlite3.connect(config.db_path) as conn:
+def fetch_common_name(db_path: str, tax_id: int):
+    """Return a taxon with a common name
+
+    If the supplied `tax_id` is associated with a common name, return the taxon.
+
+    If there is no common name associated with the taxon, keep stepping up the taxonomy until
+    a taxon is found with a common name, and return that
+    """
+
+    with sqlite3.connect(db_path) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         while tax_id > 0:
@@ -57,9 +55,43 @@ def get_common_name(tax_id: int):
             elif taxon["common_name"] is not None:
                 return dict(taxon)
             tax_id = taxon["parent_id"]
+        return None
+
+
+@app.get("/taxa")
+def query_taxa(scientific_name: str):
+    """Very basic for the moment, only support scientific name queries.
+
+    Could consider adding support for common name queries as well.
+    """
+    taxon = fetch_by_sci_name(app.state.config.db_path, scientific_name)
+
+    if taxon is None:
+        raise HTTPException(status_code=404, detail=f"'{scientific_name}' not found")
+
+    return taxon
+
+
+@app.get("/taxa/{tax_id}")
+def get_taxon(tax_id: int):
+    taxon = fetch_by_id(app.state.config.db_path, tax_id)
+
+    if taxon is None:
+        raise HTTPException(status_code=404, detail=f"'{tax_id}' not found")
+
+    return taxon
+
+
+@app.get("/taxa/{tax_id}/common_name")
+def get_common_name(tax_id: int):
+    taxon = fetch_common_name(app.state.config.db_path, tax_id)
+
+    if taxon is None:
         raise HTTPException(
             status_code=404, detail=f"Unable to find common name for taxon {tax_id}"
         )
+
+    return taxon
 
 
 def init_app(config: Config):
