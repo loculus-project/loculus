@@ -337,7 +337,7 @@ class ApproveProcessedDataEndpointTest(
     }
 
     @Test
-    fun `WHEN approving sequences with errors THEN an error is raised`() {
+    fun `WHEN approving sequences with errors THEN an error is raised with the accession version in the message`() {
         val submittedSequences =
             convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
         val accessionOfDataWithErrors = submittedSequences[0].accession
@@ -350,6 +350,13 @@ class ApproveProcessedDataEndpointTest(
             accessionVersionsFilter = listOf(AccessionVersion(accessionOfDataWithErrors, 1)),
         )
             .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath(
+                    "$.detail",
+                    containsString("$accessionOfDataWithErrors.1"),
+                ),
+            )
 
         convenienceClient.getSequenceEntry(accession = accessionOfDataWithErrors, version = 1)
             .assertStatusIs(PROCESSED)
