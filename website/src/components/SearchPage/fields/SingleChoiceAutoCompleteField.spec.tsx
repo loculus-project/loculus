@@ -316,7 +316,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 error: null,
                 mutate: vi.fn(),
             });
-            const { rerender } = render(
+            render(
                 <SingleChoiceAutoCompleteField
                     field={field}
                     optionsProvider={{
@@ -338,22 +338,8 @@ describe('SingleChoiceAutoCompleteField', () => {
             await userEvent.click(options[0]);
             setSomeFieldValues.mockClear();
 
-            // Re-render with the new field value and select Option 2
-            rerender(
-                <SingleChoiceAutoCompleteField
-                    field={field}
-                    optionsProvider={{
-                        type: 'generic',
-                        lapisUrl,
-                        lapisSearchParameters,
-                        fieldName: field.name,
-                    }}
-                    setSomeFieldValues={setSomeFieldValues}
-                    fieldValue='Option 1'
-                    fieldPresets={fieldPresets}
-                />,
-            );
-
+            // Blur then re-open the dropdown to select Option 2
+            await userEvent.click(document.body);
             await userEvent.click(input);
             const options2 = await screen.findAllByRole('option');
             await userEvent.click(options2[1]);
