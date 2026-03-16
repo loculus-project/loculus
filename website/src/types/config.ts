@@ -91,6 +91,8 @@ export const metadata = z.object({
     percentage: z.boolean().optional(),
 });
 
+export type FieldPresetMap = Partial<Record<string, Record<string, string>>>;
+
 export const inputFieldOption = z.object({
     name: z.string(),
 });

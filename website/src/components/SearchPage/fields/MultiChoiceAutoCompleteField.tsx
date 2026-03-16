@@ -4,6 +4,7 @@ import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteO
 import { FloatingLabelContainer } from './FloatingLabelContainer.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import {
+    type FieldPresetMap,
     type FieldValueUpdate,
     type GroupedMetadataFilter,
     type MetadataFilter,
@@ -22,8 +23,6 @@ import {
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiChevronUpDown from '~icons/mdi/chevron-up-down';
 import MdiTick from '~icons/mdi/tick';
-
-export type FieldPresetMap = Partial<Record<string, Record<string, string>>>;
 
 const logger = getClientLogger('MultiChoiceAutoCompleteField');
 
