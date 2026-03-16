@@ -112,18 +112,14 @@ export const InnerSearchFullUI = ({
     useEffect(() => {
         if (typeof sessionStorage === 'undefined') return;
 
-        if (Object.keys(state).length > 0) {
-            sessionStorage.setItem(sessionQueryKey, JSON.stringify(state));
-        } else {
-            sessionStorage.removeItem(sessionQueryKey);
-        }
+        if (Object.keys(state).length > 0) sessionStorage.setItem(sessionQueryKey, JSON.stringify(state));
+        else sessionStorage.removeItem(sessionQueryKey);
     }, [state]);
 
     const sessionQuery: QueryState | null = useMemo(() => {
         if (typeof sessionStorage === 'undefined') return null;
 
         const sessionQueryValue = sessionStorage.getItem(sessionQueryKey);
-        console.log('Restoring session query from sessionStorage:', sessionQueryValue);
         if (sessionQueryValue) {
             try {
                 return JSON.parse(sessionQueryValue);
@@ -131,17 +127,19 @@ export const InnerSearchFullUI = ({
         }
         return null;
     }, []);
-    const isSessionQueryRestorable = Object.keys(state).length == 0 && sessionQuery;
+
     const [showSessionQueryRestore, setShowSessionQueryRestore] = useState(false);
     useEffect(() => {
-        if (isSessionQueryRestorable) {
-            setShowSessionQueryRestore(true);
-        } else {
+        const isSessionQueryRestorable = Object.keys(state).length == 0 && sessionQuery;
+        if (isSessionQueryRestorable) setShowSessionQueryRestore(true);
+        else setShowSessionQueryRestore(false);
+    }, []);
+
+    const restoreSessionQuery = () => {
+        if (sessionQuery) {
+            setState(sessionQuery);
             setShowSessionQueryRestore(false);
         }
-    }, []);
-    const restoreSessionQuery = () => {
-        if (sessionQuery) setState(sessionQuery);
     };
 
     const searchVisibilities = useMemo(() => {
@@ -352,7 +350,7 @@ export const InnerSearchFullUI = ({
                             <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
                         </div>
                     )}
-                    {isSessionQueryRestorable && showSessionQueryRestore && (
+                    {showSessionQueryRestore && (
                         <Button
                             className='text-sm underline text-primary-700 hover:text-primary-500'
                             onClick={restoreSessionQuery}
