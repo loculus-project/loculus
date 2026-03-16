@@ -330,18 +330,6 @@ export const testGroups: Group[] = [
             country: 'Switzerland',
         },
     },
-    {
-        groupId: 1,
-        groupName: 'Group2',
-        institution: 'Institution 2',
-        contactEmail: 'group2@institution2.org',
-        address: {
-            line1: '',
-            city: '',
-            postalCode: '',
-            country: 'Switzerland',
-        },
-    },
 ];
 
 export const mockRequest = {
