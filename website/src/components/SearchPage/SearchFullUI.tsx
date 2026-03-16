@@ -108,7 +108,7 @@ export const InnerSearchFullUI = ({
     } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema, referenceGenomesInfo });
 
     const isEmptyQueryState = (q: QueryState | null) => q === null || Object.keys(q).length === 0;
-    const sessionQueryKey = `${organism}QueryState`;
+    const sessionQueryKey = `${organism}SearchPageQuery`;
 
     const restorableQuery: QueryState | null = useMemo(() => {
         // On mount, check if sessionStorage has a query to restore
