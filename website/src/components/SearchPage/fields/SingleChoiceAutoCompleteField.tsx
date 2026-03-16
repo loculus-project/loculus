@@ -4,6 +4,7 @@ import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteO
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import {
+    type FieldPresetMap,
     type FieldValueUpdate,
     type GroupedMetadataFilter,
     type MetadataFilter,
@@ -37,8 +38,6 @@ const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputEl
 ));
 
 const logger = getClientLogger('SingleChoiceAutoCompleteField');
-
-export type FieldPresetMap = Partial<Record<string, Record<string, string>>>;
 
 type SingleChoiceAutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;

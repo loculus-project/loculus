@@ -2,9 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MultiChoiceAutoCompleteField, type FieldPresetMap } from './MultiChoiceAutoCompleteField';
+import { MultiChoiceAutoCompleteField } from './MultiChoiceAutoCompleteField';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-import type { MetadataFilter } from '../../../types/config.ts';
+import type { FieldPresetMap, MetadataFilter } from '../../../types/config.ts';
 
 vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({
