@@ -49,5 +49,9 @@ spec:
       imagePullSecrets:
         - name: custom-website-sealed-secret
       volumes:
-{{ include "loculus.configVolume" (dict "name" "loculus-website-config") | nindent 8 }}
+        {{- $websiteConfigmaps := list "loculus-website-config-base" }}
+        {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+        {{- $websiteConfigmaps = append $websiteConfigmaps (printf "loculus-website-config-%s" $item.key) }}
+        {{- end }}
+{{ include "loculus.configVolume" (dict "name" "loculus-website-config" "configmaps" $websiteConfigmaps) | nindent 8 }}
 {{- end }}
