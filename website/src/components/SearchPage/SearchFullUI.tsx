@@ -354,14 +354,6 @@ export const InnerSearchFullUI = ({
                         }
                         `}
                 >
-                    {showSessionQueryRestore && (
-                        <Button
-                            className='text-sm underline text-primary-700 hover:text-primary-500'
-                            onClick={restoreSessionQuery}
-                        >
-                            Click to restore previous search
-                        </Button>
-                    )}
                     {!tableFilter.isEmpty() && (
                         <div className='pt-3 pb-2'>
                             <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
@@ -370,6 +362,17 @@ export const InnerSearchFullUI = ({
                     <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
                         <div className='mt-auto'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
+                            {showSessionQueryRestore && (
+                                <span>
+                                    <span className='m-2 text-gray-400'>|</span>
+                                    <Button
+                                        className='text-sm underline text-primary-700 hover:text-primary-500'
+                                        onClick={restoreSessionQuery}
+                                    >
+                                        Restore previous search
+                                    </Button>
+                                </span>
+                            )}
                             {detailsHook.isPending ||
                             aggregatedHook.isPending ||
                             !firstClientSideLoadOfCountCompleted ||
