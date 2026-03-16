@@ -110,42 +110,43 @@ export const InnerSearchFullUI = ({
     const isEmptyQueryState = (q: QueryState | null) => q === null || Object.keys(q).length === 0;
     const sessionQueryKey = `${organism}QueryState`;
 
-    // On mount, check if sessionStorage has a query to restore
-    const sessionQuery: QueryState | null = useMemo(() => {
+    const restorableQuery: QueryState | null = useMemo(() => {
+        // On mount, check if sessionStorage has a query to restore
         // sessionStorage is undefined during server-side rendering
-        if (typeof sessionStorage === 'undefined') return null;
-
-        const sessionQueryValue = sessionStorage.getItem(sessionQueryKey);
-        if (sessionQueryValue) {
-            try {
-                return JSON.parse(sessionQueryValue) as QueryState;
-            } catch {
-                return null;
+        if (typeof sessionStorage !== 'undefined') {
+            const queryValue = sessionStorage.getItem(sessionQueryKey);
+            if (queryValue) {
+                try {
+                    return JSON.parse(queryValue) as QueryState;
+                } catch {
+                    return null;
+                }
             }
         }
         return null;
     }, []);
 
-    // Update sessionStorage whenever state changes
-    useEffect(() => {
-        if (typeof sessionStorage === 'undefined') return;
-
-        if (!isEmptyQueryState(state)) sessionStorage.setItem(sessionQueryKey, JSON.stringify(state));
-        else sessionStorage.removeItem(sessionQueryKey);
-    }, [state]);
-
-    // Show a restore button if there's a session query that can be restored and the current state is empty
     const [showSessionQueryRestore, setShowSessionQueryRestore] = useState(false);
     useEffect(() => {
-        const isSessionQueryRestorable = isEmptyQueryState(state) && !isEmptyQueryState(sessionQuery);
+        // Show the restore button if the state is empty and there's a query that can be restored
+        const isSessionQueryRestorable = isEmptyQueryState(state) && !isEmptyQueryState(restorableQuery);
         if (isSessionQueryRestorable) setShowSessionQueryRestore(true);
-        else setShowSessionQueryRestore(false);
     }, []);
 
-    // Restore the session query
+    useEffect(() => {
+        // Update sessionStorage with the new state
+        if (typeof sessionStorage !== 'undefined') {
+            if (!isEmptyQueryState(state)) sessionStorage.setItem(sessionQueryKey, JSON.stringify(state));
+            else sessionStorage.removeItem(sessionQueryKey);
+        }
+
+        // If the state is no longer empty, hide the restore button
+        if (!isEmptyQueryState(state)) setShowSessionQueryRestore(false);
+    }, [state]);
+
     const restoreSessionQuery = () => {
-        if (sessionQuery) {
-            setState(sessionQuery);
+        if (restorableQuery) {
+            setState(restorableQuery);
             setShowSessionQueryRestore(false);
         }
     };
@@ -353,11 +354,6 @@ export const InnerSearchFullUI = ({
                         }
                         `}
                 >
-                    {!tableFilter.isEmpty() && (
-                        <div className='pt-3 pb-2'>
-                            <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
-                        </div>
-                    )}
                     {showSessionQueryRestore && (
                         <Button
                             className='text-sm underline text-primary-700 hover:text-primary-500'
@@ -365,6 +361,11 @@ export const InnerSearchFullUI = ({
                         >
                             Click to restore previous search
                         </Button>
+                    )}
+                    {!tableFilter.isEmpty() && (
+                        <div className='pt-3 pb-2'>
+                            <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
+                        </div>
                     )}
                     <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
                         <div className='mt-auto'>
