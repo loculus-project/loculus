@@ -373,8 +373,8 @@ def get_output_metadata(
                 )
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
-                input_data[arg_name] = (  # type: ignore
-                    output_metadata.get(input_path)
+                input_data[arg_name] = (
+                    output_metadata.get(input_path)  # type: ignore
                     if get_from_processed
                     else unprocessed.metadata.get(input_path)
                 )
