@@ -349,12 +349,14 @@ def get_output_metadata(
             continue
 
         for arg_name, input_path in spec.inputs.items():
+            get_from_processed = False
+            if input_path.startswith("processed."):
+                input_path = input_path.replace("processed.", "", 1)
+                get_from_processed = True
+
             if isinstance(unprocessed, UnprocessedAfterNextclade):
-                # Try to get required intput field from processed metadata values
-                # If it does not exists there, get it through add_input_metadata
-                processed = output_metadata.get(input_path)
-                if processed is not None:
-                    input_data[arg_name] = processed  # type: ignore
+                if get_from_processed:
+                    input_data[arg_name] = output_metadata.get(input_path)  # type: ignore
                 else:
                     input_metadata = add_input_metadata(
                         spec, unprocessed, input_path, config=config
@@ -371,10 +373,10 @@ def get_output_metadata(
                 )
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
-                # Try to get required intput field from processed metadata values
-                # If it does not exists there, use the unprocessed value
-                input_data[arg_name] = output_metadata.get(input_path) or unprocessed.metadata.get(  # type: ignore
-                    input_path
+                input_data[arg_name] = (  # type: ignore
+                    output_metadata.get(input_path)
+                    if get_from_processed
+                    else unprocessed.metadata.get(input_path)
                 )
                 input_fields.append(input_path)
                 group_id = unprocessed.group_id

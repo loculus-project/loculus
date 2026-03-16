@@ -10,7 +10,7 @@ processing_spec:
       type: [string, ACCESSION_VERSION, string]
     inputs:
       continent: continent
-      A: A
+      A: processed.A
       required_collection_date: ncbi_required_collection_date
   A:
     args:

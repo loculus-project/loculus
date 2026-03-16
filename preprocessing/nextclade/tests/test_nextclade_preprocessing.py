@@ -1214,7 +1214,7 @@ def test_preprocessing_without_metadata() -> None:
     )
 
     config.processing_spec = {}
-    config.processing_order = []
+    config.processing_order = ()
 
     result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
     processed_entry = result[0].processed_entry

@@ -1180,20 +1180,19 @@ def test_display_name_construction() -> None:
 
 def test_metadata_dependency(factory_custom: ProcessedEntryFactory):
     config = get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
-    test_case = test_case_definitions[-1]
     test_case = [i for i in test_case_definitions if i.name == "metadata_dependency"][0]
     processing_test_case = test_case.create_test_case(factory_custom)
 
     processed_entry = process_single_entry(processing_test_case, config)
     assert processed_entry.data.metadata["depends_on_A"] == "Asia/LOC_18.1/2022-01-01"
 
-    wrong_order = config.processing_order
-    wrong_order.remove("depends_on_A")
-    wrong_order.insert(0, "depends_on_A")
+    wrong_order = tuple(
+        ["depends_on_A"] + [i for i in config.processing_order if i != "depends_on_A"]
+    )
     config.processing_order = wrong_order
 
     processed_entry = process_single_entry(processing_test_case, config)
-    assert processed_entry.data.metadata["depends_on_A"] == "Asia/LOC_18.1/2022"
+    assert processed_entry.data.metadata["depends_on_A"] == "Asia/LOC_18.1"
 
 
 if __name__ == "__main__":

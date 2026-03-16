@@ -1,4 +1,5 @@
 import argparse
+import graphlib
 import logging
 import os
 from enum import StrEnum
@@ -101,7 +102,7 @@ class Config(BaseModel):
     organism: str = "mpox"
     segments: list[Segment] = Field(default_factory=list)
     processing_spec: dict[str, ProcessingSpec] = Field(default_factory=dict)
-    processing_order: list[str] = []
+    processing_order: tuple[str, ...] = ()
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
     segment_classification_method: SegmentClassificationMethod = SegmentClassificationMethod.ALIGN
@@ -227,21 +228,38 @@ def generate_argparse_from_model(config_cls: type[BaseModel]) -> argparse.Argume
     return parser
 
 
-def get_processing_order(config: Config) -> list[str]:
+def get_processing_order(config: Config) -> tuple[str, ...]:
     """Return a valid order for processing metadata fields based on their dependencies.
 
-    Dependencies are derived from input fields in `config.processing_spec`. A DAG is
-    constructed and topologically sorted to ensure each field is processed after the
+    Dependencies are derived from input fields in `config.processing_spec`.
+
+    A DAG is constructed and topologically sorted to ensure each field is processed after the
     fields it depends on.
+
+    A metadatafield can declare a dependency on a processed metadatafield by prefixing
+    the name of the required metadatafield with `processed.` in its inputs.
+    E.g.: `processed.collection_date` will look for `collection_date` in the processed metadata,
+    whereas `collection_date` will use the unprocessed version
     """
+    prefix = "processed."
     dag: dict[str, set[str]] = {k: set() for k in config.processing_spec.keys()}
-    for node, spec in config.processing_spec.items():
-        for dependency in spec.inputs.values():
-            if dependency == node or dependency not in dag:
+    for output_field, spec in config.processing_spec.items():
+        for input in spec.inputs.values():
+            if not input.startswith(prefix):
                 continue
-            dag[node].add(dependency)
+            dependency = input.replace(prefix, "", 1)
+            if dependency not in config.processing_spec:
+                raise ValueError(
+                    f"metadata field '{output_field}' requested non-existing field '{dependency}' as input"
+                )
+            dag[output_field].add(dependency)
     ts = TopologicalSorter(dag)
-    return list(ts.static_order())
+    try:
+        order = tuple(ts.static_order())
+    except graphlib.CycleError as e:
+        logging.exception("configuration error: found circular dependencies among metadatafields")
+        raise ValueError(f"invalid configuration: {e}")
+    return order
 
 
 def get_config(config_file: str | None = None, ignore_args: bool = False) -> Config:
