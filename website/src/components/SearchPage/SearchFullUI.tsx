@@ -107,7 +107,7 @@ export const InnerSearchFullUI = ({
         setAColumnVisibility,
     } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema, referenceGenomesInfo });
 
-    // Update sessionQuery whenever state changes
+    // Update sessionStorage whenever state changes
     const sessionQueryKey = `${organism}QueryState`;
     useEffect(() => {
         if (typeof sessionStorage === 'undefined') return;
@@ -116,18 +116,22 @@ export const InnerSearchFullUI = ({
         else sessionStorage.removeItem(sessionQueryKey);
     }, [state]);
 
+    // On mount, check if sessionStorage has a query to restore
     const sessionQuery: QueryState | null = useMemo(() => {
         if (typeof sessionStorage === 'undefined') return null;
 
         const sessionQueryValue = sessionStorage.getItem(sessionQueryKey);
         if (sessionQueryValue) {
             try {
-                return JSON.parse(sessionQueryValue);
-            } catch {}
+                return JSON.parse(sessionQueryValue) as QueryState;
+            } catch {
+                return null;
+            }
         }
         return null;
     }, []);
 
+    // Show a restore button if there's a session query that can be restored and the current state is empty
     const [showSessionQueryRestore, setShowSessionQueryRestore] = useState(false);
     useEffect(() => {
         const isSessionQueryRestorable = Object.keys(state).length == 0 && sessionQuery;
@@ -135,6 +139,7 @@ export const InnerSearchFullUI = ({
         else setShowSessionQueryRestore(false);
     }, []);
 
+    // Restore the session query
     const restoreSessionQuery = () => {
         if (sessionQuery) {
             setState(sessionQuery);
