@@ -57,13 +57,13 @@ def get_sample_attributes(
     for field_name, mapping in metadata_mapping.items():
         loculus_metadata_field_values = map(sample_metadata.get, mapping.loculus_fields)
 
-        # Fields with function and args are processed differently
-        if mapping.function and mapping.args:
+        # Fields with function are processed differently
+        if mapping.function:
             function = mapping.function
-            args = mapping.args
+            args = mapping.args or []
             match function:
                 case "match":  # Regex match each value against respective arg (as regex)
-                    if len(mapping.loculus_fields) != len(mapping.args):
+                    if len(mapping.loculus_fields) != len(args):
                         logger.error(
                             f"Function {function} for field {field_name} expects {len(args)} "
                             f"arguments, but got {len(mapping.loculus_fields)} values: "
@@ -78,6 +78,16 @@ def get_sample_attributes(
                         value = "true"
                     else:
                         value = "false"
+                case "deduplicate":
+                    # Split using ';', strip whitespace, deduplicate, and re-join using '; '
+                    unique_values = dict.fromkeys(
+                        v.strip()
+                        for value in loculus_metadata_field_values
+                        if value is not None
+                        for v in value.split(";")
+                        if v.strip()
+                    )
+                    value = "; ".join(unique_values)
                 case _:
                     logger.error(
                         f"Unknown function for field {field_name}: {mapping}. "

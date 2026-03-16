@@ -389,6 +389,11 @@
                             "groups": ["schema"],
                             "type": "string",
                             "description": "The name of the file category, e.g. 'raw_reads'."
+                          },
+                          "displayName": {
+                            "groups": ["schema"],
+                            "type": "string",
+                            "description": "The display name of the file category, e.g. 'Raw reads'."
                           }
                         },
                         "additionalProperties": false
@@ -412,7 +417,12 @@
                   "name": {
                     "groups": ["schema"],
                     "type": "string",
-                    "description": "TODO"
+                    "description": "The name of the output files array, e.g. 'annotations'."
+                  },
+                  "displayName": {
+                    "groups": ["schema"],
+                    "type": "string",
+                    "description": "The display name of the output files array, e.g. 'Annotations'."
                   },
                   "multipleFiles": {
                     "groups": ["schema"],

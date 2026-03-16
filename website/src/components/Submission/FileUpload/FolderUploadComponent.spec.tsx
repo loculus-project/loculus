@@ -35,7 +35,10 @@ const mockSetFileMapping = vi.fn();
 const mockOnError = vi.fn();
 
 const defaultProps = {
-    fileCategory: 'extraFiles',
+    fileCategory: {
+        name: 'extraFiles',
+        displayName: 'Extra Files',
+    },
     inputMode: 'bulk' as const,
     accessToken: 'test-token',
     clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {} },
@@ -54,7 +57,7 @@ describe('FolderUploadComponent', () => {
 
     it('renders upload folder button', () => {
         render(<FolderUploadComponent {...defaultProps} />);
-        expect(screen.getByText('Upload folder')).toBeInTheDocument();
+        expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument();
         expect(screen.getByTestId('folder-up-icon')).toBeInTheDocument();
     });
 

@@ -160,6 +160,7 @@ export type LinkOut = z.infer<typeof linkOut>;
 
 export const fileCategory = z.object({
     name: z.string(),
+    displayName: z.string().optional(),
 });
 
 export type FileCategory = z.infer<typeof fileCategory>;
