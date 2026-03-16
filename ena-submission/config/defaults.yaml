@@ -76,6 +76,7 @@ metadata_mapping:
     default: "not provided"
   'collecting institution':
     loculus_fields: [sequencedByOrganization, authorAffiliations]
+    function: deduplicate
     default: "not provided"
   'receipt date':
     loculus_fields: [sampleReceivedDate]
