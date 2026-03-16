@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from requests import codes
 
 from taxonomy_service.api import app
-from taxonomy_service.config import Config, get_config
+from taxonomy_service.config import Config
 
 
 client = TestClient(app)
