@@ -253,13 +253,14 @@ def get_processing_order(config: Config) -> tuple[str, ...]:
                     f"metadata field '{output_field}' requested non-existing field '{dependency}' as input"
                 )
             dag[output_field].add(dependency)
+
     ts = TopologicalSorter(dag)
     try:
-        order = tuple(ts.static_order())
+        processing_order = tuple(ts.static_order())
     except graphlib.CycleError as e:
-        logging.exception("configuration error: found circular dependencies among metadatafields")
         raise ValueError(f"invalid configuration: {e}")
-    return order
+
+    return processing_order
 
 
 def get_config(config_file: str | None = None, ignore_args: bool = False) -> Config:
