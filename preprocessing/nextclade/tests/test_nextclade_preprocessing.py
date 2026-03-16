@@ -1315,8 +1315,9 @@ def test_create_flatfile():
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
     embl_fields = get_config(EMBL_METADATA, ignore_args=True).processing_spec
     config.processing_spec.update(embl_fields)
-    config.create_embl_file = True
+    # need to recompute order after updating the spec
     config.processing_order = get_processing_order(config)
+    config.create_embl_file = True
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
         data=UnprocessedData(

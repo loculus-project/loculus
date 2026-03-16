@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 # Dataclass types for which we can generate CLI arguments
 CLI_TYPES = [str, int, float, bool]
 
+METADATA_DEPENDENCY_PREFIX = "processed."
+
 
 class EmblInfoMetadataPropertyNames(BaseModel):
     country_property: str = "geoLocCountry"
@@ -134,6 +136,8 @@ class Config(BaseModel):
         if not self.backend_host:  # Set here so we can use organism
             self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
 
+        self.processing_order = get_processing_order(self)
+
         return self
 
     @property
@@ -241,16 +245,15 @@ def get_processing_order(config: Config) -> tuple[str, ...]:
     E.g.: `processed.collection_date` will look for `collection_date` in the processed metadata,
     whereas `collection_date` will use the unprocessed version
     """
-    prefix = "processed."
     dag: dict[str, set[str]] = {k: set() for k in config.processing_spec.keys()}
     for output_field, spec in config.processing_spec.items():
         for input in spec.inputs.values():
-            if not input.startswith(prefix):
+            if not input.startswith(METADATA_DEPENDENCY_PREFIX):
                 continue
-            dependency = input.replace(prefix, "", 1)
+            dependency = input.replace(METADATA_DEPENDENCY_PREFIX, "", 1)
             if dependency not in config.processing_spec:
                 raise ValueError(
-                    f"metadata field '{output_field}' requested non-existing field '{dependency}' as input"
+                    f"invalid configuration: metadata field '{output_field}' requested non-existing field '{dependency}' as input"
                 )
             dag[output_field].add(dependency)
 
@@ -258,7 +261,9 @@ def get_processing_order(config: Config) -> tuple[str, ...]:
     try:
         processing_order = tuple(ts.static_order())
     except graphlib.CycleError as e:
-        raise ValueError(f"invalid configuration: {e}")
+        raise ValueError(
+            f"invalid configuration: computation of metadata processing order resulted in a Cycle error: {e}"
+        ) from e
 
     return processing_order
 
@@ -312,5 +317,4 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
     if cli_overrides:
         config = Config(**{**config.model_dump(), **cli_overrides})
 
-    config.processing_order = get_processing_order(config)
     return config
