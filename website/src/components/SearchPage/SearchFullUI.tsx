@@ -107,17 +107,12 @@ export const InnerSearchFullUI = ({
         setAColumnVisibility,
     } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema, referenceGenomesInfo });
 
-    // Update sessionStorage whenever state changes
+    const isEmptyQueryState = (q: QueryState | null) => q === null || Object.keys(q).length === 0;
     const sessionQueryKey = `${organism}QueryState`;
-    useEffect(() => {
-        if (typeof sessionStorage === 'undefined') return;
-
-        if (Object.keys(state).length > 0) sessionStorage.setItem(sessionQueryKey, JSON.stringify(state));
-        else sessionStorage.removeItem(sessionQueryKey);
-    }, [state]);
 
     // On mount, check if sessionStorage has a query to restore
     const sessionQuery: QueryState | null = useMemo(() => {
+        // sessionStorage is undefined during server-side rendering
         if (typeof sessionStorage === 'undefined') return null;
 
         const sessionQueryValue = sessionStorage.getItem(sessionQueryKey);
@@ -131,10 +126,18 @@ export const InnerSearchFullUI = ({
         return null;
     }, []);
 
+    // Update sessionStorage whenever state changes
+    useEffect(() => {
+        if (typeof sessionStorage === 'undefined') return;
+
+        if (!isEmptyQueryState(state)) sessionStorage.setItem(sessionQueryKey, JSON.stringify(state));
+        else sessionStorage.removeItem(sessionQueryKey);
+    }, [state]);
+
     // Show a restore button if there's a session query that can be restored and the current state is empty
     const [showSessionQueryRestore, setShowSessionQueryRestore] = useState(false);
     useEffect(() => {
-        const isSessionQueryRestorable = Object.keys(state).length == 0 && sessionQuery;
+        const isSessionQueryRestorable = isEmptyQueryState(state) && !isEmptyQueryState(sessionQuery);
         if (isSessionQueryRestorable) setShowSessionQueryRestore(true);
         else setShowSessionQueryRestore(false);
     }, []);
