@@ -261,7 +261,9 @@ describe('SingleChoiceAutoCompleteField', () => {
 
     describe('fieldPresets', () => {
         const fieldPresets = {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             'Option 1': { otherField: 'presetValue1', anotherField: 'presetValue2' },
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             'Option 2': { otherField: 'presetValue3' },
         };
 
