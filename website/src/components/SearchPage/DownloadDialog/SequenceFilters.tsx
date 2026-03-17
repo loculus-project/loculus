@@ -188,13 +188,10 @@ export class FieldFilterSet implements SequenceFilter {
                 }
                 const nonNullValues = value.filter((v) => v !== null);
                 if (value.includes(null)) {
-                    const clause = [
-                        `isNull(${key})`,
-                         ...nonNullValues.map((v) => `${key}=${v}`),
-                    ].join(' OR ');
+                    const clause = [`isNull(${key})`, ...nonNullValues.map((v) => `${key}=${v}`)].join(' OR ');
                     const existing = result.find(([k]) => k === 'advancedQuery');
                     if (existing) {
-                        existing[1] = `(${existing[1]}) OR (${clause})`;
+                        existing[1] = `(${String(existing[1])}) OR (${clause})`;
                     } else {
                         result.push(['advancedQuery', clause]);
                     }
