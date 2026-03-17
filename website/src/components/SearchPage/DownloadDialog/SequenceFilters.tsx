@@ -22,7 +22,7 @@ export interface SequenceFilter {
     sequenceCount(): number | undefined;
 
     /**
-     * Return the filter as params to use in API POST Queries.
+     * Return the filter as params to use in API Queries.
      */
     toApiParams(): LapisSearchParameters;
 
@@ -109,11 +109,6 @@ export class FieldFilterSet implements SequenceFilter {
             ),
         );
         for (const filterName of Object.keys(sequenceFilters)) {
-            if (sequenceFilters[filterName] === null) {
-                sequenceFilters[`${filterName}.isNull`] = true;
-                delete sequenceFilters[filterName];
-                continue;
-            }
             if (this.filterSchema.isSubstringSearchEnabled(filterName) && sequenceFilters[filterName] !== undefined) {
                 sequenceFilters[filterName.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(
                     sequenceFilters[filterName],
