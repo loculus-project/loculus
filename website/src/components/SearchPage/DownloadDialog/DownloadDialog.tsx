@@ -7,7 +7,6 @@ import { DownloadForm, type DownloadFormState } from './DownloadForm.tsx';
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { getDefaultSelectedFields } from './FieldSelector/FieldSelectorModal.tsx';
 import type { SequenceFilter } from './SequenceFilters.tsx';
-import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
@@ -149,7 +148,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                                         // eslint-disable-next-line @typescript-eslint/naming-convention
                                         __html:
                                             dataUseTermsAgreementHtml ??
-                                            `I agree to the <a href="${routes.datauseTermsPage()}" class="underline" target="_blank" rel="noopener noreferrer">data use terms</a>.`,
+                                            'I agree to the data use terms.',
                                     }}
                                 />
                             </label>
