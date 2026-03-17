@@ -144,7 +144,6 @@ export class FieldFilterSet implements SequenceFilter {
     }
 
     public toUrlSearchParams(): [string, string | string[]][] {
-        // this will be used in GET requests
         const result: [string, string | string[]][] = [];
 
         // keys that need special handling
