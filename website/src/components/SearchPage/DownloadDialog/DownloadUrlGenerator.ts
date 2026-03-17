@@ -3,6 +3,7 @@ import kebabCase from 'just-kebab-case';
 import { dataTypeForFilename, type DownloadDataType } from './DownloadDataType.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { metadataDefaultDownloadDataFormat, sequenceDefaultDownloadDataFormat } from '../../../settings.ts';
+import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 
 export type Compression = 'zstd' | 'gzip' | undefined;
 
@@ -87,24 +88,49 @@ export class DownloadUrlGenerator {
             }
         }
 
-        downloadParameters
-            .toUrlSearchParams()
-            .filter(([name]) => !excludedParams.has(name))
-            .forEach(([name, value]) => {
-                if (Array.isArray(value)) {
-                    value.forEach((val) => {
-                        params.append(name, val);
-                    });
-                } else {
-                    params.append(name, value);
-                }
-            });
+        const modifiedParams = this.modifyParamsForLapisGetRequest(
+            downloadParameters.toUrlSearchParams().filter(([name]) => !excludedParams.has(name)),
+        );
+        modifiedParams.forEach(([key, value]) => {
+            params.append(key, value);
+        });
 
         return {
             url: `${baseUrl}?${params}`,
             baseUrl,
-            params,
+            modifiedParams,
         };
+    }
+
+    private modifyParamsForLapisGetRequest(params: [string, string | string[]][]): URLSearchParams {
+        const new_params = new URLSearchParams();
+        params.forEach(([name, value]) => {
+            if (Array.isArray(value)) {
+                const nonNullValues = value.filter((v) => v !== null);
+                if (value.includes(NULL_QUERY_VALUE)) {
+                    const clause = [`isNull(${name})`, ...nonNullValues.map((v) => `${name}=${v}`)].join(' OR ');
+                    const existing = params.find(([k]) => k === 'advancedQuery');
+                    if (existing) {
+                        existing[1] = `(${String(existing[1])}) OR (${clause})`;
+                    } else {
+                        new_params.append('advancedQuery', clause);
+                    }
+                } else {
+                    value.forEach((val) => {
+                        new_params.append(name, val);
+                    });
+                }
+                value.forEach((val) => {
+                    new_params.append(name, val);
+                });
+            } else {
+                if (value === null) {
+                new_params.append(`${name}.isNull`, 'true');
+                }
+                new_params.append(name, value);
+            }
+        });
+        return new_params;
     }
 
     private generateFilename(downloadDataType: DownloadDataType): string {

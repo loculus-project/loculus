@@ -1,4 +1,5 @@
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
+import { NULL_QUERY_VALUE } from './search.ts';
 
 /**
  * Parse URLSearchParams into a dictionary that properly handles multiple values.
@@ -17,7 +18,7 @@ export function parseUrlSearchParams(searchParams: URLSearchParams): QueryState 
         if (!(key in paramGroups)) {
             paramGroups[key] = [];
         }
-        paramGroups[key].push(value);
+        paramGroups[key].push(value === NULL_QUERY_VALUE ? '' : value);
     }
 
     // Convert to dictionary - single values as strings, multiple as arrays

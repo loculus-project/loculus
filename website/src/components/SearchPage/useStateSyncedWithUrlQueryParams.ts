@@ -1,6 +1,7 @@
 import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
 
 import type { OrderDirection } from '../../types/lapis.ts';
+import { NULL_QUERY_VALUE } from '../../utils/search.ts';
 
 export interface QueryState {
     page?: string;
@@ -16,7 +17,8 @@ function parseSearchToDict(search: string): QueryState {
     const dict: QueryState = {};
 
     for (const key of new Set(urlParams.keys())) {
-        const values = urlParams.getAll(key);
+        const pre_values = urlParams.getAll(key);
+        const values = pre_values.map((v) => (v === NULL_QUERY_VALUE ? '' : v));
         dict[key] = values.length === 1 ? values[0] : values;
     }
     return dict;

@@ -2,7 +2,7 @@ import { type FieldValues } from '../../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { intoMutationSearchParams } from '../../../utils/mutation.ts';
 import { getReferenceIdentifier } from '../../../utils/referenceSelection.ts';
-import { MetadataFilterSchema, MUTATION_KEY } from '../../../utils/search.ts';
+import { MetadataFilterSchema, MUTATION_KEY, NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import { type SegmentAndGeneInfo, getSegmentNames } from '../../../utils/sequenceTypeHelpers.ts';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
@@ -178,23 +178,13 @@ export class FieldFilterSet implements SequenceFilter {
             }
 
             if (Array.isArray(value)) {
-                if (value.length === 0) {
-                    continue;
+                if (value.length > 0) {
+                    result.push([key, value.map((v: any) => (v === null ? NULL_QUERY_VALUE : v))]);
                 }
-                const nonNullValues = value.filter((v) => v !== null);
-                if (value.includes(null)) {
-                    const clause = [`isNull(${key})`, ...nonNullValues.map((v) => `${key}=${v}`)].join(' OR ');
-                    const existing = result.find(([k]) => k === 'advancedQuery');
-                    if (existing) {
-                        existing[1] = `(${String(existing[1])}) OR (${clause})`;
-                    } else {
-                        result.push(['advancedQuery', clause]);
-                    }
-                    continue;
-                }
-                result.push([key, nonNullValues.map((v) => String(v))]);
             } else if (value === null) {
-                result.push([`${key}.isNull`, 'true']);
+                result.push([key, NULL_QUERY_VALUE]);
+            } else if (value === null) {
+                result.push([key, NULL_QUERY_VALUE]);
             } else {
                 const stringValue = String(value);
                 const trimmedValue = stringValue.trim();
