@@ -17,8 +17,7 @@ function parseSearchToDict(search: string): QueryState {
     const dict: QueryState = {};
 
     for (const key of new Set(urlParams.keys())) {
-        const pre_values = urlParams.getAll(key);
-        const values = pre_values.map((v) => (v === NULL_QUERY_VALUE ? '' : v));
+        const values = urlParams.getAll(key);
         dict[key] = values.length === 1 ? values[0] : values;
     }
     return dict;

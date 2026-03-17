@@ -91,14 +91,13 @@ export class DownloadUrlGenerator {
         const modifiedParams = this.modifyParamsForLapisGetRequest(
             downloadParameters.toUrlSearchParams().filter(([name]) => !excludedParams.has(name)),
         );
-        modifiedParams.forEach(([key, value]) => {
-            params.append(key, value);
-        });
+
+        const merged = new URLSearchParams([...params.entries(), ...modifiedParams.entries()]);
 
         return {
-            url: `${baseUrl}?${params}`,
+            url: `${baseUrl}?${merged}`,
             baseUrl,
-            params,
+            merged,
         };
     }
 
@@ -106,7 +105,7 @@ export class DownloadUrlGenerator {
         const new_params = new URLSearchParams();
         params.forEach(([name, value]) => {
             if (Array.isArray(value)) {
-                const nonNullValues = value.filter((v) => v !== null);
+                const nonNullValues = value.filter((v) => v !== NULL_QUERY_VALUE);
                 if (value.includes(NULL_QUERY_VALUE)) {
                     const clause = [`isNull(${name})`, ...nonNullValues.map((v) => `${name}=${v}`)].join(' OR ');
                     const existing = params.find(([k]) => k === 'advancedQuery');
@@ -120,14 +119,12 @@ export class DownloadUrlGenerator {
                         new_params.append(name, val);
                     });
                 }
-                value.forEach((val) => {
-                    new_params.append(name, val);
-                });
             } else {
-                if (value === null) {
-                new_params.append(`${name}.isNull`, 'true');
+                if (value === NULL_QUERY_VALUE) {
+                    new_params.append(`${name}.isNull`, 'true');
+                } else {
+                    new_params.append(name, value);
                 }
-                new_params.append(name, value);
             }
         });
         return new_params;

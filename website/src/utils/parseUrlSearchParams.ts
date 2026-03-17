@@ -18,7 +18,7 @@ export function parseUrlSearchParams(searchParams: URLSearchParams): QueryState 
         if (!(key in paramGroups)) {
             paramGroups[key] = [];
         }
-        paramGroups[key].push(value === NULL_QUERY_VALUE ? '' : value);
+        paramGroups[key].push(value);
     }
 
     // Convert to dictionary - single values as strings, multiple as arrays
