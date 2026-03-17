@@ -146,9 +146,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                                     className='text-sm'
                                     dangerouslySetInnerHTML={{
                                         // eslint-disable-next-line @typescript-eslint/naming-convention
-                                        __html:
-                                            dataUseTermsAgreementHtml ??
-                                            'I agree to the data use terms.',
+                                        __html: dataUseTermsAgreementHtml ?? 'I agree to the data use terms.',
                                     }}
                                 />
                             </label>
