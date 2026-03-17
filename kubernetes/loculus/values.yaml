@@ -101,6 +101,9 @@ defaultOrganismConfig: &defaultOrganismConfig
     # ingest: Which NCBI field to map to this field (optional)
     ## Preprocessing related
     # preprocessing: Preprocessing function to run on the field (optional: defaults to identity function on input field with same name)
+    # preprocessing.inputs: inputs needed to compute the field using the processing function. 
+    #                       Inputs that are prefixed with 'processed.' represent dependencies on processed metadata fields, e.g., adding
+    #                       'processed.sampleCollectionDate' will input the sampleCollectionDate that has been processed by the 'parse_date_into_range' function
     metadata:
       - name: sampleCollectionDate
         displayName: Collection date
@@ -1501,7 +1504,7 @@ defaultOrganisms:
             function: build_display_name
             inputs:
               geoLocCountry: geoLocCountry
-              sampleCollectionDate: sampleCollectionDate
+              sampleCollectionDateRangeLower: processed.sampleCollectionDateRangeLower
               specimenCollectorSampleId: specimenCollectorSampleId
               submissionId: submissionId
             args:
