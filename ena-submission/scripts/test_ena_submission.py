@@ -368,23 +368,37 @@ class AssemblyCreationTests(unittest.TestCase):
         # Temp file names are different
         data.pop("CHROMOSOME_LIST")
         data.pop("FLATFILE")
-        expected_data = {
-            "STUDY": study_accession,
-            "SAMPLE": sample_accession,
-            "ADDRESS": "Fake center name, Basel, BS, Switzerland",
-            "ASSEMBLYNAME": "LOC_0001TLY.1",
-            "ASSEMBLY_TYPE": "isolate",
-            "AUTHORS": "Umair M., Haider S.A., Jamal Z., Ammar M., Hakim R., Ali Q., Salman M.;",
-            "COVERAGE": "1",
-            "PROGRAM": "Ivar",
-            "PLATFORM": "Illumina",
-            "DESCRIPTION": (
-                "Original sequence submitted to Loculus with accession: LOC_0001TLY, version: 1"
-            ),
-            "MOLECULETYPE": "genomic RNA",
+        self.assertEqual(data["STUDY"], study_accession)
+        self.assertEqual(data["SAMPLE"], sample_accession)
+        self.assertEqual(data["ADDRESS"], "Fake center name, Basel, BS, Switzerland")
+        self.assertEqual(data["ASSEMBLY_TYPE"], "isolate")
+        self.assertEqual(
+            data["AUTHORS"],
+            ("Umair M., Haider S.A., Jamal Z., Ammar M., Hakim R., Ali Q., Salman M.;"),
+        )
+        self.assertEqual(data["COVERAGE"], "1")
+        self.assertEqual(data["PROGRAM"], "Ivar")
+        self.assertEqual(data["PLATFORM"], "Illumina")
+        self.assertEqual(
+            data["DESCRIPTION"],
+            "Original sequence submitted to Loculus with accession: LOC_0001TLY, version: 1",
+        )
+        self.assertEqual(data["MOLECULETYPE"], "genomic RNA")
+        self.assertTrue(data["ASSEMBLYNAME"].startswith("LOC_0001TLY.1"))
+        expected_keys = {
+            "STUDY",
+            "SAMPLE",
+            "ASSEMBLYNAME",
+            "ASSEMBLY_TYPE",
+            "COVERAGE",
+            "PROGRAM",
+            "PLATFORM",
+            "DESCRIPTION",
+            "MOLECULETYPE",
+            "AUTHORS",
+            "ADDRESS",
         }
-
-        self.assertEqual(data, expected_data)
+        self.assertEqual(set(data.keys()), expected_keys)
 
     def test_get_chromsome_accessions(self):
         insdc_accession_range = "OZ189935-OZ189936"

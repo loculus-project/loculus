@@ -378,9 +378,7 @@ def _test_successful_assembly_submission(
     check_assembly_submission_started(db_config, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
-
-    # IMPORTANT: set test=true below or this script may submit sequences to ENA prod
-    assembly_table_create(db_config, config, test=config.test)
+    assembly_table_create(db_config, config)
     check_assembly_submission_waiting(db_config, sequences_to_upload)
 
     # Hack: ENA never processed on dev, so we set erz_accession to known public accessions
@@ -401,9 +399,7 @@ def _test_successful_assembly_submission_no_wait(
     check_assembly_submission_started(db_config, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
-
-    # IMPORTANT: set test=true below or this script may submit sequences to ENA prod
-    assembly_table_create(db_config, config, test=config.test)
+    assembly_table_create(db_config, config)
     create_assembly_submission_table_update(db_config)
     check_assembly_submission_submitted(db_config, sequences_to_upload)
 
@@ -419,9 +415,7 @@ def _test_assembly_submission_errored(
     check_assembly_submission_started(db_config, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
-
-    # IMPORTANT: set test=true below or this script may submit sequences to ENA prod
-    assembly_table_create(db_config, config, test=config.test)
+    assembly_table_create(db_config, config)
     check_assembly_submission_has_errors(db_config, sequences_to_upload)
 
     assembly_table_handle_errors(
