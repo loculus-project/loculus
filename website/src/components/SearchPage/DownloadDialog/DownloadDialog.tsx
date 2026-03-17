@@ -30,6 +30,7 @@ type DownloadDialogProps = {
     referenceGenomesInfo: ReferenceGenomesInfo;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
+    dataUseTermsAgreementHtml?: string;
     schema: Schema;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
     selectedReferenceNames?: SegmentReferenceSelections;
@@ -42,6 +43,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     referenceGenomesInfo,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
+    dataUseTermsAgreementHtml,
     schema,
     richFastaHeaderFields,
     selectedReferenceNames,
@@ -141,18 +143,14 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                                     checked={agreedToDataUseTerms}
                                     onChange={() => setAgreedToDataUseTerms(!agreedToDataUseTerms)}
                                 />
-                                <span className='text-sm'>
-                                    I agree to the{' '}
-                                    <a
-                                        href={routes.datauseTermsPage()}
-                                        className='underline'
-                                        target='_blank'
-                                        rel='noopener noreferrer'
-                                    >
-                                        data use terms
-                                    </a>
-                                    .
-                                </span>
+                                <span
+                                    className='text-sm'
+                                    dangerouslySetInnerHTML={{
+                                        __html:
+                                            dataUseTermsAgreementHtml ??
+                                            `I agree to the <a href="${routes.datauseTermsPage()}" class="underline" target="_blank" rel="noopener noreferrer">data use terms</a>.`,
+                                    }}
+                                />
                             </label>
                         </div>
                     )}

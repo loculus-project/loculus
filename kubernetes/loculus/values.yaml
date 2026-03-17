@@ -39,6 +39,7 @@ dataUseTerms:
   urls:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
+  agreementHtml: 'I agree to the <a href="/about/terms-of-use/data-use-terms" class="underline" target="_blank" rel="noopener noreferrer">data use terms</a>.'
 fileSharing:
   outputFileUrlType: backend
 s3:

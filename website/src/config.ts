@@ -251,6 +251,10 @@ export function dataUseTermsAreEnabled() {
     return getWebsiteConfig().enableDataUseTerms;
 }
 
+export function getDataUseTermsAgreementHtml() {
+    return getWebsiteConfig().dataUseTermsAgreementHtml;
+}
+
 function readTypedConfigFile<T>(fileName: string, schema: z.ZodType<T>) {
     const configFilePath = path.join(getConfigDir(), fileName);
     const json = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));
