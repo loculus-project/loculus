@@ -1,11 +1,12 @@
 from pathlib import Path
+import sqlite3
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 
 from fastapi.testclient import TestClient
 from requests import codes
 
-from taxonomy_service.api import app
+from taxonomy_service.api import app, get_db_connection
 from taxonomy_service.config import Config
 
 
@@ -13,39 +14,50 @@ client = TestClient(app)
 
 config_file = Path(__file__).parent / "test_config.yaml"
 
-mock_scientific_name = "Aedes aegypti"
-mock_missing_name = "Nonsense nonsensi"
+
+def get_test_db():
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.execute(
+        "CREATE TABLE taxonomy (tax_id INTEGER, common_name TEXT, scientific_name TEXT, parent_id INTEGER, depth INTEGER)"
+    )
+    conn.execute("INSERT INTO taxonomy VALUES (9606, 'human', 'Homo sapiens', 9605, 31)")
+    conn.commit()
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
+app.dependency_overrides[get_db_connection] = get_test_db
+
 mock_taxon = {
-    "tax_id": 7159,
-    "common_name": "yellow fever mosquito",
-    "scientific_name": "Aedes aegypti",
-    "parent_id": 53541,
-    "depth": 28,
+    "tax_id": 9606,
+    "common_name": "human",
+    "scientific_name": "Homo sapiens",
+    "parent_id": 9605,
+    "depth": 31,
 }
+
+mock_missing_taxon = 123
+mock_missing_name = "Nonsense nonsensi"
 
 
 class ApiTest(unittest.TestCase):
-    def setUp(self) -> None:
-        self.mock_config: Config = MagicMock()
-        self.mock_config.db_path = ":memory:"
-
-        app.state.config = self.mock_config
-
-    @patch("taxonomy_service.api.fetch_by_sci_name")
-    def test_taxon_from_sci_name(self, mock_fetch_by_sci_name: Mock) -> None:
-        mock_fetch_by_sci_name.return_value = mock_taxon
-
-        response = client.get(f"/taxa?scientific_name={mock_scientific_name}")
-
+    def test_get_taxon_success(self):
+        response = client.get(f"/taxa/{mock_taxon['tax_id']}")
         assert response.status_code == codes.ok
-        assert response.json() == mock_taxon
+        assert response.json()["scientific_name"] == mock_taxon["scientific_name"]
 
-    @patch("taxonomy_service.api.fetch_by_sci_name")
-    def test_taxon_from_missing_name(self, mock_fetch_by_sci_name: Mock):
-        mock_fetch_by_sci_name.return_value = None
+    def test_get_taxon_not_found(self):
+        response = client.get(f"/taxa/{mock_missing_taxon}")
+        assert response.status_code == codes.not_found
 
-        app.state.config = self.mock_config
+    def test_query_taxon_succes(self):
+        response = client.get(f"/taxa?name={mock_taxon['scientific_name']}")
+        assert response.status_code == codes.ok
+        assert response.json()["scientific_name"] == mock_taxon["scientific_name"]
 
-        response = client.get(f"/taxa?scientific_name={mock_missing_name}")
-
-        assert response.status_code == 404
+    def test_query_taxon_not_found(self):
+        response = client.get(f"/taxa?name={mock_missing_name}")
+        assert response.status_code == codes.not_found
