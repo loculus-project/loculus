@@ -1,0 +1,48 @@
+---
+layout: ../../layouts/NewsLayout.astro
+title: "Pathoplexus March Technical Update"
+---
+
+<div>
+    <a href="/news">News</a> > <b>Pathoplexus March Technical Update</b>
+</div>
+
+# Pathoplexus March Technical Update
+
+*By the Pathoplexus Team - March 2026*
+
+Alongside the [addition of dengue and yellow fever virus](https://pathoplexus.org/news/2026-03-12-expanding-pathoplexus-arbos), we've continued to improve the Pathoplexus experience with several new features across search, submission, and the user interface. Here's a summary of the latest technical improvements.
+
+## Technical Improvements
+
+### Search & Filtering:
+
+- **Required Segments filter for multi-segmented viruses**: For organisms with multiple genome segments (such as CCHF and West Nile virus), users can now filter for entries that contain specific segments using simple checkboxes at the top of the Sequence Filters panel. This replaces the previous, less intuitive approach of manually setting segment length filters to greater than zero.
+
+- **Completeness filter now displayed as a percentage**: The completeness filter in the search bar now shows values as a familiar 0-100% range instead of a raw 0-1 decimal. Active filter badges also display with a "%" suffix, making it immediately clear what threshold you've set.
+
+- **SeqSet search from the search bar**: You can now search for SeqSets directly from the accession search bar. The search box automatically detects SeqSet-format accessions and routes you to the correct page - no need to navigate to SeqSets separately.
+
+- **Numeric fields restricted to single selection**: Integer and float filter fields (such as completeness) now correctly allow only single-value selection, preventing confusing error messages that previously occurred when multiple values were selected.
+
+### Submission & Upload:
+
+- **Display names for file categories**: The upload interface now shows human-readable names for file categories (such as "Raw Reads" instead of `raw_reads`), making it clearer what type of file you're uploading.
+
+- **Deduplicated author affiliations for ENA submissions**: Author affiliations are now automatically deduplicated before submission to the European Nucleotide Archive (ENA), ensuring cleaner records in deposited data.
+
+### Display & UI:
+
+- **Cleaner download interface for single-segmented organisms**: For organisms that are not multi-segmented, the download UI no longer shows unnecessary segment names (like "main"), resulting in a simpler, cleaner download experience.
+
+- **Blockquote styling in markdown pages**: Markdown-rendered pages (such as documentation and news posts) now display blockquotes with proper visual styling - a left border, muted text, and italic formatting - making quoted text clearly distinguishable from regular content.
+
+- **Configurable contact information for error messages**: Instance operators deploying their own Loculus instances can now customize the contact information shown to users when errors occur, rather than relying on hardcoded defaults.
+
+- **Configurable ID field descriptions**: The `id` and `fastaIds` input field descriptions can now be customized per organism by instance operators. Tooltip text also now renders backtick-quoted content as styled inline code, improving readability.
+
+### Preprocessing & Infrastructure:
+
+- **NCBI taxonomy database for preprocessing**: A new infrastructure pipeline downloads NCBI taxonomy data monthly and stores it in a SQLite database, enabling future features like validating host scientific names and mapping them to common names.
+
+- **Standardized display name construction**: A new preprocessing function builds sequence display names in a structured, consistent way from specimen collector sample IDs and metadata, with support for configurable prefixes (e.g. "YFV") and regex-based ID extraction.
