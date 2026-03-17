@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator';
 import { FieldFilterSet } from './SequenceFilters';
 import type { FieldValues, Metadata } from '../../../types/config.ts';
-import { MetadataFilterSchema } from '../../../utils/search.ts';
+import { MetadataFilterSchema, NULL_QUERY_VALUE } from '../../../utils/search.ts';
 
 const makeFieldFilterSet = (fieldValues: FieldValues, metadataFields: Metadata[]) => {
     return new FieldFilterSet(
@@ -21,19 +21,18 @@ const makeFieldFilterSet = (fieldValues: FieldValues, metadataFields: Metadata[]
 };
 
 describe('FieldFilterSet.toUrlSearchParams', () => {
-    it('converts null single values to isNull params', () => {
+    it('converts null single values to NULL_QUERY_VALUE', () => {
         const filter = makeFieldFilterSet({ field1: null }, [{ name: 'field1', type: 'string' as const }]);
         const params = filter.toUrlSearchParams();
-        expect(params).toContainEqual(['field1', null]);
-        expect(params.find(([k]) => k === 'field1')).toBeUndefined();
+        expect(params).toContainEqual(['field1', NULL_QUERY_VALUE]);
     });
 
-    it('converts null values in arrays to isNull param and keeps non-null values', () => {
+    it('converts null values in arrays to NULL_QUERY_VALUE param and keeps non-null values', () => {
         const filter = makeFieldFilterSet({ field1: ['value1', null, 'value2'] }, [
             { name: 'field1', type: 'string' as const },
         ]);
         const params = filter.toUrlSearchParams();
-        expect(params).toContainEqual(['field1', ['value1', null, 'value2']]);
+        expect(params).toContainEqual(['field1', ['value1', NULL_QUERY_VALUE, 'value2']]);
     });
 
     it('does not convert regular string values', () => {
@@ -145,13 +144,10 @@ describe('modifyParamsForLapisGetRequest (via generateDownloadUrl)', () => {
     });
 
     it('ORs advancedQuery clauses when multiple fields have null values', () => {
-        const params = generate(
-            { field1: [null, 'val1'], field2: [null] },
-            [
-                { name: 'field1', type: 'string' as const },
-                { name: 'field2', type: 'string' as const },
-            ],
-        );
+        const params = generate({ field1: [null, 'val1'], field2: [null] }, [
+            { name: 'field1', type: 'string' as const },
+            { name: 'field2', type: 'string' as const },
+        ]);
         expect(params.has('field1')).toBe(false);
         expect(params.has('field2')).toBe(false);
         expect(params.get('advancedQuery')).toBe('(isNull(field1) OR field1=val1) OR (isNull(field2))');
