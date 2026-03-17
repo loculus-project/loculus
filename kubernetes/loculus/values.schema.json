@@ -1526,8 +1526,7 @@
           },
           "required": ["open", "restricted"],
           "additionalProperties": false
-        }
-      },
+        },
         "agreementHtml": {
           "groups": ["general"],
           "type": "string",

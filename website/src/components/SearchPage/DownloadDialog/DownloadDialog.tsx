@@ -146,6 +146,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                                 <span
                                     className='text-sm'
                                     dangerouslySetInnerHTML={{
+                                        // eslint-disable-next-line @typescript-eslint/naming-convention
                                         __html:
                                             dataUseTermsAgreementHtml ??
                                             `I agree to the <a href="${routes.datauseTermsPage()}" class="underline" target="_blank" rel="noopener noreferrer">data use terms</a>.`,
