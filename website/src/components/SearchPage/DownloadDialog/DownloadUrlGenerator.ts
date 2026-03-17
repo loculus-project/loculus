@@ -98,7 +98,7 @@ export class DownloadUrlGenerator {
         return {
             url: `${baseUrl}?${params}`,
             baseUrl,
-            modifiedParams,
+            params,
         };
     }
 
