@@ -2388,16 +2388,12 @@ bannerMessage: "This is a demonstration environment. It may contain non-accurate
 welcomeMessageHTML: null
 additionalHeadHTML: ""
 images:
-  lapisSilo:
-    repository: "ghcr.io/genspectrum/lapis-silo"
-    tag: "0.9.3@sha256:7e3a9a2221e265b56bc280054705f44637fcba7bea812d9bd8de62c923ebe742"
-    pullPolicy: Always
   loculusSilo:
     repository: "ghcr.io/loculus-project/loculus-silo"
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "v0.6.8@sha256:6a18b82d554ea05ba58ff8630cc74cba17d07d798665f41a8a87edc9402987a2"
+    tag: "v0.7.0@sha256:cdfea5530468f787b7652b1c4e82556f525ec5cd8af73f47e3ca8bf74e39019b"
     pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"

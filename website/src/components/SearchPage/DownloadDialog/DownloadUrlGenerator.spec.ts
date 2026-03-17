@@ -21,18 +21,19 @@ const makeFieldFilterSet = (fieldValues: FieldValues, metadataFields: Metadata[]
 };
 
 describe('FieldFilterSet.toUrlSearchParams', () => {
-    it('converts null single values to empty strings', () => {
+    it('converts null single values to isNull params', () => {
         const filter = makeFieldFilterSet({ field1: null }, [{ name: 'field1', type: 'string' as const }]);
         const params = filter.toUrlSearchParams();
-        expect(params).toContainEqual(['field1', '']);
+        expect(params).toContainEqual(['field1.isNull', 'true']);
+        expect(params.find(([k]) => k === 'field1')).toBeUndefined();
     });
 
-    it('converts null values in arrays to empty strings', () => {
+    it('converts null values in arrays to isNull param and keeps non-null values', () => {
         const filter = makeFieldFilterSet({ field1: ['value1', null, 'value2'] }, [
             { name: 'field1', type: 'string' as const },
         ]);
         const params = filter.toUrlSearchParams();
-        expect(params).toContainEqual(['field1', ['value1', '', 'value2']]);
+        expect(params).toContainEqual(['field1', ['value1', null, 'value2']]);
     });
 
     it('does not convert regular string values', () => {
@@ -83,7 +84,7 @@ describe('DownloadUrlGenerator', () => {
         expect(result.params.has('fields')).toBe(false);
     });
 
-    it('includes null field values as empty string params in download URL', () => {
+    it('includes null field values as isNull params in download URL', () => {
         const generator = new DownloadUrlGenerator(organism, lapisUrl, dataUseTermsEnabled);
         const filter = makeFieldFilterSet({ field1: null }, [{ name: 'field1', type: 'string' as const }]);
 
@@ -93,6 +94,7 @@ describe('DownloadUrlGenerator', () => {
             compression: undefined,
         });
 
-        expect(result.params.get('field1')).toBe('');
+        expect(result.params.get('field1.isNull')).toBe('true');
+        expect(result.params.has('field1')).toBe(false);
     });
 });

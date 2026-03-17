@@ -22,7 +22,7 @@ export interface SequenceFilter {
     sequenceCount(): number | undefined;
 
     /**
-     * Return the filter as params to use in API Queries.
+     * Return the filter as params to use in API POST Queries.
      */
     toApiParams(): LapisSearchParameters;
 
@@ -109,6 +109,11 @@ export class FieldFilterSet implements SequenceFilter {
             ),
         );
         for (const filterName of Object.keys(sequenceFilters)) {
+            if (sequenceFilters[filterName] === null) {
+                sequenceFilters[`${filterName}.isNull`] = true;
+                delete sequenceFilters[filterName];
+                continue;
+            }
             if (this.filterSchema.isSubstringSearchEnabled(filterName) && sequenceFilters[filterName] !== undefined) {
                 sequenceFilters[filterName.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(
                     sequenceFilters[filterName],
@@ -144,6 +149,7 @@ export class FieldFilterSet implements SequenceFilter {
     }
 
     public toUrlSearchParams(): [string, string | string[]][] {
+        // this will be used in GET requests
         const result: [string, string | string[]][] = [];
 
         // keys that need special handling
@@ -177,11 +183,26 @@ export class FieldFilterSet implements SequenceFilter {
             }
 
             if (Array.isArray(value)) {
-                if (value.length > 0) {
-                    result.push([key, value.map((v: any) => (v === null ? '' : v))]);
+                if (value.length === 0) {
+                    continue;
                 }
+                const nonNullValues = value.filter((v) => v !== null);
+                if (value.includes(null)) {
+                    const clause = [
+                        `isNull(${key})`,
+                         ...nonNullValues.map((v) => `${key}=${v}`),
+                    ].join(' OR ');
+                    const existing = result.find(([k]) => k === 'advancedQuery');
+                    if (existing) {
+                        existing[1] = `(${existing[1]}) OR (${clause})`;
+                    } else {
+                        result.push(['advancedQuery', clause]);
+                    }
+                    continue;
+                }
+                result.push([key, nonNullValues.map((v) => String(v))]);
             } else if (value === null) {
-                result.push([key, '']);
+                result.push([`${key}.isNull`, 'true']);
             } else {
                 const stringValue = String(value);
                 const trimmedValue = stringValue.trim();

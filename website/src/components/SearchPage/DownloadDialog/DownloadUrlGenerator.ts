@@ -91,12 +91,18 @@ export class DownloadUrlGenerator {
             .toUrlSearchParams()
             .filter(([name]) => !excludedParams.has(name))
             .forEach(([name, value]) => {
-                if (Array.isArray(value)) {
-                    value.forEach((val) => {
+                const appendValue = (val: string | null) => {
+                    if (val === null) {
+                        params.append(`${name}.isNull`, 'true');
+                    } else {
                         params.append(name, val);
-                    });
+                    }
+                };
+
+                if (Array.isArray(value)) {
+                    value.forEach((val) => appendValue(val));
                 } else {
-                    params.append(name, value);
+                    appendValue(value);
                 }
             });
 
