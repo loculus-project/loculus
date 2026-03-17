@@ -33,7 +33,7 @@ describe('FieldFilterSet.toUrlSearchParams', () => {
             { name: 'field1', type: 'string' as const },
         ]);
         const params = filter.toUrlSearchParams();
-        expect(params).toContainEqual(['field1', ['value1', null, 'value2']]);
+        expect(params).toContainEqual(['advancedQuery', 'isNull(field1) OR field1=value1 OR field1=value2']);
     });
 
     it('does not convert regular string values', () => {
