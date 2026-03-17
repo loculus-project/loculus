@@ -97,12 +97,12 @@ export class DownloadUrlGenerator {
         return {
             url: `${baseUrl}?${merged}`,
             baseUrl,
-            merged,
+            params: merged,
         };
     }
 
     private modifyParamsForLapisGetRequest(params: [string, string | string[]][]): URLSearchParams {
-        const new_params = new URLSearchParams();
+        const newParams = new URLSearchParams();
         params.forEach(([name, value]) => {
             if (Array.isArray(value)) {
                 const nonNullValues = value.filter((v) => v !== NULL_QUERY_VALUE);
@@ -112,22 +112,22 @@ export class DownloadUrlGenerator {
                     if (existing) {
                         existing[1] = `(${String(existing[1])}) OR (${clause})`;
                     } else {
-                        new_params.append('advancedQuery', clause);
+                        newParams.append('advancedQuery', clause);
                     }
                 } else {
                     value.forEach((val) => {
-                        new_params.append(name, val);
+                        newParams.append(name, val);
                     });
                 }
             } else {
                 if (value === NULL_QUERY_VALUE) {
-                    new_params.append(`${name}.isNull`, 'true');
+                    newParams.append(`${name}.isNull`, 'true');
                 } else {
-                    new_params.append(name, value);
+                    newParams.append(name, value);
                 }
             }
         });
-        return new_params;
+        return newParams;
     }
 
     private generateFilename(downloadDataType: DownloadDataType): string {

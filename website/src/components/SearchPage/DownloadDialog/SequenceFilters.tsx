@@ -182,8 +182,6 @@ export class FieldFilterSet implements SequenceFilter {
                 }
             } else if (value === null) {
                 result.push([key, NULL_QUERY_VALUE]);
-            } else if (value === null) {
-                result.push([key, NULL_QUERY_VALUE]);
             } else {
                 const stringValue = String(value);
                 const trimmedValue = stringValue.trim();

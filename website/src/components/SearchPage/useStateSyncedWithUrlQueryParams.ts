@@ -1,7 +1,6 @@
 import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
 
 import type { OrderDirection } from '../../types/lapis.ts';
-import { NULL_QUERY_VALUE } from '../../utils/search.ts';
 
 export interface QueryState {
     page?: string;

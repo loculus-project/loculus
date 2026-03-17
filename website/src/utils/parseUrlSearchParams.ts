@@ -1,5 +1,4 @@
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
-import { NULL_QUERY_VALUE } from './search.ts';
 
 /**
  * Parse URLSearchParams into a dictionary that properly handles multiple values.
