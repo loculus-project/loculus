@@ -109,7 +109,7 @@ export class DownloadUrlGenerator {
             if (Array.isArray(value)) {
                 const nonNullValues = value.filter((v) => v !== NULL_QUERY_VALUE);
                 if (value.includes(NULL_QUERY_VALUE)) {
-                    const clause = [`isNull(${name})`, ...nonNullValues.map((v) => `${name}=${v}`)].join(' OR ');
+                    const clause = [`isNull(${name})`, ...nonNullValues.map((v) => `${name}='${v}'`)].join(' OR ');
                     if (newParams.has(LAPIS_ADVANCED_QUERY_KEY)) {
                         const existing = `(${String(newParams.get(LAPIS_ADVANCED_QUERY_KEY))}) OR (${clause})`;
                         newParams.delete(LAPIS_ADVANCED_QUERY_KEY);

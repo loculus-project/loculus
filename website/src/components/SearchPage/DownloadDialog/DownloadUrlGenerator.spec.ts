@@ -134,13 +134,13 @@ describe('modifyParamsForLapisGetRequest (via generateDownloadUrl)', () => {
     it('converts an array containing null to an advancedQuery clause', () => {
         const params = generate({ field1: [null, 'val1'] }, [{ name: 'field1', type: 'string' as const }]);
         expect(params.has('field1')).toBe(false);
-        expect(params.get('advancedQuery')).toBe('isNull(field1) OR field1=val1');
+        expect(params.get('advancedQuery')).toBe("isNull(field1) OR field1='val1'");
     });
 
     it('handles an array with only null as an advancedQuery with just isNull', () => {
         const params = generate({ field1: [null] }, [{ name: 'field1', type: 'string' as const }]);
         expect(params.has('field1')).toBe(false);
-        expect(params.get('advancedQuery')).toBe('isNull(field1)');
+        expect(params.get('advancedQuery')).toBe("isNull(field1)");
     });
 
     it('ORs advancedQuery clauses when multiple fields have null values', () => {
@@ -150,6 +150,6 @@ describe('modifyParamsForLapisGetRequest (via generateDownloadUrl)', () => {
         ]);
         expect(params.has('field1')).toBe(false);
         expect(params.has('field2')).toBe(false);
-        expect(params.get('advancedQuery')).toBe('(isNull(field1) OR field1=val1) OR (isNull(field2))');
+        expect(params.get('advancedQuery')).toBe("(isNull(field1) OR field1='val1') OR (isNull(field2))");
     });
 });
