@@ -413,8 +413,8 @@ def generate_configs(from_live, live_host, enable_ena, values_files=None):
         [
             "python",
             "kubernetes/config-processor/config-processor.py",
-            temp_dir_path,
-            output_dir,
+            str(temp_dir_path),
+            str(output_dir),
         ]
     )
     print(f"Config generation succeeded, processed config files available in {output_dir}")
