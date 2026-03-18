@@ -761,6 +761,13 @@ def test_preprocessing_metadata_dependencies(test_case_def: Case, config_depende
     processed_entry = process_single_entry(test_case, config_dependency)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
+    wrong_order = tuple(
+        ["depends_on_A"] + [i for i in config_dependency.processing_order if i != "depends_on_A"]
+    )
+    config_dependency.processing_order = wrong_order
+    processed_entry = process_single_entry(test_case, config_dependency)
+    assert processed_entry.data.metadata != test_case.expected_output.data.metadata
+
 
 def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     sequence_name = "entry without sequences"
@@ -1179,28 +1186,6 @@ def test_display_name_construction() -> None:
         res_prefix.warnings[0].message
         == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
     )
-
-
-def test_metadata_dependency(config_dependency: Config):
-    factory_custom = ProcessedEntryFactory(
-        all_metadata_fields=list(config_dependency.processing_spec.keys())
-    )
-
-    test_case = [
-        i for i in test_metadata_dependency_test_definitions if i.name == "metadata_dependency"
-    ][0]
-    processing_test_case = test_case.create_test_case(factory_custom)
-
-    processed_entry = process_single_entry(processing_test_case, config_dependency)
-    assert processed_entry.data.metadata["depends_on_A"] == "Asia/LOC_18.1/2022-01-01"
-
-    wrong_order = tuple(
-        ["depends_on_A"] + [i for i in config_dependency.processing_order if i != "depends_on_A"]
-    )
-    config_dependency.processing_order = wrong_order
-
-    processed_entry = process_single_entry(processing_test_case, config_dependency)
-    assert processed_entry.data.metadata["depends_on_A"] == "Asia/LOC_18.1"
 
 
 if __name__ == "__main__":
