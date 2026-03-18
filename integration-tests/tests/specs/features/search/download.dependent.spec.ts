@@ -3,6 +3,8 @@ import { test } from '../../../fixtures/console-warnings.fixture';
 import { SearchPage } from '../../../pages/search.page';
 import fs from 'fs';
 
+const NULL_QUERY_VALUE = '_null_';
+
 test('Download metadata and check number of cols', async ({ page }) => {
     const searchPage = new SearchPage(page);
     await searchPage.ebolaSudan();
@@ -34,6 +36,30 @@ test('Download metadata and check number of cols', async ({ page }) => {
     const fields = firstLine.split('\t');
 
     expect(fields).toHaveLength(11);
+});
+
+test('Download with null filter sends isNull param to LAPIS', async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', 'Download tests are skipped on WebKit');
+
+    const searchPage = new SearchPage(page);
+    await searchPage.ebolaSudan();
+
+    // Navigate with a null filter applied via URL to avoid needing the option in autocomplete
+    await page.goto(`${page.url()}?geoLocCountry=${NULL_QUERY_VALUE}`);
+
+    await page.getByRole('button', { name: 'Download all entries' }).click();
+    await page.getByLabel('I agree to the data use terms.').check();
+
+    const requestPromise = page.waitForRequest((req) => req.url().includes('/sample/details'));
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByTestId('start-download').click();
+
+    const request = await requestPromise;
+    await downloadPromise;
+
+    const url = new URL(request.url());
+    expect(url.searchParams.get('geoLocCountry.isNull')).toBe('true');
+    expect(url.searchParams.has('geoLocCountry')).toBe(false);
 });
 
 test('Download metadata with POST and check number of cols', async ({ page, browserName }) => {
