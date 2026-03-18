@@ -55,7 +55,9 @@ const DataTableComponent: React.FC<Props> = ({
             header !== DEFAULT_AA_MUTATION_DETAILS_HEADER,
     );
     const alignmentSections = dataTableData.table.filter(({ header }) => header.toLowerCase().includes('alignment'));
-    const mutationSections = dataTableData.table.filter(({ header }) => header.toLowerCase().includes('mutation'));
+    const mutationSections = dataTableData.table.filter(
+        ({ header }) => header === DEFAULT_NUC_MUTATION_DETAILS_HEADER || header === DEFAULT_AA_MUTATION_DETAILS_HEADER,
+    );
     return (
         <div>
             {dataTableData.topmatter.sequenceDisplayName !== undefined && (
