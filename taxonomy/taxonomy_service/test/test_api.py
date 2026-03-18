@@ -1,14 +1,11 @@
-from pathlib import Path
 import sqlite3
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 from requests import codes
-
-from taxonomy_service.api import app, get_db_connection, init_app
+from taxonomy_service.api import app, get_db_connection
 from taxonomy_service.config import Config, get_config
-
 
 client = TestClient(app)
 
