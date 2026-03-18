@@ -68,6 +68,7 @@ cluster_parser.add_argument(
 )
 cluster_parser.add_argument("--delete", action="store_true", help="Delete the cluster")
 cluster_parser.add_argument("--bind-all", action="store_true", help="Bind to all interfaces")
+cluster_parser.add_argument("--k3s-image", help="Specify the k3s image to use for the cluster")
 
 helm_parser = subparsers.add_parser("helm", help="Install the Helm chart to the k3d cluster")
 helm_parser.add_argument(
@@ -180,10 +181,13 @@ def handle_cluster():
     if cluster_exists(CLUSTER_NAME):
         print(f"Cluster '{CLUSTER_NAME}' already exists.")
     else:
-        run_command(
-            f"k3d cluster create {CLUSTER_NAME} {' '.join(port_bindings)} --agents 1",
-            shell=True,
-        )
+        command = f"k3d cluster create {CLUSTER_NAME} {' '.join(port_bindings)} --agents 1"
+
+        if args.k3s_image:
+            command += f" --image {args.k3s_image}"
+
+        run_command([command], shell=True)
+
     install_secret_generator()
     while not is_traefik_running():
         print("Waiting for Traefik to start...")
