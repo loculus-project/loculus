@@ -140,7 +140,7 @@ describe('modifyParamsForLapisGetRequest (via generateDownloadUrl)', () => {
     it('handles an array with only null as an advancedQuery with just isNull', () => {
         const params = generate({ field1: [null] }, [{ name: 'field1', type: 'string' as const }]);
         expect(params.has('field1')).toBe(false);
-        expect(params.get('advancedQuery')).toBe("isNull(field1)");
+        expect(params.get('advancedQuery')).toBe('isNull(field1)');
     });
 
     it('ORs advancedQuery clauses when multiple fields have null values', () => {
