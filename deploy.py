@@ -74,7 +74,9 @@ cluster_parser.add_argument(
 cluster_parser.add_argument("--delete", action="store_true", help="Delete the cluster")
 cluster_parser.add_argument("--bind-all", action="store_true", help="Bind to all interfaces")
 cluster_parser.add_argument(
-    "--k3s-image", default=DEFAULT_K3S_IMAGE, help="Specify the k3s image to use for the cluster"
+    "--k3s-image",
+    default=DEFAULT_K3S_IMAGE,
+    help="Specify the k3s image to use for the cluster (default: %(default)s)",
 )
 
 helm_parser = subparsers.add_parser("helm", help="Install the Helm chart to the k3d cluster")
