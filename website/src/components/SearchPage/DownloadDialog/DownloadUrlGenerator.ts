@@ -103,13 +103,25 @@ export class DownloadUrlGenerator {
         };
     }
 
+    private escapeLapisQueryValue(value: string): string {
+        return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
     private modifyParamsForLapisGetRequest(params: [string, string | string[]][]): URLSearchParams {
         const newParams = new URLSearchParams();
+
         params.forEach(([name, value]) => {
             if (Array.isArray(value)) {
                 const nonNullValues = value.filter((v) => v !== NULL_QUERY_VALUE);
                 if (value.includes(NULL_QUERY_VALUE)) {
-                    const clause = [`isNull(${name})`, ...nonNullValues.map((v) => `${name}='${v}'`)].join(' OR ');
+                    const clause = [
+                        `isNull(${name})`,
+                        ...nonNullValues.map((v) => {
+                            const escapedValue = this.escapeLapisQueryValue(v);
+                            return `${name}='${escapedValue}'`;
+                        }),
+                    ].join(' OR ');
+
                     if (newParams.has(LAPIS_ADVANCED_QUERY_KEY)) {
                         const existing = `(${String(newParams.get(LAPIS_ADVANCED_QUERY_KEY))}) OR (${clause})`;
                         newParams.delete(LAPIS_ADVANCED_QUERY_KEY);
@@ -130,6 +142,7 @@ export class DownloadUrlGenerator {
                 }
             }
         });
+
         return newParams;
     }
 

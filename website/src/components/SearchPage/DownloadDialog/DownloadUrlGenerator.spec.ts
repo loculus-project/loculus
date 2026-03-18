@@ -131,10 +131,10 @@ describe('modifyParamsForLapisGetRequest (via generateDownloadUrl)', () => {
         expect(params.has('advancedQuery')).toBe(false);
     });
 
-    it('converts an array containing null to an advancedQuery clause', () => {
-        const params = generate({ field1: [null, 'val1'] }, [{ name: 'field1', type: 'string' as const }]);
+    it('converts an array containing null to an advancedQuery clause and escapes single quotes', () => {
+        const params = generate({ field1: [null, "O'brian"] }, [{ name: 'field1', type: 'string' as const }]);
         expect(params.has('field1')).toBe(false);
-        expect(params.get('advancedQuery')).toBe("isNull(field1) OR field1='val1'");
+        expect(params.get('advancedQuery')).toBe("isNull(field1) OR field1='O\\'brian'");
     });
 
     it('handles an array with only null as an advancedQuery with just isNull', () => {
