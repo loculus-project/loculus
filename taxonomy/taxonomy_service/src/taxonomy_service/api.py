@@ -78,8 +78,9 @@ def fetch_common_name(
         db_conn (sqlite3.Connection):   connection to a database. The caller is responsible for closing it
         tax_id (int):                   NCBI taxon ID of the taxon for which to find a common name
     """
+    # creating a reusable cursor here instead of calling `fetch_by_id` in the while loop
     cursor = db_conn.cursor()
-    while tax_id > 0:
+    while tax_id > 1:  # tax_id 1 is the root
         taxon = cursor.execute("SELECT * FROM taxonomy WHERE tax_id = ?", (tax_id,)).fetchone()
         if taxon is None:
             raise HTTPException(status_code=404, detail=f"Taxon {tax_id} not found")

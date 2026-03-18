@@ -1,3 +1,4 @@
+from pathlib import Path
 import yaml
 from pydantic import BaseModel
 
@@ -9,7 +10,7 @@ class Config(BaseModel):
     tax_service_port: int | None
 
 
-def get_config(config_file: str) -> Config:
+def get_config(config_file: str | Path) -> Config:
     with open("config/defaults.yaml", encoding="utf-8") as f:
         defaults = yaml.safe_load(f)
     with open(config_file, encoding="utf-8") as f:
