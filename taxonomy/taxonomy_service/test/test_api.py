@@ -15,7 +15,7 @@ config_file = Path(__file__).parent / "test_config.yaml"
 mock_taxa = {
     "Homo sapiens": {
         "tax_id": 9606,
-        "common_name": None,
+        "common_name": None,  # set to None for testing purposes
         "scientific_name": "Homo sapiens",
         "parent_id": 9605,
         "depth": 31,
@@ -65,7 +65,7 @@ def get_test_db():
 class ApiTest(unittest.TestCase):
     def setUp(self) -> None:
         self.config: Config = get_config(config_file)
-        if self.config.db_path == ":memory:":
+        if self.config.db_path == ":memory:" or self.config.db_path is None:
             app.dependency_overrides[get_db_connection] = get_test_db
 
     def test_get_taxon_success(self):
