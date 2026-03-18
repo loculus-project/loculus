@@ -3,7 +3,6 @@ import graphlib
 import logging
 import os
 from enum import StrEnum
-from graphlib import TopologicalSorter
 from types import UnionType
 from typing import Any, get_args
 
@@ -257,7 +256,7 @@ def get_processing_order(config: Config) -> tuple[str, ...]:
                 )
             dag[output_field].add(dependency)
 
-    ts = TopologicalSorter(dag)
+    ts = graphlib.TopologicalSorter(dag)
     try:
         processing_order = tuple(ts.static_order())
     except graphlib.CycleError as e:
