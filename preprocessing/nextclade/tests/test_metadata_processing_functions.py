@@ -10,7 +10,7 @@ from factory_methods import (
     verify_processed_entry,
 )
 
-from loculus_preprocessing.config import Config, get_config
+from loculus_preprocessing.config import Config, get_config, get_processing_order
 from loculus_preprocessing.datatypes import (
     FunctionArgs,
     InputMetadata,
@@ -27,6 +27,7 @@ from loculus_preprocessing.processing_functions import (
 
 # Config file used for testing
 NO_ALIGNMENT_CONFIG = "tests/no_alignment_config.yaml"
+METADATA_DEPENDENCY_CONFIG = "tests/metadata_dependency.yaml"
 
 
 test_case_definitions = [
@@ -34,7 +35,7 @@ test_case_definitions = [
         name="missing_required_fields",
         input_metadata={"submissionId": "missing_required_fields"},
         accession_id="0",
-        expected_metadata={"concatenated_string": "LOC_0.1", "depends_on_A": "LOC_0.1"},
+        expected_metadata={"concatenated_string": "LOC_0.1"},
         expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper(
@@ -57,7 +58,6 @@ test_case_definitions = [
         expected_metadata={
             "name_required": "name",
             "concatenated_string": "LOC_1.1",
-            "depends_on_A": "LOC_1.1",
         },
         expected_errors=build_processing_annotations(
             [
@@ -76,7 +76,6 @@ test_case_definitions = [
         expected_metadata={
             "name_required": "name",
             "concatenated_string": "LOC_21.1",
-            "depends_on_A": "LOC_21.1",
             "required_collection_date": None,
         },
         group_id=1,
@@ -94,7 +93,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "Afrika/LOC_2.1/2022-11-01",
-            "depends_on_A": "Afrika/LOC_2.1",
         },
         expected_errors=build_processing_annotations(
             [
@@ -120,7 +118,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_3.1/2022-11-01",
-            "depends_on_A": "LOC_3.1",
         },
         expected_errors=build_processing_annotations(
             [
@@ -145,7 +142,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_4.1/2022-11-01",
-            "depends_on_A": "LOC_4.1",
         },
         expected_errors=build_processing_annotations(
             [
@@ -170,7 +166,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_5.1/2022-11-01",
-            "depends_on_A": "LOC_5.1",
         },
         expected_errors=build_processing_annotations(
             [
@@ -199,7 +194,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_6.1/2022-11-01",
-            "depends_on_A": "LOC_6.1",
         },
         expected_errors=[],
         expected_warnings=build_processing_annotations(
@@ -230,7 +224,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_6.1/2022-11-01",
-            "depends_on_A": "LOC_6.1",
             "regex_field": "EPI_ISL_123456",
             "extracted_regex_field": "123456",
         },
@@ -252,7 +245,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_6.1/2022-11-01",
-            "depends_on_A": "LOC_6.1",
             "regex_field": None,
             "extracted_regex_field": None,
         },
@@ -285,7 +277,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_6.1/2022-11-01",
-            "depends_on_A": "LOC_6.1",
             "regex_field": None,
             "extracted_regex_field": None,
         },
@@ -325,7 +316,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_7.1/2022-11-01",
-            "depends_on_A": "LOC_7.1",
         },
         expected_errors=[],
         expected_warnings=build_processing_annotations(
@@ -351,7 +341,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_8.1/2022-11-01",
-            "depends_on_A": "LOC_8.1",
         },
         expected_errors=build_processing_annotations(
             [
@@ -374,7 +363,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_9.1/2022-11-01",
-            "depends_on_A": "LOC_9.1",
         },
         expected_errors=build_processing_annotations(
             [
@@ -399,7 +387,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_10.1/2022-11-01",
-            "depends_on_A": "LOC_10.1",
         },
         expected_errors=build_processing_annotations(
             [
@@ -427,7 +414,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_11.1/2022-11-01",
-            "depends_on_A": "LOC_11.1",
         },
         expected_errors=build_processing_annotations(
             [
@@ -452,7 +438,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_12.1/2022-11-01",
-            "depends_on_A": "LOC_12.1",
             "authors": "Anna Smith, Cameron Tucker",
         },
         expected_errors=[],
@@ -487,7 +472,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_13.1/2022-11-01",
-            "depends_on_A": "LOC_13.1",
         },
         expected_errors=build_processing_annotations(
             [
@@ -512,7 +496,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_13.1/2022-11-01",
-            "depends_on_A": "LOC_13.1",
             "authors": "Pérez, José; Bailley, François; Møller, Anäis; Wałęsa, Lech",
         },
         expected_errors=[],
@@ -532,7 +515,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_14.1/2022-11-01",
-            "depends_on_A": "LOC_14.1",
         },
         expected_errors=[],
     ),
@@ -549,7 +531,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_15.1/2022-11-01",
-            "depends_on_A": "LOC_15.1",
         },
         expected_errors=build_processing_annotations(
             [
@@ -574,7 +555,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_16.1/2022-11-01",
-            "depends_on_A": "LOC_16.1",
             "authors": "Smith, Anna; Perez, Tom J. and Xu X. L.",
         },
         expected_errors=[],
@@ -609,7 +589,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_16.1/2022-11-01",
-            "depends_on_A": "LOC_16.1",
             "authors": (
                 "Smith, John II; Doe, A. B. C.; Lee, J. D.; Smith, Anna; Perez, Tom J.; "
                 "Xu, X. L.; SMITH, AMY; Smith, A. D.; Black, W. C. IV; Dantas, Pedro H. L. F.; "
@@ -632,7 +611,6 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_17.1/2022-11-01",
-            "depends_on_A": "LOC_17.1",
         },
         expected_errors=build_processing_annotations(
             [
@@ -666,42 +644,12 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_16.1/2022-11-01",
-            "depends_on_A": "LOC_16.1",
             "authors": "Smith, John II; Doe, A. B. C.",
             "regex_field": "EPI_ISL_123456",
             "extracted_regex_field": "123456",
         },
         expected_errors=[],
         expected_warnings=[],
-    ),
-    Case(
-        name="metadata_dependency",
-        input_metadata={
-            "submissionId": "metadata_dependency",
-            "name_required": "name",
-            "ncbi_required_collection_date": "2022-11-01",
-            "continent": "Asia",
-            "A": "2022",
-        },
-        accession_id="18",
-        expected_metadata={
-            "name_required": "name",
-            "required_collection_date": "2022-11-01",
-            "concatenated_string": "Asia/LOC_18.1/2022-11-01",
-            "continent": "Asia",
-            "A": "2022-01-01",
-            "depends_on_A": "Asia/LOC_18.1/2022-01-01",
-        },
-        expected_errors=[],
-        expected_warnings=build_processing_annotations(
-            [
-                ProcessingAnnotationHelper(
-                    ["A"],
-                    ["A"],
-                    ("Metadata field A:'2022' - Month and day are missing. Assuming January 1st."),
-                ),
-            ]
-        ),
     ),
 ]
 
@@ -734,10 +682,51 @@ not_accepted_authors = [
     "Count4th, EwanMcGregor, Count4th",
 ]
 
+test_metadata_dependency_test_definitions = [
+    Case(
+        name="metadata_dependency",
+        input_metadata={
+            "submissionId": "metadata_dependency",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "2022",
+        },
+        accession_id="18",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_18.1/2022-11-01",
+            "continent": "Asia",
+            "A": "2022-01-01",
+            "depends_on_A": "Asia/LOC_18.1/2022-01-01",
+        },
+        expected_errors=[],
+        expected_warnings=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["A"],
+                    ["A"],
+                    ("Metadata field A:'2022' - Month and day are missing. Assuming January 1st."),
+                ),
+            ]
+        ),
+    ),
+]
+
 
 @pytest.fixture(scope="module")
 def config():
     return get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
+
+
+@pytest.fixture(scope="module")
+def config_dependency(config: Config):
+    # Add metadata dependency to config, recompute processing order
+    dependency_fields = get_config(METADATA_DEPENDENCY_CONFIG, ignore_args=True).processing_spec
+    config.processing_spec.update(dependency_fields)
+    config.processing_order = get_processing_order(config)
+    return config
 
 
 @pytest.fixture(scope="module")
@@ -756,6 +745,20 @@ def process_single_entry(
 def test_preprocessing(test_case_def: Case, config: Config, factory_custom: ProcessedEntryFactory):
     test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config)
+    verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
+
+
+@pytest.mark.parametrize(
+    "test_case_def",
+    test_metadata_dependency_test_definitions,
+    ids=lambda tc: f"metadata fields with dependencies use processed fields {tc.name}",
+)
+def test_preprocessing_metadata_dependencies(test_case_def: Case, config_dependency: Config):
+    factory_custom = ProcessedEntryFactory(
+        all_metadata_fields=list(config_dependency.processing_spec.keys())
+    )
+    test_case = test_case_def.create_test_case(factory_custom)
+    processed_entry = process_single_entry(test_case, config_dependency)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
 
@@ -1178,20 +1181,25 @@ def test_display_name_construction() -> None:
     )
 
 
-def test_metadata_dependency(factory_custom: ProcessedEntryFactory):
-    config = get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
-    test_case = [i for i in test_case_definitions if i.name == "metadata_dependency"][0]
+def test_metadata_dependency(config_dependency: Config):
+    factory_custom = ProcessedEntryFactory(
+        all_metadata_fields=list(config_dependency.processing_spec.keys())
+    )
+
+    test_case = [
+        i for i in test_metadata_dependency_test_definitions if i.name == "metadata_dependency"
+    ][0]
     processing_test_case = test_case.create_test_case(factory_custom)
 
-    processed_entry = process_single_entry(processing_test_case, config)
+    processed_entry = process_single_entry(processing_test_case, config_dependency)
     assert processed_entry.data.metadata["depends_on_A"] == "Asia/LOC_18.1/2022-01-01"
 
     wrong_order = tuple(
-        ["depends_on_A"] + [i for i in config.processing_order if i != "depends_on_A"]
+        ["depends_on_A"] + [i for i in config_dependency.processing_order if i != "depends_on_A"]
     )
-    config.processing_order = wrong_order
+    config_dependency.processing_order = wrong_order
 
-    processed_entry = process_single_entry(processing_test_case, config)
+    processed_entry = process_single_entry(processing_test_case, config_dependency)
     assert processed_entry.data.metadata["depends_on_A"] == "Asia/LOC_18.1"
 
 
