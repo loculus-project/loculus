@@ -15,7 +15,13 @@ from .backend import (
     submit_processed_sequences,
     upload_embl_file_to_presigned_url,
 )
-from .config import AlignmentRequirement, Config, ProcessingSpec, SequenceName
+from .config import (
+    METADATA_DEPENDENCY_PREFIX,
+    AlignmentRequirement,
+    Config,
+    ProcessingSpec,
+    SequenceName,
+)
 from .datatypes import (
     AccessionVersion,
     AminoAcidInsertion,
@@ -313,7 +319,8 @@ def get_output_metadata(
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
-    for output_field, spec in config.processing_spec.items():
+    for output_field in config.processing_order:
+        spec = config.processing_spec[output_field]
         input_data: InputMetadata = {}
         input_fields: list[str] = []
         if output_field == "length":
@@ -348,12 +355,25 @@ def get_output_metadata(
             continue
 
         for arg_name, input_path in spec.inputs.items():
+            get_from_processed = False
+            if input_path.startswith(METADATA_DEPENDENCY_PREFIX):
+                resolved_path = input_path.replace(METADATA_DEPENDENCY_PREFIX, "", 1)
+                get_from_processed = True
+            else:
+                resolved_path = input_path
+
             if isinstance(unprocessed, UnprocessedAfterNextclade):
-                input_metadata = add_input_metadata(spec, unprocessed, input_path, config=config)
-                input_data[arg_name] = input_metadata.datum
-                errors.extend(input_metadata.errors)
-                warnings.extend(input_metadata.warnings)
-                input_fields.append(input_path)
+                if get_from_processed:
+                    input_data[arg_name] = output_metadata.get(resolved_path)  # type: ignore
+                else:
+                    input_metadata = add_input_metadata(
+                        spec, unprocessed, resolved_path, config=config
+                    )
+                    input_data[arg_name] = input_metadata.datum
+                    errors.extend(input_metadata.errors)
+                    warnings.extend(input_metadata.warnings)
+
+                input_fields.append(resolved_path)
                 group_id = (
                     int(unprocessed.inputMetadata["group_id"])
                     if unprocessed.inputMetadata["group_id"]
@@ -361,8 +381,12 @@ def get_output_metadata(
                 )
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
-                input_data[arg_name] = unprocessed.metadata.get(input_path)
-                input_fields.append(input_path)
+                input_data[arg_name] = (
+                    output_metadata.get(resolved_path)  # type: ignore
+                    if get_from_processed
+                    else unprocessed.metadata.get(resolved_path)
+                )
+                input_fields.append(resolved_path)
                 group_id = unprocessed.group_id
                 submitted_at = unprocessed.submittedAt
 
