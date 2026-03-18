@@ -70,7 +70,7 @@ const DisplaySearchDocs: React.FC<{ geneInfos: GeneInfo[] }> = ({ geneInfos }) =
 
                                     <div className='mb-4'>
                                         <h4 className='font-bold text-l mb-4 text-primary-700'>
-                                            Amino acid mutations and insertions
+                                            Amino acid substitutions and insertions
                                         </h4>
                                         <p className='mb-2'>
                                             An amino acid mutation has the format{' '}
