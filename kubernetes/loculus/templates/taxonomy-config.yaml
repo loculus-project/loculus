@@ -1,6 +1,6 @@
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $taxonomyHost := $testconfig | ternary "127.0.0.1" "0.0.0.0" }}
-{{- $taxonomyDbPath := .Values.taxonomyDbPath | default "/opt/app/ncbi_taxonomy_latest.sqlite" }}
+{{- $taxonomyDbPath := .Values.taxonomyService.taxonomyDbPath | default "/opt/app/ncbi_taxonomy_latest.sqlite" }}
 ---
 apiVersion: v1
 kind: ConfigMap

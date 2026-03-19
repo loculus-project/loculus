@@ -2488,6 +2488,8 @@ enaDeposition:
   enaUniqueSuffix: Loculus
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
+taxonomyService:
+  taxonomyDbPath: "/opt/app/ncbi_taxonomy_latest.sqlite"
 subdomainSeparator: "-"
 replicas:
   website: 1

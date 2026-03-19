@@ -11,7 +11,7 @@ spec:
     - port: 5000
       targetPort: 5000
       {{- if ne $.Values.environment "server" }}
-      nodePort: 30050
+      nodePort: 30051
       {{- end }}
       protocol: TCP
       name: http
