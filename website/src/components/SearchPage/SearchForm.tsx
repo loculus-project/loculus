@@ -187,7 +187,7 @@ export const SearchForm = ({
             }
 
             const sequenceScope =
-                'relatesToSegment' in field && field.relatesToSegment != null ? field.relatesToSegment : 'ALL';
+                'relatesToSegment' in field && field.relatesToSegment != null ? field.relatesToSegment : 'ALL_SEGMENTS';
 
             sequenceFieldsBySegment[sequenceScope] ??= [];
             sequenceFieldsBySegment[sequenceScope].push(field);
@@ -221,7 +221,7 @@ export const SearchForm = ({
 
     const renderSegmentContents = (segmentName: string) => (
         <>
-            {referenceSelection !== undefined && segmentName !== 'ALL' && (
+            {referenceSelection !== undefined && segmentName !== 'ALL_SEGMENTS' && (
                 <ReferenceSelector
                     filterSchema={filterSchema}
                     referenceGenomesInfo={referenceGenomesInfo}
@@ -234,7 +234,7 @@ export const SearchForm = ({
                 />
             )}
 
-            {showMutationSearch && segmentAndGeneInfo[segmentName] && segmentName !== 'ALL' && (
+            {showMutationSearch && segmentAndGeneInfo[segmentName] && segmentName !== 'ALL_SEGMENTS' && (
                 <MutationField
                     singleSegmentAndGeneInfo={segmentAndGeneInfo[segmentName]}
                     value={
@@ -341,7 +341,7 @@ export const SearchForm = ({
 
                         <section className='flex flex-col gap-1.5 mb-4'>
                             <CollapsibleSection title='Sequence Filters' open>
-                                {'ALL' in sequenceFieldsBySegment && renderSegmentContents('ALL')}
+                                {'ALL_SEGMENTS' in sequenceFieldsBySegment && renderSegmentContents('ALL_SEGMENTS')}
                                 {referenceGenomesInfo.isMultiSegmented && (
                                     <SegmentFilter
                                         referenceGenomesInfo={referenceGenomesInfo}
