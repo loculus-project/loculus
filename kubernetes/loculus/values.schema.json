@@ -1679,6 +1679,14 @@
         }
       }
     },
+    "taxonomyService": {
+      "type": "object",
+      "properties": {
+        "taxonomyDbPath": {
+          "type": "string"
+        }
+      }
+    },
     "images": {
       "groups": ["general"],
       "type": "object",

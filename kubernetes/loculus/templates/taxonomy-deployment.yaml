@@ -1,0 +1,39 @@
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-taxonomy-service
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-taxonomy-service
+  template:
+    metadata:
+      annotations:
+        timestamp: {{ now | quote }}
+      labels:
+        app: loculus
+        component: loculus-taxonomy-service
+    spec:
+      {{- include "possiblePriorityClassName" $ | indent 6 }}
+      containers:
+        - name: taxonomy-service
+          image: "ghcr.io/loculus-project/taxonomy-service:{{ $dockerTag }}"
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
+          {{- include "loculus.resources" (list "taxonomy-service" $.Values) | indent 10 }}
+          args:
+            - taxonomy_service 
+            - "--config-file=/config/config.yaml"
+          volumeMounts:
+            - name: loculus-taxonomy-service-config-volume
+              mountPath: /config/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: loculus-taxonomy-service-config-volume
+          configMap:
+            name: loculus-taxonomy-service-config
