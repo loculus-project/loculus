@@ -54,6 +54,7 @@ import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.dateMonthsFromNow
 import org.loculus.backend.controller.expectNdjsonAndGetContent
@@ -227,6 +228,19 @@ class GetReleasedDataEndpointTest(
         val responseBodyMoreData = responseAfterMoreDataAdded
             .expectNdjsonAndGetContent<ReleasedData>()
         assertThat(responseBodyMoreData.size, greaterThan(NUMBER_OF_SEQUENCES))
+    }
+
+    @Test
+    fun `GIVEN other organism data is processed THEN etag for default organism does not change`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+
+        val firstResponse = submissionControllerClient.getReleasedData()
+        val initialEtag = firstResponse.andReturn().response.getHeader(ETAG)
+
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(organism = OTHER_ORGANISM)
+
+        submissionControllerClient.getReleasedData(ifNoneMatch = initialEtag)
+            .andExpect(status().isNotModified)
     }
 
     @Test
