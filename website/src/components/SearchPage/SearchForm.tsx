@@ -187,7 +187,9 @@ export const SearchForm = ({
             }
 
             const sequenceScope =
-                'relatesToSegment' in field && field.relatesToSegment != null ? field.relatesToSegment : 'NO_ASSIGNED_SEGMENT';
+                'relatesToSegment' in field && field.relatesToSegment != null
+                    ? field.relatesToSegment
+                    : 'NO_ASSIGNED_SEGMENT';
 
             sequenceFieldsBySegment[sequenceScope] ??= [];
             sequenceFieldsBySegment[sequenceScope].push(field);
@@ -341,7 +343,8 @@ export const SearchForm = ({
 
                         <section className='flex flex-col gap-1.5 mb-4'>
                             <CollapsibleSection title='Sequence Filters' open>
-                                {'NO_ASSIGNED_SEGMENT' in sequenceFieldsBySegment && renderSegmentContents('NO_ASSIGNED_SEGMENT')}
+                                {'NO_ASSIGNED_SEGMENT' in sequenceFieldsBySegment &&
+                                    renderSegmentContents('NO_ASSIGNED_SEGMENT')}
                                 {referenceGenomesInfo.isMultiSegmented && (
                                     <SegmentFilter
                                         referenceGenomesInfo={referenceGenomesInfo}
