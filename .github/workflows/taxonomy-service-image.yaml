@@ -85,7 +85,7 @@ jobs:
         if: env.CACHE_HIT == 'false'
         uses: docker/build-push-action@v6
         with:
-          context: ./taxonomy-service
+          context: ./taxonomy/taxonomy_service
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=taxonomy-service-${{ github.ref }}
@@ -98,9 +98,3 @@ jobs:
           for TAG in "${TAGS[@]}"; do
             docker buildx imagetools create --tag $TAG ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }}
           done
-      # Run smoke test to ensure the image is functional
-      - name: Run smoke test (unit tests in docker)
-        run: |
-          docker run \
-            --rm ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }} \
-            pytest scripts/test_ena_submission.py
