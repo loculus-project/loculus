@@ -1,6 +1,5 @@
 ---
 import { ErrorFeedback } from '../../components/ErrorFeedback';
-import { AuthorDetails } from '../../components/SeqSetCitations/AuthorDetails';
 import { SeqSetItem } from '../../components/SeqSetCitations/SeqSetItem';
 import { SeqSetItemActions } from '../../components/SeqSetCitations/SeqSetItemActions';
 import { getRuntimeConfig, seqSetsAreEnabled, getWebsiteConfig } from '../../config';
@@ -51,45 +50,48 @@ const getSeqSetByVersion = (seqSetVersions: SeqSet[], version: string) => {
 };
 
 const seqSet = seqSetResponse.isOk() ? getSeqSetByVersion(seqSetResponse.value, version) : undefined;
+const seqSetAccessionVersion = `${seqSetId}.${version}`;
 
 const authorResponse = seqSet !== undefined ? await seqSetClient.getAuthor(seqSet.createdBy) : undefined;
+
+const assignAuthorName = (seqSet: SeqSet) => {
+    return {
+        ...seqSet,
+        createdBy: authorResponse?.isOk()
+            ? [authorResponse.value?.firstName, authorResponse.value?.lastName]
+                  .filter((name) => name !== null)
+                  .join(' ')
+            : seqSet.createdBy,
+    };
+};
 ---
 
-<BaseLayout title='SeqSets' data-testid='seqSets-item-container' activeTopNavigationItem='seqsets'>
+<BaseLayout
+    title={seqSetResponse.isOk() ? seqSetAccessionVersion : 'SeqSet not found'}
+    data-testid='seqSets-item-container'
+    activeTopNavigationItem='seqsets'
+>
+    {
+        !authorResponse?.isOk() && (
+            <ErrorFeedback
+                message={
+                    'Error while fetching author profile: ' +
+                    JSON.stringify(authorResponse?.isErr() ? authorResponse.error : 'unknown')
+                }
+                client:load
+            />
+        )
+    }
     <div class='flex flex-col justify-center max-w-7xl'>
         {
             seqSet !== undefined ? (
-                <div class='flex flex-col md:flex-row items-left'>
-                    <div class='w-full md:w-1/5 flex flex-col justify-start items-center'>
-                        {authorResponse?.isOk() ? (
-                            <AuthorDetails
-                                displayFullDetails={false}
-                                firstName={authorResponse.value.firstName}
-                                lastName={authorResponse.value.lastName}
-                            />
-                        ) : (
-                            <ErrorFeedback
-                                message={
-                                    'Error while fetching author profile: ' +
-                                    JSON.stringify(authorResponse?.isErr() ? authorResponse.error : 'unknown')
-                                }
-                                client:load
-                            />
-                        )}
-                    </div>
-                    <div class='w-full md:w-4/5 md:pl-6 mt-6 md:mt-0'>
+                <div class='flex flex-col md:flex-row items-left py-6'>
+                    <div class='w-full md:pl-6 mt-6 md:mt-0'>
                         {seqSetRecordsResponse.isOk() ? (
                             <SeqSetItemActions
                                 clientConfig={clientConfig}
                                 accessToken={accessToken}
-                                seqSet={{
-                                    ...seqSet,
-                                    createdBy: authorResponse?.isOk()
-                                        ? [authorResponse.value?.firstName, authorResponse.value?.lastName]
-                                              .filter((name) => name !== null)
-                                              .join(' ')
-                                        : seqSet.createdBy,
-                                }}
+                                seqSet={assignAuthorName(seqSet)}
                                 seqSetRecords={seqSetRecordsResponse.value}
                                 isAdminView={seqSet.createdBy === username}
                                 databaseName={websiteConfig.name}
@@ -108,7 +110,8 @@ const authorResponse = seqSet !== undefined ? await seqSetClient.getAuthor(seqSe
                             <SeqSetItem
                                 clientConfig={clientConfig}
                                 accessToken={accessToken}
-                                seqSet={seqSet}
+                                seqSetAccessionVersion={seqSetAccessionVersion}
+                                seqSet={assignAuthorName(seqSet)}
                                 seqSetRecords={seqSetRecordsResponse.value}
                                 citedByData={seqSetCitedByResponse.value}
                                 isAdminView={seqSet.createdBy === username}
