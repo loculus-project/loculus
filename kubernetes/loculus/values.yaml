@@ -19,6 +19,7 @@ disableBackend: false
 disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
+disableTaxonomyService: false
 website:
   websiteConfig:
     enableLoginNavigationItem: true
@@ -2510,6 +2511,12 @@ resources:
     requests:
       memory: "100Mi"
       cpu: "10m"
+    limits:
+      memory: "1Gi"
+  taxonomy-service:
+    requests:
+      memory: "200Mi"
+      cpu: "20m"
     limits:
       memory: "1Gi"
   ena-submission:
