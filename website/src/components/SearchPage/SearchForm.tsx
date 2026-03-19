@@ -187,7 +187,7 @@ export const SearchForm = ({
             }
 
             const sequenceScope =
-                'relatesToSegment' in field && field.relatesToSegment != null ? field.relatesToSegment : 'ALL_SEGMENTS';
+                'relatesToSegment' in field && field.relatesToSegment != null ? field.relatesToSegment : 'NO_ASSIGNED_SEGMENT';
 
             sequenceFieldsBySegment[sequenceScope] ??= [];
             sequenceFieldsBySegment[sequenceScope].push(field);
@@ -221,7 +221,7 @@ export const SearchForm = ({
 
     const renderSegmentContents = (segmentName: string) => (
         <>
-            {referenceSelection !== undefined && segmentName !== 'ALL_SEGMENTS' && (
+            {referenceSelection !== undefined && segmentName !== 'NO_ASSIGNED_SEGMENT' && (
                 <ReferenceSelector
                     filterSchema={filterSchema}
                     referenceGenomesInfo={referenceGenomesInfo}
@@ -234,7 +234,7 @@ export const SearchForm = ({
                 />
             )}
 
-            {showMutationSearch && segmentAndGeneInfo[segmentName] && segmentName !== 'ALL_SEGMENTS' && (
+            {showMutationSearch && segmentAndGeneInfo[segmentName] && segmentName !== 'NO_ASSIGNED_SEGMENT' && (
                 <MutationField
                     singleSegmentAndGeneInfo={segmentAndGeneInfo[segmentName]}
                     value={
@@ -341,7 +341,7 @@ export const SearchForm = ({
 
                         <section className='flex flex-col gap-1.5 mb-4'>
                             <CollapsibleSection title='Sequence Filters' open>
-                                {'ALL_SEGMENTS' in sequenceFieldsBySegment && renderSegmentContents('ALL_SEGMENTS')}
+                                {'NO_ASSIGNED_SEGMENT' in sequenceFieldsBySegment && renderSegmentContents('NO_ASSIGNED_SEGMENT')}
                                 {referenceGenomesInfo.isMultiSegmented && (
                                     <SegmentFilter
                                         referenceGenomesInfo={referenceGenomesInfo}
