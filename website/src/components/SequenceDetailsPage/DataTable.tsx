@@ -155,10 +155,10 @@ const DataTableComponent: React.FC<Props> = ({
                                     header === DEFAULT_AA_MUTATION_DETAILS_HEADER) && (
                                     <h2 className='pt-2 text-xs text-gray-500'>
                                         <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
-                                        Mutations called relative to the <ReferenceDisplay
-                                            reference={references}
-                                        />{' '}
-                                        reference
+                                        {header === DEFAULT_AA_MUTATION_DETAILS_HEADER
+                                            ? 'Substitutions'
+                                            : 'Mutations'}{' '}
+                                        called relative to the <ReferenceDisplay reference={references} /> reference
                                         {references.length > 1 ? 's' : ''}
                                     </h2>
                                 )}
