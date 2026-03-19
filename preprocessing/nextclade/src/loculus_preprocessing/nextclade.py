@@ -228,8 +228,6 @@ def run_diamond(
             "blastx",
             "--query",
             input_file,
-            "--max-target-seqs",
-            "1",
             "--db",
             dataset_dir + "/diamond/diamond.dmnd",
             "--out",
