@@ -1,6 +1,6 @@
 import logging
 import sqlite3
-from typing import Annotated
+from typing import Annotated, Generator
 
 from fastapi import Depends, FastAPI, HTTPException
 import uvicorn
@@ -12,8 +12,8 @@ logger = logging.getLogger()
 app = FastAPI(title="Taxonomy service", description="Loculus taxonomy API for hostname validation")
 
 
-def get_db_connection():
-    conn = sqlite3.connect(app.state.config.db_path)
+def get_db_connection() -> Generator[sqlite3.Connection]:
+    conn = sqlite3.connect(app.state.config.tax_db_path)
     conn.row_factory = sqlite3.Row
     try:
         yield conn
