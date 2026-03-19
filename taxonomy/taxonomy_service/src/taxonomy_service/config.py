@@ -4,8 +4,8 @@ from pydantic import BaseModel
 
 
 class Config(BaseModel):
-    db_path: str
     log_level: str
+    tax_db_path: str
     tax_service_host: str | None
     tax_service_port: int | None
 

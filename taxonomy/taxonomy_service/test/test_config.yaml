@@ -1,1 +1,1 @@
-db_path: ':memory:'
+tax_db_path: ':memory:'

@@ -65,7 +65,7 @@ def get_test_db():
 class ApiTest(unittest.TestCase):
     def setUp(self) -> None:
         self.config: Config = get_config(config_file)
-        if self.config.db_path == ":memory:" or self.config.db_path is None:
+        if self.config.tax_db_path == ":memory:" or self.config.tax_db_path is None:
             app.dependency_overrides[get_db_connection] = get_test_db
 
     def test_get_taxon_success(self):
