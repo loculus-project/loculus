@@ -3,6 +3,7 @@ import { AxiosError } from 'axios';
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import { AuthorDetails } from './AuthorDetails.tsx';
 import { CitationPlot } from './CitationPlot';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import { getClientLogger } from '../../clientLogger';
@@ -12,13 +13,32 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import { type CitedByResult, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { BarPlot } from '../common/BarPlot.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 const logger = getClientLogger('SeqSetItem');
 
+const SeqSetSectionTitle: FC<{ title: string }> = ({ title }) => (
+    <h1 className='text-xl font-semibold border-b py-2 my-4'>{title}</h1>
+);
+
+const SeqSetDetailsTitle: FC<{ title: string }> = ({ title }) => (
+    <div className='flex flex-row'>
+        <h1 className='text-xl font-semibold border-b py-2 mb-3'>{title}</h1>
+    </div>
+);
+
+const SeqSetDetailsEntry: FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
+    <div className='flex flex-row py-1.5'>
+        <p className='mr-8 w-[120px] text-gray-500'>{label}</p>
+        <p className='text max-w-lg'>{value}</p>
+    </div>
+);
+
 type SeqSetItemProps = {
     clientConfig: ClientConfig;
     accessToken: string;
+    seqSetAccessionVersion: string;
     seqSet: SeqSet;
     seqSetRecords: SeqSetRecord[];
     citedByData: CitedByResult;
@@ -30,6 +50,7 @@ type SeqSetItemProps = {
 const SeqSetItemInner: FC<SeqSetItemProps> = ({
     clientConfig,
     accessToken,
+    seqSetAccessionVersion,
     seqSet,
     seqSetRecords,
     citedByData,
@@ -97,74 +118,89 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     };
 
     return (
-        <div className='flex flex-col items-left'>
-            <div className='flex flex-col'>
-                <div className='flex flex-row py-1.5'>
-                    <p className='mr-8 w-[120px] text-gray-500 text-right'>Description</p>
-                    <p className='text max-w-lg'>{seqSet.description ?? 'N/A'}</p>
-                </div>
-                <div className='flex flex-row py-1.5'>
-                    <p className='mr-8 w-[120px] text-gray-500 text-right'>Version</p>
-                    <p className='text max-w-lg'>{seqSet.seqSetVersion}</p>
-                </div>
-                <div className='flex flex-row py-1.5'>
-                    <p className='mr-8 w-[120px] text-gray-500 text-right'>Created date</p>
-                    <p className='text max-w-lg'>{formatDate(seqSet.createdAt)}</p>
-                </div>
-                <div className='flex flex-row py-1.5'>
-                    <p className='mr-8 w-[120px] text-gray-500 text-right'>Size</p>
-                    <p className='text max-w-lg'>{`${seqSetRecords.length} sequence${seqSetRecords.length === 1 ? '' : 's'}`}</p>
-                </div>
-                <div className='flex flex-row py-1.5'>
-                    <p className='mr-8 w-[120px] text-gray-500 text-right'>DOI</p>
-                    {renderDOI()}
-                </div>
-                <div className='flex flex-row py-1.5'>
-                    <p className='mr-8 w-[120px] text-gray-500 text-right'>Total citations</p>
-                    {seqSet.seqSetDOI === undefined || seqSet.seqSetDOI === null ? (
-                        <p className='text'>Cited by 0</p>
-                    ) : (
-                        <a
-                            className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
-                            href={getCrossRefUrl()}
-                            target='_blank'
-                        >
-                            Cited by 0
-                        </a>
-                    )}
-                </div>
-                <div className='flex flex-row'>
-                    <p className='mr-0 w-[120px]'></p>
-                    <div className='ml-4'>
-                        <CitationPlot citedByData={citedByData} />
-                        <p className='text-sm text-center text-gray-500 my-4 ml-8 max-w-64'>
-                            Number of times this SeqSet has been cited by a publication
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div className='flex flex-col my-4'>
-                <p className='text-xl my-4 font-semibold'>Sequences</p>
-                <SeqSetRecordsTableWithMetadata
-                    seqSetRecords={getPaginatedSeqSetRecords()}
-                    clientConfig={clientConfig}
-                    fieldsToDisplay={fieldsToDisplay}
-                    organismDisplayNames={organismDisplayNames}
-                />
-                {getMaxPages() > 1 ? (
-                    <MUIPagination
-                        className='my-4 w-full flex justify-center'
-                        page={page}
-                        count={getMaxPages()}
-                        color='primary'
-                        variant='outlined'
-                        shape='rounded'
-                        onChange={(_, newPage) => {
-                            setPage(newPage);
-                        }}
+        <div className='flex flex-col'>
+            <div className='grid grid-cols-1 md:grid-cols-2'>
+                <div className='flex flex-col'>
+                    <SeqSetDetailsTitle title='Details' />
+                    <SeqSetDetailsEntry label='Name' value={seqSet.name} />
+                    <SeqSetDetailsEntry label='Description' value={seqSet.description ?? 'N/A'} />
+                    <SeqSetDetailsEntry label='Version' value={seqSet.seqSetVersion} />
+                    <SeqSetDetailsEntry
+                        label='Created by'
+                        value={<AuthorDetails displayFullDetails={false} firstName={seqSet.createdBy} />}
                     />
-                ) : null}
+                    <SeqSetDetailsEntry label='Created date' value={formatDate(seqSet.createdAt)} />
+                    <SeqSetDetailsEntry
+                        label='Size'
+                        value={`${seqSetRecords.length} sequence${seqSetRecords.length === 1 ? '' : 's'}`}
+                    />
+                </div>
+                <div className='flex flex-col'>
+                    <SeqSetDetailsTitle title='Citations' />
+                    <SeqSetDetailsEntry label='DOI' value={renderDOI()} />
+                    <SeqSetDetailsEntry
+                        label='Total citations'
+                        value={
+                            seqSet.seqSetDOI === undefined || seqSet.seqSetDOI === null ? (
+                                <p className='text'>Cited by 0</p>
+                            ) : (
+                                <a
+                                    className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
+                                    href={getCrossRefUrl()}
+                                    target='_blank'
+                                >
+                                    Cited by 0
+                                </a>
+                            )
+                        }
+                    />
+                    <SeqSetDetailsEntry
+                        label='Citations over time'
+                        value={
+                            <CitationPlot
+                                citedByData={citedByData}
+                                responsive={false}
+                                description='Number of times this SeqSet has been cited by a publication'
+                            />
+                        }
+                    />
+                </div>
             </div>
+            <SeqSetSectionTitle title='Metadata' />
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-x-6'>
+                <BarPlot
+                    data={{ labels: [1, 2, 3, 4], datasets: [{ data: [1, 2, 3, 4] }] }}
+                    description={`Sample collection dates for ${seqSetAccessionVersion} sequences`}
+                />
+                <BarPlot
+                    data={{ labels: [1, 2, 3, 4], datasets: [{ data: [1, 2, 3, 4] }] }}
+                    description={`Countries for ${seqSetAccessionVersion} sequences`}
+                />
+                <BarPlot
+                    data={{ labels: [1, 2, 3, 4], datasets: [{ data: [1, 2, 3, 4] }] }}
+                    description={`Use terms for ${seqSetAccessionVersion} sequences`}
+                />
+            </div>
+            <SeqSetSectionTitle title='Sequences' />
+            <SeqSetRecordsTableWithMetadata
+                seqSetRecords={getPaginatedSeqSetRecords()}
+                clientConfig={clientConfig}
+                fieldsToDisplay={fieldsToDisplay}
+                organismDisplayNames={organismDisplayNames}
+            />
+            {getMaxPages() > 1 ? (
+                <MUIPagination
+                    className='my-4 w-full flex justify-center'
+                    page={page}
+                    count={getMaxPages()}
+                    color='primary'
+                    variant='outlined'
+                    shape='rounded'
+                    onChange={(_, newPage) => {
+                        setPage(newPage);
+                    }}
+                />
+            ) : null}
         </div>
     );
 };
