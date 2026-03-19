@@ -51,7 +51,6 @@ jobs:
           "
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
-      - uses: actions/checkout@v6
       - name: Generate files hash
         id: files-hash
         run: |
