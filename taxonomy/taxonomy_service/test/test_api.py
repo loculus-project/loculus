@@ -83,6 +83,13 @@ class ApiTest(unittest.TestCase):
         assert response.status_code == codes.ok
         assert response.json()["scientific_name"] == taxon["scientific_name"]
 
+    def test_query_taxon_case_success(self):
+        taxon = mock_taxa["Homo sapiens"]
+        name_lower = taxon["scientific_name"].lower()
+        response = client.get(f"/taxa?name={name_lower}")
+        assert response.status_code == codes.ok
+        assert response.json()["scientific_name"] == taxon["scientific_name"]
+
     def test_query_taxon_not_found(self):
         response = client.get(f"/taxa?name={mock_missing_name}")
         assert response.status_code == codes.not_found

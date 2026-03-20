@@ -44,7 +44,9 @@ def fetch_by_sci_name(db_conn: sqlite3.Connection, name: str) -> dict[str, str |
         db_conn (sqlite3.Connection):   connection to a database. The caller is responsible for closing it
         name (str):                     scientific name to query the database with
     """
-    taxa = db_conn.execute("SELECT * FROM taxonomy WHERE scientific_name = ?", (name,)).fetchall()
+    taxa = db_conn.execute(
+        "SELECT * FROM taxonomy WHERE scientific_name = ? COLLATE NOCASE", (name,)
+    ).fetchall()
 
     if not taxa:
         return None
