@@ -45,7 +45,6 @@ export const BarPlot: FC<BarPlotProps> = ({ data, options, description }) => {
                     },
                     scales: {
                         y: {
-                            suggestedMax: 10,
                             grid: {
                                 color: 'rgba(0, 0, 0, 0)',
                             },

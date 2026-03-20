@@ -31,6 +31,14 @@ export const CitationPlot: React.FC<CitationPlotProps> = ({ citedByData, respons
             }}
             options={{
                 responsive: responsive ?? true,
+                scales: {
+                    y: {
+                        suggestedMax: 10,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0)',
+                        },
+                    },
+                },
             }}
             description={description}
         />

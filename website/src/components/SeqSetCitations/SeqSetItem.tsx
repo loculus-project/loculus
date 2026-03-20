@@ -38,7 +38,7 @@ const SeqSetDetails: FC<{ title: string; children: React.ReactNode }> = ({ title
 const SeqSetDetailsEntry: FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
     <div className='flex flex-row py-1.5'>
         <div className='mr-8 w-[120px] text-gray-500'>{label}</div>
-        <div className='text max-w-lg'>{value}</div>
+        <div className='w-2/3 lg:w-1/2'>{value}</div>
     </div>
 );
 
@@ -135,7 +135,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     const graphColour = '#88a1d2';
     const getGraphData = (data: AggregateRow[]) => ({
         labels: data.map((item) => item.value ?? 'Unknown'),
-        datasets: [{ data: data.map((item) => item.count), backgroundColor: graphColour }],
+        datasets: [{ data: data.map((item) => item.count), backgroundColor: graphColour, maxBarThickness: 30 }],
     });
 
     return (
