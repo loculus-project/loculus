@@ -1897,6 +1897,63 @@ defaultOrganisms:
           lineageSystem: cchfS
           preprocessing:
             inputs: {input: nextclade.clade}
+        - name: variant_L
+          isSequenceFilter: true
+          header: "Clade & Lineage"
+          oneHeader: true
+          displayName: "Variant L"
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          customDisplay:
+            type: variantReference
+            displayGroup: reference_L
+            label: Closest reference L
+          preprocessing:
+            function: is_variant
+            args:
+              mu: 0.004
+            inputs: {input: "nextclade.totalSubstitutions"}
+        - name: variant_M
+          isSequenceFilter: true
+          header: "Clade & Lineage"
+          oneHeader: true
+          displayName: "Variant M"
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          customDisplay:
+            type: variantReference
+            displayGroup: reference_M
+            label: Closest reference M
+          preprocessing:
+            function: is_variant
+            args:
+              mu: 0.008
+            inputs: {input: "nextclade.totalSubstitutions"} 
+        - name: variant_S
+          isSequenceFilter: true
+          header: "Clade & Lineage"
+          oneHeader: true
+          displayName: "Variant S"
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          customDisplay:
+            type: variantReference
+            displayGroup: reference_S
+            label: Closest reference S
+          preprocessing:
+            function: is_variant
+            args:
+              mu: 0.004
+            inputs: {input: "nextclade.totalSubstitutions"} 
       website:
         <<: *website
         tableColumns:
