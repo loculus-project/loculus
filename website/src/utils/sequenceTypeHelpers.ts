@@ -15,15 +15,19 @@ export type BaseType = SequenceType['type'];
 export type SegmentInfo = {
     /** the segment name as it is called in LAPIS */
     lapisName: string;
-    /** the segment name as it should be displayed in the UI */
+    /** the segment name */
     name: string;
+    /** optional, the segment name as it should be displayed in the UI */
+    displayName?: string;
 };
 
 export type SegmentLapisNames = {
     /** the segment name as it is called in LAPIS */
     lapisNames: string[];
-    /** the segment name as it should be displayed in the UI */
+    /** the segment name */
     name: string;
+    /** optional, the segment name as it should be displayed in the UI */
+    displayName?: string;
 };
 
 export type GeneInfo = {
@@ -166,15 +170,16 @@ export function getSegmentAndGeneInfo(
         const isSingleReference = Object.keys(segmentData).length === 1;
         const selectedRef = selectedReferences?.[segmentName] ?? null;
 
+        const displayName = referenceGenomesInfo.segmentDisplayNames[segmentName];
         if (isSingleReference) {
-            nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentName });
+            nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentName, displayName });
             geneInfos.push(...segmentData[Object.keys(segmentData)[0]].genes.map((gene) => ({ ...gene, segmentName })));
             continue;
         }
         if (!selectedRef || !(selectedRef in segmentData)) {
             continue;
         }
-        nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentData[selectedRef].lapisName });
+        nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentData[selectedRef].lapisName, displayName });
         geneInfos.push(...segmentData[selectedRef].genes.map((gene) => ({ ...gene, segmentName })));
     }
 
@@ -200,8 +205,9 @@ export function getSegmentLapisNames(
 
     for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
         const isSingleReference = Object.keys(segmentData).length === 1;
+        const displayName = referenceGenomesInfo.segmentDisplayNames[segmentName];
         if (isSingleReference) {
-            nucleotideSegmentInfos.push({ name: segmentName, lapisNames: [segmentName] });
+            nucleotideSegmentInfos.push({ name: segmentName, lapisNames: [segmentName], displayName });
             continue;
         }
 
@@ -210,10 +216,15 @@ export function getSegmentLapisNames(
             nucleotideSegmentInfos.push({
                 name: segmentName,
                 lapisNames: Object.values(segmentData).map((info) => info.lapisName),
+                displayName,
             });
             continue;
         }
-        nucleotideSegmentInfos.push({ name: segmentName, lapisNames: [segmentData[selectedRef].lapisName] });
+        nucleotideSegmentInfos.push({
+            name: segmentName,
+            lapisNames: [segmentData[selectedRef].lapisName],
+            displayName,
+        });
     }
 
     return nucleotideSegmentInfos;
@@ -225,6 +236,7 @@ export function getSingleSegmentAndGeneInfo(
     selectedReferences?: SegmentReferenceSelections,
 ): SingleSegmentAndGeneInfo | null {
     const segmentData = referenceGenomesInfo.segmentReferenceGenomes[segment];
+    const displayName = referenceGenomesInfo.segmentDisplayNames[segment];
 
     const refs = Object.keys(segmentData);
     const selectedRef = refs.length === 1 ? refs[0] : selectedReferences?.[segment];
@@ -234,7 +246,7 @@ export function getSingleSegmentAndGeneInfo(
     const refData = segmentData[selectedRef];
 
     return {
-        nucleotideSegmentInfo: { name: segment, lapisName: refData.lapisName },
+        nucleotideSegmentInfo: { name: segment, lapisName: refData.lapisName, displayName },
         geneInfos: refData.genes.map((gene) => ({ ...gene, segmentName: segment })),
         useLapisMultiSegmentedEndpoint: referenceGenomesInfo.useLapisMultiSegmentedEndpoint,
         multiSegmented: referenceGenomesInfo.isMultiSegmented,
@@ -272,7 +284,12 @@ export function lapisNameToDisplayName(referenceGenomesInfo: ReferenceGenomesInf
     const map = new Map<string, string | undefined>();
     for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
         for (const refData of Object.values(segmentData)) {
-            map.set(refData.lapisName, referenceGenomesInfo.isMultiSegmented ? segmentName : undefined);
+            map.set(
+                refData.lapisName,
+                referenceGenomesInfo.isMultiSegmented
+                    ? (referenceGenomesInfo.segmentDisplayNames[segmentName] ?? segmentName)
+                    : undefined,
+            );
             for (const gene of refData.genes) {
                 map.set(gene.lapisName, gene.name);
             }
