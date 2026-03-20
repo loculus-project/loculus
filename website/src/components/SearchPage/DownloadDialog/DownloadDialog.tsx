@@ -7,7 +7,6 @@ import { DownloadForm, type DownloadFormState } from './DownloadForm.tsx';
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { getDefaultSelectedFields } from './FieldSelector/FieldSelectorModal.tsx';
 import type { SequenceFilter } from './SequenceFilters.tsx';
-import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
@@ -30,6 +29,7 @@ type DownloadDialogProps = {
     referenceGenomesInfo: ReferenceGenomesInfo;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
+    dataUseTermsAgreementHtml?: string;
     schema: Schema;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
     selectedReferenceNames?: SegmentReferenceSelections;
@@ -42,6 +42,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     referenceGenomesInfo,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
+    dataUseTermsAgreementHtml,
     schema,
     richFastaHeaderFields,
     selectedReferenceNames,
@@ -141,18 +142,13 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                                     checked={agreedToDataUseTerms}
                                     onChange={() => setAgreedToDataUseTerms(!agreedToDataUseTerms)}
                                 />
-                                <span className='text-sm'>
-                                    I agree to the{' '}
-                                    <a
-                                        href={routes.datauseTermsPage()}
-                                        className='underline'
-                                        target='_blank'
-                                        rel='noopener noreferrer'
-                                    >
-                                        data use terms
-                                    </a>
-                                    .
-                                </span>
+                                <span
+                                    className='text-sm'
+                                    dangerouslySetInnerHTML={{
+                                        // eslint-disable-next-line @typescript-eslint/naming-convention
+                                        __html: dataUseTermsAgreementHtml ?? 'I agree to the data use terms.',
+                                    }}
+                                />
                             </label>
                         </div>
                     )}
