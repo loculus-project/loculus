@@ -70,10 +70,10 @@ const DisplaySearchDocs: React.FC<{ geneInfos: GeneInfo[] }> = ({ geneInfos }) =
 
                                     <div className='mb-4'>
                                         <h4 className='font-bold text-l mb-4 text-primary-700'>
-                                            Amino acid mutations and insertions
+                                            Amino acid substitutions and insertions
                                         </h4>
                                         <p className='mb-2'>
-                                            An amino acid mutation has the format{' '}
+                                            An amino acid substitution has the format{' '}
                                             <b>&lt;gene&gt;:&lt;position&gt;&lt;base&gt;</b> or{' '}
                                             <b>&lt;gene&gt;:&lt;base_ref&gt;&lt;position&gt;&lt;base&gt;</b>. A{' '}
                                             <b>&lt;base&gt;</b> can be one of the 20 amino acid codes. It can also be{' '}

@@ -6,7 +6,11 @@ import { type TableDataEntry } from './types.ts';
 import { mockRequest, testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { Schema } from '../../types/config.ts';
+import {
+    DEFAULT_AA_MUTATION_DETAILS_HEADER,
+    DEFAULT_NUC_MUTATION_DETAILS_HEADER,
+    type Schema,
+} from '../../types/config.ts';
 import type { MutationProportionCount } from '../../types/lapis.ts';
 import {
     MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
@@ -53,9 +57,6 @@ const info = {
 const accessionVersion = 'accession';
 
 const lapisClient = LapisClient.create(testConfig.serverSide.lapisUrls[testOrganism], schema);
-
-const aminoAcidMutationsHeader = 'Amino acid mutations';
-const nucleotideMutationsHeader = 'Nucleotide mutations';
 
 describe('getTableData', () => {
     beforeEach(() => {
@@ -189,7 +190,7 @@ describe('getTableData', () => {
             label: 'Substitutions',
             name: 'nucleotideSubstitutions',
             value: '',
-            header: nucleotideMutationsHeader,
+            header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
             customDisplay: {
                 type: 'badge',
                 badge: [
@@ -218,7 +219,7 @@ describe('getTableData', () => {
             label: 'Deletions',
             name: 'nucleotideDeletions',
             value: '',
-            header: nucleotideMutationsHeader,
+            header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
             customDisplay: {
                 type: 'list',
                 list: [
@@ -234,7 +235,7 @@ describe('getTableData', () => {
             label: 'Substitutions',
             name: 'aminoAcidSubstitutions',
             value: '',
-            header: aminoAcidMutationsHeader,
+            header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
             customDisplay: {
                 type: 'badge',
                 badge: [
@@ -272,7 +273,7 @@ describe('getTableData', () => {
                     },
                 ],
             },
-            header: aminoAcidMutationsHeader,
+            header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
             type: { kind: 'mutation' },
         });
     }
@@ -351,7 +352,7 @@ describe('getTableData', () => {
             label: 'Insertions',
             name: 'nucleotideInsertions',
             value: '',
-            header: nucleotideMutationsHeader,
+            header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
             type: { kind: 'mutation' },
             customDisplay: {
                 type: 'list',
@@ -366,7 +367,7 @@ describe('getTableData', () => {
                 type: 'list',
                 list: aaInsertionsList,
             },
-            header: aminoAcidMutationsHeader,
+            header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
             type: { kind: 'mutation' },
         });
     }
@@ -418,7 +419,7 @@ describe('getTableData', () => {
         const data = result._unsafeUnwrap().data;
 
         const mutationTableEntries = data.filter((entry) =>
-            [nucleotideMutationsHeader, aminoAcidMutationsHeader].includes(entry.header),
+            [DEFAULT_NUC_MUTATION_DETAILS_HEADER, DEFAULT_AA_MUTATION_DETAILS_HEADER].includes(entry.header),
         );
 
         expect(data.length).greaterThanOrEqual(1, 'data.length');
@@ -666,7 +667,7 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
         label: 'Substitutions',
         name: 'nucleotideSubstitutions',
         value: '',
-        header: nucleotideMutationsHeader,
+        header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
         customDisplay: {
             type: 'badge',
             badge: [],
@@ -681,7 +682,7 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
             type: 'list',
             list: [],
         },
-        header: nucleotideMutationsHeader,
+        header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
         type: { kind: 'mutation' },
     },
     {
@@ -692,14 +693,14 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
             type: 'list',
             list: [],
         },
-        header: nucleotideMutationsHeader,
+        header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
         type: { kind: 'mutation' },
     },
     {
         label: 'Substitutions',
         name: 'aminoAcidSubstitutions',
         value: '',
-        header: aminoAcidMutationsHeader,
+        header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
         customDisplay: {
             type: 'badge',
             badge: [],
@@ -714,7 +715,7 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
             type: 'list',
             list: [],
         },
-        header: aminoAcidMutationsHeader,
+        header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
         type: { kind: 'mutation' },
     },
     {
@@ -725,7 +726,7 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
             type: 'list',
             list: [],
         },
-        header: aminoAcidMutationsHeader,
+        header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
         type: { kind: 'mutation' },
     },
 ];
