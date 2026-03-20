@@ -250,9 +250,7 @@ const SegmentDropdown: FC<SegmentDropdownProps> = ({ segments, sequenceType, set
                 value={currentSegmentName}
                 onChange={(e) => {
                     const segment = segments.find((s) => s.name === e.target.value)!;
-                    setType(
-                        mode === 'unaligned' ? unalignedSequenceSegment(segment) : alignedSequenceSegment(segment),
-                    );
+                    setType(mode === 'unaligned' ? unalignedSequenceSegment(segment) : alignedSequenceSegment(segment));
                 }}
             >
                 {segments.map((segment) => (
