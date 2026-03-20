@@ -39,9 +39,9 @@ const seqSetAccessions = seqSetRecordsResponse.isOk() ? seqSetRecordsResponse.va
 
 const [seqSetCollectionDatesResponse, seqSetCollectionCountriesResponse, seqSetDataUseTermsResponse] =
     await Promise.all([
-        getSeqSetStatistics(seqSetAccessions, 'date'),
-        getSeqSetStatistics(seqSetAccessions, 'country'),
-        getSeqSetStatistics(seqSetAccessions, DATA_USE_TERMS_FIELD),
+        getSeqSetStatistics(seqSetAccessions, ['sampleCollectionDate', 'date']),
+        getSeqSetStatistics(seqSetAccessions, ['geoLocCountry', 'country']),
+        getSeqSetStatistics(seqSetAccessions, [DATA_USE_TERMS_FIELD]),
     ]);
 
 const getSeqSetByVersion = (seqSetVersions: SeqSet[], version: string) => {

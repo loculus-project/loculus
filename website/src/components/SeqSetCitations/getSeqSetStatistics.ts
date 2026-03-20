@@ -5,20 +5,15 @@ import { getConfiguredOrganisms, getSchema } from '../../config.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
 import { ACCESSION_VERSION_FIELD } from '../../settings.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import { type Schema } from '../../types/config.ts';
 
 type AggregateValue = string | number | boolean | null;
 export type AggregateRow = { value: AggregateValue; count: number };
 
 const getAggregate = async (
     client: LapisClient,
-    schema: Schema,
     accessions: string[],
     field: string,
 ): Promise<Result<AggregateRow[], ProblemDetail>> => {
-    if (accessions.length === 0 || !schema.metadata.some((f) => f.name === field)) {
-        return ok([]);
-    }
     const result = await client.call('aggregated', {
         [ACCESSION_VERSION_FIELD]: accessions,
         fields: [field],
@@ -34,7 +29,7 @@ const getAggregate = async (
 
 export const getSeqSetStatistics = async (
     accessions: string[],
-    field: string,
+    fieldOptions: string[],
 ): Promise<Result<AggregateRow[], ProblemDetail>> => {
     if (accessions.length === 0) {
         return ok([]);
@@ -45,7 +40,9 @@ export const getSeqSetStatistics = async (
         organisms.map((organism) => {
             const client = LapisClient.createForOrganism(organism.key);
             const schema = getSchema(organism.key);
-            return getAggregate(client, schema, accessions, field);
+            const field = fieldOptions.find((option) => schema.metadata.some((f) => f.name === option));
+            if (!field) return Promise.resolve(ok([]));
+            return getAggregate(client, accessions, field);
         }),
     );
 
