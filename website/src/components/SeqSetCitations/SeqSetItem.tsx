@@ -6,11 +6,12 @@ import { toast } from 'react-toastify';
 import { AuthorDetails } from './AuthorDetails.tsx';
 import { CitationPlot } from './CitationPlot';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
+import type { AggregateRow } from './getSeqSetStatistics.ts';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { type CitedByResult, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
+import { type AuthorProfile, type CitedByResult, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { BarPlot } from '../common/BarPlot.tsx';
@@ -18,20 +19,26 @@ import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 const logger = getClientLogger('SeqSetItem');
 
-const SeqSetSectionTitle: FC<{ title: string }> = ({ title }) => (
-    <h1 className='text-xl font-semibold border-b py-2 my-4'>{title}</h1>
+const SeqSetSection: FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+    <div className='flex flex-col mb-6'>
+        <h1 className='text-xl font-semibold border-b py-2 my-4'>{title}</h1>
+        {children}
+    </div>
 );
 
-const SeqSetDetailsTitle: FC<{ title: string }> = ({ title }) => (
-    <div className='flex flex-row'>
-        <h1 className='text-xl font-semibold border-b py-2 mb-3'>{title}</h1>
+const SeqSetDetails: FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+    <div className='flex flex-col mb-6'>
+        <div className='flex flex-row'>
+            <h1 className='text-xl font-semibold border-b py-2 mb-3'>{title}</h1>
+        </div>
+        {children}
     </div>
 );
 
 const SeqSetDetailsEntry: FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
     <div className='flex flex-row py-1.5'>
-        <p className='mr-8 w-[120px] text-gray-500'>{label}</p>
-        <p className='text max-w-lg'>{value}</p>
+        <div className='mr-8 w-[120px] text-gray-500'>{label}</div>
+        <div className='text max-w-lg'>{value}</div>
     </div>
 );
 
@@ -40,8 +47,12 @@ type SeqSetItemProps = {
     accessToken: string;
     seqSetAccessionVersion: string;
     seqSet: SeqSet;
+    seqSetAuthor?: AuthorProfile;
     seqSetRecords: SeqSetRecord[];
     citedByData: CitedByResult;
+    collectionDatesData: AggregateRow[];
+    collectionCountriesData: AggregateRow[];
+    dataUseTermsData: AggregateRow[];
     isAdminView?: boolean;
     fieldsToDisplay?: { field: string; displayName: string }[];
     organismDisplayNames?: Record<string, string>;
@@ -52,8 +63,12 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     accessToken,
     seqSetAccessionVersion,
     seqSet,
+    seqSetAuthor,
     seqSetRecords,
     citedByData,
+    collectionDatesData,
+    collectionCountriesData,
+    dataUseTermsData,
     isAdminView = false,
     fieldsToDisplay,
     organismDisplayNames,
@@ -117,26 +132,36 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         return seqSetRecords.slice((page - 1) * sequencesPerPage, page * sequencesPerPage);
     };
 
+    const graphColour = '#88a1d2';
+    const getGraphData = (data: AggregateRow[]) => ({
+        labels: data.map((item) => item.value ?? 'Unknown'),
+        datasets: [{ data: data.map((item) => item.count), backgroundColor: graphColour }],
+    });
+
     return (
         <div className='flex flex-col'>
-            <div className='grid grid-cols-1 md:grid-cols-2'>
-                <div className='flex flex-col'>
-                    <SeqSetDetailsTitle title='Details' />
+            <div className='grid grid-cols-1 lg:grid-cols-2'>
+                <SeqSetDetails title='Details'>
                     <SeqSetDetailsEntry label='Name' value={seqSet.name} />
                     <SeqSetDetailsEntry label='Description' value={seqSet.description ?? 'N/A'} />
                     <SeqSetDetailsEntry label='Version' value={seqSet.seqSetVersion} />
                     <SeqSetDetailsEntry
                         label='Created by'
-                        value={<AuthorDetails displayFullDetails={false} firstName={seqSet.createdBy} />}
+                        value={
+                            <AuthorDetails
+                                displayFullDetails={false}
+                                firstName={seqSetAuthor?.firstName}
+                                lastName={seqSetAuthor?.lastName}
+                            />
+                        }
                     />
                     <SeqSetDetailsEntry label='Created date' value={formatDate(seqSet.createdAt)} />
                     <SeqSetDetailsEntry
                         label='Size'
                         value={`${seqSetRecords.length} sequence${seqSetRecords.length === 1 ? '' : 's'}`}
                     />
-                </div>
-                <div className='flex flex-col'>
-                    <SeqSetDetailsTitle title='Citations' />
+                </SeqSetDetails>
+                <SeqSetDetails title='Citations'>
                     <SeqSetDetailsEntry label='DOI' value={renderDOI()} />
                     <SeqSetDetailsEntry
                         label='Total citations'
@@ -164,43 +189,45 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                             />
                         }
                     />
+                </SeqSetDetails>
+            </div>
+            <SeqSetSection title='Statistics'>
+                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6'>
+                    <BarPlot
+                        data={getGraphData(collectionDatesData)}
+                        description={`Sample collection dates for ${seqSetAccessionVersion} sequences`}
+                    />
+                    <BarPlot
+                        data={getGraphData(collectionCountriesData)}
+                        description={`Countries for ${seqSetAccessionVersion} sequences`}
+                    />
+                    <BarPlot
+                        data={getGraphData(dataUseTermsData)}
+                        description={`Use terms for ${seqSetAccessionVersion} sequences`}
+                    />
                 </div>
-            </div>
-            <SeqSetSectionTitle title='Metadata' />
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-x-6'>
-                <BarPlot
-                    data={{ labels: [1, 2, 3, 4], datasets: [{ data: [1, 2, 3, 4] }] }}
-                    description={`Sample collection dates for ${seqSetAccessionVersion} sequences`}
+            </SeqSetSection>
+            <SeqSetSection title='Sequences'>
+                <SeqSetRecordsTableWithMetadata
+                    seqSetRecords={getPaginatedSeqSetRecords()}
+                    clientConfig={clientConfig}
+                    fieldsToDisplay={fieldsToDisplay}
+                    organismDisplayNames={organismDisplayNames}
                 />
-                <BarPlot
-                    data={{ labels: [1, 2, 3, 4], datasets: [{ data: [1, 2, 3, 4] }] }}
-                    description={`Countries for ${seqSetAccessionVersion} sequences`}
-                />
-                <BarPlot
-                    data={{ labels: [1, 2, 3, 4], datasets: [{ data: [1, 2, 3, 4] }] }}
-                    description={`Use terms for ${seqSetAccessionVersion} sequences`}
-                />
-            </div>
-            <SeqSetSectionTitle title='Sequences' />
-            <SeqSetRecordsTableWithMetadata
-                seqSetRecords={getPaginatedSeqSetRecords()}
-                clientConfig={clientConfig}
-                fieldsToDisplay={fieldsToDisplay}
-                organismDisplayNames={organismDisplayNames}
-            />
-            {getMaxPages() > 1 ? (
-                <MUIPagination
-                    className='my-4 w-full flex justify-center'
-                    page={page}
-                    count={getMaxPages()}
-                    color='primary'
-                    variant='outlined'
-                    shape='rounded'
-                    onChange={(_, newPage) => {
-                        setPage(newPage);
-                    }}
-                />
-            ) : null}
+                {getMaxPages() > 1 ? (
+                    <MUIPagination
+                        className='my-4 w-full flex justify-center'
+                        page={page}
+                        count={getMaxPages()}
+                        color='primary'
+                        variant='outlined'
+                        shape='rounded'
+                        onChange={(_, newPage) => {
+                            setPage(newPage);
+                        }}
+                    />
+                ) : null}
+            </SeqSetSection>
         </div>
     );
 };
