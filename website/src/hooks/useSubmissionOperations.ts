@@ -71,17 +71,17 @@ export function useSubmissionOperations(
                 const toastId = toast.loading('Releasing sequences...');
                 return { toastId };
             },
-            onSuccess: (_data, variables, context) => {
+            onSuccess: (data, _variables, context) => {
                 useGetSequences.refetch();
                 const { toastId } = context as { toastId: string | number };
-                const isSingleRelease = variables.accessionVersionsFilter != null;
+                const isBatchRelease = data.length > 1;
                 toast.update(toastId, {
-                    render: isSingleRelease
-                        ? 'Sequence released successfully.'
-                        : '🎉 All sequences have been released! They are now publicly available.',
+                    render: isBatchRelease
+                        ? '🎉 All sequences have been released! They are now publicly available.'
+                        : 'Sequence released successfully.',
                     type: 'success',
                     isLoading: false,
-                    autoClose: isSingleRelease ? 4000 : false,
+                    autoClose: isBatchRelease ? false : 4000,
                 });
             },
             onError: (error, _variables, context) => {
