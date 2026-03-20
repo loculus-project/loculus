@@ -94,7 +94,6 @@ const DataTableComponent: React.FC<Props> = ({
                                         key={index}
                                         data={entry}
                                         dataUseTermsHistory={dataUseTermsHistory}
-                                        segmentDisplayNameMap={referenceGenomesInfo.segmentDisplayNames}
                                     />
                                 ))}
                             </div>
@@ -129,7 +128,6 @@ const DataTableComponent: React.FC<Props> = ({
                                         key={index}
                                         data={entry}
                                         dataUseTermsHistory={dataUseTermsHistory}
-                                        segmentDisplayNameMap={referenceGenomesInfo.segmentDisplayNames}
                                     />
                                 ))}
                             </div>
@@ -168,7 +166,6 @@ const DataTableComponent: React.FC<Props> = ({
                                         key={index}
                                         data={entry}
                                         dataUseTermsHistory={dataUseTermsHistory}
-                                        segmentDisplayNameMap={referenceGenomesInfo.segmentDisplayNames}
                                     />
                                 ))}
                             </div>

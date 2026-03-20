@@ -177,7 +177,7 @@ describe('getTableData', () => {
 
         const result = await getTableData('accession', schema, MULTI_SEG_MULTI_REF_REFERENCEGENOMES, lapisClient);
 
-        expectMutationDataMatches(result, 'L', 'gene1L');
+        expectMutationDataMatches(result, 'L (segment)', 'gene1L');
     });
 
     function expectMutationDataMatches(
@@ -301,7 +301,7 @@ describe('getTableData', () => {
         mockRequest.lapis.aminoAcidInsertions(200, { info, data: multiSegMultiRefAminoAcidInsertions });
 
         const result = await getTableData('accession', schema, MULTI_SEG_MULTI_REF_REFERENCEGENOMES, lapisClient);
-        expectInsertionsMatch(result, 'S', 'L', 'gene1L', 'gene1S');
+        expectInsertionsMatch(result, 'S (segment)', 'L (segment)', 'gene1L', 'gene1S');
     });
 
     function expectInsertionsMatch(
