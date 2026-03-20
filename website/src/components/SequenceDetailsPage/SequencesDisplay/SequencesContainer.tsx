@@ -249,7 +249,10 @@ const SegmentDropdown: FC<SegmentDropdownProps> = ({ segments, sequenceType, set
                 className='select select-bordered w-full max-w-xs'
                 value={currentSegmentName}
                 onChange={(e) => {
-                    const segment = segments.find((s) => s.name === e.target.value)!;
+                    const segment = segments.find((s) => s.name === e.target.value);
+                    if (!segment) {
+                        throw new Error(`Segment not found: ${e.target.value}`);
+                    }
                     setType(mode === 'unaligned' ? unalignedSequenceSegment(segment) : alignedSequenceSegment(segment));
                 }}
             >
@@ -279,7 +282,10 @@ const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) =
                 className='select select-bordered w-full max-w-xs'
                 value={selectedGene}
                 onChange={(e) => {
-                    const gene = genes.find((gene) => gene.name === e.target.value)!;
+                    const gene = genes.find((gene) => gene.name === e.target.value);
+                    if (!gene) {
+                        throw new Error(`Gene not found: ${e.target.value}`);
+                    }
                     setType(geneSequence(gene));
                 }}
             >
