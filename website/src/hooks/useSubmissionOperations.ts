@@ -73,16 +73,18 @@ export function useSubmissionOperations(
             },
             onSuccess: (data, _variables, context) => {
                 void useGetSequences.refetch();
-                const { toastId } = context as { toastId: string | number };
-                const isBatchRelease = data.length > 1;
-                toast.update(toastId, {
-                    render: isBatchRelease
-                        ? '🎉 All sequences have been released successfully!'
-                        : 'Sequence released successfully.',
-                    type: 'success',
-                    isLoading: false,
-                    autoClose: isBatchRelease ? false : 4000,
-                });
+                const ctx = context as { toastId: string | number } | undefined;
+                if (ctx?.toastId) {
+                    const isBatchRelease = data.length > 1;
+                    toast.update(ctx.toastId, {
+                        render: isBatchRelease
+                            ? '🎉 All sequences have been released successfully!'
+                            : 'Sequence released successfully.',
+                        type: 'success',
+                        isLoading: false,
+                        autoClose: isBatchRelease ? false : 4000,
+                    });
+                }
             },
             onError: (error, _variables, context) => {
                 const ctx = context as { toastId: string | number } | undefined;
@@ -93,8 +95,6 @@ export function useSubmissionOperations(
                         isLoading: false,
                         autoClose: false,
                     });
-                } else {
-                    openErrorFeedback(approveProcessedDataErrorMessage(error));
                 }
             },
         },
