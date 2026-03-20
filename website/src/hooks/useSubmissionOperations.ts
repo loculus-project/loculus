@@ -67,11 +67,31 @@ export function useSubmissionOperations(
     const useApproveProcessedData = hooks.useApproveProcessedData(
         { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
-            onSuccess: () => {
-                useGetSequences.refetch();
-                toast.success('Sequences released successfully!', { autoClose: 4000 });
+            onMutate: () => {
+                const toastId = toast.loading('Releasing sequences...');
+                return { toastId };
             },
-            onError: (error) => openErrorFeedback(approveProcessedDataErrorMessage(error)),
+            onSuccess: (_data: unknown, _variables: unknown, context: { toastId: string | number }) => {
+                useGetSequences.refetch();
+                toast.update(context.toastId, {
+                    render: 'Sequences released successfully!',
+                    type: 'success',
+                    isLoading: false,
+                    autoClose: 4000,
+                });
+            },
+            onError: (error: unknown, _variables: unknown, context: { toastId: string | number } | undefined) => {
+                if (context?.toastId) {
+                    toast.update(context.toastId, {
+                        render: approveProcessedDataErrorMessage(error),
+                        type: 'error',
+                        isLoading: false,
+                        autoClose: false,
+                    });
+                } else {
+                    openErrorFeedback(approveProcessedDataErrorMessage(error));
+                }
+            },
         },
     );
 
