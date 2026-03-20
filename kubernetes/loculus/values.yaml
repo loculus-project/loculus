@@ -1934,7 +1934,7 @@ defaultOrganisms:
             function: is_variant
             args:
               mu: 0.008
-            inputs: {input: "nextclade.totalSubstitutions"} 
+            inputs: {input: "nextclade.totalSubstitutions"}
         - name: variant_S
           isSequenceFilter: true
           header: "Clade & Lineage"
@@ -1953,7 +1953,7 @@ defaultOrganisms:
             function: is_variant
             args:
               mu: 0.004
-            inputs: {input: "nextclade.totalSubstitutions"} 
+            inputs: {input: "nextclade.totalSubstitutions"}
       website:
         <<: *website
         tableColumns:
