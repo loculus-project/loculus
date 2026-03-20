@@ -72,7 +72,7 @@ export function useSubmissionOperations(
                 return { toastId };
             },
             onSuccess: (data, _variables, context) => {
-                useGetSequences.refetch();
+                void useGetSequences.refetch();
                 const { toastId } = context as { toastId: string | number };
                 const isBatchRelease = data.length > 1;
                 toast.update(toastId, {
