@@ -161,10 +161,7 @@ type NucleotideSequenceTabsProps = {
 };
 
 const getCurrentSegment = (segments: SegmentInfo[], sequenceType: SequenceType): SegmentInfo => {
-    if (isUnalignedSequence(sequenceType) || isAlignedSequence(sequenceType)) {
-        return segments.find((s) => s.name === sequenceType.name.name) ?? segments[0];
-    }
-    return segments[0];
+    return segments.find((s) => s.name === sequenceType.name.name) ?? segments[0];
 };
 
 const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
@@ -193,7 +190,7 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
         <BoxWithTabsTab
             isActive={isActive}
             onClick={() => {
-                if (!isActive) setType(unalignedSequenceSegment(getCurrentSegment(segments, sequenceType)));
+                setType(unalignedSequenceSegment(getCurrentSegment(segments, sequenceType)));
                 setActiveTab('unaligned');
             }}
             label='Nucleotide sequences'
@@ -252,12 +249,10 @@ const SegmentDropdown: FC<SegmentDropdownProps> = ({ segments, sequenceType, set
                 className='select select-bordered w-full max-w-xs'
                 value={currentSegmentName}
                 onChange={(e) => {
-                    const segment = segments.find((s) => s.name === e.target.value);
-                    if (segment !== undefined) {
-                        setType(
-                            mode === 'unaligned' ? unalignedSequenceSegment(segment) : alignedSequenceSegment(segment),
-                        );
-                    }
+                    const segment = segments.find((s) => s.name === e.target.value)!;
+                    setType(
+                        mode === 'unaligned' ? unalignedSequenceSegment(segment) : alignedSequenceSegment(segment),
+                    );
                 }}
             >
                 {segments.map((segment) => (
@@ -286,11 +281,8 @@ const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) =
                 className='select select-bordered w-full max-w-xs'
                 value={selectedGene}
                 onChange={(e) => {
-                    const name = e.target.value;
-                    const gene = genes.find((gene) => gene.name === name);
-                    if (gene !== undefined) {
-                        setType(geneSequence(gene));
-                    }
+                    const gene = genes.find((gene) => gene.name === e.target.value)!;
+                    setType(geneSequence(gene));
                 }}
             >
                 <option value='' disabled>
