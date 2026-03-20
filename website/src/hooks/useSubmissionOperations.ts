@@ -74,7 +74,7 @@ export function useSubmissionOperations(
             onSuccess: (_data: unknown, _variables: unknown, context: { toastId: string | number }) => {
                 useGetSequences.refetch();
                 toast.update(context.toastId, {
-                    render: '🎉 All sequences have been released! They are now publicly available.',
+                    render: '🎉 All sequences have been released successfully!',
                     type: 'success',
                     isLoading: false,
                     autoClose: false,
