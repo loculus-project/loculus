@@ -101,6 +101,7 @@ class Config(BaseModel):
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
 
     organism: str = "mpox"
+    max_sequences_per_entry: int | None = None
     segments: list[Segment] = Field(default_factory=list)
     processing_spec: dict[str, ProcessingSpec] = Field(default_factory=dict)
     processing_order: tuple[str, ...] = ()

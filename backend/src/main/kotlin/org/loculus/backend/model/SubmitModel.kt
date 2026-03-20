@@ -256,15 +256,11 @@ class SubmitModel(
                 "from $submissionParams.submitter with UploadId $uploadId"
         }
         val now = dateProvider.getCurrentDateTime()
-        val maxSequencesPerEntry = backendConfig.getInstanceConfig(submissionParams.organism)
-            .schema
-            .submissionDataTypes
-            .maxSequencesPerEntry
 
         try {
             when (submissionParams) {
                 is SubmissionParams.OriginalSubmissionParams -> {
-                    metadataEntryStreamAsSequence(metadataStream, maxSequencesPerEntry)
+                    metadataEntryStreamAsSequence(metadataStream)
                         .chunked(batchSize)
                         .forEach { batch ->
                             uploadDatabaseService.batchInsertMetadataInAuxTable(
@@ -280,7 +276,7 @@ class SubmitModel(
                 }
 
                 is SubmissionParams.RevisionSubmissionParams -> {
-                    revisionEntryStreamAsSequence(metadataStream, maxSequencesPerEntry)
+                    revisionEntryStreamAsSequence(metadataStream)
                         .chunked(batchSize)
                         .forEach { batch ->
                             uploadDatabaseService.batchInsertRevisedMetadataInAuxTable(

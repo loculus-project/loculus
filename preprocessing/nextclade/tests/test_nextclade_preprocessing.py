@@ -1196,6 +1196,86 @@ def test_preprocessing_multi_segment_none_requirement(test_case_def: Case):
     )
 
 
+def test_max_sequences_per_entry_rejects_exceeding_limit() -> None:
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.max_sequences_per_entry = 1
+
+    sequence_entry_data = UnprocessedEntry(
+        accessionVersion="LOC_01.1",
+        data=UnprocessedData(
+            group_id=2,
+            submitter="test_submitter",
+            submissionId="test_submission_id",
+            submittedAt=ts_from_ymd(2021, 12, 15),
+            metadata={},
+            unalignedNucleotideSequences={
+                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            },
+        ),
+    )
+
+    result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
+    processed_entry = result[0].processed_entry
+
+    max_seq_errors = [e for e in processed_entry.errors if "maximum allowed" in e.message]
+    assert len(max_seq_errors) == 1
+    assert "2 sequences" in max_seq_errors[0].message
+    assert "maximum allowed number of sequences per entry is 1" in max_seq_errors[0].message
+
+
+def test_max_sequences_per_entry_allows_within_limit() -> None:
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.max_sequences_per_entry = 3
+
+    sequence_entry_data = UnprocessedEntry(
+        accessionVersion="LOC_01.1",
+        data=UnprocessedData(
+            group_id=2,
+            submitter="test_submitter",
+            submissionId="test_submission_id",
+            submittedAt=ts_from_ymd(2021, 12, 15),
+            metadata={},
+            unalignedNucleotideSequences={
+                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            },
+        ),
+    )
+
+    result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
+    processed_entry = result[0].processed_entry
+
+    max_seq_errors = [e for e in processed_entry.errors if "maximum allowed" in e.message]
+    assert len(max_seq_errors) == 0
+
+
+def test_max_sequences_per_entry_not_set_allows_any() -> None:
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.max_sequences_per_entry = None
+
+    sequence_entry_data = UnprocessedEntry(
+        accessionVersion="LOC_01.1",
+        data=UnprocessedData(
+            group_id=2,
+            submitter="test_submitter",
+            submissionId="test_submission_id",
+            submittedAt=ts_from_ymd(2021, 12, 15),
+            metadata={},
+            unalignedNucleotideSequences={
+                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            },
+        ),
+    )
+
+    result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
+    processed_entry = result[0].processed_entry
+
+    max_seq_errors = [e for e in processed_entry.errors if "maximum allowed" in e.message]
+    assert len(max_seq_errors) == 0
+
+
 def test_preprocessing_without_metadata() -> None:
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
     sequence_entry_data = UnprocessedEntry(

@@ -591,6 +591,29 @@ def processed_entry_with_errors(id) -> SubmissionData:
     )
 
 
+def check_max_sequences_per_entry(
+    accession_version: AccessionVersion,
+    num_sequences: int,
+    config: Config,
+) -> list[ProcessingAnnotation]:
+    """Check if the number of sequences exceeds the configured maximum per entry."""
+    if (
+        config.max_sequences_per_entry is not None
+        and num_sequences > config.max_sequences_per_entry
+    ):
+        return [
+            ProcessingAnnotation.from_single(
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                message=(
+                    f"Entry has {num_sequences} sequences but the maximum allowed "
+                    f"number of sequences per entry is {config.max_sequences_per_entry}."
+                ),
+            )
+        ]
+    return []
+
+
 def process_all(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> Sequence[SubmissionData]:
@@ -615,6 +638,14 @@ def process_all(
                 logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
                 processed_single = processed_entry_with_errors(entry.accessionVersion)
             processed_results.append(processed_single)
+
+    for submission_data in processed_results:
+        entry = submission_data.processed_entry
+        num_sequences = len(entry.data.unalignedNucleotideSequences)
+        max_seq_errors = check_max_sequences_per_entry(
+            f"{entry.accession}.{entry.version}", num_sequences, config
+        )
+        entry.errors.extend(max_seq_errors)
 
     return processed_results
 
