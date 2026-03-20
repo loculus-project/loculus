@@ -1,0 +1,14 @@
+{{- if not .Values.disableTaxonomyService }}
+{{- $testconfig := .Values.testconfig | default false }}
+{{- $taxonomyHost := $testconfig | ternary "127.0.0.1" "0.0.0.0" }}
+{{- $taxonomyDbPath := .Values.taxonomyService.taxonomyDbPath | default "/opt/app/ncbi_taxonomy_latest.sqlite" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-taxonomy-service-config
+data:
+  config.yaml: |
+    tax_service_host: {{ $taxonomyHost }}
+    tax_db_path: {{ $taxonomyDbPath }}
+{{- end }}

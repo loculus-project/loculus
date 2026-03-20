@@ -1,0 +1,12 @@
+name: loculus-taxonomy-service
+channels:
+  - conda-forge
+dependencies:
+  - fastapi=0.135.1
+  - pydantic=2.12.5
+  - pytest=9.0.2
+  - python=3.14.3
+  - requests=2.32.5
+  - uv=0.10.9
+  - uvicorn=0.41.0
+  - pyyaml=6.0.3
