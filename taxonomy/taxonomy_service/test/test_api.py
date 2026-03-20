@@ -66,7 +66,6 @@ class ApiTest(unittest.TestCase):
     def setUp(self) -> None:
         self.config: Config = get_config(config_file)
         app.dependency_overrides[get_db_connection] = get_test_db
-        print(client.app.__getstate__())
 
     def test_get_taxon_success(self):
         taxon = mock_taxa["Homo sapiens"]
