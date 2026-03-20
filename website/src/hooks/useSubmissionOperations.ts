@@ -74,10 +74,10 @@ export function useSubmissionOperations(
             onSuccess: (_data: unknown, _variables: unknown, context: { toastId: string | number }) => {
                 useGetSequences.refetch();
                 toast.update(context.toastId, {
-                    render: 'Sequences released successfully!',
+                    render: '🎉 All sequences have been released! They are now publicly available.',
                     type: 'success',
                     isLoading: false,
-                    autoClose: 4000,
+                    autoClose: false,
                 });
             },
             onError: (error: unknown, _variables: unknown, context: { toastId: string | number } | undefined) => {
