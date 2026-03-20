@@ -30,8 +30,9 @@ def fetch_by_common_name(
     """This would be a bit complicated as there are often multiple common names
     associtated with a single taxon.
 
-    We store these as a '; ' separated string for each taxon entry, so we'd have to figure out
-    how to do a substring search on that.
+    We store these as a '; ' separated string for each taxon entry, so we'd have to either:
+    - figure out how to do a substring search on that.
+    - add a tax_id: common_name table to the taxonomy DB (probably cleaner)
     """
     raise NotImplementedError
 
@@ -82,11 +83,14 @@ def fetch_common_name(
     cursor = db_conn.cursor()
     while tax_id > 1:  # tax_id 1 is the root
         taxon = cursor.execute("SELECT * FROM taxonomy WHERE tax_id = ?", (tax_id,)).fetchone()
-        if taxon is None:
-            raise HTTPException(status_code=404, detail=f"Taxon {tax_id} not found")
-        elif taxon["common_name"] is not None:
+        if taxon is None or taxon["depth"] == 0:
+            # for safety, break when depth is 0 (in case NCBI decide at some
+            # point that the root should no longer be 1)
+            break
+        if taxon["common_name"] is not None:
             return dict(taxon)
         tax_id = taxon["parent_id"]
+
     return None
 
 
