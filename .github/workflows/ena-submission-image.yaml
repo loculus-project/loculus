@@ -55,7 +55,7 @@ jobs:
       - name: Generate files hash
         id: files-hash
         run: |
-          DIR_HASH=$(echo -n ${{ hashFiles('ena-submission/**', '.github/workflows/ena-submission-image.yml') }})
+          DIR_HASH=$(echo -n ${{ hashFiles('ena-submission/**', '.github/workflows/ena-submission-image.yaml') }})
           echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}" >> $GITHUB_ENV
       - name: Setup Docker metadata
         id: dockerMetadata

@@ -10,9 +10,9 @@ A nucleotide mutation has the format `<position><base>` or `<base_ref><position>
 
 Insertions can be searched for in the same manner, they just need to have `ins_` appended to the start of the mutation. Example `ins_10462:A`.
 
-### Amino acid mutations and insertions
+### Amino acid substitutions and insertions
 
-An amino acid mutation has the format `<gene>:<position><base>` of `<gene>:<base_ref><position><base>`. A `<base>` can be one of the 20 amino acid codes. It can also be `-` for deletion and `X` for unknown. Example: `E:57Q`.
+An amino acid substitution has the format `<gene>:<position><base>` of `<gene>:<base_ref><position><base>`. A `<base>` can be one of the 20 amino acid codes. It can also be `-` for deletion and `X` for unknown. Example: `E:57Q`.
 
 Insertions can be searched for in the same manner, they just need to have `ins_` appended to the start of the mutation. Example `ins_NS4B:31:N`.
 

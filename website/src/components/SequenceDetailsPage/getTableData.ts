@@ -3,12 +3,14 @@ import { err, ok, Result } from 'neverthrow';
 import type { TableDataEntry } from './types.js';
 import { type LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type {
-    Metadata,
-    MutationBadgeData,
-    Schema,
-    SegmentedMutationStrings,
-    SegmentedMutations,
+import {
+    DEFAULT_AA_MUTATION_DETAILS_HEADER,
+    DEFAULT_NUC_MUTATION_DETAILS_HEADER,
+    type Metadata,
+    type MutationBadgeData,
+    type Schema,
+    type SegmentedMutationStrings,
+    type SegmentedMutations,
 } from '../../types/config.ts';
 import {
     type Details,
@@ -127,7 +129,7 @@ function mutationDetails(
             label: 'Substitutions',
             name: 'nucleotideSubstitutions',
             value: '',
-            header: 'Nucleotide mutations',
+            header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
             customDisplay: {
                 type: 'badge',
                 badge: substitutionsMap(nucleotideMutations, referenceGenomesInfo, true),
@@ -138,7 +140,7 @@ function mutationDetails(
             label: 'Deletions',
             name: 'nucleotideDeletions',
             value: '',
-            header: 'Nucleotide mutations',
+            header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
             customDisplay: {
                 type: 'list',
                 list: deletionsMap(nucleotideMutations, referenceGenomesInfo, true),
@@ -149,7 +151,7 @@ function mutationDetails(
             label: 'Insertions',
             name: 'nucleotideInsertions',
             value: '',
-            header: 'Nucleotide mutations',
+            header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
             customDisplay: {
                 type: 'list',
                 list: insertionsMap(nucleotideInsertions, referenceGenomesInfo, true),
@@ -160,7 +162,7 @@ function mutationDetails(
             label: 'Substitutions',
             name: 'aminoAcidSubstitutions',
             value: '',
-            header: 'Amino acid mutations',
+            header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
             customDisplay: {
                 type: 'badge',
                 badge: substitutionsMap(aminoAcidMutations, referenceGenomesInfo),
@@ -171,7 +173,7 @@ function mutationDetails(
             label: 'Deletions',
             name: 'aminoAcidDeletions',
             value: '',
-            header: 'Amino acid mutations',
+            header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
             customDisplay: {
                 type: 'list',
                 list: deletionsMap(aminoAcidMutations, referenceGenomesInfo),
@@ -182,7 +184,7 @@ function mutationDetails(
             label: 'Insertions',
             name: 'aminoAcidInsertions',
             value: '',
-            header: 'Amino acid mutations',
+            header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
             customDisplay: {
                 type: 'list',
                 list: insertionsMap(aminoAcidInsertions, referenceGenomesInfo),

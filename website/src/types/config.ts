@@ -4,6 +4,8 @@ import { mutationProportionCount, orderDirection } from './lapis.ts';
 import { referenceGenomesSchema } from './referencesGenomes.ts';
 
 export const FASTA_IDS_SEPARATOR = ' ';
+export const DEFAULT_NUC_MUTATION_DETAILS_HEADER = 'Nucleotide mutations';
+export const DEFAULT_AA_MUTATION_DETAILS_HEADER = 'Amino acid substitutions';
 
 // These metadata types need to be kept in sync with the backend config class `MetadataType` in Config.kt
 export const metadataPossibleTypes = z.enum([
