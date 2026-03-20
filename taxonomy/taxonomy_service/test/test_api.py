@@ -65,8 +65,8 @@ def get_test_db():
 class ApiTest(unittest.TestCase):
     def setUp(self) -> None:
         self.config: Config = get_config(config_file)
-        if self.config.tax_db_path == ":memory:" or self.config.tax_db_path is None:
-            app.dependency_overrides[get_db_connection] = get_test_db
+        app.dependency_overrides[get_db_connection] = get_test_db
+        print(client.app.__getstate__())
 
     def test_get_taxon_success(self):
         taxon = mock_taxa["Homo sapiens"]
@@ -78,7 +78,7 @@ class ApiTest(unittest.TestCase):
         response = client.get(f"/taxa/{mock_missing_taxon}")
         assert response.status_code == codes.not_found
 
-    def test_query_taxon_succes(self):
+    def test_query_taxon_success(self):
         taxon = mock_taxa["Homo sapiens"]
         response = client.get(f"/taxa?name={taxon['scientific_name']}")
         assert response.status_code == codes.ok
