@@ -71,14 +71,11 @@ export function useSubmissionOperations(
                 const toastId = toast.loading('Releasing sequences...');
                 return { toastId };
             },
-            onSuccess: (
-                _data: unknown,
-                variables: { accessionVersionsFilter?: unknown },
-                context: { toastId: string | number },
-            ) => {
+            onSuccess: (_data, variables, context) => {
                 useGetSequences.refetch();
+                const { toastId } = context as { toastId: string | number };
                 const isSingleRelease = variables.accessionVersionsFilter != null;
-                toast.update(context.toastId, {
+                toast.update(toastId, {
                     render: isSingleRelease
                         ? 'Sequence released successfully.'
                         : '🎉 All sequences have been released! They are now publicly available.',
@@ -87,9 +84,10 @@ export function useSubmissionOperations(
                     autoClose: isSingleRelease ? 4000 : false,
                 });
             },
-            onError: (error: unknown, _variables: unknown, context: { toastId: string | number } | undefined) => {
-                if (context?.toastId) {
-                    toast.update(context.toastId, {
+            onError: (error, _variables, context) => {
+                const ctx = context as { toastId: string | number } | undefined;
+                if (ctx?.toastId) {
+                    toast.update(ctx.toastId, {
                         render: approveProcessedDataErrorMessage(error),
                         type: 'error',
                         isLoading: false,
