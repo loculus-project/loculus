@@ -77,7 +77,7 @@ export function useSubmissionOperations(
                 const isBatchRelease = data.length > 1;
                 toast.update(toastId, {
                     render: isBatchRelease
-                        ? '🎉 All sequences have been released! They are now publicly available.'
+                        ? '🎉 All sequences have been released successfully!'
                         : 'Sequence released successfully.',
                     type: 'success',
                     isLoading: false,
