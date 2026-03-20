@@ -2014,14 +2014,39 @@ defaultOrganisms:
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
-        - name: reference
+        - name: variant
           isSequenceFilter: true
-          displayName: Closest Reference
+          perSegment: true
+          header: "Clade & Lineage"
+          oneHeader: true
+          displayName: "Variant"
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          customDisplay:
+            type: variantReference
+            displayGroup: reference
+            label: Closest reference
+          preprocessing:
+            function: is_above_threshold
+            args:
+              threshold: 1000
+            inputs: {input: "nextclade.totalSubstitutions"} #custom nextclade dataset does not have private mutations, so using total substitutions as a proxy for distance from reference
+        - name: reference
+          oneHeader: true
+          header: "Clade & Lineage"
+          isSequenceFilter: true
+          displayName: Closest reference
+          customDisplay:
+            type: variantReference
+            displayGroup: reference
+            label: Closest reference
           noInput: true
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
-          hideOnSequenceDetailsPage: true
           perSegment: true
           preprocessing:
             inputs: {input: ASSIGNED_REFERENCE}
