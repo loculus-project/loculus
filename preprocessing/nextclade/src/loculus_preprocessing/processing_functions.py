@@ -1195,6 +1195,119 @@ class ProcessingFunctions:
         return ProcessingResult(datum=(input > threshold), warnings=[], errors=[])
 
     @staticmethod
+    def is_variant(
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    ) -> ProcessingResult:
+        """Flag if number of mutations is above mutation rate (specified in args) times length"""
+        if "mu" not in args:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"Field {output_field} is missing mu argument."
+                            " Please report this error to the administrator."
+                        ),
+                    )
+                ],
+            )
+        length_datum = input_data["length"]
+        num_mutations_datum = input_data["numMutations"]
+        if not length_datum or not num_mutations_datum:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+        try:
+            mu = float(args["mu"])  # type: ignore
+            length = float(length_datum)
+            threshold = mu * length
+            is_above_threshold_result = ProcessingFunctions.is_above_threshold(
+                input_data={"input": num_mutations_datum},
+                output_field=output_field,
+                input_fields=input_fields,
+                args={"threshold": threshold},
+            )
+        except (ValueError, TypeError):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(f"Field {output_field} has non-numeric threshold value."),
+                    )
+                ],
+            )
+        return ProcessingResult(
+            datum=is_above_threshold_result.datum,
+            warnings=is_above_threshold_result.warnings,
+            errors=is_above_threshold_result.errors,
+        )
+
+    @staticmethod
+    def assign_custom_lineage(
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    ) -> ProcessingResult:
+        """Assign flu lineage based on seg4 and seg6"""
+        logger.debug(
+            f"Starting custom lineage assignment with input_data: {input_data} and args: {args}"
+        )
+        if not input_data:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+        ha_subtype = input_data.get("subtype_seg4")
+        na_subtype = input_data.get("subtype_seg6")
+        references: dict[str, str | None] = {}
+        variant: dict[str, bool | None] = {}
+        for i in range(1, 9):
+            segment = f"seg{i}"
+            reference_field = f"reference_seg{i}"
+            variant_field = f"variant_seg{i}"
+            if reference_field in input_data:
+                references[segment] = input_data.get(reference_field)
+                variant[segment] = (
+                    bool(input_data.get(variant_field)) if variant_field in input_data else None
+                )
+        try:
+            if not ha_subtype or not na_subtype:
+                return ProcessingResult(datum=None, warnings=[], errors=[])
+            lineage = f"{ha_subtype}{na_subtype}"
+            if references.get("seg4") == "h1n1pdm" and references.get("seg6") == "h1n1pdm":
+                lineage = "H1N1pdm"
+            logger.debug(
+                f"Determined preliminary lineage {lineage} based on segments seg4 and seg6"
+            )
+            if lineage in {"H1N1", "H3N2", "H2N2", "H1N1pdm"}:
+                logger.debug(
+                    f"Lineage {lineage} is a human lineage, checking for reassortment and variants"
+                )
+                # only assign human lineages
+                if len(set(references.values())) > 1:
+                    lineage += " reassortant"
+                if any(v for v in variant.values() if v):
+                    lineage += " (variant)"
+                return ProcessingResult(datum=lineage, warnings=[], errors=[])
+        except (ValueError, TypeError):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"Internal error processing custom lineage for field {output_field}."
+                        ),
+                    )
+                ],
+            )
+        return ProcessingResult(datum=None, warnings=[], errors=[])
+
+    @staticmethod
     def build_display_name(  # noqa: C901
         input_data: InputMetadata,
         output_field: str,
