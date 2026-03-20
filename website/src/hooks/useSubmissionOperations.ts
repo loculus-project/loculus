@@ -1,6 +1,7 @@
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
 
 import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
@@ -66,7 +67,10 @@ export function useSubmissionOperations(
     const useApproveProcessedData = hooks.useApproveProcessedData(
         { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
-            onSuccess: () => useGetSequences.refetch(),
+            onSuccess: () => {
+                useGetSequences.refetch();
+                toast.success('Sequences released successfully!', { autoClose: 4000 });
+            },
             onError: (error) => openErrorFeedback(approveProcessedDataErrorMessage(error)),
         },
     );
