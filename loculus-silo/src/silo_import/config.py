@@ -48,8 +48,8 @@ class ImporterConfig:
                 raise RuntimeError(str(exc)) from exc
 
         hard_refresh_interval = int(env.get("HARD_REFRESH_INTERVAL", "3600"))
-        poll_interval = int(env.get("SILO_IMPORT_POLL_INTERVAL_SECONDS", "30"))
-        silo_run_timeout = int(env.get("SILO_RUN_TIMEOUT_SECONDS", "3600"))
+        poll_interval = int(env.get("LOCULUS_SILO_IMPORT_POLL_INTERVAL_SECONDS", "30"))
+        silo_run_timeout = int(env.get("LOCULUS_SILO_RUN_TIMEOUT_SECONDS", "3600"))
         root_raw = env.get("ROOT_DIR")
         root_dir = Path(root_raw).resolve() if root_raw else Path("/")
         silo_binary = Path(env.get("PATH_TO_SILO_BINARY", "/usr/local/bin/silo"))
@@ -71,3 +71,9 @@ class ImporterConfig:
     @property
     def released_data_endpoint(self) -> str:
         return f"{self.backend_base_url}/get-released-data?compression=zstd"
+
+    def released_data_since_endpoint(self, released_since: str) -> str:
+        return (
+            f"{self.backend_base_url}/get-released-data"
+            f"?compression=zstd&releasedSince={released_since}"
+        )

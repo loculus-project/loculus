@@ -93,11 +93,11 @@ spec:
             - name: LINEAGE_DEFINITIONS
               value: {{ $defsBySystem | toJson | quote }}
             {{- end }}
-            - name: SILO_RUN_TIMEOUT_SECONDS
+            - name: LOCULUS_SILO_RUN_TIMEOUT_SECONDS
               value: {{ $.Values.siloImport.siloTimeoutSeconds | quote }}
             - name: HARD_REFRESH_INTERVAL
               value: {{ $.Values.siloImport.hardRefreshIntervalSeconds | quote }}
-            - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
+            - name: LOCULUS_SILO_IMPORT_POLL_INTERVAL_SECONDS
               value: {{ $.Values.siloImport.pollIntervalSeconds | quote }}
             - name: PATH_TO_SILO_BINARY
               value: "/usr/local/bin/silo"

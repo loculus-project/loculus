@@ -32,3 +32,30 @@ class SiloRunner:
         except subprocess.TimeoutExpired as e:
             msg = f"SILO preprocessing timed out after {timeout_seconds}s"
             raise TimeoutError(msg) from e
+
+    def run_append(self, append_file: Path, silo_directory: Path, timeout_seconds: int) -> None:
+        logger.info("Starting SILO append from %s into %s", append_file, silo_directory)
+        try:
+            result = subprocess.run(  # noqa: S603
+                [
+                    str(self._silo_binary),
+                    "append",
+                    "--append-file",
+                    str(append_file),
+                    "--silo-directory",
+                    str(silo_directory),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=timeout_seconds,
+                check=False,
+            )
+            if result.returncode != 0:
+                logger.error("SILO append stderr: %s", result.stderr)
+                logger.error("SILO append stdout: %s", result.stdout)
+                msg = f"SILO append failed with exit code {result.returncode}"
+                raise RuntimeError(msg)
+            logger.info("SILO append completed successfully")
+        except subprocess.TimeoutExpired as e:
+            msg = f"SILO append timed out after {timeout_seconds}s"
+            raise TimeoutError(msg) from e
