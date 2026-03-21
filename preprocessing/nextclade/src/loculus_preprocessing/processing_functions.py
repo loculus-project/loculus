@@ -1286,6 +1286,7 @@ class ProcessingFunctions:
                     "output_field",
                     ["segment_name"],
                 ).datum
+            logger.debug(f"Extracted subtypes: {extracted_subtypes} from references: {references}")
             if not ha_subtype or not na_subtype:
                 return ProcessingResult(datum=None, warnings=[], errors=[])
             lineage = f"{ha_subtype}{na_subtype}"
