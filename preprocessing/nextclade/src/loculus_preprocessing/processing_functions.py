@@ -1305,7 +1305,7 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def assign_custom_lineage(
+    def assign_custom_lineage(  # noqa: C901
         input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
     ) -> ProcessingResult:
         """Assign flu lineage based on seg4 and seg6"""
@@ -1317,6 +1317,7 @@ class ProcessingFunctions:
         ha_subtype = input_data.get("subtype_seg4")
         na_subtype = input_data.get("subtype_seg6")
         references: dict[str, str | None] = {}
+        extracted_subtypes: dict[str, str | None] = {}
         variant: dict[str, bool | None] = {}
         for i in range(1, 9):
             segment = f"seg{i}"
@@ -1328,10 +1329,27 @@ class ProcessingFunctions:
                     bool(input_data.get(variant_field)) if variant_field in input_data else None
                 )
         try:
+            for i in range(1, 9):
+                segment = f"seg{i}"
+                extracted_subtypes[segment] = ProcessingFunctions.call_function(  # type: ignore
+                    "extract_regex",
+                    {
+                        "pattern": args["pattern"],
+                        "uppercase": args["uppercase"],
+                        "capture_group": args["capture_group"],
+                    },
+                    {"regex_field": references.get(segment, "")},
+                    "output_field",
+                    ["segment_name"],
+                ).datum
+            logger.debug(f"Extracted subtypes: {extracted_subtypes} from references: {references}")
             if not ha_subtype or not na_subtype:
                 return ProcessingResult(datum=None, warnings=[], errors=[])
             lineage = f"{ha_subtype}{na_subtype}"
-            if references.get("seg4") == "h1n1pdm" and references.get("seg6") == "h1n1pdm":
+            if (
+                extracted_subtypes.get("seg4") == "H1N1PDM"
+                and extracted_subtypes.get("seg6") == "H1N1PDM"
+            ):
                 lineage = "H1N1pdm"
             logger.debug(
                 f"Determined preliminary lineage {lineage} based on segments seg4 and seg6"
@@ -1341,7 +1359,7 @@ class ProcessingFunctions:
                     f"Lineage {lineage} is a human lineage, checking for reassortment and variants"
                 )
                 # only assign human lineages
-                if len(set(references.values())) > 1:
+                if len(set(extracted_subtypes.values())) > 1:
                     lineage += " reassortant"
                 if any(v for v in variant.values() if v):
                     lineage += " (variant)"
