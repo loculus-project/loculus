@@ -1379,21 +1379,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           label: Length
         preprocessing:
           inputs: {input: nextclade.coverage}
-      - name: variant
-        isSequenceFilter: true
-        perSegment: true
-        header: "Alignment and QC metrics"
-        displayName: "Variant"
-        type: boolean
-        noInput: true
-        autocomplete: true
-        initiallyVisible: false
-        includeInDownloadsByDefault: false
-        preprocessing:
-          function: is_above_threshold
-          args:
-            threshold: 50
-          inputs: {input: "nextclade.privateNucMutations.totalPrivateSubstitutions"}
     website: &website
       tableColumns:
         - sampleCollectionDate
@@ -1548,6 +1533,21 @@ defaultOrganisms:
           includeInDownloadsByDefault: false
           preprocessing:
             inputs: {input: "nextclade.cladeFounderInfo.aaMutations.*.privateSubstitutions"}
+        - name: variant
+          isSequenceFilter: true
+          perSegment: true
+          header: "Alignment and QC metrics"
+          displayName: "Variant"
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          preprocessing:
+            function: is_variant
+            args:
+              mu: 0.002
+            inputs: {numMutations: "nextclade.privateNucMutations.totalPrivateSubstitutions", length: processed.length}
       website:
         <<: *website
         tableColumns:
@@ -2023,12 +2023,11 @@ defaultOrganisms:
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
-        - name: variant
+        - name: variant_L
           isSequenceFilter: true
-          perSegment: true
           header: "Clade & Lineage"
           oneHeader: true
-          displayName: "Variant"
+          displayName: "Variant L"
           type: boolean
           noInput: true
           autocomplete: true
@@ -2036,13 +2035,51 @@ defaultOrganisms:
           includeInDownloadsByDefault: false
           customDisplay:
             type: variantReference
-            displayGroup: reference
-            label: Closest reference
+            displayGroup: reference_L
+            label: Closest reference L
           preprocessing:
-            function: is_above_threshold
+            function: is_variant
             args:
-              threshold: 1000
-            inputs: {input: "nextclade.totalSubstitutions"} #custom nextclade dataset does not have private mutations, so using total substitutions as a proxy for distance from reference
+              mu: 0.004
+            inputs: {numMutations: "nextclade.totalSubstitutions", length: processed.length_L}
+        - name: variant_M
+          isSequenceFilter: true
+          header: "Clade & Lineage"
+          oneHeader: true
+          displayName: "Variant M"
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          customDisplay:
+            type: variantReference
+            displayGroup: reference_M
+            label: Closest reference M
+          preprocessing:
+            function: is_variant
+            args:
+              mu: 0.008
+            inputs: {numMutations: "nextclade.totalSubstitutions", length: processed.length_M}
+        - name: variant_S
+          isSequenceFilter: true
+          header: "Clade & Lineage"
+          oneHeader: true
+          displayName: "Variant S"
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          customDisplay:
+            type: variantReference
+            displayGroup: reference_S
+            label: Closest reference S
+          preprocessing:
+            function: is_variant
+            args:
+              mu: 0.004
+            inputs: {numMutations: "nextclade.totalSubstitutions", length: processed.length_S}
         - name: reference
           oneHeader: true
           header: "Clade & Lineage"
