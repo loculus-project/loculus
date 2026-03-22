@@ -116,6 +116,16 @@ const fetchRecordsMetadata = async (
     return metadataMap;
 };
 
+const SeqSetRecordsTableHeader: FC<{ title: string }> = ({ title }) => (
+    <th className='px-2 py-2 text-xs font-medium tracking-wider text-gray-500 uppercase text-left'>{title}</th>
+);
+
+const SeqSetRecordsTableCell: FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+    <td className='px-2 py-2 text-sm text-primary-900 truncate max-w-0' title={title}>
+        {children}
+    </td>
+);
+
 export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataProps> = ({
     seqSetRecords,
     clientConfig,
@@ -150,20 +160,18 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
     }, [seqSetRecords, sortByKey]);
 
     return (
-        <table className='table-fixed w-full'>
+        <table className='min-w-full text-left border-collapse'>
             <thead>
-                <tr>
-                    <th className='text-left font-medium w-1/6'>Accession</th>
-                    <th className='text-left font-medium w-1/4'>Organism</th>
-                    <th className='text-left font-medium w-1/6'>Context</th>
+                <tr className='border-b border-gray-400'>
+                    <SeqSetRecordsTableHeader title='Accession' />
+                    <SeqSetRecordsTableHeader title='Organism' />
+                    <SeqSetRecordsTableHeader title='Context' />
                     {fieldsToDisplay.map((fieldConfig) => (
-                        <th key={fieldConfig.field} className='text-left font-medium'>
-                            {fieldConfig.displayName}
-                        </th>
+                        <SeqSetRecordsTableHeader key={fieldConfig.field} title={fieldConfig.displayName} />
                     ))}
                 </tr>
             </thead>
-            <tbody>
+            <tbody className='bg-white'>
                 {sortedSeqRecords.map((seqSetRecord, index) => {
                     const metadata = metadataMap?.get(seqSetRecord.accession);
                     const handleRowClick = () => {
@@ -172,14 +180,13 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                     return (
                         <tr
                             key={`accessionData-${index}`}
-                            className='hover:bg-primary-100 border-gray-100 cursor-pointer'
+                            className='hover:bg-primary-100 border-b border-gray-200 cursor-pointer'
                             onClick={handleRowClick}
                         >
-                            <td className='text-left pr-4 truncate max-w-0' title={seqSetRecord.accession}>
+                            <SeqSetRecordsTableCell title={seqSetRecord.accession}>
                                 {seqSetRecord.accession}
-                            </td>
-                            <td
-                                className='text-left pr-4 truncate max-w-0'
+                            </SeqSetRecordsTableCell>
+                            <SeqSetRecordsTableCell
                                 title={
                                     metadata?.organism
                                         ? (organismDisplayNames[metadata.organism] ?? metadata.organism)
@@ -193,14 +200,13 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                                 ) : (
                                     'N/A'
                                 )}
-                            </td>
-                            <td className='text-left pr-4 truncate max-w-0'>
+                            </SeqSetRecordsTableCell>
+                            <SeqSetRecordsTableCell title={seqSetRecord.isFocal ? 'Focal' : 'Background'}>
                                 {seqSetRecord.isFocal ? 'Focal' : 'Background'}
-                            </td>
+                            </SeqSetRecordsTableCell>
                             {fieldsToDisplay.map((fieldConfig) => (
-                                <td
+                                <SeqSetRecordsTableCell
                                     key={fieldConfig.field}
-                                    className='text-left pr-4 truncate max-w-0'
                                     title={
                                         // eslint-disable-next-line @typescript-eslint/no-base-to-string
                                         String(metadata?.[fieldConfig.field] ?? '')
@@ -212,7 +218,7 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                                         // eslint-disable-next-line @typescript-eslint/no-base-to-string
                                         String(metadata?.[fieldConfig.field] ?? '')
                                     )}
-                                </td>
+                                </SeqSetRecordsTableCell>
                             ))}
                         </tr>
                     );

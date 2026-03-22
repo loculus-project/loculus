@@ -1,25 +1,15 @@
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { type FC, useState, useEffect } from 'react';
-import { Bar } from 'react-chartjs-2';
+import React from 'react';
 
 import type { CitedByResult } from '../../types/seqSetCitation';
+import { BarPlot } from '../common/BarPlot';
 
 type CitationPlotProps = {
     citedByData: CitedByResult;
+    responsive?: boolean;
+    description?: string;
 };
 
-export const CitationPlot: FC<CitationPlotProps> = ({ citedByData }) => {
-    const [isRegistered, setIsRegistered] = useState(false);
-
-    useEffect(() => {
-        ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-        setIsRegistered(true);
-    }, []);
-
-    if (!isRegistered) {
-        return null;
-    }
-
+export const CitationPlot: React.FC<CitationPlotProps> = ({ citedByData, responsive, description }) => {
     const emptyCitedByData = {
         years: [2020, 2021, 2022, 2023, 2024],
         citations: [0, 0, 0, 0, 0],
@@ -28,7 +18,7 @@ export const CitationPlot: FC<CitationPlotProps> = ({ citedByData }) => {
     const renderData = citedByData.years.length > 0 ? citedByData : emptyCitedByData;
 
     return (
-        <Bar
+        <BarPlot
             data={{
                 labels: renderData.years,
                 datasets: [
@@ -40,16 +30,7 @@ export const CitationPlot: FC<CitationPlotProps> = ({ citedByData }) => {
                 ],
             }}
             options={{
-                maintainAspectRatio: false,
-                responsive: false,
-                plugins: {
-                    title: {
-                        display: true,
-                    },
-                    legend: {
-                        display: false,
-                    },
-                },
+                responsive: responsive ?? true,
                 scales: {
                     y: {
                         suggestedMax: 10,
@@ -59,6 +40,7 @@ export const CitationPlot: FC<CitationPlotProps> = ({ citedByData }) => {
                     },
                 },
             }}
+            description={description}
         />
     );
 };
