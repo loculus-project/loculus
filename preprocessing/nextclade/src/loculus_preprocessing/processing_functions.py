@@ -1215,8 +1215,8 @@ class ProcessingFunctions:
                     )
                 ],
             )
-        length_datum = input_data["length"]
-        num_mutations_datum = input_data["numMutations"]
+        length_datum = input_data.get("length")
+        num_mutations_datum = input_data.get("numMutations")
         if not length_datum or not num_mutations_datum:
             return ProcessingResult(datum=None, warnings=[], errors=[])
         try:
@@ -1238,7 +1238,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=(f"Field {output_field} has non-numeric threshold value."),
+                        message=(f"Field {output_field} has non-numeric length or numMutations value."),
                     )
                 ],
             )
@@ -1307,7 +1307,7 @@ class ProcessingFunctions:
                     f"Lineage {lineage} is a human lineage, checking for reassortment and variants"
                 )
                 # only assign human lineages
-                if len(set(extracted_subtypes.values())) > 1:
+                if len({v for v in extracted_subtypes.values() if v is not None}) > 1:
                     lineage += " reassortant"
                 if any(v for v in variant.values() if v):
                     lineage += " (variant)"
