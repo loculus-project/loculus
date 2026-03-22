@@ -1,7 +1,5 @@
 # ruff: noqa: S101
-"""Tests for ProcessingFunctions.assign_custom_lineage."""
-
-import pytest
+"""Tests for ProcessingFunctions.assign_custom_lineage and is_variant."""
 
 from loculus_preprocessing.processing_functions import ProcessingFunctions
 
@@ -196,3 +194,64 @@ class TestMissingData:
     def test_both_subtypes_missing_returns_none():
         input_data = make_flu_input(ha_subtype=None, na_subtype=None)
         assert call(input_data) is None
+
+
+def call_is_variant(length, num_mutations, mu="0.01"):
+    return ProcessingFunctions.is_variant(
+        input_data={"length": length, "numMutations": num_mutations},
+        output_field="variant",
+        input_fields=["length", "numMutations"],
+        args={"mu": mu},
+    )
+
+
+class TestIsVariant:
+    @staticmethod
+    def test_above_threshold_is_true():
+        # 150 mutations, length 1000, mu=0.1 → threshold=100, 150>100 → True
+        result = call_is_variant(length="1000", num_mutations="150", mu="0.1")
+        assert result.datum is True
+        assert result.errors == []
+
+    @staticmethod
+    def test_below_threshold_is_false():
+        # 50 mutations, length 1000, mu=0.1 → threshold=100, 50<100 → False
+        result = call_is_variant(length="1000", num_mutations="50", mu="0.1")
+        assert result.datum is False
+        assert result.errors == []
+
+    @staticmethod
+    def test_exactly_at_threshold_is_false():
+        # 100 mutations, length 1000, mu=0.1 → threshold=100, 100 is not > 100 → False
+        result = call_is_variant(length="1000", num_mutations="100", mu="0.1")
+        assert result.datum is False
+
+    @staticmethod
+    def test_missing_length_returns_none():
+        result = call_is_variant(length=None, num_mutations="50")
+        assert result.datum is None
+        assert result.errors == []
+
+    @staticmethod
+    def test_missing_num_mutations_returns_none():
+        result = call_is_variant(length="1000", num_mutations=None)
+        assert result.datum is None
+        assert result.errors == []
+
+    @staticmethod
+    def test_missing_mu_arg_returns_error():
+        result = ProcessingFunctions.is_variant(
+            input_data={"length": "1000", "numMutations": "50"},
+            output_field="variant",
+            input_fields=["length", "numMutations"],
+            args={},
+        )
+        assert result.datum is None
+        assert len(result.errors) == 1
+        assert "missing mu argument" in result.errors[0].message
+
+    @staticmethod
+    def test_non_numeric_inputs_return_error():
+        result = call_is_variant(length="not_a_number", num_mutations="50")
+        assert result.datum is None
+        assert len(result.errors) == 1
