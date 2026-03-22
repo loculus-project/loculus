@@ -3,7 +3,7 @@
 
 from loculus_preprocessing.processing_functions import ProcessingFunctions
 
-ARGS = {
+ARGS: dict[str, list[str] | str | bool | int | float | None] = {
     "capture_group": "info",
     "pattern": "^(?:.*_)?(?P<info>[^_]+)$",
     "uppercase": True,
@@ -34,7 +34,7 @@ def make_flu_input(  # noqa: PLR0913, PLR0917
     return data
 
 
-def call(input_data: dict) -> str | None:
+def assign_custom_lineage(input_data: dict) -> str | int | float | bool | None:
     return ProcessingFunctions.assign_custom_lineage(
         input_data=input_data,
         output_field="lineage",
@@ -56,7 +56,7 @@ class TestH1N1pdm:
             seg6_ref="n1_h1n1pdm",
             other_ref="h1n1pdm",
         )
-        assert call(input_data) == "H1N1pdm"
+        assert assign_custom_lineage(input_data) == "H1N1pdm"
 
     @staticmethod
     def test_h1n1pdm_with_variant_flag():
@@ -68,7 +68,7 @@ class TestH1N1pdm:
             other_ref="h1n1pdm",
             variants={"seg4": True},
         )
-        assert call(input_data) == "H1N1pdm (variant)"
+        assert assign_custom_lineage(input_data) == "H1N1pdm (variant)"
 
     @staticmethod
     def test_h1n1pdm_reassortant_when_one_segment_differs():
@@ -82,7 +82,7 @@ class TestH1N1pdm:
         )
         # Override seg2 to a different lineage
         input_data["reference_seg2"] = "h3n2"
-        assert call(input_data) == "H1N1pdm reassortant"
+        assert assign_custom_lineage(input_data) == "H1N1pdm reassortant"
 
 
 class TestH1N1Seasonal:
@@ -97,7 +97,7 @@ class TestH1N1Seasonal:
             seg6_ref="h1n1",
             other_ref="h1n1",
         )
-        assert call(input_data) == "H1N1"
+        assert assign_custom_lineage(input_data) == "H1N1"
 
     @staticmethod
     def test_h1n1_seasonal_reassortant():
@@ -109,7 +109,7 @@ class TestH1N1Seasonal:
             other_ref="h1n1",
         )
         input_data["reference_seg3"] = "h3n2"
-        assert call(input_data) == "H1N1 reassortant"
+        assert assign_custom_lineage(input_data) == "H1N1 reassortant"
 
     @staticmethod
     def test_h1n1_seasonal_with_variant():
@@ -121,7 +121,7 @@ class TestH1N1Seasonal:
             other_ref="h1n1",
             variants={"seg1": True},
         )
-        assert call(input_data) == "H1N1 (variant)"
+        assert assign_custom_lineage(input_data) == "H1N1 (variant)"
 
 
 class TestH3N2:
@@ -134,7 +134,7 @@ class TestH3N2:
             seg6_ref="n2_h3n2",
             other_ref="h3n2",
         )
-        assert call(input_data) == "H3N2"
+        assert assign_custom_lineage(input_data) == "H3N2"
 
     @staticmethod
     def test_h3n2_reassortant():
@@ -146,7 +146,7 @@ class TestH3N2:
             other_ref="h3n2",
         )
         input_data["reference_seg1"] = "h1n1pdm"
-        assert call(input_data) == "H3N2 reassortant"
+        assert assign_custom_lineage(input_data) == "H3N2 reassortant"
 
 
 class TestNonHumanLineage:
@@ -161,7 +161,7 @@ class TestNonHumanLineage:
             seg6_ref="n1_h5n1",
             other_ref="h5n1",
         )
-        assert call(input_data) is None
+        assert assign_custom_lineage(input_data) is None
 
     @staticmethod
     def test_h7n9_returns_none():
@@ -172,31 +172,31 @@ class TestNonHumanLineage:
             seg6_ref="n9_h7n9",
             other_ref="h7n9",
         )
-        assert call(input_data) is None
+        assert assign_custom_lineage(input_data) is None
 
 
 class TestMissingData:
     @staticmethod
     def test_empty_input_returns_none():
-        assert call({}) is None
+        assert assign_custom_lineage({}) is None
 
     @staticmethod
     def test_missing_ha_subtype_returns_none():
         input_data = make_flu_input(ha_subtype=None, na_subtype="N1")
-        assert call(input_data) is None
+        assert assign_custom_lineage(input_data) is None
 
     @staticmethod
     def test_missing_na_subtype_returns_none():
         input_data = make_flu_input(ha_subtype="H1", na_subtype=None)
-        assert call(input_data) is None
+        assert assign_custom_lineage(input_data) is None
 
     @staticmethod
     def test_both_subtypes_missing_returns_none():
         input_data = make_flu_input(ha_subtype=None, na_subtype=None)
-        assert call(input_data) is None
+        assert assign_custom_lineage(input_data) is None
 
 
-def call_is_variant(length, num_mutations, mu="0.01"):
+def assign_custom_lineage_is_variant(length, num_mutations, mu="0.01"):
     return ProcessingFunctions.is_variant(
         input_data={"length": length, "numMutations": num_mutations},
         output_field="variant",
@@ -209,32 +209,32 @@ class TestIsVariant:
     @staticmethod
     def test_above_threshold_is_true():
         # 150 mutations, length 1000, mu=0.1 → threshold=100, 150>100 → True
-        result = call_is_variant(length="1000", num_mutations="150", mu="0.1")
+        result = assign_custom_lineage_is_variant(length="1000", num_mutations="150", mu="0.1")
         assert result.datum is True
         assert result.errors == []
 
     @staticmethod
     def test_below_threshold_is_false():
         # 50 mutations, length 1000, mu=0.1 → threshold=100, 50<100 → False
-        result = call_is_variant(length="1000", num_mutations="50", mu="0.1")
+        result = assign_custom_lineage_is_variant(length="1000", num_mutations="50", mu="0.1")
         assert result.datum is False
         assert result.errors == []
 
     @staticmethod
     def test_exactly_at_threshold_is_false():
         # 100 mutations, length 1000, mu=0.1 → threshold=100, 100 is not > 100 → False
-        result = call_is_variant(length="1000", num_mutations="100", mu="0.1")
+        result = assign_custom_lineage_is_variant(length="1000", num_mutations="100", mu="0.1")
         assert result.datum is False
 
     @staticmethod
     def test_missing_length_returns_none():
-        result = call_is_variant(length=None, num_mutations="50")
+        result = assign_custom_lineage_is_variant(length=None, num_mutations="50")
         assert result.datum is None
         assert result.errors == []
 
     @staticmethod
     def test_missing_num_mutations_returns_none():
-        result = call_is_variant(length="1000", num_mutations=None)
+        result = assign_custom_lineage_is_variant(length="1000", num_mutations=None)
         assert result.datum is None
         assert result.errors == []
 
@@ -252,6 +252,6 @@ class TestIsVariant:
 
     @staticmethod
     def test_non_numeric_inputs_return_error():
-        result = call_is_variant(length="not_a_number", num_mutations="50")
+        result = assign_custom_lineage_is_variant(length="not_a_number", num_mutations="50")
         assert result.datum is None
         assert len(result.errors) == 1
