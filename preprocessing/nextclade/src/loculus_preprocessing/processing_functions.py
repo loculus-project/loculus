@@ -1238,7 +1238,9 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=(f"Field {output_field} has non-numeric length or numMutations value."),
+                        message=(
+                            f"Field {output_field} has non-numeric length or numMutations value."
+                        ),
                     )
                 ],
             )
