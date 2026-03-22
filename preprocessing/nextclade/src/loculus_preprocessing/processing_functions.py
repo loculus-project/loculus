@@ -1308,7 +1308,11 @@ class ProcessingFunctions:
     def assign_custom_lineage(  # noqa: C901
         input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
     ) -> ProcessingResult:
-        """Assign flu lineage based on seg4 and seg6"""
+        """
+        Assign flu lineage based on seg4 and seg6.
+        Add reassortant flag if subtypes from different lineages are detected for other segments,
+        add and variant flag if any segment is a variant.
+        """
         logger.debug(
             f"Starting custom lineage assignment with input_data: {input_data} and args: {args}"
         )
