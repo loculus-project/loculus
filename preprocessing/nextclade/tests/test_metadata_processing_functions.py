@@ -1033,7 +1033,7 @@ def test_concatenate() -> None:
     assert res_fallback_explicit_null.datum == "0/unknown/version.1/unknown"
 
 
-def test_display_name_construction() -> None:
+def test_display_name_construction() -> None:  # noqa: PLR0915
     submission_id = "mySample"
     submission_id_formatted = "hDENV1/Germany/myExtractedSample/2025"
     submission_id_formatted_unexpected = "hDENV1/myExtractedSample/2025"
