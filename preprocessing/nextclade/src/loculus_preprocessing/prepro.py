@@ -501,6 +501,12 @@ def process_single(
     """Process a single sequence per config"""
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
+    max_seq_errors = check_max_sequences_per_entry(
+        accession_version,
+        len(unprocessed.unalignedNucleotideSequences),
+        config,
+    )
+
     alignment_errors, alignment_warnings = alignment_errors_warnings(
         unprocessed,
         config,
@@ -522,7 +528,15 @@ def process_single(
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
             sequenceNameToFastaId=unprocessed.sequenceNameToFastaId,
         ),
-        errors=list(set(unprocessed.errors + iupac_errors + alignment_errors + metadata_errors)),
+        errors=list(
+            set(
+                unprocessed.errors
+                + iupac_errors
+                + max_seq_errors
+                + alignment_errors
+                + metadata_errors
+            )
+        ),
         warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
     )
 
@@ -546,6 +560,11 @@ def process_single_unaligned(
     )
     unprocessed.unalignedNucleotideSequences = segment_assignment.unalignedNucleotideSequences
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
+    max_seq_errors = check_max_sequences_per_entry(
+        accession_version,
+        len(unprocessed.unalignedNucleotideSequences),
+        config,
+    )
 
     output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
         accession_version, unprocessed, config
@@ -555,7 +574,9 @@ def process_single_unaligned(
         accession_version=accession_version,
         unprocessed=unprocessed,
         output_metadata=output_metadata,
-        errors=list(set(iupac_errors + metadata_errors + segment_assignment.alert.errors)),
+        errors=list(
+            set(iupac_errors + max_seq_errors + metadata_errors + segment_assignment.alert.errors)
+        ),
         warnings=list(set(metadata_warnings)),
         sequenceNameToFastaId=segment_assignment.sequenceNameToFastaId,
     )
@@ -638,14 +659,6 @@ def process_all(
                 logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
                 processed_single = processed_entry_with_errors(entry.accessionVersion)
             processed_results.append(processed_single)
-
-    for submission_data in processed_results:
-        entry = submission_data.processed_entry
-        num_sequences = len(entry.data.unalignedNucleotideSequences)
-        max_seq_errors = check_max_sequences_per_entry(
-            f"{entry.accession}.{entry.version}", num_sequences, config
-        )
-        entry.errors.extend(max_seq_errors)
 
     return processed_results
 
