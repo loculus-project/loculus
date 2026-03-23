@@ -17,6 +17,21 @@ This container downloads the DB from S3, so the service has access to it directl
 | `GET /taxa/{tax_id}` | Look up a taxon by NCBI taxon ID |
 | `GET /taxa/{tax_id}/common_name` | if `tax_id` has a common name, return the taxon itself. If it has no common name, return the nearest ancestor with a common name  |
 
+## Updating the NCBI database
+As mentioned above, this image relies on a taxonomy database created by [`ncbi_tax_download`](../ncbi_tax_download/README.md) module.
+The databases that are created by this module are versioned using the creation date: ncbi_taxonomy_<date>.sqlite
+The DB version that's downloaded is specified by setting `CURRENT_DB_VERSION` in the [Dockerfile](./Dockerfile).
+The download is verified by comparing the sha256 hash of the download with the hash in [ncbi_taxonomy_digest.sha256](./ncbi_taxonomy_digest.sha256).
+Thus, there are two steps to updating the taxonomy DB used by this service:
+
+1) Update the DB version pointed to by `CURRENT_DB_VERSION` in the Dockerfile (important: **don't** include the file exstension)
+2) Update the hash in [ncbi_taxonomy_digest.sha256](./ncbi_taxonomy_digest.sha256) to the sha256 hash of the new DB version. To find this out, you can run:
+```sh
+curl -L https://loculus-public.hel1.your-objectstorage.com/taxonomy/<your-database-version>.sqlite.gz \
+    | sha256sum | awk '{print $1 "  tmp.sqlite.gz"}' \
+    > ncbi_taxonomy_digest.sha256
+```
+
 ## Setup & Running
 
 ### Using the micromamba environment
