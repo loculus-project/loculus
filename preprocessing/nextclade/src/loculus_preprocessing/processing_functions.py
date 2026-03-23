@@ -9,6 +9,7 @@ import json
 import logging
 import math
 import re
+import requests
 import unicodedata
 from dataclasses import dataclass
 from datetime import datetime
@@ -1344,6 +1345,185 @@ class ProcessingFunctions:
             datum=concat_result.datum,
             warnings=warnings + concat_result.warnings,
             errors=concat_result.errors,
+        )
+
+    @staticmethod
+    def validate_hostname(  # noqa: C901
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        """Validates that the user-supplied hostNameScientific exists in NCBI's taxonomy.
+        If it exists, we return the associated tax_id
+        """
+        input_name: str | None = input_data.get("hostNameScientific")
+        host = args.get("taxonomy_service_host")
+        port = args.get("taxonomy_service_port")
+        if input_name is None or not isinstance(host, str) or not isinstance(port, int):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message="hostNameScientific, taxonomy_service_host, or taxonomy_service_port was None",
+                    )
+                ],
+            )
+        response = requests.get(f"{host}:{port}/taxa?name={input_name.replace(' ', '+')}")
+        if response.status_code != requests.codes.ok:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"host name validation for '{input_name}' failed with code {response.status_code}: {response.json().get('detail', '')}",
+                    )
+                ],
+            )
+        tax_id = response.json().get("tax_id")
+        if tax_id is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"host name validation for '{input_name}' was successful but response json had no 'tax_id'. Please contact the administrator",
+                    )
+                ],
+            )
+
+        return ProcessingResult(
+            datum=tax_id,
+            warnings=[],
+            errors=[],
+        )
+
+    @staticmethod
+    def scientific_name_from_id(  # noqa: C901
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        tax_id: str | None = input_data.get("taxonId")
+        host = args.get("taxonomy_service_host")
+        port = args.get("taxonomy_service_port")
+        if tax_id is None or not isinstance(host, str) or not isinstance(port, int):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message="taxonId, taxonomy_service_host, or taxonomy_service_port was None",
+                    )
+                ],
+            )
+
+        response = requests.get(f"{host}:{port}/taxa/{tax_id}")
+        if response.status_code != requests.codes.ok:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"'{tax_id}' is not a valid taxon ID",
+                    )
+                ],
+            )
+        scientific_name = response.json().get("scientific_name")
+        if scientific_name is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"'{tax_id}' is a valid taxon ID but response json had no 'scientific_name'. Please contact the administrator",
+                    )
+                ],
+            )
+
+        return ProcessingResult(
+            datum=scientific_name,
+            warnings=[],
+            errors=[],
+        )
+
+    @staticmethod
+    def common_name_from_id(  # noqa: C901
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        tax_id: str | None = input_data.get("taxonId")
+        host = args.get("taxonomy_service_host")
+        port = args.get("taxonomy_service_port")
+        if tax_id is None or not isinstance(host, str) or not isinstance(port, int):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message="taxonId, taxonomy_service_host, or taxonomy_service_port was None",
+                    )
+                ],
+            )
+
+        response = requests.get(f"{host}:{port}/taxa/{tax_id}/common_name")
+        if response.status_code != requests.codes.ok:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"'{tax_id}' is not a valid taxon ID",
+                    )
+                ],
+            )
+        common_name = response.json().get("common_name")
+        if common_name is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"'{tax_id}' is a valid taxon ID but response json had no 'common_name'. Please contact the administrator",
+                    )
+                ],
+            )
+
+        return ProcessingResult(
+            datum=common_name,
+            warnings=[],
+            errors=[],
         )
 
 

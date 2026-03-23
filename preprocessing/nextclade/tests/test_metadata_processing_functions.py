@@ -1188,5 +1188,52 @@ def test_display_name_construction() -> None:
     )
 
 
+def test_hostname_validation():
+    res = ProcessingFunctions.validate_hostname(
+        input_data={"hostNameScientific": "Aedes aegypti"},
+        output_field="taxonId",
+        input_fields=["hostNameScientific"],
+        args={
+            "taxonomy_service_host": "http://127.0.0.1",
+            "taxonomy_service_port": 5000,
+        },
+    )
+    print(res)
+    tax_id = res.datum
+
+    res = ProcessingFunctions.scientific_name_from_id(
+        input_data={"taxonId": tax_id},
+        output_field="hostNameScientific",
+        input_fields=["processed.taxonId"],
+        args={
+            "taxonomy_service_host": "http://127.0.0.1",
+            "taxonomy_service_port": 5000,
+        },
+    )
+    print(res)
+
+    res = ProcessingFunctions.common_name_from_id(
+        input_data={"taxonId": tax_id},
+        output_field="hostNameCommon",
+        input_fields=["hostNameCommon"],
+        args={
+            "taxonomy_service_host": "http://127.0.0.1",
+            "taxonomy_service_port": 5000,
+        },
+    )
+    print(res)
+
+    res = ProcessingFunctions.validate_hostname(
+        input_data={"hostNameScientific": "des aegypti"},
+        output_field="taxonId",
+        input_fields=["hostNameScientific"],
+        args={
+            "taxonomy_service_host": "http://127.0.0.1",
+            "taxonomy_service_port": 5000,
+        },
+    )
+    print(res)
+
+
 if __name__ == "__main__":
     pytest.main()
