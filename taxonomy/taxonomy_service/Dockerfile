@@ -22,3 +22,5 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER . .
 RUN uv pip install --system --no-cache .
+# in the kubernetes deployment, the config file gets mounted at /config/config.yaml
+CMD ["taxonomy_service", "--config-file=/config/config.yaml"]

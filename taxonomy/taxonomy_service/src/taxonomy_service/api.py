@@ -24,19 +24,6 @@ def get_db_connection() -> Generator[sqlite3.Connection]:
 DbConnection = Annotated[sqlite3.Connection, Depends(get_db_connection)]
 
 
-def fetch_by_common_name(
-    db_conn: sqlite3.Connection, name: str
-) -> dict[str, str | int | None] | None:
-    """This would be a bit complicated as there are often multiple common names
-    associtated with a single taxon.
-
-    We store these as a '; ' separated string for each taxon entry, so we'd have to either:
-    - figure out how to do a substring search on that.
-    - add a tax_id: common_name table to the taxonomy DB (probably cleaner)
-    """
-    raise NotImplementedError
-
-
 def fetch_by_sci_name(db_conn: sqlite3.Connection, name: str) -> dict[str, str | int | None] | None:
     """Check if a scientific name exists in the taxonomy and, if so, return the taxon
 
@@ -51,6 +38,7 @@ def fetch_by_sci_name(db_conn: sqlite3.Connection, name: str) -> dict[str, str |
     if not taxa:
         return None
 
+    # If multiple taxa with the same name exist, return the most specific one
     return dict(max(taxa, key=lambda x: x["depth"]))
 
 

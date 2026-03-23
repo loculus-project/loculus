@@ -30,6 +30,20 @@ spec:
           args:
             - taxonomy_service
             - "--config-file=/config/config.yaml"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
           volumeMounts:
             - name: loculus-taxonomy-service-config-volume
               mountPath: /config/config.yaml
