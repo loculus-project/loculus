@@ -1501,7 +1501,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"'{tax_id}' is not a valid taxon ID",
+                        message=f"'{tax_id}' is not a valid taxonId",
                     )
                 ],
             )
@@ -1515,7 +1515,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"'{tax_id}' is a valid taxon ID but response json had no 'common_name'. Please contact the administrator",
+                        message=f"No common name could be found for taxonId '{tax_id}'",
                     )
                 ],
             )
