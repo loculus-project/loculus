@@ -13,9 +13,8 @@ In Kubernetes, the taxonomy database is downloaded at pod startup by an init con
 | Endpoint | Description |
 |----------|-------------|
 | `GET /` | Health check |
-| `GET /taxa?name=<scientific_name>` | Look up a taxon by scientific name (case-insensitive) |
-| `GET /taxa/{tax_id}` | Look up a taxon by NCBI taxon ID |
-| `GET /taxa/{tax_id}/common_name` | if `tax_id` has a common name, return the taxon itself. If it has no common name, return the nearest ancestor with a common name  |
+| `GET /taxa?scientific_name=<string>` | Endpoint used to validate user input. Currently only supports validation of scientific names (case-insensitive) through the `scientific_name` query parameter. |
+| `GET /taxa/{tax_id}?find_common_name=<boolean>` |  Endpoint to use once a valid taxon ID is found. Looks up a taxon by NCBI taxon ID. If find_common_name=true, returns the nearest ancestor (including self) that has a common name. |
 
 ## Updating the NCBI database
 This service relies on a taxonomy database created by the [`ncbi_tax_download`](../ncbi_tax_download/README.md) module.
