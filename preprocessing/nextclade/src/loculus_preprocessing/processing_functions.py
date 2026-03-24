@@ -1373,6 +1373,7 @@ class ProcessingFunctions:
                     )
                 ],
             )
+
         response = requests.get(f"{host}:{port}/taxa?name={input_name.replace(' ', '+')}")
         if response.status_code != requests.codes.ok:
             return ProcessingResult(
@@ -1491,7 +1492,7 @@ class ProcessingFunctions:
                 ],
             )
 
-        response = requests.get(f"{host}:{port}/taxa/{tax_id}/common_name")
+        response = requests.get(f"{host}:{port}/taxa/{tax_id}?find_common_name=true")
         if response.status_code != requests.codes.ok:
             return ProcessingResult(
                 datum=None,
