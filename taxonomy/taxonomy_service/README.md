@@ -91,7 +91,7 @@ Then run the container with the config and database bind-mounted:
 
 ```sh
 docker run \
-  -v /path/to/config.yaml:/opt/app/config.yaml:ro \
+  -v /path/to/config_docker.yaml:/opt/app/config.yaml:ro \
   -v /path/to/taxonomy.sqlite:/data/taxonomy.sqlite:ro \
   -p 5000:5000 \
   loculus-taxonomy-service \
