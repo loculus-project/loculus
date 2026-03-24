@@ -1688,8 +1688,17 @@
     "taxonomyService": {
       "type": "object",
       "properties": {
+        "dbVersion": {
+          "type": "string",
+          "description": "Version identifier for the NCBI taxonomy database to download (e.g. ncbi_taxonomy_2026-03-23)"
+        },
+        "dbSha256": {
+          "type": "string",
+          "description": "SHA256 checksum of the compressed taxonomy database file for integrity verification"
+        },
         "taxonomyDbPath": {
-          "type": "string"
+          "type": "string",
+          "description": "Path where the taxonomy SQLite database is mounted inside the container"
         }
       }
     },

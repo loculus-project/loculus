@@ -22,6 +22,23 @@ spec:
         component: loculus-taxonomy-service
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      initContainers:
+        - name: download-taxonomy-db
+          image: alpine:3
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -e
+              DB_URL="https://loculus-public.hel1.your-objectstorage.com/taxonomy/{{ .Values.taxonomyService.dbVersion }}.sqlite.gz"
+              echo "Downloading taxonomy DB from $DB_URL"
+              wget -q "$DB_URL" -O /data/tmp.sqlite.gz
+              echo "{{ .Values.taxonomyService.dbSha256 }}  /data/tmp.sqlite.gz" | sha256sum -c
+              gunzip /data/tmp.sqlite.gz
+              mv /data/tmp.sqlite /data/taxonomy.sqlite
+              echo "Taxonomy DB ready"
+          volumeMounts:
+            - name: taxonomy-db
+              mountPath: /data
       containers:
         - name: taxonomy-service
           image: "ghcr.io/loculus-project/taxonomy-service:{{ $dockerTag }}"
@@ -48,8 +65,13 @@ spec:
             - name: loculus-taxonomy-service-config-volume
               mountPath: /config/config.yaml
               subPath: config.yaml
+            - name: taxonomy-db
+              mountPath: /data
+              readOnly: true
       volumes:
         - name: loculus-taxonomy-service-config-volume
           configMap:
             name: loculus-taxonomy-service-config
+        - name: taxonomy-db
+          emptyDir: {}
 {{- end }}

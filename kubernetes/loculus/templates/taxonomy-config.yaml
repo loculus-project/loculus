@@ -1,7 +1,7 @@
 {{- if not .Values.disableTaxonomyService }}
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $taxonomyHost := $testconfig | ternary "127.0.0.1" "0.0.0.0" }}
-{{- $taxonomyDbPath := .Values.taxonomyService.taxonomyDbPath | default "/opt/app/ncbi_taxonomy_latest.sqlite" }}
+{{- $taxonomyDbPath := .Values.taxonomyService.taxonomyDbPath | default "/data/taxonomy.sqlite" }}
 ---
 apiVersion: v1
 kind: ConfigMap
