@@ -90,14 +90,14 @@ def read_root() -> dict[str, str]:
 
 
 @app.get("/taxa")
-def query_taxa(name: str, db: DbConnection) -> dict[str, str | int | None]:
+def query_taxa(scientific_name: str, db: DbConnection) -> dict[str, str | int | None]:
     """Given a name, try to find a taxon associated with it.
 
     We only check if `name` is a scientific name for the moment.
     """
-    taxon = fetch_by_sci_name(db, name)
+    taxon = fetch_by_sci_name(db, scientific_name)
     if taxon is None:
-        raise HTTPException(status_code=404, detail=f"'{name}' not found")
+        raise HTTPException(status_code=404, detail=f"'{scientific_name}' not found")
 
     return taxon
 
