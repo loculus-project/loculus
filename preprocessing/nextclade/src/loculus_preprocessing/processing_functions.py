@@ -1348,7 +1348,7 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def validate_hostname(  # noqa: C901
+    def validate_hostname(
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -1409,7 +1409,7 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def scientific_name_from_id(  # noqa: C901
+    def scientific_name_from_id(
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -1468,7 +1468,7 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def common_name_from_id(  # noqa: C901
+    def common_name_from_id(
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],

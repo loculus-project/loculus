@@ -1229,51 +1229,71 @@ def test_validate_hostname_not_found(mock_get):
     assert len(res.errors) == 1
 
 
-# def test_hostname_validation():
-#     res = ProcessingFunctions.validate_hostname(
-#         input_data={"hostNameScientific": "Culex"},
-#         output_field="taxonId",
-#         input_fields=["hostNameScientific"],
-#         args={
-#             "taxonomy_service_host": "http://127.0.0.1",
-#             "taxonomy_service_port": 5000,
-#         },
-#     )
-#     print(res)
-#     tax_id = res.datum
-#
-#     res = ProcessingFunctions.scientific_name_from_id(
-#         input_data={"taxonId": tax_id},
-#         output_field="hostNameScientific",
-#         input_fields=["processed.taxonId"],
-#         args={
-#             "taxonomy_service_host": "http://127.0.0.1",
-#             "taxonomy_service_port": 5000,
-#         },
-#     )
-#     print(res)
-#
-#     res = ProcessingFunctions.common_name_from_id(
-#         input_data={"taxonId": tax_id},
-#         output_field="hostNameCommon",
-#         input_fields=["hostNameCommon"],
-#         args={
-#             "taxonomy_service_host": "http://127.0.0.1",
-#             "taxonomy_service_port": 5000,
-#         },
-#     )
-#     print(res)
-#
-#     res = ProcessingFunctions.validate_hostname(
-#         input_data={"hostNameScientific": "des aegypti"},
-#         output_field="taxonId",
-#         input_fields=["hostNameScientific"],
-#         args={
-#             "taxonomy_service_host": "http://127.0.0.1",
-#             "taxonomy_service_port": 5000,
-#         },
-#     )
-#     print(res)
+@patch("loculus_preprocessing.processing_functions.requests.get")
+def test_sci_name_from_id_success(mock_get):
+    mock_get.return_value = make_response(200, {"scientific_name": "Aedes aegypti"})
+
+    res = ProcessingFunctions.scientific_name_from_id(
+        input_data={"taxonId": "7159"},
+        output_field="hostScientificName",
+        input_fields=["taxonId"],
+        args={"taxonomy_service_host": "http://localhost", "taxonomy_service_port": 5000},
+    )
+
+    assert res.datum == "Aedes aegypti"
+    assert res.warnings == []
+    assert res.errors == []
+    mock_get.assert_called_once_with("http://localhost:5000/taxa/7159")
+
+
+@patch("loculus_preprocessing.processing_functions.requests.get")
+def test_sci_name_from_id_not_found(mock_get):
+    mock_get.return_value = make_response(404, {"detail": "not found"})
+
+    res = ProcessingFunctions.scientific_name_from_id(
+        input_data={"taxonId": "134896438906397"},
+        output_field="hostScientificName",
+        input_fields=["taxonId"],
+        args={"taxonomy_service_host": "http://localhost", "taxonomy_service_port": 5000},
+    )
+
+    print(res)
+    assert res.datum is None
+    assert len(res.errors) == 1
+    mock_get.assert_called_once_with("http://localhost:5000/taxa/134896438906397")
+
+
+@patch("loculus_preprocessing.processing_functions.requests.get")
+def test_common_name_from_id_success(mock_get):
+    mock_get.return_value = make_response(200, {"common_name": "yellow fever mosquito"})
+
+    res = ProcessingFunctions.common_name_from_id(
+        input_data={"taxonId": "7159"},
+        output_field="hostScientificName",
+        input_fields=["taxonId"],
+        args={"taxonomy_service_host": "http://localhost", "taxonomy_service_port": 5000},
+    )
+
+    assert res.datum == "yellow fever mosquito"
+    assert res.warnings == []
+    assert res.errors == []
+    mock_get.assert_called_once_with("http://localhost:5000/taxa/7159/common_name")
+
+
+@patch("loculus_preprocessing.processing_functions.requests.get")
+def test_common_name_from_id_not_found(mock_get):
+    mock_get.return_value = make_response(404, {"detail": "not found"})
+
+    res = ProcessingFunctions.common_name_from_id(
+        input_data={"taxonId": "134896438906397"},
+        output_field="hostScientificName",
+        input_fields=["taxonId"],
+        args={"taxonomy_service_host": "http://localhost", "taxonomy_service_port": 5000},
+    )
+
+    assert res.datum is None
+    assert len(res.errors) == 1
+    mock_get.assert_called_once_with("http://localhost:5000/taxa/134896438906397/common_name")
 
 
 if __name__ == "__main__":
