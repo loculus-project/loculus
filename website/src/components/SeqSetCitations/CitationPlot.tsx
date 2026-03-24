@@ -1,15 +1,14 @@
 import React from 'react';
 
-import type { CitedByResult } from '../../types/seqSetCitation';
+import { SEQSET_GRAPHS_COLOUR, type CitedByResult } from '../../types/seqSetCitation';
 import { BarPlot } from '../common/BarPlot';
 
 type CitationPlotProps = {
     citedByData: CitedByResult;
-    responsive?: boolean;
     description?: string;
 };
 
-export const CitationPlot: React.FC<CitationPlotProps> = ({ citedByData, responsive, description }) => {
+export const CitationPlot: React.FC<CitationPlotProps> = ({ citedByData, description }) => {
     const emptyCitedByData = {
         years: [2020, 2021, 2022, 2023, 2024],
         citations: [0, 0, 0, 0, 0],
@@ -25,18 +24,19 @@ export const CitationPlot: React.FC<CitationPlotProps> = ({ citedByData, respons
                     {
                         data: renderData.citations,
                         label: 'Citation count',
-                        backgroundColor: '#54858c',
+                        backgroundColor: SEQSET_GRAPHS_COLOUR,
                     },
                 ],
             }}
             options={{
-                responsive: responsive ?? true,
                 scales: {
-                    y: {
-                        suggestedMax: 10,
+                    x: {
                         grid: {
                             color: 'rgba(0, 0, 0, 0)',
                         },
+                    },
+                    y: {
+                        suggestedMax: 10,
                     },
                 },
             }}

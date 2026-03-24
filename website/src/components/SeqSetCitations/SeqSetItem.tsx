@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 
 import { AuthorDetails } from './AuthorDetails.tsx';
 import { CitationPlot } from './CitationPlot';
+import { DatePlot, CountriesPlot, UseTermsPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
 import { getClientLogger } from '../../clientLogger';
@@ -14,17 +15,20 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import { type AuthorProfile, type CitedByResult, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { BarPlot } from '../common/BarPlot.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 const logger = getClientLogger('SeqSetItem');
 
 const SeqSetSection: FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <div className='flex flex-col mb-6'>
-        <h1 className='text-xl font-semibold border-b py-2 my-4'>{title}</h1>
+        <div className='flex flex-row'>
+            <h1 className='text-xl font-semibold border-b py-2 my-4'>{title}</h1>
+        </div>
         {children}
     </div>
 );
+
+const SeqSetSectionSeparator: FC = () => <hr className='my-8 border-t-2 border-gray-200' />;
 
 const SeqSetDetails: FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <div className='flex flex-col mb-6'>
@@ -132,12 +136,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         return seqSetRecords.slice((page - 1) * sequencesPerPage, page * sequencesPerPage);
     };
 
-    const graphColour = '#88a1d2';
-    const getGraphData = (data: AggregateRow[]) => ({
-        labels: data.map((item) => item.value ?? 'Unknown'),
-        datasets: [{ data: data.map((item) => item.count), backgroundColor: graphColour, maxBarThickness: 30 }],
-    });
-
     return (
         <div className='flex flex-col'>
             <div className='grid grid-cols-1 lg:grid-cols-2'>
@@ -184,29 +182,30 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                         value={
                             <CitationPlot
                                 citedByData={citedByData}
-                                responsive={false}
                                 description='Number of times this SeqSet has been cited by a publication'
                             />
                         }
                     />
                 </SeqSetDetails>
             </div>
+            <SeqSetSectionSeparator />
             <SeqSetSection title='Statistics'>
                 <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6'>
-                    <BarPlot
-                        data={getGraphData(collectionDatesData)}
+                    <DatePlot
+                        data={collectionDatesData}
                         description={`Sample collection dates for ${seqSetAccessionVersion} sequences`}
                     />
-                    <BarPlot
-                        data={getGraphData(collectionCountriesData)}
-                        description={`Countries for ${seqSetAccessionVersion} sequences`}
+                    <CountriesPlot
+                        data={collectionCountriesData}
+                        description={`Sample collection countries for ${seqSetAccessionVersion} sequences`}
                     />
-                    <BarPlot
-                        data={getGraphData(dataUseTermsData)}
-                        description={`Use terms for ${seqSetAccessionVersion} sequences`}
+                    <UseTermsPlot
+                        data={dataUseTermsData}
+                        description={`Data use terms for ${seqSetAccessionVersion} sequences`}
                     />
                 </div>
             </SeqSetSection>
+            <SeqSetSectionSeparator />
             <SeqSetSection title='Sequences'>
                 <SeqSetRecordsTableWithMetadata
                     seqSetRecords={getPaginatedSeqSetRecords()}
