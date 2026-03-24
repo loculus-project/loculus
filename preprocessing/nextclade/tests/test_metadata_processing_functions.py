@@ -1,3 +1,5 @@
+from unittest.mock import patch, MagicMock
+
 # ruff: noqa: S101
 import pytest
 from factory_methods import (
@@ -1188,51 +1190,90 @@ def test_display_name_construction() -> None:
     )
 
 
-def test_hostname_validation():
+def make_response(status_code, json_data):
+    mock = MagicMock()
+    mock.status_code = status_code
+    mock.json.return_value = json_data
+    return mock
+
+
+@patch("loculus_preprocessing.processing_functions.requests.get")
+def test_validate_hostname_success(mock_get: MagicMock):
+    mock_get.return_value = make_response(200, {"tax_id": 7159})
+
     res = ProcessingFunctions.validate_hostname(
         input_data={"hostNameScientific": "Aedes aegypti"},
         output_field="taxonId",
         input_fields=["hostNameScientific"],
-        args={
-            "taxonomy_service_host": "http://127.0.0.1",
-            "taxonomy_service_port": 5000,
-        },
+        args={"taxonomy_service_host": "http://localhost", "taxonomy_service_port": 5000},
     )
-    print(res)
-    tax_id = res.datum
 
-    res = ProcessingFunctions.scientific_name_from_id(
-        input_data={"taxonId": tax_id},
-        output_field="hostNameScientific",
-        input_fields=["processed.taxonId"],
-        args={
-            "taxonomy_service_host": "http://127.0.0.1",
-            "taxonomy_service_port": 5000,
-        },
-    )
-    print(res)
+    assert res.datum == 7159
+    assert res.warnings == []
+    assert res.errors == []
+    mock_get.assert_called_once_with("http://localhost:5000/taxa?name=Aedes+aegypti")
 
-    res = ProcessingFunctions.common_name_from_id(
-        input_data={"taxonId": tax_id},
-        output_field="hostNameCommon",
-        input_fields=["hostNameCommon"],
-        args={
-            "taxonomy_service_host": "http://127.0.0.1",
-            "taxonomy_service_port": 5000,
-        },
-    )
-    print(res)
+
+@patch("loculus_preprocessing.processing_functions.requests.get")
+def test_validate_hostname_not_found(mock_get):
+    mock_get.return_value = make_response(404, {"detail": "not found"})
 
     res = ProcessingFunctions.validate_hostname(
         input_data={"hostNameScientific": "des aegypti"},
         output_field="taxonId",
         input_fields=["hostNameScientific"],
-        args={
-            "taxonomy_service_host": "http://127.0.0.1",
-            "taxonomy_service_port": 5000,
-        },
+        args={"taxonomy_service_host": "http://localhost", "taxonomy_service_port": 5000},
     )
-    print(res)
+
+    assert res.datum is None
+    assert len(res.errors) == 1
+
+
+# def test_hostname_validation():
+#     res = ProcessingFunctions.validate_hostname(
+#         input_data={"hostNameScientific": "Culex"},
+#         output_field="taxonId",
+#         input_fields=["hostNameScientific"],
+#         args={
+#             "taxonomy_service_host": "http://127.0.0.1",
+#             "taxonomy_service_port": 5000,
+#         },
+#     )
+#     print(res)
+#     tax_id = res.datum
+#
+#     res = ProcessingFunctions.scientific_name_from_id(
+#         input_data={"taxonId": tax_id},
+#         output_field="hostNameScientific",
+#         input_fields=["processed.taxonId"],
+#         args={
+#             "taxonomy_service_host": "http://127.0.0.1",
+#             "taxonomy_service_port": 5000,
+#         },
+#     )
+#     print(res)
+#
+#     res = ProcessingFunctions.common_name_from_id(
+#         input_data={"taxonId": tax_id},
+#         output_field="hostNameCommon",
+#         input_fields=["hostNameCommon"],
+#         args={
+#             "taxonomy_service_host": "http://127.0.0.1",
+#             "taxonomy_service_port": 5000,
+#         },
+#     )
+#     print(res)
+#
+#     res = ProcessingFunctions.validate_hostname(
+#         input_data={"hostNameScientific": "des aegypti"},
+#         output_field="taxonId",
+#         input_fields=["hostNameScientific"],
+#         args={
+#             "taxonomy_service_host": "http://127.0.0.1",
+#             "taxonomy_service_port": 5000,
+#         },
+#     )
+#     print(res)
 
 
 if __name__ == "__main__":
