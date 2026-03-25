@@ -1,9 +1,10 @@
 import logging
 import sqlite3
-from typing import Annotated, Generator
+from collections.abc import Generator
+from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException
 import uvicorn
+from fastapi import Depends, FastAPI, HTTPException
 
 from .config import Config
 
