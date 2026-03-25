@@ -1,6 +1,7 @@
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
 
 import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
@@ -66,8 +67,37 @@ export function useSubmissionOperations(
     const useApproveProcessedData = hooks.useApproveProcessedData(
         { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
-            onSuccess: () => useGetSequences.refetch(),
-            onError: (error) => openErrorFeedback(approveProcessedDataErrorMessage(error)),
+            onMutate: () => {
+                const toastId = toast.loading('Releasing sequences...');
+                return { toastId };
+            },
+            onSuccess: (data, _variables, context) => {
+                void useGetSequences.refetch();
+                const ctx = context as { toastId: string | number } | undefined;
+                if (ctx?.toastId) {
+                    const isBatchRelease = data.length > 1;
+                    toast.update(ctx.toastId, {
+                        render: isBatchRelease
+                            ? '🎉 All sequences have been released successfully!'
+                            : 'Sequence released successfully.',
+                        type: 'success',
+                        isLoading: false,
+                        autoClose: isBatchRelease ? false : 4000,
+                        closeButton: isBatchRelease,
+                    });
+                }
+            },
+            onError: (error, _variables, context) => {
+                const ctx = context as { toastId: string | number } | undefined;
+                if (ctx?.toastId) {
+                    toast.update(ctx.toastId, {
+                        render: approveProcessedDataErrorMessage(error),
+                        type: 'error',
+                        isLoading: false,
+                        autoClose: false,
+                    });
+                }
+            },
         },
     );
 
