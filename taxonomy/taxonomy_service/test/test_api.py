@@ -82,24 +82,24 @@ class ApiTest(unittest.TestCase):
 
     def test_query_taxon_success(self):
         taxon = mock_taxa["Homo sapiens"]
-        response = client.get(f"/taxa?name={taxon['scientific_name'].replace(' ', '+')}")
+        response = client.get(f"/taxa?scientific_name={taxon['scientific_name'].replace(' ', '+')}")
         assert response.status_code == codes.ok
         assert response.json()["scientific_name"] == taxon["scientific_name"]
 
     def test_query_taxon_case_success(self):
         taxon = mock_taxa["Homo sapiens"]
         name_lower = taxon["scientific_name"].lower().replace(" ", "+")
-        response = client.get(f"/taxa?name={name_lower}")
+        response = client.get(f"/taxa?scientific_name={name_lower}")
         assert response.status_code == codes.ok
         assert response.json()["scientific_name"] == taxon["scientific_name"]
 
     def test_query_taxon_not_found(self):
-        response = client.get(f"/taxa?name={mock_missing_name}")
+        response = client.get(f"/taxa?scientific_name={mock_missing_name}")
         assert response.status_code == codes.not_found
 
     def test_get_common_name_direct_hit(self):
         homo = mock_taxa["Homo"]
-        response = client.get(f"/taxa/{homo['tax_id']}/common_name")
+        response = client.get(f"/taxa/{homo['tax_id']}?find_common_name=true")
         assert response.status_code == codes.ok
         assert response.json()["tax_id"] == homo["tax_id"]
         assert response.json()["common_name"] == homo["common_name"]
@@ -107,14 +107,14 @@ class ApiTest(unittest.TestCase):
     def test_get_common_name_walk_tree(self):
         homo_sapiens = mock_taxa["Homo sapiens"]
         homo = mock_taxa["Homo"]
-        response = client.get(f"/taxa/{homo_sapiens['tax_id']}/common_name")
+        response = client.get(f"/taxa/{homo_sapiens['tax_id']}?find_common_name=true")
         assert response.status_code == codes.ok
         assert response.json()["tax_id"] == homo["tax_id"]
         assert response.json()["common_name"] == homo["common_name"]
 
     def test_get_common_name_not_found(self):
         cellular_organisms = mock_taxa["cellular organisms"]
-        response = client.get(f"/taxa/{cellular_organisms['tax_id']}/common_name")
+        response = client.get(f"/taxa/{cellular_organisms['tax_id']}?find_common_name=true")
         assert response.status_code == codes.not_found
         assert (
             response.json()["detail"]
