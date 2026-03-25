@@ -16,7 +16,10 @@ app = FastAPI(
 
 
 def get_db_connection() -> Generator[sqlite3.Connection]:
-    conn = sqlite3.connect(app.state.config.tax_db_path)
+    conn = sqlite3.connect(
+        f"file:{app.state.config.tax_db_path}?mode=ro",
+        uri=True,
+    )
     conn.row_factory = sqlite3.Row
     try:
         yield conn
