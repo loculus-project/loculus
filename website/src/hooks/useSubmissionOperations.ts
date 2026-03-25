@@ -83,6 +83,7 @@ export function useSubmissionOperations(
                         type: 'success',
                         isLoading: false,
                         autoClose: isBatchRelease ? false : 4000,
+                        closeButton: isBatchRelease,
                     });
                 }
             },
