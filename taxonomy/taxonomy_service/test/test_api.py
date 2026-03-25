@@ -82,16 +82,18 @@ class ApiTest(unittest.TestCase):
 
     def test_query_taxon_success(self):
         taxon = mock_taxa["Homo sapiens"]
-        response = client.get(f"/taxa?scientific_name={taxon['scientific_name'].replace(' ', '+')}")
+        response = client.get(
+            f"/taxa?scientific_name={taxon['scientific_name'].replace(' ', '+')}"
+        )
         assert response.status_code == codes.ok
-        assert response.json()["scientific_name"] == taxon["scientific_name"]
+        assert response.json()[0]["scientific_name"] == taxon["scientific_name"]
 
     def test_query_taxon_case_success(self):
         taxon = mock_taxa["Homo sapiens"]
         name_lower = taxon["scientific_name"].lower().replace(" ", "+")
         response = client.get(f"/taxa?scientific_name={name_lower}")
         assert response.status_code == codes.ok
-        assert response.json()["scientific_name"] == taxon["scientific_name"]
+        assert response.json()[0]["scientific_name"] == taxon["scientific_name"]
 
     def test_query_taxon_not_found(self):
         response = client.get(f"/taxa?scientific_name={mock_missing_name}")
@@ -114,7 +116,9 @@ class ApiTest(unittest.TestCase):
 
     def test_get_common_name_not_found(self):
         cellular_organisms = mock_taxa["cellular organisms"]
-        response = client.get(f"/taxa/{cellular_organisms['tax_id']}?find_common_name=true")
+        response = client.get(
+            f"/taxa/{cellular_organisms['tax_id']}?find_common_name=true"
+        )
         assert response.status_code == codes.not_found
         assert (
             response.json()["detail"]
