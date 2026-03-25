@@ -10,7 +10,9 @@ from .config import Config
 
 logger = logging.getLogger()
 
-app = FastAPI(title="Taxonomy service", description="Loculus taxonomy API for hostname validation")
+app = FastAPI(
+    title="Taxonomy service", description="Loculus taxonomy API for hostname validation"
+)
 
 
 def get_db_connection() -> Generator[sqlite3.Connection]:
@@ -25,11 +27,15 @@ def get_db_connection() -> Generator[sqlite3.Connection]:
 DbConnection = Annotated[sqlite3.Connection, Depends(get_db_connection)]
 
 
-def fetch_by_sci_name(db_conn: sqlite3.Connection, name: str) -> dict[str, str | int | None] | None:
-    """Check if a scientific name exists in the taxonomy and, if so, return the taxon
+def fetch_by_sci_name(
+    db_conn: sqlite3.Connection, name: str
+) -> list[dict[str, str | int | None]] | None:
+    """Check if a scientific name exists in the taxonomy and, if so, return all taxa associated
+    with that name
 
     args:
-        db_conn (sqlite3.Connection):   connection to a database. The caller is responsible for closing it
+        db_conn (sqlite3.Connection):   connection to a database. The caller is responsible
+                                        for closing it
         name (str):                     scientific name to query the database with
     """
     taxa = db_conn.execute(
@@ -39,18 +45,21 @@ def fetch_by_sci_name(db_conn: sqlite3.Connection, name: str) -> dict[str, str |
     if not taxa:
         return None
 
-    # If multiple taxa with the same name exist, return the most specific one
-    return dict(max(taxa, key=lambda x: x["depth"]))
+    return [dict(taxon) for taxon in taxa]
 
 
-def fetch_by_id(db_conn: sqlite3.Connection, tax_id: int) -> dict[str, str | int | None] | None:
+def fetch_by_id(
+    db_conn: sqlite3.Connection, tax_id: int
+) -> dict[str, str | int | None] | None:
     """Return the taxon associated with `tax_id`. Return None if `tax_id` does not exist in the DB
 
     args:
         db_conn (sqlite3.Connection):   connection to a database. The caller is responsible for closing it
         tax_id (int):                   NCBI taxon ID to query the database with
     """
-    taxon = db_conn.execute("SELECT * FROM taxonomy WHERE tax_id = ?", (tax_id,)).fetchone()
+    taxon = db_conn.execute(
+        "SELECT * FROM taxonomy WHERE tax_id = ?", (tax_id,)
+    ).fetchone()
     if not taxon:
         return None
     return dict(taxon)
@@ -73,7 +82,9 @@ def fetch_common_name(
     # creating a reusable cursor here instead of calling `fetch_by_id` in the while loop
     cursor = db_conn.cursor()
     while tax_id > 1:  # tax_id 1 is the root
-        taxon = cursor.execute("SELECT * FROM taxonomy WHERE tax_id = ?", (tax_id,)).fetchone()
+        taxon = cursor.execute(
+            "SELECT * FROM taxonomy WHERE tax_id = ?", (tax_id,)
+        ).fetchone()
         if taxon is None or taxon["depth"] == 0:
             # for safety, break when depth is 0 (in case NCBI decide at some
             # point that the root should no longer be 1)
@@ -91,16 +102,16 @@ def read_root() -> dict[str, str]:
 
 
 @app.get("/taxa")
-def query_taxa(scientific_name: str, db: DbConnection) -> dict[str, str | int | None]:
-    """Given a name, try to find a taxon associated with it.
+def query_taxa(
+    scientific_name: str, db: DbConnection
+) -> list[dict[str, str | int | None]] | None:
+    """Given a scientific name, try to find all taxa associated with it."""
+    taxa = fetch_by_sci_name(db, scientific_name)
 
-    We only check if `name` is a scientific name for the moment.
-    """
-    taxon = fetch_by_sci_name(db, scientific_name)
-    if taxon is None:
+    if taxa is None:
         raise HTTPException(status_code=404, detail=f"'{scientific_name}' not found")
 
-    return taxon
+    return taxa
 
 
 @app.get("/taxa/{tax_id}")
@@ -132,7 +143,9 @@ def start_api(config: Config):
     port = config.tax_service_port or 5000
     logger.info(f"Starting taxonomy service API on port {port}")
 
-    uvicorn_config = uvicorn.Config(app, host=host, port=port, log_level="info", workers=1)
+    uvicorn_config = uvicorn.Config(
+        app, host=host, port=port, log_level="info", workers=1
+    )
     server = uvicorn.Server(uvicorn_config)
 
     server.run()
