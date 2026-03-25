@@ -40,7 +40,7 @@ curl -L https://loculus-public.hel1.your-objectstorage.com/taxonomy/<your-databa
 ## Setup & Running
 
 ### Using the micromamba environment
-Set up the environment, install the service
+Navigate to the `loculus/taxonomy/taxonomy_service` directory, set up the environment, and install the service:
 
 ```sh
 micromamba env create -f environment.yaml
@@ -48,7 +48,7 @@ micromamba activate loculus-taxonomy-service
 pip install -e .
 ```
 
-Download the taxonomy database and unzip it
+Download the taxonomy database and unzip it:
 
 ```sh
 curl -L https://loculus-public.hel1.your-objectstorage.com/taxonomy/ncbi_taxonomy_latest.sqlite.gz \
@@ -56,32 +56,33 @@ curl -L https://loculus-public.hel1.your-objectstorage.com/taxonomy/ncbi_taxonom
     gunzip ncbi_taxonomy_latest.sqlite.gz
 ```
 
-Create a `config.yaml`
+Create a new file `config/config_local.yaml` containing:
 
 ```yaml
-tax_db_path: "/path/to/ncbi_taxonomy_latest.sqlite"  # path to DB on your machine
+tax_db_path: "./ncbi_taxonomy_latest.sqlite"  # path to DB on your machine
 ```
 
-Run the service
+Run the service:
 
 ```sh
-taxonomy_service --config-file /path/to/config.yaml
+taxonomy_service --config-file ./config/config_local.yaml
 ```
 
 ### Using the docker container
-Build the Docker image:
+Navigate to the `loculus/taxonomy/taxonomy_service` directory and build the Docker image:
 
 ```sh
 docker build -t loculus-taxonomy-service .
 ```
 
-The Docker image does not include the taxonomy database. You need to download it separately and mount it into the container (in Kubernetes, this is handled by an init container).
+The Docker image does not include the taxonomy database.
+You need to download it separately using the same command shown in the 'Using the micromambda environment' section, we will then mount the database into the container (in Kubernetes, this is handled by an init container).
 
-The service requires a config file and the database file mounted into the container. Create a `config_docker.yaml`:
+Once you've downloaded the database, create a new file `config/config_docker.yaml`:
 
 ```yaml
-tax_db_path: "/data/taxonomy.sqlite"  # path to the mounted DB inside the container
-tax_service_host: "0.0.0.0"
+tax_db_path: "/data/ncbi_taxonomy_latest.sqlite"  # path to the mounted DB inside the container
+tax_service_host: "0.0.0.0"     # defaults to 127.0.0.1
 tax_service_port: 5000          # defaults to 5000
 log_level: INFO                 # defaults to DEBUG
 ```
@@ -90,11 +91,11 @@ Then run the container with the config and database bind-mounted:
 
 ```sh
 docker run \
-  -v /path/to/config_docker.yaml:/opt/app/config.yaml:ro \
-  -v /path/to/taxonomy.sqlite:/data/taxonomy.sqlite:ro \
+  -v ./config/config_docker.yaml:/opt/app/config_docker.yaml:ro \
+  -v ./ncbi_taxonomy_latest.sqlite:/data/ncbi_taxonomy_latest.sqlite:ro \
   -p 5000:5000 \
   loculus-taxonomy-service \
-  taxonomy_service --config-file=/opt/app/config.yaml
+  taxonomy_service --config-file=/opt/app/config_docker.yaml
 ```
 
 ## Tests
