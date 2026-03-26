@@ -765,6 +765,15 @@ def assembly_table_handle_errors(
             retry_threshold_min=config.retry_threshold_min,
             last_retry=last_retry_time,
         )
+
+        last_retry_time = trigger_retry_if_exists(
+            entries_with_errors,
+            db_config,
+            table_name=TableName.ASSEMBLY_TABLE,
+            error_substring="Submit service authentication error. Invalid submission account user name or password. Please try enclosing your password in single quotes. The submission has failed because of a user error.:",
+            retry_threshold_min=config.retry_threshold_min,
+            last_retry=last_retry_time,
+        )
         # TODO: Query ENA to check if assembly has in fact been created
         # If created update assembly_table
         # If not retry 3 times, then raise for manual intervention
