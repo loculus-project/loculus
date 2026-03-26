@@ -61,7 +61,7 @@ test.describe('SeqSet management', () => {
             backgroundAccessions: [backgroundAccession],
         });
 
-        await seqSetPage.expectDetailLayout(seqSetName);
+        await seqSetPage.expectDetailLayout(seqSetName, seqSetDescription);
 
         const jsonDownload = await seqSetPage.exportSeqSet('json');
         expect(jsonDownload.suggestedFilename()).toContain(seqSetName);
