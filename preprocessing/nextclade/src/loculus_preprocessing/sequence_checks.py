@@ -53,7 +53,7 @@ def errors_if_non_iupac(
     return errors
 
 
-def check_max_sequences_per_entry(
+def error_on_excess_sequences(
     num_sequences: int,
     config: Config,
 ) -> list[ProcessingAnnotation]:

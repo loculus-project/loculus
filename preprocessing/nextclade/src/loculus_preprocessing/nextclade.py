@@ -15,7 +15,7 @@ from typing import Any, Final, Literal
 import pandas as pd
 from Bio import SeqIO
 
-from loculus_preprocessing.sequence_checks import check_max_sequences_per_entry
+from loculus_preprocessing.sequence_checks import error_on_excess_sequences
 
 from .config import AlignmentRequirement, Config, NextcladeSequenceAndDataset, SequenceName
 from .datatypes import (
@@ -770,7 +770,7 @@ def assign_segment_for_alignment(
 ) -> SequenceAssignmentBatch:
     errors = {}
     for entry in unprocessed:
-        errors[entry.accessionVersion] = check_max_sequences_per_entry(
+        errors[entry.accessionVersion] = error_on_excess_sequences(
             len(entry.data.unalignedNucleotideSequences),
             config,
         )

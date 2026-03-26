@@ -63,7 +63,7 @@ from .processing_functions import (
     process_phenotype_values,
     process_stop_codons,
 )
-from .sequence_checks import check_max_sequences_per_entry, errors_if_non_iupac
+from .sequence_checks import error_on_excess_sequences, errors_if_non_iupac
 
 logger = logging.getLogger(__name__)
 
@@ -501,7 +501,7 @@ def process_single(
     """Process a single sequence per config"""
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
-    max_seq_errors = check_max_sequences_per_entry(
+    max_seq_errors = error_on_excess_sequences(
         len(unprocessed.unalignedNucleotideSequences),
         config,
     )
