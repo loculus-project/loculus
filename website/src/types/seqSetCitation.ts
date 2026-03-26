@@ -38,5 +38,3 @@ export const authorProfile = z.object({
     university: z.string().nullish(),
 });
 export type AuthorProfile = z.infer<typeof authorProfile>;
-
-export const SEQSET_GRAPHS_COLOUR = '#88a1d2';

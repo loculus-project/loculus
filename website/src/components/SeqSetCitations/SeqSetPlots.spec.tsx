@@ -7,7 +7,6 @@ import {
     groupByDateFormat,
     groupRemainingPoints,
 } from './SeqSetPlots';
-import { SEQSET_GRAPHS_COLOUR } from '../../types/seqSetCitation';
 
 describe('getGraphData', () => {
     it('maps values to labels and counts to dataset data', () => {
@@ -18,11 +17,6 @@ describe('getGraphData', () => {
         const result = getGraphData(input);
         expect(result.labels).toEqual(['USA', 'Germany']);
         expect(result.datasets[0].data).toEqual([10, 5]);
-    });
-
-    it('uses SEQSET_GRAPHS_COLOUR as backgroundColor', () => {
-        const result = getGraphData([{ value: 'USA', count: 1 }]);
-        expect(result.datasets[0].backgroundColor).toBe(SEQSET_GRAPHS_COLOUR);
     });
 
     it('uses null value as "Unknown" label', () => {

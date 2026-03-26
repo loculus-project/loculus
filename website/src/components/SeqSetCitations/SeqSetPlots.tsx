@@ -2,12 +2,12 @@ import { DateTime } from 'luxon';
 import React from 'react';
 
 import type { AggregateRow } from './getSeqSetStatistics';
-import { SEQSET_GRAPHS_COLOUR } from '../../types/seqSetCitation';
 import { BarPlot } from '../common/BarPlot';
 
 type SeqSetPlotProps = {
     data: AggregateRow[];
     description?: string;
+    barColor?: string;
 };
 
 type GraphTimeProperties = {
@@ -17,9 +17,9 @@ type GraphTimeProperties = {
 };
 
 /** Transform data into the format required by the graph component. */
-export const getGraphData = (data: AggregateRow[]) => ({
+export const getGraphData = (data: AggregateRow[], barColor?: string) => ({
     labels: data.map((item) => item.value ?? 'Unknown'),
-    datasets: [{ data: data.map((item) => item.count), backgroundColor: SEQSET_GRAPHS_COLOUR, maxBarThickness: 30 }],
+    datasets: [{ data: data.map((item) => item.count), backgroundColor: barColor, maxBarThickness: 30 }],
 });
 
 /** Get the appropriate date format for the graph based on the range of dates in the data. */
@@ -76,10 +76,10 @@ export const groupRemainingPoints = (data: AggregateRow[], cutoff: number): Aggr
     return otherCount > 0 ? [...topData, { value: `Others (${otherData.length})`, count: otherCount }] : topData;
 };
 
-export const DatePlot: React.FC<SeqSetPlotProps> = ({ data, description }) => {
+export const DatePlot: React.FC<SeqSetPlotProps> = ({ data, description, barColor }) => {
     const dateFormat = getDateFormatFromData(data);
     const groupedData = groupByDateFormat(data, dateFormat);
-    const graphData = getGraphData(groupedData);
+    const graphData = getGraphData(groupedData, barColor);
     const graphTimeProperties = getGraphTimeProperties(dateFormat);
 
     return (
@@ -101,14 +101,14 @@ export const DatePlot: React.FC<SeqSetPlotProps> = ({ data, description }) => {
     );
 };
 
-export const CountriesPlot: React.FC<SeqSetPlotProps> = ({ data, description }) => {
+export const CountriesPlot: React.FC<SeqSetPlotProps> = ({ data, description, barColor }) => {
     const groupedData = groupRemainingPoints(data, 10);
-    const graphData = getGraphData(groupedData);
+    const graphData = getGraphData(groupedData, barColor);
 
     return <BarPlot data={graphData} description={description} />;
 };
 
-export const UseTermsPlot: React.FC<SeqSetPlotProps> = ({ data, description }) => {
-    const graphData = getGraphData(data);
+export const UseTermsPlot: React.FC<SeqSetPlotProps> = ({ data, description, barColor }) => {
+    const graphData = getGraphData(data, barColor);
     return <BarPlot data={graphData} description={description} />;
 };

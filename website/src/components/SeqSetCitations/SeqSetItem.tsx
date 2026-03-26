@@ -60,6 +60,7 @@ type SeqSetItemProps = {
     isAdminView?: boolean;
     fieldsToDisplay?: { field: string; displayName: string }[];
     organismDisplayNames?: Record<string, string>;
+    barGraphColor?: string;
 };
 
 const SeqSetItemInner: FC<SeqSetItemProps> = ({
@@ -76,6 +77,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     isAdminView = false,
     fieldsToDisplay,
     organismDisplayNames,
+    barGraphColor,
 }) => {
     const [page, setPage] = useState(1);
     const sequencesPerPage = 10;
@@ -183,6 +185,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                             <CitationPlot
                                 citedByData={citedByData}
                                 description='Number of times this SeqSet has been cited by a publication'
+                                barColor={barGraphColor}
                             />
                         }
                     />
@@ -194,14 +197,17 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     <DatePlot
                         data={collectionDatesData}
                         description={`Sample collection dates for ${seqSetAccessionVersion} sequences`}
+                        barColor={barGraphColor}
                     />
                     <CountriesPlot
                         data={collectionCountriesData}
                         description={`Sample collection countries for ${seqSetAccessionVersion} sequences`}
+                        barColor={barGraphColor}
                     />
                     <UseTermsPlot
                         data={dataUseTermsData}
                         description={`Data use terms for ${seqSetAccessionVersion} sequences`}
+                        barColor={barGraphColor}
                     />
                 </div>
             </SeqSetSection>

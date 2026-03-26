@@ -1,4 +1,5 @@
 ---
+import { mainTailwindColor } from '../../colors';
 import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { SeqSetItem } from '../../components/SeqSetCitations/SeqSetItem';
 import { SeqSetItemActions } from '../../components/SeqSetCitations/SeqSetItemActions';
@@ -59,6 +60,8 @@ const seqSetAccessionVersion = `${seqSetId}.${version}`;
 
 const authorResponse = seqSet !== undefined ? await seqSetClient.getAuthor(seqSet.createdBy) : undefined;
 const author = authorResponse?.isOk() ? authorResponse.value : undefined;
+
+const barGraphColor = mainTailwindColor[500];
 ---
 
 <BaseLayout
@@ -77,77 +80,71 @@ const author = authorResponse?.isOk() ? authorResponse.value : undefined;
             />
         )
     }
-    <div class='flex flex-col justify-center max-w-7xl'>
-        {
-            seqSet !== undefined ? (
-                <div class='flex flex-col md:flex-row items-left py-6'>
-                    <div class='w-full md:pl-6 mt-6 md:mt-0'>
-                        {seqSetRecordsResponse.isOk() ? (
-                            <SeqSetItemActions
-                                clientConfig={clientConfig}
-                                accessToken={accessToken}
-                                seqSet={seqSet}
-                                seqSetRecords={seqSetRecordsResponse.value}
-                                isAdminView={seqSet.createdBy === username}
-                                databaseName={websiteConfig.name}
-                                client:load
-                            />
-                        ) : (
-                            <ErrorFeedback
-                                message={
-                                    'Error while fetching seqSet records: ' +
-                                    JSON.stringify(seqSetRecordsResponse.error)
-                                }
-                                client:only='react'
-                            />
-                        )}
-                        {seqSetRecordsResponse.isOk() &&
-                        seqSetCitedByResponse.isOk() &&
-                        seqSetCollectionDatesResponse.isOk() &&
-                        seqSetCollectionCountriesResponse.isOk() &&
-                        seqSetDataUseTermsResponse.isOk() ? (
-                            <SeqSetItem
-                                clientConfig={clientConfig}
-                                accessToken={accessToken}
-                                seqSetAccessionVersion={seqSetAccessionVersion}
-                                seqSet={seqSet}
-                                seqSetAuthor={author}
-                                seqSetRecords={seqSetRecordsResponse.value}
-                                citedByData={seqSetCitedByResponse.value}
-                                collectionDatesData={seqSetCollectionDatesResponse.value}
-                                collectionCountriesData={seqSetCollectionCountriesResponse.value}
-                                dataUseTermsData={seqSetDataUseTermsResponse.value}
-                                isAdminView={seqSet.createdBy === username}
-                                fieldsToDisplay={websiteConfig.seqSetsFieldsToDisplay}
-                                organismDisplayNames={organismDisplayNames}
-                                client:load
-                            />
-                        ) : (
-                            <ErrorFeedback
-                                message={
-                                    'Error while fetching seqSet citations: ' +
-                                    JSON.stringify(
-                                        seqSetRecordsResponse.isErr()
-                                            ? seqSetRecordsResponse.error
-                                            : seqSetCitedByResponse.isErr()
-                                              ? seqSetCitedByResponse.error
-                                              : 'unknown',
-                                    )
-                                }
-                                client:only='react'
-                            />
-                        )}
-                    </div>
-                </div>
-            ) : (
-                <ErrorFeedback
-                    message={
-                        'Error while fetching seqSet: ' +
-                        JSON.stringify(seqSetResponse.isErr() ? seqSetResponse.error : 'unknown')
-                    }
-                    client:only='react'
-                />
-            )
-        }
-    </div>
+    {
+        seqSet !== undefined ? (
+            <div class='mt-12'>
+                {seqSetRecordsResponse.isOk() ? (
+                    <SeqSetItemActions
+                        clientConfig={clientConfig}
+                        accessToken={accessToken}
+                        seqSet={seqSet}
+                        seqSetRecords={seqSetRecordsResponse.value}
+                        isAdminView={seqSet.createdBy === username}
+                        databaseName={websiteConfig.name}
+                        client:load
+                    />
+                ) : (
+                    <ErrorFeedback
+                        message={'Error while fetching seqSet records: ' + JSON.stringify(seqSetRecordsResponse.error)}
+                        client:only='react'
+                    />
+                )}
+                {seqSetRecordsResponse.isOk() &&
+                seqSetCitedByResponse.isOk() &&
+                seqSetCollectionDatesResponse.isOk() &&
+                seqSetCollectionCountriesResponse.isOk() &&
+                seqSetDataUseTermsResponse.isOk() ? (
+                    <SeqSetItem
+                        clientConfig={clientConfig}
+                        accessToken={accessToken}
+                        seqSetAccessionVersion={seqSetAccessionVersion}
+                        seqSet={seqSet}
+                        seqSetAuthor={author}
+                        seqSetRecords={seqSetRecordsResponse.value}
+                        citedByData={seqSetCitedByResponse.value}
+                        collectionDatesData={seqSetCollectionDatesResponse.value}
+                        collectionCountriesData={seqSetCollectionCountriesResponse.value}
+                        dataUseTermsData={seqSetDataUseTermsResponse.value}
+                        isAdminView={seqSet.createdBy === username}
+                        fieldsToDisplay={websiteConfig.seqSetsFieldsToDisplay}
+                        organismDisplayNames={organismDisplayNames}
+                        barGraphColor={barGraphColor}
+                        client:load
+                    />
+                ) : (
+                    <ErrorFeedback
+                        message={
+                            'Error while fetching seqSet citations: ' +
+                            JSON.stringify(
+                                seqSetRecordsResponse.isErr()
+                                    ? seqSetRecordsResponse.error
+                                    : seqSetCitedByResponse.isErr()
+                                      ? seqSetCitedByResponse.error
+                                      : 'unknown',
+                            )
+                        }
+                        client:only='react'
+                    />
+                )}
+            </div>
+        ) : (
+            <ErrorFeedback
+                message={
+                    'Error while fetching seqSet: ' +
+                    JSON.stringify(seqSetResponse.isErr() ? seqSetResponse.error : 'unknown')
+                }
+                client:only='react'
+            />
+        )
+    }
 </BaseLayout>
