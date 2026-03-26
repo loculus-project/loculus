@@ -8,12 +8,15 @@ on:
 jobs:
   build-and-upload:
     runs-on: ubuntu-latest
+    outputs:
+      db_zipped: ${{ steps.set-filenames.outputs.db_zipped }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
       - name: Set versioned filenames
+        id: set-filenames
         run: |
           VERSIONED_NAME="ncbi_taxonomy_$(date +'%Y-%m-%d').sqlite"
           ZIPPED_NAME="${VERSIONED_NAME}.gz"
@@ -21,6 +24,7 @@ jobs:
           echo "DB_VERSIONED=${VERSIONED_NAME}" >> $GITHUB_ENV
           echo "DB_ZIPPED=${ZIPPED_NAME}" >> $GITHUB_ENV
           echo "DB_LATEST=ncbi_taxonomy_latest.sqlite.gz" >> $GITHUB_ENV
+          echo "db_zipped=${ZIPPED_NAME}" >> $GITHUB_OUTPUT
 
       - uses: mamba-org/setup-micromamba@v2
         with:
@@ -70,7 +74,7 @@ jobs:
           SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
         run: |
           curl -X POST -H 'Content-type: application/json' --data '{
-            "text": "✅ Successfully built and uploaded NCBI taxonomy DB: ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+            "text": "✅ Successfully built and uploaded NCBI taxonomy DB ${{ needs.build-and-upload.outputs.db_zipped }}: ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
           }' $SLACK_HOOK
 
   notify_on_failure:
