@@ -16,9 +16,7 @@ data:
     organism: {{ $organism }}
     {{- $processingConfig.configFile | toYaml | nindent 4 }}
     {{- if and (hasKey $organismConfig.schema "submissionDataTypes") (hasKey $organismConfig.schema.submissionDataTypes "maxSequencesPerEntry") }}
-    {{- if $organismConfig.schema.submissionDataTypes.maxSequencesPerEntry }}
     max_sequences_per_entry: {{ $organismConfig.schema.submissionDataTypes.maxSequencesPerEntry }}
-    {{- end }}
     {{- end }}
     processing_spec:
       {{- $args := dict "metadata" $metadata "referenceGenomes" $organismConfig.referenceGenomes }}
