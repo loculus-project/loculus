@@ -32,7 +32,6 @@ spec:
               DB_URL="https://loculus-public.hel1.your-objectstorage.com/taxonomy/{{ .Values.taxonomyService.dbVersion }}.sqlite.gz"
               echo "Downloading taxonomy DB from $DB_URL"
               wget -q "$DB_URL" -O /data/tmp.sqlite.gz
-              echo "{{ .Values.taxonomyService.dbSha256 }}  /data/tmp.sqlite.gz" | sha256sum -c
               gunzip /data/tmp.sqlite.gz
               mv /data/tmp.sqlite /data/taxonomy.sqlite
               echo "Taxonomy DB ready"

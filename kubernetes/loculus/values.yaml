@@ -2490,9 +2490,8 @@ enaDeposition:
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
 taxonomyService:
-  dbVersion: "ncbi_taxonomy_2026-03-23"
-  dbSha256: "d22610c0877bc0f753576387ee8a237899c5872f04b7561d6d2f3c61738db37f"
-  taxonomyDbPath: "/data/taxonomy.sqlite"
+  dbVersion: "ncbi_taxonomy_latest"
+  taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
 subdomainSeparator: "-"
 replicas:
   website: 1
