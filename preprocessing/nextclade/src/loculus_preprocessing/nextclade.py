@@ -792,7 +792,7 @@ def assign_segment_for_alignment(
                 )
     batch.alerts = {
         id: Alert(
-            errors=[*batch.alerts[id].errors, error] if error else batch.alerts[id].errors,
+            errors=[*batch.alerts[id].errors, *error] if error else batch.alerts[id].errors,
             warnings=batch.alerts[id].warnings,
         )
         for id, error in errors.items()
