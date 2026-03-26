@@ -2050,6 +2050,7 @@ defaultOrganisms:
           taxon_id: 3052518
           scientific_name: "Orthonairovirus haemorrhagiae"
           molecule_type: "genomic RNA"
+          alignment_requirement: ANY
           log_level: DEBUG
           nextclade_dataset_server: "https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
           segments:
