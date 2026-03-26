@@ -502,7 +502,6 @@ def process_single(
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
     max_seq_errors = check_max_sequences_per_entry(
-        accession_version,
         len(unprocessed.unalignedNucleotideSequences),
         config,
     )
@@ -560,11 +559,6 @@ def process_single_unaligned(
     )
     unprocessed.unalignedNucleotideSequences = segment_assignment.unalignedNucleotideSequences
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
-    max_seq_errors = check_max_sequences_per_entry(
-        accession_version,
-        len(unprocessed.unalignedNucleotideSequences),
-        config,
-    )
 
     output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
         accession_version, unprocessed, config
@@ -575,7 +569,7 @@ def process_single_unaligned(
         unprocessed=unprocessed,
         output_metadata=output_metadata,
         errors=list(
-            set(iupac_errors + max_seq_errors + metadata_errors + segment_assignment.alert.errors)
+            set(iupac_errors + metadata_errors + segment_assignment.alert.errors)
         ),
         warnings=list(set(metadata_warnings)),
         sequenceNameToFastaId=segment_assignment.sequenceNameToFastaId,
@@ -613,7 +607,6 @@ def processed_entry_with_errors(id) -> SubmissionData:
 
 
 def check_max_sequences_per_entry(
-    accession_version: AccessionVersion,
     num_sequences: int,
     config: Config,
 ) -> list[ProcessingAnnotation]:
