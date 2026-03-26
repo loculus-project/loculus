@@ -1,0 +1,64 @@
+name: taxonomy-service-unit-tests
+on:
+  # test
+  pull_request:
+    paths:
+      - "taxonomy/taxonomy_service/**"
+      - ".github/workflows/taxonomy-service-unit-tests.yaml"
+      - "ruff.toml"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-taxonomy-service-unit-tests
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: micromamba-shell {0}
+    working-directory: taxonomy/taxonomy_service
+jobs:
+  checkFormat:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: "taxonomy/taxonomy_service/environment.yaml"
+          micromamba-version: "latest"
+          cache-environment: true
+      - name: Run ruff format check
+        run: ruff check . --fix --diff
+  lint:
+    name: Lint code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: "taxonomy/taxonomy_service/environment.yaml"
+          micromamba-version: "latest"
+          cache-environment: true
+      - name: Run ruff check
+        run: ruff check .
+  unitTests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: "taxonomy/taxonomy_service/environment.yaml"
+          micromamba-version: "latest"
+          cache-environment: true
+      - name: Install package
+        run: |
+          uv pip install --system .
+      - name: Run tests
+        run: |
+          pytest

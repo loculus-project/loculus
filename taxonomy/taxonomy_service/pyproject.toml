@@ -1,0 +1,26 @@
+
+# Basic package config to make it installable
+[project]
+name = "taxonomy_service"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[project.scripts]
+taxonomy_service = "taxonomy_service.__main__:run"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/taxonomy_service"]
+
+[tool.ruff.lint.per-file-ignores]
+"test/**" = ["S101"]
+
+[tool.pytest.ini_options]
+# Live logging - show INFO+ during execution
+log_cli = true
+log_cli_level = "INFO"  # Show INFO logs during execution
+log_cli_format = "%(asctime)s [%(levelname)8s] %(name)s: %(message)s (%(filename)s:%(lineno)d)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"

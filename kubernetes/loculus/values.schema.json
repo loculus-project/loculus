@@ -1463,6 +1463,12 @@
       "default": false,
       "description": "If true, disables ENA (European Nucleotide Archive) submission service."
     },
+    "disableTaxonomyService": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables the taxonomy service deployment."
+    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",
@@ -1676,6 +1682,19 @@
         "enaSuppressedListTestUrl": {
           "type": "string",
           "description": "URL to the ENA suppressed sequence list (typically hosted on a Github repo)"
+        }
+      }
+    },
+    "taxonomyService": {
+      "type": "object",
+      "properties": {
+        "dbVersion": {
+          "type": "string",
+          "description": "Version identifier for the NCBI taxonomy database to download (e.g. ncbi_taxonomy_2026-03-23)"
+        },
+        "taxonomyDbPath": {
+          "type": "string",
+          "description": "Path where the taxonomy SQLite database is mounted inside the container"
         }
       }
     },
