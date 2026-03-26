@@ -63,7 +63,7 @@ from .processing_functions import (
     process_phenotype_values,
     process_stop_codons,
 )
-from .sequence_checks import errors_if_non_iupac
+from .sequence_checks import check_max_sequences_per_entry, errors_if_non_iupac
 
 logger = logging.getLogger(__name__)
 
@@ -602,28 +602,6 @@ def processed_entry_with_errors(id) -> SubmissionData:
         ),
         submitter=None,
     )
-
-
-def check_max_sequences_per_entry(
-    num_sequences: int,
-    config: Config,
-) -> list[ProcessingAnnotation]:
-    """Check if the number of sequences exceeds the configured maximum per entry."""
-    if (
-        config.max_sequences_per_entry is not None
-        and num_sequences > config.max_sequences_per_entry
-    ):
-        return [
-            ProcessingAnnotation.from_single(
-                ProcessingAnnotationAlignment,
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                message=(
-                    f"Entry has {num_sequences} sequences but the maximum allowed "
-                    f"number of sequences per entry is {config.max_sequences_per_entry}."
-                ),
-            )
-        ]
-    return []
 
 
 def process_all(

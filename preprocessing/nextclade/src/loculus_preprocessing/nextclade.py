@@ -15,7 +15,7 @@ from typing import Any, Final, Literal
 import pandas as pd
 from Bio import SeqIO
 
-from loculus_preprocessing.prepro import check_max_sequences_per_entry
+from loculus_preprocessing.sequence_checks import check_max_sequences_per_entry
 
 from .config import AlignmentRequirement, Config, NextcladeSequenceAndDataset, SequenceName
 from .datatypes import (
