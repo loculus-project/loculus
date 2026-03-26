@@ -45,12 +45,7 @@ fun findAndValidateSubmissionIdHeader(headerNames: List<String>): String {
     return submissionIdHeaders.first()
 }
 
-fun extractAndValidateFastaIds(
-    record: CSVRecord,
-    submissionId: String,
-    recordNumber: Int,
-    maxSequencesPerEntry: Int? = null,
-): Set<FastaId> {
+fun extractAndValidateFastaIds(record: CSVRecord, submissionId: String, recordNumber: Int): Set<FastaId> {
     val headerNames = record.parser.headerNames
     return when (headerNames.contains(FASTA_IDS_HEADER)) {
         true -> {
@@ -71,14 +66,6 @@ fun extractAndValidateFastaIds(
                     "In metadata file: record #$recordNumber with id '$submissionId': " +
                         "found duplicate fasta ids in column '$FASTA_IDS_HEADER': " +
                         duplicateFastaIds.joinToString(", "),
-                )
-            }
-
-            if (maxSequencesPerEntry != null && fastaIds.size > maxSequencesPerEntry) {
-                throw UnprocessableEntityException(
-                    "In metadata file: record #$recordNumber with id '$submissionId': " +
-                        "found ${fastaIds.size} fasta ids but the maximum allowed number of " +
-                        "sequences per entry is $maxSequencesPerEntry",
                 )
             }
 
@@ -134,10 +121,7 @@ private fun throwWithCsvExceptionUnwrapped(e: Exception): Nothing {
     throw e
 }
 
-fun metadataEntryStreamAsSequence(
-    metadataInputStream: InputStream,
-    maxSequencesPerEntry: Int? = null,
-): Sequence<MetadataEntry> {
+fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
     val csvParser = setUpCsvParser(metadataInputStream)
 
     val headerNames = csvParser.headerNames
@@ -150,7 +134,7 @@ fun metadataEntryStreamAsSequence(
 
                 val submissionId = getValueAndValidateNoWhitespace(record, submissionIdHeader, recordNumber)
 
-                val fastaIds = extractAndValidateFastaIds(record, submissionId, recordNumber, maxSequencesPerEntry)
+                val fastaIds = extractAndValidateFastaIds(record, submissionId, recordNumber)
 
                 val metadata = record.toMap().filterKeys {
                     it != submissionIdHeader &&
@@ -174,10 +158,7 @@ data class RevisionEntry(
     val fastaIds: Set<FastaId>? = null,
 )
 
-fun revisionEntryStreamAsSequence(
-    metadataInputStream: InputStream,
-    maxSequencesPerEntry: Int? = null,
-): Sequence<RevisionEntry> {
+fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<RevisionEntry> {
     val csvParser = setUpCsvParser(metadataInputStream)
 
     val headerNames = csvParser.headerNames
@@ -197,7 +178,7 @@ fun revisionEntryStreamAsSequence(
                 val submissionId = getValueAndValidateNoWhitespace(record, submissionIdHeader, recordNumber)
                 val accession = getValueAndValidateNoWhitespace(record, ACCESSION_HEADER, recordNumber)
 
-                val fastaIds = extractAndValidateFastaIds(record, submissionId, recordNumber, maxSequencesPerEntry)
+                val fastaIds = extractAndValidateFastaIds(record, submissionId, recordNumber)
 
                 val metadata = record.toMap().filterKeys {
                     it != submissionIdHeader && it != ACCESSION_HEADER &&

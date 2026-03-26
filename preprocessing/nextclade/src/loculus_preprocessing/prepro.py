@@ -63,7 +63,7 @@ from .processing_functions import (
     process_phenotype_values,
     process_stop_codons,
 )
-from .sequence_checks import errors_if_non_iupac
+from .sequence_checks import error_on_excess_sequences, errors_if_non_iupac
 
 logger = logging.getLogger(__name__)
 
@@ -501,6 +501,11 @@ def process_single(
     """Process a single sequence per config"""
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
+    max_seq_errors = error_on_excess_sequences(
+        len(unprocessed.unalignedNucleotideSequences),
+        config,
+    )
+
     alignment_errors, alignment_warnings = alignment_errors_warnings(
         unprocessed,
         config,
@@ -522,7 +527,15 @@ def process_single(
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
             sequenceNameToFastaId=unprocessed.sequenceNameToFastaId,
         ),
-        errors=list(set(unprocessed.errors + iupac_errors + alignment_errors + metadata_errors)),
+        errors=list(
+            set(
+                unprocessed.errors
+                + iupac_errors
+                + max_seq_errors
+                + alignment_errors
+                + metadata_errors
+            )
+        ),
         warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
     )
 
