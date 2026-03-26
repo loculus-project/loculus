@@ -427,7 +427,6 @@ CREATE TABLE public.sequence_entries (
     released_at timestamp without time zone,
     is_revocation boolean DEFAULT false NOT NULL,
     original_data jsonb,
-    version_comment text,
     unprocessed_data jsonb
 );
 
@@ -469,11 +468,11 @@ CREATE VIEW public.sequence_entries_view AS
     se.released_at,
     se.is_revocation,
     se.unprocessed_data,
-    se.version_comment,
     sepd.started_processing_at,
     sepd.finished_processing_at,
     sepd.processed_data,
         CASE
+            WHEN se.is_revocation THEN jsonb_build_object('metadata', COALESCE((se.unprocessed_data -> 'metadata'::text), '{}'::jsonb), 'unalignedNucleotideSequences', '{}'::jsonb, 'alignedNucleotideSequences', '{}'::jsonb, 'nucleotideInsertions', '{}'::jsonb, 'alignedAminoAcidSequences', '{}'::jsonb, 'aminoAcidInsertions', '{}'::jsonb, 'files', 'null'::jsonb)
             WHEN (aem.external_metadata IS NULL) THEN sepd.processed_data
             ELSE (sepd.processed_data || jsonb_build_object('metadata', ((sepd.processed_data -> 'metadata'::text) || aem.external_metadata)))
         END AS joint_metadata,
