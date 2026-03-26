@@ -33,7 +33,7 @@ const SeqSetSectionSeparator: FC = () => <hr className='my-8 border-t-2 border-g
 const SeqSetDetails: FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <div className='flex flex-col mb-6'>
         <div className='flex flex-row'>
-            <h2 className='text-xl font-semibold border-b py-2 mb-3'>{title}</h2>
+            <h2 className='text-xl font-semibold border-b py-2 my-4'>{title}</h2>
         </div>
         {children}
     </div>
@@ -148,11 +148,15 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     <SeqSetDetailsEntry
                         label='Created by'
                         value={
-                            <AuthorDetails
-                                displayFullDetails={false}
-                                firstName={seqSetAuthor?.firstName}
-                                lastName={seqSetAuthor?.lastName}
-                            />
+                            seqSetAuthor ? (
+                                <AuthorDetails
+                                    displayFullDetails={false}
+                                    firstName={seqSetAuthor.firstName}
+                                    lastName={seqSetAuthor.lastName}
+                                />
+                            ) : (
+                                'Unknown'
+                            )
                         }
                     />
                     <SeqSetDetailsEntry label='Created date' value={formatDate(seqSet.createdAt)} />

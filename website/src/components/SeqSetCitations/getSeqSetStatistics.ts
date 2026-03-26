@@ -36,7 +36,7 @@ export const getSeqSetStatistics = async (
     }
 
     const organisms = getConfiguredOrganisms();
-    const aggregates = await Promise.all(
+    const aggregateResponses = await Promise.all(
         organisms.map((organism) => {
             const client = LapisClient.createForOrganism(organism.key);
             const schema = getSchema(organism.key);
@@ -47,11 +47,11 @@ export const getSeqSetStatistics = async (
     );
 
     const crossAggregate = new Map<AggregateValue, number>();
-    for (const aggregate of aggregates) {
-        if (aggregate.isErr()) continue;
+    for (const aggregateResponse of aggregateResponses) {
+        if (aggregateResponse.isErr()) return aggregateResponse;
 
-        for (const item of aggregate.value) {
-            crossAggregate.set(item.value, (crossAggregate.get(item.value) ?? 0) + item.count);
+        for (const aggregateRow of aggregateResponse.value) {
+            crossAggregate.set(aggregateRow.value, (crossAggregate.get(aggregateRow.value) ?? 0) + aggregateRow.count);
         }
     }
 
