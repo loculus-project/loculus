@@ -14,8 +14,8 @@ from .ena_submission_helper import (
     accession_exists,
     create_ena_sample,
     get_alias,
+    retry_failed_submissions_for_matching_errors,
     set_accession_does_not_exist_error,
-    trigger_retry_if_exists,
 )
 from .ena_types import (
     ProjectLink,
@@ -422,7 +422,7 @@ def sample_table_handle_errors(
             time=datetime.now(tz=pytz.utc),
             slack_retry_threshold_min=config.slack_retry_threshold_min,
         )
-        last_retry_time = trigger_retry_if_exists(
+        last_retry_time = retry_failed_submissions_for_matching_errors(
             entries_with_errors,
             db_config,
             table_name=TableName.SAMPLE_TABLE,

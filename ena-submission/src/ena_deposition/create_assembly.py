@@ -25,8 +25,8 @@ from .ena_submission_helper import (
     get_authors,
     get_description,
     get_ena_analysis_process,
+    retry_failed_submissions_for_matching_errors,
     set_accession_does_not_exist_error,
-    trigger_retry_if_exists,
 )
 from .ena_types import (
     DEFAULT_EMBL_PROPERTY_FIELDS,
@@ -758,21 +758,18 @@ def assembly_table_handle_errors(
         )
         messages.append(msg)
 
-        last_retry_time = trigger_retry_if_exists(
+        last_retry_time = retry_failed_submissions_for_matching_errors(
             entries_with_errors,
             db_config,
             table_name=TableName.ASSEMBLY_TABLE,
             retry_threshold_min=config.retry_threshold_min,
             last_retry=last_retry_time,
-        )
-
-        last_retry_time = trigger_retry_if_exists(
-            entries_with_errors,
-            db_config,
-            table_name=TableName.ASSEMBLY_TABLE,
-            error_substring="Submit service authentication error. Invalid submission account user name or password. Please try enclosing your password in single quotes. The submission has failed because of a user error.:",
-            retry_threshold_min=config.retry_threshold_min,
-            last_retry=last_retry_time,
+            error_substrings=(
+                "Submit service authentication error. Invalid submission account user "
+                "name or password. Please try enclosing your password in single quotes. "
+                "The submission has failed because of a user error.:",
+                "does not exist in ENA",
+            ),
         )
         # TODO: Query ENA to check if assembly has in fact been created
         # If created update assembly_table
