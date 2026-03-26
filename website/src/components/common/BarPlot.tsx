@@ -27,7 +27,12 @@ export const BarPlot: FC<BarPlotProps> = ({ data, options, description }) => {
         setIsRegistered(true);
     }, []);
 
-    if (!isRegistered) return null;
+    if (!isRegistered)
+        return (
+            <div className='flex items-center justify-center h-48'>
+                <div className='loading loading-spinner' />
+            </div>
+        );
 
     return (
         <div>
