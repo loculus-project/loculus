@@ -1,5 +1,6 @@
 import sqlite3
 import unittest
+import urllib.parse
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -82,9 +83,8 @@ class ApiTest(unittest.TestCase):
 
     def test_query_taxon_success(self):
         taxon = mock_taxa["Homo sapiens"]
-        response = client.get(
-            f"/taxa?scientific_name={taxon['scientific_name'].replace(' ', '+')}"
-        )
+        query = urllib.parse.urlencode({"scientific_name": taxon["scientific_name"]})
+        response = client.get(f"/taxa?{query}")
         assert response.status_code == codes.ok
         assert response.json()[0]["scientific_name"] == taxon["scientific_name"]
 
