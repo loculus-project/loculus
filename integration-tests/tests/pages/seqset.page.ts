@@ -22,7 +22,7 @@ export class SeqSetPage {
     }
 
     getHeading(name: string) {
-        return this.page.getByRole('heading', { name });
+        return this.page.getByRole('heading').getByText(name, { exact: true });
     }
 
     async openCreateDialog() {

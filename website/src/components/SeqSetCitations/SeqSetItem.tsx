@@ -22,7 +22,7 @@ const logger = getClientLogger('SeqSetItem');
 const SeqSetSection: FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <div className='flex flex-col mb-6'>
         <div className='flex flex-row'>
-            <h1 className='text-xl font-semibold border-b py-2 my-4'>{title}</h1>
+            <h2 className='text-xl font-semibold border-b py-2 my-4'>{title}</h2>
         </div>
         {children}
     </div>
@@ -33,7 +33,7 @@ const SeqSetSectionSeparator: FC = () => <hr className='my-8 border-t-2 border-g
 const SeqSetDetails: FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <div className='flex flex-col mb-6'>
         <div className='flex flex-row'>
-            <h1 className='text-xl font-semibold border-b py-2 mb-3'>{title}</h1>
+            <h2 className='text-xl font-semibold border-b py-2 mb-3'>{title}</h2>
         </div>
         {children}
     </div>
