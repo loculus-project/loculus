@@ -71,7 +71,7 @@ jobs:
             curl https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | DEBUG=true bash && break || sleep $((i * 2))
           done
           k3d version
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           version: v3.18.3
       - name: Create k3d cluster
