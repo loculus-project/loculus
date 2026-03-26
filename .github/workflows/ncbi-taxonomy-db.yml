@@ -60,6 +60,19 @@ jobs:
           s3cmd cp s3://loculus-public/taxonomy/"${DB_ZIPPED}" \
             s3://loculus-public/taxonomy/"${DB_LATEST}"
 
+  notify_on_success:
+    needs: build-and-upload
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Send Slack Notification
+        env:
+          SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "✅ Successfully built and uploaded NCBI taxonomy DB: ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+          }' $SLACK_HOOK
+
   notify_on_failure:
     needs: build-and-upload
     runs-on: ubuntu-latest
