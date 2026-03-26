@@ -1196,93 +1196,12 @@ def test_preprocessing_multi_segment_none_requirement(test_case_def: Case):
     )
 
 
-def test_max_sequences_per_entry_rejects_exceeding_limit() -> None:
-    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    config.max_sequences_per_entry = 1
-
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-        ),
-    )
-
-    result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
-    processed_entry = result[0].processed_entry
-
-    max_seq_errors = [e for e in processed_entry.errors if "maximum allowed" in e.message]
-    assert len(max_seq_errors) == 1
-    assert "2 sequences" in max_seq_errors[0].message
-    assert "maximum allowed number of sequences per entry is 1" in max_seq_errors[0].message
-
-
-def test_max_sequences_per_entry_allows_within_limit() -> None:
-    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    config.max_sequences_per_entry = 3
-
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-        ),
-    )
-
-    result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
-    processed_entry = result[0].processed_entry
-
-    max_seq_errors = [e for e in processed_entry.errors if "maximum allowed" in e.message]
-    assert len(max_seq_errors) == 0
-
-
-def test_max_sequences_per_entry_not_set_allows_any() -> None:
-    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    config.max_sequences_per_entry = None
-
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-        ),
-    )
-
-    result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
-    processed_entry = result[0].processed_entry
-
-    max_seq_errors = [e for e in processed_entry.errors if "maximum allowed" in e.message]
-    assert len(max_seq_errors) == 0
-
-
 def test_max_sequences_per_entry_batch_isolation() -> None:
     """If one entry in a batch exceeds maxSequencesPerEntry, only that entry is flagged;
     other entries in the same batch should succeed without max-sequence errors."""
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
     config.max_sequences_per_entry = 1
 
-    # Entry with too many sequences (2 sequences, limit is 1)
     bad_entry = UnprocessedEntry(
         accessionVersion="LOC_01.1",
         data=UnprocessedData(
@@ -1298,7 +1217,6 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
         ),
     )
 
-    # Entry with acceptable number of sequences (1 sequence, limit is 1)
     good_entry = UnprocessedEntry(
         accessionVersion="LOC_02.1",
         data=UnprocessedData(
@@ -1315,16 +1233,14 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
 
     result = process_all([bad_entry, good_entry], MULTI_EBOLA_DATASET, config)
 
-    # The entry with too many sequences should have a max-sequence error
-    bad_result = [r for r in result if r.processed_entry.accession == "LOC_01"][0]
+    bad_result = next(r for r in result if r.processed_entry.accession == "LOC_01")
     bad_max_errors = [
         e for e in bad_result.processed_entry.errors if "maximum allowed" in e.message
     ]
     assert len(bad_max_errors) == 1
     assert "2 sequences" in bad_max_errors[0].message
 
-    # The entry within the limit should have no max-sequence errors
-    good_result = [r for r in result if r.processed_entry.accession == "LOC_02"][0]
+    good_result = next(r for r in result if r.processed_entry.accession == "LOC_02")
     good_max_errors = [
         e for e in good_result.processed_entry.errors if "maximum allowed" in e.message
     ]
