@@ -4,6 +4,7 @@ import tailwind from '@astrojs/tailwind';
 import Icons from 'unplugin-icons/vite';
 import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
+import { createRequire } from 'module';
 
 // https://astro.build/config
 export default defineConfig({
@@ -20,6 +21,18 @@ export default defineConfig({
         optimizeDeps: {
             exclude: ['fsevents', 'msw/node', 'msw', 'chromium-bidi'],
         },
-        plugins: [Icons({ compiler: 'jsx', jsx: 'react' })],
+        plugins: [
+            Icons({ compiler: 'jsx', jsx: 'react' }),
+            {
+                name: 'inline-colors-cjs',
+                load(id) {
+                    if (id.endsWith('colors.cjs')) {
+                        const require = createRequire(import.meta.url);
+                        const { mainTailwindColor } = require('./colors.cjs');
+                        return `export const mainTailwindColor = ${JSON.stringify(mainTailwindColor)};`;
+                    }
+                },
+            },
+        ],
     },
 });
