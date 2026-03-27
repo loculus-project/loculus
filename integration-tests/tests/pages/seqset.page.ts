@@ -36,6 +36,7 @@ export class SeqSetPage {
         await this.openCreateDialog();
         await this.fillSeqSetForm(input);
         await this.submitSeqSetForm();
+        await this.page.waitForURL(/\/seqsets\/.+/);
     }
 
     async fillSeqSetForm(input: SeqSetFormInput) {

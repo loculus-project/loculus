@@ -9,25 +9,24 @@ import {
 } from './SeqSetPlots';
 
 describe('getGraphData', () => {
-    it('maps values to labels and counts to dataset data', () => {
-        const input = [
+    it('maps values and counts, and accumulates empty values', () => {
+        const data = [
             { value: 'USA', count: 10 },
             { value: 'Germany', count: 5 },
+            { value: null, count: 3 },
+            { value: '', count: 2 },
         ];
-        const result = getGraphData(input);
-        expect(result.labels).toEqual(['USA', 'Germany']);
-        expect(result.datasets[0].data).toEqual([10, 5]);
-    });
-
-    it('uses null value as "Unknown" label', () => {
-        const result = getGraphData([{ value: null, count: 3 }]);
-        expect(result.labels).toEqual(['Unknown']);
+        const { graphData, emptyCount } = getGraphData(data);
+        expect(graphData.labels).toEqual(['USA', 'Germany']);
+        expect(graphData.datasets[0].data).toEqual([10, 5]);
+        expect(emptyCount).toBe(5);
     });
 
     it('returns empty labels and data for empty input', () => {
-        const result = getGraphData([]);
-        expect(result.labels).toEqual([]);
-        expect(result.datasets[0].data).toEqual([]);
+        const { graphData, emptyCount } = getGraphData([]);
+        expect(graphData.labels).toEqual([]);
+        expect(graphData.datasets[0].data).toEqual([]);
+        expect(emptyCount).toBe(0);
     });
 });
 

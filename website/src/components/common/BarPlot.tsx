@@ -17,9 +17,10 @@ type BarPlotProps = {
     data: ChartData<'bar'>;
     options?: ChartOptions<'bar'>;
     description?: string;
+    emptyCount?: number;
 };
 
-export const BarPlot: FC<BarPlotProps> = ({ data, options, description }) => {
+export const BarPlot: FC<BarPlotProps> = ({ data, options, description, emptyCount }) => {
     const [isRegistered, setIsRegistered] = useState(false);
 
     useEffect(() => {
@@ -56,6 +57,11 @@ export const BarPlot: FC<BarPlotProps> = ({ data, options, description }) => {
                 }}
             />
             {description && <p className={`text-sm text-center ml-6 mt-3 text-gray-500`}>{description}</p>}
+            {emptyCount !== undefined && emptyCount > 0 && (
+                <p className={`text-sm text-center ml-6 mt-1 text-gray-500`}>
+                    {emptyCount} entr{emptyCount === 1 ? 'y' : 'ies'} with missing values
+                </p>
+            )}
         </div>
     );
 };
