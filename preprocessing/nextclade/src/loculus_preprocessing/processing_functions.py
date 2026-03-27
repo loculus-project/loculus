@@ -1366,7 +1366,7 @@ class ProcessingFunctions:
             # if this record was ingested from ISNDC, we trust that they validated the hostNameScientific
             # and associated it with the proper hostTaxonId
             return ProcessingResult(
-                datum=input_data.get("ncbiHostTaxId"),
+                datum=input_data.get("hostTaxId"),
                 warnings=[],
                 errors=[],
             )

@@ -1559,7 +1559,7 @@ defaultOrganisms:
             function: validate_hostname
             inputs:
               hostNameScientific: hostNameScientific
-              ncbiHostTaxId: ncbiHostTaxId
+              hostTaxId: hostTaxId
             args: *preprocessingTaxonomyServiceArgs
         - name: hostNameScientific
           displayName: Host name - scientific
