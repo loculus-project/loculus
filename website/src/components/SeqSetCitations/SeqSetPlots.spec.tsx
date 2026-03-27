@@ -32,32 +32,36 @@ describe('getGraphData', () => {
 });
 
 describe('getDateFormatFromData', () => {
-    it('returns yyyy-MM-dd for dates within 60 days of each other', () => {
+    it('returns yyyy for mixed resolutions more than 365 days apart', () => {
         const data = [
-            { value: '2024-01-01', count: 1 },
-            { value: '2024-02-01', count: 1 },
-        ];
-        expect(getDateFormatFromData(data)).toBe('yyyy-MM-dd');
-    });
-
-    it('returns yyyy-MM for dates between 60 and 365 days apart', () => {
-        const data = [
-            { value: '2024-01-01', count: 1 },
-            { value: '2024-06-01', count: 1 },
-        ];
-        expect(getDateFormatFromData(data)).toBe('yyyy-MM');
-    });
-
-    it('returns yyyy for dates more than 365 days apart', () => {
-        const data = [
-            { value: '2022-01-01', count: 1 },
+            { value: '2022-01', count: 1 },
             { value: '2024-01-01', count: 1 },
         ];
         expect(getDateFormatFromData(data)).toBe('yyyy');
     });
 
+    it('returns yyyy-MM for mixed resolutions between 60 and 365 days apart', () => {
+        const data = [
+            { value: '2024', count: 1 },
+            { value: '2024-06-01', count: 1 },
+        ];
+        expect(getDateFormatFromData(data)).toBe('yyyy-MM');
+    });
+
+    it('returns yyyy-MM-dd for dates within 60 days of each other', () => {
+        const data = [
+            { value: '2024-01', count: 1 },
+            { value: '2024-02-02', count: 1 },
+        ];
+        expect(getDateFormatFromData(data)).toBe('yyyy-MM-dd');
+    });
+
     it('returns yyyy-MM-dd for a single date', () => {
         expect(getDateFormatFromData([{ value: '2024-03-15', count: 1 }])).toBe('yyyy-MM-dd');
+    });
+
+    it('returns yyyy-MM-dd for empty data', () => {
+        expect(getDateFormatFromData([])).toBe('yyyy-MM-dd');
     });
 
     it('ignores rows with non-string or invalid date values', () => {
@@ -71,29 +75,58 @@ describe('getDateFormatFromData', () => {
 });
 
 describe('groupByDateFormat', () => {
-    it('groups dates by month when format is yyyy-MM', () => {
+    it('handles grouping dates of mixed resolutions by yyyy', () => {
         const data = [
-            { value: '2024-01-01', count: 3 },
-            { value: '2024-01-15', count: 2 },
-            { value: '2024-02-01', count: 5 },
-        ];
-        const result = groupByDateFormat(data, 'yyyy-MM');
-        expect(result).toEqual([
-            { value: '2024-01', count: 5 },
-            { value: '2024-02', count: 5 },
-        ]);
-    });
-
-    it('groups dates by year when format is yyyy', () => {
-        const data = [
-            { value: '2022-06-01', count: 4 },
-            { value: '2022-12-01', count: 6 },
-            { value: '2023-03-01', count: 2 },
+            { value: '2022', count: 3 },
+            { value: '2022-01', count: 4 },
+            { value: '2022-06-15', count: 2 },
+            { value: '2023', count: 1 },
+            { value: '2023-01', count: 2 },
+            { value: '2023-04-04', count: 1 },
         ];
         const result = groupByDateFormat(data, 'yyyy');
         expect(result).toEqual([
-            { value: '2022', count: 10 },
-            { value: '2023', count: 2 },
+            { value: '2022', count: 9 },
+            { value: '2023', count: 4 },
+        ]);
+    });
+
+    it('handles grouping dates of mixed resolutions by yyyy-MM', () => {
+        const data = [
+            { value: '2024', count: 1 },
+            { value: '2024-01', count: 2 },
+            { value: '2024-01-15', count: 3 },
+            { value: '2024-02-01', count: 1 },
+            { value: '2025', count: 1 },
+            { value: '2025-01', count: 1 },
+            { value: '2025-02-10', count: 1 },
+        ];
+        const result = groupByDateFormat(data, 'yyyy-MM');
+        expect(result).toEqual([
+            { value: '2024-01', count: 6 },
+            { value: '2024-02', count: 1 },
+            { value: '2025-01', count: 2 },
+            { value: '2025-02', count: 1 },
+        ]);
+    });
+
+    it('handles grouping dates of mixed resolutions by yyyy-MM-dd', () => {
+        const data = [
+            { value: '2024', count: 1 },
+            { value: '2024-01', count: 4 },
+            { value: '2024-01-15', count: 3 },
+            { value: '2024-02-01', count: 1 },
+            { value: '2025', count: 1 },
+            { value: '2025-01', count: 1 },
+            { value: '2025-02-10', count: 1 },
+        ];
+        const result = groupByDateFormat(data, 'yyyy-MM-dd');
+        expect(result).toEqual([
+            { value: '2024-01-01', count: 5 },
+            { value: '2024-01-15', count: 3 },
+            { value: '2024-02-01', count: 1 },
+            { value: '2025-01-01', count: 2 },
+            { value: '2025-02-10', count: 1 },
         ]);
     });
 
@@ -102,9 +135,10 @@ describe('groupByDateFormat', () => {
             { value: null, count: 99 },
             { value: 'not-a-date', count: 99 },
             { value: '2024-03-01', count: 1 },
+            { value: '2024-03-15', count: 1 },
         ];
         const result = groupByDateFormat(data, 'yyyy-MM');
-        expect(result).toEqual([{ value: '2024-03', count: 1 }]);
+        expect(result).toEqual([{ value: '2024-03', count: 2 }]);
     });
 
     it('returns empty array for empty input', () => {
