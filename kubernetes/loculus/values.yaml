@@ -19,6 +19,7 @@ disableBackend: false
 disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
+disableTaxonomyService: false
 website:
   websiteConfig:
     enableLoginNavigationItem: true
@@ -1403,7 +1404,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
         - "prepro"
-      replicas: 2
+      replicas: 1
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         batch_size: 100
@@ -2392,16 +2393,12 @@ bannerMessage: "This is a demonstration environment. It may contain non-accurate
 welcomeMessageHTML: null
 additionalHeadHTML: ""
 images:
-  lapisSilo:
-    repository: "ghcr.io/genspectrum/lapis-silo"
-    tag: "0.9.3@sha256:7e3a9a2221e265b56bc280054705f44637fcba7bea812d9bd8de62c923ebe742"
-    pullPolicy: Always
   loculusSilo:
     repository: "ghcr.io/loculus-project/loculus-silo"
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "v0.6.8@sha256:6a18b82d554ea05ba58ff8630cc74cba17d07d798665f41a8a87edc9402987a2"
+    tag: "v0.8.0@sha256:4da71d94aceb36b7ea5963aa2e7b0566567c6423fe7fdd39448e69aebda2a8bb"
     pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"
@@ -2488,6 +2485,9 @@ enaDeposition:
   enaUniqueSuffix: Loculus
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
+taxonomyService:
+  dbVersion: "ncbi_taxonomy_latest"
+  taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
 subdomainSeparator: "-"
 replicas:
   website: 1
@@ -2508,6 +2508,12 @@ resources:
     requests:
       memory: "100Mi"
       cpu: "10m"
+    limits:
+      memory: "1Gi"
+  taxonomy-service:
+    requests:
+      memory: "200Mi"
+      cpu: "20m"
     limits:
       memory: "1Gi"
   ena-submission:
