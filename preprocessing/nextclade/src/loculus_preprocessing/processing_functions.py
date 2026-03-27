@@ -1388,7 +1388,22 @@ class ProcessingFunctions:
             )
 
         query = urllib.parse.urlencode({"scientific_name": input_name})
-        response = requests.get(f"{host}:{port}/taxa?{query}")
+        try:
+            response = requests.get(f"{host}:{port}/taxa?{query}", timeout=15)
+        except requests.exceptions.Timeout:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"request timeout while validating '{input_name}' - the taxonomy-service may be down",
+                    )
+                ],
+            )
+
         if response.status_code != requests.codes.ok:
             return ProcessingResult(
                 datum=None,
@@ -1459,7 +1474,22 @@ class ProcessingFunctions:
                 ],
             )
 
-        response = requests.get(f"{host}:{port}/taxa/{tax_id}")
+        try:
+            response = requests.get(f"{host}:{port}/taxa/{tax_id}", timeout=15)
+        except requests.exceptions.Timeout:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"request timeout while getting scientific name for '{tax_id}' - the taxonomy-service may be down",
+                    )
+                ],
+            )
+
         if response.status_code != requests.codes.ok:
             return ProcessingResult(
                 datum=None,
@@ -1473,6 +1503,7 @@ class ProcessingFunctions:
                     )
                 ],
             )
+
         scientific_name = response.json().get("scientific_name")
         if scientific_name is None:
             return ProcessingResult(
@@ -1518,7 +1549,24 @@ class ProcessingFunctions:
                 ],
             )
 
-        response = requests.get(f"{host}:{port}/taxa/{tax_id}?find_common_name=true")
+        try:
+            response = requests.get(
+                f"{host}:{port}/taxa/{tax_id}?find_common_name=true", timeout=15
+            )
+        except requests.exceptions.Timeout:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"request timeout while getting common name for '{tax_id}' - the taxonomy-service may be down",
+                    )
+                ],
+            )
+
         if response.status_code != requests.codes.ok:
             return ProcessingResult(
                 datum=None,
