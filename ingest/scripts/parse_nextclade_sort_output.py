@@ -27,6 +27,7 @@ class NextcladeSortParams:
     minimizer_url: str
     minimizer_parser: list[str]
     minimizer_parser_separator: str = "_"
+    minimizer_parser_separator: str = "_"
     method: str = "minimizer"
 
 
@@ -34,6 +35,9 @@ class NextcladeSortParams:
 class Config:
     segment_identification: NextcladeSortParams
     nucleotide_sequences: list[str]
+    minimizer_url: str | None
+    minimizer_parser: list[str] | None
+    minimizer_parser_separator: str | None
     segmented: bool = False
 
     @classmethod
