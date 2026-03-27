@@ -981,23 +981,26 @@ class SubmissionDatabaseService(
             ),
         )
 
-        if (versionComment != null) {
-            val originalData = compressionService.compressSequencesInOriginalData(
-                OriginalData(
-                    metadata = mapOf("versionComment" to versionComment),
-                    unalignedNucleotideSequences = emptyMap(),
-                ),
-                organism,
-            )
-            SequenceEntriesTable.update(
-                where = {
-                    (SequenceEntriesTable.accessionColumn inList accessions) and
-                        SequenceEntriesTable.isMaxVersion and
-                        (SequenceEntriesTable.isRevocationColumn eq true)
-                },
-            ) {
-                it[originalDataColumn] = originalData
-            }
+        val metadata = if (versionComment != null) {
+            mapOf("versionComment" to versionComment)
+        } else {
+            emptyMap()
+        }
+        val originalData = compressionService.compressSequencesInOriginalData(
+            OriginalData(
+                metadata = metadata,
+                unalignedNucleotideSequences = emptyMap(),
+            ),
+            organism,
+        )
+        SequenceEntriesTable.update(
+            where = {
+                (SequenceEntriesTable.accessionColumn inList accessions) and
+                    SequenceEntriesTable.isMaxVersion and
+                    (SequenceEntriesTable.isRevocationColumn eq true)
+            },
+        ) {
+            it[originalDataColumn] = originalData
         }
 
         auditLogger.log(

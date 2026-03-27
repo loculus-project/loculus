@@ -471,8 +471,7 @@ CREATE VIEW public.sequence_entries_view AS
     sepd.finished_processing_at,
     sepd.processed_data,
         CASE
-            WHEN (se.is_revocation AND (se.original_data IS NOT NULL)) THEN jsonb_build_object('metadata', COALESCE((se.original_data -> 'metadata'::text), '{}'::jsonb), 'unalignedNucleotideSequences', '{}'::jsonb, 'alignedNucleotideSequences', '{}'::jsonb, 'nucleotideInsertions', '{}'::jsonb, 'alignedAminoAcidSequences', '{}'::jsonb, 'aminoAcidInsertions', '{}'::jsonb, 'files', 'null'::jsonb)
-            WHEN se.is_revocation THEN NULL::jsonb
+            WHEN se.is_revocation THEN jsonb_build_object('metadata', COALESCE((se.original_data -> 'metadata'::text), '{}'::jsonb), 'unalignedNucleotideSequences', '{}'::jsonb, 'alignedNucleotideSequences', '{}'::jsonb, 'nucleotideInsertions', '{}'::jsonb, 'alignedAminoAcidSequences', '{}'::jsonb, 'aminoAcidInsertions', '{}'::jsonb, 'files', 'null'::jsonb)
             WHEN (aem.external_metadata IS NULL) THEN sepd.processed_data
             ELSE (sepd.processed_data || jsonb_build_object('metadata', ((sepd.processed_data -> 'metadata'::text) || aem.external_metadata)))
         END AS joint_metadata,

@@ -22,6 +22,14 @@ SET original_data = jsonb_set(
 )
 WHERE is_revocation = true AND version_comment IS NOT NULL AND original_data IS NOT NULL;
 
+-- Step 1b: Ensure all revocations have original_data (even those without version_comment)
+UPDATE sequence_entries
+SET original_data = jsonb_build_object(
+    'metadata', '{}'::jsonb,
+    'unalignedNucleotideSequences', '{}'::jsonb
+)
+WHERE is_revocation = true AND original_data IS NULL;
+
 -- Step 2: Drop the view (must be done before dropping the column)
 DROP VIEW IF EXISTS sequence_entries_view;
 
@@ -48,7 +56,7 @@ SELECT
     sepd.finished_processing_at,
     sepd.processed_data,
     CASE
-        WHEN se.is_revocation AND se.original_data IS NOT NULL THEN
+        WHEN se.is_revocation THEN
             jsonb_build_object(
                 'metadata', COALESCE(se.original_data -> 'metadata', '{}'::jsonb),
                 'unalignedNucleotideSequences', '{}'::jsonb,
@@ -58,7 +66,6 @@ SELECT
                 'aminoAcidInsertions', '{}'::jsonb,
                 'files', 'null'::jsonb
             )
-        WHEN se.is_revocation THEN NULL
         WHEN aem.external_metadata IS NULL THEN sepd.processed_data
         ELSE sepd.processed_data ||
             jsonb_build_object('metadata', (sepd.processed_data -> 'metadata') || aem.external_metadata)
