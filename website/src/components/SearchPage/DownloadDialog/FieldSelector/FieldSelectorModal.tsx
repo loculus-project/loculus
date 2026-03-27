@@ -47,6 +47,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     const fieldItems: FieldItem[] = schema.metadata.map((field) => ({
         name: field.name,
         displayName: field.displayName,
+        definition: field.definition,
         header: field.header,
         order: field.order,
         displayState: getDisplayState(

@@ -68,6 +68,7 @@ export const metadata = z.object({
     name: z.string(),
     displayName: z.string().optional(),
     type: metadataPossibleTypes,
+    definition: z.string().optional(),
     autocomplete: z.boolean().optional(),
     notSearchable: z.boolean().optional(),
     hideInSearchResultsTable: z.boolean().optional(),
@@ -127,6 +128,7 @@ export type GroupedMetadataFilter = {
     name: string;
     groupedFields: MetadataFilter[];
     type: Metadata['type'];
+    definition?: string;
     grouped: true;
     displayName?: string;
     isVisible?: boolean;
