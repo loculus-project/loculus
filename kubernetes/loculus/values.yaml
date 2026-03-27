@@ -2145,6 +2145,7 @@ defaultOrganisms:
             function: is_variant
             args:
               mu: 0.004
+            # custom nextclade dataset does not have private mutations, so using total substitutions as a proxy for distance from reference
             inputs: {numMutations: "nextclade.totalSubstitutions", length: processed.length_S}
         - name: reference
           oneHeader: true
