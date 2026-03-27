@@ -767,7 +767,7 @@ def assembly_table_handle_errors(
             error_substrings=(
                 "Submit service authentication error. Invalid submission account user "
                 "name or password. Please try enclosing your password in single quotes. "
-                "The submission has failed because of a user error.:",
+                "The submission has failed because of a user error.",
                 "does not exist in ENA",
             ),
         )
