@@ -119,7 +119,7 @@ export class SeqSetPage {
     async expectAccessionMatchesUrl() {
         const url = this.page.url();
         const accession = url.split('/seqsets/')[1];
-        await expect(accession).toBeTruthy();
+        expect(accession).toBeTruthy();
         await expect(this.getHeading(accession)).toBeVisible();
     }
 
