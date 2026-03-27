@@ -1364,7 +1364,7 @@ class ProcessingFunctions:
         """
         if args.get("is_insdc_ingest_group"):
             # if this record was ingested from ISNDC, we trust that they validated the hostNameScientific
-            # and associated it with the proper taxonId
+            # and associated it with the proper hostTaxonId
             return ProcessingResult(
                 datum=input_data.get("ncbiHostTaxId"),
                 warnings=[],
@@ -1469,7 +1469,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message="taxonId, taxonomy_service_host, or taxonomy_service_port was None",
+                        message="hostTaxonId, taxonomy_service_host, or taxonomy_service_port was None",
                     )
                 ],
             )
@@ -1544,7 +1544,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message="taxonId, taxonomy_service_host, or taxonomy_service_port was None",
+                        message="hostTaxonId, taxonomy_service_host, or taxonomy_service_port was None",
                     )
                 ],
             )
@@ -1576,7 +1576,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"'{tax_id}' is not a valid taxonId",
+                        message=f"'{tax_id}' is not a valid hostTaxonId",
                     )
                 ],
             )
@@ -1590,7 +1590,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"No common name could be found for taxonId '{tax_id}'",
+                        message=f"No common name could be found for hostTaxonId '{tax_id}'",
                     )
                 ],
             )

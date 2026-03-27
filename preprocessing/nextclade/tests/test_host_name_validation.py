@@ -30,7 +30,7 @@ def make_entry(metadata: dict, group_id: int) -> UnprocessedEntry:
     )
 
 
-def taxonomy_service_mock(url: str):
+def taxonomy_service_mock(url: str, **kwargs):
     """Dispatch mock responses based on taxonomy service URL."""
     if "scientific_name=" in url:
         return make_response(
@@ -92,7 +92,9 @@ def test_host_processing_insdc(mock_get: MagicMock) -> None:
 
     # Only common_name_from_id should hit the taxonomy service
     assert mock_get.call_count == 1
-    mock_get.assert_called_once_with("http://localhost:5000/taxa/7159?find_common_name=true")
+    mock_get.assert_called_once_with(
+        "http://localhost:5000/taxa/7159?find_common_name=true", timeout=15
+    )
 
 
 @patch("loculus_preprocessing.processing_functions.requests.get")

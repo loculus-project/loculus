@@ -1225,7 +1225,7 @@ def test_validate_hostname_success(mock_get: MagicMock):
     assert res.datum == 53527
     assert res.warnings == []
     assert res.errors == []
-    mock_get.assert_called_once_with("http://localhost:5000/taxa?scientific_name=Culex")
+    mock_get.assert_called_once_with("http://localhost:5000/taxa?scientific_name=Culex", timeout=15)
 
 
 @patch("loculus_preprocessing.processing_functions.requests.get")
@@ -1295,7 +1295,7 @@ def test_sci_name_from_id_success(mock_get):
     assert res.datum == "Aedes aegypti"
     assert res.warnings == []
     assert res.errors == []
-    mock_get.assert_called_once_with("http://localhost:5000/taxa/7159")
+    mock_get.assert_called_once_with("http://localhost:5000/taxa/7159", timeout=15)
 
 
 @patch("loculus_preprocessing.processing_functions.requests.get")
@@ -1311,7 +1311,7 @@ def test_sci_name_from_id_not_found(mock_get):
 
     assert res.datum is None
     assert len(res.errors) == 1
-    mock_get.assert_called_once_with("http://localhost:5000/taxa/-1")
+    mock_get.assert_called_once_with("http://localhost:5000/taxa/-1", timeout=15)
 
 
 @patch("loculus_preprocessing.processing_functions.requests.get")
@@ -1328,7 +1328,9 @@ def test_common_name_from_id_success(mock_get):
     assert res.datum == "yellow fever mosquito"
     assert res.warnings == []
     assert res.errors == []
-    mock_get.assert_called_once_with("http://localhost:5000/taxa/7159?find_common_name=true")
+    mock_get.assert_called_once_with(
+        "http://localhost:5000/taxa/7159?find_common_name=true", timeout=15
+    )
 
 
 @patch("loculus_preprocessing.processing_functions.requests.get")
@@ -1345,7 +1347,7 @@ def test_common_name_from_id_not_found(mock_get):
     assert res.datum is None
     assert len(res.errors) == 1
     mock_get.assert_called_once_with(
-        "http://localhost:5000/taxa/134896438906397?find_common_name=true"
+        "http://localhost:5000/taxa/134896438906397?find_common_name=true", timeout=15
     )
 
 
