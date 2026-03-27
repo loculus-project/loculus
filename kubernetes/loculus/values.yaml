@@ -1405,7 +1405,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       args:
         - "prepro"
       replicas: 1
-      taxonomyServiceConfig: &preprocessingTaxonomyServiceConfig
+      taxonomyServiceConfig: &preprocessingTaxonomyServiceArgs
         taxonomy_service_host: "http://loculus-taxonomy-service"
         taxonomy_service_port: 5000
       configFile: &preprocessingConfigFile
@@ -1543,6 +1543,62 @@ defaultOrganisms:
           includeInDownloadsByDefault: false
           preprocessing:
             inputs: {input: "nextclade.cladeFounderInfo.aaMutations.*.privateSubstitutions"}
+        - name: hostTaxonId
+          type: int
+          autocomplete: true
+          displayName: "Host species"
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
+            label: Host
+          header: "Host"
+          ingest: ncbiHostTaxId
+          noInput: true
+          orderOnDetailsPage: 1540
+          preprocessing:
+            function: validate_hostname
+            inputs:
+              hostNameScientific: hostNameScientific
+              ncbiHostTaxId: ncbiHostTaxId
+            args:
+              *preprocessingTaxonomyServiceArgs
+        - name: hostNameScientific
+          displayName: Host name - scientific
+          generateIndex: true
+          autocomplete: true
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
+            label: Host
+          header: "Host"
+          ingest: ncbiHostName
+          required: true
+          orderOnDetailsPage: 1560
+          preprocessing:
+            function: scientific_name_from_id
+            inputs:
+              hostNameScientific: hostNameScientific
+              hostTaxonId: processed.hostTaxonId
+            args:
+              *preprocessingTaxonomyServiceArgs
+        - name: hostNameCommon
+          displayName: Host name - common
+          generateIndex: true
+          autocomplete: true
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
+            label: Host
+          header: "Host"
+          ingest: ncbiHostCommonName
+          noInput: true
+          orderOnDetailsPage: 1580
+          preprocessing:
+            function: common_name_from_id
+            inputs:
+              hostTaxonId: processed.hostTaxonId
+            args:
+              *preprocessingTaxonomyServiceArgs
       website:
         <<: *website
         tableColumns:

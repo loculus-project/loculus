@@ -1362,6 +1362,14 @@ class ProcessingFunctions:
         we return the tax_id of the most specific taxon (i.e., the one that's furthest from
         the root of the taxonomy)
         """
+        if args.get("is_insdc_ingest_group"):
+            # if this record was ingested from ISNDC, we trust that they validated the hostNameScientific
+            # and associated it with the proper taxonId
+            return ProcessingResult(
+                datum=input_data.get("ncbiHostTaxId"),
+                warnings=[],
+                errors=[],
+            )
         input_name: str | None = input_data.get("hostNameScientific")
         host = args.get("taxonomy_service_host")
         port = args.get("taxonomy_service_port")
@@ -1425,7 +1433,16 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        tax_id: str | None = input_data.get("taxonId")
+        if args.get("is_insdc_ingest_group"):
+            # if this record was ingested from ISNDC and it has a hostNameScientific, we trust that they validated it
+            scientific_name = input_data.get("hostNameScientific")
+            if scientific_name is not None:
+                return ProcessingResult(
+                    datum=scientific_name,
+                    warnings=[],
+                    errors=[],
+                )
+        tax_id: str | None = input_data.get("hostTaxonId")
         host = args.get("taxonomy_service_host")
         port = args.get("taxonomy_service_port")
         if tax_id is None or not isinstance(host, str) or not isinstance(port, int):
@@ -1484,7 +1501,7 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        tax_id: str | None = input_data.get("taxonId")
+        tax_id: str | None = input_data.get("hostTaxonId")
         host = args.get("taxonomy_service_host")
         port = args.get("taxonomy_service_port")
         if tax_id is None or not isinstance(host, str) or not isinstance(port, int):
