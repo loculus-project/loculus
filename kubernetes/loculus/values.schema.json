@@ -814,7 +814,7 @@
                       "groups": ["ingestPipelineConfigFile"],
                       "docsIncludePrefix": false,
                       "type": "string",
-                      "description": "Separator used in the minimizer index, default is '_'"
+                      "description": "Literal string separator used in the minimizer index dataset names (default: '_'). Avoid regex metacharacters."
                     },
                     "backend_request_timeout_seconds": {
                       "groups": ["ingestPipelineConfigFile"],

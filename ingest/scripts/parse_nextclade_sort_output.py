@@ -47,7 +47,7 @@ class Config:
             segment_identification = NextcladeSortParams(
                 minimizer_url=data["minimizer_url"],
                 minimizer_parser=data["minimizer_parser"],
-                minimizer_parser_separator=data.get("minimizer_parser_separator", "_"),
+                minimizer_parser_separator=data.get("minimizer_parser_separator"),
             )
 
         return cls(
@@ -84,7 +84,7 @@ def parse_file(
     parts = (
         df_highest_per_group["dataset"]
         .astype(str)
-        .str.split(config.minimizer_parser_separator, expand=True)
+        .str.split(config.minimizer_parser_separator, expand=True, regex=False)
     )
     for i, field in enumerate(config.minimizer_parser):
         # set entire column field to results of parts[i]
