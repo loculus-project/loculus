@@ -1256,8 +1256,19 @@ class ProcessingFunctions:
     ) -> ProcessingResult:
         """
         Assign flu lineage based on seg4 and seg6.
-        Add reassortant flag if subtypes from different lineages are detected for other segments,
+        Add reassortant flag if different lineages are detected for internal segments,
         add and variant flag if any segment is a variant.
+        It expects the following input_data fields to be present:
+            - subtype_seg4: the subtype assigned to seg4
+            - subtype_seg6: the subtype assigned to seg6
+            - reference_seg1,...,reference_seg8: the reference sequence assigned to each segment
+            - variant_seg1,...,variant_seg8: boolean flag indicating whether a segment is a variant
+        It expects the following args to be present:
+            - pattern: regex pattern to extract lineage from reference
+                e.g. ^(?P<segment>[^-]+)-(?P<lineage>[^-]+)$
+            - uppercase: boolean flag indicating whether to uppercase the extracted lineage
+            - capture_group: the name of the capture group in the regex pattern to extract
+                e.g. "lineage"
         """
         logger.debug(
             f"Starting custom lineage assignment with input_data: {input_data} and args: {args}"
@@ -1267,7 +1278,7 @@ class ProcessingFunctions:
         ha_subtype = input_data.get("subtype_seg4")
         na_subtype = input_data.get("subtype_seg6")
         references: dict[str, str | None] = {}
-        extracted_subtypes: dict[str, str | None] = {}
+        extracted_lineages: dict[str, str | None] = {}
         variant: dict[str, bool | None] = {}
         for i in range(1, 9):
             segment = f"seg{i}"
@@ -1281,7 +1292,7 @@ class ProcessingFunctions:
         try:
             for i in range(1, 9):
                 segment = f"seg{i}"
-                extracted_subtypes[segment] = ProcessingFunctions.call_function(  # type: ignore
+                extracted_lineages[segment] = ProcessingFunctions.call_function(  # type: ignore
                     "extract_regex",
                     {
                         "pattern": args["pattern"],
@@ -1292,13 +1303,13 @@ class ProcessingFunctions:
                     "output_field",
                     ["segment_name"],
                 ).datum
-            logger.debug(f"Extracted subtypes: {extracted_subtypes} from references: {references}")
+            logger.debug(f"Extracted lineages: {extracted_lineages} from references: {references}")
             if not ha_subtype or not na_subtype:
                 return ProcessingResult(datum=None, warnings=[], errors=[])
             lineage = f"{ha_subtype}{na_subtype}"
             if (
-                extracted_subtypes.get("seg4") == "H1N1PDM"
-                and extracted_subtypes.get("seg6") == "H1N1PDM"
+                extracted_lineages.get("seg4") == "H1N1PDM"
+                and extracted_lineages.get("seg6") == "H1N1PDM"
             ):
                 lineage = "H1N1pdm"
             logger.debug(
@@ -1309,7 +1320,7 @@ class ProcessingFunctions:
                     f"Lineage {lineage} is a human lineage, checking for reassortment and variants"
                 )
                 # only assign human lineages
-                if len({v for v in extracted_subtypes.values() if v is not None}) > 1:
+                if len({v for v in extracted_lineages.values() if v is not None}) > 1:
                     lineage += " reassortant"
                 if any(v for v in variant.values() if v):
                     lineage += " (variant)"
