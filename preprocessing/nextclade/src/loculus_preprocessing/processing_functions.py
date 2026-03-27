@@ -9,7 +9,6 @@ import json
 import logging
 import math
 import re
-import requests
 import unicodedata
 import urllib.parse
 from dataclasses import dataclass
@@ -18,6 +17,7 @@ from typing import Any
 
 import dateutil.parser as dateutil
 import pytz
+import requests
 
 from .datatypes import (
     AnnotationSource,

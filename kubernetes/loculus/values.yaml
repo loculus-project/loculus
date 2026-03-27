@@ -1405,7 +1405,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       args:
         - "prepro"
       replicas: 1
-      taxonomyServiceConfig: &preprocessingTaxonomyServiceArgs
+      taxonomyServiceArgs: &preprocessingTaxonomyServiceArgs
         taxonomy_service_host: "http://loculus-taxonomy-service"
         taxonomy_service_port: 5000
       configFile: &preprocessingConfigFile
@@ -1560,8 +1560,7 @@ defaultOrganisms:
             inputs:
               hostNameScientific: hostNameScientific
               ncbiHostTaxId: ncbiHostTaxId
-            args:
-              *preprocessingTaxonomyServiceArgs
+            args: *preprocessingTaxonomyServiceArgs
         - name: hostNameScientific
           displayName: Host name - scientific
           generateIndex: true
@@ -1579,8 +1578,7 @@ defaultOrganisms:
             inputs:
               hostNameScientific: hostNameScientific
               hostTaxonId: processed.hostTaxonId
-            args:
-              *preprocessingTaxonomyServiceArgs
+            args: *preprocessingTaxonomyServiceArgs
         - name: hostNameCommon
           displayName: Host name - common
           generateIndex: true
@@ -1597,8 +1595,7 @@ defaultOrganisms:
             function: common_name_from_id
             inputs:
               hostTaxonId: processed.hostTaxonId
-            args:
-              *preprocessingTaxonomyServiceArgs
+            args: *preprocessingTaxonomyServiceArgs
       website:
         <<: *website
         tableColumns:
