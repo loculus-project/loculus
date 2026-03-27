@@ -199,7 +199,19 @@ const consolidateGroupedFields = (
 ): (MetadataFilter | GroupedMetadataFilter)[] => {
     const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
     const groupsMap = new Map<string, GroupedMetadataFilter>();
-    const definitionsMap = new Map(metadataSchema.map((field) => [field.name, field.definition]));
+    const definitionsMap = new Map(
+        metadataSchema.map((field) => {
+            if (field.rangeOverlapSearch) {
+                const definitionField = field.rangeOverlapSearch.rangeDefinitionField;
+                return [
+                    field.rangeOverlapSearch.rangeName,
+                    metadataSchema.find((f) => f.name === definitionField)?.definition,
+                ];
+            } else {
+                return [field.name, field.definition];
+            }
+        }),
+    );
 
     for (const filter of filters) {
         if (filter.fieldGroup !== undefined) {

@@ -121,6 +121,11 @@
               "type": "string",
               "description": "The display name of the range."
             },
+            "rangeDefinitionField": {
+              "groups": ["metadata"],
+              "type": "string",
+              "description": "Source field to obtain the range's definition from"
+            },
             "bound": {
               "groups": ["metadata"],
               "type": "string",
