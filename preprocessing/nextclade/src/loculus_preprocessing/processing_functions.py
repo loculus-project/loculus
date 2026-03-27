@@ -1458,9 +1458,15 @@ class ProcessingFunctions:
                     errors=[],
                 )
         tax_id: str | None = input_data.get("hostTaxonId")
+        if tax_id is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
         host = args.get("taxonomy_service_host")
         port = args.get("taxonomy_service_port")
-        if tax_id is None or not isinstance(host, str) or not isinstance(port, int):
+        if not isinstance(host, str) or not isinstance(port, int):
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1469,7 +1475,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message="hostTaxonId, taxonomy_service_host, or taxonomy_service_port was None",
+                        message="configuration error: taxonomy_service_host or taxonomy_service_port was None",
                     )
                 ],
             )
@@ -1533,9 +1539,15 @@ class ProcessingFunctions:
         args: FunctionArgs,
     ) -> ProcessingResult:
         tax_id: str | None = input_data.get("hostTaxonId")
+        if tax_id is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
         host = args.get("taxonomy_service_host")
         port = args.get("taxonomy_service_port")
-        if tax_id is None or not isinstance(host, str) or not isinstance(port, int):
+        if not isinstance(host, str) or not isinstance(port, int):
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1544,7 +1556,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message="hostTaxonId, taxonomy_service_host, or taxonomy_service_port was None",
+                        message="configuration error: taxonomy_service_host or taxonomy_service_port was None",
                     )
                 ],
             )
