@@ -1371,6 +1371,12 @@ class ProcessingFunctions:
                 errors=[],
             )
         input_name: str | None = input_data.get("hostNameScientific")
+        if null_per_backend(input_name):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
         host = args.get("taxonomy_service_host")
         port = args.get("taxonomy_service_port")
         if input_name is None or not isinstance(host, str) or not isinstance(port, int):
@@ -1451,14 +1457,14 @@ class ProcessingFunctions:
         if args.get("is_insdc_ingest_group"):
             # if this record was ingested from ISNDC and it has a hostNameScientific, we trust that they validated it
             scientific_name = input_data.get("hostNameScientific")
-            if scientific_name is not None:
+            if not null_per_backend(scientific_name):
                 return ProcessingResult(
                     datum=scientific_name,
                     warnings=[],
                     errors=[],
                 )
         tax_id: str | None = input_data.get("hostTaxonId")
-        if tax_id is None:
+        if null_per_backend(tax_id):
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1539,7 +1545,7 @@ class ProcessingFunctions:
         args: FunctionArgs,
     ) -> ProcessingResult:
         tax_id: str | None = input_data.get("hostTaxonId")
-        if tax_id is None:
+        if null_per_backend(tax_id):
             return ProcessingResult(
                 datum=None,
                 warnings=[],
