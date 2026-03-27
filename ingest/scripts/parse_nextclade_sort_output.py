@@ -25,6 +25,7 @@ logging.basicConfig(
 class NextcladeSortParams:
     minimizer_url: str
     minimizer_parser: list[str]
+    minimizer_parser_separator: str = "_"
     method: str = "minimizer"
 
 
@@ -34,6 +35,7 @@ class Config:
     nucleotide_sequences: list[str]
     minimizer_url: str | None
     minimizer_parser: list[str] | None
+    minimizer_parser_separator: str | None
     segmented: bool = False
 
 
@@ -55,7 +57,11 @@ def parse_file(
     df_highest_per_group = df_sorted.drop_duplicates(subset="index", keep="first")
 
     df_highest_per_group = df_highest_per_group.copy()  # Avoid SettingWithCopyWarning
-    parts = df_highest_per_group["dataset"].astype(str).str.split("_", expand=True)
+    parts = (
+        df_highest_per_group["dataset"]
+        .astype(str)
+        .str.split(config.minimizer_parser_separator, expand=True)
+    )
     for i, field in enumerate(config.minimizer_parser):
         # set entire column field to results of parts[i]
         df_highest_per_group[field] = parts[i].fillna("")
@@ -88,7 +94,9 @@ def main(config_file: str, sort_results: str, output: str, log_level: str) -> No
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         if not relevant_config["segmented"]:
             relevant_config["segment_identification"] = NextcladeSortParams(
-                relevant_config["minimizer_url"], relevant_config["minimizer_parser"]
+                relevant_config["minimizer_url"],
+                relevant_config["minimizer_parser"],
+                relevant_config["minimizer_parser_separator"],
             )
         else:
             relevant_config["segment_identification"] = NextcladeSortParams(

@@ -810,6 +810,12 @@
                       "type": "string",
                       "description": "Required if method is minimizer"
                     },
+                    "minimizer_parser_separator": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Separator used in the minimizer index, default is '_'"
+                    },
                     "backend_request_timeout_seconds": {
                       "groups": ["ingestPipelineConfigFile"],
                       "docsIncludePrefix": false,
