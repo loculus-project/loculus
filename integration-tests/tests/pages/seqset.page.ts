@@ -22,7 +22,7 @@ export class SeqSetPage {
     }
 
     getHeading(name: string) {
-        return this.page.getByRole('heading').filter({ hasText: name });
+        return this.page.getByRole('heading', { name: name });
     }
 
     async openCreateDialog() {
@@ -119,6 +119,7 @@ export class SeqSetPage {
     async expectAccessionMatchesUrl() {
         const url = this.page.url();
         const accession = url.split('/seqsets/')[1];
+        await expect(accession).toBeTruthy();
         await expect(this.getHeading(accession)).toBeVisible();
     }
 
