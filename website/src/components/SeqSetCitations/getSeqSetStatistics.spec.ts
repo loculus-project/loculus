@@ -15,6 +15,7 @@ vi.mock('../../config.ts', () => ({
 }));
 
 vi.mock('../../services/lapisClient.ts', () => ({
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     LapisClient: {
         createForOrganism: vi.fn().mockImplementation((organism: string) => ({
             call: vi
