@@ -8,6 +8,7 @@ This script parses the results of nextclade sort:
 import logging
 from dataclasses import dataclass
 from typing import Any
+from typing import Any
 
 import click
 import pandas as pd
@@ -35,9 +36,6 @@ class NextcladeSortParams:
 class Config:
     segment_identification: NextcladeSortParams
     nucleotide_sequences: list[str]
-    minimizer_url: str | None
-    minimizer_parser: list[str] | None
-    minimizer_parser_separator: str | None
     segmented: bool = False
 
     @classmethod
