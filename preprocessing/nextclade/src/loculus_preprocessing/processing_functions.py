@@ -1172,12 +1172,14 @@ class ProcessingFunctions:
                 ],
             )
         input_datum = input_data["input"]
-        if not input_datum:
+        if input_datum is None or (isinstance(input_datum, str) and not input_datum.strip()):
             return ProcessingResult(datum=None, warnings=[], errors=[])
         try:
             threshold = float(args["threshold"])  # type: ignore
             input = float(input_datum)
         except (ValueError, TypeError):
+            msg = f"Field {output_field} has non-numeric threshold value."
+            logger.error(msg)
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1186,7 +1188,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=(f"Field {output_field} has non-numeric threshold value."),
+                        message=(msg),
                     )
                 ],
             )
