@@ -11,6 +11,7 @@ import math
 import re
 import requests
 import unicodedata
+import urllib.parse
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -1355,7 +1356,11 @@ class ProcessingFunctions:
         args: FunctionArgs,
     ) -> ProcessingResult:
         """Validates that the user-supplied hostNameScientific exists in NCBI's taxonomy.
-        If it exists, we return the associated tax_id
+        If it exists, we return the tax_id of the associated taxon.
+
+        It is possible that multiple taxa have the same scientific name. In these cases,
+        we return the tax_id of the most specific taxon (i.e., the one that's furthest from
+        the root of the taxonomy)
         """
         input_name: str | None = input_data.get("hostNameScientific")
         host = args.get("taxonomy_service_host")
@@ -1374,7 +1379,8 @@ class ProcessingFunctions:
                 ],
             )
 
-        response = requests.get(f"{host}:{port}/taxa?name={input_name.replace(' ', '+')}")
+        query = urllib.parse.urlencode({"scientific_name": input_name})
+        response = requests.get(f"{host}:{port}/taxa?{query}")
         if response.status_code != requests.codes.ok:
             return ProcessingResult(
                 datum=None,
@@ -1388,7 +1394,10 @@ class ProcessingFunctions:
                     )
                 ],
             )
-        tax_id = response.json().get("tax_id")
+
+        # if multiple taxa have the same scientific name, select the most specific one
+        taxon = max(response.json(), key=lambda x: x.get("depth", -1))
+        tax_id = taxon.get("tax_id")
         if tax_id is None:
             return ProcessingResult(
                 datum=None,

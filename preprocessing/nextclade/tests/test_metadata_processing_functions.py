@@ -1199,19 +1199,33 @@ def make_response(status_code, json_data):
 
 @patch("loculus_preprocessing.processing_functions.requests.get")
 def test_validate_hostname_success(mock_get: MagicMock):
-    mock_get.return_value = make_response(200, {"tax_id": 7159})
+    mock_get.return_value = make_response(
+        200,
+        [
+            {
+                "tax_id": 7174,
+                "scientific_name": "Culex",
+                "depth": 26,
+            },
+            {
+                "tax_id": 53527,
+                "scientific_name": "Culex",
+                "depth": 27,
+            },
+        ],
+    )
 
     res = ProcessingFunctions.validate_hostname(
-        input_data={"hostNameScientific": "Aedes aegypti"},
+        input_data={"hostNameScientific": "Culex"},
         output_field="taxonId",
         input_fields=["hostNameScientific"],
         args={"taxonomy_service_host": "http://localhost", "taxonomy_service_port": 5000},
     )
 
-    assert res.datum == 7159
+    assert res.datum == 53527
     assert res.warnings == []
     assert res.errors == []
-    mock_get.assert_called_once_with("http://localhost:5000/taxa?name=Aedes+aegypti")
+    mock_get.assert_called_once_with("http://localhost:5000/taxa?scientific_name=Culex")
 
 
 @patch("loculus_preprocessing.processing_functions.requests.get")
@@ -1251,7 +1265,7 @@ def test_sci_name_from_id_not_found(mock_get):
     mock_get.return_value = make_response(404, {"detail": "not found"})
 
     res = ProcessingFunctions.scientific_name_from_id(
-        input_data={"taxonId": "134896438906397"},
+        input_data={"taxonId": "-1"},
         output_field="hostScientificName",
         input_fields=["taxonId"],
         args={"taxonomy_service_host": "http://localhost", "taxonomy_service_port": 5000},
@@ -1260,7 +1274,7 @@ def test_sci_name_from_id_not_found(mock_get):
     print(res)
     assert res.datum is None
     assert len(res.errors) == 1
-    mock_get.assert_called_once_with("http://localhost:5000/taxa/134896438906397")
+    mock_get.assert_called_once_with("http://localhost:5000/taxa/-1")
 
 
 @patch("loculus_preprocessing.processing_functions.requests.get")
@@ -1277,7 +1291,7 @@ def test_common_name_from_id_success(mock_get):
     assert res.datum == "yellow fever mosquito"
     assert res.warnings == []
     assert res.errors == []
-    mock_get.assert_called_once_with("http://localhost:5000/taxa/7159/common_name")
+    mock_get.assert_called_once_with("http://localhost:5000/taxa/7159?find_common_name=true")
 
 
 @patch("loculus_preprocessing.processing_functions.requests.get")
@@ -1293,7 +1307,9 @@ def test_common_name_from_id_not_found(mock_get):
 
     assert res.datum is None
     assert len(res.errors) == 1
-    mock_get.assert_called_once_with("http://localhost:5000/taxa/134896438906397/common_name")
+    mock_get.assert_called_once_with(
+        "http://localhost:5000/taxa/134896438906397?find_common_name=true"
+    )
 
 
 if __name__ == "__main__":
