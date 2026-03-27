@@ -7,9 +7,6 @@ ARGS: dict[str, list[str] | str | bool | int | float | None] = {
     "capture_group": "info",
     "pattern": "^(?:.*_)?(?P<info>[^_]+)$",
     "uppercase": True,
-    "is_insdc_ingest_group": True,
-    "submittedAt": 1774128802,
-    "ACCESSION_VERSION": "LOC_00020W3.1",
 }
 
 
@@ -49,23 +46,12 @@ class TestH1N1pdm:
     @staticmethod
     def test_h1n1pdm_assigned_when_subtypes_match():
         """All 8 segments reference h1n1pdm lineage (with HA/NA prefixes on seg4/6)."""
-        input_data = make_flu_input(
-            ha_subtype="H1",
-            na_subtype="N1",
-            seg4_ref="h1_h1n1pdm",
-            seg6_ref="n1_h1n1pdm",
-            other_ref="h1n1pdm",
-        )
+        input_data = make_flu_input()
         assert assign_custom_lineage(input_data) == "H1N1pdm"
 
     @staticmethod
     def test_h1n1pdm_with_variant_flag():
         input_data = make_flu_input(
-            ha_subtype="H1",
-            na_subtype="N1",
-            seg4_ref="h1_h1n1pdm",
-            seg6_ref="n1_h1n1pdm",
-            other_ref="h1n1pdm",
             variants={"seg4": True},
         )
         assert assign_custom_lineage(input_data) == "H1N1pdm (variant)"
@@ -73,16 +59,16 @@ class TestH1N1pdm:
     @staticmethod
     def test_h1n1pdm_reassortant_when_one_segment_differs():
         """If one internal segment has a different lineage, result is reassortant."""
-        input_data = make_flu_input(
-            ha_subtype="H1",
-            na_subtype="N1",
-            seg4_ref="h1_h1n1pdm",
-            seg6_ref="n1_h1n1pdm",
-            other_ref="h1n1pdm",
-        )
+        input_data = make_flu_input()
         # Override seg2 to a different lineage
         input_data["reference_seg2"] = "h3n2"
         assert assign_custom_lineage(input_data) == "H1N1pdm reassortant"
+
+    @staticmethod
+    def test_partial_genome_no_false_reassortant():
+        input_data = make_flu_input()
+        del input_data["reference_seg2"]  # simulate missing segment
+        assert assign_custom_lineage(input_data) == "H1N1pdm"
 
 
 class TestH1N1Seasonal:
