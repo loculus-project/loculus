@@ -1,0 +1,93 @@
+# Source: loculus/templates/minio-deployment.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-policies
+data:
+  policy.json: |
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::loculus-preview-private/*",
+          "Principal": "*",
+          "Condition": {
+            "StringEquals": {
+              "s3:ExistingObjectTag/public": "true"
+            }
+          }
+        }
+      ]
+    }
+---
+# Source: loculus/templates/minio-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: minio
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: minio
+    spec:
+      volumes:
+        - name: policy-volume
+          configMap:
+            name: minio-policies
+      containers:
+        - name: minio
+          image: minio/minio:latest
+          
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              cpu: 2m
+              memory: 250Mi
+          args: ["server", "/data"]
+          ports:
+            - containerPort: 9000
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: s3-bucket
+                  key: accessKey
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: s3-bucket
+                  key: secretKey
+            
+            - name: LOCULUS_VERSION
+              value: latest
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    (
+                      sleep 10
+                      mc alias set local http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+                      mc mb -p local/loculus-preview-private
+                      echo "Bucket loculus-preview-private ensured."
+                      mc anonymous set-json /policy/policy.json local/loculus-preview-private
+                    ) &
+          volumeMounts:
+            - name: policy-volume
+              mountPath: /policy
+      restartPolicy: Always
+---
