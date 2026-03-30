@@ -1256,7 +1256,7 @@ def test_validate_hostname_insdc(mock_get):
         },
     )
 
-    assert res.datum == "53527"
+    assert res.datum == 53527
     assert res.warnings == []
     assert res.errors == []
     mock_get.assert_not_called()
