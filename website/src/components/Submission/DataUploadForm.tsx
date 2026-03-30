@@ -64,7 +64,7 @@ const InnerDataUploadForm = ({
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
-    const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
+    const [restrictedUntil, setRestrictedUntil] = useState(dateTimeInMonths(6));
 
     const [agreedToINSDCUploadTerms, setAgreedToINSDCUploadTerms] = useState(false);
 

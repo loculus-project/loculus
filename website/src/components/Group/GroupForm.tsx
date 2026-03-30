@@ -83,7 +83,7 @@ export const GroupForm: FC<GroupFormProps> = ({
     onSubmit,
     getGroups,
 }) => {
-    const [currentGroup, setCurrentGroup] = useState<NewGroup>(PLACEHOLDER_NEWGROUP);
+    const [currentGroup, setCurrentGroup] = useState(PLACEHOLDER_NEWGROUP);
     const [existingGroups, setExistingGroups] = useState<Group[]>([]);
     const [isExistingGroupModalOpen, setIsExistingGroupModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
