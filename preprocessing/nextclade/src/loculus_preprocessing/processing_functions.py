@@ -1273,7 +1273,7 @@ class ProcessingFunctions:
             )
         length_datum = input_data.get("length")
         num_mutations_datum = input_data.get("numMutations")
-        if not length_datum or not num_mutations_datum:
+        if length_datum is None or num_mutations_datum is None:
             return ProcessingResult(datum=None, warnings=[], errors=[])
         try:
             mu = float(args["mu"])  # type: ignore
