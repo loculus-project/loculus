@@ -32,7 +32,6 @@ export class SeqSetPage {
         await this.openCreateDialog();
         await this.fillSeqSetForm(input);
         await this.submitSeqSetForm();
-        await this.page.waitForURL(/\/seqsets\/.+/);
     }
 
     async fillSeqSetForm(input: SeqSetFormInput) {
@@ -59,15 +58,16 @@ export class SeqSetPage {
         await this.page.getByRole('button', { name: 'Save' }).click();
     }
 
-    async expectAccessionMatchesUrl() {
+    async expectAccessionMatchesUrl(version: string) {
         const url = this.page.url();
         const accession = url.split('/seqsets/')[1];
         expect(accession).toBeTruthy();
         await expect(this.page.getByRole('heading', { name: accession })).toBeVisible();
     }
 
-    async expectDetailLayout(name: string, description: string) {
-        await this.expectAccessionMatchesUrl();
+    async expectDetailLayout(name: string, description: string, version: string) {
+        await this.page.waitForURL(new RegExp(`/seqsets/.+\\.${version}$`));
+        await this.expectAccessionMatchesUrl(version);
         await expect(this.page.getByRole('button', { name: 'Export' })).toBeVisible();
         await expect(this.page.getByRole('button', { name: 'Edit' })).toBeVisible();
         await expect(this.page.getByRole('button', { name: 'Delete' })).toBeVisible();
@@ -129,7 +129,6 @@ export class SeqSetPage {
         await descriptionField.waitFor({ state: 'visible' });
         await descriptionField.fill(newDescription);
         await this.page.getByRole('button', { name: 'Save' }).click();
-        await this.expectAccessionMatchesUrl();
         await expect(this.page.getByText(newName, { exact: true })).toBeVisible();
     }
 }
