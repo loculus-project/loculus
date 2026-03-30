@@ -8,12 +8,15 @@ on:
 jobs:
   build-and-upload:
     runs-on: ubuntu-latest
+    outputs:
+      db_zipped: ${{ steps.set-filenames.outputs.db_zipped }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
       - name: Set versioned filenames
+        id: set-filenames
         run: |
           VERSIONED_NAME="ncbi_taxonomy_$(date +'%Y-%m-%d').sqlite"
           ZIPPED_NAME="${VERSIONED_NAME}.gz"
@@ -21,10 +24,11 @@ jobs:
           echo "DB_VERSIONED=${VERSIONED_NAME}" >> $GITHUB_ENV
           echo "DB_ZIPPED=${ZIPPED_NAME}" >> $GITHUB_ENV
           echo "DB_LATEST=ncbi_taxonomy_latest.sqlite.gz" >> $GITHUB_ENV
+          echo "db_zipped=${ZIPPED_NAME}" >> $GITHUB_OUTPUT
 
       - uses: mamba-org/setup-micromamba@v2
         with:
-          environment-file: ./ncbi_tax_download/environment.yaml
+          environment-file: ./taxonomy/ncbi_tax_download/environment.yaml
           cache-environment: true
           create-args: >
             s3cmd
@@ -32,7 +36,7 @@ jobs:
       - name: Install NCBI taxonomy package
         shell: bash -l {0}
         run: |
-          pip install -e ./ncbi_tax_download
+          pip install -e ./taxonomy/ncbi_tax_download
 
       - name: Create taxonomy DB
         shell: bash -l {0}
@@ -59,6 +63,19 @@ jobs:
 
           s3cmd cp s3://loculus-public/taxonomy/"${DB_ZIPPED}" \
             s3://loculus-public/taxonomy/"${DB_LATEST}"
+
+  notify_on_success:
+    needs: build-and-upload
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Send Slack Notification
+        env:
+          SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "✅ Successfully built and uploaded NCBI taxonomy DB ${{ needs.build-and-upload.outputs.db_zipped }}: ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+          }' $SLACK_HOOK
 
   notify_on_failure:
     needs: build-and-upload

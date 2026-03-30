@@ -15,6 +15,9 @@ data:
   preprocessing-config.yaml: |
     organism: {{ $organism }}
     {{- $processingConfig.configFile | toYaml | nindent 4 }}
+    {{- if and (hasKey $organismConfig.schema "submissionDataTypes") (hasKey $organismConfig.schema.submissionDataTypes "maxSequencesPerEntry") }}
+    max_sequences_per_entry: {{ $organismConfig.schema.submissionDataTypes.maxSequencesPerEntry }}
+    {{- end }}
     processing_spec:
       {{- $args := dict "metadata" $metadata "referenceGenomes" $organismConfig.referenceGenomes }}
       {{- include "loculus.preprocessingSpecs" $args | nindent 6 }}

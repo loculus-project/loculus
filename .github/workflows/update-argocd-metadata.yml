@@ -85,8 +85,15 @@ jobs:
           check-name: Build ena-submission Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
+      - name: Wait for Taxonomy Service Docker Image
+        uses: lewagon/wait-on-check-action@v1.5.0
+        with:
+          ref: ${{ github.sha }}
+          check-name: Build taxonomy-service Docker Image
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 2
       - name: Wait for Website Docker Image
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@v4
         with:
           timeout_minutes: 15
           max_attempts: 200
