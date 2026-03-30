@@ -30,8 +30,8 @@ export function useSubmissionOperations(
     const hooks = useMemo(() => backendClientHooks(clientConfig), [clientConfig]);
     const allRelevantStatuses = [receivedStatus, inProcessingStatus, processedStatus];
     const allProcessingResults = [noIssuesProcessingResult, warningsProcessingResult, errorsProcessingResult];
-    const [includedStatuses, setIncludedStatuses] = useState<string[]>(allRelevantStatuses);
-    const [includedProcessingResults, setIncludedProcessingResults] = useState<string[]>(allProcessingResults);
+    const [includedStatuses, setIncludedStatuses] = useState(allRelevantStatuses);
+    const [includedProcessingResults, setIncludedProcessingResults] = useState(allProcessingResults);
     const useGetSequences = hooks.useGetSequences(
         {
             headers: createAuthorizationHeader(accessToken),

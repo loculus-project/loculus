@@ -41,7 +41,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     const { nucleotideSegmentInfos, geneInfos } = getSegmentAndGeneInfo(referenceGenomesInfo, segmentReferences);
 
     const [loadSequences, setLoadSequences] = useState(() => loadSequencesAutomatically);
-    const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentInfos[0]));
+    const [sequenceType, setSequenceType] = useState(unalignedSequenceSegment(nucleotideSegmentInfos[0]));
 
     if (!loadSequences) {
         return (
