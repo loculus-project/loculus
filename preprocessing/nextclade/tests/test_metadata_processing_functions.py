@@ -1222,7 +1222,7 @@ def test_validate_hostname_success(mock_get: MagicMock):
         args={"taxonomy_service_host": "http://localhost", "taxonomy_service_port": 5000},
     )
 
-    assert res.datum == 53527
+    assert res.datum == 7174
     assert res.warnings == []
     assert res.errors == []
     mock_get.assert_called_once_with("http://localhost:5000/taxa?scientific_name=Culex", timeout=15)

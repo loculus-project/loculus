@@ -1427,8 +1427,8 @@ class ProcessingFunctions:
                 ],
             )
 
-        # if multiple taxa have the same scientific name, select the most specific one
-        taxon = max(response.json(), key=lambda x: x.get("depth", -1))
+        # if multiple taxa have the same scientific name, select the most generic one
+        taxon = min(response.json(), key=lambda x: x.get("depth", -1))
         tax_id = taxon.get("tax_id")
         if tax_id is None:
             return ProcessingResult(
