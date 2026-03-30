@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import React from 'react';
 
-import type { AggregateRow } from './getSeqSetStatistics';
+import type { AggregateRow, AggregateValue } from './getSeqSetStatistics';
 import { BarPlot } from '../common/BarPlot';
 
 type SeqSetPlotProps = {
@@ -55,18 +55,20 @@ export const getDateFormatFromData = (data: AggregateRow[]): string => {
     return format;
 };
 
-/** Group the data by the specified date format */
+/** Group the data by the specified date format, or by invalid date values */
 export const groupByDateFormat = (data: AggregateRow[], format: string): AggregateRow[] => {
-    const yearMonths = new Map<string, number>();
+    const yearMonths = new Map<AggregateValue, number>();
 
     data.forEach((row) => {
-        if (typeof row.value !== 'string') return;
+        let value: AggregateValue = row.value ?? null;
 
-        const dateValue = DateTime.fromISO(row.value);
-        if (!dateValue.isValid) return;
+        if (typeof value === 'string') {
+            const dateValue = DateTime.fromISO(value);
+            if (dateValue.isValid) value = dateValue.toFormat(format);
+        }
 
-        const yearMonth = dateValue.toFormat(format);
-        yearMonths.set(yearMonth, (yearMonths.get(yearMonth) ?? 0) + row.count);
+        // Group by formatted date, or by values which failed formatting
+        yearMonths.set(value, (yearMonths.get(value) ?? 0) + row.count);
     });
 
     return Array.from(yearMonths.entries()).map(([value, count]) => ({ value, count }));
@@ -84,7 +86,7 @@ export const getGraphTimeProperties = (format: string): GraphTimeProperties => {
 
 /** Group the data by the specified cutoff, grouping remaining points into an "Others" category. */
 export const groupRemainingPoints = (data: AggregateRow[], cutoff: number): AggregateRow[] => {
-    const sortedData = data.sort((a, b) => b.count - a.count);
+    const sortedData = [...data].sort((a, b) => b.count - a.count);
     const topData = sortedData.slice(0, cutoff);
     const otherData = sortedData.slice(cutoff);
     const otherCount = otherData.reduce((sum, row) => sum + row.count, 0);

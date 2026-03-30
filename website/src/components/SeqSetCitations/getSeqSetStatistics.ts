@@ -6,7 +6,7 @@ import { LapisClient } from '../../services/lapisClient.ts';
 import { ACCESSION_VERSION_FIELD } from '../../settings.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
 
-type AggregateValue = string | number | boolean | null | undefined;
+export type AggregateValue = string | number | boolean | null | undefined;
 export type AggregateRow = { value: AggregateValue; count: number };
 
 const getAggregate = async (

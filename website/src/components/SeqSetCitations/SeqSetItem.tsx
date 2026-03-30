@@ -30,16 +30,7 @@ const SeqSetSection: FC<{ title: string; children: React.ReactNode }> = ({ title
 
 const SeqSetSectionSeparator: FC = () => <hr className='my-8 border-t-2 border-gray-200' />;
 
-const SeqSetDetails: FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <div className='flex flex-col mb-6'>
-        <div className='flex flex-row'>
-            <h2 className='text-xl font-semibold border-b py-2 my-4'>{title}</h2>
-        </div>
-        {children}
-    </div>
-);
-
-const SeqSetDetailsEntry: FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
+const SeqSetSectionEntry: FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
     <div className='flex flex-row py-1.5'>
         <div className='mr-8 w-[120px] text-gray-500'>{label}</div>
         <div className='w-2/3 lg:w-1/2'>{value}</div>
@@ -141,11 +132,11 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     return (
         <div className='flex flex-col'>
             <div className='grid grid-cols-1 lg:grid-cols-2'>
-                <SeqSetDetails title='Details'>
-                    <SeqSetDetailsEntry label='Name' value={seqSet.name} />
-                    <SeqSetDetailsEntry label='Description' value={seqSet.description ?? 'N/A'} />
-                    <SeqSetDetailsEntry label='Version' value={seqSet.seqSetVersion} />
-                    <SeqSetDetailsEntry
+                <SeqSetSection title='Details'>
+                    <SeqSetSectionEntry label='Name' value={seqSet.name} />
+                    <SeqSetSectionEntry label='Description' value={seqSet.description ?? 'N/A'} />
+                    <SeqSetSectionEntry label='Version' value={seqSet.seqSetVersion} />
+                    <SeqSetSectionEntry
                         label='Created by'
                         value={
                             seqSetAuthor ? (
@@ -159,15 +150,15 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                             )
                         }
                     />
-                    <SeqSetDetailsEntry label='Created date' value={formatDate(seqSet.createdAt)} />
-                    <SeqSetDetailsEntry
+                    <SeqSetSectionEntry label='Created date' value={formatDate(seqSet.createdAt)} />
+                    <SeqSetSectionEntry
                         label='Size'
                         value={`${seqSetRecords.length} sequence${seqSetRecords.length === 1 ? '' : 's'}`}
                     />
-                </SeqSetDetails>
-                <SeqSetDetails title='Citations'>
-                    <SeqSetDetailsEntry label='DOI' value={renderDOI()} />
-                    <SeqSetDetailsEntry
+                </SeqSetSection>
+                <SeqSetSection title='Citations'>
+                    <SeqSetSectionEntry label='DOI' value={renderDOI()} />
+                    <SeqSetSectionEntry
                         label='Total citations'
                         value={
                             seqSet.seqSetDOI === undefined || seqSet.seqSetDOI === null ? (
@@ -183,7 +174,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                             )
                         }
                     />
-                    <SeqSetDetailsEntry
+                    <SeqSetSectionEntry
                         label='Citations over time'
                         value={
                             <CitationPlot
@@ -193,7 +184,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                             />
                         }
                     />
-                </SeqSetDetails>
+                </SeqSetSection>
             </div>
             <SeqSetSectionSeparator />
             <SeqSetSection title='Statistics'>
