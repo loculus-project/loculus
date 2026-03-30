@@ -1362,27 +1362,9 @@ class ProcessingFunctions:
         we return the tax_id of the most specific taxon (i.e., the one that's furthest from
         the root of the taxonomy)
         """
-        if args.get("is_insdc_ingest_group"):
-            try:
-                raw = input_data.get("hostTaxonId")  # raw can be "123", "", or None
-                tax_id = int(raw) if raw is not None else None
-            except ValueError:
-                tax_id = None
-            return ProcessingResult(
-                datum=tax_id,
-                warnings=[],
-                errors=[],
-            )
-        input_name: str | None = input_data.get("hostNameScientific")
-        if null_per_backend(input_name):
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[],
-            )
         host = args.get("taxonomy_service_host")
         port = args.get("taxonomy_service_port")
-        if input_name is None or not isinstance(host, str) or not isinstance(port, int):
+        if not isinstance(host, str) or not isinstance(port, int):
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1396,9 +1378,26 @@ class ProcessingFunctions:
                 ],
             )
 
-        query = urllib.parse.urlencode({"scientific_name": input_name})
+        # hostTaxonId is noInput, so only case where it exists is for INSDC ingested sequences
+        unvalidated = input_data.get("hostTaxonId") or input_data.get("hostNameScientific")
+        if null_per_backend(unvalidated):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
         try:
-            response = requests.get(f"{host}:{port}/taxa?{query}", timeout=15)
+            # If it casts to int, assume it's a taxon id
+            tax_id = int(unvalidated) if unvalidated is not None else None
+            url = f"{host}:{port}/taxa/{tax_id}"
+        except ValueError:
+            # It's not an int - assume it's a scientific name
+            query = urllib.parse.urlencode({"scientific_name": unvalidated})
+            url = f"{host}:{port}/taxa?{query}"
+
+        try:
+            response = requests.get(url, timeout=15)
         except requests.exceptions.Timeout:
             return ProcessingResult(
                 datum=None,
@@ -1408,7 +1407,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"request timeout while validating '{input_name}' - the taxonomy-service may be down",
+                        message=f"request timeout while validating '{unvalidated}' - the taxonomy-service may be down",
                     )
                 ],
             )
@@ -1422,13 +1421,16 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"host name validation for '{input_name}' failed with code {response.status_code}: {response.json().get('detail', '')}",
+                        message=f"host validation for '{unvalidated}' failed with code {response.status_code}: {response.json().get('detail', '')}",
                     )
                 ],
             )
 
-        # if multiple taxa have the same scientific name, select the most generic one
-        taxon = min(response.json(), key=lambda x: x.get("depth", -1))
+        if isinstance(response.json(), list):
+            # multiple taxa may have the same scientific name: select the most generic one
+            taxon = min(response.json(), key=lambda x: x.get("depth", -1))
+        else:
+            taxon = response.json()
         tax_id = taxon.get("tax_id")
         if tax_id is None:
             return ProcessingResult(
@@ -1439,7 +1441,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"host name validation for '{input_name}' was successful but response json had no 'tax_id'. Please contact the administrator",
+                        message=f"host validation for '{unvalidated}' was successful but response json had no 'tax_id'. Please contact the administrator",
                     )
                 ],
             )
@@ -1457,15 +1459,6 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        if args.get("is_insdc_ingest_group"):
-            # if this record was ingested from ISNDC and it has a hostNameScientific, we trust that they validated it
-            scientific_name = input_data.get("hostNameScientific")
-            if not null_per_backend(scientific_name):
-                return ProcessingResult(
-                    datum=scientific_name,
-                    warnings=[],
-                    errors=[],
-                )
         tax_id: str | None = input_data.get("hostTaxonId")
         if null_per_backend(tax_id):
             return ProcessingResult(
@@ -1601,6 +1594,7 @@ class ProcessingFunctions:
                     )
                 ],
             )
+
         common_name = response.json().get("common_name")
         if common_name is None:
             return ProcessingResult(

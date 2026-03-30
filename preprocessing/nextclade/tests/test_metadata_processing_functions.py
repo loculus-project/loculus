@@ -1245,6 +1245,7 @@ def test_validate_hostname_not_found(mock_get):
 
 @patch("loculus_preprocessing.processing_functions.requests.get")
 def test_validate_hostname_insdc(mock_get):
+    mock_get.return_value = make_response(200, {"tax_id": 53527, "scientific_name": "Culex"})
     res = ProcessingFunctions.validate_host(
         input_data={"hostNameScientific": "Culex", "hostTaxonId": "53527"},
         output_field="hostTaxonId",
@@ -1259,26 +1260,7 @@ def test_validate_hostname_insdc(mock_get):
     assert res.datum == 53527
     assert res.warnings == []
     assert res.errors == []
-    mock_get.assert_not_called()
-
-
-@patch("loculus_preprocessing.processing_functions.requests.get")
-def test_sci_name_from_id_insdc(mock_get):
-    res = ProcessingFunctions.scientific_name_from_id(
-        input_data={"hostNameScientific": "Aedes aegypti", "hostTaxonId": "7159"},
-        output_field="hostNameScientific",
-        input_fields=["hostNameScientific", "hostTaxonId"],
-        args={
-            "taxonomy_service_host": "http://localhost",
-            "taxonomy_service_port": 5000,
-            "is_insdc_ingest_group": True,
-        },
-    )
-
-    assert res.datum == "Aedes aegypti"
-    assert res.warnings == []
-    assert res.errors == []
-    mock_get.assert_not_called()
+    mock_get.assert_called_once_with("http://localhost:5000/taxa/53527", timeout=15)
 
 
 @patch("loculus_preprocessing.processing_functions.requests.get")
