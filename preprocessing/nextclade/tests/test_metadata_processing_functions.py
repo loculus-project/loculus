@@ -1215,7 +1215,7 @@ def test_validate_hostname_success(mock_get: MagicMock):
         ],
     )
 
-    res = ProcessingFunctions.validate_hostname(
+    res = ProcessingFunctions.validate_host(
         input_data={"hostNameScientific": "Culex"},
         output_field="hostTaxonId",
         input_fields=["hostNameScientific"],
@@ -1232,7 +1232,7 @@ def test_validate_hostname_success(mock_get: MagicMock):
 def test_validate_hostname_not_found(mock_get):
     mock_get.return_value = make_response(404, {"detail": "not found"})
 
-    res = ProcessingFunctions.validate_hostname(
+    res = ProcessingFunctions.validate_host(
         input_data={"hostNameScientific": "des aegypti"},
         output_field="hostTaxonId",
         input_fields=["hostNameScientific"],
@@ -1245,7 +1245,7 @@ def test_validate_hostname_not_found(mock_get):
 
 @patch("loculus_preprocessing.processing_functions.requests.get")
 def test_validate_hostname_insdc(mock_get):
-    res = ProcessingFunctions.validate_hostname(
+    res = ProcessingFunctions.validate_host(
         input_data={"hostNameScientific": "Culex", "hostTaxonId": "53527"},
         output_field="hostTaxonId",
         input_fields=["hostNameScientific"],

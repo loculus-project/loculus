@@ -1349,7 +1349,7 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def validate_hostname(
+    def validate_host(
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -1363,13 +1363,13 @@ class ProcessingFunctions:
         the root of the taxonomy)
         """
         if args.get("is_insdc_ingest_group"):
-            # if this record was ingested from ISNDC, we trust that they validated the hostNameScientific
-            # and associated it with the proper hostTaxonId
-            raw = input_data.get("hostTaxonId")
+            try:
+                raw = input_data.get("hostTaxonId")  # raw can be "123", "", or None
+                tax_id = int(raw) if raw is not None else None
+            except ValueError:
+                tax_id = None
             return ProcessingResult(
-                datum=int(raw)  # it will be a string, so need to cast here
-                if raw is not None
-                else None,
+                datum=tax_id,
                 warnings=[],
                 errors=[],
             )

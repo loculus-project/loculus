@@ -13,7 +13,7 @@ processing_spec:
       hostTaxonId: processed.hostTaxonId
     args: *preprocessingTaxonomyTestArgs
   hostTaxonId:
-    function: validate_hostname
+    function: validate_host
     inputs:
       hostNameScientific: hostNameScientific
       # In production, this would instead be `ncbiHostTaxId: ncbiHostTaxId`.
