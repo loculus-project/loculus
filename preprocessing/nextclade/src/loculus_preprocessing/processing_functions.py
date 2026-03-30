@@ -1365,8 +1365,11 @@ class ProcessingFunctions:
         if args.get("is_insdc_ingest_group"):
             # if this record was ingested from ISNDC, we trust that they validated the hostNameScientific
             # and associated it with the proper hostTaxonId
+            raw = input_data.get("hostTaxonId")
             return ProcessingResult(
-                datum=input_data.get("hostTaxonId"),
+                datum=int(raw)  # it will be a string, so need to cast here
+                if raw is not None
+                else None,
                 warnings=[],
                 errors=[],
             )
