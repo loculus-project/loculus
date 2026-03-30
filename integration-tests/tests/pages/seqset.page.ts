@@ -58,7 +58,7 @@ export class SeqSetPage {
         await this.page.getByRole('button', { name: 'Save' }).click();
     }
 
-    async expectAccessionMatchesUrl(version: string) {
+    async expectAccessionMatchesUrl() {
         const url = this.page.url();
         const accession = url.split('/seqsets/')[1];
         expect(accession).toBeTruthy();
@@ -67,7 +67,7 @@ export class SeqSetPage {
 
     async expectDetailLayout(name: string, description: string, version: string) {
         await this.page.waitForURL(new RegExp(`/seqsets/.+\\.${version}$`));
-        await this.expectAccessionMatchesUrl(version);
+        await this.expectAccessionMatchesUrl();
         await expect(this.page.getByRole('button', { name: 'Export' })).toBeVisible();
         await expect(this.page.getByRole('button', { name: 'Edit' })).toBeVisible();
         await expect(this.page.getByRole('button', { name: 'Delete' })).toBeVisible();
