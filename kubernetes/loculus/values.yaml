@@ -1556,7 +1556,7 @@ defaultOrganisms:
           noInput: true
           orderOnDetailsPage: 1540
           preprocessing:
-            function: validate_hostname
+            function: validate_host
             inputs:
               hostNameScientific: hostNameScientific
               hostTaxonId: hostTaxonId
