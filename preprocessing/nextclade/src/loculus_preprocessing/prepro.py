@@ -201,13 +201,13 @@ def add_assigned_reference(
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
 ) -> InputData:
-    if not unprocessed.nextcladeMetadata:
+    if not unprocessed.unalignedNucleotideSequences:
         return InputData(datum=None)
     segment = spec.args.get("segment", "main") if spec.args else "main"
     if not isinstance(segment, str):
         msg = f"add_assigned_reference: segment must be str, got {type(segment)}"
         raise TypeError(msg)
-    name = get_dataset_name(segment, unprocessed.nextcladeMetadata, config)
+    name = get_dataset_name(segment, unprocessed.unalignedNucleotideSequences, config)
     if not name:
         return InputData(datum=None)
     reference = config.get_dataset_by_name(name).reference_name
