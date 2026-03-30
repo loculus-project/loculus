@@ -121,6 +121,8 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         );
     };
 
+    const totalCitations = citedByData.citations.reduce((sum, citation) => sum + citation, 0);
+
     const getMaxPages = () => {
         return Math.ceil(seqSetRecords.length / sequencesPerPage);
     };
@@ -169,7 +171,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                                     href={getCrossRefUrl()}
                                     target='_blank'
                                 >
-                                    Cited by 0
+                                    Cited by {totalCitations}
                                 </a>
                             )
                         }
