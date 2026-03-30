@@ -60,7 +60,6 @@ test.describe('SeqSet management', () => {
             focalAccessions: [focalAccession],
             backgroundAccessions: [backgroundAccession],
         });
-
         await seqSetPage.expectDetailLayout(seqSetName, seqSetDescription);
 
         const jsonDownload = await seqSetPage.exportSeqSet('json');
@@ -71,11 +70,11 @@ test.describe('SeqSet management', () => {
 
         await seqSetPage.openDeleteDialog();
         await seqSetPage.cancelDeletion();
-        await expect(seqSetPage.getHeading(seqSetName)).toBeVisible();
 
         const updatedSeqSetName = `${seqSetName} updated`;
-        await seqSetPage.editSeqSetName(updatedSeqSetName);
-        await expect(seqSetPage.getHeading(updatedSeqSetName)).toBeVisible();
+        const updatedSeqSetDescription = `${seqSetDescription} (updated)`;
+        await seqSetPage.editSeqSet(updatedSeqSetName, updatedSeqSetDescription);
+        await seqSetPage.expectDetailLayout(updatedSeqSetName, seqSetDescription);
 
         await seqSetPage.deleteSeqSet();
         await expect(seqSetPage.getCreateButton()).toBeVisible();

@@ -21,10 +21,6 @@ export class SeqSetPage {
         return this.page.getByTestId('AddIcon');
     }
 
-    getHeading(name: string) {
-        return this.page.getByRole('heading', { name: name });
-    }
-
     async openCreateDialog() {
         const createButton = this.getCreateButton();
         await expect(createButton).toBeVisible();
@@ -61,6 +57,13 @@ export class SeqSetPage {
 
     async submitSeqSetForm() {
         await this.page.getByRole('button', { name: 'Save' }).click();
+    }
+
+    async expectAccessionMatchesUrl() {
+        const url = this.page.url();
+        const accession = url.split('/seqsets/')[1];
+        expect(accession).toBeTruthy();
+        await expect(this.page.getByRole('heading', { name: accession })).toBeVisible();
     }
 
     async expectDetailLayout(name: string, description: string) {
@@ -117,18 +120,14 @@ export class SeqSetPage {
         await this.page.waitForLoadState('networkidle');
     }
 
-    async expectAccessionMatchesUrl() {
-        const url = this.page.url();
-        const accession = url.split('/seqsets/')[1];
-        expect(accession).toBeTruthy();
-        await expect(this.getHeading(accession)).toBeVisible();
-    }
-
-    async editSeqSetName(newName: string) {
+    async editSeqSet(newName: string, newDescription: string) {
         await this.page.getByRole('button', { name: 'Edit' }).click();
         const nameField = this.page.locator('#seqSet-name');
         await nameField.waitFor({ state: 'visible' });
         await nameField.fill(newName);
+        const descriptionField = this.page.locator('#seqSet-description');
+        await descriptionField.waitFor({ state: 'visible' });
+        await descriptionField.fill(newDescription);
         await this.page.getByRole('button', { name: 'Save' }).click();
         await this.expectAccessionMatchesUrl();
         await expect(this.page.getByText(newName, { exact: true })).toBeVisible();
