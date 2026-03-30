@@ -55,7 +55,7 @@ export const getDateFormatFromData = (data: AggregateRow[]): string => {
     return format;
 };
 
-/** Group the data by the specified date format, or by invalid date values */
+/** Group the data by the specified date format, or null if invalid */
 export const groupByDateFormat = (data: AggregateRow[], format: string): AggregateRow[] => {
     const yearMonths = new Map<AggregateValue, number>();
 
@@ -64,10 +64,13 @@ export const groupByDateFormat = (data: AggregateRow[], format: string): Aggrega
 
         if (typeof value === 'string') {
             const dateValue = DateTime.fromISO(value);
-            if (dateValue.isValid) value = dateValue.toFormat(format);
+            if (dateValue.isValid) {
+                value = dateValue.toFormat(format);
+            } else {
+                value = null;
+            }
         }
 
-        // Group by formatted date, or by values which failed formatting
         yearMonths.set(value, (yearMonths.get(value) ?? 0) + row.count);
     });
 

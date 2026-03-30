@@ -129,15 +129,18 @@ describe('groupByDateFormat', () => {
         ]);
     });
 
-    it('skips rows with non-string or invalid date values', () => {
+    it('group invalid date values', () => {
         const data = [
-            { value: null, count: 99 },
-            { value: 'not-a-date', count: 99 },
             { value: '2024-03-01', count: 1 },
             { value: '2024-03-15', count: 1 },
+            { value: null, count: 99 },
+            { value: 'not-a-date', count: 99 },
         ];
         const result = groupByDateFormat(data, 'yyyy-MM');
-        expect(result).toEqual([{ value: '2024-03', count: 2 }]);
+        expect(result).toEqual([
+            { value: '2024-03', count: 2 },
+            { value: null, count: 198 },
+        ]);
     });
 
     it('returns empty array for empty input', () => {

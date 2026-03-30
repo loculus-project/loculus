@@ -9,8 +9,11 @@ const ORGANISM_2_ACCESSIONS = vi.hoisted(() => ['LOC_345678', 'LOC_901234']);
 
 vi.mock('../../config.ts', () => ({
     getConfiguredOrganisms: () => [{ key: 'test-organism-1' }, { key: 'test-organism-2' }],
-    getSchema: () => ({
-        metadata: [{ name: 'sampleCollectionDate' }, { name: 'geoLocCountry' }],
+    getSchema: (organism: string) => ({
+        metadata:
+            organism === 'test-organism-1'
+                ? [{ name: 'sampleCollectionDate' }, { name: 'geoLocCountry' }]
+                : [{ name: 'sampleCollectionDate' }, { name: 'geoLocCountry' }, { name: 'organismSpecificField' }],
     }),
 }));
 
@@ -49,6 +52,23 @@ vi.mock('../../services/lapisClient.ts', () => ({
                                         data: [
                                             { sampleCollectionDate: '2024-01-01', count: 100 },
                                             { sampleCollectionDate: '2024-06-15', count: 500 },
+                                        ],
+                                    }),
+                                );
+                            }
+                        }
+                        if (params.fields.includes('organismSpecificField')) {
+                            if (
+                                organism === 'test-organism-2' &&
+                                params[ACCESSION_VERSION_FIELD].some((accession) =>
+                                    ORGANISM_2_ACCESSIONS.includes(accession),
+                                )
+                            ) {
+                                return Promise.resolve(
+                                    ok({
+                                        data: [
+                                            { organismSpecificField: 'valueA', count: 7 },
+                                            { organismSpecificField: 'valueB', count: 3 },
                                         ],
                                     }),
                                 );
@@ -116,6 +136,17 @@ describe('getSeqSetStatistics', () => {
         expect(resultCountry.unwrapOr(undefined)).toEqual([
             { value: 'USA', count: 10 },
             { value: 'Germany', count: 4 },
+        ]);
+    });
+
+    it('returns results only from organism 2 when field only exists in organism 2 schema', async () => {
+        const result = await getSeqSetStatistics(ORGANISM_1_ACCESSIONS.concat(ORGANISM_2_ACCESSIONS), [
+            'organismSpecificField',
+        ]);
+        expect(result.isOk()).toBe(true);
+        expect(result.unwrapOr(undefined)).toEqual([
+            { value: 'valueA', count: 7 },
+            { value: 'valueB', count: 3 },
         ]);
     });
 
