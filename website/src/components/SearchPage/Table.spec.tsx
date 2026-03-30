@@ -20,7 +20,7 @@ const schema: Schema = {
 const data: TableSequenceData[] = [{ id: '1' }, { id: '2' }, { id: '3' }];
 
 const TestWrapper = () => {
-    const [selectedSeqs, setSelectedSeqs] = React.useState(new Set());
+    const [selectedSeqs, setSelectedSeqs] = React.useState(new Set<string>());
     return (
         <Table
             schema={schema}

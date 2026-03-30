@@ -152,7 +152,7 @@ export const InnerSearchFullUI = ({
     const aggregatedHook = hooks.useAggregated();
     const detailsHook = hooks.useDetails();
 
-    const [selectedSeqs, setSelectedSeqs] = useState(new Set());
+    const [selectedSeqs, setSelectedSeqs] = useState(new Set<string>());
     const sequencesSelected = selectedSeqs.size > 0;
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
