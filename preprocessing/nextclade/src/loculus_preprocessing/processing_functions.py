@@ -1355,11 +1355,14 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        """Validates that the user-supplied hostNameScientific exists in NCBI's taxonomy.
-        If it exists, we return the tax_id of the associated taxon.
+        """Validates that the host organism specification exists
+        in NCBI's taxonomy. We check either the hostTaxonId or the
+        hostNameScientific, depending on which is set.
+
+        If it validation succeeds, we return the tax_id of the associated taxon.
 
         It is possible that multiple taxa have the same scientific name. In these cases,
-        we return the tax_id of the most specific taxon (i.e., the one that's furthest from
+        we return the tax_id of the most generic taxon (i.e., the one that's closest to
         the root of the taxonomy)
         """
         host = args.get("taxonomy_service_host")
