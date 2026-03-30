@@ -883,7 +883,7 @@ def retry_failed_submissions_for_matching_errors(
     db_config: SimpleConnectionPool,
     table_name: TableName,
     retry_threshold_min: int,
-    error_substrings: Iterable[str] = ("does not exist in ENA",),
+    error_substrings: Sequence[str] = ("does not exist in ENA",),
     last_retry: datetime | None = None,
 ) -> datetime | None:
     if (
