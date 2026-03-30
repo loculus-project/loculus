@@ -2094,6 +2094,7 @@ defaultOrganisms:
           header: "Clade & Lineage"
           oneHeader: true
           displayName: "Variant L"
+          relatesToSegment: L
           type: boolean
           noInput: true
           autocomplete: true
@@ -2113,6 +2114,7 @@ defaultOrganisms:
           header: "Clade & Lineage"
           oneHeader: true
           displayName: "Variant M"
+          relatesToSegment: M
           type: boolean
           noInput: true
           autocomplete: true
@@ -2132,6 +2134,7 @@ defaultOrganisms:
           header: "Clade & Lineage"
           oneHeader: true
           displayName: "Variant S"
+          relatesToSegment: S
           type: boolean
           noInput: true
           autocomplete: true
