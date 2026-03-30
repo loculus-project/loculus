@@ -1246,7 +1246,7 @@ def test_validate_hostname_not_found(mock_get):
 @patch("loculus_preprocessing.processing_functions.requests.get")
 def test_validate_hostname_insdc(mock_get):
     res = ProcessingFunctions.validate_hostname(
-        input_data={"hostNameScientific": "Culex", "ncbiHostTaxId": "53527"},
+        input_data={"hostNameScientific": "Culex", "hostTaxonId": "53527"},
         output_field="hostTaxonId",
         input_fields=["hostNameScientific"],
         args={

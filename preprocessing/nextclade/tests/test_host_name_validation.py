@@ -51,6 +51,7 @@ def test_host_processing_direct_submission(mock_get: MagicMock) -> None:
     hostNameCommon are then canonicalized from that tax ID."""
     mock_get.side_effect = taxonomy_service_mock
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
+    assert config.processing_order[0] == "hostTaxonId"
 
     entry = make_entry(
         metadata={"hostNameScientific": "Aedes aegypti", "ncbiHostTaxId": None},
@@ -78,7 +79,10 @@ def test_host_processing_insdc(mock_get: MagicMock) -> None:
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
 
     entry = make_entry(
-        metadata={"hostNameScientific": "Aedes aegypti", "ncbiHostTaxId": "7159"},
+        metadata={
+            "hostNameScientific": "Aedes aegypti",
+            "hostTaxonId": "7159",
+        },
         group_id=config.insdc_ingest_group_id,
     )
 
@@ -115,4 +119,7 @@ def test_host_processing_invalid_hostname(mock_get: MagicMock) -> None:
     assert metadata["hostTaxonId"] is None
     assert metadata["hostNameScientific"] is None
     assert metadata["hostNameCommon"] is None
-    assert len(result[0].processed_entry.errors) == 3
+    # only check for host name should go to service, other
+    # functions return None as hostTaxonId is None
+    assert mock_get.call_count == 1
+    assert len(result[0].processed_entry.errors) == 1

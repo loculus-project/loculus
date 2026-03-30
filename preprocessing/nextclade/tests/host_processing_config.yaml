@@ -16,5 +16,8 @@ processing_spec:
     function: validate_hostname
     inputs:
       hostNameScientific: hostNameScientific
-      ncbiHostTaxId: ncbiHostTaxId
+      # In production, this would instead be `ncbiHostTaxId: ncbiHostTaxId`.
+      # We add `hostTaxonId` here only because in production, ingest would
+      # rename ncbiHostTaxId -> hostTaxonId, which we don't have in tests
+      hostTaxonId: hostTaxonId
     args: *preprocessingTaxonomyTestArgs
