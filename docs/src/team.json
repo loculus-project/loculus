@@ -95,6 +95,11 @@
             "name": "Max Verbiest",
             "description": "Swiss TPH; SIB",
             "picture": "/images/team/maxVerbiest-square.jpg"
+        },
+        {
+            "name": "Thomas Brier",
+            "description": "Swiss TPH; ARTIC network",
+            "picture": "/images/team/thomasBrier-square.jpg"
         }
     ]
 }
