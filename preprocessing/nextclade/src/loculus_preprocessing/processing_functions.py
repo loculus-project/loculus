@@ -1389,8 +1389,12 @@ class ProcessingFunctions:
                 ],
             )
 
-        # hostTaxonId is noInput, so only case where it exists is for INSDC ingested sequences
-        unvalidated = input_data.get("hostTaxonId") or input_data.get("hostNameScientific")
+        # hostTaxonId and hostNameScientific are noInput, so the only case where they exist is for INSDC ingested sequences
+        unvalidated = (
+            input_data.get("hostIdentifier")
+            or input_data.get("hostTaxonId")
+            or input_data.get("hostNameScientific")
+        )
         if not unvalidated:
             return ProcessingResult(
                 datum=None,
