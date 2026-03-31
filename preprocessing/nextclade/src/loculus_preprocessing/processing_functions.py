@@ -32,6 +32,11 @@ from .datatypes import (
 
 logger = logging.getLogger(__name__)
 
+# two caches for host name validation:
+#   taxon_cache:        dict[taxon ID | host name, requests.Response]   Caches successful host validation reponses
+#   common_name_cache:  dict[taxon ID, requests.Response]               Caches successful common name queries.
+#                                                                       Needs to be separate since a common name query can return a
+#                                                                       taxon that's different than the input taxon
 taxon_cache: dict[str, requests.Response] = {}
 common_name_cache: dict[str, requests.Response] = {}
 
@@ -1393,9 +1398,9 @@ class ProcessingFunctions:
                 errors=[],
             )
 
-        cached = taxon_cache.get(str(unvalidated))
-        if cached is not None:
-            response = cached
+        cache_hit = str(unvalidated) in taxon_cache
+        if cache_hit:
+            response = taxon_cache[str(unvalidated)]
         else:
             try:
                 # If it casts to int, assume it's a taxon id
@@ -1408,8 +1413,6 @@ class ProcessingFunctions:
 
             try:
                 response = requests.get(url, timeout=15)
-                if response.status_code < 500:
-                    taxon_cache[str(unvalidated)] = response
             except requests.exceptions.Timeout:
                 return ProcessingResult(
                     datum=None,
@@ -1438,6 +1441,9 @@ class ProcessingFunctions:
                 warnings=[message] if args["is_insdc_ingest_group"] else [],
                 errors=[message] if not args["is_insdc_ingest_group"] else [],
             )
+
+        if not cache_hit:
+            taxon_cache[str(unvalidated)] = response
 
         if isinstance(body, list):
             # multiple taxa may have the same scientific name: select the most generic one
@@ -1497,14 +1503,12 @@ class ProcessingFunctions:
                 ],
             )
 
-        cached = taxon_cache.get(str(tax_id))
-        if cached is not None:
-            response = cached
+        cache_hit = str(tax_id) in taxon_cache
+        if cache_hit:
+            response = taxon_cache[str(tax_id)]
         else:
             try:
                 response = requests.get(f"{host}:{port}/taxa/{tax_id}", timeout=15)
-                if response.status_code < 500:
-                    taxon_cache[str(tax_id)] = response
             except requests.exceptions.Timeout:
                 return ProcessingResult(
                     datum=None,
@@ -1549,6 +1553,9 @@ class ProcessingFunctions:
                 ],
             )
 
+        if not cache_hit:
+            taxon_cache[str(tax_id)] = response
+
         return ProcessingResult(
             datum=scientific_name,
             warnings=[],
@@ -1586,16 +1593,14 @@ class ProcessingFunctions:
                 ],
             )
 
-        cached = common_name_cache.get(str(tax_id))
-        if cached is not None:
-            response = cached
+        cache_hit = str(tax_id) in common_name_cache
+        if cache_hit:
+            response = common_name_cache[str(tax_id)]
         else:
             try:
                 response = requests.get(
                     f"{host}:{port}/taxa/{tax_id}?find_common_name=true", timeout=15
                 )
-                if response.status_code < 500:
-                    common_name_cache[str(tax_id)] = response
             except requests.exceptions.Timeout:
                 return ProcessingResult(
                     datum=None,
@@ -1639,6 +1644,9 @@ class ProcessingFunctions:
                     )
                 ],
             )
+
+        if not cache_hit:
+            common_name_cache[str(tax_id)] = response
 
         return ProcessingResult(
             datum=common_name,

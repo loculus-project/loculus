@@ -3,7 +3,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from test_metadata_processing_functions import make_response
 
 from loculus_preprocessing import processing_functions
