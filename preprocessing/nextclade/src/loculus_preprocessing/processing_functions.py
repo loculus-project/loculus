@@ -1391,7 +1391,7 @@ class ProcessingFunctions:
 
         # hostTaxonId is noInput, so only case where it exists is for INSDC ingested sequences
         unvalidated = input_data.get("hostTaxonId") or input_data.get("hostNameScientific")
-        if null_per_backend(unvalidated):
+        if not unvalidated:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1480,7 +1480,7 @@ class ProcessingFunctions:
         args: FunctionArgs,
     ) -> ProcessingResult:
         tax_id: str | None = input_data.get("hostTaxonId")
-        if null_per_backend(tax_id):
+        if not tax_id:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1570,7 +1570,7 @@ class ProcessingFunctions:
         args: FunctionArgs,
     ) -> ProcessingResult:
         tax_id: str | None = input_data.get("hostTaxonId")
-        if null_per_backend(tax_id):
+        if not tax_id:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
