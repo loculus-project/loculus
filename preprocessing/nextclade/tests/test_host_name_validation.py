@@ -2,13 +2,22 @@
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from test_metadata_processing_functions import make_response
 
+from loculus_preprocessing import processing_functions
 from loculus_preprocessing.config import get_config
 from loculus_preprocessing.datatypes import UnprocessedData, UnprocessedEntry
 from loculus_preprocessing.prepro import process_all
 
 HOST_PROCESSING_CONFIG = "tests/host_processing_config.yaml"
+
+
+@pytest.fixture(autouse=True)
+def clear_taxonomy_caches():
+    processing_functions.taxon_cache.clear()
+    processing_functions.common_name_cache.clear()
 
 
 def make_entry(metadata: dict, group_id: int) -> UnprocessedEntry:
@@ -83,8 +92,8 @@ def test_host_processing_insdc(mock_get: MagicMock) -> None:
     assert metadata["hostNameCommon"] == "yellow fever mosquito"
     assert result[0].processed_entry.errors == []
 
-    # All three fields hit the taxonomy service: validate tax ID, get scientific name, get common name
-    assert mock_get.call_count == 3
+    # Two calls to taxonomy service: validate tax ID, get scientific name (cached), get common name
+    assert mock_get.call_count == 2
 
 
 @patch("loculus_preprocessing.processing_functions.requests.get")

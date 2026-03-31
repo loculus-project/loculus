@@ -1236,7 +1236,11 @@ def test_validate_hostname_not_found(mock_get):
         input_data={"hostNameScientific": "des aegypti"},
         output_field="hostTaxonId",
         input_fields=["hostNameScientific"],
-        args={"taxonomy_service_host": "http://localhost", "taxonomy_service_port": 5000},
+        args={
+            "taxonomy_service_host": "http://localhost",
+            "taxonomy_service_port": 5000,
+            "is_insdc_ingest_group": False,
+        },
     )
 
     assert res.datum is None

@@ -32,6 +32,9 @@ from .datatypes import (
 
 logger = logging.getLogger(__name__)
 
+taxon_cache: dict[str, requests.Response] = {}
+common_name_cache: dict[str, requests.Response] = {}
+
 options_cache: dict[str, dict[str, str]] = {}
 
 
@@ -1390,50 +1393,58 @@ class ProcessingFunctions:
                 errors=[],
             )
 
-        try:
-            # If it casts to int, assume it's a taxon id
-            tax_id = int(unvalidated) if unvalidated is not None else None
-            url = f"{host}:{port}/taxa/{tax_id}"
-        except ValueError:
-            # It's not an int - assume it's a scientific name
-            query = urllib.parse.urlencode({"scientific_name": unvalidated})
-            url = f"{host}:{port}/taxa?{query}"
-
-        try:
-            response = requests.get(url, timeout=15)
-        except requests.exceptions.Timeout:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=f"request timeout while validating '{unvalidated}' - the taxonomy-service may be down",
-                    )
-                ],
-            )
-
-        if response.status_code != requests.codes.ok:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=f"host validation for '{unvalidated}' failed with code {response.status_code}: {response.json().get('detail', '')}",
-                    )
-                ],
-            )
-
-        if isinstance(response.json(), list):
-            # multiple taxa may have the same scientific name: select the most generic one
-            taxon = min(response.json(), key=lambda x: x.get("depth", -1))
+        cached = taxon_cache.get(str(unvalidated))
+        if cached is not None:
+            response = cached
         else:
-            taxon = response.json()
+            try:
+                # If it casts to int, assume it's a taxon id
+                tax_id = int(unvalidated) if unvalidated is not None else None
+                url = f"{host}:{port}/taxa/{tax_id}"
+            except ValueError:
+                # It's not an int - assume it's a scientific name
+                query = urllib.parse.urlencode({"scientific_name": unvalidated})
+                url = f"{host}:{port}/taxa?{query}"
+
+            try:
+                response = requests.get(url, timeout=15)
+                if response.status_code < 500:
+                    taxon_cache[str(unvalidated)] = response
+            except requests.exceptions.Timeout:
+                return ProcessingResult(
+                    datum=None,
+                    warnings=[],
+                    errors=[
+                        ProcessingAnnotation.from_fields(
+                            input_fields,
+                            [output_field],
+                            AnnotationSourceType.METADATA,
+                            message=f"request timeout while validating '{unvalidated}' - the taxonomy-service may be down",
+                        )
+                    ],
+                )
+
+        body = response.json()
+        if response.status_code != requests.codes.ok:
+            # missing host organism is a warning for INSDC ingested sequences, but an error for everyone else
+            message = ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message=f"host validation for '{unvalidated}' failed with code {response.status_code}: {body.get('detail', '')}",
+            )
+            return ProcessingResult(
+                datum=None,
+                warnings=[message] if args["is_insdc_ingest_group"] else [],
+                errors=[message] if not args["is_insdc_ingest_group"] else [],
+            )
+
+        if isinstance(body, list):
+            # multiple taxa may have the same scientific name: select the most generic one
+            taxon = min(body, key=lambda x: x.get("depth", -1))
+        else:
+            taxon = body
+
         tax_id = taxon.get("tax_id")
         if tax_id is None:
             return ProcessingResult(
@@ -1469,6 +1480,7 @@ class ProcessingFunctions:
                 warnings=[],
                 errors=[],
             )
+
         host = args.get("taxonomy_service_host")
         port = args.get("taxonomy_service_port")
         if not isinstance(host, str) or not isinstance(port, int):
@@ -1485,22 +1497,29 @@ class ProcessingFunctions:
                 ],
             )
 
-        try:
-            response = requests.get(f"{host}:{port}/taxa/{tax_id}", timeout=15)
-        except requests.exceptions.Timeout:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=f"request timeout while getting scientific name for '{tax_id}' - the taxonomy-service may be down",
-                    )
-                ],
-            )
+        cached = taxon_cache.get(str(tax_id))
+        if cached is not None:
+            response = cached
+        else:
+            try:
+                response = requests.get(f"{host}:{port}/taxa/{tax_id}", timeout=15)
+                if response.status_code < 500:
+                    taxon_cache[str(tax_id)] = response
+            except requests.exceptions.Timeout:
+                return ProcessingResult(
+                    datum=None,
+                    warnings=[],
+                    errors=[
+                        ProcessingAnnotation.from_fields(
+                            input_fields,
+                            [output_field],
+                            AnnotationSourceType.METADATA,
+                            message=f"request timeout while getting scientific name for '{tax_id}' - the taxonomy-service may be down",
+                        )
+                    ],
+                )
 
+        body = response.json()
         if response.status_code != requests.codes.ok:
             return ProcessingResult(
                 datum=None,
@@ -1510,12 +1529,12 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"'{tax_id}' is not a valid taxon ID",
+                        message=f"could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}",
                     )
                 ],
             )
 
-        scientific_name = response.json().get("scientific_name")
+        scientific_name = body.get("scientific_name")
         if scientific_name is None:
             return ProcessingResult(
                 datum=None,
@@ -1550,6 +1569,7 @@ class ProcessingFunctions:
                 warnings=[],
                 errors=[],
             )
+
         host = args.get("taxonomy_service_host")
         port = args.get("taxonomy_service_port")
         if not isinstance(host, str) or not isinstance(port, int):
@@ -1566,24 +1586,31 @@ class ProcessingFunctions:
                 ],
             )
 
-        try:
-            response = requests.get(
-                f"{host}:{port}/taxa/{tax_id}?find_common_name=true", timeout=15
-            )
-        except requests.exceptions.Timeout:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=f"request timeout while getting common name for '{tax_id}' - the taxonomy-service may be down",
-                    )
-                ],
-            )
+        cached = common_name_cache.get(str(tax_id))
+        if cached is not None:
+            response = cached
+        else:
+            try:
+                response = requests.get(
+                    f"{host}:{port}/taxa/{tax_id}?find_common_name=true", timeout=15
+                )
+                if response.status_code < 500:
+                    common_name_cache[str(tax_id)] = response
+            except requests.exceptions.Timeout:
+                return ProcessingResult(
+                    datum=None,
+                    warnings=[],
+                    errors=[
+                        ProcessingAnnotation.from_fields(
+                            input_fields,
+                            [output_field],
+                            AnnotationSourceType.METADATA,
+                            message=f"request timeout while getting common name for '{tax_id}' - the taxonomy-service may be down",
+                        )
+                    ],
+                )
 
+        body = response.json()
         if response.status_code != requests.codes.ok:
             return ProcessingResult(
                 datum=None,
@@ -1593,12 +1620,12 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"'{tax_id}' is not a valid hostTaxonId",
+                        message=f"could not map '{tax_id}' to common name. Code {response.status_code}: {body.get('detail', '')}",
                     )
                 ],
             )
 
-        common_name = response.json().get("common_name")
+        common_name = body.get("common_name")
         if common_name is None:
             return ProcessingResult(
                 datum=None,
