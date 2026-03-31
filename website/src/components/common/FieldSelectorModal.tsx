@@ -206,10 +206,6 @@ const FieldSelectorModalField: FC<FieldSelectorModalFieldProps> = ({ field, hand
                                 <p>
                                     <FormattedText text={field.definition} />
                                 </p>
-                                    <p>
-                                        <FormattedText text={field.definition} />
-                                    </p>
-                                )}
                             </div>
                         </CustomTooltip>
                     </>
