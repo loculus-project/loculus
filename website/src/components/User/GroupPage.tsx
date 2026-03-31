@@ -43,7 +43,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
 }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
     const groupId = prefetchedGroupDetails.group.groupId;
-    const [newUserName, setNewUserName] = useState<string>('');
+    const [newUserName, setNewUserName] = useState('');
 
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 

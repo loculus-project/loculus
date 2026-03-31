@@ -15,8 +15,8 @@ from .ena_submission_helper import (
     accession_exists,
     create_ena_project,
     get_alias,
+    retry_failed_submissions_for_matching_errors,
     set_accession_does_not_exist_error,
-    trigger_retry_if_exists,
 )
 from .ena_types import (
     OrganismType,
@@ -388,7 +388,7 @@ def project_table_handle_errors(
             time=datetime.now(tz=pytz.utc),
             slack_retry_threshold_min=config.slack_retry_threshold_min,
         )
-        return trigger_retry_if_exists(
+        return retry_failed_submissions_for_matching_errors(
             entries_with_errors,
             db_config,
             table_name=TableName.PROJECT_TABLE,
