@@ -105,6 +105,17 @@ def read_root() -> dict[str, str]:
     return {"message": "Taxonomy service is running"}
 
 
+@app.get("/ancestors")
+def get_ancestors(query: int, targets: list[int], db: DbConnection) -> list[int]:
+    hits = []
+
+    # for t in targets:
+    #     if q is_descendent(t):
+    #         hits.append(t)
+
+    return hits
+
+
 @app.get("/taxa")
 def query_taxa(
     scientific_name: str, db: DbConnection
