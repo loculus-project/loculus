@@ -1,0 +1,63 @@
+name: ncbi-taxonomy-db-unit-tests
+on:
+  pull_request:
+    paths:
+      - "taxonomy/ncbi_tax_download/**"
+      - ".github/workflows/ncbi-taxonomy-db-unit-tests.yaml"
+      - "ruff.toml"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-ncbi-taxonomy-db-unit-tests
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: micromamba-shell {0}
+    working-directory: taxonomy/ncbi_tax_download
+jobs:
+  checkFormat:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: "taxonomy/ncbi_tax_download/environment.yaml"
+          micromamba-version: "latest"
+          cache-environment: true
+      - name: Run ruff format check
+        run: ruff check . --fix --diff
+  lint:
+    name: Lint code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: "taxonomy/ncbi_tax_download/environment.yaml"
+          micromamba-version: "latest"
+          cache-environment: true
+      - name: Run ruff check
+        run: ruff check .
+  unitTests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: "taxonomy/ncbi_tax_download/environment.yaml"
+          micromamba-version: "latest"
+          cache-environment: true
+      - name: Install package
+        run: |
+          uv pip install --system .
+      - name: Run tests
+        run: |
+          pytest
