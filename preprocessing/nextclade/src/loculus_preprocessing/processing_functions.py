@@ -1364,13 +1364,13 @@ class ProcessingFunctions:
         args: FunctionArgs,
     ) -> ProcessingResult:
         """Validates that the host organism specification exists
-        in NCBI's taxonomy. We check either the hostTaxonId or the
-        hostNameScientific, depending on which is set.
+        in NCBI's taxonomy. Checks either the hostTaxonId or the
+        hostNameScientific, depending on the input.
 
-        If it validation succeeds, we return the tax_id of the associated taxon.
+        If it validation succeeds, returns the tax_id of the associated taxon.
 
         It is possible that multiple taxa have the same scientific name. In these cases,
-        we return the tax_id of the most generic taxon (i.e., the one that's closest to
+        return the tax_id of the most generic taxon (i.e., the one that's closest to
         the root of the taxonomy)
         """
         host = args.get("taxonomy_service_host")
@@ -1384,7 +1384,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message="hostNameScientific, taxonomy_service_host, or taxonomy_service_port was None",
+                        message="taxonomy_service_host or taxonomy_service_port was None",
                     )
                 ],
             )
