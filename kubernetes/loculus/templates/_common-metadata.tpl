@@ -292,7 +292,7 @@ organisms:
 {{- define "loculus.standardWebsiteMetadata" }}
 - type: {{ .type | default "string" | quote }}
   {{- if .definition }}
-  definition: {{ .definition }}
+  definition: {{ .definition | quote }}
   {{- end }}
   {{- if .autocomplete }}
   autocomplete: {{ .autocomplete }}
