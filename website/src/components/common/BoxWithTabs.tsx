@@ -14,10 +14,11 @@ type BoxWithTabsTabProps = {
     isActive: boolean;
     label: string;
     onClick?: () => void;
+    classNames?: string;
 };
 
-export const BoxWithTabsTab: FC<BoxWithTabsTabProps> = ({ isActive, label, onClick }) => (
-    <Button className={`tab ${isActive ? 'tab-active font-semibold' : ''}`} onClick={onClick}>
+export const BoxWithTabsTab: FC<BoxWithTabsTabProps> = ({ isActive, label, onClick, classNames }) => (
+    <Button className={`tab ${isActive ? 'tab-active font-semibold' : ''} ${classNames}`} onClick={onClick}>
         {label}
     </Button>
 );
