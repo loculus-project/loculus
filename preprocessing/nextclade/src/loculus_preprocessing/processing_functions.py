@@ -1404,7 +1404,7 @@ class ProcessingFunctions:
         else:
             try:
                 # If it casts to int, assume it's a taxon id
-                tax_id = int(unvalidated) if unvalidated is not None else None
+                tax_id = int(unvalidated)
                 url = f"{host}:{port}/taxa/{tax_id}"
             except ValueError:
                 # It's not an int - assume it's a scientific name
@@ -1413,7 +1413,7 @@ class ProcessingFunctions:
 
             try:
                 response = requests.get(url, timeout=15)
-            except requests.exceptions.Timeout:
+            except requests.exceptions.RequestException as e:
                 return ProcessingResult(
                     datum=None,
                     warnings=[],
@@ -1422,7 +1422,7 @@ class ProcessingFunctions:
                             input_fields,
                             [output_field],
                             AnnotationSourceType.METADATA,
-                            message=f"request timeout while validating '{unvalidated}' - the taxonomy service may be down",
+                            message=f"network error while validating '{unvalidated}': {e}",
                         )
                     ],
                 )
@@ -1447,7 +1447,7 @@ class ProcessingFunctions:
 
         if isinstance(body, list):
             # multiple taxa may have the same scientific name: select the most generic one
-            taxon = min(body, key=lambda x: x.get("depth", -1))
+            taxon = min(body, key=lambda x: x.get("depth", float("inf")))
         else:
             taxon = body
 
@@ -1509,7 +1509,7 @@ class ProcessingFunctions:
         else:
             try:
                 response = requests.get(f"{host}:{port}/taxa/{tax_id}", timeout=15)
-            except requests.exceptions.Timeout:
+            except requests.exceptions.RequestException as e:
                 return ProcessingResult(
                     datum=None,
                     warnings=[],
@@ -1518,7 +1518,7 @@ class ProcessingFunctions:
                             input_fields,
                             [output_field],
                             AnnotationSourceType.METADATA,
-                            message=f"request timeout while getting scientific name for '{tax_id}' - the taxonomy service may be down",
+                            message=f"network error while getting scientific name for '{tax_id}': {e}",
                         )
                     ],
                 )
@@ -1601,7 +1601,7 @@ class ProcessingFunctions:
                 response = requests.get(
                     f"{host}:{port}/taxa/{tax_id}?find_common_name=true", timeout=15
                 )
-            except requests.exceptions.Timeout:
+            except requests.exceptions.RequestException as e:
                 return ProcessingResult(
                     datum=None,
                     warnings=[],
@@ -1610,7 +1610,7 @@ class ProcessingFunctions:
                             input_fields,
                             [output_field],
                             AnnotationSourceType.METADATA,
-                            message=f"request timeout while getting common name for '{tax_id}' - the taxonomy service may be down",
+                            message=f"network error while getting common name for '{tax_id}': {e}",
                         )
                     ],
                 )
@@ -1619,8 +1619,7 @@ class ProcessingFunctions:
         if response.status_code != requests.codes.ok:
             return ProcessingResult(
                 datum=None,
-                warnings=[],
-                errors=[
+                warnings=[
                     ProcessingAnnotation.from_fields(
                         input_fields,
                         [output_field],
@@ -1628,6 +1627,7 @@ class ProcessingFunctions:
                         message=f"could not map '{tax_id}' to common name. Code {response.status_code}: {body.get('detail', '')}",
                     )
                 ],
+                errors=[],
             )
 
         common_name = body.get("common_name")
@@ -1640,7 +1640,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"No common name could be found for hostTaxonId '{tax_id}'",
+                        message=f"no common name could be found for hostTaxonId '{tax_id}'",
                     )
                 ],
             )

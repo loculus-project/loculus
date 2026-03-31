@@ -1331,7 +1331,7 @@ def test_common_name_from_id_not_found(mock_get):
     )
 
     assert res.datum is None
-    assert len(res.errors) == 1
+    assert len(res.warnings) == 1
     mock_get.assert_called_once_with(
         "http://localhost:5000/taxa/134896438906397?find_common_name=true", timeout=15
     )
