@@ -1422,7 +1422,7 @@ class ProcessingFunctions:
                             input_fields,
                             [output_field],
                             AnnotationSourceType.METADATA,
-                            message=f"request timeout while validating '{unvalidated}' - the taxonomy-service may be down",
+                            message=f"request timeout while validating '{unvalidated}' - the taxonomy service may be down",
                         )
                     ],
                 )
@@ -1518,7 +1518,7 @@ class ProcessingFunctions:
                             input_fields,
                             [output_field],
                             AnnotationSourceType.METADATA,
-                            message=f"request timeout while getting scientific name for '{tax_id}' - the taxonomy-service may be down",
+                            message=f"request timeout while getting scientific name for '{tax_id}' - the taxonomy service may be down",
                         )
                     ],
                 )
@@ -1610,7 +1610,7 @@ class ProcessingFunctions:
                             input_fields,
                             [output_field],
                             AnnotationSourceType.METADATA,
-                            message=f"request timeout while getting common name for '{tax_id}' - the taxonomy-service may be down",
+                            message=f"request timeout while getting common name for '{tax_id}' - the taxonomy service may be down",
                         )
                     ],
                 )
