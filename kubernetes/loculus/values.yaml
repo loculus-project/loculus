@@ -1511,6 +1511,7 @@ defaultOrganisms:
           hideInSearchResultsTable: true
           hideOnSequenceDetailsPage: true
           required: true
+          position: last
       metadataAdd:
         - name: displayName
           displayName: Display name
