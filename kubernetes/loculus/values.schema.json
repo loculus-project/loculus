@@ -625,6 +625,24 @@
                 },
                 "description": "Array of Strings. Arguments passed to the preprocessing pipeline."
               },
+              "taxonomyServiceArgs": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "object",
+                "description": "Settings to configure the taxonomy service host and port",
+                "properties": {
+                  "taxonomy_service_host": {
+                    "groups": ["preprocessing"],
+                    "type": "string",
+                    "description": "Host where the taxonomy service runs"
+                  },
+                  "taxonomy_service_port": {
+                    "groups": ["preprocessing"],
+                    "type": "integer",
+                    "description": "Port the taxonomy service listens to"
+                  }
+                }
+              },
               "configFile": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,

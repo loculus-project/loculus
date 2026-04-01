@@ -10,12 +10,14 @@ import logging
 import math
 import re
 import unicodedata
+import urllib.parse
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 import dateutil.parser as dateutil
 import pytz
+import requests
 
 from .datatypes import (
     AnnotationSource,
@@ -29,6 +31,14 @@ from .datatypes import (
 )
 
 logger = logging.getLogger(__name__)
+
+# two caches for host name validation:
+#   taxon_cache:        dict[taxon ID | host name, requests.Response]   Caches successful host validation reponses
+#   common_name_cache:  dict[taxon ID, requests.Response]               Caches successful common name queries.
+#                                                                       Needs to be separate since a common name query can return a
+#                                                                       taxon that's different than the input taxon
+taxon_cache: dict[str, requests.Response] = {}
+common_name_cache: dict[str, requests.Response] = {}
 
 options_cache: dict[str, dict[str, str]] = {}
 
@@ -1346,6 +1356,314 @@ class ProcessingFunctions:
             datum=concat_result.datum,
             warnings=warnings + concat_result.warnings,
             errors=concat_result.errors,
+        )
+
+    @staticmethod
+    def validate_host(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        """Validates that the hostIdentifier exists
+        in NCBI's taxonomy. Checks either the hostTaxonId or the
+        hostNameScientific, depending on the input.
+
+        If validation succeeds, returns the tax_id of the associated taxon.
+
+        It is possible that multiple taxa have the same scientific name. In these cases,
+        return the tax_id of the most generic taxon (i.e., the one that's closest to
+        the root of the taxonomy)
+        """
+        host = args.get("taxonomy_service_host")
+        port = args.get("taxonomy_service_port")
+        if not isinstance(host, str) or not isinstance(port, int):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message="Configuration error: taxonomy_service_host or taxonomy_service_port was None. Please contact the administrator.",
+                    )
+                ],
+            )
+
+        # hostTaxonId and hostNameScientific are noInput, so the only case where they exist is for INSDC ingested sequences
+        if not args["is_insdc_ingest_group"]:
+            unvalidated = input_data.get("hostIdentifier")
+        else:
+            unvalidated = input_data.get("hostTaxonId") or input_data.get("hostNameScientific")
+
+        if not unvalidated:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message="Metadatafield hostIdentifier ",
+                    )
+                ]
+                if not args["is_insdc_ingest_group"]
+                else [],
+            )
+
+        cache_hit = str(unvalidated) in taxon_cache
+        if cache_hit:
+            response = taxon_cache[str(unvalidated)]
+        else:
+            if unvalidated.isdigit():
+                url = f"{host}:{port}/taxa/{unvalidated}"
+            else:
+                query = urllib.parse.urlencode({"scientific_name": unvalidated})
+                url = f"{host}:{port}/taxa?{query}"
+
+            try:
+                response = requests.get(url, timeout=15)
+            except requests.exceptions.RequestException as e:
+                return ProcessingResult(
+                    datum=None,
+                    warnings=[],
+                    errors=[
+                        ProcessingAnnotation.from_fields(
+                            input_fields,
+                            [output_field],
+                            AnnotationSourceType.METADATA,
+                            message=f"Internal error: network error while validating '{unvalidated}': {e}. Please contact the administrator",
+                        )
+                    ],
+                )
+
+        body = response.json()
+        if response.status_code != requests.codes.ok:
+            # failure to validate host organism is a warning for INSDC ingested sequences, but an error for everyone else
+            message = ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message=f"Host validation for '{unvalidated}' failed with code {response.status_code}: {body.get('detail', '')}",
+            )
+            return ProcessingResult(
+                datum=None,
+                warnings=[message] if args["is_insdc_ingest_group"] else [],
+                errors=[message] if not args["is_insdc_ingest_group"] else [],
+            )
+
+        if not cache_hit:
+            taxon_cache[str(unvalidated)] = response
+
+        if isinstance(body, list):
+            # multiple taxa may have the same scientific name: select the most generic one
+            taxon = min(body, key=lambda x: x.get("depth", float("inf")))
+        else:
+            taxon = body
+
+        tax_id = taxon.get("tax_id")
+        if tax_id is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: host validation for '{unvalidated}' was successful but response json had no 'tax_id'. Please contact the administrator",
+                    )
+                ],
+            )
+
+        return ProcessingResult(
+            datum=tax_id,
+            warnings=[],
+            errors=[],
+        )
+
+    @staticmethod
+    def scientific_name_from_id(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        tax_id: str | None = input_data.get("hostTaxonId")
+        if not tax_id:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        host = args.get("taxonomy_service_host")
+        port = args.get("taxonomy_service_port")
+        if not isinstance(host, str) or not isinstance(port, int):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message="Configuration error: taxonomy_service_host or taxonomy_service_port was None. Please contact the administrator",
+                    )
+                ],
+            )
+
+        cache_hit = str(tax_id) in taxon_cache
+        if cache_hit:
+            response = taxon_cache[str(tax_id)]
+        else:
+            try:
+                response = requests.get(f"{host}:{port}/taxa/{tax_id}", timeout=15)
+            except requests.exceptions.RequestException as e:
+                return ProcessingResult(
+                    datum=None,
+                    warnings=[],
+                    errors=[
+                        ProcessingAnnotation.from_fields(
+                            input_fields,
+                            [output_field],
+                            AnnotationSourceType.METADATA,
+                            message=f"Internal error: network error while validating '{tax_id}': {e}. Please contact the administrator",
+                        )
+                    ],
+                )
+
+        body = response.json()
+        if response.status_code != requests.codes.ok:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}",
+                    )
+                ],
+            )
+
+        scientific_name = body.get("scientific_name")
+        if scientific_name is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: '{tax_id}' is a valid taxon ID but response json had no 'scientific_name'. Please contact the administrator",
+                    )
+                ],
+            )
+
+        if not cache_hit:
+            taxon_cache[str(tax_id)] = response
+
+        return ProcessingResult(
+            datum=scientific_name,
+            warnings=[],
+            errors=[],
+        )
+
+    @staticmethod
+    def common_name_from_id(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        tax_id: str | None = input_data.get("hostTaxonId")
+        if not tax_id:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        host = args.get("taxonomy_service_host")
+        port = args.get("taxonomy_service_port")
+        if not isinstance(host, str) or not isinstance(port, int):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message="Configuration error: taxonomy_service_host or taxonomy_service_port was None. Please contact the administrator.",
+                    )
+                ],
+            )
+
+        cache_hit = str(tax_id) in common_name_cache
+        if cache_hit:
+            response = common_name_cache[str(tax_id)]
+        else:
+            try:
+                response = requests.get(
+                    f"{host}:{port}/taxa/{tax_id}?find_common_name=true", timeout=15
+                )
+            except requests.exceptions.RequestException as e:
+                return ProcessingResult(
+                    datum=None,
+                    warnings=[],
+                    errors=[
+                        ProcessingAnnotation.from_fields(
+                            input_fields,
+                            [output_field],
+                            AnnotationSourceType.METADATA,
+                            message=f"Internal error: network error while getting common name for '{tax_id}': {e}. Please contact the administrator.",
+                        )
+                    ],
+                )
+
+        body = response.json()
+        if response.status_code != requests.codes.ok:
+            return ProcessingResult(
+                datum=None,
+                warnings=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Could not map '{tax_id}' to common name. Code {response.status_code}: {body.get('detail', '')}",
+                    )
+                ],
+                errors=[],
+            )
+
+        common_name = body.get("common_name")
+        if common_name is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it. Please contact the administrator.",
+                    )
+                ],
+            )
+
+        if not cache_hit:
+            common_name_cache[str(tax_id)] = response
+
+        return ProcessingResult(
+            datum=common_name,
+            warnings=[],
+            errors=[],
         )
 
 
