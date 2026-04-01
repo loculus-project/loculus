@@ -108,6 +108,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     metadata:
       - name: sampleCollectionDate
         displayName: Collection date
+        definition: The date on which the sample was collected.
         header: Sample details
         ingest: ncbiCollectionDate
         order: 10
@@ -140,6 +141,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeOverlapSearch:
           rangeName: sampleCollectionDateRange
           rangeDisplayName: Collection date
+          rangeDefinitionField: sampleCollectionDate
           bound: lower
         noInput: true
       - name: sampleCollectionDateRangeUpper
@@ -159,6 +161,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeOverlapSearch:
           rangeName: sampleCollectionDateRange
           rangeDisplayName: Collection date
+          rangeDefinitionField: sampleCollectionDate
           bound: upper
         noInput: true
       - name: displayName

@@ -160,6 +160,7 @@ export const SearchForm = ({
         .map((filter) => ({
             name: filter.name,
             displayName: filter.displayName ?? filter.name,
+            definition: filter.definition,
             header: filter.header,
             displayState: getDisplayState(
                 filter,
