@@ -1505,8 +1505,8 @@ defaultOrganisms:
         - name: hostIdentifier
           type: string
           displayName: "Host identifier"
-          definition: "NCBI taxon ID or scientific name that uniquely the host from which the sample was collected."
-          guidance: "You can provide either the scientific name of the organism (e.g., Aedes aegypti) or its NCBI taxon ID (e.g., 7159) in this field. We will validate your input and use it to add the common and scientific name of the host to your submitted sequence(s)."
+          definition: "NCBI taxon ID or scientific name that uniquely identifies the host from which the sample was collected."
+          guidance: "You can provide either the scientific name of the organism (e.g., Aedes aegypti) or its NCBI taxon ID (e.g., 7159) in this field. We will validate your input and use it to populate the `host common name` and `host scientific name` fields."
           example: "Aedes aegypti"
           hideInSearchResultsTable: true
           hideOnSequenceDetailsPage: true

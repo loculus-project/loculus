@@ -1363,11 +1363,11 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        """Validates that the host organism specification exists
+        """Validates that the hostIdentifier exists
         in NCBI's taxonomy. Checks either the hostTaxonId or the
         hostNameScientific, depending on the input.
 
-        If it validation succeeds, returns the tax_id of the associated taxon.
+        If validation succeeds, returns the tax_id of the associated taxon.
 
         It is possible that multiple taxa have the same scientific name. In these cases,
         return the tax_id of the most generic taxon (i.e., the one that's closest to
@@ -1415,12 +1415,9 @@ class ProcessingFunctions:
         if cache_hit:
             response = taxon_cache[str(unvalidated)]
         else:
-            try:
-                # If it casts to int, assume it's a taxon id
-                tax_id = int(unvalidated)
-                url = f"{host}:{port}/taxa/{tax_id}"
-            except ValueError:
-                # It's not an int - assume it's a scientific name
+            if unvalidated.isdigit():
+                url = f"{host}:{port}/taxa/{unvalidated}"
+            else:
                 query = urllib.parse.urlencode({"scientific_name": unvalidated})
                 url = f"{host}:{port}/taxa?{query}"
 
