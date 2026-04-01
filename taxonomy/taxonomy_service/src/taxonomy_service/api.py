@@ -100,6 +100,10 @@ def fetch_common_name(
     return None
 
 
+def taxon_is_descendant(db_conn: sqlite3.Connection, query: int, target: int) -> bool:
+    return False
+
+
 @app.get("/")
 def read_root() -> dict[str, str]:
     return {"message": "Taxonomy service is running"}
@@ -109,9 +113,9 @@ def read_root() -> dict[str, str]:
 def get_ancestors(query: int, targets: list[int], db: DbConnection) -> list[int]:
     hits = []
 
-    # for t in targets:
-    #     if q is_descendent(t):
-    #         hits.append(t)
+    for t in targets:
+        if taxon_is_descendant(db, query, t):
+            hits.append(t)
 
     return hits
 
