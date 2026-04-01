@@ -1522,7 +1522,7 @@ defaultOrganisms:
           hideInSearchResultsTable: true
           hideOnSequenceDetailsPage: true
           required: true
-          position: last
+          noInput: true
         - name: displayName
           displayName: Display name
           preprocessing:
