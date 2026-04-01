@@ -1589,7 +1589,6 @@ defaultOrganisms:
           preprocessing:
             function: scientific_name_from_id
             inputs:
-              hostNameScientific: hostNameScientific
               hostTaxonId: processed.hostTaxonId
             args: *preprocessingTaxonomyServiceArgs
         - name: hostNameCommon
