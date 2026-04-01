@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 
 import { AuthorDetails } from './AuthorDetails.tsx';
 import { CitationPlot } from './CitationPlot';
-import { DatePlot, CountriesPlot, UseTermsPlot } from './SeqSetPlots.tsx';
+import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
 import { getClientLogger } from '../../clientLogger';
@@ -196,12 +196,13 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                         description={`Sample collection dates for ${seqSetAccessionVersion} sequences`}
                         barColor={barGraphColor}
                     />
-                    <CountriesPlot
+                    <CategoryPlot
                         data={collectionCountriesData}
                         description={`Sample collection countries for ${seqSetAccessionVersion} sequences`}
                         barColor={barGraphColor}
+                        visibleCategoryLimit={15}
                     />
-                    <UseTermsPlot
+                    <CategoryPlot
                         data={dataUseTermsData}
                         description={`Data use terms for ${seqSetAccessionVersion} sequences`}
                         barColor={barGraphColor}

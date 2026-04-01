@@ -3,11 +3,11 @@ import React from 'react';
 import { type CitedByResult } from '../../types/seqSetCitation';
 import { BarPlot } from '../common/BarPlot';
 
-type CitationPlotProps = {
+interface CitationPlotProps {
     citedByData: CitedByResult;
     description?: string;
     barColor?: string;
-};
+}
 
 export const CitationPlot: React.FC<CitationPlotProps> = ({ citedByData, description, barColor }) => {
     const emptyCitedByData = {

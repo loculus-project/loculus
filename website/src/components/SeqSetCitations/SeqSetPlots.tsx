@@ -4,11 +4,15 @@ import React from 'react';
 import type { AggregateRow } from './getSeqSetStatistics';
 import { BarPlot } from '../common/BarPlot';
 
-type SeqSetPlotProps = {
+interface SeqSetPlotProps {
     data: AggregateRow[];
     description?: string;
     barColor?: string;
-};
+}
+
+interface CategoryPlotProps extends SeqSetPlotProps {
+    visibleCategoryLimit?: number;
+}
 
 type GraphTimeProperties = {
     unit: 'day' | 'month' | 'year';
@@ -120,14 +124,13 @@ export const DatePlot: React.FC<SeqSetPlotProps> = ({ data, description, barColo
     );
 };
 
-export const CountriesPlot: React.FC<SeqSetPlotProps> = ({ data, description, barColor }) => {
-    const groupedData = groupRemainingPoints(data, 10);
+export const CategoryPlot: React.FC<CategoryPlotProps> = ({
+    data,
+    description,
+    barColor,
+    visibleCategoryLimit = 10,
+}) => {
+    const groupedData = groupRemainingPoints(data, visibleCategoryLimit);
     const { graphData, emptyCount } = getGraphData(groupedData, barColor);
-
-    return <BarPlot data={graphData} description={description} emptyCount={emptyCount} />;
-};
-
-export const UseTermsPlot: React.FC<SeqSetPlotProps> = ({ data, description, barColor }) => {
-    const { graphData, emptyCount } = getGraphData(data, barColor);
     return <BarPlot data={graphData} description={description} emptyCount={emptyCount} />;
 };
