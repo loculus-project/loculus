@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Set up micromamba
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: "taxonomy/ncbi_tax_download/environment.yaml"
           micromamba-version: "latest"
@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Set up micromamba
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: "taxonomy/ncbi_tax_download/environment.yaml"
           micromamba-version: "latest"
@@ -50,7 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Set up micromamba
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: "taxonomy/ncbi_tax_download/environment.yaml"
           micromamba-version: "latest"
