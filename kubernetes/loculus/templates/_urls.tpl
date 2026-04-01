@@ -73,3 +73,12 @@
 {{- define "loculus.lapisServiceName"}}
 {{- printf "loculus-lapis-service-%s" . }}
 {{- end }}
+
+{{/* generates the keycloak database service name, including docker tag when using ephemeral dev DB */}}
+{{- define "loculus.keycloakDatabaseServiceName" -}}
+{{- if and .Values.runDevelopmentKeycloakDatabase (not .Values.developmentDatabasePersistence) -}}
+loculus-keycloak-database-service-{{ include "loculus.dockerTag" .Values | trim }}
+{{- else -}}
+loculus-keycloak-database-service
+{{- end -}}
+{{- end -}}
