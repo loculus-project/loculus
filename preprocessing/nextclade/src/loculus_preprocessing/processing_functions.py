@@ -1384,7 +1384,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message="taxonomy_service_host or taxonomy_service_port was None",
+                        message="Configuration error: taxonomy_service_host or taxonomy_service_port was None. Please contact the administrator.",
                     )
                 ],
             )
@@ -1432,7 +1432,7 @@ class ProcessingFunctions:
                             input_fields,
                             [output_field],
                             AnnotationSourceType.METADATA,
-                            message=f"network error while validating '{unvalidated}': {e}",
+                            message=f"Internal error: network error while validating '{unvalidated}': {e}. Please contact the administrator",
                         )
                     ],
                 )
@@ -1444,7 +1444,7 @@ class ProcessingFunctions:
                 input_fields,
                 [output_field],
                 AnnotationSourceType.METADATA,
-                message=f"host validation for '{unvalidated}' failed with code {response.status_code}: {body.get('detail', '')}",
+                message=f"Host validation for '{unvalidated}' failed with code {response.status_code}: {body.get('detail', '')}",
             )
             return ProcessingResult(
                 datum=None,
@@ -1471,7 +1471,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"host validation for '{unvalidated}' was successful but response json had no 'tax_id'. Please contact the administrator",
+                        message=f"Internal error: host validation for '{unvalidated}' was successful but response json had no 'tax_id'. Please contact the administrator",
                     )
                 ],
             )
@@ -1508,7 +1508,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message="configuration error: taxonomy_service_host or taxonomy_service_port was None",
+                        message="Configuration error: taxonomy_service_host or taxonomy_service_port was None. Please contact the administrator",
                     )
                 ],
             )
@@ -1528,7 +1528,7 @@ class ProcessingFunctions:
                             input_fields,
                             [output_field],
                             AnnotationSourceType.METADATA,
-                            message=f"network error while getting scientific name for '{tax_id}': {e}",
+                            message=f"Internal error: network error while validating '{tax_id}': {e}. Please contact the administrator",
                         )
                     ],
                 )
@@ -1543,7 +1543,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}",
+                        message=f"Internal error: could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}",
                     )
                 ],
             )
@@ -1558,7 +1558,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"'{tax_id}' is a valid taxon ID but response json had no 'scientific_name'. Please contact the administrator",
+                        message=f"Internal error: '{tax_id}' is a valid taxon ID but response json had no 'scientific_name'. Please contact the administrator",
                     )
                 ],
             )
@@ -1598,7 +1598,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message="configuration error: taxonomy_service_host or taxonomy_service_port was None",
+                        message="Configuration error: taxonomy_service_host or taxonomy_service_port was None. Please contact the administrator.",
                     )
                 ],
             )
@@ -1620,7 +1620,7 @@ class ProcessingFunctions:
                             input_fields,
                             [output_field],
                             AnnotationSourceType.METADATA,
-                            message=f"network error while getting common name for '{tax_id}': {e}",
+                            message=f"Internal error: network error while getting common name for '{tax_id}': {e}. Please contact the administrator.",
                         )
                     ],
                 )
@@ -1634,7 +1634,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"could not map '{tax_id}' to common name. Code {response.status_code}: {body.get('detail', '')}",
+                        message=f"Could not map '{tax_id}' to common name. Code {response.status_code}: {body.get('detail', '')}",
                     )
                 ],
                 errors=[],
@@ -1650,7 +1650,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"no common name could be found for hostTaxonId '{tax_id}'",
+                        message=f"Internal error: taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it. Please contact the administrator.",
                     )
                 ],
             )
