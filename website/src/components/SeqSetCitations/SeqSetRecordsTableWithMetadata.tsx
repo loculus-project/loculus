@@ -160,7 +160,7 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
     }, [seqSetRecords, sortByKey]);
 
     return (
-        <table className='min-w-full text-left border-collapse'>
+        <table className='table-fixed w-full text-left border-collapse'>
             <thead>
                 <tr className='border-b border-gray-400'>
                     <SeqSetRecordsTableHeader title='Accession' />
