@@ -15,6 +15,7 @@ processing_spec:
   hostTaxonId:
     function: validate_host
     inputs:
+      hostIdentifier: hostIdentifier
       hostNameScientific: hostNameScientific
       hostTaxonId: hostTaxonId
     args: *preprocessingTaxonomyTestArgs

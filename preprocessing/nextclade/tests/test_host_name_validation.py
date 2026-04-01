@@ -54,7 +54,7 @@ def test_host_processing_direct_submission(mock_get: MagicMock) -> None:
     assert config.processing_order[0] == "hostTaxonId"
 
     entry = make_entry(
-        metadata={"hostNameScientific": "Aedes aegypti"},
+        metadata={"hostIdentifier": "Aedes aegypti"},
         group_id=config.insdc_ingest_group_id + 1,  # direct submission — not INSDC
     )
 
@@ -104,7 +104,7 @@ def test_host_processing_invalid_hostname(mock_get: MagicMock) -> None:
 
     entry = make_entry(
         metadata={"hostNameScientific": "not a real species"},
-        group_id=2,
+        group_id=config.insdc_ingest_group_id,
     )
 
     result = process_all([entry], "temp", config)
@@ -116,4 +116,28 @@ def test_host_processing_invalid_hostname(mock_get: MagicMock) -> None:
 
     # Only check for hostNameScientific should hit the taxonomy service
     assert mock_get.call_count == 1
+    assert len(result[0].processed_entry.warnings) == 1
+    assert result[0].processed_entry.errors == []
+
+
+@patch("loculus_preprocessing.processing_functions.requests.get")
+def test_host_processing_invalid_identifier_direct_submission(mock_get: MagicMock) -> None:
+    """When a direct submitter provides an invalid hostIdentifier, validation fails with an error."""
+    mock_get.return_value = make_response(404, {"detail": "not found"})
+    config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
+
+    entry = make_entry(
+        metadata={"hostIdentifier": "not a real species"},
+        group_id=config.insdc_ingest_group_id + 1,  # direct submission — not INSDC
+    )
+
+    result = process_all([entry], "temp", config)
+    metadata = result[0].processed_entry.data.metadata
+
+    assert metadata["hostTaxonId"] is None
+    assert metadata["hostNameScientific"] is None
+    assert metadata["hostNameCommon"] is None
+
+    assert mock_get.call_count == 1
     assert len(result[0].processed_entry.errors) == 1
+    assert result[0].processed_entry.warnings == []

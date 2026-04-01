@@ -1219,7 +1219,7 @@ def test_validate_hostname_success(mock_get: MagicMock):
         input_data={"hostNameScientific": "Culex"},
         output_field="hostTaxonId",
         input_fields=["hostNameScientific"],
-        args={"taxonomy_service_host": "http://localhost", "taxonomy_service_port": 5000},
+        args={"taxonomy_service_host": "http://localhost", "taxonomy_service_port": 5000, "is_insdc_ingest_group": True},
     )
 
     assert res.datum == 7174
