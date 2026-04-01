@@ -133,13 +133,16 @@ describe('groupByDateFormat', () => {
         const data = [
             { value: '2024-03-01', count: 1 },
             { value: '2024-03-15', count: 1 },
-            { value: null, count: 99 },
             { value: 'not-a-date', count: 99 },
+            { value: 12345, count: 1 },
+            { value: true, count: 1 },
+            { value: null, count: 99 },
+            { value: undefined, count: 2 },
         ];
         const result = groupByDateFormat(data, 'yyyy-MM');
         expect(result).toEqual([
             { value: '2024-03', count: 2 },
-            { value: null, count: 198 },
+            { value: null, count: 202 },
         ]);
     });
 

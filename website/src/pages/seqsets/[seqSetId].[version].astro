@@ -52,15 +52,15 @@ const seqSetAuthorResponse = seqSetResponse.isOk()
     ? await seqSetClient.getAuthor(seqSetResponse.value.createdBy)
     : err();
 
-const seqSetAccessions = seqSetRecordsResponse.unwrapOr([]).map((record) => record.accession);
+const accessions = seqSetRecordsResponse.unwrapOr([]).map((record) => record.accession);
 const seqSetCollectionDatesResponse = seqSetRecordsResponse.isOk()
-    ? await getSeqSetStatistics(seqSetAccessions, ['sampleCollectionDate', 'date'])
+    ? await getSeqSetStatistics(accessions, ['sampleCollectionDate', 'date'])
     : err();
 const seqSetCollectionCountriesResponse = seqSetRecordsResponse.isOk()
-    ? await getSeqSetStatistics(seqSetAccessions, ['geoLocCountry', 'country'])
+    ? await getSeqSetStatistics(accessions, ['geoLocCountry', 'country'])
     : err();
 const seqSetDataUseTermsResponse = seqSetRecordsResponse.isOk()
-    ? await getSeqSetStatistics(seqSetAccessions, [DATA_USE_TERMS_FIELD])
+    ? await getSeqSetStatistics(accessions, [DATA_USE_TERMS_FIELD])
     : err();
 
 const seqSetAuthor = seqSetAuthorResponse.unwrapOr(undefined);

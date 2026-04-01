@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import React from 'react';
 
-import type { AggregateRow, AggregateValue } from './getSeqSetStatistics';
+import type { AggregateRow } from './getSeqSetStatistics';
 import { BarPlot } from '../common/BarPlot';
 
 type SeqSetPlotProps = {
@@ -57,24 +57,22 @@ export const getDateFormatFromData = (data: AggregateRow[]): string => {
 
 /** Group the data by the specified date format, or null if invalid */
 export const groupByDateFormat = (data: AggregateRow[], format: string): AggregateRow[] => {
-    const yearMonths = new Map<AggregateValue, number>();
+    // Dates will be grouped by their formatted value
+    // Invalid or null dates will be grouped under null
+    const groupedDates = new Map<string | null, number>();
 
     data.forEach((row) => {
-        let value: AggregateValue = row.value ?? null;
+        let formattedDate: string | null = null;
 
-        if (typeof value === 'string') {
-            const dateValue = DateTime.fromISO(value);
-            if (dateValue.isValid) {
-                value = dateValue.toFormat(format);
-            } else {
-                value = null;
-            }
+        if (typeof row.value === 'string') {
+            const dateValue = DateTime.fromISO(row.value);
+            if (dateValue.isValid) formattedDate = dateValue.toFormat(format);
         }
 
-        yearMonths.set(value, (yearMonths.get(value) ?? 0) + row.count);
+        groupedDates.set(formattedDate, (groupedDates.get(formattedDate) ?? 0) + row.count);
     });
 
-    return Array.from(yearMonths.entries()).map(([value, count]) => ({ value, count }));
+    return Array.from(groupedDates.entries()).map(([value, count]) => ({ value, count }));
 };
 
 /** Get the corresponding graph properties for the specified date format. */
