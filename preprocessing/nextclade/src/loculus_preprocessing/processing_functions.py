@@ -1396,19 +1396,6 @@ class ProcessingFunctions:
             or input_data.get("hostNameScientific")
         )
         if not unvalidated:
-            if not args["is_insdc_ingest_group"]:
-                return ProcessingResult(
-                    datum=None,
-                    warnings=[],
-                    errors=[
-                        ProcessingAnnotation.from_fields(
-                            input_fields,
-                            [output_field],
-                            AnnotationSourceType.METADATA,
-                            message="Metadata field hostIdentifier is required.",
-                        )
-                    ],
-                )
             return ProcessingResult(
                 datum=None,
                 warnings=[],

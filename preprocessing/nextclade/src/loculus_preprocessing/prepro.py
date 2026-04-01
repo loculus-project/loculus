@@ -414,7 +414,7 @@ def get_output_metadata(
                     spec.inputs.values(),
                     [output_field],
                     AnnotationSourceType.METADATA,
-                    message=f"Metadata field {output_field} is required.",
+                    message=f"Metadata field {output_field} is required. Please provide metadata field(s) {', '.join(input_fields)}",
                 )
             )
     logger.debug(f"Processed {accession_version}: {output_metadata}")
