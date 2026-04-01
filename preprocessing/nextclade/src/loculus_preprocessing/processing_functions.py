@@ -1390,16 +1390,25 @@ class ProcessingFunctions:
             )
 
         # hostTaxonId and hostNameScientific are noInput, so the only case where they exist is for INSDC ingested sequences
-        unvalidated = (
-            input_data.get("hostIdentifier")
-            or input_data.get("hostTaxonId")
-            or input_data.get("hostNameScientific")
-        )
+        if not args["is_insdc_ingest_group"]:
+            unvalidated = input_data.get("hostIdentifier")
+        else:
+            unvalidated = input_data.get("hostTaxonId") or input_data.get("hostNameScientific")
+
         if not unvalidated:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
-                errors=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message="Metadatafield hostIdentifier ",
+                    )
+                ]
+                if not args["is_insdc_ingest_group"]
+                else [],
             )
 
         cache_hit = str(unvalidated) in taxon_cache
@@ -1433,7 +1442,7 @@ class ProcessingFunctions:
 
         body = response.json()
         if response.status_code != requests.codes.ok:
-            # missing host organism is a warning for INSDC ingested sequences, but an error for everyone else
+            # failure to validate host organism is a warning for INSDC ingested sequences, but an error for everyone else
             message = ProcessingAnnotation.from_fields(
                 input_fields,
                 [output_field],
