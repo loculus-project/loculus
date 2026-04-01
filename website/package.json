@@ -65,7 +65,7 @@
         "@astrojs/tailwind": "^6.0.2",
         "@emotion/styled": "^11.14.1",
         "@eslint/js": "^9.39.2",
-        "@iconify/json": "^2.2.455",
+        "@iconify/json": "^2.2.458",
         "@tailwindcss/forms": "^0.5.11",
         "@tanstack/eslint-plugin-query": "^5.95.2",
         "@testing-library/dom": "^10.4.1",
