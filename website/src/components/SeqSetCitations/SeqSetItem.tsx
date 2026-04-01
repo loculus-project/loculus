@@ -3,39 +3,72 @@ import { AxiosError } from 'axios';
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import { AuthorDetails } from './AuthorDetails.tsx';
 import { CitationPlot } from './CitationPlot';
+import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
+import type { AggregateRow } from './getSeqSetStatistics.ts';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { type CitedByResult, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
+import { type AuthorProfile, type CitedByResult, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 const logger = getClientLogger('SeqSetItem');
 
+const SeqSetSection: FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+    <div className='flex flex-col mb-6'>
+        <div className='flex flex-row'>
+            <h2 className='text-xl font-semibold border-b py-2 my-4'>{title}</h2>
+        </div>
+        {children}
+    </div>
+);
+
+const SeqSetSectionSeparator: FC = () => <hr className='my-8 border-t-2 border-gray-200' />;
+
+const SeqSetSectionEntry: FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
+    <div className='flex flex-row py-1.5'>
+        <div className='mr-8 w-[120px] text-gray-500'>{label}</div>
+        <div className='w-2/3 lg:w-1/2'>{value}</div>
+    </div>
+);
+
 type SeqSetItemProps = {
     clientConfig: ClientConfig;
     accessToken: string;
+    seqSetAccessionVersion: string;
     seqSet: SeqSet;
+    seqSetAuthor?: AuthorProfile;
     seqSetRecords: SeqSetRecord[];
     citedByData: CitedByResult;
+    collectionDatesData: AggregateRow[];
+    collectionCountriesData: AggregateRow[];
+    dataUseTermsData: AggregateRow[];
     isAdminView?: boolean;
     fieldsToDisplay?: { field: string; displayName: string }[];
     organismDisplayNames?: Record<string, string>;
+    barGraphColor?: string;
 };
 
 const SeqSetItemInner: FC<SeqSetItemProps> = ({
     clientConfig,
     accessToken,
+    seqSetAccessionVersion,
     seqSet,
+    seqSetAuthor,
     seqSetRecords,
     citedByData,
+    collectionDatesData,
+    collectionCountriesData,
+    dataUseTermsData,
     isAdminView = false,
     fieldsToDisplay,
     organismDisplayNames,
+    barGraphColor,
 }) => {
     const [page, setPage] = useState(1);
     const sequencesPerPage = 10;
@@ -88,6 +121,8 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         );
     };
 
+    const totalCitations = citedByData.citations.reduce((sum, citation) => sum + citation, 0);
+
     const getMaxPages = () => {
         return Math.ceil(seqSetRecords.length / sequencesPerPage);
     };
@@ -97,54 +132,85 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     };
 
     return (
-        <div className='flex flex-col items-left'>
-            <div className='flex flex-col'>
-                <div className='flex flex-row py-1.5'>
-                    <p className='mr-8 w-[120px] text-gray-500 text-right'>Description</p>
-                    <p className='text max-w-lg'>{seqSet.description ?? 'N/A'}</p>
-                </div>
-                <div className='flex flex-row py-1.5'>
-                    <p className='mr-8 w-[120px] text-gray-500 text-right'>Version</p>
-                    <p className='text max-w-lg'>{seqSet.seqSetVersion}</p>
-                </div>
-                <div className='flex flex-row py-1.5'>
-                    <p className='mr-8 w-[120px] text-gray-500 text-right'>Created date</p>
-                    <p className='text max-w-lg'>{formatDate(seqSet.createdAt)}</p>
-                </div>
-                <div className='flex flex-row py-1.5'>
-                    <p className='mr-8 w-[120px] text-gray-500 text-right'>Size</p>
-                    <p className='text max-w-lg'>{`${seqSetRecords.length} sequence${seqSetRecords.length === 1 ? '' : 's'}`}</p>
-                </div>
-                <div className='flex flex-row py-1.5'>
-                    <p className='mr-8 w-[120px] text-gray-500 text-right'>DOI</p>
-                    {renderDOI()}
-                </div>
-                <div className='flex flex-row py-1.5'>
-                    <p className='mr-8 w-[120px] text-gray-500 text-right'>Total citations</p>
-                    {seqSet.seqSetDOI === undefined || seqSet.seqSetDOI === null ? (
-                        <p className='text'>Cited by 0</p>
-                    ) : (
-                        <a
-                            className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
-                            href={getCrossRefUrl()}
-                            target='_blank'
-                        >
-                            Cited by 0
-                        </a>
-                    )}
-                </div>
-                <div className='flex flex-row'>
-                    <p className='mr-0 w-[120px]'></p>
-                    <div className='ml-4'>
-                        <CitationPlot citedByData={citedByData} />
-                        <p className='text-sm text-center text-gray-500 my-4 ml-8 max-w-64'>
-                            Number of times this SeqSet has been cited by a publication
-                        </p>
-                    </div>
-                </div>
+        <div className='flex flex-col'>
+            <div className='grid grid-cols-1 lg:grid-cols-2'>
+                <SeqSetSection title='Details'>
+                    <SeqSetSectionEntry label='Name' value={seqSet.name} />
+                    <SeqSetSectionEntry label='Description' value={seqSet.description ?? 'N/A'} />
+                    <SeqSetSectionEntry label='Version' value={seqSet.seqSetVersion} />
+                    <SeqSetSectionEntry
+                        label='Created by'
+                        value={
+                            seqSetAuthor ? (
+                                <AuthorDetails
+                                    displayFullDetails={false}
+                                    firstName={seqSetAuthor.firstName}
+                                    lastName={seqSetAuthor.lastName}
+                                />
+                            ) : (
+                                'Unknown'
+                            )
+                        }
+                    />
+                    <SeqSetSectionEntry label='Created date' value={formatDate(seqSet.createdAt)} />
+                    <SeqSetSectionEntry
+                        label='Size'
+                        value={`${seqSetRecords.length} sequence${seqSetRecords.length === 1 ? '' : 's'}`}
+                    />
+                </SeqSetSection>
+                <SeqSetSection title='Citations'>
+                    <SeqSetSectionEntry label='DOI' value={renderDOI()} />
+                    <SeqSetSectionEntry
+                        label='Total citations'
+                        value={
+                            seqSet.seqSetDOI === undefined || seqSet.seqSetDOI === null ? (
+                                <p className='text'>Cited by 0</p>
+                            ) : (
+                                <a
+                                    className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
+                                    href={getCrossRefUrl()}
+                                    target='_blank'
+                                >
+                                    Cited by {totalCitations}
+                                </a>
+                            )
+                        }
+                    />
+                    <SeqSetSectionEntry
+                        label='Citations over time'
+                        value={
+                            <CitationPlot
+                                citedByData={citedByData}
+                                description='Number of times this SeqSet has been cited by a publication'
+                                barColor={barGraphColor}
+                            />
+                        }
+                    />
+                </SeqSetSection>
             </div>
-            <div className='flex flex-col my-4'>
-                <p className='text-xl my-4 font-semibold'>Sequences</p>
+            <SeqSetSectionSeparator />
+            <SeqSetSection title='Statistics'>
+                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6'>
+                    <DatePlot
+                        data={collectionDatesData}
+                        description={`Sample collection dates for ${seqSetAccessionVersion} sequences`}
+                        barColor={barGraphColor}
+                    />
+                    <CategoryPlot
+                        data={collectionCountriesData}
+                        description={`Sample collection countries for ${seqSetAccessionVersion} sequences`}
+                        barColor={barGraphColor}
+                        visibleCategoryLimit={15}
+                    />
+                    <CategoryPlot
+                        data={dataUseTermsData}
+                        description={`Data use terms for ${seqSetAccessionVersion} sequences`}
+                        barColor={barGraphColor}
+                    />
+                </div>
+            </SeqSetSection>
+            <SeqSetSectionSeparator />
+            <SeqSetSection title='Sequences'>
                 <SeqSetRecordsTableWithMetadata
                     seqSetRecords={getPaginatedSeqSetRecords()}
                     clientConfig={clientConfig}
@@ -164,7 +230,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                         }}
                     />
                 ) : null}
-            </div>
+            </SeqSetSection>
         </div>
     );
 };
