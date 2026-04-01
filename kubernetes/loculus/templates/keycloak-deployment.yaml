@@ -46,10 +46,14 @@ spec:
             - name: KC_DB
               value: postgres
             - name: KC_DB_URL_HOST
+              {{- if .Values.runDevelopmentKeycloakDatabase }}
+              value: {{ include "loculus.keycloakDatabaseServiceName" . }}
+              {{- else }}
               valueFrom:
                 secretKeyRef:
                   name: keycloak-database
                   key: addr
+              {{- end }}
             - name: KC_DB_URL_PORT
               valueFrom:
                 secretKeyRef:
