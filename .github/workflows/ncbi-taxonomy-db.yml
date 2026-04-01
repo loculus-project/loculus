@@ -26,7 +26,7 @@ jobs:
           echo "DB_LATEST=ncbi_taxonomy_latest.sqlite.gz" >> $GITHUB_ENV
           echo "db_zipped=${ZIPPED_NAME}" >> $GITHUB_OUTPUT
 
-      - uses: mamba-org/setup-micromamba@v2
+      - uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: ./taxonomy/ncbi_tax_download/environment.yaml
           cache-environment: true

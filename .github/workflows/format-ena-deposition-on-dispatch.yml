@@ -20,7 +20,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
       - name: Set up micromamba
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: "ena-submission/environment.yml"
           micromamba-version: "latest"
