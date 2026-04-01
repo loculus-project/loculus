@@ -1401,7 +1401,7 @@ multi_reference_cases = [
                 ProcessingAnnotationHelper(
                     ["ASSIGNED_REFERENCE"],
                     ["subtype"],
-                    "Metadata field subtype is required. Please provide input metadata field(s) ASSIGNED_REFERENCE",
+                    "Metadata field `subtype` is required. Please provide input metadata field(s): `ASSIGNED_REFERENCE`",
                 ),
             ]
         ),
@@ -1531,7 +1531,7 @@ multi_segment_multi_reference_cases = [
                 ProcessingAnnotationHelper(
                     ["ASSIGNED_REFERENCE"],
                     ["subtype_S"],
-                    "Metadata field subtype_S is required. Please provide input metadata field(s) ASSIGNED_REFERENCE",
+                    "Metadata field `subtype_S` is required. Please provide input metadata field(s): `ASSIGNED_REFERENCE`",
                 ),
             ]
         ),
