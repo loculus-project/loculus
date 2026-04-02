@@ -24,9 +24,20 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
         <nav class='bg-gray-50 border-gray-200 border-b-[1.5px]' aria-label='Organism navigation'>
             <div class='flex flex-col sm:flex-row sm:items-center gap-2 px-4 py-2 mx-4'>
                 <div class='flex items-center gap-2 w-full sm:flex-1 flex-wrap sm:flex-nowrap'>
-                    <span class='text-gray-700 font-medium sm:mr-3'>
+                    <span class='text-gray-700 font-medium'>
                         {currentOrganismObject?.displayName || currentOrganism}
                     </span>
+                    <button
+                        type='button'
+                        class='inline-flex items-center justify-center w-6 h-6 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors sm:mr-3'
+                        title='Switch organism'
+                        aria-label='Switch organism'
+                        data-organism-switch-button
+                    >
+                        <svg class='w-3.5 h-3.5' viewBox='0 0 512 512' fill='currentColor' aria-hidden='true'>
+                            <path d='M0 168v-16c0-13.255 10.745-24 24-24h360V80c0-21.367 25.899-32.042 40.971-16.971l80 80c9.372 9.373 9.372 24.569 0 33.941l-80 80C409.956 271.982 384 261.456 384 240v-48H24c-13.255 0-24-10.745-24-24zm488 152H128v-48c0-21.314-25.862-32.08-40.971-16.971l-80 80c-9.372 9.373-9.372 24.569 0 33.941l80 80C102.057 463.997 128 453.437 128 432v-48h360c13.255 0 24-10.745 24-24v-16c0-13.255-10.745-24-24-24z'/>
+                        </svg>
+                    </button>
                     <span class='hidden sm:inline text-gray-300 mr-2'>|</span>
                     <div class='hidden sm:flex items-center gap-2 flex-wrap'>
                         {navigationItems.map(({ text, path, icon }) => {
@@ -64,3 +75,11 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
         </nav>
     )
 }
+
+<script>
+    document.querySelector('[data-organism-switch-button]')?.addEventListener('click', () => {
+        const menuButton = document.querySelector<HTMLElement>('[data-organism-menu-button]');
+        menuButton?.click();
+        menuButton?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+</script>
