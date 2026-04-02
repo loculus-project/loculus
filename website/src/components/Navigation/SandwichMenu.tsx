@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { type FC, useEffect } from 'react';
 
 import AccessionSearchBox from './AccessionSearchBox';
 import type { Organism } from '../../config';
@@ -28,7 +28,13 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
     siteName,
     activeTopNavigationItem,
 }) => {
-    const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
+    const { isOpen, open: openMenu, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
+
+    useEffect(() => {
+        const handler = () => openMenu();
+        window.addEventListener('open-sandwich-menu', handler);
+        return () => window.removeEventListener('open-sandwich-menu', handler);
+    }, [openMenu]);
 
     return (
         <div className='relative'>
