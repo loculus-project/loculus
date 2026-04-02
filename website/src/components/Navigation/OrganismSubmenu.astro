@@ -28,6 +28,7 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
                     <span class='text-gray-700 font-medium'>
                         {currentOrganismObject?.displayName || currentOrganism}
                     </span>
+                    {/* eslint-disable-next-line no-restricted-syntax -- Server-rendered Astro component, wired via vanilla <script>, no React hydration needed */}
                     <button
                         type='button'
                         class='inline-flex items-center justify-center w-6 h-6 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors sm:mr-3'
