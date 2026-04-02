@@ -78,8 +78,13 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
 
 <script>
     document.querySelector('[data-organism-switch-button]')?.addEventListener('click', () => {
-        const menuButton = document.querySelector<HTMLElement>('#organism-menu button');
-        menuButton?.click();
-        menuButton?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const desktopMenu = document.querySelector<HTMLElement>('#organism-menu');
+        if (desktopMenu && desktopMenu.offsetParent !== null) {
+            const menuButton = desktopMenu.querySelector<HTMLElement>('button');
+            menuButton?.click();
+            menuButton?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            window.dispatchEvent(new Event('open-sandwich-menu'));
+        }
     });
 </script>
