@@ -31,12 +31,12 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
                     {/* eslint-disable-next-line no-restricted-syntax -- Server-rendered Astro component, wired via vanilla <script>, no React hydration needed */}
                     <button
                         type='button'
-                        class='inline-flex items-center justify-center w-6 h-6 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors sm:mr-3'
+                        class='inline-flex items-center justify-center w-5 h-5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors self-end mb-px sm:mr-3'
                         title='Switch organism'
                         aria-label='Switch organism'
                         data-organism-switch-button
                     >
-                        <FaExchangeAlt className='w-3.5 h-3.5' />
+                        <FaExchangeAlt className='w-2.5 h-2.5' />
                     </button>
                     <span class='hidden sm:inline text-gray-300 mr-2'>|</span>
                     <div class='hidden sm:flex items-center gap-2 flex-wrap'>
@@ -78,7 +78,7 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
 
 <script>
     document.querySelector('[data-organism-switch-button]')?.addEventListener('click', () => {
-        const menuButton = document.querySelector<HTMLElement>('[data-organism-menu-button]');
+        const menuButton = document.querySelector<HTMLElement>('#organism-menu button');
         menuButton?.click();
         menuButton?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
