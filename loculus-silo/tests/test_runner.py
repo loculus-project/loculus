@@ -138,6 +138,8 @@ def test_runner_skips_on_hash_match_updates_etag(
         runner.run_once()
         assert runner.current_etag == 'W/"111"'
 
+        # Force full preprocessing on second run to test hash matching
+        runner.has_existing_silo_db = False
         runner.run_once()
         assert runner.current_etag == 'W/"222"'
 
@@ -191,3 +193,394 @@ def test_runner_cleans_up_on_decompress_failure(
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert runner.current_etag == 'W/"old"'
     assert not responses_list
+
+
+def test_runner_incremental_append_after_initial_full(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """After a full preprocessing run, the next cycle should use incremental append."""
+    config = make_config(
+        tmp_path, lineage_definitions={"test": {1: "http://lineage"}}, hard_refresh_interval=10000
+    )
+    paths = make_paths(tmp_path)
+    paths.ensure_directories()
+
+    records = mock_records()
+    body = compress_ndjson(records)
+
+    # First response: full data for initial preprocessing
+    # Second response: incremental data for append
+    incremental_records = [records[0]]  # Just one record for append
+    incremental_body = compress_ndjson(incremental_records)
+
+    responses = [
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"111"', "x-total-records": "3"}, body=body
+        ),
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"222"', "x-total-records": "1"}, body=incremental_body
+        ),
+    ]
+    mock_download, responses_list = make_mock_download_func(responses)
+
+    monkeypatch.setattr(
+        lineage,
+        "_download_lineage_file",
+        lambda url, path: path.write_text("lineage: data"),  # noqa: ARG005
+    )
+
+    runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(download_func=mock_download)
+
+    # First run: should do full preprocessing
+    with patch.object(runner.silo, "run_preprocessing") as mock_preprocess:
+        runner.run_once()
+        mock_preprocess.assert_called_once()
+
+    assert runner.has_existing_silo_db is True
+    assert runner.last_successful_import_time == "111"
+    assert runner.current_etag == 'W/"111"'
+
+    # Second run: should do incremental append
+    with patch.object(runner.silo, "run_append") as mock_append:
+        runner.run_once()
+        mock_append.assert_called_once()
+
+    assert runner.current_etag == 'W/"222"'
+    assert not responses_list
+
+
+def test_runner_incremental_append_calls_update_lineage_definitions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Incremental append should also call update_lineage_definitions."""
+    config = make_config(
+        tmp_path, lineage_definitions={"test": {1: "http://lineage"}}, hard_refresh_interval=10000
+    )
+    paths = make_paths(tmp_path)
+    paths.ensure_directories()
+
+    records = mock_records()
+    body = compress_ndjson(records)
+    incremental_records = [records[0]]
+    incremental_body = compress_ndjson(incremental_records)
+
+    responses = [
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"111"', "x-total-records": "3"}, body=body
+        ),
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"222"', "x-total-records": "1"}, body=incremental_body
+        ),
+    ]
+    mock_download, responses_list = make_mock_download_func(responses)
+
+    monkeypatch.setattr(
+        lineage,
+        "_download_lineage_file",
+        lambda url, path: path.write_text("lineage: data"),  # noqa: ARG005
+    )
+
+    runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(download_func=mock_download)
+
+    # First run: full preprocessing (downloads lineage for pipeline version 1)
+    with patch.object(runner.silo, "run_preprocessing"):
+        runner.run_once()
+
+    # Second run: incremental append - same pipeline version, so lineage download is skipped
+    with (
+        patch.object(runner.silo, "run_append") as mock_append,
+        patch("silo_import.runner.update_lineage_definitions") as mock_lineage,
+    ):
+        runner.run_once()
+        mock_append.assert_called_once()
+        # Lineage download is skipped because pipeline version hasn't changed
+        mock_lineage.assert_not_called()
+
+    assert not responses_list
+
+
+def test_runner_redownloads_lineage_when_pipeline_version_changes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Lineage definitions should be re-downloaded when pipeline version changes."""
+    config = make_config(
+        tmp_path,
+        lineage_definitions={"test": {1: "http://lineage-v1", 2: "http://lineage-v2"}},
+        hard_refresh_interval=10000,
+    )
+    paths = make_paths(tmp_path)
+    paths.ensure_directories()
+
+    records_v1 = mock_records()  # pipeline_version=1 by default
+    body_v1 = compress_ndjson(records_v1)
+
+    # Create records with pipeline version 2
+    records_v2 = [
+        {**r, "metadata": {**r["metadata"], "pipelineVersion": 2}} for r in mock_records()[:1]
+    ]
+    body_v2 = compress_ndjson(records_v2)
+
+    responses = [
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"111"', "x-total-records": "3"}, body=body_v1
+        ),
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"222"', "x-total-records": "1"}, body=body_v2
+        ),
+    ]
+    mock_download, responses_list = make_mock_download_func(responses)
+
+    download_calls: list[str] = []
+
+    def mock_download_lineage(url: str, path: Path) -> None:
+        download_calls.append(url)
+        path.write_text("lineage: data", encoding="utf-8")
+
+    monkeypatch.setattr(
+        lineage,
+        "_download_lineage_file",
+        mock_download_lineage,
+    )
+
+    runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(download_func=mock_download)
+
+    # First run: full preprocessing with pipeline version 1
+    with patch.object(runner.silo, "run_preprocessing"):
+        runner.run_once()
+
+    assert len(download_calls) == 1
+    assert download_calls[0] == "http://lineage-v1"
+
+    # Second run: incremental append with pipeline version 2 - should re-download
+    with patch.object(runner.silo, "run_append"):
+        runner.run_once()
+
+    expected_download_count = 2
+    assert len(download_calls) == expected_download_count
+    assert download_calls[1] == "http://lineage-v2"
+    assert not responses_list
+
+
+def test_runner_skips_lineage_download_when_version_unchanged(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Lineage definitions should NOT be re-downloaded when pipeline version is the same."""
+    config = make_config(
+        tmp_path, lineage_definitions={"test": {1: "http://lineage"}}, hard_refresh_interval=10000
+    )
+    paths = make_paths(tmp_path)
+    paths.ensure_directories()
+
+    records = mock_records()
+    body = compress_ndjson(records)
+    incremental_body = compress_ndjson([records[0]])
+
+    responses = [
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"111"', "x-total-records": "3"}, body=body
+        ),
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"222"', "x-total-records": "1"}, body=incremental_body
+        ),
+    ]
+    mock_download, responses_list = make_mock_download_func(responses)
+
+    download_count = 0
+
+    def counting_download(url: str, path: Path) -> None:  # noqa: ARG001
+        nonlocal download_count
+        download_count += 1
+        path.write_text("lineage: data", encoding="utf-8")
+
+    monkeypatch.setattr(lineage, "_download_lineage_file", counting_download)
+
+    runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(download_func=mock_download)
+
+    # First run: full preprocessing - downloads lineage
+    with patch.object(runner.silo, "run_preprocessing"):
+        runner.run_once()
+
+    assert download_count == 1
+
+    # Second run: incremental append, same pipeline version - should skip
+    with patch.object(runner.silo, "run_append"):
+        runner.run_once()
+
+    assert download_count == 1  # No additional download
+    assert not responses_list
+
+
+def test_runner_append_fallback_to_full_on_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """If incremental append fails, fall back to full preprocessing."""
+    config = make_config(
+        tmp_path, lineage_definitions={"test": {1: "http://lineage"}}, hard_refresh_interval=10000
+    )
+    paths = make_paths(tmp_path)
+    paths.ensure_directories()
+
+    records = mock_records()
+    body = compress_ndjson(records)
+    incremental_body = compress_ndjson([records[0]])
+
+    responses = [
+        # Initial full preprocessing
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"111"', "x-total-records": "3"}, body=body
+        ),
+        # Incremental download (will succeed but append will fail)
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"222"', "x-total-records": "1"}, body=incremental_body
+        ),
+        # Fallback full preprocessing
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"333"', "x-total-records": "3"}, body=body
+        ),
+    ]
+    mock_download, responses_list = make_mock_download_func(responses)
+
+    monkeypatch.setattr(
+        lineage,
+        "_download_lineage_file",
+        lambda url, path: path.write_text("lineage: data"),  # noqa: ARG005
+    )
+
+    runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(download_func=mock_download)
+
+    # First run: full preprocessing
+    with patch.object(runner.silo, "run_preprocessing") as mock_preprocess:
+        runner.run_once()
+        mock_preprocess.assert_called_once()
+
+    assert runner.has_existing_silo_db is True
+
+    # Second run: append fails, should fall back to full preprocessing
+    with (
+        patch.object(runner.silo, "run_append", side_effect=RuntimeError("append failed")),
+        patch.object(runner.silo, "run_preprocessing") as mock_preprocess,
+    ):
+        runner.run_once()
+        mock_preprocess.assert_called_once()
+
+    assert runner.current_etag == 'W/"333"'
+    assert not responses_list
+
+
+def test_runner_hard_refresh_forces_full_preprocessing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Hard refresh should always trigger full preprocessing even if SILO DB exists."""
+    config = make_config(
+        tmp_path, lineage_definitions={"test": {1: "http://lineage"}}, hard_refresh_interval=1
+    )
+    paths = make_paths(tmp_path)
+    paths.ensure_directories()
+
+    records = mock_records()
+    body = compress_ndjson(records)
+    # Use different data for second response to avoid hash match skip
+    body_v2 = compress_ndjson(records[:2])
+
+    responses = [
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"111"', "x-total-records": "3"}, body=body
+        ),
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"222"', "x-total-records": "2"}, body=body_v2
+        ),
+    ]
+    mock_download, responses_list = make_mock_download_func(responses)
+
+    monkeypatch.setattr(
+        lineage,
+        "_download_lineage_file",
+        lambda url, path: path.write_text("lineage: data"),  # noqa: ARG005
+    )
+
+    runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(download_func=mock_download)
+
+    # First run: full preprocessing
+    with patch.object(runner.silo, "run_preprocessing") as mock_preprocess:
+        runner.run_once()
+        mock_preprocess.assert_called_once()
+
+    assert runner.has_existing_silo_db is True
+
+    # Wait for hard refresh interval to expire
+    time.sleep(1.5)
+
+    # Second run: should do full preprocessing (not append) because hard refresh is due
+    with (
+        patch.object(runner.silo, "run_preprocessing") as mock_preprocess,
+        patch.object(runner.silo, "run_append") as mock_append,
+    ):
+        runner.run_once()
+        mock_preprocess.assert_called_once()
+        mock_append.assert_not_called()
+
+    assert not responses_list
+
+
+def test_runner_incremental_skips_when_not_modified(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Incremental append should skip when backend returns 304 Not Modified."""
+    config = make_config(
+        tmp_path, lineage_definitions={"test": {1: "http://lineage"}}, hard_refresh_interval=10000
+    )
+    paths = make_paths(tmp_path)
+    paths.ensure_directories()
+
+    records = mock_records()
+    body = compress_ndjson(records)
+
+    responses = [
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"111"', "x-total-records": "3"}, body=body
+        ),
+        # 304 Not Modified for incremental request
+        MockHttpResponse(status=304, headers={}),
+    ]
+    mock_download, responses_list = make_mock_download_func(responses)
+
+    monkeypatch.setattr(
+        lineage,
+        "_download_lineage_file",
+        lambda url, path: path.write_text("lineage: data"),  # noqa: ARG005
+    )
+
+    runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(download_func=mock_download)
+
+    # First run: full preprocessing
+    with patch.object(runner.silo, "run_preprocessing"):
+        runner.run_once()
+
+    # Second run: no changes (304)
+    with patch.object(runner.silo, "run_append") as mock_append:
+        runner.run_once()
+        mock_append.assert_not_called()
+
+    # ETag should still be from the first run since 304 doesn't carry a new ETag
+    assert runner.current_etag == 'W/"111"'
+    assert not responses_list
+
+
+@pytest.mark.parametrize(
+    ("etag", "expected"),
+    [
+        ('"2024-01-15T10:30:00"', "2024-01-15T10:30:00"),
+        ('W/"2024-01-15T10:30:00.123456"', "2024-01-15T10:30:00.123456"),
+        ('"some-value"', "some-value"),
+        ('W/"111"', "111"),
+    ],
+)
+def test_parse_etag_timestamp(etag: str, expected: str) -> None:
+    assert ImporterRunner._parse_etag_timestamp(etag) == expected
