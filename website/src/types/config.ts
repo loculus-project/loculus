@@ -160,6 +160,14 @@ export const linkOut = z.object({
 
 export type LinkOut = z.infer<typeof linkOut>;
 
+export const multiFieldSearch = z.object({
+    name: z.string(),
+    displayName: z.string(),
+    fields: z.array(z.string()),
+});
+
+export type MultiFieldSearch = z.infer<typeof multiFieldSearch>;
+
 export const fileCategory = z.object({
     name: z.string(),
     displayName: z.string().optional(),
@@ -196,6 +204,7 @@ export const schema = z.object({
     richFastaHeaderFields: z.array(z.string()).optional(),
     linkOuts: z.array(linkOut).optional(),
     referenceIdentifierField: z.string().optional(),
+    multiFieldSearches: z.array(multiFieldSearch).optional(),
 });
 export type Schema = z.infer<typeof schema>;
 
