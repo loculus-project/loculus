@@ -4,8 +4,8 @@
 
 \restrict dummy
 
--- Dumped from database version 15.15 (Debian 15.15-1.pgdg13+1)
--- Dumped by pg_dump version 16.11 (Debian 16.11-1.pgdg13+1)
+-- Dumped from database version 15.17 (Debian 15.17-1.pgdg13+1)
+-- Dumped by pg_dump version 16.13 (Debian 16.13-1.pgdg13+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -426,8 +426,7 @@ CREATE TABLE public.sequence_entries (
     submitted_at timestamp without time zone NOT NULL,
     released_at timestamp without time zone,
     is_revocation boolean DEFAULT false NOT NULL,
-    original_data jsonb,
-    version_comment text
+    original_data jsonb
 );
 
 
@@ -468,11 +467,11 @@ CREATE VIEW public.sequence_entries_view AS
     se.released_at,
     se.is_revocation,
     se.original_data,
-    se.version_comment,
     sepd.started_processing_at,
     sepd.finished_processing_at,
     sepd.processed_data,
         CASE
+            WHEN se.is_revocation THEN jsonb_build_object('metadata', COALESCE((se.original_data -> 'metadata'::text), '{}'::jsonb), 'unalignedNucleotideSequences', '{}'::jsonb, 'alignedNucleotideSequences', '{}'::jsonb, 'nucleotideInsertions', '{}'::jsonb, 'alignedAminoAcidSequences', '{}'::jsonb, 'aminoAcidInsertions', '{}'::jsonb, 'files', 'null'::jsonb)
             WHEN (aem.external_metadata IS NULL) THEN sepd.processed_data
             ELSE (sepd.processed_data || jsonb_build_object('metadata', ((sepd.processed_data -> 'metadata'::text) || aem.external_metadata)))
         END AS joint_metadata,
