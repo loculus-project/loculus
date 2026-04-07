@@ -91,13 +91,13 @@ def test_host_processing_insdc(mock_get: MagicMock) -> None:
     result = process_all([entry], "temp", config)
     metadata = result[0].processed_entry.data.metadata
 
-    assert metadata["hostTaxonId"] == 7159
+    assert metadata["hostTaxonId"] == "7159"
     assert metadata["hostNameScientific"] == "Aedes aegypti"
     assert metadata["hostNameCommon"] == "yellow fever mosquito"
     assert result[0].processed_entry.errors == []
 
-    # Three lookups, one cache hit: taxon_id, scientific name (cached), common name
-    assert mock_get.call_count == 2
+    # For INSDC, only use the taxonomy service for common name
+    assert mock_get.call_count == 1
 
 
 @patch("loculus_preprocessing.processing_functions.requests.get")
@@ -116,12 +116,12 @@ def test_host_processing_invalid_hostname(mock_get: MagicMock) -> None:
     metadata = result[0].processed_entry.data.metadata
 
     assert metadata["hostTaxonId"] is None
-    assert metadata["hostNameScientific"] is None
+    assert metadata["hostNameScientific"] == "not a real species"
     assert metadata["hostNameCommon"] is None
 
-    # Only check for hostNameScientific should hit the taxonomy service
-    assert mock_get.call_count == 1
-    assert len(result[0].processed_entry.warnings) == 1
+    # For INSDC, nothing should hit the taxonomy service and no warnings are raised
+    assert mock_get.call_count == 0
+    assert len(result[0].processed_entry.warnings) == 0
     assert result[0].processed_entry.errors == []
 
 
