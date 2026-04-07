@@ -4,8 +4,43 @@ import { describe, expect, it, vi } from 'vitest';
 import { getSeqSetStatistics } from './getSeqSetStatistics';
 import { ACCESSION_VERSION_FIELD } from '../../settings';
 
-const ORGANISM_1_ACCESSIONS = vi.hoisted(() => ['LOC_123456', 'LOC_789012']);
-const ORGANISM_2_ACCESSIONS = vi.hoisted(() => ['LOC_345678', 'LOC_901234']);
+const ORGANISM_1_ACCESSIONS = ['LOC_123456', 'LOC_789012'];
+const ORGANISM_2_ACCESSIONS = ['LOC_345678', 'LOC_901234'];
+
+const mockAccessions: Record<string, string[]> = {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'test-organism-1': ORGANISM_1_ACCESSIONS,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'test-organism-2': ORGANISM_2_ACCESSIONS,
+};
+
+const mockResponses: Record<string, Record<string, object[]>> = {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'test-organism-1': {
+        sampleCollectionDate: [
+            { sampleCollectionDate: '2024-01-01', count: 3 },
+            { sampleCollectionDate: '2024-06-15', count: 5 },
+        ],
+        geoLocCountry: [{ geoLocCountry: 'Switzerland', count: 10 }],
+    },
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'test-organism-2': {
+        sampleCollectionDate: [
+            { sampleCollectionDate: '2024-01-01', count: 100 },
+            { sampleCollectionDate: '2024-06-15', count: 500 },
+        ],
+        geoLocCountry: [
+            { geoLocCountry: 'USA', count: 10 },
+            { geoLocCountry: 'Germany', count: 4 },
+        ],
+        organismSpecificField: [
+            { organismSpecificField: 'valueA', count: 7 },
+            { organismSpecificField: 'valueB', count: 3 },
+        ],
+    },
+};
+
+type MockParams = { [ACCESSION_VERSION_FIELD]: string[]; fields: string[] };
 
 vi.mock('../../config.ts', () => ({
     getConfiguredOrganisms: () => [{ key: 'test-organism-1' }, { key: 'test-organism-2' }],
@@ -21,91 +56,16 @@ vi.mock('../../services/lapisClient.ts', () => ({
     // eslint-disable-next-line @typescript-eslint/naming-convention
     LapisClient: {
         createForOrganism: vi.fn().mockImplementation((organism: string) => ({
-            call: vi
-                .fn()
-                .mockImplementation(
-                    (_method: string, params: { [ACCESSION_VERSION_FIELD]: string[]; fields: string[] }) => {
-                        if (params.fields.includes('sampleCollectionDate')) {
-                            if (
-                                organism === 'test-organism-1' &&
-                                params[ACCESSION_VERSION_FIELD].some((accession) =>
-                                    ORGANISM_1_ACCESSIONS.includes(accession),
-                                )
-                            ) {
-                                return Promise.resolve(
-                                    ok({
-                                        data: [
-                                            { sampleCollectionDate: '2024-01-01', count: 3 },
-                                            { sampleCollectionDate: '2024-06-15', count: 5 },
-                                        ],
-                                    }),
-                                );
-                            }
-                            if (
-                                organism === 'test-organism-2' &&
-                                params[ACCESSION_VERSION_FIELD].some((accession) =>
-                                    ORGANISM_2_ACCESSIONS.includes(accession),
-                                )
-                            ) {
-                                return Promise.resolve(
-                                    ok({
-                                        data: [
-                                            { sampleCollectionDate: '2024-01-01', count: 100 },
-                                            { sampleCollectionDate: '2024-06-15', count: 500 },
-                                        ],
-                                    }),
-                                );
-                            }
-                        }
-                        if (params.fields.includes('organismSpecificField')) {
-                            if (
-                                organism === 'test-organism-2' &&
-                                params[ACCESSION_VERSION_FIELD].some((accession) =>
-                                    ORGANISM_2_ACCESSIONS.includes(accession),
-                                )
-                            ) {
-                                return Promise.resolve(
-                                    ok({
-                                        data: [
-                                            { organismSpecificField: 'valueA', count: 7 },
-                                            { organismSpecificField: 'valueB', count: 3 },
-                                        ],
-                                    }),
-                                );
-                            }
-                        }
-                        if (params.fields.includes('geoLocCountry')) {
-                            if (
-                                organism === 'test-organism-1' &&
-                                params[ACCESSION_VERSION_FIELD].some((accession) =>
-                                    ORGANISM_1_ACCESSIONS.includes(accession),
-                                )
-                            ) {
-                                return Promise.resolve(
-                                    ok({
-                                        data: [{ geoLocCountry: 'Switzerland', count: 10 }],
-                                    }),
-                                );
-                            }
-                            if (
-                                organism === 'test-organism-2' &&
-                                params[ACCESSION_VERSION_FIELD].some((accession) =>
-                                    ORGANISM_2_ACCESSIONS.includes(accession),
-                                )
-                            ) {
-                                return Promise.resolve(
-                                    ok({
-                                        data: [
-                                            { geoLocCountry: 'USA', count: 10 },
-                                            { geoLocCountry: 'Germany', count: 4 },
-                                        ],
-                                    }),
-                                );
-                            }
-                        }
-                        return Promise.resolve(ok({ data: [] }));
-                    },
-                ),
+            call: vi.fn().mockImplementation((_method: string, params: MockParams) => {
+                const hasOrganismAccessions = mockAccessions[organism].every((accession) =>
+                    params[ACCESSION_VERSION_FIELD].includes(accession),
+                );
+                const matchingField = params.fields.find((f) => f in mockResponses[organism]);
+                if (hasOrganismAccessions && matchingField !== undefined) {
+                    return Promise.resolve(ok({ data: mockResponses[organism][matchingField] }));
+                }
+                return Promise.resolve(ok({ data: [] }));
+            }),
         })),
     },
 }));
