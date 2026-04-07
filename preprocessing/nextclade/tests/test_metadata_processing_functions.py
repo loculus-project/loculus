@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 # ruff: noqa: S101
 import pytest
 from factory_methods import (
