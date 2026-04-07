@@ -631,15 +631,10 @@
                 "type": "object",
                 "description": "Settings to configure the taxonomy service host and port",
                 "properties": {
-                  "taxonomy_service_host": {
+                  "taxonomy_service_url": {
                     "groups": ["preprocessing"],
                     "type": "string",
-                    "description": "Host where the taxonomy service runs"
-                  },
-                  "taxonomy_service_port": {
-                    "groups": ["preprocessing"],
-                    "type": "integer",
-                    "description": "Port the taxonomy service listens to"
+                    "description": "Host and port where the taxonomy service runs"
                   }
                 }
               },

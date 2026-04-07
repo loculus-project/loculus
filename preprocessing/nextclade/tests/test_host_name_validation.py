@@ -3,7 +3,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from test_metadata_processing_functions import make_response
 
 from loculus_preprocessing import processing_functions
 from loculus_preprocessing.config import get_config
@@ -16,6 +15,13 @@ HOST_PROCESSING_CONFIG = "tests/host_processing_config.yaml"
 @pytest.fixture(autouse=True)
 def clear_taxonomy_caches():
     processing_functions.taxonomy_cache.clear()
+
+
+def make_response(status_code, json_data):
+    mock = MagicMock()
+    mock.status_code = status_code
+    mock.json.return_value = json_data
+    return mock
 
 
 def make_entry(metadata: dict, group_id: int) -> UnprocessedEntry:

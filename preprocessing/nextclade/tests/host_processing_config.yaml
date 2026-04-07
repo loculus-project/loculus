@@ -5,8 +5,7 @@ processing_spec:
       hostNameScientific: hostNameScientific
       hostTaxonId: processed.hostTaxonId
     args: &preprocessingTaxonomyTestArgs
-      taxonomy_service_host: "http://localhost"
-      taxonomy_service_port: 5000
+      taxonomy_service_url: "http://localhost:5000"
   hostNameCommon:
     function: common_name_from_id
     inputs:

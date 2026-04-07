@@ -1411,9 +1411,8 @@ class ProcessingFunctions:
         return the tax_id of the most generic taxon (i.e., the one that's closest to
         the root of the taxonomy)
         """
-        host = args.get("taxonomy_service_host")
-        port = args.get("taxonomy_service_port")
-        if not isinstance(host, str) or not isinstance(port, int):
+        tax_service = args.get("taxonomy_service_url")
+        if not tax_service:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1422,7 +1421,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message="Configuration error: taxonomy_service_host or taxonomy_service_port was None. Please contact the administrator.",
+                        message="Configuration error: taxonomy_service_url was None. Please contact the administrator.",
                     )
                 ],
             )
@@ -1441,10 +1440,10 @@ class ProcessingFunctions:
             )
 
         if unvalidated.isdigit():
-            url = f"{host}:{port}/taxa/{unvalidated}"
+            url = f"{tax_service}/taxa/{unvalidated}"
         else:
             query = urllib.parse.urlencode({"scientific_name": unvalidated})
-            url = f"{host}:{port}/taxa?{query}"
+            url = f"{tax_service}/taxa?{query}"
 
         try:
             response = taxonomy_cache.get_or_fetch(url)
@@ -1511,17 +1510,8 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        tax_id: str | None = input_data.get("hostTaxonId")
-        if not tax_id:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[],
-            )
-
-        host = args.get("taxonomy_service_host")
-        port = args.get("taxonomy_service_port")
-        if not isinstance(host, str) or not isinstance(port, int):
+        tax_service = args.get("taxonomy_service_url")
+        if not tax_service:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1530,12 +1520,20 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message="Configuration error: taxonomy_service_host or taxonomy_service_port was None. Please contact the administrator",
+                        message="Configuration error: taxonomy_service_url was None. Please contact the administrator.",
                     )
                 ],
             )
 
-        url = f"{host}:{port}/taxa/{tax_id}"
+        tax_id: str | None = input_data.get("hostTaxonId")
+        if not tax_id:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        url = f"{tax_service}/taxa/{tax_id}"
         try:
             response = taxonomy_cache.get_or_fetch(url)
         except requests.exceptions.RequestException as e:
@@ -1595,17 +1593,8 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        tax_id: str | None = input_data.get("hostTaxonId")
-        if not tax_id:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[],
-            )
-
-        host = args.get("taxonomy_service_host")
-        port = args.get("taxonomy_service_port")
-        if not isinstance(host, str) or not isinstance(port, int):
+        tax_service = args.get("taxonomy_service_url")
+        if not tax_service:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1614,12 +1603,20 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message="Configuration error: taxonomy_service_host or taxonomy_service_port was None. Please contact the administrator.",
+                        message="Configuration error: taxonomy_service_url was None. Please contact the administrator.",
                     )
                 ],
             )
 
-        url = f"{host}:{port}/taxa/{tax_id}?find_common_name=true"
+        tax_id: str | None = input_data.get("hostTaxonId")
+        if not tax_id:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        url = f"{tax_service}/taxa/{tax_id}?find_common_name=true"
         try:
             response = taxonomy_cache.get_or_fetch(url)
         except requests.exceptions.RequestException as e:

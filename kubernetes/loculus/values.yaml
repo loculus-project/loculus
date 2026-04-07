@@ -1406,8 +1406,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         - "prepro"
       replicas: 1
       taxonomyServiceArgs: &preprocessingTaxonomyServiceArgs
-        taxonomy_service_host: "http://loculus-taxonomy-service"
-        taxonomy_service_port: 5000
+        taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         batch_size: 100
