@@ -17,14 +17,22 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import { type AuthorProfile, type CitedByResult, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { Button } from '../common/Button.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import MdiDotsGrid from '~icons/mdi/dots-grid';
+import MdiViewGrid from '~icons/mdi/view-grid';
 
 const logger = getClientLogger('SeqSetItem');
 
-const SeqSetSection: FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+const SeqSetSection: FC<{ title: string; children: React.ReactNode; headerContent?: React.ReactNode }> = ({
+    title,
+    children,
+    headerContent,
+}) => (
     <div className='flex flex-col mb-6'>
-        <div className='flex flex-row'>
-            <h2 className='text-xl font-semibold border-b py-2 my-4'>{title}</h2>
+        <div className='flex flex-row items-center justify-between my-4 py-2'>
+            <h2 className='text-xl font-semibold border-b'>{title}</h2>
+            {headerContent}
         </div>
         {children}
     </div>
@@ -69,6 +77,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     organismDisplayNames,
 }) => {
     const [page, setPage] = useState(1);
+    const [wideGraphs, setWideGraphs] = useState(false);
     const sequencesPerPage = 10;
 
     const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(
@@ -190,8 +199,19 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                 </SeqSetSection>
             </div>
             <SeqSetSectionSeparator />
-            <SeqSetSection title='Statistics'>
-                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
+            <SeqSetSection
+                title='Statistics'
+                headerContent={
+                    <Button
+                        className='mt-1 outlineButton flex items-center gap-2'
+                        onClick={() => setWideGraphs((prev) => !prev)}
+                    >
+                        {wideGraphs ? <MdiViewGrid /> : <MdiDotsGrid />}
+                        <span className='hidden sm:block'>Toggle size</span>
+                    </Button>
+                }
+            >
+                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6 ${!wideGraphs ? 'lg:grid-cols-3' : ''}`}>
                     {seqSetGraphs.map((graph) =>
                         graph.type === 'date' ? (
                             <DatePlot
