@@ -8,9 +8,11 @@ import { CitationPlot } from './CitationPlot';
 import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
+import { mainTailwindColor } from '../../../colors.json';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
+import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type AuthorProfile, type CitedByResult, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
@@ -45,13 +47,11 @@ type SeqSetItemProps = {
     seqSetAuthor?: AuthorProfile;
     seqSetRecords: SeqSetRecord[];
     citedByData: CitedByResult;
-    collectionDatesData: AggregateRow[];
-    collectionCountriesData: AggregateRow[];
-    dataUseTermsData: AggregateRow[];
+    seqSetGraphs: SeqSetGraph[];
+    seqSetGraphsData: Record<string, AggregateRow[]>;
     isAdminView?: boolean;
     fieldsToDisplay?: { field: string; displayName: string }[];
     organismDisplayNames?: Record<string, string>;
-    barGraphColor?: string;
 };
 
 const SeqSetItemInner: FC<SeqSetItemProps> = ({
@@ -62,13 +62,11 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     seqSetAuthor,
     seqSetRecords,
     citedByData,
-    collectionDatesData,
-    collectionCountriesData,
-    dataUseTermsData,
+    seqSetGraphs,
+    seqSetGraphsData,
     isAdminView = false,
     fieldsToDisplay,
     organismDisplayNames,
-    barGraphColor,
 }) => {
     const [page, setPage] = useState(1);
     const sequencesPerPage = 10;
@@ -131,6 +129,9 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         return seqSetRecords.slice((page - 1) * sequencesPerPage, page * sequencesPerPage);
     };
 
+    // Colour used for the plots, derived from colors.json
+    const barPlotColor = mainTailwindColor[500];
+
     return (
         <div className='flex flex-col'>
             <div className='grid grid-cols-1 lg:grid-cols-2'>
@@ -182,7 +183,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                             <CitationPlot
                                 citedByData={citedByData}
                                 description='Number of times this SeqSet has been cited by a publication'
-                                barColor={barGraphColor}
+                                barColor={barPlotColor}
                             />
                         }
                     />
@@ -191,22 +192,23 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
             <SeqSetSectionSeparator />
             <SeqSetSection title='Statistics'>
                 <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
-                    <DatePlot
-                        data={collectionDatesData}
-                        description={`Sample collection dates for ${seqSetAccessionVersion} sequences`}
-                        barColor={barGraphColor}
-                    />
-                    <CategoryPlot
-                        data={collectionCountriesData}
-                        description={`Sample collection countries for ${seqSetAccessionVersion} sequences`}
-                        barColor={barGraphColor}
-                        visibleCategoryLimit={15}
-                    />
-                    <CategoryPlot
-                        data={dataUseTermsData}
-                        description={`Data use terms for ${seqSetAccessionVersion} sequences`}
-                        barColor={barGraphColor}
-                    />
+                    {seqSetGraphs.map((graph) =>
+                        graph.type === 'date' ? (
+                            <DatePlot
+                                key={graph.name}
+                                data={seqSetGraphsData[graph.name] ?? []}
+                                description={`${graph.displayName} for ${seqSetAccessionVersion} sequences`}
+                                barColor={barPlotColor}
+                            />
+                        ) : (
+                            <CategoryPlot
+                                key={graph.name}
+                                data={seqSetGraphsData[graph.name] ?? []}
+                                description={`${graph.displayName} for ${seqSetAccessionVersion} sequences`}
+                                barColor={barPlotColor}
+                            />
+                        ),
+                    )}
                 </div>
             </SeqSetSection>
             <SeqSetSectionSeparator />

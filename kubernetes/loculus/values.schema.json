@@ -1195,6 +1195,34 @@
             },
             "required": ["field", "displayName"]
           }
+        },
+        "graphs": {
+          "groups": ["general"],
+          "type": "array",
+          "description": "Graphs to display in the SeqSets statistics section",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name for the graph"
+              },
+              "displayName": {
+                "type": "string",
+                "description": "The display name for the graph"
+              },
+              "type": {
+                "type": "string",
+                "description": "The type of data the graph is displaying (date, category)"
+              },
+              "fields": {
+                "type": "array",
+                "description": "The metadata field, or multiple fields, to graph"
+              }
+            },
+            "required": ["name", "displayName", "type", "fields"]
+          }
         }
       }
     },

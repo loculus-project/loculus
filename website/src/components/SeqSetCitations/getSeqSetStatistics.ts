@@ -27,6 +27,9 @@ const getAggregate = async (
     );
 };
 
+/**
+ * Fetches aggregates for the accessions and field options across all organisms, and combines them into a single aggregate result.
+ */
 export const getSeqSetStatistics = async (
     accessions: string[],
     fieldOptions: string[],
@@ -40,8 +43,13 @@ export const getSeqSetStatistics = async (
         organisms.map((organism) => {
             const client = LapisClient.createForOrganism(organism.key);
             const schema = getSchema(organism.key);
+
+            // Find the first field option that exists in the schema metadata
             const field = fieldOptions.find((option) => schema.metadata.some((f) => f.name === option));
+
+            // If no field is found, return an empty aggregate result for this organism
             if (!field) return Promise.resolve(ok([]));
+
             return getAggregate(client, accessions, field);
         }),
     );

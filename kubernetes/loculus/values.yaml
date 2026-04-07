@@ -14,6 +14,19 @@ seqSets:
       displayName: "Collection Date"
     - field: "authors"
       displayName: "Authors"
+  graphs:
+    - name: sampleCollectionDates
+      displayName: Sample collection dates
+      type: date
+      fields: [sampleCollectionDate, date]
+    - name: sampleCollectionCountries
+      displayName: Sample collection countries
+      type: category
+      fields: [geoLocCountry, country]
+    - name: dataUseTerms
+      displayName: Data use terms
+      type: category
+      fields: [dataUseTerms]
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
