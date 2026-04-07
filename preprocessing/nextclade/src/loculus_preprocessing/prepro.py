@@ -409,16 +409,16 @@ def get_output_metadata(
             and spec.required
             and group_id != config.insdc_ingest_group_id
         ):
+            message = f"Metadata field `{output_field}` is required."
+            additional_inputs = [i for i in input_fields if i != output_field]
+            if additional_inputs:
+                message += f" Please provide input metadata field(s): {', '.join(f'`{field}`' for field in additional_inputs)}"
             errors.append(
                 ProcessingAnnotation.from_fields(
                     spec.inputs.values(),
                     [output_field],
                     AnnotationSourceType.METADATA,
-                    message=(
-                        f"Metadata field `{output_field}` is required. "
-                        f"Please provide input metadata field(s): "
-                        f"{', '.join(f'`{field}`' for field in input_fields)}"
-                    ),
+                    message=message,
                 )
             )
     logger.debug(f"Processed {accession_version}: {output_metadata}")

@@ -41,7 +41,7 @@ test_case_definitions = [
                 ProcessingAnnotationHelper(
                     ["name_required"],
                     ["name_required"],
-                    "Metadata field `name_required` is required. Please provide input metadata field(s): `name_required`",
+                    "Metadata field `name_required` is required.",
                 ),
                 ProcessingAnnotationHelper(
                     ["ncbi_required_collection_date"],
