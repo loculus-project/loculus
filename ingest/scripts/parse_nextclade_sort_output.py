@@ -7,6 +7,7 @@ This script parses the results of nextclade sort:
 
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 import click
 import pandas as pd
@@ -25,6 +26,7 @@ logging.basicConfig(
 class NextcladeSortParams:
     minimizer_url: str
     minimizer_parser: list[str]
+    minimizer_parser_separator: str = "_"
     method: str = "minimizer"
 
 
@@ -32,9 +34,33 @@ class NextcladeSortParams:
 class Config:
     segment_identification: NextcladeSortParams
     nucleotide_sequences: list[str]
-    minimizer_url: str | None
-    minimizer_parser: list[str] | None
     segmented: bool = False
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "Config":
+        segmented = data.get("segmented", False)
+
+        if segmented:
+            segment_identification = NextcladeSortParams(**data["segment_identification"])
+        else:
+            # Allow this script to be used for non-segmented viruses
+            segment_identification = NextcladeSortParams(
+                minimizer_url=data["minimizer_url"],
+                minimizer_parser=data["minimizer_parser"],
+                minimizer_parser_separator=data.get("minimizer_parser_separator"),
+            )
+
+        return cls(
+            segment_identification=segment_identification,
+            nucleotide_sequences=data.get("nucleotide_sequences", []),
+            segmented=segmented,
+        )
+
+    @classmethod
+    def from_yaml(cls, path: str) -> "Config":
+        with open(path, encoding="utf-8") as file:
+            data = yaml.safe_load(file) or {}
+        return cls.from_dict(data)
 
 
 def parse_file(
@@ -55,7 +81,11 @@ def parse_file(
     df_highest_per_group = df_sorted.drop_duplicates(subset="index", keep="first")
 
     df_highest_per_group = df_highest_per_group.copy()  # Avoid SettingWithCopyWarning
-    parts = df_highest_per_group["dataset"].astype(str).str.split("_", expand=True)
+    parts = (
+        df_highest_per_group["dataset"]
+        .astype(str)
+        .str.split(config.minimizer_parser_separator, expand=True, regex=False)
+    )
     for i, field in enumerate(config.minimizer_parser):
         # set entire column field to results of parts[i]
         df_highest_per_group[field] = parts[i].fillna("")
@@ -83,18 +113,7 @@ def parse_file(
 def main(config_file: str, sort_results: str, output: str, log_level: str) -> None:
     logger.setLevel(log_level)
 
-    with open(config_file, encoding="utf-8") as file:
-        full_config = yaml.safe_load(file)
-        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
-        if not relevant_config["segmented"]:
-            relevant_config["segment_identification"] = NextcladeSortParams(
-                relevant_config["minimizer_url"], relevant_config["minimizer_parser"]
-            )
-        else:
-            relevant_config["segment_identification"] = NextcladeSortParams(
-                **relevant_config["segment_identification"]
-            )
-        config = Config(**relevant_config)
+    config = Config.from_yaml(config_file)
 
     logger.info(f"Config: {config}")
     if "segment" not in config.segment_identification.minimizer_parser and config.segmented:
