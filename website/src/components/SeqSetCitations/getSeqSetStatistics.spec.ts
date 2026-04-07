@@ -91,7 +91,7 @@ describe('getSeqSetStatistics', () => {
             { value: '2024-06-15', count: 5 },
         ]);
 
-        const resultCountry = await getSeqSetStatistics(ORGANISM_2_ACCESSIONS, ['geoLocCountry', 'country']);
+        const resultCountry = await getSeqSetStatistics(ORGANISM_2_ACCESSIONS, ['geoLocCountry']);
         expect(resultCountry.isOk()).toBe(true);
         expect(resultCountry.unwrapOr(undefined)).toEqual([
             { value: 'USA', count: 10 },
