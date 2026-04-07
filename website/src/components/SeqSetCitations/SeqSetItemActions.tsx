@@ -8,6 +8,7 @@ import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button';
 import Modal from '../common/Modal';
@@ -35,6 +36,11 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     isAdminView = false,
     databaseName,
 }) => {
+    const seqSetAccessionVersion = getAccessionVersionString({
+        accession: seqSet.seqSetId,
+        version: seqSet.seqSetVersion,
+    });
+
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
 
@@ -51,16 +57,18 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     };
 
     return (
-        <div className='flex flex-col items-left'>
-            <h1 className='text-2xl font-semibold pb-4'>{seqSet.name}</h1>
-            <div className='flex-row items-center justify-between w-full'>
+        <div className='flex justify-between flex-wrap'>
+            <div className='flex flex-row pb-6'>
+                <h1 className='title'> {seqSetAccessionVersion}</h1>
+            </div>
+            <div className='inline-block ml-auto'>
                 <div className='flex justify-start items-center pb-8 gap-2'>
                     <Button
                         className='outlineButton flex items-center gap-2'
                         onClick={() => setExportModalVisible(true)}
                     >
                         <MdiDownload className='w-4 h-4' />
-                        Export / Cite
+                        <span className='hidden sm:block'>Export / Cite</span>
                     </Button>
                     {isAdminView ? (
                         <Button
@@ -68,7 +76,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                             onClick={() => setEditModalVisible(true)}
                         >
                             <MdiPencil className='w-4 h-4' />
-                            Edit
+                            <span className='hidden sm:block'>Edit</span>
                         </Button>
                     ) : null}
                     {isAdminView && (seqSet.seqSetDOI === null || seqSet.seqSetDOI === undefined) ? (
@@ -82,7 +90,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                             }
                         >
                             <MdiDelete className='w-4 h-4' />
-                            Delete
+                            <span className='hidden sm:block'>Delete</span>
                         </Button>
                     ) : null}
                 </div>

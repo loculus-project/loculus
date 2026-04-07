@@ -212,6 +212,9 @@ enableSeqSets: {{ $.Values.seqSets.enabled }}
 {{- if $.Values.seqSets.fieldsToDisplay }}
 seqSetsFieldsToDisplay: {{ $.Values.seqSets.fieldsToDisplay | toJson }}
 {{- end }}
+{{- if $.Values.seqSets.graphs }}
+seqSetsGraphs: {{ $.Values.seqSets.graphs | toJson }}
+{{- end }}
 enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
