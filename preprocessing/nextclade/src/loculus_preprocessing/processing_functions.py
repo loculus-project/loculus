@@ -45,7 +45,7 @@ class RequestCache:
         self.cache: OrderedDict[str, requests.Response] = OrderedDict()
         self.max_size = max_size
 
-    def get(self, url: str) -> requests.Response | None:
+    def get(self, url: str) -> None | requests.Response:
         if url in self.cache:
             self.cache.move_to_end(url)
             return self.cache[url]
@@ -57,6 +57,21 @@ class RequestCache:
 
         if len(self.cache) > self.max_size:
             self.cache.popitem(last=False)
+
+    def get_or_fetch(self, url: str, timeout: int = 15) -> requests.Response:
+        """See if `url` already exists in the cache and return the cached Response
+        if it does.
+
+        If `url` is not in the cache, make the actual request (with timeout), add the Response to the
+        cache, and return the Response.
+
+        Since request.get can error, the caller should wrap this in a try/except block and handle errors
+        """
+        response = self.get(url)
+        if response is None:
+            response = requests.get(url, timeout=timeout)
+            self.set(url, response)
+        return response
 
     def clear(self) -> None:
         self.cache.clear()
@@ -1431,23 +1446,21 @@ class ProcessingFunctions:
             query = urllib.parse.urlencode({"scientific_name": unvalidated})
             url = f"{host}:{port}/taxa?{query}"
 
-        response = taxonomy_cache.get(url)
-        if response is None:
-            try:
-                response = requests.get(url, timeout=15)
-            except requests.exceptions.RequestException as e:
-                return ProcessingResult(
-                    datum=None,
-                    warnings=[],
-                    errors=[
-                        ProcessingAnnotation.from_fields(
-                            input_fields,
-                            [output_field],
-                            AnnotationSourceType.METADATA,
-                            message=f"Internal error: network error while validating '{unvalidated}': {e}. Please contact the administrator",
-                        )
-                    ],
-                )
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: network error while validating '{unvalidated}': {e}. Please contact the administrator",
+                    )
+                ],
+            )
 
         body = response.json()
         if response.status_code != requests.codes.ok:
@@ -1463,8 +1476,6 @@ class ProcessingFunctions:
                 warnings=[message] if args["is_insdc_ingest_group"] else [],
                 errors=[message] if not args["is_insdc_ingest_group"] else [],
             )
-
-        taxonomy_cache.set(url, response)
 
         if isinstance(body, list):
             # when querying by scientific name, multiple taxa may be returned: select the most generic one
@@ -1525,23 +1536,21 @@ class ProcessingFunctions:
             )
 
         url = f"{host}:{port}/taxa/{tax_id}"
-        response = taxonomy_cache.get(url)
-        if response is None:
-            try:
-                response = requests.get(url, timeout=15)
-            except requests.exceptions.RequestException as e:
-                return ProcessingResult(
-                    datum=None,
-                    warnings=[],
-                    errors=[
-                        ProcessingAnnotation.from_fields(
-                            input_fields,
-                            [output_field],
-                            AnnotationSourceType.METADATA,
-                            message=f"Internal error: network error while validating '{tax_id}': {e}. Please contact the administrator",
-                        )
-                    ],
-                )
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: network error while validating '{tax_id}': {e}. Please contact the administrator",
+                    )
+                ],
+            )
 
         body = response.json()
         if response.status_code != requests.codes.ok:
@@ -1572,8 +1581,6 @@ class ProcessingFunctions:
                     )
                 ],
             )
-
-        taxonomy_cache.set(url, response)
 
         return ProcessingResult(
             datum=scientific_name,
@@ -1613,23 +1620,21 @@ class ProcessingFunctions:
             )
 
         url = f"{host}:{port}/taxa/{tax_id}?find_common_name=true"
-        response = taxonomy_cache.get(url)
-        if response is None:
-            try:
-                response = requests.get(url, timeout=15)
-            except requests.exceptions.RequestException as e:
-                return ProcessingResult(
-                    datum=None,
-                    warnings=[],
-                    errors=[
-                        ProcessingAnnotation.from_fields(
-                            input_fields,
-                            [output_field],
-                            AnnotationSourceType.METADATA,
-                            message=f"Internal error: network error while getting common name for '{tax_id}': {e}. Please contact the administrator.",
-                        )
-                    ],
-                )
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: network error while getting common name for '{tax_id}': {e}. Please contact the administrator.",
+                    )
+                ],
+            )
 
         body = response.json()
         if response.status_code != requests.codes.ok:
@@ -1660,8 +1665,6 @@ class ProcessingFunctions:
                     )
                 ],
             )
-
-        taxonomy_cache.set(url, response)
 
         return ProcessingResult(
             datum=common_name,
