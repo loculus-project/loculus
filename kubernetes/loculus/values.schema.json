@@ -1218,7 +1218,7 @@
               },
               "fields": {
                 "type": "array",
-                "description": "The metadata field, or multiple fields, to graph"
+                "description": "The metadata field to graph. Usually a single field, but multiple fields can be provided in cases where a metadata field is named differently across different organisms"
               }
             },
             "required": ["name", "displayName", "type", "fields"]

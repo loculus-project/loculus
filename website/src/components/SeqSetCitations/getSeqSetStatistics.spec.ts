@@ -21,7 +21,10 @@ const mockResponses: Record<string, Record<string, object[]>> = {
             { sampleCollectionDate: '2024-01-01', count: 3 },
             { sampleCollectionDate: '2024-06-15', count: 5 },
         ],
-        geoLocCountry: [{ geoLocCountry: 'Switzerland', count: 10 }],
+        geoLocCountry: [
+            { geoLocCountry: 'Switzerland', count: 10 },
+            { geoLocCountry: 'USA', count: 10 },
+        ],
     },
     // eslint-disable-next-line @typescript-eslint/naming-convention
     'test-organism-2': {
@@ -29,9 +32,9 @@ const mockResponses: Record<string, Record<string, object[]>> = {
             { sampleCollectionDate: '2024-01-01', count: 100 },
             { sampleCollectionDate: '2024-06-15', count: 500 },
         ],
-        geoLocCountry: [
-            { geoLocCountry: 'USA', count: 10 },
-            { geoLocCountry: 'Germany', count: 4 },
+        country: [
+            { country: 'USA', count: 10 },
+            { country: 'Germany', count: 4 },
         ],
         organismSpecificField: [
             { organismSpecificField: 'valueA', count: 7 },
@@ -48,7 +51,7 @@ vi.mock('../../config.ts', () => ({
         metadata:
             organism === 'test-organism-1'
                 ? [{ name: 'sampleCollectionDate' }, { name: 'geoLocCountry' }]
-                : [{ name: 'sampleCollectionDate' }, { name: 'geoLocCountry' }, { name: 'organismSpecificField' }],
+                : [{ name: 'sampleCollectionDate' }, { name: 'country' }, { name: 'organismSpecificField' }],
     }),
 }));
 
@@ -91,7 +94,7 @@ describe('getSeqSetStatistics', () => {
             { value: '2024-06-15', count: 5 },
         ]);
 
-        const resultCountry = await getSeqSetStatistics(ORGANISM_2_ACCESSIONS, ['geoLocCountry']);
+        const resultCountry = await getSeqSetStatistics(ORGANISM_2_ACCESSIONS, ['country']);
         expect(resultCountry.isOk()).toBe(true);
         expect(resultCountry.unwrapOr(undefined)).toEqual([
             { value: 'USA', count: 10 },
@@ -111,6 +114,7 @@ describe('getSeqSetStatistics', () => {
     });
 
     it('returns aggregated rows across multiple organisms', async () => {
+        // Organisms have the same field name
         const resultDate = await getSeqSetStatistics(ORGANISM_1_ACCESSIONS.concat(ORGANISM_2_ACCESSIONS), [
             'sampleCollectionDate',
         ]);
@@ -120,13 +124,15 @@ describe('getSeqSetStatistics', () => {
             { value: '2024-06-15', count: 505 },
         ]);
 
+        // Organisms have different field names which are aggregated together
         const resultCountry = await getSeqSetStatistics(ORGANISM_1_ACCESSIONS.concat(ORGANISM_2_ACCESSIONS), [
             'geoLocCountry',
+            'country',
         ]);
         expect(resultCountry.isOk()).toBe(true);
         expect(resultCountry.unwrapOr(undefined)).toEqual([
             { value: 'Switzerland', count: 10 },
-            { value: 'USA', count: 10 },
+            { value: 'USA', count: 20 },
             { value: 'Germany', count: 4 },
         ]);
     });
