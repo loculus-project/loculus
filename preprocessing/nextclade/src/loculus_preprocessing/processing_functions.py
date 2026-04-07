@@ -37,8 +37,8 @@ logger = logging.getLogger(__name__)
 class RequestCache:
     """Class for caching requests to external services during preprocessing.
 
-    Keys are the fully formatted URLs that would be used to make requests.
-    Values are responses as they were returned by the service.
+    Keys are the fully formatted URLs that have already been used to make sucessful requests.
+    Values are requests.Response as they were returned by the service.
     """
 
     def __init__(self, max_size: int) -> None:
