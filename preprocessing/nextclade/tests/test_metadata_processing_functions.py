@@ -1237,9 +1237,9 @@ def test_validate_hostname_not_found(mock_get):
     mock_get.return_value = make_response(404, {"detail": "not found"})
 
     res = ProcessingFunctions.validate_host(
-        input_data={"hostNameScientific": "des aegypti"},
+        input_data={"hostIdentifier": "des aegypti"},
         output_field="hostTaxonId",
-        input_fields=["hostNameScientific"],
+        input_fields=["hostIdentifier"],
         args={
             "taxonomy_service_host": "http://localhost",
             "taxonomy_service_port": 5000,

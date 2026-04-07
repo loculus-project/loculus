@@ -15,8 +15,7 @@ HOST_PROCESSING_CONFIG = "tests/host_processing_config.yaml"
 
 @pytest.fixture(autouse=True)
 def clear_taxonomy_caches():
-    processing_functions.taxon_cache.clear()
-    processing_functions.common_name_cache.clear()
+    processing_functions.taxonomy_cache.clear()
 
 
 def make_entry(metadata: dict, group_id: int) -> UnprocessedEntry:
@@ -91,7 +90,7 @@ def test_host_processing_insdc(mock_get: MagicMock) -> None:
     assert metadata["hostNameCommon"] == "yellow fever mosquito"
     assert result[0].processed_entry.errors == []
 
-    # Two calls to taxonomy service: validate tax ID, get scientific name (cached), get common name
+    # Three lookups, one cache hit: taxon_id, scientific name (cached), common name
     assert mock_get.call_count == 2
 
 

@@ -11,6 +11,7 @@ import math
 import re
 import unicodedata
 import urllib.parse
+from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -32,14 +33,36 @@ from .datatypes import (
 
 logger = logging.getLogger(__name__)
 
-# two caches for host name validation:
-#   taxon_cache:        dict[taxon ID | host name, requests.Response]   Caches successful host validation reponses
-#   common_name_cache:  dict[taxon ID, requests.Response]               Caches successful common name queries.
-#                                                                       Needs to be separate since a common name query can return a
-#                                                                       taxon that's different than the input taxon
-taxon_cache: dict[str, requests.Response] = {}
-common_name_cache: dict[str, requests.Response] = {}
 
+class RequestCache:
+    """Class for caching requests to external services during preprocessing.
+
+    Keys are the fully formatted URLs that would be used to make requests.
+    Values are responses as they were returned by the service.
+    """
+
+    def __init__(self, max_size: int) -> None:
+        self.cache: OrderedDict[str, requests.Response] = OrderedDict()
+        self.max_size = max_size
+
+    def get(self, url: str) -> requests.Response | None:
+        if url in self.cache:
+            self.cache.move_to_end(url)
+            return self.cache[url]
+        return None
+
+    def set(self, url: str, response: requests.Response) -> None:
+        self.cache[url] = response
+        self.cache.move_to_end(url)
+
+        if len(self.cache) > self.max_size:
+            self.cache.popitem(last=False)
+
+    def clear(self) -> None:
+        self.cache.clear()
+
+
+taxonomy_cache = RequestCache(max_size=64)
 options_cache: dict[str, dict[str, str]] = {}
 
 
@@ -1399,28 +1422,17 @@ class ProcessingFunctions:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message="Metadatafield hostIdentifier ",
-                    )
-                ]
-                if not args["is_insdc_ingest_group"]
-                else [],
+                errors=[],
             )
 
-        cache_hit = str(unvalidated) in taxon_cache
-        if cache_hit:
-            response = taxon_cache[str(unvalidated)]
+        if unvalidated.isdigit():
+            url = f"{host}:{port}/taxa/{unvalidated}"
         else:
-            if unvalidated.isdigit():
-                url = f"{host}:{port}/taxa/{unvalidated}"
-            else:
-                query = urllib.parse.urlencode({"scientific_name": unvalidated})
-                url = f"{host}:{port}/taxa?{query}"
+            query = urllib.parse.urlencode({"scientific_name": unvalidated})
+            url = f"{host}:{port}/taxa?{query}"
 
+        response = taxonomy_cache.get(url)
+        if response is None:
             try:
                 response = requests.get(url, timeout=15)
             except requests.exceptions.RequestException as e:
@@ -1439,7 +1451,7 @@ class ProcessingFunctions:
 
         body = response.json()
         if response.status_code != requests.codes.ok:
-            # failure to validate host organism is a warning for INSDC ingested sequences, but an error for everyone else
+            # an invalid host organism is a warning for INSDC ingested sequences, but an error for everyone else
             message = ProcessingAnnotation.from_fields(
                 input_fields,
                 [output_field],
@@ -1452,11 +1464,10 @@ class ProcessingFunctions:
                 errors=[message] if not args["is_insdc_ingest_group"] else [],
             )
 
-        if not cache_hit:
-            taxon_cache[str(unvalidated)] = response
+        taxonomy_cache.set(url, response)
 
         if isinstance(body, list):
-            # multiple taxa may have the same scientific name: select the most generic one
+            # when querying by scientific name, multiple taxa may be returned: select the most generic one
             taxon = min(body, key=lambda x: x.get("depth", float("inf")))
         else:
             taxon = body
@@ -1513,12 +1524,11 @@ class ProcessingFunctions:
                 ],
             )
 
-        cache_hit = str(tax_id) in taxon_cache
-        if cache_hit:
-            response = taxon_cache[str(tax_id)]
-        else:
+        url = f"{host}:{port}/taxa/{tax_id}"
+        response = taxonomy_cache.get(url)
+        if response is None:
             try:
-                response = requests.get(f"{host}:{port}/taxa/{tax_id}", timeout=15)
+                response = requests.get(url, timeout=15)
             except requests.exceptions.RequestException as e:
                 return ProcessingResult(
                     datum=None,
@@ -1563,8 +1573,7 @@ class ProcessingFunctions:
                 ],
             )
 
-        if not cache_hit:
-            taxon_cache[str(tax_id)] = response
+        taxonomy_cache.set(url, response)
 
         return ProcessingResult(
             datum=scientific_name,
@@ -1603,14 +1612,11 @@ class ProcessingFunctions:
                 ],
             )
 
-        cache_hit = str(tax_id) in common_name_cache
-        if cache_hit:
-            response = common_name_cache[str(tax_id)]
-        else:
+        url = f"{host}:{port}/taxa/{tax_id}?find_common_name=true"
+        response = taxonomy_cache.get(url)
+        if response is None:
             try:
-                response = requests.get(
-                    f"{host}:{port}/taxa/{tax_id}?find_common_name=true", timeout=15
-                )
+                response = requests.get(url, timeout=15)
             except requests.exceptions.RequestException as e:
                 return ProcessingResult(
                     datum=None,
@@ -1655,8 +1661,7 @@ class ProcessingFunctions:
                 ],
             )
 
-        if not cache_hit:
-            common_name_cache[str(tax_id)] = response
+        taxonomy_cache.set(url, response)
 
         return ProcessingResult(
             datum=common_name,
