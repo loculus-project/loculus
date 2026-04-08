@@ -2536,7 +2536,7 @@ gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/w
 gitHubMainUrl: https://github.com/loculus-project/loculus
 gitHubIssuesUrl: https://github.com/loculus-project/loculus/issues
 issuesEmail: noreply@loculus.org
-# allowedExternalRedirectDomains: []
+# allowedExternalRedirectUrls: []
 resources:
   website:
     requests:

@@ -204,8 +204,8 @@ welcomeMessageHTML: {{ quote $.Values.welcomeMessageHTML }}
 {{ if $.Values.additionalHeadHTML }}
 additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}
 {{end}}
-{{ if $.Values.allowedExternalRedirectDomains }}
-allowedExternalRedirectDomains: {{ $.Values.allowedExternalRedirectDomains | toJson }}
+{{ if $.Values.allowedExternalRedirectUrls }}
+allowedExternalRedirectUrls: {{ $.Values.allowedExternalRedirectUrls | toJson }}
 {{ end }}
 
 enableLoginNavigationItem: {{ $.Values.website.websiteConfig.enableLoginNavigationItem }}

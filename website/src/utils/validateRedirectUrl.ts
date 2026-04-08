@@ -2,7 +2,7 @@ type RedirectValidation = { valid: true; hostname: string } | { valid: false; er
 
 export function validateRedirectUrl(
     url: string | null | undefined,
-    options: { allowInsecure?: boolean; allowedDomains?: string[] | null } = {},
+    options: { allowInsecure?: boolean; allowedPrefixes?: string[] | null } = {},
 ): RedirectValidation {
     if (!url || url.trim() === '') {
         return { valid: false, error: 'No redirect URL provided.' };
@@ -26,9 +26,13 @@ export function validateRedirectUrl(
         }
     }
 
-    if (options.allowedDomains && options.allowedDomains.length > 0) {
-        if (!options.allowedDomains.includes(hostname)) {
-            return { valid: false, error: `The domain "${hostname}" is not in the list of allowed redirect domains.` };
+    if (options.allowedPrefixes && options.allowedPrefixes.length > 0) {
+        const matches = options.allowedPrefixes.some((prefix) => url.startsWith(prefix));
+        if (!matches) {
+            return {
+                valid: false,
+                error: `"${hostname}" is not in the list of allowed redirect targets.`,
+            };
         }
     }
 
