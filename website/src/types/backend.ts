@@ -359,3 +359,6 @@ export type CompleteMultipartUploadRequest = z.infer<typeof completeMultipartUpl
 
 export const pipelineVersionStatistics = z.record(z.record(z.number()));
 export type PipelineVersionStatistics = z.infer<typeof pipelineVersionStatistics>;
+
+export const currentPipelineVersions = z.record(z.number());
+export type CurrentPipelineVersions = z.infer<typeof currentPipelineVersions>;

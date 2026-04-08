@@ -1,12 +1,13 @@
 import type { FC } from 'react';
 
-import type { PipelineVersionStatistics } from '../../types/backend';
+import type { CurrentPipelineVersions, PipelineVersionStatistics } from '../../types/backend';
 
 interface Props {
     statistics: PipelineVersionStatistics;
+    currentVersions: CurrentPipelineVersions | undefined;
 }
 
-export const PipelineStatisticsTable: FC<Props> = ({ statistics }) => {
+export const PipelineStatisticsTable: FC<Props> = ({ statistics, currentVersions }) => {
     const versions = Array.from(
         new Set(Object.values(statistics).flatMap((m) => Object.keys(m).map((v) => Number(v)))),
     ).sort((a, b) => a - b);
@@ -24,16 +25,22 @@ export const PipelineStatisticsTable: FC<Props> = ({ statistics }) => {
                 </tr>
             </thead>
             <tbody>
-                {Object.entries(statistics).map(([organism, versionMap]) => (
-                    <tr key={organism}>
-                        <td className='border px-2 py-1 font-semibold'>{organism}</td>
-                        {versions.map((v) => (
-                            <td key={v} className='border px-2 py-1 text-right'>
-                                {versionMap[v]}
-                            </td>
-                        ))}
-                    </tr>
-                ))}
+                {Object.entries(statistics).map(([organism, versionMap]) => {
+                    const currentVersion = currentVersions?.[organism];
+                    return (
+                        <tr key={organism}>
+                            <td className='border px-2 py-1 font-semibold'>{organism}</td>
+                            {versions.map((v) => (
+                                <td
+                                    key={v}
+                                    className={`border px-2 py-1 text-right${currentVersion === v ? ' font-bold' : ''}`}
+                                >
+                                    {versionMap[v]}
+                                </td>
+                            ))}
+                        </tr>
+                    );
+                })}
             </tbody>
         </table>
     );

@@ -148,6 +148,13 @@ class SubmissionDatabaseService(
             .first()
     }
 
+    fun getAllCurrentProcessingPipelineVersions(): Map<String, Long> {
+        val table = CurrentProcessingPipelineTable
+        return table
+            .selectAll()
+            .associate { it[table.organismColumn] to it[table.versionColumn] }
+    }
+
     private fun fetchUnprocessedEntriesAndUpdateToInProcessing(
         organism: Organism,
         numberOfSequenceEntries: Int,
