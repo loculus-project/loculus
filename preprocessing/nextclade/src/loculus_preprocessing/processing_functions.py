@@ -77,7 +77,7 @@ class RequestCache:
         response = self.get(url)
         if response is None:
             response = self.session.get(url, timeout=timeout)
-            if response.status_code == requests.codes.ok:
+            if response.status_code < 500:
                 self.set(url, response)
         return response
 
