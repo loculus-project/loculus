@@ -2,12 +2,19 @@
 import { PipelineStatisticsTable } from '../../components/AdminDashboard/PipelineStatisticsTable';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { createBackendClient } from '../../services/backendClientFactory';
+import type { CurrentPipelineVersions, ProblemDetail } from '../../types/backend';
 import { getAccessToken } from '../../utils/getAccessToken';
+import type { Result } from 'neverthrow';
 
 const accessToken = getAccessToken(Astro.locals.session);
 let statisticsResult;
+let currentVersionsResult: Result<CurrentPipelineVersions, ProblemDetail> | undefined;
 if (accessToken !== undefined) {
-    statisticsResult = await createBackendClient().getPipelineStatistics(accessToken);
+    const backendClient = createBackendClient();
+    [statisticsResult, currentVersionsResult] = await Promise.all([
+        backendClient.getPipelineStatistics(accessToken),
+        backendClient.getCurrentPipelineVersions(accessToken),
+    ]);
 }
 ---
 
@@ -22,7 +29,10 @@ if (accessToken !== undefined) {
                     <>
                         <p class='mb-4'>Processed sequence entries per pipeline version.</p>
                         <div class='overflow-x-auto'>
-                            <PipelineStatisticsTable statistics={statistics} />
+                            <PipelineStatisticsTable
+                                statistics={statistics}
+                                currentVersions={currentVersionsResult?.unwrapOr({})}
+                            />
                         </div>
                     </>
                 ),
