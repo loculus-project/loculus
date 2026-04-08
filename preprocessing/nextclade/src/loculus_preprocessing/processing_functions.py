@@ -63,7 +63,7 @@ class RequestCache:
         if it does.
 
         If `url` is not in the cache, make the actual request (with timeout), add the Response to the
-        cache, and return the Response.
+        cache (if 200), and return the Response.
 
         Since request.get can error, the caller should wrap this in a try/except block and handle errors
         """
@@ -1437,11 +1437,14 @@ class ProcessingFunctions:
                 ],
             )
 
-        # hostTaxonId and hostNameScientific are noInput, so the only case where they exist is for INSDC ingested sequences
-        if not args["is_insdc_ingest_group"]:
-            unvalidated = input_data.get("hostIdentifier")
-        else:
-            unvalidated = input_data.get("hostTaxonId") or input_data.get("hostNameScientific")
+        # hostIdentifier will exist only for direct submissions
+        # hostTaxonId and hostNameScientific are noInput, so the only case where they exist is
+        # for INSDC ingested sequences or for legacy direct submissions
+        unvalidated = (
+            input_data.get("hostIdentifier")
+            or input_data.get("hostTaxonId")
+            or input_data.get("hostNameScientific")
+        )
 
         if not unvalidated:
             return ProcessingResult(
