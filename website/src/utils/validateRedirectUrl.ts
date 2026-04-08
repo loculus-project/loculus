@@ -19,6 +19,10 @@ export function validateRedirectUrl(
         return { valid: false, error: 'The redirect URL must use HTTPS.' };
     }
 
+    if (parsed.username || parsed.password || url.includes('@')) {
+        return { valid: false, error: 'The redirect URL must not contain credentials.' };
+    }
+
     const { hostname } = parsed;
     if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
         if (!options.allowInsecure) {
