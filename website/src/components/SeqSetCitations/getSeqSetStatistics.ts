@@ -3,22 +3,19 @@ import type { Result } from 'neverthrow';
 
 import { getConfiguredOrganisms, getSchema } from '../../config.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
-import { ACCESSION_VERSION_FIELD } from '../../settings.ts';
+import { ACCESSION_FIELD, ACCESSION_VERSION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
+import { versionStatuses } from '../../types/lapis.ts';
 
 type AggregateValue = string | number | boolean | null | undefined;
 export type AggregateRow = { value: AggregateValue; count: number };
 
 const getAggregate = async (
     client: LapisClient,
-    accessions: string[],
     field: string,
+    params: Record<string, string[] | string>,
 ): Promise<Result<AggregateRow[], ProblemDetail>> => {
-    const result = await client.call('aggregated', {
-        [ACCESSION_VERSION_FIELD]: accessions,
-        fields: [field],
-    });
-
+    const result = await client.call('aggregated', params);
     return result.map(({ data }) =>
         data.map((item) => ({
             value: item[field],
@@ -38,19 +35,41 @@ export const getSeqSetStatistics = async (
         return ok([]);
     }
 
+    // Split accessions into versioned (contain '.') and unversioned (no '.')
+    const versionedAccessions = accessions.filter((acc) => acc.includes('.'));
+    const unversionedAccessions = accessions.filter((acc) => !acc.includes('.'));
+
     const organisms = getConfiguredOrganisms();
     const aggregateResponses = await Promise.all(
-        organisms.map((organism) => {
+        organisms.flatMap((organism) => {
             const client = LapisClient.createForOrganism(organism.key);
             const schema = getSchema(organism.key);
 
-            // Find the first field option that exists in the schema metadata
+            // Find the first field option that exists in the schema metadata, and skip if none are found
             const field = fieldOptions.find((option) => schema.metadata.some((f) => f.name === option));
+            if (!field) return [];
 
-            // If no field is found, return an empty aggregate result for this organism
-            if (!field) return Promise.resolve(ok([]));
+            // Fetch aggregates for both versioned and unversioned accessions
+            const aggregates = [];
+            if (versionedAccessions.length > 0) {
+                aggregates.push(
+                    getAggregate(client, field, {
+                        [ACCESSION_VERSION_FIELD]: versionedAccessions,
+                        fields: [field],
+                    }),
+                );
+            }
+            if (unversionedAccessions.length > 0) {
+                aggregates.push(
+                    getAggregate(client, field, {
+                        [ACCESSION_FIELD]: unversionedAccessions,
+                        [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
+                        fields: [field],
+                    }),
+                );
+            }
 
-            return getAggregate(client, accessions, field);
+            return aggregates;
         }),
     );
 
