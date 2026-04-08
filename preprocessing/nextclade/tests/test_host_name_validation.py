@@ -52,9 +52,9 @@ def taxonomy_service_mock(url: str, **kwargs):
     return make_response(404, {"detail": "not found"})
 
 
-@patch("loculus_preprocessing.processing_functions.requests.get")
-def test_host_processing_direct_submission(mock_get: MagicMock) -> None:
-    mock_get.side_effect = taxonomy_service_mock
+@patch.object(processing_functions.taxonomy_cache, "session")
+def test_host_processing_direct_submission(mock_session: MagicMock) -> None:
+    mock_session.get.side_effect = taxonomy_service_mock
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
     assert config.processing_order[0] == "hostTaxonId"
 
@@ -72,12 +72,12 @@ def test_host_processing_direct_submission(mock_get: MagicMock) -> None:
     assert result[0].processed_entry.errors == []
 
     # All three fields should have hit the taxonomy service
-    assert mock_get.call_count == 3
+    assert mock_session.get.call_count == 3
 
 
-@patch("loculus_preprocessing.processing_functions.requests.get")
-def test_host_processing_insdc(mock_get: MagicMock) -> None:
-    mock_get.side_effect = taxonomy_service_mock
+@patch.object(processing_functions.taxonomy_cache, "session")
+def test_host_processing_insdc(mock_session: MagicMock) -> None:
+    mock_session.get.side_effect = taxonomy_service_mock
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
 
     entry = make_entry(
@@ -97,14 +97,14 @@ def test_host_processing_insdc(mock_get: MagicMock) -> None:
     assert result[0].processed_entry.errors == []
 
     # For INSDC, only use the taxonomy service for common name
-    assert mock_get.call_count == 1
+    assert mock_session.get.call_count == 1
 
 
-@patch("loculus_preprocessing.processing_functions.requests.get")
-def test_host_processing_invalid_hostname(mock_get: MagicMock) -> None:
+@patch.object(processing_functions.taxonomy_cache, "session")
+def test_host_processing_invalid_hostname(mock_session: MagicMock) -> None:
     """When hostNameScientific is not found in the taxonomy, hostTaxonId is None,
     which causes hostNameScientific and hostNameCommon to also fail."""
-    mock_get.return_value = make_response(404, {"detail": "not found"})
+    mock_session.get.return_value = make_response(404, {"detail": "not found"})
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
 
     entry = make_entry(
@@ -120,15 +120,15 @@ def test_host_processing_invalid_hostname(mock_get: MagicMock) -> None:
     assert metadata["hostNameCommon"] is None
 
     # For INSDC, nothing should hit the taxonomy service and no warnings are raised
-    assert mock_get.call_count == 0
+    assert mock_session.get.call_count == 0
     assert len(result[0].processed_entry.warnings) == 0
     assert result[0].processed_entry.errors == []
 
 
-@patch("loculus_preprocessing.processing_functions.requests.get")
-def test_host_processing_invalid_identifier_direct_submission(mock_get: MagicMock) -> None:
+@patch.object(processing_functions.taxonomy_cache, "session")
+def test_host_processing_invalid_identifier_direct_submission(mock_session: MagicMock) -> None:
     """When a direct submitter provides an invalid hostIdentifier, validation fails with an error."""
-    mock_get.return_value = make_response(404, {"detail": "not found"})
+    mock_session.get.return_value = make_response(404, {"detail": "not found"})
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
 
     entry = make_entry(
@@ -143,6 +143,6 @@ def test_host_processing_invalid_identifier_direct_submission(mock_get: MagicMoc
     assert metadata["hostNameScientific"] is None
     assert metadata["hostNameCommon"] is None
 
-    assert mock_get.call_count == 1
+    assert mock_session.get.call_count == 1
     assert len(result[0].processed_entry.errors) == 1
     assert result[0].processed_entry.warnings == []

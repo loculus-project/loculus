@@ -19,6 +19,8 @@ from typing import Any
 import dateutil.parser as dateutil
 import pytz
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from .datatypes import (
     AnnotationSource,
@@ -41,9 +43,14 @@ class RequestCache:
     Values are requests.Response as they were returned by the service.
     """
 
-    def __init__(self, max_size: int) -> None:
+    def __init__(self, max_size: int, retries=5) -> None:
         self.cache: OrderedDict[str, requests.Response] = OrderedDict()
         self.max_size = max_size
+        self.session = requests.Session()
+        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+        adapter = HTTPAdapter(max_retries=retry)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
 
     def get(self, url: str) -> None | requests.Response:
         if url in self.cache:
@@ -62,14 +69,14 @@ class RequestCache:
         """See if `url` already exists in the cache and return the cached Response
         if it does.
 
-        If `url` is not in the cache, make the actual request (with timeout), add the Response to the
-        cache (if 200), and return the Response.
+        If `url` is not in the cache, make the actual request (with timeout and retries).
+        Add the Response to the cache (if 200), and return the Response.
 
         Since request.get can error, the caller should wrap this in a try/except block and handle errors
         """
         response = self.get(url)
         if response is None:
-            response = requests.get(url, timeout=timeout)
+            response = self.session.get(url, timeout=timeout)
             if response.status_code == requests.codes.ok:
                 self.set(url, response)
         return response
