@@ -70,7 +70,7 @@ class RequestCache:
         if it does.
 
         If `url` is not in the cache, make the actual request (with timeout and retries).
-        Add the Response to the cache (if 200), and return the Response.
+        Add the Response to the cache (if status code <500), and return the Response.
 
         Since request.get can error, the caller should wrap this in a try/except block and handle errors
         """
