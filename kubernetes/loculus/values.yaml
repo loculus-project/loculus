@@ -1410,6 +1410,26 @@ defaultOrganismConfig: &defaultOrganismConfig
         - length
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
+      multiFieldSearches:
+        - name: identifier
+          displayName: Sample Identifier
+          fields:
+            - accessionVersion
+            - submissionId
+            - insdcAccessionFull
+            - bioprojectAccession
+            - gcaAccession
+            - biosampleAccession
+            - insdcRawReadsAccession
+        - name: contributor
+          displayName: Contributor
+          fields:
+            - authors
+            - authorAffiliations
+            - sequencedByOrganization
+            - sequencedByContactName
+            - submitter
+            - groupName
     extraInputFields: []
   preprocessing:
     - &preprocessing
