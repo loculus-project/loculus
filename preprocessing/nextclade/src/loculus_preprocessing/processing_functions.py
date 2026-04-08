@@ -70,7 +70,8 @@ class RequestCache:
         response = self.get(url)
         if response is None:
             response = requests.get(url, timeout=timeout)
-            self.set(url, response)
+            if response.status_code == requests.codes.ok:
+                self.set(url, response)
         return response
 
     def clear(self) -> None:
