@@ -91,7 +91,7 @@ def test_host_processing_insdc(mock_session: MagicMock) -> None:
     result = process_all([entry], "temp", config)
     metadata = result[0].processed_entry.data.metadata
 
-    assert metadata["hostTaxonId"] == "7159"
+    assert metadata["hostTaxonId"] == 7159
     assert metadata["hostNameScientific"] == "Aedes aegypti"
     assert metadata["hostNameCommon"] == "yellow fever mosquito"
     assert result[0].processed_entry.errors == []
