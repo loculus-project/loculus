@@ -20,6 +20,8 @@ type BarPlotProps = {
     emptyCount?: number;
 };
 
+const MAX_LABEL_LENGTH = 12;
+
 export const BarPlot: FC<BarPlotProps> = ({ data, options, description, emptyCount }) => {
     const [isRegistered, setIsRegistered] = useState(false);
 
@@ -50,6 +52,14 @@ export const BarPlot: FC<BarPlotProps> = ({ data, options, description, emptyCou
                         x: {
                             grid: {
                                 color: 'rgba(0, 0, 0, 0)',
+                            },
+                            ticks: {
+                                callback: function (value) {
+                                    const label = this.getLabelForValue(value as number);
+                                    return label.length > MAX_LABEL_LENGTH
+                                        ? label.slice(0, MAX_LABEL_LENGTH) + '...'
+                                        : label;
+                                },
                             },
                         },
                     },
