@@ -1,10 +1,11 @@
 ---
+import type { Result } from 'neverthrow';
+
 import { PipelineStatisticsTable } from '../../components/AdminDashboard/PipelineStatisticsTable';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { createBackendClient } from '../../services/backendClientFactory';
 import type { CurrentPipelineVersions, ProblemDetail } from '../../types/backend';
 import { getAccessToken } from '../../utils/getAccessToken';
-import type { Result } from 'neverthrow';
 
 const accessToken = getAccessToken(Astro.locals.session);
 let statisticsResult;
