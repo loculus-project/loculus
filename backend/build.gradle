@@ -8,8 +8,8 @@ plugins {
     // Check here: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
     // To bump gradle version run: `./gradlew wrapper --gradle-version=VERSION && ./gradlew wrapper`
     // Then commit the changes
-    id 'org.jetbrains.kotlin.jvm' version '2.3.10'
-    id 'org.jetbrains.kotlin.plugin.spring' version '2.3.10'
+    id 'org.jetbrains.kotlin.jvm' version '2.3.20'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.3.20'
     id 'org.jlleitschuh.gradle.ktlint' version '14.2.0'
     id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
 }
@@ -57,7 +57,7 @@ dependencies {
     implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.keycloak:keycloak-admin-client:26.0.8"
     implementation("io.minio:minio:8.6.0")
-    implementation("software.amazon.awssdk:s3:2.42.10")
+    implementation("software.amazon.awssdk:s3:2.42.30")
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
@@ -77,9 +77,9 @@ dependencies {
     testImplementation "io.jsonwebtoken:jjwt-impl"
     testImplementation "io.jsonwebtoken:jjwt-jackson"
     testImplementation "com.ninja-squad:springmockk:5.0.1"
-    testImplementation "org.testcontainers:testcontainers:2.0.3"
-    testImplementation "org.testcontainers:testcontainers-postgresql:2.0.3"
-    testImplementation "org.testcontainers:testcontainers-minio:2.0.3"
+    testImplementation "org.testcontainers:testcontainers:2.0.4"
+    testImplementation "org.testcontainers:testcontainers-postgresql:2.0.4"
+    testImplementation "org.testcontainers:testcontainers-minio:2.0.4"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.junit.platform:junit-platform-launcher"
     ktlint("com.pinterest.ktlint:ktlint-cli:1.8.0") {
