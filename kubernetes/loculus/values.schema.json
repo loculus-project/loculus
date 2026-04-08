@@ -1242,6 +1242,12 @@
       "type": "string",
       "description": "Email address that users can submit issues to"
     },
+    "allowedExternalRedirectDomains": {
+      "groups": ["general"],
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of external domains allowed to receive authentication tokens via /auth/authorize. If not set, any domain is allowed (with user consent)."
+    },
     "sequenceFlagging": {
       "type": "object",
       "properties": {
