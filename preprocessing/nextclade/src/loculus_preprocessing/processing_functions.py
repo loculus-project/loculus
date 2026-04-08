@@ -70,14 +70,14 @@ class RequestCache:
         if it does.
 
         If `url` is not in the cache, make the actual request (with timeout and retries).
-        Add the Response to the cache (if status code <500), and return the Response.
+        Add the Response to the cache (if status code in the 200s), and return the Response.
 
         Since request.get can error, the caller should wrap this in a try/except block and handle errors
         """
         response = self.get(url)
         if response is None:
             response = self.session.get(url, timeout=timeout)
-            if response.status_code < 500:
+            if 200 <= response.status_code < 300:
                 self.set(url, response)
         return response
 
@@ -1420,7 +1420,7 @@ class ProcessingFunctions:
         the root of the taxonomy)
         """
         # for INSDC-ingested sequences we just return the id INSDC give us (if any)
-        # if we ever want to change this behaviour, we just have to remove this short-cirquit,
+        # if we ever want to change this behaviour, we just have to remove this short-circuit,
         # the rest of the function is set up to validate INSDC-ingested data as well
         if args["is_insdc_ingest_group"]:
             tax_id = input_data.get("hostTaxonId")
@@ -1539,7 +1539,7 @@ class ProcessingFunctions:
         args: FunctionArgs,
     ) -> ProcessingResult:
         # for INSDC-ingested sequences we just return the name INSDC give us (if any)
-        # if we ever want to change this behaviour, we just have to remove this short-cirquit,
+        # if we ever want to change this behaviour, we just have to remove this short-circuit,
         # the rest of the function is set up to validate INSDC-ingested data as well
         if args["is_insdc_ingest_group"]:
             return ProcessingResult(
