@@ -1409,7 +1409,7 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        """Validates that the hostIdentifier exists
+        """Validates that the host exists
         in NCBI's taxonomy. Checks either the hostTaxonId or the
         hostNameScientific, depending on the input.
 
@@ -1451,11 +1451,11 @@ class ProcessingFunctions:
                 ],
             )
 
-        # hostIdentifier will exist only for direct submissions
+        # host will exist only for direct submissions
         # hostTaxonId and hostNameScientific are noInput, so the only case where they exist is
         # for INSDC ingested sequences or for legacy direct submissions
         unvalidated = (
-            input_data.get("hostIdentifier")
+            input_data.get("host")
             or input_data.get("hostTaxonId")
             or input_data.get("hostNameScientific")
         )

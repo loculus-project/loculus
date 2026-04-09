@@ -1187,7 +1187,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         preprocessing:
           function: validate_host
           inputs:
-            hostIdentifier: hostIdentifier
+            host: host
             hostNameScientific: hostNameScientific
             hostTaxonId: hostTaxonId
           args:
@@ -1420,8 +1420,8 @@ defaultOrganismConfig: &defaultOrganismConfig
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
     extraInputFields:
-      - &hostIdentifierConfig
-        name: hostIdentifier
+      - &hostConfig
+        name: host
         type: string
         displayName: "Host identifier"
         definition: "NCBI taxon ID or scientific name that uniquely identifies the host from which the sample was collected."
@@ -1460,7 +1460,7 @@ defaultOrganisms:
       organismName: "Ebola Sudan"
       image: "/images/organisms/ebolasudan_small.jpg"
       extraInputFields:
-        - <<: *hostIdentifierConfig
+        - <<: *hostConfig
         - name: id
           displayName: ID
           definition: "Unique identifier for your Ebola Sudan sample"
@@ -1535,7 +1535,7 @@ defaultOrganisms:
         - name: "Country map"
           url: "https://mapoplexus.genomium.org/?url={{[metadata+accessionVersion,accession,version,geoLocAdmin1,geoLocAdmin2,geoLocCity,geoLocCountry,geoLocSite,hostNameCommon,hostNameScientific,authors,sampleCollectionDate]}}"
       extraInputFields:
-        - <<: *hostIdentifierConfig
+        - <<: *hostConfig
           desired: false
           required: true
       metadataAdd:
@@ -1573,7 +1573,7 @@ defaultOrganisms:
           preprocessing:
             function: validate_host
             inputs:
-              hostIdentifier: hostIdentifier
+              host: host
               hostNameScientific: hostNameScientific
               hostTaxonId: hostTaxonId
             args:

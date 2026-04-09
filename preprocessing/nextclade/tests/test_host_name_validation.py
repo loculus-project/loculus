@@ -59,7 +59,7 @@ def test_host_processing_direct_submission(mock_session: MagicMock) -> None:
     assert config.processing_order[0] == "hostTaxonId"
 
     entry = make_entry(
-        metadata={"hostIdentifier": "Aedes aegypti"},
+        metadata={"host": "Aedes aegypti"},
         group_id=config.insdc_ingest_group_id + 1,  # direct submission — not INSDC
     )
 
@@ -127,12 +127,12 @@ def test_host_processing_invalid_hostname(mock_session: MagicMock) -> None:
 
 @patch.object(processing_functions.taxonomy_cache, "session")
 def test_host_processing_invalid_identifier_direct_submission(mock_session: MagicMock) -> None:
-    """When a direct submitter provides an invalid hostIdentifier, validation fails with an error."""
+    """When a direct submitter provides an invalid host, validation fails with an error."""
     mock_session.get.return_value = make_response(404, {"detail": "not found"})
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
 
     entry = make_entry(
-        metadata={"hostIdentifier": "not a real species"},
+        metadata={"host": "not a real species"},
         group_id=config.insdc_ingest_group_id + 1,  # direct submission — not INSDC
     )
 
