@@ -99,12 +99,12 @@ def prepped_metadata():
 
 
 rule all:
-    params:
-        config=lambda wildcards: str(config),
     input:
         "results/submitted",
         "results/revised",
         "results/approved",
+    params:
+        config=lambda wildcards: str(config),
 
 
 rule clean:
