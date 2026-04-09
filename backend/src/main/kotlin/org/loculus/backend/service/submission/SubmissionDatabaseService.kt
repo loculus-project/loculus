@@ -167,7 +167,7 @@ class SubmissionDatabaseService(
             .select(
                 table.accessionColumn,
                 table.versionColumn,
-                table.originalDataColumn,
+                table.unprocessedDataColumn,
                 table.submissionIdColumn,
                 table.submitterColumn,
                 table.groupIdColumn,
@@ -193,7 +193,7 @@ class SubmissionDatabaseService(
             .map { chunk ->
                 val chunkOfUnprocessedData = chunk.map {
                     val originalData = compressionService.decompressSequencesInOriginalData(
-                        it[table.originalDataColumn]!!,
+                        it[table.unprocessedDataColumn]!!,
                     )
                     val originalDataWithFileUrls = OriginalDataWithFileUrls(
                         originalData.metadata,
@@ -1127,7 +1127,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesTable.accessionVersionIsIn(listOf(editedSequenceEntryData))
             },
         ) {
-            it[originalDataColumn] = compressionService
+            it[unprocessedDataColumn] = compressionService
                 .compressSequencesInOriginalData(editedSequenceEntryData.data, organism)
         }
 
@@ -1164,7 +1164,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.groupIdColumn,
             SequenceEntriesView.statusColumn,
             SequenceEntriesView.processedDataColumn,
-            SequenceEntriesView.originalDataColumn,
+            SequenceEntriesView.unprocessedDataColumn,
             SequenceEntriesView.errorsColumn,
             SequenceEntriesView.warningsColumn,
             SequenceEntriesView.isRevocationColumn,
@@ -1189,7 +1189,7 @@ class SubmissionDatabaseService(
                 organism,
             ),
             originalData = compressionService.decompressSequencesInOriginalData(
-                selectedSequenceEntry[SequenceEntriesView.originalDataColumn]!!,
+                selectedSequenceEntry[SequenceEntriesView.unprocessedDataColumn]!!,
             ),
             errors = selectedSequenceEntry[SequenceEntriesView.errorsColumn],
             warnings = selectedSequenceEntry[SequenceEntriesView.warningsColumn],
@@ -1257,7 +1257,7 @@ class SubmissionDatabaseService(
         statusesFilter: List<Status>?,
         fields: List<String>?,
     ): Sequence<AccessionVersionOriginalMetadata> {
-        val originalMetadata = SequenceEntriesView.originalDataColumn
+        val originalMetadata = SequenceEntriesView.unprocessedDataColumn
             // It's actually <Map<String, String>?> but exposed does not support nullable types here
             .extract<Map<String, String>>("metadata")
             .alias("original_metadata")

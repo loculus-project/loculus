@@ -208,6 +208,7 @@ class UploadDatabaseService(
                 submitter,
                 group_id,
                 submitted_at,
+                unprocessed_data,
                 original_data
             )
             SELECT
@@ -218,6 +219,12 @@ class UploadDatabaseService(
                 m.submitter,
                 m.group_id,
                 m.uploaded_at,
+                jsonb_build_object(
+                    'metadata', m.metadata,
+                    'files',    m.files,
+                    'unalignedNucleotideSequences',
+                    COALESCE(x.seq_map, '{}'::jsonb)
+                ),
                 jsonb_build_object(
                     'metadata', m.metadata,
                     'files',    m.files,
