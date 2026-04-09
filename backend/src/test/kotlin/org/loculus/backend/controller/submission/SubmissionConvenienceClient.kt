@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.AccessionVersionOriginalMetadata
+import org.loculus.backend.api.AccessionVersionUnprocessedMetadata
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.EditedSequenceEntryData
@@ -499,7 +499,7 @@ class SubmissionConvenienceClient(
     fun getReleasedData(organism: String = DEFAULT_ORGANISM) =
         client.getReleasedData(organism).expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
 
-    fun getOriginalMetadata(
+    fun getUnprocessedMetadata(
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
         groupIdsFilter: List<Int>? = null,
@@ -507,7 +507,7 @@ class SubmissionConvenienceClient(
         fields: List<String>? = null,
         compression: String? = null,
     ) = client
-        .getOriginalMetadata(
+        .getUnprocessedMetadata(
             organism = organism,
             jwt = jwt,
             groupIdsFilter = groupIdsFilter,
@@ -515,7 +515,7 @@ class SubmissionConvenienceClient(
             fields = fields,
             compression = compression,
         )
-        .expectNdjsonAndGetContent<AccessionVersionOriginalMetadata>()
+        .expectNdjsonAndGetContent<AccessionVersionUnprocessedMetadata>()
 
     private inline fun <reified T> deserializeJsonResponse(resultActions: ResultActions): T {
         val content =

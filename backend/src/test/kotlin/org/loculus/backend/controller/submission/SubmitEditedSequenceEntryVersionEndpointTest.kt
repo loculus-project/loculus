@@ -83,23 +83,23 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     }
 
     @Test
-    fun `GIVEN a sequence entry is processed WHEN I submit edited data THEN has changed original data`() {
+    fun `GIVEN a sequence entry is processed WHEN I submit edited data THEN has changed unprocessed data`() {
         val firstAccession = convenienceClient.prepareDataTo(Status.PROCESSED)
             .map { it.accession }
             .first()
 
-        val entryBeforeEdit = convenienceClient.getOriginalMetadata()
+        val entryBeforeEdit = convenienceClient.getUnprocessedMetadata()
             .find { it.accession == firstAccession && it.version == 1L }!!
-        assertThat(entryBeforeEdit.originalMetadata, `is`(not(anEmptyMap())))
+        assertThat(entryBeforeEdit.unprocessedMetadata, `is`(not(anEmptyMap())))
 
         val editedData = generateEditedData(firstAccession)
 
         client.submitEditedSequenceEntryVersion(editedData)
             .andExpect(status().isNoContent)
 
-        val entryAfterEdit = convenienceClient.getOriginalMetadata()
+        val entryAfterEdit = convenienceClient.getUnprocessedMetadata()
             .find { it.accession == firstAccession && it.version == 1L }!!
-        assertThat(entryAfterEdit.originalMetadata, `is`(anEmptyMap()))
+        assertThat(entryAfterEdit.unprocessedMetadata, `is`(anEmptyMap()))
     }
 
     @Test
