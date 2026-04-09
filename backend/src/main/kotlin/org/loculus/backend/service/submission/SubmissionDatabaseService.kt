@@ -39,7 +39,7 @@ import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.ForUpdate
 import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.MODE
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.AccessionVersionOriginalMetadata
+import org.loculus.backend.api.AccessionVersionUnprocessedMetadata
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
@@ -1215,7 +1215,7 @@ class SubmissionDatabaseService(
                 )
             }
 
-    private fun originalMetadataFilter(
+    private fun unprocessedMetadataFilter(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupIdsFilter: List<Int>?,
@@ -1233,7 +1233,7 @@ class SubmissionDatabaseService(
         return conditions
     }
 
-    fun countOriginalMetadata(
+    fun countUnprocessedMetadata(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupIdsFilter: List<Int>?,
@@ -1241,7 +1241,7 @@ class SubmissionDatabaseService(
     ): Long = SequenceEntriesView
         .selectAll()
         .where(
-            originalMetadataFilter(
+            unprocessedMetadataFilter(
                 authenticatedUser,
                 organism,
                 groupIdsFilter,
@@ -1250,28 +1250,28 @@ class SubmissionDatabaseService(
         )
         .count()
 
-    fun streamOriginalMetadata(
+    fun streamUnprocessedMetadata(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
         fields: List<String>?,
-    ): Sequence<AccessionVersionOriginalMetadata> {
-        val originalMetadata = SequenceEntriesView.unprocessedDataColumn
+    ): Sequence<AccessionVersionUnprocessedMetadata> {
+        val unprocessedMetadata = SequenceEntriesView.unprocessedDataColumn
             // It's actually <Map<String, String>?> but exposed does not support nullable types here
             .extract<Map<String, String>>("metadata")
-            .alias("original_metadata")
+            .alias("unprocessed_metadata")
 
         return SequenceEntriesView
             .select(
-                originalMetadata,
+                unprocessedMetadata,
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
                 SequenceEntriesView.isRevocationColumn,
             )
             .where(
-                originalMetadataFilter(
+                unprocessedMetadataFilter(
                     authenticatedUser,
                     organism,
                     groupIdsFilter,
@@ -1283,10 +1283,10 @@ class SubmissionDatabaseService(
             .map {
                 // Revoked sequences have no original metadata, hence null can happen
                 @Suppress("USELESS_ELVIS")
-                val metadata = it[originalMetadata] ?: null
+                val metadata = it[unprocessedMetadata] ?: null
                 val selectedMetadata = fields?.associateWith { field -> metadata?.get(field) }
                     ?: metadata
-                AccessionVersionOriginalMetadata(
+                AccessionVersionUnprocessedMetadata(
                     it[SequenceEntriesView.accessionColumn],
                     it[SequenceEntriesView.versionColumn],
                     it[SequenceEntriesView.submitterColumn],
