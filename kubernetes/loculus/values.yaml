@@ -1195,8 +1195,16 @@ defaultOrganismConfig: &defaultOrganismConfig
           label: Host
         header: "Host"
         ingest: ncbiHostTaxId
-        desired: true
+        noInput: true
         orderOnDetailsPage: 1540
+        preprocessing:
+          function: validate_host
+          inputs:
+            host: host
+            hostNameScientific: hostNameScientific
+            hostTaxonId: hostTaxonId
+          args:
+            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       - name: hostNameScientific
         displayName: Host name - scientific
         generateIndex: true
@@ -1207,8 +1215,15 @@ defaultOrganismConfig: &defaultOrganismConfig
           label: Host
         header: "Host"
         ingest: ncbiHostName
-        desired: true
+        noInput: true
         orderOnDetailsPage: 1560
+        preprocessing:
+          function: scientific_name_from_id
+          inputs:
+            hostTaxonId: processed.hostTaxonId
+            hostNameScientific: hostNameScientific
+          args:
+            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       - name: hostNameCommon
         displayName: Host name - common
         generateIndex: true
@@ -1219,7 +1234,14 @@ defaultOrganismConfig: &defaultOrganismConfig
           label: Host
         header: "Host"
         ingest: ncbiHostCommonName
+        noInput: true
         orderOnDetailsPage: 1580
+        preprocessing:
+          function: common_name_from_id
+          inputs:
+            hostTaxonId: processed.hostTaxonId
+          args:
+            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       - name: isLabHost
         displayName: Is lab host
         type: boolean
@@ -1410,7 +1432,18 @@ defaultOrganismConfig: &defaultOrganismConfig
         - length
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
-    extraInputFields: []
+    extraInputFields:
+      - &hostConfig
+        name: host
+        type: string
+        displayName: "Host"
+        definition: "NCBI taxon ID or scientific name that uniquely identifies the host from which the sample was collected."
+        guidance: "You can provide either the scientific name of the organism (e.g., Aedes aegypti) or its NCBI taxon ID (e.g., 7159) in this field. We will validate your input and use it to populate the `host common name` and `host scientific name` fields. When uploading data from a pooled sample, we recommend using a higher-level taxon that includes all host organisms in the sample pool. For example, you can use 'Culicidae' when uploading data for a pooled mosquito sample (in addition to setting the `specimenProcessing` field to 'Samples pooled', see [OBI:0600016])."
+        example: "Aedes aegypti"
+        hideInSearchResultsTable: true
+        hideOnSequenceDetailsPage: true
+        desired: true
+        position: last
   preprocessing:
     - &preprocessing
       version: 1
@@ -1418,6 +1451,8 @@ defaultOrganismConfig: &defaultOrganismConfig
       args:
         - "prepro"
       replicas: 1
+      taxonomyServiceArgs: &preprocessingTaxonomyServiceArgs
+        taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         batch_size: 100
@@ -1438,6 +1473,7 @@ defaultOrganisms:
       organismName: "Ebola Sudan"
       image: "/images/organisms/ebolasudan_small.jpg"
       extraInputFields:
+        - <<: *hostConfig
         - name: id
           displayName: ID
           definition: "Unique identifier for your Ebola Sudan sample"
@@ -1511,6 +1547,10 @@ defaultOrganisms:
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/wnv/all-lineages&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output"
         - name: "Country map"
           url: "https://mapoplexus.genomium.org/?url={{[metadata+accessionVersion,accession,version,geoLocAdmin1,geoLocAdmin2,geoLocCity,geoLocCountry,geoLocSite,hostNameCommon,hostNameScientific,authors,sampleCollectionDate]}}"
+      extraInputFields:
+        - <<: *hostConfig
+          desired: false
+          required: true
       metadataAdd:
         - name: displayName
           displayName: Display name
@@ -1530,6 +1570,27 @@ defaultOrganisms:
               # - Last field is a date in format YYYY, YYYY-MM, or YYYY-MM-DD
               # - Identifier is the second to last field (extracted through named capture group)
               regex_pattern: '^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$'
+        - name: hostTaxonId
+          type: int
+          autocomplete: true
+          displayName: "Host species"
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
+            label: Host
+          header: "Host"
+          ingest: ncbiHostTaxId
+          noInput: true
+          required: true
+          orderOnDetailsPage: 1540
+          preprocessing:
+            function: validate_host
+            inputs:
+              host: host
+              hostNameScientific: hostNameScientific
+              hostTaxonId: hostTaxonId
+            args:
+              taxonomy_service_url: "http://loculus-taxonomy-service:5000"
         - name: lineage
           displayName: Lineage
           isSequenceFilter: true

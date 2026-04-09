@@ -41,12 +41,12 @@ test_case_definitions = [
                 ProcessingAnnotationHelper(
                     ["name_required"],
                     ["name_required"],
-                    "Metadata field name_required is required.",
+                    "Metadata field `name_required` is required.",
                 ),
                 ProcessingAnnotationHelper(
                     ["ncbi_required_collection_date"],
                     ["required_collection_date"],
-                    "Metadata field required_collection_date is required.",
+                    "Metadata field `required_collection_date` is required. Please provide input metadata field(s): `ncbi_required_collection_date`",
                 ),
             ]
         ),
@@ -64,7 +64,7 @@ test_case_definitions = [
                 ProcessingAnnotationHelper(
                     ["ncbi_required_collection_date"],
                     ["required_collection_date"],
-                    "Metadata field required_collection_date is required.",
+                    "Metadata field `required_collection_date` is required. Please provide input metadata field(s): `ncbi_required_collection_date`",
                 ),
             ]
         ),
