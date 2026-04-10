@@ -84,4 +84,6 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     fun groupIsOneOf(groupIds: List<Int>) = groupIdColumn inList groupIds
 
     fun submitterIsOneOf(submitterNames: List<String>) = submitterColumn inList submitterNames
+
+    fun accessionIsOneOf(accessions: List<String>) = accessionColumn inList accessions
 }

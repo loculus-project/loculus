@@ -10,6 +10,8 @@ import {
     sequenceEntryToEdit,
     pipelineVersionStatistics,
     currentPipelineVersions,
+    accessionVersionWithOrganism,
+    type AccessionVersionWithOrganism,
     type ProblemDetail,
     type CompleteMultipartUploadRequest,
 } from '../types/backend.ts';
@@ -95,6 +97,36 @@ export class BackendClient {
             fileIdsAndEtags,
             undefined,
         );
+    }
+
+    public async getSequenceEntryVersions(params: {
+        accessions?: string[];
+        accessionVersions?: string[];
+    }): Promise<AccessionVersionWithOrganism[]> {
+        const searchParams = new URLSearchParams();
+        for (const acc of params.accessions ?? []) {
+            searchParams.append('accessions', acc);
+        }
+        for (const av of params.accessionVersions ?? []) {
+            searchParams.append('accessionVersions', av);
+        }
+        try {
+            const response = await axios.get(`${this.url}/get-sequence-entry-versions`, {
+                params: searchParams,
+                responseType: 'text',
+            });
+            const lines = (response.data as string).split('\n').filter((line) => line.trim() !== '');
+            const results: AccessionVersionWithOrganism[] = [];
+            for (const line of lines) {
+                const parsed = accessionVersionWithOrganism.safeParse(JSON.parse(line));
+                if (parsed.success) {
+                    results.push(parsed.data);
+                }
+            }
+            return results;
+        } catch {
+            return [];
+        }
     }
 
     public async isInDebugMode() {
