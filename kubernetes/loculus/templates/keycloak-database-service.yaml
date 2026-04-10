@@ -2,12 +2,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: loculus-keycloak-database-service
+  name: {{ include "loculus.keycloakDatabaseServiceName" . }}
 spec:
   type: ClusterIP
   selector:
     app: loculus
-    component: keycloak-database
+    component: keycloak-database-{{ if not .Values.developmentDatabasePersistence }}{{ include "loculus.dockerTag" .Values | trim }}{{ end }}
   ports:
     - port: 5432
 {{- end }}

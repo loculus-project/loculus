@@ -1,4 +1,4 @@
-{{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- $dockerTag := include "loculus.dockerTag" .Values | trim }}
 {{- if .Values.runDevelopmentKeycloakDatabase }}
 apiVersion: apps/v1
 kind: Deployment
@@ -11,7 +11,7 @@ spec:
   selector:
     matchLabels:
       app: loculus
-      component: keycloak-database
+      component: keycloak-database-{{ if not .Values.developmentDatabasePersistence }}{{ include "loculus.dockerTag" .Values | trim }}{{ end }}
   strategy:
     type: Recreate
   template:
@@ -20,7 +20,7 @@ spec:
         timestamp: {{ now | quote }}
       labels:
         app: loculus
-        component: keycloak-database
+        component: keycloak-database-{{ if not .Values.developmentDatabasePersistence }}{{ include "loculus.dockerTag" .Values | trim }}{{ end }}
     spec:
       containers:
         - name: loculus-keycloak-database
