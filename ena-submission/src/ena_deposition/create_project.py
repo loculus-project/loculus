@@ -106,9 +106,7 @@ def set_project_table_entry(db_config: Engine, config: Config, row: SubmissionTa
     seq_key = {"accession": row.accession, "version": row.version}
     bioproject = row.seq_metadata["bioprojectAccession"]
 
-    corresponding_group = find_conditions_in_db(
-        db_config, ProjectTableEntry, conditions=group_key
-    )
+    corresponding_group = find_conditions_in_db(db_config, ProjectTableEntry, conditions=group_key)
     corresponding_project = [
         project
         for project in corresponding_group
@@ -186,9 +184,7 @@ def submission_table_start(db_config: Engine, config: Config):
     4. Else create corresponding entry in project_table
     """
     conditions = {"status_all": str(StatusAll.READY_TO_SUBMIT)}
-    ready_to_submit = find_conditions_in_db(
-        db_config, SubmissionTableEntry, conditions=conditions
-    )
+    ready_to_submit = find_conditions_in_db(db_config, SubmissionTableEntry, conditions=conditions)
     logger.debug(
         f"Found {len(ready_to_submit)} entries in submission_table in status READY_TO_SUBMIT"
     )
@@ -340,8 +336,7 @@ def project_table_create(
                 "finished_at": datetime.now(tz=pytz.utc),
             }
             logger.info(
-                f"Project creation succeeded for group_id {row.group_id} "
-                f"organism {row.organism}"
+                f"Project creation succeeded for group_id {row.group_id} organism {row.organism}"
             )
         else:
             update_values = {

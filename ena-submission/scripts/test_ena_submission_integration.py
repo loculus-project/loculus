@@ -113,13 +113,16 @@ def assert_bioproject_accession(
 
 def delete_all_records(db_config: Engine) -> None:
     logger.debug("Deleting all records from all deposition tables except flyway")
-    for model_class in [SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry]:
+    for model_class in [
+        SubmissionTableEntry,
+        ProjectTableEntry,
+        SampleTableEntry,
+        AssemblyTableEntry,
+    ]:
         delete_records_in_db(db_config, model_class, {})
 
 
-def check_sequences_uploaded(
-    db_config: Engine, sequences_to_upload: dict[str, Any]
-) -> None:
+def check_sequences_uploaded(db_config: Engine, sequences_to_upload: dict[str, Any]) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         assert in_submission_table(
@@ -145,9 +148,7 @@ def check_project_submission_started(
         ), f"Project {group_id} for {full_accession} not found in project table."
 
 
-def check_sample_submission_started(
-    db_config: Engine, sequences_to_upload: dict[str, Any]
-) -> None:
+def check_sample_submission_started(db_config: Engine, sequences_to_upload: dict[str, Any]) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         assert (
@@ -278,9 +279,7 @@ def check_assembly_submission_with_nuc_without_gca(
         assert rows[0].result.get("gca_accession") is None
 
 
-def check_sent_to_loculus(
-    db_config: Engine, sequences_to_upload: dict[str, Any]
-) -> None:
+def check_sent_to_loculus(db_config: Engine, sequences_to_upload: dict[str, Any]) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         assert in_submission_table(
@@ -351,9 +350,7 @@ def set_db_to_known_erz_accession(
                 db_config,
                 AssemblyTableEntry,
                 {"accession": accession, "version": version},
-                {
-                    "result": {"erz_accession": erz_accession, "segment_order": segment_order}
-                },
+                {"result": {"erz_accession": erz_accession, "segment_order": segment_order}},
             )
         if organism == "west-nile":
             update_db_where_conditions(

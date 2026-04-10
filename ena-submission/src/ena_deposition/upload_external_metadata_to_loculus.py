@@ -53,9 +53,7 @@ def _get_result_of_single_db_record(
     return result
 
 
-def get_bioproject_accession_from_db(
-    db_config: Engine, project_id: int
-) -> dict[str, str]:
+def get_bioproject_accession_from_db(db_config: Engine, project_id: int) -> dict[str, str]:
     result = _get_result_of_single_db_record(
         db_config, ProjectTableEntry, conditions={"project_id": project_id}
     )
@@ -147,9 +145,7 @@ def get_external_metadata_to_upload(
     }, all([bioproject_accession, biosample_accession, all_assemblies_present])
 
 
-def get_external_metadata_and_send_to_loculus(
-    db_config: Engine, config: Config
-) -> None:
+def get_external_metadata_and_send_to_loculus(db_config: Engine, config: Config) -> None:
     for status in (
         StatusAll.SUBMITTED_PROJECT,
         StatusAll.SUBMITTED_SAMPLE,
