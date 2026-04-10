@@ -135,19 +135,21 @@ def query_taxa(
 
 @app.get("/taxa/{tax_id}")
 def get_taxon(
-    tax_id: int, db: DbConnection, find_common_name: bool = False
+    tax_id: int,
+    db: DbConnection,
+    find_common_name: bool = False,
 ) -> dict[str, str | int | None]:
-    if find_common_name:
-        taxon = fetch_common_name(db, tax_id)
-        if taxon is None:
-            raise HTTPException(
-                status_code=404, detail=f"Unable to find common name for taxon {tax_id}"
-            )
-        return taxon
-
     taxon = fetch_by_id(db, tax_id)
     if taxon is None:
         raise HTTPException(status_code=404, detail=f"'{tax_id}' not found")
+
+    if find_common_name:
+        taxon_with_common_name = fetch_common_name(db, taxon["tax_id"])
+        if taxon_with_common_name is None:
+            raise HTTPException(
+                status_code=404, detail=f"Unable to find common name for taxon {tax_id}"
+            )
+        return taxon_with_common_name
 
     return taxon
 
