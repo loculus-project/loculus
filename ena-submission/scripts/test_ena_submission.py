@@ -258,7 +258,7 @@ class AssemblyCreationTests(unittest.TestCase):
         self.unaligned_sequences_multi = (
             sample_data_in_submission_table().unaligned_nucleotide_sequences
         )
-        self.unaligned_sequences = {
+        self.unaligned_sequences: dict[str, str | None] = {
             "main": "CTTAACTTTGAGAGAGTGAATT",
         }
         self.seq_key = "LOC_0001TLY"
@@ -290,7 +290,7 @@ class AssemblyCreationTests(unittest.TestCase):
             "sampleCollectionDate": "2024-01-01",
             "geoLocCountry": "Italy",
         }
-        unaligned_sequences = {
+        unaligned_sequences: dict[str, str | None] = {
             "main": "ATCGATCGATCG",
         }
 
