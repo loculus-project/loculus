@@ -8,7 +8,7 @@ import time
 from typing import Any
 
 import requests
-from psycopg2.pool import SimpleConnectionPool
+from sqlalchemy import Engine
 
 from .config import Config
 from .submission_db_helper import (
@@ -22,7 +22,7 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
-def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]):
+def upload_sequences(db_config: Engine, sequences_to_upload: dict[str, Any]):
     for full_accession, data in sequences_to_upload.items():
         accession_version = AccessionVersion.from_string(full_accession)
         if in_submission_table(
