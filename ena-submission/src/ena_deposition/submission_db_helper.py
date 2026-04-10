@@ -306,7 +306,9 @@ def delete_records_in_db[
         result = session.execute(stmt)
         session.commit()
         deleted_rows = result.rowcount
-    logger.debug(f"Deleted {deleted_rows} rows from '{model_class.__tablename__}' where {conditions}")
+    logger.debug(
+        f"Deleted {deleted_rows} rows from '{model_class.__tablename__}' where {conditions}"
+    )
     return deleted_rows
 
 
