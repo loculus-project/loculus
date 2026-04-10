@@ -7,6 +7,7 @@ import { SeqSetItemActions } from '../../components/SeqSetCitations/SeqSetItemAc
 import { getSeqSetStatistics } from '../../components/SeqSetCitations/getSeqSetStatistics.ts';
 import { getRuntimeConfig, seqSetsAreEnabled, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { routes } from '../../routes/routes';
 import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
 import type { ProblemDetail } from '../../types/backend';
 import type { SeqSet } from '../../types/seqSetCitation';
@@ -31,8 +32,7 @@ if (!seqSetsAreEnabled()) {
 }
 
 const seqSetClient = SeqSetCitationClient.create();
-
-const seqSetVersionsResponse = await seqSetClient.call('getSeqSet', { params: { seqSetId, version } });
+const seqSetVersionsResponse = await seqSetClient.call('getSeqSetVersions', { params: { seqSetId } });
 const seqSetRecordsResponse = await seqSetClient.call('getSeqSetRecords', { params: { seqSetId, version } });
 const seqSetCitedByResponse = await seqSetClient.call('getSeqSetCitedBy', { params: { seqSetId, version } });
 
@@ -47,6 +47,9 @@ const getSeqSetByVersion = (seqSetVersions: SeqSet[], version: string) => {
 };
 
 const seqSetResponse = seqSetVersionsResponse.map((seqSetVersions) => getSeqSetByVersion(seqSetVersions, version));
+const latestSeqSetVersion = seqSetVersionsResponse.isOk()
+    ? Math.max(...seqSetVersionsResponse.value.map((s) => s.seqSetVersion))
+    : undefined;
 const seqSetAuthorResponse = seqSetResponse.isOk()
     ? await seqSetClient.getAuthor(seqSetResponse.value.createdBy)
     : err();
@@ -77,6 +80,19 @@ const secondaryErrors = (
     data-testid='seqSets-item-container'
     activeTopNavigationItem='seqsets'
 >
+    {
+        seqSetResponse.isOk() && latestSeqSetVersion && seqSetResponse.value.seqSetVersion < latestSeqSetVersion && (
+            <div class='bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 space-y-2' role='alert'>
+                <p class='font-bold'>This is not the latest version of this SeqSet entry.</p>
+                <p>
+                    The latest version is:
+                    <a href={routes.seqSetPage(`${seqSetId}.${latestSeqSetVersion}`)} class='font-bold underline mx-1'>
+                        {`${seqSetId}.${latestSeqSetVersion}`}
+                    </a>
+                </p>
+            </div>
+        )
+    }
     {
         seqSetResponse.isOk() && seqSetRecordsResponse.isOk() ? (
             <div class='mt-12'>
