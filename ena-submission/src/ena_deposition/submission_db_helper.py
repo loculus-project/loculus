@@ -9,7 +9,7 @@ from enum import StrEnum
 from typing import Any, Final
 
 import pytz
-from sqlalchemy import Engine, create_engine, func, or_, select, update
+from sqlalchemy import Engine, create_engine, delete, func, or_, select, update
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -280,6 +280,34 @@ def find_conditions_in_db[
             col = getattr(model_class, col_name)
             stmt = stmt.where(col.is_(None)) if value is None else stmt.where(col == value)
         return list(session.scalars(stmt).all())
+
+
+def delete_records_in_db[
+    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
+](
+    engine: Engine,
+    model_class: type[T],
+    conditions: dict[str, Any],
+) -> int:
+    """Delete rows from *model_class*'s table matching every condition.
+
+    Each condition whose value is None generates an IS NULL check; others
+    generate an equality check.
+
+    Returns:
+        int: The number of rows deleted.
+    """
+    logger.debug(f"Deleting records from '{model_class.__tablename__}' where {conditions}")
+    with Session(engine) as session:
+        stmt = delete(model_class)
+        for col_name, value in conditions.items():
+            col = getattr(model_class, col_name)
+            stmt = stmt.where(col.is_(None)) if value is None else stmt.where(col == value)
+        result = session.execute(stmt)
+        session.commit()
+        deleted_rows = result.rowcount
+    logger.debug(f"Deleted {deleted_rows} rows from '{model_class.__tablename__}' where {conditions}")
+    return deleted_rows
 
 
 def find_errors_or_stuck_in_db[
