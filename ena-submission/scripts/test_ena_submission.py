@@ -19,11 +19,6 @@ from ena_deposition.create_assembly import (
 )
 from ena_deposition.create_project import construct_project_set_object
 from ena_deposition.create_sample import construct_sample_set_object
-from ena_deposition.submission_db_helper import (
-    ProjectTableEntry,
-    SampleTableEntry,
-    SubmissionTableEntry,
-)
 from ena_deposition.ena_submission_helper import (
     create_chromosome_list,
     create_ena_project,
@@ -43,6 +38,11 @@ from ena_deposition.ena_types import (
     default_sample_set_type,
 )
 from ena_deposition.loculus_models import Group
+from ena_deposition.submission_db_helper import (
+    ProjectTableEntry,
+    SampleTableEntry,
+    SubmissionTableEntry,
+)
 
 logger = logging.getLogger(__name__)
 
