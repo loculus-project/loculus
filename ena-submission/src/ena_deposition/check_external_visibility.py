@@ -18,7 +18,7 @@ from http import HTTPStatus
 
 import pytz
 import requests
-from psycopg2.pool import SimpleConnectionPool
+from sqlalchemy import Engine
 
 from ena_deposition.config import Config
 from ena_deposition.submission_db_helper import (
@@ -26,7 +26,6 @@ from ena_deposition.submission_db_helper import (
     ProjectTableEntry,
     SampleTableEntry,
     Status,
-    TableName,
     db_init,
     find_conditions_in_db,
     update_db_where_conditions,
@@ -45,7 +44,6 @@ class EntityType(Enum):
 class ColumnCheckConfig:
     """Configuration for checking a specific table column"""
 
-    table_name: TableName
     entry_class: type[ProjectTableEntry | SampleTableEntry | AssemblyTableEntry]
     visibility_column: str
     accession_field_name_prefix: str  # Field prefix in result dict (e.g. "insdc_accession_full")
@@ -152,28 +150,24 @@ class NCBIVisibilityChecker(VisibilityChecker):
 # Configuration mapping: (EntityType, column_name) -> ColumnCheckConfig
 COLUMN_CONFIGS = {
     (EntityType.PROJECT, "ena_first_publicly_visible"): ColumnCheckConfig(
-        table_name=TableName.PROJECT_TABLE,
         entry_class=ProjectTableEntry,
         visibility_column="ena_first_publicly_visible",
         accession_field_name_prefix="bioproject_accession",
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.PROJECT, "ncbi_first_publicly_visible"): ColumnCheckConfig(
-        table_name=TableName.PROJECT_TABLE,
         entry_class=ProjectTableEntry,
         visibility_column="ncbi_first_publicly_visible",
         accession_field_name_prefix="bioproject_accession",
         checker_class=NCBIVisibilityChecker,
     ),
     (EntityType.SAMPLE, "ena_first_publicly_visible"): ColumnCheckConfig(
-        table_name=TableName.SAMPLE_TABLE,
         entry_class=SampleTableEntry,
         visibility_column="ena_first_publicly_visible",
         accession_field_name_prefix="biosample_accession",
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.SAMPLE, "ncbi_first_publicly_visible"): ColumnCheckConfig(
-        table_name=TableName.SAMPLE_TABLE,
         entry_class=SampleTableEntry,
         visibility_column="ncbi_first_publicly_visible",
         accession_field_name_prefix="biosample_accession",
@@ -181,14 +175,12 @@ COLUMN_CONFIGS = {
     ),
     # Assemblies - ENA nucleotide accessions
     (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): ColumnCheckConfig(
-        table_name=TableName.ASSEMBLY_TABLE,
         entry_class=AssemblyTableEntry,
         visibility_column="ena_nucleotide_first_publicly_visible",
         accession_field_name_prefix="insdc_accession_full",  # Prefix for multi-segment accessions
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): ColumnCheckConfig(
-        table_name=TableName.ASSEMBLY_TABLE,
         entry_class=AssemblyTableEntry,
         visibility_column="ncbi_nucleotide_first_publicly_visible",
         accession_field_name_prefix="insdc_accession_full",  # Prefix for multi-segment accessions
@@ -196,14 +188,12 @@ COLUMN_CONFIGS = {
     ),
     # Assemblies - ENA GCA accessions
     (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): ColumnCheckConfig(
-        table_name=TableName.ASSEMBLY_TABLE,
         entry_class=AssemblyTableEntry,
         visibility_column="ena_gca_first_publicly_visible",
         accession_field_name_prefix="gca_accession",
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.ASSEMBLY, "ncbi_gca_first_publicly_visible"): ColumnCheckConfig(
-        table_name=TableName.ASSEMBLY_TABLE,
         entry_class=AssemblyTableEntry,
         visibility_column="ncbi_gca_first_publicly_visible",
         accession_field_name_prefix="gca_accession",
@@ -213,21 +203,17 @@ COLUMN_CONFIGS = {
 
 
 def get_entities_needing_column_check(
-    pool: SimpleConnectionPool, column_config: ColumnCheckConfig
+    engine: Engine, column_config: ColumnCheckConfig
 ) -> list[SampleTableEntry | ProjectTableEntry | AssemblyTableEntry]:
-    """Get entities (db rows for Project/Sample/Assembly) that don't have a timestamp
-    for a specific visibility column"""
-
-    data_in_submission_table: list[dict] = find_conditions_in_db(
-        pool,
-        table_name=column_config.table_name,
+    """Get entities that don't have a timestamp for a specific visibility column"""
+    return find_conditions_in_db(
+        engine,
+        column_config.entry_class,
         conditions={
             column_config.visibility_column: None,
-            "status": Status.SUBMITTED,
+            "status": str(Status.SUBMITTED),
         },
     )
-
-    return [column_config.entry_class(**row) for row in data_in_submission_table]
 
 
 def get_accessions_to_check(
@@ -258,7 +244,7 @@ def get_accessions_to_check(
 
 def check_and_update_visibility_for_column(
     config: Config,
-    pool: SimpleConnectionPool,
+    engine: Engine,
     entity_type: EntityType,
     column_name: str,
 ):
@@ -276,7 +262,7 @@ def check_and_update_visibility_for_column(
         return
 
     logger.debug(f"Checking {entity_type.value}.{column_name} for visibility")
-    entities_needing_check = get_entities_needing_column_check(pool, column_config)
+    entities_needing_check = get_entities_needing_column_check(engine, column_config)
     logger.info(
         f"Found {len(entities_needing_check)} {entity_type.value}s needing {column_name} check"
     )
@@ -318,8 +304,8 @@ def check_and_update_visibility_for_column(
                 "publicly visible, updating database."
             )
             updated_count = update_db_where_conditions(
-                pool,
-                table_name=column_config.table_name,
+                engine,
+                model_class=column_config.entry_class,
                 conditions=entity_id,
                 update_values={column_config.visibility_column: first_visible_timestamp},
             )
@@ -342,19 +328,19 @@ def check_and_update_visibility_for_column(
             )
 
 
-def check_and_update_visibility_all_columns(config: Config, pool: SimpleConnectionPool):
+def check_and_update_visibility_all_columns(config: Config, engine: Engine):
     """Check and update visibility for all configured (entity_type, column) combinations"""
 
     for entity_type, column_name in COLUMN_CONFIGS:
         try:
-            check_and_update_visibility_for_column(config, pool, entity_type, column_name)
+            check_and_update_visibility_for_column(config, engine, entity_type, column_name)
         except Exception as e:
             logger.error(f"Error checking {entity_type.value}.{column_name}: {e}", exc_info=True)
 
 
 def check_and_update_visibility(config: Config, stop_event: threading.Event):
     """Main loop function"""
-    pool = db_init(config.db_password, config.db_username, config.db_url)
+    engine = db_init(config.db_password, config.db_username, config.db_url)
 
     while True:
         start_time = time.time()
@@ -362,7 +348,7 @@ def check_and_update_visibility(config: Config, stop_event: threading.Event):
             logger.info("check_and_update_visibility stopped due to exception in another task")
             return
 
-        check_and_update_visibility_all_columns(config, pool)
+        check_and_update_visibility_all_columns(config, engine)
         logger.debug("check_and_update_visibility finished, sleeping for a while")
 
         gca_cache.clear()

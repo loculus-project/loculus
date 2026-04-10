@@ -3,12 +3,12 @@ import threading
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from psycopg2.extras import RealDictCursor
-from psycopg2.pool import SimpleConnectionPool
 from pydantic import BaseModel
+from sqlalchemy import Engine, select
+from sqlalchemy.orm import Session
 
 from .config import Config
-from .submission_db_helper import db_init
+from .submission_db_helper import AssemblyTableEntry, SampleTableEntry, Status, db_init
 
 logger = logging.getLogger(__name__)
 
@@ -21,39 +21,33 @@ class SubmittedAccessionsResponse(BaseModel):
     biosampleAccessions: list[str]  # noqa: N815
 
 
-def get_bio_sample_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, str]:
-    con = db_conn_pool.getconn()
-    try:
-        with con, con.cursor(cursor_factory=RealDictCursor) as cur:
-            query = "SELECT accession, result FROM sample_table WHERE STATUS = 'SUBMITTED'"
-            cur.execute(query)
-            results = cur.fetchall()
-    finally:
-        db_conn_pool.putconn(con)
-
-    return {result["accession"]: result["result"]["biosample_accession"] for result in results}
-
-
-def get_insdc_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, list[str]]:
-    con = db_conn_pool.getconn()
-    try:
-        with con, con.cursor(cursor_factory=RealDictCursor) as cur:
-            query = (
-                "SELECT accession, result FROM assembly_table "
-                "WHERE STATUS IN ('SUBMITTED', 'WAITING')"
-            )
-            cur.execute(query)
-            results = cur.fetchall()
-    finally:
-        db_conn_pool.putconn(con)
-
+def get_bio_sample_accessions(engine: Engine) -> dict[str, str]:
+    with Session(engine) as session:
+        stmt = select(SampleTableEntry).where(
+            SampleTableEntry.status == str(Status.SUBMITTED)
+        )
+        results = list(session.scalars(stmt).all())
     return {
-        result["accession"]: [
-            result["result"][key]
-            for key in result["result"]
+        row.accession: row.result["biosample_accession"]
+        for row in results
+        if row.result
+    }
+
+
+def get_insdc_accessions(engine: Engine) -> dict[str, list[str]]:
+    with Session(engine) as session:
+        stmt = select(AssemblyTableEntry).where(
+            AssemblyTableEntry.status.in_([str(Status.SUBMITTED), str(Status.WAITING)])
+        )
+        results = list(session.scalars(stmt).all())
+    return {
+        row.accession: [
+            row.result[key]
+            for key in row.result
             if key.startswith("insdc_accession_full")
         ]
-        for result in results
+        for row in results
+        if row.result
     }
 
 
@@ -69,11 +63,11 @@ def read_root():
 @app.get("/submitted", response_model=SubmittedAccessionsResponse)
 def submitted_insdc_accessions():
     config = app.state.config
-    db_conn_pool = db_init(config.db_password, config.db_username, config.db_url)
+    engine = db_init(config.db_password, config.db_username, config.db_url)
     try:
-        insdc_accessions = get_insdc_accessions(db_conn_pool)
+        insdc_accessions = get_insdc_accessions(engine)
         all_insdc_accessions = [item for sublist in insdc_accessions.values() for item in sublist]
-        bio_samples = list(get_bio_sample_accessions(db_conn_pool).values())
+        bio_samples = list(get_bio_sample_accessions(engine).values())
         return {
             "status": "ok",
             "insdcAccessions": all_insdc_accessions,
