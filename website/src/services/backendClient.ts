@@ -110,12 +110,11 @@ export class BackendClient {
         for (const av of params.accessionVersions ?? []) {
             searchParams.append('accessionVersions', av);
         }
+        console.log(`Requesting sequence entry versions with params: ${JSON.stringify(params)}`);
         try {
-            const response = await axios.get(`${this.url}/get-sequence-entry-versions`, {
-                params: searchParams,
-                responseType: 'text',
-            });
-            const lines = (response.data as string).split('\n').filter((line) => line.trim() !== '');
+            const response = await this.request('/get-sequence-entry-versions', 'GET', z.string(), undefined, undefined, undefined);
+            console.log(`Received response ${response} for sequence entry versions with params: ${JSON.stringify(params)}`);
+            const lines = (response?.unwrapOr("")).split('\n').filter((line) => line.trim() !== '');
             const results: AccessionVersionWithOrganism[] = [];
             for (const line of lines) {
                 const parsed = accessionVersionWithOrganism.safeParse(JSON.parse(line));
@@ -125,6 +124,7 @@ export class BackendClient {
             }
             return results;
         } catch {
+            console.error(`Failed to get sequence entry versions with params: ${JSON.stringify(params)}`);
             return [];
         }
     }
