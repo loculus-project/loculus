@@ -82,18 +82,21 @@ const secondaryErrors = (
 >
     {
         seqSetResponse.isOk() && latestSeqSetVersion && seqSetResponse.value.seqSetVersion < latestSeqSetVersion && (
-            <div
-                slot='banner'
-                class='bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 space-y-2'
-                role='alert'
-            >
-                <p class='font-bold'>This is not the latest version of this SeqSet entry.</p>
-                <p>
-                    The latest version is:
-                    <a href={routes.seqSetPage(`${seqSetId}.${latestSeqSetVersion}`)} class='font-bold underline mx-1'>
-                        {`${seqSetId}.${latestSeqSetVersion}`}
-                    </a>
-                </p>
+            <div slot='banner'>
+                <div class='pt-3'>
+                    <div class='bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3' role='alert'>
+                        <p class='font-bold'>This is not the latest version of this SeqSet entry.</p>
+                        <p>
+                            The latest version is:
+                            <a
+                                href={routes.seqSetPage(`${seqSetId}.${latestSeqSetVersion}`)}
+                                class='font-bold underline mx-1'
+                            >
+                                {`${seqSetId}.${latestSeqSetVersion}`}
+                            </a>
+                        </p>
+                    </div>
+                </div>
             </div>
         )
     }
