@@ -102,7 +102,7 @@ export class BackendClient {
     public async getSequenceEntryVersions(params: {
         accessions?: string[];
         accessionVersions?: string[];
-    }): Promise<AccessionVersionWithOrganism[]> {
+    }): Promise<Result<AccessionVersionWithOrganism[], ProblemDetail>> {
         const searchParams = new URLSearchParams();
 
         for (const acc of params.accessions ?? []) {
@@ -113,14 +113,12 @@ export class BackendClient {
             searchParams.append('accessionVersions', av);
         }
 
-        console.log(`Requesting sequence entry versions with params: ${JSON.stringify(params)}`);
-
         try {
-            const response = await axios.get(`${this.url}/get-sequence-entry-versions`, {
+            const response: { data: string } = await axios.get(`${this.url}/get-sequence-entry-versions`, {
                 params: searchParams,
                 responseType: 'text',
                 headers: {
-                    Accept: 'application/x-ndjson',
+                    accept: 'application/x-ndjson',
                 },
             });
 
@@ -132,26 +130,22 @@ export class BackendClient {
             const results: AccessionVersionWithOrganism[] = [];
 
             for (const line of lines) {
-                try {
-                    const json = JSON.parse(line);
-                    const parsed = accessionVersionWithOrganism.safeParse(json);
+                const json = JSON.parse(line);
+                const parsed = accessionVersionWithOrganism.safeParse(json);
 
-                    if (parsed.success) {
-                        results.push(parsed.data);
-                    } else {
-                        console.warn(`Skipping invalid NDJSON line: ${parsed.error}`);
-                    }
-                } catch (e) {
-                    console.warn(`Skipping malformed NDJSON line: ${line}`, e);
+                if (parsed.success) {
+                    results.push(parsed.data);
                 }
             }
 
-            console.log(`Received ${results.length} sequence entry versions for params: ${JSON.stringify(params)}`);
-
-            return results;
-        } catch (e) {
-            console.error(`Failed to get sequence entry versions with params: ${JSON.stringify(params)}`, e);
-            return [];
+            return ok(results);
+        } catch {
+            return err({
+                type: 'about:blank',
+                title: 'bad response',
+                status: 0,
+                detail: `Failed to get sequence entry versions with params: ${JSON.stringify(params)}`,
+            });
         }
     }
 
