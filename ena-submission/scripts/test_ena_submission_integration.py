@@ -599,7 +599,6 @@ class TestFirstPublicUpdate(TestSubmission):
         "base_entry": {
             "group_id": 1,
             "organism": "test_organism",
-            "project_id": 0,
             "status": Status.SUBMITTED,
         },
         "add_function": add_to_project_table,
