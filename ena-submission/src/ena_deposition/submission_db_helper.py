@@ -279,7 +279,9 @@ def find_conditions_in_db[
         for col_name, value in conditions.items():
             col = getattr(model_class, col_name)
             stmt = stmt.where(col.is_(None)) if value is None else stmt.where(col == value)
-        return list(session.scalars(stmt).all())
+        rows = list(session.scalars(stmt).all())
+        session.expunge_all()
+        return rows
 
 
 def delete_records_in_db[
@@ -328,7 +330,9 @@ def find_errors_or_stuck_in_db[
             (status_col == str(Status.HAS_ERRORS))
             | ((status_col == str(Status.SUBMITTING)) & (started_at_col < min_start_time))
         )
-        return list(session.scalars(stmt).all())
+        rows = list(session.scalars(stmt).all())
+        session.expunge_all()
+        return rows
 
 
 def find_stuck_in_submission_db(
@@ -342,7 +346,9 @@ def find_stuck_in_submission_db(
             SubmissionTableEntry.status_all == str(StatusAll.HAS_ERRORS_EXT_METADATA_UPLOAD),
             SubmissionTableEntry.started_at < min_start_time,
         )
-        return list(session.scalars(stmt).all())
+        rows = list(session.scalars(stmt).all())
+        session.expunge_all()
+        return rows
 
 
 def find_waiting_in_db[
@@ -360,7 +366,9 @@ def find_waiting_in_db[
         stmt = select(model_class).where(
             (status_col == str(Status.WAITING)) & (started_at_col < min_start_time)
         )
-        return list(session.scalars(stmt).all())
+        rows = list(session.scalars(stmt).all())
+        session.expunge_all()
+        return rows
 
 
 def update_db_where_conditions[
