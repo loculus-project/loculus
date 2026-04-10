@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import StrEnum
-from typing import Any, Final
+from typing import Any, Final, TypeVar
 
 import pytz
 from sqlalchemy import Engine, create_engine, delete, func, or_, select, update
@@ -260,9 +260,16 @@ def highest_version_in_submission_table(engine: Engine) -> dict[Accession, Versi
     return {row.accession: row.version for row in rows}
 
 
-def find_conditions_in_db[
-    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
-](
+T = TypeVar(
+    "T",
+    SubmissionTableEntry,
+    ProjectTableEntry,
+    SampleTableEntry,
+    AssemblyTableEntry,
+)
+
+
+def find_conditions_in_db[T](
     engine: Engine,
     model_class: type[T],
     conditions: dict[str, Any],
@@ -284,9 +291,7 @@ def find_conditions_in_db[
         return rows
 
 
-def delete_records_in_db[
-    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
-](
+def delete_records_in_db[T](
     engine: Engine,
     model_class: type[T],
     conditions: dict[str, Any],
@@ -299,7 +304,7 @@ def delete_records_in_db[
     Returns:
         int: The number of rows deleted.
     """
-    logger.debug(f"Deleting records from '{model_class.__tablename__}' where {conditions}")
+    logger.debug(f"Deleting records from '{model_class.__name__}' where {conditions}")
     with Session(engine) as session:
         stmt = delete(model_class)
         for col_name, value in conditions.items():
@@ -308,9 +313,7 @@ def delete_records_in_db[
         result = session.execute(stmt)
         session.commit()
         deleted_rows = result.rowcount
-    logger.debug(
-        f"Deleted {deleted_rows} rows from '{model_class.__tablename__}' where {conditions}"
-    )
+    logger.debug(f"Deleted {deleted_rows} rows from '{model_class.__name__}' where {conditions}")
     return deleted_rows
 
 
@@ -366,9 +369,7 @@ def find_waiting_in_db(
         return rows
 
 
-def update_db_where_conditions[
-    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
-](
+def update_db_where_conditions[T](
     engine: Engine,
     model_class: type[T],
     conditions: Mapping[str, Any],
@@ -382,7 +383,7 @@ def update_db_where_conditions[
     """
     updated_row_count = 0
     logger.debug(
-        f"Updating '{model_class.__tablename__}' with conditions '{conditions}'"
+        f"Updating '{model_class.__name__}' with conditions '{conditions}'"
         f" and values '{update_values}'"
     )
     try:
@@ -406,15 +407,13 @@ def update_db_where_conditions[
     except Exception as e:
         logger.warning(f"update_db_where_conditions errored with: {e}")
     logger.debug(
-        f"Updated {updated_row_count} rows in '{model_class.__tablename__}'"
+        f"Updated {updated_row_count} rows in '{model_class.__name__}'"
         f" for conditions '{conditions}' and update values '{update_values}'"
     )
     return updated_row_count
 
 
-def update_with_retry[
-    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
-](
+def update_with_retry[T](
     db_config: Engine,
     conditions: Mapping[str, Any],
     model_class: type[T],
@@ -435,7 +434,7 @@ def update_with_retry[
             update_values=update_values,
         )
         if number_rows_updated != 1:
-            msg = f"{model_class.__tablename__} update failed"
+            msg = f"{model_class.__name__} update failed"
             raise ValueError(msg)
         return number_rows_updated
 
@@ -450,18 +449,17 @@ def update_with_retry[
 
     try:
         logger.debug(
-            f"Updating {model_class.__tablename__} with conditions {conditions}"
+            f"Updating {model_class.__name__} with conditions {conditions}"
             f" and values {update_values}"
         )
         result = retryer(_do_update)
         logger.info(
-            f"{model_class.__tablename__} update succeeded"
-            f" for {conditions} with values {update_values}"
+            f"{model_class.__name__} update succeeded for {conditions} with values {update_values}"
         )
         return result
     except Exception as e:
         error_msg = (
-            f"{model_class.__tablename__} update failed for {conditions}"
+            f"{model_class.__name__} update failed for {conditions}"
             f" with values {update_values} after {number_of_retries} attempts."
         )
         logger.error(error_msg)

@@ -96,6 +96,7 @@ def assert_biosample_accession(
 ) -> None:
     assert len(rows) == 1, f"Sample for {full_accession} not found in sample table."
     if biosample_accession:
+        assert rows[0].result, f"No result for sample {full_accession} in sample table."
         assert rows[0].result.get("biosample_accession") == biosample_accession, (
             "Incorrect biosample accession in sample table."
         )
@@ -106,6 +107,7 @@ def assert_bioproject_accession(
 ) -> None:
     assert len(rows) == 1, f"Project {group_id} for {full_accession} not found in project table."
     if bioproject_accession:
+        assert rows[0].result, f"No result for project {group_id} in project table."
         assert rows[0].result.get("bioproject_accession") == bioproject_accession, (
             "Incorrect bioproject accession in project table."
         )
@@ -204,6 +206,7 @@ def check_assembly_submission_waiting(
             conditions={"accession": accession, "version": version, "status": "WAITING"},
         )
         assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
+        assert rows[0].result, f"No result for assembly {full_accession} in assembly table."
         assert "erz_accession" in rows[0].result, "Incorrect assembly result in assembly table."
         assert "segment_order" in rows[0].result, "Incorrect assembly result in assembly table."
 
@@ -274,6 +277,7 @@ def check_assembly_submission_with_nuc_without_gca(
         assert len(rows) == 1, (
             f"Assembly for {full_accession} not in state 'WAITING' in assembly table."
         )
+        assert rows[0].result, f"No result for assembly {full_accession} in assembly table."
         assert rows[0].result.get("insdc_accession_full_L") is not None
         assert rows[0].result.get("insdc_accession_full_M") is None
         assert rows[0].result.get("gca_accession") is None
