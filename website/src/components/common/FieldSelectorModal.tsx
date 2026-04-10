@@ -2,15 +2,18 @@ import { type FC, useId } from 'react';
 
 import { BaseDialog } from './BaseDialog.tsx';
 import { Button } from './Button';
+import { FormattedText } from './FormattedText.tsx';
 import { ACCESSION_VERSION_FIELD } from '../../settings.ts';
 import type { Metadata } from '../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
 import { segmentReferenceSelected, type SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
+import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 
 export type FieldItem = {
     name: string;
     displayName?: string;
+    definition?: string;
     header?: string;
     displayState?: FieldItemDisplayState;
     order?: number;
@@ -191,6 +194,22 @@ const FieldSelectorModalField: FC<FieldSelectorModalFieldProps> = ({ field, hand
                 {field.displayName ?? field.name}
                 {alwaysChecked ? ' (always included)' : ''}
                 {tooltip !== undefined && <CustomTooltip id={tooltipId} content={tooltip} />}
+                {field.definition && (
+                    <>
+                        <MaterialSymbolsInfoOutline
+                            className='inline-block h-4 w-4 text-gray-400 shrink-0 ml-1 mb-0.5'
+                            data-tooltip-id={`field-info-tooltip-${field.name}`}
+                        />
+                        <CustomTooltip id={`field-info-tooltip-${field.name}`}>
+                            <div className='space-y-2'>
+                                <p className='font-semibold text-gray-300'>{field.displayName ?? field.name}</p>
+                                <p>
+                                    <FormattedText text={field.definition} />
+                                </p>
+                            </div>
+                        </CustomTooltip>
+                    </>
+                )}
             </label>
         </div>
     );
