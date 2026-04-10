@@ -104,27 +104,53 @@ export class BackendClient {
         accessionVersions?: string[];
     }): Promise<AccessionVersionWithOrganism[]> {
         const searchParams = new URLSearchParams();
+
         for (const acc of params.accessions ?? []) {
             searchParams.append('accessions', acc);
         }
+
         for (const av of params.accessionVersions ?? []) {
             searchParams.append('accessionVersions', av);
         }
+
         console.log(`Requesting sequence entry versions with params: ${JSON.stringify(params)}`);
+
         try {
-            const response = await this.request('/get-sequence-entry-versions', 'GET', z.string(), undefined, undefined, undefined);
-            console.log(`Received response ${response} for sequence entry versions with params: ${JSON.stringify(params)}`);
-            const lines = (response?.unwrapOr("")).split('\n').filter((line) => line.trim() !== '');
+            const response = await axios.get(`${this.url}/get-sequence-entry-versions`, {
+                params: searchParams,
+                responseType: 'text',
+                headers: {
+                    Accept: 'application/x-ndjson',
+                },
+            });
+
+            const lines = response.data
+                .split('\n')
+                .map((line: string) => line.trim())
+                .filter((line: string) => line.length > 0);
+
             const results: AccessionVersionWithOrganism[] = [];
+
             for (const line of lines) {
-                const parsed = accessionVersionWithOrganism.safeParse(JSON.parse(line));
-                if (parsed.success) {
-                    results.push(parsed.data);
+                try {
+                    const json = JSON.parse(line);
+                    const parsed = accessionVersionWithOrganism.safeParse(json);
+
+                    if (parsed.success) {
+                        results.push(parsed.data);
+                    } else {
+                        console.warn(`Skipping invalid NDJSON line: ${parsed.error}`);
+                    }
+                } catch (e) {
+                    console.warn(`Skipping malformed NDJSON line: ${line}`, e);
                 }
             }
+
+            console.log(`Received ${results.length} sequence entry versions for params: ${JSON.stringify(params)}`);
+
             return results;
-        } catch {
-            console.error(`Failed to get sequence entry versions with params: ${JSON.stringify(params)}`);
+        } catch (e) {
+            console.error(`Failed to get sequence entry versions with params: ${JSON.stringify(params)}`, e);
             return [];
         }
     }
