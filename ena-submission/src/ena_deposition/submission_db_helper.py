@@ -1,14 +1,15 @@
 import logging
 import os
 import re
+import typing
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import StrEnum
-from typing import Any, Final, TypeVar
+from typing import Any, Final
 
 import pytz
-from sqlalchemy import Engine, create_engine, delete, func, or_, select, update
+from sqlalchemy import Engine, create_engine, func, or_, select, update
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -145,7 +146,7 @@ class SubmissionTableEntry(Base):
     """Maps to submission_table. Primary key: (accession, version)."""
 
     __tablename__ = "submission_table"
-    __table_args__ = {"schema": "ena_deposition_schema"}
+    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
 
     # Required fields (no defaults) must come first for dataclass ordering.
     accession: Mapped[str] = mapped_column(primary_key=True)
@@ -179,7 +180,7 @@ class ProjectTableEntry(Base):
     """Maps to project_table. Primary key: project_id (BIGSERIAL)."""
 
     __tablename__ = "project_table"
-    __table_args__ = {"schema": "ena_deposition_schema"}
+    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
 
     # BIGSERIAL primary key — server-generated, excluded from __init__.
     project_id: Mapped[int | None] = mapped_column(
@@ -206,7 +207,7 @@ class SampleTableEntry(Base):
     """Maps to sample_table. Primary key: (accession, version)."""
 
     __tablename__ = "sample_table"
-    __table_args__ = {"schema": "ena_deposition_schema"}
+    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
 
     accession: Mapped[str] = mapped_column(primary_key=True)
     version: Mapped[int] = mapped_column(primary_key=True)
@@ -228,7 +229,7 @@ class AssemblyTableEntry(Base):
     """Maps to assembly_table. Primary key: (accession, version)."""
 
     __tablename__ = "assembly_table"
-    __table_args__ = {"schema": "ena_deposition_schema"}
+    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
 
     accession: Mapped[str] = mapped_column(primary_key=True)
     version: Mapped[int] = mapped_column(primary_key=True)
@@ -248,21 +249,6 @@ class AssemblyTableEntry(Base):
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
-# TypeVar bound to our ORM base so generic query helpers stay typed.
-T = TypeVar(
-    "T",
-    SubmissionTableEntry,
-    ProjectTableEntry,
-    SampleTableEntry,
-    AssemblyTableEntry,
-)
-
-
-# ---------------------------------------------------------------------------
-# Query helpers
-# ---------------------------------------------------------------------------
-
-
 def highest_version_in_submission_table(engine: Engine) -> dict[Accession, Version]:
     """Return the highest version for each accession in submission_table."""
     with Session(engine) as session:
@@ -274,7 +260,9 @@ def highest_version_in_submission_table(engine: Engine) -> dict[Accession, Versi
     return {row.accession: row.version for row in rows}
 
 
-def find_conditions_in_db(
+def find_conditions_in_db[
+    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
+](
     engine: Engine,
     model_class: type[T],
     conditions: dict[str, Any],
@@ -290,14 +278,13 @@ def find_conditions_in_db(
         stmt = select(model_class)
         for col_name, value in conditions.items():
             col = getattr(model_class, col_name)
-            if value is None:
-                stmt = stmt.where(col.is_(None))
-            else:
-                stmt = stmt.where(col == value)
+            stmt = stmt.where(col.is_(None)) if value is None else stmt.where(col == value)
         return list(session.scalars(stmt).all())
 
 
-def find_errors_or_stuck_in_db(
+def find_errors_or_stuck_in_db[
+    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
+](
     engine: Engine,
     model_class: type[T],
     time_threshold: int = 15,
@@ -328,7 +315,9 @@ def find_stuck_in_submission_db(
         return list(session.scalars(stmt).all())
 
 
-def find_waiting_in_db(
+def find_waiting_in_db[
+    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
+](
     engine: Engine,
     model_class: type[T],
     time_threshold: int = 48,
@@ -344,7 +333,9 @@ def find_waiting_in_db(
         return list(session.scalars(stmt).all())
 
 
-def update_db_where_conditions(
+def update_db_where_conditions[
+    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
+](
     engine: Engine,
     model_class: type[T],
     conditions: Mapping[str, Any],
@@ -388,7 +379,9 @@ def update_db_where_conditions(
     return updated_row_count
 
 
-def update_with_retry(
+def update_with_retry[
+    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
+](
     db_config: Engine,
     conditions: Mapping[str, Any],
     model_class: type[T],
