@@ -3,6 +3,7 @@ import type { FC } from 'react';
 
 import { OrganismMetadataTable } from './OrganismMetadataTable.tsx';
 import type { Metadata, InputField } from '../../types/config.ts';
+import { getUrl } from '../../utils/getUrl.ts';
 import { Select } from '../common/Select.tsx';
 
 export type OrganismMetadata = {
@@ -18,35 +19,25 @@ type Props = {
 
 const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
     const [selectedOrganismKey, setSelectedOrganismKey] = useState('');
-    const selectedOrganism = organisms.find((o) => o.key === selectedOrganismKey) ?? null;
-
-    const handleOrganismSelect = (event: { target: { value: string } }) => {
-        setSelectedOrganismKey(event.target.value);
-    };
 
     useEffect(() => {
-        const handlePopState = () => {
-            const params = new URLSearchParams(window.location.search);
-            setSelectedOrganismKey(params.get('organism') ?? '');
-        };
-
-        handlePopState();
-        window.addEventListener('popstate', handlePopState);
-        return () => window.removeEventListener('popstate', handlePopState);
+        setSelectedOrganismKey(new URLSearchParams(window.location.search).get('organism') ?? '');
     }, []);
 
-    useEffect(() => {
+    const selectedOrganism = organisms.find((o) => o.key === selectedOrganismKey) ?? null;
+
+    const handleOrganismSelect = (organism: string) => {
+        setSelectedOrganismKey(organism);
         const params = new URLSearchParams(window.location.search);
-        if (selectedOrganismKey) {
-            params.set('organism', selectedOrganismKey);
+        if (organism) {
+            params.set('organism', organism);
         } else {
             params.delete('organism');
+            params.delete('fieldType');
         }
-
-        const newUrl =
-            window.location.origin + window.location.pathname + (params.toString() ? `?${params.toString()}` : '');
+        const newUrl = getUrl(window.location.origin, window.location.pathname, params);
         window.history.replaceState({ path: newUrl }, '', newUrl);
-    }, [selectedOrganismKey]);
+    };
 
     return (
         <div>
@@ -54,7 +45,7 @@ const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
                 <Select
                     id='organism-select'
                     value={selectedOrganismKey}
-                    onChange={handleOrganismSelect}
+                    onChange={(e) => handleOrganismSelect(e.target.value)}
                     className='border border-gray-300 p-2'
                 >
                     <option value=''>-- Select an Organism --</option>
