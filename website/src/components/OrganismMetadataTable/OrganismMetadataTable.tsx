@@ -172,7 +172,7 @@ const FieldNameCell: FC<{ header: string; name: string }> = ({ header, name }) =
             <Button
                 onClick={handleFieldLink}
                 className='opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-primary-600'
-                title='Permanent link'
+                title='Link to this field'
             >
                 ¶
             </Button>
