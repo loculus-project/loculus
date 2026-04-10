@@ -914,7 +914,7 @@ def retry_failed_submissions_for_matching_errors(
             "status": Status.READY,
             "errors": None,
             "finished_at": None,
-            "result": None,
+            "result": {},
         }
         try:
             update_with_retry(
