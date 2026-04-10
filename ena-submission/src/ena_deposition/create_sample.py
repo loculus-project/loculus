@@ -217,9 +217,7 @@ def sync_state_with_submission_table(db_config: Engine, config: Config):
     """
     # Check submission_table for newly added sequences
     conditions = {"status_all": str(StatusAll.SUBMITTED_PROJECT)}
-    ready_to_submit = find_conditions_in_db(
-        db_config, SubmissionTableEntry, conditions=conditions
-    )
+    ready_to_submit = find_conditions_in_db(db_config, SubmissionTableEntry, conditions=conditions)
     logger.debug(
         f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_PROJECT"
     )

@@ -23,15 +23,9 @@ class SubmittedAccessionsResponse(BaseModel):
 
 def get_bio_sample_accessions(engine: Engine) -> dict[str, str]:
     with Session(engine) as session:
-        stmt = select(SampleTableEntry).where(
-            SampleTableEntry.status == str(Status.SUBMITTED)
-        )
+        stmt = select(SampleTableEntry).where(SampleTableEntry.status == str(Status.SUBMITTED))
         results = list(session.scalars(stmt).all())
-    return {
-        row.accession: row.result["biosample_accession"]
-        for row in results
-        if row.result
-    }
+    return {row.accession: row.result["biosample_accession"] for row in results if row.result}
 
 
 def get_insdc_accessions(engine: Engine) -> dict[str, list[str]]:
@@ -42,9 +36,7 @@ def get_insdc_accessions(engine: Engine) -> dict[str, list[str]]:
         results = list(session.scalars(stmt).all())
     return {
         row.accession: [
-            row.result[key]
-            for key in row.result
-            if key.startswith("insdc_accession_full")
+            row.result[key] for key in row.result if key.startswith("insdc_accession_full")
         ]
         for row in results
         if row.result
