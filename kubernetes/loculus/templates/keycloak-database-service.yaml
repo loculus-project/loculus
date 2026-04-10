@@ -7,7 +7,7 @@ spec:
   type: ClusterIP
   selector:
     app: loculus
-    component: keycloak-database-{{ include "loculus.dockerTag" .Values | trim }}
+    component: keycloak-database-{{ if not .Values.developmentDatabasePersistence }}{{ include "loculus.dockerTag" .Values | trim }}{{ end }}
   ports:
     - port: 5432
 {{- end }}
