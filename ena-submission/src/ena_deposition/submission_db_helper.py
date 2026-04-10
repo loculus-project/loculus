@@ -314,9 +314,7 @@ def delete_records_in_db[
     return deleted_rows
 
 
-def find_errors_or_stuck_in_db[
-    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
-](
+def find_errors_or_stuck_in_db[T: (ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)](
     engine: Engine,
     model_class: type[T],
     time_threshold: int = 15,
@@ -351,19 +349,16 @@ def find_stuck_in_submission_db(
         return rows
 
 
-def find_waiting_in_db[
-    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
-](
+def find_waiting_in_db(
     engine: Engine,
-    model_class: type[T],
     time_threshold: int = 48,
-) -> list[T]:
+) -> list[AssemblyTableEntry]:
     """Return rows stuck in WAITING status for longer than *time_threshold* hours."""
     min_start_time = datetime.now(tz=pytz.utc) - timedelta(hours=time_threshold)
     with Session(engine) as session:
-        status_col = model_class.status
-        started_at_col = model_class.started_at
-        stmt = select(model_class).where(
+        status_col = AssemblyTableEntry.status
+        started_at_col = AssemblyTableEntry.started_at
+        stmt = select(AssemblyTableEntry).where(
             (status_col == str(Status.WAITING)) & (started_at_col < min_start_time)
         )
         rows = list(session.scalars(stmt).all())

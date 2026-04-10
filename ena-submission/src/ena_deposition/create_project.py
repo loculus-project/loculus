@@ -93,7 +93,9 @@ def construct_project_set_object(
             )
         ),
         project_links=ProjectLinks(
-            project_link=[ProjectLink(xref_link=XrefType(db=config.db_name, id=entry.group_id))]
+            project_link=[
+                ProjectLink(xref_link=XrefType(db=config.db_name, id=str(entry.group_id)))
+            ]
         ),
     )
     return ProjectSet(project=[project_type])

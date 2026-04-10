@@ -436,7 +436,7 @@ def create_flatfile(
     config: Config,
     metadata: dict[str, Any],
     organism_metadata: EnaOrganismDetails,
-    unaligned_nucleotide_sequences: dict[str, str],
+    unaligned_nucleotide_sequences: dict[str, str | None],
     dir: str | None,
 ):
     collection_date = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property, "Unknown")
@@ -878,9 +878,11 @@ def set_accession_does_not_exist_error(
 
 
 def retry_failed_submissions_for_matching_errors(
-    entries_with_errors: Iterable[ProjectTableEntry | SampleTableEntry | AssemblyTableEntry],
+    entries_with_errors: Iterable[ProjectTableEntry]
+    | Iterable[SampleTableEntry]
+    | Iterable[AssemblyTableEntry],
     db_config: Engine,
-    model_class: type[ProjectTableEntry | SampleTableEntry | AssemblyTableEntry],
+    model_class: type[ProjectTableEntry] | type[SampleTableEntry] | type[AssemblyTableEntry],
     retry_threshold_min: int,
     error_substrings: Sequence[str] = ("does not exist in ENA",),
     last_retry: datetime | None = None,

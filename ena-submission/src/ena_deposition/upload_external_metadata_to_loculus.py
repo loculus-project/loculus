@@ -53,7 +53,9 @@ def _get_result_of_single_db_record(
     return result
 
 
-def get_bioproject_accession_from_db(db_config: Engine, project_id: int) -> dict[str, str]:
+def get_bioproject_accession_from_db(db_config: Engine, project_id: int | None) -> dict[str, str]:
+    if project_id is None:
+        return {}
     result = _get_result_of_single_db_record(
         db_config, ProjectTableEntry, conditions={"project_id": project_id}
     )
