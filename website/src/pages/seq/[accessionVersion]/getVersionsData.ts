@@ -7,11 +7,12 @@ export const getVersionsData = async (accession: string) => {
     const backendClient = createBackendClient();
     const entries = await backendClient.getSequenceEntryVersions({ accessions: [accession] });
 
-    if (entries.length === 0) {
+    const entriesValue = entries.unwrapOr([]);
+    if (entriesValue.length === 0) {
         return { versionListResult: err('Sequence not found'), organism: undefined };
     }
 
-    const organism = entries[0].organism;
+    const organism = entriesValue[0].organism;
     const lapisClient = LapisClient.createForOrganism(organism);
 
     const versionListResult = (await lapisClient.getAllSequenceEntryHistoryForAccession(accession))
