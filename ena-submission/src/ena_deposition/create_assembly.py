@@ -7,7 +7,7 @@ import time
 import traceback
 from dataclasses import asdict
 from datetime import datetime, timedelta
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import pytz
 from sqlalchemy import Engine
@@ -59,7 +59,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_chromosome_list_object(
-    unaligned_sequences: dict[str, str],
+    unaligned_sequences: dict[str, str | None],
     accession: str,
     organism_metadata: EnaOrganismDetails,
 ) -> AssemblyChromosomeListFile:
@@ -94,7 +94,7 @@ def create_chromosome_list_object(
     return AssemblyChromosomeListFile(chromosomes=entries)
 
 
-def get_segment_order(unaligned_sequences: dict[str, str]) -> list[str]:
+def get_segment_order(unaligned_sequences: dict[str, str | None]) -> list[str]:
     """Order in which we put the segments in the chromosome list file"""
     segment_order = []
     for segment_name, item in unaligned_sequences.items():
@@ -540,9 +540,19 @@ def get_project_and_sample_results(
     if len(project_rows) == 0:
         error_msg = f"Entry {submission_row.accession} not found in project_table"
         raise RuntimeError(error_msg)
-    sample_accession = sample_rows[0].result["ena_sample_accession"]
-    study_accession = project_rows[0].result["bioproject_accession"]
-    return sample_accession, study_accession
+    sample_accession = (
+        sample_rows[0].result.get("ena_sample_accession") if sample_rows[0].result else None
+    )
+    study_accession = (
+        project_rows[0].result.get("bioproject_accession") if project_rows[0].result else None
+    )
+    if not sample_accession or not study_accession:
+        error_msg = (
+            f"Missing sample_accession or study_accession for accession {submission_row.accession} "
+            "cannot create manifest"
+        )
+        raise RuntimeError(error_msg)
+    return cast(str, sample_accession), cast(str, study_accession)
 
 
 def assembly_table_create(db_config: Engine, config: Config):
@@ -674,10 +684,16 @@ def assembly_table_update(db_config: Engine, config: Config, time_threshold: int
                 raise RuntimeError(error_msg)
             organism = config.enaOrganisms[submission_rows[0].organism]
             # Previous means from the last time the entry was checked, from db
-            previous_result = row.result
-            segment_order = previous_result["segment_order"]
+            segment_order = row.result.get("segment_order") if row.result else None
+            erz_accession = row.result.get("erz_accession") if row.result else None
+            if not erz_accession or not segment_order:
+                logger.warning(
+                    f"Missing erz_accession or segment_order for {seq_key['accession']} version "
+                    f"{seq_key['version']} - cannot check ENA for accession yet."
+                )
+                continue
             new_result: CreationResult = get_ena_analysis_process(
-                config, previous_result["erz_accession"], segment_order, organism
+                config, cast(str, erz_accession), cast(list[str], segment_order), organism
             )
             _last_ena_check = now
 
@@ -690,7 +706,7 @@ def assembly_table_update(db_config: Engine, config: Config, time_threshold: int
             )
 
             if not (result_contains_gca_accession and result_contains_insdc_accession):
-                if previous_result == new_result.result:
+                if row.result == new_result.result:
                     continue
                 status = Status.WAITING
                 logger.info(
@@ -728,9 +744,7 @@ def assembly_table_handle_errors(
     2. If time since last slack notification is over slack_retry_threshold_min send notification
     3. Trigger retry if time since last retry is over retry_threshold_min
     """
-    entries_waiting = find_waiting_in_db(
-        db_config, AssemblyTableEntry, time_threshold=config.waiting_threshold_hours
-    )
+    entries_waiting = find_waiting_in_db(db_config, time_threshold=config.waiting_threshold_hours)
     entries_with_errors = find_errors_or_stuck_in_db(
         db_config,
         AssemblyTableEntry,
