@@ -17,13 +17,18 @@ export async function findOrganismAndData(accessionVersion: string) {
         version !== undefined ? { accessionVersions: [accessionVersion] } : { accessions: [accession] },
     );
 
-    if (entries.length === 0) {
+    if (entries.isErr()) {
+        return err({ message: entries.error.detail });
+    }
+    const entriesValue = entries.unwrapOr([]);
+
+    if (entriesValue.length === 0) {
         return err({ message: `No released entry found for ${accessionVersion}` });
     }
 
     if (version === undefined) {
         // Find the latest version (max version number) among all entries
-        const latestEntry = entries.reduce((max, e) => (e.version > max.version ? e : max));
+        const latestEntry = entriesValue.reduce((max, e) => (e.version > max.version ? e : max));
         const redirect: Redirect = {
             type: SequenceDetailsTableResultType.REDIRECT,
             redirectUrl: routes.sequenceEntryDetailsPage(`${latestEntry.accession}.${latestEntry.version}`),
@@ -31,7 +36,7 @@ export async function findOrganismAndData(accessionVersion: string) {
         return ok({ organism: latestEntry.organism, result: redirect });
     }
 
-    const organism = entries[0].organism;
+    const organism = entriesValue[0].organism;
     const result = await getSequenceDetailsTableData(accessionVersion, organism);
     return result.map((r) => ({ organism, result: r })).mapErr((e) => ({ message: e.detail }));
 }
