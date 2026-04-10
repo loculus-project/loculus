@@ -95,7 +95,7 @@ const secondaryErrors = (
     }
     {
         seqSetResponse.isOk() && seqSetRecordsResponse.isOk() ? (
-            <div class='mt-12'>
+            <div class='mt-8'>
                 {secondaryErrors.length > 0 && (
                     <ErrorFeedback message={secondaryErrors.join(', ')} client:only='react' />
                 )}
