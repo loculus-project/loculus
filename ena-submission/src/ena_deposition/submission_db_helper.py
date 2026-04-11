@@ -9,7 +9,7 @@ from enum import StrEnum
 from typing import Any, Final, TypeVar
 
 import pytz
-from sqlalchemy import Engine, create_engine, delete, func, or_, select, update
+from sqlalchemy import Engine, create_engine, delete, func, make_url, or_, select, update
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -47,12 +47,9 @@ def db_init(db_password_default: str, db_username_default: str, db_url_default: 
     db_url = os.getenv("DB_URL") or db_url_default
 
     base_dsn = convert_jdbc_to_psycopg2(db_url)
-    # Insert credentials into the URL: postgresql+psycopg2://user:pass@host:port/db
-    url = base_dsn.replace(
-        "postgresql+psycopg2://",
-        f"postgresql+psycopg2://{db_username}:{db_password}@",
-        1,
-    )
+
+    parsed = make_url(base_dsn)
+    url = parsed.set(username=db_username, password=db_password)
     return create_engine(
         url,
         connect_args={"options": "-c search_path=ena_deposition_schema"},
