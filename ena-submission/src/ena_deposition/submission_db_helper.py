@@ -127,7 +127,7 @@ class ProjectId:
 
 
 # ---------------------------------------------------------------------------
-# SQLAlchemy ORM models — these replace the previous plain dataclasses.
+# SQLAlchemy ORM models
 # Using MappedAsDataclass so they still behave as dataclasses (constructor,
 # field access, asdict, etc.) while giving typed attribute access on query
 # results (row.accession instead of row["accession"]).
