@@ -43,6 +43,8 @@ async function queryLapisDetails(
     }
 }
 
+const isVersionedAccession = (acc: string) => /\.\d+$/.test(acc);
+
 const fetchRecordsMetadata = async (
     records: SeqSetRecord[],
     clientConfig: ClientConfig,
@@ -54,44 +56,72 @@ const fetchRecordsMetadata = async (
         return new Map();
     }
 
-    // Split accessions into versioned (contain '.') and bare (no '.')
-    const versionedAccessions = accessions.filter((acc) => acc.includes('.'));
-    const bareAccessions = accessions.filter((acc) => !acc.includes('.'));
-
-    // Extract just the field names for the API request
     const fields = fieldsToDisplay.map((f) => f.field);
 
+    // Step 1: Get organisms from the backend for all accessions in one request
+    const backendUrl = clientConfig.backendUrl;
+    let accessionToOrganism = new Map<string, string>();
+
+    try {
+        const searchParams = new URLSearchParams();
+        for (const acc of accessions) {
+            searchParams.append('accessionOrAccessionVersions', acc);
+        }
+
+        const response = await axios.get(`${backendUrl}/get-details`, {
+            params: searchParams,
+            responseType: 'text',
+        });
+        const lines = (response.data as string).split('\n').filter((line) => line.trim() !== '');
+        for (const line of lines) {
+            const entry = JSON.parse(line) as { accession: string; version: number; organism: string };
+            const versionedKey = `${entry.accession}.${entry.version}`;
+            const key = accessions.includes(versionedKey) ? versionedKey : entry.accession;
+            accessionToOrganism.set(key, entry.organism);
+        }
+    } catch (_error) {
+        accessionToOrganism = new Map();
+    }
+
+    const metadataMap = new Map<string, RecordMetadata>();
+
+    // Step 2: Group accessions by organism, then query each LAPIS instance once
+    const byOrganism = new Map<string, string[]>();
+    for (const acc of accessions) {
+        const organism = accessionToOrganism.get(acc);
+        if (organism) {
+            if (!byOrganism.has(organism)) byOrganism.set(organism, []);
+            byOrganism.get(organism)!.push(acc);
+        }
+    }
+
     // filter out "organism" as substring in lapisUrls as a hack to remove the dummy organisms
-    // #TODO: do this better, in a less hacky way
-    // But if we do try to query something that doesn't have the field its no huge problem it will just lead to a console error
     const lapisUrlsWithoutDummies = Object.fromEntries(
         Object.entries(clientConfig.lapisUrls).filter(([organism]) => !organism.includes('organism')),
     );
 
-    const metadataMap = new Map<string, RecordMetadata>();
+    const lapisPromises = [...byOrganism.entries()].map(async ([organism, orgAccessions]) => {
+        const lapisUrl = lapisUrlsWithoutDummies[organism];
+        if (!lapisUrl) return;
 
-    // Query all LAPIS instances in parallel
-    const lapisPromises = Object.entries(lapisUrlsWithoutDummies).map(async ([organism, lapisUrl]) => {
+        const versioned = orgAccessions.filter(isVersionedAccession);
+        const bare = orgAccessions.filter((acc) => !isVersionedAccession(acc));
         const queries: Promise<{ data: Record<string, unknown>[]; keyField: string }>[] = [];
 
-        // Query versioned accessions by accessionVersion
-        if (versionedAccessions.length > 0) {
+        if (versioned.length > 0) {
             queries.push(
-                queryLapisDetails(lapisUrl, { accessionVersion: versionedAccessions }, [
-                    'accessionVersion',
-                    ...fields,
-                ]).then((data) => ({ data, keyField: 'accessionVersion' })),
+                queryLapisDetails(lapisUrl, { accessionVersion: versioned }, ['accessionVersion', ...fields]).then(
+                    (data) => ({ data, keyField: 'accessionVersion' }),
+                ),
             );
         }
 
-        // Query bare accessions by accession, filtering for the latest version
-        if (bareAccessions.length > 0) {
+        if (bare.length > 0) {
             queries.push(
-                queryLapisDetails(
-                    lapisUrl,
-                    { accession: bareAccessions, versionStatus: versionStatuses.latestVersion },
-                    ['accession', ...fields],
-                ).then((data) => ({ data, keyField: 'accession' })),
+                queryLapisDetails(lapisUrl, { accession: bare, versionStatus: versionStatuses.latestVersion }, [
+                    'accession',
+                    ...fields,
+                ]).then((data) => ({ data, keyField: 'accession' })),
             );
         }
 
@@ -99,10 +129,7 @@ const fetchRecordsMetadata = async (
         for (const { data, keyField } of results) {
             for (const record of data) {
                 const key = String(record[keyField]);
-                const metadata: RecordMetadata = {
-                    accession: key,
-                    organism,
-                };
+                const metadata: RecordMetadata = { accession: key, organism };
                 for (const field of fields) {
                     metadata[field] = record[field];
                 }
