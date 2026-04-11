@@ -44,6 +44,7 @@ class ApiTest(unittest.TestCase):
         mock_get_insdc_accessions.return_value = mock_insdc_accessions
 
         app.state.config = self.config
+        app.state.engine = self.db_config
 
         response = client.get("/submitted")
 
