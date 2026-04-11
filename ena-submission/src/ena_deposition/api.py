@@ -50,6 +50,7 @@ def get_insdc_accessions(engine: Engine) -> dict[str, list[str]]:
 
 def init_app(config: Config):
     app.state.config = config
+    app.state.engine = db_init(config.db_password, config.db_username, config.db_url)
 
 
 @app.get("/")
@@ -59,8 +60,7 @@ def read_root():
 
 @app.get("/submitted", response_model=SubmittedAccessionsResponse)
 def submitted_insdc_accessions():
-    config = app.state.config
-    engine = db_init(config.db_password, config.db_username, config.db_url)
+    engine = app.state.engine
     try:
         insdc_accessions = get_insdc_accessions(engine)
         all_insdc_accessions = [item for sublist in insdc_accessions.values() for item in sublist]
