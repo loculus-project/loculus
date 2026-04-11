@@ -171,17 +171,16 @@ class GetDetailsEndpointTest(
 
     @Test
     fun `GIVEN released revocation entry THEN it is included in results`() {
-        convenienceClient.prepareRevokedSequenceEntries()
-        val allReleased = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        val accession = allReleased.first().accession
+        val revokedEntries = convenienceClient.prepareRevokedSequenceEntries()
+        val accession = revokedEntries.first().accession
 
-        val revokedAccessionVersions = submissionControllerClient.getDetails(
+        val results = submissionControllerClient.getDetails(
             accessionOrAccessionVersions = listOf(accession),
         ).expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
 
-        assertThat(revokedAccessionVersions.size, greaterThan(0))
+        assertThat(results.size, greaterThan(0))
         assertThat(
-            revokedAccessionVersions.any { it.accession == accession && it.isRevocation },
+            results.any { it.accession == accession && it.isRevocation },
             `is`(true),
         )
     }
