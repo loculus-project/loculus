@@ -113,8 +113,9 @@ class GetDetailsEndpointTest(
     @Test
     fun `GIVEN released data with multiple versions THEN bare accession returns all versions`() {
         val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        val accession = accessionVersions.first().accession
-        convenienceClient.reviseAndProcessDefaultSequenceEntries(listOf(accession))
+        val allAccessions = accessionVersions.map { it.accession }
+        val accession = allAccessions.first()
+        convenienceClient.reviseAndProcessDefaultSequenceEntries(allAccessions)
 
         val result = submissionControllerClient.getDetails(accessions = listOf(accession))
             .expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
@@ -129,8 +130,9 @@ class GetDetailsEndpointTest(
     @Test
     fun `GIVEN released data with multiple versions THEN accessionVersion returns only that version`() {
         val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        val accession = accessionVersions.first().accession
-        convenienceClient.reviseAndProcessDefaultSequenceEntries(listOf(accession))
+        val allAccessions = accessionVersions.map { it.accession }
+        val accession = allAccessions.first()
+        convenienceClient.reviseAndProcessDefaultSequenceEntries(allAccessions)
 
         val result = submissionControllerClient.getDetails(accessionVersions = listOf("$accession.1"))
             .expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
@@ -143,13 +145,14 @@ class GetDetailsEndpointTest(
     @Test
     fun `GIVEN mix of accessions and accessionVersions THEN returns correct combined results`() {
         val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        val accession1 = accessionVersions[0].accession
-        val accession2 = accessionVersions[1].accession
+        val allAccessions = accessionVersions.map { it.accession }
+        val accession1 = allAccessions[0]
+        val accession2 = allAccessions[1]
 
-        // Revise accession1 to create version 2
-        convenienceClient.reviseAndProcessDefaultSequenceEntries(listOf(accession1))
+        // Revise all accessions so accession1 and accession2 both get version 2
+        convenienceClient.reviseAndProcessDefaultSequenceEntries(allAccessions)
 
-        // Request accession1 by bare accession (all versions) and accession2 by specific version
+        // Request accession1 by bare accession (all versions) and accession2 by specific version 1 only
         val result = submissionControllerClient.getDetails(
             accessions = listOf(accession1),
             accessionVersions = listOf("$accession2.1"),
