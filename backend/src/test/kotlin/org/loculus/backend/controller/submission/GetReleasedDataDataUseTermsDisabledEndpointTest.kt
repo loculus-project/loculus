@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.GeneticSequence
+import org.loculus.backend.api.InsdcIngestGroupId
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
@@ -76,6 +77,23 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
         responseBody.forEach {
             assertThat(it.metadata.keys, not(hasItem("dataUseTerms")))
             assertThat(it.metadata.keys, not(hasItem("dataUseTermsRestrictedUntil")))
+        }
+    }
+
+    @Test
+    fun `GIVEN released data called with enaDeposition=true THEN InsdcIngestGroupId data is excluded`() {
+        val groupId = groupClient.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(groupId = groupId)
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(groupId = InsdcIngestGroupId)
+
+        val response = submissionControllerClient.getReleasedData(filterForEnaDeposition = "true")
+        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+
+        responseBody.forEach {
+            assertThat(it.metadata["groupId"], not(`is`(InsdcIngestGroupId)))
         }
     }
 
