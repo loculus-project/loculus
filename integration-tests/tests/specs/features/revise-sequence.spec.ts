@@ -5,7 +5,7 @@ import { SearchPage } from '../../pages/search.page';
 import { ReviewPage } from '../../pages/review.page';
 import { RevisionPage } from '../../pages/revision.page';
 import { NavigationPage } from '../../pages/navigation.page';
-import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { BulkSubmissionPage } from '../../pages/submission.page';
 import {
     CCHF_S_SEGMENT_FULL_SEQUENCE,
     createFastaContent,
@@ -84,16 +84,16 @@ groupTest.describe('Bulk sequence revision', () => {
     groupTest('can revise multiple sequences via file upload', async ({ page, groupId }) => {
         groupTest.setTimeout(200_000);
 
-        const submissionPage = new SingleSequenceSubmissionPage(page);
+        const submissionPage = new BulkSubmissionPage(page);
         const timestamp = Date.now();
 
-        // TODO #5524 Optimize by using bulk submission instead of 3 sequential single submissions
-        for (let i = 0; i < SEQUENCES_TO_REVISE; i++) {
-            await submissionPage.completeSubmission(
-                createTestMetadata({ submissionId: `bulk-revise-${timestamp}-${i}` }),
-                createTestSequenceData(),
-            );
-        }
+        // Use bulk submission instead of sequential single submissions for efficiency
+        await submissionPage.completeBulkSubmission({
+            count: SEQUENCES_TO_REVISE,
+            metadata: createTestMetadata({ submissionId: `bulk-revise-${timestamp}` }),
+            sequenceData: createTestSequenceData(),
+            groupId,
+        });
 
         const reviewPage = new ReviewPage(page);
         await reviewPage.goto(groupId);
