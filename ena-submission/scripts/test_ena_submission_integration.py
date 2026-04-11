@@ -61,9 +61,12 @@ from ena_deposition.create_sample import (
 from ena_deposition.loculus_models import Group
 from ena_deposition.notifications import SlackConfig
 from ena_deposition.submission_db_helper import (
+    AssemblyTableEntry,
+    ProjectTableEntry,
+    SampleTableEntry,
     Status,
     StatusAll,
-    TableName,
+    SubmissionTableEntry,
     add_to_assembly_table,
     add_to_project_table,
     add_to_sample_table,
@@ -77,7 +80,7 @@ from ena_deposition.trigger_submission_to_ena import upload_sequences
 from ena_deposition.upload_external_metadata_to_loculus import (
     get_external_metadata_and_send_to_loculus,
 )
-from psycopg2.pool import SimpleConnectionPool
+from sqlalchemy import Engine
 
 CONFIG_FILE = "./test/test_config.yaml"
 INPUT_FILE = "./test/approved_ena_submission_list_test.json"
@@ -89,39 +92,39 @@ TEST_GROUP: Final = Group._create_example_for_tests()
 
 
 def assert_biosample_accession(
-    rows: list[dict[str, Any]], biosample_accession: str, full_accession: str
+    rows: list[SampleTableEntry], biosample_accession: str, full_accession: str
 ) -> None:
     assert len(rows) == 1, f"Sample for {full_accession} not found in sample table."
     if biosample_accession:
-        assert rows[0]["result"].get("biosample_accession") == biosample_accession, (
+        assert rows[0].result, f"No result for sample {full_accession} in sample table."
+        assert rows[0].result.get("biosample_accession") == biosample_accession, (
             "Incorrect biosample accession in sample table."
         )
 
 
 def assert_bioproject_accession(
-    rows: list[dict[str, Any]], bioproject_accession: str, group_id: str, full_accession: str
+    rows: list[ProjectTableEntry], bioproject_accession: str, group_id: str, full_accession: str
 ) -> None:
     assert len(rows) == 1, f"Project {group_id} for {full_accession} not found in project table."
     if bioproject_accession:
-        assert rows[0]["result"].get("bioproject_accession") == bioproject_accession, (
+        assert rows[0].result, f"No result for project {group_id} in project table."
+        assert rows[0].result.get("bioproject_accession") == bioproject_accession, (
             "Incorrect bioproject accession in project table."
         )
 
 
-def delete_all_records(db_config: SimpleConnectionPool) -> None:
+def delete_all_records(db_config: Engine) -> None:
     logger.debug("Deleting all records from all deposition tables except flyway")
-    for table_name in [
-        TableName.SUBMISSION_TABLE,
-        TableName.PROJECT_TABLE,
-        TableName.SAMPLE_TABLE,
-        TableName.ASSEMBLY_TABLE,
+    for model_class in [
+        SubmissionTableEntry,
+        ProjectTableEntry,
+        SampleTableEntry,
+        AssemblyTableEntry,
     ]:
-        delete_records_in_db(db_config, table_name, {})
+        delete_records_in_db(db_config, model_class, {})
 
 
-def check_sequences_uploaded(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
-) -> None:
+def check_sequences_uploaded(db_config: Engine, sequences_to_upload: dict[str, Any]) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         assert in_submission_table(
@@ -130,7 +133,7 @@ def check_sequences_uploaded(
 
 
 def check_project_submission_started(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_config: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession, data in sequences_to_upload.items():
         group_id = data["metadata"]["groupId"]
@@ -139,7 +142,7 @@ def check_project_submission_started(
             len(
                 find_conditions_in_db(
                     db_config,
-                    TableName.PROJECT_TABLE,
+                    ProjectTableEntry,
                     conditions={"group_id": group_id, "organism": organism, "status": "READY"},
                 )
             )
@@ -147,16 +150,14 @@ def check_project_submission_started(
         ), f"Project {group_id} for {full_accession} not found in project table."
 
 
-def check_sample_submission_started(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
-) -> None:
+def check_sample_submission_started(db_config: Engine, sequences_to_upload: dict[str, Any]) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         assert (
             len(
                 find_conditions_in_db(
                     db_config,
-                    TableName.SAMPLE_TABLE,
+                    SampleTableEntry,
                     conditions={"accession": accession, "version": version, "status": "READY"},
                 )
             )
@@ -165,13 +166,13 @@ def check_sample_submission_started(
 
 
 def check_sample_submission_submitted(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_config: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession, data in sequences_to_upload.items():
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
             db_config,
-            TableName.SAMPLE_TABLE,
+            SampleTableEntry,
             conditions={"accession": accession, "version": version, "status": "SUBMITTED"},
         )
         assert_biosample_accession(rows, data["metadata"]["biosampleAccession"], full_accession)
@@ -182,67 +183,68 @@ def check_sample_submission_submitted(
 
 
 def check_sample_submission_has_errors(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_config: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession, data in sequences_to_upload.items():
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
             db_config,
-            TableName.SAMPLE_TABLE,
+            SampleTableEntry,
             conditions={"accession": accession, "version": version, "status": "HAS_ERRORS"},
         )
         assert_biosample_accession(rows, data["metadata"]["biosampleAccession"], full_accession)
 
 
 def check_assembly_submission_waiting(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_config: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
             db_config,
-            TableName.ASSEMBLY_TABLE,
+            AssemblyTableEntry,
             conditions={"accession": accession, "version": version, "status": "WAITING"},
         )
         assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
-        assert "erz_accession" in rows[0]["result"], "Incorrect assembly result in assembly table."
-        assert "segment_order" in rows[0]["result"], "Incorrect assembly result in assembly table."
+        assert rows[0].result, f"No result for assembly {full_accession} in assembly table."
+        assert "erz_accession" in rows[0].result, "Incorrect assembly result in assembly table."
+        assert "segment_order" in rows[0].result, "Incorrect assembly result in assembly table."
 
 
 def check_assembly_submission_has_errors(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_config: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
             db_config,
-            TableName.ASSEMBLY_TABLE,
+            AssemblyTableEntry,
             conditions={"accession": accession, "version": version, "status": "HAS_ERRORS"},
         )
         assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
 
 
 def check_assembly_submission_started(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_config: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
             db_config,
-            TableName.ASSEMBLY_TABLE,
+            AssemblyTableEntry,
             conditions={"accession": accession, "version": version, "status": "READY"},
         )
         assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
 
 
 def check_assembly_submission_submitted(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_config: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
             db_config,
-            TableName.ASSEMBLY_TABLE,
+            AssemblyTableEntry,
             conditions={"accession": accession, "version": version, "status": "SUBMITTED"},
         )
         assert len(rows) == 1, (
@@ -259,13 +261,13 @@ def check_assembly_submission_submitted(
 
 
 def check_assembly_submission_with_nuc_without_gca(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_config: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
             db_config,
-            TableName.ASSEMBLY_TABLE,
+            AssemblyTableEntry,
             conditions={
                 "accession": accession,
                 "version": version,
@@ -275,14 +277,13 @@ def check_assembly_submission_with_nuc_without_gca(
         assert len(rows) == 1, (
             f"Assembly for {full_accession} not in state 'WAITING' in assembly table."
         )
-        assert rows[0]["result"].get("insdc_accession_full_L") is not None
-        assert rows[0]["result"].get("insdc_accession_full_M") is None
-        assert rows[0]["result"].get("gca_accession") is None
+        assert rows[0].result, f"No result for assembly {full_accession} in assembly table."
+        assert rows[0].result.get("insdc_accession_full_L") is not None
+        assert rows[0].result.get("insdc_accession_full_M") is None
+        assert rows[0].result.get("gca_accession") is None
 
 
-def check_sent_to_loculus(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
-) -> None:
+def check_sent_to_loculus(db_config: Engine, sequences_to_upload: dict[str, Any]) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         assert in_submission_table(
@@ -296,7 +297,7 @@ def check_sent_to_loculus(
 
 
 def check_project_submission_submitted(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_config: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession, data in sequences_to_upload.items():
         accession, version = full_accession.split(".")
@@ -304,7 +305,7 @@ def check_project_submission_submitted(
         organism = data["organism"]
         rows = find_conditions_in_db(
             db_config,
-            TableName.PROJECT_TABLE,
+            ProjectTableEntry,
             conditions={"group_id": group_id, "organism": organism, "status": "SUBMITTED"},
         )
         assert_bioproject_accession(
@@ -317,14 +318,14 @@ def check_project_submission_submitted(
 
 
 def check_project_submission_has_errors(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_config: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession, data in sequences_to_upload.items():
         group_id = data["metadata"]["groupId"]
         organism = data["organism"]
         rows = find_conditions_in_db(
             db_config,
-            TableName.PROJECT_TABLE,
+            ProjectTableEntry,
             conditions={"group_id": group_id, "organism": organism, "status": "HAS_ERRORS"},
         )
         assert_bioproject_accession(
@@ -333,7 +334,7 @@ def check_project_submission_has_errors(
 
 
 def set_db_to_known_erz_accession(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any], single_segment: bool
+    db_config: Engine, sequences_to_upload: dict[str, Any], single_segment: bool
 ) -> None:
     """
     Sets erz-accession to known previous values that have received accession
@@ -351,25 +352,21 @@ def set_db_to_known_erz_accession(
             erz_accession = "ERZ24985816" if single_segment else "ERZ24784470"
             update_db_where_conditions(
                 db_config,
-                TableName.ASSEMBLY_TABLE,
+                AssemblyTableEntry,
                 {"accession": accession, "version": version},
-                {
-                    "result": json.dumps(
-                        {"erz_accession": erz_accession, "segment_order": segment_order}
-                    )
-                },
+                {"result": {"erz_accession": erz_accession, "segment_order": segment_order}},
             )
         if organism == "west-nile":
             update_db_where_conditions(
                 db_config,
-                TableName.ASSEMBLY_TABLE,
+                AssemblyTableEntry,
                 {"accession": accession, "version": version},
-                {"result": json.dumps({"erz_accession": "ERZ24908522", "segment_order": ["main"]})},
+                {"result": {"erz_accession": "ERZ24908522", "segment_order": ["main"]}},
             )
 
 
 def _test_successful_assembly_submission(
-    db_config: SimpleConnectionPool,
+    db_config: Engine,
     config: Config,
     sequences_to_upload: dict[str, Any],
     single_segment: bool = False,
@@ -393,7 +390,7 @@ def _test_successful_assembly_submission(
 
 
 def _test_successful_assembly_submission_no_wait(
-    db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
+    db_config: Engine, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
     create_assembly_submission_table_start(db_config, config)
     check_assembly_submission_started(db_config, sequences_to_upload)
@@ -405,7 +402,7 @@ def _test_successful_assembly_submission_no_wait(
 
 
 def _test_assembly_submission_errored(
-    db_config: SimpleConnectionPool,
+    db_config: Engine,
     config: Config,
     slack_config: SlackConfig,
     sequences_to_upload: dict[str, Any],
@@ -432,7 +429,7 @@ def _test_assembly_submission_errored(
 
 
 def _test_successful_sample_submission(
-    db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
+    db_config: Engine, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
     create_sample_submission_table_start(db_config, config=config)
     check_sample_submission_started(db_config, sequences_to_upload)
@@ -443,7 +440,7 @@ def _test_successful_sample_submission(
 
 
 def _test_successful_project_submission(
-    db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
+    db_config: Engine, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
     create_project_submission_table_start(db_config, config)
     check_project_submission_started(db_config, sequences_to_upload)
@@ -487,7 +484,7 @@ def mock_requests_post() -> Mock:
 
 
 def multi_segment_submission(
-    db_config: SimpleConnectionPool,
+    db_config: Engine,
     config: Config,
     mock_get_group_info: Mock,
     mock_submit_external_metadata: Mock,
@@ -606,7 +603,6 @@ class TestFirstPublicUpdate(TestSubmission):
         "base_entry": {
             "group_id": 1,
             "organism": "test_organism",
-            "project_id": 0,
             "status": Status.SUBMITTED,
         },
         "add_function": add_to_project_table,
@@ -704,7 +700,7 @@ class TestFirstPublicUpdate(TestSubmission):
             # Single key (like project_id)
             conditions = {"project_id": entity_id}
         else:
-            conditions = asdict(entry.primary_key)
+            conditions = asdict(entry.pkey)
 
         # Run visibility check with invalid accessions
         check_and_update_visibility_for_column(
@@ -712,16 +708,15 @@ class TestFirstPublicUpdate(TestSubmission):
         )
 
         # Check that visibility column is None
-        rows: list[dict] = find_conditions_in_db(
+        rows = find_conditions_in_db(
             self.db_config,
-            config.table_name,
+            config.entry_class,
             conditions=conditions,
         )
         logger.debug(f"Rows found after invalid check: {rows}")
         assert len(rows) == 1, f"{entity_type.value} not found in table."
 
-        entry_after_invalid = config.entry_class(**rows[0])
-        visibility_value = getattr(entry_after_invalid, column_name)
+        visibility_value = getattr(rows[0], column_name)
         assert visibility_value is None, (
             f"{column_name} should be None for non-existing accessions. Got: {visibility_value}"
         )
@@ -729,9 +724,9 @@ class TestFirstPublicUpdate(TestSubmission):
         # Update the entry to have valid accessions
         update_db_where_conditions(
             self.db_config,
-            config.table_name,
+            config.entry_class,
             conditions=conditions,
-            update_values={"result": json.dumps(test_data["valid_result"])},
+            update_values={"result": test_data["valid_result"]},
         )
 
         # Run the visibility check again with valid accessions
@@ -742,13 +737,12 @@ class TestFirstPublicUpdate(TestSubmission):
         # Check that visibility column is now updated
         rows = find_conditions_in_db(
             self.db_config,
-            config.table_name,
+            config.entry_class,
             conditions=conditions,
         )
         assert len(rows) == 1, f"{entity_type.value} not found in table after update."
 
-        entry_after_valid = config.entry_class(**rows[0])
-        visibility_value = getattr(entry_after_valid, column_name)
+        visibility_value = getattr(rows[0], column_name)
         assert visibility_value is not None, (
             f"{column_name} should be updated to current timestamp for valid accessions. "
             f"Got: {visibility_value}"

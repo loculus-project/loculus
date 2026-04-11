@@ -9,7 +9,7 @@ import string
 import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import Field, asdict, dataclass, is_dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -23,8 +23,8 @@ from Bio.Seq import Seq
 from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
 from bs4 import BeautifulSoup
-from psycopg2.pool import SimpleConnectionPool
 from requests.auth import HTTPBasicAuth
+from sqlalchemy import Engine
 from tenacity import (
     RetryCallState,
     Retrying,
@@ -55,7 +55,6 @@ from .submission_db_helper import (
     ProjectTableEntry,
     SampleTableEntry,
     Status,
-    TableName,
     add_to_assembly_table,
     add_to_project_table,
     add_to_sample_table,
@@ -437,7 +436,7 @@ def create_flatfile(
     config: Config,
     metadata: dict[str, Any],
     organism_metadata: EnaOrganismDetails,
-    unaligned_nucleotide_sequences: dict[str, str],
+    unaligned_nucleotide_sequences: dict[str, str | None],
     dir: str | None,
 ):
     collection_date = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property, "Unknown")
@@ -842,7 +841,7 @@ def set_accession_does_not_exist_error(
     conditions: dict[str, str | dict[str, str]],
     accession: str,
     accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"] | Literal["RUN_REF"],
-    db_pool: SimpleConnectionPool,
+    db_pool: Engine,
 ):
     error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
     logger.error(error_text)
@@ -879,9 +878,11 @@ def set_accession_does_not_exist_error(
 
 
 def retry_failed_submissions_for_matching_errors(
-    entries_with_errors: Iterable[Mapping[str, Any]],
-    db_config: SimpleConnectionPool,
-    table_name: TableName,
+    entries_with_errors: Iterable[ProjectTableEntry]
+    | Iterable[SampleTableEntry]
+    | Iterable[AssemblyTableEntry],
+    db_config: Engine,
+    model_class: type[ProjectTableEntry] | type[SampleTableEntry] | type[AssemblyTableEntry],
     retry_threshold_min: int,
     error_substrings: Sequence[str] = ("does not exist in ENA",),
     last_retry: datetime | None = None,
@@ -892,22 +893,14 @@ def retry_failed_submissions_for_matching_errors(
     ):
         return last_retry
     for entry in entries_with_errors:
-        errors = str(entry.get("errors", ""))
+        errors = str(entry.errors or "")
         if not any(substring in errors for substring in error_substrings):
             continue
-        match table_name:
-            case TableName.PROJECT_TABLE:
-                primary_key = ProjectTableEntry(**entry).primary_key
-            case TableName.SAMPLE_TABLE:
-                primary_key = SampleTableEntry(**entry).primary_key
-            case TableName.ASSEMBLY_TABLE:
-                primary_key = AssemblyTableEntry(**entry).primary_key
-            case _:
-                logger.error(f"Unknown table name: {table_name}")
-                continue
 
+        pkey = entry.pkey
         logger.info(
-            f"Retrying submission {primary_key} in {table_name} with error: '{entry.get('errors')}'"
+            f"Retrying submission {pkey} in {model_class.__tablename__}"
+            f" with error: '{entry.errors}'"
         )
 
         update_values = {
@@ -919,11 +912,11 @@ def retry_failed_submissions_for_matching_errors(
         try:
             update_with_retry(
                 db_config=db_config,
-                conditions=asdict(primary_key),
+                conditions=asdict(pkey),
                 update_values=update_values,
-                table_name=table_name,
+                model_class=model_class,
             )
             last_retry = datetime.now(tz=pytz.utc)
         except Exception as e:
-            logger.error(f"Failed to update {table_name} entry for retry: {e!s}")
+            logger.error(f"Failed to update {model_class.__tablename__} entry for retry: {e!s}")
     return last_retry
