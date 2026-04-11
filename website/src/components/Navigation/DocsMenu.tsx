@@ -60,7 +60,7 @@ const MenuItem: FC<MenuItemProps> = ({ page, currentPageUrl }) => (
     <li className='border-b border-gray-200 last:border-0'>
         <a
             href={page.url}
-            className={`block p-4 py-2 sm:py-3 text-primary-600 hover:bg-blue-50 transition-colors duration-150 ease-in-out ${
+            className={`block p-4 py-2 md:py-3 text-primary-600 hover:bg-blue-50 transition-colors duration-150 ease-in-out ${
                 page.url === currentPageUrl ? 'font-bold' : ''
             }`}
         >
@@ -125,12 +125,12 @@ const DocsMenu: FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
     );
 
     return (
-        <Disclosure as='nav' className='docs-menu bg-white border rounded-lg overflow-hidden mt-5 sticky sm:min-w-64'>
+        <Disclosure as='nav' className='docs-menu bg-white border rounded-lg overflow-hidden mt-5 sticky md:min-w-64'>
             {({ open }) => (
                 <>
                     <div className='flex items-center justify-between px-4 py-3 bg-gray-100'>
                         <div className='text-lg font-semibold text-primary-600'>{title}</div>
-                        <div className='sm:hidden'>
+                        <div className='md:hidden'>
                             <DisclosureButton className='text-primary-600 hover:text-primary-800 focus:outline-none'>
                                 {open ? (
                                     <XIcon className='w-6 h-6' aria-hidden='true' />
@@ -141,9 +141,9 @@ const DocsMenu: FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
                         </div>
                     </div>
 
-                    <DisclosurePanel className='sm:hidden'>{menuContent}</DisclosurePanel>
+                    <DisclosurePanel className='md:hidden'>{menuContent}</DisclosurePanel>
 
-                    <div className='hidden sm:block sm:w-64'>{menuContent}</div>
+                    <div className='hidden md:block md:w-64'>{menuContent}</div>
                 </>
             )}
         </Disclosure>

@@ -14,15 +14,18 @@ fields:
     notSearchable: true
     hideOnSequenceDetailsPage: true
     includeInDownloadsByDefault: true
+    definition: {{ printf "The %s accession and version, uniquely identifying the specific version of the sequence record (e.g. `%s000001.1`)." $.Values.name $.Values.accessionPrefix | quote }}
   - name: accession
     displayName: Accession
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
+    definition: {{ printf "A unique identifier assigned to the sequence record by %s (e.g. `%s000001`)." $.Values.name $.Values.accessionPrefix | quote }}
   - name: version
     displayName: Version
     type: int
     hideOnSequenceDetailsPage: true
+    definition: "The version number of the sequence record, incremented each time the sequence is revised."
   - name: submissionId
     displayName: Submission ID
     type: string
@@ -30,11 +33,13 @@ fields:
     orderOnDetailsPage: 5000
     enableSubstringSearch: true
     includeInDownloadsByDefault: true
+    definition: "The sample identifier provided by the submitter."
   - name: isRevocation
     displayName: Is revocation
     type: boolean
     autocomplete: true
     hideOnSequenceDetailsPage: true
+    definition: "Indicator of whether the sequence record is revoked."
   - name: submitter
     displayName: Submitter
     type: string
@@ -43,6 +48,7 @@ fields:
     hideOnSequenceDetailsPage: true
     header: Submission details
     orderOnDetailsPage: 5010
+    definition: {{ printf "Name of the %s user which submitted the sequence record." $.Values.name | quote }}
   - name: groupName
     type: string
     generateIndex: true
@@ -51,6 +57,7 @@ fields:
     displayName: Submitting group
     includeInDownloadsByDefault: true
     orderOnDetailsPage: 5020
+    definition: "Name of the group that submitted the sequence record."
     customDisplay:
       type: submittingGroup
       displayGroup: group
@@ -60,6 +67,7 @@ fields:
     header: Submission details
     displayName: Submitting group (numeric ID)
     orderOnDetailsPage: 5030
+    definition: "Numeric ID of the group which submitted the sequence record."
     customDisplay:
       type: submittingGroup
       displayGroup: group
@@ -68,6 +76,7 @@ fields:
     displayName: Date submitted
     header: Submission details
     orderOnDetailsPage: 5040
+    definition: {{ printf "Date and time on which the sequence record was submitted to %s." $.Values.name | quote }}
   - name: submittedDate
     type: string
     hideOnSequenceDetailsPage: true
@@ -75,12 +84,14 @@ fields:
     autocomplete: true
     displayName: Date submitted (exact)
     orderOnDetailsPage: 5050
+    definition: {{ printf "Date on which the sequence record was submitted to %s." $.Values.name | quote }}
   - name: releasedAtTimestamp
     type: timestamp
     displayName: Date released
     header: Submission details
     columnWidth: 100
     orderOnDetailsPage: 5060
+    definition: {{ printf "Date and time on which the sequence record was released on %s." $.Values.name | quote }}
   - name: releasedDate
     type: string
     hideOnSequenceDetailsPage: true
@@ -89,6 +100,7 @@ fields:
     displayName: Date released (exact)
     columnWidth: 100
     orderOnDetailsPage: 5070
+    definition: {{ printf "Date on which the sequence record was released on %s." $.Values.name | quote }}
   {{- if $.Values.dataUseTerms.enabled }}
   - name: dataUseTerms
     type: string
@@ -97,6 +109,7 @@ fields:
     displayName: Data use terms
     initiallyVisible: true
     includeInDownloadsByDefault: true
+    definition: "The terms under which the sequence record may be used; either `OPEN` or `RESTRICTED`."
     customDisplay:
       type: dataUseTerms
     header: Data use terms
@@ -108,12 +121,14 @@ fields:
     hideOnSequenceDetailsPage: true
     header: Data use terms
     orderOnDetailsPage: 620
+    definition: "The date until which the sequence record is restricted use."
   - name: dataBecameOpenAt
     type: date
     displayName: Date data became open
     hideOnSequenceDetailsPage: true
     header: Data use terms
     orderOnDetailsPage: 625
+    definition: "The date on which the sequence record transitioned from restricted to open access."
   {{- if $.Values.dataUseTerms.urls }}
   - name: dataUseTermsUrl
     displayName: Data use terms URL
@@ -121,6 +136,7 @@ fields:
     notSearchable: true
     header: Data use terms
     includeInDownloadsByDefault: true
+    definition: "Link to the full text of the data use terms applicable to the sequence record."
     customDisplay:
       type: link
       url: "__value__"
@@ -132,16 +148,19 @@ fields:
     type: string
     autocomplete: true
     hideOnSequenceDetailsPage: true
+    definition: "Indicates whether this is the latest version of the sequence record (`LATEST_VERSION`), an earlier version (`REVISED`), or has been revoked (`REVOKED`)."
   - name: versionComment
     type: string
     displayName: Version comment
     header: Submission details
     orderOnDetailsPage: 5000
+    definition: "Reason for revising sequences, or other general comments concerning a specific version."
   - name: pipelineVersion
     displayName: Pipeline version
     type: int
     notSearchable: true
     hideOnSequenceDetailsPage: true
+    definition: "The version of the processing pipeline used to process the sequence record."
 {{- end}}
 
 {{/* Patches schema by adding to it and overwriting overlapping fields by the value in metadataAdd*/}}
@@ -294,6 +313,9 @@ organisms:
 
 {{- define "loculus.standardWebsiteMetadata" }}
 - type: {{ .type | default "string" | quote }}
+  {{- if .definition }}
+  definition: {{ .definition | quote }}
+  {{- end }}
   {{- if .autocomplete }}
   autocomplete: {{ .autocomplete }}
   {{- end }}
