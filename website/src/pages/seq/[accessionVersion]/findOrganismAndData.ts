@@ -13,9 +13,7 @@ export async function findOrganismAndData(accessionVersion: string) {
     const backendClient = createBackendClient();
     const { accession, version } = parseAccessionVersionFromString(accessionVersion);
 
-    const entries = await backendClient.getDetails(
-        version !== undefined ? { accessionVersions: [accessionVersion] } : { accessions: [accession] },
-    );
+    const entries = await backendClient.getDetails({ accessionOrAccessionVersions: [accessionVersion] });
 
     if (entries.isErr()) {
         return err({ message: entries.error.detail });

@@ -100,17 +100,12 @@ export class BackendClient {
     }
 
     public async getDetails(params: {
-        accessions?: string[];
-        accessionVersions?: string[];
+        accessionOrAccessionVersions: string[];
     }): Promise<Result<AccessionVersionWithOrganism[], ProblemDetail>> {
         const searchParams = new URLSearchParams();
 
-        for (const acc of params.accessions ?? []) {
-            searchParams.append('accessions', acc);
-        }
-
-        for (const av of params.accessionVersions ?? []) {
-            searchParams.append('accessionVersions', av);
+        for (const entry of params.accessionOrAccessionVersions) {
+            searchParams.append('accessionOrAccessionVersions', entry);
         }
 
         try {

@@ -31,28 +31,26 @@ class SearchController(
     @Operation(
         description = "Given a list of accessions or accession versions, return an NDJSON stream of the " +
             "corresponding released entries from the sequence entries view. " +
-            "For bare accessions (without version), all released versions are returned. " +
-            "For accession versions (e.g. 'LOC_000S01D.1'), only that specific version is returned. " +
-            "At least one of 'accessions' or 'accessionVersions' must be provided.",
+            "Each entry in 'accessionOrAccessionVersions' is parsed: if it ends with '.<number>' it is treated as a " +
+            "specific accession version (e.g. 'LOC_000S01D.1'); otherwise it is treated as a bare accession " +
+            "and all released versions for that accession are returned. " +
+            "At least one value must be provided.",
     )
     @ApiResponse(responseCode = "200", description = "NDJSON stream of sequence entry versions")
     @ApiResponse(
         responseCode = "400",
-        description = "Neither accessions nor accessionVersions provided, or invalid format",
+        description = "No accessionOrAccessionVersions provided",
     )
     @GetMapping("/get-details", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getDetails(
-        @RequestParam(required = false) accessions: List<Accession>?,
-        @RequestParam(required = false) accessionVersions: List<String>?,
+        @RequestParam(required = false) accessionOrAccessionVersions: List<String>?,
     ): ResponseEntity<StreamingResponseBody> {
-        val normalizedAccessions = accessions?.takeIf { it.isNotEmpty() } ?: emptyList()
-        val normalizedAccessionVersions = accessionVersions?.takeIf { it.isNotEmpty() } ?: emptyList()
+        val normalized = accessionOrAccessionVersions?.takeIf { it.isNotEmpty() }
+            ?: throw BadRequestException("At least one accession or accession version must be provided.")
 
-        if (normalizedAccessions.isEmpty() && normalizedAccessionVersions.isEmpty()) {
-            throw BadRequestException("At least one of 'accessions' or 'accessionVersions' must be provided.")
-        }
-
-        val parsedAccessionVersions = normalizedAccessionVersions.map { parseAccessionVersion(it) }
+        val parsed = normalized.map { parseAccessionOrVersion(it) }
+        val bareAccessions = parsed.filterIsInstance<ParsedAccessionEntry.BareAccession>().map { it.accession }
+        val versionedAccessions = parsed.filterIsInstance<ParsedAccessionEntry.Versioned>().map { it.accessionVersion }
 
         val headers = org.springframework.http.HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
@@ -66,8 +64,8 @@ class SearchController(
                     try {
                         iteratorStreamer.streamAsNdjson(
                             submissionDatabaseService.streamDetailsForAccessions(
-                                normalizedAccessions,
-                                parsedAccessionVersions,
+                                bareAccessions,
+                                versionedAccessions,
                             ),
                             stream,
                         )
@@ -93,19 +91,21 @@ class SearchController(
         return ResponseEntity.ok().headers(headers).body(streamBody)
     }
 
-    private fun parseAccessionVersion(accessionVersion: String): AccessionVersion {
-        val lastDotIndex = accessionVersion.lastIndexOf('.')
-        if (lastDotIndex == -1 || lastDotIndex == accessionVersion.length - 1) {
-            throw BadRequestException(
-                "Invalid accession version format '$accessionVersion'. Expected format: '<accession>.<version>'",
-            )
+    private sealed class ParsedAccessionEntry {
+        data class BareAccession(val accession: Accession) : ParsedAccessionEntry()
+        data class Versioned(val accessionVersion: AccessionVersion) : ParsedAccessionEntry()
+    }
+
+    private fun parseAccessionOrVersion(input: String): ParsedAccessionEntry {
+        val lastDotIndex = input.lastIndexOf('.')
+        if (lastDotIndex != -1 && lastDotIndex < input.length - 1) {
+            val versionStr = input.substring(lastDotIndex + 1)
+            val version = versionStr.toLongOrNull()
+            if (version != null) {
+                val accession = input.substring(0, lastDotIndex)
+                return ParsedAccessionEntry.Versioned(AccessionVersion(accession, version))
+            }
         }
-        val accession = accessionVersion.substring(0, lastDotIndex)
-        val versionStr = accessionVersion.substring(lastDotIndex + 1)
-        val version = versionStr.toLongOrNull()
-            ?: throw BadRequestException(
-                "Invalid version '$versionStr' in accession version '$accessionVersion'. Version must be a number.",
-            )
-        return AccessionVersion(accession, version)
+        return ParsedAccessionEntry.BareAccession(input)
     }
 }

@@ -236,14 +236,12 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt),
     )
 
-    fun getDetails(accessions: List<String>? = null, accessionVersions: List<String>? = null): ResultActions =
-        mockMvc.perform(
-            get("/get-details")
-                .also { builder ->
-                    accessions?.forEach { builder.param("accessions", it) }
-                    accessionVersions?.forEach { builder.param("accessionVersions", it) }
-                },
-        )
+    fun getDetails(accessionOrAccessionVersions: List<String>? = null): ResultActions = mockMvc.perform(
+        get("/get-details")
+            .also { builder ->
+                accessionOrAccessionVersions?.forEach { builder.param("accessionOrAccessionVersions", it) }
+            },
+    )
 
     fun getReleasedData(
         organism: String = DEFAULT_ORGANISM,

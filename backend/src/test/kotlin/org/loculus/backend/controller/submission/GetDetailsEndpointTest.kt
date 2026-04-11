@@ -34,51 +34,54 @@ class GetDetailsEndpointTest(
     }
 
     @Test
-    fun `GIVEN neither accessions nor accessionVersions THEN returns 400`() {
+    fun `GIVEN no accessionOrAccessionVersions THEN returns 400`() {
         submissionControllerClient.getDetails()
             .andExpect(status().isBadRequest)
             .andExpect(
                 content().string(
-                    containsString("At least one of 'accessions' or 'accessionVersions' must be provided."),
+                    containsString("At least one accession or accession version must be provided."),
                 ),
             )
     }
 
     @Test
-    fun `GIVEN empty accessions and accessionVersions lists THEN returns 400`() {
-        submissionControllerClient.getDetails(accessions = emptyList(), accessionVersions = emptyList())
+    fun `GIVEN empty accessionOrAccessionVersions list THEN returns 400`() {
+        submissionControllerClient.getDetails(accessionOrAccessionVersions = emptyList())
             .andExpect(status().isBadRequest)
             .andExpect(
                 content().string(
-                    containsString("At least one of 'accessions' or 'accessionVersions' must be provided."),
+                    containsString("At least one accession or accession version must be provided."),
                 ),
             )
     }
 
     @Test
-    fun `GIVEN accessionVersion without dot separator THEN returns 400`() {
-        submissionControllerClient.getDetails(accessionVersions = listOf("LOC_000S01D"))
-            .andExpect(status().isBadRequest)
-            .andExpect(content().string(containsString("Invalid accession version format")))
+    fun `GIVEN entry without dot separator THEN treats it as bare accession`() {
+        val result = submissionControllerClient.getDetails(accessionOrAccessionVersions = listOf("LOC_000S01D"))
+            .expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
+
+        assertThat(result, `is`(empty()))
     }
 
     @Test
-    fun `GIVEN accessionVersion with non-numeric version THEN returns 400`() {
-        submissionControllerClient.getDetails(accessionVersions = listOf("LOC_000S01D.abc"))
-            .andExpect(status().isBadRequest)
-            .andExpect(content().string(containsString("Version must be a number")))
+    fun `GIVEN entry with non-numeric version suffix THEN treats it as bare accession`() {
+        val result = submissionControllerClient.getDetails(accessionOrAccessionVersions = listOf("LOC_000S01D.abc"))
+            .expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
+
+        assertThat(result, `is`(empty()))
     }
 
     @Test
-    fun `GIVEN accessionVersion with trailing dot THEN returns 400`() {
-        submissionControllerClient.getDetails(accessionVersions = listOf("LOC_000S01D."))
-            .andExpect(status().isBadRequest)
-            .andExpect(content().string(containsString("Invalid accession version format")))
+    fun `GIVEN entry with trailing dot THEN treats it as bare accession`() {
+        val result = submissionControllerClient.getDetails(accessionOrAccessionVersions = listOf("LOC_000S01D."))
+            .expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
+
+        assertThat(result, `is`(empty()))
     }
 
     @Test
     fun `GIVEN no matching accession in database THEN returns empty result`() {
-        val result = submissionControllerClient.getDetails(accessions = listOf("NONEXISTENT"))
+        val result = submissionControllerClient.getDetails(accessionOrAccessionVersions = listOf("NONEXISTENT"))
             .expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
 
         assertThat(result, `is`(empty()))
@@ -88,7 +91,7 @@ class GetDetailsEndpointTest(
     fun `GIVEN unreleased sequence entry THEN does not return it`() {
         convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
 
-        val result = submissionControllerClient.getDetails(accessions = listOf("LOC_000S01D"))
+        val result = submissionControllerClient.getDetails(accessionOrAccessionVersions = listOf("LOC_000S01D"))
             .expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
 
         assertThat(result, `is`(empty()))
@@ -99,7 +102,7 @@ class GetDetailsEndpointTest(
         val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
         val accession = accessionVersions.first().accession
 
-        val result = submissionControllerClient.getDetails(accessions = listOf(accession))
+        val result = submissionControllerClient.getDetails(accessionOrAccessionVersions = listOf(accession))
             .expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
 
         assertThat(result, hasSize(1))
@@ -117,7 +120,7 @@ class GetDetailsEndpointTest(
         val accession = allAccessions.first()
         convenienceClient.reviseAndProcessDefaultSequenceEntries(allAccessions)
 
-        val result = submissionControllerClient.getDetails(accessions = listOf(accession))
+        val result = submissionControllerClient.getDetails(accessionOrAccessionVersions = listOf(accession))
             .expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
 
         assertThat(result, hasSize(2))
@@ -128,13 +131,13 @@ class GetDetailsEndpointTest(
     }
 
     @Test
-    fun `GIVEN released data with multiple versions THEN accessionVersion returns only that version`() {
+    fun `GIVEN released data with multiple versions THEN accession version returns only that version`() {
         val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
         val allAccessions = accessionVersions.map { it.accession }
         val accession = allAccessions.first()
         convenienceClient.reviseAndProcessDefaultSequenceEntries(allAccessions)
 
-        val result = submissionControllerClient.getDetails(accessionVersions = listOf("$accession.1"))
+        val result = submissionControllerClient.getDetails(accessionOrAccessionVersions = listOf("$accession.1"))
             .expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
 
         assertThat(result, hasSize(1))
@@ -143,7 +146,7 @@ class GetDetailsEndpointTest(
     }
 
     @Test
-    fun `GIVEN mix of accessions and accessionVersions THEN returns correct combined results`() {
+    fun `GIVEN mix of bare accessions and accession versions THEN returns correct combined results`() {
         val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
         val allAccessions = accessionVersions.map { it.accession }
         val accession1 = allAccessions[0]
@@ -154,8 +157,7 @@ class GetDetailsEndpointTest(
 
         // Request accession1 by bare accession (all versions) and accession2 by specific version 1 only
         val result = submissionControllerClient.getDetails(
-            accessions = listOf(accession1),
-            accessionVersions = listOf("$accession2.1"),
+            accessionOrAccessionVersions = listOf(accession1, "$accession2.1"),
         ).expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
 
         val accession1Results = result.filter { it.accession == accession1 }
@@ -172,9 +174,9 @@ class GetDetailsEndpointTest(
         val allReleased = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
         val accession = allReleased.first().accession
 
-        // Get all accessions including the revoked one
-        val revokedAccessionVersions = submissionControllerClient.getDetails(accessions = listOf(accession))
-            .expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
+        val revokedAccessionVersions = submissionControllerClient.getDetails(
+            accessionOrAccessionVersions = listOf(accession),
+        ).expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
 
         assertThat(revokedAccessionVersions.size, greaterThan(0))
     }
@@ -185,7 +187,7 @@ class GetDetailsEndpointTest(
         val accession = accessionVersions.first().accession
 
         // No JWT is provided — endpoint must be public
-        submissionControllerClient.getDetails(accessions = listOf(accession))
+        submissionControllerClient.getDetails(accessionOrAccessionVersions = listOf(accession))
             .andExpect(status().isOk)
     }
 
@@ -194,7 +196,7 @@ class GetDetailsEndpointTest(
         val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
         val accessions = accessionVersions.map { it.accession }
 
-        val result = submissionControllerClient.getDetails(accessions = accessions)
+        val result = submissionControllerClient.getDetails(accessionOrAccessionVersions = accessions)
             .expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
 
         assertThat(result, hasSize(accessions.size))
