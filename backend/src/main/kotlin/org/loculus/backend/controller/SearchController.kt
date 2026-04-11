@@ -23,7 +23,7 @@ private val log = KotlinLogging.logger { }
 
 @RestController
 @Validated
-class AccessionController(
+class SearchController(
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val iteratorStreamer: IteratorStreamer,
     private val requestIdContext: RequestIdContext,
