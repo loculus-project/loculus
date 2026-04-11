@@ -11,7 +11,7 @@ import { parseAccessionVersionFromString } from '../../../utils/extractAccession
 
 export async function findOrganismAndData(accessionVersion: string) {
     const backendClient = createBackendClient();
-    const { accession, version } = parseAccessionVersionFromString(accessionVersion);
+    const { version } = parseAccessionVersionFromString(accessionVersion);
 
     const entries = await backendClient.getDetails({ accessionOrAccessionVersions: [accessionVersion] });
 
