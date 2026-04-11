@@ -897,9 +897,9 @@ def retry_failed_submissions_for_matching_errors(
         if not any(substring in errors for substring in error_substrings):
             continue
 
-        primary_key = entry.primary_key
+        pkey = entry.pkey
         logger.info(
-            f"Retrying submission {primary_key} in {model_class.__tablename__}"
+            f"Retrying submission {pkey} in {model_class.__tablename__}"
             f" with error: '{entry.errors}'"
         )
 
@@ -912,7 +912,7 @@ def retry_failed_submissions_for_matching_errors(
         try:
             update_with_retry(
                 db_config=db_config,
-                conditions=asdict(primary_key),
+                conditions=asdict(pkey),
                 update_values=update_values,
                 model_class=model_class,
             )
