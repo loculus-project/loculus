@@ -52,6 +52,7 @@ import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
+import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.OriginalDataWithFileUrls
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.PreprocessingStatus.PROCESSED
@@ -743,7 +744,6 @@ class SubmissionDatabaseService(
             SequenceEntriesView.accessionColumn,
             SequenceEntriesView.versionColumn,
             SequenceEntriesView.isRevocationColumn,
-            SequenceEntriesView.versionCommentColumn,
             SequenceEntriesView.jointDataColumn,
             SequenceEntriesView.submitterColumn,
             SequenceEntriesView.groupIdColumn,
@@ -786,7 +786,6 @@ class SubmissionDatabaseService(
                     DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
                     it[DataUseTermsTable.restrictedUntilColumn],
                 ),
-                versionComment = it[SequenceEntriesView.versionCommentColumn],
                 dataUseTermsChangeDate = it[DataUseTermsTable.changeDateColumn],
             )
         }
@@ -962,16 +961,14 @@ class SubmissionDatabaseService(
 
         SequenceEntriesTable.insert(
             SequenceEntriesTable.select(
-                SequenceEntriesTable.accessionColumn, SequenceEntriesTable.versionColumn.plus(1),
-                when (versionComment) {
-                    null -> Op.nullOp()
-                    else -> stringParam(versionComment)
-                },
+                SequenceEntriesTable.accessionColumn,
+                SequenceEntriesTable.versionColumn.plus(1),
                 SequenceEntriesTable.submissionIdColumn,
                 stringParam(authenticatedUser.username),
                 SequenceEntriesTable.groupIdColumn,
                 dateTimeParam(dateProvider.getCurrentDateTime()),
-                booleanParam(true), SequenceEntriesTable.organismColumn,
+                booleanParam(true),
+                SequenceEntriesTable.organismColumn,
             ).where {
                 (
                     SequenceEntriesTable.accessionColumn inList
@@ -982,7 +979,6 @@ class SubmissionDatabaseService(
             columns = listOf(
                 SequenceEntriesTable.accessionColumn,
                 SequenceEntriesTable.versionColumn,
-                SequenceEntriesTable.versionCommentColumn,
                 SequenceEntriesTable.submissionIdColumn,
                 SequenceEntriesTable.submitterColumn,
                 SequenceEntriesTable.groupIdColumn,
@@ -991,6 +987,28 @@ class SubmissionDatabaseService(
                 SequenceEntriesTable.organismColumn,
             ),
         )
+
+        if (versionComment != null) {
+            log.debug { "Adding version comment for revocation: $versionComment" }
+            val metadata = mapOf("versionComment" to versionComment)
+            val originalData = compressionService.compressSequencesInOriginalData(
+                OriginalData(
+                    metadata = metadata,
+                    unalignedNucleotideSequences = emptyMap(),
+                ),
+                organism,
+            )
+            SequenceEntriesTable.update(
+                where = {
+                    (SequenceEntriesTable.accessionColumn inList accessions) and
+                        SequenceEntriesTable.isMaxVersion and
+                        (SequenceEntriesTable.isRevocationColumn eq true)
+                },
+            ) {
+                it[originalDataColumn] = originalData
+                it[unprocessedDataColumn] = originalData
+            }
+        }
 
         auditLogger.log(
             authenticatedUser.username,
@@ -1532,7 +1550,6 @@ data class RawProcessedData(
     override val accession: Accession,
     override val version: Version,
     val isRevocation: Boolean,
-    val versionComment: String?,
     val submitter: String,
     val groupId: Int,
     val groupName: String,
