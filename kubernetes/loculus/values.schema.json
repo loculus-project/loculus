@@ -1255,6 +1255,12 @@
       "type": "string",
       "description": "Email address that users can submit issues to"
     },
+    "allowedExternalRedirectUrls": {
+      "groups": ["general"],
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of URL prefixes allowed to receive authentication tokens via /auth/authorize (e.g. 'https://evolve.org/auth'). Redirect URLs must start with one of these prefixes. If not set, any URL is allowed (with user consent)."
+    },
     "sequenceFlagging": {
       "type": "object",
       "properties": {

@@ -259,6 +259,7 @@ export const websiteConfig = z.object({
     enableSubmissionPages: z.boolean(),
     enableDataUseTerms: z.boolean(),
     sequenceFlagging: sequenceFlaggingConfig.optional(),
+    allowedExternalRedirectUrls: z.array(z.string()).nullable().optional(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 
