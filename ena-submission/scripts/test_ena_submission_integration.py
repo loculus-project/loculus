@@ -700,7 +700,7 @@ class TestFirstPublicUpdate(TestSubmission):
             # Single key (like project_id)
             conditions = {"project_id": entity_id}
         else:
-            conditions = asdict(entry.primary_key)
+            conditions = asdict(entry.pkey)
 
         # Run visibility check with invalid accessions
         check_and_update_visibility_for_column(

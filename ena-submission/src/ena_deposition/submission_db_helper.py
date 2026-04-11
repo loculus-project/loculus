@@ -172,7 +172,7 @@ class SubmissionTableEntry(Base):
     project_id: Mapped[int | None] = mapped_column(default=None)
 
     @property
-    def primary_key(self) -> AccessionVersion:
+    def pkey(self) -> AccessionVersion:
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
@@ -199,7 +199,7 @@ class ProjectTableEntry(Base):
     ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
 
     @property
-    def primary_key(self) -> ProjectId:
+    def pkey(self) -> ProjectId:
         return ProjectId(project_id=self.project_id)
 
 
@@ -221,7 +221,7 @@ class SampleTableEntry(Base):
     ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
 
     @property
-    def primary_key(self) -> AccessionVersion:
+    def pkey(self) -> AccessionVersion:
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
@@ -245,7 +245,7 @@ class AssemblyTableEntry(Base):
     ncbi_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
 
     @property
-    def primary_key(self) -> AccessionVersion:
+    def pkey(self) -> AccessionVersion:
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
