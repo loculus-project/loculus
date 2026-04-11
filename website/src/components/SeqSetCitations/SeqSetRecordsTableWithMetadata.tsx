@@ -75,7 +75,7 @@ const fetchRecordsMetadata = async (
         }
 
         if (versionedAccessions.length > 0 || bareAccessions.length > 0) {
-            const response = await axios.get(`${backendUrl}/get-sequence-entry-versions`, {
+            const response = await axios.get(`${backendUrl}/get-details`, {
                 params: searchParams,
                 responseType: 'text',
             });

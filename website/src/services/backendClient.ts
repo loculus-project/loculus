@@ -99,7 +99,7 @@ export class BackendClient {
         );
     }
 
-    public async getSequenceEntryVersions(params: {
+    public async getDetails(params: {
         accessions?: string[];
         accessionVersions?: string[];
     }): Promise<Result<AccessionVersionWithOrganism[], ProblemDetail>> {
@@ -114,7 +114,7 @@ export class BackendClient {
         }
 
         try {
-            const response: { data: string } = await axios.get(`${this.url}/get-sequence-entry-versions`, {
+            const response: { data: string } = await axios.get(`${this.url}/get-details`, {
                 params: searchParams,
                 responseType: 'text',
                 headers: {

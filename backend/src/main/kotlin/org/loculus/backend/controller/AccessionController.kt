@@ -40,8 +40,8 @@ class AccessionController(
         responseCode = "400",
         description = "Neither accessions nor accessionVersions provided, or invalid format",
     )
-    @GetMapping("/get-sequence-entry-versions", produces = [MediaType.APPLICATION_NDJSON_VALUE])
-    fun getSequenceEntryVersions(
+    @GetMapping("/get-details", produces = [MediaType.APPLICATION_NDJSON_VALUE])
+    fun getDetails(
         @RequestParam(required = false) accessions: List<Accession>?,
         @RequestParam(required = false) accessionVersions: List<String>?,
     ): ResponseEntity<StreamingResponseBody> {
@@ -65,7 +65,7 @@ class AccessionController(
                 transaction {
                     try {
                         iteratorStreamer.streamAsNdjson(
-                            submissionDatabaseService.streamSequenceEntryVersionsForAccessions(
+                            submissionDatabaseService.streamDetailsForAccessions(
                                 normalizedAccessions,
                                 parsedAccessionVersions,
                             ),
@@ -74,7 +74,7 @@ class AccessionController(
                     } catch (e: Exception) {
                         val duration = System.currentTimeMillis() - startTime
                         log.error(e) {
-                            "[get-sequence-entry-versions] An unexpected error occurred while streaming after " +
+                            "[get-details] An unexpected error occurred while streaming after " +
                                 "${duration}ms, aborting: $e"
                         }
                         stream.write(
@@ -85,7 +85,7 @@ class AccessionController(
             }
 
             val duration = System.currentTimeMillis() - startTime
-            log.info { "[get-sequence-entry-versions] Streaming response completed in ${duration}ms" }
+            log.info { "[get-details] Streaming response completed in ${duration}ms" }
 
             MDC.remove(REQUEST_ID_MDC_KEY)
         }

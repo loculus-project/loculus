@@ -58,7 +58,7 @@ class SecurityConfig {
         "/get-seqset-cited-by-publication",
         "/get-author",
         "/*/get-released-data",
-        "/get-sequence-entry-versions",
+        "/get-details",
         "/files/get/**",
         "/groups/*",
     )

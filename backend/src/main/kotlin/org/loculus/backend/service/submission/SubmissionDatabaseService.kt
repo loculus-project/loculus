@@ -887,7 +887,7 @@ class SubmissionDatabaseService(
         )
     }
 
-    fun streamSequenceEntryVersionsForAccessions(
+    fun streamDetailsForAccessions(
         accessions: List<Accession>,
         accessionVersions: List<AccessionVersion>,
     ): Sequence<AccessionVersionWithOrganism> {

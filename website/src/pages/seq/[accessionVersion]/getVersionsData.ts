@@ -5,7 +5,7 @@ import { LapisClient } from '../../../services/lapisClient.ts';
 
 export const getVersionsData = async (accession: string) => {
     const backendClient = createBackendClient();
-    const entries = await backendClient.getSequenceEntryVersions({ accessions: [accession] });
+    const entries = await backendClient.getDetails({ accessions: [accession] });
 
     const entriesValue = entries.unwrapOr([]);
     if (entriesValue.length === 0) {

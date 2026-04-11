@@ -13,7 +13,7 @@ export async function findOrganismAndData(accessionVersion: string) {
     const backendClient = createBackendClient();
     const { accession, version } = parseAccessionVersionFromString(accessionVersion);
 
-    const entries = await backendClient.getSequenceEntryVersions(
+    const entries = await backendClient.getDetails(
         version !== undefined ? { accessionVersions: [accessionVersion] } : { accessions: [accession] },
     );
 
