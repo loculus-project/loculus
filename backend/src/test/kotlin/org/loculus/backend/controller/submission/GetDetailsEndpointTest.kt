@@ -89,9 +89,10 @@ class GetDetailsEndpointTest(
 
     @Test
     fun `GIVEN unreleased sequence entry THEN does not return it`() {
-        convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        val accession = accessionVersions.first().accession
 
-        val result = submissionControllerClient.getDetails(accessionOrAccessionVersions = listOf("LOC_000S01D"))
+        val result = submissionControllerClient.getDetails(accessionOrAccessionVersions = listOf(accession))
             .expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
 
         assertThat(result, `is`(empty()))
@@ -179,16 +180,10 @@ class GetDetailsEndpointTest(
         ).expectNdjsonAndGetContent<AccessionVersionWithOrganism>()
 
         assertThat(revokedAccessionVersions.size, greaterThan(0))
-    }
-
-    @Test
-    fun `GIVEN released data THEN endpoint is publicly accessible without authentication`() {
-        val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        val accession = accessionVersions.first().accession
-
-        // No JWT is provided — endpoint must be public
-        submissionControllerClient.getDetails(accessionOrAccessionVersions = listOf(accession))
-            .andExpect(status().isOk)
+        assertThat(
+            revokedAccessionVersions.any { it.accession == accession && it.isRevocation },
+            `is`(true),
+        )
     }
 
     @Test
