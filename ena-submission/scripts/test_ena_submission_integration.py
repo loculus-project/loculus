@@ -16,6 +16,7 @@ import re
 import uuid
 from dataclasses import asdict
 from datetime import datetime, timedelta
+from itertools import chain, repeat
 from typing import Any, Final
 from unittest.mock import Mock, patch
 
@@ -898,6 +899,57 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
         # submit
+        create_project_submission_table_start(self.db_config, self.config)
+        check_project_submission_submitted(self.db_config, sequences_to_upload)
+        create_sample_submission_table_start(self.db_config, config=self.config)
+        check_sample_submission_submitted(self.db_config, sequences_to_upload)
+        _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
+
+        # send to loculus
+        get_external_metadata_and_send_to_loculus(self.db_config, self.config)
+        check_sent_to_loculus(self.db_config, sequences_to_upload)
+
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    @patch("ena_deposition.create_project.accession_exists", autospec=True)
+    @patch("ena_deposition.notifications.notify", autospec=True)
+    def test_retry(self, mock_notify: Mock, mock_accession_exists: Mock, mock_get_group_info: Mock, mock_submit_external_metadata: Mock) -> None:
+        """
+        Test submitting sequences with accurate data and known bioproject and biosample
+        """
+        # get data
+        mock_get_group_info.return_value = TEST_GROUP
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        mock_accession_exists.side_effect = chain([False], repeat(True))
+        mock_notify.return_value = None
+
+        sequences_to_upload = get_sequences()
+        for entry in sequences_to_upload.values():  # set to public bioproject and biosample
+            entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
+            entry["metadata"]["biosampleAccession"] = "SAMN11077987"
+
+        # upload
+        upload_sequences(self.db_config, sequences_to_upload)
+        check_sequences_uploaded(self.db_config, sequences_to_upload)
+
+        # check project submission fails
+        create_project_submission_table_start(self.db_config, self.config)
+        check_project_submission_has_errors(self.db_config, sequences_to_upload)
+
+        # Confirm DB entry is reset to READY to retry submission
+        project_table_handle_errors(
+            self.db_config,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=5),
+        )
+        check_project_submission_started(self.db_config, sequences_to_upload)
+
+        # submit
+        create_project_submission_table_start(self.db_config, self.config)
+        project_table_create(self.db_config, self.config, test=self.config.test)
         create_project_submission_table_start(self.db_config, self.config)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
         create_sample_submission_table_start(self.db_config, config=self.config)
