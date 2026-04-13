@@ -16,6 +16,7 @@ The DB version is configured in `values.yaml` (`taxonomyService.dbVersion`).
 | `GET /` | Health check |
 | `GET /taxa?scientific_name=<string>` | Endpoint used to validate user input. If the input is valid, the details of all associated taxa are returned. Currently only supports validation of scientific names (case-insensitive) through the `scientific_name` query parameter. |
 | `GET /taxa/{tax_id}?find_common_name=<boolean>` |  Endpoint to use once a valid taxon ID is found. Looks up a taxon by NCBI taxon ID and returns it. If find_common_name=true, returns the nearest ancestor (including self) that has a common name. |
+| `GET /taxa/{tax_id}/host-categories` | Returns all organism category labels associated with ancestors of `tax_id`. Labels are specified in the configuration as `organism_categories: dict[int, str]` where keys are NCBI taxon IDs and values are labels |
 
 ## Updating the NCBI database
 

@@ -1,6 +1,8 @@
 # from dataclasses import dataclass
 
 import sqlite3
+from typing import Self
+
 from pydantic import BaseModel
 
 
@@ -12,5 +14,5 @@ class Taxon(BaseModel):
     depth: int
 
     @classmethod
-    def from_row(cls, row: sqlite3.Row) -> Taxon:
+    def from_row(cls, row: sqlite3.Row) -> Self:
         return cls.model_validate(dict(row))
