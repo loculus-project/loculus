@@ -176,11 +176,7 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
     """
     1. Find all entries in submission_table in state READY_TO_SUBMIT
     2. If (exists "bioproject" in "metadata"):
-    a.      If ("bioproject" in "result"["bioproject"]) in projects for that (group_id, organism):
-                update state in submission_table to SUBMITTED_PROJECT, add center_name, project_id
-    b.      Else create entry in project_table, update state to SUBMITTED_PROJECT,
-            add center_name, project_id
-    c.      break
+        attempt to use this bioproject, see set_project_table_entry function for details
     3. If (exists an entry in the project_table for (group_id, organism)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_PROJECT
     4. Else create corresponding entry in project_table
