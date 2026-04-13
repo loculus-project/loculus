@@ -1,1 +1,4 @@
 log_level: DEBUG
+organism_categories:
+  7175: "mosquito"
+  7174: "mosquitos"
