@@ -925,6 +925,13 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         mock_notify.assert_called_once_with(self.slack_config, msg)
         mock_update_with_retry.assert_called_once()
 
+        # Confirm DB entry is reset to READY to retry submission
+        check_sample_submission_started(self.db_config, sequences_to_upload)
+
+        # Confirm DB entry is still in error state after retrying submission
+        create_sample_submission_table_start(self.db_config, config=self.config)
+        sample_table_create(self.db_config, self.config, test=self.config.test)
+        check_sample_submission_has_errors(self.db_config, sequences_to_upload)
 
 class TestRevisionAssemblyModificationTests(TestSubmission):
     @patch(
