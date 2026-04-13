@@ -7,7 +7,7 @@ from pydantic import BaseModel
 class Taxon(BaseModel):
     tax_id: int
     common_name: str | None
-    scientific_name: str | None
+    scientific_name: str
     parent_id: int
     depth: int
 
