@@ -438,7 +438,7 @@ def _test_successful_sample_submission(
     check_sample_submission_started(db_config, sequences_to_upload)
 
     sample_table_create(db_config, config, test=config.test)
-    create_sample_submission_table_update(db_config)
+    create_sample_submission_table_update(db_config, config)
     check_sample_submission_submitted(db_config, sequences_to_upload)
 
 
@@ -449,7 +449,7 @@ def _test_successful_project_submission(
     check_project_submission_started(db_config, sequences_to_upload)
 
     project_table_create(db_config, config, test=config.test)
-    create_project_submission_table_update(db_config)
+    create_project_submission_table_update(db_config, config)
     check_project_submission_submitted(db_config, sequences_to_upload)
 
 
