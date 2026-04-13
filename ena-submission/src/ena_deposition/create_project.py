@@ -213,6 +213,8 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
                     "center_name": corresponding_project[0]["center_name"],
                     "project_id": corresponding_project[0]["project_id"],
                 }
+            else:
+                continue
         else:
             project_id = add_to_project_table(
                 db_config, ProjectTableEntry(group_id=row["group_id"], organism=row["organism"])
