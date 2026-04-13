@@ -239,7 +239,7 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
         )
 
 
-def submission_table_update(db_config: SimpleConnectionPool, config: Config):
+def submission_table_update(db_config: SimpleConnectionPool):
     """
     1. Find all entries in submission_table in state SUBMITTING_PROJECT
     2. If (exists an entry in the project_table for (group_id, organism)):
@@ -261,22 +261,6 @@ def submission_table_update(db_config: SimpleConnectionPool, config: Config):
         corresponding_project = find_conditions_in_db(
             db_config, table_name=TableName.PROJECT_TABLE, conditions=group_key
         )
-        # Dont create if bioproject_accession already exists
-        if (
-            len(corresponding_project) == 1
-            and corresponding_project[0]["result"]
-            and corresponding_project[0]["result"].get("bioproject_accession")
-        ):
-            if not accession_exists(
-                corresponding_project[0]["result"]["bioproject_accession"], config
-            ):
-                continue
-            update_db_where_conditions(
-                db_config,
-                table_name=TableName.PROJECT_TABLE,
-                conditions=group_key,
-                update_values={"status": Status.SUBMITTED},
-            )
         if len(corresponding_project) == 1 and corresponding_project[0]["status"] == str(
             Status.SUBMITTED
         ):
@@ -325,7 +309,16 @@ def project_table_create(
 
         # Dont create if bioproject_accession already exists
         if row["result"] and row["result"].get("bioproject_accession"):
-            continue
+            if not accession_exists(
+                row["result"]["bioproject_accession"], config
+            ):
+                continue
+            update_db_where_conditions(
+                db_config,
+                table_name=TableName.PROJECT_TABLE,
+                conditions=group_key,
+                update_values={"status": Status.SUBMITTED},
+            )
 
         try:
             group_info = call_loculus.get_group_info(config, row["group_id"])
@@ -441,7 +434,7 @@ def create_project(config: Config, stop_event: threading.Event):
             return
         logger.debug("Checking for projects to create")
         submission_table_start(db_config, config)
-        submission_table_update(db_config, config)
+        submission_table_update(db_config)
 
         project_table_create(db_config, config, test=config.test)
         last_retry_time = project_table_handle_errors(

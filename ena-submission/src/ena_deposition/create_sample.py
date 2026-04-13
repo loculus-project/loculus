@@ -249,7 +249,7 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
         )
 
 
-def submission_table_update(db_config: SimpleConnectionPool, config: Config):
+def submission_table_update(db_config: SimpleConnectionPool):
     """
     1. Find all entries in submission_table in state SUBMITTING_SAMPLE
     2. If (exists an entry in the sample_table for (accession, version)):
@@ -270,15 +270,6 @@ def submission_table_update(db_config: SimpleConnectionPool, config: Config):
         corresponding_sample = find_conditions_in_db(
             db_config, table_name=TableName.SAMPLE_TABLE, conditions=seq_key
         )
-        if row["metadata"] and row["metadata"].get("biosampleAccession"):
-            if not accession_exists(row["metadata"]["biosampleAccession"], config):
-                continue
-            update_db_where_conditions(
-                db_config,
-                table_name=TableName.SAMPLE_TABLE,
-                conditions=seq_key,
-                update_values={"status": Status.SUBMITTED},
-            )
         if len(corresponding_sample) == 1 and corresponding_sample[0]["status"] == str(
             Status.SUBMITTED
         ):
@@ -351,7 +342,12 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
             continue
         # Dont create if biosample_accession already exists
         if row["result"] and row["result"].get("biosample_accession"):
-            continue
+            update_db_where_conditions(
+                db_config,
+                table_name=TableName.SAMPLE_TABLE,
+                conditions=asdict(seq_key),
+                update_values={"status": Status.SUBMITTED},
+            )
 
         logger.info(f"Processing sample_table entry for {seq_key}")
         sample_data_in_submission_table = find_conditions_in_db(
@@ -462,7 +458,7 @@ def create_sample(config: Config, stop_event: threading.Event):
             return
         logger.debug("Checking for samples to create")
         submission_table_start(db_config, config=config)
-        submission_table_update(db_config, config=config)
+        submission_table_update(db_config)
 
         sample_table_create(db_config, config, test=config.test)
         last_retry_time = sample_table_handle_errors(
