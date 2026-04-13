@@ -315,11 +315,16 @@ def project_table_create(
         # Dont create if bioproject_accession already exists
         if row["result"] and row["result"].get("bioproject_accession"):
             if not accession_exists(row["result"]["bioproject_accession"], config):
-                set_accession_does_not_exist_error(
+                update_db_where_conditions(
+                    db_config,
+                    table_name=TableName.PROJECT_TABLE,
                     conditions=group_key,
-                    accession=row["result"]["bioproject_accession"],
-                    accession_type="BIOPROJECT",
-                    db_pool=db_config,
+                    update_values={
+                        "status": Status.HAS_ERRORS,
+                        "errors": [
+                            f"Accession {row['result']['bioproject_accession']} of type 'BIOPROJECT' does not exist in ENA."
+                        ],
+                    },
                 )
             else:
                 update_db_where_conditions(

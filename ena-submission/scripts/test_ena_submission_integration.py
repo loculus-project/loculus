@@ -863,6 +863,18 @@ class TestIncorrectBioprojectPassed(TestSubmission):
         project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_has_errors(self.db_config, sequences_to_upload)
 
+        # Confirm retries dont change state
+        project_table_handle_errors(
+            self.db_config,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=10),
+        )
+        check_project_submission_started(self.db_config, sequences_to_upload)
+        create_project_submission_table_start(self.db_config, config=self.config)
+        project_table_create(self.db_config, self.config, test=self.config.test)
+        check_project_submission_has_errors(self.db_config, sequences_to_upload)
+
 
 class TestKnownBioprojectAndBioSample(TestSubmission):
     @patch(
@@ -946,6 +958,18 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         check_sample_submission_started(self.db_config, sequences_to_upload)
 
         # Confirm DB entry is still in error state after retrying submission
+        create_sample_submission_table_start(self.db_config, config=self.config)
+        sample_table_create(self.db_config, self.config, test=self.config.test)
+        check_sample_submission_has_errors(self.db_config, sequences_to_upload)
+
+        # Confirm retries dont change state
+        sample_table_handle_errors(
+            self.db_config,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=10),
+        )
+        check_sample_submission_started(self.db_config, sequences_to_upload)
         create_sample_submission_table_start(self.db_config, config=self.config)
         sample_table_create(self.db_config, self.config, test=self.config.test)
         check_sample_submission_has_errors(self.db_config, sequences_to_upload)

@@ -343,11 +343,16 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
         # Dont create if biosample_accession already exists
         if row["result"] and row["result"].get("biosample_accession"):
             if not accession_exists(row["result"]["biosample_accession"], config):
-                set_accession_does_not_exist_error(
+                update_db_where_conditions(
+                    db_config,
+                    table_name=TableName.PROJECT_TABLE,
                     conditions=asdict(seq_key),
-                    accession=row["result"]["biosample_accession"],
-                    accession_type="BIOSAMPLE",
-                    db_pool=db_config,
+                    update_values={
+                        "status": Status.HAS_ERRORS,
+                        "errors": [
+                            f"Accession {row['result']['biosample_accession']} of type 'BIOSAMPLE' does not exist in ENA."
+                        ],
+                    },
                 )
             else:
                 update_db_where_conditions(
