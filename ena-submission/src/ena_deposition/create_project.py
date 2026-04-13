@@ -308,12 +308,14 @@ def project_table_create(
         # Dont create if bioproject_accession already exists
         if row["result"] and row["result"].get("bioproject_accession"):
             if not accession_exists(row["result"]["bioproject_accession"], config):
-                continue
+                status = Status.HAS_ERRORS
+            else:
+                status = Status.SUBMITTED
             update_db_where_conditions(
                 db_config,
                 table_name=TableName.PROJECT_TABLE,
                 conditions=group_key,
-                update_values={"status": Status.SUBMITTED},
+                update_values={"status": status},
             )
 
         try:

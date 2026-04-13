@@ -817,11 +817,13 @@ class TestKnownBioproject(TestSubmission):
 
 class TestIncorrectBioprojectPassed(TestSubmission):
     @patch("ena_deposition.notifications.notify", autospec=True)
-    def test_submit(self, mock_notify: Mock) -> None:
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    def test_submit(self, mock_get_group_info: Mock, mock_notify: Mock) -> None:
         """
         Test submitting sequences with an incorrect bioproject - this should fail
         """
         # get data
+        mock_get_group_info.return_value = TEST_GROUP
         mock_notify.return_value = None
         sequences_to_upload = get_sequences()
         for entry in sequences_to_upload.values():  # set to invalid bioproject
@@ -838,13 +840,20 @@ class TestIncorrectBioprojectPassed(TestSubmission):
             self.db_config,
             self.config,
             self.slack_config,
-            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=5),
+            last_retry_time=datetime.now(tz=pytz.utc),
         )
         msg = (
             f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in project_table "
             "in status HAS_ERRORS or SUBMITTING for over 0m"
         )
         mock_notify.assert_called_once_with(self.slack_config, msg)
+
+        project_table_handle_errors(
+            self.db_config,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=5),
+        )
 
         # Confirm DB entry is reset to READY to retry submission
         check_project_submission_started(self.db_config, sequences_to_upload)

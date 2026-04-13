@@ -834,7 +834,7 @@ def accession_exists(
         response = ena_http_get_with_retry(config, url)
         return int(response.json()["total"]) > 0
     except Exception as e:
-        logger.error(f"Error checking if accession exists: {e!s}")
+        logger.error(f"Error checking if accession {accession} exists: {response.json()} with error {e!s}")
         return False
 
 
