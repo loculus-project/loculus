@@ -270,8 +270,8 @@ def submission_table_update(db_config: SimpleConnectionPool, config: Config):
         corresponding_sample = find_conditions_in_db(
             db_config, table_name=TableName.SAMPLE_TABLE, conditions=seq_key
         )
-        if row["result"] and row["result"].get("biosample_accession"):
-            if not accession_exists(row["result"]["biosample_accession"], config):
+        if row["metadata"] and row["metadata"].get("biosampleAccession"):
+            if not accession_exists(row["metadata"]["biosampleAccession"], config):
                 continue
             update_db_where_conditions(
                 db_config,
