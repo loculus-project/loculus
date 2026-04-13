@@ -345,7 +345,7 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
             if not accession_exists(row["result"]["biosample_accession"], config):
                 update_db_where_conditions(
                     db_config,
-                    table_name=TableName.PROJECT_TABLE,
+                    table_name=TableName.SAMPLE_TABLE,
                     conditions=asdict(seq_key),
                     update_values={
                         "status": Status.HAS_ERRORS,
