@@ -16,6 +16,7 @@ import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.FilesPreconditionValidator
+import org.loculus.backend.service.files.IpfsService
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
@@ -45,6 +46,7 @@ class FilesController(
     private val filesPreconditionValidator: FilesPreconditionValidator,
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
+    private val ipfsService: IpfsService,
 ) {
 
     @Operation(
@@ -100,6 +102,56 @@ class FilesController(
         }
         return ResponseEntity.status(HttpStatus.SC_TEMPORARY_REDIRECT)
             .location(URI.create(presignedUrl))
+            .build()
+    }
+
+    @Operation(
+        summary = "Retrieve a released file via IPFS",
+        description =
+        "Publishes the requested file to the configured IPFS node (if not already pinned) and " +
+            "returns a 307 redirect to the public IPFS gateway URL. The CID is also returned in " +
+            "the `X-IPFS-CID` response header. Because IPFS is a public network, this endpoint is " +
+            "only available for files attached to released (public) accession versions.",
+    )
+    @ApiResponse(
+        responseCode = "307",
+        description = "Temporary redirect to the IPFS gateway URL",
+        headers = [
+            Header(name = HttpHeaders.LOCATION, description = "IPFS gateway URL"),
+            Header(name = "X-IPFS-CID", description = "The IPFS content identifier for the file"),
+        ],
+    )
+    @ApiResponse(responseCode = "404", description = "File or accession version does not exist, or is not public.")
+    @ApiResponse(responseCode = "422", description = "IPFS support is not enabled on this server.")
+    @GetMapping("/ipfs/{accession}/{version}/{fileCategory}/{fileName}")
+    fun getFileIpfsUrl(
+        @PathVariable accession: Accession,
+        @PathVariable version: Long,
+        @PathVariable fileCategory: String,
+        @PathVariable fileName: String,
+    ): ResponseEntity<Void> {
+        if (!ipfsService.isEnabled()) {
+            throw UnprocessableEntityException("IPFS support is not enabled on this server.")
+        }
+        val accessionVersion = AccessionVersion(accession, version)
+        val fileIdAndReleasedAt = submissionDatabaseService.getFileIdAndReleasedAt(
+            accessionVersion,
+            fileCategory,
+            fileName,
+        )
+        val fileId = fileIdAndReleasedAt?.fileId ?: throw NotFoundException("File not found")
+        val isPublic = fileIdAndReleasedAt.releasedAt != null
+        if (!isPublic) {
+            throw NotFoundException(
+                "File is not publicly released; IPFS retrieval is only available for released files.",
+            )
+        }
+        val content = s3Service.getFileContent(fileId)
+        val cid = ipfsService.addContent(content, fileName)
+        val gatewayUrl = ipfsService.buildGatewayUrl(cid)
+        return ResponseEntity.status(HttpStatus.SC_TEMPORARY_REDIRECT)
+            .location(URI.create(gatewayUrl))
+            .header("X-IPFS-CID", cid)
             .build()
     }
 

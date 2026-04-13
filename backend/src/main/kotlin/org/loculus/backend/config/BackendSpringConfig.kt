@@ -49,6 +49,10 @@ object BackendSpringProperty {
     const val S3_BUCKET_REGION = "loculus.s3.bucket.region"
     const val S3_BUCKET_ACCESS_KEY = "loculus.s3.bucket.access-key"
     const val S3_BUCKET_SECRET_KEY = "loculus.s3.bucket.secret-key"
+
+    const val IPFS_ENABLED = "loculus.ipfs.enabled"
+    const val IPFS_API_URL = "loculus.ipfs.api-url"
+    const val IPFS_GATEWAY_URL = "loculus.ipfs.gateway-url"
 }
 
 const val DEBUG_MODE_ON_VALUE = "true"
@@ -108,6 +112,23 @@ class BackendSpringConfig {
             return S3Config(true, S3BucketConfig(endpoint, internalEndpoint, region, bucket, accessKey, secretKey))
         }
         throw IllegalStateException("S3 bucket configurations are incomplete.")
+    }
+
+    @Bean
+    fun ipfsConfig(
+        @Value("\${${BackendSpringProperty.IPFS_ENABLED}:false}") enabled: Boolean = false,
+        @Value("\${${BackendSpringProperty.IPFS_API_URL}:#{null}}") apiUrl: String? = null,
+        @Value("\${${BackendSpringProperty.IPFS_GATEWAY_URL}:#{null}}") gatewayUrl: String? = null,
+    ): IpfsConfig {
+        if (!enabled) {
+            return IpfsConfig(false, null, null)
+        }
+        if (apiUrl.isNullOrBlank() || gatewayUrl.isNullOrBlank()) {
+            throw IllegalStateException(
+                "IPFS is enabled but 'loculus.ipfs.api-url' or 'loculus.ipfs.gateway-url' is missing.",
+            )
+        }
+        return IpfsConfig(true, apiUrl.trimEnd('/'), gatewayUrl.trimEnd('/'))
     }
 
     @Bean

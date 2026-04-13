@@ -215,6 +215,21 @@ class S3Service(private val s3Config: S3Config) {
     private fun getFileIdPath(fileId: FileId): String = "files/$fileId"
 
     /**
+     * Downloads the file with the given id and returns its full content as a byte array.
+     * Callers should only use this for files small enough to fit comfortably in memory
+     * (e.g. FASTA files being republished to IPFS).
+     */
+    fun getFileContent(fileId: FileId): ByteArray = s3ErrorMapping {
+        val config = getS3BucketConfig()
+        s3Client.getObjectAsBytes(
+            GetObjectRequest.builder()
+                .bucket(config.bucket)
+                .key(getFileIdPath(fileId))
+                .build(),
+        ).asByteArray()
+    }
+
+    /**
      * Returns the file size in bytes, or `null` if the file doesn't exist.
      */
     fun getFileSize(fileId: FileId): Long? = s3ErrorMapping {
