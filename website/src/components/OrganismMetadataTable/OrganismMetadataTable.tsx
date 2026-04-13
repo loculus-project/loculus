@@ -81,14 +81,14 @@ export const OrganismMetadataTable: FC<Props> = ({ organism }) => {
                     isActive={activeTab === FieldType.INPUT}
                     onClick={() => handleTabSelect(FieldType.INPUT)}
                     label='Input fields'
-                    classNames='text-base'
+                    className='text-base'
                 />
                 <BoxWithTabsTab
                     key={FieldType.GENERATED.valueOf()}
                     isActive={activeTab === FieldType.GENERATED}
                     onClick={() => handleTabSelect(FieldType.GENERATED)}
                     label='Generated fields'
-                    classNames='text-base'
+                    className='text-base'
                 />
                 <label className='ml-auto flex items-center gap-2 text-sm cursor-pointer p-2'>
                     <input
