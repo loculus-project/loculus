@@ -6,6 +6,8 @@ from typing import Annotated
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException
 
+from taxonomy_service.datatypes import Taxon
+
 from .config import Config
 
 logger = logging.getLogger()
@@ -21,6 +23,7 @@ def get_db_connection() -> Generator[sqlite3.Connection]:
         uri=True,
         check_same_thread=False,  # DB is read-only so this should be fine
     )
+
     conn.row_factory = sqlite3.Row
     try:
         yield conn
@@ -31,9 +34,7 @@ def get_db_connection() -> Generator[sqlite3.Connection]:
 DbConnection = Annotated[sqlite3.Connection, Depends(get_db_connection)]
 
 
-def fetch_by_sci_name(
-    db_conn: sqlite3.Connection, name: str
-) -> list[dict[str, str | int | None]] | None:
+def fetch_by_sci_name(db_conn: sqlite3.Connection, name: str) -> list[Taxon] | None:
     """Check if a scientific name exists in the taxonomy and, if so, return all taxa associated
     with that name
 
@@ -49,12 +50,10 @@ def fetch_by_sci_name(
     if not taxa:
         return None
 
-    return [dict(taxon) for taxon in taxa]
+    return [Taxon.from_row(row) for row in taxa]
 
 
-def fetch_by_id(
-    db_conn: sqlite3.Connection, tax_id: int
-) -> dict[str, str | int | None] | None:
+def fetch_by_id(db_conn: sqlite3.Connection, tax_id: int) -> Taxon | None:
     """Return the taxon associated with `tax_id`. Return None if `tax_id` does not exist in the DB
 
     args:
@@ -66,12 +65,11 @@ def fetch_by_id(
     ).fetchone()
     if not taxon:
         return None
-    return dict(taxon)
+
+    return Taxon.from_row(taxon)
 
 
-def fetch_common_name(
-    db_conn: sqlite3.Connection, tax_id: int
-) -> dict[str, str | int | None] | None:
+def fetch_common_name(db_conn: sqlite3.Connection, taxon: Taxon) -> Taxon | None:
     """Return a taxon with a common name
 
     If the supplied `tax_id` is associated with a common name, return the taxon.
@@ -83,25 +81,59 @@ def fetch_common_name(
         db_conn (sqlite3.Connection):   connection to a database. The caller is responsible for closing it
         tax_id (int):                   NCBI taxon ID of the taxon for which to find a common name
     """
+    if taxon.common_name is not None:
+        return taxon
+
     # creating a reusable cursor here instead of calling `fetch_by_id` in the while loop
     cursor = db_conn.cursor()
+    tax_id = taxon.parent_id
     while tax_id > 1:  # tax_id 1 is the root
-        taxon = cursor.execute(
+        row = cursor.execute(
             "SELECT * FROM taxonomy WHERE tax_id = ?", (tax_id,)
         ).fetchone()
-        if taxon is None or taxon["depth"] == 0:
+        taxon = Taxon.from_row(row)
+
+        if taxon.depth == 0:
             # for safety, break when depth is 0 (in case NCBI decide at some
             # point that the root should no longer be 1)
             break
-        if taxon["common_name"] is not None:
-            return dict(taxon)
-        tax_id = taxon["parent_id"]
+        if taxon.common_name is not None:
+            return taxon
+
+        tax_id = taxon.parent_id
 
     return None
 
 
-def taxon_is_descendant(db_conn: sqlite3.Connection, query: int, target: int) -> bool:
-    return False
+def assign_host_categories(
+    db_conn: sqlite3.Connection, query_taxon: Taxon, host_categories: dict[int, str]
+) -> list[str]:
+    """The recursive CTE builds the ancestor chain from `query_taxon` to the
+    root once, then checks for each of the `target_taxa` whether it is in this ancestor chain.
+
+    A list of `target_taxa` that are in the ancestor chain is returned
+    """
+    if not host_categories:
+        return []
+
+    query = f"""
+    WITH RECURSIVE ancestors(tax_id, parent_id) AS (
+        SELECT tax_id, parent_id FROM taxonomy WHERE tax_id = ?
+        UNION ALL
+        SELECT t.tax_id, t.parent_id
+        FROM taxonomy t
+        JOIN ancestors a ON t.tax_id = a.parent_id
+        WHERE t.tax_id != t.parent_id
+    )
+    SELECT tax_id FROM ancestors WHERE tax_id IN ({",".join(["?"] * len(host_categories))})
+    """
+
+    result = db_conn.execute(
+        query, (query_taxon.tax_id, *host_categories.keys())
+    ).fetchall()
+    ancestor_ids = [row["tax_id"] for row in result]
+
+    return [host_categories[id] for id in ancestor_ids]
 
 
 @app.get("/")
@@ -109,22 +141,9 @@ def read_root() -> dict[str, str]:
     return {"message": "Taxonomy service is running"}
 
 
-@app.get("/ancestors")
-def get_ancestors(query: int, targets: list[int], db: DbConnection) -> list[int]:
-    hits = []
-
-    for t in targets:
-        if taxon_is_descendant(db, query, t):
-            hits.append(t)
-
-    return hits
-
-
 @app.get("/taxa")
-def query_taxa(
-    scientific_name: str, db: DbConnection
-) -> list[dict[str, str | int | None]] | None:
-    """Given a scientific name, try to find all taxa associated with it."""
+def query_taxa(scientific_name: str, db: DbConnection) -> list[Taxon] | None:
+    """Given a scientific name, find all taxa associated with it."""
     taxa = fetch_by_sci_name(db, scientific_name)
 
     if taxa is None:
@@ -138,20 +157,37 @@ def get_taxon(
     tax_id: int,
     db: DbConnection,
     find_common_name: bool = False,
-) -> dict[str, str | int | None]:
+) -> Taxon:
     taxon = fetch_by_id(db, tax_id)
     if taxon is None:
         raise HTTPException(status_code=404, detail=f"'{tax_id}' not found")
 
     if find_common_name:
-        taxon_with_common_name = fetch_common_name(db, taxon["tax_id"])
+        taxon_with_common_name = fetch_common_name(db, taxon)
         if taxon_with_common_name is None:
             raise HTTPException(
-                status_code=404, detail=f"Unable to find common name for taxon {tax_id}"
+                status_code=404,
+                detail=f"Unable to find common name for taxon {tax_id}",
             )
         return taxon_with_common_name
 
     return taxon
+
+
+@app.get("/taxa/{tax_id}/host-categories")
+def get_host_categories(
+    tax_id: int,
+    db: DbConnection,
+) -> list[str]:
+    taxon = fetch_by_id(db, tax_id)
+    if taxon is None:
+        raise HTTPException(status_code=404, detail=f"'{tax_id}' not found")
+
+    assigned_categories = assign_host_categories(
+        db, taxon, app.state.config.organism_categories
+    )
+
+    return assigned_categories
 
 
 def init_app(config: Config):
