@@ -11,6 +11,7 @@ import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 type Props = {
     organism: OrganismMetadata;
+    showDisplayNames?: boolean;
 };
 
 enum FieldType {
@@ -27,7 +28,7 @@ function scrollElementIntoView(id: string) {
     if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-export const OrganismMetadataTable: FC<Props> = ({ organism }) => {
+export const OrganismMetadataTable: FC<Props> = ({ organism, showDisplayNames = false }) => {
     const [activeTab, setActiveTab] = useState<FieldType>(() => {
         const params = new URLSearchParams(window.location.search);
         return params.get('fieldType') === FieldType.GENERATED ? FieldType.GENERATED : FieldType.INPUT;
@@ -54,7 +55,7 @@ export const OrganismMetadataTable: FC<Props> = ({ organism }) => {
         setActiveTab(fieldType);
         const params = new URLSearchParams(window.location.search);
         params.set('fieldType', fieldType);
-        const newUrl = getUrl(window.location.origin, window.location.pathname, params, window.location.hash);
+        const newUrl = getUrl(window.location.origin, window.location.pathname, params);
         window.history.replaceState({ path: newUrl }, '', newUrl);
     };
 
@@ -105,6 +106,7 @@ export const OrganismMetadataTable: FC<Props> = ({ organism }) => {
                                 header={header}
                                 metadata={organism.metadata}
                                 fields={inputFields}
+                                showDisplayNames={showDisplayNames}
                                 isInputFields
                             />
                         ))}
@@ -118,6 +120,7 @@ export const OrganismMetadataTable: FC<Props> = ({ organism }) => {
                                 header={header}
                                 metadata={organism.metadata}
                                 fields={generatedFields}
+                                showDisplayNames={showDisplayNames}
                             />
                         ))}
                     </div>
@@ -128,8 +131,8 @@ export const OrganismMetadataTable: FC<Props> = ({ organism }) => {
 };
 
 type MetadataTableProps =
-    | { header: string; metadata: Metadata[]; fields: Metadata[]; isInputFields?: false }
-    | { header: string; metadata: Metadata[]; fields: InputField[]; isInputFields: true };
+    | { header: string; metadata: Metadata[]; fields: Metadata[]; showDisplayNames: boolean; isInputFields?: false }
+    | { header: string; metadata: Metadata[]; fields: InputField[]; showDisplayNames: boolean; isInputFields: true };
 
 const MetadataTableSection: FC<MetadataTableProps> = (props) => {
     const [expandedHeader, setExpandedHeader] = useState<boolean>(true);
@@ -157,25 +160,32 @@ const MetadataTableSection: FC<MetadataTableProps> = (props) => {
     );
 };
 
-const FieldNameCell: FC<{ header: string; name: string }> = ({ header, name }) => {
+const FieldNameCell: FC<{ header: string; field: InputField | Metadata; showDisplayNames: boolean }> = ({
+    header,
+    field,
+    showDisplayNames,
+}) => {
     const handleFieldLink = () => {
         const params = new URLSearchParams(window.location.search);
-        const fieldLinkId = getFieldLinkId(header, name);
+        const fieldLinkId = getFieldLinkId(header, field.name);
         const newUrl = getUrl(window.location.origin, window.location.pathname, params, fieldLinkId);
         window.history.replaceState({ path: newUrl }, '', newUrl);
         scrollElementIntoView(fieldLinkId);
     };
 
     return (
-        <div className='group flex items-center gap-2'>
-            <span>{name}</span>
-            <Button
-                onClick={handleFieldLink}
-                className='opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-primary-600'
-                title='Link to this field'
-            >
-                ¶
-            </Button>
+        <div className='flex flex-col'>
+            <div className='group flex items-center gap-2'>
+                <span>{field.name}</span>
+                <Button
+                    onClick={handleFieldLink}
+                    className='opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-primary-600'
+                    title='Link to this field'
+                >
+                    ¶
+                </Button>
+            </div>
+            {showDisplayNames && <span className='text-xs text-gray-500 mt-1'>{field.displayName}</span>}
         </div>
     );
 };
@@ -198,7 +208,11 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                           return (
                               <tr id={getFieldLinkId(props.header, field.name)} key={field.name}>
                                   <td className='border border-gray-300 px-4 py-2'>
-                                      <FieldNameCell header={props.header} name={field.name} />
+                                      <FieldNameCell
+                                          header={props.header}
+                                          field={field}
+                                          showDisplayNames={props.showDisplayNames}
+                                      />
                                   </td>
                                   <td className='border border-gray-300 px-4 py-2'>
                                       {metadataEntry?.type ?? 'string'}
@@ -215,7 +229,11 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                     : props.fields.map((field) => (
                           <tr id={getFieldLinkId(props.header, field.name)} key={field.name}>
                               <td className='border border-gray-300 px-4 py-2'>
-                                  <FieldNameCell header={props.header} name={field.name} />
+                                  <FieldNameCell
+                                      header={props.header}
+                                      field={field}
+                                      showDisplayNames={props.showDisplayNames}
+                                  />
                               </td>
                               <td className='border border-gray-300 px-4 py-2'>
                                   <FormattedText text={field.definition ?? ''} />
