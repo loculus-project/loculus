@@ -843,6 +843,7 @@ def set_accession_does_not_exist_error(
     accession: str,
     accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"] | Literal["RUN_REF"],
     db_pool: SimpleConnectionPool,
+    center_name: str | None = None,
 ):
     error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
     logger.error(error_text)
@@ -863,6 +864,7 @@ def set_accession_does_not_exist_error(
                 status=Status.HAS_ERRORS,
                 errors=[error_text],
                 result={"bioproject_accession": accession},
+                center_name=center_name,
             )
             succeeded = add_to_project_table(db_pool, project_table_entry)
         case "RUN_REF":
@@ -914,7 +916,6 @@ def retry_failed_submissions_for_matching_errors(
             "status": Status.READY,
             "errors": None,
             "finished_at": None,
-            "result": {},
         }
         try:
             update_with_retry(

@@ -2,6 +2,7 @@ import logging
 import threading
 import time
 from datetime import datetime
+from typing import Any
 
 import pytz
 from psycopg2.pool import SimpleConnectionPool
@@ -99,8 +100,9 @@ def construct_project_set_object(
     return ProjectSet(project=[project_type])
 
 
-def set_project_table_entry(db_config, config, row):
-    """Set bioprojectAccession for entry with custom bioprojectAccession"""
+def set_project_table_entry(db_config, config, row: dict[str, Any]):
+    """Set bioprojectAccession for entry with custom bioprojectAccession
+    row is an entry in the submission table"""
     logger.debug(f"Accession {row['accession']} already has bioprojectAccession in metadata")
     group_key = {"group_id": row["group_id"], "organism": row["organism"]}
     seq_key = {"accession": row["accession"], "version": row["version"]}
@@ -114,7 +116,9 @@ def set_project_table_entry(db_config, config, row):
         for project in corresponding_group
         if project["result"] and project["result"].get("bioproject_accession") == bioproject
     ]
-    if len(corresponding_project) == 1:
+    if len(corresponding_project) == 1 and corresponding_project[0]["status"] == str(
+        Status.SUBMITTED
+    ):
         logger.debug(
             "bioprojectAccession is already in project_table - adding id to submission_table"
         )
@@ -130,6 +134,12 @@ def set_project_table_entry(db_config, config, row):
             update_values=update_values,
         )
         return
+    try:
+        group_details = call_loculus.get_group_info(config, row["group_id"])
+    except Exception as e:
+        logger.error(f"Was unable to get group info for group: {row['group_id']}, {e}")
+        return
+    center_name = group_details.institution
 
     logger.info("Checking if bioproject actually exists and is public")
     if not accession_exists(bioproject, config):
@@ -138,16 +148,11 @@ def set_project_table_entry(db_config, config, row):
             accession=bioproject,
             accession_type="BIOPROJECT",
             db_pool=db_config,
+            center_name=center_name,
         )
         return
 
     logger.info("Adding bioprojectAccession to project_table")
-    try:
-        group_details = call_loculus.get_group_info(config, row["group_id"])
-    except Exception as e:
-        logger.error(f"Was unable to get group info for group: {row['group_id']}, {e}")
-        return
-    center_name = group_details.institution
     entry = {
         "group_id": row["group_id"],
         "organism": row["organism"],
@@ -234,7 +239,7 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
         )
 
 
-def submission_table_update(db_config: SimpleConnectionPool):
+def submission_table_update(db_config: SimpleConnectionPool, config: Config):
     """
     1. Find all entries in submission_table in state SUBMITTING_PROJECT
     2. If (exists an entry in the project_table for (group_id, organism)):
@@ -256,6 +261,22 @@ def submission_table_update(db_config: SimpleConnectionPool):
         corresponding_project = find_conditions_in_db(
             db_config, table_name=TableName.PROJECT_TABLE, conditions=group_key
         )
+        # Dont create if bioproject_accession already exists
+        if (
+            len(corresponding_project) == 1
+            and "bioproject_accession" in corresponding_project[0]["result"]
+            and corresponding_project[0]["result"]["bioproject_accession"]
+        ):
+            if not accession_exists(
+                corresponding_project[0]["result"]["bioproject_accession"], config
+            ):
+                continue
+            update_db_where_conditions(
+                db_config,
+                table_name=TableName.PROJECT_TABLE,
+                conditions=group_key,
+                update_values={"status": Status.SUBMITTED},
+            )
         if len(corresponding_project) == 1 and corresponding_project[0]["status"] == str(
             Status.SUBMITTED
         ):
@@ -301,6 +322,10 @@ def project_table_create(
     logger.debug(f"Found {len(ready_to_submit_project)} entries in project_table in status READY")
     for row in ready_to_submit_project:
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
+
+        # Dont create if bioproject_accession already exists
+        if "bioproject_accession" in row["result"] and row["result"]["bioproject_accession"]:
+            continue
 
         try:
             group_info = call_loculus.get_group_info(config, row["group_id"])
@@ -416,7 +441,7 @@ def create_project(config: Config, stop_event: threading.Event):
             return
         logger.debug("Checking for projects to create")
         submission_table_start(db_config, config)
-        submission_table_update(db_config)
+        submission_table_update(db_config, config)
 
         project_table_create(db_config, config, test=config.test)
         last_retry_time = project_table_handle_errors(
