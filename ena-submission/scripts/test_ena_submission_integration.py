@@ -45,18 +45,12 @@ from ena_deposition.create_project import (
 from ena_deposition.create_project import (
     submission_table_start as create_project_submission_table_start,
 )
-from ena_deposition.create_project import (
-    submission_table_update as create_project_submission_table_update,
-)
 from ena_deposition.create_sample import (
     sample_table_create,
     sample_table_handle_errors,
 )
 from ena_deposition.create_sample import (
     submission_table_start as create_sample_submission_table_start,
-)
-from ena_deposition.create_sample import (
-    submission_table_update as create_sample_submission_table_update,
 )
 from ena_deposition.loculus_models import Group
 from ena_deposition.notifications import SlackConfig
@@ -438,7 +432,7 @@ def _test_successful_sample_submission(
     check_sample_submission_started(db_config, sequences_to_upload)
 
     sample_table_create(db_config, config, test=config.test)
-    create_sample_submission_table_update(db_config)
+    sample_table_create(db_config, config, test=config.test)
     check_sample_submission_submitted(db_config, sequences_to_upload)
 
 
@@ -449,7 +443,7 @@ def _test_successful_project_submission(
     check_project_submission_started(db_config, sequences_to_upload)
 
     project_table_create(db_config, config, test=config.test)
-    create_project_submission_table_update(db_config)
+    project_table_create(db_config, config, test=config.test)
     check_project_submission_submitted(db_config, sequences_to_upload)
 
 
