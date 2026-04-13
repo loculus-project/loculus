@@ -183,7 +183,6 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
     c.      break
     3. If (exists an entry in the project_table for (group_id, organism)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_PROJECT
-    b.      Else update state to SUBMITTING_PROJECT
     4. Else create corresponding entry in project_table
     """
     conditions = {"status_all": StatusAll.READY_TO_SUBMIT}
@@ -214,8 +213,6 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
                     "center_name": corresponding_project[0]["center_name"],
                     "project_id": corresponding_project[0]["project_id"],
                 }
-            else:
-                update_values = {"status_all": StatusAll.SUBMITTING_PROJECT}
         else:
             project_id = add_to_project_table(
                 db_config, ProjectTableEntry(group_id=row["group_id"], organism=row["organism"])
@@ -223,7 +220,6 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
             if not project_id:
                 continue
             update_values = {
-                "status_all": StatusAll.SUBMITTING_PROJECT,
                 "project_id": project_id,
             }
         update_db_where_conditions(
@@ -232,50 +228,6 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
             conditions=seq_key,
             update_values=update_values,
         )
-
-
-def submission_table_update(db_config: SimpleConnectionPool):
-    """
-    1. Find all entries in submission_table in state SUBMITTING_PROJECT
-    2. If (exists an entry in the project_table for (group_id, organism)):
-    a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_PROJECT
-    3. Else throw Error
-    """
-    conditions = {"status_all": StatusAll.SUBMITTING_PROJECT}
-    submitting_project = find_conditions_in_db(
-        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
-    )
-    logger.debug(
-        f"Found {len(submitting_project)} entries in submission_table in status SUBMITTING_PROJECT"
-    )
-    for row in submitting_project:
-        group_key = {"group_id": row["group_id"], "organism": row["organism"]}
-        seq_key = {"accession": row["accession"], "version": row["version"]}
-
-        # 1. check if there exists an entry in the project table for (group_id, organism)
-        corresponding_project = find_conditions_in_db(
-            db_config, table_name=TableName.PROJECT_TABLE, conditions=group_key
-        )
-        if len(corresponding_project) == 1 and corresponding_project[0]["status"] == str(
-            Status.SUBMITTED
-        ):
-            update_values = {
-                "status_all": StatusAll.SUBMITTED_PROJECT,
-                "center_name": corresponding_project[0]["center_name"],
-                "project_id": corresponding_project[0]["project_id"],
-            }
-            update_db_where_conditions(
-                db_config,
-                table_name=TableName.SUBMISSION_TABLE,
-                conditions=seq_key,
-                update_values=update_values,
-            )
-        if len(corresponding_project) == 0:
-            error_msg = (
-                "Entry in submission_table in status SUBMITTING_PROJECT",
-                " with no corresponding project",
-            )
-            raise RuntimeError(error_msg)
 
 
 # TODO Allow propagating updated group info https://github.com/loculus-project/loculus/issues/2939
@@ -416,7 +368,6 @@ def create_project(config: Config, stop_event: threading.Event):
             return
         logger.debug("Checking for projects to create")
         submission_table_start(db_config, config)
-        submission_table_update(db_config)
 
         project_table_create(db_config, config, test=config.test)
         last_retry_time = project_table_handle_errors(
