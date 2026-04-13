@@ -270,13 +270,8 @@ def submission_table_update(db_config: SimpleConnectionPool, config: Config):
         corresponding_sample = find_conditions_in_db(
             db_config, table_name=TableName.SAMPLE_TABLE, conditions=seq_key
         )
-        if (
-            "biosample_accession" in row["result"]
-            and row["result"]["biosample_accession"]
-        ):
-            if not accession_exists(
-                row["result"]["biosample_accession"], config
-            ):
+        if row["result"] and row["result"].get("biosample_accession"):
+            if not accession_exists(row["result"]["biosample_accession"], config):
                 continue
             update_db_where_conditions(
                 db_config,
@@ -355,7 +350,7 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
             logger.warning(f"Skipping submission for {seq_key} as it is not the latest version.")
             continue
         # Dont create if biosample_accession already exists
-        if "biosample_accession" in row["result"] and row["result"]["biosample_accession"]:
+        if row["result"] and row["result"].get("biosample_accession"):
             continue
 
         logger.info(f"Processing sample_table entry for {seq_key}")

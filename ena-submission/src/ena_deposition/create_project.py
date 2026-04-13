@@ -264,8 +264,8 @@ def submission_table_update(db_config: SimpleConnectionPool, config: Config):
         # Dont create if bioproject_accession already exists
         if (
             len(corresponding_project) == 1
-            and "bioproject_accession" in corresponding_project[0]["result"]
-            and corresponding_project[0]["result"]["bioproject_accession"]
+            and corresponding_project[0]["result"]
+            and corresponding_project[0]["result"].get("bioproject_accession")
         ):
             if not accession_exists(
                 corresponding_project[0]["result"]["bioproject_accession"], config
@@ -324,7 +324,7 @@ def project_table_create(
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
 
         # Dont create if bioproject_accession already exists
-        if "bioproject_accession" in row["result"] and row["result"]["bioproject_accession"]:
+        if row["result"] and row["result"].get("bioproject_accession"):
             continue
 
         try:
