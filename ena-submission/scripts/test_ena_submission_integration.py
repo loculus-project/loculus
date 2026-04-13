@@ -933,6 +933,7 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         sample_table_create(self.db_config, self.config, test=self.config.test)
         check_sample_submission_has_errors(self.db_config, sequences_to_upload)
 
+
 class TestRevisionAssemblyModificationTests(TestSubmission):
     @patch(
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
