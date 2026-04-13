@@ -116,9 +116,7 @@ def set_project_table_entry(db_config, config, row: dict[str, Any]):
         for project in corresponding_group
         if project["result"] and project["result"].get("bioproject_accession") == bioproject
     ]
-    if len(corresponding_project) == 1 and corresponding_project[0]["status"] == str(
-        Status.SUBMITTED
-    ):
+    if len(corresponding_project) == 1:
         logger.debug(
             "bioprojectAccession is already in project_table - adding id to submission_table"
         )
@@ -309,9 +307,7 @@ def project_table_create(
 
         # Dont create if bioproject_accession already exists
         if row["result"] and row["result"].get("bioproject_accession"):
-            if not accession_exists(
-                row["result"]["bioproject_accession"], config
-            ):
+            if not accession_exists(row["result"]["bioproject_accession"], config):
                 continue
             update_db_where_conditions(
                 db_config,

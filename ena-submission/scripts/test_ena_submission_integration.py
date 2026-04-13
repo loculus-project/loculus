@@ -838,13 +838,21 @@ class TestIncorrectBioprojectPassed(TestSubmission):
             self.db_config,
             self.config,
             self.slack_config,
-            last_retry_time=datetime.now(tz=pytz.utc),
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=5),
         )
         msg = (
             f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in project_table "
             "in status HAS_ERRORS or SUBMITTING for over 0m"
         )
         mock_notify.assert_called_once_with(self.slack_config, msg)
+
+        # Confirm DB entry is reset to READY to retry submission
+        check_project_submission_started(self.db_config, sequences_to_upload)
+
+        # Confirm DB entry is still in error state after retrying submission
+        create_project_submission_table_start(self.db_config, config=self.config)
+        project_table_create(self.db_config, self.config, test=self.config.test)
+        check_project_submission_has_errors(self.db_config, sequences_to_upload)
 
 
 class TestKnownBioprojectAndBioSample(TestSubmission):
