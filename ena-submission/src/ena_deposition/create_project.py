@@ -134,6 +134,11 @@ def set_project_table_entry(db_config, config, row: dict[str, Any]):
             update_values=update_values,
         )
         return
+    if len(corresponding_project) == 1:
+        logger.warning(
+            f"bioprojectAccession {bioproject} already exists in project_table but in status {corresponding_project[0]['status']} - not adding to project_table"
+        )
+        return
     try:
         group_details = call_loculus.get_group_info(config, row["group_id"])
     except Exception as e:
