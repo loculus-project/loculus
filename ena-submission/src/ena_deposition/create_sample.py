@@ -343,15 +343,19 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
         # Dont create if biosample_accession already exists
         if row["result"] and row["result"].get("biosample_accession"):
             if not accession_exists(row["result"]["biosample_accession"], config):
-                status = Status.HAS_ERRORS
+                set_accession_does_not_exist_error(
+                    conditions=asdict(seq_key),
+                    accession=row["result"]["biosample_accession"],
+                    accession_type="BIOSAMPLE",
+                    db_pool=db_config,
+                )
             else:
-                status = Status.SUBMITTED
-            update_db_where_conditions(
-                db_config,
-                table_name=TableName.SAMPLE_TABLE,
-                conditions=asdict(seq_key),
-                update_values={"status": status},
-            )
+                update_db_where_conditions(
+                    db_config,
+                    table_name=TableName.SAMPLE_TABLE,
+                    conditions=asdict(seq_key),
+                    update_values={"status": Status.SUBMITTED},
+                )
 
         logger.info(f"Processing sample_table entry for {seq_key}")
         sample_data_in_submission_table = find_conditions_in_db(

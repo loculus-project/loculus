@@ -308,15 +308,19 @@ def project_table_create(
         # Dont create if bioproject_accession already exists
         if row["result"] and row["result"].get("bioproject_accession"):
             if not accession_exists(row["result"]["bioproject_accession"], config):
-                status = Status.HAS_ERRORS
+                set_accession_does_not_exist_error(
+                    conditions=group_key,
+                    accession=row["result"]["bioproject_accession"],
+                    accession_type="BIOPROJECT",
+                    db_pool=db_config,
+                )
             else:
-                status = Status.SUBMITTED
-            update_db_where_conditions(
-                db_config,
-                table_name=TableName.PROJECT_TABLE,
-                conditions=group_key,
-                update_values={"status": status},
-            )
+                update_db_where_conditions(
+                    db_config,
+                    table_name=TableName.PROJECT_TABLE,
+                    conditions=group_key,
+                    update_values={"status": Status.SUBMITTED},
+                )
 
         try:
             group_info = call_loculus.get_group_info(config, row["group_id"])
