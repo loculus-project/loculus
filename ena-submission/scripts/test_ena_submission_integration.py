@@ -924,6 +924,8 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
     ) -> None:
         """
         Test submitting sequences with accurate data and known bioproject and biosample
+        Force accession_exists test to fail on first attempt to simulate ENA
+        not processing submission in time, then retrying and succeeding
         """
         # get data
         mock_get_group_info.return_value = TEST_GROUP
