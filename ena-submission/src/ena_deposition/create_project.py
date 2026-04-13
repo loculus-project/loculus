@@ -116,7 +116,9 @@ def set_project_table_entry(db_config, config, row: dict[str, Any]):
         for project in corresponding_group
         if project["result"] and project["result"].get("bioproject_accession") == bioproject
     ]
-    if len(corresponding_project) == 1:
+    if len(corresponding_project) == 1 and corresponding_project[0]["status"] == str(
+        Status.SUBMITTED
+    ):
         logger.debug(
             "bioprojectAccession is already in project_table - adding id to submission_table"
         )
@@ -321,6 +323,7 @@ def project_table_create(
                     conditions=group_key,
                     update_values={"status": Status.SUBMITTED},
                 )
+            continue
 
         try:
             group_info = call_loculus.get_group_info(config, row["group_id"])

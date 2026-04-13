@@ -356,6 +356,7 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
                     conditions=asdict(seq_key),
                     update_values={"status": Status.SUBMITTED},
                 )
+            continue
 
         logger.info(f"Processing sample_table entry for {seq_key}")
         sample_data_in_submission_table = find_conditions_in_db(
