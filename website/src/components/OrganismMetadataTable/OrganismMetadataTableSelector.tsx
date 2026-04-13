@@ -19,7 +19,6 @@ type Props = {
 
 const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
     const [selectedOrganismKey, setSelectedOrganismKey] = useState('');
-    const [showDisplayNames, setShowDisplayNames] = useState(false);
 
     useEffect(() => {
         setSelectedOrganismKey(new URLSearchParams(window.location.search).get('organism') ?? '');
@@ -42,7 +41,7 @@ const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
 
     return (
         <div>
-            <div className='flex flex-wrap items-center gap-4'>
+            <div>
                 <Select
                     id='organism-select'
                     value={selectedOrganismKey}
@@ -56,22 +55,9 @@ const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
                         </option>
                     ))}
                 </Select>
-                {selectedOrganism && (
-                    <label className='flex items-center gap-2 text-sm cursor-pointer'>
-                        <input
-                            type='checkbox'
-                            className='h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 cursor-pointer'
-                            checked={showDisplayNames}
-                            onChange={(e) => setShowDisplayNames(e.target.checked)}
-                        />
-                        <span>Show display names</span>
-                    </label>
-                )}
             </div>
 
-            {selectedOrganism && (
-                <OrganismMetadataTable organism={selectedOrganism} showDisplayNames={showDisplayNames} />
-            )}
+            {selectedOrganism && <OrganismMetadataTable organism={selectedOrganism} />}
         </div>
     );
 };

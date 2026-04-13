@@ -11,7 +11,6 @@ import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 type Props = {
     organism: OrganismMetadata;
-    showDisplayNames?: boolean;
 };
 
 enum FieldType {
@@ -28,11 +27,12 @@ function scrollElementIntoView(id: string) {
     if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-export const OrganismMetadataTable: FC<Props> = ({ organism, showDisplayNames = false }) => {
+export const OrganismMetadataTable: FC<Props> = ({ organism }) => {
     const [activeTab, setActiveTab] = useState<FieldType>(() => {
         const params = new URLSearchParams(window.location.search);
         return params.get('fieldType') === FieldType.GENERATED ? FieldType.GENERATED : FieldType.INPUT;
     });
+    const [showDisplayNames, setShowDisplayNames] = useState(false);
 
     const inputFieldNames = new Set(
         Array.from(organism.groupedInputFields.values())
@@ -90,6 +90,15 @@ export const OrganismMetadataTable: FC<Props> = ({ organism, showDisplayNames = 
                     label='Generated fields'
                     classNames='text-base'
                 />
+                <label className='ml-auto flex items-center gap-2 text-sm cursor-pointer p-2'>
+                    <input
+                        type='checkbox'
+                        className='h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 cursor-pointer'
+                        checked={showDisplayNames}
+                        onChange={(e) => setShowDisplayNames(e.target.checked)}
+                    />
+                    Show display names
+                </label>
             </BoxWithTabsTabBar>
             <BoxWithTabsBox>
                 {activeTab === FieldType.INPUT && (
