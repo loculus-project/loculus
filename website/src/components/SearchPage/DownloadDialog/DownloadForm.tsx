@@ -66,7 +66,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         [referenceGenomesInfo, selectedReferenceNames],
     );
 
-    const referenceSelected = useMemo(() => nucleotideSegmentInfos.length !== 0, [nucleotideSegmentInfos, geneInfos]);
+    const referenceSelected = useMemo(() => nucleotideSegmentInfos.length !== 0, [nucleotideSegmentInfos]);
     const notSelectedSegmentsText = useMemo(() => {
         if (!referenceGenomesInfo.isMultiSegmented) {
             return '';
@@ -114,7 +114,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                         <DropdownOptionBlock
                             name='unalignedNucleotideSequences'
                             options={segments.map((segment) => ({
-                                label: <>{segment.name}</>,
+                                label: <>{segment.displayName ?? segment.name}</>,
                             }))}
                             selected={segments.findIndex((info) => {
                                 const currentSet = new Set(downloadFormState.unalignedNucleotideSequence.lapisNames);
@@ -170,7 +170,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                         <DropdownOptionBlock
                             name='alignedNucleotideSequences'
                             options={nucleotideSegmentInfos.map((segment) => ({
-                                label: <>{segment.name}</>,
+                                label: <>{segment.displayName ?? segment.name}</>,
                             }))}
                             selected={nucleotideSegmentInfos.findIndex(
                                 (info) => info.lapisName === downloadFormState.alignedNucleotideSequence,

@@ -14,11 +14,25 @@ seqSets:
       displayName: "Collection Date"
     - field: "authors"
       displayName: "Authors"
+  graphs:
+    - name: sampleCollectionDates
+      displayName: Sample collection dates
+      type: date
+      fields: [sampleCollectionDate, date]
+    - name: sampleCollectionCountries
+      displayName: Sample collection countries
+      type: category
+      fields: [geoLocCountry, country]
+    - name: dataUseTerms
+      displayName: Data use terms
+      type: category
+      fields: [dataUseTerms]
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
+disableTaxonomyService: false
 website:
   websiteConfig:
     enableLoginNavigationItem: true
@@ -101,6 +115,9 @@ defaultOrganismConfig: &defaultOrganismConfig
     # ingest: Which NCBI field to map to this field (optional)
     ## Preprocessing related
     # preprocessing: Preprocessing function to run on the field (optional: defaults to identity function on input field with same name)
+    # preprocessing.inputs: inputs needed to compute the field using the processing function.
+    #                       Inputs that are prefixed with 'processed.' represent dependencies on processed metadata fields, e.g., adding
+    #                       'processed.sampleCollectionDate' will input the sampleCollectionDate that has been processed by the 'parse_date_into_range' function
     metadata:
       - name: sampleCollectionDate
         displayName: Collection date
@@ -1178,8 +1195,16 @@ defaultOrganismConfig: &defaultOrganismConfig
           label: Host
         header: "Host"
         ingest: ncbiHostTaxId
-        desired: true
+        noInput: true
         orderOnDetailsPage: 1540
+        preprocessing:
+          function: validate_host
+          inputs:
+            host: host
+            hostNameScientific: hostNameScientific
+            hostTaxonId: hostTaxonId
+          args:
+            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       - name: hostNameScientific
         displayName: Host name - scientific
         generateIndex: true
@@ -1190,8 +1215,15 @@ defaultOrganismConfig: &defaultOrganismConfig
           label: Host
         header: "Host"
         ingest: ncbiHostName
-        desired: true
+        noInput: true
         orderOnDetailsPage: 1560
+        preprocessing:
+          function: scientific_name_from_id
+          inputs:
+            hostTaxonId: processed.hostTaxonId
+            hostNameScientific: hostNameScientific
+          args:
+            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       - name: hostNameCommon
         displayName: Host name - common
         generateIndex: true
@@ -1202,7 +1234,14 @@ defaultOrganismConfig: &defaultOrganismConfig
           label: Host
         header: "Host"
         ingest: ncbiHostCommonName
+        noInput: true
         orderOnDetailsPage: 1580
+        preprocessing:
+          function: common_name_from_id
+          inputs:
+            hostTaxonId: processed.hostTaxonId
+          args:
+            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       - name: isLabHost
         displayName: Is lab host
         type: boolean
@@ -1393,14 +1432,27 @@ defaultOrganismConfig: &defaultOrganismConfig
         - length
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
-    extraInputFields: []
+    extraInputFields:
+      - &hostConfig
+        name: host
+        type: string
+        displayName: "Host"
+        definition: "NCBI taxon ID or scientific name that uniquely identifies the host from which the sample was collected."
+        guidance: "You can provide either the scientific name of the organism (e.g., Aedes aegypti) or its NCBI taxon ID (e.g., 7159) in this field. We will validate your input and use it to populate the `host common name` and `host scientific name` fields. When uploading data from a pooled sample, we recommend using a higher-level taxon that includes all host organisms in the sample pool. For example, you can use 'Culicidae' when uploading data for a pooled mosquito sample (in addition to setting the `specimenProcessing` field to 'Samples pooled', see [OBI:0600016])."
+        example: "Aedes aegypti"
+        hideInSearchResultsTable: true
+        hideOnSequenceDetailsPage: true
+        desired: true
+        position: last
   preprocessing:
     - &preprocessing
       version: 1
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
         - "prepro"
-      replicas: 2
+      replicas: 1
+      taxonomyServiceArgs: &preprocessingTaxonomyServiceArgs
+        taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         batch_size: 100
@@ -1421,6 +1473,7 @@ defaultOrganisms:
       organismName: "Ebola Sudan"
       image: "/images/organisms/ebolasudan_small.jpg"
       extraInputFields:
+        - <<: *hostConfig
         - name: id
           displayName: ID
           definition: "Unique identifier for your Ebola Sudan sample"
@@ -1494,6 +1547,10 @@ defaultOrganisms:
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/wnv/all-lineages&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output"
         - name: "Country map"
           url: "https://mapoplexus.genomium.org/?url={{[metadata+accessionVersion,accession,version,geoLocAdmin1,geoLocAdmin2,geoLocCity,geoLocCountry,geoLocSite,hostNameCommon,hostNameScientific,authors,sampleCollectionDate]}}"
+      extraInputFields:
+        - <<: *hostConfig
+          desired: false
+          required: true
       metadataAdd:
         - name: displayName
           displayName: Display name
@@ -1501,11 +1558,11 @@ defaultOrganisms:
             function: build_display_name
             inputs:
               geoLocCountry: geoLocCountry
-              sampleCollectionDate: sampleCollectionDate
+              sampleCollectionDateRangeLower: processed.sampleCollectionDateRangeLower
               specimenCollectorSampleId: specimenCollectorSampleId
               submissionId: submissionId
             args:
-              order: [geoLocCountry, IDENTIFIER, sampleCollectionDate]
+              order: [geoLocCountry, IDENTIFIER, sampleCollectionDateRangeLower]
               type: [string, IDENTIFIER, string]
               # regex pattern constraints:
               # - Cannot start with a slash
@@ -1513,6 +1570,27 @@ defaultOrganisms:
               # - Last field is a date in format YYYY, YYYY-MM, or YYYY-MM-DD
               # - Identifier is the second to last field (extracted through named capture group)
               regex_pattern: '^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$'
+        - name: hostTaxonId
+          type: int
+          autocomplete: true
+          displayName: "Host species"
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
+            label: Host
+          header: "Host"
+          ingest: ncbiHostTaxId
+          noInput: true
+          required: true
+          orderOnDetailsPage: 1540
+          preprocessing:
+            function: validate_host
+            inputs:
+              host: host
+              hostNameScientific: hostNameScientific
+              hostTaxonId: hostTaxonId
+            args:
+              taxonomy_service_url: "http://loculus-taxonomy-service:5000"
         - name: lineage
           displayName: Lineage
           isSequenceFilter: true
@@ -1929,6 +2007,7 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 3052518
+        calculate_groups_override_json: true
         segment_identification:
           method: "align"
           nextclade_dataset_name: community/pathoplexus/cchfv
@@ -2010,14 +2089,39 @@ defaultOrganisms:
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
-        - name: reference
+        - name: variant
           isSequenceFilter: true
-          displayName: Closest Reference
+          perSegment: true
+          header: "Clade & Lineage"
+          oneHeader: true
+          displayName: "Variant"
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          customDisplay:
+            type: variantReference
+            displayGroup: reference
+            label: Closest reference
+          preprocessing:
+            function: is_above_threshold
+            args:
+              threshold: 1000
+            inputs: {input: "nextclade.totalSubstitutions"} #custom nextclade dataset does not have private mutations, so using total substitutions as a proxy for distance from reference
+        - name: reference
+          oneHeader: true
+          header: "Clade & Lineage"
+          isSequenceFilter: true
+          displayName: Closest reference
+          customDisplay:
+            type: variantReference
+            displayGroup: reference
+            label: Closest reference
           noInput: true
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
-          hideOnSequenceDetailsPage: true
           perSegment: true
           preprocessing:
             inputs: {input: ASSIGNED_REFERENCE}
@@ -2045,6 +2149,7 @@ defaultOrganisms:
           taxon_id: 3052518
           scientific_name: "Orthonairovirus haemorrhagiae"
           molecule_type: "genomic RNA"
+          alignment_requirement: ANY
           log_level: DEBUG
           nextclade_dataset_server: "https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
           segments:
@@ -2388,16 +2493,12 @@ bannerMessage: "This is a demonstration environment. It may contain non-accurate
 welcomeMessageHTML: null
 additionalHeadHTML: ""
 images:
-  lapisSilo:
-    repository: "ghcr.io/genspectrum/lapis-silo"
-    tag: "0.9.3@sha256:7e3a9a2221e265b56bc280054705f44637fcba7bea812d9bd8de62c923ebe742"
-    pullPolicy: Always
   loculusSilo:
     repository: "ghcr.io/loculus-project/loculus-silo"
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "v0.6.8@sha256:6a18b82d554ea05ba58ff8630cc74cba17d07d798665f41a8a87edc9402987a2"
+    tag: "v0.8.0@sha256:4da71d94aceb36b7ea5963aa2e7b0566567c6423fe7fdd39448e69aebda2a8bb"
     pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"
@@ -2484,6 +2585,9 @@ enaDeposition:
   enaUniqueSuffix: Loculus
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
+taxonomyService:
+  dbVersion: "ncbi_taxonomy_latest"
+  taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
 subdomainSeparator: "-"
 replicas:
   website: 1
@@ -2504,6 +2608,12 @@ resources:
     requests:
       memory: "100Mi"
       cpu: "10m"
+    limits:
+      memory: "1Gi"
+  taxonomy-service:
+    requests:
+      memory: "200Mi"
+      cpu: "20m"
     limits:
       memory: "1Gi"
   ena-submission:

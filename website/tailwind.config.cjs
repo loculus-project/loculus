@@ -1,9 +1,7 @@
 /** @type {import('tailwindcss').Config} */
-const colors = require('./colors.cjs');
+const { mainTailwindColor } = require('./colors.json');
 
 const flowbite = require('flowbite-react/tailwind');
-
-const mainTailwindColor = colors.mainTailwindColor;
 
 module.exports = {
     content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}', flowbite.content()],

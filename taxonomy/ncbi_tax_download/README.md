@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS "taxonomy" (
 );
 CREATE UNIQUE INDEX idx_tax_id ON taxonomy(tax_id);
 CREATE INDEX idx_parent_id ON taxonomy(parent_id);
-CREATE INDEX idx_scientific_name ON taxonomy(scientific_name);
+CREATE INDEX idx_scientific_name ON taxonomy(scientific_name COLLATE NOCASE);
 CREATE TABLE sqlite_stat1(tbl,idx,stat);
 CREATE TABLE sqlite_stat4(tbl,idx,neq,nlt,ndlt,sample);
 ```

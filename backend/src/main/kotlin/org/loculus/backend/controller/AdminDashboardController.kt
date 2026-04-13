@@ -14,4 +14,9 @@ class AdminDashboardController(private val submissionDatabaseService: Submission
     @Operation(summary = "Get number of processed sequence entries per pipeline version and organism")
     @GetMapping("/pipeline-statistics")
     fun getPipelineStatistics(): Map<String, Map<Long, Int>> = submissionDatabaseService.getPipelineVersionStatistics()
+
+    @Operation(summary = "Get the current processing pipeline version per organism")
+    @GetMapping("/current-pipeline-versions")
+    fun getCurrentPipelineVersions(): Map<String, Long> =
+        submissionDatabaseService.getAllCurrentProcessingPipelineVersions()
 }

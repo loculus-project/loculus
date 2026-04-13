@@ -15,6 +15,8 @@ from typing import Any, Final, Literal
 import pandas as pd
 from Bio import SeqIO
 
+from loculus_preprocessing.sequence_checks import error_on_excess_sequences
+
 from .config import AlignmentRequirement, Config, NextcladeSequenceAndDataset, SequenceName
 from .datatypes import (
     AccessionVersion,
@@ -228,8 +230,6 @@ def run_diamond(
             "blastx",
             "--query",
             input_file,
-            "--max-target-seqs",
-            "1",
             "--db",
             dataset_dir + "/diamond/diamond.dmnd",
             "--out",
@@ -765,7 +765,42 @@ def load_aligned_aa_sequences(
     return aligned_aminoacid_sequences
 
 
-def enrich_with_nextclade(  # noqa: C901, PLR0914
+def assign_segment_for_alignment(
+    unprocessed: Sequence[UnprocessedEntry], config: Config, dataset_dir: str
+) -> SequenceAssignmentBatch:
+    errors = {}
+    for entry in unprocessed:
+        errors[entry.accessionVersion] = error_on_excess_sequences(
+            len(entry.data.unalignedNucleotideSequences),
+            config,
+        )
+    if not config.multi_datasets:
+        batch = assign_all_single_segments(unprocessed, config=config)
+    else:
+        match config.segment_classification_method:
+            case SegmentClassificationMethod.DIAMOND:
+                batch = assign_segment_with_diamond(
+                    unprocessed, config=config, dataset_dir=dataset_dir
+                )
+            case SegmentClassificationMethod.MINIMIZER:
+                batch = assign_segment_with_nextclade_sort(
+                    unprocessed, config=config, dataset_dir=dataset_dir
+                )
+            case SegmentClassificationMethod.ALIGN:
+                batch = assign_segment_with_nextclade_align(
+                    unprocessed, config=config, dataset_dir=dataset_dir
+                )
+    batch.alerts = {
+        id: Alert(
+            errors=[*batch.alerts[id].errors, *error] if error else batch.alerts[id].errors,
+            warnings=batch.alerts[id].warnings,
+        )
+        for id, error in errors.items()
+    }
+    return batch
+
+
+def enrich_with_nextclade(  # noqa: PLR0914
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
     """
@@ -793,22 +828,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914
         for entry in unprocessed
     }
 
-    if not config.multi_datasets:
-        batch = assign_all_single_segments(unprocessed, config=config)
-    else:
-        match config.segment_classification_method:
-            case SegmentClassificationMethod.DIAMOND:
-                batch = assign_segment_with_diamond(
-                    unprocessed, config=config, dataset_dir=dataset_dir
-                )
-            case SegmentClassificationMethod.MINIMIZER:
-                batch = assign_segment_with_nextclade_sort(
-                    unprocessed, config=config, dataset_dir=dataset_dir
-                )
-            case SegmentClassificationMethod.ALIGN:
-                batch = assign_segment_with_nextclade_align(
-                    unprocessed, config=config, dataset_dir=dataset_dir
-                )
+    batch = assign_segment_for_alignment(unprocessed, config=config, dataset_dir=dataset_dir)
     unaligned_nucleotide_sequences = batch.unalignedNucleotideSequences
     segment_assignment_map = batch.sequenceNameToFastaId
     alerts: Alerts = batch.alerts

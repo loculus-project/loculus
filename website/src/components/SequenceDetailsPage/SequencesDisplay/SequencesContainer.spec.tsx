@@ -29,10 +29,6 @@ const LOAD_SEQUENCES_BUTTON = 'Load sequences';
 const ALIGNED_NUCLEOTIDE_SEQUENCE_TAB = 'Aligned nucleotide sequence';
 const NUCLEOTIDE_SEQUENCE_TAB = 'Nucleotide sequence';
 
-// Helper Functions for Dynamic Labels
-const getAlignedSegmentLabel = (segment: string) => `${segment} (aligned)`;
-const getUnalignedSegmentLabel = (segment: string) => `${segment} (unaligned)`;
-
 // Test Selectors
 const BUTTON_ROLE = 'button';
 
@@ -107,28 +103,21 @@ describe('SequencesContainer', () => {
             renderSequenceViewer(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { L: 'singleReference', S: 'singleReference' });
             click(LOAD_SEQUENCES_BUTTON);
 
-            click(getAlignedSegmentLabel('L'));
             await waitFor(() => {
-                expect(
-                    screen.getByText(multiSegmentSequence, {
-                        exact: false,
-                    }),
-                ).toBeVisible();
+                expect(screen.getByRole(BUTTON_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
             });
-            //Regression test for #5330
-            expectTabActive(getAlignedSegmentLabel('L'));
-            expectTabNotActive(getUnalignedSegmentLabel('L'));
+            expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned nucleotide sequences' })).toBeVisible();
+            expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned amino acid sequences' })).toBeVisible();
 
-            click(getUnalignedSegmentLabel('L'));
+            click('Nucleotide sequences');
+
             await waitFor(() => {
-                expect(
-                    screen.getByText(unalignedMultiSegmentSequence, {
-                        exact: false,
-                    }),
-                ).toBeVisible();
+                const options = screen.getAllByRole('option');
+                const optionLabels = options.map((o) => o.textContent);
+                expect(optionLabels).toContain('L');
+                expect(optionLabels).toContain('S');
+                expectTabNotActive('Aligned nucleotide sequences');
             });
-            expectTabActive(getUnalignedSegmentLabel('L'));
-            expectTabNotActive(getAlignedSegmentLabel('L'));
         });
     });
 
@@ -176,28 +165,20 @@ describe('SequencesContainer', () => {
             renderSequenceViewer(MULTI_SEG_MULTI_REF_REFERENCEGENOMES, { L: 'ref1', S: 'singleReference' });
             click(LOAD_SEQUENCES_BUTTON);
 
-            click(getAlignedSegmentLabel('L'));
             await waitFor(() => {
-                expect(
-                    screen.getByText(multiSegmentSequence, {
-                        exact: false,
-                    }),
-                ).toBeVisible();
+                expect(screen.getByRole(BUTTON_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
             });
-            //Regression test for #5330
-            expectTabActive(getAlignedSegmentLabel('L'));
-            expectTabNotActive(getUnalignedSegmentLabel('L'));
+            expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned nucleotide sequences' })).toBeVisible();
+            expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned amino acid sequences' })).toBeVisible();
 
-            click(getUnalignedSegmentLabel('L'));
+            click('Aligned nucleotide sequences');
+
             await waitFor(() => {
-                expect(
-                    screen.getByText(unalignedMultiSegmentSequence, {
-                        exact: false,
-                    }),
-                ).toBeVisible();
+                const options = screen.getAllByRole('option');
+                const optionLabels = options.map((o) => o.textContent);
+                expect(optionLabels).toContain('L (segment)');
+                expect(optionLabels).toContain('S (segment)');
             });
-            expectTabActive(getUnalignedSegmentLabel('L'));
-            expectTabNotActive(getAlignedSegmentLabel('L'));
         });
     });
 

@@ -302,7 +302,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt),
     )
 
-    fun getOriginalMetadata(
+    fun getUnprocessedMetadata(
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
         groupIdsFilter: List<Int>? = null,
@@ -310,7 +310,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         fields: List<String>? = null,
         compression: String? = null,
     ): ResultActions = mockMvc.perform(
-        get(addOrganismToPath("/get-original-metadata", organism = organism))
+        get(addOrganismToPath("/get-unprocessed-metadata", organism = organism))
             .withAuth(jwt)
             .also {
                 when (compression) {

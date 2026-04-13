@@ -426,10 +426,10 @@ def get_sequence_status(config: Config):
 def get_submitted(config: Config, output: str):
     """Get previously submitted sequences as ndjson
     This way we can avoid submitting the same sequences again
-    Adds status to the output (as this is not returned by get-original-metadata)
+    Adds status to the output (as this is not returned by get-unprocessed-metadata)
     """
 
-    url = f"{organism_url(config)}/get-original-metadata"
+    url = f"{organism_url(config)}/get-unprocessed-metadata"
 
     if config.segmented:
         insdc_key = [
@@ -460,14 +460,14 @@ def get_submitted(config: Config, output: str):
             max_error_length = 100
             if len(response_summary) > max_error_length:
                 response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
-            logger.error(f"Error decoding JSON from /get-original-metadata: {response_summary}")
+            logger.error(f"Error decoding JSON from /get-unprocessed-metadata: {response_summary}")
             raise ValueError from err
 
         if len(entries) == expected_record_count:
             logger.info(f"Got {len(entries)} records as expected")
             break
         logger.error(
-            f"Got incomplete original metadata stream: expected {len(entries)}"
+            f"Got incomplete unprocessed metadata stream: expected {len(entries)}"
             f"records but got {expected_record_count}. Retrying after 60 seconds."
         )
         sleep(60)

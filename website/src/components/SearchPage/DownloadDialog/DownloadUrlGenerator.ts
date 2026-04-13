@@ -3,6 +3,7 @@ import kebabCase from 'just-kebab-case';
 import { dataTypeForFilename, type DownloadDataType } from './DownloadDataType.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { metadataDefaultDownloadDataFormat, sequenceDefaultDownloadDataFormat } from '../../../settings.ts';
+import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 
 export type Compression = 'zstd' | 'gzip' | undefined;
 
@@ -15,6 +16,8 @@ export type DownloadOption = {
 
 const downloadAsFile = 'downloadAsFile';
 const dataFormat = 'dataFormat';
+
+const LAPIS_ADVANCED_QUERY_KEY = 'advancedQuery';
 
 /**
  * Given download parameters and options, generates matching download URLs
@@ -87,24 +90,60 @@ export class DownloadUrlGenerator {
             }
         }
 
-        downloadParameters
-            .toUrlSearchParams()
-            .filter(([name]) => !excludedParams.has(name))
-            .forEach(([name, value]) => {
-                if (Array.isArray(value)) {
-                    value.forEach((val) => {
-                        params.append(name, val);
-                    });
-                } else {
-                    params.append(name, value);
-                }
-            });
+        const modifiedParams = this.modifyParamsForLapisGetRequest(
+            downloadParameters.toUrlSearchParams().filter(([name]) => !excludedParams.has(name)),
+        );
+
+        const merged = new URLSearchParams([...params.entries(), ...modifiedParams.entries()]);
 
         return {
-            url: `${baseUrl}?${params}`,
+            url: `${baseUrl}?${merged}`,
             baseUrl,
-            params,
+            params: merged,
         };
+    }
+
+    private escapeLapisQueryValue(value: string): string {
+        return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    private modifyParamsForLapisGetRequest(params: [string, string | string[]][]): URLSearchParams {
+        const newParams = new URLSearchParams();
+
+        params.forEach(([name, value]) => {
+            if (Array.isArray(value)) {
+                const nonNullValues = value.filter((v) => v !== NULL_QUERY_VALUE);
+                if (value.includes(NULL_QUERY_VALUE)) {
+                    const clause = [
+                        `isNull(${name})`,
+                        ...nonNullValues.map((v) => {
+                            const escapedValue = this.escapeLapisQueryValue(v);
+                            return `${name}='${escapedValue}'`;
+                        }),
+                    ].join(' OR ');
+
+                    if (newParams.has(LAPIS_ADVANCED_QUERY_KEY)) {
+                        const existing = `(${String(newParams.get(LAPIS_ADVANCED_QUERY_KEY))}) OR (${clause})`;
+                        newParams.delete(LAPIS_ADVANCED_QUERY_KEY);
+                        newParams.append(LAPIS_ADVANCED_QUERY_KEY, existing);
+                    } else {
+                        newParams.append(LAPIS_ADVANCED_QUERY_KEY, clause);
+                    }
+                } else {
+                    value.forEach((val) => {
+                        newParams.append(name, val);
+                    });
+                }
+            } else {
+                if (value === NULL_QUERY_VALUE) {
+                    newParams.append(`${name}.isNull`, 'true');
+                } else {
+                    newParams.append(name, value);
+                }
+            }
+        });
+
+        return newParams;
     }
 
     private generateFilename(downloadDataType: DownloadDataType): string {

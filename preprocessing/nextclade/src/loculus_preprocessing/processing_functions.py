@@ -10,12 +10,17 @@ import logging
 import math
 import re
 import unicodedata
+import urllib.parse
+from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 import dateutil.parser as dateutil
 import pytz
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from .datatypes import (
     AnnotationSource,
@@ -30,6 +35,57 @@ from .datatypes import (
 
 logger = logging.getLogger(__name__)
 
+
+class RequestCache:
+    """Class for caching requests to external services during preprocessing.
+
+    Keys are the fully formatted URLs that have already been used to make sucessful requests.
+    Values are requests.Response as they were returned by the service.
+    """
+
+    def __init__(self, max_size: int, retries=5) -> None:
+        self.cache: OrderedDict[str, requests.Response] = OrderedDict()
+        self.max_size = max_size
+        self.session = requests.Session()
+        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+        adapter = HTTPAdapter(max_retries=retry)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+
+    def get(self, url: str) -> None | requests.Response:
+        if url in self.cache:
+            self.cache.move_to_end(url)
+            return self.cache[url]
+        return None
+
+    def set(self, url: str, response: requests.Response) -> None:
+        self.cache[url] = response
+        self.cache.move_to_end(url)
+
+        if len(self.cache) > self.max_size:
+            self.cache.popitem(last=False)
+
+    def get_or_fetch(self, url: str, timeout: int = 15) -> requests.Response:
+        """See if `url` already exists in the cache and return the cached Response
+        if it does.
+
+        If `url` is not in the cache, make the actual request (with timeout and retries).
+        Add the Response to the cache (if status code in the 200s), and return the Response.
+
+        Since request.get can error, the caller should wrap this in a try/except block and handle errors
+        """
+        response = self.get(url)
+        if response is None:
+            response = self.session.get(url, timeout=timeout)
+            if 200 <= response.status_code < 300:
+                self.set(url, response)
+        return response
+
+    def clear(self) -> None:
+        self.cache.clear()
+
+
+taxonomy_cache = RequestCache(max_size=64)
 options_cache: dict[str, dict[str, str]] = {}
 
 
@@ -1172,12 +1228,14 @@ class ProcessingFunctions:
                 ],
             )
         input_datum = input_data["input"]
-        if not input_datum:
+        if input_datum is None or (isinstance(input_datum, str) and not input_datum.strip()):
             return ProcessingResult(datum=None, warnings=[], errors=[])
         try:
             threshold = float(args["threshold"])  # type: ignore
             input = float(input_datum)
         except (ValueError, TypeError):
+            msg = f"Field {output_field} has non-numeric threshold value."
+            logger.error(msg)
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -1186,7 +1244,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=(f"Field {output_field} has non-numeric threshold value."),
+                        message=(msg),
                     )
                 ],
             )
@@ -1344,6 +1402,311 @@ class ProcessingFunctions:
             datum=concat_result.datum,
             warnings=warnings + concat_result.warnings,
             errors=concat_result.errors,
+        )
+
+    @staticmethod
+    def validate_host(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        """Validates that the host exists
+        in NCBI's taxonomy. Checks either the hostTaxonId or the
+        hostNameScientific, depending on the input.
+
+        If validation succeeds, returns the tax_id of the associated taxon.
+
+        It is possible that multiple taxa have the same scientific name. In these cases,
+        return the tax_id of the most generic taxon (i.e., the one that's closest to
+        the root of the taxonomy)
+        """
+        # for INSDC-ingested sequences we just return the id INSDC gives us (if any)
+        # if we ever want to change this behaviour, we just have to remove this short-circuit,
+        # the rest of the function is set up to validate INSDC-ingested data as well
+        if args["is_insdc_ingest_group"]:
+            tax_id = input_data.get("hostTaxonId")
+            if isinstance(tax_id, str) and tax_id.isdigit():
+                return ProcessingResult(
+                    datum=int(tax_id),
+                    warnings=[],
+                    errors=[],
+                )
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        tax_service = args.get("taxonomy_service_url")
+        if not tax_service:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message="Configuration error: taxonomy_service_url was None. Please contact the administrator.",
+                    )
+                ],
+            )
+
+        # host will exist only for direct submissions
+        # hostTaxonId and hostNameScientific are noInput, so the only case where they exist is
+        # for INSDC ingested sequences or for legacy direct submissions
+        unvalidated = (
+            input_data.get("host")
+            or input_data.get("hostTaxonId")
+            or input_data.get("hostNameScientific")
+        )
+
+        if not unvalidated:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        if unvalidated.isdigit():
+            url = f"{tax_service}/taxa/{unvalidated}"
+        else:
+            query = urllib.parse.urlencode({"scientific_name": unvalidated})
+            url = f"{tax_service}/taxa?{query}"
+
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: network error while validating '{unvalidated}': {e}. Please contact the administrator",
+                    )
+                ],
+            )
+
+        body = response.json()
+        if response.status_code != requests.codes.ok:
+            # an invalid host organism is a warning for INSDC ingested sequences, but an error for everyone else
+            message = ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message=f"Host validation for '{unvalidated}' failed with code {response.status_code}: {body.get('detail', '')}",
+            )
+            return ProcessingResult(
+                datum=None,
+                warnings=[message] if args["is_insdc_ingest_group"] else [],
+                errors=[message] if not args["is_insdc_ingest_group"] else [],
+            )
+
+        if isinstance(body, list):
+            # when querying by scientific name, multiple taxa may be returned: select the most generic one
+            taxon = min(body, key=lambda x: x.get("depth", float("inf")))
+        else:
+            taxon = body
+
+        tax_id = taxon.get("tax_id")
+        if tax_id is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: host validation for '{unvalidated}' was successful but response json had no 'tax_id'. Please contact the administrator",
+                    )
+                ],
+            )
+
+        return ProcessingResult(
+            datum=tax_id,
+            warnings=[],
+            errors=[],
+        )
+
+    @staticmethod
+    def scientific_name_from_id(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        # for INSDC-ingested sequences we just return the name INSDC gives us (if any)
+        # if we ever want to change this behaviour, we just have to remove this short-circuit,
+        # the rest of the function is set up to validate INSDC-ingested data as well
+        if args["is_insdc_ingest_group"]:
+            return ProcessingResult(
+                datum=input_data.get("hostNameScientific"),
+                warnings=[],
+                errors=[],
+            )
+
+        tax_service = args.get("taxonomy_service_url")
+        if not tax_service:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message="Configuration error: taxonomy_service_url was None. Please contact the administrator.",
+                    )
+                ],
+            )
+
+        tax_id: str | None = input_data.get("hostTaxonId")
+        if not tax_id:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        url = f"{tax_service}/taxa/{tax_id}"
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: network error while validating '{tax_id}': {e}. Please contact the administrator",
+                    )
+                ],
+            )
+
+        body = response.json()
+        if response.status_code != requests.codes.ok:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}",
+                    )
+                ],
+            )
+
+        scientific_name = body.get("scientific_name")
+        if scientific_name is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: '{tax_id}' is a valid taxon ID but response json had no 'scientific_name'. Please contact the administrator",
+                    )
+                ],
+            )
+
+        return ProcessingResult(
+            datum=scientific_name,
+            warnings=[],
+            errors=[],
+        )
+
+    @staticmethod
+    def common_name_from_id(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        tax_service = args.get("taxonomy_service_url")
+        if not tax_service:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message="Configuration error: taxonomy_service_url was None. Please contact the administrator.",
+                    )
+                ],
+            )
+
+        tax_id: str | None = input_data.get("hostTaxonId")
+        if not tax_id:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        url = f"{tax_service}/taxa/{tax_id}?find_common_name=true"
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: network error while getting common name for '{tax_id}': {e}. Please contact the administrator.",
+                    )
+                ],
+            )
+
+        body = response.json()
+        if response.status_code != requests.codes.ok:
+            return ProcessingResult(
+                datum=None,
+                warnings=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Could not map '{tax_id}' to common name. Code {response.status_code}: {body.get('detail', '')}",
+                    )
+                ],
+                errors=[],
+            )
+
+        common_name = body.get("common_name")
+        if common_name is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it. Please contact the administrator.",
+                    )
+                ],
+            )
+
+        return ProcessingResult(
+            datum=common_name,
+            warnings=[],
+            errors=[],
         )
 
 

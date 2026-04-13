@@ -63,7 +63,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         [referenceGenomesInfo, selectedReferenceNames],
     );
 
-    const [downloadFormState, setDownloadFormState] = useState<DownloadFormState>(
+    const [downloadFormState, setDownloadFormState] = useState(
         getDefaultDownloadFormState(
             segmentAndGeneInfo.nucleotideSegmentInfos,
             segmentAndGeneInfo.geneInfos,
@@ -80,7 +80,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         );
     }, [segmentAndGeneInfo.nucleotideSegmentInfos, segmentAndGeneInfo.geneInfos, segmentLapisNames]);
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
-    const [selectedFields, setSelectedFields] = useState<Set<string>>(getDefaultSelectedFields(schema.metadata)); // This is here so that the state is persisted across closing and reopening the dialog
+    const [selectedFields, setSelectedFields] = useState(getDefaultSelectedFields(schema.metadata)); // This is here so that the state is persisted across closing and reopening the dialog
 
     const downloadFieldVisibilities = useMemo(() => {
         return new Map(

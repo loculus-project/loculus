@@ -878,12 +878,12 @@ def set_accession_does_not_exist_error(
         logger.warning(f"{accession_type} creation failed and DB update failed.")
 
 
-def trigger_retry_if_exists(
+def retry_failed_submissions_for_matching_errors(
     entries_with_errors: Iterable[Mapping[str, Any]],
     db_config: SimpleConnectionPool,
     table_name: TableName,
     retry_threshold_min: int,
-    error_substring: str = "does not exist in ENA",
+    error_substrings: Sequence[str] = ("does not exist in ENA",),
     last_retry: datetime | None = None,
 ) -> datetime | None:
     if (
@@ -892,7 +892,8 @@ def trigger_retry_if_exists(
     ):
         return last_retry
     for entry in entries_with_errors:
-        if error_substring not in str(entry.get("errors", "")):
+        errors = str(entry.get("errors", ""))
+        if not any(substring in errors for substring in error_substrings):
             continue
         match table_name:
             case TableName.PROJECT_TABLE:
@@ -913,7 +914,7 @@ def trigger_retry_if_exists(
             "status": Status.READY,
             "errors": None,
             "finished_at": None,
-            "result": None,
+            "result": {},
         }
         try:
             update_with_retry(

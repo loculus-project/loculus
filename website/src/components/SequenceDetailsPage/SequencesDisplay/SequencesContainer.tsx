@@ -41,7 +41,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     const { nucleotideSegmentInfos, geneInfos } = getSegmentAndGeneInfo(referenceGenomesInfo, segmentReferences);
 
     const [loadSequences, setLoadSequences] = useState(() => loadSequencesAutomatically);
-    const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentInfos[0]));
+    const [sequenceType, setSequenceType] = useState(unalignedSequenceSegment(nucleotideSegmentInfos[0]));
 
     if (!loadSequences) {
         return (
@@ -125,6 +125,17 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
             </BoxWithTabsTabBar>
             <BoxWithTabsBox>
                 {activeTab === 'gene' && <GeneDropdown genes={genes} sequenceType={sequenceType} setType={setType} />}
+                {segments.length > 1 && activeTab === 'unaligned' && (
+                    <SegmentDropdown
+                        segments={segments}
+                        sequenceType={sequenceType}
+                        setType={setType}
+                        mode='unaligned'
+                    />
+                )}
+                {segments.length > 1 && activeTab === 'aligned' && (
+                    <SegmentDropdown segments={segments} sequenceType={sequenceType} setType={setType} mode='aligned' />
+                )}
                 {activeTab !== 'gene' || isGeneSequence(sequenceType.name, sequenceType) ? (
                     <SequencesViewer
                         organism={organism}
@@ -147,6 +158,10 @@ type NucleotideSequenceTabsProps = {
     setType: Dispatch<SetStateAction<SequenceType>>;
     isActive: boolean;
     setActiveTab: (tab: 'unaligned' | 'aligned' | 'gene') => void;
+};
+
+const getCurrentSegment = (segments: SegmentInfo[], sequenceType: SequenceType): SegmentInfo => {
+    return segments.find((s) => s.name === sequenceType.name.name) ?? segments[0];
 };
 
 const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
@@ -172,21 +187,14 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
     }
 
     return (
-        <>
-            {segments.map((segmentName) => (
-                <BoxWithTabsTab
-                    key={segmentName.lapisName}
-                    isActive={
-                        isActive && isUnalignedSequence(sequenceType) && segmentName.name === sequenceType.name.name
-                    }
-                    onClick={() => {
-                        setType(unalignedSequenceSegment(segmentName));
-                        setActiveTab('unaligned');
-                    }}
-                    label={`${segmentName.name} (unaligned)`}
-                />
-            ))}
-        </>
+        <BoxWithTabsTab
+            isActive={isActive}
+            onClick={() => {
+                setType(unalignedSequenceSegment(getCurrentSegment(segments, sequenceType)));
+                setActiveTab('unaligned');
+            }}
+            label='Nucleotide sequences'
+        />
     );
 };
 
@@ -213,21 +221,48 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
     }
 
     return (
-        <>
-            {segments.map((segmentName) => (
-                <BoxWithTabsTab
-                    key={segmentName.lapisName}
-                    isActive={
-                        isActive && isAlignedSequence(sequenceType) && segmentName.name === sequenceType.name.name
+        <BoxWithTabsTab
+            isActive={isActive}
+            onClick={() => {
+                if (!isActive) setType(alignedSequenceSegment(getCurrentSegment(segments, sequenceType)));
+                setActiveTab('aligned');
+            }}
+            label='Aligned nucleotide sequences'
+        />
+    );
+};
+
+type SegmentDropdownProps = {
+    segments: SegmentInfo[];
+    sequenceType: SequenceType;
+    setType: Dispatch<SetStateAction<SequenceType>>;
+    mode: 'unaligned' | 'aligned';
+};
+
+const SegmentDropdown: FC<SegmentDropdownProps> = ({ segments, sequenceType, setType, mode }) => {
+    const currentSegmentName =
+        isUnalignedSequence(sequenceType) || isAlignedSequence(sequenceType) ? sequenceType.name.name : '';
+
+    return (
+        <div className='mb-4'>
+            <Select
+                className='select select-bordered w-full max-w-xs'
+                value={currentSegmentName}
+                onChange={(e) => {
+                    const segment = segments.find((s) => s.name === e.target.value);
+                    if (!segment) {
+                        throw new Error(`Segment not found: ${e.target.value}`);
                     }
-                    onClick={() => {
-                        setType(alignedSequenceSegment(segmentName));
-                        setActiveTab('aligned');
-                    }}
-                    label={`${segmentName.name} (aligned)`}
-                />
-            ))}
-        </>
+                    setType(mode === 'unaligned' ? unalignedSequenceSegment(segment) : alignedSequenceSegment(segment));
+                }}
+            >
+                {segments.map((segment) => (
+                    <option key={segment.lapisName} value={segment.name}>
+                        {segment.displayName ?? segment.name}
+                    </option>
+                ))}
+            </Select>
+        </div>
     );
 };
 
@@ -247,11 +282,11 @@ const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) =
                 className='select select-bordered w-full max-w-xs'
                 value={selectedGene}
                 onChange={(e) => {
-                    const name = e.target.value;
-                    const gene = genes.find((gene) => gene.name === name);
-                    if (gene !== undefined) {
-                        setType(geneSequence(gene));
+                    const gene = genes.find((gene) => gene.name === e.target.value);
+                    if (!gene) {
+                        throw new Error(`Gene not found: ${e.target.value}`);
                     }
+                    setType(geneSequence(gene));
                 }}
             >
                 <option value='' disabled>

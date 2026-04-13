@@ -625,6 +625,19 @@
                 },
                 "description": "Array of Strings. Arguments passed to the preprocessing pipeline."
               },
+              "taxonomyServiceArgs": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "object",
+                "description": "Settings to configure the taxonomy service host and port",
+                "properties": {
+                  "taxonomy_service_url": {
+                    "groups": ["preprocessing"],
+                    "type": "string",
+                    "description": "Host and port where the taxonomy service runs"
+                  }
+                }
+              },
               "configFile": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
@@ -810,6 +823,12 @@
                       "type": "string",
                       "description": "Required if method is minimizer"
                     },
+                    "minimizer_parser_separator": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Literal string separator used in the minimizer index dataset names (default: '_'). Avoid regex metacharacters."
+                    },
                     "backend_request_timeout_seconds": {
                       "groups": ["ingestPipelineConfigFile"],
                       "docsIncludePrefix": false,
@@ -825,11 +844,23 @@
                   },
                   "required": ["method"]
                 },
-                "grouping_override": {
+                "grouping_override_url": {
                   "groups": ["ingest"],
                   "docsIncludePrefix": false,
                   "type": "string",
-                  "description": "If multi-segmented organism, segment grouping overrides"
+                  "description": "If multi-segmented organism, URL to JSON where segment grouping overrides are defined"
+                },
+                "calculate_groups_override_json": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "boolean",
+                  "description": "If multi-segmented organism, whether to calculate segment grouping overrides from assembly report data."
+                },
+                "grouping_ignore_list_url": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "string",
+                  "description": "If multi-segmented organism and calculate_groups_override_json is true, URL to text file with a list of accessions which should have their GCA segment grouping ignored"
                 },
                 "metadata_filter": {
                   "groups": ["ingest"],
@@ -1177,6 +1208,34 @@
             },
             "required": ["field", "displayName"]
           }
+        },
+        "graphs": {
+          "groups": ["general"],
+          "type": "array",
+          "description": "Graphs to display in the SeqSets statistics section",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name for the graph"
+              },
+              "displayName": {
+                "type": "string",
+                "description": "The display name for the graph"
+              },
+              "type": {
+                "type": "string",
+                "description": "The type of data the graph is displaying (date, category)"
+              },
+              "fields": {
+                "type": "array",
+                "description": "The metadata field to graph. Usually a single field, but multiple fields can be provided in cases where a metadata field is named differently across different organisms. If multiple fields are provided, the first match found in each organism is used."
+              }
+            },
+            "required": ["name", "displayName", "type", "fields"]
+          }
         }
       }
     },
@@ -1451,6 +1510,12 @@
       "default": false,
       "description": "If true, disables ENA (European Nucleotide Archive) submission service."
     },
+    "disableTaxonomyService": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables the taxonomy service deployment."
+    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",
@@ -1669,6 +1734,19 @@
         "enaSuppressedListTestUrl": {
           "type": "string",
           "description": "URL to the ENA suppressed sequence list (typically hosted on a Github repo)"
+        }
+      }
+    },
+    "taxonomyService": {
+      "type": "object",
+      "properties": {
+        "dbVersion": {
+          "type": "string",
+          "description": "Version identifier for the NCBI taxonomy database to download (e.g. ncbi_taxonomy_2026-03-23)"
+        },
+        "taxonomyDbPath": {
+          "type": "string",
+          "description": "Path where the taxonomy SQLite database is mounted inside the container"
         }
       }
     },

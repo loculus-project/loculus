@@ -177,6 +177,16 @@ Nucleotide insertions for a multi-segmented organism:
 }
 ```
 
+#### SequenceNameToFastaId map
+
+The preprocessing pipeline is expected to classify which segment/reference each sequence best aligns to and return this assignment in the `sequenceNameToFastaId` field. The `sequenceName` should use the segment-reference structure expected by the backend (and query engine):
+
+ - For an organisms without multiple references the `sequenceName` in the name of the segment (the segment name `main` is used for the single segment edge case).
+ - For single-segmented, multi-reference organisms the `sequenceName` is the name of the reference.
+ - For multi-segment, multi-reference organisms the `sequenceName` is the `{segmentName}-{referenceName}`.
+
+Additionally, the pipeline will receive a `max_sequences_per_entry` parameter via the config and is expected to return an error if the submission entry contains more sequences than are allowed per one submission entry.
+
 ## Reprocessing
 
 The backend accepts processed data from pipelines that have the current or newer version. It will automatically switch to a newer pipeline version if the newer version has successfully processed all sequences that had also been successfully processed by the current version.

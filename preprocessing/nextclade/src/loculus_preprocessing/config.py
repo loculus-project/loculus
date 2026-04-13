@@ -1,4 +1,5 @@
 import argparse
+import graphlib
 import logging
 import os
 from enum import StrEnum
@@ -21,6 +22,8 @@ logger = logging.getLogger(__name__)
 
 # Dataclass types for which we can generate CLI arguments
 CLI_TYPES = [str, int, float, bool]
+
+METADATA_DEPENDENCY_PREFIX = "processed."
 
 
 class EmblInfoMetadataPropertyNames(BaseModel):
@@ -98,8 +101,10 @@ class Config(BaseModel):
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
 
     organism: str = "mpox"
+    max_sequences_per_entry: int | None = None
     segments: list[Segment] = Field(default_factory=list)
     processing_spec: dict[str, ProcessingSpec] = Field(default_factory=dict)
+    processing_order: tuple[str, ...] = ()
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
     segment_classification_method: SegmentClassificationMethod = SegmentClassificationMethod.ALIGN
@@ -130,6 +135,8 @@ class Config(BaseModel):
 
         if not self.backend_host:  # Set here so we can use organism
             self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
+
+        self.processing_order = get_processing_order(self)
 
         return self
 
@@ -225,6 +232,42 @@ def generate_argparse_from_model(config_cls: type[BaseModel]) -> argparse.Argume
     return parser
 
 
+def get_processing_order(config: Config) -> tuple[str, ...]:
+    """Return a valid order for processing metadata fields based on their dependencies.
+
+    Dependencies are derived from input fields in `config.processing_spec`.
+
+    A DAG is constructed and topologically sorted to ensure each field is processed after the
+    fields it depends on.
+
+    A metadatafield can declare a dependency on a processed metadatafield by prefixing
+    the name of the required metadatafield with `processed.` in its inputs.
+    E.g.: `processed.collection_date` will look for `collection_date` in the processed metadata,
+    whereas `collection_date` will use the unprocessed version
+    """
+    dag: dict[str, set[str]] = {k: set() for k in config.processing_spec.keys()}
+    for output_field, spec in config.processing_spec.items():
+        for input in spec.inputs.values():
+            if not input.startswith(METADATA_DEPENDENCY_PREFIX):
+                continue
+            dependency = input.replace(METADATA_DEPENDENCY_PREFIX, "", 1)
+            if dependency not in config.processing_spec:
+                raise ValueError(
+                    f"invalid configuration: metadata field '{output_field}' requested non-existing field '{dependency}' as input"
+                )
+            dag[output_field].add(dependency)
+
+    ts = graphlib.TopologicalSorter(dag)
+    try:
+        processing_order = tuple(ts.static_order())
+    except graphlib.CycleError as e:
+        raise ValueError(
+            f"invalid configuration: computation of metadata processing order resulted in a Cycle error: {e}"
+        ) from e
+
+    return processing_order
+
+
 def get_config(config_file: str | None = None, ignore_args: bool = False) -> Config:
     """
     Config precedence: Direct function args > CLI args > ENV variables > config file > default
@@ -273,4 +316,5 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
     }
     if cli_overrides:
         config = Config(**{**config.model_dump(), **cli_overrides})
+
     return config

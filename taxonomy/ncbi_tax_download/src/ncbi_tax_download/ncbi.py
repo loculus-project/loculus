@@ -139,7 +139,9 @@ def write_to_sqlite(df: pd.DataFrame, output_db: Path) -> None:
 
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_tax_id ON taxonomy(tax_id);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_parent_id ON taxonomy(parent_id);")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_scientific_name ON taxonomy(scientific_name);")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_scientific_name ON taxonomy(scientific_name COLLATE NOCASE);"
+        )
 
         conn.execute("ANALYZE;")
 

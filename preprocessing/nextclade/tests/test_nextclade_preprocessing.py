@@ -18,7 +18,12 @@ from factory_methods import (
     verify_processed_entry,
 )
 
-from loculus_preprocessing.config import AlignmentRequirement, Config, get_config
+from loculus_preprocessing.config import (
+    AlignmentRequirement,
+    Config,
+    get_config,
+    get_processing_order,
+)
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
     SegmentClassificationMethod,
@@ -1191,6 +1196,57 @@ def test_preprocessing_multi_segment_none_requirement(test_case_def: Case):
     )
 
 
+def test_max_sequences_per_entry_batch_isolation() -> None:
+    """If one entry in a batch exceeds maxSequencesPerEntry, only that entry is flagged;
+    other entries in the same batch should succeed without max-sequence errors."""
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.max_sequences_per_entry = 1
+
+    bad_entry = UnprocessedEntry(
+        accessionVersion="LOC_01.1",
+        data=UnprocessedData(
+            group_id=2,
+            submitter="test_submitter",
+            submissionId="test_submission_id",
+            submittedAt=ts_from_ymd(2021, 12, 15),
+            metadata={},
+            unalignedNucleotideSequences={
+                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            },
+        ),
+    )
+
+    good_entry = UnprocessedEntry(
+        accessionVersion="LOC_02.1",
+        data=UnprocessedData(
+            group_id=2,
+            submitter="test_submitter",
+            submissionId="test_submission_id",
+            submittedAt=ts_from_ymd(2021, 12, 15),
+            metadata={},
+            unalignedNucleotideSequences={
+                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            },
+        ),
+    )
+
+    result = process_all([bad_entry, good_entry], MULTI_EBOLA_DATASET, config)
+
+    bad_result = next(r for r in result if r.processed_entry.accession == "LOC_01")
+    bad_max_errors = [
+        e for e in bad_result.processed_entry.errors if "maximum allowed" in e.message
+    ]
+    assert len(bad_max_errors) == 1
+    assert "2 sequences" in bad_max_errors[0].message
+
+    good_result = next(r for r in result if r.processed_entry.accession == "LOC_02")
+    good_max_errors = [
+        e for e in good_result.processed_entry.errors if "maximum allowed" in e.message
+    ]
+    assert len(good_max_errors) == 0
+
+
 def test_preprocessing_without_metadata() -> None:
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
     sequence_entry_data = UnprocessedEntry(
@@ -1209,6 +1265,7 @@ def test_preprocessing_without_metadata() -> None:
     )
 
     config.processing_spec = {}
+    config.processing_order = ()
 
     result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
     processed_entry = result[0].processed_entry
@@ -1309,6 +1366,8 @@ def test_create_flatfile():
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
     embl_fields = get_config(EMBL_METADATA, ignore_args=True).processing_spec
     config.processing_spec.update(embl_fields)
+    # need to recompute order after updating the spec
+    config.processing_order = get_processing_order(config)
     config.create_embl_file = True
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
@@ -1393,7 +1452,7 @@ multi_reference_cases = [
                 ProcessingAnnotationHelper(
                     ["ASSIGNED_REFERENCE"],
                     ["subtype"],
-                    "Metadata field subtype is required.",
+                    "Metadata field `subtype` is required. Please provide input metadata field(s): `ASSIGNED_REFERENCE`",
                 ),
             ]
         ),
@@ -1523,7 +1582,7 @@ multi_segment_multi_reference_cases = [
                 ProcessingAnnotationHelper(
                     ["ASSIGNED_REFERENCE"],
                     ["subtype_S"],
-                    "Metadata field subtype_S is required.",
+                    "Metadata field `subtype_S` is required. Please provide input metadata field(s): `ASSIGNED_REFERENCE`",
                 ),
             ]
         ),

@@ -10,7 +10,7 @@ from factory_methods import (
     verify_processed_entry,
 )
 
-from loculus_preprocessing.config import Config, get_config
+from loculus_preprocessing.config import Config, get_config, get_processing_order
 from loculus_preprocessing.datatypes import (
     FunctionArgs,
     InputMetadata,
@@ -27,6 +27,7 @@ from loculus_preprocessing.processing_functions import (
 
 # Config file used for testing
 NO_ALIGNMENT_CONFIG = "tests/no_alignment_config.yaml"
+METADATA_DEPENDENCY_CONFIG = "tests/metadata_dependency.yaml"
 
 
 test_case_definitions = [
@@ -40,12 +41,12 @@ test_case_definitions = [
                 ProcessingAnnotationHelper(
                     ["name_required"],
                     ["name_required"],
-                    "Metadata field name_required is required.",
+                    "Metadata field `name_required` is required.",
                 ),
                 ProcessingAnnotationHelper(
                     ["ncbi_required_collection_date"],
                     ["required_collection_date"],
-                    "Metadata field required_collection_date is required.",
+                    "Metadata field `required_collection_date` is required. Please provide input metadata field(s): `ncbi_required_collection_date`",
                 ),
             ]
         ),
@@ -54,13 +55,16 @@ test_case_definitions = [
         name="missing_one_required_field",
         input_metadata={"submissionId": "missing_one_required_field", "name_required": "name"},
         accession_id="1",
-        expected_metadata={"name_required": "name", "concatenated_string": "LOC_1.1"},
+        expected_metadata={
+            "name_required": "name",
+            "concatenated_string": "LOC_1.1",
+        },
         expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper(
                     ["ncbi_required_collection_date"],
                     ["required_collection_date"],
-                    "Metadata field required_collection_date is required.",
+                    "Metadata field `required_collection_date` is required. Please provide input metadata field(s): `ncbi_required_collection_date`",
                 ),
             ]
         ),
@@ -678,10 +682,51 @@ not_accepted_authors = [
     "Count4th, EwanMcGregor, Count4th",
 ]
 
+test_metadata_dependency_test_definitions = [
+    Case(
+        name="metadata_dependency",
+        input_metadata={
+            "submissionId": "metadata_dependency",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "2022",
+        },
+        accession_id="18",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_18.1/2022-11-01",
+            "continent": "Asia",
+            "A": "2022-01-01",
+            "depends_on_A": "Asia/LOC_18.1/2022-01-01",
+        },
+        expected_errors=[],
+        expected_warnings=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["A"],
+                    ["A"],
+                    ("Metadata field A:'2022' - Month and day are missing. Assuming January 1st."),
+                ),
+            ]
+        ),
+    ),
+]
+
 
 @pytest.fixture(scope="module")
 def config():
     return get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
+
+
+@pytest.fixture(scope="module")
+def config_dependency(config: Config):
+    # Add metadata dependency to config, recompute processing order
+    dependency_fields = get_config(METADATA_DEPENDENCY_CONFIG, ignore_args=True).processing_spec
+    config.processing_spec.update(dependency_fields)
+    config.processing_order = get_processing_order(config)
+    return config
 
 
 @pytest.fixture(scope="module")
@@ -701,6 +746,27 @@ def test_preprocessing(test_case_def: Case, config: Config, factory_custom: Proc
     test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
+
+
+@pytest.mark.parametrize(
+    "test_case_def",
+    test_metadata_dependency_test_definitions,
+    ids=lambda tc: f"metadata fields with dependencies use processed fields {tc.name}",
+)
+def test_preprocessing_metadata_dependencies(test_case_def: Case, config_dependency: Config):
+    factory_custom = ProcessedEntryFactory(
+        all_metadata_fields=list(config_dependency.processing_spec.keys())
+    )
+    test_case = test_case_def.create_test_case(factory_custom)
+    processed_entry = process_single_entry(test_case, config_dependency)
+    verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
+
+    wrong_order = tuple(
+        ["depends_on_A"] + [i for i in config_dependency.processing_order if i != "depends_on_A"]
+    )
+    config_dependency.processing_order = wrong_order
+    processed_entry = process_single_entry(test_case, config_dependency)
+    assert processed_entry.data.metadata != test_case.expected_output.data.metadata
 
 
 def test_preprocessing_without_consensus_sequences(config: Config) -> None:
