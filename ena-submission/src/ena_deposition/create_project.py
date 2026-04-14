@@ -109,7 +109,8 @@ def set_project_table_entry(
     """Set bioprojectAccession for entry with custom bioprojectAccession"""
     group_key = {"group_id": row["group_id"], "organism": row["organism"]}
     logger.debug(
-        f"Group {row['group_id']} and organism {row['organism']} already has bioprojectAccession, adding to project_table"
+        f"Group {row['group_id']} and organism {row['organism']} already has "
+        f"bioprojectAccession, adding to project_table"
     )
     bioproject = row["result"]["bioproject_accession"]
 
@@ -138,7 +139,7 @@ def set_project_table_entry(
     )
 
 
-def sync_submission_table_state(db_config: SimpleConnectionPool, config: Config):
+def sync_submission_table_state(db_config: SimpleConnectionPool):
     """
     1. Find all entries in submission_table in state READY_TO_SUBMIT
     2. If (exists "bioproject" in "metadata"):
@@ -356,12 +357,10 @@ def create_project(config: Config, stop_event: threading.Event):
             logger.warning("create_project stopped due to exception in another task")
             return
         logger.debug("Checking for projects to create")
-        sync_submission_table_state(db_config, config)
+        sync_submission_table_state(db_config)
 
         project_table_create(db_config, config, test=config.test)
-        sync_submission_table_state(
-            db_config, config
-        )  # update submission_table state after creation
+        sync_submission_table_state(db_config)  # update submission_table state after creation
         last_retry_time = project_table_handle_errors(
             db_config, config, slack_config, last_retry_time
         )

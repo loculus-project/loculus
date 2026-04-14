@@ -44,14 +44,14 @@ from ena_deposition.create_project import (
     project_table_handle_errors,
 )
 from ena_deposition.create_project import (
-    sync_submission_table_state as create_project_submission_table_start,
+    sync_submission_table_state as create_project_submission_table_sync,
 )
 from ena_deposition.create_sample import (
     sample_table_create,
     sample_table_handle_errors,
 )
 from ena_deposition.create_sample import (
-    sync_submission_table_state as create_sample_submission_table_start,
+    sync_submission_table_state as create_sample_submission_table_sync,
 )
 from ena_deposition.loculus_models import Group
 from ena_deposition.notifications import SlackConfig
@@ -429,22 +429,22 @@ def _test_assembly_submission_errored(
 def _test_successful_sample_submission(
     db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
-    create_sample_submission_table_start(db_config, config=config)
+    create_sample_submission_table_sync(db_config)
     check_sample_submission_started(db_config, sequences_to_upload)
 
     sample_table_create(db_config, config, test=config.test)
-    create_sample_submission_table_start(db_config, config=config)
+    create_sample_submission_table_sync(db_config)
     check_sample_submission_submitted(db_config, sequences_to_upload)
 
 
 def _test_successful_project_submission(
     db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
-    create_project_submission_table_start(db_config, config)
+    create_project_submission_table_sync(db_config)
     check_project_submission_started(db_config, sequences_to_upload)
 
     project_table_create(db_config, config, test=config.test)
-    create_project_submission_table_start(db_config, config)
+    create_project_submission_table_sync(db_config)
     check_project_submission_submitted(db_config, sequences_to_upload)
 
 
@@ -800,9 +800,9 @@ class TestKnownBioproject(TestSubmission):
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
         # submit
-        create_project_submission_table_start(self.db_config, self.config)
+        create_project_submission_table_sync(self.db_config)
         project_table_create(self.db_config, self.config, test=self.config.test)
-        create_project_submission_table_start(self.db_config, self.config)
+        create_project_submission_table_sync(self.db_config)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
@@ -831,7 +831,7 @@ class TestIncorrectBioprojectPassed(TestSubmission):
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
         # check project submission fails and sends notification
-        create_project_submission_table_start(self.db_config, self.config)
+        create_project_submission_table_sync(self.db_config)
         project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_has_errors(self.db_config, sequences_to_upload)
         project_table_handle_errors(
@@ -857,7 +857,7 @@ class TestIncorrectBioprojectPassed(TestSubmission):
         check_project_submission_started(self.db_config, sequences_to_upload)
 
         # Confirm DB entry is still in error state after retrying submission
-        create_project_submission_table_start(self.db_config, config=self.config)
+        create_project_submission_table_sync(self.db_config)
         project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_has_errors(self.db_config, sequences_to_upload)
 
@@ -869,7 +869,7 @@ class TestIncorrectBioprojectPassed(TestSubmission):
             last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=10),
         )
         check_project_submission_started(self.db_config, sequences_to_upload)
-        create_project_submission_table_start(self.db_config, config=self.config)
+        create_project_submission_table_sync(self.db_config)
         project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_has_errors(self.db_config, sequences_to_upload)
 
@@ -896,10 +896,10 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
         # submit
-        create_project_submission_table_start(self.db_config, self.config)
+        create_project_submission_table_sync(self.db_config)
         project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
-        create_sample_submission_table_start(self.db_config, config=self.config)
+        create_sample_submission_table_sync(self.db_config)
         sample_table_create(self.db_config, self.config, test=self.config.test)
         check_sample_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
@@ -942,7 +942,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
         # check project submission fails
-        create_project_submission_table_start(self.db_config, self.config)
+        create_project_submission_table_sync(self.db_config)
         project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_has_errors(self.db_config, sequences_to_upload)
 
@@ -956,11 +956,11 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         check_project_submission_started(self.db_config, sequences_to_upload)
 
         # submit
-        create_project_submission_table_start(self.db_config, self.config)
+        create_project_submission_table_sync(self.db_config)
         project_table_create(self.db_config, self.config, test=self.config.test)
-        create_project_submission_table_start(self.db_config, self.config)
+        create_project_submission_table_sync(self.db_config)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
-        create_sample_submission_table_start(self.db_config, config=self.config)
+        create_sample_submission_table_sync(self.db_config)
         sample_table_create(self.db_config, self.config, test=self.config.test)
         check_sample_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
@@ -990,12 +990,12 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
         # submit project
-        create_project_submission_table_start(self.db_config, self.config)
+        create_project_submission_table_sync(self.db_config)
         project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
 
         # check sample submission fails and sends notification
-        create_sample_submission_table_start(self.db_config, config=self.config)
+        create_sample_submission_table_sync(self.db_config)
         sample_table_create(self.db_config, self.config, test=self.config.test)
         check_sample_submission_has_errors(self.db_config, sequences_to_upload)
         sample_table_handle_errors(
@@ -1014,7 +1014,7 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         check_sample_submission_started(self.db_config, sequences_to_upload)
 
         # Confirm DB entry is still in error state after retrying submission
-        create_sample_submission_table_start(self.db_config, config=self.config)
+        create_sample_submission_table_sync(self.db_config)
         sample_table_create(self.db_config, self.config, test=self.config.test)
         check_sample_submission_has_errors(self.db_config, sequences_to_upload)
 
@@ -1026,7 +1026,7 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
             last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=10),
         )
         check_sample_submission_started(self.db_config, sequences_to_upload)
-        create_sample_submission_table_start(self.db_config, config=self.config)
+        create_sample_submission_table_sync(self.db_config)
         sample_table_create(self.db_config, self.config, test=self.config.test)
         check_sample_submission_has_errors(self.db_config, sequences_to_upload)
 
@@ -1052,7 +1052,7 @@ class TestRevisionAssemblyModificationTests(TestSubmission):
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
         # submit
-        create_project_submission_table_start(self.db_config, self.config)
+        create_project_submission_table_sync(self.db_config)
         project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
@@ -1084,7 +1084,7 @@ class TestRevisionNoAssemblyModificationTests(TestSubmission):
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
         # submit
-        create_project_submission_table_start(self.db_config, self.config)
+        create_project_submission_table_sync(self.db_config)
         project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
@@ -1123,7 +1123,7 @@ class TestRevisionWithManifestChangeTests(TestSubmission):
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
         # submit
-        create_project_submission_table_start(self.db_config, self.config)
+        create_project_submission_table_sync(self.db_config)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
 
