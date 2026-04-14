@@ -189,6 +189,13 @@ def sync_submission_table_state(db_config: SimpleConnectionPool):
             )
             continue
 
+        if len(corresponding_project) == 1:
+            logger.warning(
+                f"Corresponding project not in STATE SUBMITTED for {row['group_id']} and "
+                f"organism {row['organism']} - not adding to project_table"
+            )
+            continue
+
         if len(corresponding_project) > 1:
             logger.warning(
                 f"Multiple corresponding projects found for group_id {row['group_id']} and "
