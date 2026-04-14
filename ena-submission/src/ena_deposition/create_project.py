@@ -9,7 +9,7 @@ from sqlalchemy import Engine
 from ena_deposition import call_loculus
 from ena_deposition.loculus_models import Group
 
-from .config import Config
+from .config import BIOPROJECT_ACCESSION_DB_KEY, BIOPROJECT_ACCESSION_LOCULUS_KEY, Config
 from .ena_submission_helper import (
     CreationResult,
     accession_exists,
@@ -106,13 +106,13 @@ def set_project_table_entry(db_engine: Engine, config: Config, row: SubmissionTa
     logger.debug(f"Accession {row.accession} already has bioprojectAccession in metadata")
     group_key = {"group_id": row.group_id, "organism": row.organism}
     seq_key = {"accession": row.accession, "version": row.version}
-    bioproject = row.seq_metadata["bioprojectAccession"]
+    bioproject = row.seq_metadata[BIOPROJECT_ACCESSION_DB_KEY]
 
     corresponding_group = find_conditions_in_db(db_engine, ProjectTableEntry, conditions=group_key)
     corresponding_project = [
         project
         for project in corresponding_group
-        if project.result and project.result.get("bioproject_accession") == bioproject
+        if project.result and project.result.get(BIOPROJECT_ACCESSION_DB_KEY) == bioproject
     ]
     if len(corresponding_project) == 1:
         if corresponding_project[0].status != Status.SUBMITTED:
@@ -153,7 +153,7 @@ def set_project_table_entry(db_engine: Engine, config: Config, row: SubmissionTa
     project_table_entry = ProjectTableEntry(
         group_id=row.group_id,
         organism=row.organism,
-        result={"bioproject_accession": bioproject},
+        result={BIOPROJECT_ACCESSION_DB_KEY: bioproject},
         status=Status.SUBMITTED,
         center_name=center_name,
     )
@@ -192,7 +192,7 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config):
         seq_key = {"accession": row.accession, "version": row.version}
 
         # Use custom bioprojectAccession if it exists
-        if row.seq_metadata.get("bioprojectAccession"):
+        if row.seq_metadata.get(BIOPROJECT_ACCESSION_LOCULUS_KEY):
             set_project_table_entry(db_engine, config, row)
             continue
 

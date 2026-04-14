@@ -1,6 +1,7 @@
 import logging
 import os
 from dataclasses import field
+from typing import Final
 
 import dotenv
 import yaml
@@ -9,6 +10,18 @@ from pydantic import BaseModel
 from ena_deposition.ena_types import MoleculeType, Topology
 
 logger = logging.getLogger(__name__)
+
+# Constants for mapping between database keys and Loculus field names for external metadata fields
+BIOPROJECT_ACCESSION_DB_KEY: Final = "bioproject_accession"
+BIOPROJECT_ACCESSION_LOCULUS_KEY: Final = "bioprojectAccession"
+BIOSAMPLE_ACCESSION_DB_KEY: Final = "biosample_accession"
+BIOSAMPLE_ACCESSION_LOCULUS_KEY: Final = "biosampleAccession"
+ASSEMBLY_ACCESSION_DB_KEY: Final = "gca_accession"
+ASSEMBLY_ACCESSION_LOCULUS_KEY: Final = "gcaAccession"
+NUCCORE_ACCESSION_PREFIX_DB_KEY: Final = "insdc_accession"
+NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY: Final = "insdcAccessionBase"
+VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY: Final = "insdc_accession_full"
+VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY: Final = "insdcAccessionFull"
 
 
 class MetadataMapping(BaseModel):
