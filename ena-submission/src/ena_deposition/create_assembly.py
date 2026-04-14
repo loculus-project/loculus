@@ -19,6 +19,7 @@ from .config import (
     BIOPROJECT_ACCESSION_DB_KEY,
     BIOPROJECT_ACCESSION_LOCULUS_KEY,
     BIOSAMPLE_ACCESSION_LOCULUS_KEY,
+    VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY,
     Config,
     EnaOrganismDetails,
 )
@@ -694,7 +695,8 @@ def assembly_table_update(db_config: SimpleConnectionPool, config: Config, time_
 
             result_contains_gca_accession = ASSEMBLY_ACCESSION_DB_KEY in new_result.result
             result_contains_insdc_accession = any(
-                key.startswith("insdc_accession_full") for key in new_result.result
+                key.startswith(VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY)
+                for key in new_result.result
             )
 
             if not (result_contains_gca_accession and result_contains_insdc_accession):

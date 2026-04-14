@@ -24,6 +24,7 @@ from ena_deposition.config import (
     ASSEMBLY_ACCESSION_DB_KEY,
     BIOPROJECT_ACCESSION_DB_KEY,
     BIOSAMPLE_ACCESSION_DB_KEY,
+    VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY,
     Config,
 )
 from ena_deposition.submission_db_helper import (
@@ -189,14 +190,16 @@ COLUMN_CONFIGS = {
         table_name=TableName.ASSEMBLY_TABLE,
         entry_class=AssemblyTableEntry,
         visibility_column="ena_nucleotide_first_publicly_visible",
-        accession_field_name_prefix="insdc_accession_full",  # Prefix for multi-segment accessions
+        # Prefix for multi-segment accessions
+        accession_field_name_prefix=VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.ASSEMBLY_TABLE,
         entry_class=AssemblyTableEntry,
         visibility_column="ncbi_nucleotide_first_publicly_visible",
-        accession_field_name_prefix="insdc_accession_full",  # Prefix for multi-segment accessions
+        # Prefix for multi-segment accessions
+        accession_field_name_prefix=VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY,
         checker_class=NCBIVisibilityChecker,
     ),
     # Assemblies - ENA GCA accessions

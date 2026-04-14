@@ -286,9 +286,9 @@ def check_assembly_submission_with_nuc_without_gca(
         assert len(rows) == 1, (
             f"Assembly for {full_accession} not in state 'WAITING' in assembly table."
         )
-        assert rows[0]["result"].get("insdc_accession_full_L") is not None
-        assert rows[0]["result"].get("insdc_accession_full_M") is None
-        assert rows[0]["result"].get("gca_accession") is None
+        assert rows[0]["result"].get(f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_L") is not None
+        assert rows[0]["result"].get(f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_M") is None
+        assert rows[0]["result"].get(ASSEMBLY_ACCESSION_DB_KEY) is None
 
 
 def check_sent_to_loculus(
