@@ -964,6 +964,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         check_project_submission_submitted(self.db_config, sequences_to_upload)
         create_sample_submission_table_sync(self.db_config)
         sample_table_create(self.db_config, self.config, test=self.config.test)
+        create_sample_submission_table_sync(self.db_config)
         check_sample_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
 
@@ -1030,6 +1031,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         check_sample_submission_started(self.db_config, sequences_to_upload)
         create_sample_submission_table_sync(self.db_config)
         sample_table_create(self.db_config, self.config, test=self.config.test)
+        create_sample_submission_table_sync(self.db_config)
         check_sample_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
 
