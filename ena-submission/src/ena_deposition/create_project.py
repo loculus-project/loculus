@@ -145,7 +145,7 @@ def sync_state_with_submission_table(db_engine: Engine):
     """
     1. Find all entries in submission_table in state READY_TO_SUBMIT
     2. If (exists "bioproject" in "metadata"):
-        attempt to use this bioproject, see set_project_table_entry function for details
+        attempt to use this bioproject, see update_with_existing_bioproject function for details
     3. If (exists an entry in the project_table for (group_id, organism)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_PROJECT
     4. Else create corresponding entry in project_table
