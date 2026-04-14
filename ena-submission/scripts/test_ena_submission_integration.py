@@ -797,10 +797,7 @@ class TestKnownBioproject(TestSubmission):
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
-        create_project_sync_state_with_submission_table(self.db_engine)
-        project_table_create(self.db_engine, self.config, test=self.config.test)
-        create_project_sync_state_with_submission_table(self.db_engine)
-        check_project_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
         _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
@@ -893,10 +890,8 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
-        create_project_sync_state_with_submission_table(self.db_engine)
-        check_project_submission_submitted(self.db_engine, sequences_to_upload)
-        create_sample_sync_state_with_submission_table(self.db_engine)
-        check_sample_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
         # send to loculus
@@ -951,13 +946,8 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         check_project_submission_started(self.db_engine, sequences_to_upload)
 
         # submit
-        create_project_sync_state_with_submission_table(self.db_engine)
-        project_table_create(self.db_engine, self.config, test=self.config.test)
-        create_project_sync_state_with_submission_table(self.db_engine)
-        check_project_submission_submitted(self.db_engine, sequences_to_upload)
-        create_sample_sync_state_with_submission_table(self.db_engine)
-        sample_table_create(self.db_engine, self.config, test=self.config.test)
-        check_sample_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
         # send to loculus
@@ -968,7 +958,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.create_project.accession_exists", autospec=True)
+    @patch("ena_deposition.create_sample.accession_exists", autospec=True)
     @patch("ena_deposition.notifications.notify", autospec=True)
     def test_biosample_retry(
         self,
@@ -985,7 +975,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
-        mock_accession_exists.side_effect = chain([True], [False], repeat(True))
+        mock_accession_exists.side_effect = chain([False], repeat(True))
         mock_notify.return_value = None
 
         sequences_to_upload = get_sequences()
@@ -998,10 +988,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
-        create_project_sync_state_with_submission_table(self.db_engine)
-        project_table_create(self.db_engine, self.config, test=self.config.test)
-        create_project_sync_state_with_submission_table(self.db_engine)
-        check_project_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
 
         # check sample submission fails and sends notification
         create_sample_sync_state_with_submission_table(self.db_engine)
@@ -1021,8 +1008,9 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
 
         # Confirm DB entry is reset to READY to retry submission
         check_sample_submission_started(self.db_engine, sequences_to_upload)
-        create_project_sync_state_with_submission_table(self.db_engine)
+        create_sample_sync_state_with_submission_table(self.db_engine)
         sample_table_create(self.db_engine, self.config, test=self.config.test)
+        create_sample_sync_state_with_submission_table(self.db_engine)
         check_sample_submission_submitted(self.db_engine, sequences_to_upload)
         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
@@ -1051,9 +1039,7 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit project
-        create_project_sync_state_with_submission_table(self.db_engine)
-        project_table_create(self.db_engine, self.config, test=self.config.test)
-        check_project_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
 
         # check sample submission fails and sends notification
         create_project_sync_state_with_submission_table(self.db_engine)

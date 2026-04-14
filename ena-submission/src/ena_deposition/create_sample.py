@@ -282,7 +282,7 @@ def sample_table_create(db_engine: Engine, config: Config):
             db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
         )
 
-        if row.result and row.result.get("bioproject_accession"):
+        if row.result and row.result.get("biosample_accession"):
             update_with_existing_biosample(db_engine, sample_data_in_submission_table[0], config)
             continue
 
