@@ -10,7 +10,6 @@ import pytz
 from psycopg2.pool import SimpleConnectionPool
 
 from .config import (
-    BIOPROJECT_ACCESSION_DB_KEY,
     BIOSAMPLE_ACCESSION_DB_KEY,
     BIOSAMPLE_ACCESSION_LOCULUS_KEY,
     Config,
@@ -323,7 +322,7 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
             db_config, table_name=TableName.SUBMISSION_TABLE, conditions=asdict(seq_key)
         )
 
-        if row["result"] and row["result"].get("biosample_accession"):
+        if row["result"] and row["result"].get(BIOSAMPLE_ACCESSION_DB_KEY):
             update_with_existing_biosample(db_config, config, row)
             continue
 
