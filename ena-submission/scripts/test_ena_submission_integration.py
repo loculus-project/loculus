@@ -34,8 +34,9 @@ from ena_deposition.config import (
     BIOPROJECT_ACCESSION_LOCULUS_KEY,
     BIOSAMPLE_ACCESSION_DB_KEY,
     BIOSAMPLE_ACCESSION_LOCULUS_KEY,
-    NUCCORE_ACCESSION_PREFIX_DB_KEY,
+    NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY,
     VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY,
+    VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY,
     Config,
     get_config,
 )
@@ -561,14 +562,14 @@ def multi_segment_submission(
     if not single_segment:
         extra_items = {
             ASSEMBLY_ACCESSION_LOCULUS_KEY,
-            f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}_M",
-            f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}_M",
+            f"{NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_M",
+            f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY}_M",
         }
     assert set(payload["externalMetadata"]) == {
         BIOPROJECT_ACCESSION_LOCULUS_KEY,
         BIOSAMPLE_ACCESSION_LOCULUS_KEY,
-        f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}_L",
-        f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}_L",
+        f"{NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_L",
+        f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY}_L",
         *extra_items,
     }
     assert payload["externalMetadata"][BIOPROJECT_ACCESSION_LOCULUS_KEY].startswith("PRJEB")
@@ -580,17 +581,17 @@ def multi_segment_submission(
 
     assert re.match(
         insdc_full_pattern,
-        payload["externalMetadata"][f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}_L"],
+        payload["externalMetadata"][f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY}_L"],
     ), (
         "insdcAccessionFull_L "
-        f"'{payload['externalMetadata'][f'{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}_L']}' "
+        f"'{payload['externalMetadata'][f'{VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY}_L']}' "
         f"does not match INSDC full pattern {insdc_full_pattern}"
     )
     assert re.match(
-        insdc_base_pattern, payload["externalMetadata"][f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}_L"]
+        insdc_base_pattern, payload["externalMetadata"][f"{NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_L"]
     ), (
         f"insdcAccessionBase_L "
-        f"'{payload['externalMetadata'][f'{NUCCORE_ACCESSION_PREFIX_DB_KEY}_L']}' "
+        f"'{payload['externalMetadata'][f'{NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_L']}' "
         f"does not match INSDC base pattern {insdc_base_pattern}"
     )
     if not single_segment:
