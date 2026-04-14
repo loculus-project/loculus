@@ -11,7 +11,7 @@ from ena_deposition.ena_types import MoleculeType, Topology
 
 logger = logging.getLogger(__name__)
 
-
+# Constants for mapping between database keys and Loculus field names for external metadata fields
 BIOPROJECT_ACCESSION_DB_KEY: Final = "bioproject_accession"
 BIOPROJECT_ACCESSION_LOCULUS_KEY: Final = "bioprojectAccession"
 BIOSAMPLE_ACCESSION_DB_KEY: Final = "biosample_accession"
