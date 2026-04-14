@@ -183,14 +183,18 @@ def set_sample_table_entry(db_config: SimpleConnectionPool, config: Config, row:
         )
         return
 
-    entry = {
-        "accession": row["accession"],
-        "version": row["version"],
-        "result": {"ena_sample_accession": biosample, "biosample_accession": biosample},
-        "status": Status.SUBMITTED,
-    }
-    sample_table_entry = SampleTableEntry(**entry)
-    add_to_sample_table(db_config, sample_table_entry)
+    logger.info("Updating entry with biosampleAccession to state SUBMITTED")
+    update_db_where_conditions(
+        db_config,
+        TableName.SAMPLE_TABLE,
+        seq_key,
+        {
+            "accession": row["accession"],
+            "version": row["version"],
+            "result": {"ena_sample_accession": biosample, "biosample_accession": biosample},
+            "status": Status.SUBMITTED,
+        },
+    )
 
 
 def sync_submission_table_state(db_config: SimpleConnectionPool, config: Config):

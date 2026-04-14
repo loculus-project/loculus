@@ -123,16 +123,19 @@ def set_project_table_entry(
         )
         return
 
-    logger.info("Adding bioprojectAccession to project_table")
-    entry = {
-        "group_id": row["group_id"],
-        "organism": row["organism"],
-        "result": {"bioproject_accession": bioproject},
-        "status": Status.SUBMITTED,
-        "center_name": center_name,
-    }
-    project_table_entry = ProjectTableEntry(**entry)
-    add_to_project_table(db_config, project_table_entry)
+    logger.info("Updating entry with bioprojectAccession to state SUBMITTED")
+    update_db_where_conditions(
+        db_config,
+        TableName.PROJECT_TABLE,
+        {"project_id": row["project_id"]},
+        {
+            "group_id": row["group_id"],
+            "organism": row["organism"],
+            "result": {"bioproject_accession": bioproject},
+            "status": Status.SUBMITTED,
+            "center_name": center_name,
+        },
+    )
 
 
 def sync_submission_table_state(db_config: SimpleConnectionPool, config: Config):
@@ -356,7 +359,9 @@ def create_project(config: Config, stop_event: threading.Event):
         sync_submission_table_state(db_config, config)
 
         project_table_create(db_config, config, test=config.test)
-        sync_submission_table_state(db_config, config)  # update submission_table state after creation
+        sync_submission_table_state(
+            db_config, config
+        )  # update submission_table state after creation
         last_retry_time = project_table_handle_errors(
             db_config, config, slack_config, last_retry_time
         )
