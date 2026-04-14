@@ -14,7 +14,7 @@ fields:
     notSearchable: true
     hideOnSequenceDetailsPage: true
     includeInDownloadsByDefault: true
-    definition: {{ printf "The %s accession and version, uniquely identifying the specific version of the sequence record (e.g. `%s000001.1`)." $.Values.name $.Values.accessionPrefix | quote }}
+    definition: {{ printf "The %s `accession` and `version`, uniquely identifying the specific version of the sequence record (e.g. `%s000001.1`)." $.Values.name $.Values.accessionPrefix | quote }}
   - name: accession
     displayName: Accession
     type: string
