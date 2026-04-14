@@ -202,9 +202,9 @@ function containsSearch(field: Metadata | TypedInputField, search: string): bool
     const searchLower = search.toLowerCase();
     return (
         field.name.toLowerCase().includes(searchLower) ||
+        field.type.toLowerCase().includes(searchLower) ||
         (field.displayName?.toLowerCase().includes(searchLower) ?? false) ||
         (field.definition?.toLowerCase().includes(searchLower) ?? false) ||
-        (field.type?.toLowerCase().includes(searchLower) ?? false) ||
         ('guidance' in field && (field.guidance?.toLowerCase().includes(searchLower) ?? false)) ||
         (('example' in field && field.example?.toString().toLowerCase().includes(searchLower)) ?? false)
     );
