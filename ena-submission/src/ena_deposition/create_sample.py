@@ -314,7 +314,7 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
             db_config, table_name=TableName.SUBMISSION_TABLE, conditions=asdict(seq_key)
         )
 
-        if row["result"] and row["result"].get("bioproject_accession"):
+        if row["result"] and row["result"].get("biosample_accession"):
             update_with_existing_biosample(db_config, config, row)
             continue
 
