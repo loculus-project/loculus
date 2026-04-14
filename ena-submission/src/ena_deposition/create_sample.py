@@ -175,7 +175,6 @@ def set_sample_table_entry(db_config: SimpleConnectionPool, config: Config, row:
     logger.info("Checking if biosample actually exists and is public")
     seq_key = {"accession": row["accession"], "version": row["version"]}
     if not accession_exists(biosample, config):
-        # TODO: this needs to be an update not a new entry
         set_accession_does_not_exist_error(
             conditions=seq_key,
             accession=biosample,
