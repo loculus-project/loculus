@@ -1307,6 +1307,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         perSegment: true
         displayName: Total SNPs
+        definition: "Total count of nucleotide substitutions."
         orderOnDetailsPage: 2720
         preprocessing:
           inputs: {input: nextclade.totalSubstitutions}
@@ -1318,6 +1319,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         perSegment: true
         displayName: Total inserted nucs
+        definition: "Total count of inserted nucleotide positions."
         orderOnDetailsPage: 2740
         preprocessing:
           inputs: {input: nextclade.totalInsertions}
@@ -1332,6 +1334,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         preprocessing:
           inputs: {input: nextclade.totalDeletions}
         displayName: Total deleted nucs
+        definition: "Total count of deleted nucleotide positions."
       - name: totalAmbiguousNucs
         type: int
         isSequenceFilter: true
@@ -1340,6 +1343,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         perSegment: true
         displayName: Total ambiguous nucs
+        definition: "Total count of ambiguous nucleotides (not A, C, G, T, or N)."
         orderOnDetailsPage: 2780
         preprocessing:
           inputs: {input: "nextclade.totalNonACGTNs"}
@@ -1352,6 +1356,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         perSegment: true
         displayName: Total unknown nucs
+        definition: "Total count of missing (N) nucleotides."
         preprocessing:
           inputs: {input: nextclade.totalMissing}
       - name: totalFrameShifts
@@ -1362,6 +1367,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         perSegment: true
         displayName: Total frame shifts
+        definition: "Total count of detected frame shifts."
         orderOnDetailsPage: 2820
         preprocessing:
           inputs: {input: nextclade.totalFrameShifts}
@@ -1371,6 +1377,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         perSegment: true
         displayName: Frame shifts
+        definition: "Frame-shifting insertions or deletions detected in CDS regions."
         orderOnDetailsPage: 2840
         preprocessing:
           inputs: {input: nextclade.frameShifts}
@@ -1378,6 +1385,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         isSequenceFilter: true
         perSegment: true
         displayName: Total stop codons
+        definition: "Number of penalized premature stop codons."
         type: int
         header: "Alignment and QC metrics"
         noInput: true
@@ -1387,6 +1395,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         isSequenceFilter: true
         perSegment: true
         displayName: Stop codons
+        definition: "Premature stop codons not in the ignored list (penalized)."
         header: "Alignment and QC metrics"
         noInput: true
         preprocessing:
@@ -1398,6 +1407,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         perSegment: true
         displayName: Completeness
+        definition: "Fraction of reference positions covered by the sequence (0.0 to 1.0)."
         rangeSearch: true
         percentage: true
         orderOnDetailsPage: 2860
@@ -1596,6 +1606,7 @@ defaultOrganisms:
               taxonomy_service_url: "http://loculus-taxonomy-service:5000"
         - name: lineage
           displayName: Lineage
+          definition: "Assigned clade label from the nearest reference tree node."
           isSequenceFilter: true
           header: "Lineage"
           noInput: true
@@ -1957,6 +1968,7 @@ defaultOrganisms:
           isSequenceFilter: true
           relatesToSegment: S
           displayName: "Segment S Lineage"
+          definition: "Assigned clade label from the nearest reference tree node."
           header: "Lineage"
           noInput: true
           generateIndex: true
