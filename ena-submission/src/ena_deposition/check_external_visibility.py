@@ -20,7 +20,12 @@ import pytz
 import requests
 from psycopg2.pool import SimpleConnectionPool
 
-from ena_deposition.config import Config
+from ena_deposition.config import (
+    ASSEMBLY_ACCESSION_DB_KEY,
+    BIOPROJECT_ACCESSION_DB_KEY,
+    BIOSAMPLE_ACCESSION_DB_KEY,
+    Config,
+)
 from ena_deposition.submission_db_helper import (
     AssemblyTableEntry,
     ProjectTableEntry,
@@ -155,28 +160,28 @@ COLUMN_CONFIGS = {
         table_name=TableName.PROJECT_TABLE,
         entry_class=ProjectTableEntry,
         visibility_column="ena_first_publicly_visible",
-        accession_field_name_prefix="bioproject_accession",
+        accession_field_name_prefix=BIOPROJECT_ACCESSION_DB_KEY,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.PROJECT, "ncbi_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.PROJECT_TABLE,
         entry_class=ProjectTableEntry,
         visibility_column="ncbi_first_publicly_visible",
-        accession_field_name_prefix="bioproject_accession",
+        accession_field_name_prefix=BIOPROJECT_ACCESSION_DB_KEY,
         checker_class=NCBIVisibilityChecker,
     ),
     (EntityType.SAMPLE, "ena_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.SAMPLE_TABLE,
         entry_class=SampleTableEntry,
         visibility_column="ena_first_publicly_visible",
-        accession_field_name_prefix="biosample_accession",
+        accession_field_name_prefix=BIOSAMPLE_ACCESSION_DB_KEY,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.SAMPLE, "ncbi_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.SAMPLE_TABLE,
         entry_class=SampleTableEntry,
         visibility_column="ncbi_first_publicly_visible",
-        accession_field_name_prefix="biosample_accession",
+        accession_field_name_prefix=BIOSAMPLE_ACCESSION_DB_KEY,
         checker_class=NCBIVisibilityChecker,
     ),
     # Assemblies - ENA nucleotide accessions
@@ -199,14 +204,14 @@ COLUMN_CONFIGS = {
         table_name=TableName.ASSEMBLY_TABLE,
         entry_class=AssemblyTableEntry,
         visibility_column="ena_gca_first_publicly_visible",
-        accession_field_name_prefix="gca_accession",
+        accession_field_name_prefix=ASSEMBLY_ACCESSION_DB_KEY,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.ASSEMBLY, "ncbi_gca_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.ASSEMBLY_TABLE,
         entry_class=AssemblyTableEntry,
         visibility_column="ncbi_gca_first_publicly_visible",
-        accession_field_name_prefix="gca_accession",
+        accession_field_name_prefix=ASSEMBLY_ACCESSION_DB_KEY,
         checker_class=NCBIVisibilityChecker,
     ),
 }

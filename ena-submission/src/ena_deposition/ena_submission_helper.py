@@ -34,7 +34,13 @@ from tenacity import (
 )
 from unidecode import unidecode
 
-from ena_deposition.config import Config, EnaOrganismDetails
+from ena_deposition.config import (
+    ASSEMBLY_ACCESSION_DB_KEY,
+    BIOPROJECT_ACCESSION_DB_KEY,
+    BIOSAMPLE_ACCESSION_DB_KEY,
+    Config,
+    EnaOrganismDetails,
+)
 
 from .ena_types import (
     DEFAULT_EMBL_PROPERTY_FIELDS,
@@ -261,7 +267,7 @@ def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResul
         errors.append(error_message)
         return CreationResult(errors=errors, warnings=warnings)
     project_results = {
-        "bioproject_accession": parsed_response["RECEIPT"]["PROJECT"]["@accession"],
+        BIOPROJECT_ACCESSION_DB_KEY: parsed_response["RECEIPT"]["PROJECT"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
     return CreationResult(result=project_results, errors=errors, warnings=warnings)
@@ -334,7 +340,7 @@ def create_ena_sample(
         return CreationResult(errors=errors, warnings=warnings)
     sample_results = {
         "ena_sample_accession": parsed_response["RECEIPT"]["SAMPLE"]["@accession"],
-        "biosample_accession": parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
+        BIOSAMPLE_ACCESSION_DB_KEY: parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
     return CreationResult(result=sample_results, errors=errors, warnings=warnings)
@@ -734,7 +740,7 @@ def get_ena_analysis_process(
             if gca_accession:
                 assembly_results.update(
                     {
-                        "gca_accession": gca_accession,
+                        ASSEMBLY_ACCESSION_DB_KEY: gca_accession,
                     }
                 )
             insdc_accession_range = acc_dict.get("chromosomes")
@@ -856,7 +862,10 @@ def set_accession_does_not_exist_error(
                 {
                     "status": Status.HAS_ERRORS,
                     "errors": [error_text],
-                    "result": {"biosample_accession": accession, "ena_sample_accession": accession},
+                    "result": {
+                        BIOSAMPLE_ACCESSION_DB_KEY: accession,
+                        "ena_sample_accession": accession,
+                    },
                 },
             )
         case "BIOPROJECT":
@@ -867,7 +876,7 @@ def set_accession_does_not_exist_error(
                 {
                     "status": Status.HAS_ERRORS,
                     "errors": [error_text],
-                    "result": {"bioproject_accession": accession},
+                    "result": {BIOPROJECT_ACCESSION_DB_KEY: accession},
                 },
             )
         case "RUN_REF":

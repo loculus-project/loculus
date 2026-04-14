@@ -9,7 +9,13 @@ from typing import Any
 import pytz
 from psycopg2.pool import SimpleConnectionPool
 
-from .config import Config, MetadataMapping
+from .config import (
+    BIOPROJECT_ACCESSION_DB_KEY,
+    BIOSAMPLE_ACCESSION_DB_KEY,
+    BIOSAMPLE_ACCESSION_LOCULUS_KEY,
+    Config,
+    MetadataMapping,
+)
 from .ena_submission_helper import (
     CreationResult,
     accession_exists,
@@ -172,7 +178,7 @@ def update_with_existing_biosample(
     logger.debug(
         f"Accession: {row['accession']} already has biosampleAccession, adding to sample_table"
     )
-    biosample = row["result"]["biosample_accession"]
+    biosample = row["result"][BIOSAMPLE_ACCESSION_DB_KEY]
 
     logger.info("Checking if biosample actually exists and is public")
     seq_key = {"accession": row["accession"], "version": row["version"]}
@@ -193,7 +199,7 @@ def update_with_existing_biosample(
         {
             "accession": row["accession"],
             "version": row["version"],
-            "result": {"ena_sample_accession": biosample, "biosample_accession": biosample},
+            "result": {"ena_sample_accession": biosample, BIOSAMPLE_ACCESSION_DB_KEY: biosample},
             "status": Status.SUBMITTED,
         },
     )
@@ -204,7 +210,7 @@ def sync_submission_table_state(db_config: SimpleConnectionPool):
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
     2. If (exists an entry in the sample_table for (accession, version)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_SAMPLE
-    3. If (exists "biosampleAccession" in "metadata"):
+    3. If (exists BIOSAMPLE_ACCESSION_LOCULUS_KEY in "metadata"):
         create entry in sample_table, update state to SUBMITTED_SAMPLE
     4. Else create corresponding entry in sample_table
     """
@@ -246,12 +252,15 @@ def sync_submission_table_state(db_config: SimpleConnectionPool):
             )
             continue
         biosample = None
-        if "biosampleAccession" in row["metadata"] and row["metadata"]["biosampleAccession"]:
-            biosample = row["metadata"]["biosampleAccession"]
+        if (
+            BIOSAMPLE_ACCESSION_LOCULUS_KEY in row["metadata"]
+            and row["metadata"][BIOSAMPLE_ACCESSION_LOCULUS_KEY]
+        ):
+            biosample = row["metadata"][BIOSAMPLE_ACCESSION_LOCULUS_KEY]
         add_to_sample_table(
             db_config,
             SampleTableEntry(
-                **seq_key, result={"biosample_accession": biosample} if biosample else None
+                **seq_key, result={BIOSAMPLE_ACCESSION_DB_KEY: biosample} if biosample else None
             ),
         )
 
