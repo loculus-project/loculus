@@ -976,7 +976,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.create_project.accession_exists", autospec=True)
+    @patch("ena_deposition.create_sample.accession_exists", autospec=True)
     @patch("ena_deposition.notifications.notify", autospec=True)
     def test_biosample_retry(
         self,
@@ -993,7 +993,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
-        mock_accession_exists.side_effect = chain([True], [False], repeat(True))
+        mock_accession_exists.side_effect = chain([False], repeat(True))
         mock_notify.return_value = None
 
         sequences_to_upload = get_sequences()
