@@ -4,6 +4,7 @@ import threading
 import time
 from dataclasses import asdict
 from datetime import datetime
+from typing import Any
 
 import pytz
 from psycopg2.pool import SimpleConnectionPool
@@ -164,16 +165,17 @@ def construct_sample_set_object(
     return SampleSetType(sample=[sample_type])
 
 
-def set_sample_table_entry(db_config, row, seq_key, config: Config):
+def set_sample_table_entry(db_config: SimpleConnectionPool, config: Config, row: dict[str, Any]):
     """Set sample_table entry for entry with biosampleAccession"""
     logger.debug(
         f"Accession: {row['accession']} already has biosampleAccession, adding to sample_table"
     )
-    biosample = row["metadata"]["biosampleAccession"]
+    biosample = row["result"]["biosample_accession"]
 
     logger.info("Checking if biosample actually exists and is public")
     seq_key = {"accession": row["accession"], "version": row["version"]}
     if not accession_exists(biosample, config):
+        # TODO: this needs to be an update not a new entry
         set_accession_does_not_exist_error(
             conditions=seq_key,
             accession=biosample,
@@ -189,21 +191,10 @@ def set_sample_table_entry(db_config, row, seq_key, config: Config):
         "status": Status.SUBMITTED,
     }
     sample_table_entry = SampleTableEntry(**entry)
-    succeeded = add_to_sample_table(db_config, sample_table_entry)
-    if succeeded:
-        logger.debug("Succeeding in adding biosampleAccession to sample_table")
-        update_values = {
-            "status_all": StatusAll.SUBMITTED_SAMPLE,
-        }
-        update_db_where_conditions(
-            db_config,
-            table_name=TableName.SUBMISSION_TABLE,
-            conditions=seq_key,
-            update_values=update_values,
-        )
+    add_to_sample_table(db_config, sample_table_entry)
 
 
-def submission_table_start(db_config: SimpleConnectionPool, config: Config):
+def sync_submission_table_state(db_config: SimpleConnectionPool, config: Config):
     """
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
     2. If (exists an entry in the sample_table for (accession, version)):
@@ -227,20 +218,31 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
         corresponding_sample = find_conditions_in_db(
             db_config, table_name=TableName.SAMPLE_TABLE, conditions=seq_key
         )
+        if len(corresponding_sample) == 1 and corresponding_sample[0]["status"] == str(
+            Status.SUBMITTED
+        ):
+            update_db_where_conditions(
+                db_config,
+                table_name=TableName.SUBMISSION_TABLE,
+                conditions=seq_key,
+                update_values={"status_all": StatusAll.SUBMITTED_SAMPLE},
+            )
+            continue
         if len(corresponding_sample) == 1:
-            if corresponding_sample[0]["status"] == str(Status.SUBMITTED):
-                update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values={"status_all": StatusAll.SUBMITTED_SAMPLE},
-                )
-        else:
-            if "biosampleAccession" in row["metadata"] and row["metadata"]["biosampleAccession"]:
-                set_sample_table_entry(db_config, row, seq_key, config)
-                continue
-            if not add_to_sample_table(db_config, SampleTableEntry(**seq_key)):
-                continue
+            logger.debug(
+                f"Entry for {seq_key} already exists in sample_table with status "
+                f"{corresponding_sample[0]['status']}, not updating submission_table status."
+            )
+            continue
+        biosample = None
+        if "biosampleAccession" in row["metadata"] and row["metadata"]["biosampleAccession"]:
+            biosample = row["metadata"]["biosampleAccession"]
+        add_to_sample_table(
+            db_config,
+            SampleTableEntry(
+                **seq_key, result={"biosample_accession": biosample} if biosample else None
+            ),
+        )
 
 
 def is_old_version(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> bool:
@@ -300,6 +302,10 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
         sample_data_in_submission_table = find_conditions_in_db(
             db_config, table_name=TableName.SUBMISSION_TABLE, conditions=asdict(seq_key)
         )
+
+        if row["result"] and row["result"].get("bioproject_accession"):
+            set_sample_table_entry(db_config, config, row)
+            continue
 
         sample_set = construct_sample_set_object(
             config, sample_data_in_submission_table[0], row, test
@@ -404,10 +410,10 @@ def create_sample(config: Config, stop_event: threading.Event):
             logger.warning("create_sample stopped due to exception in another task")
             return
         logger.debug("Checking for samples to create")
-        submission_table_start(db_config, config=config)
+        sync_submission_table_state(db_config, config=config)
 
         sample_table_create(db_config, config, test=config.test)
-        submission_table_start(
+        sync_submission_table_state(
             db_config, config=config
         )  # update submission_table state after creation
         last_retry_time = sample_table_handle_errors(
