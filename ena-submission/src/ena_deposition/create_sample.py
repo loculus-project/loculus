@@ -237,6 +237,12 @@ def sync_submission_table_state(db_config: SimpleConnectionPool):
                 f"{corresponding_sample[0]['status']}, not updating submission_table status."
             )
             continue
+        if len(corresponding_sample) > 1:
+            logger.error(
+                f"Multiple entries found in sample_table for {seq_key}, not updating "
+                "submission_table status or adding to sample_table."
+            )
+            continue
         biosample = None
         if "biosampleAccession" in row["metadata"] and row["metadata"]["biosampleAccession"]:
             biosample = row["metadata"]["biosampleAccession"]
