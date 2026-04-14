@@ -20,8 +20,8 @@ ASSEMBLY_ACCESSION_DB_KEY: Final = "gca_accession"
 ASSEMBLY_ACCESSION_LOCULUS_KEY: Final = "gcaAccession"
 NUCCORE_ACCESSION_PREFIX_DB_KEY: Final = "insdc_accession"
 NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY: Final = "insdcAccessionBase"
-VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY: Final = "insdc_accession_full"
-VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY: Final = "insdcAccessionFull"
+VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY: Final = "insdc_accession_full"
+VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY: Final = "insdcAccessionFull"
 
 
 class MetadataMapping(BaseModel):

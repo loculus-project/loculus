@@ -35,8 +35,8 @@ from ena_deposition.config import (
     BIOSAMPLE_ACCESSION_DB_KEY,
     BIOSAMPLE_ACCESSION_LOCULUS_KEY,
     NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY,
-    VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY,
-    VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY,
+    VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY,
+    VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY,
     Config,
     get_config,
 )
@@ -563,13 +563,13 @@ def multi_segment_submission(
         extra_items = {
             ASSEMBLY_ACCESSION_LOCULUS_KEY,
             f"{NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_M",
-            f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY}_M",
+            f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_M",
         }
     assert set(payload["externalMetadata"]) == {
         BIOPROJECT_ACCESSION_LOCULUS_KEY,
         BIOSAMPLE_ACCESSION_LOCULUS_KEY,
         f"{NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_L",
-        f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY}_L",
+        f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_L",
         *extra_items,
     }
     assert payload["externalMetadata"][BIOPROJECT_ACCESSION_LOCULUS_KEY].startswith("PRJEB")
@@ -581,10 +581,10 @@ def multi_segment_submission(
 
     assert re.match(
         insdc_full_pattern,
-        payload["externalMetadata"][f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY}_L"],
+        payload["externalMetadata"][f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_L"],
     ), (
         "insdcAccessionFull_L "
-        f"'{payload['externalMetadata'][f'{VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY}_L']}' "
+        f"'{payload['externalMetadata'][f'{VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_L']}' "
         f"does not match INSDC full pattern {insdc_full_pattern}"
     )
     assert re.match(
@@ -650,12 +650,12 @@ class TestFirstPublicUpdate(TestSubmission):
 
     NUCLEOTIDE_CONFIG: Final = {
         "invalid_result": {
-            f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}_seg1": "XY999999",
-            f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}_seg2": "XY999998",
+            f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg1": "XY999999",
+            f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg2": "XY999998",
         },
         "valid_result": {
-            f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}_seg1": "OZ271453",
-            f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}_seg2": "OZ271454",
+            f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg1": "OZ271453",
+            f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg2": "OZ271454",
         },
         "base_entry": {
             "accession": "test_accession",

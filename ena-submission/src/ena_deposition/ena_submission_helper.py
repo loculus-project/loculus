@@ -39,7 +39,7 @@ from ena_deposition.config import (
     BIOPROJECT_ACCESSION_DB_KEY,
     BIOSAMPLE_ACCESSION_DB_KEY,
     NUCCORE_ACCESSION_PREFIX_DB_KEY,
-    VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY,
+    VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY,
     Config,
     EnaOrganismDetails,
 )
@@ -808,13 +808,13 @@ def get_chromsome_accessions(
             accession = f"{start_letters}{start_num:0{num_digits}d}"
             return {
                 NUCCORE_ACCESSION_PREFIX_DB_KEY: accession,
-                VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY: f"{accession}.1",
+                VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY: f"{accession}.1",
             }
         results = {}
         for i, segment in enumerate(segment_order):
             accession = f"{start_letters}{(start_num + i):0{num_digits}d}"
             results[f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}_{segment}"] = accession
-            results[f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}_{segment}"] = f"{accession}.1"
+            results[f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_{segment}"] = f"{accession}.1"
         return results
 
     # Don't handle the Value error here, let it propagate

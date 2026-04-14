@@ -20,8 +20,8 @@ from .config import (
     BIOSAMPLE_ACCESSION_LOCULUS_KEY,
     NUCCORE_ACCESSION_PREFIX_DB_KEY,
     NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY,
-    VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY,
-    VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY,
+    VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY,
+    VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY,
     Config,
     EnaOrganismDetails,
 )
@@ -127,9 +127,9 @@ def get_assembly_accessions_from_db(
         else:
             all_present = False
 
-        full_key = f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}{segment_suffix}"
+        full_key = f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}{segment_suffix}"
         if full_key in result:
-            data[f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY}{segment_suffix}"] = result[
+            data[f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}{segment_suffix}"] = result[
                 full_key
             ]
         else:

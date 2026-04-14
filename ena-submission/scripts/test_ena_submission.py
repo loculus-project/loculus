@@ -16,7 +16,7 @@ from ena_deposition.config import (
     BIOPROJECT_ACCESSION_DB_KEY,
     BIOSAMPLE_ACCESSION_DB_KEY,
     NUCCORE_ACCESSION_PREFIX_DB_KEY,
-    VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY,
+    VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY,
     EnaOrganismDetails,
     ManifestFieldDetails,
     MetadataMapping,
@@ -417,8 +417,8 @@ class AssemblyCreationTests(unittest.TestCase):
             {
                 f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg2": "OZ189935",
                 f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg3": "OZ189936",
-                f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}_seg2": "OZ189935.1",
-                f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}_seg3": "OZ189936.1",
+                f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg2": "OZ189935.1",
+                f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg3": "OZ189936.1",
             },
         )
 
@@ -429,7 +429,7 @@ class AssemblyCreationTests(unittest.TestCase):
             result_single,
             {
                 f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}": "OZ189935",
-                f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}": "OZ189935.1",
+                f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}": "OZ189935.1",
             },
         )
 
@@ -440,7 +440,7 @@ class AssemblyCreationTests(unittest.TestCase):
             result_single,
             {
                 f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg3": "OZ189935",
-                f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}_seg3": "OZ189935.1",
+                f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg3": "OZ189935.1",
             },
         )
 
@@ -469,7 +469,7 @@ class AssemblyCreationTests(unittest.TestCase):
         desired_response = {
             "erz_accession": "ERZ000001",
             NUCCORE_ACCESSION_PREFIX_DB_KEY: "OZ189999",
-            VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY: "OZ189999.1",
+            VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY: "OZ189999.1",
             "segment_order": ["main"],
         }
         self.assertEqual(response.result, desired_response)
