@@ -251,8 +251,8 @@ export function dataUseTermsAreEnabled() {
     return getWebsiteConfig().enableDataUseTerms;
 }
 
-export function getDataUseTermsAgreementHtml() {
-    return getWebsiteConfig().dataUseTermsAgreementHtml;
+export function getDataUseTermsAgreementHTML() {
+    return getWebsiteConfig().dataUseTermsAgreementHTML;
 }
 
 function readTypedConfigFile<T>(fileName: string, schema: z.ZodType<T>) {

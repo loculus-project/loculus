@@ -29,7 +29,7 @@ type DownloadDialogProps = {
     referenceGenomesInfo: ReferenceGenomesInfo;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
-    dataUseTermsAgreementHtml?: string;
+    dataUseTermsAgreementHTML?: string;
     schema: Schema;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
     selectedReferenceNames?: SegmentReferenceSelections;
@@ -42,7 +42,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     referenceGenomesInfo,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
-    dataUseTermsAgreementHtml,
+    dataUseTermsAgreementHTML,
     schema,
     richFastaHeaderFields,
     selectedReferenceNames,
@@ -146,7 +146,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                                     className='text-sm'
                                     dangerouslySetInnerHTML={{
                                         // eslint-disable-next-line @typescript-eslint/naming-convention
-                                        __html: dataUseTermsAgreementHtml ?? 'I agree to the data use terms.',
+                                        __html: dataUseTermsAgreementHTML ?? 'I agree to the data use terms.',
                                     }}
                                 />
                             </label>

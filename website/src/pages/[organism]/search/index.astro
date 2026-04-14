@@ -4,7 +4,7 @@ import { SearchFullUI } from '../../../components/SearchPage/SearchFullUI';
 import {
     dataUseTermsAreEnabled,
     getContactConfig,
-    getDataUseTermsAgreementHtml,
+    getDataUseTermsAgreementHTML,
     getReferenceGenomes,
     getRuntimeConfig,
     getSchema,
@@ -70,7 +70,7 @@ const contactConfig = getContactConfig(websiteConfig);
         initialCount={totalCount}
         initialQueryDict={initialQueryDict}
         dataUseTermsEnabled={dataUseTermsAreEnabled()}
-        dataUseTermsAgreementHtml={getDataUseTermsAgreementHtml()}
+        dataUseTermsAgreementHTML={getDataUseTermsAgreementHTML()}
         sequenceFlaggingConfig={sequenceFlaggingConfig}
         linkOuts={schema.linkOuts}
         contactConfig={contactConfig}

@@ -1592,7 +1592,7 @@
           "required": ["open", "restricted"],
           "additionalProperties": false
         },
-        "agreementHtml": {
+        "agreementHTML": {
           "groups": ["general"],
           "type": "string",
           "description": "Custom HTML for the data use terms agreement checkbox label shown in the download dialog. Can contain links and other HTML elements."
