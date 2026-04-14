@@ -407,6 +407,7 @@ def create_sample(config: Config, stop_event: threading.Event):
         submission_table_start(db_config, config=config)
 
         sample_table_create(db_config, config, test=config.test)
+        submission_table_start(db_config, config=config)  # update submission_table state after creation
         last_retry_time = sample_table_handle_errors(
             db_config, config, slack_config, last_retry_time
         )
