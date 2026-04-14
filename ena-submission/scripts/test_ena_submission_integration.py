@@ -1102,7 +1102,8 @@ class TestRevisionAssemblyModificationTests(TestSubmission):
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
         # submit
-        _test_successful_project_submission(self.db_config, self.config, sequences_to_upload)
+        create_project_submission_table_sync(self.db_config)
+        check_project_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
 
@@ -1132,7 +1133,8 @@ class TestRevisionNoAssemblyModificationTests(TestSubmission):
         check_sequences_uploaded(self.db_config, sequences_to_upload)
 
         # submit
-        _test_successful_project_submission(self.db_config, self.config, sequences_to_upload)
+        create_project_submission_table_sync(self.db_config)
+        check_project_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
         _test_successful_assembly_submission_no_wait(
             self.db_config, self.config, sequences_to_upload
