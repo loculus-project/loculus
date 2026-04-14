@@ -898,9 +898,11 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         # submit
         create_project_submission_table_sync(self.db_config)
         project_table_create(self.db_config, self.config, test=self.config.test)
+        create_project_submission_table_sync(self.db_config)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
         create_sample_submission_table_sync(self.db_config)
         sample_table_create(self.db_config, self.config, test=self.config.test)
+        create_sample_submission_table_sync(self.db_config)
         check_sample_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
 
@@ -1058,6 +1060,7 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         # submit project
         create_project_submission_table_sync(self.db_config)
         project_table_create(self.db_config, self.config, test=self.config.test)
+        create_project_submission_table_sync(self.db_config)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
 
         # check sample submission fails and sends notification
@@ -1120,6 +1123,7 @@ class TestRevisionAssemblyModificationTests(TestSubmission):
         # submit
         create_project_submission_table_sync(self.db_config)
         project_table_create(self.db_config, self.config, test=self.config.test)
+        create_project_submission_table_sync(self.db_config)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
@@ -1152,6 +1156,7 @@ class TestRevisionNoAssemblyModificationTests(TestSubmission):
         # submit
         create_project_submission_table_sync(self.db_config)
         project_table_create(self.db_config, self.config, test=self.config.test)
+        create_project_submission_table_sync(self.db_config)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
         _test_successful_assembly_submission_no_wait(
