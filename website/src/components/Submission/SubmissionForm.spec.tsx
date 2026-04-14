@@ -23,6 +23,8 @@ vi.mock('react-toastify', () => ({
     },
 }));
 
+const INSTANCE_NAME = 'test-instance';
+
 const group: Group = {
     groupId: 1,
     groupName: testGroups[0].groupName,
@@ -49,6 +51,7 @@ function renderSubmissionForm({
 } = {}) {
     return render(
         <SubmissionForm
+            instanceName={INSTANCE_NAME}
             inputMode={inputMode}
             accessToken={testAccessToken}
             organism={testOrganism}
