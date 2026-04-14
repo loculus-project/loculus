@@ -115,7 +115,6 @@ def set_project_table_entry(
 
     logger.info("Checking if bioproject actually exists and is public")
     if not accession_exists(bioproject, config):
-        # TODO: this needs to be an update not a new entry
         set_accession_does_not_exist_error(
             conditions=group_key,
             accession=bioproject,
