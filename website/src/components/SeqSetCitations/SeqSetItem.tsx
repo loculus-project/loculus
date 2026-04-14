@@ -21,6 +21,7 @@ import { Button } from '../common/Button.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDotsGrid from '~icons/mdi/dots-grid';
 import MdiViewGrid from '~icons/mdi/view-grid';
+import { useQuery } from '@tanstack/react-query';
 
 const logger = getClientLogger('SeqSetItem');
 
@@ -80,6 +81,17 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     const [wideGraphs, setWideGraphs] = useState(false);
     const sequencesPerPage = 10;
 
+    const { data: totalCitations, isLoading: isTotalCitationsLoading } = useQuery({
+        queryKey: ['seqset-total-citations', seqSet.seqSetDOI],
+        queryFn: async () => {
+            return fetch(`https://api.crossref.org/works/${seqSet.seqSetDOI}/`)
+                .then((r) => r.json())
+                .then((data) => {
+                    return data.message['is-referenced-by-count'] as number;
+                });
+        },
+    });
+
     const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(
         clientConfig,
         accessToken,
@@ -127,8 +139,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
             </a>
         );
     };
-
-    const totalCitations = citedByData.citations.reduce((sum, citation) => sum + citation, 0);
 
     const getMaxPages = () => {
         return Math.ceil(seqSetRecords.length / sequencesPerPage);
@@ -181,7 +191,11 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                                     href={getCrossRefUrl()}
                                     target='_blank'
                                 >
-                                    Cited by {totalCitations}
+                                    {isTotalCitationsLoading ? (
+                                        <span className='loading loading-spinner loading-xs'></span>
+                                    ) : (
+                                        <span>Cited by {totalCitations}</span>
+                                    )}
                                 </a>
                             )
                         }
