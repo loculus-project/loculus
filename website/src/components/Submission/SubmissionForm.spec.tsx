@@ -264,6 +264,11 @@ describe('SubmitForm', () => {
         );
     });
 
+    test('instance name should be present in the submission form', () => {
+        const { container } = renderSubmissionForm();
+        expect(container.textContent).toContain(INSTANCE_NAME);
+    });
+
     async function submitAndExpectErrorMessageContains(receivedUnexpectedMessageFromBackend: string) {
         const { getByLabelText, getByRole, findByRole } = renderSubmissionForm();
 
