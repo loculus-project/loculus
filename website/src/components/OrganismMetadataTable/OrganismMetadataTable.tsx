@@ -9,15 +9,6 @@ import { Button } from '../common/Button.tsx';
 import { FormattedText } from '../common/FormattedText.tsx';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
-type Props = {
-    organism: OrganismMetadata;
-};
-
-enum FieldType {
-    INPUT = 'inputFields',
-    GENERATED = 'generatedFields',
-}
-
 function getFieldLinkId(header: string, name: string): string {
     return `${header.replaceAll(' ', '_')}-${name}`;
 }
@@ -27,12 +18,37 @@ function scrollElementIntoView(id: string) {
     if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-export const OrganismMetadataTable: FC<Props> = ({ organism }) => {
+type MetadataSearchBarProps = {
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+};
+
+const MetadataSearchBar: FC<MetadataSearchBarProps> = ({ value, onChange, placeholder }) => {
+    return (
+        <input
+            type='search'
+            placeholder={placeholder ?? 'Search fields...'}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className='border border-gray-300 rounded px-3 py-2 text-sm w-1/3 focus:outline-none focus:ring-1 focus:ring-primary-600'
+        />
+    );
+};
+
+enum FieldType {
+    INPUT = 'inputFields',
+    GENERATED = 'generatedFields',
+}
+
+export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ organism }) => {
     const [activeTab, setActiveTab] = useState<FieldType>(() => {
         const params = new URLSearchParams(window.location.search);
         return params.get('fieldType') === FieldType.GENERATED ? FieldType.GENERATED : FieldType.INPUT;
     });
     const [showDisplayNames, setShowDisplayNames] = useState(false);
+    const [inputFieldSearch, setInputFieldSearch] = useState('');
+    const [generatedFieldSearch, setGeneratedFieldSearch] = useState('');
 
     const inputFieldNames = new Set(
         Array.from(organism.groupedInputFields.values())
@@ -109,20 +125,42 @@ export const OrganismMetadataTable: FC<Props> = ({ organism }) => {
                                 {`${organism.displayName.replaceAll(' ', '_')}_metadata_overview.tsv`}
                             </a>
                         </div>
-                        {Array.from(organism.groupedInputFields.entries()).map(([header, inputFields]) => (
-                            <MetadataTableSection
-                                key={header}
-                                header={header}
-                                metadata={organism.metadata}
-                                fields={inputFields}
-                                showDisplayNames={showDisplayNames}
-                                isInputFields
-                            />
-                        ))}
+                        <MetadataSearchBar
+                            value={inputFieldSearch}
+                            onChange={setInputFieldSearch}
+                            placeholder='Search input fields...'
+                        />
+                        {Array.from(organism.groupedInputFields.entries()).map(([header, inputFields]) => {
+                            const inputFieldTypes = new Map(
+                                organism.metadata
+                                    .filter((meta) => inputFieldNames.has(meta.name))
+                                    .map((meta) => [meta.name, meta.type]),
+                            );
+                            const typedInputFields = inputFields.map((field) => ({
+                                ...field,
+                                type: inputFieldTypes.get(field.name) ?? 'string',
+                            }));
+                            return (
+                                <MetadataTableSection
+                                    key={header}
+                                    header={header}
+                                    metadata={organism.metadata}
+                                    fields={typedInputFields}
+                                    showDisplayNames={showDisplayNames}
+                                    search={inputFieldSearch}
+                                    isInputFields
+                                />
+                            );
+                        })}
                     </div>
                 )}
                 {activeTab === FieldType.GENERATED && (
                     <div className='mt-4'>
+                        <MetadataSearchBar
+                            value={generatedFieldSearch}
+                            onChange={setGeneratedFieldSearch}
+                            placeholder='Search generated fields...'
+                        />
                         {Array.from(groupedGeneratedFields.entries()).map(([header, generatedFields]) => (
                             <MetadataTableSection
                                 key={header}
@@ -130,6 +168,7 @@ export const OrganismMetadataTable: FC<Props> = ({ organism }) => {
                                 metadata={organism.metadata}
                                 fields={generatedFields}
                                 showDisplayNames={showDisplayNames}
+                                search={generatedFieldSearch}
                             />
                         ))}
                     </div>
@@ -139,12 +178,42 @@ export const OrganismMetadataTable: FC<Props> = ({ organism }) => {
     );
 };
 
+type TypedInputField = InputField & { type: string };
+
 type MetadataTableProps =
-    | { header: string; metadata: Metadata[]; fields: Metadata[]; showDisplayNames: boolean; isInputFields?: false }
-    | { header: string; metadata: Metadata[]; fields: InputField[]; showDisplayNames: boolean; isInputFields: true };
+    | {
+          header: string;
+          metadata: Metadata[];
+          fields: Metadata[];
+          showDisplayNames: boolean;
+          search: string;
+          isInputFields?: false;
+      }
+    | {
+          header: string;
+          metadata: Metadata[];
+          fields: TypedInputField[];
+          showDisplayNames: boolean;
+          search: string;
+          isInputFields: true;
+      };
+
+function containsSearch(field: Metadata | TypedInputField, search: string): boolean {
+    const searchLower = search.toLowerCase();
+    return (
+        field.name.toLowerCase().includes(searchLower) ||
+        (field.displayName?.toLowerCase().includes(searchLower) ?? false) ||
+        (field.definition?.toLowerCase().includes(searchLower) ?? false) ||
+        (field.type?.toLowerCase().includes(searchLower) ?? false) ||
+        ('guidance' in field && (field.guidance?.toLowerCase().includes(searchLower) ?? false)) ||
+        (('example' in field && field.example?.toString().toLowerCase().includes(searchLower)) ?? false)
+    );
+}
 
 const MetadataTableSection: FC<MetadataTableProps> = (props) => {
     const [expandedHeader, setExpandedHeader] = useState<boolean>(true);
+    const filteredFields = props.search ? props.fields.filter((f) => containsSearch(f, props.search)) : props.fields;
+    if (filteredFields.length === 0) return <></>;
 
     return (
         <div key={props.header} className='mb-8'>
@@ -163,13 +232,17 @@ const MetadataTableSection: FC<MetadataTableProps> = (props) => {
                 className={`transition-all duration-300 ${expandedHeader ? 'block' : 'sr-only'}`}
                 data-table-header={props.header}
             >
-                <MetadataTable {...props} />
+                {props.isInputFields ? (
+                    <MetadataTable {...props} fields={filteredFields as TypedInputField[]} />
+                ) : (
+                    <MetadataTable {...props} fields={filteredFields as Metadata[]} />
+                )}
             </div>
         </div>
     );
 };
 
-const FieldNameCell: FC<{ header: string; field: InputField | Metadata; showDisplayNames: boolean }> = ({
+const FieldNameCell: FC<{ header: string; field: TypedInputField | Metadata; showDisplayNames: boolean }> = ({
     header,
     field,
     showDisplayNames,
@@ -213,7 +286,6 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
             <tbody>
                 {props.isInputFields
                     ? props.fields.map((field) => {
-                          const metadataEntry = props.metadata.find((meta) => meta.name === field.name);
                           return (
                               <tr id={getFieldLinkId(props.header, field.name)} key={field.name}>
                                   <td className='border border-gray-300 px-4 py-2'>
@@ -223,9 +295,7 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                                           showDisplayNames={props.showDisplayNames}
                                       />
                                   </td>
-                                  <td className='border border-gray-300 px-4 py-2'>
-                                      {metadataEntry?.type ?? 'string'}
-                                  </td>
+                                  <td className='border border-gray-300 px-4 py-2'>{field.type}</td>
                                   <td className='border border-gray-300 px-4 py-2'>
                                       <FormattedText
                                           text={[field.definition, field.guidance].filter(Boolean).join(' ')}
