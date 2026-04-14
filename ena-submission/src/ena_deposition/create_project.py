@@ -254,7 +254,9 @@ def project_table_create(
             continue
 
         if row["result"] and row["result"].get("bioproject_accession"):
-            update_with_existing_bioproject(db_config, config, row, center_name=group_info.institution)
+            update_with_existing_bioproject(
+                db_config, config, row, center_name=group_info.institution
+            )
             continue
 
         project_set = construct_project_set_object(group_info, config, row, test)

@@ -165,7 +165,9 @@ def construct_sample_set_object(
     return SampleSetType(sample=[sample_type])
 
 
-def update_with_existing_biosample(db_config: SimpleConnectionPool, config: Config, row: dict[str, Any]):
+def update_with_existing_biosample(
+    db_config: SimpleConnectionPool, config: Config, row: dict[str, Any]
+):
     """Set sample_table entry for entry with biosampleAccession"""
     logger.debug(
         f"Accession: {row['accession']} already has biosampleAccession, adding to sample_table"
