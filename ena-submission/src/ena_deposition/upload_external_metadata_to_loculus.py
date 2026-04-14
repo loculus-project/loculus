@@ -18,6 +18,10 @@ from .config import (
     BIOPROJECT_ACCESSION_LOCULUS_KEY,
     BIOSAMPLE_ACCESSION_DB_KEY,
     BIOSAMPLE_ACCESSION_LOCULUS_KEY,
+    NUCCORE_ACCESSION_PREFIX_DB_KEY,
+    NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY,
+    VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY,
+    VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY,
     Config,
     EnaOrganismDetails,
 )
@@ -117,15 +121,17 @@ def get_assembly_accessions_from_db(
     for segment in segment_names:
         segment_suffix = f"_{segment}" if organism.is_multi_segment() else ""
 
-        base_key = f"insdc_accession{segment_suffix}"
+        base_key = f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}{segment_suffix}"
         if base_key in result:
-            data[f"insdcAccessionBase{segment_suffix}"] = result[base_key]
+            data[f"{NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}{segment_suffix}"] = result[base_key]
         else:
             all_present = False
 
-        full_key = f"insdc_accession_full{segment_suffix}"
+        full_key = f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_DB_KEY}{segment_suffix}"
         if full_key in result:
-            data[f"insdcAccessionFull{segment_suffix}"] = result[full_key]
+            data[f"{VERSIONED_NUCCORE_PREFIX_ACCESSION_LOCULUS_KEY}{segment_suffix}"] = result[
+                full_key
+            ]
         else:
             all_present = False
 
