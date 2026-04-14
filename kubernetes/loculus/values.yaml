@@ -176,6 +176,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
       - name: displayName
         displayName: Display name
+        definition: A human-readable label for the sequence record, with the format `{geoLocCountry}/{accessionVersion}/{sampleCollectionDate}`.
         preprocessing:
           function: concatenate
           inputs:
@@ -1554,6 +1555,8 @@ defaultOrganisms:
       metadataAdd:
         - name: displayName
           displayName: Display name
+          definition: A human-readable label for the sequence record, with the format `{geoLocCountry}/{identifier}/{sampleCollectionDate}`. The identifier is `specimenCollectorSampleId` if set, otherwise `submissionId`; for INSDC sequences the isolate name is used directly if it contains no slashes or spaces. If the identifier cannot be parsed from the expected format, `accessionVersion` is used instead. Missing fields default to `"unknown"`.
+          noInput: true
           preprocessing:
             function: build_display_name
             inputs:
