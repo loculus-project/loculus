@@ -213,10 +213,11 @@ function getDownloadOption({
                     segmentLapisNames: useMultiSegmentEndpoint
                         ? downloadFormState.unalignedNucleotideSequence
                         : undefined,
-                    richFastaHeaders:
-                        defaultFastaHeaderTemplate !== undefined
-                            ? { include: true, fastaHeaderOverride: defaultFastaHeaderTemplate }
-                            : { include: downloadFormState.includeRichFastaHeaders },
+                    richFastaHeaders: downloadFormState.includeRichFastaHeaders
+                        ? { include: true }
+                        : defaultFastaHeaderTemplate !== undefined
+                          ? { include: true, fastaHeaderOverride: defaultFastaHeaderTemplate }
+                          : { include: false },
                 };
             case 'alignedNucleotideSequences':
                 return {
