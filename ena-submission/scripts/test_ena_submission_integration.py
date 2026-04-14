@@ -973,9 +973,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
 class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     @patch("ena_deposition.notifications.notify", autospec=True)
-    def test_submit(
-        self, mock_notify: Mock, mock_get_group_info: Mock
-    ) -> None:
+    def test_submit(self, mock_notify: Mock, mock_get_group_info: Mock) -> None:
         """
         Test submitting sequences with known public bioproject and invalid biosample
         """
