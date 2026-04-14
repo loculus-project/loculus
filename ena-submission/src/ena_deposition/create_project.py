@@ -100,7 +100,7 @@ def construct_project_set_object(
     return ProjectSet(project=[project_type])
 
 
-def set_project_table_entry(
+def update_with_existing_bioproject(
     db_config: SimpleConnectionPool,
     config: Config,
     row: dict[str, Any],
@@ -143,7 +143,7 @@ def sync_submission_table_state(db_config: SimpleConnectionPool):
     """
     1. Find all entries in submission_table in state READY_TO_SUBMIT
     2. If (exists "bioproject" in "metadata"):
-        attempt to use this bioproject, see set_project_table_entry function for details
+        attempt to use this bioproject, see update_with_existing_bioproject function for details
     3. If (exists an entry in the project_table for (group_id, organism)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_PROJECT
     4. Else create corresponding entry in project_table
@@ -254,7 +254,7 @@ def project_table_create(
             continue
 
         if row["result"] and row["result"].get("bioproject_accession"):
-            set_project_table_entry(db_config, config, row, center_name=group_info.institution)
+            update_with_existing_bioproject(db_config, config, row, center_name=group_info.institution)
             continue
 
         project_set = construct_project_set_object(group_info, config, row, test)
