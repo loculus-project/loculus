@@ -801,6 +801,7 @@ class TestKnownBioproject(TestSubmission):
 
         # submit
         create_project_submission_table_start(self.db_config, self.config)
+        project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
@@ -830,6 +831,7 @@ class TestIncorrectBioprojectPassed(TestSubmission):
 
         # check project submission fails and sends notification
         create_project_submission_table_start(self.db_config, self.config)
+        project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_has_errors(self.db_config, sequences_to_upload)
         project_table_handle_errors(
             self.db_config,
@@ -894,6 +896,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
 
         # submit
         create_project_submission_table_start(self.db_config, self.config)
+        project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
         create_sample_submission_table_start(self.db_config, config=self.config)
         check_sample_submission_submitted(self.db_config, sequences_to_upload)
@@ -938,6 +941,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
 
         # check project submission fails
         create_project_submission_table_start(self.db_config, self.config)
+        project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_has_errors(self.db_config, sequences_to_upload)
 
         # Confirm DB entry is reset to READY to retry submission
@@ -986,6 +990,7 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
 
         # submit project
         create_project_submission_table_start(self.db_config, self.config)
+        project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
 
         # check sample submission fails and sends notification
@@ -1046,6 +1051,7 @@ class TestRevisionAssemblyModificationTests(TestSubmission):
 
         # submit
         create_project_submission_table_start(self.db_config, self.config)
+        project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
@@ -1077,6 +1083,7 @@ class TestRevisionNoAssemblyModificationTests(TestSubmission):
 
         # submit
         create_project_submission_table_start(self.db_config, self.config)
+        project_table_create(self.db_config, self.config, test=self.config.test)
         check_project_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
         _test_successful_assembly_submission_no_wait(
