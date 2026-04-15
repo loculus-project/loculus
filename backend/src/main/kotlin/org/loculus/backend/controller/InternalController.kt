@@ -1,6 +1,5 @@
 package org.loculus.backend.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.headers.Header
@@ -18,13 +17,9 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
 import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
-import org.loculus.backend.model.SubmitModel
-import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
-import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -49,13 +44,8 @@ private val log = KotlinLogging.logger { }
 @Validated
 @SecurityRequirement(name = "bearerAuth")
 open class InternalController(
-    private val submitModel: SubmitModel,
     private val releasedDataModel: ReleasedDataModel,
     private val submissionDatabaseService: SubmissionDatabaseService,
-    private val backendConfig: BackendConfig,
-    private val objectMapper: ObjectMapper,
-    private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
-    private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
 ) {
     @Operation(description = EXTRACT_UNPROCESSED_DATA_DESCRIPTION)
     @ApiResponse(
