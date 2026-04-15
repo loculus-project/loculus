@@ -104,7 +104,7 @@ def update_with_existing_bioproject(
     db_config: SimpleConnectionPool,
     config: Config,
     row: dict[str, Any],
-    center_name: str | None = None,
+    center_name: str,
 ):
     """Set bioprojectAccession for entry with custom bioprojectAccession"""
     group_key = {"group_id": row["group_id"], "organism": row["organism"]}
