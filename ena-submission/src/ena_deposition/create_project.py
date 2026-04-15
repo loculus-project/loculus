@@ -142,11 +142,11 @@ def update_with_existing_bioproject(
 def sync_submission_table_state(db_config: SimpleConnectionPool):
     """
     1. Find all entries in submission_table in state READY_TO_SUBMIT
-    2. If (exists "bioproject" in "metadata"):
-        attempt to use this bioproject, see update_with_existing_bioproject function for details
-    3. If (exists an entry in the project_table for (group_id, organism)):
+    2. If (exists an entry in the project_table for (group_id, organism)):
+    a.      If (exists "bioproject" in "metadata") filter to that entry
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_PROJECT
-    4. Else create corresponding entry in project_table
+    4. Else create corresponding entry in project_table in state READY
+            (add "bioproject" to result if exists in metadata)
     """
     conditions = {"status_all": StatusAll.READY_TO_SUBMIT}
     ready_to_submit = find_conditions_in_db(
