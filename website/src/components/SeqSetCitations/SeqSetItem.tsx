@@ -188,6 +188,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                                         className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
                                         href={getCrossRefUrl()}
                                         target='_blank'
+                                        rel='noopener noreferrer'
                                     >
                                         Cited by {seqSetCrossRefWork.message.isReferencedByCount}
                                     </a>
