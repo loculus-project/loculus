@@ -179,21 +179,21 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                         label='Total citations'
                         value={
                             seqSet.seqSetDOI ? (
-                                <a
-                                    className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
-                                    href={getCrossRefUrl()}
-                                    target='_blank'
-                                >
-                                    {isCrossRefWorkLoading ? (
-                                        <span className='loading loading-spinner loading-xs'></span>
-                                    ) : isCrossRefWorkError ? (
-                                        <span>Failed to load total citations</span>
-                                    ) : (
-                                        <span>Cited by {seqSetCrossRefWork.message.isReferencedByCount}</span>
-                                    )}
-                                </a>
+                                isCrossRefWorkLoading ? (
+                                    <span className='loading loading-spinner loading-xs'></span>
+                                ) : isCrossRefWorkError ? (
+                                    <span>Failed to load citations.</span>
+                                ) : (
+                                    <a
+                                        className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
+                                        href={getCrossRefUrl()}
+                                        target='_blank'
+                                    >
+                                        Cited by {seqSetCrossRefWork.message.isReferencedByCount}
+                                    </a>
+                                )
                             ) : (
-                                <p className='text'>Cited by 0</p>
+                                <span>Cited by 0</span>
                             )
                         }
                     />
