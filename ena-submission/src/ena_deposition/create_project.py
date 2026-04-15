@@ -107,7 +107,7 @@ def update_with_existing_bioproject(
     center_name: str,
 ):
     """Set bioprojectAccession for entry with custom bioprojectAccession"""
-    group_key = {"group_id": row["group_id"], "organism": row["organism"]}
+    group_key = {"project_id": row["project_id"]}
     logger.debug(
         f"Group {row['group_id']} and organism {row['organism']} already has "
         f"bioprojectAccession, adding to project_table"
@@ -128,7 +128,7 @@ def update_with_existing_bioproject(
     update_db_where_conditions(
         db_config,
         TableName.PROJECT_TABLE,
-        {"project_id": row["project_id"]},
+        group_key,
         {
             "group_id": row["group_id"],
             "organism": row["organism"],
