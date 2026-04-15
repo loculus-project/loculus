@@ -62,8 +62,8 @@ const MenuItem: FC<MenuItemProps> = ({ page, currentPageUrl }) => {
         <li>
             <a
                 href={page.url}
-                className={`block py-1.5 pl-4 text-primary-600 transition-colors duration-150 ease-in-out hover:text-primary-700 ${
-                    isActive ? 'font-medium underline' : ''
+                className={`block py-1.5 pl-4 transition-colors duration-150 ease-in-out hover:text-primary-800 ${
+                    isActive ? 'text-primary-700 font-medium underline' : 'text-primary-500'
                 }`}
             >
                 {(page.frontmatter.menuTitle ?? page.frontmatter.title) as string}
@@ -84,21 +84,21 @@ const MenuSection: FC<MenuSectionProps> = ({ dir, pages, indexPage, currentPageU
     const heading = indexPage ? (
         <a
             href={indexPage.url}
-            className={`block font-semibold text-primary-600 hover:text-primary-700 ${
+            className={`block font-semibold text-primary-700 hover:text-primary-900 ${
                 indexIsActive ? 'underline' : ''
             }`}
         >
             {indexPage.frontmatter.title as string}
         </a>
     ) : (
-        <span className='block font-semibold text-primary-600'>{toTitleCase(dir.replaceAll('-', ' '))}</span>
+        <span className='block font-semibold text-primary-700'>{toTitleCase(dir.replaceAll('-', ' '))}</span>
     );
 
     return (
         <li className='mb-4 last:mb-0'>
             <div className='mb-1'>{heading}</div>
             {pages.length > 0 && (
-                <ul className='list-none m-0 p-0 border-l border-gray-300'>
+                <ul className='list-none m-0 p-0 border-l border-primary-200'>
                     {pages.map((page) => (
                         <MenuItem key={page.url} page={page} currentPageUrl={currentPageUrl} />
                     ))}
@@ -137,7 +137,7 @@ const DocsMenu: FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
             {({ open }) => (
                 <>
                     <div className='flex items-center justify-between sm:block'>
-                        <div className='text-2xl font-bold text-primary-600 mb-3'>{title}</div>
+                        <div className='text-2xl font-bold text-primary-800 mb-3'>{title}</div>
                         <div className='sm:hidden'>
                             <DisclosureButton className='text-gray-700 hover:text-primary-700 focus:outline-none'>
                                 {open ? (
