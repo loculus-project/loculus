@@ -8,7 +8,6 @@ This script parses the results of nextclade sort:
 import logging
 from dataclasses import dataclass
 from typing import Any
-from typing import Any
 
 import click
 import pandas as pd
@@ -27,7 +26,6 @@ logging.basicConfig(
 class NextcladeSortParams:
     minimizer_url: str
     minimizer_parser: list[str]
-    minimizer_parser_separator: str = "_"
     minimizer_parser_separator: str = "_"
     method: str = "minimizer"
 
