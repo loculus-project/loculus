@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 from requests import codes
-from taxonomy_service.api import app, get_db_connection
+from taxonomy_service.api import app, get_db_connection, init_app
 from taxonomy_service.config import Config, get_config
 
 client = TestClient(app)
@@ -25,8 +25,15 @@ mock_taxa = {
         "tax_id": 9605,
         "common_name": "humans",
         "scientific_name": "Homo",
-        "parent_id": 207598,
+        "parent_id": 9442,  # skipping some levels for testig purposes
         "depth": 30,
+    },
+    "Primates": {
+        "tax_id": 9442,
+        "common_name": "primates",
+        "scientific_name": "Primates",
+        "parent_id": 131567,
+        "depth": 23,
     },
     "cellular organisms": {
         "tax_id": 131567,
@@ -66,6 +73,7 @@ def get_test_db():
 class ApiTest(unittest.TestCase):
     def setUp(self) -> None:
         self.config: Config = get_config(config_file)
+        init_app(self.config)
         app.dependency_overrides[get_db_connection] = get_test_db
 
     def tearDown(self) -> None:
@@ -74,6 +82,7 @@ class ApiTest(unittest.TestCase):
     def test_get_taxon_success(self):
         taxon = mock_taxa["Homo sapiens"]
         response = client.get(f"/taxa/{taxon['tax_id']}")
+
         assert response.status_code == codes.ok
         assert response.json()["scientific_name"] == taxon["scientific_name"]
 
@@ -124,3 +133,10 @@ class ApiTest(unittest.TestCase):
             response.json()["detail"]
             == f"Unable to find common name for taxon {cellular_organisms['tax_id']}"
         )
+
+    def test_assign_host_categories(self):
+        homo_sapiens = mock_taxa["Homo sapiens"]
+        response = client.get(f"/taxa/{homo_sapiens['tax_id']}/host-categories")
+
+        assert len(response.json()) == 2
+        assert all([i in response.json() for i in ["Primates", "Cellular organisms"]])
