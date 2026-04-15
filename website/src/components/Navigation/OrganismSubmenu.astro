@@ -30,12 +30,12 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
                          {/* eslint-disable-next-line no-restricted-syntax -- Server-rendered Astro component, wired via vanilla <script>, no React hydration needed */}
                     <button
                         type='button'
-                        class='inline-flex items-center justify-center w-5 h-5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors self-end mb-px sm:mr-3'
+                        class='inline-flex items-center justify-center w-5 h-5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors self-end mb-px mr-2 ml-2'
                         title='Switch organism'
                         aria-label='Switch organism'
                         data-organism-switch-button
                     >
-                        <FaExchangeAlt className='w-2.5 h-2.5 ml-1' />
+                        <FaExchangeAlt className='w-2.5 h-2.5 ' />
                     </button>
                     </span>
                     <span class='hidden sm:inline text-gray-300 mr-2'>|</span>
