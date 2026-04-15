@@ -9,7 +9,7 @@ from enum import StrEnum
 from typing import Any, Final, TypeVar
 
 import pytz
-from sqlalchemy import Engine, create_engine, delete, func, make_url, or_, select, update
+from sqlalchemy import Engine, Enum, create_engine, delete, func, make_url, or_, select, update
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -156,7 +156,10 @@ class SubmissionTableEntry(Base):
     seq_metadata: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB, default_factory=dict)
     errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
     warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
-    status_all: Mapped[str] = mapped_column(default=str(StatusAll.READY_TO_SUBMIT))
+    status_all: Mapped[Status] = mapped_column(
+        Enum(StatusAll, native_enum=False),  # Store enum as string in DB table.
+        default=StatusAll.READY_TO_SUBMIT,
+    )
     started_at: Mapped[datetime | None] = mapped_column(default=None)
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     unaligned_nucleotide_sequences: Mapped[dict[str, str | None]] = mapped_column(
@@ -187,7 +190,10 @@ class ProjectTableEntry(Base):
     organism: Mapped[str] = mapped_column()
     errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
     warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
-    status: Mapped[str] = mapped_column(default=str(Status.READY))
+    status: Mapped[Status] = mapped_column(
+        Enum(Status, native_enum=False),
+        default=Status.READY,
+    )
     started_at: Mapped[datetime | None] = mapped_column(default=None)
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     center_name: Mapped[str | None] = mapped_column(default=None)
@@ -210,7 +216,10 @@ class SampleTableEntry(Base):
     version: Mapped[int] = mapped_column(primary_key=True)
     errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
     warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
-    status: Mapped[str] = mapped_column(default=str(Status.READY))
+    status: Mapped[Status] = mapped_column(
+        Enum(Status, native_enum=False),
+        default=Status.READY,
+    )
     started_at: Mapped[datetime | None] = mapped_column(default=None)
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
@@ -232,7 +241,10 @@ class AssemblyTableEntry(Base):
     version: Mapped[int] = mapped_column(primary_key=True)
     errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
     warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
-    status: Mapped[str] = mapped_column(default=str(Status.READY))
+    status: Mapped[Status] = mapped_column(
+        Enum(Status, native_enum=False),
+        default=Status.READY,
+    )
     started_at: Mapped[datetime | None] = mapped_column(default=None)
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
@@ -325,8 +337,8 @@ def find_errors_or_stuck_in_db[T: (ProjectTableEntry, SampleTableEntry, Assembly
         status_col = model_class.status
         started_at_col = model_class.started_at
         stmt = select(model_class).where(
-            (status_col == str(Status.HAS_ERRORS))
-            | ((status_col == str(Status.SUBMITTING)) & (started_at_col < min_start_time))
+            (status_col == Status.HAS_ERRORS)
+            | ((status_col == Status.SUBMITTING) & (started_at_col < min_start_time))
         )
         rows = list(session.scalars(stmt).all())
         session.expunge_all()
@@ -341,7 +353,7 @@ def find_stuck_in_submission_db(
     min_start_time = datetime.now(tz=pytz.utc) - timedelta(hours=time_threshold)
     with Session(engine) as session:
         stmt = select(SubmissionTableEntry).where(
-            SubmissionTableEntry.status_all == str(StatusAll.HAS_ERRORS_EXT_METADATA_UPLOAD),
+            SubmissionTableEntry.status_all == StatusAll.HAS_ERRORS_EXT_METADATA_UPLOAD,
             SubmissionTableEntry.started_at < min_start_time,
         )
         rows = list(session.scalars(stmt).all())
@@ -359,7 +371,7 @@ def find_waiting_in_db(
         status_col = AssemblyTableEntry.status
         started_at_col = AssemblyTableEntry.started_at
         stmt = select(AssemblyTableEntry).where(
-            (status_col == str(Status.WAITING)) & (started_at_col < min_start_time)
+            (status_col == Status.WAITING) & (started_at_col < min_start_time)
         )
         rows = list(session.scalars(stmt).all())
         session.expunge_all()

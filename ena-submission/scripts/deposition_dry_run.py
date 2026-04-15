@@ -103,7 +103,7 @@ def local_ena_submission_generator(
             group_id=data["metadata"]["groupId"],
             organism=data["organism"],
             result={"bioproject_accession": bioproject} if bioproject else None,
-            center_name=center_name
+            center_name=center_name,
         )
         sample_entry = SampleTableEntry(
             accession=accession,

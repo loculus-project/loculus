@@ -242,7 +242,7 @@ def submission_table_start(db_config: Engine, config: Config) -> None:
     b.      Else update state to SUBMITTING_ASSEMBLY
     4. Else create corresponding entry in assembly_table
     """
-    conditions = {"status_all": str(StatusAll.SUBMITTED_SAMPLE)}
+    conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE}
     ready_to_submit = find_conditions_in_db(db_config, SubmissionTableEntry, conditions=conditions)
     if len(ready_to_submit) > 0:
         logger.debug(
@@ -267,7 +267,7 @@ def submission_table_start(db_config: Engine, config: Config) -> None:
         )
         status_all = None
         if len(corresponding_assembly) == 1:
-            if corresponding_assembly[0].status == str(Status.SUBMITTED):
+            if corresponding_assembly[0].status == Status.SUBMITTED:
                 status_all = StatusAll.SUBMITTED_ALL
             else:
                 status_all = StatusAll.SUBMITTING_ASSEMBLY
@@ -291,7 +291,7 @@ def submission_table_update(db_config: Engine) -> None:
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_ALL
     3. Else throw Error
     """
-    conditions = {"status_all": str(StatusAll.SUBMITTING_ASSEMBLY)}
+    conditions = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
     submitting_assembly = find_conditions_in_db(
         db_config, SubmissionTableEntry, conditions=conditions
     )
@@ -565,7 +565,7 @@ def assembly_table_create(db_config: Engine, config: Config):
 
     If config.test=True: use the test ENA webin-cli endpoint for submission.
     """
-    conditions = {"status": str(Status.READY)}
+    conditions = {"status": Status.READY}
     ready_to_submit_assembly = find_conditions_in_db(
         db_config, AssemblyTableEntry, conditions=conditions
     )
@@ -666,7 +666,7 @@ def assembly_table_update(db_config: Engine, config: Config, time_threshold: int
     3. If (exists): update state to SUBMITTED with results
     """
     global _last_ena_check  # noqa: PLW0603
-    conditions = {"status": str(Status.WAITING)}
+    conditions = {"status": Status.WAITING}
     waiting = find_conditions_in_db(db_config, AssemblyTableEntry, conditions=conditions)
     if len(waiting) > 0:
         logger.debug(f"Found {len(waiting)} entries in assembly_table in status WAITING")

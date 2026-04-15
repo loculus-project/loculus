@@ -152,7 +152,7 @@ def set_project_table_entry(db_config: Engine, config: Config, row: SubmissionTa
         group_id=row.group_id,
         organism=row.organism,
         result={"bioproject_accession": bioproject},
-        status=str(Status.SUBMITTED),
+        status=Status.SUBMITTED,
         center_name=center_name,
     )
     succeeded = add_to_project_table(db_config, project_table_entry)
@@ -185,7 +185,7 @@ def submission_table_start(db_config: Engine, config: Config):
     b.      Else update state to SUBMITTING_PROJECT
     4. Else create corresponding entry in project_table
     """
-    conditions = {"status_all": str(StatusAll.READY_TO_SUBMIT)}
+    conditions = {"status_all": StatusAll.READY_TO_SUBMIT}
     ready_to_submit = find_conditions_in_db(db_config, SubmissionTableEntry, conditions=conditions)
     logger.debug(
         f"Found {len(ready_to_submit)} entries in submission_table in status READY_TO_SUBMIT"
@@ -205,7 +205,7 @@ def submission_table_start(db_config: Engine, config: Config):
             db_config, ProjectTableEntry, conditions=group_key
         )
         if len(corresponding_project) == 1:
-            if corresponding_project[0].status == str(Status.SUBMITTED):
+            if corresponding_project[0].status == Status.SUBMITTED:
                 update_values = {
                     "status_all": StatusAll.SUBMITTED_PROJECT,
                     "center_name": corresponding_project[0].center_name,
@@ -238,7 +238,7 @@ def submission_table_update(db_config: Engine):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_PROJECT
     3. Else throw Error
     """
-    conditions = {"status_all": str(StatusAll.SUBMITTING_PROJECT)}
+    conditions = {"status_all": StatusAll.SUBMITTING_PROJECT}
     submitting_project = find_conditions_in_db(
         db_config, SubmissionTableEntry, conditions=conditions
     )
@@ -291,7 +291,7 @@ def project_table_create(
     If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
     project for testing.
     """
-    conditions = {"status": str(Status.READY)}
+    conditions = {"status": Status.READY}
     ready_to_submit_project = find_conditions_in_db(
         db_config, ProjectTableEntry, conditions=conditions
     )
