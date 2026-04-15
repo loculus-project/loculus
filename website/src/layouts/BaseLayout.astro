@@ -98,9 +98,8 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                     currentOrganismObject={currentOrganismObject}
                     currentPath={currentPath}
                 />
-
-                <slot name='banner' />
             </header>
+            <slot name='banner' />
 
             <div
                 class:list={[
