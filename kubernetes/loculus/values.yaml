@@ -74,7 +74,7 @@ lineageSystemDefinitions:
   cchfS:
     1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml
   hostOrganism:
-    1: https://raw.githubusercontent.com/maverbiest/silo-lineage-hierarchy-definitions/e00a1fcc7dab1d4b50bf1558cb000a9f4a782531/definitions/taxonomy/2026-04-15/lineages.yaml
+    1: https://raw.githubusercontent.com/maverbiest/silo-lineage-hierarchy-definitions/55f7df800e5e2bc0f8ee97f019dc641d675b9e31/definitions/taxonomy/2026-04-15/lineages.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     submissionDataTypes: &defaultSubmissionDataTypes
