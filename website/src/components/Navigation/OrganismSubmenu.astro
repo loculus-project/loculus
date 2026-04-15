@@ -4,6 +4,7 @@ import type { Organism } from '../../config';
 import { extraSequenceRelatedTopNavigationItems } from '../../routes/extraTopNavigationItems';
 import { getSequenceRelatedItems } from '../../routes/navigationItems';
 import FaExchangeAlt from '~icons/fa-solid/exchange-alt';
+import { mainTailwindColor } from '../../../colors.json';
 
 interface Props {
     currentOrganism?: string;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 const { currentOrganism, currentOrganismObject, currentPath } = Astro.props;
+const primaryColor = mainTailwindColor[400];
 
 // Get the navigation items for this organism
 const sequenceRelatedItems = getSequenceRelatedItems(currentOrganism);
@@ -34,6 +36,7 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
                             title='Switch organism'
                             aria-label='Switch organism'
                             data-organism-switch-button
+                            data-primary-color={primaryColor}
                         >
                             <FaExchangeAlt className='w-2.5 h-2.5 ' />
                         </button>
@@ -90,13 +93,8 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
             const from = icon.getBoundingClientRect();
             const to = menuButton.getBoundingClientRect();
 
-            // Read the primary color from Tailwind for the trail and flash
-            const probe = document.createElement('span');
-            probe.className = 'text-primary';
-            probe.style.display = 'none';
-            document.body.appendChild(probe);
-            const primaryColor = getComputedStyle(probe).color;
-            probe.remove();
+            // Read the primary color from the data attribute (set from colors.json in frontmatter)
+            const primaryColor = btn.dataset.primaryColor ?? '#88a1d2';
 
             const flyingIcon = icon.cloneNode(true) as SVGElement;
             const wrapper = document.createElement('div');
