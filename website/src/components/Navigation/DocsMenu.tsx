@@ -62,8 +62,8 @@ const MenuItem: FC<MenuItemProps> = ({ page, currentPageUrl }) => {
         <li>
             <a
                 href={page.url}
-                className={`block py-1.5 pl-4 transition-colors duration-150 ease-in-out hover:text-primary-700 ${
-                    isActive ? 'text-primary-600 font-medium' : 'text-gray-700'
+                className={`block py-1.5 pl-4 text-primary-600 transition-colors duration-150 ease-in-out hover:text-primary-700 ${
+                    isActive ? 'font-medium underline' : ''
                 }`}
             >
                 {(page.frontmatter.menuTitle ?? page.frontmatter.title) as string}
@@ -84,14 +84,14 @@ const MenuSection: FC<MenuSectionProps> = ({ dir, pages, indexPage, currentPageU
     const heading = indexPage ? (
         <a
             href={indexPage.url}
-            className={`block font-semibold hover:text-primary-700 ${
-                indexIsActive ? 'text-primary-600' : 'text-gray-900'
+            className={`block font-semibold text-primary-600 hover:text-primary-700 ${
+                indexIsActive ? 'underline' : ''
             }`}
         >
             {indexPage.frontmatter.title as string}
         </a>
     ) : (
-        <span className='block font-semibold text-gray-900'>{toTitleCase(dir.replaceAll('-', ' '))}</span>
+        <span className='block font-semibold text-primary-600'>{toTitleCase(dir.replaceAll('-', ' '))}</span>
     );
 
     return (
@@ -137,7 +137,7 @@ const DocsMenu: FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
             {({ open }) => (
                 <>
                     <div className='flex items-center justify-between sm:block'>
-                        <div className='text-2xl font-bold text-gray-900 mb-3'>{title}</div>
+                        <div className='text-2xl font-bold text-primary-600 mb-3'>{title}</div>
                         <div className='sm:hidden'>
                             <DisclosureButton className='text-gray-700 hover:text-primary-700 focus:outline-none'>
                                 {open ? (
