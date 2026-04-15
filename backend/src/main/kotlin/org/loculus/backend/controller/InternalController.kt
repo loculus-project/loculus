@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
-import mu.KotlinLogging
 import org.loculus.backend.api.CompressionFormat
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.Organism
@@ -38,8 +37,6 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
-
-private val log = KotlinLogging.logger { }
 
 @RestController
 @RequestMapping("/{organism}")
