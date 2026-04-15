@@ -211,7 +211,7 @@ def get_entities_needing_column_check(
         column_config.entry_class,
         conditions={
             column_config.visibility_column: None,
-            "status": str(Status.SUBMITTED),
+            "status": Status.SUBMITTED,
         },
     )
 

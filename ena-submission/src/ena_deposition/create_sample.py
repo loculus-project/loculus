@@ -190,7 +190,7 @@ def set_sample_table_entry(
         accession=row.accession,
         version=row.version,
         result={"ena_sample_accession": biosample, "biosample_accession": biosample},
-        status=str(Status.SUBMITTED),
+        status=Status.SUBMITTED,
     )
     succeeded = add_to_sample_table(db_config, sample_table_entry)
     if succeeded:
@@ -216,7 +216,7 @@ def sync_state_with_submission_table(db_config: Engine, config: Config):
     4. Else create corresponding entry in sample_table
     """
     # Check submission_table for newly added sequences
-    conditions = {"status_all": str(StatusAll.SUBMITTED_PROJECT)}
+    conditions = {"status_all": StatusAll.SUBMITTED_PROJECT}
     ready_to_submit = find_conditions_in_db(db_config, SubmissionTableEntry, conditions=conditions)
     logger.debug(
         f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_PROJECT"
@@ -229,7 +229,7 @@ def sync_state_with_submission_table(db_config: Engine, config: Config):
             db_config, SampleTableEntry, conditions=seq_key
         )
         if len(corresponding_sample) == 1:
-            if corresponding_sample[0].status == str(Status.SUBMITTED):
+            if corresponding_sample[0].status == Status.SUBMITTED:
                 update_db_where_conditions(
                     db_config,
                     table_name=TableName.SUBMISSION_TABLE,
@@ -285,7 +285,7 @@ def sample_table_create(db_config: Engine, config: Config, test: bool = False):
     If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
     sample for testing.
     """
-    conditions = {"status": str(Status.READY)}
+    conditions = {"status": Status.READY}
     ready_to_submit_sample = find_conditions_in_db(
         db_config, SampleTableEntry, conditions=conditions
     )

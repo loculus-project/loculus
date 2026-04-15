@@ -157,7 +157,7 @@ def get_external_metadata_and_send_to_loculus(db_config: Engine, config: Config)
         for entry in find_conditions_in_db(
             db_config,
             SubmissionTableEntry,
-            conditions={"status_all": str(status)},
+            conditions={"status_all": status},
         ):
             accession = entry.accession
             version = entry.version
