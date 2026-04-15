@@ -10,6 +10,7 @@ import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata
 import type { AggregateRow } from './getSeqSetStatistics.ts';
 import { mainTailwindColor } from '../../../colors.json';
 import { getClientLogger } from '../../clientLogger';
+import { useCrossRefWork } from '../../hooks/useCrossRefOperations.ts';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { SeqSetGraph } from '../../types/config.ts';
@@ -21,7 +22,6 @@ import { Button } from '../common/Button.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDotsGrid from '~icons/mdi/dots-grid';
 import MdiViewGrid from '~icons/mdi/view-grid';
-import { useQuery } from '@tanstack/react-query';
 
 const logger = getClientLogger('SeqSetItem');
 
@@ -81,16 +81,11 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     const [wideGraphs, setWideGraphs] = useState(false);
     const sequencesPerPage = 10;
 
-    const { data: totalCitations, isLoading: isTotalCitationsLoading } = useQuery({
-        queryKey: ['seqset-total-citations', seqSet.seqSetDOI],
-        queryFn: async () => {
-            return fetch(`https://api.crossref.org/works/${seqSet.seqSetDOI}/`)
-                .then((r) => r.json())
-                .then((data) => {
-                    return data.message['is-referenced-by-count'] as number;
-                });
-        },
-    });
+    const {
+        data: seqSetCrossRefWork,
+        isLoading: isCrossRefWorkLoading,
+        isError: isCrossRefWorkError,
+    } = useCrossRefWork(seqSet.seqSetDOI);
 
     const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(
         clientConfig,
@@ -183,20 +178,22 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     <SeqSetSectionEntry
                         label='Total citations'
                         value={
-                            seqSet.seqSetDOI === undefined || seqSet.seqSetDOI === null ? (
-                                <p className='text'>Cited by 0</p>
-                            ) : (
+                            seqSet.seqSetDOI ? (
                                 <a
                                     className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
                                     href={getCrossRefUrl()}
                                     target='_blank'
                                 >
-                                    {isTotalCitationsLoading ? (
+                                    {isCrossRefWorkLoading ? (
                                         <span className='loading loading-spinner loading-xs'></span>
+                                    ) : isCrossRefWorkError ? (
+                                        <span>Failed to load total citations</span>
                                     ) : (
-                                        <span>Cited by {totalCitations}</span>
+                                        <span>Cited by {seqSetCrossRefWork.message.isReferencedByCount}</span>
                                     )}
                                 </a>
+                            ) : (
+                                <p className='text'>Cited by 0</p>
                             )
                         }
                     />

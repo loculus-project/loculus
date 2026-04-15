@@ -38,3 +38,15 @@ export const authorProfile = z.object({
     university: z.string().nullish(),
 });
 export type AuthorProfile = z.infer<typeof authorProfile>;
+
+export const crossRefWork = z.object({
+    message: z
+        .object({
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            'is-referenced-by-count': z.number(),
+        })
+        .transform((data) => ({
+            isReferencedByCount: data['is-referenced-by-count'],
+        })),
+});
+export type CrossRefWork = z.infer<typeof crossRefWork>;
