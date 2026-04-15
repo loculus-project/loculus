@@ -8,7 +8,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
-import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.LongColumnType
@@ -42,7 +41,6 @@ import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.AccessionVersionUnprocessedMetadata
 import org.loculus.backend.api.ApproveDataScope
-import org.loculus.backend.api.CompressionFormat
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
@@ -77,9 +75,6 @@ import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
-import org.loculus.backend.log.ORGANISM_MDC_KEY
-import org.loculus.backend.log.REQUEST_ID_MDC_KEY
-import org.loculus.backend.log.RequestIdContext
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService
@@ -94,14 +89,11 @@ import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipeline
 import org.loculus.backend.service.submission.dbtables.ExternalMetadataTable
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
-import org.loculus.backend.utils.IteratorStreamer
 import org.loculus.backend.utils.Version
 import org.loculus.backend.utils.toTimestamp
-import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -127,8 +119,6 @@ class SubmissionDatabaseService(
     private val processedDataPostprocessor: ProcessedDataPostprocessor,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
-    private val iteratorStreamer: IteratorStreamer,
-    private val requestIdContext: RequestIdContext,
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
     private var lastPreprocessedDataUpdate: String? = null
@@ -145,44 +135,6 @@ class SubmissionDatabaseService(
             numberOfSequenceEntries,
             pipelineVersion,
         )
-    }
-
-    fun <T> streamTransactioned(
-        compressionFormat: CompressionFormat? = null,
-        endpoint: String,
-        organism: Organism,
-        sequenceProvider: () -> Sequence<T>,
-    ) = StreamingResponseBody { responseBodyStream ->
-        val startTime = System.currentTimeMillis()
-        MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
-        MDC.put(ORGANISM_MDC_KEY, organism.name)
-
-        val outputStream = when (compressionFormat) {
-            CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
-            null -> responseBodyStream
-        }
-
-        outputStream.use { stream ->
-            transaction {
-                try {
-                    iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
-                } catch (e: Exception) {
-                    val duration = System.currentTimeMillis() - startTime
-                    log.error(e) {
-                        "[$endpoint] An unexpected error occurred while streaming after ${duration}ms, aborting the stream: $e"
-                    }
-                    stream.write(
-                        "An unexpected error occurred while streaming, aborting the stream: ${e.message}".toByteArray(),
-                    )
-                }
-            }
-        }
-
-        val duration = System.currentTimeMillis() - startTime
-        log.info { "[$endpoint] Streaming response completed in ${duration}ms" }
-
-        MDC.remove(REQUEST_ID_MDC_KEY)
-        MDC.remove(ORGANISM_MDC_KEY)
     }
 
     fun getCurrentProcessingPipelineVersion(organism: Organism): Long {

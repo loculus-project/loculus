@@ -28,6 +28,7 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
+import org.loculus.backend.log.RequestIdContext
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
@@ -35,6 +36,7 @@ import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidato
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
+import org.loculus.backend.utils.IteratorStreamer
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -68,7 +70,9 @@ open class SubmissionController(
     private val objectMapper: ObjectMapper,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
-) {
+    iteratorStreamer: IteratorStreamer,
+    requestIdContext: RequestIdContext,
+) : BaseController(iteratorStreamer, requestIdContext) {
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
     @ApiResponse(responseCode = "400", description = SUBMIT_ERROR_RESPONSE)
@@ -236,7 +240,7 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = submissionDatabaseService.streamTransactioned(
+        val streamBody = streamTransactioned(
             compression,
             endpoint = "get-unprocessed-metadata",
             organism = organism,
