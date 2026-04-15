@@ -57,8 +57,7 @@ from .submission_db_helper import (
     Status,
     TableName,
     add_to_assembly_table,
-    add_to_project_table,
-    add_to_sample_table,
+    update_db_where_conditions,
     update_with_retry,
 )
 
@@ -839,7 +838,7 @@ def accession_exists(
 
 
 def set_accession_does_not_exist_error(
-    conditions: dict[str, str | dict[str, str]],
+    conditions: dict[str, Any],
     accession: str,
     accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"] | Literal["RUN_REF"],
     db_pool: SimpleConnectionPool,
@@ -850,21 +849,27 @@ def set_accession_does_not_exist_error(
     succeeded: bool | int | None
     match accession_type:
         case "BIOSAMPLE":
-            sample_table_entry = SampleTableEntry(
-                **conditions,  # type: ignore
-                status=Status.HAS_ERRORS,
-                errors=[error_text],
-                result={"ena_sample_accession": accession, "biosample_accession": accession},
+            succeeded = update_db_where_conditions(
+                db_pool,
+                TableName.SAMPLE_TABLE,
+                conditions,
+                {
+                    "status": Status.HAS_ERRORS,
+                    "errors": [error_text],
+                    "result": {"biosample_accession": accession, "ena_sample_accession": accession},
+                },
             )
-            succeeded = add_to_sample_table(db_pool, sample_table_entry)
         case "BIOPROJECT":
-            project_table_entry = ProjectTableEntry(
-                **conditions,  # type: ignore
-                status=Status.HAS_ERRORS,
-                errors=[error_text],
-                result={"bioproject_accession": accession},
+            succeeded = update_db_where_conditions(
+                db_pool,
+                TableName.PROJECT_TABLE,
+                conditions,
+                {
+                    "status": Status.HAS_ERRORS,
+                    "errors": [error_text],
+                    "result": {"bioproject_accession": accession},
+                },
             )
-            succeeded = add_to_project_table(db_pool, project_table_entry)
         case "RUN_REF":
             assembly_table_entry = AssemblyTableEntry(
                 **conditions,  # type: ignore
@@ -914,7 +919,6 @@ def retry_failed_submissions_for_matching_errors(
             "status": Status.READY,
             "errors": None,
             "finished_at": None,
-            "result": {},
         }
         try:
             update_with_retry(
