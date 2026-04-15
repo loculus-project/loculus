@@ -63,7 +63,7 @@ const MenuItem: FC<MenuItemProps> = ({ page, currentPageUrl }) => {
             <a
                 href={page.url}
                 className={`block py-1.5 pl-4 transition-colors duration-150 ease-in-out hover:text-primary-800 ${
-                    isActive ? 'text-primary-700 font-medium underline' : 'text-primary-500'
+                    isActive ? 'text-primary-700 font-medium underline' : 'text-primary-600'
                 }`}
             >
                 {(page.frontmatter.menuTitle ?? page.frontmatter.title) as string}
