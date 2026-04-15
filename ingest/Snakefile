@@ -415,7 +415,7 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             if [[ "{params.use_mirror}" == "True" ]]; then
                 curl {params.mirror_url} -o {params.compressed_package_tzst} && \
                 mkdir -p {params.package} && \
-                tar xvf {params.compressed_package_tzst} -C {params.package}
+                tar xf {params.compressed_package_tzst} -C {params.package}
             else
                 datasets download genome taxon {params.taxon_id} \
                     --assembly-source {wildcards.source} \
