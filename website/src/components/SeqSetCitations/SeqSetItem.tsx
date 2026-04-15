@@ -10,6 +10,7 @@ import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata
 import type { AggregateRow } from './getSeqSetStatistics.ts';
 import { mainTailwindColor } from '../../../colors.json';
 import { getClientLogger } from '../../clientLogger';
+import { useCrossRefWork } from '../../hooks/useCrossRefOperations.ts';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { SeqSetGraph } from '../../types/config.ts';
@@ -80,6 +81,12 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     const [wideGraphs, setWideGraphs] = useState(false);
     const sequencesPerPage = 10;
 
+    const {
+        data: seqSetCrossRefWork,
+        isLoading: isCrossRefWorkLoading,
+        isError: isCrossRefWorkError,
+    } = useCrossRefWork(seqSet.seqSetDOI);
+
     const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(
         clientConfig,
         accessToken,
@@ -128,8 +135,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         );
     };
 
-    const totalCitations = citedByData.citations.reduce((sum, citation) => sum + citation, 0);
-
     const getMaxPages = () => {
         return Math.ceil(seqSetRecords.length / sequencesPerPage);
     };
@@ -173,16 +178,23 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     <SeqSetSectionEntry
                         label='Total citations'
                         value={
-                            seqSet.seqSetDOI === undefined || seqSet.seqSetDOI === null ? (
-                                <p className='text'>Cited by 0</p>
+                            seqSet.seqSetDOI ? (
+                                isCrossRefWorkLoading ? (
+                                    <span className='loading loading-spinner loading-xs'></span>
+                                ) : isCrossRefWorkError ? (
+                                    <span>Failed to load citations.</span>
+                                ) : (
+                                    <a
+                                        className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
+                                        href={getCrossRefUrl()}
+                                        target='_blank'
+                                        rel='noopener noreferrer'
+                                    >
+                                        Cited by {seqSetCrossRefWork.message.isReferencedByCount}
+                                    </a>
+                                )
                             ) : (
-                                <a
-                                    className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
-                                    href={getCrossRefUrl()}
-                                    target='_blank'
-                                >
-                                    Cited by {totalCitations}
-                                </a>
+                                <span>Cited by 0</span>
                             )
                         }
                     />
