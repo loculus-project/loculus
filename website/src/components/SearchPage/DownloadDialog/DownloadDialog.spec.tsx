@@ -55,6 +55,7 @@ async function renderDialog({
     downloadParams = new SequenceEntrySelection(new Set()),
     allowSubmissionOfConsensusSequences = true,
     dataUseTermsEnabled = true,
+    dataUseTermsAgreementHTML,
     richFastaHeaderFields,
     metadata = mockMetadata,
     selectedReferenceNames = { main: null },
@@ -64,6 +65,7 @@ async function renderDialog({
     downloadParams?: SequenceFilter;
     allowSubmissionOfConsensusSequences?: boolean;
     dataUseTermsEnabled?: boolean;
+    dataUseTermsAgreementHTML?: string;
     richFastaHeaderFields?: string[];
     metadata?: Metadata[];
     selectedReferenceNames?: SegmentReferenceSelections;
@@ -92,6 +94,7 @@ async function renderDialog({
             referenceGenomesInfo={referenceGenomesInfo}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             dataUseTermsEnabled={dataUseTermsEnabled}
+            dataUseTermsAgreementHTML={dataUseTermsAgreementHTML}
             schema={schema}
             richFastaHeaderFields={richFastaHeaderFields}
             selectedReferenceNames={selectedReferenceNames}
