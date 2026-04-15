@@ -153,7 +153,9 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
                         transition: opacity 200ms ease-out;
                     `;
                     document.body.appendChild(ghost);
-                    requestAnimationFrame(() => { ghost.style.opacity = '0'; });
+                    requestAnimationFrame(() => {
+                        ghost.style.opacity = '0';
+                    });
                     setTimeout(() => ghost.remove(), 220);
                 }
 
