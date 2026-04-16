@@ -23,6 +23,8 @@ vi.mock('react-toastify', () => ({
     },
 }));
 
+const INSTANCE_NAME = 'test-instance';
+
 const group: Group = {
     groupId: 1,
     groupName: testGroups[0].groupName,
@@ -49,6 +51,7 @@ function renderSubmissionForm({
 } = {}) {
     return render(
         <SubmissionForm
+            instanceName={INSTANCE_NAME}
             inputMode={inputMode}
             accessToken={testAccessToken}
             organism={testOrganism}
@@ -259,6 +262,11 @@ describe('SubmitForm', () => {
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
         );
+    });
+
+    test('instance name should be present in the submission form', () => {
+        const { container } = renderSubmissionForm();
+        expect(container.textContent).toContain(INSTANCE_NAME);
     });
 
     async function submitAndExpectErrorMessageContains(receivedUnexpectedMessageFromBackend: string) {

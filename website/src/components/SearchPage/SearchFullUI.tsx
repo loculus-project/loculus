@@ -48,6 +48,7 @@ export interface InnerSearchFullUIProps {
     initialQueryDict: QueryState;
     showEditDataUseTermsControls?: boolean;
     dataUseTermsEnabled?: boolean;
+    dataUseTermsAgreementHTML?: string;
     sequenceFlaggingConfig?: SequenceFlaggingConfig;
     linkOuts?: LinkOut[];
     contactConfig?: ContactConfig;
@@ -76,6 +77,7 @@ export const InnerSearchFullUI = ({
     initialQueryDict,
     showEditDataUseTermsControls = false,
     dataUseTermsEnabled = true,
+    dataUseTermsAgreementHTML,
     sequenceFlaggingConfig,
     linkOuts,
     contactConfig,
@@ -354,6 +356,7 @@ export const InnerSearchFullUI = ({
                                 referenceGenomesInfo={referenceGenomesInfo}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
+                                dataUseTermsAgreementHTML={dataUseTermsAgreementHTML}
                                 schema={schema}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
                                 selectedReferenceNames={referenceSelection?.selectedReferences}

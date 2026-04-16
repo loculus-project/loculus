@@ -235,6 +235,9 @@ seqSetsFieldsToDisplay: {{ $.Values.seqSets.fieldsToDisplay | toJson }}
 seqSetsGraphs: {{ $.Values.seqSets.graphs | toJson }}
 {{- end }}
 enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
+{{ if $.Values.dataUseTerms.agreementHTML }}
+dataUseTermsAgreementHTML: {{ quote $.Values.dataUseTerms.agreementHTML }}
+{{- end }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:

@@ -55,6 +55,7 @@ async function renderDialog({
     downloadParams = new SequenceEntrySelection(new Set()),
     allowSubmissionOfConsensusSequences = true,
     dataUseTermsEnabled = true,
+    dataUseTermsAgreementHTML,
     richFastaHeaderFields,
     metadata = mockMetadata,
     selectedReferenceNames = { main: null },
@@ -64,6 +65,7 @@ async function renderDialog({
     downloadParams?: SequenceFilter;
     allowSubmissionOfConsensusSequences?: boolean;
     dataUseTermsEnabled?: boolean;
+    dataUseTermsAgreementHTML?: string;
     richFastaHeaderFields?: string[];
     metadata?: Metadata[];
     selectedReferenceNames?: SegmentReferenceSelections;
@@ -92,6 +94,7 @@ async function renderDialog({
             referenceGenomesInfo={referenceGenomesInfo}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             dataUseTermsEnabled={dataUseTermsEnabled}
+            dataUseTermsAgreementHTML={dataUseTermsAgreementHTML}
             schema={schema}
             richFastaHeaderFields={richFastaHeaderFields}
             selectedReferenceNames={selectedReferenceNames}
@@ -417,6 +420,23 @@ describe('DownloadDialog', () => {
             const { path, query } = parseDownloadHref();
             expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
             expect(query).contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
+        });
+
+        test('should use display name fasta header template when display name is selected on multi-ref organism', async () => {
+            await renderDialog({
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceIdentifierField: 'genotype',
+                richFastaHeaderFields: ['displayName'],
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
+            await userEvent.click(screen.getByLabelText(displayNameFastaHeaderStyleLabel));
+
+            const { path, query } = parseDownloadHref();
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            expect(query).contains('fastaHeaderTemplate=%7BdisplayName%7D');
+            expect(query).not.contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
         });
 
         test('should download all unaligned segments when no reference is selected for multi-segmented reference genomes', async () => {

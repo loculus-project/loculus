@@ -112,7 +112,7 @@ def set_project_table_entry(db_config, config, row):
     corresponding_project = [
         project
         for project in corresponding_group
-        if project["result"].get("bioproject_accession") == bioproject
+        if project["result"] and project["result"].get("bioproject_accession") == bioproject
     ]
     if len(corresponding_project) == 1:
         logger.debug(

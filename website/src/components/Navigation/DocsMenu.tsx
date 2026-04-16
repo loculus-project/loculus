@@ -56,18 +56,21 @@ interface MenuItemProps {
     currentPageUrl: string;
 }
 
-const MenuItem: FC<MenuItemProps> = ({ page, currentPageUrl }) => (
-    <li className='border-b border-gray-200 last:border-0'>
-        <a
-            href={page.url}
-            className={`block p-4 py-2 md:py-3 text-primary-600 hover:bg-blue-50 transition-colors duration-150 ease-in-out ${
-                page.url === currentPageUrl ? 'font-bold' : ''
-            }`}
-        >
-            {(page.frontmatter.menuTitle ?? page.frontmatter.title) as string}
-        </a>
-    </li>
-);
+const MenuItem: FC<MenuItemProps> = ({ page, currentPageUrl }) => {
+    const isActive = page.url === currentPageUrl;
+    return (
+        <li>
+            <a
+                href={page.url}
+                className={`block py-1.5 pl-4 transition-colors duration-150 ease-in-out hover:text-primary-800 ${
+                    isActive ? 'text-primary-700 font-medium underline' : 'text-primary-600'
+                }`}
+            >
+                {(page.frontmatter.menuTitle ?? page.frontmatter.title) as string}
+            </a>
+        </li>
+    );
+};
 
 interface MenuSectionProps {
     dir: string;
@@ -76,29 +79,34 @@ interface MenuSectionProps {
     currentPageUrl: string;
 }
 
-const MenuSection: FC<MenuSectionProps> = ({ dir, pages, indexPage, currentPageUrl }) => (
-    <li className='border-b border-gray-200 last:border-0'>
-        <div className='p-4 text-primary-600 font-semibold bg-gray-100'>
-            {indexPage ? (
-                <a
-                    href={indexPage.url}
-                    className={`block text-primary-600 hover:text-primary-800 ${
-                        indexPage.url === currentPageUrl ? 'font-bold' : ''
-                    }`}
-                >
-                    {indexPage.frontmatter.title as string}
-                </a>
-            ) : (
-                toTitleCase(dir.replaceAll('-', ' '))
+const MenuSection: FC<MenuSectionProps> = ({ dir, pages, indexPage, currentPageUrl }) => {
+    const indexIsActive = indexPage?.url === currentPageUrl;
+    const heading = indexPage ? (
+        <a
+            href={indexPage.url}
+            className={`block font-semibold text-primary-700 hover:text-primary-900 ${
+                indexIsActive ? 'underline' : ''
+            }`}
+        >
+            {indexPage.frontmatter.title as string}
+        </a>
+    ) : (
+        <span className='block font-semibold text-primary-700'>{toTitleCase(dir.replaceAll('-', ' '))}</span>
+    );
+
+    return (
+        <li className='mb-4 last:mb-0'>
+            <div className='mb-1'>{heading}</div>
+            {pages.length > 0 && (
+                <ul className='list-none m-0 p-0 border-l border-primary-200'>
+                    {pages.map((page) => (
+                        <MenuItem key={page.url} page={page} currentPageUrl={currentPageUrl} />
+                    ))}
+                </ul>
             )}
-        </div>
-        <ul className='list-none m-0 p-0'>
-            {pages.map((page) => (
-                <MenuItem key={page.url} page={page} currentPageUrl={currentPageUrl} />
-            ))}
-        </ul>
-    </li>
-);
+        </li>
+    );
+};
 
 const DocsMenu: FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
     const { groupedPages, indexPages } = groupPagesByDirectory(docsPages);
@@ -125,13 +133,13 @@ const DocsMenu: FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
     );
 
     return (
-        <Disclosure as='nav' className='docs-menu bg-white border rounded-lg overflow-hidden mt-5 sticky md:min-w-64'>
+        <Disclosure as='nav' className='docs-menu mt-5 sticky sm:min-w-64'>
             {({ open }) => (
                 <>
-                    <div className='flex items-center justify-between px-4 py-3 bg-gray-100'>
-                        <div className='text-lg font-semibold text-primary-600'>{title}</div>
-                        <div className='md:hidden'>
-                            <DisclosureButton className='text-primary-600 hover:text-primary-800 focus:outline-none'>
+                    <div className='flex items-center justify-between sm:block'>
+                        <div className='text-2xl font-bold text-primary-800 mb-3'>{title}</div>
+                        <div className='sm:hidden'>
+                            <DisclosureButton className='text-gray-700 hover:text-primary-700 focus:outline-none'>
                                 {open ? (
                                     <XIcon className='w-6 h-6' aria-hidden='true' />
                                 ) : (
