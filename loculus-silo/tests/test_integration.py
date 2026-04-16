@@ -72,8 +72,8 @@ def test_full_import_cycle_with_real_zstd_data(
 
     monkeypatch.setattr(
         lineage,
-        "_download_lineage_file",
-        lambda url, path: path.write_text("lineage: test-data\n"),  # noqa: ARG005
+        "_download_lineage_text",
+        lambda url: "lineage: test-data\n",  # noqa: ARG005
     )
 
     runner = ImporterRunner(config, paths)
@@ -119,8 +119,8 @@ def test_multiple_runs_with_state_persistence(
 
     monkeypatch.setattr(
         lineage,
-        "_download_lineage_file",
-        lambda url, path: path.write_text("lineage: v1\n"),  # noqa: ARG005
+        "_download_lineage_text",
+        lambda url: "lineage: v1\n",  # noqa: ARG005
     )
 
     # Run 1: Initial import
@@ -199,8 +199,8 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
 
     monkeypatch.setattr(
         lineage,
-        "_download_lineage_file",
-        lambda url, path: path.write_text("lineage: data\n"),  # noqa: ARG005
+        "_download_lineage_text",
+        lambda url: "lineage: data\n",  # noqa: ARG005
     )
 
     records = mock_records()
@@ -263,8 +263,8 @@ def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.M
 
     monkeypatch.setattr(
         lineage,
-        "_download_lineage_file",
-        lambda url, path: path.write_text("lineage: data\n"),  # noqa: ARG005
+        "_download_lineage_text",
+        lambda url: "lineage: data\n",  # noqa: ARG005
     )
 
     runner = ImporterRunner(config, paths)
@@ -303,11 +303,11 @@ def test_lineage_download_failure_cleanup(tmp_path: Path, monkeypatch: pytest.Mo
     mock_download, _ = make_mock_download_func(responses)
 
     # Make lineage download fail
-    def failing_lineage_download(url: str, path: Path) -> None:  # noqa: ARG001
+    def failing_lineage_download(url: str) -> str:  # noqa: ARG001
         msg = "Simulated lineage download failure"
         raise RuntimeError(msg)
 
-    monkeypatch.setattr(lineage, "_download_lineage_file", failing_lineage_download)
+    monkeypatch.setattr(lineage, "_download_lineage_text", failing_lineage_download)
 
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
@@ -344,8 +344,8 @@ def test_interrupted_run_cleanup_and_hash_skip(
 
     monkeypatch.setattr(
         lineage,
-        "_download_lineage_file",
-        lambda url, path: path.write_text("lineage: data\n"),  # noqa: ARG005
+        "_download_lineage_text",
+        lambda url: "lineage: data\n",  # noqa: ARG005
     )
 
     runner = ImporterRunner(config, paths)

@@ -5,8 +5,8 @@ from __future__ import annotations
 import hashlib
 import logging
 import time
-from collections.abc import Callable
-from dataclasses import dataclass
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
 from http.client import BAD_REQUEST
 from pathlib import Path
 
@@ -79,6 +79,7 @@ class DownloadResult:
     transformed_path: Path
     etag: str
     pipeline_version: int | None
+    lineage_values: dict[str, set[str]] = field(default_factory=dict)
 
 
 def _download_file(
@@ -142,6 +143,7 @@ class DownloadManager:
         config: ImporterConfig,
         paths: ImporterPaths,
         last_etag: str,
+        lineage_field_mapping: Mapping[str, list[str]] | None = None,
     ) -> DownloadResult:
         """
         Download and validate a data release from the backend.
@@ -150,6 +152,12 @@ class DownloadManager:
             config: Importer configuration
             paths: Importer paths
             last_etag: ETag from previous download for conditional request
+            lineage_field_mapping: Optional mapping from lineage system name
+                to the metadata field names that hold values from that system.
+                When provided, the unique lineage values found in the data are
+                collected and returned in ``DownloadResult.lineage_values``,
+                so the lineage YAML files can later be subset to exactly the
+                entries needed by the data.
 
         Returns:
             DownloadResult with paths and metadata
@@ -205,7 +213,7 @@ class DownloadManager:
 
             # Decompress and analyze the data
             try:
-                analysis = analyze_ndjson(data_path)
+                analysis = analyze_ndjson(data_path, lineage_field_mapping)
             except RuntimeError as exc:
                 logger.warning(
                     "Failed to decompress %s (size=%s bytes): %s",
@@ -245,6 +253,7 @@ class DownloadManager:
                 transformed_path=transformed_path,
                 etag=etag_value,
                 pipeline_version=analysis.pipeline_version,
+                lineage_values=analysis.lineage_values,
             )
 
         except (

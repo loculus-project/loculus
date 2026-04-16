@@ -62,8 +62,8 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 
     monkeypatch.setattr(
         lineage,
-        "_download_lineage_file",
-        lambda url, path: path.write_text("lineage: data"),  # noqa: ARG005
+        "_download_lineage_text",
+        lambda url: "lineage: data\n",  # noqa: ARG005
     )
 
     runner = ImporterRunner(config, paths)
@@ -76,8 +76,11 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert records_out == mock_transformed_records()
     assert runner.current_etag == 'W/"123"'
     assert runner.last_hard_refresh > 0
+    # No database config is mounted in this test, so the importer can't tell
+    # which metadata field uses lineage system "test"; the upstream YAML is
+    # written through unchanged.
     lineage_definition_file = paths.input_dir / "test.yaml"
-    assert lineage_definition_file.read_text(encoding="utf-8") == "lineage: data"
+    assert lineage_definition_file.read_text(encoding="utf-8") == "lineage: data\n"
 
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 1
@@ -127,8 +130,8 @@ def test_runner_skips_on_hash_match_updates_etag(
 
     monkeypatch.setattr(
         lineage,
-        "_download_lineage_file",
-        lambda url, path: path.write_text("lineage: data"),  # noqa: ARG005
+        "_download_lineage_text",
+        lambda url: "lineage: data\n",  # noqa: ARG005
     )
 
     runner = ImporterRunner(config, paths)
