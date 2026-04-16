@@ -143,7 +143,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                                     onChange={() => setAgreedToDataUseTerms(!agreedToDataUseTerms)}
                                 />
                                 <span
-                                    className='text-sm'
+                                    className='text-sm dataAgreement'
                                     dangerouslySetInnerHTML={{
                                         // eslint-disable-next-line @typescript-eslint/naming-convention
                                         __html: dataUseTermsAgreementHTML ?? 'I agree to the data use terms.',
