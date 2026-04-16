@@ -6,6 +6,7 @@ dependencies = [
     "zstandard>=0.22,<0.26",
     "requests>=2.31,<3.0",
     "orjsonl>=0.3,<2.0",
+    "PyYAML>=6.0,<7.0",
 ]
 
 [project.scripts]

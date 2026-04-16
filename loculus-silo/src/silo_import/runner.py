@@ -15,7 +15,7 @@ from .errors import (
 )
 from .filesystem import prune_timestamped_directories, safe_remove
 from .instruct_silo import SiloRunner
-from .lineage import update_lineage_definitions
+from .lineage import read_lineage_field_mapping, update_lineage_definitions
 from .paths import ImporterPaths
 
 logger = logging.getLogger(__name__)
@@ -63,8 +63,21 @@ class ImporterRunner:
         # Use special ETag for hard refresh to force re-download
         last_etag = SPECIAL_ETAG_NONE if hard_refresh else self.current_etag
 
+        # Build {lineage system -> [metadata field names]} so the data scan can
+        # collect the lineage values that are actually used.
+        lineage_field_mapping = (
+            read_lineage_field_mapping(self.paths.database_config_path)
+            if self.config.lineage_definitions
+            else {}
+        )
+
         try:
-            download = self.download_manager.download_release(self.config, self.paths, last_etag)
+            download = self.download_manager.download_release(
+                self.config,
+                self.paths,
+                last_etag,
+                lineage_field_mapping=lineage_field_mapping,
+            )
         except (NotModifiedError, HashUnchangedError) as skip:
             logger.info("Skipping run: %s", skip)
             if skip.new_etag is not None:
@@ -79,7 +92,12 @@ class ImporterRunner:
             return
 
         try:
-            update_lineage_definitions(download.pipeline_version, self.config, self.paths)
+            update_lineage_definitions(
+                download.pipeline_version,
+                self.config,
+                self.paths,
+                lineage_values_per_system=download.lineage_values,
+            )
         except Exception:
             logger.exception("Failed to download lineage definitions; cleaning up input")
             safe_remove(self.paths.silo_input_data_path)

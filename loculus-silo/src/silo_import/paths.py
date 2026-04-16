@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .constants import (
+    DATABASE_CONFIG_FILENAME,
     TRANSFORMED_DATA_FILENAME,
 )
 
@@ -14,6 +15,7 @@ class ImporterPaths:
     input_dir: Path
     output_dir: Path
     silo_input_data_path: Path
+    database_config_path: Path
     silo_binary: Path
     preprocessing_config: Path
 
@@ -27,6 +29,7 @@ class ImporterPaths:
             input_dir=input_dir,
             output_dir=output_dir,
             silo_input_data_path=input_dir / TRANSFORMED_DATA_FILENAME,
+            database_config_path=input_dir / DATABASE_CONFIG_FILENAME,
             silo_binary=silo_binary,
             preprocessing_config=preprocessing_config,
         )
