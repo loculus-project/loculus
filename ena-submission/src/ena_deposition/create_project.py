@@ -172,7 +172,7 @@ def set_project_table_entry(db_config, config, row):
         )
 
 
-def submission_table_start(db_config: SimpleConnectionPool, config: Config):
+def sync_state_with_submission_table(db_config: SimpleConnectionPool, config: Config):
     """
     1. Find all entries in submission_table in state READY_TO_SUBMIT
     2. If (exists "bioproject" in "metadata"):
@@ -365,10 +365,12 @@ def create_project(config: Config, stop_event: threading.Event):
             logger.warning("create_project stopped due to exception in another task")
             return
         logger.debug("Checking for projects to create")
-        submission_table_start(db_config, config)
+        sync_state_with_submission_table(db_config, config)
 
         project_table_create(db_config, config, test=config.test)
-        submission_table_start(db_config, config)  # update submission_table state after creation
+        sync_state_with_submission_table(
+            db_config, config
+        )  # update submission_table state after creation
         last_retry_time = project_table_handle_errors(
             db_config, config, slack_config, last_retry_time
         )

@@ -203,7 +203,7 @@ def set_sample_table_entry(db_config, row, seq_key, config: Config):
         )
 
 
-def submission_table_start(db_config: SimpleConnectionPool, config: Config):
+def sync_state_with_submission_table(db_config: SimpleConnectionPool, config: Config):
     """
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
     2. If (exists an entry in the sample_table for (accession, version)):
@@ -404,10 +404,10 @@ def create_sample(config: Config, stop_event: threading.Event):
             logger.warning("create_sample stopped due to exception in another task")
             return
         logger.debug("Checking for samples to create")
-        submission_table_start(db_config, config=config)
+        sync_state_with_submission_table(db_config, config=config)
 
         sample_table_create(db_config, config, test=config.test)
-        submission_table_start(
+        sync_state_with_submission_table(
             db_config, config=config
         )  # update submission_table state after creation
         last_retry_time = sample_table_handle_errors(
