@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
 
-import { OrganismMetadataTable } from './OrganismMetadataTable.tsx';
+import { OrganismMetadataTable, TableQueryParams } from './OrganismMetadataTable.tsx';
 import type { Metadata, InputField } from '../../types/config.ts';
 import { getUrl } from '../../utils/getUrl.ts';
 import { Select } from '../common/Select.tsx';
@@ -13,15 +13,15 @@ export type OrganismMetadata = {
     groupedInputFields: Map<string, InputField[]>;
 };
 
-type Props = {
+const OrganismMetadataTableSelector: FC<{
     organisms: OrganismMetadata[];
-};
+}> = ({ organisms }) => {
+    const [selectedOrganismKey, setSelectedOrganismKey] = useState<string>('');
 
-const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
-    const [selectedOrganismKey, setSelectedOrganismKey] = useState('');
-
+    // Set the initial selected organism based on the URL parameter
     useEffect(() => {
-        setSelectedOrganismKey(new URLSearchParams(window.location.search).get('organism') ?? '');
+        const params = new URLSearchParams(window.location.search);
+        setSelectedOrganismKey(params.get(TableQueryParams.ORGANISM) ?? '');
     }, []);
 
     const selectedOrganism = organisms.find((o) => o.key === selectedOrganismKey) ?? null;
@@ -30,10 +30,10 @@ const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
         setSelectedOrganismKey(organism);
         const params = new URLSearchParams(window.location.search);
         if (organism) {
-            params.set('organism', organism);
+            params.set(TableQueryParams.ORGANISM, organism);
         } else {
-            params.delete('organism');
-            params.delete('fieldType');
+            // Clear all table query parameters
+            Object.values(TableQueryParams).forEach((param) => params.delete(param));
         }
         const newUrl = getUrl(window.location.origin, window.location.pathname, params);
         window.history.replaceState({ path: newUrl }, '', newUrl);

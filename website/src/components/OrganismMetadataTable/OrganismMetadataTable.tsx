@@ -9,6 +9,16 @@ import { Button } from '../common/Button.tsx';
 import { FormattedText } from '../common/FormattedText.tsx';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
+export enum TableQueryParams {
+    ORGANISM = 'organism',
+    FIELD_TYPE = 'fieldType',
+}
+
+enum FieldType {
+    INPUT = 'inputFields',
+    GENERATED = 'generatedFields',
+}
+
 function getFieldLinkId(header: string, name: string): string {
     return `${header.replaceAll(' ', '_')}-${name}`;
 }
@@ -36,32 +46,51 @@ const MetadataSearchBar: FC<MetadataSearchBarProps> = ({ value, onChange, placeh
     );
 };
 
-enum FieldType {
-    INPUT = 'inputFields',
-    GENERATED = 'generatedFields',
-}
-
 export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ organism }) => {
-    const [activeTab, setActiveTab] = useState<FieldType>(() => {
-        const params = new URLSearchParams(window.location.search);
-        return params.get('fieldType') === FieldType.GENERATED ? FieldType.GENERATED : FieldType.INPUT;
-    });
-    const [showDisplayNames, setShowDisplayNames] = useState(false);
-    const [inputFieldSearch, setInputFieldSearch] = useState('');
-    const [generatedFieldSearch, setGeneratedFieldSearch] = useState('');
+    const [activeTab, setActiveTab] = useState<FieldType | null>(null);
+    const [showDisplayNames, setShowDisplayNames] = useState<boolean>(false);
+    const [inputFieldSearch, setInputFieldSearch] = useState<string>('');
+    const [generatedFieldSearch, setGeneratedFieldSearch] = useState<string>('');
 
-    const inputFieldNames = new Set(
-        Array.from(organism.groupedInputFields.values())
-            .flat()
-            .map((field) => field.name),
-    );
+    const inputFieldsMetadata = useMemo(() => {
+        const inputFieldNames = new Set(
+            Array.from(organism.groupedInputFields.values())
+                .flat()
+                .map((field) => field.name),
+        );
+        return new Map(
+            organism.metadata.filter((meta) => inputFieldNames.has(meta.name)).map((meta) => [meta.name, meta]),
+        );
+    }, [organism]);
+    const groupedGeneratedFields = useMemo(() => {
+        const groupedFields = new Map<string, Metadata[]>();
 
+        organism.metadata
+            .filter((field: Metadata) => !inputFieldsMetadata.has(field.name))
+            .forEach((field) => {
+                const header = field.header ?? 'Other';
+                if (groupedFields.has(header)) groupedFields.get(header)?.push(field);
+                else groupedFields.set(header, [field]);
+            });
+        return groupedFields;
+    }, [organism]);
+
+    // Set the initial active tab based on the URL parameter
     useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        setActiveTab(
+            params.get(TableQueryParams.FIELD_TYPE) === FieldType.GENERATED ? FieldType.GENERATED : FieldType.INPUT,
+        );
+    }, []);
+
+    // Scroll to the field in the URL hash when the component mounts or when the active tab changes
+    useEffect(() => {
+        if (!activeTab) return;
         const fieldLinkId = window.location.hash.slice(1); // Remove the '#' from the hash
         const [header, field] = fieldLinkId.split('-');
         if (header && field) {
             // Check if the correct tab is active for the field in the URL hash
-            const isInputField = inputFieldNames.has(field);
+            const isInputField = inputFieldsMetadata.has(field);
             const fieldTab = isInputField ? FieldType.INPUT : FieldType.GENERATED;
             if (activeTab === fieldTab) scrollElementIntoView(fieldLinkId);
         }
@@ -70,23 +99,10 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
     const handleTabSelect = (fieldType: FieldType) => {
         setActiveTab(fieldType);
         const params = new URLSearchParams(window.location.search);
-        params.set('fieldType', fieldType);
+        params.set(TableQueryParams.FIELD_TYPE, fieldType);
         const newUrl = getUrl(window.location.origin, window.location.pathname, params);
         window.history.replaceState({ path: newUrl }, '', newUrl);
     };
-
-    const groupedGeneratedFields = useMemo(() => {
-        const groupedFields = new Map<string, Metadata[]>();
-
-        organism.metadata
-            .filter((field: Metadata) => !inputFieldNames.has(field.name))
-            .forEach((field) => {
-                const header = field.header ?? 'Other';
-                if (groupedFields.has(header)) groupedFields.get(header)?.push(field);
-                else groupedFields.set(header, [field]);
-            });
-        return groupedFields;
-    }, [organism]);
 
     return (
         <div className='mt-6 mb-2'>
@@ -131,14 +147,9 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
                             placeholder='Search input fields...'
                         />
                         {Array.from(organism.groupedInputFields.entries()).map(([header, inputFields]) => {
-                            const inputFieldTypes = new Map(
-                                organism.metadata
-                                    .filter((meta) => inputFieldNames.has(meta.name))
-                                    .map((meta) => [meta.name, meta.type]),
-                            );
                             const typedInputFields = inputFields.map((field) => ({
                                 ...field,
-                                type: inputFieldTypes.get(field.name) ?? 'string',
+                                type: inputFieldsMetadata.get(field.name)?.type ?? 'string',
                             }));
                             return (
                                 <MetadataTableSection
