@@ -138,7 +138,7 @@ def get_taxon(
                 status_code=404,
                 detail=f"Unable to find common name for taxon {tax_id}",
             )
-        return taxon
+        return taxon_with_common_name
 
     taxon = fetch_by_id(db, tax_id)
     if taxon is None:
