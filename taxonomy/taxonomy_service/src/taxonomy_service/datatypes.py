@@ -13,3 +13,7 @@ class Taxon(BaseModel):
     @classmethod
     def from_row(cls, row: sqlite3.Row) -> Self:
         return cls.model_validate(dict(row))
+
+
+class SubtreeRequestBody(BaseModel):
+    tax_ids: list[int]

@@ -1,10 +1,14 @@
+from collections import defaultdict
 import logging
 import sqlite3
 from collections.abc import Generator
 from typing import Annotated
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Response
+import yaml
+
+from taxonomy_service.datatypes import SubtreeRequestBody
 
 from taxonomy_service.datatypes import Taxon
 
@@ -107,6 +111,31 @@ def fetch_common_name(db_conn: sqlite3.Connection, taxon: Taxon) -> Taxon | None
     return None
 
 
+def build_pruned_lineage(
+    node_id: int,
+    keep_ids: set[int],
+    children: dict[int, list[int]],
+    parent_in_output: int | None,
+) -> dict[int, dict]:
+    result: dict[int, dict] = {}
+
+    if node_id in keep_ids:
+        result[node_id] = {
+            "aliases": [],
+            "parents": [parent_in_output] if parent_in_output is not None else [],
+        }
+        next_parent = (
+            node_id  # this node becomes the nearest-kept-parent for descendants
+        )
+    else:
+        next_parent = parent_in_output  # skip this node , pass through current parent
+
+    for child_id in children.get(node_id, []):
+        result.update(build_pruned_lineage(child_id, keep_ids, children, next_parent))
+
+    return result
+
+
 @app.get("/")
 def read_root() -> dict[str, str]:
     return {"message": "Taxonomy service is running"}
@@ -143,6 +172,47 @@ def get_taxon(
         return taxon_with_common_name
 
     return taxon
+
+
+@app.post("/subtree")
+def get_silo_lineage(
+    payload: SubtreeRequestBody,
+    db: DbConnection,
+) -> Response:
+    keep_ids = set(payload.tax_ids) | {1}
+    placeholders = ",".join("?" * len(keep_ids))
+
+    rows = db.execute(
+        f"""
+      WITH RECURSIVE ancestors AS (
+          SELECT tax_id, parent_id
+          FROM taxonomy WHERE tax_id IN ({placeholders})
+          UNION
+          SELECT t.tax_id, t.parent_id
+          FROM taxonomy t JOIN ancestors a ON t.tax_id = a.parent_id
+          WHERE t.tax_id != t.parent_id
+      )
+      SELECT * FROM ancestors
+    """,
+        list(keep_ids),
+    ).fetchall()
+
+    observed = set()
+    children: dict[int, list[int]] = defaultdict(list)
+    for row in rows:
+        observed.add(row["tax_id"])
+        if row["tax_id"] != row["parent_id"]:
+            children[row["parent_id"]].append(row["tax_id"])
+    for child_list in children.values():
+        child_list.sort()
+
+    missing = (keep_ids - {1}) - observed
+    logger.warning(f"WARNING: one or more requested taxa don't exist: {missing}")
+
+    lineage = build_pruned_lineage(1, keep_ids, children, None)
+    return Response(
+        content=yaml.dump(lineage, sort_keys=False), media_type="application/yaml"
+    )
 
 
 def init_app(config: Config):
