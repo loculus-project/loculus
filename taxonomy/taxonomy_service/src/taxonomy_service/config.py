@@ -9,7 +9,6 @@ class Config(BaseModel):
     tax_db_path: str
     tax_service_host: str | None
     tax_service_port: int | None
-    organism_categories: dict[int, str] = {}
 
 
 def get_config(config_file: str | Path) -> Config:

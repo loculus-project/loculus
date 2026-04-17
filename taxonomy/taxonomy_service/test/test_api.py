@@ -133,10 +133,3 @@ class ApiTest(unittest.TestCase):
             response.json()["detail"]
             == f"Unable to find common name for taxon {cellular_organisms['tax_id']}"
         )
-
-    def test_assign_host_categories(self):
-        homo_sapiens = mock_taxa["Homo sapiens"]
-        response = client.get(f"/taxa/{homo_sapiens['tax_id']}/host-categories")
-
-        assert len(response.json()) == 2
-        assert all([i in response.json() for i in ["Primates", "Cellular organisms"]])

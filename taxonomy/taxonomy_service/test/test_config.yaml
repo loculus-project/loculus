@@ -1,7 +1,3 @@
 tax_db_path: ":memory:" # adding for consistency, will be ignored by test framework
 tax_service_host: "127.0.0.1"
 tax_service_port: 5000
-organism_categories:
-  9442: "Primates"
-  131567: "Cellular organisms"
-  12345678: "Something else"
