@@ -251,33 +251,25 @@ def missing_taxonomy_service_error(input_fields: list[str], output_field: str) -
     )
 
 
-def taxonomy_service_request(
-    url: str,
+def taxonomy_network_error(
     subject: str,
     action: str,
+    e: Exception,
     input_fields: list[str],
     output_field: str,
-    cache: RequestCache | None = None,
-) -> tuple[requests.Response | None, ProcessingResult | None]:
-    """Fetch `url` from the taxonomy service, using a cache if provided.
-    Returns (response, None) on success, (None, error_result) on network failure."""
-    try:
-        if cache:
-            return cache.get_or_fetch(url), None
-        return requests.get(url, timeout=15), None
-    except requests.exceptions.RequestException as e:
-        return None, ProcessingResult(
-            datum=None,
-            warnings=[],
-            errors=[
-                ProcessingAnnotation.from_fields(
-                    input_fields,
-                    [output_field],
-                    AnnotationSourceType.METADATA,
-                    message=f"Internal error: network error while {action} '{subject}': {e}. Please contact the administrator.",
-                )
-            ],
-        )
+) -> ProcessingResult:
+    return ProcessingResult(
+        datum=None,
+        warnings=[],
+        errors=[
+            ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message=f"Internal error: network error while {action} '{subject}': {e}. Please contact the administrator.",
+            )
+        ],
+    )
 
 
 class ProcessingFunctions:
@@ -1656,11 +1648,10 @@ class ProcessingFunctions:
             query = urllib.parse.urlencode({"scientific_name": unvalidated})
             url = f"{tax_service}/taxa?{query}"
 
-        response, error = taxonomy_service_request(
-            url, unvalidated, "validating", input_fields, output_field, taxonomy_cache
-        )
-        if error:
-            return error
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return taxonomy_network_error(unvalidated, "validating", e, input_fields, output_field)
 
         body = response.json()
         if response.status_code != requests.codes.ok:
@@ -1734,11 +1725,10 @@ class ProcessingFunctions:
             )
 
         url = f"{tax_service}/taxa/{tax_id}"
-        response, error = taxonomy_service_request(
-            url, tax_id, "validating", input_fields, output_field, taxonomy_cache
-        )
-        if error:
-            return error
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return taxonomy_network_error(tax_id, "validating", e, input_fields, output_field)
 
         body = response.json()
         if response.status_code != requests.codes.ok:
@@ -1796,11 +1786,12 @@ class ProcessingFunctions:
             )
 
         url = f"{tax_service}/taxa/{tax_id}?find_common_name=true"
-        response, error = taxonomy_service_request(
-            url, tax_id, "getting common name for", input_fields, output_field, taxonomy_cache
-        )
-        if error:
-            return error
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return taxonomy_network_error(
+                tax_id, "getting common name for", e, input_fields, output_field
+            )
 
         body = response.json()
         if response.status_code != requests.codes.ok:
