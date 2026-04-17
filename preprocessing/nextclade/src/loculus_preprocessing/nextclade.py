@@ -889,10 +889,11 @@ def enrich_with_nextclade(  # noqa: PLR0914
             ]
             logger.debug(f"Running nextclade: {command}")
 
-            # TODO: Capture stderr and log at DEBUG level
-            exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
-            if exit_code != 0:
-                msg = f"nextclade failed with exit code {exit_code}"
+            result = subprocess.run(command, check=False, capture_output=True, text=True)  # noqa: S603
+            if result.stderr:
+                logger.debug("nextclade stderr:\n%s", result.stderr)
+            if result.returncode != 0:
+                msg = f"nextclade failed with exit code {result.returncode}"
                 raise Exception(msg)
 
             logger.debug("Nextclade results available in %s", result_dir)
