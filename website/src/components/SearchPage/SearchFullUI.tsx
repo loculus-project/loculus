@@ -91,6 +91,7 @@ export const InnerSearchFullUI = ({
 
     const {
         state,
+        setState,
         previewedSeqId,
         setPreviewedSeqId,
         previewHalfScreen,
@@ -107,6 +108,50 @@ export const InnerSearchFullUI = ({
         setASearchVisibility,
         setAColumnVisibility,
     } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema, referenceGenomesInfo });
+
+    const isEmptyQueryState = (q: QueryState | null) => q === null || Object.keys(q).length === 0;
+    const sessionQueryKey = `${organism}SearchPageQuery`;
+
+    const restorableQuery: QueryState | null = useMemo(() => {
+        // On mount, check if sessionStorage has a query to restore
+        // sessionStorage is undefined during server-side rendering
+        if (typeof sessionStorage !== 'undefined') {
+            const queryValue = sessionStorage.getItem(sessionQueryKey);
+            if (queryValue) {
+                try {
+                    return JSON.parse(queryValue) as QueryState;
+                } catch {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }, []);
+
+    const [showSessionQueryRestore, setShowSessionQueryRestore] = useState(false);
+    useEffect(() => {
+        // Show the restore button if the state is empty and there's a query that can be restored
+        const isSessionQueryRestorable = isEmptyQueryState(state) && !isEmptyQueryState(restorableQuery);
+        if (isSessionQueryRestorable) setShowSessionQueryRestore(true);
+    }, []);
+
+    useEffect(() => {
+        // Update sessionStorage with the new state
+        if (typeof sessionStorage !== 'undefined') {
+            if (!isEmptyQueryState(state)) sessionStorage.setItem(sessionQueryKey, JSON.stringify(state));
+            else sessionStorage.removeItem(sessionQueryKey);
+        }
+
+        // If the state is no longer empty, hide the restore button
+        if (!isEmptyQueryState(state)) setShowSessionQueryRestore(false);
+    }, [state]);
+
+    const restoreSessionQuery = () => {
+        if (restorableQuery) {
+            setState(restorableQuery);
+            setShowSessionQueryRestore(false);
+        }
+    };
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -319,6 +364,17 @@ export const InnerSearchFullUI = ({
                     <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
                         <div className='mt-auto'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
+                            {showSessionQueryRestore && (
+                                <span>
+                                    <span className='m-2 text-gray-400'>|</span>
+                                    <Button
+                                        className='text-sm underline text-primary-700 hover:text-primary-500'
+                                        onClick={restoreSessionQuery}
+                                    >
+                                        Restore previous search
+                                    </Button>
+                                </span>
+                            )}
                             {detailsHook.isPending ||
                             aggregatedHook.isPending ||
                             !firstClientSideLoadOfCountCompleted ||
