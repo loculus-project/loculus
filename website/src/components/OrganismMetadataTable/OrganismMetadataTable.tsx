@@ -31,7 +31,7 @@ const MetadataSearchBar: FC<MetadataSearchBarProps> = ({ value, onChange, placeh
             placeholder={placeholder ?? 'Search fields...'}
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className='border border-gray-300 rounded px-3 py-2 text-sm w-1/3 focus:outline-none focus:ring-1 focus:ring-primary-600'
+            className='w-1/3 border border-gray-300 px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary-600 focus:border-primary-600'
         />
     );
 };

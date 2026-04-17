@@ -46,7 +46,7 @@ const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
                     id='organism-select'
                     value={selectedOrganismKey}
                     onChange={(e) => handleOrganismSelect(e.target.value)}
-                    className='border border-gray-300 p-2'
+                    className='border border-gray-300 p-2 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary-600 focus:border-primary-600'
                 >
                     <option value=''>-- Select an Organism --</option>
                     {organisms.map((organism) => (
