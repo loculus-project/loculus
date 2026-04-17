@@ -17,3 +17,7 @@ class Taxon(BaseModel):
 
 class SubtreeRequestBody(BaseModel):
     tax_ids: list[str]
+
+
+class SubtreeRequestBody(BaseModel):
+    tax_ids: list[int]
