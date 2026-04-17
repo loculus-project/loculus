@@ -264,8 +264,7 @@ def taxonomy_service_request(
     try:
         if cache:
             return cache.get_or_fetch(url), None
-        else:
-            return requests.get(url, timeout=15), None
+        return requests.get(url, timeout=15), None
     except requests.exceptions.RequestException as e:
         return None, ProcessingResult(
             datum=None,
