@@ -87,8 +87,8 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
     useEffect(() => {
         if (!activeTab) return;
         const fieldLinkId = window.location.hash.slice(1); // Remove the '#' from the hash
-        const [header, field] = fieldLinkId.split('-');
-        if (header && field) {
+        const field = fieldLinkId.split('-').pop();
+        if (field) {
             // Check if the correct tab is active for the field in the URL hash
             const isInputField = inputFieldsMetadata.has(field);
             const fieldTab = isInputField ? FieldType.INPUT : FieldType.GENERATED;
