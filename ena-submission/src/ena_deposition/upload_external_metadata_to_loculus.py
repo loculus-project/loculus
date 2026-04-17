@@ -11,7 +11,20 @@ from psycopg2.pool import SimpleConnectionPool
 
 from ena_deposition.call_loculus import submit_external_metadata
 
-from .config import Config, EnaOrganismDetails
+from .config import (
+    ASSEMBLY_ACCESSION_DB_KEY,
+    ASSEMBLY_ACCESSION_LOCULUS_KEY,
+    BIOPROJECT_ACCESSION_DB_KEY,
+    BIOPROJECT_ACCESSION_LOCULUS_KEY,
+    BIOSAMPLE_ACCESSION_DB_KEY,
+    BIOSAMPLE_ACCESSION_LOCULUS_KEY,
+    NUCCORE_ACCESSION_PREFIX_DB_KEY,
+    NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY,
+    VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY,
+    VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY,
+    Config,
+    EnaOrganismDetails,
+)
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     StatusAll,
@@ -60,10 +73,10 @@ def get_bioproject_accession_from_db(
         db_config, TableName.PROJECT_TABLE, {"project_id": project_id}
     )
 
-    if not result or "bioproject_accession" not in result:
+    if not result or BIOPROJECT_ACCESSION_DB_KEY not in result:
         return {}
 
-    return {"bioprojectAccession": result["bioproject_accession"]}
+    return {BIOPROJECT_ACCESSION_LOCULUS_KEY: result[BIOPROJECT_ACCESSION_DB_KEY]}
 
 
 def get_biosample_accession_from_db(
@@ -75,10 +88,10 @@ def get_biosample_accession_from_db(
         {"accession": accession, "version": version},
     )
 
-    if not result or "biosample_accession" not in result:
+    if not result or BIOSAMPLE_ACCESSION_DB_KEY not in result:
         return {}
 
-    return {"biosampleAccession": result["biosample_accession"]}
+    return {BIOSAMPLE_ACCESSION_LOCULUS_KEY: result[BIOSAMPLE_ACCESSION_DB_KEY]}
 
 
 def get_assembly_accessions_from_db(
@@ -99,8 +112,8 @@ def get_assembly_accessions_from_db(
     data = {}
     all_present = True
 
-    if gca := result.get("gca_accession"):
-        data["gcaAccession"] = gca
+    if gca := result.get(ASSEMBLY_ACCESSION_DB_KEY):
+        data[ASSEMBLY_ACCESSION_LOCULUS_KEY] = gca
     else:
         all_present = False
 
@@ -108,15 +121,17 @@ def get_assembly_accessions_from_db(
     for segment in segment_names:
         segment_suffix = f"_{segment}" if organism.is_multi_segment() else ""
 
-        base_key = f"insdc_accession{segment_suffix}"
+        base_key = f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}{segment_suffix}"
         if base_key in result:
-            data[f"insdcAccessionBase{segment_suffix}"] = result[base_key]
+            data[f"{NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}{segment_suffix}"] = result[base_key]
         else:
             all_present = False
 
-        full_key = f"insdc_accession_full{segment_suffix}"
+        full_key = f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}{segment_suffix}"
         if full_key in result:
-            data[f"insdcAccessionFull{segment_suffix}"] = result[full_key]
+            data[f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}{segment_suffix}"] = result[
+                full_key
+            ]
         else:
             all_present = False
 

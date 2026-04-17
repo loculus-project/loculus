@@ -10,7 +10,7 @@ from psycopg2.pool import SimpleConnectionPool
 from ena_deposition import call_loculus
 from ena_deposition.loculus_models import Group
 
-from .config import Config
+from .config import BIOPROJECT_ACCESSION_DB_KEY, BIOPROJECT_ACCESSION_LOCULUS_KEY, Config
 from .ena_submission_helper import (
     CreationResult,
     accession_exists,
@@ -112,7 +112,7 @@ def update_with_existing_bioproject(
         f"Group {row['group_id']} and organism {row['organism']} already has "
         f"bioprojectAccession, adding to project_table"
     )
-    bioproject = row["result"]["bioproject_accession"]
+    bioproject = row["result"][BIOPROJECT_ACCESSION_DB_KEY]
 
     logger.info("Checking if bioproject actually exists and is public")
     if not accession_exists(bioproject, config):
@@ -132,7 +132,7 @@ def update_with_existing_bioproject(
         {
             "group_id": row["group_id"],
             "organism": row["organism"],
-            "result": {"bioproject_accession": bioproject},
+            "result": {BIOPROJECT_ACCESSION_DB_KEY: bioproject},
             "status": Status.SUBMITTED,
             "center_name": center_name,
         },
@@ -166,12 +166,16 @@ def sync_submission_table_state(db_config: SimpleConnectionPool):
         )
 
         # Use custom bioprojectAccession if it exists
-        if "bioprojectAccession" in row["metadata"] and row["metadata"]["bioprojectAccession"]:
-            bioproject = row["metadata"]["bioprojectAccession"]
+        if (
+            BIOPROJECT_ACCESSION_LOCULUS_KEY in row["metadata"]
+            and row["metadata"][BIOPROJECT_ACCESSION_LOCULUS_KEY]
+        ):
+            bioproject = row["metadata"][BIOPROJECT_ACCESSION_LOCULUS_KEY]
             corresponding_project = [
                 project
                 for project in corresponding_project
-                if project["result"] and project["result"].get("bioproject_accession") == bioproject
+                if project["result"]
+                and project["result"].get(BIOPROJECT_ACCESSION_DB_KEY) == bioproject
             ]
 
         if len(corresponding_project) == 1 and corresponding_project[0]["status"] == str(
@@ -208,7 +212,7 @@ def sync_submission_table_state(db_config: SimpleConnectionPool):
             ProjectTableEntry(
                 group_id=row["group_id"],
                 organism=row["organism"],
-                result={"bioproject_accession": bioproject} if bioproject else None,
+                result={BIOPROJECT_ACCESSION_DB_KEY: bioproject} if bioproject else None,
             ),
         )
         if not project_id:
@@ -253,7 +257,7 @@ def project_table_create(
             logger.error(f"Was unable to get group info for group: {row['group_id']}, {e}")
             continue
 
-        if row["result"] and row["result"].get("bioproject_accession"):
+        if row["result"] and row["result"].get(BIOPROJECT_ACCESSION_DB_KEY):
             update_with_existing_bioproject(
                 db_config, config, row, center_name=group_info.institution
             )

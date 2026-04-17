@@ -14,7 +14,15 @@ from psycopg2.pool import SimpleConnectionPool
 
 from ena_deposition import call_loculus
 
-from .config import Config, EnaOrganismDetails
+from .config import (
+    ASSEMBLY_ACCESSION_DB_KEY,
+    BIOPROJECT_ACCESSION_DB_KEY,
+    BIOPROJECT_ACCESSION_LOCULUS_KEY,
+    BIOSAMPLE_ACCESSION_LOCULUS_KEY,
+    VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY,
+    Config,
+    EnaOrganismDetails,
+)
 from .ena_submission_helper import (
     CreationResult,
     accession_exists,
@@ -383,8 +391,8 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
         f"Previous sample accession: {previous_sample_accession}, "
         f"previous study accession: {previous_study_accession}"
     )
-    if entry["metadata"].get("biosampleAccession"):
-        new_sample_accession = entry["metadata"]["biosampleAccession"]
+    if entry["metadata"].get(BIOSAMPLE_ACCESSION_LOCULUS_KEY):
+        new_sample_accession = entry["metadata"][BIOSAMPLE_ACCESSION_LOCULUS_KEY]
         if previous_sample_accession != new_sample_accession:
             error = (
                 "Assembly cannot be revised because biosampleAccession in new version: "
@@ -393,8 +401,8 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
             logger.error(error)
             update_assembly_error(db_config, [error], seq_key=entry, update_type="revision")
             return False
-    if entry["metadata"].get("bioprojectAccession"):
-        new_project_accession = entry["metadata"]["bioprojectAccession"]
+    if entry["metadata"].get(BIOPROJECT_ACCESSION_LOCULUS_KEY):
+        new_project_accession = entry["metadata"][BIOPROJECT_ACCESSION_LOCULUS_KEY]
         if new_project_accession != previous_study_accession:
             error = (
                 "Assembly cannot be revised because bioprojectAccession in new version: "
@@ -537,7 +545,7 @@ def get_project_and_sample_results(
         error_msg = f"Entry {entry['accession']} not found in project_table"
         raise RuntimeError(error_msg)
     sample_accession = results_in_sample_table[0]["result"]["ena_sample_accession"]
-    study_accession = results_in_project_table[0]["result"]["bioproject_accession"]
+    study_accession = results_in_project_table[0]["result"][BIOPROJECT_ACCESSION_DB_KEY]
     return sample_accession, study_accession
 
 
@@ -685,9 +693,10 @@ def assembly_table_update(db_config: SimpleConnectionPool, config: Config, time_
             if not new_result.result:
                 continue
 
-            result_contains_gca_accession = "gca_accession" in new_result.result
+            result_contains_gca_accession = ASSEMBLY_ACCESSION_DB_KEY in new_result.result
             result_contains_insdc_accession = any(
-                key.startswith("insdc_accession_full") for key in new_result.result
+                key.startswith(VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY)
+                for key in new_result.result
             )
 
             if not (result_contains_gca_accession and result_contains_insdc_accession):

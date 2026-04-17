@@ -7,7 +7,7 @@ from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
 from pydantic import BaseModel
 
-from .config import Config
+from .config import BIOSAMPLE_ACCESSION_DB_KEY, VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY, Config
 from .submission_db_helper import db_init
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ def get_bio_sample_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, s
     finally:
         db_conn_pool.putconn(con)
 
-    return {result["accession"]: result["result"]["biosample_accession"] for result in results}
+    return {result["accession"]: result["result"][BIOSAMPLE_ACCESSION_DB_KEY] for result in results}
 
 
 def get_insdc_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, list[str]]:
@@ -51,7 +51,7 @@ def get_insdc_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, list[s
         result["accession"]: [
             result["result"][key]
             for key in result["result"]
-            if key.startswith("insdc_accession_full")
+            if key.startswith(VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY)
         ]
         for result in results
     }
