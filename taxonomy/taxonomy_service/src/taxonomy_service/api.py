@@ -72,14 +72,14 @@ def fetch_by_id(db_conn: sqlite3.Connection, tax_id: int) -> Taxon | None:
 def fetch_common_name(db_conn: sqlite3.Connection, taxon: Taxon) -> Taxon | None:
     """Return a taxon with a common name
 
-    If the supplied `tax_id` is associated with a common name, return the taxon.
+    If the supplied `taxon` is associated with a common name, return the taxon.
 
     If there is no common name associated with the taxon, keep stepping up the taxonomy until
     a taxon is found with a common name, and return that
 
     args:
         db_conn (sqlite3.Connection):   connection to a database. The caller is responsible for closing it
-        tax_id (int):                   NCBI taxon ID of the taxon for which to find a common name
+        taxon (Taxon):                  Taxon for which to find a common name
     """
     if taxon.common_name is not None:
         return taxon
@@ -91,8 +91,10 @@ def fetch_common_name(db_conn: sqlite3.Connection, taxon: Taxon) -> Taxon | None
         row = cursor.execute(
             "SELECT * FROM taxonomy WHERE tax_id = ?", (tax_id,)
         ).fetchone()
-        taxon = Taxon.from_row(row)
+        if row is None:
+            break
 
+        taxon = Taxon.from_row(row)
         if taxon.depth == 0:
             # for safety, break when depth is 0 (in case NCBI decide at some
             # point that the root should no longer be 1)
@@ -140,27 +142,7 @@ def get_taxon(
             )
         return taxon_with_common_name
 
-    taxon = fetch_by_id(db, tax_id)
-    if taxon is None:
-        raise HTTPException(status_code=404, detail=f"'{tax_id}' not found")
-
     return taxon
-
-
-@app.get("/taxa/{tax_id}/host-categories")
-def get_host_categories(
-    tax_id: int,
-    db: DbConnection,
-) -> list[str]:
-    taxon = fetch_by_id(db, tax_id)
-    if taxon is None:
-        raise HTTPException(status_code=404, detail=f"'{tax_id}' not found")
-
-    assigned_categories = assign_host_categories(
-        db, taxon, app.state.config.organism_categories
-    )
-
-    return assigned_categories
 
 
 def init_app(config: Config):

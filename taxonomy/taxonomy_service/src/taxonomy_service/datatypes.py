@@ -1,5 +1,3 @@
-# from dataclasses import dataclass
-
 import sqlite3
 from pydantic import BaseModel
 

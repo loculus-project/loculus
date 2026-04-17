@@ -25,7 +25,7 @@ mock_taxa = {
         "tax_id": 9605,
         "common_name": "humans",
         "scientific_name": "Homo",
-        "parent_id": 9442,  # skipping some levels for testig purposes
+        "parent_id": 9442,  # skipping some levels for testing purposes
         "depth": 30,
     },
     "Primates": {
