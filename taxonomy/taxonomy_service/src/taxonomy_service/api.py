@@ -206,10 +206,13 @@ def get_silo_lineage(
     for child_list in children.values():
         child_list.sort()
 
-    missing = (keep_ids - {1}) - observed
-    logger.warning(f"WARNING: one or more requested taxa don't exist: {missing}")
-
     lineage = build_pruned_lineage(1, keep_ids, children, None)
+    missing = (keep_ids - {1}) - observed
+    if missing:
+        logger.warning(f"WARNING: one or more requested taxa don't exist: {missing}")
+        for m in missing:
+            lineage[m] = {"aliases": [], "parents": []}
+
     return Response(
         content=yaml.dump(lineage, sort_keys=False), media_type="application/yaml"
     )
