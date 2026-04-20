@@ -239,7 +239,11 @@ export const Table: FC<TableProps> = ({
                                 <tr
                                     key={index}
                                     className={`hover:bg-primary-100 border-b border-gray-200 ${
-                                        row[primaryKey] === previewedSeqId ? 'bg-gray-200' : ''
+                                        row[primaryKey] === previewedSeqId
+                                            ? 'bg-gray-200'
+                                            : index % 2 === 0
+                                              ? 'bg-gray-50'
+                                              : 'bg-white'
                                     } cursor-pointer`}
                                     onMouseDown={handleRowMouseDown}
                                     onClick={(e) => handleRowClick(e, row[primaryKey] as string)}
