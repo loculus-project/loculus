@@ -887,6 +887,8 @@ def enrich_with_nextclade(  # noqa: PLR0914
                 "--",
                 input_file,
             ]
+            if sequence_and_dataset.nextclade_additional_args:
+                command.extend(sequence_and_dataset.nextclade_additional_args)
             logger.debug(f"Running nextclade: {command}")
 
             # TODO: Capture stderr and log at DEBUG level

@@ -730,6 +730,12 @@
                                 "docsIncludePrefix": false,
                                 "type": "array",
                                 "description": "Array of strings. The names of the genes to be extracted from the sequence alignment results (should correspond to gene names in the nextclade dataset)."
+                              },
+                              "nextclade_additional_args": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "array",
+                                "description": "Array of strings. Additional arguments to pass to nextclade when aligning this segment."
                               }
                             }
                           }

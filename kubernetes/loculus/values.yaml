@@ -1638,6 +1638,7 @@ defaultOrganisms:
                 - name: singleReference
                   nextclade_dataset_name: nextstrain/wnv/all-lineages
                   genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
+                  nextclade_additional_args: ["--allowed-mismatches", "8", "--min-seed-cover", "0.01"]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
           taxon_id: 11082
           scientific_name: "West Nile virus"
