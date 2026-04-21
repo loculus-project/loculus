@@ -188,6 +188,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
       - name: ncbiReleaseDate
         displayName: NCBI release date
+        definition: Date the viral nucleotide accession was first released in NCBI Virus.
         type: date
         header: "INSDC"
         orderOnDetailsPage: 1000
@@ -625,6 +626,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 820
       - name: ncbiSubmitterCountry
         displayName: NCBI submitter country
+        definition: The country representing the submitter's affilation.
         generateIndex: true
         autocomplete: true
         hideOnSequenceDetailsPage: true
@@ -1269,6 +1271,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 1980
       - name: ncbiSourceDb
         displayName: NCBI source DB
+        definition: Indicates if the source of the viral nucleotide record is from a GenBank submitter or from NCBI-derived curation (RefSeq).
         generateIndex: true
         autocomplete: true
         header: "INSDC"
@@ -1276,6 +1279,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
       - name: ncbiVirusName
         displayName: NCBI Virus name
+        definition: Scientific name for the organism from the NCBI Taxonomy.
         generateIndex: true
         autocomplete: true
         hideOnSequenceDetailsPage: true
@@ -1283,6 +1287,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
       - name: ncbiVirusTaxId
         displayName: NCBI Virus tax ID
+        definition: Identifier for the organism from the NCBI Taxonomy.
         type: int
         autocomplete: true
         customDisplay:
