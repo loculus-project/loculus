@@ -1516,6 +1516,12 @@
       "default": false,
       "description": "If true, disables the taxonomy service deployment."
     },
+    "readOnlyMode": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, the instance runs in read-only mode: the backend rejects write requests (POST/PUT/DELETE/PATCH) with 503 Service Unavailable, and the website hides login/submission entry points and shows a read-only banner."
+    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",

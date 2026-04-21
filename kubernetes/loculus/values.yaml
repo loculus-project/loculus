@@ -33,6 +33,7 @@ disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
 disableTaxonomyService: false
+readOnlyMode: false
 website:
   websiteConfig:
     enableLoginNavigationItem: true
