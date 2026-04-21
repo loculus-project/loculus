@@ -121,6 +121,9 @@ defaultOrganismConfig: &defaultOrganismConfig
     metadata:
       - name: sampleCollectionDate
         displayName: Collection date
+        definition: "The date on which the sample was collected."
+        guidance: "Please format YYYY-MM-DD. If day is unknown, use YYYY-MM (e.g., `2020-03`). If both day and month are unknown, use YYYY (e.g., `2020`). Please provide at least a year."
+        example: "2020-03-15"
         header: Sample details
         ingest: ncbiCollectionDate
         order: 10
@@ -221,18 +224,25 @@ defaultOrganismConfig: &defaultOrganismConfig
         columnWidth: 100
       - name: geoLocLatitude
         displayName: Latitude
+        definition: Geo-coordinate latitude in decimal degree (WGS84) format.
         header: Sample details
         type: float
         orderOnDetailsPage: 420
         guidance: Geo-coordinate latitude in decimal degree (WGS84) format, i.e. values in range -90 to 90, where positive values are north of the Equator.
+        example: -34.603722
       - name: geoLocLongitude
         displayName: Longitude
+        definition: Geo-coordinate longitude in decimal degree (WGS84) format.
         header: Sample details
         type: float
         orderOnDetailsPage: 440
         guidance: Geo-coordinate longitude in decimal degree (WGS84) format, i.e. values in range -180 to 180, where positive values are east of the Prime Meridian.
+        example: -58.381592
       - name: geoLocCountry
         displayName: Collection country
+        definition: "The country from which the sample was collected."
+        guidance: "Please choose a country or ocean/sea from the list of options defined by INSDC standards."
+        example: "Canada"
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
@@ -556,6 +566,8 @@ defaultOrganismConfig: &defaultOrganismConfig
             input: geoLocCountry
       - name: geoLocAdmin1
         displayName: Collection subdivision level 1
+        definition: "A local administrative region from which the sample was collected (ex: Province, State, Canton)."
+        example: "Ontario"
         desired: true
         generateIndex: true
         autocomplete: true
@@ -570,6 +582,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         ingest: division
       - name: geoLocAdmin2
         displayName: Collection subdivision level 2
+        definition: "A local administrative region from which the sample was collected (ex: county or municipality)."
+        example: "City of Toronto"
         desired: true
         generateIndex: true
         autocomplete: true
@@ -581,6 +595,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 480
       - name: geoLocCity
         displayName: Collection city
+        definition: "The city from which the sample was collected."
+        example: "Toronto"
         desired: true
         generateIndex: true
         autocomplete: true
@@ -596,6 +612,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 520
       - name: specimenCollectorSampleId
         displayName: Isolate name
+        definition: "A de-identified ID for the sample the sequence was obtained from."
+        example: "Isolate 1"
         desired: true
         header: Sample details
         ingest: ncbiIsolateName
@@ -603,6 +621,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 600
       - name: authors
         displayName: Authors
+        definition: "List of authors who should be listed on the sample."
+        guidance: "Authors should be separated by semi-colons. Each author's name should be in the format `last name, first name;`. Last name(s) is mandatory, only ASCII alphabetical characters A-Z are allowed."
+        example: "Smith, Anna; Perez, Tom J.; Xu,;"
         type: authors
         header: Authors
         desired: true
@@ -618,6 +639,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         columnWidth: 140
       - name: authorAffiliations
         displayName: Author affiliations
+        definition: "List of author affiliations."
+        guidance: "If multiple affiliations exist, create a semi-colon separated list in the same order as authors with one entry per author."
+        example: "EVE Group, MPI Department, Swiss TPH, Basel, Switzerland; Anderson Group, IEB Department, School of Biology, University of Edinburgh, Edinburgh, Scotland"
         desired: true
         enableSubstringSearch: true
         header: Authors
@@ -679,7 +703,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 1060
         ingest: bioprojects
         guidance: "Only add this field if you want your sequences to be linked to an existing public bioproject in the INSDC. If you do not have a bioproject, leave this field blank - we will create a bioproject for you on submission of your consensus sequence."
-        definition: "Accession of public bioproject in the INSDC your consensus sequences should be uploaded tp"
+        definition: "Accession of public bioproject in the INSDC your consensus sequences should be uploaded to."
         example: "PRJNA123456"
       - name: gcaAccession
         displayName: GCA accession
@@ -703,12 +727,14 @@ defaultOrganismConfig: &defaultOrganismConfig
               url: "https://ddbj.nig.ac.jp/search/entry/biosample/__value__"
         header: "INSDC"
         orderOnDetailsPage: 1080
-        guidance: "Only add this field if you have already submitted the raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences. If you add this field we will not create a new biosample for you and assume you have submitted all required metadata in the linked biosample."
-        definition: "Accession of corresponding public biosample of the raw reads in the INSDC"
+        guidance: "Only add this field if you have already submitted the raw reads to the INSDC, read more at <https://pathoplexus.org/docs/how-to/upload-sequences>. If you add this field we will not create a new biosample for you and assume you have submitted all required metadata in the linked biosample."
+        definition: "Accession of corresponding public biosample of the raw reads in the INSDC."
         example: "SAMN12345678"
         oneHeader: true
       - name: cultureId
         displayName: Culture ID
+        definition: "An ID useful to linking to a culture."
+        example: "Plate7-1124"
         desired: true
         header: Sample details
         orderOnDetailsPage: 620
@@ -728,6 +754,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
       - name: sampleType
         displayName: Sample type
+        definition: "Method of sampling."
+        example: "Nasopharyngeal Swabs"
         header: Sampling
         orderOnDetailsPage: 1200
       - name: purposeOfSampling
@@ -750,7 +778,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: anatomicalMaterial
         ontology_id: GENEPIO:0001211
         definition: A substance obtained from an anatomical part of an organism e.g. tissue, blood.
-        guidance: 'Provide a descriptor if an anatomical material was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/uberon. If not applicable, leave blank.'
+        guidance: 'Provide a descriptor if an anatomical material was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: <https://www.ebi.ac.uk/ols/ontologies/uberon>. If not applicable, leave blank.'
         example: Blood [UBERON:0000178]
         displayName: Anatomical material
         header: Sampling
@@ -758,7 +786,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: anatomicalPart
         ontology_id: GENEPIO:0001214
         definition: An anatomical part of an organism e.g. oropharynx.
-        guidance: 'Provide a descriptor if an anatomical part was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/uberon. If not applicable, leave blank.'
+        guidance: 'Provide a descriptor if an anatomical part was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: <https://www.ebi.ac.uk/ols/ontologies/uberon>. If not applicable, leave blank.'
         example: Nasopharynx (NP) [UBERON:0001728]
         displayName: Anatomical part
         header: Sampling
@@ -766,7 +794,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: bodyProduct
         ontology_id: GENEPIO:0001216
         definition: A substance excreted/secreted from an organism e.g. feces, urine, sweat.
-        guidance: 'Provide a descriptor if a body product was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/uberon. If not applicable, leave blank.'
+        guidance: 'Provide a descriptor if a body product was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: <https://www.ebi.ac.uk/ols/ontologies/uberon>. If not applicable, leave blank.'
         example: Feces [UBERON:0001988]
         displayName: Body product
         header: Sampling
@@ -774,7 +802,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: environmentalMaterial
         ontology_id: GENEPIO:0001223
         definition: A substance obtained from the natural or man-made environment e.g. soil, water, sewage, door handle, bed handrail, face mask.
-        guidance: 'Provide a descriptor if an environmental material was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/envo. If not applicable, leave blank.'
+        guidance: 'Provide a descriptor if an environmental material was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: <https://www.ebi.ac.uk/ols/ontologies/envo>. If not applicable, leave blank.'
         example: Face mask [OBI:0002787]
         displayName: Environmental material
         header: Sampling
@@ -782,7 +810,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: environmentalSite
         ontology_id: GENEPIO:0001232
         definition: An environmental location may describe a site in the natural or built environment e.g. hospital, wet market, bat cave.
-        guidance: 'Provide a descriptor if an environmental site was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/envo. If not applicable, leave blank.'
+        guidance: 'Provide a descriptor if an environmental site was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: <https://www.ebi.ac.uk/ols/ontologies/envo>. If not applicable, leave blank.'
         example: Hospital [ENVO:00002173]
         displayName: Environmental site
         header: Sampling
@@ -790,7 +818,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: collectionDevice
         ontology_id: GENEPIO:0001234
         definition: The instrument or container used to collect the sample e.g. swab.
-        guidance: 'Provide a descriptor if a collection device was used for sampling. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/obi. If not applicable, leave blank.'
+        guidance: 'Provide a descriptor if a collection device was used for sampling. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: <https://www.ebi.ac.uk/ols/ontologies/obi>. If not applicable, leave blank.'
         example: Swab [GENEPIO:0100027]
         displayName: Collection device
         header: Sampling
@@ -799,7 +827,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: collectionMethod
         ontology_id: GENEPIO:0001241
         definition: The process used to collect the sample e.g. phlebotomy, necropsy.
-        guidance: 'Provide a descriptor if a collection method was used for sampling. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/obi. If not applicable, leave blank.'
+        guidance: 'Provide a descriptor if a collection method was used for sampling. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: <https://www.ebi.ac.uk/ols/ontologies/obi>. If not applicable, leave blank.'
         example: Bronchoalveolar lavage (BAL) [GENEPIO:0100032]
         displayName: Collection method
         header: Sampling
@@ -879,7 +907,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: hostDisease
         ontology_id: GENEPIO:0001391
         definition: The name of the disease experienced by the host.
-        guidance: "This field is only required if the Pathogen.cl package was selected. If the host was sick, provide the name of the disease.The standardized term can be sourced from this look-up service: https://www.ebi.ac.uk/ols/ontologies/doid If the disease is not known, put “missing”."
+        guidance: "This field is only required if the Pathogen.cl package was selected. If the host was sick, provide the name of the disease.The standardized term can be sourced from this look-up service: <https://www.ebi.ac.uk/ols/ontologies/doid> If the disease is not known, put “missing”."
         example: mastitis, gastroenteritis
         displayName: Host disease
         header: Host
@@ -1156,22 +1184,32 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 2500
       - name: diagnosticMeasurementMethod
         displayName: Diagnostic measurement method
+        definition: "Type of diagnostic test performed."
+        example: "RT-PCR test"
         header: Diagnostics
         orderOnDetailsPage: 2520
       - name: diagnosticTargetPresence
         displayName: Diagnostic target presence
+        definition: "Boolean value, if the diagnostic target was present."
+        example: "True"
         header: Diagnostics
         orderOnDetailsPage: 2540
       - name: diagnosticTargetGeneName
         displayName: Gene name
+        definition: "Name of the gene targeted by the diagnostic RT-PCR test."
+        example: "E gene (orf4)"
         header: Diagnostics
         orderOnDetailsPage: 2560
       - name: diagnosticMeasurementValue
         displayName: Diagnostic measurement value
+        definition: "Value of the diagnostic test. Ex: The Ct value result from a diagnostic SARS-CoV-2 RT-PCR test."
+        example: "39"
         header: Diagnostics
         orderOnDetailsPage: 2580
       - name: diagnosticMeasurementUnit
         displayName: Diagnostic measurement unit
+        definition: "Unit of the diagnostic measurement value."
+        example: "Cycle threshold (CT)"
         orderOnDetailsPage: 2600
         header: Diagnostics
       - name: length
@@ -1192,6 +1230,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: int
         autocomplete: true
         displayName: "Host species"
+        definition: "Taxon ID for the host."
         customDisplay:
           type: hostSpecies
           displayGroup: hostSpecies
@@ -1210,6 +1249,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       - name: hostNameScientific
         displayName: Host name - scientific
+        definition: "The scientific name of the host from which the sample was collected."
         generateIndex: true
         autocomplete: true
         customDisplay:
@@ -1229,6 +1269,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       - name: hostNameCommon
         displayName: Host name - common
+        definition: "The common name of the host from which the sample was collected."
         generateIndex: true
         autocomplete: true
         customDisplay:
@@ -1247,6 +1288,8 @@ defaultOrganismConfig: &defaultOrganismConfig
             taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       - name: isLabHost
         displayName: Is lab host
+        definition: "If a laboratory host (e.g. cultured cell line) was used to propagate the sample."
+        example: "True"
         type: boolean
         autocomplete: true
         header: "Host"
@@ -1254,17 +1297,22 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 1920
       - name: cellLine
         displayName: Cell line
+        definition: "Population of cells derived from a single cell or group of cells, which are cultured in the laboratory under controlled conditions."
         generateIndex: true
         orderOnDetailsPage: 1940
         autocomplete: true
         header: "Host"
       - name: passageNumber
         displayName: Passage number
+        definition: "The number of times a cell culture has been subcultured or transferred from one vessel to another."
+        example: "12"
         type: int
         header: "Host"
         orderOnDetailsPage: 1960
       - name: passageMethod
         displayName: Passage method
+        definition: "The techniques used to subculture cells."
+        example: "Enzymatic Detachment"
         generateIndex: true
         autocomplete: true
         header: "Host"
@@ -1298,6 +1346,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
       - name: insdcRawReadsAccession
         displayName: Raw reads accession
+        definition: "Accession of corresponding raw reads in the INSDC, e.g. SRR27477368."
+        guidance: "Only add this field if you have already submitted raw reads to the INSDC, read more at <https://pathoplexus.org/docs/how-to/upload-sequences>."
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
@@ -1477,7 +1527,7 @@ defaultOrganisms:
         - <<: *hostConfig
         - name: id
           displayName: ID
-          definition: "Unique identifier for your Ebola Sudan sample"
+          definition: "Unique identifier for your Ebola Sudan sample."
           guidance: "Use the sample ID assigned by your sequencing lab."
           example: "EBOV-SD-2024-001"
           required: true
