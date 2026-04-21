@@ -1,13 +1,26 @@
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 
 /**
  * Renders text with basic inline markdown formatting.
- * Supports: `code`
+ * Supports: `code` and <https://links>.
  */
 export const FormattedText = ({ text }: { text: string }): ReactNode => {
+    const processLinks = (input: string): ReactNode => {
+        const parts = input.split(/<(https?:\/\/[^>]+)>/);
+        return parts.map((part, i) =>
+            i % 2 === 1 ? (
+                <a key={i} href={part} className='text-primary-500 px-0.5' target='_blank' rel='noopener noreferrer'>
+                    {part}
+                </a>
+            ) : (
+                part
+            ),
+        );
+    };
+
     const parts = text.split('`');
     if (parts.length < 3) {
-        return text;
+        return processLinks(text);
     }
     // Only process matched pairs; if odd number of parts, treat trailing unmatched backtick as plain text
     const pairedLength = parts.length % 2 === 0 ? parts.length - 1 : parts.length;
@@ -17,9 +30,9 @@ export const FormattedText = ({ text }: { text: string }): ReactNode => {
                 {part}
             </code>
         ) : i >= pairedLength ? (
-            '`' + part
+            <Fragment key={i}>{processLinks('`' + part)}</Fragment>
         ) : (
-            part
+            <Fragment key={i}>{processLinks(part)}</Fragment>
         ),
     );
 };

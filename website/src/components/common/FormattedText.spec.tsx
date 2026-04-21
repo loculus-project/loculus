@@ -43,4 +43,46 @@ describe('FormattedText', () => {
         const { container } = render(<FormattedText text='' />);
         expect(container.textContent).toBe('');
     });
+
+    it('renders a link with angle brackets as <a> elements', () => {
+        const { container } = render(<FormattedText text='See <https://example.com> for details' />);
+        expect(container.textContent).toBe('See https://example.com for details');
+        const link = container.querySelector('a');
+        expect(link).not.toBeNull();
+        expect(link!.getAttribute('href')).toBe('https://example.com');
+        expect(link!.getAttribute('target')).toBe('_blank');
+        expect(link!.getAttribute('rel')).toBe('noopener noreferrer');
+    });
+
+    it('renders multiple links', () => {
+        const { container } = render(<FormattedText text='See <https://example.com> and <https://other.com>' />);
+        const links = container.querySelectorAll('a');
+        expect(links).toHaveLength(2);
+        expect(links[0].getAttribute('href')).toBe('https://example.com');
+        expect(links[1].getAttribute('href')).toBe('https://other.com');
+    });
+
+    it('does not render a link for text without http/https scheme', () => {
+        const { container } = render(<FormattedText text='See <example.com> for details' />);
+        expect(container.querySelector('a')).toBeNull();
+        expect(container.textContent).toBe('See <example.com> for details');
+    });
+
+    it('renders both links and code', () => {
+        const { container } = render(<FormattedText text='Use `foo` or see <https://example.com>' />);
+        const code = container.querySelector('code');
+        const link = container.querySelector('a');
+        expect(code).not.toBeNull();
+        expect(link).not.toBeNull();
+        expect(code!.textContent).toBe('foo');
+        expect(link!.getAttribute('href')).toBe('https://example.com');
+    });
+
+    it('renders links within code segments as regular text', () => {
+        const { container } = render(<FormattedText text='Use `see <https://example.com>` for details' />);
+        const code = container.querySelector('code');
+        expect(code).not.toBeNull();
+        expect(code!.textContent).toBe('see <https://example.com>');
+        expect(container.querySelector('a')).toBeNull();
+    });
 });
