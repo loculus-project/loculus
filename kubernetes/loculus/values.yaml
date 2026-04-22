@@ -727,7 +727,7 @@ defaultOrganismConfig: &defaultOrganismConfig
               url: "https://ddbj.nig.ac.jp/search/entry/biosample/__value__"
         header: "INSDC"
         orderOnDetailsPage: 1080
-        guidance: "Only add this field if you have already submitted the raw reads to the INSDC, read more at <https://pathoplexus.org/docs/how-to/upload-sequences>. If you add this field we will not create a new biosample for you and assume you have submitted all required metadata in the linked biosample."
+        guidance: "Only add this field if you have already submitted the raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences. If you add this field we will not create a new biosample for you and assume you have submitted all required metadata in the linked biosample."
         definition: "Accession of corresponding public biosample of the raw reads in the INSDC."
         example: "SAMN12345678"
         oneHeader: true
@@ -778,7 +778,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: anatomicalMaterial
         ontology_id: GENEPIO:0001211
         definition: A substance obtained from an anatomical part of an organism e.g. tissue, blood.
-        guidance: 'Provide a descriptor if an anatomical material was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: <https://www.ebi.ac.uk/ols/ontologies/uberon>. If not applicable, leave blank.'
+        guidance: 'Provide a descriptor if an anatomical material was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/uberon. If not applicable, leave blank.'
         example: Blood [UBERON:0000178]
         displayName: Anatomical material
         header: Sampling
@@ -786,7 +786,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: anatomicalPart
         ontology_id: GENEPIO:0001214
         definition: An anatomical part of an organism e.g. oropharynx.
-        guidance: 'Provide a descriptor if an anatomical part was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: <https://www.ebi.ac.uk/ols/ontologies/uberon>. If not applicable, leave blank.'
+        guidance: 'Provide a descriptor if an anatomical part was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/uberon. If not applicable, leave blank.'
         example: Nasopharynx (NP) [UBERON:0001728]
         displayName: Anatomical part
         header: Sampling
@@ -794,7 +794,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: bodyProduct
         ontology_id: GENEPIO:0001216
         definition: A substance excreted/secreted from an organism e.g. feces, urine, sweat.
-        guidance: 'Provide a descriptor if a body product was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: <https://www.ebi.ac.uk/ols/ontologies/uberon>. If not applicable, leave blank.'
+        guidance: 'Provide a descriptor if a body product was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/uberon. If not applicable, leave blank.'
         example: Feces [UBERON:0001988]
         displayName: Body product
         header: Sampling
@@ -802,7 +802,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: environmentalMaterial
         ontology_id: GENEPIO:0001223
         definition: A substance obtained from the natural or man-made environment e.g. soil, water, sewage, door handle, bed handrail, face mask.
-        guidance: 'Provide a descriptor if an environmental material was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: <https://www.ebi.ac.uk/ols/ontologies/envo>. If not applicable, leave blank.'
+        guidance: 'Provide a descriptor if an environmental material was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/envo. If not applicable, leave blank.'
         example: Face mask [OBI:0002787]
         displayName: Environmental material
         header: Sampling
@@ -810,7 +810,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: environmentalSite
         ontology_id: GENEPIO:0001232
         definition: An environmental location may describe a site in the natural or built environment e.g. hospital, wet market, bat cave.
-        guidance: 'Provide a descriptor if an environmental site was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: <https://www.ebi.ac.uk/ols/ontologies/envo>. If not applicable, leave blank.'
+        guidance: 'Provide a descriptor if an environmental site was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/envo. If not applicable, leave blank.'
         example: Hospital [ENVO:00002173]
         displayName: Environmental site
         header: Sampling
@@ -818,7 +818,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: collectionDevice
         ontology_id: GENEPIO:0001234
         definition: The instrument or container used to collect the sample e.g. swab.
-        guidance: 'Provide a descriptor if a collection device was used for sampling. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: <https://www.ebi.ac.uk/ols/ontologies/obi>. If not applicable, leave blank.'
+        guidance: 'Provide a descriptor if a collection device was used for sampling. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/obi. If not applicable, leave blank.'
         example: Swab [GENEPIO:0100027]
         displayName: Collection device
         header: Sampling
@@ -827,7 +827,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: collectionMethod
         ontology_id: GENEPIO:0001241
         definition: The process used to collect the sample e.g. phlebotomy, necropsy.
-        guidance: 'Provide a descriptor if a collection method was used for sampling. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: <https://www.ebi.ac.uk/ols/ontologies/obi>. If not applicable, leave blank.'
+        guidance: 'Provide a descriptor if a collection method was used for sampling. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/obi. If not applicable, leave blank.'
         example: Bronchoalveolar lavage (BAL) [GENEPIO:0100032]
         displayName: Collection method
         header: Sampling
@@ -907,7 +907,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: hostDisease
         ontology_id: GENEPIO:0001391
         definition: The name of the disease experienced by the host.
-        guidance: "This field is only required if the Pathogen.cl package was selected. If the host was sick, provide the name of the disease.The standardized term can be sourced from this look-up service: <https://www.ebi.ac.uk/ols/ontologies/doid> If the disease is not known, put “missing”."
+        guidance: "This field is only required if the Pathogen.cl package was selected. If the host was sick, provide the name of the disease.The standardized term can be sourced from this look-up service: https://www.ebi.ac.uk/ols/ontologies/doid If the disease is not known, put “missing”."
         example: mastitis, gastroenteritis
         displayName: Host disease
         header: Host
@@ -1347,7 +1347,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: insdcRawReadsAccession
         displayName: Raw reads accession
         definition: "Accession of corresponding raw reads in the INSDC, e.g. SRR27477368."
-        guidance: "Only add this field if you have already submitted raw reads to the INSDC, read more at <https://pathoplexus.org/docs/how-to/upload-sequences>."
+        guidance: "Only add this field if you have already submitted raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences."
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
