@@ -884,11 +884,10 @@ def enrich_with_nextclade(  # noqa: PLR0914
                 f"--input-dataset={dataset_dir}/{name}",
                 f"--output-translations={result_dir_seg}/nextclade.cds_translation.{{cds}}.fasta",
                 "--jobs=1",
+                *sequence_and_dataset.nextclade_additional_args,
                 "--",
                 input_file,
             ]
-            if sequence_and_dataset.nextclade_additional_args:
-                command.extend(sequence_and_dataset.nextclade_additional_args)
             logger.debug(f"Running nextclade: {command}")
 
             # TODO: Capture stderr and log at DEBUG level
