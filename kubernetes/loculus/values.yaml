@@ -87,7 +87,6 @@ defaultOrganismConfig: &defaultOrganismConfig
     files:
       - name: annotations
         displayName: Annotations
-        definition: Optional genome annotation file (e.g. GFF3) describing features of the submitted sequence.
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
