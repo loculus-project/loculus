@@ -22,9 +22,10 @@ const {
     readOnlyMode,
 } = websiteConfig;
 const remoteBannerMessage = await getRemoteBannerMessage();
-const bannerMessage = readOnlyMode
+const readOnlyBannerMessage = readOnlyMode
     ? 'This instance is in read-only mode. Submissions and login are disabled.'
-    : (remoteBannerMessage ?? configBannerMessage);
+    : undefined;
+const bannerMessage = remoteBannerMessage ?? configBannerMessage ?? readOnlyBannerMessage;
 
 interface Props {
     title: string;
