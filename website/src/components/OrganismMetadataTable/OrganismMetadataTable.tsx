@@ -62,11 +62,12 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
             organism.metadata.filter((meta) => inputFieldNames.has(meta.name)).map((meta) => [meta.name, meta]),
         );
     }, [organism]);
+
     const groupedGeneratedFields = useMemo(() => {
         const groupedFields = new Map<string, Metadata[]>();
 
         organism.metadata
-            .filter((field: Metadata) => !inputFieldsMetadata.has(field.name))
+            .filter((field: Metadata) => !inputFieldsMetadata.has(field.name) && !field.hideInSearchResultsTable)
             .forEach((field) => {
                 const header = field.header ?? 'Other';
                 if (groupedFields.has(header)) groupedFields.get(header)?.push(field);
