@@ -1612,7 +1612,7 @@ class ProcessingFunctions:
             tax_id = input_data.get("hostTaxonId")
             if isinstance(tax_id, str) and tax_id.isdigit():
                 return ProcessingResult(
-                    datum=int(tax_id),
+                    datum=tax_id,
                     warnings=[],
                     errors=[],
                 )
@@ -1690,7 +1690,7 @@ class ProcessingFunctions:
             )
 
         return ProcessingResult(
-            datum=tax_id,
+            datum=str(tax_id),
             warnings=[],
             errors=[],
         )
