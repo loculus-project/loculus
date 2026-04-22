@@ -103,6 +103,8 @@ spec:
               value: "/usr/local/bin/silo"
             - name: PREPROCESSING_CONFIG
               value: "/app/preprocessing_config.yaml"
+            - name: TAXONOMY_SERVICE_URL
+              value: {{ $.Values.siloImport.taxonomyServiceUrl | quote }}
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json
