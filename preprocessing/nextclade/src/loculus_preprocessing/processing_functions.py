@@ -236,6 +236,42 @@ def regex_error(
     )
 
 
+def missing_taxonomy_service_error(input_fields: list[str], output_field: str) -> ProcessingResult:
+    return ProcessingResult(
+        datum=None,
+        warnings=[],
+        errors=[
+            ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message="Configuration error: taxonomy_service_url was None. Please contact the administrator.",
+            )
+        ],
+    )
+
+
+def taxonomy_network_error(
+    subject: str,
+    action: str,
+    e: Exception,
+    input_fields: list[str],
+    output_field: str,
+) -> ProcessingResult:
+    return ProcessingResult(
+        datum=None,
+        warnings=[],
+        errors=[
+            ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message=f"Internal error: network error while {action} '{subject}': {e}. Please contact the administrator.",
+            )
+        ],
+    )
+
+
 class ProcessingFunctions:
     @classmethod
     def call_function(
@@ -1588,18 +1624,7 @@ class ProcessingFunctions:
 
         tax_service = args.get("taxonomy_service_url")
         if not tax_service:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message="Configuration error: taxonomy_service_url was None. Please contact the administrator.",
-                    )
-                ],
-            )
+            return missing_taxonomy_service_error(input_fields, output_field)
 
         # host will exist only for direct submissions
         # hostTaxonId and hostNameScientific are noInput, so the only case where they exist is
@@ -1626,18 +1651,7 @@ class ProcessingFunctions:
         try:
             response = taxonomy_cache.get_or_fetch(url)
         except requests.exceptions.RequestException as e:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=f"Internal error: network error while validating '{unvalidated}': {e}. Please contact the administrator",
-                    )
-                ],
-            )
+            return taxonomy_network_error(unvalidated, "validating", e, input_fields, output_field)
 
         body = response.json()
         if response.status_code != requests.codes.ok:
@@ -1700,18 +1714,7 @@ class ProcessingFunctions:
 
         tax_service = args.get("taxonomy_service_url")
         if not tax_service:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message="Configuration error: taxonomy_service_url was None. Please contact the administrator.",
-                    )
-                ],
-            )
+            return missing_taxonomy_service_error(input_fields, output_field)
 
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
@@ -1725,18 +1728,7 @@ class ProcessingFunctions:
         try:
             response = taxonomy_cache.get_or_fetch(url)
         except requests.exceptions.RequestException as e:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=f"Internal error: network error while validating '{tax_id}': {e}. Please contact the administrator",
-                    )
-                ],
-            )
+            return taxonomy_network_error(tax_id, "validating", e, input_fields, output_field)
 
         body = response.json()
         if response.status_code != requests.codes.ok:
@@ -1783,18 +1775,7 @@ class ProcessingFunctions:
     ) -> ProcessingResult:
         tax_service = args.get("taxonomy_service_url")
         if not tax_service:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message="Configuration error: taxonomy_service_url was None. Please contact the administrator.",
-                    )
-                ],
-            )
+            return missing_taxonomy_service_error(input_fields, output_field)
 
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
@@ -1808,17 +1789,8 @@ class ProcessingFunctions:
         try:
             response = taxonomy_cache.get_or_fetch(url)
         except requests.exceptions.RequestException as e:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=f"Internal error: network error while getting common name for '{tax_id}': {e}. Please contact the administrator.",
-                    )
-                ],
+            return taxonomy_network_error(
+                tax_id, "getting common name for", e, input_fields, output_field
             )
 
         body = response.json()
