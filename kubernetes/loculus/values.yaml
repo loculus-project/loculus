@@ -43,6 +43,7 @@ siloImport:
   siloTimeoutSeconds: 3600
   hardRefreshIntervalSeconds: 3600
   pollIntervalSeconds: 30
+  taxonomyServiceUrl: &taxonomy_service_url http://loculus-taxonomy-service:5000
 ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
@@ -1254,7 +1255,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             hostNameScientific: hostNameScientific
             hostTaxonId: hostTaxonId
           args:
-            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+            taxonomy_service_url: *taxonomy_service_url
       - name: hostNameScientific
         displayName: Host name - scientific
         definition: "The scientific name of the host from which the sample was collected."
@@ -1274,7 +1275,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             hostTaxonId: processed.hostTaxonId
             hostNameScientific: hostNameScientific
           args:
-            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+            taxonomy_service_url: *taxonomy_service_url
       - name: hostNameCommon
         displayName: Host name - common
         definition: "The common name of the host from which the sample was collected."
@@ -1293,7 +1294,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             hostTaxonId: processed.hostTaxonId
           args:
-            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+            taxonomy_service_url: *taxonomy_service_url
       - name: isLabHost
         displayName: Is lab host
         definition: "If a laboratory host (e.g. cultured cell line) was used to propagate the sample."
@@ -1511,7 +1512,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         - "prepro"
       replicas: 1
       taxonomyServiceArgs: &preprocessingTaxonomyServiceArgs
-        taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+        taxonomy_service_url: *taxonomy_service_url
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         batch_size: 100
@@ -1652,7 +1653,7 @@ defaultOrganisms:
               hostNameScientific: hostNameScientific
               hostTaxonId: hostTaxonId
             args:
-              taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+              taxonomy_service_url: *taxonomy_service_url
         - name: lineage
           displayName: Lineage
           definition: "Assigned clade label from the nearest reference tree node."
