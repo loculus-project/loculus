@@ -1,8 +1,10 @@
 ---
 import { SubmenuLink } from './SubmenuLink.tsx';
+import { mainTailwindColor } from '../../../colors.json';
 import type { Organism } from '../../config';
 import { extraSequenceRelatedTopNavigationItems } from '../../routes/extraTopNavigationItems';
 import { getSequenceRelatedItems } from '../../routes/navigationItems';
+import FaExchangeAlt from '~icons/fa-solid/exchange-alt';
 
 interface Props {
     currentOrganism?: string;
@@ -11,6 +13,7 @@ interface Props {
 }
 
 const { currentOrganism, currentOrganismObject, currentPath } = Astro.props;
+const primaryColor = mainTailwindColor[400];
 
 // Get the navigation items for this organism
 const sequenceRelatedItems = getSequenceRelatedItems(currentOrganism);
@@ -24,8 +27,19 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
         <nav class='bg-gray-50 border-gray-200 border-b-[1.5px]' aria-label='Organism navigation'>
             <div class='flex flex-col sm:flex-row sm:items-center gap-2 px-4 py-2 mx-4'>
                 <div class='flex items-center gap-2 w-full sm:flex-1 flex-wrap sm:flex-nowrap'>
-                    <span class='text-gray-700 font-medium sm:mr-3'>
+                    <span class='text-gray-700 font-medium'>
                         {currentOrganismObject?.displayName || currentOrganism}
+                        {/* eslint-disable-next-line no-restricted-syntax -- Server-rendered Astro component, wired via vanilla <script>, no React hydration needed */}
+                        <button
+                            type='button'
+                            class='inline-flex items-center justify-center w-5 h-5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors self-end mb-px mr-2 ml-2'
+                            title='Switch organism'
+                            aria-label='Switch organism'
+                            data-organism-switch-button
+                            data-primary-color={primaryColor}
+                        >
+                            <FaExchangeAlt className='w-2.5 h-2.5 ' />
+                        </button>
                     </span>
                     <span class='hidden sm:inline text-gray-300 mr-2'>|</span>
                     <div class='hidden sm:flex items-center gap-2 flex-wrap'>
@@ -64,3 +78,111 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
         </nav>
     )
 }
+
+<script>
+    let isAnimating = false;
+
+    document.querySelector('[data-organism-switch-button]')?.addEventListener('click', (e) => {
+        if (isAnimating) return;
+
+        const desktopMenu = document.querySelector<HTMLElement>('#organism-menu');
+        if (desktopMenu && desktopMenu.offsetParent !== null) {
+            const menuButton = desktopMenu.querySelector<HTMLElement>('button');
+            if (!menuButton) return;
+
+            const btn = e.currentTarget as HTMLElement;
+            const icon = btn.querySelector('svg');
+            if (!icon) return;
+
+            isAnimating = true;
+
+            const from = icon.getBoundingClientRect();
+            const to = menuButton.getBoundingClientRect();
+
+            // Read the primary color from the data attribute (set from colors.json in frontmatter)
+            const primaryColor = btn.dataset.primaryColor ?? '#88a1d2';
+
+            const flyingIcon = icon.cloneNode(true) as SVGElement;
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = `
+                position: fixed;
+                z-index: 2147483647;
+                pointer-events: none;
+                width: ${from.width}px;
+                height: ${from.height}px;
+                left: ${from.left}px;
+                top: ${from.top}px;
+                color: ${primaryColor};
+                filter: drop-shadow(0 0 3px ${primaryColor});
+            `;
+            wrapper.appendChild(flyingIcon);
+            document.body.appendChild(wrapper);
+
+            // Animate using requestAnimationFrame for trail particles
+            const startX = from.left;
+            const startY = from.top;
+            const endX = to.left + to.width / 2 - from.width / 2;
+            const endY = to.top + to.height / 2 - from.height / 2;
+            const duration = 350;
+            const startTime = performance.now();
+            const trailInterval = 25;
+            let lastTrailTime = 0;
+
+            function animate(now: number) {
+                const elapsed = now - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                // ease-out cubic
+                const ease = 1 - Math.pow(1 - t, 3);
+
+                const x = startX + (endX - startX) * ease;
+                const y = startY + (endY - startY) * ease;
+                wrapper.style.left = `${x}px`;
+                wrapper.style.top = `${y}px`;
+
+                // Spawn trail ghost
+                if (now - lastTrailTime > trailInterval && t < 0.95) {
+                    lastTrailTime = now;
+                    const ghost = document.createElement('div');
+                    ghost.innerHTML = icon!.outerHTML;
+                    ghost.style.cssText = `
+                        position: fixed;
+                        z-index: 2147483646;
+                        pointer-events: none;
+                        width: ${from.width}px;
+                        height: ${from.height}px;
+                        left: ${x}px;
+                        top: ${y}px;
+                        color: ${primaryColor};
+                        opacity: 0.5;
+                        transition: opacity 200ms ease-out;
+                    `;
+                    document.body.appendChild(ghost);
+                    requestAnimationFrame(() => {
+                        ghost.style.opacity = '0';
+                    });
+                    setTimeout(() => ghost.remove(), 220);
+                }
+
+                if (t < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    wrapper.remove();
+                    menuButton!.style.transition = 'box-shadow 150ms ease-in';
+                    menuButton!.style.boxShadow = `0 0 0 3px ${primaryColor}, 0 0 12px ${primaryColor}`;
+                    setTimeout(() => {
+                        menuButton!.style.boxShadow = '';
+                        setTimeout(() => {
+                            menuButton!.style.transition = '';
+                            menuButton!.click();
+                            isAnimating = false;
+                        }, 150);
+                    }, 200);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        } else {
+            window.dispatchEvent(new Event('open-sandwich-menu'));
+        }
+    });
+</script>
