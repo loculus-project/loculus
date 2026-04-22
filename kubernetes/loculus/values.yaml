@@ -122,7 +122,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: sampleCollectionDate
         displayName: Collection date
         definition: "The date on which the sample was collected."
-        guidance: "Please format YYYY-MM-DD. If day is unknown, use YYYY-MM (e.g., `2020-03`). If both day and month are unknown, use YYYY (e.g., `2020`). Please provide at least a year."
+        guidance: "Please format `YYYY-MM-DD`. If day is unknown, use `YYYY-MM` (e.g., `2020-03`). If both day and month are unknown, use `YYYY` (e.g., `2020`). Please provide at least a year."
         example: "2020-03-15"
         header: Sample details
         ingest: ncbiCollectionDate
@@ -212,6 +212,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: ncbiUpdateDate
         type: date
         displayName: NCBI update date
+        definition: Date the viral nucleotide accession was last updated in NCBI Virus.
         header: "INSDC"
         orderOnDetailsPage: 1020
         preprocessing:
@@ -658,6 +659,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
       - name: insdcAccessionBase
         displayName: INSDC accession base
+        definition: The base accession assigned by the INSDC (GenBank/ENA/DDBJ) for this sequence, without the version number.
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
@@ -665,6 +667,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         oneHeader: true
       - name: insdcVersion
         displayName: INSDC version
+        definition: The version number of the INSDC record, incremented each time the sequence record is updated.
         type: int
         header: "INSDC"
         hideOnSequenceDetailsPage: true
@@ -673,6 +676,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         oneHeader: true
       - name: insdcAccessionFull
         displayName: INSDC accession
+        definition: The full versioned INSDC accession (base accession plus version number), searchable across GenBank, ENA, and DDBJ.
         customDisplay:
           type: linkWithMenu
           linkMenuItems:
@@ -707,6 +711,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: "PRJNA123456"
       - name: gcaAccession
         displayName: GCA accession
+        definition: The GenBank genome assembly accession number for the sequence.
         customDisplay:
           type: link
           url: "https://www.ebi.ac.uk/ena/browser/view/__value__"
@@ -741,7 +746,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: sampleReceivedDate
         ontology_id: GENEPIO:0001177
         definition: The date on which the sample was received by the laboratory.
-        guidance: Alternative if "sampleCollectionDate" is not available. Record the date the sample was received by the laboratory. Required granularity includes year, month and day. Before sharing this data, ensure this date is not considered identifiable information. If this date is considered identifiable, it is acceptable to add "jitter" to the received date by adding or subtracting calendar days. Do not change the received date in your original records. Alternatively, collection_date may be used as a substitute in the data you share. The date should be provided in ISO 8601 standard format "YYYY-MM-DD".
+        guidance: Alternative if `sampleCollectionDate` is not available. Record the date the sample was received by the laboratory. Required granularity includes year, month and day. Before sharing this data, ensure this date is not considered identifiable information. If this date is considered identifiable, it is acceptable to add "jitter" to the received date by adding or subtracting calendar days. Do not change the received date in your original records. Alternatively, `collection_date` may be used as a substitute in the data you share. The date should be provided in ISO 8601 standard format `YYYY-MM-DD`.
         example: '2020-03-20'
         displayName: Sample received date
         desired: true
@@ -762,7 +767,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Purpose of sampling
         ontology_id: GENEPIO:0001198
         definition: The reason that the sample was collected.
-        guidance: Select a value from the pick list in the template
+        guidance: Select a value from the pick list in the template.
         example: Diagnostic testing
         header: Sampling
         orderOnDetailsPage: 1220
@@ -907,7 +912,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: hostDisease
         ontology_id: GENEPIO:0001391
         definition: The name of the disease experienced by the host.
-        guidance: "This field is only required if the Pathogen.cl package was selected. If the host was sick, provide the name of the disease.The standardized term can be sourced from this look-up service: https://www.ebi.ac.uk/ols/ontologies/doid If the disease is not known, put “missing”."
+        guidance: "This field is only required if the Pathogen.cl package was selected. If the host was sick, provide the name of the disease. The standardized term can be sourced from this look-up service: https://www.ebi.ac.uk/ols/ontologies/doid. If the disease is not known, put “missing”."
         example: mastitis, gastroenteritis
         displayName: Host disease
         header: Host
@@ -1006,7 +1011,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: sequencingDate
         ontology_id: GENEPIO:0001447
         definition: The date the sample was sequenced.
-        guidance: Provide the sequencing date in ISO 8601 standard format "YYYY-MM-DD".
+        guidance: Provide the sequencing date in ISO 8601 standard format `YYYY-MM-DD`.
         example: "2021-04-26"
         displayName: Sequencing date
         type: date
@@ -1045,7 +1050,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: sequencingProtocol
         ontology_id: GENEPIO:0001454
         definition: The protocol used to generate the sequence.
-        guidance: 'Provide a free text description of the methods and materials used to generate the sequence. Suggested text, fill in information where indicated.: "Viral sequencing was performed following a tiling amplicon strategy using the <fill in> primer scheme. Sequencing was performed using a <fill in> sequencing instrument. Libraries were prepared using <fill in> library kit. "'
+        guidance: 'Provide a free text description of the methods and materials used to generate the sequence. Suggested text, fill in information where indicated: "Viral sequencing was performed following a tiling amplicon strategy using the <fill in> primer scheme. Sequencing was performed using a <fill in> sequencing instrument. Libraries were prepared using <fill in> library kit. "'
         example: Genomes were generated through amplicon sequencing of 1200 bp amplicons with Freed schema primers. Libraries were created using Illumina DNA Prep kits, and sequence data was produced using Miseq Micro v2 (500 cycles) sequencing kits.
         displayName: Sequencing protocol
         header: Sequencing
@@ -1136,7 +1141,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: breadthOfCoverage
         ontology_id: GENEPIO:0001475
         definition: The threshold used as a cut-off for the depth of coverage.
-        guidance: Provide the threshold fold coverage (as a number)
+        guidance: Provide the threshold fold coverage (as a number).
         example: "100"
         displayName: Breadth of coverage
         type: int
@@ -1489,7 +1494,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: string
         displayName: "Host"
         definition: "NCBI taxon ID or scientific name that uniquely identifies the host from which the sample was collected."
-        guidance: "You can provide either the scientific name of the organism (e.g., Aedes aegypti) or its NCBI taxon ID (e.g., 7159) in this field. We will validate your input and use it to populate the `host common name` and `host scientific name` fields. When uploading data from a pooled sample, we recommend using a higher-level taxon that includes all host organisms in the sample pool. For example, you can use 'Culicidae' when uploading data for a pooled mosquito sample (in addition to setting the `specimenProcessing` field to 'Samples pooled', see [OBI:0600016])."
+        guidance: "You can provide either the scientific name of the organism (e.g., `Aedes aegypti`) or its NCBI taxon ID (e.g., `7159`) in this field. We will validate your input and use it to populate the `host common name` and `host scientific name` fields. When uploading data from a pooled sample, we recommend using a higher-level taxon that includes all host organisms in the sample pool. For example, you can use `Culicidae` when uploading data for a pooled mosquito sample (in addition to setting the `specimenProcessing` field to `Samples pooled`, see [OBI:0600016])."
         example: "Aedes aegypti"
         hideInSearchResultsTable: true
         hideOnSequenceDetailsPage: true
@@ -1627,6 +1632,7 @@ defaultOrganisms:
           type: int
           autocomplete: true
           displayName: "Host species"
+          definition: "Taxon ID for the host."
           customDisplay:
             type: hostSpecies
             displayGroup: hostSpecies

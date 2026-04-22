@@ -280,8 +280,8 @@ organisms:
       inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
         - name: versionComment
           displayName: Version comment
-          definition: "Reason for revising sequences or other general comments concerning a specific version"
-          example: "Fixed an issue in previous version where low-coverage nucleotides were erroneously filled with reference sequence"
+          definition: "Reason for revising sequences or other general comments concerning a specific version."
+          example: "Fixed an issue in previous version where low-coverage nucleotides were erroneously filled with reference sequence."
           desired: true
       {{ if .files }}
       files: {{ .files | toYaml | nindent 8 }}
