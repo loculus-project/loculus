@@ -310,6 +310,7 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                                   <td className='border border-gray-300 px-4 py-2'>
                                       <FormattedText
                                           text={[field.definition, field.guidance].filter(Boolean).join(' ')}
+                                          formatLinks
                                       />
                                   </td>
                                   <td className='border border-gray-300 px-4 py-2'>{field.example ?? ''}</td>
@@ -326,7 +327,7 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                                   />
                               </td>
                               <td className='border border-gray-300 px-4 py-2'>
-                                  <FormattedText text={field.definition ?? ''} />
+                                  <FormattedText text={field.definition ?? ''} formatLinks />
                               </td>
                           </tr>
                       ))}
