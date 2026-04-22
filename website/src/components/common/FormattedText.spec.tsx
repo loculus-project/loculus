@@ -5,8 +5,9 @@ import { FormattedText } from './FormattedText';
 
 describe('FormattedText', () => {
     it('renders plain text without backticks as-is', () => {
-        const { container } = render(<FormattedText text='Hello world' />);
-        expect(container.textContent).toBe('Hello world');
+        const textContent = 'Hello world';
+        const { container } = render(<FormattedText text={textContent} />);
+        expect(container.textContent).toBe(textContent);
         expect(container.querySelector('code')).toBeNull();
     });
 
@@ -28,8 +29,9 @@ describe('FormattedText', () => {
     });
 
     it('does not render code elements for a single backtick', () => {
-        const { container } = render(<FormattedText text="it's a test" />);
-        expect(container.textContent).toBe("it's a test");
+        const textContent = 'it`s a test';
+        const { container } = render(<FormattedText text={textContent} />);
+        expect(container.textContent).toBe(textContent);
         expect(container.querySelector('code')).toBeNull();
     });
 
@@ -44,47 +46,71 @@ describe('FormattedText', () => {
         expect(container.textContent).toBe('');
     });
 
-    it('renders a bare URL surrounded by spaces as a link', () => {
-        const { container } = render(<FormattedText text='See https://example.com for details' formatLinks />);
-        expect(container.textContent).toBe('See https://example.com for details');
-        const link = container.querySelector('a');
-        expect(link).not.toBeNull();
-        expect(link!.getAttribute('href')).toBe('https://example.com');
-        expect(link!.getAttribute('target')).toBe('_blank');
-        expect(link!.getAttribute('rel')).toBe('noopener noreferrer');
-    });
-
-    it('renders a bare URL at the start of the string as a link', () => {
-        const { container } = render(<FormattedText text='https://example.com for details' formatLinks />);
+    it('renders a URL surrounded by spaces as a link', () => {
+        const textContent = 'See https://example.com for details';
+        const { container } = render(<FormattedText text={textContent} formatLinks />);
+        expect(container.textContent).toBe(textContent);
         const link = container.querySelector('a');
         expect(link).not.toBeNull();
         expect(link!.getAttribute('href')).toBe('https://example.com');
     });
 
-    it('renders a bare URL at the end of the string as a link', () => {
-        const { container } = render(<FormattedText text='See https://example.com' formatLinks />);
+    it('renders a URL at the start of the string as a link', () => {
+        const textContent = 'https://example.com for details';
+        const { container } = render(<FormattedText text={textContent} formatLinks />);
+        expect(container.textContent).toBe(textContent);
         const link = container.querySelector('a');
         expect(link).not.toBeNull();
         expect(link!.getAttribute('href')).toBe('https://example.com');
     });
 
-    it('renders multiple links', () => {
-        const { container } = render(
-            <FormattedText text='See https://example.com and https://other.com' formatLinks />,
-        );
+    it('renders a URL at the end of the string as a link', () => {
+        const textContent = 'See https://example.com';
+        const { container } = render(<FormattedText text={textContent} formatLinks />);
+        expect(container.textContent).toBe(textContent);
+        const link = container.querySelector('a');
+        expect(link).not.toBeNull();
+        expect(link!.getAttribute('href')).toBe('https://example.com');
+    });
+
+    it('renders multiple URL links', () => {
+        const textContent = 'See https://example.com and https://other.com for details';
+        const { container } = render(<FormattedText text={textContent} formatLinks />);
+        expect(container.textContent).toBe(textContent);
         const links = container.querySelectorAll('a');
         expect(links).toHaveLength(2);
         expect(links[0].getAttribute('href')).toBe('https://example.com');
         expect(links[1].getAttribute('href')).toBe('https://other.com');
     });
 
+    it('strips trailing punctuation from links', () => {
+        const textContent = 'See https://example.com!? For details';
+        const { container } = render(<FormattedText text={textContent} formatLinks />);
+        expect(container.textContent).toBe(textContent);
+        const link = container.querySelector('a');
+        expect(link).not.toBeNull();
+        expect(link!.getAttribute('href')).toBe('https://example.com');
+    });
+
+    it('does not strip punctuation that is part of the URL path', () => {
+        const textContent = 'See https://example.com/path.html for details';
+        const { container } = render(<FormattedText text={textContent} formatLinks />);
+        expect(container.textContent).toBe(textContent);
+        const link = container.querySelector('a');
+        expect(link).not.toBeNull();
+        expect(link!.getAttribute('href')).toBe('https://example.com/path.html');
+    });
+
     it('does not render a link for text without http/https scheme', () => {
-        const { container } = render(<FormattedText text='See example.com for details' formatLinks />);
+        const textContent = 'See example.com for details';
+        const { container } = render(<FormattedText text={textContent} formatLinks />);
+        expect(container.textContent).toBe(textContent);
         expect(container.querySelector('a')).toBeNull();
     });
 
     it('renders both links and code', () => {
         const { container } = render(<FormattedText text='Use `foo` or see https://example.com' formatLinks />);
+        expect(container.textContent).toBe('Use foo or see https://example.com');
         const code = container.querySelector('code');
         const link = container.querySelector('a');
         expect(code).not.toBeNull();
@@ -95,6 +121,7 @@ describe('FormattedText', () => {
 
     it('does not render a link inside a code span', () => {
         const { container } = render(<FormattedText text='Use `https://example.com` for details' formatLinks />);
+        expect(container.textContent).toBe('Use https://example.com for details');
         expect(container.querySelector('code')!.textContent).toBe('https://example.com');
         expect(container.querySelector('a')).toBeNull();
     });
@@ -103,6 +130,7 @@ describe('FormattedText', () => {
         const { container } = render(
             <FormattedText text='Use `https://example.com` for details' formatLinks={false} />,
         );
+        expect(container.textContent).toBe('Use https://example.com for details');
         expect(container.querySelector('code')!.textContent).toBe('https://example.com');
         expect(container.querySelector('a')).toBeNull();
     });

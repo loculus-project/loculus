@@ -2,22 +2,30 @@ import { Fragment, type ReactNode } from 'react';
 
 /**
  * Renders text with basic inline markdown formatting.
- * Supports: `code` and https://links (space-delimited or at string boundaries).
+ * Supports: `code` and (optionally) http://links or https://links.
  */
 export const FormattedText = ({ text, formatLinks = false }: { text: string; formatLinks?: boolean }): ReactNode => {
-    const processLinks = (input: string): ReactNode => {
-        if (!formatLinks) return input;
+    const processLinks = (input: string) => {
+        if (!formatLinks || (!input.includes('http://') && !input.includes('https://'))) return input;
 
-        const parts = input.split(/(?<=^|\s)(https?:\/\/\S+)(?=\s|$)/);
-        return parts.map((part, i) =>
-            i % 2 === 1 ? (
-                <a key={i} href={part} className='text-primary-500 px-0.5' target='_blank' rel='noopener noreferrer'>
-                    {part}
-                </a>
-            ) : (
-                part
-            ),
-        );
+        const inputParts = input.split(' ');
+        return inputParts
+            .map((part, i) => {
+                if (part.startsWith('http://') || part.startsWith('https://')) {
+                    // Handle common trailing punctuation (.,;:!?)
+                    const [url, trailingPunctuation] = part.split(/([.,;:!?]+)$/);
+                    return (
+                        <Fragment key={i}>
+                            <a href={url} className='text-primary-500 px-0.5' target='_blank' rel='noopener noreferrer'>
+                                {url}
+                            </a>
+                            {trailingPunctuation}
+                        </Fragment>
+                    );
+                }
+                return part;
+            })
+            .flatMap((part, i) => (i < inputParts.length - 1 ? [part, ' '] : part));
     };
 
     const parts = text.split('`');
