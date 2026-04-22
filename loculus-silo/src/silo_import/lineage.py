@@ -5,6 +5,8 @@ from pathlib import Path
 
 import requests
 
+from silo_import.constants import HOST_TAXONOMY_FILENAME
+
 from .config import ImporterConfig
 from .paths import ImporterPaths
 
@@ -44,8 +46,32 @@ def update_lineage_definitions(
             raise RuntimeError(msg) from exc
 
 
+def update_taxonomic_lineage(
+    taxa: set[str],
+    config: ImporterConfig,
+    paths: ImporterPaths,
+) -> None:
+    if not config.taxonomy_service_url or not taxa:
+        logger.info("Skipping host taxonomy fetch (not configured or no taxa)")
+        return
+
+    url = f"{config.taxonomy_service_url.rstrip('/')}/silo-lineage"
+    logger.info("Fetching host taxonomy subtree for %d taxa", len(taxa))
+    try:
+        _fetch_taxonomic_lineage(url, sorted(taxa), paths.input_dir / HOST_TAXONOMY_FILENAME)
+    except requests.RequestException as exc:
+        msg = f"Failed to fetch host taxonomy from {url}: {exc}"
+        raise RuntimeError(msg) from exc
+
+
 def _download_lineage_file(url: str, destination: Path) -> None:
     response = requests.get(url, timeout=60)
+    response.raise_for_status()
+    _write_text(destination, response.text)
+
+
+def _fetch_taxonomic_lineage(url: str, taxa: list[str], destination: Path) -> None:
+    response = requests.post(url, json={"tax_ids": taxa}, timeout=60)
     response.raise_for_status()
     _write_text(destination, response.text)
 

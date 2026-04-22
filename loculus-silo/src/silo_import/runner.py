@@ -80,6 +80,7 @@ class ImporterRunner:
 
         try:
             update_lineage_definitions(download.pipeline_version, self.config, self.paths)
+            update_taxonomic_lineage(taxa, self.config, self.paths)
         except Exception:
             logger.exception("Failed to download lineage definitions; cleaning up input")
             safe_remove(self.paths.silo_input_data_path)

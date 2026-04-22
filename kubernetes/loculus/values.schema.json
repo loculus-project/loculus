@@ -1823,6 +1823,10 @@
           "description": "Interval in seconds between checking for new data",
           "default": 30,
           "minimum": 1
+        },
+        "taxonomyServiceUrl": {
+          "type": "string",
+          "description": "URL (including port!) pointing to the taxomomy service"
         }
       },
       "additionalProperties": false,

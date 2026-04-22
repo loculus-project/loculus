@@ -16,6 +16,7 @@ class ImporterConfig:
     root_dir: Path
     silo_binary: Path
     preprocessing_config: Path
+    taxonomy_service_url: str | None
 
     @classmethod
     def from_env(cls) -> ImporterConfig:
@@ -53,6 +54,7 @@ class ImporterConfig:
         root_raw = env.get("ROOT_DIR")
         root_dir = Path(root_raw).resolve() if root_raw else Path("/")
         silo_binary = Path(env.get("PATH_TO_SILO_BINARY", "/usr/local/bin/silo"))
+        taxonomy_service_url = env.get("TAXONOMY_SERVICE_URL")
         preprocessing_config = Path(
             env.get("PREPROCESSING_CONFIG", "/app/preprocessing_config.yaml")
         )
@@ -66,6 +68,7 @@ class ImporterConfig:
             root_dir=root_dir,
             silo_binary=silo_binary,
             preprocessing_config=preprocessing_config,
+            taxonomy_service_url=taxonomy_service_url,
         )
 
     @property
