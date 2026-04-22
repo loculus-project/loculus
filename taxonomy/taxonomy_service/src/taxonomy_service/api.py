@@ -111,8 +111,14 @@ def fetch_common_name(db_conn: sqlite3.Connection, taxon: Taxon) -> Taxon | None
     return None
 
 
-def get_spanning_tree(db_conn: sqlite3.Connection, tax_ids: set[int]):
-    keep_ids = set(tax_ids) | {1}
+def get_spanning_tree(db_conn: sqlite3.Connection, tax_ids: set[int]) -> list[Taxon]:
+    """Run a recursive CTE against the database to collect the path
+    from each taxon in tax_ids to the root node.
+
+    Uses UNION to prevent having to evaluate parts of paths shared by
+    several input taxa multiple times.
+    """
+    keep_ids = tax_ids | {1}  # always include root node
     placeholders = ",".join("?" * len(keep_ids))
 
     rows = db_conn.execute(
@@ -130,14 +136,17 @@ def get_spanning_tree(db_conn: sqlite3.Connection, tax_ids: set[int]):
         list(keep_ids),
     ).fetchall()
 
-    return rows
+    return [Taxon.from_row(row) for row in rows]
 
 
-def map_child_nodes(tree):
+def map_child_nodes(tree: list[Taxon]) -> dict[int, list[int]]:
+    """Create a dict where keys are taxon ids and values are lists off
+    all children associated with a taxon
+    """
     children: dict[int, list[int]] = defaultdict(list)
-    for node in tree:
-        if node["tax_id"] != node["parent_id"]:
-            children[node["parent_id"]].append(node["tax_id"])
+    for taxon in tree:
+        if taxon.tax_id != taxon.parent_id:
+            children[taxon.parent_id].append(taxon.tax_id)
     for child_list in children.values():
         child_list.sort()
 
@@ -150,6 +159,11 @@ def build_silo_lineage(
     children: dict[int, list[int]],
     parent_in_output: int | None,
 ) -> dict[str, dict]:
+    """Build a dict representing a SILO-formatted lineage.
+
+    Prune nodes that aren't in `keep_ids`. If a node is pruned, connect
+    its child nodes to the node's parent so the overall hierarchy is preserved.
+    """
     result: dict[str, dict] = {}
 
     if node_id in keep_ids:
@@ -161,7 +175,7 @@ def build_silo_lineage(
             node_id  # this node becomes the nearest-kept-parent for descendants
         )
     else:
-        next_parent = parent_in_output  # skip this node , pass through current parent
+        next_parent = parent_in_output  # skip this node, pass through current parent
 
     for child_id in children.get(node_id, []):
         result.update(build_silo_lineage(child_id, keep_ids, children, next_parent))
@@ -212,7 +226,7 @@ def get_silo_lineage(
     payload: SubtreeRequestBody,
     db: DbConnection,
 ) -> Response:
-    taxon_ids = {1}
+    taxon_ids = set()
     for i in payload.tax_ids:
         try:
             taxon_ids.add(int(i))
