@@ -111,16 +111,16 @@ def fetch_common_name(db_conn: sqlite3.Connection, taxon: Taxon) -> Taxon | None
     return None
 
 
-def get_spanning_tree(db_conn: sqlite3.Connection, tax_ids: set[int]) -> list[Taxon]:
+def get_spanning_tree(
+    db_conn: sqlite3.Connection, tax_ids: set[int]
+) -> list[tuple[int, int]]:
     """Run a recursive CTE against the database to collect the path
     from each taxon in tax_ids to the root node.
 
     Uses UNION to prevent having to evaluate parts of paths shared by
     several input taxa multiple times.
     """
-    keep_ids = tax_ids | {1}  # always include root node
-    placeholders = ",".join("?" * len(keep_ids))
-
+    placeholders = ",".join("?" * len(tax_ids))
     rows = db_conn.execute(
         f"""
       WITH RECURSIVE ancestors AS (
@@ -133,23 +133,19 @@ def get_spanning_tree(db_conn: sqlite3.Connection, tax_ids: set[int]) -> list[Ta
       )
       SELECT * FROM ancestors
     """,
-        list(keep_ids),
+        list(tax_ids),
     ).fetchall()
 
-    return [Taxon.from_row(row) for row in rows]
+    return [(row["tax_id"], row["parent_id"]) for row in rows]
 
 
-def map_child_nodes(tree: list[Taxon]) -> dict[int, list[int]]:
-    """Create a dict where keys are taxon ids and values are lists off
-    all children associated with a taxon
-    """
+def map_child_nodes(tree: list[tuple[int, int]]) -> dict[int, list[int]]:
     children: dict[int, list[int]] = defaultdict(list)
-    for taxon in tree:
-        if taxon.tax_id != taxon.parent_id:
-            children[taxon.parent_id].append(taxon.tax_id)
+    for tax_id, parent_id in tree:
+        if tax_id != parent_id:
+            children[parent_id].append(tax_id)
     for child_list in children.values():
         child_list.sort()
-
     return children
 
 
@@ -226,7 +222,7 @@ def get_silo_lineage(
     payload: SubtreeRequestBody,
     db: DbConnection,
 ) -> Response:
-    taxon_ids = set()
+    taxon_ids = {1}  # always include the root node
     for i in payload.tax_ids:
         try:
             taxon_ids.add(int(i))
