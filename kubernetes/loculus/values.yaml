@@ -87,6 +87,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     files:
       - name: annotations
         displayName: Annotations
+        definition: Optional genome annotation file (e.g. GFF3) describing features of the submitted sequence.
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
@@ -203,6 +204,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         columnWidth: 100
       - name: earliestReleaseDate
         displayName: Earliest release date
+        definition: The earliest release date for the accession, across all versions in both Loculus and NCBI Virus.
         header: Sample details
         type: date
         rangeSearch: true
@@ -1226,6 +1228,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         initiallyVisible: true
         perSegment: true
         displayName: Length
+        definition: The length of the sequence.
         orderOnDetailsPage: 2700
         customDisplay:
           type: lengthCompleteness
