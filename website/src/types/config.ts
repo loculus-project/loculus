@@ -260,6 +260,7 @@ export const websiteConfig = z.object({
     enableDataUseTerms: z.boolean(),
     dataUseTermsAgreementHTML: z.string().optional(),
     sequenceFlagging: sequenceFlaggingConfig.optional(),
+    metadataItemForCumulativeGroupGraph: z.string().nullable(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 

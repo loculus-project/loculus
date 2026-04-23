@@ -220,6 +220,7 @@ enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
 dataUseTermsAgreementHTML: {{ quote $.Values.dataUseTerms.agreementHTML }}
 {{- end }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
+metadataItemForCumulativeGroupGraph: {{ quote $.Values.metadataItemForCumulativeGroupGraph }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
   {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
