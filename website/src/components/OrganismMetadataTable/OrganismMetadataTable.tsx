@@ -52,17 +52,22 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
     const [inputFieldSearch, setInputFieldSearch] = useState<string>('');
     const [generatedFieldSearch, setGeneratedFieldSearch] = useState<string>('');
 
+    // Mapping of input fields to their corresponding metadata
+    // Some input fields, such as extraInputFields in the config, do not have corresponding metadata
     const inputFieldsMetadata = useMemo(() => {
-        const inputFieldNames = new Set(
-            Array.from(organism.groupedInputFields.values())
-                .flat()
-                .map((field) => field.name),
-        );
-        return new Map(
-            organism.metadata.filter((meta) => inputFieldNames.has(meta.name)).map((meta) => [meta.name, meta]),
-        );
+        const inputFieldNames = [
+            ...new Set(
+                Array.from(organism.groupedInputFields.values())
+                    .flat()
+                    .map((field) => field.name),
+            ),
+        ];
+
+        const organismMetadataMap = new Map(organism.metadata.map((meta) => [meta.name, meta]));
+        return new Map(inputFieldNames.map((fieldName) => [fieldName, organismMetadataMap.get(fieldName)]));
     }, [organism]);
 
+    // Generated fields grouped by header
     const groupedGeneratedFields = useMemo(() => {
         const groupedFields = new Map<string, Metadata[]>();
 
