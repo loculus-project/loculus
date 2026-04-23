@@ -40,6 +40,7 @@ import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.MODE
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.AccessionVersionUnprocessedMetadata
+import org.loculus.backend.api.AccessionVersionWithOrganism
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
@@ -884,6 +885,47 @@ class SubmissionDatabaseService(
             statusCounts = statusCounts,
             processingResultCounts = processingResultCounts,
         )
+    }
+
+    fun streamDetailsForAccessions(
+        accessions: List<Accession>,
+        accessionVersions: List<AccessionVersion>,
+    ): Sequence<AccessionVersionWithOrganism> {
+        val accessionCondition = if (accessions.isNotEmpty()) {
+            SequenceEntriesView.accessionIsOneOf(accessions)
+        } else {
+            Op.FALSE
+        }
+        val accessionVersionCondition = if (accessionVersions.isNotEmpty()) {
+            SequenceEntriesView.accessionVersionIsIn(accessionVersions)
+        } else {
+            Op.FALSE
+        }
+
+        return SequenceEntriesView
+            .select(
+                SequenceEntriesView.accessionColumn,
+                SequenceEntriesView.versionColumn,
+                SequenceEntriesView.organismColumn,
+                SequenceEntriesView.isRevocationColumn,
+                SequenceEntriesView.submittedAtTimestampColumn,
+            )
+            .where {
+                SequenceEntriesView.statusIs(APPROVED_FOR_RELEASE) and
+                    (accessionCondition or accessionVersionCondition)
+            }
+            .orderBy(SequenceEntriesView.accessionColumn, SortOrder.ASC)
+            .orderBy(SequenceEntriesView.versionColumn, SortOrder.ASC)
+            .asSequence()
+            .map { row ->
+                AccessionVersionWithOrganism(
+                    accession = row[SequenceEntriesView.accessionColumn],
+                    version = row[SequenceEntriesView.versionColumn],
+                    organism = row[SequenceEntriesView.organismColumn],
+                    isRevocation = row[SequenceEntriesView.isRevocationColumn],
+                    submittedAt = row[SequenceEntriesView.submittedAtTimestampColumn].toTimestamp(),
+                )
+            }
     }
 
     private fun getStatusCounts(organism: Organism, groupCondition: Op<Boolean>): Map<Status, Int> {

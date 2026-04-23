@@ -10,6 +10,8 @@ import {
     sequenceEntryToEdit,
     pipelineVersionStatistics,
     currentPipelineVersions,
+    accessionVersionWithOrganism,
+    type AccessionVersionWithOrganism,
     type ProblemDetail,
     type CompleteMultipartUploadRequest,
 } from '../types/backend.ts';
@@ -95,6 +97,51 @@ export class BackendClient {
             fileIdsAndEtags,
             undefined,
         );
+    }
+
+    public async getDetails(params: {
+        accessionOrAccessionVersions: string[];
+    }): Promise<Result<AccessionVersionWithOrganism[], ProblemDetail>> {
+        const searchParams = new URLSearchParams();
+
+        for (const entry of params.accessionOrAccessionVersions) {
+            searchParams.append('accessionOrAccessionVersions', entry);
+        }
+
+        try {
+            const response: { data: string } = await axios.get(`${this.url}/get-details`, {
+                params: searchParams,
+                responseType: 'text',
+                headers: {
+                    accept: 'application/x-ndjson',
+                },
+            });
+
+            const lines = response.data
+                .split('\n')
+                .map((line: string) => line.trim())
+                .filter((line: string) => line.length > 0);
+
+            const results: AccessionVersionWithOrganism[] = [];
+
+            for (const line of lines) {
+                const json = JSON.parse(line);
+                const parsed = accessionVersionWithOrganism.safeParse(json);
+
+                if (parsed.success) {
+                    results.push(parsed.data);
+                }
+            }
+
+            return ok(results);
+        } catch {
+            return err({
+                type: 'about:blank',
+                title: 'bad response',
+                status: 0,
+                detail: `Failed to get sequence entry versions with params: ${JSON.stringify(params)}`,
+            });
+        }
     }
 
     public async isInDebugMode() {
