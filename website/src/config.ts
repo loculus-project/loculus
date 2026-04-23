@@ -255,11 +255,11 @@ export function getDataUseTermsAgreementHTML() {
     return getWebsiteConfig().dataUseTermsAgreementHTML;
 }
 
-function readTypedConfigFile<T>(fileName: string, schema: z.ZodType<T>) {
+function readTypedConfigFile<Schema extends z.ZodTypeAny>(fileName: string, schema: Schema): z.infer<Schema> {
     const configFilePath = path.join(getConfigDir(), fileName);
     const json = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));
     try {
-        return schema.parse(json);
+        return schema.parse(json) as z.infer<Schema>;
     } catch (e) {
         const zodError = e as ZodError;
         throw new Error(`Type error reading ${configFilePath}: ${zodError.message}`);

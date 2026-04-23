@@ -6,6 +6,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const allowedServiceNames = ['authentication'];
 
 const serviceParam = Astro.url.searchParams.get('service');
+const isReadOnly = serviceParam?.toLowerCase() === 'readonly';
 
 let service = 'Internal';
 let bodyService = 'internal service you are trying to access';
@@ -15,11 +16,23 @@ if (serviceParam !== null && serviceParam !== '' && allowedServiceNames.includes
 }
 ---
 
-<BaseLayout title={`${service} service unavailable`}>
-    <div class='bc'>
-        <h1 class='title'>{`${service} service unavailable`}</h1>
-        <p>
-            The {bodyService} is currently unavailable. Please check back later.
-        </p>
-    </div>
-</BaseLayout>
+{
+    isReadOnly ? (
+        <BaseLayout title='Read-only mode'>
+            <div class='bc'>
+                <h1 class='title'>Read-only mode</h1>
+                <p>
+                    This Loculus instance is currently in read-only mode. Login, submissions, and other write operations
+                    are disabled. You can still browse and search existing data.
+                </p>
+            </div>
+        </BaseLayout>
+    ) : (
+        <BaseLayout title={`${service} service unavailable`}>
+            <div class='bc'>
+                <h1 class='title'>{`${service} service unavailable`}</h1>
+                <p>The {bodyService} is currently unavailable. Please check back later.</p>
+            </div>
+        </BaseLayout>
+    )
+}

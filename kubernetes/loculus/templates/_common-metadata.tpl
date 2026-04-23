@@ -208,6 +208,7 @@ additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}
 enableLoginNavigationItem: {{ $.Values.website.websiteConfig.enableLoginNavigationItem }}
 enableSubmissionNavigationItem: {{ $.Values.website.websiteConfig.enableSubmissionNavigationItem }}
 enableSubmissionPages: {{ $.Values.website.websiteConfig.enableSubmissionPages }}
+readOnlyMode: {{ $.Values.readOnlyMode | default false }}
 enableSeqSets: {{ $.Values.seqSets.enabled }}
 {{- if $.Values.seqSets.fieldsToDisplay }}
 seqSetsFieldsToDisplay: {{ $.Values.seqSets.fieldsToDisplay | toJson }}
@@ -430,6 +431,7 @@ fields:
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 zstdCompressionLevel: {{ $.Values.zstdCompressionLevel }}
 pipelineVersionUpgradeCheckIntervalSeconds: {{ $.Values.pipelineVersionUpgradeCheckIntervalSeconds }}
+readOnlyMode: {{ $.Values.readOnlyMode | default false }}
 name: {{ quote $.Values.name }}
 dataUseTerms:
   {{$.Values.dataUseTerms | toYaml | nindent 2}}
