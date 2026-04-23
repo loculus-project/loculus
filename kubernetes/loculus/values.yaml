@@ -1667,6 +1667,7 @@ defaultOrganisms:
         - name: mutations_from_founder
           header: "Alignment and QC metrics"
           displayName: "Amino Acid Mutations from founder clade"
+          definition: "Private amino acid mutations in this sequence relative to the founder of its assigned clade."
           customDisplay:
             type: generatedBadge
           noInput: true
@@ -1681,6 +1682,7 @@ defaultOrganisms:
           perSegment: true
           header: "Alignment and QC metrics"
           displayName: "Variant"
+          definition: "Indicates whether the sequence is sufficiently divergent from its closest reference to be classified as a distinct variant, based on whether the number of private nucleotide substitutions exceeds a threshold relative to sequence length."
           type: boolean
           noInput: true
           autocomplete: true
@@ -2018,6 +2020,7 @@ defaultOrganisms:
       metadataAdd:
         - name: hostNameScientific
           displayName: Host name - scientific
+          definition: "The scientific name of the host from which the sample was collected."
           generateIndex: true
           autocomplete: true
           customDisplay:
@@ -2158,6 +2161,7 @@ defaultOrganisms:
       metadataAdd:
         - name: hostNameScientific
           displayName: Host name - scientific
+          definition: "The scientific name of the host from which the sample was collected."
           generateIndex: true
           autocomplete: true
           customDisplay:
@@ -2172,6 +2176,7 @@ defaultOrganisms:
           header: "Clade & Lineage"
           oneHeader: true
           displayName: "Variant L"
+          definition: "Indicates whether the segment is sufficiently divergent from its closest reference to be classified as a distinct variant, based on whether the number of nucleotide substitutions exceeds a threshold relative to segment length."
           relatesToSegment: L
           type: boolean
           noInput: true
@@ -2192,6 +2197,7 @@ defaultOrganisms:
           header: "Clade & Lineage"
           oneHeader: true
           displayName: "Variant M"
+          definition: "Indicates whether the segment is sufficiently divergent from its closest reference to be classified as a distinct variant, based on whether the number of nucleotide substitutions exceeds a threshold relative to segment length."
           relatesToSegment: M
           type: boolean
           noInput: true
@@ -2212,6 +2218,7 @@ defaultOrganisms:
           header: "Clade & Lineage"
           oneHeader: true
           displayName: "Variant S"
+          definition: "Indicates whether the segment is sufficiently divergent from its closest reference to be classified as a distinct variant, based on whether the number of nucleotide substitutions exceeds a threshold relative to segment length."
           relatesToSegment: S
           type: boolean
           noInput: true
@@ -2233,6 +2240,7 @@ defaultOrganisms:
           header: "Clade & Lineage"
           isSequenceFilter: true
           displayName: Closest reference
+          definition: "The reference genome this sequence was most closely assigned to by Nextclade."
           customDisplay:
             type: variantReference
             displayGroup: reference
@@ -2380,6 +2388,7 @@ defaultOrganisms:
           isSequenceFilter: true
           relatesToSegment: main
           displayName: Clade CV-A16
+          definition: "The clade assigned by Nextclade, only populated for sequences of genotype CV-A16."
           onlyForReference: CV-A16
           header: "Clade"
           noInput: true
@@ -2394,6 +2403,7 @@ defaultOrganisms:
           isSequenceFilter: true
           relatesToSegment: main
           displayName: Clade CV-A10
+          definition: "The clade assigned by Nextclade, only populated for sequences of genotype CV-A10."
           onlyForReference: CV-A10
           preprocessing:
             inputs: {input: nextclade.clade}
@@ -2402,6 +2412,7 @@ defaultOrganisms:
           isSequenceFilter: true
           relatesToSegment: main
           displayName: Clade EV-A71
+          definition: "The clade assigned by Nextclade, only populated for sequences of genotype EV-A71."
           onlyForReference: EV-A71
           preprocessing:
             inputs: {input: nextclade.clade}
@@ -2410,12 +2421,14 @@ defaultOrganisms:
           isSequenceFilter: true
           relatesToSegment: main
           displayName: Clade EV-D68
+          definition: "The clade assigned by Nextclade, only populated for sequences of genotype EV-D68."
           onlyForReference: EV-D68
           preprocessing:
             inputs: {input: nextclade.clade}
         - name: genotype
           isSequenceFilter: true
           displayName: Genotype
+          definition: "The genotype of this sequence, determined by which Nextclade reference dataset the sequence was assigned to during processing."
           header: "Genotype"
           noInput: true
           generateIndex: true
