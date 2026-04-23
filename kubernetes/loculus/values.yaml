@@ -1559,6 +1559,7 @@ defaultOrganisms:
               regex_pattern: '^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$'
         - name: hostTaxonId
           type: string
+          lineageSystem: host_taxonomy
           autocomplete: true
           displayName: "Host species"
           customDisplay:

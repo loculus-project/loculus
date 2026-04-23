@@ -8,10 +8,7 @@ import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Response
 import yaml
 
-from taxonomy_service.datatypes import SubtreeRequestBody
-<<<<<< HEAD
-
-from taxonomy_service.datatypes import Taxon
+from taxonomy_service.datatypes import SubtreeRequestBody, Taxon
 
 from .config import Config
 

@@ -15,7 +15,7 @@ from .errors import (
 )
 from .filesystem import prune_timestamped_directories, safe_remove
 from .instruct_silo import SiloRunner
-from .lineage import update_lineage_definitions
+from .lineage import update_lineage_definitions, update_taxonomic_lineage
 from .paths import ImporterPaths
 
 logger = logging.getLogger(__name__)
@@ -79,8 +79,8 @@ class ImporterRunner:
             return
 
         try:
-            update_lineage_definitions(download.pipeline_version, self.config, self.paths)
-            update_taxonomic_lineage(taxa, self.config, self.paths)
+            update_lineage_definitions(download.analysis.pipeline_version, self.config, self.paths)
+            update_taxonomic_lineage(download.analysis.host_taxon_ids, self.config, self.paths)
         except Exception:
             logger.exception("Failed to download lineage definitions; cleaning up input")
             safe_remove(self.paths.silo_input_data_path)

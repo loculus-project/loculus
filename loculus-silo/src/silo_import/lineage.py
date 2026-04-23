@@ -51,14 +51,16 @@ def update_taxonomic_lineage(
     config: ImporterConfig,
     paths: ImporterPaths,
 ) -> None:
+    destination = paths.input_dir / HOST_TAXONOMY_FILENAME
     if not config.taxonomy_service_url or not taxa:
         logger.info("Skipping host taxonomy fetch (not configured or no taxa)")
+        _write_text(destination, "{}\n")
         return
 
     url = f"{config.taxonomy_service_url.rstrip('/')}/silo-lineage"
     logger.info("Fetching host taxonomy subtree for %d taxa", len(taxa))
     try:
-        _fetch_taxonomic_lineage(url, sorted(taxa), paths.input_dir / HOST_TAXONOMY_FILENAME)
+        _fetch_taxonomic_lineage(url, sorted(taxa), destination)
     except requests.RequestException as exc:
         msg = f"Failed to fetch host taxonomy from {url}: {exc}"
         raise RuntimeError(msg) from exc
