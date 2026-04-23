@@ -45,7 +45,6 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     val statusColumn = varchar("status", 255)
     val processingResultColumn = varchar("processing_result", 255).nullable()
     val isRevocationColumn = bool("is_revocation").default(false)
-    val versionCommentColumn = varchar("version_comment", 255).nullable()
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
     val warningsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
     val pipelineVersionColumn = long("pipeline_version").nullable()
