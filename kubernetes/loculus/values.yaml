@@ -33,7 +33,7 @@ disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
 disableTaxonomyService: false
-readOnlyMode: true # TODO: disable once migration/maintenance is complete
+readOnlyMode: false
 website:
   websiteConfig:
     enableLoginNavigationItem: true
