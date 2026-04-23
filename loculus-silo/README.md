@@ -23,8 +23,8 @@ Environment variables mirror the historical shell scripts:
 - `BACKEND_BASE_URL` (required)
 - `LINEAGE_DEFINITIONS` (optional JSON mapping `pipelineVersion -> URL`)
 - `HARD_REFRESH_INTERVAL` (seconds, default `3600`)
-- `SILO_IMPORT_POLL_INTERVAL_SECONDS` (default `30`)
-- `SILO_RUN_TIMEOUT_SECONDS` (default `3600`)
+- `LOCULUS_SILO_IMPORT_POLL_INTERVAL_SECONDS` (default `30`)
+- `LOCULUS_SILO_RUN_TIMEOUT_SECONDS` (default `3600`)
 - `ROOT_DIR` (optional alternative root for the `/preprocessing` tree)
 
 ## Container image
