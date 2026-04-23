@@ -73,6 +73,8 @@ lineageSystemDefinitions:
     4: https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml
   cchfS:
     1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml
+  hostOrganism:
+    1: https://raw.githubusercontent.com/maverbiest/silo-lineage-hierarchy-definitions/fc6fa2dddc6e9394b344d59ff86fb32a24c6fe18/definitions/taxonomy/2026-04-16/lineages.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     submissionDataTypes: &defaultSubmissionDataTypes
@@ -1186,7 +1188,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           displayGroup: lengthCompleteness
           label: Length
       - name: hostTaxonId
-        type: int
+        type: string
         autocomplete: true
         displayName: "Host species"
         customDisplay:
@@ -1556,9 +1558,10 @@ defaultOrganisms:
               # - Identifier is the second to last field (extracted through named capture group)
               regex_pattern: '^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$'
         - name: hostTaxonId
-          type: int
+          type: string
           autocomplete: true
           displayName: "Host species"
+          lineageSystem: hostOrganism
           customDisplay:
             type: hostSpecies
             displayGroup: hostSpecies
