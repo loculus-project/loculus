@@ -16,7 +16,7 @@ class ImporterConfig:
     root_dir: Path
     silo_binary: Path
     preprocessing_config: Path
-    taxonomy_service_url: str | None
+    taxonomy_service_url: str | None = None
 
     @classmethod
     def from_env(cls) -> ImporterConfig:
