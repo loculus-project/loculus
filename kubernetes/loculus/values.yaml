@@ -122,7 +122,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: sampleCollectionDate
         displayName: Collection date
         definition: "The date on which the sample was collected."
-        guidance: "Please format `YYYY-MM-DD`. If day is unknown, use `YYYY-MM` (e.g., `2020-03`). If both day and month are unknown, use `YYYY` (e.g., `2020`). Please provide at least a year."
+        guidance: "Please format the date as `YYYY-MM-DD`. If day is unknown, use `YYYY-MM` (e.g., `2020-03`). If both day and month are unknown, use `YYYY` (e.g., `2020`). Please provide at least a year."
         example: "2020-03-15"
         header: Sample details
         ingest: ncbiCollectionDate
@@ -191,7 +191,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
       - name: ncbiReleaseDate
         displayName: NCBI release date
-        definition: Date the viral nucleotide accession was first released in NCBI Virus.
+        definition: Date the viral nucleotide accession was first released on the INSDC.
         type: date
         header: "INSDC"
         orderOnDetailsPage: 1000
@@ -203,7 +203,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         columnWidth: 100
       - name: earliestReleaseDate
         displayName: Earliest release date
-        definition: The earliest release date for the accession, across all versions in both Loculus and NCBI Virus.
+        definition: The earliest release date for the accession, across all versions in both Loculus and the INSDC.
         header: Sample details
         type: date
         rangeSearch: true
@@ -213,7 +213,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: ncbiUpdateDate
         type: date
         displayName: NCBI update date
-        definition: Date the viral nucleotide accession was last updated in NCBI Virus.
+        definition: Date the viral nucleotide accession was last updated on the INSDC.
         header: "INSDC"
         orderOnDetailsPage: 1020
         preprocessing:
@@ -2240,7 +2240,7 @@ defaultOrganisms:
           header: "Clade & Lineage"
           isSequenceFilter: true
           displayName: Closest reference
-          definition: "The reference genome this sequence was most closely assigned to by Nextclade."
+          definition: "The reference genome this sequence was most closely assigned to according to Nextclade."
           customDisplay:
             type: variantReference
             displayGroup: reference

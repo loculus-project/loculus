@@ -48,7 +48,7 @@ fields:
     hideOnSequenceDetailsPage: true
     header: Submission details
     orderOnDetailsPage: 5010
-    definition: {{ printf "Name of the %s user which submitted the sequence record." $.Values.name | quote }}
+    definition: {{ printf "Name of the %s user who submitted the sequence record." $.Values.name | quote }}
   - name: groupName
     type: string
     generateIndex: true
@@ -67,7 +67,7 @@ fields:
     header: Submission details
     displayName: Submitting group (numeric ID)
     orderOnDetailsPage: 5030
-    definition: "Numeric ID of the group which submitted the sequence record."
+    definition: "Numeric ID of the group that submitted the sequence record."
     customDisplay:
       type: submittingGroup
       displayGroup: group
