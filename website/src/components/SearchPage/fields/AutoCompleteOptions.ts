@@ -211,6 +211,9 @@ const createLineageOptionsHook = (
             Object.keys(lineageDefinition).forEach((lineageName) => {
                 const count: number = aggregatedCounts.get(lineageName) ?? 0;
                 options.push({ option: lineageName, value: lineageName, count });
+                (lineageDefinition[lineageName].aliases ?? []).forEach((a) => {
+                    options.push({ option: a, value: lineageName, count });
+                });
             });
         }
 
