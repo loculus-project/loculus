@@ -165,7 +165,7 @@ def build_silo_lineage(
 
     if node_id in keep_ids:
         taxon = tree[node_id]
-        alias = f"{node_id}; {taxon.scientific_name}"
+        alias = f"Taxon {node_id}: {taxon.scientific_name}"
         if taxon.common_name is not None:
             alias += f"; {taxon.common_name}"
         result[str(node_id)] = {
