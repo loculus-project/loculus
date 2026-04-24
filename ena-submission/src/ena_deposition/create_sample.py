@@ -231,8 +231,8 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config):
         if len(corresponding_sample) == 1:
             if corresponding_sample[0].status == Status.SUBMITTED:
                 update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
+                    db_engine,
+                    model_class=SubmissionTableEntry,
                     conditions=seq_key,
                     update_values={"status_all": StatusAll.SUBMITTED_SAMPLE},
                 )
