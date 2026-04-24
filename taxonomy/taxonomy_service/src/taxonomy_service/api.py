@@ -113,7 +113,7 @@ def fetch_common_name(db_conn: sqlite3.Connection, taxon: Taxon) -> Taxon | None
 
 def get_spanning_tree(
     db_conn: sqlite3.Connection, tax_ids: set[int]
-) -> list[tuple[int, int]]:
+) -> dict[int, Taxon]:
     """Run a recursive CTE against the database to collect the path
     from each taxon in tax_ids to the root node.
 
@@ -124,10 +124,10 @@ def get_spanning_tree(
     rows = db_conn.execute(
         f"""
       WITH RECURSIVE ancestors AS (
-          SELECT tax_id, parent_id
+          SELECT *
           FROM taxonomy WHERE tax_id IN ({placeholders})
           UNION
-          SELECT t.tax_id, t.parent_id
+          SELECT t.*
           FROM taxonomy t JOIN ancestors a ON t.tax_id = a.parent_id
           WHERE t.tax_id != t.parent_id
       )
@@ -136,14 +136,14 @@ def get_spanning_tree(
         list(tax_ids),
     ).fetchall()
 
-    return [(row["tax_id"], row["parent_id"]) for row in rows]
+    return {row["tax_id"]: Taxon.from_row(row) for row in rows}
 
 
-def map_child_nodes(tree: list[tuple[int, int]]) -> dict[int, list[int]]:
+def map_child_nodes(tree: dict[int, Taxon]) -> dict[int, list[int]]:
     children: dict[int, list[int]] = defaultdict(list)
-    for tax_id, parent_id in tree:
-        if tax_id != parent_id:
-            children[parent_id].append(tax_id)
+    for taxon in tree.values():
+        if taxon.tax_id != taxon.parent_id:
+            children[taxon.parent_id].append(taxon.tax_id)
     for child_list in children.values():
         child_list.sort()
     return children
@@ -152,6 +152,7 @@ def map_child_nodes(tree: list[tuple[int, int]]) -> dict[int, list[int]]:
 def build_silo_lineage(
     node_id: int,
     keep_ids: set[int],
+    tree: dict[int, Taxon],
     children: dict[int, list[int]],
     parent_in_output: int | None,
 ) -> dict[str, dict]:
@@ -163,8 +164,12 @@ def build_silo_lineage(
     result: dict[str, dict] = {}
 
     if node_id in keep_ids:
+        taxon = tree[node_id]
+        alias = f"{node_id}; {taxon.scientific_name}"
+        if taxon.common_name is not None:
+            alias += f"; {taxon.common_name}"
         result[str(node_id)] = {
-            "aliases": [],
+            "aliases": [alias],
             "parents": [str(parent_in_output)] if parent_in_output is not None else [],
         }
         next_parent = (
@@ -174,7 +179,9 @@ def build_silo_lineage(
         next_parent = parent_in_output  # skip this node, pass through current parent
 
     for child_id in children.get(node_id, []):
-        result.update(build_silo_lineage(child_id, keep_ids, children, next_parent))
+        result.update(
+            build_silo_lineage(child_id, keep_ids, tree, children, next_parent)
+        )
 
     return result
 
@@ -233,7 +240,7 @@ def get_silo_lineage(
 
     spanning_tree = get_spanning_tree(db, taxon_ids)
     children = map_child_nodes(spanning_tree)
-    lineage = build_silo_lineage(1, taxon_ids, children, None)
+    lineage = build_silo_lineage(1, taxon_ids, spanning_tree, children, None)
 
     missing = (taxon_ids - {1}) - {int(k) for k in lineage}
     if missing:
