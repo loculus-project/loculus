@@ -81,13 +81,6 @@ class Status(StrEnum):
     WAITING = "WAITING"  # Only for assembly creation
 
 
-class TableName(StrEnum):
-    PROJECT_TABLE = "project_table"
-    SAMPLE_TABLE = "sample_table"
-    ASSEMBLY_TABLE = "assembly_table"
-    SUBMISSION_TABLE = "submission_table"
-
-
 type Accession = str
 type Version = int
 
