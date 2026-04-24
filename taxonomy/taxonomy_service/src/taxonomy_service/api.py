@@ -1,7 +1,7 @@
 from collections import defaultdict
 import logging
 import sqlite3
-from collections.abc import Generator
+from collections.abc import Generator, Iterable
 from typing import Annotated
 
 import uvicorn
@@ -111,9 +111,7 @@ def fetch_common_name(db_conn: sqlite3.Connection, taxon: Taxon) -> Taxon | None
     return None
 
 
-def get_spanning_tree(
-    db_conn: sqlite3.Connection, tax_ids: set[int]
-) -> dict[int, Taxon]:
+def get_spanning_tree(db_conn: sqlite3.Connection, tax_ids: set[int]) -> list[Taxon]:
     """Run a recursive CTE against the database to collect the path
     from each taxon in tax_ids to the root node.
 
@@ -132,56 +130,83 @@ def get_spanning_tree(
           WHERE t.tax_id != t.parent_id
       )
       SELECT * FROM ancestors
+      ORDER BY depth, tax_id
     """,
         list(tax_ids),
     ).fetchall()
 
-    return {row["tax_id"]: Taxon.from_row(row) for row in rows}
+    return [Taxon.from_row(row) for row in rows]
 
 
-def map_child_nodes(tree: dict[int, Taxon]) -> dict[int, list[int]]:
+def map_child_nodes(tree: list[Taxon]) -> dict[int, list[int]]:
+    """Take a list of Taxons (each of which declares its parent) and
+    return a dict that maps each Taxon's id to its children
+    """
     children: dict[int, list[int]] = defaultdict(list)
-    for taxon in tree.values():
+
+    for taxon in tree:
         if taxon.tax_id != taxon.parent_id:
             children[taxon.parent_id].append(taxon.tax_id)
     for child_list in children.values():
         child_list.sort()
+
     return children
 
 
-def build_silo_lineage(
-    node_id: int,
+def prune_tree(
+    tree: list[Taxon],
     keep_ids: set[int],
-    tree: dict[int, Taxon],
-    children: dict[int, list[int]],
-    parent_in_output: int | None,
-) -> dict[str, dict]:
-    """Build a dict representing a SILO-formatted lineage.
+    root_id: int,
+) -> list[Taxon]:
+    """Return a list of Taxa pruned to `keep_ids`, rooted at `root_id`.
+    Pruned taxa are skipped; their children reattach to the nearest kept ancestor
+    to preserve the overall hierarchy.
+    """
+    indexed_by_id: dict[int, Taxon] = {t.tax_id: t for t in tree}
+    children = map_child_nodes(tree)
+    return list(_prune(indexed_by_id, keep_ids, children, root_id, root_id).values())
 
-    Prune nodes that aren't in `keep_ids`. If a node is pruned, connect
-    its child nodes to the node's parent so the overall hierarchy is preserved.
+
+def _prune(
+    tree_by_id: dict[int, Taxon],
+    keep_ids: set[int],
+    children: dict[int, list[int]],
+    node_id: int,
+    parent_in_output: int,
+) -> dict[int, Taxon]:
+    result: dict[int, Taxon] = {}
+
+    current_taxon = tree_by_id[node_id]
+    if current_taxon.tax_id in keep_ids:
+        result[node_id] = current_taxon.model_copy(
+            update={"parent_id": parent_in_output}
+        )
+        next_parent = current_taxon.tax_id
+    else:
+        next_parent = parent_in_output
+
+    for child_id in children.get(node_id, []):
+        result.update(_prune(tree_by_id, keep_ids, children, child_id, next_parent))
+
+    return result
+
+
+def convert_to_silo_yaml(taxa: Iterable[Taxon]) -> dict[str, dict]:
+    """Generate a dict that can be dumped to a SILO-compatible yaml
+    file representing the taxonomic hierarchy.
     """
     result: dict[str, dict] = {}
 
-    if node_id in keep_ids:
-        taxon = tree[node_id]
-        alias = f"Taxon {node_id}: {taxon.scientific_name}"
+    for taxon in taxa:
+        alias = f"Taxon {taxon.tax_id}: {taxon.scientific_name}"
         if taxon.common_name is not None:
             alias += f"; {taxon.common_name}"
-        result[str(node_id)] = {
+        result[str(taxon.tax_id)] = {
             "aliases": [alias],
-            "parents": [str(parent_in_output)] if parent_in_output is not None else [],
+            "parents": [str(taxon.parent_id)]
+            if taxon.tax_id != taxon.parent_id
+            else [],
         }
-        next_parent = (
-            node_id  # this node becomes the nearest-kept-parent for descendants
-        )
-    else:
-        next_parent = parent_in_output  # skip this node, pass through current parent
-
-    for child_id in children.get(node_id, []):
-        result.update(
-            build_silo_lineage(child_id, keep_ids, tree, children, next_parent)
-        )
 
     return result
 
@@ -226,8 +251,7 @@ def get_taxon(
 
 @app.post("/silo-lineage")
 def get_silo_lineage(
-    payload: SubtreeRequestBody,
-    db: DbConnection,
+    payload: SubtreeRequestBody, db: DbConnection, prune: bool = False
 ) -> Response:
     taxon_ids = {1}  # always include the root node
     for i in payload.tax_ids:
@@ -239,8 +263,9 @@ def get_silo_lineage(
             )
 
     spanning_tree = get_spanning_tree(db, taxon_ids)
-    children = map_child_nodes(spanning_tree)
-    lineage = build_silo_lineage(1, taxon_ids, spanning_tree, children, None)
+    if prune:
+        spanning_tree = prune_tree(spanning_tree, taxon_ids, root_id=1)
+    lineage = convert_to_silo_yaml(spanning_tree)
 
     missing = (taxon_ids - {1}) - {int(k) for k in lineage}
     if missing:
