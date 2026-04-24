@@ -193,9 +193,25 @@ const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): Metada
     return result;
 };
 
-const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
+const consolidateGroupedFields = (
+    metadataSchema: Metadata[],
+    filters: MetadataFilter[],
+): (MetadataFilter | GroupedMetadataFilter)[] => {
     const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
     const groupsMap = new Map<string, GroupedMetadataFilter>();
+    const definitionsMap = new Map(
+        metadataSchema.map((field) => {
+            if (field.rangeOverlapSearch) {
+                const definitionField = field.rangeOverlapSearch.rangeDefinitionField;
+                return [
+                    field.rangeOverlapSearch.rangeName,
+                    metadataSchema.find((f) => f.name === definitionField)?.definition,
+                ];
+            } else {
+                return [field.name, field.definition];
+            }
+        }),
+    );
 
     for (const filter of filters) {
         if (filter.fieldGroup !== undefined) {
@@ -206,6 +222,7 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
                     type: filter.type,
                     grouped: true,
                     displayName: filter.fieldGroupDisplayName,
+                    definition: definitionsMap.get(filter.fieldGroup),
                     initiallyVisible: filter.initiallyVisible,
                     header: filter.header,
                     isSequenceFilter: filter.isSequenceFilter,
@@ -231,7 +248,7 @@ export class MetadataFilterSchema {
 
     constructor(metadataSchema: Metadata[]) {
         const expandedFilters = getMetadataSchemaWithExpandedRanges(metadataSchema);
-        this.filters = consolidateGroupedFields(expandedFilters);
+        this.filters = consolidateGroupedFields(metadataSchema, expandedFilters);
     }
 
     public ungroupedMetadataFilters(): MetadataFilter[] {
