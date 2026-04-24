@@ -176,7 +176,7 @@ def set_sample_table_entry(
     biosample = row.seq_metadata["biosampleAccession"]
 
     logger.info("Checking if biosample actually exists and is public")
-    seq_key = {"accession": row.accession, "version": row.version}
+    seq_key = asdict(row.pkey)
     if not accession_exists(biosample, config):
         set_accession_does_not_exist_error(
             conditions=seq_key,
@@ -223,7 +223,7 @@ def submission_table_start(db_engine: Engine, config: Config):
         f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_PROJECT"
     )
     for row in ready_to_submit:
-        seq_key = {"accession": row.accession, "version": row.version}
+        seq_key = asdict(row.pkey)
 
         # 1. check if there exists an entry in the sample table for seq_key
         corresponding_sample = find_conditions_in_db(
@@ -265,7 +265,7 @@ def submission_table_update(db_engine: Engine):
         f"Found {len(submitting_sample)} entries in submission_table in status SUBMITTING_SAMPLE"
     )
     for row in submitting_sample:
-        seq_key = {"accession": row.accession, "version": row.version}
+        seq_key = asdict(row.pkey)
 
         # 1. check if there exists an entry in the sample table for seq_key
         corresponding_sample = find_conditions_in_db(
