@@ -48,7 +48,6 @@ const MetadataSearchBar: FC<MetadataSearchBarProps> = ({ value, onChange, placeh
 
 export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ organism }) => {
     const [activeTab, setActiveTab] = useState<FieldType | null>(null);
-    const [showDisplayNames, setShowDisplayNames] = useState<boolean>(false);
     const [inputFieldSearch, setInputFieldSearch] = useState<string>('');
     const [generatedFieldSearch, setGeneratedFieldSearch] = useState<string>('');
 
@@ -128,15 +127,6 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
                     label='Generated fields'
                     className='text-base'
                 />
-                <label className='ml-auto flex items-center gap-2 text-sm cursor-pointer p-2'>
-                    <input
-                        type='checkbox'
-                        className='h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 cursor-pointer'
-                        checked={showDisplayNames}
-                        onChange={(e) => setShowDisplayNames(e.target.checked)}
-                    />
-                    Show display names
-                </label>
             </BoxWithTabsTabBar>
             <BoxWithTabsBox>
                 {activeTab === FieldType.INPUT && (
@@ -163,7 +153,6 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
                                     header={header}
                                     metadata={organism.metadata}
                                     fields={typedInputFields}
-                                    showDisplayNames={showDisplayNames}
                                     search={inputFieldSearch}
                                     isInputFields
                                 />
@@ -184,7 +173,6 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
                                 header={header}
                                 metadata={organism.metadata}
                                 fields={generatedFields}
-                                showDisplayNames={showDisplayNames}
                                 search={generatedFieldSearch}
                             />
                         ))}
@@ -202,7 +190,6 @@ type MetadataTableProps =
           header: string;
           metadata: Metadata[];
           fields: Metadata[];
-          showDisplayNames: boolean;
           search: string;
           isInputFields?: false;
       }
@@ -210,26 +197,30 @@ type MetadataTableProps =
           header: string;
           metadata: Metadata[];
           fields: TypedInputField[];
-          showDisplayNames: boolean;
           search: string;
           isInputFields: true;
       };
 
-function containsSearch(field: Metadata | TypedInputField, search: string): boolean {
-    const searchLower = search.toLowerCase();
-    return (
-        field.name.toLowerCase().includes(searchLower) ||
-        field.type.toLowerCase().includes(searchLower) ||
-        (field.displayName?.toLowerCase().includes(searchLower) ?? false) ||
-        (field.definition?.toLowerCase().includes(searchLower) ?? false) ||
-        ('guidance' in field && (field.guidance?.toLowerCase().includes(searchLower) ?? false)) ||
-        (('example' in field && field.example?.toString().toLowerCase().includes(searchLower)) ?? false)
-    );
+function containsSearch(header: string, field: Metadata | TypedInputField, search: string): boolean {
+    const searchTokens = search.toLowerCase().trim().split(/\s+/);
+    const contents = [
+        header.toLowerCase(),
+        field.name.toLowerCase(),
+        field.type.toLowerCase(),
+        field.displayName?.toLowerCase() ?? '',
+        field.definition?.toLowerCase() ?? '',
+        'guidance' in field ? (field.guidance?.toLowerCase() ?? '') : '',
+        'example' in field ? (field.example?.toString().toLowerCase() ?? '') : '',
+    ].join(' ');
+
+    return searchTokens.every((searchToken) => contents.includes(searchToken));
 }
 
 const MetadataTableSection: FC<MetadataTableProps> = (props) => {
     const [expandedHeader, setExpandedHeader] = useState<boolean>(true);
-    const filteredFields = props.search ? props.fields.filter((f) => containsSearch(f, props.search)) : props.fields;
+    const filteredFields = props.search
+        ? props.fields.filter((field) => containsSearch(props.header, field, props.search))
+        : props.fields;
     if (filteredFields.length === 0) return <></>;
 
     return (
@@ -259,11 +250,7 @@ const MetadataTableSection: FC<MetadataTableProps> = (props) => {
     );
 };
 
-const FieldNameCell: FC<{ header: string; field: TypedInputField | Metadata; showDisplayNames: boolean }> = ({
-    header,
-    field,
-    showDisplayNames,
-}) => {
+const FieldNameCell: FC<{ header: string; field: TypedInputField | Metadata }> = ({ header, field }) => {
     const handleFieldLink = () => {
         const params = new URLSearchParams(window.location.search);
         const fieldLinkId = getFieldLinkId(header, field.name);
@@ -284,7 +271,7 @@ const FieldNameCell: FC<{ header: string; field: TypedInputField | Metadata; sho
                     ¶
                 </Button>
             </div>
-            {showDisplayNames && <span className='text-xs text-gray-500 mt-1'>{field.displayName}</span>}
+            <span className='text-xs text-gray-500 mt-1'>{field.displayName}</span>
         </div>
     );
 };
@@ -306,11 +293,7 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                           return (
                               <tr id={getFieldLinkId(props.header, field.name)} key={field.name}>
                                   <td className='border border-gray-300 px-4 py-2'>
-                                      <FieldNameCell
-                                          header={props.header}
-                                          field={field}
-                                          showDisplayNames={props.showDisplayNames}
-                                      />
+                                      <FieldNameCell header={props.header} field={field} />
                                   </td>
                                   <td className='border border-gray-300 px-4 py-2'>{field.type}</td>
                                   <td className='border border-gray-300 px-4 py-2'>
@@ -326,11 +309,7 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                     : props.fields.map((field) => (
                           <tr id={getFieldLinkId(props.header, field.name)} key={field.name}>
                               <td className='border border-gray-300 px-4 py-2'>
-                                  <FieldNameCell
-                                      header={props.header}
-                                      field={field}
-                                      showDisplayNames={props.showDisplayNames}
-                                  />
+                                  <FieldNameCell header={props.header} field={field} />
                               </td>
                               <td className='border border-gray-300 px-4 py-2'>
                                   <FormattedText text={field.definition ?? ''} formatLinks />
