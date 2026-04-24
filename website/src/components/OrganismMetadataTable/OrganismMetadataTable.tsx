@@ -19,6 +19,10 @@ enum FieldType {
     GENERATED = 'generatedFields',
 }
 
+function getHeaderLinkId(header: string): string {
+    return header.replaceAll(' ', '_');
+}
+
 function getFieldLinkId(header: string, name: string): string {
     return `${header.replaceAll(' ', '_')}-${name}`;
 }
@@ -78,7 +82,7 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
                 else groupedFields.set(header, [field]);
             });
         return groupedFields;
-    }, [organism]);
+    }, [organism, inputFieldsMetadata]);
 
     // Set the initial active tab based on the URL parameter
     useEffect(() => {
@@ -88,18 +92,45 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
         );
     }, []);
 
-    // Scroll to the field in the URL hash when the component mounts or when the active tab changes
+    // Mapping of link IDs to their corresponding tab(s)
+    const linkIdTabs = useMemo(() => {
+        const map = new Map<string, FieldType[]>();
+
+        // Add input field headers and fields
+        organism.groupedInputFields.forEach((inputFields, header) => {
+            const headerLinkId = getHeaderLinkId(header);
+            map.set(headerLinkId, [FieldType.INPUT]);
+
+            inputFields.forEach((field) => {
+                const fieldLinkId = getFieldLinkId(header, field.name);
+                map.set(fieldLinkId, [FieldType.INPUT]);
+            });
+        });
+
+        // Add generated field headers and fields
+        groupedGeneratedFields.forEach((generatedFields, header) => {
+            const headerLinkId = getHeaderLinkId(header);
+            if (map.has(headerLinkId)) map.get(headerLinkId)?.push(FieldType.GENERATED);
+            else map.set(headerLinkId, [FieldType.GENERATED]);
+
+            generatedFields.forEach((field) => {
+                const fieldLinkId = getFieldLinkId(header, field.name);
+                if (map.has(fieldLinkId)) map.get(fieldLinkId)?.push(FieldType.GENERATED);
+                else map.set(fieldLinkId, [FieldType.GENERATED]);
+            });
+        });
+
+        return map;
+    }, [organism, groupedGeneratedFields]);
+
+    // Scroll to the element in the URL hash when the component mounts or the active tab changes
+    // Uses the linkIdTabs mapping to determine which tab(s) the link ID belongs to,
+    // only scrolling if the active tab matches
     useEffect(() => {
         if (!activeTab) return;
-        const fieldLinkId = window.location.hash.slice(1); // Remove the '#' from the hash
-        const field = fieldLinkId.split('-').pop();
-        if (field) {
-            // Check if the correct tab is active for the field in the URL hash
-            const isInputField = inputFieldsMetadata.has(field);
-            const fieldTab = isInputField ? FieldType.INPUT : FieldType.GENERATED;
-            if (activeTab === fieldTab) scrollElementIntoView(fieldLinkId);
-        }
-    }, [activeTab]);
+        const linkId = window.location.hash.slice(1); // Remove the '#' from the hash
+        if (linkIdTabs.get(linkId)?.includes(activeTab)) scrollElementIntoView(linkId);
+    }, [activeTab, linkIdTabs]);
 
     const handleTabSelect = (fieldType: FieldType) => {
         setActiveTab(fieldType);
@@ -151,7 +182,6 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
                                 <MetadataTableSection
                                     key={header}
                                     header={header}
-                                    metadata={organism.metadata}
                                     fields={typedInputFields}
                                     search={inputFieldSearch}
                                     isInputFields
@@ -171,7 +201,6 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
                             <MetadataTableSection
                                 key={header}
                                 header={header}
-                                metadata={organism.metadata}
                                 fields={generatedFields}
                                 search={generatedFieldSearch}
                             />
@@ -188,14 +217,12 @@ type TypedInputField = InputField & { type: string };
 type MetadataTableProps =
     | {
           header: string;
-          metadata: Metadata[];
           fields: Metadata[];
           search: string;
           isInputFields?: false;
       }
     | {
           header: string;
-          metadata: Metadata[];
           fields: TypedInputField[];
           search: string;
           isInputFields: true;
@@ -224,9 +251,10 @@ const MetadataTableSection: FC<MetadataTableProps> = (props) => {
     if (filteredFields.length === 0) return <></>;
 
     return (
-        <div key={props.header} className='mb-8'>
+        <div className='mb-8'>
             <h3
-                className='text-lg font-semibold mb-4 cursor-pointer'
+                id={getHeaderLinkId(props.header)}
+                className='text-lg font-semibold mb-4 pt-1 cursor-pointer'
                 onClick={() => setExpandedHeader((prev) => !prev)}
             >
                 {props.header}
