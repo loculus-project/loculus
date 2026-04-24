@@ -65,6 +65,7 @@ export const routes = {
     seqSetPage: (seqSetAccessionVersion: AccessionVersion | string) => {
         return `/seqsets/${getAccessionVersionString(seqSetAccessionVersion)}`;
     },
+    authAuthorize: (redirect: string) => `/auth/authorize?redirect=${encodeURIComponent(redirect)}`,
     logout: () => '/logout',
     datauseTermsPage: () => '/about/terms-of-use/data-use-terms',
 };
