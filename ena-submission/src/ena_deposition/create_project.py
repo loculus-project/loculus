@@ -1,3 +1,4 @@
+from dataclasses import asdict
 import logging
 import threading
 import time
@@ -105,7 +106,7 @@ def set_project_table_entry(db_engine: Engine, config: Config, row: SubmissionTa
     """Set bioprojectAccession for entry with custom bioprojectAccession"""
     logger.debug(f"Accession {row.accession} already has bioprojectAccession in metadata")
     group_key = {"group_id": row.group_id, "organism": row.organism}
-    seq_key = {"accession": row.accession, "version": row.version}
+    seq_key = asdict(row.pkey)
     bioproject = row.seq_metadata["bioprojectAccession"]
 
     corresponding_group = find_conditions_in_db(db_engine, ProjectTableEntry, conditions=group_key)
@@ -187,7 +188,7 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config):
     )
     for row in ready_to_submit:
         group_key = {"group_id": row.group_id, "organism": row.organism}
-        seq_key = {"accession": row.accession, "version": row.version}
+        seq_key = asdict(row.pkey)
 
         # Use custom bioprojectAccession if it exists
         if row.seq_metadata.get("bioprojectAccession"):

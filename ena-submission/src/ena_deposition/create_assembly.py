@@ -249,7 +249,7 @@ def submission_table_start(db_engine: Engine, config: Config) -> None:
             f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE"
         )
     for row in ready_to_submit:
-        seq_key = {"accession": row.accession, "version": row.version}
+        seq_key = asdict(row.pkey)
 
         run_ref = row.seq_metadata.get("insdcRawReadsAccession")
         if run_ref and not accession_exists(run_ref, config):
@@ -301,7 +301,7 @@ def submission_table_update(db_engine: Engine) -> None:
             f"in status SUBMITTING_ASSEMBLY"
         )
     for row in submitting_assembly:
-        seq_key = {"accession": row.accession, "version": row.version}
+        seq_key = asdict(row.pkey)
 
         corresponding_assembly = find_conditions_in_db(
             db_engine, AssemblyTableEntry, conditions=seq_key
@@ -675,7 +675,7 @@ def assembly_table_update(db_engine: Engine, config: Config, time_threshold: int
     if not _last_ena_check or now - timedelta(minutes=time_threshold) > _last_ena_check:
         logger.debug("Checking state in ENA")
         for row in waiting:
-            seq_key = {"accession": row.accession, "version": row.version}
+            seq_key = asdict(row.pkey)
             submission_rows = find_conditions_in_db(
                 db_engine, SubmissionTableEntry, conditions=seq_key
             )
