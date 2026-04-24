@@ -30,7 +30,6 @@ from .ena_types import (
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
-    AccessionVersion,
     SampleTableEntry,
     Status,
     StatusAll,
@@ -40,6 +39,7 @@ from .submission_db_helper import (
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
     is_latest_revision,
+    is_revision,
     update_db_where_conditions,
     update_with_retry,
 )
@@ -289,35 +289,6 @@ def submission_table_update(db_engine: Engine):
             raise RuntimeError(error_msg)
 
 
-def is_old_version(db_engine: Engine, seq_key: AccessionVersion) -> bool:
-    """Check if entry is incorrectly added older version - error and do not submit"""
-    version = seq_key.version
-    rows = find_conditions_in_db(
-        db_engine, SubmissionTableEntry, conditions={"accession": seq_key.accession}
-    )
-    all_versions = sorted(row.version for row in rows)
-
-    if version < all_versions[-1]:
-        update_values = {
-            "status": Status.HAS_ERRORS,
-            "errors": ["Revision version is not the latest version"],
-            "started_at": datetime.now(tz=pytz.utc),
-        }
-        logger.error(
-            f"Sample creation failed for {seq_key.accession} version {version} "
-            "as it is not the latest version."
-        )
-        update_with_retry(
-            db_engine=db_engine,
-            conditions=asdict(seq_key),
-            update_values=update_values,
-            model_class=SampleTableEntry,
-            reraise=False,
-        )
-        return True
-    return False
-
-
 def sample_table_create(db_engine: Engine, config: Config, test: bool = False):
     """
     1. Find all entries in sample_table in state READY
@@ -337,7 +308,7 @@ def sample_table_create(db_engine: Engine, config: Config, test: bool = False):
     logger.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
     for row in ready_to_submit_sample:
         seq_key = row.pkey
-        if is_old_version(db_engine, seq_key):
+        if is_revision(db_engine, seq_key) and not is_latest_revision(db_engine, seq_key):
             logger.warning(f"Skipping submission for {seq_key} as it is not the latest version.")
             continue
 
