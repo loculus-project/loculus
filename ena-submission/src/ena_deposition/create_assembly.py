@@ -49,8 +49,9 @@ from .submission_db_helper import (
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
     find_waiting_in_db,
+    is_latest_revision,
     is_revision,
-    last_version,
+    previous_version,
     update_db_where_conditions,
     update_with_retry,
 )
@@ -356,9 +357,9 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
        requires manual revision
     """
     seq_key = submission_row.pkey
-    if not is_revision(db_engine, seq_key):
+    if not is_latest_revision(db_engine, seq_key):
         return False
-    version_to_revise = last_version(db_engine, seq_key)
+    version_to_revise = previous_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
         db_engine,
         SubmissionTableEntry,
@@ -450,7 +451,7 @@ def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableE
     Check if change in sequence or flatfile metadata has occurred since last version.
     """
     seq_key = submission_row.pkey
-    version_to_revise = last_version(db_engine, seq_key)
+    version_to_revise = previous_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
         db_engine,
         SubmissionTableEntry,
@@ -493,7 +494,7 @@ def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableE
 
 
 def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
-    version_to_revise = last_version(db_engine, seq_key)
+    version_to_revise = previous_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
         db_engine,
         AssemblyTableEntry,
