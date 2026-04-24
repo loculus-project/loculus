@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
 
-import { OrganismMetadataTable } from './OrganismMetadataTable.tsx';
+import { OrganismMetadataTable, TableQueryParams } from './OrganismMetadataTable.tsx';
 import type { Metadata, InputField } from '../../types/config.ts';
+import { getUrl } from '../../utils/getUrl.ts';
 import { Select } from '../common/Select.tsx';
 
 export type OrganismMetadata = {
@@ -12,41 +13,31 @@ export type OrganismMetadata = {
     groupedInputFields: Map<string, InputField[]>;
 };
 
-type Props = {
+const OrganismMetadataTableSelector: FC<{
     organisms: OrganismMetadata[];
-};
+}> = ({ organisms }) => {
+    const [selectedOrganismKey, setSelectedOrganismKey] = useState<string>('');
 
-const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
-    const [selectedOrganismKey, setSelectedOrganismKey] = useState('');
-    const selectedOrganism = organisms.find((o) => o.key === selectedOrganismKey) ?? null;
-
-    const handleOrganismSelect = (event: { target: { value: string } }) => {
-        setSelectedOrganismKey(event.target.value);
-    };
-
-    useEffect(() => {
-        const handlePopState = () => {
-            const params = new URLSearchParams(window.location.search);
-            setSelectedOrganismKey(params.get('organism') ?? '');
-        };
-
-        handlePopState();
-        window.addEventListener('popstate', handlePopState);
-        return () => window.removeEventListener('popstate', handlePopState);
-    }, []);
-
+    // Set the initial selected organism based on the URL parameter
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        if (selectedOrganismKey) {
-            params.set('organism', selectedOrganismKey);
-        } else {
-            params.delete('organism');
-        }
+        setSelectedOrganismKey(params.get(TableQueryParams.ORGANISM) ?? '');
+    }, []);
 
-        const newUrl =
-            window.location.origin + window.location.pathname + (params.toString() ? `?${params.toString()}` : '');
+    const selectedOrganism = organisms.find((o) => o.key === selectedOrganismKey) ?? null;
+
+    const handleOrganismSelect = (organism: string) => {
+        setSelectedOrganismKey(organism);
+        const params = new URLSearchParams(window.location.search);
+        if (organism) {
+            params.set(TableQueryParams.ORGANISM, organism);
+        } else {
+            // Clear all table query parameters
+            Object.values(TableQueryParams).forEach((param) => params.delete(param));
+        }
+        const newUrl = getUrl(window.location.origin, window.location.pathname, params);
         window.history.replaceState({ path: newUrl }, '', newUrl);
-    }, [selectedOrganismKey]);
+    };
 
     return (
         <div>
@@ -54,8 +45,8 @@ const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
                 <Select
                     id='organism-select'
                     value={selectedOrganismKey}
-                    onChange={handleOrganismSelect}
-                    className='border border-gray-300 p-2'
+                    onChange={(e) => handleOrganismSelect(e.target.value)}
+                    className='border border-gray-300 p-2 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary-600 focus:border-primary-600'
                 >
                     <option value=''>-- Select an Organism --</option>
                     {organisms.map((organism) => (
