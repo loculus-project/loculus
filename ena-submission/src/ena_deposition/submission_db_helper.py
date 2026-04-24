@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import StrEnum
-from typing import Any, Final, TypeVar
+from typing import Any, Final
 
 import pytz
 from sqlalchemy import Engine, Enum, create_engine, delete, func, make_url, or_, select, update
@@ -262,16 +262,9 @@ def highest_version_in_submission_table(engine: Engine) -> dict[Accession, Versi
     return {row.accession: row.version for row in rows}
 
 
-T = TypeVar(
-    "T",
-    SubmissionTableEntry,
-    ProjectTableEntry,
-    SampleTableEntry,
-    AssemblyTableEntry,
-)
-
-
-def find_conditions_in_db[T](
+def find_conditions_in_db[
+    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
+](
     engine: Engine,
     model_class: type[T],
     conditions: dict[str, Any],
@@ -293,7 +286,9 @@ def find_conditions_in_db[T](
         return rows
 
 
-def delete_records_in_db[T](
+def delete_records_in_db[
+    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
+](
     engine: Engine,
     model_class: type[T],
     conditions: dict[str, Any],
@@ -371,7 +366,9 @@ def find_waiting_in_db(
         return rows
 
 
-def update_db_where_conditions[T](
+def update_db_where_conditions[
+    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
+](
     engine: Engine,
     model_class: type[T],
     conditions: Mapping[str, Any],
@@ -415,7 +412,9 @@ def update_db_where_conditions[T](
     return updated_row_count
 
 
-def update_with_retry[T](
+def update_with_retry[
+    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
+](
     db_engine: Engine,
     conditions: Mapping[str, Any],
     model_class: type[T],
