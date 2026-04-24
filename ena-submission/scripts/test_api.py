@@ -28,7 +28,7 @@ config_file = "./test/test_config.yaml"
 class ApiTest(unittest.TestCase):
     def setUp(self) -> None:
         self.config: Config = get_config(config_file)
-        self.db_config = db_init(
+        self.db_engine = db_init(
             self.config.db_password, self.config.db_username, self.config.db_url
         )
 
@@ -44,6 +44,7 @@ class ApiTest(unittest.TestCase):
         mock_get_insdc_accessions.return_value = mock_insdc_accessions
 
         app.state.config = self.config
+        app.state.engine = self.db_engine
 
         response = client.get("/submitted")
 

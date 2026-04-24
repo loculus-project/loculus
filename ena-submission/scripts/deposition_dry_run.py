@@ -18,6 +18,11 @@ from ena_deposition.create_assembly import create_manifest_object
 from ena_deposition.create_project import construct_project_set_object
 from ena_deposition.create_sample import construct_sample_set_object
 from ena_deposition.ena_submission_helper import create_manifest, get_project_xml, get_sample_xml
+from ena_deposition.submission_db_helper import (
+    ProjectTableEntry,
+    SampleTableEntry,
+    SubmissionTableEntry,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -86,18 +91,29 @@ def local_ena_submission_generator(
 
     for full_accession, data in sequences_to_upload.items():
         accession, version = full_accession.split(".")
-        entry = {
-            "accession": accession,
-            "version": version,
-            "group_id": data["metadata"]["groupId"],
-            "organism": data["organism"],
-            "metadata": data["metadata"],
-            "unaligned_nucleotide_sequences": data["unalignedNucleotideSequences"],
-        }
+        entry = SubmissionTableEntry(
+            accession=accession,
+            version=int(version),
+            group_id=data["metadata"]["groupId"],
+            organism=data["organism"],
+            seq_metadata=data["metadata"],
+            unaligned_nucleotide_sequences=data["unalignedNucleotideSequences"],
+        )
+        project_entry = ProjectTableEntry(
+            group_id=data["metadata"]["groupId"],
+            organism=data["organism"],
+            result={"bioproject_accession": bioproject} if bioproject else None,
+            center_name=center_name,
+        )
+        sample_entry = SampleTableEntry(
+            accession=accession,
+            version=int(version),
+            result={"biosample_accession": biosample} if biosample else None,
+        )
 
     if mode == "project":
-        group_info = get_group_info(config, entry["group_id"])
-        project_set = construct_project_set_object(group_info, config, entry)
+        group_info = get_group_info(config, entry.group_id)
+        project_set = construct_project_set_object(group_info, config, project_entry)
         project_xml = get_project_xml(project_set)
 
         directory = "project"
@@ -121,8 +137,7 @@ def local_ena_submission_generator(
         )
 
     if mode == "sample":
-        entry["center_name"] = center_name
-        sample_set = construct_sample_set_object(config, entry, entry)
+        sample_set = construct_sample_set_object(config, entry, sample_entry)
         sample_xml = get_sample_xml(sample_set, revision=revision)
 
         directory = "sample"
@@ -145,8 +160,6 @@ def local_ena_submission_generator(
         )
 
     if mode == "assembly":
-        entry["center_name"] = center_name
-
         directory = "assembly"
         os.makedirs(directory, exist_ok=True)
         logger.info(f"Writing results to {directory}")

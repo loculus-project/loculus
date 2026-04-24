@@ -6,7 +6,7 @@ from dataclasses import asdict
 from datetime import datetime
 
 import pytz
-from psycopg2.pool import SimpleConnectionPool
+from sqlalchemy import Engine
 
 from .config import Config, MetadataMapping
 from .ena_submission_helper import (
@@ -30,15 +30,15 @@ from .ena_types import (
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
-    AccessionVersion,
     SampleTableEntry,
     Status,
     StatusAll,
-    TableName,
+    SubmissionTableEntry,
     add_to_sample_table,
     db_init,
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
+    is_latest_revision,
     is_revision,
     update_db_where_conditions,
     update_with_retry,
@@ -114,25 +114,25 @@ def get_sample_attributes(
 
 def construct_sample_set_object(
     config: Config,
-    sample_data_in_submission_table: dict[str, str | dict[str, str]],
-    entry: dict[str, str],
+    submission_row: SubmissionTableEntry,
+    sample_row: SampleTableEntry,
     test: bool = False,
 ):
     """
     Construct sample set object, using:
-    - entry in sample_table
-    - sample_data_in_submission_table: corresponding entry in submission_table
+    - sample_row: entry in sample_table
+    - submission_row: corresponding entry in submission_table
     - config information, such as enaDeposition metadata for that organism
     If test=True add a timestamp to the alias suffix to allow for multiple
     submissions of the same project for testing.
     (ENA blocks multiple submissions with the same alias)
     """
-    sample_metadata: dict[str, str] = sample_data_in_submission_table["metadata"]  # type: ignore
-    center_name = sample_data_in_submission_table["center_name"]
-    organism: str = sample_data_in_submission_table["organism"]  # type: ignore
+    sample_metadata: dict[str, str] = submission_row.seq_metadata  # type: ignore
+    center_name = submission_row.center_name
+    organism: str = submission_row.organism
     organism_metadata = config.enaOrganisms[organism]
     alias = get_alias(
-        f"{entry['accession']}:{organism}:{config.unique_project_suffix}",
+        f"{sample_row.accession}:{organism}:{config.unique_project_suffix}",
         test,
         config.set_alias_suffix,
     )
@@ -157,53 +157,56 @@ def construct_sample_set_object(
             scientific_name=organism_metadata.scientific_name,
         ),
         sample_links=SampleLinks(
-            sample_link=[ProjectLink(xref_link=XrefType(db=config.db_name, id=entry["accession"]))]
+            sample_link=[
+                ProjectLink(xref_link=XrefType(db=config.db_name, id=sample_row.accession))
+            ]
         ),
         sample_attributes=SampleAttributes(sample_attribute=sample_attributes),
     )
     return SampleSetType(sample=[sample_type])
 
 
-def set_sample_table_entry(db_config, row, seq_key, config: Config):
+def set_sample_table_entry(
+    db_engine: Engine, row: SubmissionTableEntry, seq_key: dict, config: Config
+):
     """Set sample_table entry for entry with biosampleAccession"""
     logger.debug(
-        f"Accession: {row['accession']} already has biosampleAccession, adding to sample_table"
+        f"Accession: {row.accession} already has biosampleAccession, adding to sample_table"
     )
-    biosample = row["metadata"]["biosampleAccession"]
+    biosample = row.seq_metadata["biosampleAccession"]
 
     logger.info("Checking if biosample actually exists and is public")
-    seq_key = {"accession": row["accession"], "version": row["version"]}
+    seq_key = asdict(row.pkey)
     if not accession_exists(biosample, config):
         set_accession_does_not_exist_error(
             conditions=seq_key,
             accession=biosample,
             accession_type="BIOSAMPLE",
-            db_pool=db_config,
+            db_engine=db_engine,
         )
         return
 
-    entry = {
-        "accession": row["accession"],
-        "version": row["version"],
-        "result": {"ena_sample_accession": biosample, "biosample_accession": biosample},
-        "status": Status.SUBMITTED,
-    }
-    sample_table_entry = SampleTableEntry(**entry)
-    succeeded = add_to_sample_table(db_config, sample_table_entry)
+    sample_table_entry = SampleTableEntry(
+        accession=row.accession,
+        version=row.version,
+        result={"ena_sample_accession": biosample, "biosample_accession": biosample},
+        status=Status.SUBMITTED,
+    )
+    succeeded = add_to_sample_table(db_engine, sample_table_entry)
     if succeeded:
         logger.debug("Succeeding in adding biosampleAccession to sample_table")
         update_values = {
             "status_all": StatusAll.SUBMITTED_SAMPLE,
         }
         update_db_where_conditions(
-            db_config,
-            table_name=TableName.SUBMISSION_TABLE,
+            db_engine,
+            model_class=SubmissionTableEntry,
             conditions=seq_key,
             update_values=update_values,
         )
 
 
-def submission_table_start(db_config: SimpleConnectionPool, config: Config):
+def submission_table_start(db_engine: Engine, config: Config):
     """
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
     2. If (exists an entry in the sample_table for (accession, version)):
@@ -215,41 +218,39 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
     """
     # Check submission_table for newly added sequences
     conditions = {"status_all": StatusAll.SUBMITTED_PROJECT}
-    ready_to_submit = find_conditions_in_db(
-        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
-    )
+    ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
     logger.debug(
         f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_PROJECT"
     )
     for row in ready_to_submit:
-        seq_key = {"accession": row["accession"], "version": row["version"]}
+        seq_key = asdict(row.pkey)
 
         # 1. check if there exists an entry in the sample table for seq_key
         corresponding_sample = find_conditions_in_db(
-            db_config, table_name=TableName.SAMPLE_TABLE, conditions=seq_key
+            db_engine, SampleTableEntry, conditions=seq_key
         )
         if len(corresponding_sample) == 1:
-            if corresponding_sample[0]["status"] == str(Status.SUBMITTED):
+            if corresponding_sample[0].status == Status.SUBMITTED:
                 status_all = StatusAll.SUBMITTED_SAMPLE
             else:
                 status_all = StatusAll.SUBMITTING_SAMPLE
         else:
             # If not: create sample_entry, change status to SUBMITTING_SAMPLE
-            if "biosampleAccession" in row["metadata"] and row["metadata"]["biosampleAccession"]:
-                set_sample_table_entry(db_config, row, seq_key, config)
+            if row.seq_metadata.get("biosampleAccession"):
+                set_sample_table_entry(db_engine, row, seq_key, config)
                 continue
-            if not add_to_sample_table(db_config, SampleTableEntry(**seq_key)):
+            if not add_to_sample_table(db_engine, SampleTableEntry(**seq_key)):
                 continue
             status_all = StatusAll.SUBMITTING_SAMPLE
         update_db_where_conditions(
-            db_config,
-            table_name=TableName.SUBMISSION_TABLE,
+            db_engine,
+            model_class=SubmissionTableEntry,
             conditions=seq_key,
             update_values={"status_all": status_all},
         )
 
 
-def submission_table_update(db_config: SimpleConnectionPool):
+def submission_table_update(db_engine: Engine):
     """
     1. Find all entries in submission_table in state SUBMITTING_SAMPLE
     2. If (exists an entry in the sample_table for (accession, version)):
@@ -258,25 +259,25 @@ def submission_table_update(db_config: SimpleConnectionPool):
     """
     conditions = {"status_all": StatusAll.SUBMITTING_SAMPLE}
     submitting_sample = find_conditions_in_db(
-        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
+        db_engine, SubmissionTableEntry, conditions=conditions
     )
     logger.debug(
         f"Found {len(submitting_sample)} entries in submission_table in status SUBMITTING_SAMPLE"
     )
     for row in submitting_sample:
-        seq_key = {"accession": row["accession"], "version": row["version"]}
+        seq_key = asdict(row.pkey)
 
         # 1. check if there exists an entry in the sample table for seq_key
         corresponding_sample = find_conditions_in_db(
-            db_config, table_name=TableName.SAMPLE_TABLE, conditions=seq_key
+            db_engine, SampleTableEntry, conditions=seq_key
         )
-        if len(corresponding_sample) == 1 and corresponding_sample[0]["status"] == str(
+        if len(corresponding_sample) == 1 and corresponding_sample[0].status == str(
             Status.SUBMITTED
         ):
             update_values = {"status_all": StatusAll.SUBMITTED_SAMPLE}
             update_db_where_conditions(
-                db_config,
-                table_name=TableName.SUBMISSION_TABLE,
+                db_engine,
+                model_class=SubmissionTableEntry,
                 conditions=seq_key,
                 update_values=update_values,
             )
@@ -288,37 +289,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
-def is_old_version(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> bool:
-    """Check if entry is incorrectly added older version - error and do not submit"""
-    version = seq_key.version
-    accession = {"accession": seq_key.accession}
-    sample_data_in_submission_table = find_conditions_in_db(
-        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
-    )
-    all_versions = sorted([entry["version"] for entry in sample_data_in_submission_table])
-
-    if version < all_versions[-1]:
-        update_values = {
-            "status": Status.HAS_ERRORS,
-            "errors": ["Revision version is not the latest version"],
-            "started_at": datetime.now(tz=pytz.utc),
-        }
-        logger.error(
-            f"Sample creation failed for {seq_key.accession} version {version} "
-            "as it is not the latest version."
-        )
-        update_with_retry(
-            db_config=db_config,
-            conditions=asdict(seq_key),
-            update_values=update_values,
-            table_name=TableName.SAMPLE_TABLE,
-            reraise=False,
-        )
-        return True
-    return False
-
-
-def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: bool = False):
+def sample_table_create(db_engine: Engine, config: Config, test: bool = False):
     """
     1. Find all entries in sample_table in state READY
     2. Create sample_set_object: use metadata, center_name, organism, and ingest fields
@@ -332,30 +303,28 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
     """
     conditions = {"status": Status.READY}
     ready_to_submit_sample = find_conditions_in_db(
-        db_config, table_name=TableName.SAMPLE_TABLE, conditions=conditions
+        db_engine, SampleTableEntry, conditions=conditions
     )
     logger.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
     for row in ready_to_submit_sample:
-        seq_key = AccessionVersion(accession=row["accession"], version=row["version"])
-        if is_old_version(db_config, seq_key):
+        seq_key = row.pkey
+        if is_revision(db_engine, seq_key) and not is_latest_revision(db_engine, seq_key):
             logger.warning(f"Skipping submission for {seq_key} as it is not the latest version.")
             continue
 
         logger.info(f"Processing sample_table entry for {seq_key}")
-        sample_data_in_submission_table = find_conditions_in_db(
-            db_config, table_name=TableName.SUBMISSION_TABLE, conditions=asdict(seq_key)
+        submission_rows = find_conditions_in_db(
+            db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
         )
 
-        sample_set = construct_sample_set_object(
-            config, sample_data_in_submission_table[0], row, test
-        )
+        sample_set = construct_sample_set_object(config, submission_rows[0], row, test)
         update_values = {
             "status": Status.SUBMITTING,
             "started_at": datetime.now(tz=pytz.utc),
         }
         number_rows_updated = update_db_where_conditions(
-            db_config,
-            table_name=TableName.SAMPLE_TABLE,
+            db_engine,
+            model_class=SampleTableEntry,
             conditions=asdict(seq_key),
             update_values=update_values,
         )
@@ -366,9 +335,9 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
                 "- not starting submission."
             )
             continue
-        logger.info(f"Starting sample creation for accession {row['accession']}")
+        logger.info(f"Starting sample creation for accession {row.accession}")
         sample_creation_results: CreationResult = create_ena_sample(
-            config, sample_set, revision=is_revision(db_config, seq_key)
+            config, sample_set, revision=is_latest_revision(db_engine, seq_key)
         )
         if sample_creation_results.result:
             update_values = {
@@ -389,15 +358,15 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
                 f"Sample creation failed for {seq_key.accession} version {seq_key.version}"
             )
         update_with_retry(
-            db_config=db_config,
+            db_engine=db_engine,
             conditions=asdict(seq_key),
             update_values=update_values,
-            table_name=TableName.SAMPLE_TABLE,
+            model_class=SampleTableEntry,
         )
 
 
 def sample_table_handle_errors(
-    db_config: SimpleConnectionPool,
+    db_engine: Engine,
     config: Config,
     slack_config: SlackConfig,
     last_retry_time: datetime | None,
@@ -408,7 +377,7 @@ def sample_table_handle_errors(
     2. If time since last slack_notification is over slack_retry_threshold_min send notification
     """
     entries_with_errors = find_errors_or_stuck_in_db(
-        db_config, TableName.SAMPLE_TABLE, time_threshold=config.submitting_time_threshold_min
+        db_engine, SampleTableEntry, time_threshold=config.submitting_time_threshold_min
     )
     if len(entries_with_errors) > 0:
         error_msg = (
@@ -424,8 +393,8 @@ def sample_table_handle_errors(
         )
         last_retry_time = retry_failed_submissions_for_matching_errors(
             entries_with_errors,
-            db_config,
-            table_name=TableName.SAMPLE_TABLE,
+            db_engine,
+            model_class=SampleTableEntry,
             retry_threshold_min=config.retry_threshold_min,
             last_retry=last_retry_time,
         )
@@ -436,7 +405,7 @@ def sample_table_handle_errors(
 
 
 def create_sample(config: Config, stop_event: threading.Event):
-    db_config = db_init(config.db_password, config.db_username, config.db_url)
+    db_engine = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
         slack_token_default=config.slack_token,
@@ -449,11 +418,11 @@ def create_sample(config: Config, stop_event: threading.Event):
             logger.warning("create_sample stopped due to exception in another task")
             return
         logger.debug("Checking for samples to create")
-        submission_table_start(db_config, config=config)
-        submission_table_update(db_config)
+        submission_table_start(db_engine, config=config)
+        submission_table_update(db_engine)
 
-        sample_table_create(db_config, config, test=config.test)
+        sample_table_create(db_engine, config, test=config.test)
         last_retry_time = sample_table_handle_errors(
-            db_config, config, slack_config, last_retry_time
+            db_engine, config, slack_config, last_retry_time
         )
         time.sleep(config.time_between_iterations)

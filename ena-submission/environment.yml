@@ -19,6 +19,7 @@ dependencies:
   - requests=2.32.5
   - unzip=6.0
   - psycopg2=2.9.10
+  - sqlalchemy=2.0.40
   - slack_sdk=3.37.0
   - xmltodict=1.0.2
   - biopython=1.85
