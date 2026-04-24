@@ -182,7 +182,7 @@ def set_sample_table_entry(
             conditions=seq_key,
             accession=biosample,
             accession_type="BIOSAMPLE",
-            db_pool=db_engine,
+            db_engine=db_engine,
         )
         return
 

@@ -257,7 +257,7 @@ def submission_table_start(db_engine: Engine, config: Config) -> None:
                 conditions=seq_key,
                 accession=run_ref,
                 accession_type="RUN_REF",
-                db_pool=db_engine,
+                db_engine=db_engine,
             )
             continue
 
