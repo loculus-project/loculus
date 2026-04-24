@@ -675,9 +675,9 @@ def assembly_table_update(db_engine: Engine, config: Config, time_threshold: int
     if not _last_ena_check or now - timedelta(minutes=time_threshold) > _last_ena_check:
         logger.debug("Checking state in ENA")
         for row in waiting:
-            seq_key = asdict(row.pkey)
+            seq_key = row.pkey
             submission_rows = find_conditions_in_db(
-                db_engine, SubmissionTableEntry, conditions=seq_key
+                db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
             )
             if len(submission_rows) == 0:
                 error_msg = f"Entry {row.accession} not found in submitting_table"
@@ -688,8 +688,8 @@ def assembly_table_update(db_engine: Engine, config: Config, time_threshold: int
             erz_accession = row.result.get("erz_accession") if row.result else None
             if not erz_accession or not segment_order:
                 logger.warning(
-                    f"Missing erz_accession or segment_order for {seq_key['accession']} version "
-                    f"{seq_key['version']} - cannot check ENA for accession yet."
+                    f"Missing erz_accession or segment_order for {seq_key.accession} version "
+                    f"{seq_key.version} - cannot check ENA for accession yet."
                 )
                 continue
             new_result: CreationResult = get_ena_analysis_process(
@@ -710,18 +710,18 @@ def assembly_table_update(db_engine: Engine, config: Config, time_threshold: int
                     continue
                 status = Status.WAITING
                 logger.info(
-                    f"Assembly partially accessioned by ENA for {seq_key['accession']} "
-                    f"version {seq_key['version']}"
+                    f"Assembly partially accessioned by ENA for {seq_key.accession} "
+                    f"version {seq_key.version}"
                 )
             else:
                 status = Status.SUBMITTED
                 logger.info(
-                    f"Assembly accessioned by ENA for {seq_key['accession']} version "
-                    f"{seq_key['version']}"
+                    f"Assembly accessioned by ENA for {seq_key.accession} version "
+                    f"{seq_key.version}"
                 )
             update_with_retry(
                 db_engine=db_engine,
-                conditions=seq_key,
+                conditions=asdict(seq_key),
                 update_values={
                     "status": status,
                     "result": new_result.result,
