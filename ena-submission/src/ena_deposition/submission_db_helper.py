@@ -423,7 +423,7 @@ def update_db_where_conditions[T](
 
 
 def update_with_retry[T](
-    db_config: Engine,
+    db_engine: Engine,
     conditions: Mapping[str, Any],
     model_class: type[T],
     update_values: dict[str, Any],
@@ -437,7 +437,7 @@ def update_with_retry[T](
 
     def _do_update() -> int:
         number_rows_updated = update_db_where_conditions(
-            db_config,
+            db_engine,
             model_class=model_class,
             conditions=conditions,
             update_values=update_values,

@@ -203,11 +203,11 @@ COLUMN_CONFIGS = {
 
 
 def get_entities_needing_column_check(
-    engine: Engine, column_config: ColumnCheckConfig
+    db_engine: Engine, column_config: ColumnCheckConfig
 ) -> list[SampleTableEntry | ProjectTableEntry | AssemblyTableEntry]:
     """Get entities that don't have a timestamp for a specific visibility column"""
     return find_conditions_in_db(
-        engine,
+        db_engine,
         column_config.entry_class,
         conditions={
             column_config.visibility_column: None,
@@ -244,7 +244,7 @@ def get_accessions_to_check(
 
 def check_and_update_visibility_for_column(
     config: Config,
-    engine: Engine,
+    db_engine: Engine,
     entity_type: EntityType,
     column_name: str,
 ):
@@ -262,7 +262,7 @@ def check_and_update_visibility_for_column(
         return
 
     logger.debug(f"Checking {entity_type.value}.{column_name} for visibility")
-    entities_needing_check = get_entities_needing_column_check(engine, column_config)
+    entities_needing_check = get_entities_needing_column_check(db_engine, column_config)
     logger.info(
         f"Found {len(entities_needing_check)} {entity_type.value}s needing {column_name} check"
     )
@@ -304,7 +304,7 @@ def check_and_update_visibility_for_column(
                 "publicly visible, updating database."
             )
             updated_count = update_db_where_conditions(
-                engine,
+                db_engine,
                 model_class=column_config.entry_class,
                 conditions=entity_id,
                 update_values={column_config.visibility_column: first_visible_timestamp},
@@ -328,19 +328,19 @@ def check_and_update_visibility_for_column(
             )
 
 
-def check_and_update_visibility_all_columns(config: Config, engine: Engine):
+def check_and_update_visibility_all_columns(config: Config, db_engine: Engine):
     """Check and update visibility for all configured (entity_type, column) combinations"""
 
     for entity_type, column_name in COLUMN_CONFIGS:
         try:
-            check_and_update_visibility_for_column(config, engine, entity_type, column_name)
+            check_and_update_visibility_for_column(config, db_engine, entity_type, column_name)
         except Exception as e:
             logger.error(f"Error checking {entity_type.value}.{column_name}: {e}", exc_info=True)
 
 
 def check_and_update_visibility(config: Config, stop_event: threading.Event):
     """Main loop function"""
-    engine = db_init(config.db_password, config.db_username, config.db_url)
+    db_engine = db_init(config.db_password, config.db_username, config.db_url)
 
     while True:
         start_time = time.time()
@@ -348,7 +348,7 @@ def check_and_update_visibility(config: Config, stop_event: threading.Event):
             logger.info("check_and_update_visibility stopped due to exception in another task")
             return
 
-        check_and_update_visibility_all_columns(config, engine)
+        check_and_update_visibility_all_columns(config, db_engine)
         logger.debug("check_and_update_visibility finished, sleeping for a while")
 
         gca_cache.clear()

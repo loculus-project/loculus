@@ -30,7 +30,7 @@ def test_submit(self, mock_get_group_info, mock_submit_external_metadata):
     Test the full ENA submission pipeline with accurate data - this should succeed
     """
     simple_submission(
-        self.db_config, self.config, mock_get_group_info, mock_submit_external_metadata
+        self.db_engine, self.config, mock_get_group_info, mock_submit_external_metadata
     )
 ```
 
@@ -42,7 +42,7 @@ The behavior is specified in the test function itself in this case, inside `simp
 
 ```py
 def simple_submission(
-    db_config: SimpleConnectionPool,
+    db_engine: SimpleConnectionPool,
     config: Config,
     mock_get_group_info,
     mock_submit_external_metadata,

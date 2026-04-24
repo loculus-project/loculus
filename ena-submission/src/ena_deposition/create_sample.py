@@ -167,7 +167,7 @@ def construct_sample_set_object(
 
 
 def set_sample_table_entry(
-    db_config: Engine, row: SubmissionTableEntry, seq_key: dict, config: Config
+    db_engine: Engine, row: SubmissionTableEntry, seq_key: dict, config: Config
 ):
     """Set sample_table entry for entry with biosampleAccession"""
     logger.debug(
@@ -182,7 +182,7 @@ def set_sample_table_entry(
             conditions=seq_key,
             accession=biosample,
             accession_type="BIOSAMPLE",
-            db_pool=db_config,
+            db_pool=db_engine,
         )
         return
 
@@ -192,21 +192,21 @@ def set_sample_table_entry(
         result={"ena_sample_accession": biosample, "biosample_accession": biosample},
         status=Status.SUBMITTED,
     )
-    succeeded = add_to_sample_table(db_config, sample_table_entry)
+    succeeded = add_to_sample_table(db_engine, sample_table_entry)
     if succeeded:
         logger.debug("Succeeding in adding biosampleAccession to sample_table")
         update_values = {
             "status_all": StatusAll.SUBMITTED_SAMPLE,
         }
         update_db_where_conditions(
-            db_config,
+            db_engine,
             model_class=SubmissionTableEntry,
             conditions=seq_key,
             update_values=update_values,
         )
 
 
-def submission_table_start(db_config: Engine, config: Config):
+def submission_table_start(db_engine: Engine, config: Config):
     """
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
     2. If (exists an entry in the sample_table for (accession, version)):
@@ -218,7 +218,7 @@ def submission_table_start(db_config: Engine, config: Config):
     """
     # Check submission_table for newly added sequences
     conditions = {"status_all": StatusAll.SUBMITTED_PROJECT}
-    ready_to_submit = find_conditions_in_db(db_config, SubmissionTableEntry, conditions=conditions)
+    ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
     logger.debug(
         f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_PROJECT"
     )
@@ -227,7 +227,7 @@ def submission_table_start(db_config: Engine, config: Config):
 
         # 1. check if there exists an entry in the sample table for seq_key
         corresponding_sample = find_conditions_in_db(
-            db_config, SampleTableEntry, conditions=seq_key
+            db_engine, SampleTableEntry, conditions=seq_key
         )
         if len(corresponding_sample) == 1:
             if corresponding_sample[0].status == Status.SUBMITTED:
@@ -237,20 +237,20 @@ def submission_table_start(db_config: Engine, config: Config):
         else:
             # If not: create sample_entry, change status to SUBMITTING_SAMPLE
             if row.seq_metadata.get("biosampleAccession"):
-                set_sample_table_entry(db_config, row, seq_key, config)
+                set_sample_table_entry(db_engine, row, seq_key, config)
                 continue
-            if not add_to_sample_table(db_config, SampleTableEntry(**seq_key)):
+            if not add_to_sample_table(db_engine, SampleTableEntry(**seq_key)):
                 continue
             status_all = StatusAll.SUBMITTING_SAMPLE
         update_db_where_conditions(
-            db_config,
+            db_engine,
             model_class=SubmissionTableEntry,
             conditions=seq_key,
             update_values={"status_all": status_all},
         )
 
 
-def submission_table_update(db_config: Engine):
+def submission_table_update(db_engine: Engine):
     """
     1. Find all entries in submission_table in state SUBMITTING_SAMPLE
     2. If (exists an entry in the sample_table for (accession, version)):
@@ -259,7 +259,7 @@ def submission_table_update(db_config: Engine):
     """
     conditions = {"status_all": StatusAll.SUBMITTING_SAMPLE}
     submitting_sample = find_conditions_in_db(
-        db_config, SubmissionTableEntry, conditions=conditions
+        db_engine, SubmissionTableEntry, conditions=conditions
     )
     logger.debug(
         f"Found {len(submitting_sample)} entries in submission_table in status SUBMITTING_SAMPLE"
@@ -269,14 +269,14 @@ def submission_table_update(db_config: Engine):
 
         # 1. check if there exists an entry in the sample table for seq_key
         corresponding_sample = find_conditions_in_db(
-            db_config, SampleTableEntry, conditions=seq_key
+            db_engine, SampleTableEntry, conditions=seq_key
         )
         if len(corresponding_sample) == 1 and corresponding_sample[0].status == str(
             Status.SUBMITTED
         ):
             update_values = {"status_all": StatusAll.SUBMITTED_SAMPLE}
             update_db_where_conditions(
-                db_config,
+                db_engine,
                 model_class=SubmissionTableEntry,
                 conditions=seq_key,
                 update_values=update_values,
@@ -289,11 +289,11 @@ def submission_table_update(db_config: Engine):
             raise RuntimeError(error_msg)
 
 
-def is_old_version(db_config: Engine, seq_key: AccessionVersion) -> bool:
+def is_old_version(db_engine: Engine, seq_key: AccessionVersion) -> bool:
     """Check if entry is incorrectly added older version - error and do not submit"""
     version = seq_key.version
     rows = find_conditions_in_db(
-        db_config, SubmissionTableEntry, conditions={"accession": seq_key.accession}
+        db_engine, SubmissionTableEntry, conditions={"accession": seq_key.accession}
     )
     all_versions = sorted(row.version for row in rows)
 
@@ -308,7 +308,7 @@ def is_old_version(db_config: Engine, seq_key: AccessionVersion) -> bool:
             "as it is not the latest version."
         )
         update_with_retry(
-            db_config=db_config,
+            db_engine=db_engine,
             conditions=asdict(seq_key),
             update_values=update_values,
             model_class=SampleTableEntry,
@@ -318,7 +318,7 @@ def is_old_version(db_config: Engine, seq_key: AccessionVersion) -> bool:
     return False
 
 
-def sample_table_create(db_config: Engine, config: Config, test: bool = False):
+def sample_table_create(db_engine: Engine, config: Config, test: bool = False):
     """
     1. Find all entries in sample_table in state READY
     2. Create sample_set_object: use metadata, center_name, organism, and ingest fields
@@ -332,18 +332,18 @@ def sample_table_create(db_config: Engine, config: Config, test: bool = False):
     """
     conditions = {"status": Status.READY}
     ready_to_submit_sample = find_conditions_in_db(
-        db_config, SampleTableEntry, conditions=conditions
+        db_engine, SampleTableEntry, conditions=conditions
     )
     logger.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
     for row in ready_to_submit_sample:
         seq_key = AccessionVersion(accession=row.accession, version=row.version)
-        if is_old_version(db_config, seq_key):
+        if is_old_version(db_engine, seq_key):
             logger.warning(f"Skipping submission for {seq_key} as it is not the latest version.")
             continue
 
         logger.info(f"Processing sample_table entry for {seq_key}")
         submission_rows = find_conditions_in_db(
-            db_config, SubmissionTableEntry, conditions=asdict(seq_key)
+            db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
         )
 
         sample_set = construct_sample_set_object(config, submission_rows[0], row, test)
@@ -352,7 +352,7 @@ def sample_table_create(db_config: Engine, config: Config, test: bool = False):
             "started_at": datetime.now(tz=pytz.utc),
         }
         number_rows_updated = update_db_where_conditions(
-            db_config,
+            db_engine,
             model_class=SampleTableEntry,
             conditions=asdict(seq_key),
             update_values=update_values,
@@ -366,7 +366,7 @@ def sample_table_create(db_config: Engine, config: Config, test: bool = False):
             continue
         logger.info(f"Starting sample creation for accession {row.accession}")
         sample_creation_results: CreationResult = create_ena_sample(
-            config, sample_set, revision=is_revision(db_config, seq_key)
+            config, sample_set, revision=is_revision(db_engine, seq_key)
         )
         if sample_creation_results.result:
             update_values = {
@@ -387,7 +387,7 @@ def sample_table_create(db_config: Engine, config: Config, test: bool = False):
                 f"Sample creation failed for {seq_key.accession} version {seq_key.version}"
             )
         update_with_retry(
-            db_config=db_config,
+            db_engine=db_engine,
             conditions=asdict(seq_key),
             update_values=update_values,
             model_class=SampleTableEntry,
@@ -395,7 +395,7 @@ def sample_table_create(db_config: Engine, config: Config, test: bool = False):
 
 
 def sample_table_handle_errors(
-    db_config: Engine,
+    db_engine: Engine,
     config: Config,
     slack_config: SlackConfig,
     last_retry_time: datetime | None,
@@ -406,7 +406,7 @@ def sample_table_handle_errors(
     2. If time since last slack_notification is over slack_retry_threshold_min send notification
     """
     entries_with_errors = find_errors_or_stuck_in_db(
-        db_config, SampleTableEntry, time_threshold=config.submitting_time_threshold_min
+        db_engine, SampleTableEntry, time_threshold=config.submitting_time_threshold_min
     )
     if len(entries_with_errors) > 0:
         error_msg = (
@@ -422,7 +422,7 @@ def sample_table_handle_errors(
         )
         last_retry_time = retry_failed_submissions_for_matching_errors(
             entries_with_errors,
-            db_config,
+            db_engine,
             model_class=SampleTableEntry,
             retry_threshold_min=config.retry_threshold_min,
             last_retry=last_retry_time,
@@ -434,7 +434,7 @@ def sample_table_handle_errors(
 
 
 def create_sample(config: Config, stop_event: threading.Event):
-    db_config = db_init(config.db_password, config.db_username, config.db_url)
+    db_engine = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
         slack_token_default=config.slack_token,
@@ -447,11 +447,11 @@ def create_sample(config: Config, stop_event: threading.Event):
             logger.warning("create_sample stopped due to exception in another task")
             return
         logger.debug("Checking for samples to create")
-        submission_table_start(db_config, config=config)
-        submission_table_update(db_config)
+        submission_table_start(db_engine, config=config)
+        submission_table_update(db_engine)
 
-        sample_table_create(db_config, config, test=config.test)
+        sample_table_create(db_engine, config, test=config.test)
         last_retry_time = sample_table_handle_errors(
-            db_config, config, slack_config, last_retry_time
+            db_engine, config, slack_config, last_retry_time
         )
         time.sleep(config.time_between_iterations)

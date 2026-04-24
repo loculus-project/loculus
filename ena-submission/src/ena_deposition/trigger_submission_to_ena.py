@@ -22,11 +22,11 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
-def upload_sequences(db_config: Engine, sequences_to_upload: dict[str, Any]):
+def upload_sequences(db_engine: Engine, sequences_to_upload: dict[str, Any]):
     for full_accession, data in sequences_to_upload.items():
         accession_version = AccessionVersion.from_string(full_accession)
         if in_submission_table(
-            db_config,
+            db_engine,
             {"accession": accession_version.accession, "version": accession_version.version},
         ):
             continue
@@ -38,20 +38,20 @@ def upload_sequences(db_config: Engine, sequences_to_upload: dict[str, Any]):
             seq_metadata=data["metadata"],
             unaligned_nucleotide_sequences=data["unalignedNucleotideSequences"],
         )
-        add_to_submission_table(db_config, entry)
+        add_to_submission_table(db_engine, entry)
         logger.info(f"Inserted {full_accession} into submission_table")
 
 
 def trigger_submission_to_ena(
     config: Config, stop_event: threading.Event, input_file: str | None = None
 ):
-    db_config = db_init(config.db_password, config.db_username, config.db_url)
+    db_engine = db_init(config.db_password, config.db_username, config.db_url)
 
     if input_file:
         # Get sequences to upload from a file
         with open(input_file, encoding="utf-8") as json_file:
             sequences_to_upload: dict[str, Any] = json.load(json_file)
-            upload_sequences(db_config, sequences_to_upload)
+            upload_sequences(db_engine, sequences_to_upload)
             return
 
     while True:
@@ -72,7 +72,7 @@ def trigger_submission_to_ena(
             continue
         try:
             sequences_to_upload = response.json()
-            upload_sequences(db_config, sequences_to_upload)
+            upload_sequences(db_engine, sequences_to_upload)
         except Exception as upload_error:
             logger.error(f"Failed to upload sequences: {upload_error}")
         finally:

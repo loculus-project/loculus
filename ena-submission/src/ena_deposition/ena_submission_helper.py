@@ -881,7 +881,7 @@ def retry_failed_submissions_for_matching_errors(
     entries_with_errors: Iterable[ProjectTableEntry]
     | Iterable[SampleTableEntry]
     | Iterable[AssemblyTableEntry],
-    db_config: Engine,
+    db_engine: Engine,
     model_class: type[ProjectTableEntry] | type[SampleTableEntry] | type[AssemblyTableEntry],
     retry_threshold_min: int,
     error_substrings: Sequence[str] = ("does not exist in ENA",),
@@ -911,7 +911,7 @@ def retry_failed_submissions_for_matching_errors(
         }
         try:
             update_with_retry(
-                db_config=db_config,
+                db_engine=db_engine,
                 conditions=asdict(pkey),
                 update_values=update_values,
                 model_class=model_class,

@@ -29,12 +29,12 @@ logger = logging.getLogger(__name__)
 
 
 def _get_result_of_single_db_record(
-    db_config: Engine,
+    db_engine: Engine,
     model_class: type,
     conditions: dict[str, Any],
 ) -> dict[str, Any]:
     """Helper to get the result field from a single record with validation."""
-    entries = find_conditions_in_db(db_config, model_class, conditions=conditions)
+    entries = find_conditions_in_db(db_engine, model_class, conditions=conditions)
 
     if not entries:
         return {}
@@ -53,11 +53,11 @@ def _get_result_of_single_db_record(
     return result
 
 
-def get_bioproject_accession_from_db(db_config: Engine, project_id: int | None) -> dict[str, str]:
+def get_bioproject_accession_from_db(db_engine: Engine, project_id: int | None) -> dict[str, str]:
     if project_id is None:
         return {}
     result = _get_result_of_single_db_record(
-        db_config, ProjectTableEntry, conditions={"project_id": project_id}
+        db_engine, ProjectTableEntry, conditions={"project_id": project_id}
     )
 
     if not result or "bioproject_accession" not in result:
@@ -67,10 +67,10 @@ def get_bioproject_accession_from_db(db_config: Engine, project_id: int | None) 
 
 
 def get_biosample_accession_from_db(
-    db_config: Engine, accession: str, version: int
+    db_engine: Engine, accession: str, version: int
 ) -> dict[str, str]:
     result = _get_result_of_single_db_record(
-        db_config,
+        db_engine,
         SampleTableEntry,
         conditions={"accession": accession, "version": version},
     )
@@ -82,13 +82,13 @@ def get_biosample_accession_from_db(
 
 
 def get_assembly_accessions_from_db(
-    db_config: Engine,
+    db_engine: Engine,
     accession: str,
     version: int,
     organism: EnaOrganismDetails,
 ) -> tuple[dict[str, str], bool]:
     result = _get_result_of_single_db_record(
-        db_config,
+        db_engine,
         AssemblyTableEntry,
         conditions={"accession": accession, "version": version},
     )
@@ -124,16 +124,16 @@ def get_assembly_accessions_from_db(
 
 
 def get_external_metadata_to_upload(
-    db_config: Engine, entry: SubmissionTableEntry, config: Config
+    db_engine: Engine, entry: SubmissionTableEntry, config: Config
 ) -> tuple[dict[str, Any], bool]:
     accession = entry.accession
     version = entry.version
     organism = config.enaOrganisms[entry.organism]
 
-    bioproject_accession = get_bioproject_accession_from_db(db_config, entry.project_id)
-    biosample_accession = get_biosample_accession_from_db(db_config, accession, version)
+    bioproject_accession = get_bioproject_accession_from_db(db_engine, entry.project_id)
+    biosample_accession = get_biosample_accession_from_db(db_engine, accession, version)
     assembly_accession, all_assemblies_present = get_assembly_accessions_from_db(
-        db_config, accession, version, organism
+        db_engine, accession, version, organism
     )
 
     return {
@@ -147,7 +147,7 @@ def get_external_metadata_to_upload(
     }, all([bioproject_accession, biosample_accession, all_assemblies_present])
 
 
-def get_external_metadata_and_send_to_loculus(db_config: Engine, config: Config) -> None:
+def get_external_metadata_and_send_to_loculus(db_engine: Engine, config: Config) -> None:
     for status in (
         StatusAll.SUBMITTED_PROJECT,
         StatusAll.SUBMITTED_SAMPLE,
@@ -155,14 +155,14 @@ def get_external_metadata_and_send_to_loculus(db_config: Engine, config: Config)
         StatusAll.SUBMITTED_ALL,
     ):
         for entry in find_conditions_in_db(
-            db_config,
+            db_engine,
             SubmissionTableEntry,
             conditions={"status_all": status},
         ):
             accession = entry.accession
             version = entry.version
             accession_version = f"{accession}.{version}"
-            data, all_present = get_external_metadata_to_upload(db_config, entry, config)
+            data, all_present = get_external_metadata_to_upload(db_engine, entry, config)
             seq_key = {"accession": accession, "version": version}
 
             previously_uploaded: dict[str, Any] = entry.external_metadata or {}
@@ -194,7 +194,7 @@ def get_external_metadata_and_send_to_loculus(db_config: Engine, config: Config)
                     continue
                 try:
                     update_with_retry(
-                        db_config,
+                        db_engine,
                         conditions=seq_key,
                         update_values={
                             "external_metadata": new_external_metadata,
@@ -210,7 +210,7 @@ def get_external_metadata_and_send_to_loculus(db_config: Engine, config: Config)
             if status == StatusAll.SUBMITTED_ALL and all_present:
                 try:
                     update_with_retry(
-                        db_config,
+                        db_engine,
                         conditions=seq_key,
                         update_values={
                             "status_all": StatusAll.SENT_TO_LOCULUS,
@@ -224,7 +224,7 @@ def get_external_metadata_and_send_to_loculus(db_config: Engine, config: Config)
                         f"{StatusAll.SENT_TO_LOCULUS}: {e}"
                     )
                     update_with_retry(
-                        db_config,
+                        db_engine,
                         conditions=seq_key,
                         update_values={
                             "status_all": StatusAll.HAS_ERRORS_EXT_METADATA_UPLOAD,
@@ -235,7 +235,7 @@ def get_external_metadata_and_send_to_loculus(db_config: Engine, config: Config)
 
 
 def upload_handle_errors(
-    db_config: Engine,
+    db_engine: Engine,
     config: Config,
     slack_config: SlackConfig,
     time_threshold: int = 15,
@@ -250,7 +250,7 @@ def upload_handle_errors(
     2. If time since last slack_notification is over slack_time_threshold send notification
     """
     entries_with_errors = find_stuck_in_submission_db(
-        db_config,
+        db_engine,
         time_threshold=time_threshold,
     )
     if len(entries_with_errors) > 0:
@@ -268,7 +268,7 @@ def upload_handle_errors(
 
 
 def upload_external_metadata(config: Config, stop_event: threading.Event):
-    db_config = db_init(config.db_password, config.db_username, config.db_url)
+    db_engine = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
         slack_token_default=config.slack_token,
@@ -280,9 +280,9 @@ def upload_external_metadata(config: Config, stop_event: threading.Event):
             logger.warning("upload_external_metadata stopped due to exception in another task")
             return
         logger.debug("Checking for external metadata to upload to Loculus")
-        get_external_metadata_and_send_to_loculus(db_config, config)
+        get_external_metadata_and_send_to_loculus(db_engine, config)
         upload_handle_errors(
-            db_config,
+            db_engine,
             config,
             slack_config,
         )
