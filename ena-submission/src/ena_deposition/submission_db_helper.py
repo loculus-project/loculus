@@ -563,7 +563,7 @@ def is_revision(engine: Engine, seq_key: AccessionVersion) -> bool:
 
 def previous_version(engine: Engine, seq_key: AccessionVersion) -> int | None:
     """Return the previous version number for *seq_key*, or None if not a revision."""
-    if not is_latest_revision(engine, seq_key):
+    if not is_revision(engine, seq_key):
         return None
     rows = find_conditions_in_db(
         engine,
