@@ -29,9 +29,9 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
-def _get_result_of_single_db_record(
+def _get_result_of_single_db_record[T: SampleTableEntry | ProjectTableEntry | AssemblyTableEntry](
     db_engine: Engine,
-    model_class: type,
+    model_class: type[T],
     conditions: dict[str, Any],
 ) -> dict[str, Any]:
     """Helper to get the result field from a single record with validation."""
