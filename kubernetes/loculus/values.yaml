@@ -1612,7 +1612,7 @@ defaultOrganisms:
       metadataAdd:
         - name: displayName
           displayName: Display name
-          definition: A human-readable label for the sequence record, with the format `{geoLocCountry}/{identifier}/{sampleCollectionDate}`. The identifier is `specimenCollectorSampleId` if set, otherwise `submissionId`; for INSDC sequences the isolate name is used directly if it contains no slashes or spaces. If the identifier cannot be parsed from the expected format, `accessionVersion` is used instead. Missing fields default to `"unknown"`.
+          definition: A human-readable label for the sequence record, with the format `{geoLocCountry}/{identifier}/{sampleCollectionDate}`. The identifier is provided from `specimenCollectorSampleId` if set, otherwise `submissionId`. For sequences ingested from the INSDC, the identifier is taken directly as the provided field, assuming it contains no slashes or spaces, otherwise the `accessionVersion` is used. For other sequences, if the provided field has a display-name format itself (four or three items, separated by slashes), then the identifier is extracted as the second to last item within this. If the identifier cannot be extracted (due to invalid format of the provided field), the `accessionVersion` is used. Missing `geoLocCountry`/`sampleCollectionDate` default to `unknown`.
           noInput: true
           preprocessing:
             function: build_display_name
