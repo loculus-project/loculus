@@ -163,7 +163,7 @@ def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) ->
     return assembly_values
 
 
-def make_assembly_name(accession: str, version: str) -> str:
+def make_assembly_name(accession: str, version: int) -> str:
     """
     Create a unique assembly name based on accession, version and timestamp.
     Add a timestamp to the alias suffix.
@@ -197,7 +197,7 @@ def create_manifest_object(
 
     assembly_name = make_assembly_name(
         submission_row.accession,
-        str(submission_row.version),
+        submission_row.version,
     )
 
     unaligned_nucleotide_sequences = submission_row.unaligned_nucleotide_sequences
@@ -355,7 +355,7 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
     3. metadata fields in manifest haven't changed since previous version, otherwise
        requires manual revision
     """
-    seq_key = AccessionVersion(accession=submission_row.accession, version=submission_row.version)
+    seq_key = submission_row.pkey
     if not is_revision(db_engine, seq_key):
         return False
     version_to_revise = last_version(db_engine, seq_key)
@@ -388,7 +388,7 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
             update_assembly_error(
                 db_engine,
                 [error],
-                seq_key={"accession": submission_row.accession, "version": submission_row.version},
+                seq_key=asdict(submission_row.pkey),
                 update_type="revision",
             )
             return False
@@ -403,7 +403,7 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
             update_assembly_error(
                 db_engine,
                 [error],
-                seq_key={"accession": submission_row.accession, "version": submission_row.version},
+                seq_key=asdict(submission_row.pkey),
                 update_type="revision",
             )
             return False
@@ -438,7 +438,7 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
         update_assembly_error(
             db_engine,
             [error],
-            seq_key={"accession": submission_row.accession, "version": submission_row.version},
+            seq_key=asdict(submission_row.pkey),
             update_type="revision",
         )
         return False
@@ -449,12 +449,12 @@ def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableE
     """
     Check if change in sequence or flatfile metadata has occurred since last version.
     """
-    seq_key = AccessionVersion(accession=submission_row.accession, version=submission_row.version)
+    seq_key = submission_row.pkey
     version_to_revise = last_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
         db_engine,
         SubmissionTableEntry,
-        conditions={"accession": seq_key.accession, "version": version_to_revise},
+        conditions=asdict(seq_key),
     )
     if len(last_version_rows) == 0:
         error_msg = f"Last version {version_to_revise} not found in submission_table"
@@ -574,7 +574,7 @@ def assembly_table_create(db_engine: Engine, config: Config):
             f"Found {len(ready_to_submit_assembly)} entries in assembly_table in status READY"
         )
     for row in ready_to_submit_assembly:
-        seq_key = AccessionVersion(accession=row.accession, version=row.version)
+        seq_key = row.pkey
         submission_rows = find_conditions_in_db(
             db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
         )
@@ -650,7 +650,7 @@ def assembly_table_create(db_engine: Engine, config: Config):
             update_assembly_error(
                 db_engine,
                 assembly_creation_results.errors,
-                seq_key={"accession": row.accession, "version": row.version},
+                seq_key=asdict(row.pkey),
                 update_type="creation",
             )
 
