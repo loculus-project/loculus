@@ -533,7 +533,7 @@ def add_to_submission_table(engine: Engine, entry: SubmissionTableEntry) -> bool
         return False
 
 
-def is_revision(engine: Engine, seq_key: AccessionVersion) -> bool:
+def is_latest_revision(engine: Engine, seq_key: AccessionVersion) -> bool:
     """Return True if *seq_key* is the latest of multiple versions for its accession."""
     if seq_key.version == 1:
         return False
@@ -546,9 +546,24 @@ def is_revision(engine: Engine, seq_key: AccessionVersion) -> bool:
     return len(all_versions) > 1 and seq_key.version == all_versions[-1]
 
 
-def last_version(engine: Engine, seq_key: AccessionVersion) -> int | None:
+def is_revision(engine: Engine, seq_key: AccessionVersion) -> bool:
+    """Return True if *seq_key* is a revision of an accession submitted to ENA.
+    Note: a sequence with version > 1 is not necessarily a revision as the first version
+    might not have been submitted to ENA yet."""
+    if seq_key.version == 1:
+        return False
+    rows = find_conditions_in_db(
+        engine,
+        SubmissionTableEntry,
+        {"accession": seq_key.accession},
+    )
+    all_versions = sorted(row.version for row in rows)
+    return len(all_versions) > 1
+
+
+def previous_version(engine: Engine, seq_key: AccessionVersion) -> int | None:
     """Return the previous version number for *seq_key*, or None if not a revision."""
-    if not is_revision(engine, seq_key):
+    if not is_latest_revision(engine, seq_key):
         return None
     rows = find_conditions_in_db(
         engine,

@@ -39,7 +39,7 @@ from .submission_db_helper import (
     db_init,
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
-    is_revision,
+    is_latest_revision,
     update_db_where_conditions,
     update_with_retry,
 )
@@ -366,7 +366,7 @@ def sample_table_create(db_engine: Engine, config: Config, test: bool = False):
             continue
         logger.info(f"Starting sample creation for accession {row.accession}")
         sample_creation_results: CreationResult = create_ena_sample(
-            config, sample_set, revision=is_revision(db_engine, seq_key)
+            config, sample_set, revision=is_latest_revision(db_engine, seq_key)
         )
         if sample_creation_results.result:
             update_values = {
