@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: loculus-keycloak-database
-          image: postgres:15.12
+          image: ghcr.io/cloudnative-pg/postgresql@sha256:8e08e8d876545a0ce1cd5aa3c13923181f1d51d419cb618bc52832f4c89fda06
           resources:
             requests:
               memory: "30Mi"
