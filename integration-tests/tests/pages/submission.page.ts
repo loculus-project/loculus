@@ -217,4 +217,108 @@ export class BulkSubmissionPage extends SubmissionPage {
         );
         await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);
     }
+
+    /**
+     * Complete a bulk submission with N sequences using the same or different metadata/sequences.
+     *
+     * @param options.count - Number of sequences to submit (when using identical data)
+     * @param options.metadata - Array of metadata objects for each sequence, or a single object to replicate
+     * @param options.sequenceData - Array of sequence data objects, or a single object to replicate
+     * @param options.groupId - Optional group ID to submit to a specific group
+     * @param options.isRestricted - Whether to use restricted data terms (default: false)
+     * @returns ReviewPage after submission completes
+     */
+    async completeBulkSubmission({
+        count,
+        metadata,
+        sequenceData,
+        groupId,
+        isRestricted = false,
+    }: {
+        count?: number;
+        metadata:
+            | {
+                  submissionId: string;
+                  collectionCountry: string;
+                  collectionDate: string;
+                  authorAffiliations: string;
+              }
+            | Array<{
+                  submissionId: string;
+                  collectionCountry: string;
+                  collectionDate: string;
+                  authorAffiliations: string;
+              }>;
+        sequenceData: Record<string, string> | Array<Record<string, string>>;
+        groupId?: string | number;
+        isRestricted?: boolean;
+    }): Promise<ReviewPage> {
+        // Determine the actual count
+        const actualCount = Array.isArray(metadata)
+            ? metadata.length
+            : Array.isArray(sequenceData)
+              ? sequenceData.length
+              : (count ?? 1);
+
+        // Normalize metadata to array
+        const finalMetadata: Array<{
+            submissionId: string;
+            collectionCountry: string;
+            collectionDate: string;
+            authorAffiliations: string;
+        }> = Array.isArray(metadata)
+            ? metadata
+            : Array.from({ length: actualCount }, (_, i) => ({
+                  ...metadata,
+                  submissionId: `${metadata.submissionId}-${i}`,
+              }));
+
+        // Normalize sequenceData to array
+        const finalSequenceData: Array<Record<string, string>> = Array.isArray(sequenceData)
+            ? sequenceData
+            : Array.from({ length: actualCount }, () => ({ ...sequenceData }));
+
+        if (groupId) {
+            await this.page.goto(`/ebola-sudan/submission/${groupId}/submit`);
+        } else {
+            await this.navigateToSubmissionPage();
+        }
+
+        // Upload metadata
+        const headers = [
+            'submissionId',
+            'collectionCountry',
+            'collectionDate',
+            'authorAffiliations',
+        ];
+        const rows = finalMetadata.map((m) => [
+            m.submissionId,
+            m.collectionCountry,
+            m.collectionDate,
+            m.authorAffiliations,
+        ]);
+        await this.uploadMetadataFile(headers, rows);
+
+        // Upload sequences - create FASTA with submission IDs as headers
+        const sequenceMap: Record<string, string> = {};
+        for (let i = 0; i < actualCount; i++) {
+            const seqData = finalSequenceData[i];
+            // For single-segment organisms, use just the submission ID
+            // For multi-segment, we need to handle the segment names
+            for (const [segmentName, sequence] of Object.entries(seqData)) {
+                const header =
+                    segmentName === 'main'
+                        ? finalMetadata[i].submissionId
+                        : `${finalMetadata[i].submissionId}_${segmentName}`;
+                sequenceMap[header] = sequence;
+            }
+        }
+        await this.uploadSequencesFile(sequenceMap);
+
+        if (isRestricted) {
+            await this.selectRestrictedDataUseTerms();
+        }
+
+        return this.submitAndWaitForProcessingDone();
+    }
 }
