@@ -455,7 +455,7 @@ def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableE
     last_version_rows = find_conditions_in_db(
         db_engine,
         SubmissionTableEntry,
-        conditions=asdict(seq_key),
+        conditions={"accession": seq_key.accession, "version": version_to_revise},
     )
     if len(last_version_rows) == 0:
         error_msg = f"Last version {version_to_revise} not found in submission_table"
