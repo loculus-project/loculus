@@ -716,8 +716,7 @@ def assembly_table_update(db_engine: Engine, config: Config, time_threshold: int
             else:
                 status = Status.SUBMITTED
                 logger.info(
-                    f"Assembly accessioned by ENA for {seq_key.accession} version "
-                    f"{seq_key.version}"
+                    f"Assembly accessioned by ENA for {seq_key.accession} version {seq_key.version}"
                 )
             update_with_retry(
                 db_engine=db_engine,

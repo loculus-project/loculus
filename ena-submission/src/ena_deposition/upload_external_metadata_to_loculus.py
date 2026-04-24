@@ -3,6 +3,7 @@
 import logging
 import threading
 import time
+from dataclasses import asdict
 from datetime import datetime
 from typing import Any
 
@@ -159,11 +160,8 @@ def get_external_metadata_and_send_to_loculus(db_engine: Engine, config: Config)
             SubmissionTableEntry,
             conditions={"status_all": status},
         ):
-            accession = entry.accession
-            version = entry.version
-            accession_version = f"{accession}.{version}"
             data, all_present = get_external_metadata_to_upload(db_engine, entry, config)
-            seq_key = {"accession": accession, "version": version}
+            seq_key = entry.pkey
 
             previously_uploaded: dict[str, Any] = entry.external_metadata or {}
             new_external_metadata: dict[str, Any] = data.get("externalMetadata", {})
@@ -182,20 +180,19 @@ def get_external_metadata_and_send_to_loculus(db_engine: Engine, config: Config)
                         entry.organism,
                     )
                     logger.info(
-                        f"External metadata update for {accession_version} succeeded. "
+                        f"External metadata update for {seq_key} succeeded. "
                         f"Old data: {previously_uploaded}, "
                         f"new data: {new_external_metadata}"
                     )
                 except Exception as e:
                     logger.exception(
-                        f"Submitting external metadata to backend failed for "
-                        f"{accession_version}: {e}"
+                        f"Submitting external metadata to backend failed for {seq_key}: {e}"
                     )
                     continue
                 try:
                     update_with_retry(
                         db_engine,
-                        conditions=seq_key,
+                        conditions=asdict(seq_key),
                         update_values={
                             "external_metadata": new_external_metadata,
                         },
@@ -204,14 +201,14 @@ def get_external_metadata_and_send_to_loculus(db_engine: Engine, config: Config)
                 except Exception as e:
                     logger.exception(
                         f"Failed to add new state of submitted external metadata to db for "
-                        f"{accession_version}: {e}"
+                        f"{seq_key}: {e}"
                     )
                     continue
             if status == StatusAll.SUBMITTED_ALL and all_present:
                 try:
                     update_with_retry(
                         db_engine,
-                        conditions=seq_key,
+                        conditions=asdict(seq_key),
                         update_values={
                             "status_all": StatusAll.SENT_TO_LOCULUS,
                             "finished_at": datetime.now(tz=pytz.utc),
@@ -220,12 +217,12 @@ def get_external_metadata_and_send_to_loculus(db_engine: Engine, config: Config)
                     )
                 except Exception as e:
                     logger.exception(
-                        f"Failed to update status_all for {accession_version} to "
+                        f"Failed to update status_all for {seq_key} to "
                         f"{StatusAll.SENT_TO_LOCULUS}: {e}"
                     )
                     update_with_retry(
                         db_engine,
-                        conditions=seq_key,
+                        conditions=asdict(seq_key),
                         update_values={
                             "status_all": StatusAll.HAS_ERRORS_EXT_METADATA_UPLOAD,
                             "finished_at": datetime.now(tz=pytz.utc),
