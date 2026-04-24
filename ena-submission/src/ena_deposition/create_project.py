@@ -254,8 +254,9 @@ def submission_table_update(db_engine: Engine):
         corresponding_project = find_conditions_in_db(
             db_engine, ProjectTableEntry, conditions=group_key
         )
-        if len(corresponding_project) == 1 and corresponding_project[0].status == str(
-            Status.SUBMITTED
+        if (
+            len(corresponding_project) == 1
+            and corresponding_project[0].status == Status.SUBMITTED.value
         ):
             update_values = {
                 "status_all": StatusAll.SUBMITTED_PROJECT,

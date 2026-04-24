@@ -336,7 +336,7 @@ def sample_table_create(db_engine: Engine, config: Config, test: bool = False):
     )
     logger.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
     for row in ready_to_submit_sample:
-        seq_key = AccessionVersion(accession=row.accession, version=row.version)
+        seq_key = row.pkey
         if is_old_version(db_engine, seq_key):
             logger.warning(f"Skipping submission for {seq_key} as it is not the latest version.")
             continue
