@@ -841,7 +841,7 @@ def set_accession_does_not_exist_error(
     conditions: dict[str, str | dict[str, str]],
     accession: str,
     accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"] | Literal["RUN_REF"],
-    db_pool: Engine,
+    db_engine: Engine,
 ):
     error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
     logger.error(error_text)
@@ -855,7 +855,7 @@ def set_accession_does_not_exist_error(
                 errors=[error_text],
                 result={"ena_sample_accession": accession, "biosample_accession": accession},
             )
-            succeeded = add_to_sample_table(db_pool, sample_table_entry)
+            succeeded = add_to_sample_table(db_engine, sample_table_entry)
         case "BIOPROJECT":
             project_table_entry = ProjectTableEntry(
                 **conditions,  # type: ignore
@@ -863,7 +863,7 @@ def set_accession_does_not_exist_error(
                 errors=[error_text],
                 result={"bioproject_accession": accession},
             )
-            succeeded = add_to_project_table(db_pool, project_table_entry)
+            succeeded = add_to_project_table(db_engine, project_table_entry)
         case "RUN_REF":
             assembly_table_entry = AssemblyTableEntry(
                 **conditions,  # type: ignore
@@ -871,7 +871,7 @@ def set_accession_does_not_exist_error(
                 errors=[error_text],
                 result={},  # type: ignore
             )
-            succeeded = add_to_assembly_table(db_pool, assembly_table_entry)
+            succeeded = add_to_assembly_table(db_engine, assembly_table_entry)
 
     if not succeeded:
         logger.warning(f"{accession_type} creation failed and DB update failed.")

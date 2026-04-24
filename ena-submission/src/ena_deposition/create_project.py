@@ -137,7 +137,7 @@ def set_project_table_entry(db_engine: Engine, config: Config, row: SubmissionTa
             conditions=group_key,
             accession=bioproject,
             accession_type="BIOPROJECT",
-            db_pool=db_engine,
+            db_engine=db_engine,
         )
         return
 
