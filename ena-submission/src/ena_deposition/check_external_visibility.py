@@ -257,9 +257,6 @@ def check_and_update_visibility_for_column(
 
     # Get the appropriate visibility checker
     visibility_checker: VisibilityChecker = column_config.checker_class()
-    if not visibility_checker:
-        logger.error(f"No checker found for {column_config.checker_class}")
-        return
 
     logger.debug(f"Checking {entity_type.value}.{column_name} for visibility")
     entities_needing_check = get_entities_needing_column_check(db_engine, column_config)
