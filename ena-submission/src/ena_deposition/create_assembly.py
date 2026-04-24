@@ -233,7 +233,7 @@ def create_manifest_object(
     return manifest
 
 
-def submission_table_start(db_config: Engine, config: Config) -> None:
+def submission_table_start(db_engine: Engine, config: Config) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE
     2. If entry has insdcRawReadsAccession, check it exists in ENA, if not set error and continue
@@ -243,7 +243,7 @@ def submission_table_start(db_config: Engine, config: Config) -> None:
     4. Else create corresponding entry in assembly_table
     """
     conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE}
-    ready_to_submit = find_conditions_in_db(db_config, SubmissionTableEntry, conditions=conditions)
+    ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
     if len(ready_to_submit) > 0:
         logger.debug(
             f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE"
@@ -257,13 +257,13 @@ def submission_table_start(db_config: Engine, config: Config) -> None:
                 conditions=seq_key,
                 accession=run_ref,
                 accession_type="RUN_REF",
-                db_pool=db_config,
+                db_pool=db_engine,
             )
             continue
 
         # 1. check if there exists an entry in the assembly_table for seq_key
         corresponding_assembly = find_conditions_in_db(
-            db_config, AssemblyTableEntry, conditions=seq_key
+            db_engine, AssemblyTableEntry, conditions=seq_key
         )
         status_all = None
         if len(corresponding_assembly) == 1:
@@ -273,18 +273,18 @@ def submission_table_start(db_config: Engine, config: Config) -> None:
                 status_all = StatusAll.SUBMITTING_ASSEMBLY
         else:
             # If not: create assembly_entry, change status to SUBMITTING_ASSEMBLY
-            if not add_to_assembly_table(db_config, AssemblyTableEntry(**seq_key)):
+            if not add_to_assembly_table(db_engine, AssemblyTableEntry(**seq_key)):
                 continue
             status_all = StatusAll.SUBMITTING_ASSEMBLY
         update_db_where_conditions(
-            db_config,
+            db_engine,
             model_class=SubmissionTableEntry,
             conditions=seq_key,
             update_values={"status_all": status_all},
         )
 
 
-def submission_table_update(db_config: Engine) -> None:
+def submission_table_update(db_engine: Engine) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTING_ASSEMBLY
     2. If (exists an entry in the assembly_table for (accession, version)):
@@ -293,7 +293,7 @@ def submission_table_update(db_config: Engine) -> None:
     """
     conditions = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
     submitting_assembly = find_conditions_in_db(
-        db_config, SubmissionTableEntry, conditions=conditions
+        db_engine, SubmissionTableEntry, conditions=conditions
     )
     if len(submitting_assembly) > 0:
         logger.debug(
@@ -304,14 +304,14 @@ def submission_table_update(db_config: Engine) -> None:
         seq_key = {"accession": row.accession, "version": row.version}
 
         corresponding_assembly = find_conditions_in_db(
-            db_config, AssemblyTableEntry, conditions=seq_key
+            db_engine, AssemblyTableEntry, conditions=seq_key
         )
         if len(corresponding_assembly) == 1 and corresponding_assembly[0].status == str(
             Status.SUBMITTED
         ):
             update_values = {"status_all": StatusAll.SUBMITTED_ALL}
             update_db_where_conditions(
-                db_config,
+                db_engine,
                 model_class=SubmissionTableEntry,
                 conditions=seq_key,
                 update_values=update_values,
@@ -325,7 +325,7 @@ def submission_table_update(db_config: Engine) -> None:
 
 
 def update_assembly_error(
-    db_config: Engine,
+    db_engine: Engine,
     error: list[str],
     seq_key: dict[str, Any],
     update_type: Literal["revision"] | Literal["creation"],
@@ -335,7 +335,7 @@ def update_assembly_error(
         f"version {seq_key['version']}. Propagating to db. Error: {error}"
     )
     update_with_retry(
-        db_config=db_config,
+        db_engine=db_engine,
         conditions={"accession": seq_key["accession"], "version": seq_key["version"]},
         update_values={
             "status": Status.HAS_ERRORS,
@@ -346,7 +346,7 @@ def update_assembly_error(
     )
 
 
-def can_be_revised(config: Config, db_config: Engine, submission_row: SubmissionTableEntry) -> bool:
+def can_be_revised(config: Config, db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
     """
     Check if assembly can be revised
     1. Last version exists in submission_table, otherwise throw RuntimeError
@@ -356,11 +356,11 @@ def can_be_revised(config: Config, db_config: Engine, submission_row: Submission
        requires manual revision
     """
     seq_key = AccessionVersion(accession=submission_row.accession, version=submission_row.version)
-    if not is_revision(db_config, seq_key):
+    if not is_revision(db_engine, seq_key):
         return False
-    version_to_revise = last_version(db_config, seq_key)
+    version_to_revise = last_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
-        db_config,
+        db_engine,
         SubmissionTableEntry,
         conditions={"accession": submission_row.accession, "version": version_to_revise},
     )
@@ -371,7 +371,7 @@ def can_be_revised(config: Config, db_config: Engine, submission_row: Submission
     last_version_entry = last_version_rows[0]
 
     previous_sample_accession, previous_study_accession = get_project_and_sample_results(
-        db_config, last_version_entry
+        db_engine, last_version_entry
     )
     logger.debug(
         f"Previous sample accession: {previous_sample_accession}, "
@@ -386,7 +386,7 @@ def can_be_revised(config: Config, db_config: Engine, submission_row: Submission
             )
             logger.error(error)
             update_assembly_error(
-                db_config,
+                db_engine,
                 [error],
                 seq_key={"accession": submission_row.accession, "version": submission_row.version},
                 update_type="revision",
@@ -401,7 +401,7 @@ def can_be_revised(config: Config, db_config: Engine, submission_row: Submission
             )
             logger.error(error)
             update_assembly_error(
-                db_config,
+                db_engine,
                 [error],
                 seq_key={"accession": submission_row.accession, "version": submission_row.version},
                 update_type="revision",
@@ -436,7 +436,7 @@ def can_be_revised(config: Config, db_config: Engine, submission_row: Submission
         )
         logger.error(error)
         update_assembly_error(
-            db_config,
+            db_engine,
             [error],
             seq_key={"accession": submission_row.accession, "version": submission_row.version},
             update_type="revision",
@@ -445,14 +445,14 @@ def can_be_revised(config: Config, db_config: Engine, submission_row: Submission
     return True
 
 
-def is_flatfile_data_changed(db_config: Engine, submission_row: SubmissionTableEntry) -> bool:
+def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
     """
     Check if change in sequence or flatfile metadata has occurred since last version.
     """
     seq_key = AccessionVersion(accession=submission_row.accession, version=submission_row.version)
-    version_to_revise = last_version(db_config, seq_key)
+    version_to_revise = last_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
-        db_config,
+        db_engine,
         SubmissionTableEntry,
         conditions={"accession": seq_key.accession, "version": version_to_revise},
     )
@@ -492,10 +492,10 @@ def is_flatfile_data_changed(db_config: Engine, submission_row: SubmissionTableE
     return False
 
 
-def update_assembly_results_with_latest_version(db_config: Engine, seq_key: AccessionVersion):
-    version_to_revise = last_version(db_config, seq_key)
+def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
+    version_to_revise = last_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
-        db_config,
+        db_engine,
         AssemblyTableEntry,
         conditions={
             "accession": seq_key.accession,
@@ -511,7 +511,7 @@ def update_assembly_results_with_latest_version(db_config: Engine, seq_key: Acce
         "change in flatfile data."
     )
     update_with_retry(
-        db_config=db_config,
+        db_engine=db_engine,
         conditions=asdict(seq_key),
         update_values={
             "status": Status.SUBMITTED,
@@ -523,17 +523,17 @@ def update_assembly_results_with_latest_version(db_config: Engine, seq_key: Acce
 
 
 def get_project_and_sample_results(
-    db_config: Engine, submission_row: SubmissionTableEntry
+    db_engine: Engine, submission_row: SubmissionTableEntry
 ) -> tuple[str, str]:
     seq_key = {"accession": submission_row.accession, "version": submission_row.version}
 
-    sample_rows = find_conditions_in_db(db_config, SampleTableEntry, conditions=seq_key)
+    sample_rows = find_conditions_in_db(db_engine, SampleTableEntry, conditions=seq_key)
     if len(sample_rows) == 0:
         error_msg = f"Entry {submission_row.accession} not found in sample_table"
         raise RuntimeError(error_msg)
 
     project_rows = find_conditions_in_db(
-        db_config,
+        db_engine,
         ProjectTableEntry,
         conditions={"project_id": submission_row.project_id},
     )
@@ -555,7 +555,7 @@ def get_project_and_sample_results(
     return cast(str, sample_accession), cast(str, study_accession)
 
 
-def assembly_table_create(db_config: Engine, config: Config):
+def assembly_table_create(db_engine: Engine, config: Config):
     """
     1. Find all entries in assembly_table in state READY
     2. Create temporary files: chromosome_list_file, embl_file, manifest_file
@@ -567,7 +567,7 @@ def assembly_table_create(db_config: Engine, config: Config):
     """
     conditions = {"status": Status.READY}
     ready_to_submit_assembly = find_conditions_in_db(
-        db_config, AssemblyTableEntry, conditions=conditions
+        db_engine, AssemblyTableEntry, conditions=conditions
     )
     if len(ready_to_submit_assembly) > 0:
         logger.debug(
@@ -576,7 +576,7 @@ def assembly_table_create(db_config: Engine, config: Config):
     for row in ready_to_submit_assembly:
         seq_key = AccessionVersion(accession=row.accession, version=row.version)
         submission_rows = find_conditions_in_db(
-            db_config, SubmissionTableEntry, conditions=asdict(seq_key)
+            db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
         )
         if len(submission_rows) == 0:
             error_msg = f"Entry {row.accession} not found in submitting_table"
@@ -585,15 +585,15 @@ def assembly_table_create(db_config: Engine, config: Config):
         center_name = submission_row.center_name
 
         sample_accession, study_accession = get_project_and_sample_results(
-            db_config, submission_row
+            db_engine, submission_row
         )
 
-        if is_revision(db_config, seq_key):
+        if is_revision(db_engine, seq_key):
             logger.debug(f"Entry {row.accession} is a revision, checking if it can be revised")
-            if not can_be_revised(config, db_config, submission_row):
+            if not can_be_revised(config, db_engine, submission_row):
                 continue
-            if not is_flatfile_data_changed(db_config, submission_row):
-                update_assembly_results_with_latest_version(db_config, seq_key)
+            if not is_flatfile_data_changed(db_engine, submission_row):
+                update_assembly_results_with_latest_version(db_engine, seq_key)
                 continue
 
         try:
@@ -610,7 +610,7 @@ def assembly_table_create(db_config: Engine, config: Config):
 
         update_values: dict[str, Any] = {"status": Status.SUBMITTING}
         number_rows_updated = update_db_where_conditions(
-            db_config,
+            db_engine,
             model_class=AssemblyTableEntry,
             conditions=asdict(seq_key),
             update_values=update_values,
@@ -641,14 +641,14 @@ def assembly_table_create(db_config: Engine, config: Config):
                 f"Assembly creation succeeded for {seq_key.accession} version {seq_key.version}"
             )
             update_with_retry(
-                db_config=db_config,
+                db_engine=db_engine,
                 conditions=asdict(seq_key),
                 update_values=update_values,
                 model_class=AssemblyTableEntry,
             )
         else:
             update_assembly_error(
-                db_config,
+                db_engine,
                 assembly_creation_results.errors,
                 seq_key={"accession": row.accession, "version": row.version},
                 update_type="creation",
@@ -658,7 +658,7 @@ def assembly_table_create(db_config: Engine, config: Config):
 _last_ena_check: datetime | None = None
 
 
-def assembly_table_update(db_config: Engine, config: Config, time_threshold: int = 5):
+def assembly_table_update(db_engine: Engine, config: Config, time_threshold: int = 5):
     """
     - time_threshold (minutes)
     1. Find all entries in assembly_table in state WAITING
@@ -667,7 +667,7 @@ def assembly_table_update(db_config: Engine, config: Config, time_threshold: int
     """
     global _last_ena_check  # noqa: PLW0603
     conditions = {"status": Status.WAITING}
-    waiting = find_conditions_in_db(db_config, AssemblyTableEntry, conditions=conditions)
+    waiting = find_conditions_in_db(db_engine, AssemblyTableEntry, conditions=conditions)
     if len(waiting) > 0:
         logger.debug(f"Found {len(waiting)} entries in assembly_table in status WAITING")
     # Check if ENA has assigned an accession, don't do this too frequently
@@ -677,7 +677,7 @@ def assembly_table_update(db_config: Engine, config: Config, time_threshold: int
         for row in waiting:
             seq_key = {"accession": row.accession, "version": row.version}
             submission_rows = find_conditions_in_db(
-                db_config, SubmissionTableEntry, conditions=seq_key
+                db_engine, SubmissionTableEntry, conditions=seq_key
             )
             if len(submission_rows) == 0:
                 error_msg = f"Entry {row.accession} not found in submitting_table"
@@ -720,7 +720,7 @@ def assembly_table_update(db_config: Engine, config: Config, time_threshold: int
                     f"{seq_key['version']}"
                 )
             update_with_retry(
-                db_config=db_config,
+                db_engine=db_engine,
                 conditions=seq_key,
                 update_values={
                     "status": status,
@@ -733,7 +733,7 @@ def assembly_table_update(db_config: Engine, config: Config, time_threshold: int
 
 
 def assembly_table_handle_errors(
-    db_config: Engine,
+    db_engine: Engine,
     config: Config,
     slack_config: SlackConfig,
     last_retry_time: datetime | None,
@@ -744,9 +744,9 @@ def assembly_table_handle_errors(
     2. If time since last slack notification is over slack_retry_threshold_min send notification
     3. Trigger retry if time since last retry is over retry_threshold_min
     """
-    entries_waiting = find_waiting_in_db(db_config, time_threshold=config.waiting_threshold_hours)
+    entries_waiting = find_waiting_in_db(db_engine, time_threshold=config.waiting_threshold_hours)
     entries_with_errors = find_errors_or_stuck_in_db(
-        db_config,
+        db_engine,
         AssemblyTableEntry,
         time_threshold=config.submitting_time_threshold_min,
     )
@@ -773,7 +773,7 @@ def assembly_table_handle_errors(
 
         last_retry_time = retry_failed_submissions_for_matching_errors(
             entries_with_errors,
-            db_config,
+            db_engine,
             model_class=AssemblyTableEntry,
             retry_threshold_min=config.retry_threshold_min,
             last_retry=last_retry_time,
@@ -802,7 +802,7 @@ def assembly_table_handle_errors(
 
 
 def create_assembly(config: Config, stop_event: threading.Event):
-    db_config = db_init(config.db_password, config.db_username, config.db_url)
+    db_engine = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
         slack_token_default=config.slack_token,
@@ -815,12 +815,12 @@ def create_assembly(config: Config, stop_event: threading.Event):
             logger.warning("create_assembly stopped due to exception in another task")
             return
         logger.debug("Checking for assemblies to create")
-        submission_table_start(db_config, config)
-        submission_table_update(db_config)
+        submission_table_start(db_engine, config)
+        submission_table_update(db_engine)
 
-        assembly_table_create(db_config, config)
-        assembly_table_update(db_config, config, time_threshold=config.min_between_ena_checks)
+        assembly_table_create(db_engine, config)
+        assembly_table_update(db_engine, config, time_threshold=config.min_between_ena_checks)
         last_retry_time = assembly_table_handle_errors(
-            db_config, config, slack_config, last_retry_time
+            db_engine, config, slack_config, last_retry_time
         )
         time.sleep(config.time_between_iterations)

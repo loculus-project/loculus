@@ -101,14 +101,14 @@ def construct_project_set_object(
     return ProjectSet(project=[project_type])
 
 
-def set_project_table_entry(db_config: Engine, config: Config, row: SubmissionTableEntry):
+def set_project_table_entry(db_engine: Engine, config: Config, row: SubmissionTableEntry):
     """Set bioprojectAccession for entry with custom bioprojectAccession"""
     logger.debug(f"Accession {row.accession} already has bioprojectAccession in metadata")
     group_key = {"group_id": row.group_id, "organism": row.organism}
     seq_key = {"accession": row.accession, "version": row.version}
     bioproject = row.seq_metadata["bioprojectAccession"]
 
-    corresponding_group = find_conditions_in_db(db_config, ProjectTableEntry, conditions=group_key)
+    corresponding_group = find_conditions_in_db(db_engine, ProjectTableEntry, conditions=group_key)
     corresponding_project = [
         project
         for project in corresponding_group
@@ -124,7 +124,7 @@ def set_project_table_entry(db_config: Engine, config: Config, row: SubmissionTa
             "project_id": corresponding_project[0].project_id,
         }
         update_db_where_conditions(
-            db_config,
+            db_engine,
             model_class=type(row),
             conditions=seq_key,
             update_values=update_values,
@@ -137,7 +137,7 @@ def set_project_table_entry(db_config: Engine, config: Config, row: SubmissionTa
             conditions=group_key,
             accession=bioproject,
             accession_type="BIOPROJECT",
-            db_pool=db_config,
+            db_pool=db_engine,
         )
         return
 
@@ -155,7 +155,7 @@ def set_project_table_entry(db_config: Engine, config: Config, row: SubmissionTa
         status=Status.SUBMITTED,
         center_name=center_name,
     )
-    succeeded = add_to_project_table(db_config, project_table_entry)
+    succeeded = add_to_project_table(db_engine, project_table_entry)
     if succeeded:
         logger.debug("Succeeding in adding bioprojectAccession to project_table")
         update_values = {
@@ -164,14 +164,14 @@ def set_project_table_entry(db_config: Engine, config: Config, row: SubmissionTa
             "project_id": succeeded,
         }
         update_db_where_conditions(
-            db_config,
+            db_engine,
             model_class=type(row),
             conditions=seq_key,
             update_values=update_values,
         )
 
 
-def sync_state_with_submission_table(db_config: Engine, config: Config):
+def sync_state_with_submission_table(db_engine: Engine, config: Config):
     """
     1. Find all entries in submission_table in state READY_TO_SUBMIT
     2. If (exists "bioproject" in "metadata"):
@@ -181,7 +181,7 @@ def sync_state_with_submission_table(db_config: Engine, config: Config):
     4. Else create corresponding entry in project_table
     """
     conditions = {"status_all": StatusAll.READY_TO_SUBMIT}
-    ready_to_submit = find_conditions_in_db(db_config, SubmissionTableEntry, conditions=conditions)
+    ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
     logger.debug(
         f"Found {len(ready_to_submit)} entries in submission_table in status READY_TO_SUBMIT"
     )
@@ -191,13 +191,13 @@ def sync_state_with_submission_table(db_config: Engine, config: Config):
 
         # Use custom bioprojectAccession if it exists
         if row.seq_metadata.get("bioprojectAccession"):
-            set_project_table_entry(db_config, config, row)
+            set_project_table_entry(db_engine, config, row)
             continue
 
         # Create a default project entry for (group_id, organism)
         # Check if there exists an entry in the project table for (group_id, organism)
         corresponding_project = find_conditions_in_db(
-            db_config, ProjectTableEntry, conditions=group_key
+            db_engine, ProjectTableEntry, conditions=group_key
         )
         if len(corresponding_project) == 1:
             if corresponding_project[0].status == Status.SUBMITTED:
@@ -210,7 +210,7 @@ def sync_state_with_submission_table(db_config: Engine, config: Config):
                 continue
         else:
             project_id = add_to_project_table(
-                db_config, ProjectTableEntry(group_id=row.group_id, organism=row.organism)
+                db_engine, ProjectTableEntry(group_id=row.group_id, organism=row.organism)
             )
             if not project_id:
                 continue
@@ -218,7 +218,7 @@ def sync_state_with_submission_table(db_config: Engine, config: Config):
                 "project_id": project_id,
             }
         update_db_where_conditions(
-            db_config,
+            db_engine,
             model_class=SubmissionTableEntry,
             conditions=seq_key,
             update_values=update_values,
@@ -227,7 +227,7 @@ def sync_state_with_submission_table(db_config: Engine, config: Config):
 
 # TODO Allow propagating updated group info https://github.com/loculus-project/loculus/issues/2939
 def project_table_create(
-    db_config: Engine,
+    db_engine: Engine,
     config: Config,
     test: bool = False,
 ):
@@ -243,7 +243,7 @@ def project_table_create(
     """
     conditions = {"status": Status.READY}
     ready_to_submit_project = find_conditions_in_db(
-        db_config, ProjectTableEntry, conditions=conditions
+        db_engine, ProjectTableEntry, conditions=conditions
     )
     logger.debug(f"Found {len(ready_to_submit_project)} entries in project_table in status READY")
     for row in ready_to_submit_project:
@@ -262,7 +262,7 @@ def project_table_create(
             "center_name": group_info.institution,
         }
         number_rows_updated = update_db_where_conditions(
-            db_config,
+            db_engine,
             model_class=ProjectTableEntry,
             conditions=group_key,
             update_values=update_values,
@@ -300,7 +300,7 @@ def project_table_create(
                 f"Project creation failed for group_id {row.group_id} organism {row.organism}"
             )
         update_with_retry(
-            db_config=db_config,
+            db_engine=db_engine,
             conditions=group_key,
             update_values=update_values,
             model_class=ProjectTableEntry,
@@ -308,7 +308,7 @@ def project_table_create(
 
 
 def project_table_handle_errors(
-    db_config: Engine,
+    db_engine: Engine,
     config: Config,
     slack_config: SlackConfig,
     last_retry_time: datetime | None,
@@ -320,7 +320,7 @@ def project_table_handle_errors(
     3. Retry entries if time since last retry is over retry_threshold_min
     """
     entries_with_errors = find_errors_or_stuck_in_db(
-        db_config, ProjectTableEntry, time_threshold=config.submitting_time_threshold_min
+        db_engine, ProjectTableEntry, time_threshold=config.submitting_time_threshold_min
     )
     if len(entries_with_errors) > 0:
         error_msg = (
@@ -336,7 +336,7 @@ def project_table_handle_errors(
         )
         return retry_failed_submissions_for_matching_errors(
             entries_with_errors,
-            db_config,
+            db_engine,
             model_class=ProjectTableEntry,
             retry_threshold_min=config.retry_threshold_min,
             last_retry=last_retry_time,
@@ -348,7 +348,7 @@ def project_table_handle_errors(
 
 
 def create_project(config: Config, stop_event: threading.Event):
-    db_config = db_init(config.db_password, config.db_username, config.db_url)
+    db_engine = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
         slack_token_default=config.slack_token,
@@ -361,13 +361,13 @@ def create_project(config: Config, stop_event: threading.Event):
             logger.warning("create_project stopped due to exception in another task")
             return
         logger.debug("Checking for projects to create")
-        sync_state_with_submission_table(db_config, config)
+        sync_state_with_submission_table(db_engine, config)
 
-        project_table_create(db_config, config, test=config.test)
+        project_table_create(db_engine, config, test=config.test)
         sync_state_with_submission_table(
-            db_config, config
+            db_engine, config
         )  # update submission_table state after creation
         last_retry_time = project_table_handle_errors(
-            db_config, config, slack_config, last_retry_time
+            db_engine, config, slack_config, last_retry_time
         )
         time.sleep(config.time_between_iterations)
