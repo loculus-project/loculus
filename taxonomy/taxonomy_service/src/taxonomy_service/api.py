@@ -1,10 +1,14 @@
+from collections import defaultdict
 import logging
 import sqlite3
-from collections.abc import Generator
+from collections.abc import Generator, Iterable
 from typing import Annotated
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Response
+import yaml
+
+from taxonomy_service.datatypes import SubtreeRequestBody
 
 from taxonomy_service.datatypes import Taxon
 
@@ -107,6 +111,106 @@ def fetch_common_name(db_conn: sqlite3.Connection, taxon: Taxon) -> Taxon | None
     return None
 
 
+def get_spanning_tree(db_conn: sqlite3.Connection, tax_ids: set[int]) -> list[Taxon]:
+    """Run a recursive CTE against the database to collect the path
+    from each taxon in tax_ids to the root node.
+
+    Uses UNION to prevent having to evaluate parts of paths shared by
+    several input taxa multiple times.
+    """
+    placeholders = ",".join("?" * len(tax_ids))
+    rows = db_conn.execute(
+        f"""
+      WITH RECURSIVE ancestors AS (
+          SELECT *
+          FROM taxonomy WHERE tax_id IN ({placeholders})
+          UNION
+          SELECT t.*
+          FROM taxonomy t JOIN ancestors a ON t.tax_id = a.parent_id
+          WHERE t.tax_id != t.parent_id
+      )
+      SELECT * FROM ancestors
+      ORDER BY depth, tax_id
+    """,
+        list(tax_ids),
+    ).fetchall()
+
+    return [Taxon.from_row(row) for row in rows]
+
+
+def map_child_nodes(tree: list[Taxon]) -> dict[int, list[int]]:
+    """Take a list of Taxons (each of which declares its parent) and
+    return a dict that maps each Taxon's id to its children
+    """
+    children: dict[int, list[int]] = defaultdict(list)
+
+    for taxon in tree:
+        if taxon.tax_id != taxon.parent_id:
+            children[taxon.parent_id].append(taxon.tax_id)
+    for child_list in children.values():
+        child_list.sort()
+
+    return children
+
+
+def prune_tree(
+    tree: list[Taxon],
+    keep_ids: set[int],
+    root_id: int,
+) -> list[Taxon]:
+    """Return a list of Taxa pruned to `keep_ids`, rooted at `root_id`.
+    Pruned taxa are skipped; their children reattach to the nearest kept ancestor
+    to preserve the overall hierarchy.
+    """
+    indexed_by_id: dict[int, Taxon] = {t.tax_id: t for t in tree}
+    children = map_child_nodes(tree)
+    return list(_prune(indexed_by_id, keep_ids, children, root_id, root_id).values())
+
+
+def _prune(
+    tree_by_id: dict[int, Taxon],
+    keep_ids: set[int],
+    children: dict[int, list[int]],
+    node_id: int,
+    parent_in_output: int,
+) -> dict[int, Taxon]:
+    result: dict[int, Taxon] = {}
+
+    current_taxon = tree_by_id[node_id]
+    if current_taxon.tax_id in keep_ids:
+        result[node_id] = current_taxon.model_copy(
+            update={"parent_id": parent_in_output}
+        )
+        next_parent = current_taxon.tax_id
+    else:
+        next_parent = parent_in_output
+
+    for child_id in children.get(node_id, []):
+        result.update(_prune(tree_by_id, keep_ids, children, child_id, next_parent))
+
+    return result
+
+
+def convert_to_silo_yaml(taxa: Iterable[Taxon]) -> dict[str, dict]:
+    """Generate a dict that can be dumped to a SILO-compatible yaml
+    file representing the taxonomic hierarchy.
+    """
+    result: dict[str, dict] = {}
+
+    for taxon in taxa:
+        alias = f"Taxon {taxon.tax_id}: {taxon.scientific_name}"
+        if taxon.common_name is not None:
+            alias += f"; {taxon.common_name}"
+        result[str(taxon.tax_id)] = {
+            "aliases": [alias],
+            "parents": [str(taxon.parent_id)]
+            if taxon.tax_id != taxon.parent_id
+            else [],
+        }
+
+    return result
+
+
 @app.get("/")
 def read_root() -> dict[str, str]:
     return {"message": "Taxonomy service is running"}
@@ -143,6 +247,38 @@ def get_taxon(
         return taxon_with_common_name
 
     return taxon
+
+
+@app.post("/silo-lineage")
+def get_silo_lineage(
+    payload: SubtreeRequestBody, db: DbConnection, prune: bool = False
+) -> Response:
+    taxon_ids = {1}  # always include the root node
+    for i in payload.tax_ids:
+        try:
+            taxon_ids.add(int(i))
+        except ValueError:
+            raise HTTPException(
+                status_code=400, detail=f"tax_ids must be numeric, got '{i}'"
+            )
+
+    spanning_tree = get_spanning_tree(db, taxon_ids)
+    if prune:
+        spanning_tree = prune_tree(spanning_tree, taxon_ids, root_id=1)
+    lineage = convert_to_silo_yaml(spanning_tree)
+
+    missing = (taxon_ids - {1}) - {int(k) for k in lineage}
+    if missing:
+        logger.warning(f"one or more requested taxa don't exist: {sorted(missing)}")
+        for m in missing:
+            lineage[str(m)] = {
+                "aliases": [f"Taxon {m}"],
+                "parents": ["1"],  # attach these directly to root node
+            }
+
+    return Response(
+        content=yaml.dump(lineage, sort_keys=False), media_type="application/yaml"
+    )
 
 
 def init_app(config: Config):
