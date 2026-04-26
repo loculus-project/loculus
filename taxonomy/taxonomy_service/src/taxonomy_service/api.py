@@ -271,7 +271,10 @@ def get_silo_lineage(
     if missing:
         logger.warning(f"one or more requested taxa don't exist: {sorted(missing)}")
         for m in missing:
-            lineage[str(m)] = {"aliases": [], "parents": []}
+            lineage[str(m)] = {
+                "aliases": [f"Taxon {m}"],
+                "parents": ["1"],  # attach these directly to root node
+            }
 
     return Response(
         content=yaml.dump(lineage, sort_keys=False), media_type="application/yaml"
