@@ -43,6 +43,7 @@ siloImport:
   siloTimeoutSeconds: 3600
   hardRefreshIntervalSeconds: 3600
   pollIntervalSeconds: 30
+  taxonomyServiceUrl: &taxonomy_service_url http://loculus-taxonomy-service:5000
 ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
@@ -1187,7 +1188,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           displayGroup: lengthCompleteness
           label: Length
       - name: hostTaxonId
-        type: int
+        type: string
         autocomplete: true
         displayName: "Host species"
         customDisplay:
@@ -1205,7 +1206,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             hostNameScientific: hostNameScientific
             hostTaxonId: hostTaxonId
           args:
-            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+            taxonomy_service_url: *taxonomy_service_url
       - name: hostNameScientific
         displayName: Host name - scientific
         generateIndex: true
@@ -1224,7 +1225,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             hostTaxonId: processed.hostTaxonId
             hostNameScientific: hostNameScientific
           args:
-            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+            taxonomy_service_url: *taxonomy_service_url
       - name: hostNameCommon
         displayName: Host name - common
         generateIndex: true
@@ -1242,7 +1243,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             hostTaxonId: processed.hostTaxonId
           args:
-            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+            taxonomy_service_url: *taxonomy_service_url
       - name: isLabHost
         displayName: Is lab host
         type: boolean
@@ -1438,7 +1439,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         - "prepro"
       replicas: 1
       taxonomyServiceArgs: &preprocessingTaxonomyServiceArgs
-        taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+        taxonomy_service_url: *taxonomy_service_url
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         batch_size: 100
@@ -1557,7 +1558,8 @@ defaultOrganisms:
               # - Identifier is the second to last field (extracted through named capture group)
               regex_pattern: '^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$'
         - name: hostTaxonId
-          type: int
+          type: string
+          lineageSystem: host_taxonomy
           autocomplete: true
           displayName: "Host species"
           customDisplay:
@@ -1576,7 +1578,7 @@ defaultOrganisms:
               hostNameScientific: hostNameScientific
               hostTaxonId: hostTaxonId
             args:
-              taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+              taxonomy_service_url: *taxonomy_service_url
         - name: lineage
           displayName: Lineage
           isSequenceFilter: true

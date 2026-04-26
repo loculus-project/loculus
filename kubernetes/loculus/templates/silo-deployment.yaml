@@ -84,11 +84,13 @@ spec:
             {{- if $lineageSystem }}
               {{- $defsBySystem := dict -}}
               {{- range $ls := $lineageSystem }}
-                {{- $def := index $.Values.lineageSystemDefinitions $ls -}}
-                {{- if not $def -}}
-                  {{- fail (printf "lineageSystemDefinitions missing entry for lineage system '%s'" $ls) -}}
-                {{- end -}}
-                {{- $defsBySystem = set $defsBySystem $ls $def -}}
+                {{- if ne $ls "host_taxonomy" }} {{- /* host_taxonomy is populated from the taxonomy service at import time, not via lineageSystemDefinitions */ -}}
+                  {{- $def := index $.Values.lineageSystemDefinitions $ls -}}
+                  {{- if not $def -}}
+                    {{- fail (printf "lineageSystemDefinitions missing entry for lineage system '%s'" $ls) -}}
+                  {{- end -}}
+                  {{- $defsBySystem = set $defsBySystem $ls $def -}}
+                {{- end }}
               {{- end }}
             - name: LINEAGE_DEFINITIONS
               value: {{ $defsBySystem | toJson | quote }}
@@ -103,6 +105,8 @@ spec:
               value: "/usr/local/bin/silo"
             - name: PREPROCESSING_CONFIG
               value: "/app/preprocessing_config.yaml"
+            - name: TAXONOMY_SERVICE_URL
+              value: {{ $.Values.siloImport.taxonomyServiceUrl | quote }}
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json
