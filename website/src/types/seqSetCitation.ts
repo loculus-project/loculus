@@ -50,3 +50,19 @@ export const crossRefWork = z.object({
         })),
 });
 export type CrossRefWork = z.infer<typeof crossRefWork>;
+
+const seqSetCitationContributor = z.object({
+    givenName: z.string(),
+    surname: z.string(),
+});
+
+const seqSetCitation = z.object({
+    seqSetDOI: z.string(),
+    citationDOI: z.string(),
+    title: z.string(),
+    year: z.string(),
+    contributors: z.array(seqSetCitationContributor),
+});
+export type SeqSetCitation = z.infer<typeof seqSetCitation>;
+
+export const seqSetCitations = z.array(seqSetCitation);

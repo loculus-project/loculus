@@ -2,6 +2,7 @@ import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { ExportSeqSet } from './ExportSeqSet';
+import { SeqSetCitationsList } from './SeqSetCitationsList.tsx';
 import { SeqSetForm } from './SeqSetForm';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
@@ -16,6 +17,7 @@ import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDelete from '~icons/mdi/delete';
 import MdiDownload from '~icons/mdi/download';
 import MdiPencil from '~icons/mdi/pencil';
+import MdiViewListOutline from '~icons/mdi/view-list-outline';
 
 const logger = getClientLogger('SeqSetItemActions');
 
@@ -43,6 +45,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
 
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
+    const [citationsModalVisible, setCitationsModalVisible] = useState(false);
 
     const { mutate: deleteSeqSet } = useDeleteSeqSetAction(
         clientConfig,
@@ -69,6 +72,13 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                     >
                         <MdiDownload className='w-4 h-4' />
                         <span className='hidden sm:block'>Export / Cite</span>
+                    </Button>
+                    <Button
+                        className='outlineButton flex items-center gap-2'
+                        onClick={() => setCitationsModalVisible(true)}
+                    >
+                        <MdiViewListOutline className='w-4 h-4' />
+                        <span className='hidden sm:block'>View Citations</span>
                     </Button>
                     {isAdminView ? (
                         <Button
@@ -105,6 +115,9 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
             </Modal>
             <Modal isModalVisible={exportModalVisible} setModalVisible={setExportModalVisible}>
                 <ExportSeqSet seqSet={seqSet} seqSetRecords={seqSetRecords} databaseName={databaseName} />
+            </Modal>
+            <Modal isModalVisible={citationsModalVisible} setModalVisible={setCitationsModalVisible}>
+                <SeqSetCitationsList clientConfig={clientConfig} seqSet={seqSet} />
             </Modal>
         </div>
     );
