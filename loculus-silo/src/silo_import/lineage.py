@@ -59,8 +59,17 @@ def update_taxonomic_lineage(
 
     url = f"{config.taxonomy_service_url.rstrip('/')}/silo-lineage"
     logger.info("Fetching host taxonomy subtree for %d taxa", len(taxa))
+    sorted_taxa = sorted(taxa)
     try:
-        _fetch_taxonomic_lineage(url, sorted(taxa), destination)
+        response = _post_taxonomic_lineage(url, sorted_taxa)
+        if response.status_code == 413:
+            logger.warning(
+                "Unpruned taxonomic lineage file exceeds default size threshold; "
+                "retrying with prune=true"
+            )
+            response = _post_taxonomic_lineage(url, sorted_taxa, prune=True)
+        response.raise_for_status()
+        _write_text(destination, response.text)
     except requests.RequestException as exc:
         msg = f"Failed to fetch host taxonomy from {url}: {exc}"
         raise RuntimeError(msg) from exc
@@ -72,10 +81,9 @@ def _download_lineage_file(url: str, destination: Path) -> None:
     _write_text(destination, response.text)
 
 
-def _fetch_taxonomic_lineage(url: str, taxa: list[str], destination: Path) -> None:
-    response = requests.post(url, json={"tax_ids": taxa}, timeout=60)
-    response.raise_for_status()
-    _write_text(destination, response.text)
+def _post_taxonomic_lineage(url: str, taxa: list[str], prune: bool = False) -> requests.Response:
+    params = {"prune": "true"} if prune else None
+    return requests.post(url, json={"tax_ids": taxa}, params=params, timeout=60)
 
 
 def _write_text(path: Path, content: str) -> None:
