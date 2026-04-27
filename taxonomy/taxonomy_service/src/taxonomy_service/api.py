@@ -261,6 +261,19 @@ def post_silo_lineage(
     prune: bool = False,
     allow_large: bool = False,
 ) -> Response:
+    """Return a taxonomy based on the taxa provided in the request body
+    The taxonomy is returned as a SILO-compatible yaml file.
+
+    Args:
+        prune: bool     If False, return a lineage that contains all provided tax_ids,
+                        as well as all taxa on the path from the provided tax_ids to the root.
+                        If True, return a lineage that only contains the provided tax_ids
+                        (and root), but with the overall hierarchy preserved by connecting
+                        the children of pruned taxa to the parent taxon.
+        allow_large: bool
+                        If False, return status 413 if the generated yaml file is
+                        larger than `LARGE_FILE_THRESHOLD`
+    """
     taxon_ids = {1}  # always include the root node
     for i in payload.tax_ids:
         try:
