@@ -88,7 +88,8 @@ class CrossRefService(final val properties: CrossRefServiceProperties) {
 
         val endDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
         val connection = URI(
-            properties.endpoint + "/servlet/getForwardLinks?usr=${properties.username}&pwd=${properties.password}&doi=${doi}&endDate=${endDate}&include_postedcontent=true"
+            properties.endpoint +
+                "/servlet/getForwardLinks?usr=${properties.username}&pwd=${properties.password}&doi=$doi&endDate=$endDate&include_postedcontent=true",
         ).toURL().openConnection() as HttpURLConnection
         connection.requestMethod = "GET"
 
