@@ -246,6 +246,14 @@ class AssemblyTableEntry(Base):
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
+type TableEntry = (
+    SubmissionTableEntry
+    | ProjectTableEntry
+    | SampleTableEntry
+    | AssemblyTableEntry
+)
+
+
 def highest_version_in_submission_table(engine: Engine) -> dict[Accession, Version]:
     """Return the highest version for each accession in submission_table."""
     with Session(engine) as session:
@@ -258,7 +266,7 @@ def highest_version_in_submission_table(engine: Engine) -> dict[Accession, Versi
 
 
 def find_conditions_in_db[
-    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
+    T: TableEntry
 ](
     engine: Engine,
     model_class: type[T],
@@ -282,7 +290,7 @@ def find_conditions_in_db[
 
 
 def delete_records_in_db[
-    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
+    T: TableEntry
 ](
     engine: Engine,
     model_class: type[T],
@@ -362,7 +370,7 @@ def find_waiting_in_db(
 
 
 def update_db_where_conditions[
-    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
+    T: TableEntry
 ](
     engine: Engine,
     model_class: type[T],
@@ -408,7 +416,7 @@ def update_db_where_conditions[
 
 
 def update_with_retry[
-    T: (SubmissionTableEntry, ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)
+    T: TableEntry
 ](
     db_engine: Engine,
     conditions: Mapping[str, Any],
