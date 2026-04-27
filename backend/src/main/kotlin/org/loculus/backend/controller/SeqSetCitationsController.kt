@@ -6,6 +6,7 @@ import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
+import org.loculus.backend.api.SeqSetCitation
 import org.loculus.backend.api.SeqSetRecord
 import org.loculus.backend.api.SubmittedSeqSet
 import org.loculus.backend.api.SubmittedSeqSetRecord
@@ -79,6 +80,11 @@ class SeqSetCitationsController(
     @GetMapping("/get-seqset-records")
     fun getSeqSetRecords(@RequestParam seqSetId: String, @RequestParam version: Long?): List<SeqSetRecord> =
         seqSetCitationsService.getSeqSetRecords(seqSetId, version)
+
+    @Operation(description = "Get citations for a SeqSet DOI")
+    @GetMapping("/get-seqset-citations")
+    fun getSeqSetCitations(@RequestParam seqSetDOI: String): List<SeqSetCitation> =
+        seqSetCitationsService.getSeqSetCitations(seqSetDOI)
 
     @Operation(description = "Delete a SeqSet")
     @DeleteMapping("/delete-seqset")

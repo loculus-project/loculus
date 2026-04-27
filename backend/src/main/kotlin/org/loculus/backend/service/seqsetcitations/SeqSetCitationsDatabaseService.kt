@@ -22,6 +22,7 @@ import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
+import org.loculus.backend.api.SeqSetCitation
 import org.loculus.backend.api.SeqSetCitationsConstants
 import org.loculus.backend.api.SeqSetRecord
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
@@ -250,6 +251,11 @@ class SeqSetCitationsDatabaseService(
             }
 
         return selectedSeqSetRecords
+    }
+
+    fun getSeqSetCitations(seqSetDOI: String): List<SeqSetCitation> {
+        log.info { "Get seqSet citations for seqSet DOI $seqSetDOI" }
+        return crossRefService.getCrossRefCitedBy(seqSetDOI)
     }
 
     fun getSeqSets(authenticatedUser: AuthenticatedUser): List<SeqSet> {

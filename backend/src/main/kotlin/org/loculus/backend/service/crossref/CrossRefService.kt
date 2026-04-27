@@ -2,6 +2,9 @@ package org.loculus.backend.service.crossref
 
 import mu.KotlinLogging
 import org.jsoup.Jsoup
+import org.jsoup.parser.Parser
+import org.loculus.backend.api.SeqSetCitation
+import org.loculus.backend.api.SeqSetCitationContributor
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -56,6 +59,50 @@ class CrossRefService(final val properties: CrossRefServiceProperties) {
     private fun checkIsActive() {
         if (!isActive) {
             throw RuntimeException("The CrossRefService is not active as it has not been configured.")
+        }
+    }
+
+    fun parseCrossRefCitedByXML(citedByXML: String): List<SeqSetCitation> {
+        val doc = Jsoup.parse(citedByXML, "", Parser.xmlParser())
+
+        return doc.select("forward_link").mapNotNull { link ->
+            val cite = link.children().firstOrNull() ?: return@mapNotNull null
+            val contributors = cite.select("contributor").map { c ->
+                SeqSetCitationContributor(
+                    givenName = c.selectFirst("given_name")?.text() ?: "",
+                    surname = c.selectFirst("surname")?.text() ?: "",
+                )
+            }
+            SeqSetCitation(
+                seqSetDOI = link.attr("doi"),
+                citationDOI = cite.selectFirst("doi")?.text() ?: "",
+                title = cite.selectFirst("title")?.text() ?: "",
+                year = cite.selectFirst("year")?.text() ?: "",
+                contributors = contributors,
+            )
+        }
+    }
+
+    fun getCrossRefCitedBy(doi: String): List<SeqSetCitation> {
+        checkIsActive()
+
+        val endDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val connection = URI(
+            properties.endpoint + "/servlet/getForwardLinks?usr=${properties.username}&pwd=${properties.password}&doi=${doi}&endDate=${endDate}&include_postedcontent=true"
+        ).toURL().openConnection() as HttpURLConnection
+        connection.requestMethod = "GET"
+
+        val responseCode = connection.responseCode
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            val response = String(connection.inputStream.readAllBytes())
+            connection.inputStream.close()
+            return try {
+                parseCrossRefCitedByXML(response)
+            } catch (e: Exception) {
+                throw RuntimeException("Failed to parse CrossRef citedBy response for DOI $doi", e)
+            }
+        } else {
+            throw RuntimeException("CrossRef citedBy request returned $responseCode")
         }
     }
 
