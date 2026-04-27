@@ -31,6 +31,7 @@ class ImporterRunner:
         self.download_manager = DownloadManager()
         self.current_etag = SPECIAL_ETAG_NONE
         self.last_hard_refresh: float = 0
+        self.host_taxon_ids: set[str] = set()
 
     def _clear_download_directories(self) -> None:
         """Clear all timestamped download directories on startup."""
@@ -80,7 +81,10 @@ class ImporterRunner:
 
         try:
             update_lineage_definitions(download.analysis.pipeline_version, self.config, self.paths)
-            update_taxonomic_lineage(download.analysis.host_taxon_ids, self.config, self.paths)
+            if self.host_taxon_ids != download.analysis.host_taxon_ids:
+                # only update if download has different taxa than currently in SILO
+                update_taxonomic_lineage(download.analysis.host_taxon_ids, self.config, self.paths)
+                self.host_taxon_ids = download.analysis.host_taxon_ids
         except Exception:
             logger.exception("Failed to download lineage definitions; cleaning up input")
             safe_remove(self.paths.silo_input_data_path)
