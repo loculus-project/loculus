@@ -81,10 +81,10 @@ class SeqSetCitationsController(
     fun getSeqSetRecords(@RequestParam seqSetId: String, @RequestParam version: Long?): List<SeqSetRecord> =
         seqSetCitationsService.getSeqSetRecords(seqSetId, version)
 
-    @Operation(description = "Get citations for a SeqSet DOI")
+    @Operation(description = "Get citations for a SeqSet")
     @GetMapping("/get-seqset-citations")
-    fun getSeqSetCitations(@RequestParam seqSetDOI: String): List<SeqSetCitation> =
-        seqSetCitationsService.getSeqSetCitations(seqSetDOI)
+    fun getSeqSetCitations(@RequestParam seqSetId: String, @RequestParam version: Long): List<SeqSetCitation> =
+        seqSetCitationsService.getSeqSetCitations(seqSetId, version)
 
     @Operation(description = "Delete a SeqSet")
     @DeleteMapping("/delete-seqset")

@@ -8,7 +8,7 @@ object SeqSetsTable : Table("seqsets") {
     val seqSetVersion = long("seqset_version")
     val name = varchar("name", 255)
     val description = varchar("description", 255)
-    val seqSetDOI = varchar("seqset_doi", 255)
+    val seqSetDOI = varchar("seqset_doi", 255).nullable()
     val createdAt = datetime("created_at")
     val createdBy = varchar("created_by", 255)
     override val primaryKey = PrimaryKey(seqSetId, seqSetVersion)

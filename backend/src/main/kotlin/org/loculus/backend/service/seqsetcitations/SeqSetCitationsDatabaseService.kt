@@ -253,8 +253,17 @@ class SeqSetCitationsDatabaseService(
         return selectedSeqSetRecords
     }
 
-    fun getSeqSetCitations(seqSetDOI: String): List<SeqSetCitation> {
-        log.info { "Get seqSet citations for seqSet DOI $seqSetDOI" }
+    fun getSeqSetCitations(seqSetId: String, version: Long): List<SeqSetCitation> {
+        log.info { "Get seqSet citations for seqSet $seqSetId, version $version" }
+
+        val seqSet = SeqSetsTable
+            .selectAll()
+            .where { (SeqSetsTable.seqSetId eq seqSetId) and (SeqSetsTable.seqSetVersion eq version) }
+            .singleOrNull()
+            ?: throw NotFoundException("SeqSet $seqSetId, version $version does not exist")
+
+        val seqSetDOI = seqSet[SeqSetsTable.seqSetDOI]
+        if (seqSetDOI.isNullOrEmpty()) return emptyList()
         return crossRefService.getCrossRefCitedBy(seqSetDOI)
     }
 

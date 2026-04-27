@@ -56,7 +56,7 @@ const getSeqSetRecordsEndpoint = makeEndpoint({
 
 const getSeqSetCitationsEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-seqset-citations?seqSetDOI=:seqSetDOI',
+    path: '/get-seqset-citations?seqSetId=:seqSetId&version=:version',
     alias: 'getSeqSetCitations',
     response: seqSetCitations,
     errors: [notAuthorizedError],
