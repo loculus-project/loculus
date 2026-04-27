@@ -8,9 +8,7 @@ import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Response
 import yaml
 
-from taxonomy_service.datatypes import SubtreeRequestBody
-
-from taxonomy_service.datatypes import Taxon
+from taxonomy_service.datatypes import SubtreeRequestBody, Taxon
 
 from .config import Config
 
@@ -274,14 +272,7 @@ def post_silo_lineage(
                         If False, return status 413 if the generated yaml file is
                         larger than `LARGE_FILE_THRESHOLD`
     """
-    taxon_ids = {1}  # always include the root node
-    for i in payload.tax_ids:
-        try:
-            taxon_ids.add(int(i))
-        except ValueError:
-            raise HTTPException(
-                status_code=400, detail=f"tax_ids must be numeric, got '{i}'"
-            )
+    taxon_ids = {1} | set(payload.tax_ids)  # always include the root node
 
     spanning_tree = get_spanning_tree(db, taxon_ids)
     if prune:

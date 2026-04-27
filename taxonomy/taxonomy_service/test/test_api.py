@@ -193,13 +193,11 @@ class PostSiloLineageTest(unittest.TestCase):
         lineage = yaml.safe_load(response.text)
         assert set(lineage.keys()) == {"1"}
 
-    def test_non_numeric_tax_id_returns_400(self):
-        response = client.post(
-            "/silo-lineage", json={"tax_ids": ["not-a-number"]}
-        )
+    def test_non_numeric_tax_id_returns_422(self):
+        response = client.post("/silo-lineage", json={"tax_ids": ["not-a-number"]})
 
-        assert response.status_code == codes.bad_request
-        assert "must be numeric" in response.json()["detail"]
+        assert response.status_code == codes.unprocessable_entity
+        assert "Input should be a valid integer" in response.json()["detail"][0]["msg"]
 
     def test_missing_taxon_attached_to_root_with_placeholder_alias(self):
         response = self._post([mock_missing_taxon])
@@ -216,9 +214,7 @@ class PostSiloLineageTest(unittest.TestCase):
         # With prune=true, only the requested taxa + root are kept (1 and 9606),
         # so 9606 should reattach directly to 1.
         homo_sapiens = mock_taxa["Homo sapiens"]
-        response = self._post(
-            [homo_sapiens["tax_id"]], params={"prune": "true"}
-        )
+        response = self._post([homo_sapiens["tax_id"]], params={"prune": "true"})
 
         assert response.status_code == codes.ok
         lineage = yaml.safe_load(response.text)
