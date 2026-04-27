@@ -263,7 +263,8 @@ def sample_table_create(db_engine: Engine, config: Config, test: bool = False):
     logger.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
     for row in ready_to_submit_sample:
         seq_key = row.pkey
-        if is_revision(db_engine, seq_key) and not is_latest_revision(db_engine, seq_key):
+        is_rev = is_revision(db_engine, seq_key)
+        if is_rev and not is_latest_revision(db_engine, seq_key):
             logger.warning(f"Skipping submission for {seq_key} as it is not the latest version.")
             continue
 
@@ -292,7 +293,7 @@ def sample_table_create(db_engine: Engine, config: Config, test: bool = False):
             continue
         logger.info(f"Starting sample creation for accession {row.accession}")
         sample_creation_results: CreationResult = create_ena_sample(
-            config, sample_set, revision=is_latest_revision(db_engine, seq_key)
+            config, sample_set, revision=is_rev
         )
         if sample_creation_results.result:
             update_values = {
