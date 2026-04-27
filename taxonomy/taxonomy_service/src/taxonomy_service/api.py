@@ -14,6 +14,11 @@ from taxonomy_service.datatypes import Taxon
 
 from .config import Config
 
+# LAPIS/SILO uses Jackson to parse YAML files, which by default sets a limit of 3MB
+# If we send a lineage file over the limit to SILO it will crash and take down the
+# instance, so for large files we send back status 413 instead.
+LARGE_FILE_THRESHOLD = 2.5 * 1024 * 1024
+
 logger = logging.getLogger()
 
 app = FastAPI(
@@ -250,8 +255,11 @@ def get_taxon(
 
 
 @app.post("/silo-lineage")
-def get_silo_lineage(
-    payload: SubtreeRequestBody, db: DbConnection, prune: bool = False
+def post_silo_lineage(
+    payload: SubtreeRequestBody,
+    db: DbConnection,
+    prune: bool = False,
+    allow_large: bool = False,
 ) -> Response:
     taxon_ids = {1}  # always include the root node
     for i in payload.tax_ids:
@@ -276,9 +284,19 @@ def get_silo_lineage(
                 "parents": ["1"],  # attach these directly to root node
             }
 
-    return Response(
-        content=yaml.dump(lineage, sort_keys=False), media_type="application/yaml"
-    )
+    lineage_yaml = yaml.dump(lineage, sort_keys=False)
+    yaml_size = len(lineage_yaml.encode("utf-8"))
+    if yaml_size > LARGE_FILE_THRESHOLD and not allow_large:
+        raise HTTPException(
+            status_code=413,
+            detail=(
+                f"Generated lineage file is {yaml_size / 1024 / 1024:.2f}MB, "
+                f"larger than the default limit of {LARGE_FILE_THRESHOLD / 1024 / 1024:.2f}MB. "
+                f"Retry request with `allow_large=true` to get the full file"
+            ),
+        )
+
+    return Response(content=lineage_yaml, media_type="application/yaml")
 
 
 def init_app(config: Config):
