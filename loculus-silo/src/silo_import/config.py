@@ -1,13 +1,13 @@
 from __future__ import annotations
 
+import enum
 import json
 import os
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 
 
-class HierarchicalFilterKind(str, Enum):
+class HierarchicalFilterKind(enum.StrEnum):
     """If we add new hierarchical filters, they must be
     registered as enum variants here, as well as in `lineage.update_hierarchical_filters`
     """
@@ -107,7 +107,7 @@ def _parse_hierarchical_filters(
 
     if not isinstance(data, dict):
         msg = f"HIERARCHICAL_FILTERS must be a JSON object, got: {raw}"
-        raise RuntimeError(msg)
+        raise TypeError(msg)
 
     filters: dict[HierarchicalFilterKind, HierarchicalFilterConfig] = {}
     for filter_name, entry in data.items():

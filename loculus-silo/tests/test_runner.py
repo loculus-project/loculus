@@ -234,7 +234,7 @@ def test_runner_writes_hierarchical_filter_yaml(
         {
             "status_code": 200,
             "text": "lineage: host\n",
-            "raise_for_status": lambda self: None,
+            "raise_for_status": lambda _: None,
         },
     )()
     post_calls: list[tuple[str, list[str]]] = []
@@ -300,7 +300,7 @@ def test_runner_skips_filter_refetch_when_taxa_unchanged(
         {
             "status_code": 200,
             "text": "lineage: host\n",
-            "raise_for_status": lambda self: None,
+            "raise_for_status": lambda _: None,
         },
     )()
     post_calls: list[tuple[str, list[str]]] = []
