@@ -12,7 +12,14 @@ interface BaseDialogProps {
     className?: string;
 }
 
-export const BaseDialog: React.FC<BaseDialogProps> = ({ title, isOpen, onClose, children, fullWidth = true, className }) => {
+export const BaseDialog: React.FC<BaseDialogProps> = ({
+    title,
+    isOpen,
+    onClose,
+    children,
+    fullWidth = true,
+    className,
+}) => {
     const fullWidthClasses = fullWidth ? 'w-full w-max-5xl' : '';
     return (
         <Dialog open={isOpen} onClose={onClose} className='relative z-40'>
