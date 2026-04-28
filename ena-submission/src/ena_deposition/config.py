@@ -109,6 +109,8 @@ class Config(BaseModel):
     ingest_pipeline_submission_group: int
     ena_checklist: str | None = None
     set_alias_suffix: str | None = None  # Add to test revisions in dev
+    # Add timestamp and entropy to test sample aliases in integration tests to avoid name clashes
+    random_alias: bool = False
 
     ena_http_timeout_seconds: int = 60
     ena_public_search_timeout_seconds: int = 120

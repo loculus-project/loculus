@@ -116,14 +116,14 @@ def construct_sample_set_object(
     config: Config,
     submission_row: SubmissionTableEntry,
     sample_row: SampleTableEntry,
-    test: bool = False,
+    random_alias: bool = False,
 ):
     """
     Construct sample set object, using:
     - sample_row: entry in sample_table
     - submission_row: corresponding entry in submission_table
     - config information, such as enaDeposition metadata for that organism
-    If test=True add a timestamp to the alias suffix to allow for multiple
+    If random_alias=True add a timestamp to the alias suffix to allow for multiple
     submissions of the same project for testing.
     (ENA blocks multiple submissions with the same alias)
     """
@@ -133,7 +133,7 @@ def construct_sample_set_object(
     organism_metadata = config.enaOrganisms[organism]
     alias = get_alias(
         f"{sample_row.accession}:{organism}:{config.unique_project_suffix}",
-        test,
+        random_alias,
         config.set_alias_suffix,
     )
     sample_attributes = get_sample_attributes(config.metadata_mapping, sample_metadata)
@@ -244,7 +244,7 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config):
                 continue
 
 
-def sample_table_create(db_engine: Engine, config: Config, test: bool = False):
+def sample_table_create(db_engine: Engine, config: Config):
     """
     1. Find all entries in sample_table in state READY
     2. Create sample_set_object: use metadata, center_name, organism, and ingest fields
@@ -253,8 +253,8 @@ def sample_table_create(db_engine: Engine, config: Config, test: bool = False):
     4. If (create_ena_sample succeeds): update state to SUBMITTED with results
     3. Else update state to HAS_ERRORS with error messages
 
-    If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
-    sample for testing.
+    If config.random_alias=True add a timestamp to the alias suffix to allow for multiple
+    submissions of the same sample for testing.
     """
     conditions = {"status": Status.READY}
     ready_to_submit_sample = find_conditions_in_db(
@@ -273,7 +273,9 @@ def sample_table_create(db_engine: Engine, config: Config, test: bool = False):
             db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
         )
 
-        sample_set = construct_sample_set_object(config, submission_rows[0], row, test)
+        sample_set = construct_sample_set_object(
+            config, submission_rows[0], row, config.random_alias
+        )
         update_values = {
             "status": Status.SUBMITTING,
             "started_at": datetime.now(tz=pytz.utc),
@@ -376,7 +378,7 @@ def create_sample(config: Config, stop_event: threading.Event):
         logger.debug("Checking for samples to create")
         sync_state_with_submission_table(db_engine, config=config)
 
-        sample_table_create(db_engine, config, test=config.test)
+        sample_table_create(db_engine, config)
         sync_state_with_submission_table(
             db_engine, config=config
         )  # update submission_table state after creation

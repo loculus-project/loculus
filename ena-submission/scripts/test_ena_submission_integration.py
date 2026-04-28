@@ -428,7 +428,7 @@ def _test_successful_sample_submission(
     create_sample_sync_state_with_submission_table(db_engine, config=config)
     check_sample_submission_started(db_engine, sequences_to_upload)
 
-    sample_table_create(db_engine, config, test=config.test)
+    sample_table_create(db_engine, config)
     create_sample_sync_state_with_submission_table(db_engine, config)
     check_sample_submission_submitted(db_engine, sequences_to_upload)
 
@@ -439,7 +439,7 @@ def _test_successful_project_submission(
     create_project_sync_state_with_submission_table(db_engine, config)
     check_project_submission_started(db_engine, sequences_to_upload)
 
-    project_table_create(db_engine, config, test=config.test)
+    project_table_create(db_engine, config)
     create_project_sync_state_with_submission_table(db_engine, config)
     check_project_submission_submitted(db_engine, sequences_to_upload)
 
@@ -588,6 +588,9 @@ class TestSubmission:
             f"ENA submission URL is {self.config.ena_submission_url} instead of https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/"
         )
         assert self.config.test, "Test mode is not enabled."
+        assert self.config.random_alias, (
+            "Random alias is not enabled, this will case conflicts in ENA dev if tests are run simultaneously."  # noqa: E501
+        )
 
 
 class TestFirstPublicUpdate(TestSubmission):
