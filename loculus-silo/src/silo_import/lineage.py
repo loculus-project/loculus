@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 import requests
+from requests import codes
 
 from .config import HierarchicalFilterKind, ImporterConfig
 from .paths import ImporterPaths
@@ -49,7 +50,7 @@ def update_hierarchical_filters(
     config: ImporterConfig,
     paths: ImporterPaths,
     *,
-    subset: set[HierarchicalFilterKind] = set(),
+    subset: set[HierarchicalFilterKind] | None = None,
 ) -> None:
     """Dispatch each configured filter to its dedicated handler.
 
@@ -59,7 +60,7 @@ def update_hierarchical_filters(
     if not config.hierarchical_filters:
         return
     for kind, hf in config.hierarchical_filters.items():
-        if subset and kind not in subset:
+        if subset is not None and kind not in subset:
             continue
         values = values_by_kind.get(kind, set())
         match kind:
@@ -86,7 +87,7 @@ def update_taxonomic_lineage(
     sorted_taxa = sorted(taxa)
     try:
         response = _post_taxonomic_lineage(url, sorted_taxa)
-        if response.status_code == 413:
+        if response.status_code == codes.request_entity_too_large:
             logger.warning(
                 "Unpruned %s lineage exceeds size threshold; retrying with prune=true", file_base
             )

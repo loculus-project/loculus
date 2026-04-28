@@ -84,7 +84,7 @@ class ImporterRunner:
             new_values = download.analysis.hierarchical_filter_values
             filters_with_new_values = {
                 kind
-                for kind in new_values.keys()
+                for kind in new_values
                 if new_values.get(kind, set()) != self.hierarchical_filter_values.get(kind, set())
             }
             if filters_with_new_values:
