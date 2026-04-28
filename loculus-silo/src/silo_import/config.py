@@ -3,7 +3,23 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
+
+
+class HierarchicalFilterKind(str, Enum):
+    """If we add new hierarchical filters, they must be
+    registered as enum variants here, as well as in `lineage.update_hierarchical_filters`
+    """
+
+    HOST_TAXON = "hostTaxon"
+
+
+@dataclass(frozen=True)
+class HierarchicalFilterConfig:
+    kind: HierarchicalFilterKind
+    url: str
+    metadata_field: str
 
 
 @dataclass(frozen=True)
@@ -16,7 +32,7 @@ class ImporterConfig:
     root_dir: Path
     silo_binary: Path
     preprocessing_config: Path
-    taxonomy_service_url: str | None = None
+    hierarchical_filters: dict[HierarchicalFilterKind, HierarchicalFilterConfig] | None = None
 
     @classmethod
     def from_env(cls) -> ImporterConfig:
@@ -48,13 +64,14 @@ class ImporterConfig:
             except TypeError as exc:
                 raise RuntimeError(str(exc)) from exc
 
+        hierarchical_filters = _parse_hierarchical_filters(env.get("HIERARCHICAL_FILTERS"))
+
         hard_refresh_interval = int(env.get("HARD_REFRESH_INTERVAL", "3600"))
         poll_interval = int(env.get("SILO_IMPORT_POLL_INTERVAL_SECONDS", "30"))
         silo_run_timeout = int(env.get("SILO_RUN_TIMEOUT_SECONDS", "3600"))
         root_raw = env.get("ROOT_DIR")
         root_dir = Path(root_raw).resolve() if root_raw else Path("/")
         silo_binary = Path(env.get("PATH_TO_SILO_BINARY", "/usr/local/bin/silo"))
-        taxonomy_service_url = env.get("TAXONOMY_SERVICE_URL")
         preprocessing_config = Path(
             env.get("PREPROCESSING_CONFIG", "/app/preprocessing_config.yaml")
         )
@@ -68,9 +85,46 @@ class ImporterConfig:
             root_dir=root_dir,
             silo_binary=silo_binary,
             preprocessing_config=preprocessing_config,
-            taxonomy_service_url=taxonomy_service_url,
+            hierarchical_filters=hierarchical_filters,
         )
 
     @property
     def released_data_endpoint(self) -> str:
         return f"{self.backend_base_url}/get-released-data?compression=zstd"
+
+
+def _parse_hierarchical_filters(
+    raw: str | None,
+) -> dict[HierarchicalFilterKind, HierarchicalFilterConfig] | None:
+    if not raw:
+        return None
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        msg = "HIERARCHICAL_FILTERS must be valid JSON"
+        raise RuntimeError(msg) from exc
+
+    if not isinstance(data, dict):
+        msg = f"HIERARCHICAL_FILTERS must be a JSON object, got: {raw}"
+        raise RuntimeError(msg)
+
+    filters: dict[HierarchicalFilterKind, HierarchicalFilterConfig] = {}
+    for filter_name, entry in data.items():
+        try:
+            kind = HierarchicalFilterKind(filter_name)
+        except ValueError as exc:
+            valid = [k.value for k in HierarchicalFilterKind]
+            msg = f"Unknown hierarchical filter '{filter_name}'; expected one of {valid}"
+            raise RuntimeError(msg) from exc
+        try:
+            filters[kind] = HierarchicalFilterConfig(
+                kind=kind,
+                url=entry["url"],
+                metadata_field=entry["metadataField"],
+            )
+        except (KeyError, TypeError) as exc:
+            msg = f"HIERARCHICAL_FILTERS entry for '{filter_name}' is malformed: {entry}"
+            raise RuntimeError(msg) from exc
+
+    return filters

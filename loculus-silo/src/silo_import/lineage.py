@@ -5,9 +5,7 @@ from pathlib import Path
 
 import requests
 
-from silo_import.constants import HOST_TAXONOMY_FILENAME
-
-from .config import ImporterConfig
+from .config import HierarchicalFilterKind, ImporterConfig
 from .paths import ImporterPaths
 
 logger = logging.getLogger(__name__)
@@ -46,26 +44,51 @@ def update_lineage_definitions(
             raise RuntimeError(msg) from exc
 
 
-def update_taxonomic_lineage(
-    taxa: set[str],
+def update_hierarchical_filters(
+    values_by_kind: dict[HierarchicalFilterKind, set[str]],
     config: ImporterConfig,
     paths: ImporterPaths,
+    *,
+    subset: set[HierarchicalFilterKind] = set(),
 ) -> None:
-    destination = paths.input_dir / HOST_TAXONOMY_FILENAME
-    if not config.taxonomy_service_url or not taxa:
-        logger.info("Skipping host taxonomy fetch (not configured or no taxa)")
+    """Dispatch each configured filter to its dedicated handler.
+
+    New filter kinds slot in by adding a HierarchicalFilterKind member and a
+    corresponding case here.
+    """
+    if not config.hierarchical_filters:
+        return
+    for kind, hf in config.hierarchical_filters.items():
+        if subset and kind not in subset:
+            continue
+        values = values_by_kind.get(kind, set())
+        match kind:
+            # If we add new filter kinds, we should implement a corresponding
+            # handler function and call it here
+            case HierarchicalFilterKind.HOST_TAXON:
+                update_taxonomic_lineage(kind.value, values, hf.url, paths)
+
+
+def update_taxonomic_lineage(
+    file_base: str,
+    taxa: set[str],
+    service_url: str,
+    paths: ImporterPaths,
+) -> None:
+    destination = paths.input_dir / f"{file_base}.yaml"
+    if not taxa:
+        logger.info("No taxa for filter '%s'; writing empty lineage", file_base)
         _write_text(destination, "{}\n")
         return
 
-    url = f"{config.taxonomy_service_url.rstrip('/')}/silo-lineage"
-    logger.info("Fetching host taxonomy subtree for %d taxa", len(taxa))
+    url = f"{service_url.rstrip('/')}/silo-lineage"
+    logger.info("Fetching %s hierarchy for %d taxa", file_base, len(taxa))
     sorted_taxa = sorted(taxa)
     try:
         response = _post_taxonomic_lineage(url, sorted_taxa)
         if response.status_code == 413:
             logger.warning(
-                "Unpruned taxonomic lineage file exceeds default size threshold; "
-                "retrying with prune=true"
+                "Unpruned %s lineage exceeds size threshold; retrying with prune=true", file_base
             )
             response = _post_taxonomic_lineage(url, sorted_taxa, prune=True)
         response.raise_for_status()
