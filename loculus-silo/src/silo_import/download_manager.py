@@ -205,7 +205,7 @@ class DownloadManager:
 
             # Decompress and analyze the data
             try:
-                analysis = analyze_ndjson(data_path)
+                analysis = analyze_ndjson(data_path, config.hierarchical_filters)
             except RuntimeError as exc:
                 logger.warning(
                     "Failed to decompress %s (size=%s bytes): %s",

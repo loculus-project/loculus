@@ -5,6 +5,11 @@
 {{- $organismContent := $item.contents }}
 
 {{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" | fromYamlArray }}
+{{- $hierarchicalFilters := $organismContent | include "loculus.hierarchicalFiltersForOrganism" | fromYamlArray }}
+{{- $allLineageNames := $lineageSystem }}
+{{- range $hf := $hierarchicalFilters }}
+  {{- $allLineageNames = append $allLineageNames $hf.name }}
+{{- end }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -24,10 +29,10 @@ data:
     outputDirectory: /preprocessing/output
     ndjsonInputFilename: data.ndjson.zst
     referenceGenomeFilename: reference_genomes.json
-    {{- if $lineageSystem }}
+    {{- if $allLineageNames }}
     lineageDefinitionFilenames:
-    {{- range $ls := $lineageSystem }}
-      - {{ printf "%s.yaml" $ls }}
+    {{- range $name := $allLineageNames }}
+      - {{ printf "%s.yaml" $name }}
     {{- end }}
     {{- end }}
 

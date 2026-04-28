@@ -232,6 +232,11 @@
           "groups": ["metadata"],
           "type": "string",
           "description": "Use this on string fields that contain lineages, if you want to enable searches that can include sublineages. The value needs to be a lineage system that is defined under the `lineageSystemDefinitions` key."
+        },
+        "hierarchicalFilter": {
+          "groups": ["metadata"],
+          "type": "string",
+          "description": "Use this on string fields whose values form a hierarchy resolved at SILO import time. The value must match a key in the `hierarchicalFilterSources` map."
         }
       },
       "required": ["name"],
@@ -288,6 +293,24 @@
               "type": { "enum": ["string", "authors"] }
             },
             "errorMessage": "When lineageSystem is set, type must be 'string' or 'authors'"
+          }
+        },
+        {
+          "if": {
+            "properties": { "hierarchicalFilter": { "type": "string" } },
+            "required": ["hierarchicalFilter"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "authors"] }
+            },
+            "errorMessage": "When hierarchicalFilter is set, type must be 'string' or 'authors'"
+          }
+        },
+        {
+          "not": {
+            "description": "lineageSystem and hierarchicalFilter cannot both be set",
+            "required": ["lineageSystem", "hierarchicalFilter"]
           }
         },
         {
@@ -1563,6 +1586,21 @@
         }
       }
     },
+    "hierarchicalFilterSources": {
+      "groups": ["organism-conf"],
+      "type": "object",
+      "description": "Map from hierarchical filter name to the base URL of a service provides SILO lineage yaml files. Keys here are the names referenced by the `hierarchicalFilter` property on metadata fields.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-zA-Z0-9-]+$": {
+          "groups": ["hierarchical-filter-sources"],
+          "placeholder": "name",
+          "type": "string",
+          "format": "uri",
+          "description": "Base URL of the service. The importer appends `/silo-lineage`."
+        }
+      }
+    },
     "enforceHTTPS": {
       "type": "boolean",
       "default": true,
@@ -1817,10 +1855,6 @@
           "description": "Interval in seconds between checking for new data",
           "default": 30,
           "minimum": 1
-        },
-        "taxonomyServiceUrl": {
-          "type": "string",
-          "description": "URL (including port!) pointing to the taxomomy service"
         }
       },
       "additionalProperties": false,

@@ -81,6 +81,23 @@ lineageSystemDefinitions:
 
 Note: Lineages should be determined by the preprocessing pipeline and not the user, set the lineage field to `noInput: true` to reflect this or alternatively only allow users to submit valid lineage values by adding an `options` list.
 
+### Hierarchical filter sources
+
+For metadata fields whose values form a hierarchy that's resolved at SILO import
+time (rather than fetched as a static file per pipeline version), set
+`hierarchicalFilter: <name>` on the metadata field and add a corresponding entry under
+`hierarchicalFilterSources`. Each entry maps a name to the base URL of a
+service that provides the SILO lineage file. The importer collects observed
+values for the field, sends them to that service, and writes the returned YAML
+into SILO's input directory as `<name>.yaml`.
+
+```yaml
+hierarchicalFilterSources:
+  hostTaxon: http://loculus-taxonomy-service:5000
+```
+
+<SchemaDocs group='hierarchical-filter-sources' fieldColumnClass='w-48' />
+
 ### Organism (type)
 
 Each organism object has the following fields:
@@ -182,5 +199,6 @@ For [our ingest pipeline](https://github.com/loculus-project/loculus/tree/main/i
 <SchemaDocs group='gene' fieldColumnClass='w-48' />
 
 ### Image spec (type)
+
 
 <SchemaDocs group='image' fieldColumnClass='w-48' />
