@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import orjsonl
+
+from .config import HierarchicalFilterConfig, HierarchicalFilterKind
 
 logger = logging.getLogger(__name__)
 
@@ -17,18 +19,24 @@ class NdjsonAnalysis:
 
     record_count: int
     pipeline_version: int | None
-    host_taxon_ids: set[str]
+    hierarchical_filter_values: dict[HierarchicalFilterKind, set[str]] = field(default_factory=dict)
 
 
-def analyze_ndjson(path: Path) -> NdjsonAnalysis:
+def analyze_ndjson(
+    path: Path,
+    hierarchical_filters: dict[HierarchicalFilterKind, HierarchicalFilterConfig] | None = None,
+) -> NdjsonAnalysis:
     """
     Decompress and analyze a zstd-compressed NDJSON file.
 
     Args:
         path: Path to the compressed NDJSON file
+        hierarchical_filters: Map of configured filter kinds to their config; the
+            metadata field referenced by each is collected per record.
 
     Returns:
-        NdjsonAnalysis with record count and pipeline versions found
+        NdjsonAnalysis with record count, pipeline version, and per-kind
+        observed values for the configured hierarchical filters.
 
     Raises:
         RuntimeError: If decompression or JSON parsing fails
@@ -36,7 +44,9 @@ def analyze_ndjson(path: Path) -> NdjsonAnalysis:
     logger.info("Starting analyze_and_transform_ndjson")
     record_count = 0
     pipeline_version: int | None = None
-    host_taxon_ids: set[str] = set()
+    filter_values: dict[HierarchicalFilterKind, set[str]] = (
+        {kind: set() for kind in hierarchical_filters} if hierarchical_filters else {}
+    )
 
     try:
         for record in orjsonl.stream(path):
@@ -44,9 +54,11 @@ def analyze_ndjson(path: Path) -> NdjsonAnalysis:
             metadata = record.get("metadata", {})  # type: ignore
             if pipeline_version is None:
                 pipeline_version = metadata.get("pipelineVersion")
-            taxon = metadata.get("hostTaxonId")
-            if taxon:
-                host_taxon_ids.add(str(taxon))
+            if hierarchical_filters:
+                for kind, cfg in hierarchical_filters.items():
+                    raw_value = metadata.get(cfg.metadata_field)
+                    if raw_value:
+                        filter_values[kind].add(str(raw_value))
 
     except Exception as exc:
         msg = f"Failed to decompress {path}: {exc}"
@@ -54,5 +66,7 @@ def analyze_ndjson(path: Path) -> NdjsonAnalysis:
         raise RuntimeError(msg) from exc
 
     return NdjsonAnalysis(
-        record_count=record_count, pipeline_version=pipeline_version, host_taxon_ids=host_taxon_ids
+        record_count=record_count,
+        pipeline_version=pipeline_version,
+        hierarchical_filter_values=filter_values,
     )

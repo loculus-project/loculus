@@ -11,11 +11,16 @@ from helpers import (
     compress_ndjson,
     make_mock_download_func,
     mock_records,
+    mock_records_with_host_taxa,
     mock_transformed_records,
     read_ndjson_file,
 )
 from silo_import import lineage
-from silo_import.config import ImporterConfig
+from silo_import.config import (
+    HierarchicalFilterConfig,
+    HierarchicalFilterKind,
+    ImporterConfig,
+)
 from silo_import.download_manager import DownloadManager
 from silo_import.paths import ImporterPaths
 from silo_import.runner import ImporterRunner
@@ -25,6 +30,7 @@ def make_config(
     tmp_path: Path,
     lineage_definitions: dict[str, dict[int, str]] | None = None,
     hard_refresh_interval: int = 1,
+    hierarchical_filters: dict[HierarchicalFilterKind, HierarchicalFilterConfig] | None = None,
 ) -> ImporterConfig:
     return ImporterConfig(
         backend_base_url="http://backend",
@@ -35,6 +41,7 @@ def make_config(
         root_dir=tmp_path,
         silo_binary=tmp_path / "silo",
         preprocessing_config=tmp_path / "config.yaml",
+        hierarchical_filters=hierarchical_filters,
     )
 
 
@@ -191,3 +198,125 @@ def test_runner_cleans_up_on_decompress_failure(
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert runner.current_etag == 'W/"old"'
     assert not responses_list
+
+
+def test_runner_writes_hierarchical_filter_yaml(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = make_config(
+        tmp_path,
+        hierarchical_filters={
+            HierarchicalFilterKind.HOST_TAXON: HierarchicalFilterConfig(
+                kind=HierarchicalFilterKind.HOST_TAXON,
+                url="http://taxonomy:5000",
+                metadata_field="hostTaxonId",
+            )
+        },
+        hard_refresh_interval=1000,
+    )
+    paths = make_paths(tmp_path)
+    paths.ensure_directories()
+
+    records = mock_records_with_host_taxa(["9606", "10090", "9606"])
+    body = compress_ndjson(records)
+    responses = [
+        MockHttpResponse(
+            status=200,
+            headers={"ETag": 'W/"hf"', "x-total-records": str(len(records))},
+            body=body,
+        )
+    ]
+    mock_download, _ = make_mock_download_func(responses)
+
+    fake_response = type(
+        "Resp",
+        (),
+        {
+            "status_code": 200,
+            "text": "lineage: host\n",
+            "raise_for_status": lambda self: None,
+        },
+    )()
+    post_calls: list[tuple[str, list[str]]] = []
+
+    def fake_post(url: str, taxa: list[str], prune: bool = False):  # noqa: ARG001
+        post_calls.append((url, list(taxa)))
+        return fake_response
+
+    monkeypatch.setattr(lineage, "_post_taxonomic_lineage", fake_post)
+
+    runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(download_func=mock_download)
+
+    with patch.object(runner.silo, "run_preprocessing"):
+        runner.run_once()
+
+    host_taxon_yaml = paths.input_dir / "hostTaxon.yaml"
+    assert host_taxon_yaml.read_text(encoding="utf-8") == "lineage: host\n"
+    assert len(post_calls) == 1
+    assert post_calls[0][0] == "http://taxonomy:5000/silo-lineage"
+    assert post_calls[0][1] == ["10090", "9606"]
+    assert runner.hierarchical_filter_values == {
+        HierarchicalFilterKind.HOST_TAXON: {"9606", "10090"}
+    }
+
+
+def test_runner_skips_filter_refetch_when_taxa_unchanged(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = make_config(
+        tmp_path,
+        hierarchical_filters={
+            HierarchicalFilterKind.HOST_TAXON: HierarchicalFilterConfig(
+                kind=HierarchicalFilterKind.HOST_TAXON,
+                url="http://taxonomy:5000",
+                metadata_field="hostTaxonId",
+            )
+        },
+        hard_refresh_interval=1000,
+    )
+    paths = make_paths(tmp_path)
+    paths.ensure_directories()
+
+    records = mock_records_with_host_taxa(["9606", "10090", "9606"])
+    body = compress_ndjson(records)
+    responses = [
+        MockHttpResponse(
+            status=200,
+            headers={"ETag": 'W/"first"', "x-total-records": str(len(records))},
+            body=body,
+        ),
+        MockHttpResponse(
+            status=200,
+            headers={"ETag": 'W/"second"', "x-total-records": str(len(records))},
+            body=body,
+        ),
+    ]
+    mock_download, _ = make_mock_download_func(responses)
+
+    fake_response = type(
+        "Resp",
+        (),
+        {
+            "status_code": 200,
+            "text": "lineage: host\n",
+            "raise_for_status": lambda self: None,
+        },
+    )()
+    post_calls: list[tuple[str, list[str]]] = []
+
+    def fake_post(url: str, taxa: list[str], prune: bool = False):  # noqa: ARG001
+        post_calls.append((url, list(taxa)))
+        return fake_response
+
+    monkeypatch.setattr(lineage, "_post_taxonomic_lineage", fake_post)
+
+    runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(download_func=mock_download)
+
+    with patch.object(runner.silo, "run_preprocessing"):
+        runner.run_once()
+        runner.run_once()
+
+    # Second run sees identical taxa → no second POST
+    assert len(post_calls) == 1
