@@ -203,12 +203,11 @@ def set_sample_table_entry(db_config, row, seq_key, config: Config):
         )
 
 
-def submission_table_start(db_config: SimpleConnectionPool, config: Config):
+def sync_state_with_submission_table(db_config: SimpleConnectionPool, config: Config):
     """
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
     2. If (exists an entry in the sample_table for (accession, version)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_SAMPLE
-    b.      Else update state to SUBMITTING_SAMPLE
     3. If (exists "biosampleAccession" in "metadata"):
         create entry in sample_table, update state to SUBMITTED_SAMPLE
     4. Else create corresponding entry in sample_table
@@ -230,62 +229,18 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
         )
         if len(corresponding_sample) == 1:
             if corresponding_sample[0]["status"] == str(Status.SUBMITTED):
-                status_all = StatusAll.SUBMITTED_SAMPLE
-            else:
-                status_all = StatusAll.SUBMITTING_SAMPLE
+                update_db_where_conditions(
+                    db_config,
+                    table_name=TableName.SUBMISSION_TABLE,
+                    conditions=seq_key,
+                    update_values={"status_all": StatusAll.SUBMITTED_SAMPLE},
+                )
         else:
-            # If not: create sample_entry, change status to SUBMITTING_SAMPLE
             if "biosampleAccession" in row["metadata"] and row["metadata"]["biosampleAccession"]:
                 set_sample_table_entry(db_config, row, seq_key, config)
                 continue
             if not add_to_sample_table(db_config, SampleTableEntry(**seq_key)):
                 continue
-            status_all = StatusAll.SUBMITTING_SAMPLE
-        update_db_where_conditions(
-            db_config,
-            table_name=TableName.SUBMISSION_TABLE,
-            conditions=seq_key,
-            update_values={"status_all": status_all},
-        )
-
-
-def submission_table_update(db_config: SimpleConnectionPool):
-    """
-    1. Find all entries in submission_table in state SUBMITTING_SAMPLE
-    2. If (exists an entry in the sample_table for (accession, version)):
-    a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_SAMPLE
-    3. Else throw Error
-    """
-    conditions = {"status_all": StatusAll.SUBMITTING_SAMPLE}
-    submitting_sample = find_conditions_in_db(
-        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
-    )
-    logger.debug(
-        f"Found {len(submitting_sample)} entries in submission_table in status SUBMITTING_SAMPLE"
-    )
-    for row in submitting_sample:
-        seq_key = {"accession": row["accession"], "version": row["version"]}
-
-        # 1. check if there exists an entry in the sample table for seq_key
-        corresponding_sample = find_conditions_in_db(
-            db_config, table_name=TableName.SAMPLE_TABLE, conditions=seq_key
-        )
-        if len(corresponding_sample) == 1 and corresponding_sample[0]["status"] == str(
-            Status.SUBMITTED
-        ):
-            update_values = {"status_all": StatusAll.SUBMITTED_SAMPLE}
-            update_db_where_conditions(
-                db_config,
-                table_name=TableName.SUBMISSION_TABLE,
-                conditions=seq_key,
-                update_values=update_values,
-            )
-        if len(corresponding_sample) == 0:
-            error_msg = (
-                "Entry in submission_table in status SUBMITTING_SAMPLE",
-                " with no corresponding sample",
-            )
-            raise RuntimeError(error_msg)
 
 
 def is_old_version(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> bool:
@@ -449,10 +404,12 @@ def create_sample(config: Config, stop_event: threading.Event):
             logger.warning("create_sample stopped due to exception in another task")
             return
         logger.debug("Checking for samples to create")
-        submission_table_start(db_config, config=config)
-        submission_table_update(db_config)
+        sync_state_with_submission_table(db_config, config=config)
 
         sample_table_create(db_config, config, test=config.test)
+        sync_state_with_submission_table(
+            db_config, config=config
+        )  # update submission_table state after creation
         last_retry_time = sample_table_handle_errors(
             db_config, config, slack_config, last_retry_time
         )
