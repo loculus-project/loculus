@@ -115,6 +115,8 @@ def set_project_table_entry(db_engine: Engine, config: Config, row: SubmissionTa
         if project.result and project.result.get("bioproject_accession") == bioproject
     ]
     if len(corresponding_project) == 1:
+        if corresponding_project[0].status != Status.SUBMITTED:
+            return
         logger.debug(
             "bioprojectAccession is already in project_table - adding id to submission_table"
         )
