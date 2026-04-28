@@ -9,9 +9,10 @@ interface BaseDialogProps {
     onClose: () => void;
     children: ReactNode;
     fullWidth?: boolean;
+    className?: string;
 }
 
-export const BaseDialog: React.FC<BaseDialogProps> = ({ title, isOpen, onClose, children, fullWidth = true }) => {
+export const BaseDialog: React.FC<BaseDialogProps> = ({ title, isOpen, onClose, children, fullWidth = true, className }) => {
     const fullWidthClasses = fullWidth ? 'w-full w-max-5xl' : '';
     return (
         <Dialog open={isOpen} onClose={onClose} className='relative z-40'>
@@ -19,7 +20,7 @@ export const BaseDialog: React.FC<BaseDialogProps> = ({ title, isOpen, onClose, 
             <div className='fixed inset-0 overflow-y-auto'>
                 <div className='flex min-h-full items-center justify-center p-4 text-center'>
                     <DialogPanel
-                        className={`${fullWidthClasses} transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl`}
+                        className={`${fullWidthClasses} ${className ?? ''} transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl`}
                     >
                         <DialogTitle as='h3' className='text-2xl font-bold leading-6 text-gray-900 mb-4'>
                             {title}

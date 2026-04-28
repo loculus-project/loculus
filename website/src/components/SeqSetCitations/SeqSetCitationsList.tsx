@@ -25,7 +25,7 @@ const SeqSetCitationItem: FC<SeqSetCitationItemProps> = ({ seqSetCitation }) => 
             <div>
                 DOI:
                 <a
-                    className='text-primary-500 mx-1'
+                    className='text-primary-600 mx-1'
                     href={`https://doi.org/${seqSetCitation.citationDOI}`}
                     target='_blank'
                     rel='noopener noreferrer'
@@ -38,8 +38,6 @@ const SeqSetCitationItem: FC<SeqSetCitationItemProps> = ({ seqSetCitation }) => 
 };
 
 export const SeqSetCitationsList: FC<SeqSetCitationsListProps> = ({ clientConfig, seqSet }) => {
-    const seqSetAccessionVersion = `${seqSet.seqSetId}.${seqSet.seqSetVersion}`;
-
     const {
         isLoading: isSeqSetCitationsLoading,
         error: isSeqSetCitationsError,
@@ -50,28 +48,29 @@ export const SeqSetCitationsList: FC<SeqSetCitationsListProps> = ({ clientConfig
     );
 
     return (
-        <div className='flex flex-col items-center gap-4'>
-            <div className='py-5'>
-                <h1 className='text-xl font-semibold'>Citations for {seqSetAccessionVersion}</h1>
+        <div className='flex flex-col items-center w-full'>
+            <div className='flex justify-start items-center py-5'>
+                <h1 className='text-xl font-semibold py-4'>SeqSet Citations</h1>
             </div>
-            <hr className='w-full max-w-3xl border-t border-gray-300 mb-5' />
-            {!seqSet.seqSetDOI ? (
-                <span>This SeqSet does not have a DOI, so no citation data is available.</span>
-            ) : isSeqSetCitationsLoading ? (
-                <span className='loading loading-spinner'></span>
-            ) : isSeqSetCitationsError ? (
-                <span>Failed to load citations.</span>
-            ) : seqSetCitations.length > 0 ? (
-                <ul className='max-w-3xl space-y-8'>
-                    {seqSetCitations.map((seqSetCitation) => (
-                        <li key={seqSetCitation.citationDOI}>
-                            <SeqSetCitationItem seqSetCitation={seqSetCitation} />
-                        </li>
-                    ))}
-                </ul>
-            ) : (
-                <span>No citations found for this SeqSet.</span>
-            )}
+            <div className='overflow-y-auto max-h-[60vh]'>
+                {!seqSet.seqSetDOI ? (
+                    <span>This SeqSet does not have a DOI, so no citation data is available.</span>
+                ) : isSeqSetCitationsLoading ? (
+                    <span className='loading loading-spinner'></span>
+                ) : isSeqSetCitationsError ? (
+                    <span>Failed to load citations.</span>
+                ) : seqSetCitations.length > 0 ? (
+                    <ul className='max-w-3xl space-y-8'>
+                        {seqSetCitations.map((seqSetCitation) => (
+                            <li key={seqSetCitation.citationDOI}>
+                                <SeqSetCitationItem seqSetCitation={seqSetCitation} />
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <span>No citations found for this SeqSet.</span>
+                )}
+            </div>
         </div>
     );
 };

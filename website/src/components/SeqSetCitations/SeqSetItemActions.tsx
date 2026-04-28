@@ -11,8 +11,8 @@ import type { SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { BaseDialog } from '../common/BaseDialog.tsx';
 import { Button } from '../common/Button';
-import Modal from '../common/Modal';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDelete from '~icons/mdi/delete';
 import MdiDownload from '~icons/mdi/download';
@@ -105,20 +105,41 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                     ) : null}
                 </div>
             </div>
-            <Modal isModalVisible={editModalVisible} setModalVisible={setEditModalVisible}>
+            <BaseDialog
+                isOpen={editModalVisible}
+                onClose={() => setEditModalVisible(false)}
+                title={''}
+                fullWidth={false}
+                className='min-h-[60vh]'
+            >
+                <div className='min-w-[1000px]'></div>
                 <SeqSetForm
                     clientConfig={clientConfig}
                     accessToken={accessToken}
                     editSeqSet={seqSet}
                     editSeqSetRecords={seqSetRecords}
                 />
-            </Modal>
-            <Modal isModalVisible={exportModalVisible} setModalVisible={setExportModalVisible}>
+            </BaseDialog>
+            <BaseDialog
+                isOpen={exportModalVisible}
+                onClose={() => setExportModalVisible(false)}
+                title=''
+                fullWidth={false}
+                className='min-h-[60vh]'
+            >
+                <div className='min-w-[1000px]'></div>
                 <ExportSeqSet seqSet={seqSet} seqSetRecords={seqSetRecords} databaseName={databaseName} />
-            </Modal>
-            <Modal isModalVisible={citationsModalVisible} setModalVisible={setCitationsModalVisible}>
+            </BaseDialog>
+            <BaseDialog
+                isOpen={citationsModalVisible}
+                onClose={() => setCitationsModalVisible(false)}
+                title=''
+                fullWidth={false}
+                className='min-h-[60vh]'
+            >
+                <div className='min-w-[1000px]'></div>
                 <SeqSetCitationsList clientConfig={clientConfig} seqSet={seqSet} />
-            </Modal>
+            </BaseDialog>
         </div>
     );
 };

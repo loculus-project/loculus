@@ -109,11 +109,11 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
     };
 
     return (
-        <div className='flex flex-col flex-start items-center w-full'>
+        <div className='flex flex-col items-center w-full'>
             <div className='flex justify-start items-center py-5'>
-                <h1 className='text-xl font-semibold'>Export</h1>
+                <h1 className='text-xl font-semibold py-4'>Export / Cite SeqSet</h1>
             </div>
-            <div className='flex flex-col justify-around max-w-lg w-2/4'>
+            <div className='flex flex-col justify-around max-w-lg'>
                 <div>
                     <div className='flex'>
                         <div className='flex items-center me-4'>

@@ -136,7 +136,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
     };
 
     return (
-        <div className='flex flex-col items-center  overflow-auto-y w-full'>
+        <div className='flex flex-col items-center overflow-y-auto w-full'>
             <div className='flex justify-start items-center py-5'>
                 <h1 className='text-xl font-semibold py-4'>{`${editSeqSet ? 'Edit' : 'Create a'} SeqSet`}</h1>
             </div>
