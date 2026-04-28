@@ -245,10 +245,9 @@ def submission_table_start(db_engine: Engine, config: Config) -> None:
     """
     conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE}
     ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
-    if len(ready_to_submit) > 0:
-        logger.debug(
-            f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE"
-        )
+    logger.debug(
+        f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE"
+    )
     for row in ready_to_submit:
         seq_key = asdict(row.pkey)
 
