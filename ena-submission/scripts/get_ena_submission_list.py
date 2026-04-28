@@ -183,14 +183,14 @@ def filter_for_submission(
         else:
             # If lower version had external metadata and this one doesn't, remove it from that set
             entries_with_external_metadata.discard(accession_version.accession)
+        if accession_version in suppressed_accessions:
+            logger.debug(f"Skipping suppressed accession: {accession_version}")
+            entries_with_external_metadata.discard(accession_version.accession)
+            continue
         entries_to_submit[accession_version.accession] = entry
         if entry["metadata"].get("isRevocation", False):
-            if accession_version in suppressed_accessions:
-                logger.debug(f"Skipping suppressed accession: {accession_version}")
-                entries_to_submit.pop(accession_version.accession)
-            else:
-                logger.debug(f"Found revoked sequence: {accession_version}")
-                revoked_entries.add(accession_version.accession)
+            logger.debug(f"Found revoked sequence: {accession_version}")
+            revoked_entries.add(accession_version.accession)
             entries_with_external_metadata.discard(accession_version.accession)
         else:
             revoked_entries.discard(accession_version.accession)
