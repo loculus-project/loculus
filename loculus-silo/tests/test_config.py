@@ -51,9 +51,7 @@ def test_hierarchical_filters_parsed(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com")
     monkeypatch.setenv(
         "HIERARCHICAL_FILTERS",
-        json.dumps(
-            {"hostTaxon": {"url": "http://taxonomy:5000", "metadataField": "hostTaxonId"}}
-        ),
+        json.dumps({"hostTaxon": {"url": "http://taxonomy:5000", "metadataField": "hostTaxonId"}}),
     )
 
     config = ImporterConfig.from_env()
