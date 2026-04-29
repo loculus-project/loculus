@@ -8,6 +8,7 @@ import org.loculus.backend.api.SeqSetCitationContributor
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import java.io.DataOutputStream
 import java.io.OutputStreamWriter
@@ -83,6 +84,7 @@ class CrossRefService(final val properties: CrossRefServiceProperties) {
         }
     }
 
+    @Cacheable("getCrossRefCitedBy")
     fun getCrossRefCitedBy(doi: String): List<SeqSetCitation> {
         checkIsActive()
 

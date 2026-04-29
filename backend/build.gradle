@@ -69,6 +69,9 @@ dependencies {
     implementation("org.redundent:kotlin-xml-builder:1.9.3")
     implementation("org.jsoup:jsoup:1.22.2")
 
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
     }

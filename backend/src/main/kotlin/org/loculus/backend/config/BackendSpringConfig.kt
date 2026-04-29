@@ -26,6 +26,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import org.springframework.cache.annotation.EnableCaching
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.CommonsRequestLoggingFilter
@@ -57,6 +58,7 @@ const val ENABLE_SEQSETS_TRUE_VALUE = "true"
 private val logger = mu.KotlinLogging.logger {}
 
 @Configuration
+@EnableCaching
 @EnableScheduling
 @ImportAutoConfiguration(
     value = [ExposedAutoConfiguration::class],
