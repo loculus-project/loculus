@@ -1658,6 +1658,7 @@ defaultOrganisms:
         - name: hostTaxonId
           type: string
           hierarchicalFilter: hostTaxon
+          initiallyVisible: true
           autocomplete: true
           displayName: "Host species"
           definition: "Taxon ID for the host."
