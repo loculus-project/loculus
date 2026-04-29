@@ -1042,7 +1042,7 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
 
         # check sample submission fails and sends notification
-        create_project_sync_state_with_submission_table(self.db_engine)
+        create_sample_sync_state_with_submission_table(self.db_engine)
         sample_table_create(self.db_engine, self.config)
         check_sample_submission_has_errors(self.db_engine, sequences_to_upload)
         sample_table_handle_errors(
