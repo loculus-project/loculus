@@ -29,13 +29,13 @@ const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } =
         <h3 class='font-semibold mb-2'>{displayName}</h3>
         <p class='text-sm leading-7'>
             <span class='font-bold'>
-                {formatNumberWithDefaultLocale(organismStatistics.totalSequences)}
+                {formatNumberWithDefaultLocale(organismStatistics.totalSamples)}
             </span>
-            sequences
+            samples
             <br />
             <span class='text-slate-400 text-sm'>
                 <span class='text-slate-500'>
-                    +{formatNumberWithDefaultLocale(organismStatistics.recentSequences)}
+                    +{formatNumberWithDefaultLocale(organismStatistics.recentSamples)}
                 </span>
                 in last {numberDaysAgoStatistics} days
             </span>
