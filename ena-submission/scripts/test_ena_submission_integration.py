@@ -589,7 +589,7 @@ class TestSubmission:
         )
         assert self.config.test, "Test mode is not enabled."
         assert self.config.random_alias, (
-            "Random alias is not enabled, this will case conflicts in ENA dev if tests are run simultaneously."  # noqa: E501
+            "Random alias is not enabled, this will cause conflicts in ENA dev if tests are run simultaneously."  # noqa: E501
         )
 
 
