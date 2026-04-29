@@ -178,7 +178,7 @@ def set_sample_table_entry(
     logger.debug(
         f"Accession: {row.accession} already has biosampleAccession, adding to sample_table"
     )
-    biosample = row.seq_metadata[DBKeys.BIOSAMPLE_ACCESSION]
+    biosample = row.seq_metadata[LoculusKeys.BIOSAMPLE_ACCESSION]
 
     logger.info("Checking if biosample actually exists and is public")
     seq_key = asdict(row.pkey)
