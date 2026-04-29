@@ -62,7 +62,7 @@ test.describe('Sequence version banners', () => {
         await page.getByRole('link', { name: 'released sequences' }).click();
 
         // Wait for sequences to appear in search
-        while (!(await page.getByText('Search returned 2 sequences').isVisible())) {
+        while (!(await page.getByText('Search returned 2 samples').isVisible())) {
             await page.reload();
             await page.waitForTimeout(2000);
         }
