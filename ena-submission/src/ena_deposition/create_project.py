@@ -158,7 +158,6 @@ def sync_state_with_submission_table(db_engine: Engine):
     for row in ready_to_submit:
         group_key = {"group_id": row.group_id, "organism": row.organism}
         seq_key = {"accession": row.accession, "version": row.version}
-        bioproject = None
 
         # Check if there exists an entry in the project table for (group_id, organism)
         corresponding_project = find_conditions_in_db(
@@ -253,7 +252,9 @@ def project_table_create(
             continue
 
         if row.result and row.result.get("bioproject_accession"):
-            update_with_existing_bioproject(db_engine, config, row, center_name=group_info.institution)
+            update_with_existing_bioproject(
+                db_engine, config, row, center_name=group_info.institution
+            )
             continue
 
         project_set = construct_project_set_object(group_info, config, row, config.random_alias)

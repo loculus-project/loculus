@@ -287,9 +287,7 @@ def sample_table_create(db_engine: Engine, config: Config):
             continue
 
         sample_set = construct_sample_set_object(
-            
             config, sample_data_in_submission_table[0], row, config.random_alias
-        
         )
         update_values = {
             "status": Status.SUBMITTING,
