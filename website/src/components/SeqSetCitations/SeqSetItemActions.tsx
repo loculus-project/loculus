@@ -108,7 +108,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
             <BaseDialog
                 isOpen={editModalVisible}
                 onClose={() => setEditModalVisible(false)}
-                title={''}
+                title=''
                 fullWidth={false}
                 className='min-h-[60vh]'
             >
