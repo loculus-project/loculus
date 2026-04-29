@@ -157,6 +157,7 @@ def sync_state_with_submission_table(db_engine: Engine):
     for row in ready_to_submit:
         group_key = {"group_id": row.group_id, "organism": row.organism}
         seq_key = {"accession": row.accession, "version": row.version}
+        bioproject = row.seq_metadata.get("bioprojectAccession")
 
         # Check if there exists an entry in the project table for (group_id, organism)
         corresponding_project = find_conditions_in_db(
@@ -164,8 +165,7 @@ def sync_state_with_submission_table(db_engine: Engine):
         )
 
         # Use custom bioprojectAccession if it exists
-        if row.seq_metadata.get("bioprojectAccession"):
-            bioproject = row.seq_metadata["bioprojectAccession"]
+        if bioproject:
             corresponding_project = [
                 project
                 for project in corresponding_project
