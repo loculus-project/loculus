@@ -9,9 +9,9 @@ import pytz
 from sqlalchemy import Engine
 
 from .config import (
-    BIOSAMPLE_ACCESSION_DB_KEY,
-    BIOSAMPLE_ACCESSION_LOCULUS_KEY,
     Config,
+    DBKeys,
+    LoculusKeys,
     MetadataMapping,
 )
 from .ena_submission_helper import (
@@ -178,7 +178,7 @@ def set_sample_table_entry(
     logger.debug(
         f"Accession: {row.accession} already has biosampleAccession, adding to sample_table"
     )
-    biosample = row.seq_metadata[BIOSAMPLE_ACCESSION_DB_KEY]
+    biosample = row.seq_metadata[DBKeys.BIOSAMPLE_ACCESSION]
 
     logger.info("Checking if biosample actually exists and is public")
     seq_key = asdict(row.pkey)
@@ -194,7 +194,7 @@ def set_sample_table_entry(
     sample_table_entry = SampleTableEntry(
         accession=row.accession,
         version=row.version,
-        result={"ena_sample_accession": biosample, BIOSAMPLE_ACCESSION_DB_KEY: biosample},
+        result={"ena_sample_accession": biosample, DBKeys.BIOSAMPLE_ACCESSION: biosample},
         status=Status.SUBMITTED,
     )
     succeeded = add_to_sample_table(db_engine, sample_table_entry)
@@ -216,7 +216,7 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config):
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
     2. If (exists an entry in the sample_table for (accession, version)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_SAMPLE
-    3. If (exists BIOSAMPLE_ACCESSION_LOCULUS_KEY in "metadata"):
+    3. If (exists LoculusKeys.BIOSAMPLE_ACCESSION in "metadata"):
         create entry in sample_table, update state to SUBMITTED_SAMPLE
     4. Else create corresponding entry in sample_table
     """
@@ -242,7 +242,7 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config):
                     update_values={"status_all": StatusAll.SUBMITTED_SAMPLE},
                 )
         else:
-            if row.seq_metadata.get(BIOSAMPLE_ACCESSION_LOCULUS_KEY):  # type: ignore
+            if row.seq_metadata.get(LoculusKeys.BIOSAMPLE_ACCESSION):  # type: ignore
                 set_sample_table_entry(db_engine, row, seq_key, config)
                 continue
             if not add_to_sample_table(db_engine, SampleTableEntry(**seq_key)):

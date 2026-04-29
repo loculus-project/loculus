@@ -35,12 +35,8 @@ from tenacity import (
 from unidecode import unidecode
 
 from ena_deposition.config import (
-    ASSEMBLY_ACCESSION_DB_KEY,
-    BIOPROJECT_ACCESSION_DB_KEY,
-    BIOSAMPLE_ACCESSION_DB_KEY,
-    NUCCORE_ACCESSION_PREFIX_DB_KEY,
-    VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY,
     Config,
+    DBKeys,
     EnaOrganismDetails,
 )
 
@@ -269,7 +265,7 @@ def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResul
         errors.append(error_message)
         return CreationResult(errors=errors, warnings=warnings)
     project_results = {
-        BIOPROJECT_ACCESSION_DB_KEY: parsed_response["RECEIPT"]["PROJECT"]["@accession"],
+        DBKeys.BIOPROJECT_ACCESSION: parsed_response["RECEIPT"]["PROJECT"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
     return CreationResult(result=project_results, errors=errors, warnings=warnings)
@@ -342,7 +338,7 @@ def create_ena_sample(
         return CreationResult(errors=errors, warnings=warnings)
     sample_results = {
         "ena_sample_accession": parsed_response["RECEIPT"]["SAMPLE"]["@accession"],
-        BIOSAMPLE_ACCESSION_DB_KEY: parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
+        DBKeys.BIOSAMPLE_ACCESSION: parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
     return CreationResult(result=sample_results, errors=errors, warnings=warnings)
@@ -742,7 +738,7 @@ def get_ena_analysis_process(
             if gca_accession:
                 assembly_results.update(
                     {
-                        ASSEMBLY_ACCESSION_DB_KEY: gca_accession,
+                        DBKeys.ASSEMBLY_ACCESSION: gca_accession,
                     }
                 )
             insdc_accession_range = acc_dict.get("chromosomes")
@@ -807,14 +803,14 @@ def get_chromsome_accessions(
         if not is_multi_segment:
             accession = f"{start_letters}{start_num:0{num_digits}d}"
             return {
-                NUCCORE_ACCESSION_PREFIX_DB_KEY: accession,
-                VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY: f"{accession}.1",
+                DBKeys.NUCCORE_ACCESSION_PREFIX: accession,
+                DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX: f"{accession}.1",
             }
         results = {}
         for i, segment in enumerate(segment_order):
             accession = f"{start_letters}{(start_num + i):0{num_digits}d}"
-            results[f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}_{segment}"] = accession
-            results[f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_{segment}"] = f"{accession}.1"
+            results[f"{DBKeys.NUCCORE_ACCESSION_PREFIX}_{segment}"] = accession
+            results[f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_{segment}"] = f"{accession}.1"
         return results
 
     # Don't handle the Value error here, let it propagate
@@ -861,7 +857,7 @@ def set_accession_does_not_exist_error(
                 **conditions,  # type: ignore
                 status=Status.HAS_ERRORS,
                 errors=[error_text],
-                result={"ena_sample_accession": accession, BIOSAMPLE_ACCESSION_DB_KEY: accession},
+                result={"ena_sample_accession": accession, DBKeys.BIOSAMPLE_ACCESSION: accession},
             )
             succeeded = add_to_sample_table(db_engine, sample_table_entry)
         case "BIOPROJECT":
@@ -869,7 +865,7 @@ def set_accession_does_not_exist_error(
                 **conditions,  # type: ignore
                 status=Status.HAS_ERRORS,
                 errors=[error_text],
-                result={BIOPROJECT_ACCESSION_DB_KEY: accession},
+                result={DBKeys.BIOPROJECT_ACCESSION: accession},
             )
             succeeded = add_to_project_table(db_engine, project_table_entry)
         case "RUN_REF":

@@ -27,16 +27,9 @@ from ena_deposition.check_external_visibility import (
     check_and_update_visibility_for_column,
 )
 from ena_deposition.config import (
-    ASSEMBLY_ACCESSION_DB_KEY,
-    ASSEMBLY_ACCESSION_LOCULUS_KEY,
-    BIOPROJECT_ACCESSION_DB_KEY,
-    BIOPROJECT_ACCESSION_LOCULUS_KEY,
-    BIOSAMPLE_ACCESSION_DB_KEY,
-    BIOSAMPLE_ACCESSION_LOCULUS_KEY,
-    NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY,
-    VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY,
-    VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY,
     Config,
+    DBKeys,
+    LoculusKeys,
     get_config,
 )
 from ena_deposition.create_assembly import (
@@ -103,7 +96,7 @@ def assert_biosample_accession(
     assert len(rows) == 1, f"Sample for {full_accession} not found in sample table."
     if biosample_accession:
         assert rows[0].result, f"No result for sample {full_accession} in sample table."
-        assert rows[0].result.get(BIOSAMPLE_ACCESSION_DB_KEY) == biosample_accession, (
+        assert rows[0].result.get(DBKeys.BIOSAMPLE_ACCESSION) == biosample_accession, (
             "Incorrect biosample accession in sample table."
         )
 
@@ -114,7 +107,7 @@ def assert_bioproject_accession(
     assert len(rows) == 1, f"Project {group_id} for {full_accession} not found in project table."
     if bioproject_accession:
         assert rows[0].result, f"No result for project {group_id} in project table."
-        assert rows[0].result.get(BIOPROJECT_ACCESSION_DB_KEY) == bioproject_accession, (
+        assert rows[0].result.get(DBKeys.BIOPROJECT_ACCESSION) == bioproject_accession, (
             "Incorrect bioproject accession in project table."
         )
 
@@ -182,7 +175,7 @@ def check_sample_submission_submitted(
             conditions={"accession": accession, "version": version, "status": "SUBMITTED"},
         )
         assert_biosample_accession(
-            rows, data["metadata"][BIOSAMPLE_ACCESSION_LOCULUS_KEY], full_accession
+            rows, data["metadata"][LoculusKeys.BIOSAMPLE_ACCESSION], full_accession
         )
         assert in_submission_table(
             db_engine,
@@ -201,7 +194,7 @@ def check_sample_submission_has_errors(
             conditions={"accession": accession, "version": version, "status": "HAS_ERRORS"},
         )
         assert_biosample_accession(
-            rows, data["metadata"][BIOSAMPLE_ACCESSION_LOCULUS_KEY], full_accession
+            rows, data["metadata"][LoculusKeys.BIOSAMPLE_ACCESSION], full_accession
         )
 
 
@@ -288,9 +281,9 @@ def check_assembly_submission_with_nuc_without_gca(
             f"Assembly for {full_accession} not in state 'WAITING' in assembly table."
         )
         assert rows[0].result, f"No result for assembly {full_accession} in assembly table."
-        assert rows[0].result.get(f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_L") is not None
-        assert rows[0].result.get(f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_M") is None
-        assert rows[0].result.get(ASSEMBLY_ACCESSION_DB_KEY) is None
+        assert rows[0].result.get(f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_L") is not None
+        assert rows[0].result.get(f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_M") is None
+        assert rows[0].result.get(DBKeys.ASSEMBLY_ACCESSION) is None
 
 
 def check_sent_to_loculus(db_engine: Engine, sequences_to_upload: dict[str, Any]) -> None:
@@ -319,7 +312,7 @@ def check_project_submission_submitted(
             conditions={"group_id": group_id, "organism": organism, "status": "SUBMITTED"},
         )
         assert_bioproject_accession(
-            rows, data["metadata"][BIOPROJECT_ACCESSION_LOCULUS_KEY], group_id, full_accession
+            rows, data["metadata"][LoculusKeys.BIOPROJECT_ACCESSION], group_id, full_accession
         )
         assert in_submission_table(
             db_engine,
@@ -339,7 +332,7 @@ def check_project_submission_has_errors(
             conditions={"group_id": group_id, "organism": organism, "status": "HAS_ERRORS"},
         )
         assert_bioproject_accession(
-            rows, data["metadata"][BIOPROJECT_ACCESSION_LOCULUS_KEY], group_id, full_accession
+            rows, data["metadata"][LoculusKeys.BIOPROJECT_ACCESSION], group_id, full_accession
         )
 
 
@@ -527,8 +520,8 @@ def multi_segment_submission(
     payload = args[0][0][0]  # first positional argument of first call
     assert payload["accession"] == "LOC_0001TLY"
     assert payload["version"] == 1
-    assert set(payload["externalMetadata"]) == {BIOPROJECT_ACCESSION_LOCULUS_KEY}
-    assert payload["externalMetadata"][BIOPROJECT_ACCESSION_LOCULUS_KEY].startswith("PRJEB")
+    assert set(payload["externalMetadata"]) == {LoculusKeys.BIOPROJECT_ACCESSION}
+    assert payload["externalMetadata"][LoculusKeys.BIOPROJECT_ACCESSION].startswith("PRJEB")
 
     _test_successful_sample_submission(db_engine, config, sequences_to_upload)
     get_external_metadata_and_send_to_loculus(db_engine, config)
@@ -538,11 +531,11 @@ def multi_segment_submission(
     assert payload["accession"] == "LOC_0001TLY"
     assert payload["version"] == 1
     assert set(payload["externalMetadata"]) == {
-        BIOPROJECT_ACCESSION_LOCULUS_KEY,
-        BIOSAMPLE_ACCESSION_LOCULUS_KEY,
+        LoculusKeys.BIOPROJECT_ACCESSION,
+        LoculusKeys.BIOSAMPLE_ACCESSION,
     }
-    assert payload["externalMetadata"][BIOPROJECT_ACCESSION_LOCULUS_KEY].startswith("PRJEB")
-    assert payload["externalMetadata"][BIOSAMPLE_ACCESSION_LOCULUS_KEY].startswith("SAMEA")
+    assert payload["externalMetadata"][LoculusKeys.BIOPROJECT_ACCESSION].startswith("PRJEB")
+    assert payload["externalMetadata"][LoculusKeys.BIOSAMPLE_ACCESSION].startswith("SAMEA")
 
     _test_successful_assembly_submission(db_engine, config, sequences_to_upload, single_segment)
     get_external_metadata_and_send_to_loculus(db_engine, config)
@@ -557,19 +550,19 @@ def multi_segment_submission(
     extra_items = set()
     if not single_segment:
         extra_items = {
-            ASSEMBLY_ACCESSION_LOCULUS_KEY,
-            f"{NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_M",
-            f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_M",
+            LoculusKeys.ASSEMBLY_ACCESSION,
+            f"{LoculusKeys.NUCCORE_ACCESSION_PREFIX}_M",
+            f"{LoculusKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_M",
         }
     assert set(payload["externalMetadata"]) == {
-        BIOPROJECT_ACCESSION_LOCULUS_KEY,
-        BIOSAMPLE_ACCESSION_LOCULUS_KEY,
-        f"{NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_L",
-        f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_L",
+        LoculusKeys.BIOPROJECT_ACCESSION,
+        LoculusKeys.BIOSAMPLE_ACCESSION,
+        f"{LoculusKeys.NUCCORE_ACCESSION_PREFIX}_L",
+        f"{LoculusKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_L",
         *extra_items,
     }
-    assert payload["externalMetadata"][BIOPROJECT_ACCESSION_LOCULUS_KEY].startswith("PRJEB")
-    assert payload["externalMetadata"][BIOSAMPLE_ACCESSION_LOCULUS_KEY].startswith("SAMEA")
+    assert payload["externalMetadata"][LoculusKeys.BIOPROJECT_ACCESSION].startswith("PRJEB")
+    assert payload["externalMetadata"][LoculusKeys.BIOSAMPLE_ACCESSION].startswith("SAMEA")
 
     insdc_full_pattern = r"^[A-Z]{2}[0-9]{6}\.[0-9]+$"
     insdc_base_pattern = r"^[A-Z]{2}[0-9]{6}$"
@@ -577,22 +570,22 @@ def multi_segment_submission(
 
     assert re.match(
         insdc_full_pattern,
-        payload["externalMetadata"][f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_L"],
+        payload["externalMetadata"][f"{LoculusKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_L"],
     ), (
         "insdcAccessionFull_L "
-        f"'{payload['externalMetadata'][f'{VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_L']}' "
+        f"'{payload['externalMetadata'][f'{LoculusKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_L']}' "
         f"does not match INSDC full pattern {insdc_full_pattern}"
     )
     assert re.match(
-        insdc_base_pattern, payload["externalMetadata"][f"{NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_L"]
+        insdc_base_pattern, payload["externalMetadata"][f"{LoculusKeys.NUCCORE_ACCESSION_PREFIX}_L"]
     ), (
         f"insdcAccessionBase_L "
-        f"'{payload['externalMetadata'][f'{NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}_L']}' "
+        f"'{payload['externalMetadata'][f'{LoculusKeys.NUCCORE_ACCESSION_PREFIX}_L']}' "
         f"does not match INSDC base pattern {insdc_base_pattern}"
     )
     if not single_segment:
-        assert re.match(gca_pattern, payload["externalMetadata"][ASSEMBLY_ACCESSION_LOCULUS_KEY]), (
-            f"gcaAccession '{payload['externalMetadata'][ASSEMBLY_ACCESSION_LOCULUS_KEY]}' "
+        assert re.match(gca_pattern, payload["externalMetadata"][LoculusKeys.ASSEMBLY_ACCESSION]), (
+            f"gcaAccession '{payload['externalMetadata'][LoculusKeys.ASSEMBLY_ACCESSION]}' "
             f"does not match GCA pattern {gca_pattern}"
         )
 
@@ -622,8 +615,8 @@ class TestSubmission:
 
 class TestFirstPublicUpdate(TestSubmission):
     PROJECT_CONFIG: Final = {
-        "invalid_result": {BIOPROJECT_ACCESSION_DB_KEY: "PRJEB2"},
-        "valid_result": {BIOPROJECT_ACCESSION_DB_KEY: "PRJEB53055"},
+        "invalid_result": {DBKeys.BIOPROJECT_ACCESSION: "PRJEB2"},
+        "valid_result": {DBKeys.BIOPROJECT_ACCESSION: "PRJEB53055"},
         "base_entry": {
             "group_id": 1,
             "organism": "test_organism",
@@ -633,8 +626,8 @@ class TestFirstPublicUpdate(TestSubmission):
     }
 
     SAMPLE_CONFIG: Final = {
-        "invalid_result": {BIOSAMPLE_ACCESSION_DB_KEY: "SAMEA999999999"},
-        "valid_result": {BIOSAMPLE_ACCESSION_DB_KEY: "SAMEA7997453"},
+        "invalid_result": {DBKeys.BIOSAMPLE_ACCESSION: "SAMEA999999999"},
+        "valid_result": {DBKeys.BIOSAMPLE_ACCESSION: "SAMEA7997453"},
         "base_entry": {
             "accession": "test_accession",
             "version": 1,
@@ -645,12 +638,12 @@ class TestFirstPublicUpdate(TestSubmission):
 
     NUCLEOTIDE_CONFIG: Final = {
         "invalid_result": {
-            f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg1": "XY999999",
-            f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg2": "XY999998",
+            f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_seg1": "XY999999",
+            f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_seg2": "XY999998",
         },
         "valid_result": {
-            f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg1": "OZ271453",
-            f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg2": "OZ271454",
+            f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_seg1": "OZ271453",
+            f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_seg2": "OZ271454",
         },
         "base_entry": {
             "accession": "test_accession",
@@ -661,8 +654,8 @@ class TestFirstPublicUpdate(TestSubmission):
     }
 
     GCA_CONFIG: Final = {
-        "invalid_result": {ASSEMBLY_ACCESSION_DB_KEY: "GCA_999999999.1"},
-        "valid_result": {ASSEMBLY_ACCESSION_DB_KEY: "GCA_965196905.1"},
+        "invalid_result": {DBKeys.ASSEMBLY_ACCESSION: "GCA_999999999.1"},
+        "valid_result": {DBKeys.ASSEMBLY_ACCESSION: "GCA_965196905.1"},
         "base_entry": {
             "accession": "test_accession",
             "version": 1,
@@ -816,7 +809,7 @@ class TestKnownBioproject(TestSubmission):
         mock_submit_external_metadata.return_value = mock_requests_post()
         sequences_to_upload = get_sequences()
         for entry in sequences_to_upload.values():  # set to known public bioproject
-            entry["metadata"][BIOPROJECT_ACCESSION_LOCULUS_KEY] = "PRJNA231221"
+            entry["metadata"][LoculusKeys.BIOPROJECT_ACCESSION] = "PRJNA231221"
 
         # upload sequences
         upload_sequences(self.db_engine, sequences_to_upload)
@@ -843,7 +836,7 @@ class TestIncorrectBioprojectPassed(TestSubmission):
         mock_notify.return_value = None
         sequences_to_upload = get_sequences()
         for entry in sequences_to_upload.values():  # set to invalid bioproject
-            entry["metadata"][BIOPROJECT_ACCESSION_LOCULUS_KEY] = "INVALID_ACCESSION"
+            entry["metadata"][LoculusKeys.BIOPROJECT_ACCESSION] = "INVALID_ACCESSION"
 
         # upload sequences
         upload_sequences(self.db_engine, sequences_to_upload)
@@ -879,8 +872,8 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         mock_submit_external_metadata.return_value = mock_requests_post()
         sequences_to_upload = get_sequences()
         for entry in sequences_to_upload.values():  # set to public bioproject and biosample
-            entry["metadata"][BIOPROJECT_ACCESSION_LOCULUS_KEY] = "PRJNA231221"
-            entry["metadata"][BIOSAMPLE_ACCESSION_LOCULUS_KEY] = "SAMN11077987"
+            entry["metadata"][LoculusKeys.BIOPROJECT_ACCESSION] = "PRJNA231221"
+            entry["metadata"][LoculusKeys.BIOSAMPLE_ACCESSION] = "SAMN11077987"
 
         # upload
         upload_sequences(self.db_engine, sequences_to_upload)
@@ -916,8 +909,8 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         mock_notify.return_value = None
         sequences_to_upload = get_sequences()
         for entry in sequences_to_upload.values():  # set to invalid biosample
-            entry["metadata"][BIOPROJECT_ACCESSION_LOCULUS_KEY] = "PRJNA231221"
-            entry["metadata"][BIOSAMPLE_ACCESSION_LOCULUS_KEY] = "INVALID_ACCESSION"
+            entry["metadata"][LoculusKeys.BIOPROJECT_ACCESSION] = "PRJNA231221"
+            entry["metadata"][LoculusKeys.BIOSAMPLE_ACCESSION] = "INVALID_ACCESSION"
 
         # upload
         upload_sequences(self.db_engine, sequences_to_upload)

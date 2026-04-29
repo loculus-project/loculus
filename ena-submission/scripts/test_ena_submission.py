@@ -13,10 +13,10 @@ from unittest import mock
 import xmltodict
 import yaml
 from ena_deposition.config import (
-    BIOPROJECT_ACCESSION_DB_KEY,
-    BIOSAMPLE_ACCESSION_DB_KEY,
-    NUCCORE_ACCESSION_PREFIX_DB_KEY,
-    VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY,
+    DBKeys.BIOPROJECT_ACCESSION,
+    DBKeys.BIOSAMPLE_ACCESSION,
+    DBKeys.NUCCORE_ACCESSION_PREFIX,
+    DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX,
     EnaOrganismDetails,
     ManifestFieldDetails,
     MetadataMapping,
@@ -175,7 +175,7 @@ class ProjectCreationTests(unittest.TestCase):
         project_set = default_project_set()
         response = create_ena_project(MOCK_CONFIG, project_set)
         desired_response = {
-            BIOPROJECT_ACCESSION_DB_KEY: "PRJEB20767",
+            DBKeys.BIOPROJECT_ACCESSION: "PRJEB20767",
             "ena_submission_accession": "ERA912529",
         }
         assert response.result == desired_response
@@ -220,7 +220,7 @@ class TestCreateSample:
         response = create_ena_sample(MOCK_CONFIG, sample_set)
         desired_response = {
             "ena_sample_accession": "ERS1833148",
-            BIOSAMPLE_ACCESSION_DB_KEY: "SAMEA104174130",
+            DBKeys.BIOSAMPLE_ACCESSION: "SAMEA104174130",
             "ena_submission_accession": "ERA979927",
         }
         assert response.result == desired_response
@@ -417,10 +417,10 @@ class AssemblyCreationTests(unittest.TestCase):
         self.assertEqual(
             result_multi,
             {
-                f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg2": "OZ189935",
-                f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg3": "OZ189936",
-                f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg2": "OZ189935.1",
-                f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg3": "OZ189936.1",
+                f"{DBKeys.NUCCORE_ACCESSION_PREFIX}_seg2": "OZ189935",
+                f"{DBKeys.NUCCORE_ACCESSION_PREFIX}_seg3": "OZ189936",
+                f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_seg2": "OZ189935.1",
+                f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_seg3": "OZ189936.1",
             },
         )
 
@@ -430,8 +430,8 @@ class AssemblyCreationTests(unittest.TestCase):
         self.assertEqual(
             result_single,
             {
-                f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}": "OZ189935",
-                f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}": "OZ189935.1",
+                f"{DBKeys.NUCCORE_ACCESSION_PREFIX}": "OZ189935",
+                f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}": "OZ189935.1",
             },
         )
 
@@ -441,8 +441,8 @@ class AssemblyCreationTests(unittest.TestCase):
         self.assertEqual(
             result_single,
             {
-                f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg3": "OZ189935",
-                f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}_seg3": "OZ189935.1",
+                f"{DBKeys.NUCCORE_ACCESSION_PREFIX}_seg3": "OZ189935",
+                f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_seg3": "OZ189935.1",
             },
         )
 
@@ -470,8 +470,8 @@ class AssemblyCreationTests(unittest.TestCase):
         )
         desired_response = {
             "erz_accession": "ERZ000001",
-            NUCCORE_ACCESSION_PREFIX_DB_KEY: "OZ189999",
-            VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY: "OZ189999.1",
+            DBKeys.NUCCORE_ACCESSION_PREFIX: "OZ189999",
+            DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX: "OZ189999.1",
             "segment_order": ["main"],
         }
         self.assertEqual(response.result, desired_response)

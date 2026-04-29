@@ -13,18 +13,10 @@ from sqlalchemy import Engine
 from ena_deposition.call_loculus import submit_external_metadata
 
 from .config import (
-    ASSEMBLY_ACCESSION_DB_KEY,
-    ASSEMBLY_ACCESSION_LOCULUS_KEY,
-    BIOPROJECT_ACCESSION_DB_KEY,
-    BIOPROJECT_ACCESSION_LOCULUS_KEY,
-    BIOSAMPLE_ACCESSION_DB_KEY,
-    BIOSAMPLE_ACCESSION_LOCULUS_KEY,
-    NUCCORE_ACCESSION_PREFIX_DB_KEY,
-    NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY,
-    VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY,
-    VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY,
     Config,
+    DBKeys,
     EnaOrganismDetails,
+    LoculusKeys,
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
@@ -74,10 +66,10 @@ def get_bioproject_accession_from_db(db_engine: Engine, project_id: int | None) 
         db_engine, ProjectTableEntry, conditions={"project_id": project_id}
     )
 
-    if not result or BIOPROJECT_ACCESSION_DB_KEY not in result:
+    if not result or DBKeys.BIOPROJECT_ACCESSION not in result:
         return {}
 
-    return {BIOPROJECT_ACCESSION_LOCULUS_KEY: result[BIOPROJECT_ACCESSION_DB_KEY]}
+    return {LoculusKeys.BIOPROJECT_ACCESSION: result[DBKeys.BIOPROJECT_ACCESSION]}
 
 
 def get_biosample_accession_from_db(
@@ -89,10 +81,10 @@ def get_biosample_accession_from_db(
         conditions={"accession": accession, "version": version},
     )
 
-    if not result or BIOSAMPLE_ACCESSION_DB_KEY not in result:
+    if not result or DBKeys.BIOSAMPLE_ACCESSION not in result:
         return {}
 
-    return {BIOSAMPLE_ACCESSION_LOCULUS_KEY: result[BIOSAMPLE_ACCESSION_DB_KEY]}
+    return {LoculusKeys.BIOSAMPLE_ACCESSION: result[DBKeys.BIOSAMPLE_ACCESSION]}
 
 
 def get_assembly_accessions_from_db(
@@ -113,8 +105,8 @@ def get_assembly_accessions_from_db(
     data = {}
     all_present = True
 
-    if gca := result.get(ASSEMBLY_ACCESSION_DB_KEY):
-        data[ASSEMBLY_ACCESSION_LOCULUS_KEY] = gca
+    if gca := result.get(DBKeys.ASSEMBLY_ACCESSION):
+        data[LoculusKeys.ASSEMBLY_ACCESSION] = gca
     else:
         all_present = False
 
@@ -122,15 +114,15 @@ def get_assembly_accessions_from_db(
     for segment in segment_names:
         segment_suffix = f"_{segment}" if organism.is_multi_segment() else ""
 
-        base_key = f"{NUCCORE_ACCESSION_PREFIX_DB_KEY}{segment_suffix}"
+        base_key = f"{DBKeys.NUCCORE_ACCESSION_PREFIX}{segment_suffix}"
         if base_key in result:
-            data[f"{NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}{segment_suffix}"] = result[base_key]
+            data[f"{LoculusKeys.NUCCORE_ACCESSION_PREFIX}{segment_suffix}"] = result[base_key]
         else:
             all_present = False
 
-        full_key = f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY}{segment_suffix}"
+        full_key = f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}{segment_suffix}"
         if full_key in result:
-            data[f"{VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY}{segment_suffix}"] = result[
+            data[f"{LoculusKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}{segment_suffix}"] = result[
                 full_key
             ]
         else:

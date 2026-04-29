@@ -1,7 +1,7 @@
 import logging
 import os
 from dataclasses import field
-from typing import Final
+from enum import StrEnum
 
 import dotenv
 import yaml
@@ -11,17 +11,22 @@ from ena_deposition.ena_types import MoleculeType, Topology
 
 logger = logging.getLogger(__name__)
 
+
 # Constants for mapping between database keys and Loculus field names for external metadata fields
-BIOPROJECT_ACCESSION_DB_KEY: Final = "bioproject_accession"
-BIOPROJECT_ACCESSION_LOCULUS_KEY: Final = "bioprojectAccession"
-BIOSAMPLE_ACCESSION_DB_KEY: Final = "biosample_accession"
-BIOSAMPLE_ACCESSION_LOCULUS_KEY: Final = "biosampleAccession"
-ASSEMBLY_ACCESSION_DB_KEY: Final = "gca_accession"
-ASSEMBLY_ACCESSION_LOCULUS_KEY: Final = "gcaAccession"
-NUCCORE_ACCESSION_PREFIX_DB_KEY: Final = "insdc_accession"
-NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY: Final = "insdcAccessionBase"
-VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY: Final = "insdc_accession_full"
-VERSIONED_NUCCORE_ACCESSION_PREFIX_LOCULUS_KEY: Final = "insdcAccessionFull"
+class DBKeys(StrEnum):
+    BIOPROJECT_ACCESSION = "bioproject_accession"
+    BIOSAMPLE_ACCESSION = "biosample_accession"
+    ASSEMBLY_ACCESSION = "gca_accession"
+    NUCCORE_ACCESSION_PREFIX = "insdc_accession"
+    VERSIONED_NUCCORE_ACCESSION_PREFIX = "insdc_accession_full"
+
+
+class LoculusKeys(StrEnum):
+    BIOPROJECT_ACCESSION = "bioprojectAccession"
+    BIOSAMPLE_ACCESSION = "biosampleAccession"
+    ASSEMBLY_ACCESSION = "gcaAccession"
+    NUCCORE_ACCESSION_PREFIX = "insdcAccessionBase"
+    VERSIONED_NUCCORE_ACCESSION_PREFIX = "insdcAccessionFull"
 
 
 class MetadataMapping(BaseModel):

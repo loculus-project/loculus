@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 
-from .config import BIOSAMPLE_ACCESSION_DB_KEY, VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY, Config
+from .config import Config, DBKeys
 from .submission_db_helper import AssemblyTableEntry, SampleTableEntry, Status, db_init
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ def get_bio_sample_accessions(engine: Engine) -> dict[str, str]:
         stmt = select(SampleTableEntry).where(SampleTableEntry.status == Status.SUBMITTED)
         results = list(session.scalars(stmt).all())
     return {
-        row.accession: cast(str, row.result[BIOSAMPLE_ACCESSION_DB_KEY])
+        row.accession: cast(str, row.result[DBKeys.BIOSAMPLE_ACCESSION])
         for row in results
         if row.result
     }
@@ -43,7 +43,7 @@ def get_insdc_accessions(engine: Engine) -> dict[str, list[str]]:
         row.accession: [
             cast(str, row.result[key])
             for key in row.result
-            if key.startswith(VERSIONED_NUCCORE_ACCESSION_PREFIX_DB_KEY)
+            if key.startswith(DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX)
         ]
         for row in results
         if row.result
