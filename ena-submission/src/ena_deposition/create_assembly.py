@@ -14,7 +14,12 @@ from sqlalchemy import Engine
 
 from ena_deposition import call_loculus
 
-from .config import Config, EnaOrganismDetails
+from .config import (
+    Config,
+    DBKeys,
+    EnaOrganismDetails,
+    LoculusKeys,
+)
 from .ena_submission_helper import (
     CreationResult,
     accession_exists,
@@ -377,8 +382,8 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
         f"Previous sample accession: {previous_sample_accession}, "
         f"previous study accession: {previous_study_accession}"
     )
-    if submission_row.seq_metadata.get("biosampleAccession"):
-        new_sample_accession = submission_row.seq_metadata["biosampleAccession"]
+    if submission_row.seq_metadata.get(LoculusKeys.BIOSAMPLE_ACCESSION):
+        new_sample_accession = submission_row.seq_metadata[LoculusKeys.BIOSAMPLE_ACCESSION]
         if previous_sample_accession != new_sample_accession:
             error = (
                 "Assembly cannot be revised because biosampleAccession in new version: "
@@ -392,8 +397,8 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
                 update_type="revision",
             )
             return False
-    if submission_row.seq_metadata.get("bioprojectAccession"):
-        new_project_accession = submission_row.seq_metadata["bioprojectAccession"]
+    if submission_row.seq_metadata.get(LoculusKeys.BIOPROJECT_ACCESSION):
+        new_project_accession = submission_row.seq_metadata[LoculusKeys.BIOPROJECT_ACCESSION]
         if new_project_accession != previous_study_accession:
             error = (
                 "Assembly cannot be revised because bioprojectAccession in new version: "
@@ -544,7 +549,7 @@ def get_project_and_sample_results(
         sample_rows[0].result.get("ena_sample_accession") if sample_rows[0].result else None
     )
     study_accession = (
-        project_rows[0].result.get("bioproject_accession") if project_rows[0].result else None
+        project_rows[0].result.get(DBKeys.BIOPROJECT_ACCESSION) if project_rows[0].result else None
     )
     if not sample_accession or not study_accession:
         error_msg = (
@@ -700,9 +705,10 @@ def assembly_table_update(db_engine: Engine, config: Config, time_threshold: int
             if not new_result.result:
                 continue
 
-            result_contains_gca_accession = "gca_accession" in new_result.result
+            result_contains_gca_accession = DBKeys.ASSEMBLY_ACCESSION in new_result.result
             result_contains_insdc_accession = any(
-                key.startswith("insdc_accession_full") for key in new_result.result
+                key.startswith(DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX)
+                for key in new_result.result
             )
 
             if not (result_contains_gca_accession and result_contains_insdc_accession):

@@ -12,7 +12,12 @@ from unittest import mock
 
 import xmltodict
 import yaml
-from ena_deposition.config import EnaOrganismDetails, ManifestFieldDetails, MetadataMapping
+from ena_deposition.config import (
+    DBKeys,
+    EnaOrganismDetails,
+    ManifestFieldDetails,
+    MetadataMapping,
+)
 from ena_deposition.create_assembly import (
     create_chromosome_list_object,
     create_manifest_object,
@@ -167,7 +172,7 @@ class ProjectCreationTests(unittest.TestCase):
         project_set = default_project_set()
         response = create_ena_project(MOCK_CONFIG, project_set)
         desired_response = {
-            "bioproject_accession": "PRJEB20767",
+            DBKeys.BIOPROJECT_ACCESSION: "PRJEB20767",
             "ena_submission_accession": "ERA912529",
         }
         assert response.result == desired_response
@@ -212,7 +217,7 @@ class TestCreateSample:
         response = create_ena_sample(MOCK_CONFIG, sample_set)
         desired_response = {
             "ena_sample_accession": "ERS1833148",
-            "biosample_accession": "SAMEA104174130",
+            DBKeys.BIOSAMPLE_ACCESSION: "SAMEA104174130",
             "ena_submission_accession": "ERA979927",
         }
         assert response.result == desired_response
@@ -409,10 +414,10 @@ class AssemblyCreationTests(unittest.TestCase):
         self.assertEqual(
             result_multi,
             {
-                "insdc_accession_seg2": "OZ189935",
-                "insdc_accession_seg3": "OZ189936",
-                "insdc_accession_full_seg2": "OZ189935.1",
-                "insdc_accession_full_seg3": "OZ189936.1",
+                f"{DBKeys.NUCCORE_ACCESSION_PREFIX}_seg2": "OZ189935",
+                f"{DBKeys.NUCCORE_ACCESSION_PREFIX}_seg3": "OZ189936",
+                f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_seg2": "OZ189935.1",
+                f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_seg3": "OZ189936.1",
             },
         )
 
@@ -422,8 +427,8 @@ class AssemblyCreationTests(unittest.TestCase):
         self.assertEqual(
             result_single,
             {
-                "insdc_accession": "OZ189935",
-                "insdc_accession_full": "OZ189935.1",
+                f"{DBKeys.NUCCORE_ACCESSION_PREFIX}": "OZ189935",
+                f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}": "OZ189935.1",
             },
         )
 
@@ -433,8 +438,8 @@ class AssemblyCreationTests(unittest.TestCase):
         self.assertEqual(
             result_single,
             {
-                "insdc_accession_seg3": "OZ189935",
-                "insdc_accession_full_seg3": "OZ189935.1",
+                f"{DBKeys.NUCCORE_ACCESSION_PREFIX}_seg3": "OZ189935",
+                f"{DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX}_seg3": "OZ189935.1",
             },
         )
 
@@ -462,8 +467,8 @@ class AssemblyCreationTests(unittest.TestCase):
         )
         desired_response = {
             "erz_accession": "ERZ000001",
-            "insdc_accession": "OZ189999",
-            "insdc_accession_full": "OZ189999.1",
+            DBKeys.NUCCORE_ACCESSION_PREFIX: "OZ189999",
+            DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX: "OZ189999.1",
             "segment_order": ["main"],
         }
         self.assertEqual(response.result, desired_response)

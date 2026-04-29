@@ -20,7 +20,10 @@ import pytz
 import requests
 from sqlalchemy import Engine
 
-from ena_deposition.config import Config
+from ena_deposition.config import (
+    Config,
+    DBKeys,
+)
 from ena_deposition.submission_db_helper import (
     AssemblyTableEntry,
     ProjectTableEntry,
@@ -152,51 +155,53 @@ COLUMN_CONFIGS = {
     (EntityType.PROJECT, "ena_first_publicly_visible"): ColumnCheckConfig(
         entry_class=ProjectTableEntry,
         visibility_column="ena_first_publicly_visible",
-        accession_field_name_prefix="bioproject_accession",
+        accession_field_name_prefix=DBKeys.BIOPROJECT_ACCESSION,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.PROJECT, "ncbi_first_publicly_visible"): ColumnCheckConfig(
         entry_class=ProjectTableEntry,
         visibility_column="ncbi_first_publicly_visible",
-        accession_field_name_prefix="bioproject_accession",
+        accession_field_name_prefix=DBKeys.BIOPROJECT_ACCESSION,
         checker_class=NCBIVisibilityChecker,
     ),
     (EntityType.SAMPLE, "ena_first_publicly_visible"): ColumnCheckConfig(
         entry_class=SampleTableEntry,
         visibility_column="ena_first_publicly_visible",
-        accession_field_name_prefix="biosample_accession",
+        accession_field_name_prefix=DBKeys.BIOSAMPLE_ACCESSION,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.SAMPLE, "ncbi_first_publicly_visible"): ColumnCheckConfig(
         entry_class=SampleTableEntry,
         visibility_column="ncbi_first_publicly_visible",
-        accession_field_name_prefix="biosample_accession",
+        accession_field_name_prefix=DBKeys.BIOSAMPLE_ACCESSION,
         checker_class=NCBIVisibilityChecker,
     ),
     # Assemblies - ENA nucleotide accessions
     (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): ColumnCheckConfig(
         entry_class=AssemblyTableEntry,
         visibility_column="ena_nucleotide_first_publicly_visible",
-        accession_field_name_prefix="insdc_accession_full",  # Prefix for multi-segment accessions
+        # Prefix for multi-segment accessions
+        accession_field_name_prefix=DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): ColumnCheckConfig(
         entry_class=AssemblyTableEntry,
         visibility_column="ncbi_nucleotide_first_publicly_visible",
-        accession_field_name_prefix="insdc_accession_full",  # Prefix for multi-segment accessions
+        # Prefix for multi-segment accessions
+        accession_field_name_prefix=DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX,
         checker_class=NCBIVisibilityChecker,
     ),
     # Assemblies - ENA GCA accessions
     (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): ColumnCheckConfig(
         entry_class=AssemblyTableEntry,
         visibility_column="ena_gca_first_publicly_visible",
-        accession_field_name_prefix="gca_accession",
+        accession_field_name_prefix=DBKeys.ASSEMBLY_ACCESSION,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.ASSEMBLY, "ncbi_gca_first_publicly_visible"): ColumnCheckConfig(
         entry_class=AssemblyTableEntry,
         visibility_column="ncbi_gca_first_publicly_visible",
-        accession_field_name_prefix="gca_accession",
+        accession_field_name_prefix=DBKeys.ASSEMBLY_ACCESSION,
         checker_class=NCBIVisibilityChecker,
     ),
 }
