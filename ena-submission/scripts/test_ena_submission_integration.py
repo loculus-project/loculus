@@ -430,7 +430,7 @@ def _test_successful_sample_submission(
     check_sample_submission_started(db_engine, sequences_to_upload)
 
     sample_table_create(db_engine, config)
-    create_sample_sync_state_with_submission_table(db_engine, config)
+    create_sample_sync_state_with_submission_table(db_engine)
     check_sample_submission_submitted(db_engine, sequences_to_upload)
 
 
@@ -826,7 +826,7 @@ class TestIncorrectBioprojectPassed(TestSubmission):
 
         # check project submission fails and sends notification
         create_project_sync_state_with_submission_table(self.db_engine)
-        project_table_create(self.db_engine, self.config, test=self.config.test)
+        project_table_create(self.db_engine, self.config)
         check_project_submission_has_errors(self.db_engine, sequences_to_upload)
         project_table_handle_errors(
             self.db_engine,
@@ -852,7 +852,7 @@ class TestIncorrectBioprojectPassed(TestSubmission):
 
         # Confirm DB entry is still in error state after retrying submission
         create_project_sync_state_with_submission_table(self.db_engine)
-        project_table_create(self.db_engine, self.config, test=self.config.test)
+        project_table_create(self.db_engine, self.config)
         check_project_submission_has_errors(self.db_engine, sequences_to_upload)
 
         # Confirm retries dont change state
@@ -864,7 +864,7 @@ class TestIncorrectBioprojectPassed(TestSubmission):
         )
         check_project_submission_started(self.db_engine, sequences_to_upload)
         create_project_sync_state_with_submission_table(self.db_engine)
-        project_table_create(self.db_engine, self.config, test=self.config.test)
+        project_table_create(self.db_engine, self.config)
         check_project_submission_has_errors(self.db_engine, sequences_to_upload)
 
 
@@ -933,7 +933,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
 
         # check project submission fails
         create_project_sync_state_with_submission_table(self.db_engine)
-        project_table_create(self.db_engine, self.config, test=self.config.test)
+        project_table_create(self.db_engine, self.config)
         check_project_submission_has_errors(self.db_engine, sequences_to_upload)
 
         # Confirm DB entry is reset to READY to retry submission
@@ -992,7 +992,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
 
         # check sample submission fails and sends notification
         create_sample_sync_state_with_submission_table(self.db_engine)
-        sample_table_create(self.db_engine, self.config, test=self.config.test)
+        sample_table_create(self.db_engine, self.config)
         check_sample_submission_has_errors(self.db_engine, sequences_to_upload)
         sample_table_handle_errors(
             self.db_engine,
@@ -1009,7 +1009,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         # Confirm DB entry is reset to READY to retry submission
         check_sample_submission_started(self.db_engine, sequences_to_upload)
         create_sample_sync_state_with_submission_table(self.db_engine)
-        sample_table_create(self.db_engine, self.config, test=self.config.test)
+        sample_table_create(self.db_engine, self.config)
         create_sample_sync_state_with_submission_table(self.db_engine)
         check_sample_submission_submitted(self.db_engine, sequences_to_upload)
         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
@@ -1043,7 +1043,7 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
 
         # check sample submission fails and sends notification
         create_project_sync_state_with_submission_table(self.db_engine)
-        sample_table_create(self.db_engine, self.config, test=self.config.test)
+        sample_table_create(self.db_engine, self.config)
         check_sample_submission_has_errors(self.db_engine, sequences_to_upload)
         sample_table_handle_errors(
             self.db_engine,
@@ -1062,7 +1062,7 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
 
         # Confirm DB entry is still in error state after retrying submission
         create_project_sync_state_with_submission_table(self.db_engine)
-        sample_table_create(self.db_engine, self.config, test=self.config.test)
+        sample_table_create(self.db_engine, self.config)
         check_sample_submission_has_errors(self.db_engine, sequences_to_upload)
 
         # Confirm retries dont change state
@@ -1074,7 +1074,7 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         )
         check_sample_submission_started(self.db_engine, sequences_to_upload)
         create_project_sync_state_with_submission_table(self.db_engine)
-        sample_table_create(self.db_engine, self.config, test=self.config.test)
+        sample_table_create(self.db_engine, self.config)
         check_sample_submission_has_errors(self.db_engine, sequences_to_upload)
 
 
@@ -1100,7 +1100,7 @@ class TestRevisionAssemblyModificationTests(TestSubmission):
 
         # submit
         create_project_sync_state_with_submission_table(self.db_engine)
-        project_table_create(self.db_engine, self.config, test=self.config.test)
+        project_table_create(self.db_engine, self.config)
         check_project_submission_submitted(self.db_engine, sequences_to_upload)
         _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
@@ -1132,7 +1132,7 @@ class TestRevisionNoAssemblyModificationTests(TestSubmission):
 
         # submit
         create_project_sync_state_with_submission_table(self.db_engine)
-        project_table_create(self.db_engine, self.config, test=self.config.test)
+        project_table_create(self.db_engine, self.config)
         check_project_submission_submitted(self.db_engine, sequences_to_upload)
         _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
         _test_successful_assembly_submission_no_wait(
