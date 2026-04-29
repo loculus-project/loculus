@@ -4,12 +4,31 @@ import { SingleChoiceAutoCompleteField } from './SingleChoiceAutoCompleteField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters';
 
+export type LineageFieldMode = 'lineage' | 'hierarchical';
+
+interface ModeConfig {
+    defaultIncludeSublineages: boolean;
+    showAliasOnly: boolean;
+}
+
+const MODE_CONFIGS: Record<LineageFieldMode, ModeConfig> = {
+    lineage: {
+        defaultIncludeSublineages: false,
+        showAliasOnly: false,
+    },
+    hierarchical: {
+        defaultIncludeSublineages: true,
+        showAliasOnly: true,
+    },
+};
+
 interface LineageFieldProps {
     lapisUrl: string;
     lapisSearchParameters: LapisSearchParameters;
     field: MetadataFilter;
     fieldValue: string;
     setSomeFieldValues: SetSomeFieldValues;
+    mode?: LineageFieldMode;
 }
 
 export const LineageField: FC<LineageFieldProps> = ({
@@ -18,14 +37,19 @@ export const LineageField: FC<LineageFieldProps> = ({
     setSomeFieldValues,
     lapisUrl,
     lapisSearchParameters,
+    mode = 'lineage',
 }) => {
-    const [includeSublineages, _setIncludeSubLineages] = useState(fieldValue.endsWith('*'));
+    const { defaultIncludeSublineages, showAliasOnly } = MODE_CONFIGS[mode];
+
+    const [includeSublineages, _setIncludeSubLineages] = useState(
+        fieldValue.endsWith('*') || (fieldValue === '' && defaultIncludeSublineages),
+    );
     const [inputText, _setInputText] = useState(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
 
     useEffect(() => {
         _setInputText(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
-        _setIncludeSubLineages(fieldValue.endsWith('*'));
-    }, [fieldValue]);
+        _setIncludeSubLineages(fieldValue.endsWith('*') || (fieldValue === '' && defaultIncludeSublineages));
+    }, [fieldValue, defaultIncludeSublineages]);
 
     function queryText(includeSublineages: boolean, inputText: string) {
         let queryText = includeSublineages ? `${inputText}*` : inputText;
@@ -53,6 +77,7 @@ export const LineageField: FC<LineageFieldProps> = ({
                     lapisSearchParameters,
                     fieldName: field.name,
                     includeSublineages,
+                    showAliasOnly,
                 }}
                 setSomeFieldValues={([_, value]) => {
                     setInputText(value as string);

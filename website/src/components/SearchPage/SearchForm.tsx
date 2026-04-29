@@ -475,6 +475,18 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                     />
                 );
             }
+            if (field.hierarchicalSearch) {
+                return (
+                    <LineageField
+                        field={field}
+                        fieldValue={(fieldValues[field.name] ?? '') as string}
+                        setSomeFieldValues={setSomeFieldValues}
+                        lapisUrl={lapisUrl}
+                        lapisSearchParameters={lapisSearchParameters}
+                        mode='hierarchical'
+                    />
+                );
+            }
             if (field.autocomplete === true) {
                 if (field.type === 'int' || field.type === 'float') {
                     return (

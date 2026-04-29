@@ -368,8 +368,11 @@ organisms:
   {{- if .rangeOverlapSearch }}
   rangeOverlapSearch: {{ .rangeOverlapSearch | toJson }}
   {{- end}}
-  {{- if or .lineageSystem .hierarchicalFilter }}
+  {{- if or .lineageSystem }}
   lineageSearch: true
+  {{- end }}
+  {{- if .hierarchicalFilter }}
+  hierarchicalSearch: true
   {{- end }}
   {{- if .hideOnSequenceDetailsPage }}
   hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
