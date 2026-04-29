@@ -88,7 +88,10 @@ const DataTableComponent: React.FC<Props> = ({
                             <div className='flex flex-row'>
                                 <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
                             </div>
-                            <div className='mt-4'>
+                            <div
+                                className='mt-4 grid text-sm items-start'
+                                style={{ gridTemplateColumns: 'max-content 1fr', rowGap: '0.25rem' }}
+                            >
                                 {rows.map((entry: TableDataEntry, index: number) => (
                                     <DataTableEntry
                                         key={index}
@@ -123,7 +126,10 @@ const DataTableComponent: React.FC<Props> = ({
                     {alignmentSections.map(({ header, rows }) => (
                         <div key={header} className='p-4 pl-0'>
                             <div className='flex flex-row'></div>
-                            <div className='mt-4'>
+                            <div
+                                className='mt-4 grid text-sm items-start'
+                                style={{ gridTemplateColumns: 'max-content 1fr', rowGap: '0.25rem' }}
+                            >
                                 {rows.map((entry: TableDataEntry, index: number) => (
                                     <DataTableEntry
                                         key={index}
