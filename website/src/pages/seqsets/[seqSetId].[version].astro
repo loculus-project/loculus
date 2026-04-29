@@ -34,7 +34,6 @@ if (!seqSetsAreEnabled()) {
 const seqSetClient = SeqSetCitationClient.create();
 const seqSetVersionsResponse = await seqSetClient.call('getSeqSetVersions', { params: { seqSetId } });
 const seqSetRecordsResponse = await seqSetClient.call('getSeqSetRecords', { params: { seqSetId, version } });
-const seqSetCitedByResponse = await seqSetClient.call('getSeqSetCitedBy', { params: { seqSetId, version } });
 
 const getSeqSetByVersion = (seqSetVersions: SeqSet[], version: string) => {
     const matchedVersion = seqSetVersions.find((obj) => {
@@ -61,7 +60,6 @@ const seqSetGraphResponses = await Promise.all(
 );
 
 const seqSetAuthor = seqSetAuthorResponse.unwrapOr(undefined);
-const citedByData = seqSetCitedByResponse.unwrapOr({ years: [], citations: [] });
 const seqSetGraphsData = Object.fromEntries(
     seqSetGraphs.map((graph, i) => [graph.name, seqSetGraphResponses[i].unwrapOr([])]),
 );
@@ -69,7 +67,6 @@ const seqSetGraphsData = Object.fromEntries(
 const secondaryErrors = (
     [
         [seqSetAuthorResponse, 'Error while fetching author profile'],
-        [seqSetCitedByResponse, 'Error while fetching seqSet citations'],
         ...seqSetGraphResponses.map((response) => [response, 'Error while fetching seqSet statistics']),
     ] as [Result<unknown, ProblemDetail>, string][]
 ).flatMap(([response, message]) => (response.isErr() ? [`${message}: ${JSON.stringify(response.error)}`] : []));
@@ -122,7 +119,6 @@ const secondaryErrors = (
                     seqSet={seqSetResponse.value}
                     seqSetAuthor={seqSetAuthor}
                     seqSetRecords={seqSetRecordsResponse.value}
-                    citedByData={citedByData}
                     seqSetGraphs={seqSetGraphs}
                     seqSetGraphsData={seqSetGraphsData}
                     isAdminView={seqSetResponse.value.createdBy === username}

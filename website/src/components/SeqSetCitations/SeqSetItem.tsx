@@ -1,27 +1,26 @@
 import MUIPagination from '@mui/material/Pagination';
 import { AxiosError } from 'axios';
-import { type FC, useState } from 'react';
+import { type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { AuthorDetails } from './AuthorDetails.tsx';
-import { CitationPlot } from './CitationPlot';
 import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
 import { mainTailwindColor } from '../../../colors.json';
 import { getClientLogger } from '../../clientLogger';
-import { useCrossRefWork } from '../../hooks/useCrossRefOperations.ts';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { type AuthorProfile, type CitedByResult, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
+import { type AuthorProfile, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDotsGrid from '~icons/mdi/dots-grid';
 import MdiViewGrid from '~icons/mdi/view-grid';
+import OouiNewWindowLtr from '~icons/ooui/new-window-ltr';
 
 const logger = getClientLogger('SeqSetItem');
 
@@ -55,7 +54,6 @@ type SeqSetItemProps = {
     seqSet: SeqSet;
     seqSetAuthor?: AuthorProfile;
     seqSetRecords: SeqSetRecord[];
-    citedByData: CitedByResult;
     seqSetGraphs: SeqSetGraph[];
     seqSetGraphsData: Record<string, AggregateRow[]>;
     isAdminView?: boolean;
@@ -70,7 +68,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     seqSet,
     seqSetAuthor,
     seqSetRecords,
-    citedByData,
     seqSetGraphs,
     seqSetGraphsData,
     isAdminView = false,
@@ -82,10 +79,32 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     const sequencesPerPage = 10;
 
     const {
-        data: seqSetCrossRefWork,
-        isLoading: isCrossRefWorkLoading,
-        isError: isCrossRefWorkError,
-    } = useCrossRefWork(seqSet.seqSetDOI);
+        isLoading: isSeqSetCitationsLoading,
+        error: isSeqSetCitationsError,
+        data: seqSetCitations,
+    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitations(
+        { params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion } },
+        { enabled: !!seqSet.seqSetDOI },
+    );
+
+    const totalCitations = useMemo(() => {
+        if (isSeqSetCitationsLoading || isSeqSetCitationsError) return 0;
+
+        return seqSetCitations.length;
+    }, [isSeqSetCitationsLoading, isSeqSetCitationsError, seqSetCitations]);
+
+    const citationDates: AggregateRow[] = useMemo(() => {
+        if (isSeqSetCitationsLoading || isSeqSetCitationsError) return [];
+
+        const citationDatesAggregate = new Map<string, number>();
+        seqSetCitations.forEach((citation) =>
+            citationDatesAggregate.set(citation.year, (citationDatesAggregate.get(citation.year) ?? 0) + 1),
+        );
+        return Array.from(citationDatesAggregate.entries()).map(([year, citations]) => ({
+            value: year,
+            count: citations,
+        }));
+    }, [isSeqSetCitationsLoading, isSeqSetCitationsError, seqSetCitations]);
 
     const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(
         clientConfig,
@@ -113,7 +132,20 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
 
     const renderDOI = () => {
         if (seqSet.seqSetDOI !== undefined && seqSet.seqSetDOI !== null) {
-            return `https://doi.org/${seqSet.seqSetDOI}`;
+            return (
+                <span className='inline-flex items-center gap-3'>
+                    {`https://doi.org/${seqSet.seqSetDOI}`}
+                    <a
+                        className='text-gray-500'
+                        href={getCrossRefUrl()}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        title='View DOI on Crossref'
+                    >
+                        <OouiNewWindowLtr className='w-4 h-4' />
+                    </a>
+                </span>
+            );
         }
 
         if (!isAdminView) {
@@ -179,19 +211,12 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                         label='Total citations'
                         value={
                             seqSet.seqSetDOI ? (
-                                isCrossRefWorkLoading ? (
+                                isSeqSetCitationsLoading ? (
                                     <span className='loading loading-spinner loading-xs'></span>
-                                ) : isCrossRefWorkError ? (
+                                ) : isSeqSetCitationsError ? (
                                     <span>Failed to load citations.</span>
                                 ) : (
-                                    <a
-                                        className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
-                                        href={getCrossRefUrl()}
-                                        target='_blank'
-                                        rel='noopener noreferrer'
-                                    >
-                                        Cited by {seqSetCrossRefWork.message.isReferencedByCount}
-                                    </a>
+                                    <span>Cited by {totalCitations}</span>
                                 )
                             ) : (
                                 <span>Cited by 0</span>
@@ -201,10 +226,11 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     <SeqSetSectionEntry
                         label='Citations over time'
                         value={
-                            <CitationPlot
-                                citedByData={citedByData}
+                            <DatePlot
+                                data={citationDates}
                                 description='Number of times this SeqSet has been cited by a publication'
                                 barColor={barPlotColor}
+                                dateFormat='yyyy'
                             />
                         }
                     />

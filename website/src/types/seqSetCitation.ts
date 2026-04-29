@@ -39,19 +39,7 @@ export const authorProfile = z.object({
 });
 export type AuthorProfile = z.infer<typeof authorProfile>;
 
-export const crossRefWork = z.object({
-    message: z
-        .object({
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            'is-referenced-by-count': z.number(),
-        })
-        .transform((data) => ({
-            isReferencedByCount: data['is-referenced-by-count'],
-        })),
-});
-export type CrossRefWork = z.infer<typeof crossRefWork>;
-
-const seqSetCitationContributor = z.object({
+const citationContributor = z.object({
     givenName: z.string(),
     surname: z.string(),
 });
@@ -61,7 +49,7 @@ const seqSetCitation = z.object({
     citationDOI: z.string(),
     title: z.string(),
     year: z.string(),
-    contributors: z.array(seqSetCitationContributor),
+    contributors: z.array(citationContributor),
 });
 export type SeqSetCitation = z.infer<typeof seqSetCitation>;
 
