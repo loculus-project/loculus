@@ -175,18 +175,33 @@ def _prune(
     keep_ids: set[int],
     children: dict[int, list[int]],
     node_id: int,
-    parent_in_output: int,
+    parent_id_after_prune: int,
 ) -> dict[int, Taxon]:
+    """Recursively walk the subtree rooted at `node_id`, keeping only taxa in `keep_ids`.
+
+    Kept taxa are emitted with their `parent_id` rewritten to `parent_id_after_prune` (the
+    nearest kept ancestor in the output), so the children of skipped taxa reattach to
+    that ancestor and the overall hierarchy is preserved.
+
+    args:
+      tree_by_id (dict[int, Taxon]):  all taxa in the spanning tree, indexed by tax_id
+      keep_ids (set[int]):            tax_ids that should appear in the output
+      children (dict[int, list[int]]):
+                                      map of tax_id -> list of child tax_ids
+      node_id (int):                  tax_id of the node currently being visited
+      parent_id_after_prune (int):    tax_id of the nearest kept ancestor; used as the
+                                      rewritten parent_id when `node_id` is kept
+    """
     result: dict[int, Taxon] = {}
 
     current_taxon = tree_by_id[node_id]
     if current_taxon.tax_id in keep_ids:
         result[node_id] = current_taxon.model_copy(
-            update={"parent_id": parent_in_output}
+            update={"parent_id": parent_id_after_prune}
         )
         next_parent = current_taxon.tax_id
     else:
-        next_parent = parent_in_output
+        next_parent = parent_id_after_prune
 
     for child_id in children.get(node_id, []):
         result.update(_prune(tree_by_id, keep_ids, children, child_id, next_parent))
