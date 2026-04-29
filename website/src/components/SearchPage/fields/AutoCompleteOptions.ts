@@ -26,6 +26,11 @@ type LineageOptionsProvider = {
     lapisSearchParameters: LapisSearchParameters;
     fieldName: string;
     includeSublineages: boolean;
+    /**
+     * When true, show only the alias for a lineage (when one exists) instead of the canonical
+     * name. Used by hierarchical filters where the alias is the user-facing label.
+     */
+    showAliasOnly?: boolean;
 };
 
 /* Defines where how the options in the dropdown of the AutocompleteField are fetched. */
@@ -155,6 +160,7 @@ const createLineageOptionsHook = (
     fieldName: string,
     lapisSearchParameters: LapisSearchParameters,
     includeSublineages: boolean,
+    showAliasOnly: boolean,
 ): AutocompleteOptionsHook => {
     const otherFields = { ...lapisSearchParameters };
     delete otherFields[fieldName];
@@ -212,8 +218,8 @@ const createLineageOptionsHook = (
                 let count: number | undefined = aggregatedCounts.get(lineageName);
                 if (count === 0) count = undefined;
 
-                const aliases = lineageDefinition[lineageName].aliases;
-                const labels = aliases && aliases.length > 0 ? aliases : [lineageName];
+                const aliases = lineageDefinition[lineageName].aliases ?? [];
+                const labels = showAliasOnly && aliases.length > 0 ? aliases : [lineageName];
                 labels.forEach((a) => options.push({ option: a, value: lineageName, count }));
             });
         }
@@ -248,6 +254,7 @@ export const createOptionsProviderHook = (optionsProvider: OptionsProvider): Aut
                     optionsProvider.fieldName,
                     optionsProvider.lapisSearchParameters,
                     optionsProvider.includeSublineages,
+                    optionsProvider.showAliasOnly ?? false,
                 ),
                 [optionsProvider],
             );
