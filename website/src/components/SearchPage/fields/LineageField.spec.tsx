@@ -229,4 +229,94 @@ describe('LineageField', () => {
         expect(checkbox).not.toBeChecked();
         expect(textbox).toHaveValue('');
     });
+
+    describe('hierarchical mode', () => {
+        it('defaults the sublineages checkbox to checked when fieldValue is empty', () => {
+            render(
+                <LineageField
+                    field={field}
+                    fieldValue=''
+                    setSomeFieldValues={setSomeFieldValues}
+                    lapisUrl={lapisUrl}
+                    lapisSearchParameters={lapisSearchParameters}
+                    mode='hierarchical'
+                />,
+            );
+
+            expect(screen.getByRole('checkbox')).toBeChecked();
+        });
+
+        it('appends the sublineage wildcard when the user types into an empty field', async () => {
+            render(
+                <LineageField
+                    field={field}
+                    fieldValue=''
+                    setSomeFieldValues={setSomeFieldValues}
+                    lapisUrl={lapisUrl}
+                    lapisSearchParameters={lapisSearchParameters}
+                    mode='hierarchical'
+                />,
+            );
+
+            await userEvent.click(screen.getByLabelText('My Lineage'));
+            const options = await screen.findAllByRole('option');
+            await userEvent.click(options[1]);
+
+            expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1*']);
+        });
+
+        it('respects an explicit non-wildcard fieldValue', () => {
+            render(
+                <LineageField
+                    field={field}
+                    fieldValue='A.1'
+                    setSomeFieldValues={setSomeFieldValues}
+                    lapisUrl={lapisUrl}
+                    lapisSearchParameters={lapisSearchParameters}
+                    mode='hierarchical'
+                />,
+            );
+
+            expect(screen.getByRole('checkbox')).not.toBeChecked();
+        });
+
+        it('shows aliases instead of canonical names when an alias exists', async () => {
+            render(
+                <LineageField
+                    field={field}
+                    fieldValue=''
+                    setSomeFieldValues={setSomeFieldValues}
+                    lapisUrl={lapisUrl}
+                    lapisSearchParameters={lapisSearchParameters}
+                    mode='hierarchical'
+                />,
+            );
+
+            await userEvent.click(screen.getByLabelText('My Lineage'));
+            const optionTexts = (await screen.findAllByRole('option')).map((o) => o.textContent);
+
+            // 'A.1.1' renders as its alias 'B'; 'B.1' as 'A.1.1.1'; 'A.2' as 'C'
+            expect(optionTexts).toEqual(['A(53)', 'A.1(45)', 'A.1.1.1(35)', 'B(35)', 'C(8)']);
+        });
+
+        it('uses the canonical lineage as the value when an alias is selected', async () => {
+            render(
+                <LineageField
+                    field={field}
+                    fieldValue=''
+                    setSomeFieldValues={setSomeFieldValues}
+                    lapisUrl={lapisUrl}
+                    lapisSearchParameters={lapisSearchParameters}
+                    mode='hierarchical'
+                />,
+            );
+
+            await userEvent.click(screen.getByLabelText('My Lineage'));
+            const options = await screen.findAllByRole('option');
+            // options[3] === 'B' (alias for canonical 'A.1.1')
+            await userEvent.click(options[3]);
+
+            expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1.1*']);
+        });
+    });
 });
