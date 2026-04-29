@@ -149,7 +149,7 @@ def get_project_xml(project_set: ProjectSet) -> dict[str, str]:
     }
 
 
-def get_alias(prefix: str, test=False, set_alias_suffix: str | None = None) -> XmlAttribute:
+def get_alias(prefix: str, random_alias=False, set_alias_suffix: str | None = None) -> XmlAttribute:
     """
     The alias uniquely identifies project and sample submissions.
     ENA blocks duplicates, so each submission needs a unique alias.
@@ -160,7 +160,7 @@ def get_alias(prefix: str, test=False, set_alias_suffix: str | None = None) -> X
     """
     if set_alias_suffix:
         return XmlAttribute(f"{prefix}:{set_alias_suffix}")
-    if test:
+    if random_alias:
         entropy = "".join(random.choices(string.ascii_letters + string.digits, k=4))  # noqa: S311
         timestamp = datetime.now(tz=pytz.utc).strftime("%Y%m%d_%H%M%S")
         return XmlAttribute(f"{prefix}:{timestamp}_{entropy}")
