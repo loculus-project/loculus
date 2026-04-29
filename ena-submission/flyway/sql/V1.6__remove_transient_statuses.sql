@@ -1,0 +1,2 @@
+UPDATE submission_table SET status_all = 'READY_TO_SUBMIT'   WHERE status_all = 'SUBMITTING_PROJECT';
+UPDATE submission_table SET status_all = 'SUBMITTED_PROJECT' WHERE status_all = 'SUBMITTING_SAMPLE';
