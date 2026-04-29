@@ -13,10 +13,7 @@ from unittest import mock
 import xmltodict
 import yaml
 from ena_deposition.config import (
-    DBKeys.BIOPROJECT_ACCESSION,
-    DBKeys.BIOSAMPLE_ACCESSION,
-    DBKeys.NUCCORE_ACCESSION_PREFIX,
-    DBKeys.VERSIONED_NUCCORE_ACCESSION_PREFIX,
+    DBKeys,
     EnaOrganismDetails,
     ManifestFieldDetails,
     MetadataMapping,
