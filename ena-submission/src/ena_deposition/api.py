@@ -27,7 +27,9 @@ def get_bio_sample_accessions(engine: Engine) -> dict[str, str]:
         stmt = select(SampleTableEntry).where(SampleTableEntry.status == Status.SUBMITTED)
         results = list(session.scalars(stmt).all())
     return {
-        row.accession: cast(str, row.result[BIOSAMPLE_ACCESSION_DB_KEY]) for row in results if row.result
+        row.accession: cast(str, row.result[BIOSAMPLE_ACCESSION_DB_KEY])
+        for row in results
+        if row.result
     }
 
 
