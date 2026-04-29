@@ -348,7 +348,7 @@ class SeqSetCitationsDatabaseService(
 
         validateCreateSeqSetDOI(username, seqSetId, version)
 
-        val doiPrefix = crossRefService.properties.doiPrefix ?: "no-prefix-configured"
+        val doiPrefix = crossRefService.doiPrefix ?: "no-prefix-configured"
         val seqSetDOI = "$doiPrefix/$seqSetId.$version"
 
         val seqSet = getSeqSet(seqSetId, version)

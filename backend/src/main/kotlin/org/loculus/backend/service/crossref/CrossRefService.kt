@@ -44,7 +44,7 @@ data class DoiEntry(
 )
 
 @Service
-class CrossRefService(final val properties: CrossRefServiceProperties) {
+class CrossRefService(private val properties: CrossRefServiceProperties) {
     val isActive = properties.endpoint != null &&
         properties.username != null &&
         properties.password != null &&
@@ -53,6 +53,7 @@ class CrossRefService(final val properties: CrossRefServiceProperties) {
         properties.email != null &&
         properties.organization != null &&
         properties.hostUrl != null
+    val doiPrefix: String? = properties.doiPrefix
     val dateTimeFormatterMM = DateTimeFormatter.ofPattern("MM")
     val dateTimeFormatterdd = DateTimeFormatter.ofPattern("dd")
     val dateTimeFormatteryyyy = DateTimeFormatter.ofPattern("yyyy")

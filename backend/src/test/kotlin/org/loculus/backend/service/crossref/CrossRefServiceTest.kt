@@ -16,7 +16,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         Instant.ofEpochSecond(1711411200),
         ZoneId.of("UTC"),
     ).toLocalDate()
-    private val doi = crossRefService.properties.doiPrefix + "/xxxx"
+    private val doi = crossRefService.doiPrefix + "/xxxx"
 
     private val crossRefXMLReference = """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
