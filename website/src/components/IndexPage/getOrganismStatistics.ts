@@ -5,8 +5,8 @@ import { RELEASED_AT_FIELD, VERSION_STATUS_FIELD, IS_REVOCATION_FIELD } from '..
 import { versionStatuses } from '../../types/lapis';
 
 export type OrganismStatistics = {
-    totalSamples: number;
-    recentSamples: number;
+    totalEntries: number;
+    recentEntries: number;
     lastUpdatedAt: DateTime | undefined;
 };
 type OrganismStatisticsMap = Map<string, OrganismStatistics>;
@@ -33,8 +33,8 @@ const getOrganismStatistics = async (organism: string, numberDaysAgo: number): P
         withTimeout(getRecent(organism, numberDaysAgo), TIMEOUT_MS, 0),
     ]);
     return {
-        totalSamples: total,
-        recentSamples: recent,
+        totalEntries: total,
+        recentEntries: recent,
         lastUpdatedAt,
     };
 };

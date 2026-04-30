@@ -29,10 +29,10 @@ test.describe('Review page restricted sequences', () => {
             .poll(
                 async () => {
                     await page.reload();
-                    return page.getByText('Search returned 1 sample').isVisible();
+                    return page.getByText('Search returned 1 sequence entry').isVisible();
                 },
                 {
-                    message: 'Expected 1 restricted sample to appear',
+                    message: 'Expected 1 restricted sequence entry to appear',
                     timeout: 60_000,
                 },
             )
