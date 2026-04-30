@@ -58,9 +58,9 @@ const buildSamplesCountText = (totalSamples: number | undefined, oldCount: numbe
     const sampleCount = totalSamples ?? oldCount ?? initialCount;
 
     const formattedCount = formatNumberWithDefaultLocale(sampleCount);
-    const pluralSuffix = sampleCount === 1 ? '' : 's';
+    const entryLabel = sampleCount === 1 ? 'sequence entry' : 'sequence entries';
 
-    return `Search returned ${formattedCount} sample${pluralSuffix}`;
+    return `Search returned ${formattedCount} ${entryLabel}`;
 };
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) this component is a mess a needs to be refactored */
