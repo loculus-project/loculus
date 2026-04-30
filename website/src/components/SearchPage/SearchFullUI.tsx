@@ -54,11 +54,11 @@ export interface InnerSearchFullUIProps {
     contactConfig?: ContactConfig;
 }
 
-const buildSamplesCountText = (totalSamples: number | undefined, oldCount: number | null, initialCount: number) => {
-    const sampleCount = totalSamples ?? oldCount ?? initialCount;
+const buildEntriesCountText = (totalEntries: number | undefined, oldCount: number | null, initialCount: number) => {
+    const entryCount = totalEntries ?? oldCount ?? initialCount;
 
-    const formattedCount = formatNumberWithDefaultLocale(sampleCount);
-    const entryLabel = sampleCount === 1 ? 'sequence entry' : 'sequence entries';
+    const formattedCount = formatNumberWithDefaultLocale(entryCount);
+    const entryLabel = entryCount === 1 ? 'sequence entry' : 'sequence entries';
 
     return `Search returned ${formattedCount} ${entryLabel}`;
 };
@@ -198,8 +198,8 @@ export const InnerSearchFullUI = ({
         });
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
-    const totalSamples = aggregatedHook.data?.data[0].count ?? undefined;
-    const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSamples;
+    const totalEntries = aggregatedHook.data?.data[0].count ?? undefined;
+    const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalEntries;
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
@@ -318,7 +318,7 @@ export const InnerSearchFullUI = ({
                     )}
                     <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
                         <div className='mt-auto'>
-                            {buildSamplesCountText(totalSamples, oldCount, initialCount)}
+                            {buildEntriesCountText(totalEntries, oldCount, initialCount)}
                             {detailsHook.isPending ||
                             aggregatedHook.isPending ||
                             !firstClientSideLoadOfCountCompleted ||
@@ -399,9 +399,9 @@ export const InnerSearchFullUI = ({
                     />
 
                     <div className='mt-4 flex justify-center'>
-                        {totalSamples !== undefined && (
+                        {totalEntries !== undefined && (
                             <SearchPagination
-                                count={Math.ceil(totalSamples / pageSize)}
+                                count={Math.ceil(totalEntries / pageSize)}
                                 page={page}
                                 setPage={setPage}
                             />
