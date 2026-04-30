@@ -220,7 +220,8 @@ CREATE TABLE public.files (
     group_id integer NOT NULL,
     size bigint,
     multipart_completed boolean DEFAULT false NOT NULL,
-    multipart_upload_id text
+    multipart_upload_id text,
+    submitted_at timestamp without time zone
 );
 
 
