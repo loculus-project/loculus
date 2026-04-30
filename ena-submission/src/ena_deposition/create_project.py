@@ -49,7 +49,7 @@ def construct_project_set_object(
     group_info: Group,
     config: Config,
     entry: ProjectTableEntry,
-    test=False,
+    random_alias=False,
 ) -> ProjectSet:
     """
     Construct project set object, using:
@@ -57,14 +57,14 @@ def construct_project_set_object(
     - group_info of corresponding group_id
     - config information, such as enaDeposition metadata for that organism
 
-    If test=True add a timestamp to the alias suffix to allow for multiple
+    If random_alias=True add a timestamp to the alias suffix to allow for multiple
     submissions of the same project for testing.
     (ENA blocks multiple submissions with the same alias)
     """
     metadata_dict = config.enaOrganisms[entry.organism]
     alias = get_alias(
         f"{entry.group_id}:{entry.organism}:{config.unique_project_suffix}",
-        test,
+        random_alias,
         config.set_alias_suffix,
     )
 
@@ -231,7 +231,6 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config):
 def project_table_create(
     db_engine: Engine,
     config: Config,
-    test: bool = False,
 ):
     """
     1. Find all entries in project_table in state READY
@@ -240,8 +239,8 @@ def project_table_create(
     4. If (create_ena_project succeeds): update state to SUBMITTED with results
     3. Else update state to HAS_ERRORS with error messages
 
-    If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
-    project for testing.
+    If config.random_alias=True add a timestamp to the alias suffix to allow for multiple
+    submissions of the same project for testing.
     """
     conditions = {"status": Status.READY}
     ready_to_submit_project = find_conditions_in_db(
@@ -257,7 +256,7 @@ def project_table_create(
             logger.error(f"Was unable to get group info for group: {row.group_id}, {e}")
             continue
 
-        project_set = construct_project_set_object(group_info, config, row, test)
+        project_set = construct_project_set_object(group_info, config, row, config.random_alias)
         update_values = {
             "status": Status.SUBMITTING,
             "started_at": datetime.now(tz=pytz.utc),
@@ -365,7 +364,7 @@ def create_project(config: Config, stop_event: threading.Event):
         logger.debug("Checking for projects to create")
         sync_state_with_submission_table(db_engine, config)
 
-        project_table_create(db_engine, config, test=config.test)
+        project_table_create(db_engine, config)
         sync_state_with_submission_table(
             db_engine, config
         )  # update submission_table state after creation
