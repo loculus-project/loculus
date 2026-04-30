@@ -43,4 +43,9 @@ object FilesTable : Table(FILES_TABLE_NAME) {
     val multipartCompleted = bool("multipart_completed")
 
     val multipartUploadId = text("multipart_upload_id").nullable()
+
+    /**
+     * When the file was linked to a submission. Null means the file has not been submitted yet (orphaned).
+     */
+    val submittedAtColumn = datetime("submitted_at").nullable()
 }

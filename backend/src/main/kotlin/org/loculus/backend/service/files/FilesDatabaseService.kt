@@ -1,6 +1,10 @@
 package org.loculus.backend.service.files
 
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.update
@@ -82,5 +86,30 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         }) {
             it[multipartCompleted] = true
         }
+    }
+
+    fun markFilesAsSubmitted(fileIds: Set<FileId>) {
+        if (fileIds.isEmpty()) return
+        val now = dateProvider.getCurrentDateTime()
+        FilesTable.update({ FilesTable.idColumn inList fileIds }) {
+            it[submittedAtColumn] = now
+        }
+    }
+
+    fun getOrphanedFileIds(olderThanSeconds: Long): List<FileId> {
+        val cutoff = dateProvider.getCurrentInstant()
+            .minus(olderThanSeconds, DateTimeUnit.SECOND, DateProvider.timeZone)
+            .toLocalDateTime(DateProvider.timeZone)
+        return FilesTable
+            .select(FilesTable.idColumn)
+            .where {
+                (FilesTable.submittedAtColumn eq null) and
+                    (FilesTable.uploadRequestedAtColumn less cutoff)
+            }
+            .map { it[FilesTable.idColumn] }
+    }
+
+    fun deleteFileEntry(fileId: FileId) {
+        FilesTable.deleteWhere { FilesTable.idColumn eq fileId }
     }
 }

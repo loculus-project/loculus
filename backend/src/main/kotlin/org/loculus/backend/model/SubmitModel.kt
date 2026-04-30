@@ -23,6 +23,7 @@ import org.loculus.backend.utils.FastaReader
 import org.loculus.backend.utils.metadataEntryStreamAsSequence
 import org.loculus.backend.utils.revisionEntryStreamAsSequence
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.io.BufferedInputStream
 import java.io.File
@@ -101,6 +102,7 @@ class SubmitModel(
             }
     }
 
+    @Transactional
     fun processSubmissions(
         uploadId: String,
         submissionParams: SubmissionParams,
@@ -156,7 +158,9 @@ class SubmitModel(
         }
 
         log.debug { "Persisting submission with uploadId $uploadId" }
-        uploadDatabaseService.mapAndCopy(uploadId, submissionParams)
+        val result = uploadDatabaseService.mapAndCopy(uploadId, submissionParams)
+        submissionParams.files?.let { filesDatabaseService.markFilesAsSubmitted(it.getAllFileIds()) }
+        result
     } finally {
         uploadDatabaseService.deleteUploadData(uploadId)
     }
