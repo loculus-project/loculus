@@ -12,6 +12,7 @@ import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.QueryParameter
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
@@ -959,6 +960,13 @@ class SubmissionDatabaseService(
                 .andThatOrganismIs(organism)
         }
 
+        val metadata = versionComment?.let { mapOf("versionComment" to it) } ?: emptyMap()
+        val originalData = compressionService.compressSequencesInOriginalData(
+            OriginalData(metadata = metadata, unalignedNucleotideSequences = emptyMap()),
+            organism,
+        )
+        val originalDataParam = QueryParameter(originalData, SequenceEntriesTable.originalDataColumn.columnType)
+
         SequenceEntriesTable.insert(
             SequenceEntriesTable.select(
                 SequenceEntriesTable.accessionColumn,
@@ -969,6 +977,8 @@ class SubmissionDatabaseService(
                 dateTimeParam(dateProvider.getCurrentDateTime()),
                 booleanParam(true),
                 SequenceEntriesTable.organismColumn,
+                originalDataParam,
+                originalDataParam,
             ).where {
                 (
                     SequenceEntriesTable.accessionColumn inList
@@ -985,30 +995,10 @@ class SubmissionDatabaseService(
                 SequenceEntriesTable.submittedAtTimestampColumn,
                 SequenceEntriesTable.isRevocationColumn,
                 SequenceEntriesTable.organismColumn,
+                SequenceEntriesTable.originalDataColumn,
+                SequenceEntriesTable.unprocessedDataColumn,
             ),
         )
-
-        if (versionComment != null) {
-            log.debug { "Adding version comment for revocation: $versionComment" }
-            val metadata = mapOf("versionComment" to versionComment)
-            val originalData = compressionService.compressSequencesInOriginalData(
-                OriginalData(
-                    metadata = metadata,
-                    unalignedNucleotideSequences = emptyMap(),
-                ),
-                organism,
-            )
-            SequenceEntriesTable.update(
-                where = {
-                    (SequenceEntriesTable.accessionColumn inList accessions) and
-                        SequenceEntriesTable.isMaxVersion and
-                        (SequenceEntriesTable.isRevocationColumn eq true)
-                },
-            ) {
-                it[originalDataColumn] = originalData
-                it[unprocessedDataColumn] = originalData
-            }
-        }
 
         auditLogger.log(
             authenticatedUser.username,
