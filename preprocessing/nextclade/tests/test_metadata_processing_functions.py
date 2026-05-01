@@ -10,8 +10,10 @@ from factory_methods import (
     verify_processed_entry,
 )
 
-from loculus_preprocessing.config import Config, get_config
+from loculus_preprocessing.config import Config, get_config, get_processing_order
 from loculus_preprocessing.datatypes import (
+    FunctionArgs,
+    InputMetadata,
     ProcessedEntry,
     UnprocessedData,
     UnprocessedEntry,
@@ -25,6 +27,7 @@ from loculus_preprocessing.processing_functions import (
 
 # Config file used for testing
 NO_ALIGNMENT_CONFIG = "tests/no_alignment_config.yaml"
+METADATA_DEPENDENCY_CONFIG = "tests/metadata_dependency.yaml"
 
 
 test_case_definitions = [
@@ -38,12 +41,12 @@ test_case_definitions = [
                 ProcessingAnnotationHelper(
                     ["name_required"],
                     ["name_required"],
-                    "Metadata field name_required is required.",
+                    "Metadata field `name_required` is required.",
                 ),
                 ProcessingAnnotationHelper(
                     ["ncbi_required_collection_date"],
                     ["required_collection_date"],
-                    "Metadata field required_collection_date is required.",
+                    "Metadata field `required_collection_date` is required. Please provide input metadata field(s): `ncbi_required_collection_date`",
                 ),
             ]
         ),
@@ -52,13 +55,16 @@ test_case_definitions = [
         name="missing_one_required_field",
         input_metadata={"submissionId": "missing_one_required_field", "name_required": "name"},
         accession_id="1",
-        expected_metadata={"name_required": "name", "concatenated_string": "LOC_1.1"},
+        expected_metadata={
+            "name_required": "name",
+            "concatenated_string": "LOC_1.1",
+        },
         expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper(
                     ["ncbi_required_collection_date"],
                     ["required_collection_date"],
-                    "Metadata field required_collection_date is required.",
+                    "Metadata field `required_collection_date` is required. Please provide input metadata field(s): `ncbi_required_collection_date`",
                 ),
             ]
         ),
@@ -219,8 +225,41 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_6.1/2022-11-01",
             "regex_field": "EPI_ISL_123456",
+            "extracted_regex_field": "123456",
         },
         expected_errors=[],
+        expected_warnings=[],
+    ),
+    Case(
+        name="regex_empty_capture_group",
+        input_metadata={
+            "submissionId": "date_only_year",
+            "collection_date": "2023-01-01",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "regex_field": "EPI_ISL_",
+        },
+        accession_id="6",
+        expected_metadata={
+            "collection_date": "2023-01-01",
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_6.1/2022-11-01",
+            "regex_field": None,
+            "extracted_regex_field": None,
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["regex_field"],
+                    ["regex_field"],
+                    (
+                        "The value 'EPI_ISL_' does not match the expected regex pattern: "
+                        "'^EPI_ISL_[0-9]+$'."
+                    ),
+                )
+            ]
+        ),
         expected_warnings=[],
     ),
     Case(
@@ -239,6 +278,7 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_6.1/2022-11-01",
             "regex_field": None,
+            "extracted_regex_field": None,
         },
         expected_errors=build_processing_annotations(
             [
@@ -248,6 +288,14 @@ test_case_definitions = [
                     (
                         "The value 'EPIISL_123456' does not match the expected regex pattern: "
                         "'^EPI_ISL_[0-9]+$'."
+                    ),
+                ),
+                ProcessingAnnotationHelper(
+                    ["regex_field"],
+                    ["extracted_regex_field"],
+                    (
+                        "The value 'EPIISL_123456' does not match the expected regex pattern: "
+                        "'^EPI_ISL_(?P<id>[0-9]+)?$'."
                     ),
                 ),
             ]
@@ -598,6 +646,7 @@ test_case_definitions = [
             "concatenated_string": "LOC_16.1/2022-11-01",
             "authors": "Smith, John II; Doe, A. B. C.",
             "regex_field": "EPI_ISL_123456",
+            "extracted_regex_field": "123456",
         },
         expected_errors=[],
         expected_warnings=[],
@@ -633,10 +682,51 @@ not_accepted_authors = [
     "Count4th, EwanMcGregor, Count4th",
 ]
 
+test_metadata_dependency_test_definitions = [
+    Case(
+        name="metadata_dependency",
+        input_metadata={
+            "submissionId": "metadata_dependency",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "2022",
+        },
+        accession_id="18",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_18.1/2022-11-01",
+            "continent": "Asia",
+            "A": "2022-01-01",
+            "depends_on_A": "Asia/LOC_18.1/2022-01-01",
+        },
+        expected_errors=[],
+        expected_warnings=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["A"],
+                    ["A"],
+                    ("Metadata field A:'2022' - Month and day are missing. Assuming January 1st."),
+                ),
+            ]
+        ),
+    ),
+]
+
 
 @pytest.fixture(scope="module")
 def config():
     return get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
+
+
+@pytest.fixture(scope="module")
+def config_dependency(config: Config):
+    # Add metadata dependency to config, recompute processing order
+    dependency_fields = get_config(METADATA_DEPENDENCY_CONFIG, ignore_args=True).processing_spec
+    config.processing_spec.update(dependency_fields)
+    config.processing_order = get_processing_order(config)
+    return config
 
 
 @pytest.fixture(scope="module")
@@ -658,12 +748,34 @@ def test_preprocessing(test_case_def: Case, config: Config, factory_custom: Proc
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
 
+@pytest.mark.parametrize(
+    "test_case_def",
+    test_metadata_dependency_test_definitions,
+    ids=lambda tc: f"metadata fields with dependencies use processed fields {tc.name}",
+)
+def test_preprocessing_metadata_dependencies(test_case_def: Case, config_dependency: Config):
+    factory_custom = ProcessedEntryFactory(
+        all_metadata_fields=list(config_dependency.processing_spec.keys())
+    )
+    test_case = test_case_def.create_test_case(factory_custom)
+    processed_entry = process_single_entry(test_case, config_dependency)
+    verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
+
+    wrong_order = tuple(
+        ["depends_on_A"] + [i for i in config_dependency.processing_order if i != "depends_on_A"]
+    )
+    config_dependency.processing_order = wrong_order
+    processed_entry = process_single_entry(test_case, config_dependency)
+    assert processed_entry.data.metadata != test_case.expected_output.data.metadata
+
+
 def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     sequence_name = "entry without sequences"
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
         data=UnprocessedData(
             submitter="test_submitter",
+            submissionId="test_submission_id",
             group_id=2,
             submittedAt=ts_from_ymd(2021, 12, 15),
             metadata={
@@ -854,6 +966,226 @@ def test_parse_date_into_range() -> None:
         ).datum
         is None
     ), "dateRangeLower: empty date should be returned as None."
+
+
+def test_concatenate() -> None:
+    input_data: InputMetadata = {
+        "someInt": "",
+        "geoLocCountry": "",
+        "sampleCollectionDate": "2025",
+    }
+    output_field: str = "displayName"
+    input_fields: list[str] = ["geoLocCountry", "sampleCollectionDate"]
+    args: FunctionArgs = {
+        "ACCESSION_VERSION": "version.1",
+        "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
+        "type": ["integer", "string", "ACCESSION_VERSION", "date"],
+    }
+    args_no_accession_version: FunctionArgs = {
+        "ACCESSION_VERSION": "version.1",
+        "order": ["someInt", "geoLocCountry", "sampleCollectionDate"],
+        "type": ["integer", "string", "date"],
+        "fallback_value": "unknown",
+    }
+
+    res_no_fallback_no_int = ProcessingFunctions.concatenate(
+        input_data,
+        output_field,
+        input_fields,
+        args,
+    )
+
+    input_data["someInt"] = "0"
+    res_no_fallback = ProcessingFunctions.concatenate(
+        input_data,
+        output_field,
+        input_fields,
+        args,
+    )
+
+    args["fallback_value"] = "unknown"
+    res_fallback = ProcessingFunctions.concatenate(
+        input_data,
+        output_field,
+        input_fields,
+        args,
+    )
+
+    res_fallback_no_accession_version = ProcessingFunctions.concatenate(
+        input_data,
+        output_field,
+        input_fields,
+        args_no_accession_version,
+    )
+
+    input_data["sampleCollectionDate"] = None
+    res_fallback_explicit_null = ProcessingFunctions.concatenate(
+        input_data,
+        output_field,
+        input_fields,
+        args,
+    )
+
+    assert res_no_fallback_no_int.datum == "version.1/2025-01-01"
+    assert res_no_fallback.datum == "0//version.1/2025-01-01"
+    assert res_fallback.datum == "0/unknown/version.1/2025-01-01"
+    assert res_fallback_no_accession_version.datum == "0/unknown/2025-01-01"
+    assert res_fallback_explicit_null.datum == "0/unknown/version.1/unknown"
+
+
+def test_display_name_construction() -> None:  # noqa: PLR0915
+    submission_id = "mySample"
+    submission_id_formatted = "hDENV1/Germany/myExtractedSample/2025"
+    submission_id_formatted_unexpected = "hDENV1/myExtractedSample/2025"
+    input_data: InputMetadata = {
+        "nextclade.clade": "DENV-1",
+        "geoLocCountry": "Switzerland",
+        "sampleCollectionDate": "2025",
+        "submissionId": submission_id,
+    }
+    output_field: str = "displayName"
+
+    def input_fields():
+        return [
+            "nextclade.clade",
+            "geoLocCountry",
+            "specimenCollectorSampleId",
+            "submissionId",
+            "sampleCollectionDate",
+        ]
+
+    def args():
+        return {
+            "ACCESSION_VERSION": "version.1",
+            "is_insdc_ingest_group": False,
+            "order": ["nextclade.clade", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
+            "type": ["string", "string", "IDENTIFIER", "string"],
+            "regex_pattern": r"^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$",
+        }
+
+    def args_with_prefix():
+        return {
+            "ACCESSION_VERSION": "version.1",
+            "is_insdc_ingest_group": False,
+            "order": ["ARG:prefix", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
+            "type": ["ARG:prefix", "string", "IDENTIFIER", "string"],
+            "prefix": "hYF",
+            "regex_pattern": r"^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$",
+        }
+
+    def args_insdc():
+        return {
+            "ACCESSION_VERSION": "version.1",
+            "is_insdc_ingest_group": True,
+            "order": ["nextclade.clade", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
+            "type": ["string", "string", "IDENTIFIER", "string"],
+            "regex_pattern": r"^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$",
+        }
+
+    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
+    res_insdc = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_insdc()
+    )
+    res_prefix = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_with_prefix()
+    )
+    assert res.datum == "DENV-1/Switzerland/mySample/2025"
+    assert res_insdc.datum == "DENV-1/Switzerland/mySample/2025"
+    assert res_prefix.datum == "hYF/Switzerland/mySample/2025"
+
+    input_data["specimenCollectorSampleId"] = "myCollectorSample"
+    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
+    res_insdc = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_insdc()
+    )
+    res_prefix = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_with_prefix()
+    )
+    assert res.datum == "DENV-1/Switzerland/myCollectorSample/2025"
+    assert res_insdc.datum == "DENV-1/Switzerland/myCollectorSample/2025"
+    assert res_prefix.datum == "hYF/Switzerland/myCollectorSample/2025"
+
+    input_data["specimenCollectorSampleId"] = submission_id_formatted
+    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
+    res_insdc = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_insdc()
+    )
+    res_prefix = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_with_prefix()
+    )
+    assert res.datum == "DENV-1/Switzerland/myExtractedSample/2025"
+    assert res_insdc.datum == "DENV-1/Switzerland/version.1/2025"
+    assert res_prefix.datum == "hYF/Switzerland/myExtractedSample/2025"
+
+    input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
+    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
+    res_insdc = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_insdc()
+    )
+    res_prefix = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_with_prefix()
+    )
+    assert res.datum == "DENV-1/Switzerland/version.1/2025"
+    assert res_insdc.datum == "DENV-1/Switzerland/version.1/2025"
+    assert res_prefix.datum == "hYF/Switzerland/version.1/2025"
+
+    input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
+    input_data["geoLocCountry"] = ""
+    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
+    res_insdc = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_insdc()
+    )
+    res_prefix = ProcessingFunctions.build_display_name(
+        input_data, output_field, input_fields(), args_with_prefix()
+    )
+    assert res.datum == "DENV-1/unknown/version.1/2025"
+    assert len(res.warnings) == 1
+    assert (
+        res.warnings[0].message
+        == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
+    )
+    assert res_insdc.datum == "DENV-1/unknown/version.1/2025"
+    assert len(res_insdc.warnings) == 0
+    assert res_prefix.datum == "hYF/unknown/version.1/2025"
+    assert len(res_prefix.warnings) == 1
+    assert (
+        res_prefix.warnings[0].message
+        == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
+    )
+
+    input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
+    res = ProcessingFunctions.build_display_name(
+        input_data,
+        output_field,
+        input_fields(),
+        {"fallback_value": "another_fallback"} | args(),  # type: ignore
+    )
+    res_insdc = ProcessingFunctions.build_display_name(
+        input_data,
+        output_field,
+        input_fields(),
+        {"fallback_value": "another_fallback"} | args_insdc(),  # type: ignore
+    )
+    res_prefix = ProcessingFunctions.build_display_name(
+        input_data,
+        output_field,
+        input_fields(),
+        {"fallback_value": "another_fallback"} | args_with_prefix(),  # type: ignore
+    )
+    assert res.datum == "DENV-1/another_fallback/version.1/2025"
+    assert len(res.warnings) == 1
+    assert (
+        res.warnings[0].message
+        == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
+    )
+    assert res_insdc.datum == "DENV-1/another_fallback/version.1/2025"
+    assert len(res_insdc.warnings) == 0
+    assert res_prefix.datum == "hYF/another_fallback/version.1/2025"
+    assert len(res_prefix.warnings) == 1
+    assert (
+        res_prefix.warnings[0].message
+        == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
+    )
 
 
 if __name__ == "__main__":

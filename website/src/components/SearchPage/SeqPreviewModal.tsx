@@ -6,7 +6,8 @@ import { routes } from '../../routes/routes';
 import { type Group } from '../../types/backend';
 import type { SequenceFlaggingConfig } from '../../types/config.ts';
 import { type DetailsJson, detailsJsonSchema } from '../../types/detailsJson.ts';
-import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes';
+import { getSegmentNames } from '../../utils/sequenceTypeHelpers.ts';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu';
 import SequencesBanner from '../SequenceDetailsPage/SequencesBanner.tsx';
@@ -26,7 +27,7 @@ interface SeqPreviewModalProps {
     accessToken?: string;
     isOpen: boolean;
     onClose: () => void;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     myGroups: Group[];
     isHalfScreen?: boolean;
@@ -41,7 +42,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     accessToken,
     isOpen,
     onClose,
-    referenceGenomeLightweightSchema,
+    referenceGenomesInfo,
     sequenceFlaggingConfig,
     myGroups,
     isHalfScreen = false,
@@ -88,7 +89,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                 <div className='px-6'>
                     <SequenceDataUI
                         {...data}
-                        referenceGenomeSequenceNames={referenceGenomeLightweightSchema}
+                        referenceGenomesInfo={referenceGenomesInfo}
                         myGroups={myGroups}
                         accessToken={accessToken}
                         sequenceFlaggingConfig={data.isRevocation ? undefined : sequenceFlaggingConfig}
@@ -124,7 +125,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                         <MdiDockBottom className='w-6 h-6' />
                     )}
                 </Button>
-                <DownloadButton seqId={seqId} />
+                <DownloadButton seqId={seqId} allowFastaDownload={getSegmentNames(referenceGenomesInfo).length > 0} />
                 <a href={routes.sequenceEntryDetailsPage(seqId)} title='Open in full window' className={BUTTONCLASS}>
                     <OouiNewWindowLtr className='w-6 h-6' />
                 </a>
@@ -173,9 +174,10 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
 
 interface DownloadButtonProps {
     seqId: string;
+    allowFastaDownload?: boolean;
 }
 
-const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId }: { seqId: string }) => {
+const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId, allowFastaDownload = true }) => {
     return (
         <div className='dropdown dropdown-hover relative inline-block'>
             <Button className={BUTTONCLASS}>
@@ -184,11 +186,16 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId }: { seqId: strin
                 <CharmMenuKebab className=' w-4 h-6 -ml-1.5 pb-1 pt-1.5' />
             </Button>
             <ul className='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn absolute top-full w-52 -left-32'>
-                <li>
-                    <a href={routes.sequenceEntryFastaPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>
-                        Download FASTA
-                    </a>
-                </li>
+                {allowFastaDownload && (
+                    <li>
+                        <a
+                            href={routes.sequenceEntryFastaPage(seqId, true)}
+                            className='block px-4 py-2 hover:bg-gray-100'
+                        >
+                            Download FASTA
+                        </a>
+                    </li>
+                )}
                 <li>
                     <a href={routes.sequenceEntryTsvPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>
                         Download metadata TSV

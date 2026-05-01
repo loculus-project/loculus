@@ -3,7 +3,9 @@ import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../components/SearchPage/SearchFullUI';
 import {
     dataUseTermsAreEnabled,
-    getReferenceGenomeLightweightSchema,
+    getContactConfig,
+    getDataUseTermsAgreementHTML,
+    getReferenceGenomes,
     getRuntimeConfig,
     getSchema,
     getWebsiteConfig,
@@ -37,19 +39,21 @@ const schema = getSchema(cleanedOrganism.key);
 const accessToken = getAccessToken(Astro.locals.session);
 const myGroups = accessToken !== undefined ? await getMyGroups(accessToken) : [];
 
-const referenceGenomeLightweightSchema = getReferenceGenomeLightweightSchema(cleanedOrganism.key);
+const referenceGenomesInfo = getReferenceGenomes(cleanedOrganism.key);
 
 // Build initialQueryDict with support for multi-value parameters
 const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
 const { data, totalCount } = await performLapisSearchQueries(
     initialQueryDict,
     schema,
-    referenceGenomeLightweightSchema,
+    referenceGenomesInfo,
     hiddenFieldValues,
     cleanedOrganism.key,
 );
 
-const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
+const websiteConfig = getWebsiteConfig();
+const sequenceFlaggingConfig = websiteConfig.sequenceFlagging;
+const contactConfig = getContactConfig(websiteConfig);
 ---
 
 <BaseLayout title={`${cleanedOrganism.displayName} - Browse`} fullWidth withoutMargin>
@@ -60,13 +64,15 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
         schema={schema}
         myGroups={myGroups}
         accessToken={accessToken}
-        referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+        referenceGenomesInfo={referenceGenomesInfo}
         hiddenFieldValues={hiddenFieldValues}
         initialData={data}
         initialCount={totalCount}
         initialQueryDict={initialQueryDict}
         dataUseTermsEnabled={dataUseTermsAreEnabled()}
+        dataUseTermsAgreementHTML={getDataUseTermsAgreementHTML()}
         sequenceFlaggingConfig={sequenceFlaggingConfig}
         linkOuts={schema.linkOuts}
+        contactConfig={contactConfig}
     />
 </BaseLayout>

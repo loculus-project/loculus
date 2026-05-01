@@ -13,6 +13,7 @@ jobs:
           - 11069    # Dengue type 3
           - 11070    # Dengue type 4
           - 11137    # Coronavirus 229E
+          - 11234    # Measles morbillivirus
           - 11250    # RSV
           - 11520    # Influenza B
           - 11676    # HIV1

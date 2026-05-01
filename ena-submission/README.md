@@ -53,10 +53,7 @@ In a loop:
     - else: create an entry in `project_table` and then update `submission_table` with results (center_name and project_id)
   - if (there exists an entry in the project_table for the corresponding (group_id, organism)):
     - if (entry is in status SUBMITTED): update `submission_table` to SUBMITTED_PROJECT.
-    - else: update submission_table to SUBMITTING_PROJECT.
   - else: create project entry in `project_table` for (group_id, organism) -> creates a unique `project_id`.
-- Get sequences in `submission_table` in state SUBMITTING_PROJECT
-  - if (corresponding `project_table` entry is in state SUBMITTED): update entries to state SUBMITTED_PROJECT.
 - Get sequences in `project_table` in state READY, prepare submission object, set status to SUBMITTING
   - if (submission succeeds): set status to SUBMITTED and fill in results: the result of a successful submission is `bioproject_accession` and an ena-internal `ena_submission_accession`.
   - else: set status to HAS_ERRORS and fill in errors
@@ -79,10 +76,7 @@ In a loop
     - else: create an entry in `sample_table` and then update `submission_table` with results
   - if (there exists an entry in the `sample_table` for the corresponding (accession, version)):
     - if (entry is in status SUBMITTED): update `submission_table` to SUBMITTED_SAMPLE.
-    - else: update submission_table to SUBMITTING_SAMPLE.
   - else: create sample entry in `sample_table` for (accession, version).
-- Get sequences in `submission_table` in state SUBMITTING_SAMPLE
-  - if (corresponding `sample_table` entry is in state SUBMITTED): update entries to state SUBMITTED_SAMPLE.
 - Get sequences in `sample_table` in state READY, prepare submission object, set status to SUBMITTING
   - if (submission succeeds): set status to SUBMITTED and fill in results, the results of a successful submission are an `sra_run_accession` (starting with ERS) , a `biosample_accession` (starting with SAM) and an ena-internal `ena_submission_accession`.
   - else: set status to HAS_ERRORS and fill in errors
@@ -97,7 +91,7 @@ In a loop:
     - if (entry is in status SUBMITTED): update `assembly_table` to SUBMITTED_ALL.
     - else: update `assembly_table` to SUBMITTING_ASSEMBLY.
   - else: create assembly entry in `assembly_table` for (accession, version).
-- Get sequences in `submission_table` in state SUBMITTING_SAMPLE
+- Get sequences in `submission_table` in state SUBMITTED_SAMPLE
   - if (corresponding `assembly_table` entry is in state SUBMITTED): update entries to state SUBMITTED_ALL.
 - Get sequences in `assembly_table` in state READY, prepare files: we need chromosome_list, embl flatfiles and a manifest file, set status to WAITING
   - if (submission succeeds): set status to WAITING and fill in results: ena-internal `erz_accession`
@@ -200,11 +194,11 @@ pytest --ignore=./scripts/test_ena_submission_integration.py --ignore=./scripts/
 You can also use the `deposition_dry_run.py` script to produce the same output files/XMLs that the pipeline would produce in order to submit to ENA. This is a good test if you would like to first verify what your submission to ENA will look like. Make sure that you have the same `config.yaml` that will be used in production (use `../deploy.py` to generate this). Also note that the generator can only produce output for one submission at a time.
 
 ```sh
-python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/approved_ena_submission_list.json --mode=assembly --center-name="Yale" --config-file=config/config.yaml
+python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/approved_ena_submission_list.json --mode=assembly --center-name="Stellenbosch University" --bioproject="<bioproject>" --biosample="<biosample>" --config-file=config/config.yaml
 ```
 
 > **_NOTE:_**
-> If you want to run the ena deposition pod with the [Pathoplexus](https://github.com/pathoplexus/pathoplexus) staging or production config you can create the config locally by running:
+> If you want to run the ena deposition pod with the [Pathoplexus](https://github.com/pathoplexus/pathoplexus) staging or production config you can create the config locally by running or by downloading the config from argocd:
 >
 > ```bash
 > cd ..

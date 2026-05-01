@@ -12,12 +12,17 @@ from pathlib import Path
 from typing import Any
 
 import click
+from ena_deposition.call_loculus import get_group_info
 from ena_deposition.config import Config, get_config
 from ena_deposition.create_assembly import create_manifest_object
 from ena_deposition.create_project import construct_project_set_object
 from ena_deposition.create_sample import construct_sample_set_object
 from ena_deposition.ena_submission_helper import create_manifest, get_project_xml, get_sample_xml
-from ena_deposition.loculus_models import Address, Group
+from ena_deposition.submission_db_helper import (
+    ProjectTableEntry,
+    SampleTableEntry,
+    SubmissionTableEntry,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -46,6 +51,8 @@ logging.basicConfig(
     type=click.Choice(["project", "sample", "assembly"]),
 )
 @click.option("--center-name", required=False, type=str, default="CENTER_NAME")
+@click.option("--bioproject", required=False, type=str, default="BIOPROJECT_ACCESSION")
+@click.option("--biosample", required=False, type=str, default="BIOSAMPLE_ACCESSION")
 @click.option(
     "--revision",
     required=False,
@@ -61,6 +68,8 @@ def local_ena_submission_generator(
     config_file,
     data_to_submit,
     center_name,
+    bioproject,
+    biosample,
     mode,
     revision,
     log_level,
@@ -82,32 +91,29 @@ def local_ena_submission_generator(
 
     for full_accession, data in sequences_to_upload.items():
         accession, version = full_accession.split(".")
-        entry = {
-            "accession": accession,
-            "version": version,
-            "group_id": data["metadata"]["groupId"],
-            "organism": data["organism"],
-            "metadata": data["metadata"],
-            "unaligned_nucleotide_sequences": data["unalignedNucleotideSequences"],
-        }
-
-    group_info = Group(
-        groupId=123,
-        groupName="GROUP_NAME",
-        institution=center_name,
-        contactEmail="someemail@example.com",
-        address=Address(
-            line1="ADDRESS_LINE_1",
-            line2="ADDRESS_LINE_2",
-            city="CITY",
-            state="STATE",
-            postalCode="POSTAL_CODE",
-            country="COUNTRY",
-        ),
-    )
+        entry = SubmissionTableEntry(
+            accession=accession,
+            version=int(version),
+            group_id=data["metadata"]["groupId"],
+            organism=data["organism"],
+            seq_metadata=data["metadata"],
+            unaligned_nucleotide_sequences=data["unalignedNucleotideSequences"],
+        )
+        project_entry = ProjectTableEntry(
+            group_id=data["metadata"]["groupId"],
+            organism=data["organism"],
+            result={"bioproject_accession": bioproject} if bioproject else None,
+            center_name=center_name,
+        )
+        sample_entry = SampleTableEntry(
+            accession=accession,
+            version=int(version),
+            result={"biosample_accession": biosample} if biosample else None,
+        )
 
     if mode == "project":
-        project_set = construct_project_set_object(group_info, config, entry)
+        group_info = get_group_info(config, entry.group_id)
+        project_set = construct_project_set_object(group_info, config, project_entry)
         project_xml = get_project_xml(project_set)
 
         directory = "project"
@@ -131,8 +137,7 @@ def local_ena_submission_generator(
         )
 
     if mode == "sample":
-        entry["center_name"] = center_name
-        sample_set = construct_sample_set_object(config, entry, entry)
+        sample_set = construct_sample_set_object(config, entry, sample_entry)
         sample_xml = get_sample_xml(sample_set, revision=revision)
 
         directory = "sample"
@@ -155,14 +160,12 @@ def local_ena_submission_generator(
         )
 
     if mode == "assembly":
-        entry["center_name"] = center_name
-
         directory = "assembly"
         os.makedirs(directory, exist_ok=True)
         logger.info(f"Writing results to {directory}")
 
         manifest_object = create_manifest_object(
-            config, "BIOSAMPLE_ACCESSION", "BIOPROJECT_ACCESSION", entry, dir=directory
+            config, biosample, bioproject, entry, dir=directory
         )
         create_manifest(manifest_object, is_broker=config.is_broker, dir=directory)
         logger.info(
@@ -172,7 +175,7 @@ def local_ena_submission_generator(
             "-manifest assembly/manifest.tsv -submit "
             f"-centername {center_name}"
             "\n Remember to submit with -test if you do not want to submit to production"
-            "\n Remember to add `is_broker=true` to config and modify ADDRESS "
+            "\n Remember to add `is_broker=true` to config"
             "if you are submitting as a broker"
         )
 

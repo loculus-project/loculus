@@ -1,5 +1,6 @@
 package org.loculus.backend.model
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.IntNode
@@ -124,6 +125,7 @@ open class ReleasedDataModel(
         } else {
             NullNode.getInstance()
         }
+        val dataBecameOpenAt = computeDataBecameOpenAt(rawProcessedData, currentDataUseTerms)
 
         val earliestReleaseDate = earliestReleaseDateFinder?.calculateEarliestReleaseDate(rawProcessedData)
 
@@ -159,6 +161,7 @@ open class ReleasedDataModel(
                     mapOf(
                         "dataUseTerms" to TextNode(currentDataUseTerms.type.name),
                         "dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil,
+                        "dataBecameOpenAt" to dataBecameOpenAt,
                     )
                 },
             ) +
@@ -233,6 +236,21 @@ open class ReleasedDataModel(
         DataUseTerms.Restricted(rawProcessedData.dataUseTerms.restrictedUntil)
     } else {
         DataUseTerms.Open
+    }
+
+    private fun computeDataBecameOpenAt(
+        rawProcessedData: RawProcessedData,
+        currentDataUseTerms: DataUseTerms,
+    ): JsonNode = when {
+        currentDataUseTerms is DataUseTerms.Restricted -> NullNode.getInstance()
+
+        rawProcessedData.dataUseTerms is DataUseTerms.Restricted ->
+            TextNode(rawProcessedData.dataUseTerms.restrictedUntil.toString())
+
+        rawProcessedData.dataUseTermsChangeDate != null ->
+            TextNode(rawProcessedData.dataUseTermsChangeDate.toUtcDateString())
+
+        else -> NullNode.getInstance()
     }
 
     // LATEST_VERSION: This is the highest version of the sequence entry

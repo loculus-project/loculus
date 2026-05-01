@@ -87,6 +87,19 @@ prepro --config-file=../../website/tests/config/preprocessing-config.{organism}.
 
 Additionally, the `--keep-tmp-dir` is useful for debugging issues. The results of nextclade run will be stored in the temp directory, as well as a file called `submission_requests.json` which contains a log of the full submit requests that are sent to the backend.
 
+## Sequence Assignment/Classification for Sequences with Multiple Segments and/or Multiple References
+
+The preprocessing pipeline is configured to take entries with multiple nucleotide sequences and classify which segment/reference each sequence best aligns to - it returns the identity of each sequence with a sequence name to fastaId map `sequenceNameToFastaId`. This can also be used to identify which reference a sequence best aligns to in the case that multiple references exist. The `sequenceName` uses the segment-reference structure expected by the backend (and query engine):
+ - For an organisms without multiple references the `sequenceName` in the name of the segment (the segment name `main` is used for the single segment edge case).
+ - For single-segmented, multi-reference organisms the `sequenceName` is the name of the reference.
+ - For multi-segment, multi-reference organisms the `sequenceName` is the `{segmentName}-{referenceName}`.
+ 
+Currently the prepro pipeline is configured to only accept one copy of each segment in a submission entry. The classification of sequences to the sequence they best align to can be done using three different algorithms, which algorithm is used is determined by the `segment_classification_method` config field. (Additionally for non-alignment configurations segment classification can be performed by parsing the fastaId):
+
+- `ALIGN`: uses [nextclade run](https://docs.nextstrain.org/projects/nextclade/en/stable/user/nextclade-cli/reference.html#nextclade-run) to align sequences. The algorithm uses the alignment score to classify the sequence. To use this method a nextclade server and dataset must be configured.
+- `MINIMIZER`: uses [nextclade sort](https://docs.nextstrain.org/projects/nextclade/en/stable/user/nextclade-cli/reference.html#nextclade-sort) to perform fast local alignment of sequences to a reference (called `dataset`) based on k-mers of the reference that are stored in a minimizer index. Again classification is based on a score. To use this method you need to define a `minimizer index`, see https://github.com/loculus-project/nextclade-sort-minimizers for details. This is the fastest algorithm but might suffer performance issues for highly divergent sequences. The `accepted_dataset_matches` list can be updated to include multiple reference `dataset`s that when matched will result in the same classification.
+- `DIAMOND`: uses [diamond blastx](https://github.com/bbuchfink/diamond) to perform pairwise alignment of (auto-translated) nucleotides to protein sequences using BLAST. To use this method you need to define a `diamond database`, see https://github.com/loculus-project/diamond-reference-databases for details. Diamond matches nucleotide sequences to protein translations, if there are multiple proteins in a reference `dataset` a match to any of the proteins should result in a match to the same dataset. This can be accomplished by ensuring each protein in the dataset has the name `{dataset}|CDS|i}` (where `i` is a digit) or alternatively, adding each protein to the `accepted_dataset_matches` list.
+
 ## Preprocessing Checks
 
 ### Type Check
@@ -108,8 +121,10 @@ However, the `preprocessing` field can be customized to take an arbitrary number
 2. `check_date`: Take a date string and return a date field in the "%Y-%m-%d" format. Incomplete dates `%Y` or `%Y-%m` default the unspecified part to `1`.
 3. `parse_timestamp`: Take a timestamp e.g. 2022-11-01T00:00:00Z and return that field in the "%Y-%m-%d" format.
 4. `parse_date_into_range`: Takes an incomplete (or complete) date (Just `%Y`, just `%Y-%m` or a full date) and turns it into two date fields: an upper and a lower date for the date range. Can optionally take another date field (the release date) into account, as an upper bound for the date range. For example, a sample collected in "2025-03" and released "2025-03-23" will mean the lower bound for the collection date is 2025-03-01 and the upper bound is the release date, 2025-03-23. To use this function fully, define three metadata fields: one for the plain string, one for the upper bound, one for the lower bound. See example below.
-5. `concatenate`: Take multiple metadata fields (including the accessionVersion) and concatenate them in the order specified by the `arg.order` parameter, fields will first be processed based on their `arg.type` (the order of the types should correspond to the order of fields specified by the order argument).
+5. `concatenate`: Take multiple metadata fields (including the accessionVersion) and concatenate them in the order specified by the `arg.order` parameter, fields will first be processed based on their `arg.type` (the order of the types should correspond to the order of fields specified by the order argument). If the field `ACCESSION_VERSION` is passed in as a type and order argument the function will use the entry's accession version when building the field. Additionally, strings can be passed in to the concatenate function by adding an order and type arg with the prefix `ARG:` followed by a name e.g. `ARG:prefix`, this will then use the string value in the `prefix` arg when building the field.
 6. `process_options`: Only accept input that is in `args.options`, this check is case-insensitive. If input value is not in options raise an error, or return null if the submitter is in the "insdc_ingest" group.
+7. `check_regex`: Validate that the input field matches the pattern in `args.pattern`.
+8. `extract_regex`: Extracts a substring from input field using the provided regex `args.pattern` with a `args.capture_group`. For example the pattern `^(?P<segment>[^-]+)-(?P<subtype>[^-]+)$` with capture group `subtype` would extract `HA` from the field `seg1-HA`. Returns an error if the pattern does not match (and internal error if capture group does not exist in pattern). If `arg.uppercase` is added the extracted string will be capitalized.
 
 Using these functions in your `values.yaml` will look like:
 
@@ -183,7 +198,7 @@ Example of using the `parse_date_into_range` below. The same function is called 
 
 ### Nextclade results
 
-Metadata fields that are created from the results of the nextclade analysis require the input field to be prefaced with `nextclade.` For example:
+Metadata fields that are created from the results of the nextclade analysis require the input field to be prefaced with `nextclade.` and should include the metadata field name and structure in the nextclade results.json. For example:
 
 ```yaml
 - name: totalSnps
@@ -193,7 +208,7 @@ Metadata fields that are created from the results of the nextclade analysis requ
   preprocessing:
     inputs: {input: nextclade.totalSubstitutions}
 ```
-Note that adding the `perSegment` field will mean that for a multi-segmented organism, preprocessing will create a `totalSnps_<segment>` field for each segment containing the nextclade results of that specific segment. In general, all nextclade metadata fields should be `perSegment`. 
+Note that adding the `perSegment` field will mean that for a multi-segmented organism, preprocessing will create a `totalSnps_<segment>` field for each segment containing the nextclade results of that specific segment. In general, all nextclade metadata fields should be `perSegment`.
 
 ## Deployment
 

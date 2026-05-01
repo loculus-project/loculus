@@ -1,4 +1,3 @@
-import { sentenceCase } from 'change-case';
 import { type FC } from 'react';
 
 import { InputField as InputFieldComponent, type Row } from './InputField.tsx';
@@ -21,7 +20,7 @@ export const EditableDataRow: FC<EditableRowProps> = ({ inputField, row, onChang
         (value) => value !== undefined,
     );
 
-    const label = inputField.displayName ?? sentenceCase(inputField.name);
+    const label = inputField.displayName ?? inputField.name;
 
     // split label to attach icon later on to prevent the icon wrapping alone
     // (https://www.codemzy.com/blog/prevent-icon-wrap-javascript)

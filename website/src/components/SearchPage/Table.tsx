@@ -7,6 +7,7 @@ import ScrollContainer from './ScrollContainer.jsx';
 import { routes } from '../../routes/routes.ts';
 import type { Schema } from '../../types/config.ts';
 import type { Metadatum, OrderBy, OrderDirection } from '../../types/lapis.ts';
+import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiTriangle from '~icons/mdi/triangle';
@@ -18,7 +19,7 @@ export type TableSequenceData = {
     [key: string]: Metadatum;
 };
 
-function formatField(value: unknown, type: string): string {
+function formatField(value: unknown, type: string, fieldName?: string): string {
     if (typeof value === 'number' && Number.isInteger(value)) {
         if (type === 'timestamp') {
             return new Date(value * 1000).toISOString().slice(0, 10);
@@ -27,6 +28,10 @@ function formatField(value: unknown, type: string): string {
     } else if (typeof value === 'boolean') {
         return value ? 'True' : 'False';
     } else {
+        const stringValue = value as string;
+        if (fieldName?.toLowerCase().includes('affiliation')) {
+            return deduplicateSemicolonSeparated(stringValue);
+        }
         // @ts-expect-error: TODO(#3451) add proper types
         return value;
     }
@@ -52,9 +57,10 @@ type CellContentProps = {
     value: Metadatum;
     type: string;
     columnWidth: number | undefined;
+    fieldName: string;
 };
 
-const CellContent: FC<CellContentProps> = ({ value, type, columnWidth }) => {
+const CellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName }) => {
     const textRef = useRef<HTMLSpanElement>(null);
     const [isTruncated, setIsTruncated] = useState(false);
 
@@ -64,7 +70,7 @@ const CellContent: FC<CellContentProps> = ({ value, type, columnWidth }) => {
         }
     }, [value]);
 
-    const formattedValue = formatField(value, type);
+    const formattedValue = formatField(value, type, fieldName);
     const tooltipText =
         typeof formattedValue === 'string'
             ? formattedValue.slice(0, MAX_TOOLTIP_LENGTH) + (formattedValue.length > MAX_TOOLTIP_LENGTH ? '..' : '')
@@ -124,11 +130,11 @@ export const Table: FC<TableProps> = ({
     };
 
     const mouseDownSelection = useRef('');
-    const dragSelecting = useRef({ active: false, value: false });
+    const dragSelecting = useRef({ active: false, value: false, startY: 0 });
 
     useEffect(() => {
         const handleMouseUp = () => {
-            dragSelecting.current.active = false;
+            dragSelecting.current = { active: false, value: false, startY: 0 };
         };
         window.addEventListener('mouseup', handleMouseUp);
         return () => {
@@ -241,16 +247,31 @@ export const Table: FC<TableProps> = ({
                                     data-testid='sequence-row'
                                 >
                                     <td
-                                        className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
+                                        className='px-2 whitespace-nowrap text-primary-900 md:pl-6 select-none'
                                         onClick={(e) => {
                                             e.stopPropagation();
+                                        }}
+                                        onMouseDown={(e) => {
                                             const seqId = row[primaryKey] as string;
                                             const newValue = !selectedSeqs.has(seqId);
+                                            dragSelecting.current = {
+                                                active: false,
+                                                value: newValue,
+                                                startY: e.clientY,
+                                            };
                                             setRowSelected(seqId, newValue);
                                         }}
-                                        onMouseEnter={() => {
+                                        onMouseEnter={(e) => {
+                                            const seqId = row[primaryKey] as string;
+                                            const minMouseMovement = 5;
+                                            if (
+                                                dragSelecting.current.startY !== 0 &&
+                                                Math.abs(e.clientY - dragSelecting.current.startY) > minMouseMovement
+                                            ) {
+                                                dragSelecting.current.active = true;
+                                            }
                                             if (dragSelecting.current.active) {
-                                                setRowSelected(row[primaryKey] as string, dragSelecting.current.value);
+                                                setRowSelected(seqId, dragSelecting.current.value);
                                                 if (document.activeElement instanceof HTMLElement) {
                                                     document.activeElement.blur();
                                                 }
@@ -259,14 +280,11 @@ export const Table: FC<TableProps> = ({
                                     >
                                         <input
                                             type='checkbox'
-                                            className='text-primary-900 hover:text-primary-800 hover:no-underline'
-                                            onClick={(e) => e.stopPropagation()}
+                                            className='text-primary-900 hover:text-primary-800 hover:no-underline pointer-events-none'
                                             checked={selectedSeqs.has(row[primaryKey] as string)}
-                                            onMouseDown={() => {
+                                            onChange={() => {
                                                 const seqId = row[primaryKey] as string;
-                                                const newValue = !selectedSeqs.has(seqId);
-                                                dragSelecting.current = { active: true, value: newValue };
-                                                setRowSelected(seqId, newValue);
+                                                setRowSelected(seqId, !selectedSeqs.has(seqId));
                                             }}
                                         />
                                     </td>
@@ -296,6 +314,7 @@ export const Table: FC<TableProps> = ({
                                                 value={row[c.field]}
                                                 type={c.type}
                                                 columnWidth={c.columnWidth}
+                                                fieldName={c.field}
                                             />
                                         </td>
                                     ))}
@@ -304,7 +323,7 @@ export const Table: FC<TableProps> = ({
                         </tbody>
                     </table>
                 ) : (
-                    <div className='flex justify-center font-bold text-xl my-8'>No Data</div>
+                    <div className='flex justify-center font-bold text-xl my-8'>No data</div>
                 )}
             </ScrollContainer>
         </div>

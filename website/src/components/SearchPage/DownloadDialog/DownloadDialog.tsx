@@ -3,83 +3,109 @@ import { type FC, useEffect, useMemo, useState } from 'react';
 import { DownloadDialogButton } from './DowloadDialogButton.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
 import type { DownloadDataType } from './DownloadDataType.ts';
-import { DownloadForm, type DownloadFormState, getSequenceNames } from './DownloadForm.tsx';
+import { DownloadForm, type DownloadFormState } from './DownloadForm.tsx';
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { getDefaultSelectedFields } from './FieldSelector/FieldSelectorModal.tsx';
 import type { SequenceFilter } from './SequenceFilters.tsx';
-import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
-import type { ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { MetadataVisibility } from '../../../utils/search.ts';
-import type { GeneInfo, SegmentInfo } from '../../../utils/sequenceTypeHelpers.ts';
+import {
+    getSegmentAndGeneInfo,
+    getSegmentLapisNames,
+    segmentsWithMultipleReferences,
+    type GeneInfo,
+    type SegmentInfo,
+    type SegmentLapisNames,
+    type SegmentReferenceSelections,
+} from '../../../utils/sequenceTypeHelpers.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
 import { BaseDialog } from '../../common/BaseDialog.tsx';
 
 type DownloadDialogProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     sequenceFilter: SequenceFilter;
-    referenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
+    dataUseTermsAgreementHTML?: string;
     schema: Schema;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
-    selectedSuborganism: string | null;
-    suborganismIdentifierField: string | undefined;
+    selectedReferenceNames?: SegmentReferenceSelections;
+    referenceIdentifierField: string | undefined;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
     downloadUrlGenerator,
     sequenceFilter,
-    referenceGenomesLightweightSchema,
+    referenceGenomesInfo,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
+    dataUseTermsAgreementHTML,
     schema,
     richFastaHeaderFields,
-    selectedSuborganism,
-    suborganismIdentifierField,
+    selectedReferenceNames,
+    referenceIdentifierField,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const { nucleotideSequences, genes, useMultiSegmentEndpoint, defaultFastaHeaderTemplate } = useMemo(
-        () => getSequenceNames(referenceGenomesLightweightSchema, selectedSuborganism),
-        [referenceGenomesLightweightSchema, selectedSuborganism],
+    const segmentAndGeneInfo = useMemo(
+        () => getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferenceNames),
+        [referenceGenomesInfo, selectedReferenceNames],
+    );
+    const useMultiSegmentEndpoint = referenceGenomesInfo.useLapisMultiSegmentedEndpoint;
+    const segmentLapisNames = useMemo(
+        () => getSegmentLapisNames(referenceGenomesInfo, selectedReferenceNames),
+        [referenceGenomesInfo, selectedReferenceNames],
     );
 
-    const [downloadFormState, setDownloadFormState] = useState<DownloadFormState>(
-        getDefaultDownloadFormState(nucleotideSequences, genes),
+    const [downloadFormState, setDownloadFormState] = useState(
+        getDefaultDownloadFormState(
+            segmentAndGeneInfo.nucleotideSegmentInfos,
+            segmentAndGeneInfo.geneInfos,
+            segmentLapisNames,
+        ),
     );
     useEffect(() => {
-        setDownloadFormState(getDefaultDownloadFormState(nucleotideSequences, genes));
-    }, [nucleotideSequences, genes]);
-
+        setDownloadFormState(
+            getDefaultDownloadFormState(
+                segmentAndGeneInfo.nucleotideSegmentInfos,
+                segmentAndGeneInfo.geneInfos,
+                segmentLapisNames,
+            ),
+        );
+    }, [segmentAndGeneInfo.nucleotideSegmentInfos, segmentAndGeneInfo.geneInfos, segmentLapisNames]);
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
-    const [selectedFields, setSelectedFields] = useState<Set<string>>(getDefaultSelectedFields(schema.metadata)); // This is here so that the state is persisted across closing and reopening the dialog
+    const [selectedFields, setSelectedFields] = useState(getDefaultSelectedFields(schema.metadata)); // This is here so that the state is persisted across closing and reopening the dialog
 
     const downloadFieldVisibilities = useMemo(() => {
         return new Map(
             schema.metadata.map((field) => [
                 field.name,
-                new MetadataVisibility(selectedFields.has(field.name), field.onlyForSuborganism),
+                new MetadataVisibility(selectedFields.has(field.name), field.onlyForReference, field.relatesToSegment),
             ]),
         );
     }, [selectedFields, schema]);
 
     const downloadOption = getDownloadOption({
         downloadFormState,
-        nucleotideSequences,
-        genes,
+        nucleotideSegmentInfos: segmentAndGeneInfo.nucleotideSegmentInfos,
+        geneInfos: segmentAndGeneInfo.geneInfos,
         useMultiSegmentEndpoint,
-        defaultFastaHeaderTemplate,
         getVisibleFields: () => [
             ...Array.from(downloadFieldVisibilities.entries())
-                .filter(([_, visibility]) => visibility.isVisible(selectedSuborganism))
+                .filter(([_, visibility]) => visibility.isVisible(referenceGenomesInfo, selectedReferenceNames, false))
                 .map(([name]) => name),
         ],
         metadata: schema.metadata,
+        defaultFastaHeaderTemplate:
+            segmentsWithMultipleReferences(referenceGenomesInfo).length > 0
+                ? `{${ACCESSION_VERSION_FIELD}}`
+                : undefined,
     });
 
     return (
@@ -94,7 +120,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         </div>
                     )}
                     <DownloadForm
-                        referenceGenomesLightweightSchema={referenceGenomesLightweightSchema}
+                        referenceGenomesInfo={referenceGenomesInfo}
                         downloadFormState={downloadFormState}
                         setDownloadFormState={setDownloadFormState}
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
@@ -103,8 +129,8 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         downloadFieldVisibilities={downloadFieldVisibilities}
                         onSelectedFieldsChange={setSelectedFields}
                         richFastaHeaderFields={richFastaHeaderFields}
-                        selectedSuborganism={selectedSuborganism}
-                        suborganismIdentifierField={suborganismIdentifierField}
+                        selectedReferenceNames={selectedReferenceNames}
+                        referenceIdentifierField={referenceIdentifierField}
                     />
                     {dataUseTermsEnabled && (
                         <div className='mb-4 py-4'>
@@ -116,18 +142,13 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                                     checked={agreedToDataUseTerms}
                                     onChange={() => setAgreedToDataUseTerms(!agreedToDataUseTerms)}
                                 />
-                                <span className='text-sm'>
-                                    I agree to the{' '}
-                                    <a
-                                        href={routes.datauseTermsPage()}
-                                        className='underline'
-                                        target='_blank'
-                                        rel='noopener noreferrer'
-                                    >
-                                        data use terms
-                                    </a>
-                                    .
-                                </span>
+                                <span
+                                    className='text-sm dataAgreement'
+                                    dangerouslySetInnerHTML={{
+                                        // eslint-disable-next-line @typescript-eslint/naming-convention
+                                        __html: dataUseTermsAgreementHTML ?? 'I agree to the data use terms.',
+                                    }}
+                                />
                             </label>
                         </div>
                     )}
@@ -144,14 +165,18 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     );
 };
 
-function getDefaultDownloadFormState(nucleotideSequences: SegmentInfo[], genes: GeneInfo[]): DownloadFormState {
+function getDefaultDownloadFormState(
+    nucleotideSegmentInfos: SegmentInfo[],
+    geneInfos: GeneInfo[],
+    segmentLapisNames: SegmentLapisNames[],
+): DownloadFormState {
     return {
         includeRestricted: false,
         dataType: 'metadata',
         compression: undefined,
-        unalignedNucleotideSequence: nucleotideSequences[0]?.lapisName ?? '',
-        alignedNucleotideSequence: nucleotideSequences[0]?.lapisName ?? '',
-        alignedAminoAcidSequence: genes[0]?.lapisName ?? '',
+        unalignedNucleotideSequence: segmentLapisNames[0] ?? { name: '', lapisNames: [] },
+        alignedNucleotideSequence: nucleotideSegmentInfos[0]?.lapisName ?? '',
+        alignedAminoAcidSequence: geneInfos[0]?.lapisName ?? '',
         includeRichFastaHeaders: false,
     };
 }
@@ -159,17 +184,17 @@ function getDefaultDownloadFormState(nucleotideSequences: SegmentInfo[], genes: 
 function getDownloadOption({
     downloadFormState,
     useMultiSegmentEndpoint,
-    defaultFastaHeaderTemplate,
     getVisibleFields,
     metadata,
+    defaultFastaHeaderTemplate,
 }: {
     downloadFormState: DownloadFormState;
-    nucleotideSequences: SegmentInfo[];
-    genes: GeneInfo[];
+    nucleotideSegmentInfos: SegmentInfo[];
+    geneInfos: GeneInfo[];
     useMultiSegmentEndpoint: boolean;
-    defaultFastaHeaderTemplate: string | undefined;
     getVisibleFields: () => string[];
     metadata: Metadata[];
+    defaultFastaHeaderTemplate?: string;
 }): DownloadOption {
     const assembleDownloadDataType = (): DownloadDataType => {
         switch (downloadFormState.dataType) {
@@ -181,11 +206,14 @@ function getDownloadOption({
             case 'unalignedNucleotideSequences':
                 return {
                     type: downloadFormState.dataType,
-                    segment: useMultiSegmentEndpoint ? downloadFormState.unalignedNucleotideSequence : undefined,
-                    richFastaHeaders:
-                        defaultFastaHeaderTemplate !== undefined
-                            ? { include: true, fastaHeaderOverride: defaultFastaHeaderTemplate }
-                            : { include: downloadFormState.includeRichFastaHeaders },
+                    segmentLapisNames: useMultiSegmentEndpoint
+                        ? downloadFormState.unalignedNucleotideSequence
+                        : undefined,
+                    richFastaHeaders: downloadFormState.includeRichFastaHeaders
+                        ? { include: true }
+                        : defaultFastaHeaderTemplate !== undefined
+                          ? { include: true, fastaHeaderOverride: defaultFastaHeaderTemplate }
+                          : { include: false },
                 };
             case 'alignedNucleotideSequences':
                 return {

@@ -14,7 +14,9 @@ NucleotideInsertion = str
 AminoAcidInsertion = str
 FunctionName = str  # Name of function present in processing_functions
 ArgName = str  # Name of argument present in processing_functions
-ArgValue = list[str] | str | bool | None  # Name of argument value present in processing_functions
+ArgValue = (
+    list[str] | str | bool | int | float | None
+)  # Value of an argument passed to processing_functions
 InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
 ProcessedMetadataValue = str | int | float | bool | None
 ProcessedMetadata = dict[str, ProcessedMetadataValue]
@@ -77,6 +79,7 @@ class UnprocessedData:
     submitter: str
     group_id: int
     submittedAt: str  # timestamp  # noqa: N815
+    submissionId: str  # noqa: N815
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
 
@@ -175,8 +178,25 @@ class ProcessingResult:
 
 @unique
 class SegmentClassificationMethod(StrEnum):
+    """
+    Methods for classifying genomic segments.
+
+    - ALIGN: Best accuracy but slower; uses Nextclade datasets.
+    - MINIMIZER: Fast; suitable for well-characterized organisms with low diversity.
+    - DIAMOND: Protein-based alignment; useful for highly divergent sequences.
+    """
+
     ALIGN = "align"
     MINIMIZER = "minimizer"
+    DIAMOND = "diamond"
+
+    @property
+    def display_name(self) -> str:
+        return {
+            SegmentClassificationMethod.ALIGN: "nextclade align",
+            SegmentClassificationMethod.MINIMIZER: "nextclade sort",
+            SegmentClassificationMethod.DIAMOND: "diamond",
+        }[self]
 
 
 @dataclass

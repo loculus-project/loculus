@@ -1,7 +1,9 @@
 import { type FieldValues } from '../../../types/config.ts';
-import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
+import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { intoMutationSearchParams } from '../../../utils/mutation.ts';
-import { MetadataFilterSchema } from '../../../utils/search.ts';
+import { getReferenceIdentifier } from '../../../utils/referenceSelection.ts';
+import { MetadataFilterSchema, MUTATION_KEY, NULL_QUERY_VALUE } from '../../../utils/search.ts';
+import { type SegmentAndGeneInfo, getSegmentNames } from '../../../utils/sequenceTypeHelpers.ts';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
@@ -44,7 +46,8 @@ export class FieldFilterSet implements SequenceFilter {
     private readonly filterSchema: MetadataFilterSchema;
     private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
-    private readonly suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo | null;
+    private readonly segmentAndGeneInfo: SegmentAndGeneInfo;
+    private readonly referenceGenomesInfo: ReferenceGenomesInfo;
 
     /**
      * @param filterSchema The {@link MetadataFilterSchema} to use. Provides labels and other
@@ -52,18 +55,21 @@ export class FieldFilterSet implements SequenceFilter {
      * @param fieldValues The {@link FieldValues} that are used to filter sequence entries.
      * @param hiddenFieldValues key-value combinations of fields that should be hidden when converting
      *     displaying the field values (because these are default values).
-     * @param suborganismSegmentAndGeneInfo Necessary to construct mutation API params.
+     * @param segmentAndGeneInfo Necessary to construct mutation API params.
+     * @param referenceGenomesInfo Necessary to construct mutation API params.
      */
     constructor(
         filterSchema: MetadataFilterSchema,
         fieldValues: FieldValues,
         hiddenFieldValues: FieldValues,
-        suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo | null,
+        segmentAndGeneInfo: SegmentAndGeneInfo,
+        referenceGenomesInfo: ReferenceGenomesInfo,
     ) {
         this.filterSchema = filterSchema;
         this.fieldValues = fieldValues;
         this.hiddenFieldValues = hiddenFieldValues;
-        this.suborganismSegmentAndGeneInfo = suborganismSegmentAndGeneInfo;
+        this.segmentAndGeneInfo = segmentAndGeneInfo;
+        this.referenceGenomesInfo = referenceGenomesInfo;
     }
 
     /**
@@ -75,7 +81,13 @@ export class FieldFilterSet implements SequenceFilter {
             new MetadataFilterSchema([]),
             {},
             {},
-            { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
+            { nucleotideSegmentInfos: [], geneInfos: [] },
+            {
+                isMultiSegmented: false,
+                segmentReferenceGenomes: {},
+                segmentDisplayNames: {},
+                useLapisMultiSegmentedEndpoint: false,
+            },
         );
     }
 
@@ -88,9 +100,12 @@ export class FieldFilterSet implements SequenceFilter {
     }
 
     public toApiParams(): LapisSearchParameters {
+        const mutationSearchIdentifiers = getSegmentNames(this.referenceGenomesInfo).map((segmentName) =>
+            getReferenceIdentifier(MUTATION_KEY, segmentName, this.referenceGenomesInfo.isMultiSegmented),
+        );
         const sequenceFilters = Object.fromEntries(
             Object.entries(this.fieldValues as Record<string, any>).filter(
-                ([, value]) => value !== undefined && value !== '',
+                ([key, value]) => value !== undefined && value !== '' && !mutationSearchIdentifiers.includes(key),
             ),
         );
         for (const filterName of Object.keys(sequenceFilters)) {
@@ -100,16 +115,21 @@ export class FieldFilterSet implements SequenceFilter {
                 );
                 delete sequenceFilters[filterName];
             }
+            if (this.filterSchema.isPercentage(filterName) && sequenceFilters[filterName] !== undefined) {
+                const numVal = Number(sequenceFilters[filterName]);
+                if (!isNaN(numVal)) {
+                    sequenceFilters[filterName] = numVal / 100;
+                }
+            }
         }
 
         if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
             sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
         }
 
-        delete sequenceFilters.mutation;
         const mutationSearchParams =
-            this.suborganismSegmentAndGeneInfo !== null
-                ? intoMutationSearchParams(this.fieldValues.mutation, this.suborganismSegmentAndGeneInfo)
+            Object.keys(this.segmentAndGeneInfo.nucleotideSegmentInfos).length > 0
+                ? intoMutationSearchParams(this.fieldValues, this.segmentAndGeneInfo)
                 : {
                       aminoAcidInsertions: [],
                       aminoAcidMutations: [],
@@ -158,8 +178,10 @@ export class FieldFilterSet implements SequenceFilter {
 
             if (Array.isArray(value)) {
                 if (value.length > 0) {
-                    result.push([key, value]);
+                    result.push([key, value.map((v: any) => (v === null ? NULL_QUERY_VALUE : v))]);
                 }
+            } else if (value === null) {
+                result.push([key, NULL_QUERY_VALUE]);
             } else {
                 const stringValue = String(value);
                 const trimmedValue = stringValue.trim();
@@ -202,6 +224,9 @@ export class FieldFilterSet implements SequenceFilter {
         if (this.filterSchema.getType(fieldName) === 'timestamp') {
             const date = new Date(Number(value) * 1000);
             result = date.toISOString().split('T')[0]; // Extract YYYY-MM-DD
+        }
+        if (this.filterSchema.isPercentage(fieldName) && result !== undefined && result !== '') {
+            return `${result}%`;
         }
         if (typeof result === 'string' && result.length > 40) {
             result = `${result.substring(0, 37)}...`;

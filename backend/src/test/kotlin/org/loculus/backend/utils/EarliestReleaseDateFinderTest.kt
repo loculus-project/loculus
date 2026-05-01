@@ -74,6 +74,7 @@ fun row(
     groupName = "foo",
     dataUseTerms = DataUseTerms.Open,
     pipelineVersion = 0,
+    dataUseTermsChangeDate = releasedAt,
 )
 
 // Notes:

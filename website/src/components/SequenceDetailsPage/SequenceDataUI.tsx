@@ -10,8 +10,9 @@ import { routes } from '../../routes/routes';
 import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
-import { type ReferenceGenomesLightweightSchema, type Suborganism } from '../../types/referencesGenomes';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
+import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
 import MdiEye from '~icons/mdi/eye';
@@ -19,7 +20,7 @@ import MdiEye from '~icons/mdi/eye';
 interface Props {
     tableData: TableDataEntry[];
     organism: string;
-    suborganism: Suborganism | null;
+    segmentReferences?: SegmentReferenceSelections;
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     schema: Schema;
@@ -27,13 +28,14 @@ interface Props {
     myGroups: Group[];
     accessToken: string | undefined;
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
-    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomesInfo: ReferenceGenomesInfo;
+    isRevocation?: boolean;
 }
 
 export const SequenceDataUI: FC<Props> = ({
     tableData,
     organism,
-    suborganism,
+    segmentReferences,
     accessionVersion,
     dataUseTermsHistory,
     schema,
@@ -41,7 +43,8 @@ export const SequenceDataUI: FC<Props> = ({
     myGroups,
     accessToken,
     sequenceFlaggingConfig,
-    referenceGenomeSequenceNames,
+    referenceGenomesInfo,
+    isRevocation,
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
 
@@ -64,18 +67,18 @@ export const SequenceDataUI: FC<Props> = ({
             {isRestricted && <RestrictedUseWarning />}
             <DataTable
                 dataTableData={dataTableData}
-                suborganism={suborganism}
+                segmentReferences={segmentReferences}
                 dataUseTermsHistory={dataUseTermsHistory}
-                referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
+                referenceGenomesInfo={referenceGenomesInfo}
             />
-            {schema.submissionDataTypes.consensusSequences && suborganism !== null && (
+            {schema.submissionDataTypes.consensusSequences && !isRevocation && (
                 <div className='mt-10'>
                     <SequencesContainer
                         organism={organism}
-                        suborganism={suborganism}
+                        segmentReferences={segmentReferences}
                         accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
-                        referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
+                        referenceGenomesInfo={referenceGenomesInfo}
                         loadSequencesAutomatically={loadSequencesAutomatically}
                     />
                 </div>

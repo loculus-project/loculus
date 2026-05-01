@@ -1,25 +1,15 @@
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { type FC, useState, useEffect } from 'react';
-import { Bar } from 'react-chartjs-2';
+import React from 'react';
 
-import type { CitedByResult } from '../../types/seqSetCitation';
+import { type CitedByResult } from '../../types/seqSetCitation';
+import { BarPlot } from '../common/BarPlot';
 
-type CitationPlotProps = {
+interface CitationPlotProps {
     citedByData: CitedByResult;
-};
+    description?: string;
+    barColor?: string;
+}
 
-export const CitationPlot: FC<CitationPlotProps> = ({ citedByData }) => {
-    const [isRegistered, setIsRegistered] = useState(false);
-
-    useEffect(() => {
-        ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-        setIsRegistered(true);
-    }, []);
-
-    if (!isRegistered) {
-        return null;
-    }
-
+export const CitationPlot: React.FC<CitationPlotProps> = ({ citedByData, description, barColor }) => {
     const emptyCitedByData = {
         years: [2020, 2021, 2022, 2023, 2024],
         citations: [0, 0, 0, 0, 0],
@@ -28,37 +18,30 @@ export const CitationPlot: FC<CitationPlotProps> = ({ citedByData }) => {
     const renderData = citedByData.years.length > 0 ? citedByData : emptyCitedByData;
 
     return (
-        <Bar
+        <BarPlot
             data={{
                 labels: renderData.years,
                 datasets: [
                     {
                         data: renderData.citations,
                         label: 'Citation count',
-                        backgroundColor: '#54858c',
+                        backgroundColor: barColor,
                     },
                 ],
             }}
             options={{
-                maintainAspectRatio: false,
-                responsive: false,
-                plugins: {
-                    title: {
-                        display: true,
-                    },
-                    legend: {
-                        display: false,
-                    },
-                },
                 scales: {
-                    y: {
-                        suggestedMax: 10,
+                    x: {
                         grid: {
                             color: 'rgba(0, 0, 0, 0)',
                         },
                     },
+                    y: {
+                        suggestedMax: 10,
+                    },
                 },
             }}
+            description={description}
         />
     );
 };

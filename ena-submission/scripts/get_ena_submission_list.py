@@ -22,7 +22,7 @@ from ena_deposition.submission_db_helper import (
     db_init,
     highest_version_in_submission_table,
 )
-from psycopg2.pool import SimpleConnectionPool
+from sqlalchemy import Engine
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -43,16 +43,16 @@ class SubmissionResults:
 @dataclass
 class ENAOrganism:
     enaOrganismName: str  # noqa: N815
-    suborganismIdentifierField: str | None = None  # noqa: N815
+    referenceIdentifierField: str | None = None  # noqa: N815
 
 
 def loculus_organism_to_ena_organism(config: Config) -> dict[str, list[ENAOrganism]]:
     loculus_organism_to_ena_organism: dict[str, list[ENAOrganism]] = defaultdict(list)
     for ena_organism, details in config.enaOrganisms.items():
         if details.loculusOrganism:
-            if not details.suborganismIdentifierField:
+            if not details.referenceIdentifierField:
                 error_msg = (
-                    "Could not find suborganismIdentifierField in enaOrganism "
+                    "Could not find referenceIdentifierField in enaOrganism "
                     f"config for {ena_organism}"
                 )
                 logger.error(error_msg)
@@ -60,7 +60,7 @@ def loculus_organism_to_ena_organism(config: Config) -> dict[str, list[ENAOrgani
             loculus_organism_to_ena_organism[details.loculusOrganism].append(
                 ENAOrganism(
                     enaOrganismName=ena_organism,
-                    suborganismIdentifierField=details.suborganismIdentifierField,
+                    referenceIdentifierField=details.referenceIdentifierField,
                 )
             )
             continue
@@ -94,11 +94,11 @@ def assign_ena_organism(
     entry: dict[str, Any],
     ena_organisms: list[ENAOrganism],
 ) -> str:
-    """Assign the correct ena organism based on suborganismIdentifierField if present."""
+    """Assign the correct ena organism based on referenceIdentifierField if present."""
     if len(ena_organisms) == 1:
         return ena_organisms[0].enaOrganismName
     for ena_organism in ena_organisms:
-        suborganism_field = ena_organism.suborganismIdentifierField
+        suborganism_field = ena_organism.referenceIdentifierField
         if (
             suborganism_field
             and entry["metadata"].get(suborganism_field) == ena_organism.enaOrganismName
@@ -113,7 +113,7 @@ def assign_ena_organism(
 
 def filter_for_submission(
     config: Config,
-    db_pool: SimpleConnectionPool,
+    db_engine: Engine,
     entries_iterator: Iterator[dict[str, Any]],
     ena_organisms: list[ENAOrganism],
 ) -> SubmissionResults:
@@ -134,9 +134,7 @@ def filter_for_submission(
     entries_with_external_metadata: set[Accession] = set()
     revoked_entries: set[Accession] = set()
     logger.debug("Querying ENA db for latest version of submissions")
-    highest_submitted_version = highest_version_in_submission_table(
-        db_conn_pool=db_pool
-    )
+    highest_submitted_version = highest_version_in_submission_table(db_engine)
     logger.debug("Starting processing of data from Loculus backend")
     suppressed_accessions = fetch_suppressed_accessions(config)
     for idx, entry in enumerate(entries_iterator):
@@ -155,7 +153,7 @@ def filter_for_submission(
             continue
 
         # Ignore if a higher version of this entry is already to be submitted
-        version_already_to_submit = int(
+        version_already_to_submit = (
             entries_to_submit.get(accession_version.accession, {})
             .get("metadata", {})
             .get("version", -1)
@@ -185,14 +183,14 @@ def filter_for_submission(
         else:
             # If lower version had external metadata and this one doesn't, remove it from that set
             entries_with_external_metadata.discard(accession_version.accession)
+        if accession_version in suppressed_accessions:
+            logger.debug(f"Skipping suppressed accession: {accession_version}")
+            entries_with_external_metadata.discard(accession_version.accession)
+            continue
         entries_to_submit[accession_version.accession] = entry
         if entry["metadata"].get("isRevocation", False):
-            if accession_version in suppressed_accessions:
-                logger.debug(f"Skipping suppressed accession: {accession_version}")
-                entries_to_submit.pop(accession_version.accession)
-            else:
-                logger.debug(f"Found revoked sequence: {accession_version}")
-                revoked_entries.add(accession_version.accession)
+            logger.debug(f"Found revoked sequence: {accession_version}")
+            revoked_entries.add(accession_version.accession)
             entries_with_external_metadata.discard(accession_version.accession)
         else:
             revoked_entries.discard(accession_version.accession)
@@ -259,7 +257,7 @@ def get_ena_submission_list(config_file) -> None:
 
     output_file_suffix = "ena_submission_list.json"
 
-    db_pool = db_init(
+    db_engine = db_init(
         db_password_default=config.db_password,
         db_username_default=config.db_username,
         db_url_default=config.db_url,
@@ -278,7 +276,7 @@ def get_ena_submission_list(config_file) -> None:
         released_entries = fetch_released_entries(config, loculus_organism)
         logger.info("Starting to stream released entries. Filtering for submission...")
         submission_results = filter_for_submission(
-            config, db_pool, released_entries, input_map[loculus_organism]
+            config, db_engine, released_entries, input_map[loculus_organism]
         )
         if submission_results.entries_to_submit:
             logger.info(

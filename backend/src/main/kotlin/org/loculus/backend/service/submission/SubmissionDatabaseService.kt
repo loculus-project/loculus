@@ -39,7 +39,7 @@ import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.ForUpdate
 import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.MODE
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.AccessionVersionOriginalMetadata
+import org.loculus.backend.api.AccessionVersionUnprocessedMetadata
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
@@ -148,6 +148,13 @@ class SubmissionDatabaseService(
             .first()
     }
 
+    fun getAllCurrentProcessingPipelineVersions(): Map<String, Long> {
+        val table = CurrentProcessingPipelineTable
+        return table
+            .selectAll()
+            .associate { it[table.organismColumn] to it[table.versionColumn] }
+    }
+
     private fun fetchUnprocessedEntriesAndUpdateToInProcessing(
         organism: Organism,
         numberOfSequenceEntries: Int,
@@ -160,7 +167,7 @@ class SubmissionDatabaseService(
             .select(
                 table.accessionColumn,
                 table.versionColumn,
-                table.originalDataColumn,
+                table.unprocessedDataColumn,
                 table.submissionIdColumn,
                 table.submitterColumn,
                 table.groupIdColumn,
@@ -186,7 +193,7 @@ class SubmissionDatabaseService(
             .map { chunk ->
                 val chunkOfUnprocessedData = chunk.map {
                     val originalData = compressionService.decompressSequencesInOriginalData(
-                        it[table.originalDataColumn]!!,
+                        it[table.unprocessedDataColumn]!!,
                     )
                     val originalDataWithFileUrls = OriginalDataWithFileUrls(
                         originalData.metadata,
@@ -211,21 +218,50 @@ class SubmissionDatabaseService(
                     )
                 }
                 updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
-                chunkOfUnprocessedData
             }
             .flatten()
     }
 
-    private fun updateStatusToProcessing(sequenceEntries: List<UnprocessedData>, pipelineVersion: Long) {
+    private fun updateStatusToProcessing(
+        sequenceEntries: List<UnprocessedData>,
+        pipelineVersion: Long,
+    ): List<UnprocessedData> {
         log.info { "updating status to processing. Number of sequence entries: ${sequenceEntries.size}" }
 
-        SequenceEntriesPreprocessedDataTable.batchInsert(sequenceEntries) {
-            this[SequenceEntriesPreprocessedDataTable.accessionColumn] = it.accession
-            this[SequenceEntriesPreprocessedDataTable.versionColumn] = it.version
-            this[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] = pipelineVersion
-            this[SequenceEntriesPreprocessedDataTable.processingStatusColumn] = IN_PROCESSING.name
-            this[SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn] = dateProvider.getCurrentDateTime()
+        val table = SequenceEntriesPreprocessedDataTable
+        val now = dateProvider.getCurrentDateTime()
+
+        table.batchInsert(sequenceEntries, ignore = true, shouldReturnGeneratedValues = false) {
+            this[table.accessionColumn] = it.accession
+            this[table.versionColumn] = it.version
+            this[table.pipelineVersionColumn] = pipelineVersion
+            this[table.processingStatusColumn] = IN_PROCESSING.name
+            this[table.startedProcessingAtColumn] = now
         }
+
+        // Query back to reliably determine which entries were actually claimed by this pipeline.
+        // We match on the exact startedProcessingAt timestamp to distinguish our inserts
+        // from entries claimed by concurrent pipelines.
+        val claimedKeys = table
+            .select(table.accessionColumn, table.versionColumn)
+            .where {
+                (table.pipelineVersionColumn eq pipelineVersion) and
+                    (table.startedProcessingAtColumn eq now) and
+                    (table.accessionColumn to table.versionColumn).inList(
+                        sequenceEntries.map { it.accession to it.version },
+                    )
+            }
+            .map { Pair(it[table.accessionColumn], it[table.versionColumn]) }
+            .toSet()
+
+        if (claimedKeys.size < sequenceEntries.size) {
+            val skippedCount = sequenceEntries.size - claimedKeys.size
+            log.warn {
+                "$skippedCount entries were already claimed by another pipeline and will be skipped."
+            }
+        }
+
+        return sequenceEntries.filter { Pair(it.accession, it.version) in claimedKeys }
     }
 
     fun updateProcessedData(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
@@ -717,6 +753,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.pipelineVersionColumn,
             DataUseTermsTable.dataUseTermsTypeColumn,
             DataUseTermsTable.restrictedUntilColumn,
+            DataUseTermsTable.changeDateColumn,
         )
         .where {
             SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
@@ -750,6 +787,7 @@ class SubmissionDatabaseService(
                     it[DataUseTermsTable.restrictedUntilColumn],
                 ),
                 versionComment = it[SequenceEntriesView.versionCommentColumn],
+                dataUseTermsChangeDate = it[DataUseTermsTable.changeDateColumn],
             )
         }
 
@@ -1089,7 +1127,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesTable.accessionVersionIsIn(listOf(editedSequenceEntryData))
             },
         ) {
-            it[originalDataColumn] = compressionService
+            it[unprocessedDataColumn] = compressionService
                 .compressSequencesInOriginalData(editedSequenceEntryData.data, organism)
         }
 
@@ -1126,7 +1164,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.groupIdColumn,
             SequenceEntriesView.statusColumn,
             SequenceEntriesView.processedDataColumn,
-            SequenceEntriesView.originalDataColumn,
+            SequenceEntriesView.unprocessedDataColumn,
             SequenceEntriesView.errorsColumn,
             SequenceEntriesView.warningsColumn,
             SequenceEntriesView.isRevocationColumn,
@@ -1151,7 +1189,7 @@ class SubmissionDatabaseService(
                 organism,
             ),
             originalData = compressionService.decompressSequencesInOriginalData(
-                selectedSequenceEntry[SequenceEntriesView.originalDataColumn]!!,
+                selectedSequenceEntry[SequenceEntriesView.unprocessedDataColumn]!!,
             ),
             errors = selectedSequenceEntry[SequenceEntriesView.errorsColumn],
             warnings = selectedSequenceEntry[SequenceEntriesView.warningsColumn],
@@ -1177,7 +1215,7 @@ class SubmissionDatabaseService(
                 )
             }
 
-    private fun originalMetadataFilter(
+    private fun unprocessedMetadataFilter(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupIdsFilter: List<Int>?,
@@ -1195,7 +1233,7 @@ class SubmissionDatabaseService(
         return conditions
     }
 
-    fun countOriginalMetadata(
+    fun countUnprocessedMetadata(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupIdsFilter: List<Int>?,
@@ -1203,7 +1241,7 @@ class SubmissionDatabaseService(
     ): Long = SequenceEntriesView
         .selectAll()
         .where(
-            originalMetadataFilter(
+            unprocessedMetadataFilter(
                 authenticatedUser,
                 organism,
                 groupIdsFilter,
@@ -1212,28 +1250,28 @@ class SubmissionDatabaseService(
         )
         .count()
 
-    fun streamOriginalMetadata(
+    fun streamUnprocessedMetadata(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
         fields: List<String>?,
-    ): Sequence<AccessionVersionOriginalMetadata> {
-        val originalMetadata = SequenceEntriesView.originalDataColumn
+    ): Sequence<AccessionVersionUnprocessedMetadata> {
+        val unprocessedMetadata = SequenceEntriesView.unprocessedDataColumn
             // It's actually <Map<String, String>?> but exposed does not support nullable types here
             .extract<Map<String, String>>("metadata")
-            .alias("original_metadata")
+            .alias("unprocessed_metadata")
 
         return SequenceEntriesView
             .select(
-                originalMetadata,
+                unprocessedMetadata,
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
                 SequenceEntriesView.isRevocationColumn,
             )
             .where(
-                originalMetadataFilter(
+                unprocessedMetadataFilter(
                     authenticatedUser,
                     organism,
                     groupIdsFilter,
@@ -1245,10 +1283,10 @@ class SubmissionDatabaseService(
             .map {
                 // Revoked sequences have no original metadata, hence null can happen
                 @Suppress("USELESS_ELVIS")
-                val metadata = it[originalMetadata] ?: null
+                val metadata = it[unprocessedMetadata] ?: null
                 val selectedMetadata = fields?.associateWith { field -> metadata?.get(field) }
                     ?: metadata
-                AccessionVersionOriginalMetadata(
+                AccessionVersionUnprocessedMetadata(
                     it[SequenceEntriesView.accessionColumn],
                     it[SequenceEntriesView.versionColumn],
                     it[SequenceEntriesView.submitterColumn],
@@ -1504,4 +1542,5 @@ data class RawProcessedData(
     val processedData: ProcessedData<GeneticSequence>,
     val pipelineVersion: Long,
     val dataUseTerms: DataUseTerms,
+    val dataUseTermsChangeDate: LocalDateTime?,
 ) : AccessionVersionInterface

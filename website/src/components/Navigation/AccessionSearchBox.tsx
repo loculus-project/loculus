@@ -5,13 +5,20 @@ import { Button } from '../common/Button';
 import SearchIcon from '~icons/material-symbols/search';
 
 interface Props {
+    accessionPrefix: string;
     className?: string;
     onSubmitSuccess?: () => void;
     defaultOpen?: boolean;
     fullWidth?: boolean;
 }
 
-export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defaultOpen, fullWidth }) => {
+export const AccessionSearchBox: FC<Props> = ({
+    accessionPrefix,
+    className,
+    onSubmitSuccess,
+    defaultOpen,
+    fullWidth,
+}) => {
     const [value, setValue] = useState('');
     const [open, setOpen] = useState(!!defaultOpen);
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -28,6 +35,12 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
         return /^[A-Za-z0-9._-]+$/.test(input);
     }
 
+    // Evaluate if the accession is a seqSet
+    function isSeqSetAccession(accession: string): boolean {
+        const seqSetPrefix = `${accessionPrefix}SS_`;
+        return accession.startsWith(seqSetPrefix);
+    }
+
     const onSubmit = (e: FormEvent) => {
         e.preventDefault();
         const v = value.trim();
@@ -42,7 +55,9 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
         }
         setError(null);
         onSubmitSuccess?.();
-        window.location.href = routes.sequenceEntryDetailsPage(v);
+
+        if (isSeqSetAccession(v)) window.location.href = routes.seqSetPage(v);
+        else window.location.href = routes.sequenceEntryDetailsPage(v);
     };
 
     return (

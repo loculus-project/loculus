@@ -3,6 +3,7 @@ import axios from 'axios';
 import { type FC, type FormEvent, useMemo, useState, type ReactNode } from 'react';
 
 import { CumulativeSubmissionsChart, type TimeSeriesData } from './CumulativeSubmissionsChart.tsx';
+import { getClientLogger } from '../../clientLogger.ts';
 import type { Organism } from '../../config.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
@@ -18,6 +19,8 @@ import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import DashiconsGroups from '~icons/dashicons/groups';
 import DashiconsPlus from '~icons/dashicons/plus';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
+
+const logger = getClientLogger('GroupPage');
 
 type GroupPageProps = {
     prefetchedGroupDetails: GroupDetails;
@@ -46,7 +49,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
 }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
     const groupId = prefetchedGroupDetails.group.groupId;
-    const [newUserName, setNewUserName] = useState<string>('');
+    const [newUserName, setNewUserName] = useState('');
 
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
@@ -319,7 +322,8 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
                 });
                 const count = (response.data as { data?: { count?: number }[] }).data?.[0]?.count ?? 0;
                 counts[key] = count;
-            } catch {
+            } catch (error) {
+                void logger.error(`Failed to fetch sequence count for ${key}: ${JSON.stringify(error)}`);
                 counts[key] = 0;
             }
         }),
@@ -356,7 +360,8 @@ async function fetchTimeSeriesData(
                         count: typeof d.count === 'number' ? d.count : 0,
                     }))
                     .sort((a, b) => a.date.localeCompare(b.date));
-            } catch {
+            } catch (error) {
+                void logger.error(`Failed to fetch time series data for ${key}: ${JSON.stringify(error)}`);
                 data[key] = [];
             }
         }),

@@ -46,7 +46,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
     };
 
     const [selectedOption, setSelectedOptionInternal] = useState<DataUseTermsOption | null>(initialDataUseTermsOption);
-    const [selectedDate, setSelectedDateInternal] = useState<DateTime>(maxRestrictedUntil);
+    const [selectedDate, setSelectedDateInternal] = useState(maxRestrictedUntil);
 
     const setSelectedOption = (newOption: DataUseTermsOption) => {
         setSelectedOptionInternal(newOption);

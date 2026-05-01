@@ -3,41 +3,43 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
 import { MutationField } from './MutationField.tsx';
-import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
+import type { SingleSegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
 
-const singleReferenceSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo = {
-    nucleotideSegmentInfos: [{ lapisName: 'main', label: 'main' }],
+const singleReferenceSegmentAndGeneInfo: SingleSegmentAndGeneInfo = {
+    nucleotideSegmentInfo: { lapisName: 'main', name: 'main' },
     geneInfos: [
-        { lapisName: 'gene1', label: 'gene1' },
-        { lapisName: 'gene2', label: 'gene2' },
+        { lapisName: 'gene1', name: 'gene1' },
+        { lapisName: 'gene2', name: 'gene2' },
     ],
-    isMultiSegmented: false,
 };
 
-const multiReferenceGenomeLightweightSchema: SuborganismSegmentAndGeneInfo = {
-    nucleotideSegmentInfos: [
-        { lapisName: 'seg1', label: 'seg1' },
-        { lapisName: 'seg2', label: 'seg2' },
-    ],
+const singleSegMultiRefGenomesMap: SingleSegmentAndGeneInfo = {
+    nucleotideSegmentInfo: { lapisName: 'ref1', name: 'main' },
     geneInfos: [
-        { lapisName: 'gene1', label: 'gene1' },
-        { lapisName: 'gene2', label: 'gene2' },
+        { lapisName: 'gene1', name: 'gene1' },
+        { lapisName: 'gene2', name: 'gene2' },
     ],
-    isMultiSegmented: true,
+    useLapisMultiSegmentedEndpoint: true,
+    multiSegmented: false,
+};
+
+// This test also covers the multi-segmented, multi-reference case
+const multiSegmentedGenomesMap: SingleSegmentAndGeneInfo = {
+    nucleotideSegmentInfo: { lapisName: 'seg1', name: 'seg1' },
+    geneInfos: [
+        { lapisName: 'gene1', name: 'gene1' },
+        { lapisName: 'gene2', name: 'gene2' },
+    ],
+    useLapisMultiSegmentedEndpoint: true,
+    multiSegmented: true,
 };
 
 function renderField(
     value: string,
     onChange: (mutationFilter: string) => void,
-    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
+    segmentAndGeneInfo: SingleSegmentAndGeneInfo,
 ) {
-    render(
-        <MutationField
-            value={value}
-            onChange={onChange}
-            suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
-        />,
-    );
+    render(<MutationField value={value} onChange={onChange} singleSegmentAndGeneInfo={segmentAndGeneInfo} />);
 }
 
 describe('MutationField', () => {
@@ -57,12 +59,20 @@ describe('MutationField', () => {
         expect(handleChange).toHaveBeenCalledWith('G100A');
     });
 
+    test('should accept input and dispatch events (single-segment, multi-reference)', async () => {
+        const handleChange = vi.fn();
+        renderField('', handleChange, singleSegMultiRefGenomesMap);
+
+        await userEvent.type(screen.getByLabelText('Mutations'), 'G100A{enter}');
+        expect(handleChange).toHaveBeenCalledWith('G100A');
+    });
+
     test('should accept input and dispatch events (multi-segmented)', async () => {
         const handleChange = vi.fn();
-        renderField('', handleChange, multiReferenceGenomeLightweightSchema);
+        renderField('', handleChange, multiSegmentedGenomesMap);
 
-        await userEvent.type(screen.getByLabelText('Mutations'), 'seg1:G100A{enter}');
-        expect(handleChange).toHaveBeenCalledWith('seg1:G100A');
+        await userEvent.type(screen.getByLabelText('Mutations'), 'G100A{enter}');
+        expect(handleChange).toHaveBeenCalledWith('G100A');
     });
 
     test('should reject invalid input', async () => {

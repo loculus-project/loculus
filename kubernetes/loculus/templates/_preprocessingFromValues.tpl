@@ -16,6 +16,9 @@
     {{- if .segment }}
     segment: {{ .segment }}
     {{- end }}
+    {{- if .onlyForReference }}
+    reference: {{ .onlyForReference }}
+    {{- end }}
     {{- if .type }}
     type: {{ .type }}
     {{- end }}
@@ -41,6 +44,9 @@
     {{- if .segment }}
     segment: {{ .segment }}
     {{- end }}
+    {{- if .onlyForReference }}
+    reference: {{ .onlyForReference }}
+    {{- end }}
     {{- if .type }}
     type: {{ .type }}
     {{- end }}
@@ -58,7 +64,7 @@
 {{- $metadata := .metadata }}
 {{- $referenceGenomes := .referenceGenomes}}
 
-{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" $referenceGenomes | fromYaml).segments }}
+{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" $referenceGenomes | fromYaml).segments }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 
 {{- range $metadata }}
@@ -71,7 +77,11 @@
             {{- end }}
         {{- end }}
     {{- else }}
-        {{- $args := deepCopy . | merge (dict "segment" "" "key" .name) }}
+        {{- $segment := "" }}
+        {{- if .relatesToSegment }}
+        {{- $segment = .relatesToSegment }}
+        {{- end }}
+        {{- $args := deepCopy . | merge (dict "segment" $segment "key" .name) }}
         {{- include "loculus.sharedPreproSpecs" $args }}
     {{- end }}
 {{- end }}

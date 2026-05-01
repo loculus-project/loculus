@@ -12,13 +12,9 @@ import {
     type WebsiteConfig,
     websiteConfig,
 } from './types/config.ts';
-import {
-    type NamedSequence,
-    type ReferenceAccession,
-    type ReferenceGenomes,
-    type ReferenceGenomesLightweightSchema,
-} from './types/referencesGenomes.ts';
+import { type ReferenceGenomesInfo } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
+import { toReferenceGenomes } from './utils/sequenceTypeHelpers.ts';
 
 let _config: WebsiteConfig | null = null;
 let _runtimeConfig: RuntimeConfig | null = null;
@@ -47,28 +43,16 @@ export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
             });
         }
 
-        const knownSuborganisms = Object.keys(schema.referenceGenomes);
-
-        schema.schema.metadata.forEach((metadatum) => {
-            const onlyForSuborganism = metadatum.onlyForSuborganism;
-            if (onlyForSuborganism !== undefined && !knownSuborganisms.includes(onlyForSuborganism)) {
-                errors.push(
-                    new Error(
-                        `Metadata field '${metadatum.name}' in organism '${organism}' references unknown suborganism '${onlyForSuborganism}' in 'onlyForSuborganism'.`,
-                    ),
-                );
-            }
-        });
-
-        const suborganismIdentifierField = schema.schema.suborganismIdentifierField;
-        if (suborganismIdentifierField !== undefined) {
-            if (!schema.schema.metadata.some((metadatum) => metadatum.name === suborganismIdentifierField)) {
-                errors.push(
-                    new Error(
-                        `suborganismIdentifierField '${suborganismIdentifierField}' of organism '${organism}' is not defined in the metadata.`,
-                    ),
-                );
-            }
+        const referenceIdentifierField = schema.schema.referenceIdentifierField;
+        const hasMultipleReferences = schema.referenceGenomes
+            ?.map((segment) => segment.references.length > 1)
+            .some((v) => v);
+        if (referenceIdentifierField == undefined && hasMultipleReferences) {
+            errors.push(
+                new Error(
+                    `Organism '${organism}' has multiple references but referenceIdentifierField is not defined in the schema.`,
+                ),
+            );
         }
     });
     return errors;
@@ -84,6 +68,13 @@ export function getWebsiteConfig(): WebsiteConfig {
         _config = config;
     }
     return _config;
+}
+
+export function getContactConfig(websiteConfig: WebsiteConfig) {
+    return {
+        gitHubIssuesUrl: websiteConfig.gitHubIssuesUrl,
+        issuesEmail: websiteConfig.issuesEmail,
+    };
 }
 
 /**
@@ -183,43 +174,11 @@ function getAccessionInputField(): InputField {
 }
 
 export function getSubmissionIdInputFields(schema: Schema): InputField[] {
-    const maxSequencesPerEntry = schema.submissionDataTypes.maxSequencesPerEntry ?? Infinity;
+    const idField = schema.inputFields.find((f) => f.name === SUBMISSION_ID_INPUT_FIELD);
+    if (!idField) throw new Error(`Missing required '${SUBMISSION_ID_INPUT_FIELD}' input field in schema`);
+    const fastaIdsField = schema.inputFields.find((f) => f.name === FASTA_IDS_FIELD);
 
-    if (maxSequencesPerEntry == 1) {
-        return [
-            {
-                name: SUBMISSION_ID_INPUT_FIELD,
-                displayName: 'ID',
-                definition: 'FASTA ID',
-                guidance:
-                    "Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence.",
-                example: 'GJP123',
-                noEdit: true,
-                required: true,
-            },
-        ];
-    }
-    return [
-        {
-            name: SUBMISSION_ID_INPUT_FIELD,
-            displayName: 'ID',
-            definition: 'METADATA ID',
-            guidance:
-                'Your sample identifier. If FASTA IDS column is provided, this sample ID will be used to associate the metadata with the sequence.',
-            example: 'GJP123',
-            noEdit: true,
-            required: true,
-        },
-        {
-            name: FASTA_IDS_FIELD,
-            displayName: 'FASTA IDS',
-            definition: 'FASTA IDS',
-            guidance: 'Space-separated list of FASTA IDS of each sequence to be associated with this metadata entry.',
-            example: 'GJP123 GJP124',
-            noEdit: true,
-            desired: true,
-        },
-    ];
+    return fastaIdsField ? [idField, fastaIdsField] : [idField];
 }
 
 export function getGroupedInputFields(
@@ -229,11 +188,13 @@ export function getGroupedInputFields(
 ): Map<string, InputField[]> {
     const schema = getConfig(organism).schema;
     const submissionIdInputFields = getSubmissionIdInputFields(schema);
+    const submissionIdFieldNames = new Set(submissionIdInputFields.map((f) => f.name));
+    const nonIdInputFields = schema.inputFields.filter((f) => !submissionIdFieldNames.has(f.name));
 
     const allFields = [
         ...submissionIdInputFields,
         ...(action === 'submit' ? [] : [getAccessionInputField()]),
-        ...schema.inputFields,
+        ...nonIdInputFields,
     ];
     const requiredFields = allFields.filter((meta) => meta.required);
     const desiredFields = allFields.filter((meta) => meta.desired);
@@ -247,7 +208,7 @@ export function getGroupedInputFields(
             .flatMap((fields) => fields.map((f) => f.name))
             .some((name) => name === fieldName);
 
-    schema.inputFields.forEach((field) => {
+    nonIdInputFields.forEach((field) => {
         const metadataEntry = schema.metadata.find((meta) => meta.name === field.name);
         const header = metadataEntry?.header ?? 'Uncategorized';
 
@@ -278,30 +239,9 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
     return serviceConfig.lapisUrls[organism];
 }
 
-export function getReferenceGenomes(organism: string): ReferenceGenomes {
-    return getConfig(organism).referenceGenomes;
+export function getReferenceGenomes(organism: string): ReferenceGenomesInfo {
+    return toReferenceGenomes(getConfig(organism).referenceGenomes);
 }
-
-const getAccession = (n: NamedSequence): ReferenceAccession => {
-    return {
-        name: n.name,
-        insdcAccessionFull: n.insdcAccessionFull,
-    };
-};
-
-export const getReferenceGenomeLightweightSchema = (organism: string): ReferenceGenomesLightweightSchema => {
-    const referenceGenomes = getReferenceGenomes(organism);
-    return Object.fromEntries(
-        Object.entries(referenceGenomes).map(([suborganism, referenceGenome]) => [
-            suborganism,
-            {
-                nucleotideSegmentNames: referenceGenome.nucleotideSequences.map((n) => n.name),
-                geneNames: referenceGenome.genes.map((n) => n.name),
-                insdcAccessionFull: referenceGenome.nucleotideSequences.map((n) => getAccession(n)),
-            },
-        ]),
-    );
-};
 
 export function seqSetsAreEnabled() {
     return getWebsiteConfig().enableSeqSets;
@@ -311,11 +251,15 @@ export function dataUseTermsAreEnabled() {
     return getWebsiteConfig().enableDataUseTerms;
 }
 
-function readTypedConfigFile<T>(fileName: string, schema: z.ZodType<T>) {
+export function getDataUseTermsAgreementHTML() {
+    return getWebsiteConfig().dataUseTermsAgreementHTML;
+}
+
+function readTypedConfigFile<Schema extends z.ZodTypeAny>(fileName: string, schema: Schema): z.infer<Schema> {
     const configFilePath = path.join(getConfigDir(), fileName);
     const json = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));
     try {
-        return schema.parse(json);
+        return schema.parse(json) as z.infer<Schema>;
     } catch (e) {
         const zodError = e as ZodError;
         throw new Error(`Type error reading ${configFilePath}: ${zodError.message}`);

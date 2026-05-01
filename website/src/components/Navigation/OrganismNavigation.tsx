@@ -15,7 +15,7 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
     const displayName = 'Organisms';
 
     return (
-        <Menu as='div' className='relative'>
+        <Menu as='div' className='relative' id='organism-menu'>
             <MenuButton as={NavigationTab} isActive={!!currentOrganism} className='group'>
                 <span>{displayName}</span>
                 {currentOrganism && (

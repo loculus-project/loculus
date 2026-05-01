@@ -4,6 +4,7 @@ import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
+import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
 const val GROUPS_TABLE_NAME = "groups_table"
 const val USER_GROUPS_TABLE_NAME = "user_groups_table"
@@ -18,6 +19,8 @@ object GroupsTable : IntIdTable(GROUPS_TABLE_NAME, "group_id") {
     val addressState = text("address_state")
     val addressCountry = text("address_country")
     val contactEmailColumn = text("contact_email")
+    val createdAt = datetime("created_at")
+    val createdBy = text("created_by").nullable()
 }
 
 class GroupEntity(id: EntityID<Int>) : IntEntity(id) {
@@ -32,6 +35,8 @@ class GroupEntity(id: EntityID<Int>) : IntEntity(id) {
     var addressState by GroupsTable.addressState
     var addressCountry by GroupsTable.addressCountry
     var contactEmail by GroupsTable.contactEmailColumn
+    var createdAt by GroupsTable.createdAt
+    var createdBy by GroupsTable.createdBy
 }
 
 object UserGroupsTable : IntIdTable(USER_GROUPS_TABLE_NAME, "id") {

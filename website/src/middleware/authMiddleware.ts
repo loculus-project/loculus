@@ -5,7 +5,7 @@ import JwksRsa from 'jwks-rsa';
 import { err, ok, ResultAsync } from 'neverthrow';
 import { type BaseClient, type TokenSet } from 'openid-client';
 
-import { getConfiguredOrganisms, getRuntimeConfig } from '../config.ts';
+import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
 import { getAuthUrl } from '../utils/getAuthUrl.ts';
@@ -64,6 +64,19 @@ async function getValidTokenAndUserInfoFromParams(context: APIContext, client: B
 export const authMiddleware = defineMiddleware(async (context, next) => {
     let token: TokenCookie | undefined;
     let userInfo;
+
+    if (getWebsiteConfig().readOnlyMode) {
+        const enforceLogin = shouldMiddlewareEnforceLogin(
+            context.url.pathname,
+            getConfiguredOrganisms().map((it) => it.key),
+        );
+        if (enforceLogin) {
+            return context.redirect('/503?service=readonly');
+        }
+        deleteCookie(context);
+        context.locals.session = { isLoggedIn: false };
+        return next();
+    }
 
     const client = await KeycloakClientManager.getClient();
     if (client !== undefined) {

@@ -27,11 +27,22 @@ test.describe('Search', () => {
     });
 
     test('mutation filter can be removed by clicking the X', async ({ page }) => {
+        const mutation = 'A23T';
         await searchPage.ebolaSudan();
-        await searchPage.enterMutation('A23T');
-        await expect(page.getByText('mutation:A23T')).toBeVisible();
+        await searchPage.enterMutation(mutation);
+        await expect(page.getByText(`mutation:${mutation}`)).toBeVisible();
         await page.getByLabel('remove filter').click();
-        await expect(page.getByText('mutation:A23T')).toBeHidden();
+        await expect(page.getByText(`mutation:${mutation}`)).toBeHidden();
+        expect(new URL(page.url()).searchParams.size).toBe(0);
+    });
+
+    test('multi-segment mutation filter can be added and removed', async ({ page }) => {
+        const mutation = 'G100A';
+        await searchPage.cchf();
+        await searchPage.enterSegmentedMutation(mutation, 'S');
+        await expect(page.getByText(`mutation_S:${mutation}`)).toBeVisible();
+        await page.getByLabel('remove filter').click();
+        await expect(page.getByText(`mutation_S:${mutation}`)).toBeHidden();
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
 

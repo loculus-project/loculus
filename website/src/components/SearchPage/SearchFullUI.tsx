@@ -12,32 +12,32 @@ import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
-import { stillRequiresSuborganismSelection } from './stillRequiresSuborganismSelection.tsx';
 import { useSearchPageState } from './useSearchPageState.ts';
 import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import type { LinkOut } from '../../types/config.ts';
+import type { LinkOut, ContactConfig } from '../../types/config.ts';
 import { type FieldValues, type Schema, type SequenceFlaggingConfig } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
-import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
-import { getSuborganismSegmentAndGeneInfo } from '../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import {
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
     MetadataFilterSchema,
 } from '../../utils/search.ts';
+import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
+import ErrorContactMessage from '../common/ErrorContactMessage.tsx';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
+    referenceGenomesInfo: ReferenceGenomesInfo;
     myGroups: Group[];
     organism: string;
     clientConfig: ClientConfig;
@@ -48,8 +48,10 @@ export interface InnerSearchFullUIProps {
     initialQueryDict: QueryState;
     showEditDataUseTermsControls?: boolean;
     dataUseTermsEnabled?: boolean;
+    dataUseTermsAgreementHTML?: string;
     sequenceFlaggingConfig?: SequenceFlaggingConfig;
     linkOuts?: LinkOut[];
+    contactConfig?: ContactConfig;
 }
 
 const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
@@ -64,7 +66,7 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) this component is a mess a needs to be refactored */
 export const InnerSearchFullUI = ({
     accessToken,
-    referenceGenomeLightweightSchema,
+    referenceGenomesInfo,
     myGroups,
     organism,
     clientConfig,
@@ -75,8 +77,10 @@ export const InnerSearchFullUI = ({
     initialQueryDict,
     showEditDataUseTermsControls = false,
     dataUseTermsEnabled = true,
+    dataUseTermsAgreementHTML,
     sequenceFlaggingConfig,
     linkOuts,
+    contactConfig,
 }: InnerSearchFullUIProps) => {
     hiddenFieldValues ??= {};
 
@@ -91,8 +95,7 @@ export const InnerSearchFullUI = ({
         setPreviewedSeqId,
         previewHalfScreen,
         setPreviewHalfScreen,
-        selectedSuborganism,
-        setSelectedSuborganism,
+        referenceSelection,
         page,
         setPage,
         setSomeFieldValues,
@@ -103,7 +106,7 @@ export const InnerSearchFullUI = ({
         setOrderDirection,
         setASearchVisibility,
         setAColumnVisibility,
-    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema });
+    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema, referenceGenomesInfo });
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -113,9 +116,14 @@ export const InnerSearchFullUI = ({
 
     const columnsToShow = useMemo(() => {
         return schema.metadata
-            .filter((field) => columnVisibilities.get(field.name)?.isVisible(selectedSuborganism) === true)
+            .filter(
+                (field) =>
+                    columnVisibilities
+                        .get(field.name)
+                        ?.isVisible(referenceGenomesInfo, referenceSelection?.selectedReferences) === true,
+            )
             .map((field) => field.name);
-    }, [schema.metadata, columnVisibilities]);
+    }, [schema.metadata, columnVisibilities, referenceSelection?.selectedReferences, referenceGenomesInfo]);
 
     const orderByField = columnsToShow.includes(orderByFieldCandidate) ? orderByFieldCandidate : schema.primaryKey;
 
@@ -125,8 +133,8 @@ export const InnerSearchFullUI = ({
      * and the initial `state` (URL search params).
      */
     const fieldValues = useMemo(() => {
-        return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
-    }, [state, hiddenFieldValues, filterSchema]);
+        return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues, referenceGenomesInfo);
+    }, [state, hiddenFieldValues, filterSchema, referenceGenomesInfo]);
 
     useEffect(() => {
         if (showEditDataUseTermsControls && dataUseTermsEnabled) {
@@ -146,19 +154,19 @@ export const InnerSearchFullUI = ({
     const aggregatedHook = hooks.useAggregated();
     const detailsHook = hooks.useDetails();
 
-    const [selectedSeqs, setSelectedSeqs] = useState<Set<string>>(new Set());
+    const [selectedSeqs, setSelectedSeqs] = useState(new Set<string>());
     const sequencesSelected = selectedSeqs.size > 0;
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
+    const segmentAndGeneInfo = useMemo(
+        () => getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
+        [referenceGenomesInfo, referenceSelection?.selectedReferences],
+    );
+
     const tableFilter = useMemo(
         () =>
-            new FieldFilterSet(
-                filterSchema,
-                fieldValues,
-                hiddenFieldValues,
-                getSuborganismSegmentAndGeneInfo(referenceGenomeLightweightSchema, selectedSuborganism),
-            ),
-        [fieldValues, hiddenFieldValues, referenceGenomeLightweightSchema, selectedSuborganism, filterSchema],
+            new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, segmentAndGeneInfo, referenceGenomesInfo),
+        [fieldValues, hiddenFieldValues, referenceGenomesInfo, filterSchema],
     );
 
     /**
@@ -212,9 +220,7 @@ export const InnerSearchFullUI = ({
         }
     }, [aggregatedHook.data?.data, oldCount]);
 
-    const showMutationSearch =
-        schema.submissionDataTypes.consensusSequences &&
-        !stillRequiresSuborganismSelection(referenceGenomeLightweightSchema, selectedSuborganism);
+    const showMutationSearch = schema.submissionDataTypes.consensusSequences;
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -224,7 +230,8 @@ export const InnerSearchFullUI = ({
                 schema={schema}
                 columnVisibilities={columnVisibilities}
                 setAColumnVisibility={setAColumnVisibility}
-                selectedSuborganism={selectedSuborganism}
+                selectedReferenceNames={referenceSelection?.selectedReferences}
+                referenceGenomesInfo={referenceGenomesInfo}
             />
             <SeqPreviewModal
                 key={previewedSeqId ?? 'seq-modal'}
@@ -232,7 +239,7 @@ export const InnerSearchFullUI = ({
                 accessToken={accessToken}
                 isOpen={Boolean(previewedSeqId)}
                 onClose={() => setPreviewedSeqId(null)}
-                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+                referenceGenomesInfo={referenceGenomesInfo}
                 myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
                 setIsHalfScreen={setPreviewHalfScreen}
@@ -243,7 +250,7 @@ export const InnerSearchFullUI = ({
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}
-                    referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+                    referenceGenomesInfo={referenceGenomesInfo}
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
                     filterSchema={filterSchema}
@@ -252,9 +259,7 @@ export const InnerSearchFullUI = ({
                     setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
                     showMutationSearch={showMutationSearch}
-                    suborganismIdentifierField={schema.suborganismIdentifierField}
-                    selectedSuborganism={selectedSuborganism}
-                    setSelectedSuborganism={setSelectedSuborganism}
+                    referenceSelection={referenceSelection}
                 />
             </div>
             <div
@@ -285,11 +290,13 @@ export const InnerSearchFullUI = ({
                 {(detailsHook.isPaused || aggregatedHook.isPaused) &&
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
                         <ErrorBox title='Connection problem'>
-                            The browser thinks you are offline. This will affect site usage, and many features may not
-                            work. If you are actually online, please try using a different browser. If the problem
-                            persists, feel free to create an issue in{' '}
-                            <a href='https://github.com/pathoplexus/pathoplexus/issues'>our Github repo</a> or email us
-                            at <a href='mailto:bug@pathoplexus.org'>bug@pathoplexus.org</a>.
+                            <div className='space-y-2 mt-2'>
+                                <p>
+                                    The browser thinks you are offline. This will affect site usage, and many features
+                                    may not work. If you are actually online, please try using a different browser.
+                                </p>
+                                <ErrorContactMessage {...contactConfig} />
+                            </div>
                         </ErrorBox>
                     )}
 
@@ -346,13 +353,14 @@ export const InnerSearchFullUI = ({
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
                                 sequenceFilter={downloadFilter}
-                                referenceGenomesLightweightSchema={referenceGenomeLightweightSchema}
+                                referenceGenomesInfo={referenceGenomesInfo}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
+                                dataUseTermsAgreementHTML={dataUseTermsAgreementHTML}
                                 schema={schema}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
-                                selectedSuborganism={selectedSuborganism}
-                                suborganismIdentifierField={schema.suborganismIdentifierField}
+                                selectedReferenceNames={referenceSelection?.selectedReferences}
+                                referenceIdentifierField={schema.referenceIdentifierField}
                             />
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu
@@ -361,6 +369,8 @@ export const InnerSearchFullUI = ({
                                     sequenceCount={linkOutSequenceCount}
                                     linkOuts={linkOuts}
                                     dataUseTermsEnabled={dataUseTermsEnabled}
+                                    referenceGenomesInfo={referenceGenomesInfo}
+                                    referenceSelection={referenceSelection}
                                 />
                             )}
                         </div>

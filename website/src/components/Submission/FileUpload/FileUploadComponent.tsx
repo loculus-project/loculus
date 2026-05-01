@@ -13,9 +13,9 @@ export const FileUploadComponent = <F extends ProcessedFile>({
     ariaLabel,
     fileKind,
     small = false,
-    initialValue = undefined,
+    initialValue,
     showUndo = false,
-    onDownload = undefined,
+    onDownload,
     downloadDisabled = false,
 }: {
     setFile: (file: F | undefined) => Promise<void> | void;
@@ -28,7 +28,7 @@ export const FileUploadComponent = <F extends ProcessedFile>({
     onDownload?: () => void;
     downloadDisabled?: boolean;
 }) => {
-    const [myFile, rawSetMyFile] = useState<F | undefined>(initialValue);
+    const [myFile, rawSetMyFile] = useState(initialValue);
     const [isDragOver, setIsDragOver] = useState(false);
     const isClient = useClientFlag();
 

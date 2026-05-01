@@ -1,4 +1,5 @@
 import argparse
+import graphlib
 import logging
 import os
 from enum import StrEnum
@@ -21,6 +22,8 @@ logger = logging.getLogger(__name__)
 
 # Dataclass types for which we can generate CLI arguments
 CLI_TYPES = [str, int, float, bool]
+
+METADATA_DEPENDENCY_PREFIX = "processed."
 
 
 class EmblInfoMetadataPropertyNames(BaseModel):
@@ -56,12 +59,13 @@ type SequenceName = str
 
 
 class Reference(BaseModel):
-    reference_name: str = "singleReference"
+    name: str = "singleReference"
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str | None = None
-    accepted_sort_matches: list[str] = Field(default_factory=list)
+    accepted_dataset_matches: list[str] = Field(default_factory=list)
     genes: list[str] = Field(default_factory=list)
+    nextclade_additional_args: list[str] = Field(default_factory=list)
 
 
 class Segment(BaseModel):
@@ -76,11 +80,13 @@ class NextcladeSequenceAndDataset(BaseModel):
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str | None = None
-    accepted_sort_matches: list[str] = Field(default_factory=list)
-    gene_prefix: str | None = None
-    # Names of genes in the Nextclade dataset; when concatenated with gene_prefix
+    # Names of diamond or nextclade sort entries that are acceptable matches for this dataset
+    accepted_dataset_matches: list[str] = Field(default_factory=list)
+    gene_suffix: str | None = None
+    # Names of genes in the Nextclade dataset; when concatenated with gene_suffix
     # this must match the gene names expected by the backend and LAPIS
     genes: list[str] = Field(default_factory=list)
+    nextclade_additional_args: list[str] = Field(default_factory=list)
 
 
 class Config(BaseModel):
@@ -97,8 +103,10 @@ class Config(BaseModel):
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
 
     organism: str = "mpox"
+    max_sequences_per_entry: int | None = None
     segments: list[Segment] = Field(default_factory=list)
     processing_spec: dict[str, ProcessingSpec] = Field(default_factory=dict)
+    processing_order: tuple[str, ...] = ()
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
     segment_classification_method: SegmentClassificationMethod = SegmentClassificationMethod.ALIGN
@@ -106,6 +114,7 @@ class Config(BaseModel):
 
     require_nextclade_sort_match: bool = False
     minimizer_url: str | None = None
+    diamond_dmnd_url: str | None = None
 
     create_embl_file: bool = False
     scientific_name: str = "Orthonairovirus haemorrhagiae"
@@ -129,6 +138,8 @@ class Config(BaseModel):
         if not self.backend_host:  # Set here so we can use organism
             self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
 
+        self.processing_order = get_processing_order(self)
+
         return self
 
     @property
@@ -144,12 +155,12 @@ class Config(BaseModel):
             ds = NextcladeSequenceAndDataset(
                 **base,
                 segment=segment_name,
+                reference_name=reference.name if reference else "singleReference",
             )
             if ds.nextclade_dataset_server is None:
                 ds.nextclade_dataset_server = self.nextclade_dataset_server
             ds.name = set_sequence_name(multi_reference, self.multi_segment, ds)
-            # TODO: this should be a suffix in future
-            ds.gene_prefix = ds.reference_name if multi_reference else None
+            ds.gene_suffix = ds.reference_name if multi_reference else None
             return ds
 
         datasets: list[NextcladeSequenceAndDataset] = []
@@ -223,6 +234,42 @@ def generate_argparse_from_model(config_cls: type[BaseModel]) -> argparse.Argume
     return parser
 
 
+def get_processing_order(config: Config) -> tuple[str, ...]:
+    """Return a valid order for processing metadata fields based on their dependencies.
+
+    Dependencies are derived from input fields in `config.processing_spec`.
+
+    A DAG is constructed and topologically sorted to ensure each field is processed after the
+    fields it depends on.
+
+    A metadatafield can declare a dependency on a processed metadatafield by prefixing
+    the name of the required metadatafield with `processed.` in its inputs.
+    E.g.: `processed.collection_date` will look for `collection_date` in the processed metadata,
+    whereas `collection_date` will use the unprocessed version
+    """
+    dag: dict[str, set[str]] = {k: set() for k in config.processing_spec.keys()}
+    for output_field, spec in config.processing_spec.items():
+        for input in spec.inputs.values():
+            if not input.startswith(METADATA_DEPENDENCY_PREFIX):
+                continue
+            dependency = input.replace(METADATA_DEPENDENCY_PREFIX, "", 1)
+            if dependency not in config.processing_spec:
+                raise ValueError(
+                    f"invalid configuration: metadata field '{output_field}' requested non-existing field '{dependency}' as input"
+                )
+            dag[output_field].add(dependency)
+
+    ts = graphlib.TopologicalSorter(dag)
+    try:
+        processing_order = tuple(ts.static_order())
+    except graphlib.CycleError as e:
+        raise ValueError(
+            f"invalid configuration: computation of metadata processing order resulted in a Cycle error: {e}"
+        ) from e
+
+    return processing_order
+
+
 def get_config(config_file: str | None = None, ignore_args: bool = False) -> Config:
     """
     Config precedence: Direct function args > CLI args > ENV variables > config file > default
@@ -271,4 +318,5 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
     }
     if cli_overrides:
         config = Config(**{**config.model_dump(), **cli_overrides})
+
     return config

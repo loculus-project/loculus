@@ -9,15 +9,18 @@ See https://github.com/loculus-project/loculus/pull/3141 for an example */}}
 {{- define "loculus.commonMetadata" }}
 fields:
   - name: accessionVersion
+    displayName: Accession version
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
     includeInDownloadsByDefault: true
   - name: accession
+    displayName: Accession
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
   - name: version
+    displayName: Version
     type: int
     hideOnSequenceDetailsPage: true
   - name: submissionId
@@ -33,6 +36,7 @@ fields:
     autocomplete: true
     hideOnSequenceDetailsPage: true
   - name: submitter
+    displayName: Submitter
     type: string
     generateIndex: true
     autocomplete: true
@@ -51,7 +55,6 @@ fields:
       type: submittingGroup
       displayGroup: group
   - name: groupId
-    displayName: Group ID
     type: int
     autocomplete: true
     header: Submission details
@@ -98,12 +101,19 @@ fields:
       type: dataUseTerms
     header: Data use terms
     orderOnDetailsPage: 610
+    orderInSearchDisplay: 10
   - name: dataUseTermsRestrictedUntil
     type: date
     displayName: Data use terms restricted until
     hideOnSequenceDetailsPage: true
     header: Data use terms
     orderOnDetailsPage: 620
+  - name: dataBecameOpenAt
+    type: date
+    displayName: Date data became open
+    hideOnSequenceDetailsPage: true
+    header: Data use terms
+    orderOnDetailsPage: 625
   {{- if $.Values.dataUseTerms.urls }}
   - name: dataUseTermsUrl
     displayName: Data use terms URL
@@ -128,6 +138,7 @@ fields:
     header: Submission details
     orderOnDetailsPage: 5000
   - name: pipelineVersion
+    displayName: Pipeline version
     type: int
     notSearchable: true
     hideOnSequenceDetailsPage: true
@@ -164,6 +175,12 @@ sequenceFlagging: {{ $.Values.sequenceFlagging | toYaml | nindent 6 }}
 {{ if $.Values.gitHubMainUrl }}
 gitHubMainUrl: {{ quote $.Values.gitHubMainUrl }}
 {{ end }}
+{{ if $.Values.gitHubIssuesUrl }}
+gitHubIssuesUrl: {{ quote $.Values.gitHubIssuesUrl }}
+{{ end }}
+{{ if $.Values.issuesEmail }}
+issuesEmail: {{ quote $.Values.issuesEmail }}
+{{ end }}
 {{ if $.Values.bannerMessageURL }}
 bannerMessageURL: {{ quote $.Values.bannerMessageURL }}
 {{ end }}
@@ -191,13 +208,20 @@ additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}
 enableLoginNavigationItem: {{ $.Values.website.websiteConfig.enableLoginNavigationItem }}
 enableSubmissionNavigationItem: {{ $.Values.website.websiteConfig.enableSubmissionNavigationItem }}
 enableSubmissionPages: {{ $.Values.website.websiteConfig.enableSubmissionPages }}
+readOnlyMode: {{ $.Values.readOnlyMode | default false }}
 enableSeqSets: {{ $.Values.seqSets.enabled }}
 {{- if $.Values.seqSets.fieldsToDisplay }}
 seqSetsFieldsToDisplay: {{ $.Values.seqSets.fieldsToDisplay | toJson }}
 {{- end }}
+{{- if $.Values.seqSets.graphs }}
+seqSetsGraphs: {{ $.Values.seqSets.graphs | toJson }}
+{{- end }}
 enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
+{{ if $.Values.dataUseTerms.agreementHTML }}
+dataUseTermsAgreementHTML: {{ quote $.Values.dataUseTerms.agreementHTML }}
+{{- end }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
-metadataItemForCumulativeGroupGraph: {{ quote $.Values.metadataItemForCumulativeGroupGraph }}
+metadataItemForCumulativeGroupGraph: {{ if $.Values.metadataItemForCumulativeGroupGraph }}{{ quote $.Values.metadataItemForCumulativeGroupGraph }}{{ else }}null{{ end }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
   {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
@@ -214,6 +238,12 @@ organisms:
           url: {{ quote $linkOut.url }}
           {{- if $linkOut.maxNumberOfRecommendedEntries }}
           maxNumberOfRecommendedEntries: {{ $linkOut.maxNumberOfRecommendedEntries }}
+          {{- end }}
+          {{- if $linkOut.onlyForReferences }}
+          onlyForReferences: {{ $linkOut.onlyForReferences | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $linkOut.category }}
+          category: {{ quote $linkOut.category }}
           {{- end }}
         {{- end }}
       {{- end }}
@@ -246,6 +276,9 @@ organisms:
         {{ if .files }}
         {{- range .files }}
         - name: {{ .name }}
+          {{- if .displayName }}
+          displayName: {{ .displayName }}
+          {{- end }}
           type: string
           header: "Files"
           noInput: true
@@ -302,11 +335,14 @@ organisms:
   {{- if .orderOnDetailsPage }}
   orderOnDetailsPage: {{ .orderOnDetailsPage }}
   {{- end }}
+  {{- if .orderInSearchDisplay }}
+  orderInSearchDisplay: {{ .orderInSearchDisplay }}
+  {{- end }}
   {{- if .includeInDownloadsByDefault }}
   includeInDownloadsByDefault: {{ .includeInDownloadsByDefault }}
   {{- end }}
-  {{- if .onlyForSuborganism }}
-  onlyForSuborganism: {{ .onlyForSuborganism }}
+  {{- if .onlyForReference }}
+  onlyForReference: {{ .onlyForReference }}
   {{- end }}
   {{- if .customDisplay }}
   customDisplay:
@@ -324,15 +360,29 @@ organisms:
     {{- if .customDisplay.displayGroup }}
     displayGroup: {{ quote .customDisplay.displayGroup }}
     {{- end }}
+    {{- if .customDisplay.label }}
+    label: {{ quote .customDisplay.label }}
+    {{- end }}
     {{- if .customDisplay.html }}
     html: {{ .customDisplay.html }}
     {{- end }}
+  {{- end }}
+  {{- if .isSequenceFilter }}
+  isSequenceFilter: {{ .isSequenceFilter }}
+  {{- end }}
+  {{- if .relatesToSegment }}
+  relatesToSegment: {{ .relatesToSegment }}
+  {{- end }}
+  {{- if .percentage }}
+  percentage: {{ .percentage }}
   {{- end }}
 {{- end }}
 
 {{/* Generate website metadata from passed metadata array */}}
 {{- define "loculus.generateWebsiteMetadata" }}
-{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" .referenceGenomes | fromYaml).segments }}
+{{- $segmentsData := include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml -}}
+{{- $rawUniqueSegments := $segmentsData.segments | default (list) -}}
+{{- $displayNameMap := $segmentsData.displayNames | default (dict) -}}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
 fields:
@@ -340,16 +390,29 @@ fields:
 {{- if and $isSegmented .perSegment }}
 {{- $currentItem := . }}
 {{- range $segment := $rawUniqueSegments }}
+{{- $segmentDisplayName := default $segment (get $displayNameMap $segment) -}}
 {{- with $currentItem }}
 {{ include "loculus.standardWebsiteMetadata" . }}
   name: {{ printf "%s_%s" .name $segment | quote }}
   {{- if .displayName }}
-  displayName: {{ printf "%s %s" .displayName $segment | quote }}
+  displayName: {{ printf "%s %s" .displayName $segmentDisplayName | quote }}
   {{- end }}
   {{- if (default false .oneHeader)}}
   header: {{ (default "Other" .header) | quote }}
   {{- else }}
-  header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
+  header: {{ printf "%s %s" (default "Other" .header) $segmentDisplayName | quote }}
+  {{- end }}
+  relatesToSegment: {{ $segment }}
+  {{- if .isSequenceFilter }}
+  isSequenceFilter: true
+  {{- end }}
+  {{- if and .customDisplay .customDisplay.displayGroup }}
+  customDisplay:
+    type: {{ quote .customDisplay.type }}
+    displayGroup: {{ printf "%s_%s" .customDisplay.displayGroup $segment | quote }}
+    {{- if .customDisplay.label }}
+    label: {{ printf "%s %s" .customDisplay.label $segmentDisplayName | quote }}
+    {{- end }}
   {{- end }}
 {{- end }}
 {{- end }}
@@ -369,6 +432,7 @@ fields:
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 zstdCompressionLevel: {{ $.Values.zstdCompressionLevel }}
 pipelineVersionUpgradeCheckIntervalSeconds: {{ $.Values.pipelineVersionUpgradeCheckIntervalSeconds }}
+readOnlyMode: {{ $.Values.readOnlyMode | default false }}
 name: {{ quote $.Values.name }}
 dataUseTerms:
   {{$.Values.dataUseTerms | toYaml | nindent 2}}
@@ -441,7 +505,7 @@ fields:
 
 {{/* Generate backend metadata from passed metadata array */}}
 {{- define "loculus.generateBackendMetadata" }}
-{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" .referenceGenomes | fromYaml).segments }}
+{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).segments }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
 fields:
@@ -465,7 +529,7 @@ fields:
 
 {{/* Generate backend metadata from passed metadata array */}}
 {{- define "loculus.generateBackendExternalMetadata" }}
-{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" .referenceGenomes | fromYaml).segments }}
+{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).segments }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
 fields:
@@ -528,11 +592,11 @@ enaOrganisms:
   {{- end }}
   {{- with $instance.schema }}
     {{ $configFile.configFile | toYaml | nindent 4 }}
-    {{- if $configFile.suborganismIdentifierField }}
-    suborganismIdentifierField: {{ quote $configFile.suborganismIdentifierField }}
+    {{- if $configFile.referenceIdentifierField }}
+    referenceIdentifierField: {{ quote $configFile.referenceIdentifierField }}
     {{- end }}
     organismName: {{ quote .organismName }}
-    {{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" $instance.referenceGenomes | fromYaml).segments }}
+    {{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" $instance.referenceGenomes | fromYaml).segments }}
     segments: {{ $rawUniqueSegments | toYaml | nindent 6 }}
     externalMetadata:
       {{- $args := dict

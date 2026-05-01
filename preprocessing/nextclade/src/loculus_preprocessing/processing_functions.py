@@ -3,17 +3,24 @@ Each function takes input data and returns output data, warnings and errors
 This makes it easy to test and reason about the code
 """
 
+import ast
 import calendar
 import json
 import logging
 import math
 import re
 import unicodedata
+import urllib.parse
+from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 import dateutil.parser as dateutil
 import pytz
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from .datatypes import (
     AnnotationSource,
@@ -28,6 +35,57 @@ from .datatypes import (
 
 logger = logging.getLogger(__name__)
 
+
+class RequestCache:
+    """Class for caching requests to external services during preprocessing.
+
+    Keys are the fully formatted URLs that have already been used to make sucessful requests.
+    Values are requests.Response as they were returned by the service.
+    """
+
+    def __init__(self, max_size: int, retries=5) -> None:
+        self.cache: OrderedDict[str, requests.Response] = OrderedDict()
+        self.max_size = max_size
+        self.session = requests.Session()
+        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+        adapter = HTTPAdapter(max_retries=retry)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+
+    def get(self, url: str) -> None | requests.Response:
+        if url in self.cache:
+            self.cache.move_to_end(url)
+            return self.cache[url]
+        return None
+
+    def set(self, url: str, response: requests.Response) -> None:
+        self.cache[url] = response
+        self.cache.move_to_end(url)
+
+        if len(self.cache) > self.max_size:
+            self.cache.popitem(last=False)
+
+    def get_or_fetch(self, url: str, timeout: int = 15) -> requests.Response:
+        """See if `url` already exists in the cache and return the cached Response
+        if it does.
+
+        If `url` is not in the cache, make the actual request (with timeout and retries).
+        Add the Response to the cache (if status code in the 200s), and return the Response.
+
+        Since request.get can error, the caller should wrap this in a try/except block and handle errors
+        """
+        response = self.get(url)
+        if response is None:
+            response = self.session.get(url, timeout=timeout)
+            if 200 <= response.status_code < 300:
+                self.set(url, response)
+        return response
+
+    def clear(self) -> None:
+        self.cache.clear()
+
+
+taxonomy_cache = RequestCache(max_size=64)
 options_cache: dict[str, dict[str, str]] = {}
 
 
@@ -166,6 +224,52 @@ def format_authors(authors: str) -> str:
             formated_first_name = f"{formated_first_name} {suffix}"
         loculus_authors.append(f"{last_name}, {formated_first_name}")
     return "; ".join(loculus_authors).strip()
+
+
+def regex_error(
+    function_name: str, function_arg: str, input_data: InputMetadata, args: FunctionArgs
+) -> str:
+    return (
+        f"Internal Error: Function {function_name} did not receive valid "
+        f"regex {function_arg}, with input {input_data} and args {args}, "
+        "please contact the administrator."
+    )
+
+
+def missing_taxonomy_service_error(input_fields: list[str], output_field: str) -> ProcessingResult:
+    return ProcessingResult(
+        datum=None,
+        warnings=[],
+        errors=[
+            ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message="Configuration error: taxonomy_service_url was None. Please contact the administrator.",
+            )
+        ],
+    )
+
+
+def taxonomy_network_error(
+    subject: str,
+    action: str,
+    e: Exception,
+    input_fields: list[str],
+    output_field: str,
+) -> ProcessingResult:
+    return ProcessingResult(
+        datum=None,
+        warnings=[],
+        errors=[
+            ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message=f"Internal error: network error while {action} '{subject}': {e}. Please contact the administrator.",
+            )
+        ],
+    )
 
 
 class ProcessingFunctions:
@@ -626,15 +730,15 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        """Concatenates input fields with accession_version using the "/" separator in the order
-        specified by the order argument.
+        """Concatenates input fields using the "/" separator in the order
+        specified by the order argument. Optionally, a 'fallback_value' argument can be provided.
+        This should be a string to use in place of metadata that is not available. If fallback_value
+        is not provided, the empty string will be used in place of missing metadata.
         """
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
 
-        number_fields = len(input_data.keys()) + 1
-
-        if not isinstance(args["accession_version"], str):
+        if not isinstance(args["ACCESSION_VERSION"], str):
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -652,9 +756,12 @@ class ProcessingFunctions:
                 ],
             )
 
-        accession_version: str = args["accession_version"]
+        accession_version: str = args["ACCESSION_VERSION"]
         order = args["order"]
-        type = args["type"]
+        field_types = args["type"]
+        fallback_value = (
+            str(args["fallback_value"]).strip() if args.get("fallback_value") is not None else ""
+        )
 
         def add_errors():
             errors.append(
@@ -670,7 +777,7 @@ class ProcessingFunctions:
         if not isinstance(order, list):
             logger.error(
                 f"Concatenate: Expected order field to be a list. "
-                f"This is probably a configuration error. (accession_version: {accession_version})"
+                f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
             )
             add_errors()
             return ProcessingResult(
@@ -678,10 +785,16 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=errors,
             )
-        if number_fields != len(order):
+
+        n_inputs = len(input_data.keys())
+        # exclude ACCESSION_VERSION as it's provided by _call_preprocessing_function() and should not be an input_metadata field
+        n_expected = len(
+            [i for i in order if i != "ACCESSION_VERSION" and not i.startswith("ARG:")]
+        )
+        if n_inputs < n_expected:
             logger.error(
-                f"Concatenate: Expected {len(order)} fields, got {number_fields}. "
-                f"This is probably a configuration error. (accession_version: {accession_version})"
+                f"Concatenate: Expected {n_expected} fields, got {n_inputs}. "
+                f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
             )
             add_errors()
             return ProcessingResult(
@@ -689,10 +802,10 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=errors,
             )
-        if not isinstance(type, list):
+        if not isinstance(field_types, list):
             logger.error(
                 f"Concatenate: Expected type field to be a list. "
-                f"This is probably a configuration error. (accession_version: {accession_version})"
+                f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
             )
             add_errors()
             return ProcessingResult(
@@ -704,27 +817,56 @@ class ProcessingFunctions:
         formatted_input_data: list[str] = []
         try:
             for i in range(len(order)):
-                if type[i] == "date":
+                if field_types[i] == "date":
                     processed = ProcessingFunctions.parse_and_assert_past_date(
                         {"date": input_data[order[i]]}, output_field, input_fields, args
                     )
                     formatted_input_data.append(
-                        "" if processed.datum is None else str(processed.datum)
+                        fallback_value
+                        if null_per_backend(processed.datum)
+                        else str(processed.datum)
                     )
-                elif type[i] == "timestamp":
+                elif field_types[i] == "timestamp":
                     processed = ProcessingFunctions.parse_timestamp(
                         {"timestamp": input_data[order[i]]}, output_field, input_fields, args
                     )
                     formatted_input_data.append(
-                        "" if processed.datum is None else str(processed.datum)
+                        fallback_value
+                        if null_per_backend(processed.datum)
+                        else str(processed.datum)
                     )
+                elif field_types[i] == "ACCESSION_VERSION":
+                    formatted_input_data.append(accession_version)
+                elif field_types[i].startswith("ARG:"):
+                    if field_types[i][4:] not in args:
+                        logger.error(
+                            f"Concatenate: Missing argument {field_types[i][4:]} in args. "
+                            f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
+                        )
+                        add_errors()
+                        return ProcessingResult(
+                            datum=None,
+                            warnings=warnings,
+                            errors=errors,
+                        )
+                    formatted_input_data.append(str(args[field_types[i][4:]]))
                 elif order[i] in input_data:
                     formatted_input_data.append(
-                        "" if input_data[order[i]] is None else str(input_data[order[i]]).strip()
+                        fallback_value
+                        if null_per_backend(input_data[order[i]])
+                        else str(input_data[order[i]]).strip()
                     )
                 else:
-                    formatted_input_data.append(accession_version)
-            logger.debug(f"formatted input data:{formatted_input_data}")
+                    logger.error(
+                        f"Concatenate: cannot find field {order[i]} of {field_types[i]} in input_data"
+                        f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
+                    )
+                    add_errors()
+                    return ProcessingResult(
+                        datum=None,
+                        warnings=warnings,
+                        errors=errors,
+                    )
 
             result = "/".join(formatted_input_data)
             # To avoid downstream issues do not let the result start or end in a "/"
@@ -733,7 +875,7 @@ class ProcessingFunctions:
 
             return ProcessingResult(datum=result, warnings=warnings, errors=errors)
         except ValueError as e:
-            logger.error(f"Concatenate failed with {e} (accession_version: {accession_version})")
+            logger.error(f"Concatenate failed with {e} (ACCESSION_VERSION: {accession_version})")
             errors.append(
                 ProcessingAnnotation.from_fields(
                     input_fields,
@@ -843,6 +985,84 @@ class ProcessingFunctions:
         )
 
     @staticmethod
+    def extract_regex(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        """
+        Extracts a substring from the `regex_field` using the provided regex `pattern`
+        with a `capture_group`, if `uppercase` is set to true the extracted value is capitalized.
+        e.g. ^(?P<segment>[^-]+)-(?P<subtype>[^-]+)$ where segment or subtype could be used
+        as a capture_group to extract their respective value from the regex_field.
+        """
+        regex_field = input_data["regex_field"]
+
+        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
+
+        pattern = args.get("pattern")
+        capture_group = args.get("capture_group")
+        uppercase = args.get("uppercase", False)
+
+        if not regex_field:
+            return ProcessingResult(datum=None, warnings=warnings, errors=errors)
+        if not isinstance(pattern, str):
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=regex_error("extract_regex", "pattern", input_data, args),
+                )
+            )
+            return ProcessingResult(datum=None, warnings=warnings, errors=errors)
+        if not isinstance(capture_group, str):
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=regex_error("extract_regex", "capture_group", input_data, args),
+                )
+            )
+            return ProcessingResult(datum=None, warnings=warnings, errors=errors)
+        match = re.match(pattern, regex_field.strip())
+        if match:
+            try:
+                result = match.group(capture_group)
+                if result is not None and uppercase:
+                    result = result.upper()
+                return ProcessingResult(datum=result, warnings=warnings, errors=errors)
+            except IndexError:
+                errors.append(
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"The pattern '{pattern}' does not contain a capture group: "
+                            f"'{capture_group}'- this is an internal error,"
+                            " please contact your local administrator."
+                        ),
+                    )
+                )
+        else:
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=(
+                        f"The value '{regex_field}' does not match the expected regex "
+                        f"pattern: '{pattern}'."
+                    ),
+                )
+            )
+        return ProcessingResult(datum=None, warnings=warnings, errors=errors)
+
+    @staticmethod
     def check_regex(
         input_data: InputMetadata,
         output_field: str,
@@ -868,11 +1088,7 @@ class ProcessingFunctions:
                     input_fields,
                     [output_field],
                     AnnotationSourceType.METADATA,
-                    message=(
-                        f"Internal Error: Function check_regex did not receive valid "
-                        f"regex pattern, with input {input_data} and args {args}, "
-                        "please contact the administrator."
-                    ),
+                    message=regex_error("check_regex", "pattern", input_data, args),
                 )
             )
             return ProcessingResult(datum=None, warnings=warnings, errors=errors)
@@ -1026,6 +1242,593 @@ class ProcessingFunctions:
             )
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
 
+    @staticmethod
+    def is_above_threshold(
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    ) -> ProcessingResult:
+        """Flag if input value is above a threshold specified in args"""
+        if "threshold" not in args:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"Field {output_field} is missing threshold argument."
+                            " Please report this error to the administrator."
+                        ),
+                    )
+                ],
+            )
+        input_datum = input_data["input"]
+        if input_datum is None or (isinstance(input_datum, str) and not input_datum.strip()):
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+        try:
+            threshold = float(args["threshold"])  # type: ignore
+            input = float(input_datum)
+        except (ValueError, TypeError):
+            msg = f"Field {output_field} has non-numeric threshold value."
+            logger.error(msg)
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(msg),
+                    )
+                ],
+            )
+        return ProcessingResult(datum=(input > threshold), warnings=[], errors=[])
+
+    @staticmethod
+    def is_variant(
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    ) -> ProcessingResult:
+        """Flag if number of mutations is above mutation rate (specified in args) times length"""
+        if "mu" not in args:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"Field {output_field} is missing mu argument."
+                            " Please report this error to the administrator."
+                        ),
+                    )
+                ],
+            )
+        length_datum = input_data.get("length")
+        num_mutations_datum = input_data.get("numMutations")
+        if length_datum is None or num_mutations_datum is None:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+        try:
+            mu = float(args["mu"])  # type: ignore
+            length = float(length_datum)
+            threshold = mu * length
+            is_above_threshold_result = ProcessingFunctions.is_above_threshold(
+                input_data={"input": num_mutations_datum},
+                output_field=output_field,
+                input_fields=input_fields,
+                args={"threshold": threshold},
+            )
+        except (ValueError, TypeError):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"Field {output_field} has non-numeric length or numMutations value."
+                        ),
+                    )
+                ],
+            )
+        return ProcessingResult(
+            datum=is_above_threshold_result.datum,
+            warnings=is_above_threshold_result.warnings,
+            errors=is_above_threshold_result.errors,
+        )
+
+    @staticmethod
+    def assign_custom_lineage(  # noqa: C901
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    ) -> ProcessingResult:
+        """
+        Assign flu lineage based on seg4 and seg6.
+        Add reassortant flag if different lineages are detected for internal segments,
+        add and variant flag if any segment is a variant.
+        It expects the following input_data fields to be present:
+            - subtype_seg4: the subtype assigned to seg4
+            - subtype_seg6: the subtype assigned to seg6
+            - reference_seg1,...,reference_seg8: the reference sequence assigned to each segment
+            - variant_seg1,...,variant_seg8: boolean flag indicating whether a segment is a variant
+        It expects the following args to be present:
+            - pattern: regex pattern to extract lineage from reference
+                e.g. ^(?P<segment>[^-]+)-(?P<lineage>[^-]+)$
+            - uppercase: boolean flag indicating whether to uppercase the extracted lineage
+            - capture_group: the name of the capture group in the regex pattern to extract
+                e.g. "lineage"
+        """
+        logger.debug(
+            f"Starting custom lineage assignment with input_data: {input_data} and args: {args}"
+        )
+        if not input_data:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+        ha_subtype = input_data.get("subtype_seg4")
+        na_subtype = input_data.get("subtype_seg6")
+        references: dict[str, str | None] = {}
+        extracted_lineages: dict[str, str | None] = {}
+        variant: dict[str, bool | None] = {}
+        for i in range(1, 9):
+            segment = f"seg{i}"
+            reference_field = f"reference_seg{i}"
+            variant_field = f"variant_seg{i}"
+            if reference_field in input_data:
+                references[segment] = input_data.get(reference_field)
+                variant[segment] = (
+                    bool(input_data.get(variant_field)) if variant_field in input_data else None
+                )
+        try:
+            for i in range(1, 9):
+                segment = f"seg{i}"
+                extracted_lineages[segment] = ProcessingFunctions.call_function(  # type: ignore
+                    "extract_regex",
+                    {
+                        "pattern": args["pattern"],
+                        "uppercase": args["uppercase"],
+                        "capture_group": args["capture_group"],
+                    },
+                    {"regex_field": references.get(segment, "")},
+                    "output_field",
+                    ["segment_name"],
+                ).datum
+            logger.debug(f"Extracted lineages: {extracted_lineages} from references: {references}")
+            if not ha_subtype or not na_subtype:
+                return ProcessingResult(datum=None, warnings=[], errors=[])
+            lineage = f"{ha_subtype}{na_subtype}"
+            if (
+                extracted_lineages.get("seg4") == "H1N1PDM"
+                and extracted_lineages.get("seg6") == "H1N1PDM"
+            ):
+                lineage = "H1N1pdm"
+            logger.debug(
+                f"Determined preliminary lineage {lineage} based on segments seg4 and seg6"
+            )
+            if lineage in {"H1N1", "H3N2", "H2N2", "H1N1pdm"}:
+                logger.debug(
+                    f"Lineage {lineage} is a human lineage, checking for reassortment and variants"
+                )
+                # only assign human lineages
+                if len({v for v in extracted_lineages.values() if v is not None}) > 1:
+                    lineage += " reassortant"
+                if any(v for v in variant.values() if v):
+                    lineage += " (variant)"
+                return ProcessingResult(datum=lineage, warnings=[], errors=[])
+        except (ValueError, TypeError):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"Internal error processing custom lineage for field {output_field}."
+                        ),
+                    )
+                ],
+            )
+        return ProcessingResult(datum=None, warnings=[], errors=[])
+
+    @staticmethod
+    def build_display_name(  # noqa: C901
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        """Builds a displayName from input_fields. The identifier field in the displayName is based on
+        specimenCollectorSampleId or - if it is not set - submissionId.
+
+        This method wraps ProcessingFunctions.concatenate(). Thus, it has the same required input
+        args, as well as adding some additional checks and requirements:
+            - submissionId and specimenCollectorSampleId must be in the input_data
+            - IDENTIFIER keyword must be in args['order'] and args['type']
+            - if the IDENTIFIER is in an unrecognized format, it will be replaced with the ACCESSION_VERSION
+            - if fallback_value is not in args, { 'fallback_value': 'unknown' } is added to the args before passing
+              them on to concatenate()
+            - for sequences ingested from INSDC, we do not try to parse the IDENTIFIER field using regex. We
+              will use the Isolate Name as IDENTIFIER field if it contains no slashes or spaces (otherwise we fall back to
+              ACCESSION_VERSION)
+        """
+        collector_id = input_data.get("specimenCollectorSampleId", None)
+        submission_id = input_data.get("submissionId", None)
+        warnings: list[ProcessingAnnotation] = []
+        if submission_id is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            "Internal Error: 'submissionId' must not be None for build_display_name(). Please contact the administrator."
+                        ),
+                    )
+                ],
+            )
+
+        order = args.get("order")
+        field_types = args.get("type")
+        if (
+            not isinstance(order, list)
+            or not isinstance(field_types, list)
+            or len(order) != len(field_types)
+            or "IDENTIFIER" not in order
+        ):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            "Internal Error: 'order' and 'type' must be lists of equal length, and 'order' must contain IDENTIFIER - this is required for build_display_name to function. Please contact the administrator."
+                        ),
+                    )
+                ],
+            )
+
+        regex_pattern = args.get("regex_pattern")
+        if (
+            regex_pattern is not None
+            and "identifier" not in re.compile(str(regex_pattern)).groupindex
+        ):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            "Internal Error: if provided, 'regex_pattern' must contain a named capture group called 'identifier'"
+                        ),
+                    )
+                ],
+            )
+
+        concatenate_order = order.copy()
+        concatenate_field_types = field_types.copy()
+
+        def replace_identifier(values, replacement):
+            return [replacement if v == "IDENTIFIER" else v for v in values]
+
+        identifier: ProcessedMetadataValue = collector_id or submission_id
+        if not isinstance(identifier, str):
+            identifier = None
+        elif args["is_insdc_ingest_group"]:
+            # For INSDC ingested sequence: use ID as is unless it contains ' ' or '/'
+            # If it does: fall back to ACCESSION_VERSION
+            if " " in identifier or "/" in identifier:
+                identifier = None
+        elif "/" in identifier:
+            # For direct submissions with "/": try to extract ID field using regex
+            if regex_pattern is None:
+                identifier = None
+            else:
+                extract_result = ProcessingFunctions.extract_regex(
+                    input_data={"regex_field": identifier},
+                    output_field="IDENTIFIER",
+                    input_fields=[],
+                    args={"pattern": regex_pattern, "capture_group": "identifier"},
+                )
+                if extract_result.datum is None:
+                    # regex extraction of ID field failed, fall back to ACCESSION_VERSION
+                    warnings.append(
+                        ProcessingAnnotation.from_fields(
+                            input_fields,
+                            [output_field],
+                            AnnotationSourceType.METADATA,
+                            message=(
+                                f"identifier string '{identifier}' could not be parsed, using ACCESSION_VERSION in displayName instead"
+                            ),
+                        )
+                    )
+                identifier = extract_result.datum
+
+        if identifier is None:
+            # Use ACCESSION_VERSION instead of IDENTIFIER
+            concatenate_order = replace_identifier(order, "ACCESSION_VERSION")
+            concatenate_field_types = replace_identifier(field_types, "ACCESSION_VERSION")
+        else:
+            # Keep IDENTIFIER but treat it as string
+            concatenate_field_types = replace_identifier(field_types, "string")
+            input_data["IDENTIFIER"] = str(identifier)
+
+        new_args = args.copy()
+        new_args.update(
+            {
+                "order": concatenate_order,
+                "type": concatenate_field_types,
+                "fallback_value": args.get("fallback_value", "unknown"),
+                "ACCESSION_VERSION": args["ACCESSION_VERSION"],
+            }
+        )
+
+        concat_result = ProcessingFunctions.concatenate(
+            input_data,
+            output_field,
+            input_fields,
+            new_args,
+        )
+
+        return ProcessingResult(
+            datum=concat_result.datum,
+            warnings=warnings + concat_result.warnings,
+            errors=concat_result.errors,
+        )
+
+    @staticmethod
+    def validate_host(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        """Validates that the host exists
+        in NCBI's taxonomy. Checks either the hostTaxonId or the
+        hostNameScientific, depending on the input.
+
+        If validation succeeds, returns the tax_id of the associated taxon.
+
+        It is possible that multiple taxa have the same scientific name. In these cases,
+        return the tax_id of the most generic taxon (i.e., the one that's closest to
+        the root of the taxonomy)
+        """
+        # for INSDC-ingested sequences we just return the id INSDC gives us (if any)
+        # if we ever want to change this behaviour, we just have to remove this short-circuit,
+        # the rest of the function is set up to validate INSDC-ingested data as well
+        if args["is_insdc_ingest_group"]:
+            tax_id = input_data.get("hostTaxonId")
+            if isinstance(tax_id, str) and tax_id.isdigit():
+                return ProcessingResult(
+                    datum=int(tax_id),
+                    warnings=[],
+                    errors=[],
+                )
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        tax_service = args.get("taxonomy_service_url")
+        if not tax_service:
+            return missing_taxonomy_service_error(input_fields, output_field)
+
+        # host will exist only for direct submissions
+        # hostTaxonId and hostNameScientific are noInput, so the only case where they exist is
+        # for INSDC ingested sequences or for legacy direct submissions
+        unvalidated = (
+            input_data.get("host")
+            or input_data.get("hostTaxonId")
+            or input_data.get("hostNameScientific")
+        )
+
+        if not unvalidated:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        if unvalidated.isdigit():
+            url = f"{tax_service}/taxa/{unvalidated}"
+        else:
+            query = urllib.parse.urlencode({"scientific_name": unvalidated})
+            url = f"{tax_service}/taxa?{query}"
+
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return taxonomy_network_error(unvalidated, "validating", e, input_fields, output_field)
+
+        body = response.json()
+        if response.status_code != requests.codes.ok:
+            # an invalid host organism is a warning for INSDC ingested sequences, but an error for everyone else
+            message = ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message=f"Host validation for '{unvalidated}' failed with code {response.status_code}: {body.get('detail', '')}",
+            )
+            return ProcessingResult(
+                datum=None,
+                warnings=[message] if args["is_insdc_ingest_group"] else [],
+                errors=[message] if not args["is_insdc_ingest_group"] else [],
+            )
+
+        if isinstance(body, list):
+            # when querying by scientific name, multiple taxa may be returned: select the most generic one
+            taxon = min(body, key=lambda x: x.get("depth", float("inf")))
+        else:
+            taxon = body
+
+        tax_id = taxon.get("tax_id")
+        if tax_id is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: host validation for '{unvalidated}' was successful but response json had no 'tax_id'. Please contact the administrator",
+                    )
+                ],
+            )
+
+        return ProcessingResult(
+            datum=tax_id,
+            warnings=[],
+            errors=[],
+        )
+
+    @staticmethod
+    def scientific_name_from_id(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        # for INSDC-ingested sequences we just return the name INSDC gives us (if any)
+        # if we ever want to change this behaviour, we just have to remove this short-circuit,
+        # the rest of the function is set up to validate INSDC-ingested data as well
+        if args["is_insdc_ingest_group"]:
+            return ProcessingResult(
+                datum=input_data.get("hostNameScientific"),
+                warnings=[],
+                errors=[],
+            )
+
+        tax_service = args.get("taxonomy_service_url")
+        if not tax_service:
+            return missing_taxonomy_service_error(input_fields, output_field)
+
+        tax_id: str | None = input_data.get("hostTaxonId")
+        if not tax_id:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        url = f"{tax_service}/taxa/{tax_id}"
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return taxonomy_network_error(tax_id, "validating", e, input_fields, output_field)
+
+        body = response.json()
+        if response.status_code != requests.codes.ok:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}",
+                    )
+                ],
+            )
+
+        scientific_name = body.get("scientific_name")
+        if scientific_name is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: '{tax_id}' is a valid taxon ID but response json had no 'scientific_name'. Please contact the administrator",
+                    )
+                ],
+            )
+
+        return ProcessingResult(
+            datum=scientific_name,
+            warnings=[],
+            errors=[],
+        )
+
+    @staticmethod
+    def common_name_from_id(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        tax_service = args.get("taxonomy_service_url")
+        if not tax_service:
+            return missing_taxonomy_service_error(input_fields, output_field)
+
+        tax_id: str | None = input_data.get("hostTaxonId")
+        if not tax_id:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        url = f"{tax_service}/taxa/{tax_id}?find_common_name=true"
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return taxonomy_network_error(
+                tax_id, "getting common name for", e, input_fields, output_field
+            )
+
+        body = response.json()
+        if response.status_code != requests.codes.ok:
+            return ProcessingResult(
+                datum=None,
+                warnings=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Could not map '{tax_id}' to common name. Code {response.status_code}: {body.get('detail', '')}",
+                    )
+                ],
+                errors=[],
+            )
+
+        common_name = body.get("common_name")
+        if common_name is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it. Please contact the administrator.",
+                    )
+                ],
+            )
+
+        return ProcessingResult(
+            datum=common_name,
+            warnings=[],
+            errors=[],
+        )
+
 
 def single_metadata_annotation(
     source_name: str,
@@ -1169,6 +1972,102 @@ def format_stop_codon(result: str | None) -> str | None:
     return ",".join(stop_codon_strings)
 
 
+def _format_aa_substitution(mutation: dict) -> str:
+    return f"{mutation['cdsName']}:{mutation['refAa']}{int(mutation['pos']) + 1}{mutation['qryAa']}"
+
+
+def process_mutations_from_clade_founder(input: str | None, args: FunctionArgs | None) -> InputData:
+    """Processes substitutions from clade founder InputData for processing"""
+    if input is None:
+        return InputData(datum=None)
+    try:
+        data = ast.literal_eval(input)
+        mutations = []
+        for value in data.values():
+            if not value.get("privateSubstitutions"):
+                continue
+            for mutation in value["privateSubstitutions"]:
+                substitution = _format_aa_substitution(mutation)
+                mutations.append(substitution)
+        if mutations:
+            return InputData(datum=" ".join(mutations))
+    except Exception as e:
+        msg = (
+            "Was unable to process mutations from clade founder - this is likely an internal error. "
+            "Please contact the administrator."
+        )
+        logger.error(msg + f" Error: {e}")
+        return InputData(
+            datum=None,
+            errors=single_metadata_annotation(
+                "mutationsFromCladeFounder",
+                msg,
+            ),
+        )
+    return InputData(datum=None)
+
+
+def process_labeled_mutations(input: str | None, args: FunctionArgs | None) -> InputData:
+    """Processes labeledMutations from privateMutations list for processing"""
+    if input is None:
+        return InputData(datum=None)
+    try:
+        data = ast.literal_eval(input)
+        mutations = []
+        for value in data.values():
+            if not value.get("labeledSubstitutions"):
+                continue
+            for labeled_mutation in value["labeledSubstitutions"]:
+                if not labeled_mutation.get("substitution"):
+                    continue
+                mutation = labeled_mutation["substitution"]
+                substitution = _format_aa_substitution(mutation)
+                mutations.append(substitution)
+        if mutations:
+            return InputData(datum=" ".join(mutations))
+    except Exception as e:
+        msg = (
+            "Was unable to process labeled mutations - this is likely an internal error. "
+            "Please contact the administrator."
+        )
+        logger.error(msg + f" Error: {e}")
+        return InputData(
+            datum=None,
+            errors=single_metadata_annotation(
+                "labeledMutations",
+                msg,
+            ),
+        )
+    return InputData(datum=None)
+
+
+def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> InputData:
+    """Processes phenotype values string to InputData for processing"""
+    if input is None:
+        return InputData(datum=None)
+    name = args.get("name", "") if args else ""
+    try:
+        data = ast.literal_eval(input)
+        for entry in data:
+            if entry.get("name") == name:
+                value = entry.get("value")
+                return InputData(datum=str(value) if value is not None else None)
+    except Exception as e:
+        msg = (
+            "Was unable to process phenotype values - this is likely an internal error. "
+            "Please contact the administrator."
+        )
+        logger.error(msg + f" Error: {e}")
+        return InputData(
+            datum=None,
+            errors=single_metadata_annotation(
+                "phenotypeValues",
+                msg,
+            ),
+        )
+    return InputData(datum=None)
+
+
 def trim_ns(sequence: str) -> str:
     """
     Trims 'N' and 'n' characters from the start and end of a nucleotide sequence.
@@ -1180,3 +2079,13 @@ def trim_ns(sequence: str) -> str:
         str: The trimmed sequence.
     """
     return sequence.strip("Nn")
+
+
+def null_per_backend(x: Any) -> bool:
+    match x:
+        case None:
+            return True
+        case "":
+            return True
+        case _:
+            return False

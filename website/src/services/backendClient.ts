@@ -9,6 +9,7 @@ import {
     requestMultipartUploadResponse,
     sequenceEntryToEdit,
     pipelineVersionStatistics,
+    currentPipelineVersions,
     type ProblemDetail,
     type CompleteMultipartUploadRequest,
 } from '../types/backend.ts';
@@ -109,6 +110,17 @@ export class BackendClient {
             '/admin/pipeline-statistics',
             'GET',
             pipelineVersionStatistics,
+            createAuthorizationHeader(token),
+            undefined,
+            undefined,
+        );
+    }
+
+    public getCurrentPipelineVersions(token: string) {
+        return this.request(
+            '/admin/current-pipeline-versions',
+            'GET',
+            currentPipelineVersions,
             createAuthorizationHeader(token),
             undefined,
             undefined,

@@ -48,7 +48,7 @@ logging.basicConfig(
 )
 
 type Accession = str
-type InsdcAccession = str
+type InsdcAccession = str  # The INSDC Accession type includes the version (i.e. ABC123D.2)
 type Id = str
 type GroupName = str
 
@@ -68,9 +68,14 @@ class Config:
 
 @dataclass
 class Groups:
-    accession_to_group: dict[InsdcAccession, GroupName]
+    # Group override definitions, showing which accessions belong to a given group.
+    # The INSDC accessions include the version segment.
     override_groups: dict[GroupName, list[InsdcAccession]]
-    found_groups: dict[GroupName, list[dict[str, Any]]]
+
+    # Map of nucleotide sequence accessions to their group/assembly names.
+    # Basically the reverse map of `override_groups`.
+    # The INSDC accessions include the version segment.
+    accession_to_group: dict[InsdcAccession, GroupName]
 
 
 # id is actually NCBI accession
@@ -171,7 +176,7 @@ def get_metadata_of_group(
 def group_records(
     record_list: list[dict],
     output_metadata_path: str,
-    fasta_id_map: dict[str, str],
+    fasta_id_map: dict[Accession, Id],
     config: Config,
     different_values_log: dict[str, int],
 ) -> None:
@@ -183,7 +188,7 @@ def group_records(
             )
             logger.error(msg)
             full_msg = (
-                f"Ingest for {config.organism} filed with: {msg} "
+                f"Ingest for {config.organism} failed with: {msg} "
                 "- this indicates the grouping override file needs to be changed"
             )
             notify(config, full_msg)
@@ -207,7 +212,9 @@ def write_grouped_metadata(
     output_grouped_metadata_path: str,
     config: Config,
     groups: Groups,
-) -> tuple[dict, set]:
+    match_previous_accession_versions: bool,
+) -> tuple[dict[Accession, Id], set[Accession]]:
+    found_groups = {group: [] for group in groups.override_groups}
     # Map from original accession to the new concatenated accession
     fasta_id_map: dict[Accession, Id] = {}
     ungrouped_accessions = set()
@@ -217,46 +224,62 @@ def write_grouped_metadata(
     for record in orjsonl.stream(input_metadata_path):
         count_total += 1
         metadata = record["metadata"]
-        if metadata["insdcAccessionFull"] not in groups.accession_to_group:
+        full_accession = metadata["insdcAccessionFull"]
+        group = None
+        if full_accession in groups.accession_to_group:
+            group = groups.accession_to_group[full_accession]
+        elif match_previous_accession_versions:
+            acc, ver = full_accession.split(".")
+            ver = int(ver)
+            # generate previous versions
+            for prev_ver in range(ver - 1, 0, -1):
+                prev_acc = f"{acc}.{prev_ver}"
+                if prev_acc in groups.accession_to_group:
+                    group = groups.accession_to_group[prev_acc]
+                    logger.warning(f"Matched {full_accession} to group via previous version {prev_acc}")
+                    break
+
+        if group is None:
             count_ungrouped += 1
             orjsonl.append(
                 output_ungrouped_metadata_path, {"id": record["id"], "metadata": record["metadata"]}
             )
             ungrouped_accessions.add(record["id"])
             continue
-        group = groups.accession_to_group[metadata["insdcAccessionFull"]]
-        groups.found_groups[group].append(record)
-        if len(groups.found_groups[group]) == len(set(groups.override_groups[group])):
+
+        found_groups[group].append(record)
+        if len(found_groups[group]) == len(set(groups.override_groups[group])):
             group_records(
-                groups.found_groups[group],
+                found_groups[group],
                 output_grouped_metadata_path,
                 fasta_id_map,
                 config,
                 different_values_log,
             )
-            del groups.found_groups[group]
+            del found_groups[group]
 
-    logger.info(f"Found {count_total} records")
-    logger.info(f"Unable to group {count_ungrouped} records")
+    # Now, found_groups has only groups left with either no found metadata at all, or just partial
+    # all the completed ones were deleted.
 
-    # add found_groups without all segments in file
-    count_unfilled_groups = 0
-    count_missing_tests = 0
-    for name, records in groups.found_groups.items():
-        count_unfilled_groups += 1
+    logger.info(f"Scanned {count_total} input metadata records")
+    logger.info(f"No override group definitions found for {count_ungrouped} records")
+
+    count_incomplete_groups = len(found_groups)
+    count_empty_groups = len([name for name, records in found_groups.items() if len(records) == 0])
+
+    # Write out remaining, only partially found groups - even if incomplete
+    for name, records in found_groups.items():
         missing_records = set(groups.override_groups[name]) - {
             record["metadata"]["insdcAccessionFull"] for record in records
         }
         logger.debug(f"{name}: Missing record {missing_records}")
-        if len(records) == 0:
-            count_missing_tests += 1
-            continue
-        group_records(
-            records, output_grouped_metadata_path, fasta_id_map, config, different_values_log
-        )
+        if len(records) > 0:
+            group_records(
+                records, output_grouped_metadata_path, fasta_id_map, config, different_values_log
+            )
     logger.info(different_values_log)
-    logger.info(f"Found {count_unfilled_groups} groups without all segments")
-    logger.info(f"Found {count_missing_tests} groups without any segments")
+    logger.info(f"Found {count_incomplete_groups} groups without all segments")
+    logger.info(f"Found {count_empty_groups} groups without any segments")
     return fasta_id_map, ungrouped_accessions
 
 
@@ -293,24 +316,32 @@ def write_grouped_sequences(
     logger.info(f"Ignored {count_ignored} sequences as not found in {input_seq_path}")
 
 
-def get_groups_object(groups_json_path: str):
+def get_groups_object(groups_json_path: str) -> Groups:
     with open(groups_json_path, encoding="utf-8") as g:
         override_groups = json.load(g)
     logger.info(f"Found {len(override_groups.keys())} source of truth groups")
-    accession_to_group = {}
+    accession_to_group: dict[InsdcAccession, GroupName] = {}
     for group, metadata in override_groups.items():
         for accession in metadata:
             accession_to_group[accession] = group
 
-    found_groups = {group: [] for group in override_groups}
-
-    return Groups(accession_to_group, override_groups, found_groups)
+    return Groups(override_groups, accession_to_group)
 
 
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
-@click.option("--groups", required=True, type=click.Path(exists=True))
-@click.option("--input-seq", required=True, type=click.Path(exists=True))
+@click.option(
+    "--groups",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to the JSON file containing the map from group names to lists of accessions."
+)
+@click.option(
+    "--input-seq",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to the JSONL file of input data."
+)
 @click.option("--input-metadata", required=True, type=click.Path(exists=True))
 @click.option("--output-seq", required=True, type=click.Path())
 @click.option("--output-metadata", required=True, type=click.Path())
@@ -320,6 +351,11 @@ def get_groups_object(groups_json_path: str):
     "--log-level",
     default="INFO",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+)
+@click.option(
+    "--match-previous-accession-versions/--no-match-previous-accession-versions",
+    default=False,
+    help="Whether to match against previous versions of accessions (e.g., XX123.1 when XX123.2 is provided)"
 )
 def main(  # noqa: PLR0913, PLR0917
     config_file: str,
@@ -331,6 +367,7 @@ def main(  # noqa: PLR0913, PLR0917
     output_ungrouped_seq: str,
     output_ungrouped_metadata: str,
     log_level: str,
+    match_previous_accession_versions: bool,
 ) -> None:
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.WARNING)
@@ -352,6 +389,7 @@ def main(  # noqa: PLR0913, PLR0917
         output_metadata,
         config,
         groups_,
+        match_previous_accession_versions,
     )
 
     write_grouped_sequences(

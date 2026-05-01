@@ -9,7 +9,7 @@ async function proxyToBackend({ params, locals }: Parameters<APIRoute>[0], metho
     const { accessionVersion, fileCategory, fileName } = params;
     const { accession, version } = parseAccessionVersionFromString(accessionVersion!);
 
-    const backendUrl = `${runtimeConfig.public.backendUrl}/files/get/${accession}/${version}/${encodeURIComponent(fileCategory!)}/${encodeURIComponent(fileName!)}`;
+    const backendUrl = `${runtimeConfig.serverSide.backendUrl}/files/get/${accession}/${version}/${encodeURIComponent(fileCategory!)}/${encodeURIComponent(fileName!)}`;
 
     const accessToken = getAccessToken(locals.session)!;
 

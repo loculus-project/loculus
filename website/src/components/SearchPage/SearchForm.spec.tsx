@@ -1,17 +1,38 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
+import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { MetadataFilter } from '../../types/config.ts';
 import {
-    type ReferenceGenomesLightweightSchema,
-    type ReferenceAccession,
-    SINGLE_REFERENCE,
-} from '../../types/referencesGenomes.ts';
+    SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+    SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+} from '../../types/referenceGenomes.spec.ts';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
+import type { ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
+
+vi.mock('../../services/serviceHooks.ts');
+vi.mock('../../clientLogger.ts', () => ({
+    getClientLogger: () => ({
+        error: vi.fn(),
+    }),
+}));
+
+const mockUseAggregated = vi.fn().mockReturnValue({
+    data: { data: [] },
+    isPending: false,
+    error: null,
+    mutate: vi.fn(),
+});
+// @ts-expect-error mock implementation for test double
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+lapisClientHooks.mockReturnValue({
+    useAggregated: mockUseAggregated,
+});
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
     observe() {}
@@ -38,56 +59,27 @@ const defaultSearchFormFilters: MetadataFilter[] = [
     },
 ];
 
-const defaultAccession: ReferenceAccession = {
-    name: 'main',
-    insdcAccessionFull: undefined,
-};
-
-const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
-    [SINGLE_REFERENCE]: {
-        nucleotideSegmentNames: ['main'],
-        geneNames: ['gene1', 'gene2'],
-        insdcAccessionFull: [defaultAccession],
-    },
-};
-
-const multiPathogenReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
-    suborganism1: {
-        nucleotideSegmentNames: ['main'],
-        geneNames: ['gene1', 'gene2'],
-        insdcAccessionFull: [defaultAccession],
-    },
-    suborganism2: {
-        nucleotideSegmentNames: ['main'],
-        geneNames: ['gene1', 'gene2'],
-        insdcAccessionFull: [defaultAccession],
-    },
-};
-
 const defaultSearchVisibilities = new Map<string, MetadataVisibility>([
-    ['field1', new MetadataVisibility(true, undefined)],
-    ['field3', new MetadataVisibility(true, undefined)],
+    ['field1', new MetadataVisibility(true, undefined, undefined)],
+    ['field3', new MetadataVisibility(true, undefined, undefined)],
 ]);
 
 const setSomeFieldValues = vi.fn();
 const setASearchVisibility = vi.fn();
-const setSelectedSuborganism = vi.fn();
 
 const renderSearchForm = ({
     filterSchema = new MetadataFilterSchema([...defaultSearchFormFilters]),
     fieldValues = {},
-    referenceGenomeLightweightSchema = defaultReferenceGenomesLightweightSchema,
+    referenceGenomesInfo = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
     lapisSearchParameters = {},
-    suborganismIdentifierField = undefined,
-    selectedSuborganism = null,
+    referenceSelection,
     searchVisibilities = defaultSearchVisibilities,
 }: {
     filterSchema?: MetadataFilterSchema;
     fieldValues?: Record<string, string>;
-    referenceGenomeLightweightSchema?: ReferenceGenomesLightweightSchema;
+    referenceGenomesInfo?: ReferenceGenomesInfo;
     lapisSearchParameters?: Record<string, string>;
-    suborganismIdentifierField?: string;
-    selectedSuborganism?: string | null;
+    referenceSelection?: ReferenceSelection;
     searchVisibilities?: Map<string, MetadataVisibility>;
 } = {}) => {
     const props = {
@@ -99,12 +91,10 @@ const renderSearchForm = ({
         lapisUrl: 'http://lapis.dummy.url',
         searchVisibilities,
         setASearchVisibility,
-        referenceGenomeLightweightSchema,
+        referenceGenomesInfo: referenceGenomesInfo,
         lapisSearchParameters,
         showMutationSearch: true,
-        suborganismIdentifierField,
-        selectedSuborganism,
-        setSelectedSuborganism,
+        referenceSelection,
     };
 
     render(
@@ -115,6 +105,10 @@ const renderSearchForm = ({
 };
 
 describe('SearchForm', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     it('renders without crashing', () => {
         renderSearchForm();
         expect(screen.getByText('Field 1')).toBeInTheDocument();
@@ -139,21 +133,54 @@ describe('SearchForm', () => {
         expect(window.location.href).toMatch(/\/$/);
     });
 
-    it('should render the suborganism selector in the multi pathogen case', async () => {
-        renderSearchForm({
-            filterSchema: new MetadataFilterSchema([
-                ...defaultSearchFormFilters,
-                { name: 'My genotype', type: 'string' },
-            ]),
-            suborganismIdentifierField: 'My genotype',
-            referenceGenomeLightweightSchema: multiPathogenReferenceGenomesLightweightSchema,
+    it('should render the reference selector in the multiReference case', async () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    { 'My genotype': 'ref1', 'count': 100 },
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    { 'My genotype': 'ref2', 'count': 200 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
         });
 
-        const suborganismSelector = screen.getByRole('combobox', { name: 'My genotype' });
-        expect(suborganismSelector).toBeInTheDocument();
-        await userEvent.selectOptions(suborganismSelector, 'suborganism1');
+        render(
+            <QueryClientProvider client={queryClient}>
+                <SearchForm
+                    organism={testOrganism}
+                    filterSchema={
+                        new MetadataFilterSchema([...defaultSearchFormFilters, { name: 'My genotype', type: 'string' }])
+                    }
+                    clientConfig={testConfig.public}
+                    fieldValues={{}}
+                    setSomeFieldValues={setSomeFieldValues}
+                    lapisUrl='http://lapis.dummy.url'
+                    searchVisibilities={defaultSearchVisibilities}
+                    setASearchVisibility={setASearchVisibility}
+                    referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
+                    lapisSearchParameters={{}}
+                    showMutationSearch={true}
+                    referenceSelection={{
+                        referenceIdentifierField: 'My genotype',
+                        selectedReferences: {},
+                    }}
+                />
+            </QueryClientProvider>,
+        );
 
-        expect(setSelectedSuborganism).toHaveBeenCalledWith('suborganism1');
+        const referenceInput = await screen.findByLabelText('My genotype');
+        expect(referenceInput).toBeInTheDocument();
+
+        await userEvent.click(referenceInput);
+        const options = await screen.findAllByRole('option');
+        const ref1Option = options.find((opt) => opt.textContent.includes('ref1'));
+        await userEvent.click(ref1Option!);
+
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['My genotype', 'ref1']);
     });
 
     it('opens advanced options modal with version status and revocation fields', async () => {
@@ -179,19 +206,19 @@ describe('SearchForm', () => {
                 type: 'string',
                 displayName: 'Field 1',
                 initiallyVisible: true,
-                onlyForSuborganism: 'suborganism1',
+                onlyForReference: 'suborganism1',
             },
             {
                 name: 'field2',
                 type: 'string',
                 displayName: 'Field 2',
                 initiallyVisible: true,
-                onlyForSuborganism: 'suborganism2',
+                onlyForReference: 'suborganism2',
             },
         ]);
         const searchVisibilities = new Map<string, MetadataVisibility>([
-            ['field1', new MetadataVisibility(true, 'suborganism1')],
-            ['field2', new MetadataVisibility(true, 'suborganism2')],
+            ['field1', new MetadataVisibility(true, 'suborganism1', 'main')],
+            ['field2', new MetadataVisibility(true, 'suborganism2', 'main')],
         ]);
 
         const field1 = () => screen.queryByLabelText('Field 1');
@@ -201,24 +228,15 @@ describe('SearchForm', () => {
             renderSearchForm({
                 filterSchema,
                 searchVisibilities,
-                suborganismIdentifierField: 'My genotype',
-                selectedSuborganism: 'suborganism1',
+                referenceSelection: {
+                    referenceIdentifierField: 'My genotype',
+
+                    selectedReferences: { main: 'suborganism1' },
+                },
             });
 
             expect(field1()).toBeVisible();
             expect(field2()).not.toBeInTheDocument();
-        });
-
-        it('should display suborganism specific fields when no suborganism is selected', () => {
-            renderSearchForm({
-                filterSchema,
-                searchVisibilities,
-                suborganismIdentifierField: 'My genotype',
-                selectedSuborganism: null,
-            });
-
-            expect(field1()).toBeVisible();
-            expect(field2()).toBeVisible();
         });
     });
 });

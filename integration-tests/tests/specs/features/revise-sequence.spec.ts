@@ -67,6 +67,19 @@ sequenceTest(
     },
 );
 
+groupTest.describe('Revision page template downloads', () => {
+    groupTest('can download revision metadata templates', async ({ page, groupId }) => {
+        const revisionPage = new RevisionPage(page);
+        await revisionPage.goto(TEST_ORGANISM, groupId);
+
+        const tsvDownload = await revisionPage.downloadTsvTemplate();
+        expect(tsvDownload.suggestedFilename()).toContain('.tsv');
+
+        const xlsxDownload = await revisionPage.downloadXlsxTemplate();
+        expect(xlsxDownload.suggestedFilename()).toContain('.xlsx');
+    });
+});
+
 groupTest.describe('Bulk sequence revision', () => {
     groupTest('can revise multiple sequences via file upload', async ({ page, groupId }) => {
         groupTest.setTimeout(200_000);

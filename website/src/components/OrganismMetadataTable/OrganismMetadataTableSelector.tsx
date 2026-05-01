@@ -3,6 +3,7 @@ import type { FC } from 'react';
 
 import { OrganismMetadataTable } from './OrganismMetadataTable.tsx';
 import type { Metadata, InputField } from '../../types/config.ts';
+import { Select } from '../common/Select.tsx';
 
 export type OrganismMetadata = {
     key: string;
@@ -16,7 +17,7 @@ type Props = {
 };
 
 const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
-    const [selectedOrganismKey, setSelectedOrganismKey] = useState<string>('');
+    const [selectedOrganismKey, setSelectedOrganismKey] = useState('');
     const selectedOrganism = organisms.find((o) => o.key === selectedOrganismKey) ?? null;
 
     const handleOrganismSelect = (event: { target: { value: string } }) => {
@@ -50,7 +51,7 @@ const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
     return (
         <div>
             <div>
-                <select
+                <Select
                     id='organism-select'
                     value={selectedOrganismKey}
                     onChange={handleOrganismSelect}
@@ -62,7 +63,7 @@ const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
                             {organism.displayName}
                         </option>
                     ))}
-                </select>
+                </Select>
             </div>
 
             {selectedOrganism && <OrganismMetadataTable organism={selectedOrganism} />}

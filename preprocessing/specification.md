@@ -34,7 +34,7 @@ Also see the Swagger UI available in the backend at `<backendUrl>/swagger-ui/ind
 
 ### Pulling unpreprocessed data
 
-To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request to the backend's `/extract-unprocessed-data` with the request parameter `numberOfSequenceEntries` (integer) and `pipelineVersion` (integer). This returns a response in [NDJSON](http://ndjson.org/) containing at most the specified number of sequence entries. If there are no entries that require preprocessing, an empty file is returned.
+To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request to the backend's `/extract-unprocessed-data` with the request parameter `numberOfSequenceEntries` (integer) and `pipelineVersion` (integer). This returns a response in [NDJSON](https://github.com/ndjson/ndjson-spec) containing at most the specified number of sequence entries. If there are no entries that require preprocessing, an empty file is returned.
 
 In the unprocessed NDJSON, each line contains a sequence entry represented as a JSON object and looks as follows:
 
@@ -176,6 +176,16 @@ Nucleotide insertions for a multi-segmented organism:
     ...
 }
 ```
+
+#### SequenceNameToFastaId map
+
+The preprocessing pipeline is expected to classify which segment/reference each sequence best aligns to and return this assignment in the `sequenceNameToFastaId` field. The `sequenceName` should use the segment-reference structure expected by the backend (and query engine):
+
+ - For an organisms without multiple references the `sequenceName` in the name of the segment (the segment name `main` is used for the single segment edge case).
+ - For single-segmented, multi-reference organisms the `sequenceName` is the name of the reference.
+ - For multi-segment, multi-reference organisms the `sequenceName` is the `{segmentName}-{referenceName}`.
+
+Additionally, the pipeline will receive a `max_sequences_per_entry` parameter via the config and is expected to return an error if the submission entry contains more sequences than are allowed per one submission entry.
 
 ## Reprocessing
 

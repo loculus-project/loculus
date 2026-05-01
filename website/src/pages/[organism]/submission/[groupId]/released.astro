@@ -4,7 +4,8 @@ import { SearchFullUI } from '../../../../components/SearchPage/SearchFullUI';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import {
     dataUseTermsAreEnabled,
-    getReferenceGenomeLightweightSchema,
+    getContactConfig,
+    getReferenceGenomes,
     getRuntimeConfig,
     getSchema,
     getWebsiteConfig,
@@ -36,7 +37,7 @@ const schema = getSchema(cleanedOrganism.key);
 
 const accessToken = getAccessToken(Astro.locals.session);
 
-const referenceGenomeLightweightSchema = getReferenceGenomeLightweightSchema(cleanedOrganism.key);
+const referenceGenomesInfo = getReferenceGenomes(cleanedOrganism.key);
 
 const hiddenFieldValues = {
     [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
@@ -47,12 +48,14 @@ const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
 const { data, totalCount } = await performLapisSearchQueries(
     initialQueryDict,
     schema,
-    referenceGenomeLightweightSchema,
+    referenceGenomesInfo,
     hiddenFieldValues,
     cleanedOrganism.key,
 );
 
-const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
+const websiteConfig = getWebsiteConfig();
+const sequenceFlaggingConfig = websiteConfig.sequenceFlagging;
+const contactConfig = getContactConfig(websiteConfig);
 ---
 
 <SubmissionPageWrapper groupsResult={groupsResult} title='Released sequences'>
@@ -63,13 +66,14 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
         schema={schema}
         myGroups={[group]}
         accessToken={accessToken}
-        referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+        referenceGenomesInfo={referenceGenomesInfo}
         hiddenFieldValues={hiddenFieldValues}
         initialData={data}
         initialCount={totalCount}
         initialQueryDict={initialQueryDict}
         dataUseTermsEnabled={dataUseTermsAreEnabled()}
         sequenceFlaggingConfig={sequenceFlaggingConfig}
+        contactConfig={contactConfig}
         showEditDataUseTermsControls
     />
 </SubmissionPageWrapper>

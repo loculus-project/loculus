@@ -8,13 +8,20 @@ from typing import Any
 import dpath
 
 from .backend import (
+    download_diamond_db,
     download_minimizer,
     fetch_unprocessed_sequences,
     request_upload,
     submit_processed_sequences,
     upload_embl_file_to_presigned_url,
 )
-from .config import AlignmentRequirement, Config, ProcessingSpec, SequenceName
+from .config import (
+    METADATA_DEPENDENCY_PREFIX,
+    AlignmentRequirement,
+    Config,
+    ProcessingSpec,
+    SequenceName,
+)
 from .datatypes import (
     AccessionVersion,
     AminoAcidInsertion,
@@ -49,10 +56,14 @@ from .nextclade import (
 )
 from .processing_functions import (
     ProcessingFunctions,
+    null_per_backend,
     process_frameshifts,
+    process_labeled_mutations,
+    process_mutations_from_clade_founder,
+    process_phenotype_values,
     process_stop_codons,
 )
-from .sequence_checks import errors_if_non_iupac
+from .sequence_checks import error_on_excess_sequences, errors_if_non_iupac
 
 logger = logging.getLogger(__name__)
 
@@ -63,16 +74,6 @@ def accession_from_str(id_str: AccessionVersion) -> str:
 
 def version_from_str(id_str: AccessionVersion) -> int:
     return int(id_str.split(".")[1])
-
-
-def null_per_backend(x: Any) -> bool:
-    match x:
-        case None:
-            return True
-        case "":
-            return True
-        case _:
-            return False
 
 
 class MultipleSequencesPerSegmentError(Exception):
@@ -98,8 +99,11 @@ class MultipleSequencesPerSegmentError(Exception):
         )
 
 
-def get_name(
-    segment: SegmentName, data_per_dataset: dict[SequenceName, Any] | None, config: Config
+def get_dataset_name(
+    segment: SegmentName,
+    data_per_dataset: dict[SequenceName, Any] | None,
+    config: Config,
+    reference: str | None = None,
 ) -> str | None:
     """Returns the name of the dataset to use based on spec args"""
     valid_datasets = (
@@ -110,11 +114,24 @@ def get_name(
         for dataset in valid_datasets
         if config.get_dataset_by_name(dataset).segment == segment
     ]
+    if reference is not None:
+        lapis_names = [
+            dataset
+            for dataset in lapis_names
+            if config.get_dataset_by_name(dataset).reference_name == reference
+        ]
     if not lapis_names:
         return None
     if len(lapis_names) > 1:
         raise MultipleSequencesPerSegmentError(lapis_names)
     return lapis_names[0]
+
+
+def truncate_after_wildcard(path: str, separator: str = ".") -> str:
+    parts = path.split(separator)
+    if "*" in parts:
+        return separator.join(parts[: parts.index("*")])
+    return path
 
 
 def add_nextclade_metadata(
@@ -125,7 +142,19 @@ def add_nextclade_metadata(
 ) -> InputData:
     try:
         segment = spec.args.get("segment", "main") if spec.args else "main"
-        sequence_name = get_name(str(segment), unprocessed.nextcladeMetadata, config)
+        if not isinstance(segment, str):
+            msg = f"add_nextclade_metadata: segment must be str, got {type(segment)}"
+            raise TypeError(msg)
+        reference = spec.args.get("reference", None) if spec.args else None
+        if not isinstance(reference, str) and reference is not None:
+            msg = f"add_nextclade_metadata: reference must be str, got {type(reference)}"
+            raise TypeError(msg)
+        sequence_name = get_dataset_name(
+            segment,
+            unprocessed.nextcladeMetadata,
+            config,
+            reference,
+        )
     except MultipleSequencesPerSegmentError as e:
         error_annotation = e.get_processing_annotation(
             processed_field_name=nextclade_path, organism=config.organism
@@ -142,7 +171,7 @@ def add_nextclade_metadata(
 
     raw: str | None = dpath.get(
         unprocessed.nextcladeMetadata[sequence_name],
-        nextclade_path,
+        truncate_after_wildcard(nextclade_path),
         separator=".",
         default=None,
     )  # type: ignore[assignment]
@@ -154,6 +183,15 @@ def add_nextclade_metadata(
         case "qc.stopCodons.stopCodons":
             result = None if raw is None else str(raw)
             return process_stop_codons(result)
+        case "phenotypeValues":
+            result = None if raw is None else str(raw)
+            return process_phenotype_values(result, spec.args)
+        case "cladeFounderInfo.aaMutations.*.privateSubstitutions":
+            result = None if raw is None else str(raw)
+            return process_mutations_from_clade_founder(result, spec.args)
+        case "privateAaMutations.*.labeledSubstitutions.substitution":
+            result = None if raw is None else str(raw)
+            return process_labeled_mutations(result, spec.args)
         case _:
             return InputData(datum=str(raw))
 
@@ -163,10 +201,13 @@ def add_assigned_reference(
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
 ) -> InputData:
-    if not unprocessed.nextcladeMetadata:
+    if not unprocessed.unalignedNucleotideSequences:
         return InputData(datum=None)
     segment = spec.args.get("segment", "main") if spec.args else "main"
-    name = get_name(str(segment), unprocessed.nextcladeMetadata, config)
+    if not isinstance(segment, str):
+        msg = f"add_assigned_reference: segment must be str, got {type(segment)}"
+        raise TypeError(msg)
+    name = get_dataset_name(segment, unprocessed.unalignedNucleotideSequences, config)
     if not name:
         return InputData(datum=None)
     reference = config.get_dataset_by_name(name).reference_name
@@ -207,7 +248,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     args = dict(spec.args) if spec.args else {}
     args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
     args["submittedAt"] = submitted_at
-    args["accession_version"] = accession_version
+    args["ACCESSION_VERSION"] = accession_version
 
     try:
         processing_result = ProcessingFunctions.call_function(
@@ -278,14 +319,18 @@ def get_output_metadata(
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
-    for output_field, spec in config.processing_spec.items():
+    for output_field in config.processing_order:
+        spec = config.processing_spec[output_field]
         input_data: InputMetadata = {}
         input_fields: list[str] = []
         if output_field == "length":
             try:
                 segment = spec.args.get("segment", "main") if spec.args else "main"
-                sequence_name = get_name(
-                    str(segment), unprocessed.unalignedNucleotideSequences, config
+                if not isinstance(segment, str):
+                    msg = f"get_output_metadata: segment must be str, got {type(segment)}"
+                    raise TypeError(msg)
+                sequence_name = get_dataset_name(
+                    segment, unprocessed.unalignedNucleotideSequences, config
                 )
             except MultipleSequencesPerSegmentError as e:
                 error_annotation = e.get_processing_annotation(
@@ -301,20 +346,34 @@ def get_output_metadata(
             continue
 
         if output_field.startswith("length_"):
-            segment = output_field[7:]
-            sequence_name = get_name(str(segment), unprocessed.unalignedNucleotideSequences, config)
+            sequence_name = get_dataset_name(
+                output_field[7:], unprocessed.unalignedNucleotideSequences, config
+            )
             output_metadata[output_field] = get_sequence_length(
                 unprocessed.unalignedNucleotideSequences, sequence_name
             )
             continue
 
         for arg_name, input_path in spec.inputs.items():
+            get_from_processed = False
+            if input_path.startswith(METADATA_DEPENDENCY_PREFIX):
+                resolved_path = input_path.replace(METADATA_DEPENDENCY_PREFIX, "", 1)
+                get_from_processed = True
+            else:
+                resolved_path = input_path
+
             if isinstance(unprocessed, UnprocessedAfterNextclade):
-                input_metadata = add_input_metadata(spec, unprocessed, input_path, config=config)
-                input_data[arg_name] = input_metadata.datum
-                errors.extend(input_metadata.errors)
-                warnings.extend(input_metadata.warnings)
-                input_fields.append(input_path)
+                if get_from_processed:
+                    input_data[arg_name] = output_metadata.get(resolved_path)  # type: ignore
+                else:
+                    input_metadata = add_input_metadata(
+                        spec, unprocessed, resolved_path, config=config
+                    )
+                    input_data[arg_name] = input_metadata.datum
+                    errors.extend(input_metadata.errors)
+                    warnings.extend(input_metadata.warnings)
+
+                input_fields.append(resolved_path)
                 group_id = (
                     int(unprocessed.inputMetadata["group_id"])
                     if unprocessed.inputMetadata["group_id"]
@@ -322,8 +381,12 @@ def get_output_metadata(
                 )
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
-                input_data[arg_name] = unprocessed.metadata.get(input_path)
-                input_fields.append(input_path)
+                input_data[arg_name] = (
+                    output_metadata.get(resolved_path)  # type: ignore
+                    if get_from_processed
+                    else unprocessed.metadata.get(resolved_path)
+                )
+                input_fields.append(resolved_path)
                 group_id = unprocessed.group_id
                 submitted_at = unprocessed.submittedAt
 
@@ -346,12 +409,16 @@ def get_output_metadata(
             and spec.required
             and group_id != config.insdc_ingest_group_id
         ):
+            message = f"Metadata field `{output_field}` is required."
+            additional_inputs = [i for i in input_fields if i != output_field]
+            if additional_inputs:
+                message += f" Please provide input metadata field(s): {', '.join(f'`{field}`' for field in additional_inputs)}"
             errors.append(
                 ProcessingAnnotation.from_fields(
                     spec.inputs.values(),
                     [output_field],
                     AnnotationSourceType.METADATA,
-                    message=f"Metadata field {output_field} is required.",
+                    message=message,
                 )
             )
     logger.debug(f"Processed {accession_version}: {output_metadata}")
@@ -438,6 +505,11 @@ def process_single(
     """Process a single sequence per config"""
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
+    max_seq_errors = error_on_excess_sequences(
+        len(unprocessed.unalignedNucleotideSequences),
+        config,
+    )
+
     alignment_errors, alignment_warnings = alignment_errors_warnings(
         unprocessed,
         config,
@@ -459,7 +531,15 @@ def process_single(
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
             sequenceNameToFastaId=unprocessed.sequenceNameToFastaId,
         ),
-        errors=list(set(unprocessed.errors + iupac_errors + alignment_errors + metadata_errors)),
+        errors=list(
+            set(
+                unprocessed.errors
+                + iupac_errors
+                + max_seq_errors
+                + alignment_errors
+                + metadata_errors
+            )
+        ),
         warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
     )
 
@@ -589,16 +669,20 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             )
 
 
-def run(config: Config) -> None:
+def run(config: Config) -> None:  # noqa: C901
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         if config.alignment_requirement != AlignmentRequirement.NONE:
             download_nextclade_dataset(dataset_dir, config)
         if (
-            config.minimizer_url
-            or config.segment_classification_method == SegmentClassificationMethod.MINIMIZER
+            config.segment_classification_method == SegmentClassificationMethod.MINIMIZER
             or config.require_nextclade_sort_match
         ):
             download_minimizer(config, dataset_dir + "/minimizer/minimizer.json")
+        if config.segment_classification_method == SegmentClassificationMethod.DIAMOND:
+            if not config.diamond_dmnd_url:
+                msg = "Diamond database URL must be provided for diamond segment classification"
+                raise ValueError(msg)
+            download_diamond_db(config, dataset_dir + "/diamond/diamond.dmnd")
         total_processed = 0
         etag = None
         last_force_refresh = time.time()

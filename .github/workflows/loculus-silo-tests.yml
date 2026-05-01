@@ -1,0 +1,66 @@
+name: loculus-silo-tests
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+defaults:
+  run:
+    working-directory: ./loculus-silo
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[test]
+      - uses: dtolnay/rust-toolchain@1.92
+      - name: build rust binary
+        run: |
+          REPO=https://github.com/GenSpectrum/LAPIS-SILO.git
+          COMMIT=8d38b2739524cca52857d9d09ff05e9373cea4df
+          cargo install --git "$REPO" --rev "$COMMIT"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - name: Run tests
+        run: |
+          python -m pytest
+  typeCheck:
+    name: Type Checking
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - name: Install type checking dependencies
+        run: |
+          uv pip install --system '.[test]'
+      - name: Run mypy (checks type hints)
+        run: mypy . --config-file .mypy.ini --non-interactive --install-types
+  lint:
+    name: Lint code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - name: Install test dependencies
+        run: |
+          uv pip install --system '.[test]'
+      - name: Run ruff format check
+        run: ruff format --diff .
+      - name: Run ruff check
+        run: ruff check .

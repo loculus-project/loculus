@@ -42,7 +42,7 @@ jobs:
           secret_key = ${{ secrets.HETZNER_S3_SECRET_KEY }}
           host_base = hel1.your-objectstorage.com
           host_bucket = %(bucket)s.hel1.your-objectstorage.com
-          verbosity = DEBUG
+          verbosity = WARNING
           EOF
       - name: Upload to Object Storage
         shell: bash -l {0}

@@ -1,6 +1,6 @@
 import { exec } from 'child_process';
 import { promisify, stripVTControlCharacters } from 'util';
-import { writeFile, unlink } from 'fs/promises';
+import { writeFile, unlink, rm } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { test } from '@playwright/test';
@@ -21,6 +21,7 @@ export class CliPage {
     private baseUrl: string;
     private keyringService: string;
     private configFile: string;
+    private dataHome: string;
 
     constructor() {
         const uuid = randomUUID();
@@ -30,6 +31,11 @@ export class CliPage {
         this.keyringService = `loculus-cli-test-${uuid}`;
         // Generate a unique config file for this test instance
         this.configFile = join(tmpdir(), `loculus-cli-test-config-${uuid}.yml`);
+        // Generate a unique data directory for this test instance to isolate keyring storage.
+        // The PlaintextKeyring backend stores all entries in a single shared file under
+        // XDG_DATA_HOME. Without isolation, parallel tests perform concurrent read-modify-write
+        // on that file, causing race conditions that silently clobber each other's tokens.
+        this.dataHome = join(tmpdir(), `loculus-cli-test-data-${uuid}`);
     }
 
     /**
@@ -55,6 +61,8 @@ export class CliPage {
             LOCULUS_CLI_KEYRING_SERVICE: this.keyringService,
             // Use unique config file for test isolation
             LOCULUS_CONFIG: this.configFile,
+            // Use unique data directory so each test gets its own keyring file
+            XDG_DATA_HOME: this.dataHome,
             // Disable interactive features like spinners
             CI: 'true',
             NO_COLOR: '1',
@@ -192,6 +200,13 @@ export class CliPage {
 
         // Clean up unique config file
         await this.cleanupFile(this.configFile);
+
+        // Clean up unique data directory (contains isolated keyring file)
+        try {
+            await rm(this.dataHome, { recursive: true, force: true });
+        } catch {
+            // Ignore cleanup errors
+        }
     }
 
     /**

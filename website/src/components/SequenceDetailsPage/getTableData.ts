@@ -1,30 +1,42 @@
-import { sentenceCase } from 'change-case';
 import { err, ok, Result } from 'neverthrow';
-import z from 'zod';
 
 import type { TableDataEntry } from './types.js';
 import { type LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { Metadata, MutationBadgeData, Schema, SegmentedMutations } from '../../types/config.ts';
+import {
+    DEFAULT_AA_MUTATION_DETAILS_HEADER,
+    DEFAULT_NUC_MUTATION_DETAILS_HEADER,
+    type Metadata,
+    type MutationBadgeData,
+    type Schema,
+    type SegmentedMutationStrings,
+    type SegmentedMutations,
+} from '../../types/config.ts';
 import {
     type Details,
     type DetailsResponse,
     type InsertionCount,
     type MutationProportionCount,
 } from '../../types/lapis.ts';
-import { type ReferenceGenomes, SINGLE_REFERENCE, type Suborganism } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
+import { getSelectedReferences } from '../../utils/referenceSelection.ts';
+import {
+    lapisNameToDisplayName,
+    segmentsWithMultipleReferences,
+    type SegmentReferenceSelections,
+} from '../../utils/sequenceTypeHelpers.ts';
 
 export type GetTableDataResult = {
     data: TableDataEntry[];
-    suborganism: Suborganism | null;
     isRevocation: boolean;
+    segmentReferences?: SegmentReferenceSelections;
 };
 
 export async function getTableData(
     accessionVersion: string,
     schema: Schema,
-    referenceGenomes: ReferenceGenomes,
+    referenceGenomesInfo: ReferenceGenomesInfo,
     lapisClient: LapisClient,
 ): Promise<Result<GetTableDataResult, ProblemDetail>> {
     return Promise.all([
@@ -54,63 +66,33 @@ export async function getTableData(
                     }),
                 )
                 .andThen((data) => {
-                    const suborganismResult = getSuborganism(data.details, schema, referenceGenomes, accessionVersion);
-                    if (suborganismResult.isErr()) {
-                        return err(suborganismResult.error);
+                    if (
+                        segmentsWithMultipleReferences(referenceGenomesInfo).length > 0 &&
+                        schema.referenceIdentifierField === undefined
+                    ) {
+                        return err({
+                            type: 'about:blank',
+                            title: 'Invalid configuration',
+                            status: 0,
+                            detail: `No 'referenceIdentifierField' has been configured in the schema for organism ${schema.organismName}`,
+                            instance: '/seq/' + accessionVersion,
+                        });
                     }
-
-                    const suborganism = suborganismResult.value;
+                    const segmentReferences = schema.referenceIdentifierField
+                        ? getSelectedReferences({
+                              referenceGenomesInfo,
+                              referenceIdentifierField: schema.referenceIdentifierField,
+                              state: data.details,
+                          })
+                        : undefined;
 
                     return ok({
-                        data: toTableData(schema, suborganism, data),
-                        suborganism,
+                        data: toTableData(schema, referenceGenomesInfo, data),
                         isRevocation: isRevocationEntry(data.details),
+                        segmentReferences,
                     });
                 }),
         );
-}
-
-function getSuborganism(
-    details: Details,
-    schema: Schema,
-    referenceGenomes: ReferenceGenomes,
-    accessionVersion: string,
-): Result<Suborganism | null, ProblemDetail> {
-    if (SINGLE_REFERENCE in referenceGenomes) {
-        return ok(SINGLE_REFERENCE);
-    }
-    const suborganismField = schema.suborganismIdentifierField;
-    if (suborganismField === undefined) {
-        return err({
-            type: 'about:blank',
-            title: 'Invalid configuration',
-            status: 0,
-            detail: `No 'suborganismIdentifierField' has been configured in the schema for organism ${schema.organismName}`,
-            instance: '/seq/' + accessionVersion,
-        });
-    }
-    const value = details[suborganismField];
-    const suborganismResult = z.string().nullable().safeParse(value);
-    if (!suborganismResult.success) {
-        return err({
-            type: 'about:blank',
-            title: 'Invalid suborganism field',
-            status: 0,
-            detail: `Value '${value}' of field '${suborganismField}' is not a valid string or null.`,
-            instance: '/seq/' + accessionVersion,
-        });
-    }
-    const suborganism = suborganismResult.data;
-    if (suborganism !== null && !(suborganism in referenceGenomes)) {
-        return err({
-            type: 'about:blank',
-            title: 'Invalid suborganism',
-            status: 0,
-            detail: `Suborganism '${suborganism}' (value of field '${suborganismField}') not found in reference genomes.`,
-            instance: '/seq/' + accessionVersion,
-        });
-    }
-    return ok(suborganism);
 }
 
 function isRevocationEntry(details: Details): boolean {
@@ -140,57 +122,73 @@ function mutationDetails(
     aminoAcidMutations: MutationProportionCount[],
     nucleotideInsertions: InsertionCount[],
     aminoAcidInsertions: InsertionCount[],
-    suborganism: Suborganism | null,
+    referenceGenomesInfo: ReferenceGenomesInfo,
 ): TableDataEntry[] {
     const data: TableDataEntry[] = [
         {
             label: 'Substitutions',
             name: 'nucleotideSubstitutions',
             value: '',
-            header: 'Nucleotide mutations',
+            header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
             customDisplay: {
                 type: 'badge',
-                value: substitutionsMap(nucleotideMutations, suborganism),
+                badge: substitutionsMap(nucleotideMutations, referenceGenomesInfo, true),
             },
             type: { kind: 'mutation' },
         },
         {
             label: 'Deletions',
             name: 'nucleotideDeletions',
-            value: deletionsToCommaSeparatedString(nucleotideMutations, suborganism),
-            header: 'Nucleotide mutations',
+            value: '',
+            header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
+            customDisplay: {
+                type: 'list',
+                list: deletionsMap(nucleotideMutations, referenceGenomesInfo, true),
+            },
             type: { kind: 'mutation' },
         },
         {
             label: 'Insertions',
             name: 'nucleotideInsertions',
-            value: insertionsToCommaSeparatedString(nucleotideInsertions, suborganism),
-            header: 'Nucleotide mutations',
+            value: '',
+            header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
+            customDisplay: {
+                type: 'list',
+                list: insertionsMap(nucleotideInsertions, referenceGenomesInfo, true),
+            },
             type: { kind: 'mutation' },
         },
         {
             label: 'Substitutions',
             name: 'aminoAcidSubstitutions',
             value: '',
-            header: 'Amino acid mutations',
+            header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
             customDisplay: {
                 type: 'badge',
-                value: substitutionsMap(aminoAcidMutations, suborganism),
+                badge: substitutionsMap(aminoAcidMutations, referenceGenomesInfo),
             },
             type: { kind: 'mutation' },
         },
         {
             label: 'Deletions',
             name: 'aminoAcidDeletions',
-            value: deletionsToCommaSeparatedString(aminoAcidMutations, suborganism),
-            header: 'Amino acid mutations',
+            value: '',
+            header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
+            customDisplay: {
+                type: 'list',
+                list: deletionsMap(aminoAcidMutations, referenceGenomesInfo),
+            },
             type: { kind: 'mutation' },
         },
         {
             label: 'Insertions',
             name: 'aminoAcidInsertions',
-            value: insertionsToCommaSeparatedString(aminoAcidInsertions, suborganism),
-            header: 'Amino acid mutations',
+            value: '',
+            header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
+            customDisplay: {
+                type: 'list',
+                list: insertionsMap(aminoAcidInsertions, referenceGenomesInfo),
+            },
             type: { kind: 'mutation' },
         },
     ];
@@ -199,7 +197,7 @@ function mutationDetails(
 
 function toTableData(
     config: Schema,
-    suborganism: Suborganism | null,
+    referenceGenomesInfo: ReferenceGenomesInfo,
     {
         details,
         nucleotideMutations,
@@ -218,7 +216,7 @@ function toTableData(
         .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
         .filter((metadata) => details[metadata.name] !== null && metadata.name in details)
         .map((metadata) => ({
-            label: metadata.displayName ?? sentenceCase(metadata.name),
+            label: metadata.displayName ?? metadata.name,
             name: metadata.name,
             customDisplay: metadata.customDisplay,
             value: mapValueToDisplayedValue(details[metadata.name], metadata),
@@ -233,7 +231,7 @@ function toTableData(
             aminoAcidMutations,
             nucleotideInsertions,
             aminoAcidInsertions,
-            suborganism,
+            referenceGenomesInfo,
         );
         data.push(...mutations);
     }
@@ -255,15 +253,17 @@ function mapValueToDisplayedValue(value: undefined | null | string | number | bo
 
 export function substitutionsMap(
     mutationData: MutationProportionCount[],
-    suborganism: Suborganism | null,
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    nucleotide: boolean = false,
 ): SegmentedMutations[] {
     const result: SegmentedMutations[] = [];
     const substitutionData = mutationData.filter((m) => m.mutationTo !== '-');
+    const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomesInfo);
 
     const segmentMutationsMap = new Map<string, MutationBadgeData[]>();
     for (const entry of substitutionData) {
         const { sequenceName, mutationFrom, position, mutationTo } = entry;
-        const sequenceDisplayName = computeSequenceDisplayName(sequenceName, suborganism);
+        const sequenceDisplayName = sequenceName ? (lapisNameToDisplayNameMap.get(sequenceName) ?? null) : null;
 
         const sequenceKey = sequenceDisplayName ?? '';
         if (!segmentMutationsMap.has(sequenceKey)) {
@@ -271,7 +271,8 @@ export function substitutionsMap(
         }
         segmentMutationsMap
             .get(sequenceKey)!
-            .push({ sequenceName: sequenceDisplayName, mutationFrom, position, mutationTo });
+            // Do not show the segment name in the nucleotide mutation badges
+            .push({ sequenceName: nucleotide ? null : sequenceDisplayName, mutationFrom, position, mutationTo });
     }
     for (const [segment, mutations] of segmentMutationsMap.entries()) {
         result.push({ segment, mutations });
@@ -280,37 +281,26 @@ export function substitutionsMap(
     return result;
 }
 
-function computeSequenceDisplayName(
-    originalSequenceName: string | null,
-    suborganism: Suborganism | null,
-): string | null {
-    if (originalSequenceName === null || suborganism === SINGLE_REFERENCE || suborganism === null) {
-        return originalSequenceName;
-    }
-
-    if (originalSequenceName === suborganism) {
-        // there is only one segment in which case the name should be null
-        return null;
-    }
-
-    const prefixToTrim = `${suborganism}-`;
-    return originalSequenceName.startsWith(prefixToTrim)
-        ? originalSequenceName.substring(prefixToTrim.length)
-        : originalSequenceName;
-}
-
-function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[], suborganism: Suborganism | null) {
+function deletionsMap(
+    mutationData: MutationProportionCount[],
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    nucleotide: boolean = false,
+): SegmentedMutationStrings[] {
     const segmentPositions = new Map<string | null, number[]>();
+    const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomesInfo);
     mutationData
         .filter((m) => m.mutationTo === '-')
         .forEach((m) => {
-            const segment = computeSequenceDisplayName(m.sequenceName, suborganism);
+            const segment = m.sequenceName ? (lapisNameToDisplayNameMap.get(m.sequenceName) ?? null) : null;
             const position = m.position;
             if (!segmentPositions.has(segment)) {
                 segmentPositions.set(segment, []);
             }
             segmentPositions.get(segment)!.push(position);
         });
+    if (segmentPositions.size === 0) {
+        return [];
+    }
     const segmentRanges = [...segmentPositions.entries()].map(([segment, positions]) => {
         const sortedPositions = positions.sort((a, b) => a - b);
         const ranges = [];
@@ -342,19 +332,44 @@ function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]
             return 1;
         }
     });
-    return segmentRanges
-        .map(({ segment, ranges }) => ranges.map((range) => `${segment !== null ? segment + ':' : ''}${range}`))
-        .flat()
-        .join(', ');
+    return segmentRanges.map(({ segment, ranges }) => ({
+        segment: segment ?? '',
+        mutations: ranges.map((range) => `${!nucleotide && segment !== null ? segment + ':' : ''}${range}`),
+    }));
 }
 
-function insertionsToCommaSeparatedString(insertionData: InsertionCount[], suborganism: Suborganism | null) {
-    return insertionData
-        .map((insertion) => {
-            const sequenceDisplayName = computeSequenceDisplayName(insertion.sequenceName, suborganism);
+function insertionsMap(
+    insertionData: InsertionCount[],
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    nucleotide: boolean = false,
+): SegmentedMutationStrings[] {
+    const result: SegmentedMutationStrings[] = [];
+    const insertions = new Map<string, string[]>();
+    const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomesInfo);
+    const segmentInsertionsMap = insertionData.map((insertion) => {
+        const sequenceDisplayName = insertion.sequenceName
+            ? lapisNameToDisplayNameMap.get(insertion.sequenceName)
+            : null;
 
-            const sequenceNamePart = sequenceDisplayName !== null ? sequenceDisplayName + ':' : '';
-            return `ins_${sequenceNamePart}${insertion.position}:${insertion.insertedSymbols}`;
-        })
-        .join(', ');
+        const sequenceNamePart = !nucleotide && sequenceDisplayName ? sequenceDisplayName + ':' : '';
+        return {
+            segment: sequenceDisplayName ?? '',
+            insertion: `ins_${sequenceNamePart}${insertion.position}:${insertion.insertedSymbols}`,
+        };
+    });
+    if (segmentInsertionsMap.length === 0) {
+        return [];
+    }
+    for (const { segment, insertion } of segmentInsertionsMap) {
+        if (!insertions.has(segment)) {
+            insertions.set(segment, []);
+        }
+        insertions.get(segment)!.push(insertion);
+    }
+
+    for (const [segment, mutations] of insertions.entries()) {
+        result.push({ segment, mutations });
+    }
+
+    return result;
 }

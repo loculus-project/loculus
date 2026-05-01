@@ -137,7 +137,7 @@ updates:
           - "minor"
           - "patch"
   - package-ecosystem: pip
-    directory: silo-import
+    directory: loculus-silo
     schedule:
       interval: monthly
     groups:

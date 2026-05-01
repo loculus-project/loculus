@@ -51,7 +51,7 @@ class EnaOrganismDetails(BaseModel):
     topology: Topology = Topology.LINEAR
     segments: list[str]
     loculusOrganism: str | None = None  # noqa: N815
-    suborganismIdentifierField: str | None = None  # noqa: N815
+    referenceIdentifierField: str | None = None  # noqa: N815
 
     def is_multi_segment(self) -> bool:
         return len(self.segments) > 1
@@ -109,6 +109,8 @@ class Config(BaseModel):
     ingest_pipeline_submission_group: int
     ena_checklist: str | None = None
     set_alias_suffix: str | None = None  # Add to test revisions in dev
+    # Add timestamp and entropy to test sample aliases in integration tests to avoid name clashes
+    random_alias: bool = False
 
     ena_http_timeout_seconds: int = 60
     ena_public_search_timeout_seconds: int = 120

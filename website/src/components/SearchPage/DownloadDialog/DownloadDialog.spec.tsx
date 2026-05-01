@@ -10,37 +10,14 @@ import { ACCESSION_VERSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } fr
 import type { Metadata, Schema } from '../../../types/config.ts';
 import { versionStatuses } from '../../../types/lapis';
 import {
-    type ReferenceGenomesLightweightSchema,
-    type ReferenceAccession,
-    SINGLE_REFERENCE,
-} from '../../../types/referencesGenomes.ts';
+    SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+    SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+    MOCK_REFERENCE_GENOMES_INFO,
+    MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
+} from '../../../types/referenceGenomes.spec.ts';
+import { type ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
-
-const defaultAccession: ReferenceAccession = {
-    name: 'main',
-    insdcAccessionFull: undefined,
-};
-
-const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
-    [SINGLE_REFERENCE]: {
-        nucleotideSegmentNames: ['main'],
-        geneNames: ['gene1', 'gene2'],
-        insdcAccessionFull: [defaultAccession],
-    },
-};
-
-const multiPathogenReferenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema = {
-    suborganism1: {
-        nucleotideSegmentNames: ['main'],
-        geneNames: ['gene1', 'gene2'],
-        insdcAccessionFull: [defaultAccession],
-    },
-    suborganism2: {
-        nucleotideSegmentNames: ['main'],
-        geneNames: ['gene1', 'gene2'],
-        insdcAccessionFull: [defaultAccession],
-    },
-};
+import type { SegmentAndGeneInfo, SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 
 const defaultLapisUrl = 'https://lapis';
 const defaultOrganism = 'ebola';
@@ -64,26 +41,36 @@ const mockMetadata: Metadata[] = [
         header: 'Group 1',
         includeInDownloadsByDefault: true,
     },
+    {
+        name: 'genotype',
+        displayName: 'Genotype display name',
+        type: 'string',
+        includeInDownloadsByDefault: true,
+    },
 ];
+
+const mockSegmentAndGeneInfo: SegmentAndGeneInfo = { nucleotideSegmentInfos: [], geneInfos: [] };
 
 async function renderDialog({
     downloadParams = new SequenceEntrySelection(new Set()),
     allowSubmissionOfConsensusSequences = true,
     dataUseTermsEnabled = true,
+    dataUseTermsAgreementHTML,
     richFastaHeaderFields,
     metadata = mockMetadata,
-    selectedSuborganism = null,
-    suborganismIdentifierField,
-    referenceGenomesLightweightSchema = defaultReferenceGenomesLightweightSchema,
+    selectedReferenceNames = { main: null },
+    referenceIdentifierField,
+    referenceGenomesInfo = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 }: {
     downloadParams?: SequenceFilter;
     allowSubmissionOfConsensusSequences?: boolean;
     dataUseTermsEnabled?: boolean;
+    dataUseTermsAgreementHTML?: string;
     richFastaHeaderFields?: string[];
     metadata?: Metadata[];
-    selectedSuborganism?: string | null;
-    suborganismIdentifierField?: string;
-    referenceGenomesLightweightSchema?: ReferenceGenomesLightweightSchema;
+    selectedReferenceNames?: SegmentReferenceSelections;
+    referenceIdentifierField?: string;
+    referenceGenomesInfo?: ReferenceGenomesInfo;
 } = {}) {
     const schema: Schema = {
         defaultOrder: 'ascending',
@@ -104,13 +91,14 @@ async function renderDialog({
                 new DownloadUrlGenerator(defaultOrganism, defaultLapisUrl, dataUseTermsEnabled, richFastaHeaderFields)
             }
             sequenceFilter={downloadParams}
-            referenceGenomesLightweightSchema={referenceGenomesLightweightSchema}
+            referenceGenomesInfo={referenceGenomesInfo}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             dataUseTermsEnabled={dataUseTermsEnabled}
+            dataUseTermsAgreementHTML={dataUseTermsAgreementHTML}
             schema={schema}
             richFastaHeaderFields={richFastaHeaderFields}
-            selectedSuborganism={selectedSuborganism}
-            suborganismIdentifierField={suborganismIdentifierField}
+            selectedReferenceNames={selectedReferenceNames}
+            referenceIdentifierField={referenceIdentifierField}
         />,
     );
 
@@ -173,7 +161,8 @@ describe('DownloadDialog', () => {
                     field1: 'value1',
                 },
                 {},
-                { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
+                mockSegmentAndGeneInfo,
+                MOCK_REFERENCE_GENOMES_INFO,
             ),
         });
         await checkAgreement();
@@ -181,7 +170,7 @@ describe('DownloadDialog', () => {
         let { path, query } = parseDownloadHref();
         expectRouteInPathMatches(path, `/sample/details`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
+            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
 
         await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
@@ -210,7 +199,7 @@ describe('DownloadDialog', () => {
         let { path, query } = parseDownloadHref();
         expectRouteInPathMatches(path, `/sample/details`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2&accessionVersion=SEQID1&accessionVersion=SEQID2/,
+            /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
 
         await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
@@ -302,7 +291,7 @@ describe('DownloadDialog', () => {
         const expectedPrefix = 'https://lapis/sample/details?downloadAsFile=true&downloadFileBasename=ebola_metadata_';
         expectStringStartsWith(copiedText, expectedPrefix);
 
-        const expectedSuffix = '&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2';
+        const expectedSuffix = '&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype';
         expectStringEndsWith(copiedText, expectedSuffix);
 
         clipboardMock.mockRestore();
@@ -318,7 +307,8 @@ describe('DownloadDialog', () => {
                     field2: 'value2',
                 },
                 {},
-                { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
+                mockSegmentAndGeneInfo,
+                MOCK_REFERENCE_GENOMES_INFO,
             ),
         });
         await checkAgreement();
@@ -367,7 +357,8 @@ describe('DownloadDialog', () => {
                         field1: 'value1',
                     },
                     {},
-                    { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
+                    mockSegmentAndGeneInfo,
+                    MOCK_REFERENCE_GENOMES_INFO,
                 ),
             });
 
@@ -384,23 +375,43 @@ describe('DownloadDialog', () => {
     });
 
     describe('multi pathogen case', () => {
-        test('should disable the aligned sequence downloads when no suborganism is selected', async () => {
+        test('should disable the aligned sequence downloads when no reference is selected', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
-                selectedSuborganism: null,
-                suborganismIdentifierField: 'genotype',
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceIdentifierField: 'genotype',
             });
 
-            expect(screen.getByText('select a genotype', { exact: false })).toBeVisible();
+            expect(
+                screen.getByText('Select a genotype with the search UI to enable download of aligned sequences.', {
+                    exact: false,
+                }),
+            ).toBeVisible();
             expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
             expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
         });
 
-        test('should download all raw segments when no suborganism is selected', async () => {
+        test('should partially disable the aligned sequence downloads when no reference is selected', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
-                selectedSuborganism: null,
-                suborganismIdentifierField: 'genotype',
+                referenceGenomesInfo: MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceIdentifierField: 'genotype',
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                selectedReferenceNames: { L: null, S: 'singleReference' },
+            });
+
+            expect(
+                screen.getByText(
+                    'No genotype has been selected for the segment: L (segment). Select one in the search UI to enable download of aligned sequences for these segments.',
+                    { exact: false },
+                ),
+            ).toBeVisible();
+            expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).toBeInTheDocument();
+            expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).toBeInTheDocument();
+        });
+
+        test('should download all raw segments when no reference is selected', async () => {
+            await renderDialog({
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceIdentifierField: 'genotype',
             });
 
             await checkAgreement();
@@ -411,50 +422,84 @@ describe('DownloadDialog', () => {
             expect(query).contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
         });
 
-        test('should enable the aligned sequence downloads when suborganism is selected', async () => {
+        test('should use display name fasta header template when display name is selected on multi-ref organism', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
-                selectedSuborganism: 'suborganism1',
-                suborganismIdentifierField: 'genotype',
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceIdentifierField: 'genotype',
+                richFastaHeaderFields: ['displayName'],
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
+            await userEvent.click(screen.getByLabelText(displayNameFastaHeaderStyleLabel));
+
+            const { path, query } = parseDownloadHref();
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            expect(query).contains('fastaHeaderTemplate=%7BdisplayName%7D');
+            expect(query).not.contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
+        });
+
+        test('should download all unaligned segments when no reference is selected for multi-segmented reference genomes', async () => {
+            await renderDialog({
+                referenceGenomesInfo: MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceIdentifierField: 'genotype',
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
+
+            const { path, query } = parseDownloadHref();
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            expect(query).contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
+            expect(query).contains('segments=L-ref1%2CL-ref2');
+        });
+
+        test('should enable the aligned sequence downloads when reference is selected', async () => {
+            await renderDialog({
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                selectedReferenceNames: { main: 'ref1' },
+                referenceIdentifierField: 'genotype',
             });
 
             expect(screen.getByLabelText(alignedNucleotideSequencesLabel)).toBeEnabled();
             expect(screen.getByLabelText(alignedAminoAcidSequencesLabel)).toBeEnabled();
         });
 
-        test('should download only the selected raw suborganism sequences when suborganism is selected', async () => {
+        test('should download only the selected raw reference sequences when reference is selected', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
-                selectedSuborganism: 'suborganism1',
-                suborganismIdentifierField: 'genotype',
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                selectedReferenceNames: { main: 'ref1' },
+                referenceIdentifierField: 'genotype',
             });
 
             await checkAgreement();
             await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
 
             const { path } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences/suborganism1`);
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            const { query } = parseDownloadHref();
+            expect(query).toMatch(/segments=ref1/);
         });
 
-        test('should download only the selected aligned suborganism sequences when suborganism is selected', async () => {
+        test('should download only the selected aligned reference sequences when reference is selected', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
-                selectedSuborganism: 'suborganism1',
-                suborganismIdentifierField: 'genotype',
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                selectedReferenceNames: { main: 'ref1' },
+                referenceIdentifierField: 'genotype',
             });
 
             await checkAgreement();
             await userEvent.click(screen.getByLabelText(alignedNucleotideSequencesLabel));
 
             const { path } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/alignedNucleotideSequences/suborganism1`);
+            expectRouteInPathMatches(path, `/sample/alignedNucleotideSequences/ref1`);
         });
 
-        test('should download only the selected aligned suborganism amino acid sequences when suborganism is selected', async () => {
+        test('should download only the selected aligned reference amino acid sequences when reference is selected', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
-                selectedSuborganism: 'suborganism1',
-                suborganismIdentifierField: 'genotype',
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                selectedReferenceNames: { main: 'ref1' },
+                referenceIdentifierField: 'genotype',
             });
 
             await checkAgreement();
@@ -462,17 +507,18 @@ describe('DownloadDialog', () => {
             await userEvent.selectOptions(screen.getByRole('combobox', { name: 'alignedAminoAcidSequences' }), 'gene2');
 
             const { path } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/alignedAminoAcidSequences/suborganism1-gene2`);
+            expectRouteInPathMatches(path, `/sample/alignedAminoAcidSequences/gene2-ref1`);
         });
 
-        const metadataWithOnlyForSuborganism: Metadata[] = [
+        const metadataWithOnlyForReferenceName: Metadata[] = [
             {
                 name: 'field1',
                 displayName: 'Field 1',
                 type: 'string',
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
-                onlyForSuborganism: 'suborganism1',
+                onlyForReference: 'ref1',
+                relatesToSegment: 'main',
             },
             {
                 name: 'field2',
@@ -480,7 +526,8 @@ describe('DownloadDialog', () => {
                 type: 'string',
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
-                onlyForSuborganism: 'suborganism2',
+                onlyForReference: 'ref2',
+                relatesToSegment: 'main',
             },
             {
                 name: ACCESSION_VERSION_FIELD,
@@ -489,12 +536,11 @@ describe('DownloadDialog', () => {
             },
         ];
 
-        test('should include "onlyForSuborganism" selected fields in download if no suborganism is selected', async () => {
+        test('should include "onlyForReference" selected fields in download if no reference is selected', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
-                selectedSuborganism: null,
-                suborganismIdentifierField: 'genotype',
-                metadata: metadataWithOnlyForSuborganism,
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                referenceIdentifierField: 'genotype',
+                metadata: metadataWithOnlyForReferenceName,
             });
 
             await checkAgreement();
@@ -505,12 +551,12 @@ describe('DownloadDialog', () => {
             expect(query).toMatch(/fields=accessionVersion%2Cfield1%2Cfield2$/);
         });
 
-        test('should exclude selected fields from download if they are not for selected suborganism', async () => {
+        test('should exclude selected fields from download if they are not for selected reference', async () => {
             await renderDialog({
-                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
-                selectedSuborganism: 'suborganism2',
-                suborganismIdentifierField: 'genotype',
-                metadata: metadataWithOnlyForSuborganism,
+                referenceGenomesInfo: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
+                selectedReferenceNames: { main: 'ref2' },
+                referenceIdentifierField: 'genotype',
+                metadata: metadataWithOnlyForReferenceName,
             });
 
             await checkAgreement();

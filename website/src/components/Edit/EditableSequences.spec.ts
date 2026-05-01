@@ -55,9 +55,9 @@ describe('EditableSequences', () => {
             ]);
         }
 
-        expect(() =>
-            editableSequences.update('another key', 'GG', 'another key', 'FASTAHEADER_anotherkey'),
-        ).toThrowError('Maximum limit reached — you can add up to 1 sequence file(s) only.');
+        expect(() => editableSequences.update('another key', 'GG', 'another key', 'FASTAHEADER_anotherkey')).toThrow(
+            'Maximum limit reached — you can add up to 1 sequence file(s) only.',
+        );
         editableSequences = editableSequences.update(firstKey, null, null, null);
         expect(editableSequences.rows).toEqual([
             { label: 'Add a segment', value: null, fastaHeader: null, initialValue: null, key: expect.any(String) },
@@ -149,7 +149,7 @@ describe('EditableSequences', () => {
             ]);
         }
 
-        expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrowError(
+        expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrow(
             'Maximum limit reached — you can add up to 2 sequence file(s) only.',
         );
         expect(editableSequences.getFastaIds()).toEqual(`${FASTAHEADER} ${OTHER_FASTAHEADER}`);
@@ -206,9 +206,9 @@ describe('EditableSequences', () => {
 
         const rows = editableSequences.rows;
         expect(rows).deep.equals([{ label: key, value: SEQUENCE, initialValue: null, fastaHeader: FASTAHEADER, key }]);
-        expect(() =>
-            editableSequences.update('another key', OTHER_SEQUENCE, OTHER_LABEL, OTHER_FASTAHEADER),
-        ).toThrowError('Maximum limit reached — you can add up to 1 sequence file(s) only.');
+        expect(() => editableSequences.update('another key', OTHER_SEQUENCE, OTHER_LABEL, OTHER_FASTAHEADER)).toThrow(
+            'Maximum limit reached — you can add up to 1 sequence file(s) only.',
+        );
     });
 
     test('GIVEN MAX_SEQUENCES_PER_ENTRY is 1 THEN only allows 1 input and fasta header does not contain the segment name', async () => {
@@ -230,9 +230,9 @@ describe('EditableSequences', () => {
 
         const rows = editableSequences.rows;
         expect(rows).deep.equals([{ label: LABEL, value: SEQUENCE, initialValue: null, fastaHeader: key, key }]);
-        expect(() =>
-            editableSequences.update('another key', OTHER_SEQUENCE, OTHER_LABEL, OTHER_FASTAHEADER),
-        ).toThrowError('Maximum limit reached — you can add up to 1 sequence file(s) only.');
+        expect(() => editableSequences.update('another key', OTHER_SEQUENCE, OTHER_LABEL, OTHER_FASTAHEADER)).toThrow(
+            'Maximum limit reached — you can add up to 1 sequence file(s) only.',
+        );
     });
 
     test('GIVEN no initial data and max 2 seq per entry WHEN I add and remove a sequence THEN input is also removed again', () => {

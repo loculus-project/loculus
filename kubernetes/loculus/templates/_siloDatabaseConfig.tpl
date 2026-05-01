@@ -6,14 +6,14 @@
   {{- end }}
   {{- if .lineageSystem }}
   generateIndex: true
-  generateLineageIndex: true
+  generateLineageIndex: {{ .lineageSystem }} {{- /* must match the file name in the lineageDefinitionFilenames */}}
   {{- end }}
 {{- end }}
 
 
 {{- define "loculus.siloDatabaseConfig" }}
 {{- $schema := .schema }}
-{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" .referenceGenomes | fromYaml).segments }}
+{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).segments }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 schema:
   instanceName: {{ $schema.organismName }}

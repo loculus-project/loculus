@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { type FC, useEffect } from 'react';
 
 import AccessionSearchBox from './AccessionSearchBox';
 import type { Organism } from '../../config';
@@ -10,6 +10,7 @@ import { SandwichIcon } from '../SandwichIcon';
 import { Button } from '../common/Button';
 
 type SandwichMenuProps = {
+    accessionPrefix: string;
     topNavigationItems: TopNavigationItems;
     currentOrganism?: Organism;
     knownOrganisms: Organism[];
@@ -19,6 +20,7 @@ type SandwichMenuProps = {
 };
 
 export const SandwichMenu: FC<SandwichMenuProps> = ({
+    accessionPrefix,
     topNavigationItems,
     currentOrganism,
     knownOrganisms,
@@ -26,7 +28,13 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
     siteName,
     activeTopNavigationItem,
 }) => {
-    const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
+    const { isOpen, open: openMenu, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
+
+    useEffect(() => {
+        const handler = () => openMenu();
+        window.addEventListener('open-sandwich-menu', handler);
+        return () => window.removeEventListener('open-sandwich-menu', handler);
+    }, [openMenu]);
 
     return (
         <div className='relative'>
@@ -50,7 +58,12 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
                             </a>
                         </div>
                         <div className='py-3 pr-2'>
-                            <AccessionSearchBox defaultOpen fullWidth onSubmitSuccess={closeMenu} />
+                            <AccessionSearchBox
+                                accessionPrefix={accessionPrefix}
+                                defaultOpen
+                                fullWidth
+                                onSubmitSuccess={closeMenu}
+                            />
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 border-y-2 border-gray-300'>
                             <div className='py-3'>

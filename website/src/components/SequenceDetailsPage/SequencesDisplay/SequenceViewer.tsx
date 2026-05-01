@@ -1,6 +1,7 @@
 import { noCase } from 'change-case';
 import { type FC } from 'react';
 
+import { SequenceActionButtons } from './SequenceActionButtons.tsx';
 import { getLapisUrl } from '../../../config.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
@@ -14,7 +15,7 @@ type Props = {
     accessionVersion: string;
     clientConfig: ClientConfig;
     sequenceType: SequenceType;
-    isMultiSegmented: boolean;
+    useLapisMultiSegmentedEndpoint: boolean;
 };
 
 export const SequencesViewer: FC<Props> = ({
@@ -22,12 +23,12 @@ export const SequencesViewer: FC<Props> = ({
     accessionVersion,
     clientConfig,
     sequenceType,
-    isMultiSegmented,
+    useLapisMultiSegmentedEndpoint,
 }) => {
     const { data, error, isLoading } = lapisClientHooks(getLapisUrl(clientConfig, organism)).useGetSequence(
         accessionVersion,
         sequenceType,
-        isMultiSegmented,
+        useLapisMultiSegmentedEndpoint,
     );
 
     if (error !== null) {
@@ -47,11 +48,17 @@ export const SequencesViewer: FC<Props> = ({
         return <span className='text-gray-600 italic'>None</span>;
     }
 
-    const header = '>' + data.name + (sequenceType.name.label === 'main' ? '' : `_${sequenceType.name.label}`);
+    const sequenceName = data.name + (sequenceType.name.name === 'main' ? '' : `_${sequenceType.name.name}`);
+    const header = '>' + sequenceName;
 
     return (
-        <div className='h-80 overflow-auto'>
-            <FixedLengthTextViewer text={data.sequence} maxLineLength={LINE_LENGTH} header={header} />
+        <div className='relative'>
+            <div className='absolute top-0 right-0 z-10'>
+                <SequenceActionButtons sequenceName={sequenceName} sequence={data.sequence} />
+            </div>
+            <div className='h-80 overflow-auto'>
+                <FixedLengthTextViewer text={data.sequence} maxLineLength={LINE_LENGTH} header={header} />
+            </div>
         </div>
     );
 };
