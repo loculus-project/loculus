@@ -193,12 +193,13 @@ COLUMN_CONFIGS = {
         accession_field_name_prefix="gca_accession",
         checker_class=ENAVisibilityChecker,
     ),
-    (EntityType.ASSEMBLY, "ncbi_gca_first_publicly_visible"): ColumnCheckConfig(
-        entry_class=AssemblyTableEntry,
-        visibility_column="ncbi_gca_first_publicly_visible",
-        accession_field_name_prefix="gca_accession",
-        checker_class=NCBIVisibilityChecker,
-    ),
+    # NCBI no longer exposes GCA accessions - stop checking for these
+    # (EntityType.ASSEMBLY, "ncbi_gca_first_publicly_visible"): ColumnCheckConfig(
+    #     entry_class=AssemblyTableEntry,
+    #     visibility_column="ncbi_gca_first_publicly_visible",
+    #     accession_field_name_prefix="gca_accession",
+    #     checker_class=NCBIVisibilityChecker,
+    # ),
 }
 
 

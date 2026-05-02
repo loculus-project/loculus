@@ -23,6 +23,7 @@ from .submission_db_helper import (
     db_init,
     find_conditions_in_db,
     find_stuck_in_submission_db,
+    update_db_where_conditions,
     update_with_retry,
 )
 
@@ -264,6 +265,18 @@ def upload_handle_errors(
         )
 
 
+def delete_submitted_entries(db_engine: Engine):
+    """Delete sequence metadata of entries in submission_table in state SENT_TO_LOCULUS
+    as this is no longer needed after submission to Loculus."""
+    number_deleted = update_db_where_conditions(
+        db_engine,
+        model_class=SubmissionTableEntry,
+        conditions={"status_all": StatusAll.SENT_TO_LOCULUS},
+        update_values={"seq_metadata": {}, "status_all": StatusAll.CLEANUP_COMPLETE},
+    )
+    logger.info(f"Deleted sequence metadata for {number_deleted} entries in state SENT_TO_LOCULUS")
+
+
 def upload_external_metadata(config: Config, stop_event: threading.Event):
     db_engine = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
@@ -283,4 +296,5 @@ def upload_external_metadata(config: Config, stop_event: threading.Event):
             config,
             slack_config,
         )
+        delete_submitted_entries(db_engine)
         time.sleep(config.time_between_iterations)
