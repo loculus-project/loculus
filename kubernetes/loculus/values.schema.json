@@ -1510,6 +1510,12 @@
       "default": false,
       "description": "If true, disables ingestion services."
     },
+    "ingestAsCronJob": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, runs ingest as CronJobs (twice daily, staggered by organism) instead of always-running Deployments."
+    },
     "disableEnaSubmission": {
       "groups": ["services"],
       "type": "boolean",

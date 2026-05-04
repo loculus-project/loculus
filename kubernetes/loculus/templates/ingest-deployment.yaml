@@ -1,9 +1,91 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- if not .Values.disableIngest }}
-{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- range $i, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 {{- $organismContent := $item.contents }}
 {{- if $organismContent.ingest }}
+{{- if $.Values.ingestAsCronJob }}
+{{- $hourOffset := mod $i 12 }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: loculus-ingest-cronjob-{{ $key }}
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  schedule: {{ printf "0 %d,%d * * *" $hourOffset (add $hourOffset 12) | quote }}
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
+      template:
+        metadata:
+          labels:
+            app: loculus
+            component: loculus-ingest-cronjob-{{ $key }}
+        spec:
+          {{- include "possiblePriorityClassName" $ | nindent 10 }}
+          restartPolicy: OnFailure
+          initContainers:
+            - name: version-check
+              image: busybox
+              {{- include "loculus.resources" (list "ingest-init" $.Values) | nindent 14 }}
+              command: ['sh', '-c', '
+                CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
+                DOCKER_TAG="{{ $dockerTag }}";
+                echo "Config version: $CONFIG_VERSION";
+                echo "Docker tag: $DOCKER_TAG";
+                if [ "$CONFIG_VERSION" != "$DOCKER_TAG" ]; then
+                  echo "Version mismatch: ConfigMap version $CONFIG_VERSION does not match docker tag $DOCKER_TAG";
+                  exit 1;
+                else
+                  echo "Version match confirmed";
+                fi
+              ']
+              volumeMounts:
+                - name: loculus-ingest-config-volume-{{ $key }}
+                  mountPath: /package/config/config.yaml
+                  subPath: config.yaml
+          containers:
+            - name: ingest-{{ $key }}
+              image: {{ $organismContent.ingest.image}}:{{ $dockerTag }}
+              imagePullPolicy: {{ $.Values.imagePullPolicy }}
+              {{- include "loculus.resources" (list "ingest" $.Values) | nindent 14 }}
+              env:
+                - name: KEYCLOAK_INGEST_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: service-accounts
+                      key: insdcIngestUserPassword
+                - name: SLACK_HOOK
+                  valueFrom:
+                    secretKeyRef:
+                      name: slack-notifications
+                      key: slack-hook
+                - name: NCBI_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: ingest-ncbi
+                      key: api-key
+              args:
+                - snakemake
+                - results/submitted
+                - results/revised
+                - results/approved
+                - --all-temp # Reduce disk usage by not keeping files around
+          {{- if $organismContent.ingest.configFile }}
+              volumeMounts:
+                - name: loculus-ingest-config-volume-{{ $key }}
+                  mountPath: /package/config/config.yaml
+                  subPath: config.yaml
+          volumes:
+            - name: loculus-ingest-config-volume-{{ $key }}
+              configMap:
+                name: loculus-ingest-config-{{ $key }}
+          {{- end }}
+{{- else }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -85,6 +167,7 @@ spec:
           configMap:
             name: loculus-ingest-config-{{ $key }}
       {{- end }}
+{{- end }}
 ---
 apiVersion: batch/v1
 kind: CronJob

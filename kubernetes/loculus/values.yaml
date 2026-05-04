@@ -31,6 +31,7 @@ disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
 disableIngest: false
+ingestAsCronJob: false
 disableEnaSubmission: true
 disableTaxonomyService: false
 readOnlyMode: false
