@@ -730,6 +730,12 @@
                                 "docsIncludePrefix": false,
                                 "type": "array",
                                 "description": "Array of strings. The names of the genes to be extracted from the sequence alignment results (should correspond to gene names in the nextclade dataset)."
+                              },
+                              "nextclade_additional_args": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "array",
+                                "description": "Array of strings. Additional arguments to pass to nextclade when aligning this segment."
                               }
                             }
                           }
@@ -1515,6 +1521,12 @@
       "type": "boolean",
       "default": false,
       "description": "If true, disables the taxonomy service deployment."
+    },
+    "readOnlyMode": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, the instance runs in read-only mode: the backend rejects write requests (POST/PUT/DELETE/PATCH) with 503 Service Unavailable, and the website hides login/submission entry points and shows a read-only banner."
     },
     "organisms": {
       "groups": ["organism-conf"],

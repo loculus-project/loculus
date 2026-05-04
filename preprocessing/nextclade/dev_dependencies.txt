@@ -1,6 +1,6 @@
 mypy
 ruff
-types-PyYAML
+types-pyyaml
 types-requests
 types-pytz
 types-python-dateutil
