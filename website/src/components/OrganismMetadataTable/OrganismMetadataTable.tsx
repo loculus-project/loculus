@@ -278,9 +278,14 @@ const MetadataTableSection: FC<MetadataTableProps> = (props) => {
     );
 };
 
-const FieldNameCell: FC<{ header: string; field: TypedInputField | Metadata }> = ({ header, field }) => {
+const FieldNameCell: FC<{ header: string; field: TypedInputField | Metadata; fieldType: FieldType }> = ({
+    header,
+    field,
+    fieldType,
+}) => {
     const handleFieldLink = () => {
         const params = new URLSearchParams(window.location.search);
+        params.set(TableQueryParams.FIELD_TYPE, fieldType);
         const fieldLinkId = getFieldLinkId(header, field.name);
         const newUrl = getUrl(window.location.origin, window.location.pathname, params, fieldLinkId);
         window.history.replaceState({ path: newUrl }, '', newUrl);
@@ -321,7 +326,7 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                           return (
                               <tr id={getFieldLinkId(props.header, field.name)} key={field.name}>
                                   <td className='border border-gray-300 px-4 py-2'>
-                                      <FieldNameCell header={props.header} field={field} />
+                                      <FieldNameCell header={props.header} field={field} fieldType={FieldType.INPUT} />
                                   </td>
                                   <td className='border border-gray-300 px-4 py-2'>{field.type}</td>
                                   <td className='border border-gray-300 px-4 py-2'>
@@ -337,7 +342,7 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                     : props.fields.map((field) => (
                           <tr id={getFieldLinkId(props.header, field.name)} key={field.name}>
                               <td className='border border-gray-300 px-4 py-2'>
-                                  <FieldNameCell header={props.header} field={field} />
+                                  <FieldNameCell header={props.header} field={field} fieldType={FieldType.GENERATED} />
                               </td>
                               <td className='border border-gray-300 px-4 py-2'>
                                   <FormattedText text={field.definition ?? ''} formatLinks />
