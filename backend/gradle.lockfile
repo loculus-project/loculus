@@ -28,12 +28,8 @@ com.github.docker-java:docker-java-transport:3.7.1=testCompileClasspath,testRunt
 com.github.java-json-tools:json-patch:1.13=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.github.luben:zstd-jni:1.5.7-7=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.github.stephenc.jcip:jcip-annotations:1.0-1=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-<<<<<<< seqset-citations
-com.google.errorprone:error_prone_annotations:2.40.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,swiftExportClasspathResolvable,testCompileClasspath,testRuntimeClasspath
-=======
 com.google.errorprone:error_prone_annotations:2.40.0=swiftExportClasspathResolvable
 com.google.errorprone:error_prone_annotations:2.41.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
->>>>>>> main
 com.google.guava:failureaccess:1.0.3=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.google.guava:guava:33.5.0-jre=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
