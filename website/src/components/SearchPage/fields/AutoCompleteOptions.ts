@@ -227,8 +227,8 @@ const createLineageOptionsHook = (
                 }
 
                 const aliases = lineageDefinition[lineageName].aliases ?? [];
-                const labels = showAliasOnly && aliases.length > 0 ? aliases : [lineageName];
-                labels.forEach((a) => options.push({ option: a, value: lineageName, count }));
+                const label = showAliasOnly && aliases.length > 0 ? aliases[0] : lineageName;
+                options.push({ option: label, value: lineageName, count });
             });
         }
 
