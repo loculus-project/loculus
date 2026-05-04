@@ -45,7 +45,7 @@ export const LineageField: FC<LineageFieldProps> = ({
     lapisSearchParameters,
     mode = 'lineage',
 }) => {
-    const { defaultIncludeSublineages, includeZeroCounts, showAliasOnly, checkBoxLabel} = MODE_CONFIGS[mode];
+    const { defaultIncludeSublineages, includeZeroCounts, showAliasOnly, checkBoxLabel } = MODE_CONFIGS[mode];
 
     const [includeSublineages, _setIncludeSubLineages] = useState(
         fieldValue.endsWith('*') || (fieldValue === '' && defaultIncludeSublineages),
