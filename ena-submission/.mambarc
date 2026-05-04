@@ -4,3 +4,4 @@ channels:
 repodata_use_zst: true
 channel_priority: strict
 download_threads: 20
+use_sharded_repodata: false
