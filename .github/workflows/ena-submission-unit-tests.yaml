@@ -27,7 +27,6 @@ jobs:
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: "ena-submission/environment.yml"
-          condarc-file: "ena-submission/.mambarc"
           micromamba-version: "latest"
           cache-environment: true
       - name: Run ruff format check
@@ -41,7 +40,6 @@ jobs:
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: "ena-submission/environment.yml"
-          condarc-file: "ena-submission/.mambarc"
           micromamba-version: "latest"
           cache-environment: true
       - name: Run ruff check
@@ -56,7 +54,6 @@ jobs:
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: "ena-submission/environment.yml"
-          condarc-file: "ena-submission/.mambarc"
           micromamba-version: "latest"
           cache-environment: true
       - name: Install package

@@ -26,7 +26,6 @@ jobs:
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: preprocessing/nextclade/environment.yml
-          condarc-file: preprocessing/nextclade/.mambarc
           micromamba-version: 'latest'
           cache-environment: true
           post-cleanup: 'all'
@@ -46,7 +45,6 @@ jobs:
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: preprocessing/nextclade/environment.yml
-          condarc-file: preprocessing/nextclade/.mambarc
           micromamba-version: 'latest'
           cache-environment: true
           post-cleanup: 'all'
@@ -65,7 +63,6 @@ jobs:
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: preprocessing/nextclade/environment.yml
-          condarc-file: preprocessing/nextclade/.mambarc
           micromamba-version: 'latest'
           cache-environment: true
           post-cleanup: 'all'
