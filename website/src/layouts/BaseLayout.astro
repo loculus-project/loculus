@@ -19,9 +19,13 @@ const {
     bannerMessage: configBannerMessage,
     additionalHeadHTML,
     gitHubMainUrl,
+    readOnlyMode,
 } = websiteConfig;
 const remoteBannerMessage = await getRemoteBannerMessage();
-const bannerMessage = remoteBannerMessage ?? configBannerMessage;
+const readOnlyBannerMessage = readOnlyMode
+    ? 'This instance is in read-only mode. Submissions and login are disabled.'
+    : undefined;
+const bannerMessage = remoteBannerMessage ?? configBannerMessage ?? readOnlyBannerMessage;
 
 interface Props {
     title: string;

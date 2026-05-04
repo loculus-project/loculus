@@ -259,6 +259,7 @@ export const websiteConfig = z.object({
     enableSubmissionNavigationItem: z.boolean(),
     enableSubmissionPages: z.boolean(),
     enableDataUseTerms: z.boolean(),
+    readOnlyMode: z.boolean().default(false),
     dataUseTermsAgreementHTML: z.string().optional(),
     sequenceFlagging: sequenceFlaggingConfig.optional(),
 });

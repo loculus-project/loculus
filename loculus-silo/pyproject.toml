@@ -3,9 +3,9 @@ name = "silo-import"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
-    "zstandard>=0.22,<0.26",
-    "requests>=2.31,<3.0",
-    "orjsonl>=0.3,<2.0",
+    "zstandard>=0.25.0,<0.26",
+    "requests>=2.33.1,<3.0",
+    "orjsonl>=1.0.0,<2.0",
 ]
 
 [project.scripts]

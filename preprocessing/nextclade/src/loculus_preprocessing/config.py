@@ -65,6 +65,7 @@ class Reference(BaseModel):
     nextclade_dataset_server: str | None = None
     accepted_dataset_matches: list[str] = Field(default_factory=list)
     genes: list[str] = Field(default_factory=list)
+    nextclade_additional_args: list[str] = Field(default_factory=list)
 
 
 class Segment(BaseModel):
@@ -85,6 +86,7 @@ class NextcladeSequenceAndDataset(BaseModel):
     # Names of genes in the Nextclade dataset; when concatenated with gene_suffix
     # this must match the gene names expected by the backend and LAPIS
     genes: list[str] = Field(default_factory=list)
+    nextclade_additional_args: list[str] = Field(default_factory=list)
 
 
 class Config(BaseModel):
