@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 from requests import codes
-from taxonomy_service.api import app, get_db_connection
+from taxonomy_service.api import app, get_db_connection, init_app
 from taxonomy_service.config import Config, get_config
 
 client = TestClient(app)
@@ -25,7 +25,7 @@ mock_taxa = {
         "tax_id": 9605,
         "common_name": "humans",
         "scientific_name": "Homo",
-        "parent_id": 207598,
+        "parent_id": 131567,  # skipping some levels for testing purposes
         "depth": 30,
     },
     "cellular organisms": {
@@ -66,6 +66,7 @@ def get_test_db():
 class ApiTest(unittest.TestCase):
     def setUp(self) -> None:
         self.config: Config = get_config(config_file)
+        init_app(self.config)
         app.dependency_overrides[get_db_connection] = get_test_db
 
     def tearDown(self) -> None:
@@ -74,6 +75,7 @@ class ApiTest(unittest.TestCase):
     def test_get_taxon_success(self):
         taxon = mock_taxa["Homo sapiens"]
         response = client.get(f"/taxa/{taxon['tax_id']}")
+
         assert response.status_code == codes.ok
         assert response.json()["scientific_name"] == taxon["scientific_name"]
 

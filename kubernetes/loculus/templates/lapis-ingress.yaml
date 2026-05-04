@@ -1,11 +1,12 @@
 {{- $lapisHost := printf "lapis%s%s" .Values.subdomainSeparator .Values.host }}
+{{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (eq (int $.Values.traefikVersion) 3) -}}
 {{- $enabledOrganismsResult := (include "loculus.enabledOrganisms" . | fromJson) }}
 {{- $enabledOrganismsList := $enabledOrganismsResult.organisms }}
 {{- $organismKeys := list -}}
 {{- range $_, $item := $enabledOrganismsList -}}
   {{- $organismKeys = append $organismKeys $item.key -}}
 {{- end -}}
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: {{ $traefikApiVersion }}
 kind: Middleware
 metadata:
   name: cors-all-origins
@@ -50,7 +51,7 @@ spec:
 
 {{- range $key := $organismKeys }}
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: {{ $traefikApiVersion }}
 kind: Middleware
 metadata:
   name: strip-{{ $key }}-prefix
@@ -60,7 +61,7 @@ spec:
       - /{{ $key }}/
 {{- end }}
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: {{ $traefikApiVersion }}
 kind: Middleware
 metadata:
   name: redirect-slash

@@ -4,8 +4,8 @@
 
 \restrict dummy
 
--- Dumped from database version 15.15 (Debian 15.15-1.pgdg13+1)
--- Dumped by pg_dump version 16.11 (Debian 16.11-1.pgdg13+1)
+-- Dumped from database version 15.17 (Debian 15.17-1.pgdg13+1)
+-- Dumped by pg_dump version 16.13 (Debian 16.13-1.pgdg13+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -427,7 +427,8 @@ CREATE TABLE public.sequence_entries (
     released_at timestamp without time zone,
     is_revocation boolean DEFAULT false NOT NULL,
     original_data jsonb,
-    version_comment text
+    version_comment text,
+    unprocessed_data jsonb
 );
 
 
@@ -467,7 +468,7 @@ CREATE VIEW public.sequence_entries_view AS
     se.submitted_at,
     se.released_at,
     se.is_revocation,
-    se.original_data,
+    se.unprocessed_data,
     se.version_comment,
     sepd.started_processing_at,
     sepd.finished_processing_at,

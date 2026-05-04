@@ -31,6 +31,7 @@ export type UploadAction = 'submit' | 'revise';
 
 type DataUploadFormProps = {
     accessToken: string;
+    instanceName: string;
     organism: string;
     clientConfig: ClientConfig;
     action: UploadAction;
@@ -47,6 +48,7 @@ const logger = getClientLogger('DataUploadForm');
 
 const InnerDataUploadForm = ({
     accessToken,
+    instanceName,
     organism,
     clientConfig,
     action,
@@ -189,6 +191,7 @@ const InnerDataUploadForm = ({
                 {action === 'submit' && dataUseTermsEnabled && (
                     <>
                         <DataUseTerms
+                            instanceName={instanceName}
                             dataUseTermsType={dataUseTermsType}
                             setDataUseTermsType={setDataUseTermsType}
                             restrictedUntil={restrictedUntil}
@@ -200,6 +203,7 @@ const InnerDataUploadForm = ({
                 {dataUseTermsEnabled && (
                     <>
                         <Acknowledgement
+                            instanceName={instanceName}
                             confirmedNoPII={confirmedNoPII}
                             setConfirmedNoPII={setConfirmedNoPII}
                             agreedToINSDCUploadTerms={agreedToINSDCUploadTerms}
@@ -318,11 +322,13 @@ export const ExtraFilesUpload = ({
 };
 
 const DataUseTerms = ({
+    instanceName,
     dataUseTermsType,
     setDataUseTermsType,
     restrictedUntil,
     setRestrictedUntil,
 }: {
+    instanceName: string;
     dataUseTermsType: DataUseTermsOption;
     setDataUseTermsType: (dataUseTermsType: DataUseTermsOption) => void;
     restrictedUntil: DateTime;
@@ -353,10 +359,12 @@ const DataUseTerms = ({
                         />
                     </div>
                     {dataUseTermsType === openDataUseTermsOption ? (
-                        <p className='text-sm'>Your data will be available on Pathoplexus under the open use terms.</p>
+                        <p className='text-sm'>
+                            Your data will be available on {instanceName} under the open use terms.
+                        </p>
                     ) : (
                         <p className='text-sm'>
-                            Your data will be available on Pathoplexus, under the restricted use terms until{' '}
+                            Your data will be available on {instanceName}, under the restricted use terms until{' '}
                             {restrictedUntil.toFormat('yyyy-MM-dd')} and under the open use terms after that date.
                         </p>
                     )}
@@ -367,11 +375,13 @@ const DataUseTerms = ({
 };
 
 const Acknowledgement = ({
+    instanceName,
     confirmedNoPII,
     setConfirmedNoPII,
     agreedToINSDCUploadTerms,
     setAgreedToINSDCUploadTerms,
 }: {
+    instanceName: string;
     confirmedNoPII: boolean;
     setConfirmedNoPII: Dispatch<SetStateAction<boolean>>;
     agreedToINSDCUploadTerms: boolean;
@@ -386,7 +396,7 @@ const Acknowledgement = ({
             <div className='gap-x-6 gap-y-8 col-span-2'>
                 <div>
                     <p className='block text-sm'>
-                        Your data will be available on Pathoplexus, under the selected data use terms. Data with open
+                        Your data will be available on {instanceName}, under the selected data use terms. Data with open
                         data use terms will additionally be made publicly available through the{' '}
                         <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
                             INSDC
@@ -421,7 +431,8 @@ const Acknowledgement = ({
                             <div>
                                 <p className='text-xs pl-4 text-gray-500'>
                                     I confirm I have not and will not submit this data independently to INSDC, to avoid
-                                    data duplication. I agree to Loculus handling the submission of this data to INSDC.{' '}
+                                    data duplication. I agree to {instanceName} handling the submission of this data to
+                                    INSDC.{' '}
                                     <a
                                         href='/docs/concepts/insdc-submission'
                                         className='text-primary-600 hover:underline'

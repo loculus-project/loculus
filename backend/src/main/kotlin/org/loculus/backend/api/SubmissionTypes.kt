@@ -320,12 +320,12 @@ typealias OriginalData<SequenceType> = OriginalDataInternal<SequenceType, FileId
 typealias OriginalDataWithFileUrls<SequenceType> =
     OriginalDataInternal<SequenceType, FileIdAndNameAndReadUrl>
 
-data class AccessionVersionOriginalMetadata(
+data class AccessionVersionUnprocessedMetadata(
     override val accession: Accession,
     override val version: Version,
     val submitter: String,
     val isRevocation: Boolean,
-    val originalMetadata: Map<String, String?>?,
+    val unprocessedMetadata: Map<String, String?>?,
 ) : AccessionVersionInterface
 
 enum class Status {

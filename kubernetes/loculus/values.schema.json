@@ -630,6 +630,19 @@
                 },
                 "description": "Array of Strings. Arguments passed to the preprocessing pipeline."
               },
+              "taxonomyServiceArgs": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "object",
+                "description": "Settings to configure the taxonomy service host and port",
+                "properties": {
+                  "taxonomy_service_url": {
+                    "groups": ["preprocessing"],
+                    "type": "string",
+                    "description": "Host and port where the taxonomy service runs"
+                  }
+                }
+              },
               "configFile": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
@@ -722,6 +735,12 @@
                                 "docsIncludePrefix": false,
                                 "type": "array",
                                 "description": "Array of strings. The names of the genes to be extracted from the sequence alignment results (should correspond to gene names in the nextclade dataset)."
+                              },
+                              "nextclade_additional_args": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "array",
+                                "description": "Array of strings. Additional arguments to pass to nextclade when aligning this segment."
                               }
                             }
                           }
@@ -814,6 +833,12 @@
                       "docsIncludePrefix": false,
                       "type": "string",
                       "description": "Required if method is minimizer"
+                    },
+                    "minimizer_parser_separator": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Literal string separator used in the minimizer index dataset names (default: '_'). Avoid regex metacharacters."
                     },
                     "backend_request_timeout_seconds": {
                       "groups": ["ingestPipelineConfigFile"],
@@ -1194,6 +1219,34 @@
             },
             "required": ["field", "displayName"]
           }
+        },
+        "graphs": {
+          "groups": ["general"],
+          "type": "array",
+          "description": "Graphs to display in the SeqSets statistics section",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name for the graph"
+              },
+              "displayName": {
+                "type": "string",
+                "description": "The display name for the graph"
+              },
+              "type": {
+                "type": "string",
+                "description": "The type of data the graph is displaying (date, category)"
+              },
+              "fields": {
+                "type": "array",
+                "description": "The metadata field to graph. Usually a single field, but multiple fields can be provided in cases where a metadata field is named differently across different organisms. If multiple fields are provided, the first match found in each organism is used."
+              }
+            },
+            "required": ["name", "displayName", "type", "fields"]
+          }
         }
       }
     },
@@ -1474,6 +1527,12 @@
       "default": false,
       "description": "If true, disables the taxonomy service deployment."
     },
+    "readOnlyMode": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, the instance runs in read-only mode: the backend rejects write requests (POST/PUT/DELETE/PATCH) with 503 Service Unavailable, and the website hides login/submission entry points and shows a read-only banner."
+    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",
@@ -1520,6 +1579,13 @@
       "default": true,
       "description": "TODO"
     },
+    "traefikVersion": {
+      "groups": ["general"],
+      "type": "integer",
+      "enum": [2, 3],
+      "default": 2,
+      "description": "Traefik major version for CRD API group. Use 2 for traefik.containo.us/v1alpha1 (Traefik v2) or 3 for traefik.io/v1alpha1 (Traefik v3)."
+    },
     "ingestLimitSeconds": {
       "type": "integer",
       "default": 1800,
@@ -1549,6 +1615,11 @@
           },
           "required": ["open", "restricted"],
           "additionalProperties": false
+        },
+        "agreementHTML": {
+          "groups": ["general"],
+          "type": "string",
+          "description": "Custom HTML for the data use terms agreement checkbox label shown in the download dialog. Can contain links and other HTML elements."
         }
       },
       "required": ["enabled", "urls"],

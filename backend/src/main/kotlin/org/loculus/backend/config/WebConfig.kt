@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @Configuration
-class WebConfig : WebMvcConfigurer {
+class WebConfig(private val backendConfig: BackendConfig) : WebMvcConfigurer {
     override fun addCorsMappings(registry: CorsRegistry) {
         registry.addMapping("/**")
             .allowedOrigins("*") // Allow requests from any origin
@@ -19,6 +19,7 @@ class WebConfig : WebMvcConfigurer {
     }
 
     override fun addInterceptors(registry: InterceptorRegistry) {
+        registry.addInterceptor(ReadOnlyModeInterceptor(backendConfig))
         registry.addInterceptor(OrganismMdcInterceptor())
     }
 

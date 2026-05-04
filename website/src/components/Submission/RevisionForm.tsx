@@ -10,6 +10,7 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 type RevisionFormProps = {
     accessToken: string;
+    instanceName: string;
     organism: string;
     clientConfig: ClientConfig;
     group: Group;
@@ -20,6 +21,7 @@ type RevisionFormProps = {
 
 export const RevisionForm: FC<RevisionFormProps> = ({
     accessToken,
+    instanceName,
     organism,
     clientConfig,
     group,
@@ -31,6 +33,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
         <div className='flex flex-col items-center'>
             <DataUploadForm
                 accessToken={accessToken}
+                instanceName={instanceName}
                 organism={organism}
                 metadataTemplateFields={metadataTemplateFields}
                 clientConfig={clientConfig}

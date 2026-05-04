@@ -19,9 +19,13 @@ const {
     bannerMessage: configBannerMessage,
     additionalHeadHTML,
     gitHubMainUrl,
+    readOnlyMode,
 } = websiteConfig;
 const remoteBannerMessage = await getRemoteBannerMessage();
-const bannerMessage = remoteBannerMessage ?? configBannerMessage;
+const readOnlyBannerMessage = readOnlyMode
+    ? 'This instance is in read-only mode. Submissions and login are disabled.'
+    : undefined;
+const bannerMessage = remoteBannerMessage ?? configBannerMessage ?? readOnlyBannerMessage;
 
 interface Props {
     title: string;
@@ -98,9 +102,8 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                     currentOrganismObject={currentOrganismObject}
                     currentPath={currentPath}
                 />
-
-                <slot name='banner' />
             </header>
+            <slot name='banner' />
 
             <div
                 class:list={[

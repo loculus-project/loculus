@@ -884,6 +884,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
                 f"--input-dataset={dataset_dir}/{name}",
                 f"--output-translations={result_dir_seg}/nextclade.cds_translation.{{cds}}.fasta",
                 "--jobs=1",
+                *sequence_and_dataset.nextclade_additional_args,
                 "--",
                 input_file,
             ]

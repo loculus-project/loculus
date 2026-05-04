@@ -7,7 +7,7 @@ import logging
 import os
 import unittest
 from pathlib import Path
-from typing import Any, Final
+from typing import Final
 from unittest import mock
 
 import xmltodict
@@ -38,6 +38,11 @@ from ena_deposition.ena_types import (
     default_sample_set_type,
 )
 from ena_deposition.loculus_models import Group
+from ena_deposition.submission_db_helper import (
+    ProjectTableEntry,
+    SampleTableEntry,
+    SubmissionTableEntry,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -123,28 +128,25 @@ with open("test/approved_ena_submission_list_test.json", encoding="utf-8") as f:
     loculus_sample: dict = json.load(f)
 
 
-def sample_data_in_submission_table() -> dict[str, Any]:
-    """Returns a sample data structure that mimics the one used in the submission table."""
-    return {
-        "accession": "LOC_0001TLY",
-        "version": "1",
-        "group_id": 2,
-        "organism": "Test organism",
-        "metadata": loculus_sample["LOC_0001TLY.1"]["metadata"],
-        "unaligned_nucleotide_sequences": {
+def sample_data_in_submission_table() -> SubmissionTableEntry:
+    """Returns a SubmissionTableEntry that mimics a row from the submission table."""
+    return SubmissionTableEntry(
+        accession="LOC_0001TLY",
+        version=1,
+        group_id=2,
+        organism="Test organism",
+        seq_metadata=loculus_sample["LOC_0001TLY.1"]["metadata"],
+        unaligned_nucleotide_sequences={
             "seg1": None,
             "seg2": "GCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT",
             "seg3": "CTTAACTTTGAGAGAGTGAATT",
         },
-        "center_name": "Fake center name",
-    }
+        center_name="Fake center name",
+    )
 
 
-project_table_entry = {"group_id": "2", "organism": "Test organism"}
-sample_table_entry = {
-    "accession": "LOC_0001TLY",
-    "version": "1",
-}
+project_table_entry = ProjectTableEntry(group_id=2, organism="Test organism")
+sample_table_entry = SampleTableEntry(accession="LOC_0001TLY", version=1)
 
 
 # Mock requests
@@ -229,7 +231,7 @@ class TestCreateSample:
     def test_sample_set_with_gisaid(self):
         config = mock_config()
         sample_data = sample_data_in_submission_table()
-        sample_data["metadata"]["gisaidIsolateId"] = "EPI_ISL_12345"
+        sample_data.seq_metadata["gisaidIsolateId"] = "EPI_ISL_12345"
         sample_set = construct_sample_set_object(
             config,
             sample_data,
@@ -253,13 +255,13 @@ class TestCreateSample:
 
 class AssemblyCreationTests(unittest.TestCase):
     def setUp(self):
-        self.unaligned_sequences_multi = sample_data_in_submission_table()[
-            "unaligned_nucleotide_sequences"
-        ]
-        self.unaligned_sequences = {
+        self.unaligned_sequences_multi = (
+            sample_data_in_submission_table().unaligned_nucleotide_sequences
+        )
+        self.unaligned_sequences: dict[str, str | None] = {
             "main": "CTTAACTTTGAGAGAGTGAATT",
         }
-        self.seq_key = {"accession": "LOC_0001TLY", "version": "1"}
+        self.seq_key = "LOC_0001TLY"
 
     def test_format_authors(self):
         authors = "Xi,L.;Smith, Anna Maria; Perez Gonzalez, Anthony J.;Doe,;von Doe, John"
@@ -288,7 +290,7 @@ class AssemblyCreationTests(unittest.TestCase):
             "sampleCollectionDate": "2024-01-01",
             "geoLocCountry": "Italy",
         }
-        unaligned_sequences = {
+        unaligned_sequences: dict[str, str | None] = {
             "main": "ATCGATCGATCG",
         }
 

@@ -16,6 +16,10 @@ a {
     @apply font-bold underline;
 }
 
+.dataAgreement a {
+    @apply underline;
+}
+
 .fillColor {
     background-color: theme('colors.main');
 }
