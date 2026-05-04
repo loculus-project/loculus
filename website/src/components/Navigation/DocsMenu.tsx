@@ -149,9 +149,9 @@ const DocsMenu: FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
                         </div>
                     </div>
 
-                    <DisclosurePanel className='sm:hidden'>{menuContent}</DisclosurePanel>
+                    <DisclosurePanel className='md:hidden'>{menuContent}</DisclosurePanel>
 
-                    <div className='hidden sm:block sm:w-64'>{menuContent}</div>
+                    <div className='hidden md:block md:w-64'>{menuContent}</div>
                 </>
             )}
         </Disclosure>
