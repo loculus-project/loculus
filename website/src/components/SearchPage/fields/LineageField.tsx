@@ -10,7 +10,7 @@ interface ModeConfig {
     defaultIncludeSublineages: boolean;
     includeZeroCounts: boolean;
     showAliasOnly: boolean;
-    checkBoxText: string;
+    checkBoxLabel: string;
 }
 
 const MODE_CONFIGS: Record<LineageFieldMode, ModeConfig> = {
@@ -18,13 +18,13 @@ const MODE_CONFIGS: Record<LineageFieldMode, ModeConfig> = {
         defaultIncludeSublineages: false,
         includeZeroCounts: true,
         showAliasOnly: false,
-        checkBoxText: 'include sublineages',
+        checkBoxLabel: 'include sublineages',
     },
     hierarchical: {
         defaultIncludeSublineages: true,
         includeZeroCounts: false,
         showAliasOnly: true,
-        checkBoxText: 'include subtaxa',
+        checkBoxLabel: 'include subtaxa',
     },
 };
 
@@ -45,7 +45,7 @@ export const LineageField: FC<LineageFieldProps> = ({
     lapisSearchParameters,
     mode = 'lineage',
 }) => {
-    const { defaultIncludeSublineages, includeZeroCounts, showAliasOnly, checkBoxText } = MODE_CONFIGS[mode];
+    const { defaultIncludeSublineages, includeZeroCounts, showAliasOnly, checkBoxLabel} = MODE_CONFIGS[mode];
 
     const [includeSublineages, _setIncludeSubLineages] = useState(
         fieldValue.endsWith('*') || (fieldValue === '' && defaultIncludeSublineages),
@@ -93,7 +93,7 @@ export const LineageField: FC<LineageFieldProps> = ({
             />
             <div className='flex flex-row justify-end'>
                 <label>
-                    <span className='text-gray-400 text-sm mr-2'>{checkBoxText}</span>
+                    <span className='text-gray-400 text-sm mr-2'>{checkBoxLabel}</span>
                     <input
                         type='checkbox'
                         className='checkbox checkbox-sm text-3xl [--chkbg:white] [--chkfg:theme(colors.gray.700)] checked:border-gray-300'
