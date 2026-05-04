@@ -368,7 +368,7 @@ organisms:
   {{- if .rangeOverlapSearch }}
   rangeOverlapSearch: {{ .rangeOverlapSearch | toJson }}
   {{- end}}
-  {{- if or .lineageSystem }}
+  {{- if .lineageSystem }}
   lineageSearch: true
   {{- end }}
   {{- if .hierarchicalFilter }}
