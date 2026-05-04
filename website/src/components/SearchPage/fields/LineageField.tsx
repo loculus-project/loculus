@@ -8,17 +8,23 @@ export type LineageFieldMode = 'lineage' | 'hierarchical';
 
 interface ModeConfig {
     defaultIncludeSublineages: boolean;
+    includeZeroCounts: boolean;
     showAliasOnly: boolean;
+    checkBoxText: string;
 }
 
 const MODE_CONFIGS: Record<LineageFieldMode, ModeConfig> = {
     lineage: {
         defaultIncludeSublineages: false,
+        includeZeroCounts: true,
         showAliasOnly: false,
+        checkBoxText: 'include sublineages',
     },
     hierarchical: {
         defaultIncludeSublineages: true,
+        includeZeroCounts: false,
         showAliasOnly: true,
+        checkBoxText: 'include subtaxa',
     },
 };
 
@@ -39,7 +45,7 @@ export const LineageField: FC<LineageFieldProps> = ({
     lapisSearchParameters,
     mode = 'lineage',
 }) => {
-    const { defaultIncludeSublineages, showAliasOnly } = MODE_CONFIGS[mode];
+    const { defaultIncludeSublineages, includeZeroCounts, showAliasOnly, checkBoxText } = MODE_CONFIGS[mode];
 
     const [includeSublineages, _setIncludeSubLineages] = useState(
         fieldValue.endsWith('*') || (fieldValue === '' && defaultIncludeSublineages),
@@ -78,6 +84,7 @@ export const LineageField: FC<LineageFieldProps> = ({
                     fieldName: field.name,
                     includeSublineages,
                     showAliasOnly,
+                    includeZeroCounts,
                 }}
                 setSomeFieldValues={([_, value]) => {
                     setInputText(value as string);
@@ -86,7 +93,7 @@ export const LineageField: FC<LineageFieldProps> = ({
             />
             <div className='flex flex-row justify-end'>
                 <label>
-                    <span className='text-gray-400 text-sm mr-2'>include sublineages</span>
+                    <span className='text-gray-400 text-sm mr-2'>{checkBoxText}</span>
                     <input
                         type='checkbox'
                         className='checkbox checkbox-sm text-3xl [--chkbg:white] [--chkfg:theme(colors.gray.700)] checked:border-gray-300'
