@@ -2052,7 +2052,6 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
-        <<: *defaultIngestConfigFile
         taxon_id: 10244
     enaDeposition:
       singleReference:
