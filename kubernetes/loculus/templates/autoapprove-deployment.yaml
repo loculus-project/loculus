@@ -1,0 +1,59 @@
+{{- if not .Values.disableIngest }}
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- $organismKeys := list }}
+{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+  {{- if $item.contents.ingest }}
+  {{- $organismKeys = append $organismKeys $item.key }}
+  {{- end }}
+{{- end }}
+{{- if $organismKeys }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-autoapprove-deployment
+  annotations:
+    argocd.argoproj.io/sync-options: Force=true,Replace=true
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-autoapprove-deployment
+  template:
+    metadata:
+      annotations:
+        timestamp: {{ now | quote }}
+      labels:
+        app: loculus
+        component: loculus-autoapprove-deployment
+    spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      containers:
+        - name: autoapprove
+          image: ghcr.io/loculus-project/ingest:{{ $dockerTag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          {{- include "loculus.resources" (list "ingest" .Values) | nindent 10 }}
+          env:
+            - name: KEYCLOAK_INGEST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+          args:
+            - python
+            - scripts/autoapprove.py
+            - --config-file
+            - /package/config/config.yaml
+          volumeMounts:
+            - name: loculus-autoapprove-config-volume
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: loculus-autoapprove-config-volume
+          configMap:
+            name: loculus-autoapprove-config
+{{- end }}
+{{- end }}
