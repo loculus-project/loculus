@@ -200,9 +200,10 @@ def test_runner_cleans_up_on_decompress_failure(
     assert not responses_list
 
 
-def test_runner_writes_hierarchical_filter_yaml(
+@pytest.fixture
+def host_taxon_setup(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+) -> tuple[ImporterConfig, ImporterPaths, list[tuple[str, list[str]]]]:
     config = make_config(
         tmp_path,
         hierarchical_filters={
@@ -217,6 +218,32 @@ def test_runner_writes_hierarchical_filter_yaml(
     paths = make_paths(tmp_path)
     paths.ensure_directories()
 
+    fake_response = type(
+        "Resp",
+        (),
+        {
+            "status_code": 200,
+            "text": "lineage: host\n",
+            "raise_for_status": lambda _: None,
+        },
+    )()
+
+    post_calls: list[tuple[str, list[str]]] = []
+
+    def fake_post(url: str, taxa: list[str], prune: bool = False):  # noqa: ARG001
+        post_calls.append((url, list(taxa)))
+        return fake_response
+
+    monkeypatch.setattr(lineage, "_post_taxonomic_lineage", fake_post)
+
+    return config, paths, post_calls
+
+
+def test_runner_writes_hierarchical_filter_yaml(
+    host_taxon_setup: tuple[ImporterConfig, ImporterPaths, list[tuple[str, list[str]]]],
+) -> None:
+    config, paths, post_calls = host_taxon_setup
+
     records = mock_records_with_host_taxa(["9606", "10090", "9606"])
     body = compress_ndjson(records)
     responses = [
@@ -227,23 +254,6 @@ def test_runner_writes_hierarchical_filter_yaml(
         )
     ]
     mock_download, _ = make_mock_download_func(responses)
-
-    fake_response = type(
-        "Resp",
-        (),
-        {
-            "status_code": 200,
-            "text": "lineage: host\n",
-            "raise_for_status": lambda _: None,
-        },
-    )()
-    post_calls: list[tuple[str, list[str]]] = []
-
-    def fake_post(url: str, taxa: list[str], prune: bool = False):  # noqa: ARG001
-        post_calls.append((url, list(taxa)))
-        return fake_response
-
-    monkeypatch.setattr(lineage, "_post_taxonomic_lineage", fake_post)
 
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
@@ -262,21 +272,9 @@ def test_runner_writes_hierarchical_filter_yaml(
 
 
 def test_runner_skips_filter_refetch_when_taxa_unchanged(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    host_taxon_setup: tuple[ImporterConfig, ImporterPaths, list[tuple[str, list[str]]]],
 ) -> None:
-    config = make_config(
-        tmp_path,
-        hierarchical_filters={
-            HierarchicalFilterKind.HOST_TAXON: HierarchicalFilterConfig(
-                kind=HierarchicalFilterKind.HOST_TAXON,
-                url="http://taxonomy:5000",
-                metadata_field="hostTaxonId",
-            )
-        },
-        hard_refresh_interval=1000,
-    )
-    paths = make_paths(tmp_path)
-    paths.ensure_directories()
+    config, paths, post_calls = host_taxon_setup
 
     records = mock_records_with_host_taxa(["9606", "10090", "9606"])
     body = compress_ndjson(records)
@@ -293,23 +291,6 @@ def test_runner_skips_filter_refetch_when_taxa_unchanged(
         ),
     ]
     mock_download, _ = make_mock_download_func(responses)
-
-    fake_response = type(
-        "Resp",
-        (),
-        {
-            "status_code": 200,
-            "text": "lineage: host\n",
-            "raise_for_status": lambda _: None,
-        },
-    )()
-    post_calls: list[tuple[str, list[str]]] = []
-
-    def fake_post(url: str, taxa: list[str], prune: bool = False):  # noqa: ARG001
-        post_calls.append((url, list(taxa)))
-        return fake_response
-
-    monkeypatch.setattr(lineage, "_post_taxonomic_lineage", fake_post)
 
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)

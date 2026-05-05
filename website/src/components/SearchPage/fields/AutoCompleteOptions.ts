@@ -263,7 +263,7 @@ export const createOptionsProviderHook = (optionsProvider: OptionsProvider): Aut
                     optionsProvider.lapisSearchParameters,
                     optionsProvider.includeSublineages,
                     optionsProvider.showAliasOnly ?? false,
-                    optionsProvider.includeZeroCounts ?? false,
+                    optionsProvider.includeZeroCounts ?? true,
                 ),
                 [optionsProvider],
             );

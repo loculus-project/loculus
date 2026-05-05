@@ -57,7 +57,7 @@ def analyze_ndjson(
             if hierarchical_filters:
                 for kind, cfg in hierarchical_filters.items():
                     raw_value = metadata.get(cfg.metadata_field)
-                    if raw_value:
+                    if raw_value is not None:
                         filter_values[kind].add(str(raw_value))
 
     except Exception as exc:

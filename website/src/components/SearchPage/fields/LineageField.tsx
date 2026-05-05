@@ -55,7 +55,7 @@ export const LineageField: FC<LineageFieldProps> = ({
     useEffect(() => {
         _setInputText(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
         _setIncludeSubLineages(fieldValue.endsWith('*') || (fieldValue === '' && defaultIncludeSublineages));
-    }, [fieldValue, defaultIncludeSublineages]);
+    }, [fieldValue]);
 
     function queryText(includeSublineages: boolean, inputText: string) {
         let queryText = includeSublineages ? `${inputText}*` : inputText;
