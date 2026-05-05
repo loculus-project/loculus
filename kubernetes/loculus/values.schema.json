@@ -1931,9 +1931,9 @@
       "type": ["string", "integer"],
       "description": "TODO - this is required/set by ArgoCD"
     },
-    "podPriorityClassName": {
-      "type": "string",
-      "description": "TODO - found in PPX production.yaml"
+    "podPriorityValue": {
+      "type": "integer",
+      "description": "If set, the chart creates a PriorityClass named after the release namespace with this value, and assigns it to all loculus pods. Higher values mean higher scheduling priority; can be negative for lower-than-default priority. If unset, no PriorityClass is created and pods run at the cluster default priority."
     },
     "testconfig": {
       "description": "TODO"

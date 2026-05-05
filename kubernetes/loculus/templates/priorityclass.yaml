@@ -1,0 +1,11 @@
+{{- if hasKey .Values "podPriorityValue" }}
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+value: {{ .Values.podPriorityValue }}
+globalDefault: false
+description: "Priority class for namespace {{ .Release.Namespace }}, managed by the loculus Helm chart."
+{{- end }}
