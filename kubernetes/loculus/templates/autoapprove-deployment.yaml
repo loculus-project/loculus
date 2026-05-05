@@ -1,12 +1,5 @@
 {{- if not .Values.disableIngest }}
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
-{{- $ingestImage := "" }}
-{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-  {{- if and $item.contents.ingest (eq $ingestImage "") }}
-  {{- $ingestImage = $item.contents.ingest.image }}
-  {{- end }}
-{{- end }}
-{{- if $ingestImage }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -33,7 +26,7 @@ spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       containers:
         - name: autoapprove
-          image: {{ $ingestImage }}:{{ $dockerTag }}
+          image: ghcr.io/loculus-project/ingest:{{ $dockerTag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "ingest" .Values) | nindent 10 }}
           env:
@@ -55,5 +48,4 @@ spec:
         - name: loculus-autoapprove-config-volume
           configMap:
             name: loculus-autoapprove-config
-{{- end }}
 {{- end }}
