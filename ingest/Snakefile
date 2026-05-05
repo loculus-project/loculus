@@ -127,6 +127,8 @@ rule fetch_inflate_ncbi_dataset_package:
         dataset_package=directory("results/ncbi_dataset"),
         compressed_package_tzst="results/dataset.tar.zst",
         compressed_package_zip="results/dataset.zip",
+    benchmark:
+        "benchmarks/fetch_inflate_ncbi_dataset_package.tsv"
     shell:
         """
         if [[ "{params.use_mirror}" == "True" ]]; then
@@ -152,6 +154,8 @@ rule format_ncbi_dataset_report:
         config="results/config.yaml",
     output:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
+    benchmark:
+        "benchmarks/format_ncbi_dataset_report.tsv"
     shell:
         """
         python {input.script} \
@@ -169,6 +173,8 @@ rule format_ncbi_dataset_sequences:
         dataset_sequences="results/ncbi_dataset/data/genomic.fna",
     output:
         ncbi_dataset_sequences="results/sequences.fasta",
+    benchmark:
+        "benchmarks/format_ncbi_dataset_sequences.tsv"
     shell:
         """
         seqkit seq -w0 -i \
@@ -188,6 +194,8 @@ if CHECK_ENA_DEPOSITION:
             config="results/config.yaml",
         output:
             exclude_insdc_accessions="results/accessions_to_exclude.json",
+        benchmark:
+            "benchmarks/get_loculus_depositions.tsv"
         params:
             log_level=LOG_LEVEL,
         shell:
@@ -208,6 +216,8 @@ if CHECK_ENA_DEPOSITION:
             metadata_tsv="results/filtered_metadata.tsv",
         params:
             log_level=LOG_LEVEL,
+        benchmark:
+            "benchmarks/filter_out_loculus_depositions.tsv"
         shell:
             """
             python {input.script} \
@@ -227,6 +237,8 @@ rule calculate_sequence_hashes:
     output:
         sequence_hashes="results/sequence_hashes.ndjson",
         sequence_json="results/sequences.ndjson",
+    benchmark:
+        "benchmarks/calculate_sequence_hashes.tsv"
     params:
         log_level=LOG_LEVEL,
     shell:
@@ -249,6 +261,8 @@ if SEGMENTED and segment_detection_method == SegmentDetectionMethod.ALIGN:
         params:
             dataset_server=lambda w: dataset_server_map[w.segment],
             dataset_name=lambda w: dataset_name_map[w.segment],
+        benchmark:
+            "benchmarks/nextclade_align_{segment}.tsv"
         shell:
             """
             nextclade run \
@@ -267,6 +281,8 @@ if SEGMENTED and segment_detection_method == SegmentDetectionMethod.ALIGN:
             script="scripts/parse_alignment_output.py",
         output:
             merged="results/nextclade_merged.tsv",
+        benchmark:
+            "benchmarks/parse_alignment_output.tsv"
         params:
             segment_paths=" ".join(
                 [
@@ -293,6 +309,8 @@ if APPLY_MINIMIZER:
                 if config.get("segment_identification")
                 else config.get("minimizer_url")
             ),
+        benchmark:
+            "benchmarks/download_minimizer.tsv"
         shell:
             """
             curl -L -o {output.results} {params.minimizer}
@@ -304,6 +322,8 @@ if APPLY_MINIMIZER:
             minimizer="results/minimizer.json",
         output:
             results="results/sort_results.tsv",
+        benchmark:
+            "benchmarks/nextclade_sort.tsv"
         shell:
             """
             nextclade sort -m {input.minimizer} \
@@ -318,6 +338,8 @@ if APPLY_MINIMIZER:
             script="scripts/parse_nextclade_sort_output.py",
         output:
             merged="results/nextclade_merged.tsv",
+        benchmark:
+            "benchmarks/parse_nextclade_sort_output.tsv"
         params:
             log_level=LOG_LEVEL,
         shell:
@@ -347,6 +369,8 @@ rule prepare_metadata:
             if (SEGMENTED or APPLY_MINIMIZER)
             else "results/config.yaml"
         ),
+    benchmark:
+        "benchmarks/prepare_metadata.tsv"
     output:
         metadata="results/metadata_post_prepare.ndjson",
     params:
@@ -375,6 +399,8 @@ if GROUPS_OVERRIDE_JSON and not CALCULATE_GROUPS_OVERRIDE_JSON:
             results="results/groups.json",
         params:
             grouping=config.get("grouping_override_url"),
+        benchmark:
+            "benchmarks/download_groups.tsv"
         shell:
             """
             curl -L -o {output.results} {params.grouping}
@@ -388,6 +414,8 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             ignore_list="results/grouping_ignore_list.txt",
         params:
             grouping_ignore_list_url=config.get("grouping_ignore_list_url", ""),
+        benchmark:
+            "benchmarks/download_ignore_list.tsv"
         shell:
             """
             if [[ -n "{params.grouping_ignore_list_url}" ]]; then
@@ -410,6 +438,8 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             compressed_package_tzst="results/{source}_assembly.tar.zst",
             compressed_package_zip="results/{source}_assembly.zip",
             package=directory("results/{source}_assembly"),
+        benchmark:
+            "benchmarks/fetch_inflate_{source}_assemblies.tsv"
         shell:
             """
             if [[ "{params.use_mirror}" == "True" ]]; then
@@ -445,6 +475,8 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
         params:
             genbank_dir="results/genbank_assembly/ncbi_dataset/data",
             refseq_dir="results/refseq_assembly/ncbi_dataset/data",
+        benchmark:
+            "benchmarks/calculate_assembly_groups.tsv"
         shell:
             """
             python {input.script} \
@@ -471,6 +503,8 @@ if GROUPS_OVERRIDE_JSON:
             sequences="results/sequences_grouped.ndjson",
             ungrouped_metadata="results/metadata_ungrouped.ndjson",
             ungrouped_sequences="results/sequences_ungrouped.ndjson",
+        benchmark:
+            "benchmarks/override_group_segments.tsv"
         params:
             log_level=LOG_LEVEL,
             match_prev_flag=lambda w: (
@@ -522,6 +556,8 @@ rule heuristic_group_segments:
     output:
         metadata="results/metadata_post_group.ndjson",
         sequences="results/sequences_post_group.ndjson",
+    benchmark:
+        "benchmarks/heuristic_group_segments.tsv"
     params:
         log_level=LOG_LEVEL,
         GROUPS_OVERRIDE_JSON="true" if GROUPS_OVERRIDE_JSON else "false",
@@ -561,6 +597,8 @@ if FILTER:
             ),
             script="scripts/metadata_filter.py",
             config="results/config.yaml",
+        benchmark:
+            "benchmarks/metadata_filter.tsv"
         output:
             sequences="results/sequences_filtered.ndjson",
             metadata="results/metadata_filtered.ndjson",
@@ -604,6 +642,8 @@ rule get_previous_submissions:
     params:
         log_level=LOG_LEVEL,
         sleep=config["post_start_sleep"],
+    benchmark:
+        "benchmarks/get_previous_submissions.tsv"
     shell:
         """
         sleep {params.sleep}
@@ -631,6 +671,8 @@ rule compare_hashes:
     params:
         log_level=LOG_LEVEL,
         subsample_fraction=config.get("subsample_fraction", 1.0),
+    benchmark:
+        "benchmarks/compare_hashes.tsv"
     shell:
         """
         python {input.script} \
@@ -672,6 +714,8 @@ rule prepare_files:
         metadata_submit="results/submit_metadata.tsv",
         metadata_revise="results/revise_metadata.tsv",
         metadata_revoke="results/metadata_to_submit_prior_to_revoke.tsv",
+    benchmark:
+        "benchmarks/prepare_files.tsv"
     shell:
         """
         python {input.script} \
@@ -696,6 +740,8 @@ rule sort_fasta:
         sequences="results/{basename}.fasta",
     output:
         sorted="results/{basename}_sorted.fasta",
+    benchmark:
+        "benchmarks/sort_{basename}_fasta.tsv"
     shell:
         """
         seqkit sort -N --two-pass {input.sequences} | seqkit seq -w 0 > {output.sorted}
@@ -708,6 +754,8 @@ rule sort_metadata:
         metadata="results/{basename}.tsv",
     output:
         sorted="results/{basename}_sorted.tsv",
+    benchmark:
+        "benchmarks/sort_{basename}_metadata.tsv"
     shell:
         """
         columnNumber=$(awk -F'\\t' '{{for(i=1;i<=NF;i++) if($i=="id") print i}}' {input.metadata});
@@ -729,6 +777,8 @@ rule submit:
         submitted=touch("results/submitted"),
     params:
         log_level=LOG_LEVEL,
+    benchmark:
+        "benchmarks/submit.tsv"
     shell:
         """
         if [ -s {input.metadata} ]; then
@@ -752,6 +802,8 @@ rule revise:
         revised=touch("results/revised"),
     params:
         log_level=LOG_LEVEL,
+    benchmark:
+        "benchmarks/revise.tsv"
     shell:
         """
         if [ -s {input.metadata} ]; then
@@ -776,6 +828,8 @@ rule regroup_and_revoke:
         revoked=touch("results/revoked"),
     params:
         log_level=LOG_LEVEL,
+    benchmark:
+        "benchmarks/regroup_and_revoke.tsv"
     shell:
         """
         if [ -s {input.metadata} ]; then
@@ -799,6 +853,8 @@ rule approve:
     params:
         log_level=LOG_LEVEL,
         approve_timeout_min=APPROVE_TIMEOUT_MIN,
+    benchmark:
+        "benchmarks/approve.tsv"
     shell:
         """
         python {input.script} \
