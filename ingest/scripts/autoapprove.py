@@ -21,23 +21,30 @@ logging.basicConfig(
 )
 
 
+DEFAULT_KEYCLOAK_CLIENT_ID = "backend-client"
+DEFAULT_USERNAME = "insdc_ingest_user"
+DEFAULT_PASSWORD = "insdc_ingest_user"
+DEFAULT_INTERVAL_SECONDS = 60
+DEFAULT_REQUEST_TIMEOUT_SECONDS = 600
+
+
 def _config_for_organism(full_config: dict, organism: str) -> Config:
     return Config(
         organism=organism,
         backend_url=full_config["backend_url"],
         keycloak_token_url=full_config["keycloak_token_url"],
-        keycloak_client_id=full_config["keycloak_client_id"],
-        username=full_config["username"],
-        password=full_config["password"],
+        keycloak_client_id=full_config.get("keycloak_client_id", DEFAULT_KEYCLOAK_CLIENT_ID),
+        username=full_config.get("username", DEFAULT_USERNAME),
+        password=full_config.get("password", DEFAULT_PASSWORD),
         group_name="",
         nucleotide_sequences=[],
         segmented=False,
         batch_chunk_size=0,
         time_between_approve_requests_seconds=full_config.get(
-            "time_between_approve_requests_seconds", 60
+            "time_between_approve_requests_seconds", DEFAULT_INTERVAL_SECONDS
         ),
         backend_request_timeout_seconds=full_config.get(
-            "backend_request_timeout_seconds", 600
+            "backend_request_timeout_seconds", DEFAULT_REQUEST_TIMEOUT_SECONDS
         ),
     )
 
@@ -58,7 +65,9 @@ def autoapprove(config_file, log_level):
         full_config = yaml.safe_load(file)
 
     organisms: list[str] = full_config["organisms"]
-    interval_seconds: int = full_config.get("time_between_approve_requests_seconds", 60)
+    interval_seconds: int = full_config.get(
+        "time_between_approve_requests_seconds", DEFAULT_INTERVAL_SECONDS
+    )
 
     logger.info(f"Auto-approving for organisms: {organisms} every {interval_seconds}s")
 
