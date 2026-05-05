@@ -1510,11 +1510,11 @@
       "default": false,
       "description": "If true, disables ingestion services."
     },
-    "ingestAsCronJob": {
+    "ingestStaggered": {
       "groups": ["services"],
       "type": "boolean",
       "default": false,
-      "description": "If true, runs ingest as CronJobs (twice daily, staggered by organism) instead of always-running Deployments."
+      "description": "If true, runs ingest as a staggered twice-daily CronJob (offset by organism index) instead of every minute."
     },
     "disableEnaSubmission": {
       "groups": ["services"],

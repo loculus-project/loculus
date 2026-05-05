@@ -4,8 +4,11 @@
 {{- $key := $item.key }}
 {{- $organismContent := $item.contents }}
 {{- if $organismContent.ingest }}
-{{- if $.Values.ingestAsCronJob }}
+{{- $schedule := "* * * * *" }}
+{{- if $.Values.ingestStaggered }}
 {{- $hourOffset := mod $i 12 }}
+{{- $schedule = printf "0 %d,%d * * *" $hourOffset (add $hourOffset 12) }}
+{{- end }}
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -14,7 +17,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
 spec:
-  schedule: {{ printf "0 %d,%d * * *" $hourOffset (add $hourOffset 12) | quote }}
+  schedule: {{ $schedule | quote }}
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 3600
   jobTemplate:
@@ -29,33 +32,6 @@ spec:
           {{- include "possiblePriorityClassName" $ | nindent 10 }}
           restartPolicy: OnFailure
           {{- include "loculus.ingest.podSpecContents" (list $key $dockerTag $organismContent $) | nindent 10 }}
-{{- else }}
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: loculus-ingest-deployment-{{ $key }}
-  annotations:
-    argocd.argoproj.io/sync-options: Force=true,Replace=true
-spec:
-  replicas: 1
-  strategy:
-    type: Recreate
-  selector:
-    matchLabels:
-      app: loculus
-      component: loculus-ingest-deployment-{{ $key }}
-  template:
-    metadata:
-      annotations:
-        timestamp: {{ now | quote }}
-      labels:
-        app: loculus
-        component: loculus-ingest-deployment-{{ $key }}
-    spec:
-      {{- include "possiblePriorityClassName" $ | nindent 6 }}
-      {{- include "loculus.ingest.podSpecContents" (list $key $dockerTag $organismContent $) | nindent 6 }}
-{{- end }}
 ---
 apiVersion: batch/v1
 kind: CronJob
