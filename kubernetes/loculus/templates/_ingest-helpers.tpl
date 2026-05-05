@@ -1,7 +1,3 @@
-{{/*
-Shared pod spec contents for both the ingest CronJob and ingest Deployment.
-Usage: include "loculus.ingest.podSpecContents" (list $key $dockerTag $organismContent $root) | nindent N
-*/}}
 {{- define "loculus.ingest.podSpecContents" -}}
 {{- $args := . -}}
 {{- $key := index $args 0 -}}
