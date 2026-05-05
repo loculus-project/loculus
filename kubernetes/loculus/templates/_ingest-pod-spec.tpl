@@ -42,16 +42,24 @@ initContainers:
       - |
         set -eu
         while true; do
-          OTHER=$(kubectl get pods \
+          ALL=$(kubectl get pods \
             -l ingest-organism={{ $key }},loculus-ingest-runner=true \
-            -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' \
-            | grep -v "^${HOSTNAME}$" || true)
-          if [ -z "$OTHER" ]; then
-            echo "No other ingest pods active for {{ $key }}, proceeding."
+            -o jsonpath='{range .items[*]}{.metadata.name} {.status.phase}{"\n"}{end}')
+          RUNNING=$(echo "$ALL" | awk -v me="$HOSTNAME" '$2=="Running" && $1!=me {print $1}')
+          if [ -n "$RUNNING" ]; then
+            echo "Waiting for running ingest pod(s) for {{ $key }}: $RUNNING"
+            sleep 30
+            continue
+          fi
+          # No peer in Running. Tie-break among Pending pods (typically all in init):
+          # lowest pod name by lexicographic order wins, others wait until it transitions.
+          LEADER=$(echo "$ALL" | awk '$2=="Pending" {print $1}' | sort | head -n 1)
+          if [ -z "$LEADER" ] || [ "$LEADER" = "$HOSTNAME" ]; then
+            echo "No conflicting ingest pods for {{ $key }}, proceeding."
             exit 0
           fi
-          echo "Waiting for active ingest pod(s) for {{ $key }}: $OTHER"
-          sleep 30
+          echo "Tie-break for {{ $key }}: yielding to lower-named peer $LEADER"
+          sleep 10
         done
 containers:
   - name: ingest-{{ $key }}
