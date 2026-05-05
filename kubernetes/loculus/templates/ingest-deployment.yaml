@@ -1,90 +1,105 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- if not .Values.disableIngest }}
+{{- $ingestOrganisms := list }}
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-{{- $key := $item.key }}
-{{- $organismContent := $item.contents }}
-{{- if $organismContent.ingest }}
+  {{- if $item.contents.ingest }}
+  {{- $ingestOrganisms = append $ingestOrganisms $item }}
+  {{- end }}
+{{- end }}
+{{- $ingestCount := len $ingestOrganisms }}
+{{- if gt $ingestCount 0 }}
+{{/*
+RBAC so each ingest pod can list other ingest pods to avoid CronJob and
+Sync-hook Job runs overlapping for the same organism.
+*/}}
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: ServiceAccount
 metadata:
-  name: loculus-ingest-deployment-{{ $key }}
+  name: loculus-ingest-lock
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: loculus-ingest-lock
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: loculus-ingest-lock
+subjects:
+  - kind: ServiceAccount
+    name: loculus-ingest-lock
+roleRef:
+  kind: Role
+  name: loculus-ingest-lock
+  apiGroup: rbac.authorization.k8s.io
+{{/*
+Schedule one organism per 30-minute slot so ingest runs are staggered.
+Period (hours) = ceil(N/2); organism i runs at minute (i%2)*30 of hour
+(i/2) within each period.
+*/}}
+{{- $periodHours := div (add $ingestCount 1) 2 }}
+{{- range $i, $item := $ingestOrganisms }}
+  {{- $key := $item.key }}
+  {{- $organismContent := $item.contents }}
+  {{- $minute := mul (mod $i 2) 30 }}
+  {{- $hourOffset := div $i 2 }}
+  {{- $hourExpr := "*" }}
+  {{- if gt $periodHours 1 }}
+    {{- $hourExpr = printf "%d-23/%d" $hourOffset $periodHours }}
+  {{- end }}
+  {{- $schedule := printf "%d %s * * *" $minute $hourExpr }}
+  {{- $podArgs := dict "key" $key "dockerTag" $dockerTag "organismContent" $organismContent "Values" $.Values }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: loculus-ingest-cronjob-{{ $key }}
   annotations:
-    argocd.argoproj.io/sync-options: Force=true,Replace=true
+    argocd.argoproj.io/sync-options: Replace=true
 spec:
-  replicas: 1
-  strategy:
-    type: Recreate
-  selector:
-    matchLabels:
-      app: loculus
-      component: loculus-ingest-deployment-{{ $key }}
+  schedule: {{ $schedule | quote }}
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 60
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
+      template:
+        metadata:
+          labels:
+            app: loculus
+            component: loculus-ingest-cronjob-{{ $key }}
+            ingest-organism: {{ $key }}
+            loculus-ingest-runner: "true"
+        spec:
+          {{- include "loculus.ingestPodSpec" $podArgs | nindent 10 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: loculus-ingest-sync-{{ $key }}
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
+  backoffLimit: 0
   template:
     metadata:
-      annotations:
-        timestamp: {{ now | quote }}
       labels:
         app: loculus
-        component: loculus-ingest-deployment-{{ $key }}
+        component: loculus-ingest-sync-{{ $key }}
+        ingest-organism: {{ $key }}
+        loculus-ingest-runner: "true"
     spec:
-      {{- include "possiblePriorityClassName" $ | nindent 6 }}
-      initContainers:
-        - name: version-check
-          image: busybox
-          {{- include "loculus.resources" (list "ingest-init" $.Values) | nindent 10 }}
-          command: ['sh', '-c', '
-            CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
-            DOCKER_TAG="{{ $dockerTag }}";
-            echo "Config version: $CONFIG_VERSION";
-            echo "Docker tag: $DOCKER_TAG";
-            if [ "$CONFIG_VERSION" != "$DOCKER_TAG" ]; then
-              echo "Version mismatch: ConfigMap version $CONFIG_VERSION does not match docker tag $DOCKER_TAG";
-              exit 1;
-            else
-              echo "Version match confirmed";
-            fi
-          ']
-          volumeMounts:
-            - name: loculus-ingest-config-volume-{{ $key }}
-              mountPath: /package/config/config.yaml
-              subPath: config.yaml
-      containers:
-        - name: ingest-{{ $key }}
-          image: {{ $organismContent.ingest.image}}:{{ $dockerTag }}
-          imagePullPolicy: {{ $.Values.imagePullPolicy }}
-          {{- include "loculus.resources" (list "ingest" $.Values) | nindent 10 }}
-          env:
-            - name: KEYCLOAK_INGEST_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: service-accounts
-                  key: insdcIngestUserPassword
-            - name: SLACK_HOOK
-              valueFrom:
-                secretKeyRef:
-                  name: slack-notifications
-                  key: slack-hook
-            - name: NCBI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: ingest-ncbi
-                  key: api-key
-          args:
-            - snakemake
-            - results/submitted
-            - results/revised
-            - results/paused
-            - --all-temp # Reduce disk usage by not keeping files around
-      {{- if $organismContent.ingest.configFile }}
-          volumeMounts:
-            - name: loculus-ingest-config-volume-{{ $key }}
-              mountPath: /package/config/config.yaml
-              subPath: config.yaml
-      volumes:
-        - name: loculus-ingest-config-volume-{{ $key }}
-          configMap:
-            name: loculus-ingest-config-{{ $key }}
-      {{- end }}
+      {{- include "loculus.ingestPodSpec" $podArgs | nindent 6 }}
 ---
 apiVersion: batch/v1
 kind: CronJob
