@@ -6,7 +6,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from http import HTTPMethod
 from io import BytesIO
-from pathlib import Path
 from time import sleep
 from typing import Any, Literal
 
@@ -61,7 +60,12 @@ def get_jwt(config: Config) -> str:
 
     keycloak_token_url = config.keycloak_token_url
 
-    response = requests.post(keycloak_token_url, data=data, headers=headers, timeout=config.backend_request_timeout_seconds)
+    response = requests.post(
+        keycloak_token_url,
+        data=data,
+        headers=headers,
+        timeout=config.backend_request_timeout_seconds,
+    )
     response.raise_for_status()
 
     jwt_keycloak = response.json()
@@ -300,9 +304,22 @@ def post_fasta_batches(
     return response
 
 
+def count_lines(path, chunk_size=1024 * 1024):
+    """Memory efficient way to count the number of lines in a file by reading in chunks."""
+    count = 0
+    last_char = b""
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(chunk_size), b""):
+            count += chunk.count(b"\n")
+            last_char = chunk[-1:]  # keep last byte
+    if count != 0 and last_char != b"\n":
+        count += 1
+    return count
+
+
 def submit_or_revise(
     metadata, sequences, config: Config, group_id, mode=Literal["submit", "revise"]
-):
+) -> list[dict[str, Any]]:
     """
     Submit/revise data to Loculus -requires metadata and sequences sorted by id.
     """
@@ -327,7 +344,8 @@ def submit_or_revise(
 
     url = f"{organism_url(config)}/{endpoint}"
 
-    metadata_lines = len(Path(metadata).read_text(encoding="utf-8").splitlines()) - 1
+    metadata_lines = max(count_lines(metadata) - 1, 0)
+
     logger.info(f"{logging_strings['gerund']} {metadata_lines} sequence(s) to Loculus")
 
     params = {
