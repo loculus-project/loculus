@@ -73,6 +73,7 @@ spec:
             - snakemake
             - results/submitted
             - results/revised
+            - results/paused
             - --all-temp # Reduce disk usage by not keeping files around
       {{- if $organismContent.ingest.configFile }}
           volumeMounts:

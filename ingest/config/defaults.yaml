@@ -67,6 +67,9 @@ username: insdc_ingest_user
 password: insdc_ingest_user
 keycloak_client_id: backend-client
 subsample_fraction: 1.0
+# Time to sleep at the end of an ingest cycle before the deployment restarts.
+# Roughly matches the old approve-loop duration so cycles stay on a ~30 min cadence.
+cycle_sleep_seconds: 1500
 db_username: postgres
 db_password: unsecure
 db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"

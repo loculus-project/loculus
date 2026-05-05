@@ -35,6 +35,7 @@ LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 NCBI_GATEWAY_URL = config.get("ncbi_gateway_url")
 MIRROR_BUCKET = config.get("mirror_bucket", "")
+CYCLE_SLEEP_SECONDS = config.get("cycle_sleep_seconds", 1500)
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
 FILTER = config.get("metadata_filter", None)
 CALCULATE_GROUPS_OVERRIDE_JSON = config.get(
@@ -101,8 +102,22 @@ rule all:
     input:
         "results/submitted",
         "results/revised",
+        "results/paused",
     params:
         config=lambda wildcards: str(config),
+
+
+rule pause:
+    """Sleep at the end of a cycle so the deployment doesn't tight-loop after Snakemake exits."""
+    input:
+        "results/submitted",
+        "results/revised",
+    output:
+        paused=touch("results/paused"),
+    params:
+        sleep_seconds=CYCLE_SLEEP_SECONDS,
+    shell:
+        "sleep {params.sleep_seconds}"
 
 
 rule clean:
