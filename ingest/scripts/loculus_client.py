@@ -302,7 +302,7 @@ def post_fasta_batches(
 
 def submit_or_revise(
     metadata, sequences, config: Config, group_id, mode=Literal["submit", "revise"]
-):
+) -> list[dict[str, Any]]:
     """
     Submit/revise data to Loculus -requires metadata and sequences sorted by id.
     """
@@ -327,9 +327,9 @@ def submit_or_revise(
 
     url = f"{organism_url(config)}/{endpoint}"
 
-    with open(metadata, encoding="utf-8") as f:
-        metadata_lines = sum(1 for _ in f) - 1
-    logger.info(f"{logging_strings['gerund']} {metadata_lines} sequence(s) to Loculus")
+    # with open(metadata, encoding="utf-8") as f:
+    #     metadata_lines = sum(1 for _ in f) - 1
+    # logger.info(f"{logging_strings['gerund']} {metadata_lines} sequence(s) to Loculus")
 
     params = {
         "groupId": group_id,
