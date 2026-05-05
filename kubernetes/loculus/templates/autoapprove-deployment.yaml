@@ -1,8 +1,5 @@
 {{- if not .Values.disableIngest }}
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
-{{- $testconfig := .Values.testconfig | default false }}
-{{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary (printf "http://%s:8079" $.Values.localHost) "http://loculus-backend-service:8079") }}
-{{- $keycloakHost := $testconfig | ternary (printf "http://%s:8083" $.Values.localHost) "http://loculus-keycloak-service:8083" }}
 {{- $organismKeys := list }}
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
   {{- if $item.contents.ingest }}
@@ -45,16 +42,18 @@ spec:
                 secretKeyRef:
                   name: service-accounts
                   key: insdcIngestUserPassword
-            - name: BACKEND_URL
-              value: {{ $backendHost | quote }}
-            - name: KEYCLOAK_TOKEN_URL
-              value: {{ printf "%s/realms/loculus/protocol/openid-connect/token" $keycloakHost | quote }}
           args:
             - python
             - scripts/autoapprove.py
-            {{- range $organismKeys }}
-            - --organism
-            - {{ . | quote }}
-            {{- end }}
+            - --config-file
+            - /package/config/config.yaml
+          volumeMounts:
+            - name: loculus-autoapprove-config-volume
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: loculus-autoapprove-config-volume
+          configMap:
+            name: loculus-autoapprove-config
 {{- end }}
 {{- end }}
