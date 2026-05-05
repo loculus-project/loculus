@@ -35,7 +35,7 @@ initContainers:
         mountPath: /package/config/config.yaml
         subPath: config.yaml
   - name: wait-for-no-other-ingest
-    image: bitnami/kubectl:1.31
+    image: alpine/kubectl:1.31.1
     command:
       - sh
       - -c
