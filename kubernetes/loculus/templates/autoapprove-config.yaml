@@ -2,7 +2,12 @@
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary (printf "http://%s:8079" $.Values.localHost) "http://loculus-backend-service:8079") }}
 {{- $keycloakHost := $testconfig | ternary (printf "http://%s:8083" $.Values.localHost) "http://loculus-keycloak-service:8083" }}
-{{- $organismKeys := (include "loculus.ingestEnabledOrganismKeys" . | fromJson).keys }}
+{{- $organismKeys := list }}
+{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+  {{- if $item.contents.ingest }}
+  {{- $organismKeys = append $organismKeys $item.key }}
+  {{- end }}
+{{- end }}
 {{- if $organismKeys }}
 ---
 apiVersion: v1
