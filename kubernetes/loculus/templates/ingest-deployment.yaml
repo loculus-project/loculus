@@ -86,13 +86,15 @@ kind: Job
 metadata:
   name: loculus-ingest-sync-{{ $key }}
   annotations:
-    argocd.argoproj.io/hook: Sync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-options: Force=true,Replace=true
 spec:
   activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
   backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
   template:
     metadata:
+      annotations:
+        timestamp: {{ now | quote }}
       labels:
         app: loculus
         component: loculus-ingest-sync-{{ $key }}
