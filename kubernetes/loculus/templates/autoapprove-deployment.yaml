@@ -1,7 +1,5 @@
 {{- if not .Values.disableIngest }}
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
-{{- $organismKeys := (include "loculus.ingestEnabledOrganismKeys" . | fromJson).keys }}
-{{- if $organismKeys }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -50,5 +48,4 @@ spec:
         - name: loculus-autoapprove-config-volume
           configMap:
             name: loculus-autoapprove-config
-{{- end }}
 {{- end }}
