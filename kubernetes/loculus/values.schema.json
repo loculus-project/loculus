@@ -840,12 +840,6 @@
                       "docsIncludePrefix": false,
                       "type": "integer",
                       "description": "Timeout in seconds for requests to the backend server for data to process"
-                    },
-                    "time_between_approve_requests_seconds": {
-                      "groups": ["ingestPipelineConfigFile"],
-                      "docsIncludePrefix": false,
-                      "type": "integer",
-                      "description": "Time in seconds to wait between approve requests"
                     }
                   },
                   "required": ["method"]

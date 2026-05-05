@@ -8,7 +8,6 @@
   {{- $organismKeys = append $organismKeys $item.key }}
   {{- end }}
 {{- end }}
-{{- if $organismKeys }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -16,16 +15,7 @@ metadata:
   name: loculus-autoapprove-config
 data:
   config.yaml: |
-    organisms:
-    {{- range $organismKeys }}
-      - {{ . }}
-    {{- end }}
+    organisms: {{ $organismKeys | toJson }}
     backend_url: {{ $backendHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
-    keycloak_client_id: backend-client
-    username: insdc_ingest_user
-    password: insdc_ingest_user
-    time_between_approve_requests_seconds: 60
-    backend_request_timeout_seconds: 600
-{{- end }}
 {{- end }}
