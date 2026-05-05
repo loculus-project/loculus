@@ -9,8 +9,8 @@
 {{- $ingestCount := len $ingestOrganisms }}
 {{- if gt $ingestCount 0 }}
 {{/*
-RBAC so each ingest pod can list other ingest pods to avoid CronJob and
-Sync-hook Job runs overlapping for the same organism.
+RBAC so each ingest pod can list other ingest pods to avoid the CronJob
+run and the sync-triggered bootstrap Job overlapping for the same organism.
 */}}
 ---
 apiVersion: v1
@@ -37,6 +37,39 @@ subjects:
 roleRef:
   kind: Role
   name: loculus-ingest-lock
+  apiGroup: rbac.authorization.k8s.io
+{{/*
+Separate, narrower RBAC for the per-sync trigger Job: it just spawns a
+one-shot ingest Job from the corresponding CronJob's template.
+*/}}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: loculus-ingest-trigger
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: loculus-ingest-trigger
+rules:
+  - apiGroups: ["batch"]
+    resources: ["cronjobs"]
+    verbs: ["get"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: loculus-ingest-trigger
+subjects:
+  - kind: ServiceAccount
+    name: loculus-ingest-trigger
+roleRef:
+  kind: Role
+  name: loculus-ingest-trigger
   apiGroup: rbac.authorization.k8s.io
 {{/*
 Schedule one organism per 30-minute slot so ingest runs are staggered.
@@ -71,6 +104,7 @@ spec:
   jobTemplate:
     spec:
       activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
+      ttlSecondsAfterFinished: 86400
       template:
         metadata:
           labels:
@@ -80,28 +114,44 @@ spec:
             loculus-ingest-runner: "true"
         spec:
           {{- include "loculus.ingestPodSpec" $podArgs | nindent 10 }}
+{{/*
+Sync-hook trigger: kicks off a one-off ingest Job from the CronJob's
+template whenever argocd syncs. The trigger itself exits in seconds
+(so it doesn't block the sync); the spawned ingest Job runs untracked
+by argocd. Concurrency with a scheduled CronJob run is handled by the
+shared lock init container in the spawned pod.
+*/}}
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: loculus-ingest-sync-{{ $key }}
+  name: loculus-ingest-trigger-{{ $key }}
   annotations:
-    argocd.argoproj.io/sync-options: Force=true,Replace=true
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 spec:
-  activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
+  activeDeadlineSeconds: 120
   backoffLimit: 0
-  ttlSecondsAfterFinished: 86400
+  ttlSecondsAfterFinished: 600
   template:
     metadata:
-      annotations:
-        timestamp: {{ now | quote }}
       labels:
         app: loculus
-        component: loculus-ingest-sync-{{ $key }}
-        ingest-organism: {{ $key }}
-        loculus-ingest-runner: "true"
+        component: loculus-ingest-trigger-{{ $key }}
     spec:
-      {{- include "loculus.ingestPodSpec" $podArgs | nindent 6 }}
+      restartPolicy: Never
+      serviceAccountName: loculus-ingest-trigger
+      containers:
+        - name: trigger
+          image: alpine/kubectl:1.31.1
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              JOB_NAME="loculus-ingest-bootstrap-{{ $key }}-$(date +%s)"
+              echo "Creating $JOB_NAME from cronjob/loculus-ingest-cronjob-{{ $key }}"
+              kubectl create job --from=cronjob/loculus-ingest-cronjob-{{ $key }} "$JOB_NAME"
 ---
 apiVersion: batch/v1
 kind: CronJob
