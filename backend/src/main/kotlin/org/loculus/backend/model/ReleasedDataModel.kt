@@ -166,14 +166,6 @@ open class ReleasedDataModel(
                 },
             ) +
             conditionalMetadata(
-                rawProcessedData.isRevocation,
-                {
-                    mapOf(
-                        "versionComment" to TextNode(rawProcessedData.versionComment),
-                    )
-                },
-            ) +
-            conditionalMetadata(
                 earliestReleaseDate != null,
                 {
                     mapOf(
