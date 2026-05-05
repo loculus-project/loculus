@@ -327,7 +327,8 @@ def submit_or_revise(
 
     url = f"{organism_url(config)}/{endpoint}"
 
-    metadata_lines = len(Path(metadata).read_text(encoding="utf-8").splitlines()) - 1
+    with open(metadata, encoding="utf-8") as f:
+        metadata_lines = sum(1 for _ in f) - 1
     logger.info(f"{logging_strings['gerund']} {metadata_lines} sequence(s) to Loculus")
 
     params = {
