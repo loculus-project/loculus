@@ -16,32 +16,39 @@ import requests
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class Config:
+@dataclass(kw_only=True)
+class ApproveConfig:
+    """The minimal config the approve path needs: just enough to authenticate
+    against keycloak and hit the backend's approve-processed-data endpoint."""
+
     organism: str
     backend_url: str
     keycloak_token_url: str
     keycloak_client_id: str
     username: str
     password: str
+    backend_request_timeout_seconds: int = 600
+
+
+@dataclass(kw_only=True)
+class Config(ApproveConfig):
     group_name: str
     nucleotide_sequences: list[str]
     segmented: bool
     batch_chunk_size: int
     time_between_approve_requests_seconds: int = 30
-    backend_request_timeout_seconds: int = 600
 
 
-def backend_url(config: Config) -> str:
+def backend_url(config: ApproveConfig) -> str:
     """Right strip the URL to remove trailing slashes"""
     return f"{config.backend_url.rstrip('/')}"
 
 
-def organism_url(config: Config) -> str:
+def organism_url(config: ApproveConfig) -> str:
     return f"{backend_url(config)}/{config.organism.strip('/')}"
 
 
-def get_jwt(config: Config) -> str:
+def get_jwt(config: ApproveConfig) -> str:
     """
     Get a JWT token for the given username and password
     """
@@ -75,7 +82,7 @@ def get_jwt(config: Config) -> str:
 def make_request(  # noqa: PLR0913, PLR0917
     method: HTTPMethod,
     url: str,
-    config: Config,
+    config: ApproveConfig,
     params: dict[str, Any] | None = None,
     files: dict[str, Any] | None = None,
     json_body: dict[str, Any] | None = None,
@@ -402,7 +409,7 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     return responses
 
 
-def approve(config: Config):
+def approve(config: ApproveConfig):
     """
     Approve all sequences
     """

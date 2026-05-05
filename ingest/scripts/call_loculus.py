@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 
 import click
@@ -74,8 +75,7 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output,
 
     with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
-        relevant_config = {}
-        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
+        relevant_config = {f.name: full_config.get(f.name, []) for f in dataclasses.fields(Config)}
         config = Config(**relevant_config)
 
     logger.info(f"Config: {config}")

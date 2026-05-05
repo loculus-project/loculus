@@ -10,7 +10,7 @@ from time import sleep
 
 import click
 import yaml
-from loculus_client import Config, approve
+from loculus_client import ApproveConfig, approve
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -28,21 +28,14 @@ DEFAULT_INTERVAL_SECONDS = 60
 DEFAULT_REQUEST_TIMEOUT_SECONDS = 600
 
 
-def _config_for_organism(full_config: dict, organism: str) -> Config:
-    return Config(
+def _config_for_organism(full_config: dict, organism: str) -> ApproveConfig:
+    return ApproveConfig(
         organism=organism,
         backend_url=full_config["backend_url"],
         keycloak_token_url=full_config["keycloak_token_url"],
         keycloak_client_id=full_config.get("keycloak_client_id", DEFAULT_KEYCLOAK_CLIENT_ID),
         username=full_config.get("username", DEFAULT_USERNAME),
         password=full_config.get("password", DEFAULT_PASSWORD),
-        group_name="",
-        nucleotide_sequences=[],
-        segmented=False,
-        batch_chunk_size=0,
-        time_between_approve_requests_seconds=full_config.get(
-            "time_between_approve_requests_seconds", DEFAULT_INTERVAL_SECONDS
-        ),
         backend_request_timeout_seconds=full_config.get(
             "backend_request_timeout_seconds", DEFAULT_REQUEST_TIMEOUT_SECONDS
         ),
