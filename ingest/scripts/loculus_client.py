@@ -332,13 +332,18 @@ def submit_or_revise(
 
     url = f"{organism_url(config)}/{endpoint}"
 
-    count = 0
-    with open(metadata, encoding="utf-8") as f:
-        for _ in f:
-            count += 1
+    def count_lines(path, chunk_size=1024 * 1024):
+        count = 0
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(chunk_size), b""):
+                count += chunk.count(b"\n")
+        return count
+
+    metadata_lines = max(count_lines(metadata) - 1, 0)
+
     logger.info(
-        f"{logging_strings['gerund']} {count - 1} sequence(s) to Loculus"
-    )  # subtract 1 for header
+        f"{logging_strings['gerund']} {metadata_lines} sequence(s) to Loculus"
+    )
 
     params = {
         "groupId": group_id,
