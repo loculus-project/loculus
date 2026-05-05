@@ -6,7 +6,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from http import HTTPMethod
 from io import BytesIO
-from pathlib import Path
 from time import sleep
 from typing import Any, Literal
 
