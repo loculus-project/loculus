@@ -15,3 +15,19 @@
 */ -}}
 {{- dict "organisms" $enabledList | toJson -}}
 {{- end -}}
+
+{{- /*
+    Returns the list of keys for enabled organisms that have an `ingest` block,
+    wrapped in a dict (Helm's `fromJson` requires a top-level object) under the
+    key "keys". Usage:
+        {{- $keys := (include "loculus.ingestEnabledOrganismKeys" . | fromJson).keys }}
+*/ -}}
+{{- define "loculus.ingestEnabledOrganismKeys" -}}
+{{- $keys := list -}}
+{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms -}}
+  {{- if $item.contents.ingest -}}
+{{- $keys = append $keys $item.key -}}
+  {{- end -}}
+{{- end -}}
+{{- dict "keys" $keys | toJson -}}
+{{- end -}}
