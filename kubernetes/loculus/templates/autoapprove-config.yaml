@@ -8,7 +8,6 @@
   {{- $organismKeys = append $organismKeys $item.key }}
   {{- end }}
 {{- end }}
-{{- if $organismKeys }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -16,11 +15,7 @@ metadata:
   name: loculus-autoapprove-config
 data:
   config.yaml: |
-    organisms:
-    {{- range $organismKeys }}
-      - {{ . }}
-    {{- end }}
+    organisms: {{ $organismKeys | toJson }}
     backend_url: {{ $backendHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
-{{- end }}
 {{- end }}
