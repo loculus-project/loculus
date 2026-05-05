@@ -145,8 +145,8 @@ def sync_state_with_submission_table(db_engine: Engine):
     1. Find all entries in submission_table in state READY_TO_SUBMIT
     2. If (exists an entry in the project_table for (group_id, organism)):
     a.      If (exists "bioproject" in "metadata") filter to that entry
-    a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_PROJECT
-    4. Else create corresponding entry in project_table in state READY
+    b.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_PROJECT
+    3. Else create corresponding entry in project_table in state READY
             (add "bioproject" to result if exists in metadata)
     """
     conditions = {"status_all": StatusAll.READY_TO_SUBMIT}
@@ -156,7 +156,7 @@ def sync_state_with_submission_table(db_engine: Engine):
     )
     for row in ready_to_submit:
         group_key = {"group_id": row.group_id, "organism": row.organism}
-        seq_key = {"accession": row.accession, "version": row.version}
+        seq_key = asdict(row.pkey)
         bioproject = row.seq_metadata.get("bioprojectAccession")
 
         # Check if there exists an entry in the project table for (group_id, organism)
@@ -231,7 +231,7 @@ def project_table_create(
     2. Create project_set: get_group_info from loculus, use entry and config for other fields
     3. Update project_table to state SUBMITTING (only proceed if update succeeds)
     4. If (create_ena_project succeeds): update state to SUBMITTED with results
-    3. Else update state to HAS_ERRORS with error messages
+    5. Else update state to HAS_ERRORS with error messages
 
     If config.random_alias=True add a timestamp to the alias suffix to allow for multiple
     submissions of the same project for testing.
