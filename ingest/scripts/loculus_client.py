@@ -61,7 +61,12 @@ def get_jwt(config: Config) -> str:
 
     keycloak_token_url = config.keycloak_token_url
 
-    response = requests.post(keycloak_token_url, data=data, headers=headers, timeout=config.backend_request_timeout_seconds)
+    response = requests.post(
+        keycloak_token_url,
+        data=data,
+        headers=headers,
+        timeout=config.backend_request_timeout_seconds,
+    )
     response.raise_for_status()
 
     jwt_keycloak = response.json()
@@ -327,9 +332,13 @@ def submit_or_revise(
 
     url = f"{organism_url(config)}/{endpoint}"
 
-    # with open(metadata, encoding="utf-8") as f:
-    #     metadata_lines = sum(1 for _ in f) - 1
-    # logger.info(f"{logging_strings['gerund']} {metadata_lines} sequence(s) to Loculus")
+    count = 0
+    with open(metadata, encoding="utf-8") as f:
+        for _ in f:
+            count += 1
+    logger.info(
+        f"{logging_strings['gerund']} {count - 1} sequence(s) to Loculus"
+    )  # subtract 1 for header
 
     params = {
         "groupId": group_id,
