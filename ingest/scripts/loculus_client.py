@@ -36,7 +36,6 @@ class Config(ApproveConfig):
     nucleotide_sequences: list[str]
     segmented: bool
     batch_chunk_size: int
-    time_between_approve_requests_seconds: int = 30
 
 
 def backend_url(config: ApproveConfig) -> str:
