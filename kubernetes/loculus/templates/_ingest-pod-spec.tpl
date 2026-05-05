@@ -35,12 +35,13 @@ initContainers:
         mountPath: /package/config/config.yaml
         subPath: config.yaml
   - name: wait-for-no-other-ingest
-    image: alpine/kubectl:1.31.1
+    image: alpine:3
     command:
       - sh
       - -c
       - |
         set -eu
+        apk add --no-cache kubectl >/dev/null
         while true; do
           ALL=$(kubectl get pods \
             -l ingest-organism={{ $key }},loculus-ingest-runner=true \
