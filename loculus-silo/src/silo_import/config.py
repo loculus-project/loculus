@@ -109,6 +109,10 @@ def _parse_hierarchical_filters(
         msg = f"HIERARCHICAL_FILTERS must be a JSON object, got: {raw}"
         raise TypeError(msg)
 
+    if not data:
+        # env variable exists but is empty: `HIERARCHICAL_FILTERS={}`
+        return None
+
     filters: dict[HierarchicalFilterKind, HierarchicalFilterConfig] = {}
     for filter_name, entry in data.items():
         try:
