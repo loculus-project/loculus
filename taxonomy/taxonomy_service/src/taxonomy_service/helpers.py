@@ -2,8 +2,15 @@ import sqlite3
 from collections import defaultdict
 from collections.abc import Iterable
 
+import yaml
+from fastapi import HTTPException
 
 from taxonomy_service.datatypes import Taxon
+
+# LAPIS/SILO uses Jackson to parse YAML files, which by default sets a limit of 3MB
+# If we send a lineage file over the limit to SILO it will crash and take down the
+# instance, so for large files we send back status 413 instead.
+LARGE_FILE_THRESHOLD = 2.5 * 1024 * 1024
 
 
 def fetch_by_sci_name(db_conn: sqlite3.Connection, name: str) -> list[Taxon] | None:
@@ -79,31 +86,79 @@ def fetch_common_name(db_conn: sqlite3.Connection, taxon: Taxon) -> Taxon | None
     return None
 
 
-def get_spanning_tree(db_conn: sqlite3.Connection, tax_ids: set[int]) -> list[Taxon]:
-    """Run a recursive CTE against the database to collect the path
-    from each taxon in tax_ids to the root node.
+def find_existing_ids(db_conn: sqlite3.Connection, tax_ids: set[int]) -> set[int]:
+    """Take in a set of unvalidated tax_ids and return the ones
+    that exist in the database
+    """
+    if not tax_ids:
+        return set()
 
-    Uses UNION to prevent having to evaluate parts of paths shared by
-    several input taxa multiple times.
+    placeholders = ",".join("?" * len(tax_ids))
+    existing = {
+        row["tax_id"]
+        for row in db_conn.execute(
+            f"SELECT tax_id FROM taxonomy WHERE tax_id IN ({placeholders})",
+            list(tax_ids),
+        ).fetchall()
+    }
+
+    return existing
+
+
+def get_spanning_tree(
+    db_conn: sqlite3.Connection, tax_ids: set[int]
+) -> tuple[list[Taxon], int]:
+    """Run a recursive CTE against the database to collect the path
+    from each taxon in tax_ids to their most recent common ancestor.
+
+    NOTE: `tax_ids` is assumed to have at least one ID, and all IDs are assumed to exist!
+    See `find_existing_ids()`
     """
     placeholders = ",".join("?" * len(tax_ids))
     rows = db_conn.execute(
         f"""
-      WITH RECURSIVE ancestors AS (
-          SELECT *
-          FROM taxonomy WHERE tax_id IN ({placeholders})
+    WITH RECURSIVE ancestors AS (
+          SELECT
+              tax_id AS original_tax_id,
+              taxonomy.*
+          FROM taxonomy
+          WHERE tax_id IN ({placeholders})
+
           UNION
-          SELECT t.*
-          FROM taxonomy t JOIN ancestors a ON t.tax_id = a.parent_id
+
+          SELECT
+              a.original_tax_id,
+              t.*
+          FROM taxonomy t
+          JOIN ancestors a ON t.tax_id = a.parent_id
           WHERE t.tax_id != t.parent_id
+      ),
+      mrca AS (
+          SELECT tax_id, depth
+          FROM ancestors
+          GROUP BY tax_id, depth
+          HAVING COUNT(DISTINCT original_tax_id) = {len(tax_ids)}
+          ORDER BY depth DESC
+          LIMIT 1
       )
-      SELECT * FROM ancestors
-      ORDER BY depth, tax_id
+      SELECT t.*
+      FROM taxonomy t
+      CROSS JOIN mrca m
+      WHERE t.tax_id IN (SELECT tax_id FROM ancestors)
+        AND t.depth >= m.depth
+      ORDER BY t.depth, t.tax_id;
     """,
         list(tax_ids),
     ).fetchall()
 
-    return [Taxon.from_row(row) for row in rows]
+    taxa = [Taxon.from_row(row) for row in rows]
+    if any(t.depth == taxa[0].depth for t in taxa[1:]):
+        raise RuntimeError(
+            "spanning tree contained multiple taxa at MRCA depth, which should be impossible"
+        )
+    taxa[0] = taxa[0].model_copy(update={"parent_id": taxa[0].tax_id})
+
+    return taxa, taxa[0].tax_id
 
 
 def map_child_nodes(tree: list[Taxon]) -> dict[int, list[int]]:
@@ -174,7 +229,7 @@ def _prune(
     return result
 
 
-def convert_to_silo_yaml(taxa: Iterable[Taxon]) -> dict[str, dict]:
+def convert_to_lineage_dict(taxa: Iterable[Taxon]) -> dict[str, dict]:
     """Generate a dict that can be dumped to a SILO-compatible yaml
     file representing the taxonomic hierarchy.
     """
@@ -192,3 +247,25 @@ def convert_to_silo_yaml(taxa: Iterable[Taxon]) -> dict[str, dict]:
         }
 
     return result
+
+
+def lineage_dict_to_string(lineage: dict[str, dict], allow_large: bool) -> str:
+    """Generates a yaml string representation of a lineage dictionary and
+    checks its size.
+
+    If the size is > LARGE_FILE_THRESHOLD and allow_large is false, raise
+    a 413 HTTPException
+    """
+    lineage_yaml = yaml.dump(lineage, sort_keys=False)
+    yaml_size = len(lineage_yaml.encode("utf-8"))
+    if yaml_size > LARGE_FILE_THRESHOLD and not allow_large:
+        raise HTTPException(
+            status_code=413,
+            detail=(
+                f"Generated lineage file is {yaml_size / 1024 / 1024:.2f}MB, "
+                f"larger than the default limit of {LARGE_FILE_THRESHOLD / 1024 / 1024:.2f}MB. "
+                f"Retry request with `allow_large=true` to get the full file"
+            ),
+        )
+
+    return lineage_yaml

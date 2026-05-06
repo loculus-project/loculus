@@ -4,25 +4,21 @@ from collections.abc import Generator
 from typing import Annotated
 
 import uvicorn
-import yaml
 from fastapi import Depends, FastAPI, HTTPException, Response
 
 from taxonomy_service.datatypes import SubtreeRequestBody, Taxon
 from taxonomy_service.helpers import (
-    convert_to_silo_yaml,
+    convert_to_lineage_dict,
     fetch_by_id,
     fetch_by_sci_name,
     fetch_common_name,
+    find_existing_ids,
     get_spanning_tree,
+    lineage_dict_to_string,
     prune_tree,
 )
 
 from .config import Config
-
-# LAPIS/SILO uses Jackson to parse YAML files, which by default sets a limit of 3MB
-# If we send a lineage file over the limit to SILO it will crash and take down the
-# instance, so for large files we send back status 413 instead.
-LARGE_FILE_THRESHOLD = 2.5 * 1024 * 1024
 
 logger = logging.getLogger()
 
@@ -106,34 +102,32 @@ def post_silo_lineage(
                         If False, return status 413 if the generated yaml file is
                         larger than `LARGE_FILE_THRESHOLD`
     """
-    taxon_ids = {1} | set(payload.tax_ids)  # always include the root node
+    tax_ids = set(payload.tax_ids)
+    existing_ids = find_existing_ids(db, tax_ids)
+    if not existing_ids:
+        lineage = {str(t): {"aliases": [f"Taxon {t}"], "parents": []} for t in tax_ids}
+        lineage_yaml = lineage_dict_to_string(lineage, allow_large)
+        return Response(content=lineage_yaml, media_type="application/yaml")
 
-    spanning_tree = get_spanning_tree(db, taxon_ids)
-    if prune:
-        spanning_tree = prune_tree(spanning_tree, taxon_ids, root_id=1)
-    lineage = convert_to_silo_yaml(spanning_tree)
-
-    missing = (taxon_ids - {1}) - {int(k) for k in lineage}
+    missing = tax_ids - existing_ids
     if missing:
-        logger.warning(f"one or more requested taxa don't exist: {sorted(missing)}")
-        for m in missing:
-            lineage[str(m)] = {
-                "aliases": [f"Taxon {m}"],
-                "parents": ["1"],  # attach these directly to root node
-            }
-
-    lineage_yaml = yaml.dump(lineage, sort_keys=False)
-    yaml_size = len(lineage_yaml.encode("utf-8"))
-    if yaml_size > LARGE_FILE_THRESHOLD and not allow_large:
-        raise HTTPException(
-            status_code=413,
-            detail=(
-                f"Generated lineage file is {yaml_size / 1024 / 1024:.2f}MB, "
-                f"larger than the default limit of {LARGE_FILE_THRESHOLD / 1024 / 1024:.2f}MB. "
-                f"Retry request with `allow_large=true` to get the full file"
-            ),
+        logger.warning(
+            f"one or more provided taxa don't exist "
+            f"and will be added as orphan nodes: {sorted(missing)}"
         )
 
+    spanning_tree, root_id = get_spanning_tree(db, existing_ids)
+    if prune:
+        spanning_tree = prune_tree(spanning_tree, existing_ids, root_id=root_id)
+
+    lineage = convert_to_lineage_dict(spanning_tree)
+    for m in missing:
+        lineage[str(m)] = {
+            "aliases": [f"Taxon {m}"],
+            "parents": [],  # add these as orphan nodes
+        }
+
+    lineage_yaml = lineage_dict_to_string(lineage, allow_large)
     return Response(content=lineage_yaml, media_type="application/yaml")
 
 

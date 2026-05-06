@@ -7,6 +7,7 @@ from unittest.mock import patch
 import yaml
 from fastapi.testclient import TestClient
 from requests import codes
+
 from taxonomy_service.api import app, get_db_connection, init_app
 from taxonomy_service.config import Config, get_config
 
@@ -28,6 +29,15 @@ mock_taxa = {
         "common_name": "humans",
         "scientific_name": "Homo",
         "parent_id": 131567,  # skipping some levels for testing purposes
+        "depth": 30,
+    },
+    "Pan": {
+        # sibling of Homo under "cellular organisms" so we can test
+        # an MRCA that is not part of the input
+        "tax_id": 9596,
+        "common_name": "chimpanzees",
+        "scientific_name": "Pan",
+        "parent_id": 131567,
         "depth": 30,
     },
     "cellular organisms": {
@@ -146,52 +156,41 @@ class PostSiloLineageTest(unittest.TestCase):
             params=params,
         )
 
-    def test_returns_full_ancestry_for_single_taxon(self):
+    def test_single_taxon_returns_only_itself_as_root(self):
         homo_sapiens = mock_taxa["Homo sapiens"]
         response = self._post([homo_sapiens["tax_id"]])
 
         assert response.status_code == codes.ok
         lineage = yaml.safe_load(response.text)
-        assert set(lineage.keys()) == {"1", "131567", "9605", "9606"}
+        assert set(lineage.keys()) == {"9606"}
+        assert lineage["9606"]["parents"] == []
 
-    def test_root_always_included_with_no_parents(self):
-        homo = mock_taxa["Homo"]
-        response = self._post([homo["tax_id"]])
+    def test_returns_subtree_rooted_at_mrca_for_branching_inputs(self):
+        # Homo sapiens (9606) and Pan (9596) branch at "cellular organisms" (131567),
+        # which is their MRCA and therefore the root of the output subtree.
+        response = self._post([9606, 9596])
 
         assert response.status_code == codes.ok
         lineage = yaml.safe_load(response.text)
-        assert "1" in lineage
-        assert lineage["1"]["parents"] == []
-
-    def test_parent_relationships_preserved(self):
-        homo_sapiens = mock_taxa["Homo sapiens"]
-        response = self._post([homo_sapiens["tax_id"]])
-
-        lineage = yaml.safe_load(response.text)
-        assert lineage["9606"]["parents"] == ["9605"]
+        assert set(lineage.keys()) == {"131567", "9605", "9596", "9606"}
+        assert lineage["131567"]["parents"] == []
         assert lineage["9605"]["parents"] == ["131567"]
-        assert lineage["131567"]["parents"] == ["1"]
+        assert lineage["9596"]["parents"] == ["131567"]
+        assert lineage["9606"]["parents"] == ["9605"]
 
-    def test_alias_includes_common_name_when_present(self):
-        homo = mock_taxa["Homo"]
-        response = self._post([homo["tax_id"]])
+    def test_alias_includes_host_names(self):
+        response = self._post([9605, 9606])
 
         lineage = yaml.safe_load(response.text)
         assert lineage["9605"]["aliases"] == ["Taxon 9605: Homo; humans"]
-
-    def test_alias_omits_common_name_when_absent(self):
-        homo_sapiens = mock_taxa["Homo sapiens"]
-        response = self._post([homo_sapiens["tax_id"]])
-
-        lineage = yaml.safe_load(response.text)
         assert lineage["9606"]["aliases"] == ["Taxon 9606: Homo sapiens"]
 
-    def test_empty_tax_ids_returns_root_only(self):
+    def test_empty_tax_ids_returns_empty_lineage(self):
         response = self._post([])
 
         assert response.status_code == codes.ok
         lineage = yaml.safe_load(response.text)
-        assert set(lineage.keys()) == {"1"}
+        assert lineage == {}
 
     def test_non_numeric_tax_id_returns_422(self):
         response = client.post("/silo-lineage", json={"tax_ids": ["not-a-number"]})
@@ -199,36 +198,43 @@ class PostSiloLineageTest(unittest.TestCase):
         assert response.status_code == codes.unprocessable_entity
         assert "Input should be a valid integer" in response.json()["detail"][0]["msg"]
 
-    def test_missing_taxon_attached_to_root_with_placeholder_alias(self):
+    def test_missing_taxa_returned_as_unrooted_entries(self):
+        # Missing taxa should be included as orphan nodes
         response = self._post([mock_missing_taxon])
 
         assert response.status_code == codes.ok
         lineage = yaml.safe_load(response.text)
-        assert lineage[str(mock_missing_taxon)]["parents"] == ["1"]
+        assert lineage[str(mock_missing_taxon)]["parents"] == []
         assert lineage[str(mock_missing_taxon)]["aliases"] == [
             f"Taxon {mock_missing_taxon}"
         ]
 
-    def test_prune_reattaches_descendant_to_nearest_kept_ancestor(self):
-        # Spanning tree for Homo sapiens is {1, 131567, 9605, 9606}.
-        # With prune=true, only the requested taxa + root are kept (1 and 9606),
-        # so 9606 should reattach directly to 1.
-        homo_sapiens = mock_taxa["Homo sapiens"]
-        response = self._post([homo_sapiens["tax_id"]], params={"prune": "true"})
+        response = self._post([9606, 9596, mock_missing_taxon])
 
         assert response.status_code == codes.ok
         lineage = yaml.safe_load(response.text)
-        assert set(lineage.keys()) == {"1", "9606"}
-        assert lineage["9606"]["parents"] == ["1"]
+        assert lineage[str(mock_missing_taxon)]["parents"] == []
+
+    def test_prune_reattaches_descendant_to_nearest_kept_ancestor(self):
+        # MRCA of [131567, 9606] is 131567; the full tree is
+        # {131567, 9605, 9606}. With prune=true only the requested taxa are
+        # kept, so 9606 should reattach directly to 131567 (skipping 9605).
+        response = self._post([131567, 9606], params={"prune": "true"})
+
+        assert response.status_code == codes.ok
+        lineage = yaml.safe_load(response.text)
+        assert set(lineage.keys()) == {"131567", "9606"}
+        assert lineage["131567"]["parents"] == []
+        assert lineage["9606"]["parents"] == ["131567"]
 
     def test_returns_413_when_response_exceeds_threshold(self):
-        with patch("taxonomy_service.api.LARGE_FILE_THRESHOLD", 10):
+        with patch("taxonomy_service.helpers.LARGE_FILE_THRESHOLD", 10):
             response = self._post([mock_taxa["Homo sapiens"]["tax_id"]])
 
         assert response.status_code == codes.request_entity_too_large
 
     def test_allow_large_bypasses_size_guard(self):
-        with patch("taxonomy_service.api.LARGE_FILE_THRESHOLD", 10):
+        with patch("taxonomy_service.helpers.LARGE_FILE_THRESHOLD", 10):
             response = self._post(
                 [mock_taxa["Homo sapiens"]["tax_id"]],
                 params={"allow_large": "true"},
