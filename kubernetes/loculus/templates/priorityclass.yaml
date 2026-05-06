@@ -2,7 +2,7 @@
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
-  name: {{ .Release.Namespace }}
+  name: {{ .Release.Namespace }}-priority
   annotations:
     argocd.argoproj.io/sync-wave: "-10"
 value: {{ .Values.podPriorityValue }}
