@@ -114,11 +114,13 @@ spec:
             "args" (list "snakemake" "results/submitted" "results/revised" "--all-temp")
           ) | nindent 8 }}
 {{/*
-Sync-hook trigger: kicks off a one-off ingest Job from the CronJob's
-template whenever argocd syncs. The trigger itself exits in seconds
-(so it doesn't block the sync); the spawned ingest Job runs untracked
-by argocd. Concurrency with a scheduled CronJob run is handled by the
-shared lock init container in the spawned pod.
+PostSync-hook trigger: kicks off a one-off ingest Job from the CronJob's
+template after argocd reports the sync as healthy. PostSync waits for
+all resources (e.g. backend, ena-submission) to be Healthy before firing,
+so the spawned ingest pod doesn't start hammering services that aren't
+ready yet. The trigger itself exits in seconds; the spawned ingest Job
+runs untracked by argocd. Concurrency with a scheduled CronJob run is
+handled by the shared lock init container in the spawned pod.
 */}}
 ---
 apiVersion: batch/v1
@@ -126,7 +128,7 @@ kind: Job
 metadata:
   name: loculus-ingest-trigger-{{ $key }}
   annotations:
-    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook: PostSync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 spec:
   activeDeadlineSeconds: 120
