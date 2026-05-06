@@ -104,99 +104,13 @@ spec:
       activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
       ttlSecondsAfterFinished: 86400
       template:
-        metadata:
-          labels:
-            app: loculus
-            component: loculus-ingest-cronjob-{{ $key }}
-            ingest-organism: {{ $key }}
-            loculus-ingest-runner: "true"
-        spec:
-          {{- include "possiblePriorityClassName" (dict "Values" $.Values) | nindent 10 }}
-          serviceAccountName: loculus-ingest-lock
-          restartPolicy: Never
-          initContainers:
-            - name: version-check
-              image: busybox
-              {{- include "loculus.resources" (list "ingest-init" $.Values) | nindent 14 }}
-              command: ['sh', '-c', '
-                CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
-                DOCKER_TAG="{{ $dockerTag }}";
-                echo "Config version: $CONFIG_VERSION";
-                echo "Docker tag: $DOCKER_TAG";
-                if [ "$CONFIG_VERSION" != "$DOCKER_TAG" ]; then
-                  echo "Version mismatch: ConfigMap version $CONFIG_VERSION does not match docker tag $DOCKER_TAG";
-                  exit 1;
-                else
-                  echo "Version match confirmed";
-                fi
-              ']
-              volumeMounts:
-                - name: loculus-ingest-config-volume-{{ $key }}
-                  mountPath: /package/config/config.yaml
-                  subPath: config.yaml
-            - name: wait-for-no-other-ingest
-              image: alpine/kubectl:1.36.0
-              command:
-                - sh
-                - -c
-                - |
-                  set -eu
-                  while true; do
-                    ALL=$(kubectl get pods \
-                      -l ingest-organism={{ $key }},loculus-ingest-runner=true \
-                      -o jsonpath='{range .items[*]}{.metadata.name} {.status.phase}{"\n"}{end}')
-                    RUNNING=$(echo "$ALL" | awk -v me="$HOSTNAME" '$2=="Running" && $1!=me {print $1}')
-                    if [ -n "$RUNNING" ]; then
-                      echo "Waiting for running ingest pod(s) for {{ $key }}: $RUNNING"
-                      sleep 30
-                      continue
-                    fi
-                    # No peer in Running. Tie-break among Pending pods (typically all in init):
-                    # lowest pod name by lexicographic order wins, others wait until it transitions.
-                    LEADER=$(echo "$ALL" | awk '$2=="Pending" {print $1}' | sort | head -n 1)
-                    if [ -z "$LEADER" ] || [ "$LEADER" = "$HOSTNAME" ]; then
-                      echo "No conflicting ingest pods for {{ $key }}, proceeding."
-                      exit 0
-                    fi
-                    echo "Tie-break for {{ $key }}: yielding to lower-named peer $LEADER"
-                    sleep 10
-                  done
-          containers:
-            - name: ingest-{{ $key }}
-              image: {{ $organismContent.ingest.image }}:{{ $dockerTag }}
-              imagePullPolicy: {{ $.Values.imagePullPolicy }}
-              {{- include "loculus.resources" (list "ingest" $.Values) | nindent 14 }}
-              env:
-                - name: KEYCLOAK_INGEST_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: service-accounts
-                      key: insdcIngestUserPassword
-                - name: SLACK_HOOK
-                  valueFrom:
-                    secretKeyRef:
-                      name: slack-notifications
-                      key: slack-hook
-                - name: NCBI_API_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      name: ingest-ncbi
-                      key: api-key
-              args:
-                - snakemake
-                - results/submitted
-                - results/revised
-                - --all-temp
-          {{- if $organismContent.ingest.configFile }}
-              volumeMounts:
-                - name: loculus-ingest-config-volume-{{ $key }}
-                  mountPath: /package/config/config.yaml
-                  subPath: config.yaml
-          volumes:
-            - name: loculus-ingest-config-volume-{{ $key }}
-              configMap:
-                name: loculus-ingest-config-{{ $key }}
-          {{- end }}
+        {{- include "loculus.ingestPodSpec" (dict
+            "key" $key
+            "dockerTag" $dockerTag
+            "organismContent" $organismContent
+            "Values" $.Values
+            "args" (list "snakemake" "results/submitted" "results/revised" "--all-temp")
+          ) | nindent 8 }}
 {{/*
 Sync-hook trigger: kicks off a one-off ingest Job from the CronJob's
 template whenever argocd syncs. The trigger itself exits in seconds
@@ -251,39 +165,12 @@ spec:
     spec:
       activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
       template:
-        metadata:
-          labels:
-            app: loculus
-            component: loculus-ingest-cronjob-{{ $key }}
-        spec:
-          {{- include "possiblePriorityClassName" $ | nindent 10 }}
-          restartPolicy: Never
-          containers:
-            - name: ingest-{{ $key }}
-              image: {{ $organismContent.ingest.image}}:{{ $dockerTag }}
-              imagePullPolicy: {{ $.Values.imagePullPolicy }}
-              {{- include "loculus.resources" (list "ingest" $.Values) | nindent 14 }}
-              env:
-                - name: KEYCLOAK_INGEST_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: service-accounts
-                      key: insdcIngestUserPassword
-              args:
-                - snakemake
-                - results/submitted
-                - results/revised
-                - results/revoked
-                - --all-temp # Reduce disk usage by not keeping files around
-          {{- if $organismContent.ingest.configFile }}
-              volumeMounts:
-                - name: loculus-ingest-config-volume-{{ $key }}
-                  mountPath: /package/config/config.yaml
-                  subPath: config.yaml
-          volumes:
-            - name: loculus-ingest-config-volume-{{ $key }}
-              configMap:
-                name: loculus-ingest-config-{{ $key }}
-          {{- end }}
+        {{- include "loculus.ingestPodSpec" (dict
+            "key" $key
+            "dockerTag" $dockerTag
+            "organismContent" $organismContent
+            "Values" $.Values
+            "args" (list "snakemake" "results/submitted" "results/revised" "results/revoked" "--all-temp")
+          ) | nindent 8 }}
 {{- end }}
 {{- end }}
