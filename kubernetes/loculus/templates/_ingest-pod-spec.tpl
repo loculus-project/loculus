@@ -23,7 +23,7 @@ metadata:
     ingest-organism: {{ $key }}
     loculus-ingest-runner: "true"
 spec:
-  {{- include "possiblePriorityClassName" (dict "Values" $Values) | nindent 2 }}
+  {{- include "possiblePriorityClassName" . | nindent 2 }}
   serviceAccountName: loculus-ingest-lock
   restartPolicy: Never
   initContainers:
