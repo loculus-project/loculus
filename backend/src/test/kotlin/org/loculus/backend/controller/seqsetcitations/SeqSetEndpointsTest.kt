@@ -24,13 +24,14 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
     @MockkBean
     lateinit var accessionPreconditionValidator: AccessionPreconditionValidator
 
-    @MockkBean(relaxed = true)
+    @MockkBean
     lateinit var crossRefService: CrossRefService
 
     @BeforeEach
     fun setup() {
         every { accessionPreconditionValidator.validate(any()) } returns Unit
-        every { crossRefService.postCrossRefXML(any()) } returns "SUCCESS"
+        every { crossRefService.doiPrefix } returns MOCK_DOI_PREFIX
+        every { crossRefService.isActive } returns false
     }
 
     @ParameterizedTest

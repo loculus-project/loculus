@@ -14,12 +14,15 @@ const val MOCK_SEQSET_ID = "e302e770-e198-4a8f-9145-b536e3590656"
 const val MOCK_SEQSET_VERSION = 1L
 const val MOCK_SEQSET_NAME = "mock-seqset-name"
 const val MOCK_SEQSET_DESCRIPTION = "mock-seqset-description"
-const val MOCK_SEQSET_RECORDS = "[{ \"accession\": \"mock-sequence-accession.1\", \"type\": \"loculus\" }]"
+const val MOCK_SEQ_ACCESSION = "mock-sequence-accession"
+const val MOCK_SEQ_VERSION = 1L
+const val MOCK_SEQSET_RECORDS = "[{ \"accession\": \"${MOCK_SEQ_ACCESSION}.${MOCK_SEQ_VERSION}\", \"type\": \"loculus\" }]"
 const val MOCK_USERNAME = "testuser"
 const val MOCK_USER_EMAIL = "testuser@example.com"
 const val MOCK_USER_FIRST_NAME = "Test"
 const val MOCK_USER_LAST_NAME = "User"
 const val MOCK_USER_UNIVERSITY = "Test University"
+const val MOCK_DOI_PREFIX = "10.1234"
 
 class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
 
@@ -88,9 +91,18 @@ class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
             .withAuth(jwt),
     )
 
+    fun getSeqSetCitations(
+        seqSetId: String = MOCK_SEQSET_ID,
+        seqSetVersion: Long = MOCK_SEQSET_VERSION,
+    ): ResultActions = mockMvc.perform(
+        get("/get-seqset-citations")
+            .param("seqSetId", seqSetId)
+            .param("version", seqSetVersion.toString()),
+    )
+
     fun deleteSeqSet(
         seqSetId: String = MOCK_SEQSET_ID,
-        seqSetVersion: Long? = MOCK_SEQSET_VERSION,
+        seqSetVersion: Long = MOCK_SEQSET_VERSION,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         delete("/delete-seqset")
@@ -101,7 +113,7 @@ class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
 
     fun createSeqSetDOI(
         seqSetId: String = MOCK_SEQSET_ID,
-        seqSetVersion: Long? = MOCK_SEQSET_VERSION,
+        seqSetVersion: Long = MOCK_SEQSET_VERSION,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         post("/create-seqset-doi")

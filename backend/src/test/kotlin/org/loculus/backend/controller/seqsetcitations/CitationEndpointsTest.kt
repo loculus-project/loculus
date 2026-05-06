@@ -3,13 +3,18 @@ package org.loculus.backend.controller.seqsetcitations
 import com.jayway.jsonpath.JsonPath
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
+import org.hamcrest.CoreMatchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.SeqSetCitation
+import org.loculus.backend.api.SeqSetCitationContributor
+import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
+import org.loculus.backend.service.crossref.CrossRefService
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,9 +32,19 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
     @MockkBean
     lateinit var accessionPreconditionValidator: AccessionPreconditionValidator
 
+    @MockkBean
+    lateinit var crossRefService: CrossRefService
+
     @BeforeEach
     fun setup() {
+        every {
+            submissionDatabaseService.getApprovedUserAccessionVersions(
+                match { it.username == DEFAULT_USER_NAME },
+            )
+        } returns listOf(AccessionVersion(MOCK_SEQ_ACCESSION, MOCK_SEQ_VERSION))
         every { accessionPreconditionValidator.validate(any()) } returns Unit
+        every { crossRefService.doiPrefix } returns MOCK_DOI_PREFIX
+        every { crossRefService.isActive } returns false
     }
 
     @ParameterizedTest
@@ -41,11 +56,7 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
     }
 
     @Test
-    fun `WHEN calling get user cited by seqSet of non-existing user THEN returns empty results`() {
-        every {
-            submissionDatabaseService.getApprovedUserAccessionVersions(any())
-        } returns listOf()
-
+    fun `WHEN calling get user cited by seqSet for user sequences not in any seqSet THEN returns empty results`() {
         client.getUserCitedBySeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -56,22 +67,7 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
     }
 
     @Test
-    fun `WHEN calling get seqSet cited by publication of non-existing seqSet THEN returns empty results`() {
-        client.getSeqSetCitedByPublication()
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.years").isArray)
-            .andExpect(jsonPath("\$.years").isEmpty)
-            .andExpect(jsonPath("\$.citations").isArray)
-            .andExpect(jsonPath("\$.citations").isEmpty)
-    }
-
-    @Test
-    fun `WHEN calling get seqSet cited by publication of existing seqSet THEN returns results`() {
-        every {
-            submissionDatabaseService.getApprovedUserAccessionVersions(any())
-        } returns listOf(AccessionVersion("mock-sequence-accession", 1L))
-
+    fun `WHEN calling get user cited by seqSet for user sequences in a seqSet THEN returns results`() {
         val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -90,9 +86,98 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
             .andExpect(jsonPath("\$.citations[0]").value(1))
 
         val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+        val seqSetVersion = JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
 
-        client.deleteSeqSet(seqSetId)
+        client.deleteSeqSet(seqSetId, seqSetVersion)
             .andExpect(status().isOk)
+    }
+
+    @Test
+    fun `WHEN calling get seqSet cited by publication of non-existing seqSet THEN returns empty results`() {
+        client.getSeqSetCitedByPublication()
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.years").isArray)
+            .andExpect(jsonPath("\$.years").isEmpty)
+            .andExpect(jsonPath("\$.citations").isArray)
+            .andExpect(jsonPath("\$.citations").isEmpty)
+    }
+
+    @Test
+    fun `WHEN calling get seqSet citations for non-existing seqSet THEN returns 404`() {
+        client.getSeqSetCitations(seqSetId = "non-existing-id", seqSetVersion = 1L)
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `WHEN calling get seqSet citations for seqSet without DOI THEN returns empty list`() {
+        val seqSetResult = client.createSeqSet()
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.seqSetId").isString)
+            .andExpect(jsonPath("\$.seqSetVersion").value(1))
+            .andReturn()
+
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+        val seqSetVersion = JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
+
+        client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$").isArray)
+            .andExpect(jsonPath("\$").isEmpty)
+
+        client.deleteSeqSet(seqSetId, seqSetVersion)
+            .andExpect(status().isOk)
+    }
+
+    @Test
+    fun `WHEN calling get seqSet citations for seqSet with DOI THEN returns citations`() {
+        val seqSetResult = client.createSeqSet()
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.seqSetId").isString)
+            .andExpect(jsonPath("\$.seqSetVersion").value(1))
+            .andReturn()
+
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+        val seqSetVersion = JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
+
+        client.createSeqSetDOI(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
+            .andExpect(status().isOk)
+
+        val seqSetDOI = "${MOCK_DOI_PREFIX}/$seqSetId.$seqSetVersion"
+        val seqSetCitation = SeqSetCitation(
+            seqSetDOI = seqSetDOI,
+            citationDOI = "10.5678/citing-paper",
+            title = "A paper citing the seqSet",
+            year = "2024",
+            contributors = listOf(SeqSetCitationContributor(givenName = "Jane", surname = "Doe")),
+        )
+
+        every { crossRefService.getCrossRefCitedBy(seqSetDOI) } returns listOf(
+            seqSetCitation,
+        )
+
+        client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$").isArray)
+            .andExpect(jsonPath("\$[0].citationDOI").value(seqSetCitation.citationDOI))
+            .andExpect(jsonPath("\$[0].title").value(seqSetCitation.title))
+            .andExpect(jsonPath("\$[0].year").value(seqSetCitation.year))
+            .andExpect(jsonPath("\$[0].contributors[0].givenName").value(seqSetCitation.contributors[0].givenName))
+            .andExpect(jsonPath("\$[0].contributors[0].surname").value(seqSetCitation.contributors[0].surname))
+
+        client.deleteSeqSet(seqSetId, seqSetVersion)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString("SeqSet $seqSetId, version $seqSetVersion has a DOI and cannot be deleted"),
+                ),
+            )
     }
 
     companion object {
