@@ -7,7 +7,6 @@
   {{- end }}
 {{- end }}
 {{- $ingestCount := len $ingestOrganisms }}
-{{- if gt $ingestCount 0 }}
 {{/*
 RBAC so each ingest pod can list other ingest pods to avoid the CronJob
 run and the sync-triggered bootstrap Job overlapping for the same organism.
@@ -292,6 +291,5 @@ spec:
               configMap:
                 name: loculus-ingest-config-{{ $key }}
           {{- end }}
-{{- end }}
 {{- end }}
 {{- end }}
