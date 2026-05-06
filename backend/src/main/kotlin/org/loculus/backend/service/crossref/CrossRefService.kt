@@ -54,9 +54,9 @@ class CrossRefService(private val properties: CrossRefServiceProperties) {
         properties.organization != null &&
         properties.hostUrl != null
     val doiPrefix: String? = properties.doiPrefix
-    val dateTimeFormatterMM = DateTimeFormatter.ofPattern("MM")
-    val dateTimeFormatterdd = DateTimeFormatter.ofPattern("dd")
-    val dateTimeFormatteryyyy = DateTimeFormatter.ofPattern("yyyy")
+    val dateTimeFormatterMM: DateTimeFormatter = DateTimeFormatter.ofPattern("MM")
+    val dateTimeFormatterdd: DateTimeFormatter = DateTimeFormatter.ofPattern("dd")
+    val dateTimeFormatteryyyy: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy")
 
     private fun checkIsActive() {
         if (!isActive) {
@@ -89,6 +89,7 @@ class CrossRefService(private val properties: CrossRefServiceProperties) {
     fun getCrossRefCitedBy(doi: String): List<SeqSetCitation> {
         checkIsActive()
 
+        // End date is set to the current date
         val endDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
         val connection = URI(
             properties.endpoint +
