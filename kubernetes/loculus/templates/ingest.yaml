@@ -70,6 +70,8 @@ roleRef:
   kind: Role
   name: loculus-ingest-trigger
   apiGroup: rbac.authorization.k8s.io
+
+
 {{/*
 Schedule one organism per 30-minute slot so ingest runs are staggered.
 Period (hours) = ceil(N/2); organism i runs at minute (i%2)*30 of hour
