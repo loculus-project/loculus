@@ -262,13 +262,7 @@ spec:
             - name: ingest-{{ $key }}
               image: {{ $organismContent.ingest.image}}:{{ $dockerTag }}
               imagePullPolicy: {{ $.Values.imagePullPolicy }}
-              resources:
-                requests:
-                  memory: "1Gi"
-                  cpu: "200m"
-                limits:
-                  cpu: "200m"
-                  memory: "10Gi"
+              {{- include "loculus.resources" (list "ingest" $.Values) | nindent 14 }}
               env:
                 - name: KEYCLOAK_INGEST_PASSWORD
                   valueFrom:
