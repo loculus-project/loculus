@@ -160,18 +160,24 @@ export const InnerSearchFullUI = ({
     // but we keep the prop name through the search components for now to
     // avoid a rename cascade.
     const lapisUrl = getQueryServiceUrl(clientConfig);
+
+    // By default the search shows latest non-revoked sequences (query-service
+    // applies those defaults). The user can flip the "Include older versions
+    // and revocations" toggle to send `?include=all` and see everything.
+    const includeRaw = state.include;
+    const include = Array.isArray(includeRaw) ? includeRaw[0] : includeRaw;
+    const includeAll = include === 'all';
+    const setIncludeAll = (next: boolean) => {
+        setSomeFieldValues(['include', next ? 'all' : '']);
+    };
     const downloadUrlGenerator = new DownloadUrlGenerator(
         organism,
         lapisUrl,
         dataUseTermsEnabled,
         schema.richFastaHeaderFields,
+        include,
     );
-
-    // The search UI manages its own version-related defaults via
-    // hiddenFieldValues — let users see all versions / revocations when
-    // they clear those fields. Pass include=all to opt out of the
-    // query-service-side defaults.
-    const hooks = lapisClientHooks(lapisUrl, organism, { include: 'all' });
+    const hooks = lapisClientHooks(lapisUrl, organism, include ? { include } : {});
     const aggregatedHook = hooks.useAggregated();
     const detailsHook = hooks.useDetails();
 
@@ -277,6 +283,19 @@ export const InnerSearchFullUI = ({
                 sequenceFlaggingConfig={sequenceFlaggingConfig}
             />
             <div className='md:w-[18rem]'>
+                <label
+                    className='mb-3 flex cursor-pointer items-center gap-2 text-sm text-gray-600'
+                    data-testid='include-all-toggle-label'
+                >
+                    <input
+                        type='checkbox'
+                        className='checkbox checkbox-sm'
+                        data-testid='include-all-toggle'
+                        checked={includeAll}
+                        onChange={(e) => setIncludeAll(e.target.checked)}
+                    />
+                    Include older versions and revocations
+                </label>
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}

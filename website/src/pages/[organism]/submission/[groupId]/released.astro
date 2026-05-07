@@ -10,8 +10,7 @@ import {
     getSchema,
     getWebsiteConfig,
 } from '../../../../config';
-import { GROUP_ID_FIELD, VERSION_STATUS_FIELD } from '../../../../settings';
-import { versionStatuses } from '../../../../types/lapis';
+import { GROUP_ID_FIELD } from '../../../../settings';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { parseUrlSearchParams } from '../../../../utils/parseUrlSearchParams';
 import { performLapisSearchQueries } from '../../../../utils/serversideSearch';
@@ -39,8 +38,9 @@ const accessToken = getAccessToken(Astro.locals.session);
 
 const referenceGenomesInfo = getReferenceGenomes(cleanedOrganism.key);
 
+// Only the group-id constraint is a "hidden" filter on this page —
+// versionStatus / isRevocation defaults are now applied by query-service.
 const hiddenFieldValues = {
-    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
     [GROUP_ID_FIELD]: String(group.groupId),
 };
 
@@ -49,8 +49,8 @@ const { data, totalCount } = await performLapisSearchQueries(
     initialQueryDict,
     schema,
     referenceGenomesInfo,
-    hiddenFieldValues,
     cleanedOrganism.key,
+    hiddenFieldValues,
 );
 
 const websiteConfig = getWebsiteConfig();

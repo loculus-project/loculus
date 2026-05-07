@@ -32,12 +32,17 @@ export class DownloadUrlGenerator {
      *   the rename blast radius).
      * @param dataUseTermsEnabled If false, the downloaded URLs won't include any data use terms related settings.
      * @param richFastaHeaderFields Set the fastaHeaderTemplate parameter to include rich fasta headers.
+     * @param include Optional `include=` value to forward to query-service
+     *   (e.g. `'all'` when the user has toggled "Include older versions and
+     *   revocations"). Without this, query-service applies its
+     *   latest-version / no-revocation defaults.
      */
     constructor(
         private readonly organism: string,
         private readonly lapisUrl: string,
         private readonly dataUseTermsEnabled: boolean,
         private readonly richFastaHeaderFields?: string[],
+        private readonly include?: string,
     ) {}
 
     public generateDownloadUrl(downloadParameters: SequenceFilter, option: DownloadOption) {
@@ -47,10 +52,9 @@ export class DownloadUrlGenerator {
         const excludedParams = new Set<string>();
 
         params.set('organism', this.organism);
-        // The search page manages its own version-status / revocation
-        // defaults via hiddenFieldValues, so opt out of the query-service
-        // defaults to keep the prior "user can clear these" UX.
-        params.set('include', 'all');
+        if (this.include !== undefined && this.include !== '') {
+            params.set('include', this.include);
+        }
         for (const [k, v] of Object.entries(routingParams)) {
             params.set(k, v);
         }
