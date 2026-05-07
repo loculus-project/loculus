@@ -47,6 +47,10 @@ export class DownloadUrlGenerator {
         const excludedParams = new Set<string>();
 
         params.set('organism', this.organism);
+        // The search page manages its own version-status / revocation
+        // defaults via hiddenFieldValues, so opt out of the query-service
+        // defaults to keep the prior "user can clear these" UX.
+        params.set('include', 'all');
         for (const [k, v] of Object.entries(routingParams)) {
             params.set(k, v);
         }

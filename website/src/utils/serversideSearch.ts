@@ -64,7 +64,9 @@ export const performLapisSearchQueries = async (
 
     const client = LapisClient.createForOrganism(organism);
 
-    const organismQueries = { queries: { organism: client.organism } };
+    // include=all: the search page manages version defaults itself via
+    // hiddenFieldValues, so opt out of query-service's auto-defaults.
+    const organismQueries = { queries: { organism: client.organism, include: 'all' } };
     const [detailsResult, aggregatedResult] = await Promise.all([
         client.call(
             'details',
