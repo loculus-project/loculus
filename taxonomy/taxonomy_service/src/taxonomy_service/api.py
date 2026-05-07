@@ -8,11 +8,11 @@ from fastapi import Depends, FastAPI, HTTPException, Response
 
 from taxonomy_service.datatypes import SubtreeRequestBody, Taxon
 from taxonomy_service.helpers import (
+    ROOT_TAX_ID,
     convert_to_lineage_dict,
     fetch_by_id,
     fetch_by_sci_name,
     fetch_common_name,
-    find_existing_ids,
     get_spanning_tree,
     lineage_dict_to_string,
     prune_tree,
@@ -103,28 +103,26 @@ def post_silo_lineage(
                         larger than `LARGE_FILE_THRESHOLD`
     """
     tax_ids = set(payload.tax_ids)
-    existing_ids = find_existing_ids(db, tax_ids)
-    if not existing_ids:
-        lineage = {str(t): {"aliases": [f"Taxon {t}"], "parents": []} for t in tax_ids}
-        lineage_yaml = lineage_dict_to_string(lineage, allow_large)
-        return Response(content=lineage_yaml, media_type="application/yaml")
+    if not tax_ids:
+        return Response(content="{}\n", media_type="application/yaml")
 
-    missing = tax_ids - existing_ids
-    if missing:
+    spanning_tree, missing_ids = get_spanning_tree(db, tax_ids)
+    if missing_ids:
         logger.warning(
             f"one or more provided taxa don't exist "
-            f"and will be added as orphan nodes: {sorted(missing)}"
+            f"and will be attached to the root taxon: {sorted(missing_ids)}"
         )
 
-    spanning_tree, root_id = get_spanning_tree(db, existing_ids)
     if prune:
-        spanning_tree = prune_tree(spanning_tree, existing_ids, root_id=root_id)
+        spanning_tree = prune_tree(
+            spanning_tree, tax_ids | {ROOT_TAX_ID}, root_id=ROOT_TAX_ID
+        )
 
     lineage = convert_to_lineage_dict(spanning_tree)
-    for m in missing:
+    for m in missing_ids:
         lineage[str(m)] = {
             "aliases": [f"Taxon {m}"],
-            "parents": [],  # add these as orphan nodes
+            "parents": ["1"],  # attach these to the root
         }
 
     lineage_yaml = lineage_dict_to_string(lineage, allow_large)

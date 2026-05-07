@@ -11,6 +11,7 @@ from taxonomy_service.datatypes import Taxon
 # If we send a lineage file over the limit to SILO it will crash and take down the
 # instance, so for large files we send back status 413 instead.
 LARGE_FILE_THRESHOLD = 2.5 * 1024 * 1024
+ROOT_TAX_ID = 1
 
 
 def fetch_by_sci_name(db_conn: sqlite3.Connection, name: str) -> list[Taxon] | None:
@@ -66,7 +67,7 @@ def fetch_common_name(db_conn: sqlite3.Connection, taxon: Taxon) -> Taxon | None
     # creating a reusable cursor here instead of calling `fetch_by_id` in the while loop
     cursor = db_conn.cursor()
     tax_id = taxon.parent_id
-    while tax_id > 1:  # tax_id 1 is the root
+    while tax_id > ROOT_TAX_ID:
         row = cursor.execute(
             "SELECT * FROM taxonomy WHERE tax_id = ?", (tax_id,)
         ).fetchone()
@@ -107,58 +108,45 @@ def find_existing_ids(db_conn: sqlite3.Connection, tax_ids: set[int]) -> set[int
 
 def get_spanning_tree(
     db_conn: sqlite3.Connection, tax_ids: set[int]
-) -> tuple[list[Taxon], int]:
+) -> tuple[list[Taxon], set[int]]:
     """Run a recursive CTE against the database to collect the path
-    from each taxon in tax_ids to their most recent common ancestor.
+    from each taxon in tax_ids to the taxonomic root
 
-    NOTE: `tax_ids` is assumed to have at least one ID, and all IDs are assumed to exist!
-    See `find_existing_ids()`
+    args:
+        db_conn: sqlite3.Connection:
+                        Connection to the database
+        tax_ids: set[int]
+                        A set of taxon identifiers to build a spanning tree for
+
+    returns:
+        list[Taxon]:    The taxonomic tree spanning all input tax_ids, represented
+                        as a list of taxa
+        set[int]:       Taxon ids in `tax_ids` that do not exist in the database
     """
-    placeholders = ",".join("?" * len(tax_ids))
+    existing_ids = find_existing_ids(db_conn, tax_ids)
+    if not existing_ids:
+        return [], tax_ids
+    existing_ids = {ROOT_TAX_ID} | existing_ids  # always include the root node
+    missing_ids = tax_ids - existing_ids
+
+    placeholders = ",".join("?" * len(existing_ids))
     rows = db_conn.execute(
         f"""
-    WITH RECURSIVE ancestors AS (
-          SELECT
-              tax_id AS original_tax_id,
-              taxonomy.*
-          FROM taxonomy
-          WHERE tax_id IN ({placeholders})
-
+      WITH RECURSIVE ancestors AS (
+          SELECT *
+          FROM taxonomy WHERE tax_id IN ({placeholders})
           UNION
-
-          SELECT
-              a.original_tax_id,
-              t.*
-          FROM taxonomy t
-          JOIN ancestors a ON t.tax_id = a.parent_id
+          SELECT t.*
+          FROM taxonomy t JOIN ancestors a ON t.tax_id = a.parent_id
           WHERE t.tax_id != t.parent_id
-      ),
-      mrca AS (
-          SELECT tax_id, depth
-          FROM ancestors
-          GROUP BY tax_id, depth
-          HAVING COUNT(DISTINCT original_tax_id) = {len(tax_ids)}
-          ORDER BY depth DESC
-          LIMIT 1
       )
-      SELECT t.*
-      FROM taxonomy t
-      CROSS JOIN mrca m
-      WHERE t.tax_id IN (SELECT tax_id FROM ancestors)
-        AND t.depth >= m.depth
-      ORDER BY t.depth, t.tax_id;
+      SELECT * FROM ancestors
+      ORDER BY depth, tax_id
     """,
-        list(tax_ids),
+        list(existing_ids),
     ).fetchall()
 
-    taxa = [Taxon.from_row(row) for row in rows]
-    if any(t.depth == taxa[0].depth for t in taxa[1:]):
-        raise RuntimeError(
-            "spanning tree contained multiple taxa at MRCA depth, which should be impossible"
-        )
-    taxa[0] = taxa[0].model_copy(update={"parent_id": taxa[0].tax_id})
-
-    return taxa, taxa[0].tax_id
+    return [Taxon.from_row(row) for row in rows], missing_ids
 
 
 def map_child_nodes(tree: list[Taxon]) -> dict[int, list[int]]:

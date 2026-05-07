@@ -156,29 +156,19 @@ class PostSiloLineageTest(unittest.TestCase):
             params=params,
         )
 
-    def test_single_taxon_returns_only_itself_as_root(self):
-        homo_sapiens = mock_taxa["Homo sapiens"]
-        response = self._post([homo_sapiens["tax_id"]])
-
-        assert response.status_code == codes.ok
-        lineage = yaml.safe_load(response.text)
-        assert set(lineage.keys()) == {"9606"}
-        assert lineage["9606"]["parents"] == []
-
-    def test_returns_subtree_rooted_at_mrca_for_branching_inputs(self):
+    def test_returns_expected_tree(self):
         # Homo sapiens (9606) and Pan (9596) branch at "cellular organisms" (131567),
-        # which is their MRCA and therefore the root of the output subtree.
         response = self._post([9606, 9596])
 
         assert response.status_code == codes.ok
         lineage = yaml.safe_load(response.text)
-        assert set(lineage.keys()) == {"131567", "9605", "9596", "9606"}
-        assert lineage["131567"]["parents"] == []
+        assert set(lineage.keys()) == {"1", "131567", "9605", "9596", "9606"}
+        assert lineage["131567"]["parents"] == ["1"]
         assert lineage["9605"]["parents"] == ["131567"]
         assert lineage["9596"]["parents"] == ["131567"]
         assert lineage["9606"]["parents"] == ["9605"]
 
-    def test_alias_includes_host_names(self):
+    def test_alias_includes_names(self):
         response = self._post([9605, 9606])
 
         lineage = yaml.safe_load(response.text)
@@ -198,33 +188,33 @@ class PostSiloLineageTest(unittest.TestCase):
         assert response.status_code == codes.unprocessable_entity
         assert "Input should be a valid integer" in response.json()["detail"][0]["msg"]
 
-    def test_missing_taxa_returned_as_unrooted_entries(self):
-        # Missing taxa should be included as orphan nodes
+    def test_missing_taxa_attached_to_root(self):
         response = self._post([mock_missing_taxon])
 
         assert response.status_code == codes.ok
         lineage = yaml.safe_load(response.text)
-        assert lineage[str(mock_missing_taxon)]["parents"] == []
+        assert lineage[str(mock_missing_taxon)]["parents"] == ["1"]
         assert lineage[str(mock_missing_taxon)]["aliases"] == [
             f"Taxon {mock_missing_taxon}"
         ]
 
+        # Also if other valid taxa are provided
         response = self._post([9606, 9596, mock_missing_taxon])
 
         assert response.status_code == codes.ok
         lineage = yaml.safe_load(response.text)
-        assert lineage[str(mock_missing_taxon)]["parents"] == []
+        assert lineage[str(mock_missing_taxon)]["parents"] == ["1"]
 
     def test_prune_reattaches_descendant_to_nearest_kept_ancestor(self):
-        # MRCA of [131567, 9606] is 131567; the full tree is
-        # {131567, 9605, 9606}. With prune=true only the requested taxa are
-        # kept, so 9606 should reattach directly to 131567 (skipping 9605).
+        # The relevant tree is {1, 131567, 9605, 9606}.
+        # With prune=true only the requested taxa (and root) are kept,
+        # so 9606 should reattach directly to 131567 (skipping 9605).
         response = self._post([131567, 9606], params={"prune": "true"})
 
         assert response.status_code == codes.ok
         lineage = yaml.safe_load(response.text)
-        assert set(lineage.keys()) == {"131567", "9606"}
-        assert lineage["131567"]["parents"] == []
+        assert set(lineage.keys()) == {"1", "131567", "9606"}
+        assert lineage["131567"]["parents"] == ["1"]
         assert lineage["9606"]["parents"] == ["131567"]
 
     def test_returns_413_when_response_exceeds_threshold(self):
