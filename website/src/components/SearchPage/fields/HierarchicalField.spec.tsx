@@ -173,8 +173,8 @@ describe('HierarchicalField - lineage mode', () => {
 
         await userEvent.click(screen.getByLabelText('My Lineage'));
 
-        const options = await screen.findAllByRole('option');
-        await userEvent.click(options[2]);
+        await screen.findAllByRole('option');
+        await userEvent.click(screen.getByRole('option', { name: /A\.1\.1/ }));
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1.1']);
 
@@ -316,8 +316,8 @@ describe('HierarchicalField - default mode', () => {
         );
 
         await userEvent.click(screen.getByLabelText('Host Taxon'));
-        const options = await screen.findAllByRole('option');
-        await userEvent.click(options[3]); // Rodentia
+        await screen.findAllByRole('option');
+        await userEvent.click(screen.getByRole('option', { name: /Rodentia/ }));
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['hostTaxon', 'Rodentia*']);
     });
@@ -366,9 +366,9 @@ describe('HierarchicalField - default mode', () => {
         );
 
         await userEvent.click(screen.getByLabelText('Host Taxon'));
-        const options = await screen.findAllByRole('option');
-        // options[4] === 'True mice' (alias for canonical 'Muridae')
-        await userEvent.click(options[4]);
+        await screen.findAllByRole('option');
+        // 'True mice' is the alias for canonical 'Muridae'
+        await userEvent.click(screen.getByRole('option', { name: /True mice/ }));
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['hostTaxon', 'Muridae*']);
     });

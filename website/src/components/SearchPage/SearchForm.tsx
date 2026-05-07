@@ -436,8 +436,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
                         lapisSearchParameters={lapisSearchParameters}
-                        mode= {field.lineageSearch ? 'lineage' : 'default'}
-                        hierarchicalSearchText={field.hierarchicalSearchText}
+                        mode={field.lineageSearch ? 'lineage' : 'default'}
                     />
                 );
             }

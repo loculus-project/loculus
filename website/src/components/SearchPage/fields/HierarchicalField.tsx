@@ -35,7 +35,6 @@ interface HierarchicalFieldProps {
     fieldValue: string;
     setSomeFieldValues: SetSomeFieldValues;
     mode?: HierarchicalFieldMode;
-    hierarchicalSearchText?: string;
 }
 
 export const HierarchicalField: FC<HierarchicalFieldProps> = ({
@@ -44,11 +43,10 @@ export const HierarchicalField: FC<HierarchicalFieldProps> = ({
     setSomeFieldValues,
     lapisUrl,
     lapisSearchParameters,
-    hierarchicalSearchText = null,
     mode = 'default',
 }) => {
     const { defaultIncludeSublineages, includeZeroCounts, showAlias: showAlias, checkBoxLabel: defaultCheckBoxLabel } = MODE_CONFIGS[mode];
-    const checkBoxLabel = hierarchicalSearchText ?? defaultCheckBoxLabel;
+    const checkBoxLabel = field.hierarchicalSearchText ?? defaultCheckBoxLabel;
 
     const [includeSublineages, _setIncludeSubLineages] = useState(
         fieldValue.endsWith('*') || (fieldValue === '' && defaultIncludeSublineages),
