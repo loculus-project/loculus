@@ -61,9 +61,7 @@ def update_hierarchical_filters(
     for field in config.hierarchical_filters:
         new_values = metadata_values.get(field, set())
         if old_metadata_values.get(field) == new_values:
-            logger.info(
-                "No change in values for hierarchical filter '%s'; skipping update", field
-            )
+            logger.info("No change in values for hierarchical filter '%s'; skipping update", field)
             continue
         url = config.hierarchical_filters.get(field)
         if not url:

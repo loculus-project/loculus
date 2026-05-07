@@ -202,9 +202,7 @@ def host_taxon_setup(
 ) -> tuple[ImporterConfig, ImporterPaths, list[tuple[str, list[str]]]]:
     config = make_config(
         tmp_path,
-        hierarchical_filters={
-            "hostTaxon": "http://taxonomy:5000"
-        },
+        hierarchical_filters={"hostTaxon": "http://taxonomy:5000"},
         hard_refresh_interval=1000,
     )
     paths = make_paths(tmp_path)
@@ -258,9 +256,7 @@ def test_runner_writes_hierarchical_filter_yaml(
     assert len(post_calls) == 1
     assert post_calls[0][0] == "http://taxonomy:5000/silo-lineage"
     assert post_calls[0][1] == ["10090", "9606"]
-    assert runner.hierarchical_filter_values == {
-        "hostTaxon": {"9606", "10090"}
-    }
+    assert runner.hierarchical_filter_values == {"hostTaxon": {"9606", "10090"}}
 
 
 def test_runner_skips_filter_refetch_when_taxa_unchanged(
