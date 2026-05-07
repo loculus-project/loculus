@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from typing import Final
 from unittest.mock import patch
 
 import pytest
@@ -11,7 +12,7 @@ from helpers import (
     compress_ndjson,
     make_mock_download_func,
     mock_records,
-    mock_records_with_host_taxa,
+    mock_records_with_hierarchical_filters,
     mock_transformed_records,
     read_ndjson_file,
 )
@@ -196,13 +197,15 @@ def test_runner_cleans_up_on_decompress_failure(
     assert not responses_list
 
 
+HOST_TAXON_NAME: Final = "hostTaxon"
+
 @pytest.fixture
 def host_taxon_setup(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> tuple[ImporterConfig, ImporterPaths, list[tuple[str, list[str]]]]:
     config = make_config(
         tmp_path,
-        hierarchical_filters={"hostTaxon": "http://taxonomy:5000"},
+        hierarchical_filters={HOST_TAXON_NAME: "http://taxonomy:5000"},
         hard_refresh_interval=1000,
     )
     paths = make_paths(tmp_path)
@@ -234,7 +237,7 @@ def test_runner_writes_hierarchical_filter_yaml(
 ) -> None:
     config, paths, post_calls = host_taxon_setup
 
-    records = mock_records_with_host_taxa(["9606", "10090", "9606"])
+    records = mock_records_with_hierarchical_filters(["9606", "10090", "9606"], HOST_TAXON_NAME)
     body = compress_ndjson(records)
     responses = [
         MockHttpResponse(
@@ -251,12 +254,12 @@ def test_runner_writes_hierarchical_filter_yaml(
     with patch.object(runner.silo, "run_preprocessing"):
         runner.run_once()
 
-    host_taxon_yaml = paths.input_dir / "hostTaxon.yaml"
+    host_taxon_yaml = paths.input_dir / f"{HOST_TAXON_NAME}.yaml"
     assert host_taxon_yaml.read_text(encoding="utf-8") == "lineage: host\n"
     assert len(post_calls) == 1
     assert post_calls[0][0] == "http://taxonomy:5000/silo-lineage"
     assert post_calls[0][1] == ["10090", "9606"]
-    assert runner.hierarchical_filter_values == {"hostTaxon": {"9606", "10090"}}
+    assert runner.hierarchical_filter_values == {HOST_TAXON_NAME: {"9606", "10090"}}
 
 
 def test_runner_skips_filter_refetch_when_taxa_unchanged(
@@ -264,7 +267,7 @@ def test_runner_skips_filter_refetch_when_taxa_unchanged(
 ) -> None:
     config, paths, post_calls = host_taxon_setup
 
-    records = mock_records_with_host_taxa(["9606", "10090", "9606"])
+    records = mock_records_with_hierarchical_filters(["9606", "10090", "9606"], HOST_TAXON_NAME)
     body = compress_ndjson(records)
     responses = [
         MockHttpResponse(

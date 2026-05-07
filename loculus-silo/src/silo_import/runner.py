@@ -87,6 +87,7 @@ class ImporterRunner:
                 self.config,
                 self.paths,
             )
+            self.hierarchical_filter_values = download.analysis.hierarchical_filter_values
         except Exception:
             logger.exception("Failed to download lineage definitions; cleaning up input")
             safe_remove(self.paths.silo_input_data_path)
