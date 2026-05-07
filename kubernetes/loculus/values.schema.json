@@ -1707,6 +1707,11 @@
           "type": "integer",
           "description": "Number of replicas for the LAPIS deployment",
           "default": 1
+        },
+        "queryService": {
+          "type": "integer",
+          "description": "Number of replicas for the query-service deployment",
+          "default": 1
         }
       },
       "additionalProperties": false
@@ -1766,13 +1771,14 @@
     "images": {
       "groups": ["general"],
       "type": "object",
-      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend.`",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website`, `backend` and `queryService`.",
       "properties": {
         "lapis": { "$ref": "#/definitions/imageSpec" },
         "lapisSilo": { "$ref": "#/definitions/imageSpec" },
         "loculusSilo": { "$ref": "#/definitions/imageSpec" },
         "website": { "$ref": "#/definitions/imageSpec" },
-        "backend": { "$ref": "#/definitions/imageSpec" }
+        "backend": { "$ref": "#/definitions/imageSpec" },
+        "queryService": { "$ref": "#/definitions/imageSpec" }
       },
       "additionalProperties": false
     },
@@ -1867,6 +1873,7 @@
         "silo-importer": { "$ref": "#/definitions/resourceSpec" },
         "backend": { "$ref": "#/definitions/resourceSpec" },
         "preprocessing": { "$ref": "#/definitions/resourceSpec" },
+        "query-service": { "$ref": "#/definitions/resourceSpec" },
         "organismSpecific": {
           "type": "object",
           "patternProperties": {
