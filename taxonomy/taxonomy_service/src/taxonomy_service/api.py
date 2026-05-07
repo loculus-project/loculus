@@ -122,7 +122,7 @@ def post_silo_lineage(
     for m in missing_ids:
         lineage[str(m)] = {
             "aliases": [f"Taxon {m}"],
-            "parents": ["1"],  # attach these to the root
+            "parents": [f"{ROOT_TAX_ID}"],  # attach these to the root
         }
 
     lineage_yaml = lineage_dict_to_string(lineage, allow_large)

@@ -1,6 +1,6 @@
 {{- define "loculus.siloDatabaseShared" -}}
 {{- $type := default "string" .type -}}
-{{- $lineageName := ternary .name (default .hierarchicalFilter .lineageSystem) .hierarchicalFilter -}}
+{{- $lineageName := ternary .name (default .hierarchicalFilter .lineageSystem) (not (empty .hierarchicalFilter)) -}}
 - type: {{ ($type | eq "timestamp") | ternary "int" (($type | eq "authors") | ternary "string" $type) }}
   {{- if .generateIndex }}
   generateIndex: {{ .generateIndex }}
