@@ -199,6 +199,7 @@ def test_runner_cleans_up_on_decompress_failure(
 
 HOST_TAXON_NAME: Final = "hostTaxon"
 
+
 @pytest.fixture
 def host_taxon_setup(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
