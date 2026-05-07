@@ -30,7 +30,7 @@ type LineageOptionsProvider = {
      * When true, show only the alias for a lineage (when one exists) instead of the canonical
      * name. Used by hierarchical filters where the alias is the user-facing label.
      */
-    showAliasOnly?: boolean;
+    showAlias?: boolean;
     /**
      * When false, only show options with a count higher than zero
      */
@@ -164,7 +164,7 @@ const createLineageOptionsHook = (
     fieldName: string,
     lapisSearchParameters: LapisSearchParameters,
     includeSublineages: boolean,
-    showAliasOnly: boolean,
+    showAlias: boolean,
     includeZeroCounts: boolean,
 ): AutocompleteOptionsHook => {
     const otherFields = { ...lapisSearchParameters };
@@ -226,7 +226,7 @@ const createLineageOptionsHook = (
                 }
 
                 const aliases = lineageDefinition[lineageName].aliases ?? [];
-                const label = showAliasOnly && aliases.length > 0 ? aliases[0] : lineageName;
+                const label = showAlias && aliases.length > 0 ? aliases[0] : lineageName;
                 options.push({ option: label, value: lineageName, count });
             });
         }
@@ -261,7 +261,7 @@ export const createOptionsProviderHook = (optionsProvider: OptionsProvider): Aut
                     optionsProvider.fieldName,
                     optionsProvider.lapisSearchParameters,
                     optionsProvider.includeSublineages,
-                    optionsProvider.showAliasOnly ?? false,
+                    optionsProvider.showAlias ?? false,
                     optionsProvider.includeZeroCounts ?? true,
                 ),
                 [optionsProvider],

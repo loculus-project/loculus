@@ -318,5 +318,20 @@ describe('LineageField', () => {
 
             expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1.1*']);
         });
+
+        it('displays the alias in the input when fieldValue is a canonical name with an alias', async () => {
+            render(
+                <LineageField
+                    field={field}
+                    fieldValue='A.1.1*'
+                    setSomeFieldValues={setSomeFieldValues}
+                    lapisUrl={lapisUrl}
+                    lapisSearchParameters={lapisSearchParameters}
+                    mode='hierarchical'
+                />,
+            );
+
+            expect(await screen.findByDisplayValue('B')).toBeInTheDocument();
+        });
     });
 });
