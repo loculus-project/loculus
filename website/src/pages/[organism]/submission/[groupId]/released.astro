@@ -45,14 +45,15 @@ const hiddenFieldValues = {
 };
 
 // Submitters need to see every version they've released, including
-// revocations. Default the URL state's `include` to `all` so the initial
-// SSR query-service call (and the in-page checkbox) start in the
-// "show everything" mode. Users can untick the toggle to filter back
-// down to latest non-revoked.
-const initialQueryDictRaw = parseUrlSearchParams(Astro.url.searchParams);
-const initialQueryDict = 'include' in initialQueryDictRaw
-    ? initialQueryDictRaw
-    : { ...initialQueryDictRaw, include: 'all' };
+// revocations. Redirect to ?include=all if it's not present so the URL is
+// the source of truth (the React state syncs with URL on mount, so SSR
+// alone wouldn't stick).
+if (!Astro.url.searchParams.has('include')) {
+    const url = new URL(Astro.url);
+    url.searchParams.set('include', 'all');
+    return Astro.redirect(url.pathname + url.search, 302);
+}
+const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
 const { data, totalCount } = await performLapisSearchQueries(
     initialQueryDict,
     schema,

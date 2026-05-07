@@ -85,10 +85,7 @@ export const InnerSearchFullUI = ({
     // Stabilise the default so downstream `useMemo`s don't see a fresh
     // empty object on every render — that previously cascaded into an
     // effect that refired every render and pelted the query-service.
-    const hiddenValues: FieldValues = useMemo(
-        () => hiddenFieldValues ?? {},
-        [hiddenFieldValues],
-    );
+    const hiddenValues: FieldValues = useMemo(() => hiddenFieldValues ?? {}, [hiddenFieldValues]);
 
     const metadataSchema = schema.metadata;
     const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
@@ -189,8 +186,7 @@ export const InnerSearchFullUI = ({
     );
 
     const tableFilter = useMemo(
-        () =>
-            new FieldFilterSet(filterSchema, fieldValues, hiddenValues, segmentAndGeneInfo, referenceGenomesInfo),
+        () => new FieldFilterSet(filterSchema, fieldValues, hiddenValues, segmentAndGeneInfo, referenceGenomesInfo),
         [fieldValues, hiddenValues, referenceGenomesInfo, filterSchema],
     );
 
