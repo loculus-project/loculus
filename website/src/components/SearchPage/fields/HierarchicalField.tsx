@@ -45,7 +45,7 @@ export const HierarchicalField: FC<HierarchicalFieldProps> = ({
     lapisUrl,
     lapisSearchParameters,
     hierarchicalSearchText = null,
-    mode = 'lineage',
+    mode = 'default',
 }) => {
     const { defaultIncludeSublineages, includeZeroCounts, showAlias: showAlias, checkBoxLabel: defaultCheckBoxLabel } = MODE_CONFIGS[mode];
     const checkBoxLabel = hierarchicalSearchText ?? defaultCheckBoxLabel;

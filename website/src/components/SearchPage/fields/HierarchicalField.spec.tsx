@@ -24,7 +24,7 @@ lapisClientHooks.mockReturnValue({
     useLineageDefinition: mockUseLineageDefinition,
 });
 
-describe('HierarchicalField', () => {
+describe('HierarchicalField - lineage mode', () => {
     const field: MetadataFilter = { name: 'lineage', displayName: 'My Lineage', type: 'string' };
     const setSomeFieldValues = vi.fn();
     const lapisUrl = 'https://example.com/api';
@@ -82,6 +82,7 @@ describe('HierarchicalField', () => {
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                mode="lineage"
             />,
         );
 
@@ -100,6 +101,7 @@ describe('HierarchicalField', () => {
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                mode="lineage"
             />,
         );
 
@@ -118,6 +120,7 @@ describe('HierarchicalField', () => {
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                mode="lineage"
             />,
         );
 
@@ -139,6 +142,7 @@ describe('HierarchicalField', () => {
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                mode="lineage"
             />,
         );
 
@@ -163,6 +167,7 @@ describe('HierarchicalField', () => {
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                mode="lineage"
             />,
         );
 
@@ -188,6 +193,7 @@ describe('HierarchicalField', () => {
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                mode="lineage"
             />,
         );
 
@@ -211,6 +217,7 @@ describe('HierarchicalField', () => {
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
                         lapisSearchParameters={lapisSearchParameters}
+                        mode="lineage"
                     />
                     <Button onClick={() => setValue('')}>reset</Button>
                 </>
@@ -230,8 +237,60 @@ describe('HierarchicalField', () => {
         expect(textbox).toHaveValue('');
     });
 
-    describe('hierarchical mode', () => {
-        it('defaults the sublineages checkbox to checked when fieldValue is empty', () => {
+}
+);
+describe('HierarchicalField - default mode', () => {
+    const field: MetadataFilter = { name: 'hostTaxon', displayName: 'Host Taxon', type: 'string', hierarchicalSearchText: 'include subtaxa' };
+    const setSomeFieldValues = vi.fn();
+    const lapisUrl = 'https://example.com/api';
+    const lapisSearchParameters = {};
+
+    beforeEach(() => {
+        setSomeFieldValues.mockClear();
+
+        mockUseLineageDefinition.mockReturnValue({
+            /* eslint-disable @typescript-eslint/naming-convention */
+            data: {
+                'A': {},
+                'A.1': {
+                    parents: ['A'],
+                },
+                'A.1.1': {
+                    parents: ['A.1'],
+                    aliases: ['B'],
+                },
+                'B.1': {
+                    parents: ['A.1.1'],
+                    aliases: ['A.1.1.1'],
+                },
+                'A.2': {
+                    parents: ['A'],
+                    aliases: ['C'],
+                },
+            },
+            /* eslint-enable @typescript-eslint/naming-convention */
+            isLoading: false,
+            error: null,
+            mutate: vi.fn(),
+        });
+
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { hostTaxon: 'A.1', count: 10 },
+                    { hostTaxon: 'A.1.1.1', count: 20 },
+                    { hostTaxon: 'B.1', count: 15 },
+                    { hostTaxon: 'A.2', count: 8 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
+        });
+    });
+
+    describe('default mode', () => {
+        it('defaults the subcategory checkbox to checked when fieldValue is empty', () => {
             render(
                 <HierarchicalField
                     field={field}
@@ -239,14 +298,13 @@ describe('HierarchicalField', () => {
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
                     lapisSearchParameters={lapisSearchParameters}
-                    mode="default"
                 />,
             );
 
             expect(screen.getByRole('checkbox')).toBeChecked();
         });
 
-        it('appends the sublineage wildcard when the user types into an empty field', async () => {
+        it('appends the subcategory wildcard when the user types into an empty field', async () => {
             render(
                 <HierarchicalField
                     field={field}
@@ -254,15 +312,14 @@ describe('HierarchicalField', () => {
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
                     lapisSearchParameters={lapisSearchParameters}
-                    mode="default"
                 />,
             );
 
-            await userEvent.click(screen.getByLabelText('My Lineage'));
+            await userEvent.click(screen.getByLabelText('Host Taxon'));
             const options = await screen.findAllByRole('option');
             await userEvent.click(options[1]);
 
-            expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1*']);
+            expect(setSomeFieldValues).toHaveBeenCalledWith(['hostTaxon', 'A.1*']);
         });
 
         it('respects an explicit non-wildcard fieldValue', () => {
@@ -273,7 +330,6 @@ describe('HierarchicalField', () => {
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
                     lapisSearchParameters={lapisSearchParameters}
-                    mode="default"
                 />,
             );
 
@@ -288,11 +344,10 @@ describe('HierarchicalField', () => {
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
                     lapisSearchParameters={lapisSearchParameters}
-                    mode="default"
                 />,
             );
 
-            await userEvent.click(screen.getByLabelText('My Lineage'));
+            await userEvent.click(screen.getByLabelText('Host Taxon'));
             const optionTexts = (await screen.findAllByRole('option')).map((o) => o.textContent);
 
             // 'A.1.1' renders as its alias 'B'; 'B.1' as 'A.1.1.1'; 'A.2' as 'C'
@@ -307,16 +362,15 @@ describe('HierarchicalField', () => {
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
                     lapisSearchParameters={lapisSearchParameters}
-                    mode="default"
                 />,
             );
 
-            await userEvent.click(screen.getByLabelText('My Lineage'));
+            await userEvent.click(screen.getByLabelText('Host Taxon'));
             const options = await screen.findAllByRole('option');
             // options[3] === 'B' (alias for canonical 'A.1.1')
             await userEvent.click(options[3]);
 
-            expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1.1*']);
+            expect(setSomeFieldValues).toHaveBeenCalledWith(['hostTaxon', 'A.1.1*']);
         });
 
         it('displays the alias in the input when fieldValue is a canonical name with an alias', async () => {
@@ -327,7 +381,6 @@ describe('HierarchicalField', () => {
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
                     lapisSearchParameters={lapisSearchParameters}
-                    mode="default"
                 />,
             );
 
