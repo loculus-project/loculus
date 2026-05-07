@@ -102,15 +102,15 @@ def post_silo_lineage(
                         If False, return status 413 if the generated yaml file is
                         larger than `LARGE_FILE_THRESHOLD`
     """
-    tax_ids = {ROOT_TAX_ID} | set(payload.tax_ids)
-    if tax_ids == {ROOT_TAX_ID}:
+    tax_ids = set(payload.tax_ids)
+    if not tax_ids:
         return Response(content="{}\n", media_type="application/yaml")
 
     spanning_tree, missing_ids = get_spanning_tree(db, tax_ids)
     if missing_ids:
         logger.warning(
             f"one or more provided taxa don't exist "
-            f"and will be attached to the root taxon: {sorted(missing_ids)}"
+            f"and will be added as orphan nodes: {sorted(missing_ids)}"
         )
 
     if prune:
@@ -120,7 +120,7 @@ def post_silo_lineage(
     for m in missing_ids:
         lineage[str(m)] = {
             "aliases": [f"Taxon {m}"],
-            "parents": [f"{ROOT_TAX_ID}"],  # attach these to the root
+            "parents": [],  # add these as orphan nodes
         }
 
     lineage_yaml = lineage_dict_to_string(lineage, allow_large)

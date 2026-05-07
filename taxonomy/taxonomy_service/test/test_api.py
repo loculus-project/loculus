@@ -188,12 +188,12 @@ class PostSiloLineageTest(unittest.TestCase):
         assert response.status_code == codes.unprocessable_entity
         assert "Input should be a valid integer" in response.json()["detail"][0]["msg"]
 
-    def test_missing_taxa_attached_to_root(self):
+    def test_missing_taxa_added_as_orphans(self):
         response = self._post([mock_missing_taxon])
 
         assert response.status_code == codes.ok
         lineage = yaml.safe_load(response.text)
-        assert lineage[str(mock_missing_taxon)]["parents"] == ["1"]
+        assert lineage[str(mock_missing_taxon)]["parents"] == []
         assert lineage[str(mock_missing_taxon)]["aliases"] == [
             f"Taxon {mock_missing_taxon}"
         ]
@@ -203,7 +203,7 @@ class PostSiloLineageTest(unittest.TestCase):
 
         assert response.status_code == codes.ok
         lineage = yaml.safe_load(response.text)
-        assert lineage[str(mock_missing_taxon)]["parents"] == ["1"]
+        assert lineage[str(mock_missing_taxon)]["parents"] == []
 
     def test_prune_reattaches_descendant_to_nearest_kept_ancestor(self):
         # The relevant tree is {1, 131567, 9605, 9606}.

@@ -111,7 +111,9 @@ def get_spanning_tree(
 ) -> tuple[list[Taxon], set[int]]:
     """Run a recursive CTE against the database to collect the path
     from each taxon in tax_ids to the taxonomic root
-    NOTE: root itself is only included in output if it is part of `tax_ids`
+
+    The root taxon has itself as a parent, but the use of UNION in the recursive
+    CTE avoids an infinite loop: it stops recursing if no new rows are added
 
     args:
         db_conn: sqlite3.Connection:
@@ -138,7 +140,6 @@ def get_spanning_tree(
           UNION
           SELECT t.*
           FROM taxonomy t JOIN ancestors a ON t.tax_id = a.parent_id
-          WHERE t.tax_id != t.parent_id
       )
       SELECT * FROM ancestors
       ORDER BY depth, tax_id
@@ -177,7 +178,9 @@ def prune_tree(
     if root_id not in indexed_by_id:
         raise ValueError(f"root_id {root_id} does not exist in the provided tree")
     children = map_child_nodes(tree)
-    return list(_prune(indexed_by_id, keep_ids, children, root_id, root_id).values())
+    return list(
+        _prune(indexed_by_id, keep_ids | {root_id}, children, root_id, root_id).values()
+    )
 
 
 def _prune(
