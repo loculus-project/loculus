@@ -49,7 +49,7 @@ def test_hierarchical_filters_parsed(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com")
     monkeypatch.setenv(
         "HIERARCHICAL_FILTERS",
-        json.dumps({"hostTaxon": {"url": "http://taxonomy:5000", "metadataField": "hostTaxonId"}}),
+        json.dumps({"hostTaxon": "http://taxonomy:5000"}),
     )
 
     config = ImporterConfig.from_env()
@@ -71,7 +71,7 @@ def test_hierarchical_filters_unknown_name(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com")
     monkeypatch.setenv(
         "HIERARCHICAL_FILTERS",
-        json.dumps({"madeUpFilter": {"url": "http://x", "metadataField": "foo"}}),
+        json.dumps({"madeUpFilter": "http://x"}),
     )
 
     with pytest.raises(RuntimeError, match="Unknown hierarchical filter 'madeUpFilter'"):
