@@ -47,24 +47,28 @@ def update_lineage_definitions(
 
 def update_hierarchical_filters(
     metadata_values: dict[MetadataField, set[str]],
+    old_metadata_values: dict[MetadataField, set[str]],
     config: ImporterConfig,
     paths: ImporterPaths,
-    *,
-    metadata_to_update: set[MetadataField] | None = None,
 ) -> None:
     """Dispatch each configured filter to its dedicated handler.
 
     New filter kinds slot in by adding a MetadataField member and a
     corresponding case here.
     """
-    if not config.hierarchical_filters or not metadata_to_update:
+    if not config.hierarchical_filters:
         return
-    for field in metadata_to_update:
-        values = metadata_values.get(field, set())
+    for field in config.hierarchical_filters:
+        new_values = metadata_values.get(field, set())
+        if old_metadata_values.get(field) == new_values:
+            logger.info(
+                "No change in values for hierarchical filter '%s'; skipping update", field
+            )
+            continue
         url = config.hierarchical_filters.get(field)
         if not url:
             continue
-        update_taxonomic_lineage(field, values, url, paths)
+        update_taxonomic_lineage(field, new_values, url, paths)
 
 
 def update_taxonomic_lineage(

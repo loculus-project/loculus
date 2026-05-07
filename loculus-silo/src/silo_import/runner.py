@@ -81,29 +81,12 @@ class ImporterRunner:
 
         try:
             update_lineage_definitions(download.analysis.pipeline_version, self.config, self.paths)
-
-            # we need to update a filter if:
-            #   1) we see `field` for the first time (first cycle)
-            #   2) the values have changed since the last cycle
-            hierarchical_metadata_fields = set(self.config.hierarchical_filters or {})
-            new_values = download.analysis.hierarchical_filter_values
-            filters_to_update = {
-                field
-                for field in hierarchical_metadata_fields
-                if (
-                    field not in self.hierarchical_filter_values
-                    or new_values.get(field, set()) != self.hierarchical_filter_values[field]
-                )
-            }
-            if filters_to_update:
-                update_hierarchical_filters(
-                    new_values,
-                    self.config,
-                    self.paths,
-                    metadata_to_update=filters_to_update,
-                )
-                for field in filters_to_update:
-                    self.hierarchical_filter_values[field] = new_values.get(field, set())
+            update_hierarchical_filters(
+                download.analysis.hierarchical_filter_values,
+                self.hierarchical_filter_values,
+                self.config,
+                self.paths,
+            )
         except Exception:
             logger.exception("Failed to download lineage definitions; cleaning up input")
             safe_remove(self.paths.silo_input_data_path)
