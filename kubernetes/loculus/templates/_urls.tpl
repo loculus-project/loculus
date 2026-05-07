@@ -51,23 +51,26 @@
   {{- end -}}
 {{- end -}}
 
-{{/* generates internal LAPIS urls (now served by query-service) from given config object */}}
-{{ define "loculus.generateInternalLapisUrls" }}
-  {{ range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-{{- $key := $item.key }}
-    "{{ $key }}": "{{ if not $.Values.disableWebsite }}http://loculus-query-service:8080/{{ $key }}{{ else -}}http://{{ $.Values.localHost }}:8080/{{ $key }}{{ end }}"
-  {{ end }}
-{{ end }}
+{{/* internal query-service base URL (used by website server-side calls) */}}
+{{- define "loculus.queryServiceUrlInternal" -}}
+  {{- if not $.Values.disableWebsite -}}
+    http://loculus-query-service:8080
+  {{- else -}}
+    http://{{ $.Values.localHost }}:8080
+  {{- end -}}
+{{- end -}}
 
-{{/* generates external LAPIS urls from { config, host } */}}
-{{ define "loculus.generateExternalLapisUrls"}}
-{{ $lapisUrlTemplate := .lapisUrlTemplate }}
-{{ range $key, $organism := (.config.organisms | default .config.defaultOrganisms) }}
-{{- if ne $organism.enabled false }}
-"{{ $key -}}": "{{ $lapisUrlTemplate | replace "%organism%" $key }}"
-{{- end }}
-{{ end }}
-{{ end }}
+{{/* public query-service base URL (used by browser, CLI, external API users) */}}
+{{- define "loculus.queryServiceUrlPublic" -}}
+{{- $publicRuntimeConfig := $.Values.public }}
+  {{- if $publicRuntimeConfig.queryServiceUrl -}}
+    {{- $publicRuntimeConfig.queryServiceUrl -}}
+  {{- else if eq $.Values.environment "server" -}}
+    {{- printf "https://lapis%s%s" $.Values.subdomainSeparator $.Values.host -}}
+  {{- else -}}
+    {{- printf "http://%s:8080" $.Values.localHost -}}
+  {{- end -}}
+{{- end -}}
 
 {{/* generates the LAPIS service name for a given organism key */}}
 {{- define "loculus.lapisServiceName"}}

@@ -79,23 +79,18 @@ const BUTTON_CLASS =
         </div>
 
         <div class='mb-10'>
-            <h2 class='text-xl font-semibold text-primary-400 mb-4'>LAPIS query engines</h2>
-            <div class='space-y-4'>
-                {
-                    Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
-                        <a class={BUTTON_CLASS} href={url + '/swagger-ui/index.html'}>
-                            {organismToDisplayName[organism]} LAPIS API documentation
-                        </a>
-                    ))
-                }
+            <h2 class='text-xl font-semibold text-primary-400 mb-4'>Query service</h2>
+            <div class='mt-4'>
+                <span class='font-medium'>URL of the query service:</span>
+                <code>{clientConfig.queryServiceUrl}</code>
             </div>
-            <div class='mt-8'>
-                <span class='font-medium'>URLs of LAPIS query engines:</span>
+            <div class='mt-4'>
+                Pass <code>?organism=&lt;key&gt;</code> on every request. Available organism keys:
                 <ul class='list-disc ml-6'>
                     {
-                        Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
+                        clientConfig.organisms.map((organism) => (
                             <li>
-                                {organismToDisplayName[organism]}: <code>{url}</code>
+                                {organismToDisplayName[organism]}: <code>{organism}</code>
                             </li>
                         ))
                     }

@@ -56,7 +56,7 @@ const info = {
 
 const accessionVersion = 'accession';
 
-const lapisClient = LapisClient.create(testConfig.serverSide.lapisUrls[testOrganism], schema);
+const lapisClient = LapisClient.create(testConfig.serverSide.queryServiceUrl, testOrganism, schema);
 
 describe('getTableData', () => {
     beforeEach(() => {

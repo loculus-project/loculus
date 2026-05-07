@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request }) => {
     const response = {
         hosts: {
             backend: runtime.public.backendUrl,
-            lapis: runtime.public.lapisUrls,
+            queryService: runtime.public.queryServiceUrl,
             keycloak: keycloakUrl,
             website: new URL(request.url).origin,
         },

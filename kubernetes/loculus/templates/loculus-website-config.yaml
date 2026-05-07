@@ -19,7 +19,8 @@ data:
             {{- else -}}
             "backendUrl": "http://loculus-backend-service:8079",
             {{- end }}
-            "lapisUrls": {{- include "loculus.generateInternalLapisUrls" . | fromYaml | toJson }},
+            "queryServiceUrl": "{{ include "loculus.queryServiceUrlInternal" . }}",
+            "organisms": [{{- $first := true -}}{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms -}}{{- if $first -}}{{- $first = false -}}{{- else -}}, {{ end -}}"{{ $item.key }}"{{- end -}}],
             "keycloakUrl": "{{ if not .Values.disableWebsite -}}http://loculus-keycloak-service:8083{{ else -}}http://{{ $.Values.localHost }}:8083{{ end }}"
             {{- end }}
         },

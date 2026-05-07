@@ -12,10 +12,9 @@ import { fastaEntries } from '../utils/parseFasta.ts';
 import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../utils/sequenceTypeHelpers.ts';
 
 /**
- * Retry configuration for LAPIS mutations.
- * LAPIS queries are safe to retry even though they use POST, as they only fetch data.
- * This configuration enables automatic retry on transient network errors.
- * Applied automatically by lapisClientHooks wrappers.
+ * Retry configuration for query-service POSTs.
+ * These are POST-shaped reads (no side effects) so retrying transient
+ * errors is safe. Applied by every lapisClientHooks wrapper below.
  */
 const LAPIS_RETRY_OPTIONS = {
     retry: 6,
@@ -26,13 +25,16 @@ export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
 }
 
-export function lapisClientHooks(lapisUrl: string) {
-    const zodiosHooks = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
+export function lapisClientHooks(queryServiceUrl: string, organism: string) {
+    const zodiosHooks = new ZodiosHooks('lapis', new Zodios(queryServiceUrl, lapisApi, { transform: false }));
+    const baseQueries = { organism } as const;
     return {
-        // All POST hooks must include retry options manually to enable retries
-        useAggregated: () => zodiosHooks.useAggregated({}, { ...LAPIS_RETRY_OPTIONS }),
-        useDetails: () => zodiosHooks.useDetails({}, { ...LAPIS_RETRY_OPTIONS }),
-        useLineageDefinition: zodiosHooks.useLineageDefinition,
+        useAggregated: () =>
+            zodiosHooks.useAggregated({ queries: baseQueries }, { ...LAPIS_RETRY_OPTIONS }),
+        useDetails: () =>
+            zodiosHooks.useDetails({ queries: baseQueries }, { ...LAPIS_RETRY_OPTIONS }),
+        useLineageDefinition: (config: { queries: { column: string } }) =>
+            zodiosHooks.useLineageDefinition({ queries: { ...baseQueries, ...config.queries } }),
         useGetSequence(accessionVersion: string, sequenceType: SequenceType, useLapisMultiSegmentedEndpoint: boolean) {
             return getSequenceHook(
                 zodiosHooks,
@@ -40,6 +42,7 @@ export function lapisClientHooks(lapisUrl: string) {
                     accessionVersion,
                     dataFormat: 'FASTA',
                 },
+                organism,
                 sequenceType,
                 useLapisMultiSegmentedEndpoint,
             );
@@ -50,10 +53,11 @@ export function lapisClientHooks(lapisUrl: string) {
 function getSequenceHook(
     hooks: ZodiosHooksInstance<typeof lapisApi>,
     request: SequenceRequest, // these are request PARAMETERS, not requests
+    organism: string,
     sequenceType: SequenceType,
     isMultiSegmented: boolean,
 ) {
-    const rawResult = selectSequenceHook(hooks, request, sequenceType, isMultiSegmented);
+    const rawResult = selectSequenceHook(hooks, request, organism, sequenceType, isMultiSegmented);
     const { data, error, isLoading } = rawResult;
 
     if (data === undefined) {
@@ -89,6 +93,7 @@ function getSequenceHook(
 function selectSequenceHook(
     hooks: ZodiosHooksInstance<typeof lapisApi>,
     request: SequenceRequest,
+    organism: string,
     sequenceType: SequenceType,
     isMultiSegmented: boolean,
 ) {
@@ -96,22 +101,33 @@ function selectSequenceHook(
         return isMultiSegmented
             ? hooks.useUnalignedNucleotideSequencesMultiSegment(request, {
                   params: { segment: sequenceType.name.lapisName },
+                  queries: { organism },
                   ...LAPIS_RETRY_OPTIONS,
               })
-            : hooks.useUnalignedNucleotideSequences(request, {}, { ...LAPIS_RETRY_OPTIONS });
+            : hooks.useUnalignedNucleotideSequences(
+                  request,
+                  { queries: { organism } },
+                  { ...LAPIS_RETRY_OPTIONS },
+              );
     }
 
     if (isAlignedSequence(sequenceType)) {
         return isMultiSegmented
             ? hooks.useAlignedNucleotideSequencesMultiSegment(request, {
                   params: { segment: sequenceType.name.lapisName },
+                  queries: { organism },
                   ...LAPIS_RETRY_OPTIONS,
               })
-            : hooks.useAlignedNucleotideSequences(request, {}, { ...LAPIS_RETRY_OPTIONS });
+            : hooks.useAlignedNucleotideSequences(
+                  request,
+                  { queries: { organism } },
+                  { ...LAPIS_RETRY_OPTIONS },
+              );
     }
 
     return hooks.useAlignedAminoAcidSequences(request, {
-        params: { gene: sequenceType.name.lapisName },
+        params: { proteinName: sequenceType.name.lapisName },
+        queries: { organism },
         ...LAPIS_RETRY_OPTIONS,
     });
 }

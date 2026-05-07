@@ -1,30 +1,78 @@
 # Loculus query-service
 
-Single-deployment HTTP service that sits between callers (the website, the
-LAPIS ingress) and the per-organism LAPIS deployments.
+Single-deployment HTTP service that the website and CLI use instead of
+talking to LAPIS directly.
 
-For now it is a transparent reverse proxy: a request to
+## v1 API
 
-    /{organism}/{lapis_path}
+```
+GET|POST  /v1/aggregated         ?organism=
+GET|POST  /v1/details            ?organism=
+GET|POST  /v1/mutations          ?organism=                # nucleotide
+GET|POST  /v1/aaMutations        ?organism=                # amino acid
+GET|POST  /v1/insertions         ?organism=                # nucleotide
+GET|POST  /v1/aaInsertions       ?organism=                # amino acid
+GET|POST  /v1/sequences          ?organism=&aligned=&segment=
+GET|POST  /v1/aaSequences        ?organism=&proteinName=
+GET       /v1/info               ?organism=
+GET       /v1/lineageDefinition  ?organism=&column=
+```
 
-is forwarded to
+`organism` is required and single-valued.
 
-    http://loculus-lapis-service-{organism}:8080/{lapis_path}
+### Reserved control params
 
-with the same method, query string, headers (minus hop-by-hop), and body, and
-the response is streamed back unchanged.
+`organism`, `format`, `download`, `fields`, `limit`, `offset`, `include`,
+`aligned`, `segment`, `reference`, `proteinName`, `column`.
 
-The point of routing through our own service is to give us a place to modify
-LAPIS responses later (filter records, redact fields, etc.) without touching
-the website or LAPIS.
+Anything else is treated as a metadata-column filter and forwarded to
+LAPIS as-is.
+
+`format` and `download` map to LAPIS's `dataFormat` and `downloadAsFile`.
+
+### Implicit defaults
+
+By default, every query applies:
+
+```
+versionStatus = LATEST_VERSION
+isRevocation  = false
+```
+
+Opt out with the repeatable `include=` enum:
+
+```
+include=revoked          # also revocations
+include=older-versions   # also non-latest versions
+include=all              # both
+```
+
+If the caller specifies any version-related filter
+(`accessionVersion`, `version`, `versionStatus`), the implicit defaults
+are dropped — the explicit filter wins.
+
+### POST body
+
+Flat. Reserved control keys live at the top level; everything else is a
+metadata-column filter and is forwarded verbatim. Matches LAPIS's own
+POST body shape, so existing flat bodies migrate as-is:
+
+```json
+{
+  "organism": "cchf",
+  "country":  "Switzerland",
+  "fields":   ["country", "date"],
+  "limit":    1000
+}
+```
 
 ## Configuration
 
-| Env var                    | Default                                                | Purpose                                                              |
-|----------------------------|--------------------------------------------------------|----------------------------------------------------------------------|
-| `LAPIS_SERVICE_TEMPLATE`   | `http://loculus-lapis-service-{organism}:8080`         | Upstream URL template; `{organism}` is replaced per request.         |
-| `UPSTREAM_TIMEOUT_SECONDS` | `60`                                                   | Per-request timeout to LAPIS.                                        |
-| `LOG_LEVEL`                | `INFO`                                                 | Standard `logging` level name.                                       |
+| Env var                    | Default                                            |
+|----------------------------|----------------------------------------------------|
+| `LAPIS_SERVICE_TEMPLATE`   | `http://loculus-lapis-service-{organism}:8080`     |
+| `UPSTREAM_TIMEOUT_SECONDS` | `60`                                               |
+| `LOG_LEVEL`                | `INFO`                                             |
 
 ## Local dev
 

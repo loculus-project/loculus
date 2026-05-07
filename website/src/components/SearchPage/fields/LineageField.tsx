@@ -6,6 +6,7 @@ import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters';
 
 interface LineageFieldProps {
     lapisUrl: string;
+    organism: string;
     lapisSearchParameters: LapisSearchParameters;
     field: MetadataFilter;
     fieldValue: string;
@@ -17,6 +18,7 @@ export const LineageField: FC<LineageFieldProps> = ({
     fieldValue,
     setSomeFieldValues,
     lapisUrl,
+    organism,
     lapisSearchParameters,
 }) => {
     const [includeSublineages, _setIncludeSubLineages] = useState(fieldValue.endsWith('*'));
@@ -50,6 +52,7 @@ export const LineageField: FC<LineageFieldProps> = ({
                 optionsProvider={{
                     type: 'lineage',
                     lapisUrl,
+                    organism,
                     lapisSearchParameters,
                     fieldName: field.name,
                     includeSublineages,

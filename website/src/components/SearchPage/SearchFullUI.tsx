@@ -14,7 +14,7 @@ import { Table, type TableSequenceData } from './Table';
 import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
 import { useSearchPageState } from './useSearchPageState.ts';
 import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
-import { getLapisUrl } from '../../config.ts';
+import { getQueryServiceUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
@@ -142,7 +142,10 @@ export const InnerSearchFullUI = ({
         }
     }, []);
 
-    const lapisUrl = getLapisUrl(clientConfig, organism);
+    // `lapisUrl` is a misnomer now — this is the query-service base URL —
+    // but we keep the prop name through the search components for now to
+    // avoid a rename cascade.
+    const lapisUrl = getQueryServiceUrl(clientConfig);
     const downloadUrlGenerator = new DownloadUrlGenerator(
         organism,
         lapisUrl,
@@ -150,7 +153,7 @@ export const InnerSearchFullUI = ({
         schema.richFastaHeaderFields,
     );
 
-    const hooks = lapisClientHooks(lapisUrl);
+    const hooks = lapisClientHooks(lapisUrl, organism);
     const aggregatedHook = hooks.useAggregated();
     const detailsHook = hooks.useDetails();
 
@@ -330,6 +333,7 @@ export const InnerSearchFullUI = ({
                             {showEditDataUseTermsControls && dataUseTermsEnabled && (
                                 <EditDataUseTermsModal
                                     lapisUrl={lapisUrl}
+                                    organism={organism}
                                     clientConfig={clientConfig}
                                     accessToken={accessToken}
                                     sequenceFilter={downloadFilter}

@@ -15,7 +15,7 @@ import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 
 vi.mock('../../config', () => ({
-    getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
+    getQueryServiceUrl: vi.fn().mockReturnValue('http://query.dummy'),
 }));
 
 const queryClient = new QueryClient();

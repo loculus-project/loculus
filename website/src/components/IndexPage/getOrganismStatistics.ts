@@ -1,7 +1,7 @@
 import { DateTime, FixedOffsetZone } from 'luxon';
 
 import { LapisClient } from '../../services/lapisClient.ts';
-import { RELEASED_AT_FIELD, VERSION_STATUS_FIELD, IS_REVOCATION_FIELD } from '../../settings.ts';
+import { RELEASED_AT_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import { versionStatuses } from '../../types/lapis';
 
 export type OrganismStatistics = {
@@ -48,11 +48,9 @@ const getTotalAndLastUpdatedAt = async (
     organism: string,
 ): Promise<{ total: number; lastUpdatedAt: DateTime | undefined }> => {
     const client = LapisClient.createForOrganism(organism);
+    // versionStatus=LATEST_VERSION & isRevocation=false are query-service defaults.
     return (
-        await client.call('aggregated', {
-            [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
-            [IS_REVOCATION_FIELD]: 'false',
-        })
+        await client.call('aggregated', {}, { queries: { organism: client.organism } })
     )
         .map((x) => ({
             total: x.data[0].count,
@@ -75,20 +73,29 @@ const getTotalAndLastUpdatedAt = async (
 const getRecent = async (organism: string, numberDaysAgo: number): Promise<number> => {
     const recentTimestamp = Math.floor(Date.now() / 1000 - numberDaysAgo * 24 * 60 * 60);
     const client = LapisClient.createForOrganism(organism);
+    const organismQueries = { queries: { organism: client.organism } };
     const recentlyReleasedTotal = (
-        await client.call('aggregated', {
-            [`${RELEASED_AT_FIELD}From`]: recentTimestamp,
-            version: 1,
-        })
+        await client.call(
+            'aggregated',
+            {
+                [`${RELEASED_AT_FIELD}From`]: recentTimestamp,
+                version: 1,
+            },
+            organismQueries,
+        )
     )
         .map((x) => x.data[0].count)
         .unwrapOr(0);
     const recentlyReleasedThenRevokedTotal = (
-        await client.call('aggregated', {
-            [`${RELEASED_AT_FIELD}From`]: recentTimestamp,
-            version: 1,
-            [VERSION_STATUS_FIELD]: versionStatuses.revoked,
-        })
+        await client.call(
+            'aggregated',
+            {
+                [`${RELEASED_AT_FIELD}From`]: recentTimestamp,
+                version: 1,
+                [VERSION_STATUS_FIELD]: versionStatuses.revoked,
+            },
+            organismQueries,
+        )
     )
         .map((x) => x.data[0].count)
         .unwrapOr(0);
