@@ -5,7 +5,7 @@
 {{- $key := $item.key }}
 {{- $organismContent := $item.contents }}
 {{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" | fromYamlArray }}
-{{- $hierarchicalFilters := $organismContent | include "loculus.hierarchicalFiltersForOrganism" | fromYamlArray }}
+{{- $hierarchicalFilters := $organismContent | include "loculus.hierarchicalFiltersForOrganism" | fromYaml }}
 ---
 apiVersion: apps/v1
 kind: Deployment
