@@ -53,17 +53,15 @@ def update_hierarchical_filters(
 ) -> None:
     """Dispatch each configured filter to its dedicated handler.
 
-    New filter kinds slot in by adding a MetadataField member and a
-    corresponding case here.
+    Skips filters whose observed values have not changed since the last run.
     """
     if not config.hierarchical_filters:
         return
-    for field in config.hierarchical_filters:
+    for field, url in config.hierarchical_filters.items():
         new_values = metadata_values.get(field, set())
         if old_metadata_values.get(field) == new_values:
             logger.info("No change in values for hierarchical filter '%s'; skipping update", field)
             continue
-        url = config.hierarchical_filters.get(field)
         if not url:
             continue
         update_taxonomic_lineage(field, new_values, url, paths)

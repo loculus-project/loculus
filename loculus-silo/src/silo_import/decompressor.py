@@ -31,8 +31,7 @@ def analyze_ndjson(
 
     Args:
         path: Path to the compressed NDJSON file
-        hierarchical_filters: List of configured filter configs; the
-            metadata field referenced by each is collected per record.
+        hierarchical_filters: Map of hierarchical metadata field names to service URLs
 
     Returns:
         NdjsonAnalysis with record count, pipeline version, and per-kind
