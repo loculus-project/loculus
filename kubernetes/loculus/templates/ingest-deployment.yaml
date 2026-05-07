@@ -89,7 +89,7 @@ spec:
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: loculus-revoke-and-regroup-cronjob-{{ $key }}
+  name: loculus-ingest-revoke-and-regroup-cronjob-{{ $key }}
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
 spec:
@@ -104,7 +104,7 @@ spec:
         metadata:
           labels:
             app: loculus
-            component: loculus-ingest-cronjob-{{ $key }}
+            component: loculus-ingest-revoke-and-regroup-cronjob-{{ $key }}
         spec:
           {{- include "possiblePriorityClassName" $ | nindent 10 }}
           restartPolicy: Never
