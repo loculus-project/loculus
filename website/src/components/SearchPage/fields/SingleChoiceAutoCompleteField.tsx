@@ -61,6 +61,8 @@ export const SingleChoiceAutoCompleteField = ({
         }
     }, [error]);
 
+    const valueToLabel = useMemo(() => new Map(options.map((o) => [o.value, o.option])), [options]);
+
     const filteredOptions = useMemo(() => {
         const allMatchedOptions =
             query === ''
@@ -100,7 +102,8 @@ export const SingleChoiceAutoCompleteField = ({
                                 if (value === null || value === NULL_QUERY_VALUE) {
                                     return '(blank)';
                                 }
-                                return String(value);
+                                const stringValue = String(value);
+                                return valueToLabel.get(stringValue) ?? stringValue;
                             }}
                             onChange={(event) => setQuery(event.target.value)}
                             onFocus={load}

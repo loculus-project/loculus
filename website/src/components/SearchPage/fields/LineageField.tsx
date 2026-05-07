@@ -9,7 +9,7 @@ export type LineageFieldMode = 'lineage' | 'hierarchical';
 interface ModeConfig {
     defaultIncludeSublineages: boolean;
     includeZeroCounts: boolean;
-    showAliasOnly: boolean;
+    showAlias: boolean;
     checkBoxLabel: string;
 }
 
@@ -17,13 +17,13 @@ const MODE_CONFIGS: Record<LineageFieldMode, ModeConfig> = {
     lineage: {
         defaultIncludeSublineages: false,
         includeZeroCounts: true,
-        showAliasOnly: false,
+        showAlias: false,
         checkBoxLabel: 'include sublineages',
     },
     hierarchical: {
         defaultIncludeSublineages: true,
         includeZeroCounts: false,
-        showAliasOnly: true,
+        showAlias: true,
         checkBoxLabel: 'include subtaxa',
     },
 };
@@ -45,7 +45,7 @@ export const LineageField: FC<LineageFieldProps> = ({
     lapisSearchParameters,
     mode = 'lineage',
 }) => {
-    const { defaultIncludeSublineages, includeZeroCounts, showAliasOnly, checkBoxLabel } = MODE_CONFIGS[mode];
+    const { defaultIncludeSublineages, includeZeroCounts, showAlias: showAlias, checkBoxLabel } = MODE_CONFIGS[mode];
 
     const [includeSublineages, _setIncludeSubLineages] = useState(
         fieldValue.endsWith('*') || (fieldValue === '' && defaultIncludeSublineages),
@@ -83,7 +83,7 @@ export const LineageField: FC<LineageFieldProps> = ({
                     lapisSearchParameters,
                     fieldName: field.name,
                     includeSublineages,
-                    showAliasOnly,
+                    showAlias: showAlias,
                     includeZeroCounts,
                 }}
                 setSomeFieldValues={([_, value]) => {
