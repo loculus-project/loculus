@@ -312,6 +312,22 @@ CREATE TABLE public.metadata_upload_aux_table (
 ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
 
 --
+-- Name: seqset_citations; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.seqset_citations (
+    seqset_doi character varying(255) NOT NULL,
+    citation_doi character varying(255) NOT NULL,
+    title text DEFAULT ''::text NOT NULL,
+    year character varying(10) DEFAULT ''::character varying NOT NULL,
+    contributors jsonb DEFAULT '[]'::jsonb NOT NULL,
+    last_fetched timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.seqset_citations OWNER TO postgres;
+
+--
 -- Name: seqset_id_sequence; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -683,6 +699,14 @@ ALTER TABLE ONLY public.metadata_upload_aux_table
 
 
 --
+-- Name: seqset_citations seqset_citations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_citations
+    ADD CONSTRAINT seqset_citations_pkey PRIMARY KEY (seqset_doi, citation_doi);
+
+
+--
 -- Name: seqset_records seqset_records_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -704,6 +728,14 @@ ALTER TABLE ONLY public.seqset_to_records
 
 ALTER TABLE ONLY public.seqsets
     ADD CONSTRAINT seqsets_pkey PRIMARY KEY (seqset_id, seqset_version);
+
+
+--
+-- Name: seqsets seqsets_seqset_doi_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqsets
+    ADD CONSTRAINT seqsets_seqset_doi_unique UNIQUE (seqset_doi);
 
 
 --
@@ -895,6 +927,14 @@ ALTER TABLE ONLY public.seqset_to_records
 
 ALTER TABLE ONLY public.seqset_to_records
     ADD CONSTRAINT foreign_key_seqset_record_id FOREIGN KEY (seqset_record_id) REFERENCES public.seqset_records(seqset_record_id) ON DELETE CASCADE;
+
+
+--
+-- Name: seqset_citations seqset_citations_seqset_doi_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_citations
+    ADD CONSTRAINT seqset_citations_seqset_doi_fkey FOREIGN KEY (seqset_doi) REFERENCES public.seqsets(seqset_doi) ON DELETE CASCADE;
 
 
 --
