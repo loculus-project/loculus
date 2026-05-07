@@ -36,7 +36,7 @@ spec:
       containers:
         - name: keycloak
           # TODO #1221
-          image: quay.io/keycloak/keycloak:23.0
+          image: ghcr.io/loculus-project/keycloak@sha256:461bdabba2bd2de667b19b0c1831754cb0f1c6c1d1c85cd35ccfa65335078962
           {{- include "loculus.resources" (list "keycloak" $.Values) | nindent 10 }}
           env:
             - name: REGISTRATION_TERMS_MESSAGE

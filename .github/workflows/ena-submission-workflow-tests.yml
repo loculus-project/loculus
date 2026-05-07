@@ -17,7 +17,7 @@ jobs:
       ENA_PASSWORD: ${{ secrets.ENA_SUBMISSION_PASSWORD }}
     services:
       postgres:
-        image: postgres:15
+        image: ghcr.io/cloudnative-pg/postgresql@sha256:8e08e8d876545a0ce1cd5aa3c13923181f1d51d419cb618bc52832f4c89fda06
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: unsecure
