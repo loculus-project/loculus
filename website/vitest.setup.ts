@@ -212,7 +212,7 @@ const lapisRequestMocks = {
     },
     alignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.queryServiceUrl}/v1/sequences`, () => {
+            http.post(`${testConfig.serverSide.queryServiceUrl}/v1/alignedSequences`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -225,19 +225,16 @@ const lapisRequestMocks = {
         segmentName: string,
     ) => {
         testServer.use(
-            http.post(
-                `${testConfig.serverSide.queryServiceUrl}/v1/sequences`,
-                () => {
-                    return new Response(JSON.stringify(response), {
-                        status: statusCode,
-                    });
-                },
-            ),
+            http.post(`${testConfig.serverSide.queryServiceUrl}/v1/alignedSequences/${segmentName}`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                });
+            }),
         );
     },
     unalignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError, dataVersion?: string) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.queryServiceUrl}/v1/sequences`, () => {
+            http.post(`${testConfig.serverSide.queryServiceUrl}/v1/unalignedSequences`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                     headers:
@@ -258,21 +255,18 @@ const lapisRequestMocks = {
         dataVersion?: string,
     ) => {
         testServer.use(
-            http.post(
-                `${testConfig.serverSide.queryServiceUrl}/v1/sequences`,
-                () => {
-                    return new Response(JSON.stringify(response), {
-                        status: statusCode,
-                        headers:
-                            dataVersion !== undefined
-                                ? {
-                                      // eslint-disable-next-line @typescript-eslint/naming-convention
-                                      'lapis-data-version': dataVersion,
-                                  }
-                                : {},
-                    });
-                },
-            ),
+            http.post(`${testConfig.serverSide.queryServiceUrl}/v1/unalignedSequences/${segmentName}`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                    headers:
+                        dataVersion !== undefined
+                            ? {
+                                  // eslint-disable-next-line @typescript-eslint/naming-convention
+                                  'lapis-data-version': dataVersion,
+                              }
+                            : {},
+                });
+            }),
         );
     },
     nucleotideMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {

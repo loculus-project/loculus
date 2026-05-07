@@ -170,7 +170,7 @@ describe('DownloadDialog', () => {
         let { path, query } = parseDownloadHref();
         expectRouteInPathMatches(path, `/v1/details`);
         expect(query).toMatch(
-            /organism=ebola&include=all&downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype&accession=accession1&accession=accession2&field1=value1/,
+            /organism=ebola&include=all&downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
 
         await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
@@ -179,7 +179,7 @@ describe('DownloadDialog', () => {
         ({ path, query } = parseDownloadHref());
         expectRouteInPathMatches(path, `/v1/unalignedSequences`);
         expect(query).toMatch(
-            /organism=ebola&include=all&downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=fasta&compression=gzip&accession=accession1&accession=accession2&field1=value1/,
+            /organism=ebola&include=all&downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=fasta&compression=gzip&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
 
         await userEvent.click(screen.getByLabelText(/include restricted data/));
@@ -188,7 +188,7 @@ describe('DownloadDialog', () => {
         ({ path, query } = parseDownloadHref());
         expectRouteInPathMatches(path, `/v1/unalignedSequences`);
         expect(query).toMatch(
-            /organism=ebola&include=all&downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataFormat=fasta&compression=zstd&accession=accession1&accession=accession2&field1=value1/,
+            /organism=ebola&include=all&downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataFormat=fasta&compression=zstd&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
     });
 
@@ -288,7 +288,8 @@ describe('DownloadDialog', () => {
         expect(clipboardMock).toHaveBeenCalledTimes(1);
         const copiedText = clipboardMock.mock.calls[0][0];
 
-        const expectedPrefix = 'https://lapis/v1/details?organism=ebola&include=all&downloadAsFile=true&downloadFileBasename=ebola_metadata_';
+        const expectedPrefix =
+            'https://lapis/v1/details?organism=ebola&include=all&downloadAsFile=true&downloadFileBasename=ebola_metadata_';
         expectStringStartsWith(copiedText, expectedPrefix);
 
         const expectedSuffix = '&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype';

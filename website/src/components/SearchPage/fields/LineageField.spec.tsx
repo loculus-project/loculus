@@ -81,7 +81,7 @@ describe('LineageField', () => {
                 fieldValue='initialValue'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
-                organism={"testOrganism"}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
             />,
         );
@@ -100,7 +100,7 @@ describe('LineageField', () => {
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
-                organism={"testOrganism"}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
             />,
         );
@@ -119,7 +119,7 @@ describe('LineageField', () => {
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
-                organism={"testOrganism"}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
             />,
         );
@@ -141,7 +141,7 @@ describe('LineageField', () => {
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
-                organism={"testOrganism"}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
             />,
         );
@@ -166,7 +166,7 @@ describe('LineageField', () => {
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
-                organism={"testOrganism"}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
             />,
         );
@@ -192,7 +192,7 @@ describe('LineageField', () => {
                 fieldValue='value*'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
-                organism={"testOrganism"}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
             />,
         );
@@ -216,7 +216,7 @@ describe('LineageField', () => {
                         fieldValue={value}
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
-                organism={"testOrganism"}
+                        organism={'testOrganism'}
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <Button onClick={() => setValue('')}>reset</Button>
