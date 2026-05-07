@@ -44,15 +44,13 @@ const hiddenFieldValues = {
     [GROUP_ID_FIELD]: String(group.groupId),
 };
 
-// Submitters need to see every version they've released, including
-// revocations. Redirect to ?include=all if it's not present so the URL is
-// the source of truth (the React state syncs with URL on mount, so SSR
-// alone wouldn't stick).
-if (!Astro.url.searchParams.has('include')) {
-    const url = new URL(Astro.url);
-    url.searchParams.set('include', 'all');
-    return Astro.redirect(url.pathname + url.search, 302);
-}
+// Default to the current/non-revoked view here. The in-page link from
+// the review page (routes.mySequencesPage) ships users in with
+// `?include=all` so they see every version they've just released; the
+// page-level checkbox toggles between modes. We deliberately don't
+// rewrite the URL server-side because tests / external links commonly
+// append further query params with `?`, and a server-side redirect
+// would corrupt those.
 const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
 const { data, totalCount } = await performLapisSearchQueries(
     initialQueryDict,
