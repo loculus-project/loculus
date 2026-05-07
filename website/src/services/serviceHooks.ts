@@ -32,20 +32,12 @@ export function backendClientHooks(clientConfig: ClientConfig) {
  *   via `hiddenFieldValues`. Autocomplete and other narrow views leave it
  *   unset so the defaults apply.
  */
-export function lapisClientHooks(
-    queryServiceUrl: string,
-    organism: string,
-    options: { include?: string } = {},
-) {
+export function lapisClientHooks(queryServiceUrl: string, organism: string, options: { include?: string } = {}) {
     const zodiosHooks = new ZodiosHooks('lapis', new Zodios(queryServiceUrl, lapisApi, { transform: false }));
-    const baseQueries = options.include
-        ? ({ organism, include: options.include } as const)
-        : ({ organism } as const);
+    const baseQueries = options.include ? ({ organism, include: options.include } as const) : ({ organism } as const);
     return {
-        useAggregated: () =>
-            zodiosHooks.useAggregated({ queries: baseQueries }, { ...LAPIS_RETRY_OPTIONS }),
-        useDetails: () =>
-            zodiosHooks.useDetails({ queries: baseQueries }, { ...LAPIS_RETRY_OPTIONS }),
+        useAggregated: () => zodiosHooks.useAggregated({ queries: baseQueries }, { ...LAPIS_RETRY_OPTIONS }),
+        useDetails: () => zodiosHooks.useDetails({ queries: baseQueries }, { ...LAPIS_RETRY_OPTIONS }),
         useLineageDefinition: (config: { queries: { column: string } }) =>
             zodiosHooks.useLineageDefinition({ queries: { ...baseQueries, ...config.queries } }),
         useGetSequence(accessionVersion: string, sequenceType: SequenceType, useLapisMultiSegmentedEndpoint: boolean) {
@@ -117,11 +109,7 @@ function selectSequenceHook(
                   queries: { organism },
                   ...LAPIS_RETRY_OPTIONS,
               })
-            : hooks.useUnalignedNucleotideSequences(
-                  request,
-                  { queries: { organism } },
-                  { ...LAPIS_RETRY_OPTIONS },
-              );
+            : hooks.useUnalignedNucleotideSequences(request, { queries: { organism } }, { ...LAPIS_RETRY_OPTIONS });
     }
 
     if (isAlignedSequence(sequenceType)) {
@@ -131,11 +119,7 @@ function selectSequenceHook(
                   queries: { organism },
                   ...LAPIS_RETRY_OPTIONS,
               })
-            : hooks.useAlignedNucleotideSequences(
-                  request,
-                  { queries: { organism } },
-                  { ...LAPIS_RETRY_OPTIONS },
-              );
+            : hooks.useAlignedNucleotideSequences(request, { queries: { organism } }, { ...LAPIS_RETRY_OPTIONS });
     }
 
     return hooks.useAlignedAminoAcidSequences(request, {

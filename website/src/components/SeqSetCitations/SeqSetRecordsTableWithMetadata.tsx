@@ -80,12 +80,10 @@ const fetchRecordsMetadata = async (
         // Query versioned accessions by accessionVersion
         if (versionedAccessions.length > 0) {
             queries.push(
-                queryLapisDetails(
-                    clientConfig.queryServiceUrl,
-                    organism,
-                    { accessionVersion: versionedAccessions },
-                    ['accessionVersion', ...fields],
-                ).then((data) => ({ data, keyField: 'accessionVersion' })),
+                queryLapisDetails(clientConfig.queryServiceUrl, organism, { accessionVersion: versionedAccessions }, [
+                    'accessionVersion',
+                    ...fields,
+                ]).then((data) => ({ data, keyField: 'accessionVersion' })),
             );
         }
 
@@ -93,12 +91,10 @@ const fetchRecordsMetadata = async (
         // latest-version default automatically.
         if (bareAccessions.length > 0) {
             queries.push(
-                queryLapisDetails(
-                    clientConfig.queryServiceUrl,
-                    organism,
-                    { accession: bareAccessions },
-                    ['accession', ...fields],
-                ).then((data) => ({ data, keyField: 'accession' })),
+                queryLapisDetails(clientConfig.queryServiceUrl, organism, { accession: bareAccessions }, [
+                    'accession',
+                    ...fields,
+                ]).then((data) => ({ data, keyField: 'accession' })),
             );
         }
 

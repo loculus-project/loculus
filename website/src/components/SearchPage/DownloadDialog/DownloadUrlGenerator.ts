@@ -164,11 +164,8 @@ export class DownloadUrlGenerator {
         return `${organism}_${dataType}_${timestamp}`;
     }
 
-    private downloadEndpoint(
-        dataType: DownloadDataType,
-    ): { path: string; routingParams: Record<string, string> } {
-        const segmentSuffix = (segment?: string) =>
-            segment !== undefined ? `/${segment}` : '';
+    private downloadEndpoint(dataType: DownloadDataType): { path: string; routingParams: Record<string, string> } {
+        const segmentSuffix = (segment?: string) => (segment !== undefined ? `/${segment}` : '');
         switch (dataType.type) {
             case 'metadata':
                 return { path: '/v1/details', routingParams: {} };

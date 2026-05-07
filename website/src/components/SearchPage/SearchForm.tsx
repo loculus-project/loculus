@@ -259,7 +259,7 @@ export const SearchForm = ({
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
-                                        organism={organism}
+                    organism={organism}
                     lapisSearchParameters={lapisSearchParameters}
                     segmentName={segmentName}
                 />
@@ -282,7 +282,7 @@ export const SearchForm = ({
                     key={filter.name}
                     field={filter}
                     lapisUrl={lapisUrl}
-                                        organism={organism}
+                    organism={organism}
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
                     lapisSearchParameters={lapisSearchParameters}
@@ -346,7 +346,7 @@ export const SearchForm = ({
                         fieldValues={fieldValues}
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
-                                        organism={organism}
+                        organism={organism}
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
@@ -457,7 +457,7 @@ const SearchField = ({
                             key={f.name}
                             lapisSearchParameters={lapisSearchParameters}
                             lapisUrl={lapisUrl}
-                                        organism={organism}
+                            organism={organism}
                         />
                     ))}
                 </div>
@@ -490,7 +490,7 @@ const SearchField = ({
                         fieldValue={(fieldValues[field.name] ?? '') as string}
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
-                                        organism={organism}
+                        organism={organism}
                         lapisSearchParameters={lapisSearchParameters}
                         mode={field.lineageSearch ? 'lineage' : 'default'}
                     />
@@ -577,7 +577,7 @@ const AdvancedOptionsModal = ({
                             fieldValues={fieldValues}
                             setSomeFieldValues={setSomeFieldValues}
                             lapisUrl={lapisUrl}
-                                        organism={organism}
+                            organism={organism}
                             lapisSearchParameters={lapisSearchParameters}
                         />
                     </div>

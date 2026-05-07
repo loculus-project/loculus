@@ -26,10 +26,11 @@ export const SequencesViewer: FC<Props> = ({
     sequenceType,
     useLapisMultiSegmentedEndpoint,
 }) => {
-    const { data, error, isLoading } = lapisClientHooks(
-        getQueryServiceUrl(clientConfig),
-        organism,
-    ).useGetSequence(accessionVersion, sequenceType, useLapisMultiSegmentedEndpoint);
+    const { data, error, isLoading } = lapisClientHooks(getQueryServiceUrl(clientConfig), organism).useGetSequence(
+        accessionVersion,
+        sequenceType,
+        useLapisMultiSegmentedEndpoint,
+    );
 
     if (error !== null) {
         return (
