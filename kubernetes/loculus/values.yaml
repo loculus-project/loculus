@@ -2647,6 +2647,9 @@ images:
   backend:
     repository: "ghcr.io/loculus-project/backend"
     pullPolicy: Always
+  queryService:
+    repository: "ghcr.io/loculus-project/loculus-query-service"
+    pullPolicy: Always
 silo:
   apiThreadsForHttpConnections: 16
 secrets:
@@ -2756,6 +2759,12 @@ resources:
     requests:
       memory: "200Mi"
       cpu: "20m"
+    limits:
+      memory: "1Gi"
+  query-service:
+    requests:
+      memory: "200Mi"
+      cpu: "100m"
     limits:
       memory: "1Gi"
   ena-submission:

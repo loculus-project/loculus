@@ -28,7 +28,7 @@ kind: Ingress
 metadata:
   name: lapis-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd,{{- $first := true }}{{- range $key := $organismKeys }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd"
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
@@ -39,7 +39,7 @@ spec:
         pathType: {{ ternary "ImplementationSpecific" "Prefix" (eq $.Values.environment "server") }}
         backend:
           service:
-            name: {{ template "loculus.lapisServiceName" $key }}
+            name: loculus-query-service
             port:
               number: 8080
       {{- end }}
@@ -48,18 +48,6 @@ spec:
   - hosts:
     - {{ $lapisHost }}
   {{- end }}
-
-{{- range $key := $organismKeys }}
----
-apiVersion: {{ $traefikApiVersion }}
-kind: Middleware
-metadata:
-  name: strip-{{ $key }}-prefix
-spec:
-  stripPrefix:
-    prefixes:
-      - /{{ $key }}/
-{{- end }}
 ---
 apiVersion: {{ $traefikApiVersion }}
 kind: Middleware
@@ -96,10 +84,10 @@ spec:
         pathType: Exact
         backend:
           # An Ingress path requires a backend. Since the redirect happens before
-          # the request is forwarded, we can point all paths to the first
-          # organism's service as a placeholder.
+          # the request is forwarded, we can point all paths to query-service
+          # as a placeholder.
           service:
-            name: {{ template "loculus.lapisServiceName" (first $organismKeys) }}
+            name: loculus-query-service
             port:
               number: 8080
       {{- end }}

@@ -51,11 +51,11 @@
   {{- end -}}
 {{- end -}}
 
-{{/* generates internal LAPIS urls from given config object */}}
+{{/* generates internal LAPIS urls (now served by query-service) from given config object */}}
 {{ define "loculus.generateInternalLapisUrls" }}
   {{ range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
-    "{{ $key }}": "{{ if not $.Values.disableWebsite }}http://{{ template "loculus.lapisServiceName" $key }}:8080{{ else -}}http://{{ $.Values.localHost }}:8080/{{ $key }}{{ end }}"
+    "{{ $key }}": "{{ if not $.Values.disableWebsite }}http://loculus-query-service:8080/{{ $key }}{{ else -}}http://{{ $.Values.localHost }}:8080/{{ $key }}{{ end }}"
   {{ end }}
 {{ end }}
 

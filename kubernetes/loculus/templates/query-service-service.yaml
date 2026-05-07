@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-query-service
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: loculus-query-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
