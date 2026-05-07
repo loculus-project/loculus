@@ -11,6 +11,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.max
@@ -256,15 +257,46 @@ class SeqSetCitationsDatabaseService(
     fun getSeqSetCitations(seqSetId: String, version: Long): List<SeqSetCitation> {
         log.info { "Get seqSet citations for seqSet $seqSetId, version $version" }
 
-        val seqSet = SeqSetsTable
-            .selectAll()
-            .where { (SeqSetsTable.seqSetId eq seqSetId) and (SeqSetsTable.seqSetVersion eq version) }
-            .singleOrNull()
-            ?: throw NotFoundException("SeqSet $seqSetId, version $version does not exist")
+        val seqSetDOI = (
+            SeqSetsTable
+                .select(SeqSetsTable.seqSetDOI)
+                .where { (SeqSetsTable.seqSetId eq seqSetId) and (SeqSetsTable.seqSetVersion eq version) }
+                .singleOrNull()
+                ?: throw NotFoundException("SeqSet $seqSetId, version $version does not exist")
+            )[SeqSetsTable.seqSetDOI]
 
-        val seqSetDOI = seqSet[SeqSetsTable.seqSetDOI]
         if (seqSetDOI.isNullOrEmpty()) return emptyList()
-        return crossRefService.getCrossRefCitedBy(seqSetDOI)
+
+        return SeqSetCitationsTable
+            .selectAll()
+            .where { SeqSetCitationsTable.seqSetDOI eq seqSetDOI }
+            .map {
+                SeqSetCitation(
+                    it[SeqSetCitationsTable.seqSetDOI],
+                    it[SeqSetCitationsTable.citationDOI],
+                    it[SeqSetCitationsTable.title],
+                    it[SeqSetCitationsTable.year],
+                    it[SeqSetCitationsTable.contributors],
+                )
+            }
+    }
+
+    fun updateSeqSetCitations(citationsByDOI: Map<String, List<SeqSetCitation>>) {
+        val lastFetched = dateProvider.getCurrentDateTime()
+
+        // Remove existing citations and set new ones for each seqSet DOI
+        // TODO: Currently explodes if a DOI does not exist in the database
+        for ((doi, citations) in citationsByDOI) {
+            SeqSetCitationsTable.deleteWhere { SeqSetCitationsTable.seqSetDOI eq doi }
+            SeqSetCitationsTable.batchInsert(citations) {
+                this[SeqSetCitationsTable.seqSetDOI] = it.seqSetDOI
+                this[SeqSetCitationsTable.citationDOI] = it.citationDOI
+                this[SeqSetCitationsTable.title] = it.title
+                this[SeqSetCitationsTable.year] = it.year
+                this[SeqSetCitationsTable.contributors] = it.contributors
+                this[SeqSetCitationsTable.lastFetched] = lastFetched
+            }
+        }
     }
 
     fun getSeqSets(authenticatedUser: AuthenticatedUser): List<SeqSet> {

@@ -15,6 +15,7 @@ import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.service.crossref.CrossRefService
+import org.loculus.backend.service.seqsetcitations.UpdateSeqSetCitationsTask
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,7 +26,10 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsControllerClient) {
+class CitationEndpointsTest(
+    @Autowired private val client: SeqSetCitationsControllerClient,
+    @Autowired private val updateSeqSetCitationsTask: UpdateSeqSetCitationsTask,
+) {
     @MockkBean
     lateinit var submissionDatabaseService: SubmissionDatabaseService
 
@@ -155,9 +159,10 @@ class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsContro
             contributors = listOf(SeqSetCitationContributor(givenName = "Jane", surname = "Doe")),
         )
 
-        every { crossRefService.getCrossRefCitedBy(seqSetDOI) } returns listOf(
-            seqSetCitation,
-        )
+        // Simulate running the task and updating citations
+        every { crossRefService.isActive } returns true
+        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns listOf(seqSetCitation)
+        updateSeqSetCitationsTask.task()
 
         client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
             .andExpect(status().isOk)
