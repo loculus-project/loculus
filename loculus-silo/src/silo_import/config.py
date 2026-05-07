@@ -97,16 +97,4 @@ def _parse_hierarchical_filters(
         msg = f"HIERARCHICAL_FILTERS must be a JSON object, got: {raw}"
         raise TypeError(msg)
 
-    if not data:
-        # env variable exists but is empty: `HIERARCHICAL_FILTERS={}`
-        return None
-
-    filters: dict[str, str] = {}
-    for filter_name, entry in data.items():
-        try:
-            filters[filter_name] = entry
-        except (KeyError, TypeError) as exc:
-            msg = f"HIERARCHICAL_FILTERS entry for '{filter_name}' is malformed: {entry}"
-            raise RuntimeError(msg) from exc
-
-    return filters
+    return data or None
