@@ -2757,9 +2757,10 @@ resources:
   query-service:
     requests:
       memory: "200Mi"
-      cpu: "100m"
+      cpu: "200m"
     limits:
       memory: "1Gi"
+      cpu: "2"
   ena-submission:
     requests:
       memory: "200Mi"

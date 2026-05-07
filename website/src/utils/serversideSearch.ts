@@ -17,12 +17,14 @@ import { pageSize } from '../settings';
 import type { FieldValues, Schema } from '../types/config';
 import type { ReferenceGenomesInfo } from '../types/referencesGenomes.ts';
 
+const INCLUDE_QUERY_KEY = 'include';
+
 export const performLapisSearchQueries = async (
     state: QueryState,
     schema: Schema,
     referenceGenomesInfo: ReferenceGenomesInfo,
-    hiddenFieldValues: FieldValues,
     organism: string,
+    hiddenFieldValues: FieldValues = {},
 ): Promise<SearchResponse> => {
     const selectedReferences = schema.referenceIdentifierField
         ? getSelectedReferences({
@@ -64,9 +66,15 @@ export const performLapisSearchQueries = async (
 
     const client = LapisClient.createForOrganism(organism);
 
-    // include=all: the search page manages version defaults itself via
-    // hiddenFieldValues, so opt out of query-service's auto-defaults.
-    const organismQueries = { queries: { organism: client.organism, include: 'all' } };
+    // The search page applies query-service's implicit defaults
+    // (`versionStatus=LATEST_VERSION`, `isRevocation=false`) unless the user
+    // has explicitly asked otherwise via `?include=all` (see the
+    // "Include older versions and revocations" toggle in SearchFullUI).
+    const includeRaw = state[INCLUDE_QUERY_KEY];
+    const include = Array.isArray(includeRaw) ? includeRaw[0] : includeRaw;
+    const organismQueries = include
+        ? { queries: { organism: client.organism, include } }
+        : { queries: { organism: client.organism } };
     const [detailsResult, aggregatedResult] = await Promise.all([
         client.call(
             'details',

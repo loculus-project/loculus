@@ -94,11 +94,16 @@ test('Override hidden fields', async ({ page, groupId }) => {
     await search.select('Collection country', 'France');
     await page.getByLabel('Clear').click();
 
-    await search.enableSearchFields('Author affiliations', 'Version status');
+    await search.enableSearchFields('Author affiliations');
     await search.fill('Author affiliations', uuid);
 
+    // Default: query-service applies versionStatus=LATEST_VERSION and
+    // isRevocation=false, so the revised France entry is the only match.
     await search.expectSequenceCount(1);
-    await search.clearSelect('Version status');
+    // Toggle the "Include older versions and revocations" checkbox to opt
+    // out of those defaults — three non-revoked entries (France v1, France
+    // v2, Uganda v1) become visible.
+    await page.getByTestId('include-all-toggle').check();
     await search.expectSequenceCount(3);
     await search.select('Collection country', 'France');
     await search.expectSequenceCount(2);
