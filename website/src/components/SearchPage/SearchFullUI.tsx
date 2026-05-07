@@ -82,7 +82,13 @@ export const InnerSearchFullUI = ({
     linkOuts,
     contactConfig,
 }: InnerSearchFullUIProps) => {
-    hiddenFieldValues ??= {};
+    // Stabilise the default so downstream `useMemo`s don't see a fresh
+    // empty object on every render — that previously cascaded into an
+    // effect that refired every render and pelted the query-service.
+    const hiddenValues: FieldValues = useMemo(
+        () => hiddenFieldValues ?? {},
+        [hiddenFieldValues],
+    );
 
     const metadataSchema = schema.metadata;
     const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
@@ -106,7 +112,13 @@ export const InnerSearchFullUI = ({
         setOrderDirection,
         setASearchVisibility,
         setAColumnVisibility,
-    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema, referenceGenomesInfo });
+    } = useSearchPageState({
+        initialQueryDict,
+        schema,
+        hiddenFieldValues: hiddenValues,
+        filterSchema,
+        referenceGenomesInfo,
+    });
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -129,12 +141,12 @@ export const InnerSearchFullUI = ({
 
     /**
      * The `fieldValues` are the values of the search fields.
-     * The values are initially loaded from the default values set in `hiddenFieldValues`
+     * The values are initially loaded from the default values set in `hiddenValues`
      * and the initial `state` (URL search params).
      */
     const fieldValues = useMemo(() => {
-        return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues, referenceGenomesInfo);
-    }, [state, hiddenFieldValues, filterSchema, referenceGenomesInfo]);
+        return filterSchema.getFieldValuesFromQuery(state, hiddenValues, referenceGenomesInfo);
+    }, [state, hiddenValues, filterSchema, referenceGenomesInfo]);
 
     useEffect(() => {
         if (showEditDataUseTermsControls && dataUseTermsEnabled) {
@@ -178,8 +190,8 @@ export const InnerSearchFullUI = ({
 
     const tableFilter = useMemo(
         () =>
-            new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, segmentAndGeneInfo, referenceGenomesInfo),
-        [fieldValues, hiddenFieldValues, referenceGenomesInfo, filterSchema],
+            new FieldFilterSet(filterSchema, fieldValues, hiddenValues, segmentAndGeneInfo, referenceGenomesInfo),
+        [fieldValues, hiddenValues, referenceGenomesInfo, filterSchema],
     );
 
     /**

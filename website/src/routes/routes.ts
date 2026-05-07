@@ -25,7 +25,10 @@ export const routes = {
             name: 'released',
             organism,
             groupId,
-            searchParams: new URLSearchParams({}),
+            // Submitters land on this page wanting to see every version they've
+            // released, including revocations they've just made. The page-level
+            // toggle still lets them switch back to latest non-revoked.
+            searchParams: new URLSearchParams({ include: 'all' }),
         }),
     sequenceEntryDetailsPage: (accessionVersion: AccessionVersion | string) =>
         `/seq/${getAccessionVersionString(accessionVersion)}`,
