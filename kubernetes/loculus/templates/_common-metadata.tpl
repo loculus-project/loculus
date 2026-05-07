@@ -347,6 +347,9 @@ organisms:
   {{- if .hierarchicalFilter }}
   hierarchicalSearch: true
   {{- end }}
+  {{- if and .hierarchicalFilter .hierarchicalSearchText }}
+  hierarchicalSearchText: {{ .hierarchicalSearchText }}
+  {{- end }}
   {{- if .hideOnSequenceDetailsPage }}
   hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
   {{- end }}

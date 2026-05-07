@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { LineageField } from './LineageField';
+import { HierarchicalField } from './HierarchicalField.tsx';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-import type { MetadataFilter } from '../../../types/config';
-import { Button } from '../../common/Button';
+import type { MetadataFilter } from '../../../types/config.ts';
+import { Button } from '../../common/Button.tsx';
 
 vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({
@@ -24,7 +24,7 @@ lapisClientHooks.mockReturnValue({
     useLineageDefinition: mockUseLineageDefinition,
 });
 
-describe('LineageField', () => {
+describe('HierarchicalField', () => {
     const field: MetadataFilter = { name: 'lineage', displayName: 'My Lineage', type: 'string' };
     const setSomeFieldValues = vi.fn();
     const lapisUrl = 'https://example.com/api';
@@ -76,7 +76,7 @@ describe('LineageField', () => {
 
     it('renders correctly with initial state', () => {
         render(
-            <LineageField
+            <HierarchicalField
                 field={field}
                 fieldValue='initialValue'
                 setSomeFieldValues={setSomeFieldValues}
@@ -94,7 +94,7 @@ describe('LineageField', () => {
 
     it('updates query when sublineages checkbox is toggled', () => {
         render(
-            <LineageField
+            <HierarchicalField
                 field={field}
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
@@ -112,7 +112,7 @@ describe('LineageField', () => {
 
     it('aggregates counts for aliases correctly', async () => {
         render(
-            <LineageField
+            <HierarchicalField
                 field={field}
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
@@ -133,7 +133,7 @@ describe('LineageField', () => {
 
     it('aggregates counts for sublineages correctly', async () => {
         render(
-            <LineageField
+            <HierarchicalField
                 field={field}
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
@@ -157,7 +157,7 @@ describe('LineageField', () => {
 
     it('handles input changes and calls setSomeFieldValues', async () => {
         render(
-            <LineageField
+            <HierarchicalField
                 field={field}
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
@@ -182,7 +182,7 @@ describe('LineageField', () => {
 
     it('clears wildcard when sublineages is unchecked', () => {
         render(
-            <LineageField
+            <HierarchicalField
                 field={field}
                 fieldValue='value*'
                 setSomeFieldValues={setSomeFieldValues}
@@ -205,7 +205,7 @@ describe('LineageField', () => {
 
             return (
                 <>
-                    <LineageField
+                    <HierarchicalField
                         field={field}
                         fieldValue={value}
                         setSomeFieldValues={setSomeFieldValues}
@@ -233,13 +233,13 @@ describe('LineageField', () => {
     describe('hierarchical mode', () => {
         it('defaults the sublineages checkbox to checked when fieldValue is empty', () => {
             render(
-                <LineageField
+                <HierarchicalField
                     field={field}
                     fieldValue=''
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
                     lapisSearchParameters={lapisSearchParameters}
-                    mode='hierarchical'
+                    mode="default"
                 />,
             );
 
@@ -248,13 +248,13 @@ describe('LineageField', () => {
 
         it('appends the sublineage wildcard when the user types into an empty field', async () => {
             render(
-                <LineageField
+                <HierarchicalField
                     field={field}
                     fieldValue=''
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
                     lapisSearchParameters={lapisSearchParameters}
-                    mode='hierarchical'
+                    mode="default"
                 />,
             );
 
@@ -267,13 +267,13 @@ describe('LineageField', () => {
 
         it('respects an explicit non-wildcard fieldValue', () => {
             render(
-                <LineageField
+                <HierarchicalField
                     field={field}
                     fieldValue='A.1'
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
                     lapisSearchParameters={lapisSearchParameters}
-                    mode='hierarchical'
+                    mode="default"
                 />,
             );
 
@@ -282,13 +282,13 @@ describe('LineageField', () => {
 
         it('shows aliases instead of canonical names when an alias exists', async () => {
             render(
-                <LineageField
+                <HierarchicalField
                     field={field}
                     fieldValue=''
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
                     lapisSearchParameters={lapisSearchParameters}
-                    mode='hierarchical'
+                    mode="default"
                 />,
             );
 
@@ -301,13 +301,13 @@ describe('LineageField', () => {
 
         it('uses the canonical lineage as the value when an alias is selected', async () => {
             render(
-                <LineageField
+                <HierarchicalField
                     field={field}
                     fieldValue=''
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
                     lapisSearchParameters={lapisSearchParameters}
-                    mode='hierarchical'
+                    mode="default"
                 />,
             );
 
@@ -321,13 +321,13 @@ describe('LineageField', () => {
 
         it('displays the alias in the input when fieldValue is a canonical name with an alias', async () => {
             render(
-                <LineageField
+                <HierarchicalField
                     field={field}
                     fieldValue='A.1.1*'
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
                     lapisSearchParameters={lapisSearchParameters}
-                    mode='hierarchical'
+                    mode="default"
                 />,
             );
 

@@ -4,7 +4,7 @@ import { SingleChoiceAutoCompleteField } from './SingleChoiceAutoCompleteField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters';
 
-export type LineageFieldMode = 'lineage' | 'hierarchical';
+export type HierarchicalFieldMode = 'lineage' | 'default';
 
 interface ModeConfig {
     defaultIncludeSublineages: boolean;
@@ -13,39 +13,42 @@ interface ModeConfig {
     checkBoxLabel: string;
 }
 
-const MODE_CONFIGS: Record<LineageFieldMode, ModeConfig> = {
+const MODE_CONFIGS: Record<HierarchicalFieldMode, ModeConfig> = {
     lineage: {
         defaultIncludeSublineages: false,
         includeZeroCounts: true,
         showAlias: false,
         checkBoxLabel: 'include sublineages',
     },
-    hierarchical: {
+    default: {
         defaultIncludeSublineages: true,
         includeZeroCounts: false,
         showAlias: true,
-        checkBoxLabel: 'include subtaxa',
-    },
+        checkBoxLabel: 'include subcategories',
+    }
 };
 
-interface LineageFieldProps {
+interface HierarchicalFieldProps {
     lapisUrl: string;
     lapisSearchParameters: LapisSearchParameters;
     field: MetadataFilter;
     fieldValue: string;
     setSomeFieldValues: SetSomeFieldValues;
-    mode?: LineageFieldMode;
+    mode?: HierarchicalFieldMode;
+    hierarchicalSearchText?: string;
 }
 
-export const LineageField: FC<LineageFieldProps> = ({
+export const HierarchicalField: FC<HierarchicalFieldProps> = ({
     field,
     fieldValue,
     setSomeFieldValues,
     lapisUrl,
     lapisSearchParameters,
+    hierarchicalSearchText = null,
     mode = 'lineage',
 }) => {
-    const { defaultIncludeSublineages, includeZeroCounts, showAlias: showAlias, checkBoxLabel } = MODE_CONFIGS[mode];
+    const { defaultIncludeSublineages, includeZeroCounts, showAlias: showAlias, checkBoxLabel: defaultCheckBoxLabel } = MODE_CONFIGS[mode];
+    const checkBoxLabel = hierarchicalSearchText ?? defaultCheckBoxLabel;
 
     const [includeSublineages, _setIncludeSubLineages] = useState(
         fieldValue.endsWith('*') || (fieldValue === '' && defaultIncludeSublineages),
