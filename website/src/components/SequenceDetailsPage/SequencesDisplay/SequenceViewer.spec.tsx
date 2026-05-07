@@ -8,7 +8,7 @@ import { type ClientConfig } from '../../../types/runtimeConfig.ts';
 import { type SequenceType } from '../../../utils/sequenceTypeHelpers.ts';
 
 vi.mock('../../config', () => ({
-    getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
+    getQueryServiceUrl: vi.fn().mockReturnValue('http://query.dummy'),
 }));
 
 const queryClient = new QueryClient();

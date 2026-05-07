@@ -64,24 +64,33 @@ export const performLapisSearchQueries = async (
 
     const client = LapisClient.createForOrganism(organism);
 
+    const organismQueries = { queries: { organism: client.organism } };
     const [detailsResult, aggregatedResult] = await Promise.all([
-        // @ts-expect-error because OrderBy typing does not accept this for unknown reasons
-        client.call('details', {
-            ...lapisSearchParameters,
-            fields: [...columnsToShow, schema.primaryKey],
-            limit: pageSize,
-            offset: (page - 1) * pageSize,
-            orderBy: [
-                {
-                    field: orderByField,
-                    type: orderDirection === 'ascending' ? 'ascending' : 'descending',
-                },
-            ],
-        }),
-        client.call('aggregated', {
-            ...lapisSearchParameters,
-            fields: [],
-        }),
+        client.call(
+            'details',
+            // @ts-expect-error because OrderBy typing does not accept this for unknown reasons
+            {
+                ...lapisSearchParameters,
+                fields: [...columnsToShow, schema.primaryKey],
+                limit: pageSize,
+                offset: (page - 1) * pageSize,
+                orderBy: [
+                    {
+                        field: orderByField,
+                        type: orderDirection === 'ascending' ? 'ascending' : 'descending',
+                    },
+                ],
+            },
+            organismQueries,
+        ),
+        client.call(
+            'aggregated',
+            {
+                ...lapisSearchParameters,
+                fields: [],
+            },
+            organismQueries,
+        ),
     ]);
 
     return {

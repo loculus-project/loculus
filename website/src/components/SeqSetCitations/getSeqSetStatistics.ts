@@ -3,9 +3,8 @@ import type { Result } from 'neverthrow';
 
 import { getConfiguredOrganisms, getSchema } from '../../config.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
-import { ACCESSION_FIELD, ACCESSION_VERSION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
+import { ACCESSION_FIELD, ACCESSION_VERSION_FIELD } from '../../settings.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import { versionStatuses } from '../../types/lapis.ts';
 
 type AggregateValue = string | number | boolean | null | undefined;
 export type AggregateRow = { value: AggregateValue; count: number };
@@ -15,7 +14,7 @@ const getAggregate = async (
     field: string,
     params: Record<string, string[] | string>,
 ): Promise<Result<AggregateRow[], ProblemDetail>> => {
-    const result = await client.call('aggregated', params);
+    const result = await client.call('aggregated', params, { queries: { organism: client.organism } });
     return result.map(({ data }) =>
         data.map((item) => ({
             value: item[field],
@@ -60,10 +59,10 @@ export const getSeqSetStatistics = async (
                 );
             }
             if (unversionedAccessions.length > 0) {
+                // versionStatus=LATEST_VERSION is applied by query-service as a default.
                 aggregates.push(
                     getAggregate(client, field, {
                         [ACCESSION_FIELD]: unversionedAccessions,
-                        [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
                         fields: [field],
                     }),
                 );

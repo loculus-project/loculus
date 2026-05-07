@@ -40,7 +40,7 @@ const defaultProps = {
     },
     inputMode: 'bulk' as const,
     accessToken: 'test-token',
-    clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {} },
+    clientConfig: { backendUrl: 'http://test-backend', queryServiceUrl: 'http://test-qs', organisms: [] },
     groupId: 1,
     setFileMapping: mockSetFileMapping,
     onError: mockOnError,

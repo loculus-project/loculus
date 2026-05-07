@@ -26,8 +26,10 @@ const LAPIS_ADVANCED_QUERY_KEY = 'advancedQuery';
 export class DownloadUrlGenerator {
     /**
      * Create new DownloadUrlGenerator with the given properties.
-     * @param organism The organism, will be part of the filename.
-     * @param lapisUrl The lapis API URL for downloading.
+     * @param organism The organism, will be part of the filename and the
+     *   query-service `?organism=` parameter.
+     * @param lapisUrl The query-service base URL (kept misnamed to limit
+     *   the rename blast radius).
      * @param dataUseTermsEnabled If false, the downloaded URLs won't include any data use terms related settings.
      * @param richFastaHeaderFields Set the fastaHeaderTemplate parameter to include rich fasta headers.
      */
@@ -39,10 +41,15 @@ export class DownloadUrlGenerator {
     ) {}
 
     public generateDownloadUrl(downloadParameters: SequenceFilter, option: DownloadOption) {
-        const baseUrl = this.downloadEndpoint(option.dataType);
+        const { path, routingParams } = this.downloadEndpoint(option.dataType);
+        const baseUrl = this.lapisUrl + path;
         const params = new URLSearchParams();
         const excludedParams = new Set<string>();
 
+        params.set('organism', this.organism);
+        for (const [k, v] of Object.entries(routingParams)) {
+            params.set(k, v);
+        }
         params.set(downloadAsFile, 'true');
         params.set('downloadFileBasename', this.generateFilename(option.dataType));
 
@@ -153,21 +160,29 @@ export class DownloadUrlGenerator {
         return `${organism}_${dataType}_${timestamp}`;
     }
 
-    private downloadEndpoint(dataType: DownloadDataType) {
-        const segmentPath = (segment?: string) => (segment !== undefined ? '/' + segment : '');
-
+    private downloadEndpoint(
+        dataType: DownloadDataType,
+    ): { path: string; routingParams: Record<string, string> } {
+        const segmentSuffix = (segment?: string) =>
+            segment !== undefined ? `/${segment}` : '';
         switch (dataType.type) {
             case 'metadata':
-                return this.lapisUrl + '/sample/details';
+                return { path: '/v1/details', routingParams: {} };
             case 'unalignedNucleotideSequences':
-                if (dataType.segment !== undefined) {
-                    return this.lapisUrl + '/sample/unalignedNucleotideSequences/' + dataType.segment;
-                }
-                return this.lapisUrl + '/sample/unalignedNucleotideSequences';
+                return {
+                    path: `/v1/unalignedSequences${segmentSuffix(dataType.segment)}`,
+                    routingParams: {},
+                };
             case 'alignedNucleotideSequences':
-                return this.lapisUrl + '/sample/alignedNucleotideSequences' + segmentPath(dataType.segment);
+                return {
+                    path: `/v1/alignedSequences${segmentSuffix(dataType.segment)}`,
+                    routingParams: {},
+                };
             case 'alignedAminoAcidSequences':
-                return this.lapisUrl + '/sample/alignedAminoAcidSequences/' + dataType.gene;
+                return {
+                    path: `/v1/aaSequences/${dataType.gene}`,
+                    routingParams: {},
+                };
         }
     }
 }
