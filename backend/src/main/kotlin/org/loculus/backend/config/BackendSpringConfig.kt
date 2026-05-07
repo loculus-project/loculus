@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
-import org.springframework.cache.annotation.EnableCaching
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -58,7 +57,6 @@ const val ENABLE_SEQSETS_TRUE_VALUE = "true"
 private val logger = mu.KotlinLogging.logger {}
 
 @Configuration
-@EnableCaching
 @EnableScheduling
 @ImportAutoConfiguration(
     value = [ExposedAutoConfiguration::class],
