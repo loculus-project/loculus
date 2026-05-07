@@ -32,6 +32,7 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
                 .map((field) => ({
                     name: field.name,
                     displayName: field.displayName ?? field.name,
+                    definition: field.definition,
                     header: field.header,
                     displayState: getDisplayState(
                         field,

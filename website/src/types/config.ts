@@ -61,6 +61,7 @@ export const rangeOverlapSearch = z.object({
      */
     rangeName: z.string(),
     rangeDisplayName: z.string(), // just needed in the 'lower' field technically
+    rangeDefinitionField: z.string().optional(),
     bound: z.enum(['lower', 'upper']),
 });
 
@@ -128,6 +129,7 @@ export type GroupedMetadataFilter = {
     name: string;
     groupedFields: MetadataFilter[];
     type: Metadata['type'];
+    definition?: string;
     grouped: true;
     displayName?: string;
     isVisible?: boolean;

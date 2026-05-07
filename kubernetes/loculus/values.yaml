@@ -157,6 +157,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeOverlapSearch:
           rangeName: sampleCollectionDateRange
           rangeDisplayName: Collection date
+          rangeDefinitionField: sampleCollectionDate
           bound: lower
         noInput: true
       - name: sampleCollectionDateRangeUpper
@@ -176,6 +177,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeOverlapSearch:
           rangeName: sampleCollectionDateRange
           rangeDisplayName: Collection date
+          rangeDefinitionField: sampleCollectionDate
           bound: upper
         noInput: true
       - name: displayName
