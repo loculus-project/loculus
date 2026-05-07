@@ -153,7 +153,11 @@ export const InnerSearchFullUI = ({
         schema.richFastaHeaderFields,
     );
 
-    const hooks = lapisClientHooks(lapisUrl, organism);
+    // The search UI manages its own version-related defaults via
+    // hiddenFieldValues — let users see all versions / revocations when
+    // they clear those fields. Pass include=all to opt out of the
+    // query-service-side defaults.
+    const hooks = lapisClientHooks(lapisUrl, organism, { include: 'all' });
     const aggregatedHook = hooks.useAggregated();
     const detailsHook = hooks.useDetails();
 

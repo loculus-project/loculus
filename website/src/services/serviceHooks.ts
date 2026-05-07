@@ -25,9 +25,22 @@ export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
 }
 
-export function lapisClientHooks(queryServiceUrl: string, organism: string) {
+/**
+ * @param options.include  Pass `'all'` (or any valid query-service `include=`
+ *   value) to opt out of the implicit version-status / revocation defaults.
+ *   The search UI passes `'all'` because it manages those defaults itself
+ *   via `hiddenFieldValues`. Autocomplete and other narrow views leave it
+ *   unset so the defaults apply.
+ */
+export function lapisClientHooks(
+    queryServiceUrl: string,
+    organism: string,
+    options: { include?: string } = {},
+) {
     const zodiosHooks = new ZodiosHooks('lapis', new Zodios(queryServiceUrl, lapisApi, { transform: false }));
-    const baseQueries = { organism } as const;
+    const baseQueries = options.include
+        ? ({ organism, include: options.include } as const)
+        : ({ organism } as const);
     return {
         useAggregated: () =>
             zodiosHooks.useAggregated({ queries: baseQueries }, { ...LAPIS_RETRY_OPTIONS }),

@@ -264,21 +264,42 @@ async def _handle(request: Request, lapis_path: str) -> Response:
         params: dict[str, Any] = dict(request.query_params)
         includes = _includes_from_params(request.query_params.getlist("include"))
     else:
-        raw = await request.body()
-        try:
-            body = json.loads(raw) if raw else {}
-        except json.JSONDecodeError as exc:
-            raise HTTPException(status_code=400, detail="invalid JSON body") from exc
-        if not isinstance(body, dict):
-            raise HTTPException(
-                status_code=400, detail="POST body must be a JSON object"
-            )
         # POST body is flat: control keys at top level, everything else is a
-        # metadata-column filter. Body wins on conflicts with the query string.
+        # metadata-column filter. We accept either JSON (for programmatic
+        # callers) or form-encoded (for browser-driven downloads that
+        # submit an HTML form with method=POST). Body wins on conflicts
+        # with the query string.
         params = dict(request.query_params)
+        content_type = request.headers.get("content-type", "")
+        if "application/x-www-form-urlencoded" in content_type:
+            form = await request.form()
+            # Form fields like `fields=a&fields=b&fields=c` repeat the key.
+            # Collapse to a list when there's more than one, scalar otherwise.
+            body: dict[str, Any] = {}
+            for k in form.keys():
+                values = form.getlist(k)
+                body[k] = values if len(values) > 1 else values[0]
+        else:
+            raw = await request.body()
+            try:
+                body = json.loads(raw) if raw else {}
+            except json.JSONDecodeError as exc:
+                raise HTTPException(
+                    status_code=400, detail="invalid JSON body"
+                ) from exc
+            if not isinstance(body, dict):
+                raise HTTPException(
+                    status_code=400, detail="POST body must be a JSON object"
+                )
+
         for k, v in body.items():
             params[k] = v
-        includes = _includes_from_params(body.get("include"))
+        # `include` may come from either the query string (typical for the
+        # website's POST hooks) or the body (for callers using the envelope
+        # / form-encoded shapes).
+        includes = _includes_from_params(
+            body.get("include") or request.query_params.getlist("include")
+        )
 
     organism = _validate_organism(params.get("organism"))
     params.pop("organism", None)

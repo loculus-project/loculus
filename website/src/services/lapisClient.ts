@@ -55,6 +55,14 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         return { queries: { organism: this.organism } } as const;
     }
 
+    /**
+     * For queries that need to see every version & revocation (e.g. version
+     * history), opt out of the query-service's implicit defaults.
+     */
+    private organismQueryAll() {
+        return { queries: { organism: this.organism, include: 'all' } } as const;
+    }
+
     public static createForOrganism(organism: string) {
         return this.create(getQueryServiceUrl(getRuntimeConfig().serverSide), organism, getSchema(organism));
     }
@@ -144,7 +152,9 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
             ],
             orderBy: [{ field: VERSION_FIELD, type: 'ascending' }],
         };
-        const result = await this.call('details', request, this.organismQuery());
+        // Version history needs every version (including revocations) for
+        // the accession.
+        const result = await this.call('details', request, this.organismQueryAll());
         const createSequenceHistoryProblemDetail = (detail: string): ProblemDetail => ({
             type: 'about:blank',
             title: 'Could not get sequence entry history',

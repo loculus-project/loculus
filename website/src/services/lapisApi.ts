@@ -20,11 +20,21 @@ function v1<Path extends `/${string}`>(path: Path) {
     return `/v1${path}` as const;
 }
 
+// Every /v1/ endpoint takes `?organism=` (required) and may take
+// `?include=` (optional) to opt out of query-service's implicit defaults
+// (`versionStatus=LATEST_VERSION` and `isRevocation=false`). Valid values:
+// `revoked`, `older-versions`, `all`. The search UI passes `all` because
+// it manages those defaults itself via hiddenFieldValues.
 const organismParam = makeParameters([
     {
         name: 'organism',
         type: 'Query',
         schema: z.string(),
+    },
+    {
+        name: 'include',
+        type: 'Query',
+        schema: z.string().optional(),
     },
 ] as const);
 
