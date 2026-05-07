@@ -236,7 +236,7 @@
         "hierarchicalFilter": {
           "groups": ["metadata"],
           "type": "string",
-          "description": "Use this on string fields whose values form a hierarchy resolved at SILO import time. The value must match a key in the `hierarchicalFilterSources` map."
+          "description": "Use this on string fields whose values form a hierarchy resolved at SILO import time. The value should be an URL to the lineage file."
         }
       },
       "required": ["name"],
@@ -1589,21 +1589,6 @@
               "description": "The URL to the lineage definition file for that lineage system and that pipeline version."
             }
           }
-        }
-      }
-    },
-    "hierarchicalFilterSources": {
-      "groups": ["organism-conf"],
-      "type": "object",
-      "description": "Map from hierarchical filter name to the base URL of a service provides SILO lineage yaml files. Keys here are the names referenced by the `hierarchicalFilter` property on metadata fields.",
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[a-zA-Z0-9-]+$": {
-          "groups": ["hierarchical-filter-sources"],
-          "placeholder": "name",
-          "type": "string",
-          "format": "uri",
-          "description": "Base URL of the service. The importer appends `/silo-lineage`."
         }
       }
     },
