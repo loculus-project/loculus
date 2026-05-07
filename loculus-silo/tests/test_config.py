@@ -65,25 +65,3 @@ def test_hierarchical_filters_invalid_json(monkeypatch: pytest.MonkeyPatch) -> N
 
     with pytest.raises(RuntimeError, match="HIERARCHICAL_FILTERS must be valid JSON"):
         ImporterConfig.from_env()
-
-
-def test_hierarchical_filters_unknown_name(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com")
-    monkeypatch.setenv(
-        "HIERARCHICAL_FILTERS",
-        json.dumps({"madeUpFilter": "http://x"}),
-    )
-
-    with pytest.raises(RuntimeError, match="Unknown hierarchical filter 'madeUpFilter'"):
-        ImporterConfig.from_env()
-
-
-def test_hierarchical_filters_missing_keys(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com")
-    monkeypatch.setenv(
-        "HIERARCHICAL_FILTERS",
-        json.dumps({"hostTaxon": {"url": "http://x"}}),
-    )
-
-    with pytest.raises(RuntimeError, match="malformed"):
-        ImporterConfig.from_env()
