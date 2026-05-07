@@ -107,11 +107,10 @@ def find_existing_ids(db_conn: sqlite3.Connection, tax_ids: set[int]) -> set[int
 
 
 def get_spanning_tree(
-    db_conn: sqlite3.Connection, tax_ids: set[int]
-) -> tuple[list[Taxon], set[int]]:
+    db_conn: sqlite3.Connection, tax_ids: set[int], root_id: int
+) -> list[Taxon]:
     """Run a recursive CTE against the database to collect the path
     from each taxon in tax_ids to the taxonomic root
-    NOTE: root itself is only included in output if it is part of `tax_ids`
 
     args:
         db_conn: sqlite3.Connection:
@@ -122,31 +121,32 @@ def get_spanning_tree(
     returns:
         list[Taxon]:    The taxonomic tree spanning all input tax_ids, represented
                         as a list of taxa
-        set[int]:       Taxon IDs in `tax_ids` that do not exist in the database
     """
-    existing_ids = find_existing_ids(db_conn, tax_ids)
-    missing_ids = tax_ids - existing_ids
-    if not existing_ids:
-        return [], tax_ids
+    print(f"Finding spanning tree for tax_ids {tax_ids} with root_id {root_id}")
 
-    placeholders = ",".join("?" * len(existing_ids))
+    placeholders = ",".join("?" * len(tax_ids))
     rows = db_conn.execute(
         f"""
-      WITH RECURSIVE ancestors AS (
-          SELECT *
-          FROM taxonomy WHERE tax_id IN ({placeholders})
-          UNION
-          SELECT t.*
-          FROM taxonomy t JOIN ancestors a ON t.tax_id = a.parent_id
-          WHERE t.tax_id != t.parent_id
-      )
-      SELECT * FROM ancestors
-      ORDER BY depth, tax_id
+    WITH RECURSIVE ancestors AS (
+        SELECT *
+        FROM taxonomy
+        WHERE tax_id IN ({placeholders})
+
+        UNION
+
+        SELECT t.*
+        FROM taxonomy t
+        JOIN ancestors a ON t.tax_id = a.parent_id
+        WHERE a.tax_id != ?
+    )
+    SELECT *
+    FROM ancestors
+    ORDER BY depth, tax_id
     """,
-        list(existing_ids),
+        list(tax_ids) + [root_id],
     ).fetchall()
 
-    return [Taxon.from_row(row) for row in rows], missing_ids
+    return [Taxon.from_row(row) for row in rows]
 
 
 def map_child_nodes(tree: list[Taxon]) -> dict[int, list[int]]:
@@ -164,6 +164,42 @@ def map_child_nodes(tree: list[Taxon]) -> dict[int, list[int]]:
     return children
 
 
+def get_mrca(db_conn: sqlite3.Connection, tax_ids: set[int]) -> int | None:
+    placeholders = ",".join("?" * len(tax_ids))
+    rows = db_conn.execute(
+        f"""
+    WITH RECURSIVE ancestors AS (
+          SELECT
+              tax_id AS original_tax_id,
+              taxonomy.*
+          FROM taxonomy
+          WHERE tax_id IN ({placeholders})
+
+          UNION
+
+          SELECT
+              a.original_tax_id,
+              t.*
+          FROM taxonomy t
+          JOIN ancestors a ON t.tax_id = a.parent_id
+          WHERE t.tax_id != t.parent_id
+      ),
+      mrca AS (
+          SELECT tax_id, depth
+          FROM ancestors
+          GROUP BY tax_id, depth
+          HAVING COUNT(DISTINCT original_tax_id) = {len(tax_ids)}
+          ORDER BY depth DESC
+          LIMIT 1
+      )
+      SELECT tax_id FROM mrca
+    """,
+        list(tax_ids),
+    ).fetchall()
+
+    return rows[0]["tax_id"] if rows else None
+
+
 def prune_tree(
     tree: list[Taxon],
     keep_ids: set[int],
@@ -177,7 +213,9 @@ def prune_tree(
     if root_id not in indexed_by_id:
         raise ValueError(f"root_id {root_id} does not exist in the provided tree")
     children = map_child_nodes(tree)
-    return list(_prune(indexed_by_id, keep_ids, children, root_id, root_id).values())
+    return list(
+        _prune(indexed_by_id, keep_ids | {root_id}, children, root_id, root_id).values()
+    )
 
 
 def _prune(

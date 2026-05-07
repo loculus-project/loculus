@@ -168,6 +168,17 @@ class PostSiloLineageTest(unittest.TestCase):
         assert lineage["9596"]["parents"] == ["131567"]
         assert lineage["9606"]["parents"] == ["9605"]
 
+    def test_returns_expected_tree_with_mrca(self):
+        # Homo sapiens (9606) and Pan (9596) branch at "cellular organisms" (131567),
+        response = self._post([9606, 9596], params={"use_mrca": "true", "prune": "false"})
+
+        assert response.status_code == codes.ok
+        lineage = yaml.safe_load(response.text)
+        assert set(lineage.keys()) == {"131567", "9605", "9596", "9606"}
+        assert lineage["9605"]["parents"] == ["131567"]
+        assert lineage["9596"]["parents"] == ["131567"]
+        assert lineage["9606"]["parents"] == ["9605"]
+
     def test_alias_includes_names(self):
         response = self._post([9605, 9606])
 

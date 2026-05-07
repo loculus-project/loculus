@@ -13,7 +13,9 @@ from taxonomy_service.helpers import (
     fetch_by_id,
     fetch_by_sci_name,
     fetch_common_name,
+    find_existing_ids,
     get_spanning_tree,
+    get_mrca,
     lineage_dict_to_string,
     prune_tree,
 )
@@ -88,6 +90,7 @@ def post_silo_lineage(
     db: DbConnection,
     prune: bool = False,
     allow_large: bool = False,
+    use_mrca: bool = False,
 ) -> Response:
     """Return a taxonomy based on the taxa provided in the request body
     The taxonomy is returned as a SILO-compatible yaml file.
@@ -102,25 +105,37 @@ def post_silo_lineage(
                         If False, return status 413 if the generated yaml file is
                         larger than `LARGE_FILE_THRESHOLD`
     """
-    tax_ids = {ROOT_TAX_ID} | set(payload.tax_ids)
-    if tax_ids == {ROOT_TAX_ID}:
+    tax_ids = set(payload.tax_ids)
+    if not tax_ids:
         return Response(content="{}\n", media_type="application/yaml")
+    
+    existing_ids = find_existing_ids(db, tax_ids)
+    missing_ids = tax_ids - existing_ids
 
-    spanning_tree, missing_ids = get_spanning_tree(db, tax_ids)
     if missing_ids:
         logger.warning(
             f"one or more provided taxa don't exist "
             f"and will be attached to the root taxon: {sorted(missing_ids)}"
         )
 
+    root = ROOT_TAX_ID
+    if use_mrca and not missing_ids:  # if there are missing ids, the mrca is likely to be inaccurate
+        mrca = get_mrca(db, tax_ids)
+        print(f"MRCA of {tax_ids} is {mrca}")
+        if mrca is not None:
+            root = mrca
+
+    spanning_tree = get_spanning_tree(db, existing_ids, root_id=root)
+
     if prune:
-        spanning_tree = prune_tree(spanning_tree, tax_ids, root_id=ROOT_TAX_ID)
+        print(f"Pruning tree to keep only {tax_ids} and root {root}")
+        spanning_tree = prune_tree(spanning_tree, tax_ids, root_id=root)
 
     lineage = convert_to_lineage_dict(spanning_tree)
     for m in missing_ids:
         lineage[str(m)] = {
             "aliases": [f"Taxon {m}"],
-            "parents": [f"{ROOT_TAX_ID}"],  # attach these to the root
+            "parents": [f"{root}"],  # attach these to the root
         }
 
     lineage_yaml = lineage_dict_to_string(lineage, allow_large)
