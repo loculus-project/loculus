@@ -16,11 +16,7 @@ from helpers import (
     read_ndjson_file,
 )
 from silo_import import lineage
-from silo_import.config import (
-    HierarchicalFilterConfig,
-    HierarchicalFilterKind,
-    ImporterConfig,
-)
+from silo_import.config import ImporterConfig, MetadataField
 from silo_import.download_manager import DownloadManager
 from silo_import.paths import ImporterPaths
 from silo_import.runner import ImporterRunner
@@ -30,7 +26,7 @@ def make_config(
     tmp_path: Path,
     lineage_definitions: dict[str, dict[int, str]] | None = None,
     hard_refresh_interval: int = 1,
-    hierarchical_filters: dict[HierarchicalFilterKind, HierarchicalFilterConfig] | None = None,
+    hierarchical_filters: dict[MetadataField, str] | None = None,
 ) -> ImporterConfig:
     return ImporterConfig(
         backend_base_url="http://backend",
@@ -207,11 +203,7 @@ def host_taxon_setup(
     config = make_config(
         tmp_path,
         hierarchical_filters={
-            HierarchicalFilterKind.HOST_TAXON: HierarchicalFilterConfig(
-                kind=HierarchicalFilterKind.HOST_TAXON,
-                url="http://taxonomy:5000",
-                metadata_field="hostTaxonId",
-            )
+            "hostTaxon": "http://taxonomy:5000"
         },
         hard_refresh_interval=1000,
     )
@@ -267,7 +259,7 @@ def test_runner_writes_hierarchical_filter_yaml(
     assert post_calls[0][0] == "http://taxonomy:5000/silo-lineage"
     assert post_calls[0][1] == ["10090", "9606"]
     assert runner.hierarchical_filter_values == {
-        HierarchicalFilterKind.HOST_TAXON: {"9606", "10090"}
+        "hostTaxon": {"9606", "10090"}
     }
 
 

@@ -7,8 +7,6 @@ from pathlib import Path
 
 import pytest
 from silo_import.config import (
-    HierarchicalFilterConfig,
-    HierarchicalFilterKind,
     ImporterConfig,
 )
 
@@ -57,11 +55,7 @@ def test_hierarchical_filters_parsed(monkeypatch: pytest.MonkeyPatch) -> None:
     config = ImporterConfig.from_env()
 
     assert config.hierarchical_filters == {
-        HierarchicalFilterKind.HOST_TAXON: HierarchicalFilterConfig(
-            kind=HierarchicalFilterKind.HOST_TAXON,
-            url="http://taxonomy:5000",
-            metadata_field="hostTaxonId",
-        )
+        "hostTaxon": "http://taxonomy:5000",
     }
 
 

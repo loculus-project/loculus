@@ -1,25 +1,13 @@
 from __future__ import annotations
 
-import enum
 import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
 
 
-class HierarchicalFilterKind(enum.StrEnum):
-    """If we add new hierarchical filters, they must be
-    registered as enum variants here, as well as in `lineage.update_hierarchical_filters`
-    """
-
-    HOST_TAXON = "hostTaxon"
-
-
-@dataclass(frozen=True)
-class HierarchicalFilterConfig:
-    kind: HierarchicalFilterKind
-    url: str
-    metadata_field: str
+MetadataField = str
+HierarchicalServiceUrl = str
 
 
 @dataclass(frozen=True)
@@ -32,7 +20,7 @@ class ImporterConfig:
     root_dir: Path
     silo_binary: Path
     preprocessing_config: Path
-    hierarchical_filters: dict[HierarchicalFilterKind, HierarchicalFilterConfig] | None = None
+    hierarchical_filters: dict[MetadataField, HierarchicalServiceUrl] | None = None
 
     @classmethod
     def from_env(cls) -> ImporterConfig:
@@ -95,7 +83,7 @@ class ImporterConfig:
 
 def _parse_hierarchical_filters(
     raw: str | None,
-) -> dict[HierarchicalFilterKind, HierarchicalFilterConfig] | None:
+) -> dict[MetadataField, HierarchicalServiceUrl] | None:
     if not raw:
         return None
 
@@ -113,20 +101,10 @@ def _parse_hierarchical_filters(
         # env variable exists but is empty: `HIERARCHICAL_FILTERS={}`
         return None
 
-    filters: dict[HierarchicalFilterKind, HierarchicalFilterConfig] = {}
+    filters: dict[str, str] = {}
     for filter_name, entry in data.items():
         try:
-            kind = HierarchicalFilterKind(filter_name)
-        except ValueError as exc:
-            valid = [k.value for k in HierarchicalFilterKind]
-            msg = f"Unknown hierarchical filter '{filter_name}'; expected one of {valid}"
-            raise RuntimeError(msg) from exc
-        try:
-            filters[kind] = HierarchicalFilterConfig(
-                kind=kind,
-                url=entry["url"],
-                metadata_field=entry["metadataField"],
-            )
+            filters[filter_name] = entry
         except (KeyError, TypeError) as exc:
             msg = f"HIERARCHICAL_FILTERS entry for '{filter_name}' is malformed: {entry}"
             raise RuntimeError(msg) from exc

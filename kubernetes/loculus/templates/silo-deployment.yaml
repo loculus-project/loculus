@@ -95,16 +95,8 @@ spec:
               value: {{ $defsBySystem | toJson | quote }}
             {{- end }}
             {{- if $hierarchicalFilters }}
-              {{- $hfMap := dict -}}
-              {{- range $hf := $hierarchicalFilters }}
-                {{- $url := index $.Values.hierarchicalFilterSources $hf.name -}}
-                {{- if not $url -}}
-                  {{- fail (printf "hierarchicalFilterSources missing entry for filter '%s'" $hf.name) -}}
-                {{- end -}}
-                {{- $hfMap = set $hfMap $hf.name (dict "url" $url "metadataField" $hf.metadataField) -}}
-              {{- end }}
             - name: HIERARCHICAL_FILTERS
-              value: {{ $hfMap | toJson | quote }}
+              value: {{ $hierarchicalFilters | toJson | quote }}
             {{- end }}
             - name: SILO_RUN_TIMEOUT_SECONDS
               value: {{ $.Values.siloImport.siloTimeoutSeconds | quote }}

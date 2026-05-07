@@ -4,7 +4,7 @@ import logging
 import shutil
 import time
 
-from .config import HierarchicalFilterKind, ImporterConfig
+from .config import ImporterConfig, MetadataField
 from .constants import SPECIAL_ETAG_NONE
 from .download_manager import DownloadManager
 from .errors import (
@@ -31,7 +31,7 @@ class ImporterRunner:
         self.download_manager = DownloadManager()
         self.current_etag = SPECIAL_ETAG_NONE
         self.last_hard_refresh: float = 0
-        self.hierarchical_filter_values: dict[HierarchicalFilterKind, set[str]] = {}
+        self.hierarchical_filter_values: dict[MetadataField, set[str]] = {}
 
     def _clear_download_directories(self) -> None:
         """Clear all timestamped download directories on startup."""
@@ -85,14 +85,14 @@ class ImporterRunner:
             # we need to update a filter if:
             #   1) we see `kind` for the first time (first cycle)
             #   2) the values have changed since the last cycle
-            configured_kinds = set(self.config.hierarchical_filters or {})
+            hierarchical_metadata_fields = set(self.config.hierarchical_filters or {})
             new_values = download.analysis.hierarchical_filter_values
             filters_to_update = {
-                kind
-                for kind in configured_kinds
+                field
+                for field in hierarchical_metadata_fields
                 if (
-                    kind not in self.hierarchical_filter_values
-                    or new_values.get(kind, set()) != self.hierarchical_filter_values[kind]
+                    field not in self.hierarchical_filter_values
+                    or new_values.get(field, set()) != self.hierarchical_filter_values[field]
                 )
             }
             if filters_to_update:
@@ -102,8 +102,8 @@ class ImporterRunner:
                     self.paths,
                     subset=filters_to_update,
                 )
-                for kind in filters_to_update:
-                    self.hierarchical_filter_values[kind] = new_values.get(kind, set())
+                for field in filters_to_update:
+                    self.hierarchical_filter_values[field] = new_values.get(field, set())
         except Exception:
             logger.exception("Failed to download lineage definitions; cleaning up input")
             safe_remove(self.paths.silo_input_data_path)

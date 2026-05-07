@@ -6,7 +6,7 @@ from pathlib import Path
 import requests
 from requests import codes
 
-from .config import HierarchicalFilterKind, ImporterConfig
+from .config import ImporterConfig, MetadataField
 from .paths import ImporterPaths
 
 logger = logging.getLogger(__name__)
@@ -46,15 +46,15 @@ def update_lineage_definitions(
 
 
 def update_hierarchical_filters(
-    values_by_kind: dict[HierarchicalFilterKind, set[str]],
+    values_by_kind: dict[MetadataField, set[str]],
     config: ImporterConfig,
     paths: ImporterPaths,
     *,
-    subset: set[HierarchicalFilterKind] | None = None,
+    subset: set[MetadataField] | None = None,
 ) -> None:
     """Dispatch each configured filter to its dedicated handler.
 
-    New filter kinds slot in by adding a HierarchicalFilterKind member and a
+    New filter kinds slot in by adding a MetadataField member and a
     corresponding case here.
     """
     if not config.hierarchical_filters:
@@ -63,11 +63,7 @@ def update_hierarchical_filters(
         if subset is not None and kind not in subset:
             continue
         values = values_by_kind.get(kind, set())
-        match kind:
-            # If we add new filter kinds, we should implement a corresponding
-            # handler function and call it here
-            case HierarchicalFilterKind.HOST_TAXON:
-                update_taxonomic_lineage(kind.value, values, hf.url, paths)
+        update_taxonomic_lineage(kind.value, values, hf.url, paths)
 
 
 def update_taxonomic_lineage(
