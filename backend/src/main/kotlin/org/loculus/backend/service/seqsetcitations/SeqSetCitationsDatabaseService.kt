@@ -25,6 +25,7 @@ import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
 import org.loculus.backend.api.SeqSetCitation
 import org.loculus.backend.api.SeqSetCitationsConstants
+import org.loculus.backend.api.SeqSetCitationsUpdateResult
 import org.loculus.backend.api.SeqSetRecord
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedSeqSetRecord
@@ -281,12 +282,14 @@ class SeqSetCitationsDatabaseService(
             }
     }
 
-    fun updateSeqSetCitations(citationsByDOI: Map<String, List<SeqSetCitation>>) {
+    fun updateSeqSetCitations(citationsByDOI: Map<String, List<SeqSetCitation>>): SeqSetCitationsUpdateResult {
         val lastFetched = dateProvider.getCurrentDateTime()
+        val seqSetDOIs = SeqSetsTable.select(SeqSetsTable.seqSetDOI).mapNotNull { it[SeqSetsTable.seqSetDOI] }.toSet()
+        val updateDOIs = citationsByDOI.keys.intersect(seqSetDOIs)
+        val skipDOIs = citationsByDOI.keys.subtract(seqSetDOIs)
 
         // Remove existing citations and set new ones for each seqSet DOI
-        // TODO: Currently explodes if a DOI does not exist in the database
-        for ((doi, citations) in citationsByDOI) {
+        for ((doi, citations) in citationsByDOI.filterKeys { it in updateDOIs }) {
             SeqSetCitationsTable.deleteWhere { SeqSetCitationsTable.seqSetDOI eq doi }
             SeqSetCitationsTable.batchInsert(citations) {
                 this[SeqSetCitationsTable.seqSetDOI] = it.seqSetDOI
@@ -297,6 +300,8 @@ class SeqSetCitationsDatabaseService(
                 this[SeqSetCitationsTable.lastFetched] = lastFetched
             }
         }
+
+        return SeqSetCitationsUpdateResult(updateDOIs, skipDOIs)
     }
 
     fun getSeqSets(authenticatedUser: AuthenticatedUser): List<SeqSet> {

@@ -67,6 +67,8 @@ data class SeqSetCitation(
     val contributors: List<SeqSetCitationContributor>,
 )
 
+data class SeqSetCitationsUpdateResult(val updatedSeqSetDOIs: Set<String>, val skippedSeqSetDOIs: Set<String>)
+
 data class ResponseSeqSet(val seqSetId: String, val seqSetVersion: Long)
 
 data class CitedBy(

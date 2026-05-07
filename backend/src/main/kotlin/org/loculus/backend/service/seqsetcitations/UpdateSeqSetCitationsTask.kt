@@ -38,10 +38,22 @@ class UpdateSeqSetCitationsTask(
         val citations = crossRefService.getCrossRefCitedBy(doiPrefix)
         val citationsByDOI = citations.groupBy { it.seqSetDOI }
         log.info {
-            "Successfully fetched ${citations.size} citations for ${citationsByDOI.size} SeqSet DOIs from Crossref."
+            "Fetched ${citations.size} citation(s) across ${citationsByDOI.size} SeqSet DOI(s) from Crossref."
         }
 
-        seqSetCitationsDatabaseService.updateSeqSetCitations(citationsByDOI)
-        log.info { "Successfully updated SeqSet citations." }
+        if (citationsByDOI.isEmpty()) {
+            return
+        }
+        val updateResult = seqSetCitationsDatabaseService.updateSeqSetCitations(citationsByDOI)
+
+        if (updateResult.updatedSeqSetDOIs.isNotEmpty()) {
+            log.info { "Successfully updated citation(s) for ${updateResult.updatedSeqSetDOIs.size} SeqSet DOI(s)." }
+        }
+
+        if (updateResult.skippedSeqSetDOIs.isNotEmpty()) {
+            log.warn {
+                "Skipped ${updateResult.skippedSeqSetDOIs.size} SeqSet DOI(s) that do not appear in the database."
+            }
+        }
     }
 }
