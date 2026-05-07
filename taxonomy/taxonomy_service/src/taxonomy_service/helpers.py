@@ -111,7 +111,6 @@ def get_spanning_tree(
 ) -> tuple[list[Taxon], set[int]]:
     """Run a recursive CTE against the database to collect the path
     from each taxon in tax_ids to the taxonomic root
-    NOTE: root itself is only included in output if it is part of `tax_ids`
 
     args:
         db_conn: sqlite3.Connection:
@@ -122,12 +121,13 @@ def get_spanning_tree(
     returns:
         list[Taxon]:    The taxonomic tree spanning all input tax_ids, represented
                         as a list of taxa
-        set[int]:       Taxon IDs in `tax_ids` that do not exist in the database
+        set[int]:       Taxon ids in `tax_ids` that do not exist in the database
     """
     existing_ids = find_existing_ids(db_conn, tax_ids)
-    missing_ids = tax_ids - existing_ids
     if not existing_ids:
         return [], tax_ids
+    existing_ids = {ROOT_TAX_ID} | existing_ids  # always include the root node
+    missing_ids = tax_ids - existing_ids
 
     placeholders = ",".join("?" * len(existing_ids))
     rows = db_conn.execute(
@@ -174,8 +174,6 @@ def prune_tree(
     to preserve the overall hierarchy.
     """
     indexed_by_id: dict[int, Taxon] = {t.tax_id: t for t in tree}
-    if root_id not in indexed_by_id:
-        raise ValueError(f"root_id {root_id} does not exist in the provided tree")
     children = map_child_nodes(tree)
     return list(_prune(indexed_by_id, keep_ids, children, root_id, root_id).values())
 
