@@ -1,13 +1,10 @@
+import dataclasses
 import logging
-from datetime import datetime, timedelta
-from time import sleep
 
 import click
-import pytz
 import yaml
 from loculus_client import (
     Config,
-    approve,
     get_or_create_group_and_return_group_id,
     get_submitted,
     regroup_and_revoke,
@@ -21,8 +18,6 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)8s %(filename)15s%(mode)s - %(message)s ",
     datefmt="%H:%M:%S",
 )
-
-_start_time: datetime | None = None
 
 
 @click.command()
@@ -39,7 +34,7 @@ _start_time: datetime | None = None
 @click.option(
     "--mode",
     required=True,
-    type=click.Choice(["submit", "revise", "approve", "regroup-and-revoke", "get-submitted"]),
+    type=click.Choice(["submit", "revise", "regroup-and-revoke", "get-submitted"]),
 )
 @click.option(
     "--log-level",
@@ -61,18 +56,10 @@ _start_time: datetime | None = None
     required=False,
     type=click.Path(exists=True),
 )
-@click.option(
-    "--approve-timeout",
-    required=False,
-    type=int,
-)
-def submit_to_loculus(
-    metadata, sequences, mode, log_level, config_file, output, revoke_map, approve_timeout
-):
+def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output, revoke_map):
     """
     Submit data to Loculus.
     """
-    global _start_time
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -88,8 +75,7 @@ def submit_to_loculus(
 
     with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
-        relevant_config = {}
-        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
+        relevant_config = {f.name: full_config.get(f.name, []) for f in dataclasses.fields(Config)}
         config = Config(**relevant_config)
 
     logger.info(f"Config: {config}")
@@ -105,17 +91,6 @@ def submit_to_loculus(
             return
         response = submit_or_revise(metadata, sequences, config, group_id, mode=mode)
         logger.info(f"Completed {mode}")
-
-    if mode == "approve":
-        while True:
-            if not _start_time:
-                _start_time = datetime.now(tz=pytz.utc)
-            logger.info("Approving sequences")
-            response = approve(config)
-            logger.info(f"Approved: {len(response)} sequences")
-            sleep(config.time_between_approve_requests_seconds)
-            if datetime.now(tz=pytz.utc) - timedelta(minutes=approve_timeout) > _start_time:
-                break
 
     if mode == "regroup-and-revoke":
         try:

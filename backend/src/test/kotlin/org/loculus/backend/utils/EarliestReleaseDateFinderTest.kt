@@ -66,7 +66,6 @@ fun row(
         files = null,
     ),
     isRevocation = false,
-    versionComment = null,
     submitter = "foo",
     submissionId = "foo",
     submittedAtTimestamp = releasedAt,

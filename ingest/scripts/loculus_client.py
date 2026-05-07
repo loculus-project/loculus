@@ -6,7 +6,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from http import HTTPMethod
 from io import BytesIO
-from pathlib import Path
 from time import sleep
 from typing import Any, Literal
 
@@ -17,32 +16,38 @@ import requests
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class Config:
+@dataclass(kw_only=True)
+class ApproveConfig:
+    """The minimal config the approve path needs: just enough to authenticate
+    against keycloak and hit the backend's approve-processed-data endpoint."""
+
     organism: str
     backend_url: str
     keycloak_token_url: str
     keycloak_client_id: str
     username: str
     password: str
+    backend_request_timeout_seconds: int = 600
+
+
+@dataclass(kw_only=True)
+class Config(ApproveConfig):
     group_name: str
     nucleotide_sequences: list[str]
     segmented: bool
     batch_chunk_size: int
-    time_between_approve_requests_seconds: int = 30
-    backend_request_timeout_seconds: int = 600
 
 
-def backend_url(config: Config) -> str:
+def backend_url(config: ApproveConfig) -> str:
     """Right strip the URL to remove trailing slashes"""
     return f"{config.backend_url.rstrip('/')}"
 
 
-def organism_url(config: Config) -> str:
+def organism_url(config: ApproveConfig) -> str:
     return f"{backend_url(config)}/{config.organism.strip('/')}"
 
 
-def get_jwt(config: Config) -> str:
+def get_jwt(config: ApproveConfig) -> str:
     """
     Get a JWT token for the given username and password
     """
@@ -61,7 +66,12 @@ def get_jwt(config: Config) -> str:
 
     keycloak_token_url = config.keycloak_token_url
 
-    response = requests.post(keycloak_token_url, data=data, headers=headers, timeout=config.backend_request_timeout_seconds)
+    response = requests.post(
+        keycloak_token_url,
+        data=data,
+        headers=headers,
+        timeout=config.backend_request_timeout_seconds,
+    )
     response.raise_for_status()
 
     jwt_keycloak = response.json()
@@ -71,7 +81,7 @@ def get_jwt(config: Config) -> str:
 def make_request(  # noqa: PLR0913, PLR0917
     method: HTTPMethod,
     url: str,
-    config: Config,
+    config: ApproveConfig,
     params: dict[str, Any] | None = None,
     files: dict[str, Any] | None = None,
     json_body: dict[str, Any] | None = None,
@@ -300,9 +310,22 @@ def post_fasta_batches(
     return response
 
 
+def count_lines(path, chunk_size=1024 * 1024):
+    """Memory efficient way to count the number of lines in a file by reading in chunks."""
+    count = 0
+    last_char = b""
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(chunk_size), b""):
+            count += chunk.count(b"\n")
+            last_char = chunk[-1:]  # keep last byte
+    if count != 0 and last_char != b"\n":
+        count += 1
+    return count
+
+
 def submit_or_revise(
     metadata, sequences, config: Config, group_id, mode=Literal["submit", "revise"]
-):
+) -> list[dict[str, Any]]:
     """
     Submit/revise data to Loculus -requires metadata and sequences sorted by id.
     """
@@ -327,7 +350,8 @@ def submit_or_revise(
 
     url = f"{organism_url(config)}/{endpoint}"
 
-    metadata_lines = len(Path(metadata).read_text(encoding="utf-8").splitlines()) - 1
+    metadata_lines = max(count_lines(metadata) - 1, 0)
+
     logger.info(f"{logging_strings['gerund']} {metadata_lines} sequence(s) to Loculus")
 
     params = {
@@ -384,7 +408,7 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     return responses
 
 
-def approve(config: Config):
+def approve(config: ApproveConfig):
     """
     Approve all sequences
     """
