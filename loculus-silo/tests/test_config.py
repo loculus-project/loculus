@@ -7,8 +7,6 @@ from pathlib import Path
 
 import pytest
 from silo_import.config import (
-    HierarchicalFilterConfig,
-    HierarchicalFilterKind,
     ImporterConfig,
 )
 
@@ -51,17 +49,13 @@ def test_hierarchical_filters_parsed(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com")
     monkeypatch.setenv(
         "HIERARCHICAL_FILTERS",
-        json.dumps({"hostTaxon": {"url": "http://taxonomy:5000", "metadataField": "hostTaxonId"}}),
+        json.dumps({"hostTaxon": "http://taxonomy:5000"}),
     )
 
     config = ImporterConfig.from_env()
 
     assert config.hierarchical_filters == {
-        HierarchicalFilterKind.HOST_TAXON: HierarchicalFilterConfig(
-            kind=HierarchicalFilterKind.HOST_TAXON,
-            url="http://taxonomy:5000",
-            metadata_field="hostTaxonId",
-        )
+        "hostTaxon": "http://taxonomy:5000",
     }
 
 
@@ -70,26 +64,4 @@ def test_hierarchical_filters_invalid_json(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setenv("HIERARCHICAL_FILTERS", "not-json")
 
     with pytest.raises(RuntimeError, match="HIERARCHICAL_FILTERS must be valid JSON"):
-        ImporterConfig.from_env()
-
-
-def test_hierarchical_filters_unknown_name(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com")
-    monkeypatch.setenv(
-        "HIERARCHICAL_FILTERS",
-        json.dumps({"madeUpFilter": {"url": "http://x", "metadataField": "foo"}}),
-    )
-
-    with pytest.raises(RuntimeError, match="Unknown hierarchical filter 'madeUpFilter'"):
-        ImporterConfig.from_env()
-
-
-def test_hierarchical_filters_missing_keys(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com")
-    monkeypatch.setenv(
-        "HIERARCHICAL_FILTERS",
-        json.dumps({"hostTaxon": {"url": "http://x"}}),
-    )
-
-    with pytest.raises(RuntimeError, match="malformed"):
         ImporterConfig.from_env()

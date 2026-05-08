@@ -1,10 +1,10 @@
 {{- define "loculus.hierarchicalFiltersForOrganism" -}}
 {{- $organism := . -}}
 {{- $schema := $organism.schema | include "loculus.patchMetadataSchema" | fromYaml }}
-{{- $filters := list }}
+{{- $filters := dict }}
 {{- range $entry := $schema.metadata }}
   {{- if hasKey $entry "hierarchicalFilter" }}
-    {{- $filters = append $filters (dict "name" $entry.hierarchicalFilter "metadataField" $entry.name) }}
+    {{- $_ := set $filters $entry.name $entry.hierarchicalFilter }}
   {{- end }}
 {{- end }}
 {{- $filters | toYaml -}}
