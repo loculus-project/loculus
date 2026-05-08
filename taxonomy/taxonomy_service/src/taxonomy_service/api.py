@@ -4,7 +4,19 @@ from collections.abc import Generator
 from typing import Annotated
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Response
+
+from taxonomy_service.datatypes import SubtreeRequestBody, Taxon
+from taxonomy_service.helpers import (
+    ROOT_TAX_ID,
+    convert_to_lineage_dict,
+    fetch_by_id,
+    fetch_by_sci_name,
+    fetch_common_name,
+    get_spanning_tree,
+    lineage_dict_to_string,
+    prune_tree,
+)
 
 from .config import Config
 
@@ -19,7 +31,9 @@ def get_db_connection() -> Generator[sqlite3.Connection]:
     conn = sqlite3.connect(
         f"file:{app.state.config.tax_db_path}?mode=ro",
         uri=True,
+        check_same_thread=False,  # DB is read-only so this should be fine
     )
+
     conn.row_factory = sqlite3.Row
     try:
         yield conn
@@ -30,85 +44,14 @@ def get_db_connection() -> Generator[sqlite3.Connection]:
 DbConnection = Annotated[sqlite3.Connection, Depends(get_db_connection)]
 
 
-def fetch_by_sci_name(
-    db_conn: sqlite3.Connection, name: str
-) -> list[dict[str, str | int | None]] | None:
-    """Check if a scientific name exists in the taxonomy and, if so, return all taxa associated
-    with that name
-
-    args:
-        db_conn (sqlite3.Connection):   connection to a database. The caller is responsible
-                                        for closing it
-        name (str):                     scientific name to query the database with
-    """
-    taxa = db_conn.execute(
-        "SELECT * FROM taxonomy WHERE scientific_name = ? COLLATE NOCASE", (name,)
-    ).fetchall()
-
-    if not taxa:
-        return None
-
-    return [dict(taxon) for taxon in taxa]
-
-
-def fetch_by_id(
-    db_conn: sqlite3.Connection, tax_id: int
-) -> dict[str, str | int | None] | None:
-    """Return the taxon associated with `tax_id`. Return None if `tax_id` does not exist in the DB
-
-    args:
-        db_conn (sqlite3.Connection):   connection to a database. The caller is responsible for closing it
-        tax_id (int):                   NCBI taxon ID to query the database with
-    """
-    taxon = db_conn.execute(
-        "SELECT * FROM taxonomy WHERE tax_id = ?", (tax_id,)
-    ).fetchone()
-    if not taxon:
-        return None
-    return dict(taxon)
-
-
-def fetch_common_name(
-    db_conn: sqlite3.Connection, tax_id: int
-) -> dict[str, str | int | None] | None:
-    """Return a taxon with a common name
-
-    If the supplied `tax_id` is associated with a common name, return the taxon.
-
-    If there is no common name associated with the taxon, keep stepping up the taxonomy until
-    a taxon is found with a common name, and return that
-
-    args:
-        db_conn (sqlite3.Connection):   connection to a database. The caller is responsible for closing it
-        tax_id (int):                   NCBI taxon ID of the taxon for which to find a common name
-    """
-    # creating a reusable cursor here instead of calling `fetch_by_id` in the while loop
-    cursor = db_conn.cursor()
-    while tax_id > 1:  # tax_id 1 is the root
-        taxon = cursor.execute(
-            "SELECT * FROM taxonomy WHERE tax_id = ?", (tax_id,)
-        ).fetchone()
-        if taxon is None or taxon["depth"] == 0:
-            # for safety, break when depth is 0 (in case NCBI decide at some
-            # point that the root should no longer be 1)
-            break
-        if taxon["common_name"] is not None:
-            return dict(taxon)
-        tax_id = taxon["parent_id"]
-
-    return None
-
-
 @app.get("/")
 def read_root() -> dict[str, str]:
     return {"message": "Taxonomy service is running"}
 
 
 @app.get("/taxa")
-def query_taxa(
-    scientific_name: str, db: DbConnection
-) -> list[dict[str, str | int | None]] | None:
-    """Given a scientific name, try to find all taxa associated with it."""
+def query_taxa(scientific_name: str, db: DbConnection) -> list[Taxon] | None:
+    """Given a scientific name, find all taxa associated with it."""
     taxa = fetch_by_sci_name(db, scientific_name)
 
     if taxa is None:
@@ -119,21 +62,69 @@ def query_taxa(
 
 @app.get("/taxa/{tax_id}")
 def get_taxon(
-    tax_id: int, db: DbConnection, find_common_name: bool = False
-) -> dict[str, str | int | None]:
-    if find_common_name:
-        taxon = fetch_common_name(db, tax_id)
-        if taxon is None:
-            raise HTTPException(
-                status_code=404, detail=f"Unable to find common name for taxon {tax_id}"
-            )
-        return taxon
-
+    tax_id: int,
+    db: DbConnection,
+    find_common_name: bool = False,
+) -> Taxon:
     taxon = fetch_by_id(db, tax_id)
     if taxon is None:
         raise HTTPException(status_code=404, detail=f"'{tax_id}' not found")
 
+    if find_common_name:
+        taxon_with_common_name = fetch_common_name(db, taxon)
+        if taxon_with_common_name is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Unable to find common name for taxon {tax_id}",
+            )
+        return taxon_with_common_name
+
     return taxon
+
+
+@app.post("/silo-lineage")
+def post_silo_lineage(
+    payload: SubtreeRequestBody,
+    db: DbConnection,
+    prune: bool = False,
+    allow_large: bool = False,
+) -> Response:
+    """Return a taxonomy based on the taxa provided in the request body
+    The taxonomy is returned as a SILO-compatible yaml file.
+
+    Args:
+        prune: bool     If False, return a lineage that contains all provided tax_ids,
+                        as well as all taxa on the path from the provided tax_ids to the root.
+                        If True, return a lineage that only contains the provided tax_ids
+                        (and root), but with the overall hierarchy preserved by connecting
+                        the children of pruned taxa to the parent taxon.
+        allow_large: bool
+                        If False, return status 413 if the generated yaml file is
+                        larger than `LARGE_FILE_THRESHOLD`
+    """
+    tax_ids = set(payload.values)
+    if not tax_ids:
+        return Response(content="{}\n", media_type="application/yaml")
+
+    spanning_tree, missing_ids = get_spanning_tree(db, tax_ids)
+    if missing_ids:
+        logger.warning(
+            f"one or more provided taxa don't exist "
+            f"and will be added as orphan nodes: {sorted(missing_ids)}"
+        )
+
+    if prune:
+        spanning_tree = prune_tree(spanning_tree, tax_ids, root_id=ROOT_TAX_ID)
+
+    lineage = convert_to_lineage_dict(spanning_tree)
+    for m in missing_ids:
+        lineage[str(m)] = {
+            "aliases": [f"Taxon {m}"],
+            "parents": [],  # add these as orphan nodes
+        }
+
+    lineage_yaml = lineage_dict_to_string(lineage, allow_large)
+    return Response(content=lineage_yaml, media_type="application/yaml")
 
 
 def init_app(config: Config):

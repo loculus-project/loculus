@@ -40,6 +40,22 @@ Instead, external managed databases should be used.
 
 <SchemaDocs group='services' fieldColumnClass='w-48' />
 
+### Read-only mode
+
+Setting `readOnlyMode: true` at the top level of `values.yaml` puts the instance
+into a read-only state. When enabled:
+
+- The backend rejects every mutating request (`POST`, `PUT`, `PATCH`, `DELETE`)
+  with `503 Service Unavailable` and a problem-detail body explaining that the
+  instance is in read-only mode. `GET` requests continue to work.
+- The website hides the Login and Submit navigation items, disables the
+  submission pages (they return 404), skips the Keycloak redirect on pages that
+  would otherwise enforce login (they render a read-only notice instead), and
+  shows a banner informing users the instance is read-only.
+
+This flag is intended for migrations, archival instances, and maintenance
+windows. It defaults to `false`.
+
 ## SILO Configuration
 
 <SchemaDocs group='silo' fieldColumnClass='w-48' />

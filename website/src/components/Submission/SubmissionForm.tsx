@@ -11,6 +11,7 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 type SubmissionFormProps = {
     accessToken: string;
+    instanceName: string;
     organism: string;
     clientConfig: ClientConfig;
     group: Group;
@@ -22,6 +23,7 @@ type SubmissionFormProps = {
 
 export const SubmissionForm: FC<SubmissionFormProps> = ({
     accessToken,
+    instanceName,
     organism,
     clientConfig,
     group,
@@ -34,6 +36,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
         <div className='flex flex-col items-center'>
             <DataUploadForm
                 accessToken={accessToken}
+                instanceName={instanceName}
                 organism={organism}
                 metadataTemplateFields={metadataTemplateFields}
                 clientConfig={clientConfig}

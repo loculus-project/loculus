@@ -155,7 +155,7 @@ def get_loculus_accession_to_latest_version_map(
     "version":1,
     "submitter":"insdc_ingest_user",
     "isRevocation":false,
-    "originalMetadata":
+    "unprocessedMetadata":
         {"hash":"6349c57c56efaca1fbfcabf4d377535b",
         "insdcAccessionBase_L":"",
         "insdcAccessionBase_M":"",
@@ -207,17 +207,17 @@ def construct_submitted_dict(
     # Create a map from INSDC accession to latest loculus accession
     insdc_to_loculus_accession_map: dict[InsdcAccession, LatestLoculusVersion] = {}
     for loculus_accession, entry in loculus_accession_to_latest_version_map.items():
-        original_metadata: dict[str, Any] = entry["originalMetadata"]
-        hash_value = original_metadata.get("hash")
+        unprocessed_metadata: dict[str, Any] = entry["unprocessedMetadata"]
+        hash_value = unprocessed_metadata.get("hash")
 
         if config.segmented:
             insdc_accessions = [
-                original_metadata[key] for key in insdc_keys if original_metadata[key]
+                unprocessed_metadata[key] for key in insdc_keys if unprocessed_metadata[key]
             ]
-            joint_accession = get_joint_insdc_accession(original_metadata, insdc_keys, config)
+            joint_accession = get_joint_insdc_accession(unprocessed_metadata, insdc_keys, config)
         else:
-            insdc_accessions = [original_metadata.get("insdcAccessionBase", "")]
-            joint_accession = original_metadata.get("insdcAccessionBase", "")
+            insdc_accessions = [unprocessed_metadata.get("insdcAccessionBase", "")]
+            joint_accession = unprocessed_metadata.get("insdcAccessionBase", "")
 
         status = "REVOKED" if entry["isRevocation"] else entry["status"]
 

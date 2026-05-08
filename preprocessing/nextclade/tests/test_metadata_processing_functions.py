@@ -41,12 +41,12 @@ test_case_definitions = [
                 ProcessingAnnotationHelper(
                     ["name_required"],
                     ["name_required"],
-                    "Metadata field name_required is required.",
+                    "Metadata field `name_required` is required.",
                 ),
                 ProcessingAnnotationHelper(
                     ["ncbi_required_collection_date"],
                     ["required_collection_date"],
-                    "Metadata field required_collection_date is required.",
+                    "Metadata field `required_collection_date` is required. Please provide input metadata field(s): `ncbi_required_collection_date`",
                 ),
             ]
         ),
@@ -64,7 +64,7 @@ test_case_definitions = [
                 ProcessingAnnotationHelper(
                     ["ncbi_required_collection_date"],
                     ["required_collection_date"],
-                    "Metadata field required_collection_date is required.",
+                    "Metadata field `required_collection_date` is required. Please provide input metadata field(s): `ncbi_required_collection_date`",
                 ),
             ]
         ),
@@ -1033,7 +1033,7 @@ def test_concatenate() -> None:
     assert res_fallback_explicit_null.datum == "0/unknown/version.1/unknown"
 
 
-def test_display_name_construction() -> None:
+def test_display_name_construction() -> None:  # noqa: PLR0915
     submission_id = "mySample"
     submission_id_formatted = "hDENV1/Germany/myExtractedSample/2025"
     submission_id_formatted_unexpected = "hDENV1/myExtractedSample/2025"

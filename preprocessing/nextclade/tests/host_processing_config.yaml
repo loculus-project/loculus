@@ -1,0 +1,20 @@
+processing_spec:
+  hostNameScientific:
+    function: scientific_name_from_id
+    inputs:
+      hostNameScientific: hostNameScientific
+      hostTaxonId: processed.hostTaxonId
+    args: &preprocessingTaxonomyTestArgs
+      taxonomy_service_url: "http://localhost:5000"
+  hostNameCommon:
+    function: common_name_from_id
+    inputs:
+      hostTaxonId: processed.hostTaxonId
+    args: *preprocessingTaxonomyTestArgs
+  hostTaxonId:
+    function: validate_host
+    inputs:
+      host: host
+      hostNameScientific: hostNameScientific
+      hostTaxonId: hostTaxonId
+    args: *preprocessingTaxonomyTestArgs

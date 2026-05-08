@@ -58,8 +58,7 @@ test.describe('Sequence version banners', () => {
 
         // Release both sequences
         await reviewPage.waitForZeroProcessing();
-        await reviewPage.releaseValidSequences();
-        await page.getByRole('link', { name: 'released sequences' }).click();
+        await reviewPage.releaseAndGoToReleasedSequences();
 
         // Wait for sequences to appear in search
         while (!(await page.getByText('Search returned 2 sequences').isVisible())) {
@@ -105,8 +104,7 @@ test.describe('Sequence version banners', () => {
         // Release the revision and revocation
         const reviewPage2 = new ReviewPage(page);
         await reviewPage2.waitForZeroProcessing();
-        await reviewPage2.releaseValidSequences();
-        await page.getByRole('link', { name: 'released sequences' }).click();
+        await reviewPage2.releaseAndGoToReleasedSequences();
 
         // Wait for the revised sequence to appear (with new date)
         while (!(await page.getByRole('cell', { name: '2023-06-15' }).isVisible())) {
@@ -163,8 +161,7 @@ test.describe('Sequence version banners', () => {
 
         // Release the sequence
         await reviewPage.waitForZeroProcessing();
-        await reviewPage.releaseValidSequences();
-        await page.getByRole('link', { name: 'released sequences' }).click();
+        await reviewPage.releaseAndGoToReleasedSequences();
 
         // Wait for sequence to appear
         while (!(await page.getByRole('link', { name: /LOC_/ }).isVisible())) {
@@ -192,8 +189,7 @@ test.describe('Sequence version banners', () => {
         // Release the revision
         const reviewPage2 = new ReviewPage(page);
         await reviewPage2.waitForZeroProcessing();
-        await reviewPage2.releaseValidSequences();
-        await page.getByRole('link', { name: 'released sequences' }).click();
+        await reviewPage2.releaseAndGoToReleasedSequences();
 
         // Wait for revised sequence
         while (!(await page.getByRole('cell', { name: '2023-09-20' }).isVisible())) {

@@ -10,12 +10,17 @@ import logging
 import math
 import re
 import unicodedata
+import urllib.parse
+from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 import dateutil.parser as dateutil
 import pytz
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from .datatypes import (
     AnnotationSource,
@@ -30,6 +35,57 @@ from .datatypes import (
 
 logger = logging.getLogger(__name__)
 
+
+class RequestCache:
+    """Class for caching requests to external services during preprocessing.
+
+    Keys are the fully formatted URLs that have already been used to make sucessful requests.
+    Values are requests.Response as they were returned by the service.
+    """
+
+    def __init__(self, max_size: int, retries=5) -> None:
+        self.cache: OrderedDict[str, requests.Response] = OrderedDict()
+        self.max_size = max_size
+        self.session = requests.Session()
+        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+        adapter = HTTPAdapter(max_retries=retry)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+
+    def get(self, url: str) -> None | requests.Response:
+        if url in self.cache:
+            self.cache.move_to_end(url)
+            return self.cache[url]
+        return None
+
+    def set(self, url: str, response: requests.Response) -> None:
+        self.cache[url] = response
+        self.cache.move_to_end(url)
+
+        if len(self.cache) > self.max_size:
+            self.cache.popitem(last=False)
+
+    def get_or_fetch(self, url: str, timeout: int = 15) -> requests.Response:
+        """See if `url` already exists in the cache and return the cached Response
+        if it does.
+
+        If `url` is not in the cache, make the actual request (with timeout and retries).
+        Add the Response to the cache (if status code in the 200s), and return the Response.
+
+        Since request.get can error, the caller should wrap this in a try/except block and handle errors
+        """
+        response = self.get(url)
+        if response is None:
+            response = self.session.get(url, timeout=timeout)
+            if 200 <= response.status_code < 300:
+                self.set(url, response)
+        return response
+
+    def clear(self) -> None:
+        self.cache.clear()
+
+
+taxonomy_cache = RequestCache(max_size=64)
 options_cache: dict[str, dict[str, str]] = {}
 
 
@@ -177,6 +233,42 @@ def regex_error(
         f"Internal Error: Function {function_name} did not receive valid "
         f"regex {function_arg}, with input {input_data} and args {args}, "
         "please contact the administrator."
+    )
+
+
+def missing_taxonomy_service_error(input_fields: list[str], output_field: str) -> ProcessingResult:
+    return ProcessingResult(
+        datum=None,
+        warnings=[],
+        errors=[
+            ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message="Configuration error: taxonomy_service_url was None. Please contact the administrator.",
+            )
+        ],
+    )
+
+
+def taxonomy_network_error(
+    subject: str,
+    action: str,
+    e: Exception,
+    input_fields: list[str],
+    output_field: str,
+) -> ProcessingResult:
+    return ProcessingResult(
+        datum=None,
+        warnings=[],
+        errors=[
+            ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message=f"Internal error: network error while {action} '{subject}': {e}. Please contact the administrator.",
+            )
+        ],
     )
 
 
@@ -1195,6 +1287,154 @@ class ProcessingFunctions:
         return ProcessingResult(datum=(input > threshold), warnings=[], errors=[])
 
     @staticmethod
+    def is_variant(
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    ) -> ProcessingResult:
+        """Flag if number of mutations is above mutation rate (specified in args) times length"""
+        if "mu" not in args:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"Field {output_field} is missing mu argument."
+                            " Please report this error to the administrator."
+                        ),
+                    )
+                ],
+            )
+        length_datum = input_data.get("length")
+        num_mutations_datum = input_data.get("numMutations")
+        if length_datum is None or num_mutations_datum is None:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+        try:
+            mu = float(args["mu"])  # type: ignore
+            length = float(length_datum)
+            threshold = mu * length
+            is_above_threshold_result = ProcessingFunctions.is_above_threshold(
+                input_data={"input": num_mutations_datum},
+                output_field=output_field,
+                input_fields=input_fields,
+                args={"threshold": threshold},
+            )
+        except (ValueError, TypeError):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"Field {output_field} has non-numeric length or numMutations value."
+                        ),
+                    )
+                ],
+            )
+        return ProcessingResult(
+            datum=is_above_threshold_result.datum,
+            warnings=is_above_threshold_result.warnings,
+            errors=is_above_threshold_result.errors,
+        )
+
+    @staticmethod
+    def assign_custom_lineage(  # noqa: C901
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    ) -> ProcessingResult:
+        """
+        Assign flu lineage based on seg4 and seg6.
+        Add reassortant flag if different lineages are detected for internal segments,
+        add and variant flag if any segment is a variant.
+        It expects the following input_data fields to be present:
+            - subtype_seg4: the subtype assigned to seg4
+            - subtype_seg6: the subtype assigned to seg6
+            - reference_seg1,...,reference_seg8: the reference sequence assigned to each segment
+            - variant_seg1,...,variant_seg8: boolean flag indicating whether a segment is a variant
+        It expects the following args to be present:
+            - pattern: regex pattern to extract lineage from reference
+                e.g. ^(?P<segment>[^-]+)-(?P<lineage>[^-]+)$
+            - uppercase: boolean flag indicating whether to uppercase the extracted lineage
+            - capture_group: the name of the capture group in the regex pattern to extract
+                e.g. "lineage"
+        """
+        logger.debug(
+            f"Starting custom lineage assignment with input_data: {input_data} and args: {args}"
+        )
+        if not input_data:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+        ha_subtype = input_data.get("subtype_seg4")
+        na_subtype = input_data.get("subtype_seg6")
+        references: dict[str, str | None] = {}
+        extracted_lineages: dict[str, str | None] = {}
+        variant: dict[str, bool | None] = {}
+        for i in range(1, 9):
+            segment = f"seg{i}"
+            reference_field = f"reference_seg{i}"
+            variant_field = f"variant_seg{i}"
+            if reference_field in input_data:
+                references[segment] = input_data.get(reference_field)
+                variant[segment] = (
+                    bool(input_data.get(variant_field)) if variant_field in input_data else None
+                )
+        try:
+            for i in range(1, 9):
+                segment = f"seg{i}"
+                extracted_lineages[segment] = ProcessingFunctions.call_function(  # type: ignore
+                    "extract_regex",
+                    {
+                        "pattern": args["pattern"],
+                        "uppercase": args["uppercase"],
+                        "capture_group": args["capture_group"],
+                    },
+                    {"regex_field": references.get(segment, "")},
+                    "output_field",
+                    ["segment_name"],
+                ).datum
+            logger.debug(f"Extracted lineages: {extracted_lineages} from references: {references}")
+            if not ha_subtype or not na_subtype:
+                return ProcessingResult(datum=None, warnings=[], errors=[])
+            lineage = f"{ha_subtype}{na_subtype}"
+            if (
+                extracted_lineages.get("seg4") == "H1N1PDM"
+                and extracted_lineages.get("seg6") == "H1N1PDM"
+            ):
+                lineage = "H1N1pdm"
+            logger.debug(
+                f"Determined preliminary lineage {lineage} based on segments seg4 and seg6"
+            )
+            if lineage in {"H1N1", "H3N2", "H2N2", "H1N1pdm"}:
+                logger.debug(
+                    f"Lineage {lineage} is a human lineage, checking for reassortment and variants"
+                )
+                # only assign human lineages
+                if len({v for v in extracted_lineages.values() if v is not None}) > 1:
+                    lineage += " reassortant"
+                if any(v for v in variant.values() if v):
+                    lineage += " (variant)"
+                return ProcessingResult(datum=lineage, warnings=[], errors=[])
+        except (ValueError, TypeError):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"Internal error processing custom lineage for field {output_field}."
+                        ),
+                    )
+                ],
+            )
+        return ProcessingResult(datum=None, warnings=[], errors=[])
+
+    @staticmethod
     def build_display_name(  # noqa: C901
         input_data: InputMetadata,
         output_field: str,
@@ -1346,6 +1586,247 @@ class ProcessingFunctions:
             datum=concat_result.datum,
             warnings=warnings + concat_result.warnings,
             errors=concat_result.errors,
+        )
+
+    @staticmethod
+    def validate_host(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        """Validates that the host exists
+        in NCBI's taxonomy. Checks either the hostTaxonId or the
+        hostNameScientific, depending on the input.
+
+        If validation succeeds, returns the tax_id of the associated taxon.
+
+        It is possible that multiple taxa have the same scientific name. In these cases,
+        return the tax_id of the most generic taxon (i.e., the one that's closest to
+        the root of the taxonomy)
+        """
+        # for INSDC-ingested sequences we just return the id INSDC gives us (if any)
+        # if we ever want to change this behaviour, we just have to remove this short-circuit,
+        # the rest of the function is set up to validate INSDC-ingested data as well
+        if args["is_insdc_ingest_group"]:
+            tax_id = input_data.get("hostTaxonId")
+            if isinstance(tax_id, str) and tax_id.isdigit():
+                return ProcessingResult(
+                    datum=int(tax_id),
+                    warnings=[],
+                    errors=[],
+                )
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        tax_service = args.get("taxonomy_service_url")
+        if not tax_service:
+            return missing_taxonomy_service_error(input_fields, output_field)
+
+        # host will exist only for direct submissions
+        # hostTaxonId and hostNameScientific are noInput, so the only case where they exist is
+        # for INSDC ingested sequences or for legacy direct submissions
+        unvalidated = (
+            input_data.get("host")
+            or input_data.get("hostTaxonId")
+            or input_data.get("hostNameScientific")
+        )
+
+        if not unvalidated:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        if unvalidated.isdigit():
+            url = f"{tax_service}/taxa/{unvalidated}"
+        else:
+            query = urllib.parse.urlencode({"scientific_name": unvalidated})
+            url = f"{tax_service}/taxa?{query}"
+
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return taxonomy_network_error(unvalidated, "validating", e, input_fields, output_field)
+
+        body = response.json()
+        if response.status_code != requests.codes.ok:
+            # an invalid host organism is a warning for INSDC ingested sequences, but an error for everyone else
+            message = ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message=f"Host validation for '{unvalidated}' failed with code {response.status_code}: {body.get('detail', '')}",
+            )
+            return ProcessingResult(
+                datum=None,
+                warnings=[message] if args["is_insdc_ingest_group"] else [],
+                errors=[message] if not args["is_insdc_ingest_group"] else [],
+            )
+
+        if isinstance(body, list):
+            # when querying by scientific name, multiple taxa may be returned: select the most generic one
+            taxon = min(body, key=lambda x: x.get("depth", float("inf")))
+        else:
+            taxon = body
+
+        tax_id = taxon.get("tax_id")
+        if tax_id is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: host validation for '{unvalidated}' was successful but response json had no 'tax_id'. Please contact the administrator",
+                    )
+                ],
+            )
+
+        return ProcessingResult(
+            datum=tax_id,
+            warnings=[],
+            errors=[],
+        )
+
+    @staticmethod
+    def scientific_name_from_id(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        # for INSDC-ingested sequences we just return the name INSDC gives us (if any)
+        # if we ever want to change this behaviour, we just have to remove this short-circuit,
+        # the rest of the function is set up to validate INSDC-ingested data as well
+        if args["is_insdc_ingest_group"]:
+            return ProcessingResult(
+                datum=input_data.get("hostNameScientific"),
+                warnings=[],
+                errors=[],
+            )
+
+        tax_service = args.get("taxonomy_service_url")
+        if not tax_service:
+            return missing_taxonomy_service_error(input_fields, output_field)
+
+        tax_id: str | None = input_data.get("hostTaxonId")
+        if not tax_id:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        url = f"{tax_service}/taxa/{tax_id}"
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return taxonomy_network_error(tax_id, "validating", e, input_fields, output_field)
+
+        body = response.json()
+        if response.status_code != requests.codes.ok:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}",
+                    )
+                ],
+            )
+
+        scientific_name = body.get("scientific_name")
+        if scientific_name is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: '{tax_id}' is a valid taxon ID but response json had no 'scientific_name'. Please contact the administrator",
+                    )
+                ],
+            )
+
+        return ProcessingResult(
+            datum=scientific_name,
+            warnings=[],
+            errors=[],
+        )
+
+    @staticmethod
+    def common_name_from_id(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        tax_service = args.get("taxonomy_service_url")
+        if not tax_service:
+            return missing_taxonomy_service_error(input_fields, output_field)
+
+        tax_id: str | None = input_data.get("hostTaxonId")
+        if not tax_id:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
+        url = f"{tax_service}/taxa/{tax_id}?find_common_name=true"
+        try:
+            response = taxonomy_cache.get_or_fetch(url)
+        except requests.exceptions.RequestException as e:
+            return taxonomy_network_error(
+                tax_id, "getting common name for", e, input_fields, output_field
+            )
+
+        body = response.json()
+        if response.status_code != requests.codes.ok:
+            return ProcessingResult(
+                datum=None,
+                warnings=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Could not map '{tax_id}' to common name. Code {response.status_code}: {body.get('detail', '')}",
+                    )
+                ],
+                errors=[],
+            )
+
+        common_name = body.get("common_name")
+        if common_name is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Internal error: taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it. Please contact the administrator.",
+                    )
+                ],
+            )
+
+        return ProcessingResult(
+            datum=common_name,
+            warnings=[],
+            errors=[],
         )
 
 

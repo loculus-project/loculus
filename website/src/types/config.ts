@@ -68,6 +68,7 @@ export const metadata = z.object({
     name: z.string(),
     displayName: z.string().optional(),
     type: metadataPossibleTypes,
+    definition: z.string().optional(),
     autocomplete: z.boolean().optional(),
     notSearchable: z.boolean().optional(),
     hideInSearchResultsTable: z.boolean().optional(),
@@ -236,6 +237,15 @@ const fieldToDisplay = z.object({
     displayName: z.string(),
 });
 
+const seqSetGraphTypes = z.enum(['date', 'category']);
+export const seqSetGraph = z.object({
+    name: z.string(),
+    displayName: z.string(),
+    type: seqSetGraphTypes,
+    fields: z.array(z.string()),
+});
+export type SeqSetGraph = z.infer<typeof seqSetGraph>;
+
 export const websiteConfig = z.object({
     accessionPrefix: z.string(),
     organisms: z.record(instanceConfig),
@@ -253,10 +263,13 @@ export const websiteConfig = z.object({
     issuesEmail: z.string().optional(),
     enableSeqSets: z.boolean(),
     seqSetsFieldsToDisplay: z.array(fieldToDisplay).optional(),
+    seqSetsGraphs: z.array(seqSetGraph).optional(),
     enableLoginNavigationItem: z.boolean(),
     enableSubmissionNavigationItem: z.boolean(),
     enableSubmissionPages: z.boolean(),
     enableDataUseTerms: z.boolean(),
+    readOnlyMode: z.boolean().default(false),
+    dataUseTermsAgreementHTML: z.string().optional(),
     sequenceFlagging: sequenceFlaggingConfig.optional(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;

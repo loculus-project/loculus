@@ -10,6 +10,7 @@ export const test = base.extend({
                 const harmlessMessages = [
                     'Form submission canceled because the form is not connected',
                     'ERR_INCOMPLETE_CHUNKED_ENCODING',
+                    "Response to preflight request doesn't pass access control check", // LAPIS sometimes hangs up preflight requests for unknown reasons
                 ];
 
                 const isHarmless = harmlessMessages.some((harmless) =>
