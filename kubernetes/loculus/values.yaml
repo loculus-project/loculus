@@ -1771,9 +1771,9 @@ defaultOrganisms:
         <<: *defaultSubmissionDataTypes
         maxSequencesPerEntry: 3
       organismName: "Andes virus"
+      image: "https://raw.githubusercontent.com/loculus-project/agent_store/eb5ead95768351c5ee1576065a731bb32e6502f2/andes-virus/images/viridis_invert.png"
       website:
         <<: *website
-        image: "https://raw.githubusercontent.com/loculus-project/agent_store/eb5ead95768351c5ee1576065a731bb32e6502f2/andes-virus/images/viridis_invert.png"
         tableColumns:
           - sampleCollectionDate
           - geoLocCountry
