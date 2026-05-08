@@ -1491,7 +1491,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         - length
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
-<<<<<<< multifieldsearch
       multiFieldSearches:
         - name: identifier
           displayName: Sample Identifier
@@ -1512,8 +1511,6 @@ defaultOrganismConfig: &defaultOrganismConfig
             - sequencedByContactName
             - submitter
             - groupName
-    extraInputFields: []
-=======
     extraInputFields:
       - &hostConfig
         name: host
@@ -1526,7 +1523,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         hideOnSequenceDetailsPage: true
         desired: true
         position: last
->>>>>>> main
   preprocessing:
     - &preprocessing
       version: 1
