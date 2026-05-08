@@ -12,6 +12,7 @@ jobs:
           - 11520   # Influenza B
           - 197911  # Influenza A
           - 3052518  # CCHFV
+          - 1980442  # Orthohantavirus
       fail-fast: false
     steps:
       - name: Checkout repository
