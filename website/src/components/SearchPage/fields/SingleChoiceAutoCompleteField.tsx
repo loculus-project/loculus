@@ -153,7 +153,7 @@ export const SingleChoiceAutoCompleteField = ({
                                                         {fieldDisplayNameMap?.get(option.option) ?? option.option}
                                                     </span>
                                                     <span className='inline-block ml-1'>
-                                                         ({formatNumberWithDefaultLocale(option.count)})
+                                                        ({formatNumberWithDefaultLocale(option.count)})
                                                     </span>
                                                     {selected && (
                                                         <span
