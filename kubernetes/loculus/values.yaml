@@ -1812,6 +1812,7 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 1980442
+        calculate_groups_override_json: true
         segment_identification:
           method: "minimizer"
           minimizer_url: "https://raw.githubusercontent.com/loculus-project/agent_store/d65a90b79f460203aad04dd346ca943aed55de56/hantavirus/segment-minimizer.json"
