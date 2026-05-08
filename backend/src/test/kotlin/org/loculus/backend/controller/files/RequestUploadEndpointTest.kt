@@ -82,6 +82,7 @@ class RequestUploadEndpointTest(
         val content = "test content".toByteArray()
         val request = HttpPut(url)
         request.entity = ByteArrayEntity(content, ContentType.TEXT_PLAIN)
+        request.addHeader("If-None-Match", "*")
         val httpClient = HttpClients.createDefault()
         val response = httpClient.execute(request)
         Assertions.assertEquals(200, response.statusLine.statusCode)
