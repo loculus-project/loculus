@@ -165,6 +165,7 @@ export const multiFieldSearch = z.object({
     name: z.string(),
     displayName: z.string(),
     fields: z.array(z.string()),
+    orderInSearchDisplay: z.number().optional(),
 });
 
 export type MultiFieldSearch = z.infer<typeof multiFieldSearch>;
