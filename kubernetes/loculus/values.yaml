@@ -1767,7 +1767,25 @@ defaultOrganisms:
     enabled: true
     schema:
       <<: *schema
+      submissionDataTypes:
+        <<: *defaultSubmissionDataTypes
+        maxSequencesPerEntry: 3
       organismName: "Hantavirus"
+      website:
+        <<: *website
+        tableColumns:
+          - sampleCollectionDate
+          - geoLocCountry
+          - geoLocAdmin1
+          - authors
+          - authorAffiliations
+          - ncbiReleaseDate
+          - hostNameScientific
+          - length_M
+          - length_S
+          - length_L
+        defaultOrderBy: sampleCollectionDate
+        defaultOrder: descending
     preprocessing:
       - <<: *preprocessing
         version: 1
@@ -1778,7 +1796,15 @@ defaultOrganisms:
           scientific_name: "Orthohantavirus"
           molecule_type: "genomic RNA"
           segments:
-            - name: main
+            - name: L
+              references:
+                - name: singleReference
+                  genes: []
+            - name: M
+              references:
+                - name: singleReference
+                  genes: []
+            - name: S
               references:
                 - name: singleReference
                   genes: []
@@ -1786,8 +1812,23 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 1980442
+        calculate_groups_override_json: true
+        segment_identification:
+          method: "minimizer"
+          minimizer_url: "https://raw.githubusercontent.com/loculus-project/agent_store/ce409e4a9ed0ecbbae131d0059db4a381a143abd/hantavirus/segment-minimizer.json"
+          minimizer_parser: ["segment"]
     referenceGenomes:
-      - name: main
+      - name: L
+        references:
+          - name: singleReference
+            sequence: "[[URL:https://www.ncbi.nlm.nih.gov/sviewer/viewer.cgi?id=NC_005222.1&db=nuccore&report=fasta&retmode=text]]"
+            insdcAccessionFull: NC_005222.1
+      - name: M
+        references:
+          - name: singleReference
+            sequence: "[[URL:https://www.ncbi.nlm.nih.gov/sviewer/viewer.cgi?id=NC_005219.1&db=nuccore&report=fasta&retmode=text]]"
+            insdcAccessionFull: NC_005219.1
+      - name: S
         references:
           - name: singleReference
             sequence: "[[URL:https://www.ncbi.nlm.nih.gov/sviewer/viewer.cgi?id=NC_005218.1&db=nuccore&report=fasta&retmode=text]]"
