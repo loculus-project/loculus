@@ -216,17 +216,6 @@ class S3Service(private val s3Config: S3Config) {
 
     private fun getFileIdPath(fileId: FileId): String = "files/$fileId"
 
-    fun deleteObject(fileId: FileId) = s3ErrorMapping {
-        val config = getS3BucketConfig()
-        s3Client.deleteObject(
-            DeleteObjectRequest.builder()
-                .bucket(config.bucket)
-                .key(getFileIdPath(fileId))
-                .build(),
-        )
-        Unit
-    }
-
     /**
      * Returns the file size in bytes, or `null` if the file doesn't exist.
      */
