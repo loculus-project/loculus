@@ -1656,6 +1656,7 @@ defaultOrganisms:
         - name: hostTaxonId
           type: string
           hierarchicalFilter: *taxonomy_service_url
+          hierarchicalSearchLabel: "include subtaxa"
           initiallyVisible: true
           autocomplete: true
           displayName: "Host species"

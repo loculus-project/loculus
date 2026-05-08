@@ -81,6 +81,7 @@ export const metadata = z.object({
     substringSearch: z.boolean().optional(),
     lineageSearch: z.boolean().optional(),
     hierarchicalSearch: z.boolean().optional(),
+    hierarchicalSearchLabel: z.string().optional(),
     columnWidth: z.number().optional(),
     order: z.number().optional(),
     orderOnDetailsPage: z.number().optional(),
