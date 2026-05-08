@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { validateWebsiteConfig } from './config.ts';
+import { configuredOrganismsFromConfig, validateWebsiteConfig } from './config.ts';
 import type { WebsiteConfig } from './types/config.ts';
 import { SINGLE_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA } from './types/referenceGenomes.spec.ts';
 
@@ -42,5 +42,41 @@ describe('validateWebsiteConfig', () => {
         expect(errors[0].message).contains(
             `Organism 'dummyOrganism' has multiple references but referenceIdentifierField is not defined in the schema.`,
         );
+    });
+});
+
+describe('configuredOrganismsFromConfig', () => {
+    it('sorts organisms by display name instead of key', () => {
+        const organisms = configuredOrganismsFromConfig({
+            ...defaultConfig,
+            organisms: {
+                zika: {
+                    schema: {
+                        organismName: 'Zika Virus',
+                        inputFields: [],
+                        tableColumns: [],
+                        primaryKey: '',
+                        metadata: [],
+                        defaultOrderBy: '',
+                        defaultOrder: 'ascending',
+                        submissionDataTypes: { consensusSequences: false },
+                    },
+                },
+                andes: {
+                    schema: {
+                        organismName: 'Andes Virus [Hantavirus]',
+                        inputFields: [],
+                        tableColumns: [],
+                        primaryKey: '',
+                        metadata: [],
+                        defaultOrderBy: '',
+                        defaultOrder: 'ascending',
+                        submissionDataTypes: { consensusSequences: false },
+                    },
+                },
+            },
+        });
+
+        expect(organisms.map((organism) => organism.key)).toEqual(['andes', 'zika']);
     });
 });
