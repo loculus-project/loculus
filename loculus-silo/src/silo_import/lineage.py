@@ -51,7 +51,7 @@ def update_hierarchical_filters(
     config: ImporterConfig,
     paths: ImporterPaths,
 ) -> None:
-    """Dispatch each configured filter to its dedicated handler.
+    """Dispatch each configured filter to the taxonomy filter handler.
 
     Skips filters whose observed values have not changed since the last run.
     """
