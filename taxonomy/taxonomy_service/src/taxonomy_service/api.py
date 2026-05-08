@@ -102,7 +102,7 @@ def post_silo_lineage(
                         If False, return status 413 if the generated yaml file is
                         larger than `LARGE_FILE_THRESHOLD`
     """
-    tax_ids = set(payload.tax_ids)
+    tax_ids = set(payload.values)
     if not tax_ids:
         return Response(content="{}\n", media_type="application/yaml")
 

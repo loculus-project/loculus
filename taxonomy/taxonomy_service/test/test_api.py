@@ -149,10 +149,10 @@ class PostSiloLineageTest(unittest.TestCase):
     def tearDown(self) -> None:
         return app.dependency_overrides.clear()
 
-    def _post(self, tax_ids, params=None):
+    def _post(self, values, params=None):
         return client.post(
             "/silo-lineage",
-            json={"tax_ids": [str(t) for t in tax_ids]},
+            json={"values": [str(t) for t in values]},
             params=params,
         )
 
@@ -183,7 +183,7 @@ class PostSiloLineageTest(unittest.TestCase):
         assert lineage == {}
 
     def test_non_numeric_tax_id_returns_422(self):
-        response = client.post("/silo-lineage", json={"tax_ids": ["not-a-number"]})
+        response = client.post("/silo-lineage", json={"values": ["not-a-number"]})
 
         assert response.status_code == codes.unprocessable_entity
         assert "Input should be a valid integer" in response.json()["detail"][0]["msg"]
