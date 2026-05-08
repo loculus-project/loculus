@@ -33,9 +33,7 @@ describe('FieldFilterSet.toApiParams — multi-field search advancedQuery', () =
     it('generates advancedQuery when a multi-field search has a non-empty value', () => {
         const filter = makeFieldFilterSet({ identifier: 'test123' }, [], [identifierMfs]);
         const params = filter.toApiParams();
-        expect(params.advancedQuery).toBe(
-            "(accessionVersion.regex='(?i)test123' or submissionId.regex='(?i)test123')",
-        );
+        expect(params.advancedQuery).toBe("(accessionVersion.regex='(?i)test123' or submissionId.regex='(?i)test123')");
     });
 
     it('does not produce advancedQuery when value is empty string', () => {
@@ -59,9 +57,7 @@ describe('FieldFilterSet.toApiParams — multi-field search advancedQuery', () =
     it('trims surrounding whitespace from the search value', () => {
         const filter = makeFieldFilterSet({ identifier: '  acc123  ' }, [], [identifierMfs]);
         const params = filter.toApiParams();
-        expect(params.advancedQuery).toBe(
-            "(accessionVersion.regex='(?i)acc123' or submissionId.regex='(?i)acc123')",
-        );
+        expect(params.advancedQuery).toBe("(accessionVersion.regex='(?i)acc123' or submissionId.regex='(?i)acc123')");
     });
 
     it('escapes single quotes so LAPIS query string literals remain valid', () => {
@@ -118,9 +114,7 @@ describe('FieldFilterSet.toApiParams — multi-field search advancedQuery', () =
             [identifierMfs, contributorMfs],
         );
         const params = filter.toApiParams();
-        expect(params.advancedQuery).toBe(
-            "(accessionVersion.regex='(?i)acc123' or submissionId.regex='(?i)acc123')",
-        );
+        expect(params.advancedQuery).toBe("(accessionVersion.regex='(?i)acc123' or submissionId.regex='(?i)acc123')");
     });
 
     it('excludes multi-field search keys from the regular filter params', () => {
