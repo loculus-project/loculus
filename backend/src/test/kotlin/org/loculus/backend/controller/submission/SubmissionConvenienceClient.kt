@@ -101,12 +101,12 @@ class SubmissionConvenienceClient(
 
             DefaultFiles.submissionIds.forEachIndexed { i, submissionId ->
 
-                val request = HttpRequest.newBuilder()
+                val requestBuilder = HttpRequest.newBuilder()
                     .uri(URI.create(fileIdsAndUrls[i].presignedWriteUrl))
                     .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
-                    .build()
+                fileIdsAndUrls[i].headers.forEach { (k, v) -> requestBuilder.header(k, v) }
 
-                client.send(request, HttpResponse.BodyHandlers.ofString())
+                client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString())
 
                 fileMapping[submissionId] =
                     mapOf("myFileCategory" to listOf(FileIdAndName(fileIdsAndUrls[i].fileId, "hello.txt")))
@@ -531,15 +531,19 @@ class SubmissionConvenienceClient(
     /**
      * Upload a file to a presigned write URL (S3).
      */
-    fun uploadFile(presignedWriteUrl: String, content: String): HttpResponse<String?> {
+    fun uploadFile(
+        presignedWriteUrl: String,
+        content: String,
+        headers: Map<String, String> = emptyMap(),
+    ): HttpResponse<String?> {
         val client = HttpClient.newBuilder().build()
         val fileContent = content.toByteArray()
 
-        val request = HttpRequest.newBuilder()
+        val requestBuilder = HttpRequest.newBuilder()
             .uri(URI.create(presignedWriteUrl))
             .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
-            .build()
+        headers.forEach { (k, v) -> requestBuilder.header(k, v) }
 
-        return client.send(request, HttpResponse.BodyHandlers.ofString())
+        return client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString())
     }
 }
