@@ -8,7 +8,7 @@ import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters.ts
 export type Option = {
     option: string;
     value: string; // Always a string, using NULL_QUERY_VALUE for nulls
-    count: number | undefined;
+    count: number;
 };
 
 /* Fetch options as all possible unique values for `fieldName` */
@@ -209,8 +209,7 @@ const createLineageOptionsHook = (
 
             // generate options
             Object.keys(lineageDefinition).forEach((lineageName) => {
-                let count: number | undefined = aggregatedCounts.get(lineageName);
-                if (count === 0) count = undefined;
+                const count: number = aggregatedCounts.get(lineageName) ?? 0;
                 options.push({ option: lineageName, value: lineageName, count });
             });
         }
