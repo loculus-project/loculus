@@ -128,7 +128,7 @@ export function configuredOrganismsFromConfig(config: WebsiteConfig): Organism[]
             displayName: instance.schema.organismName,
             image: instance.schema.image,
         }))
-        .sort((a, b) => a.displayName.localeCompare(b.displayName));
+        .sort((a, b) => a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }));
 }
 
 export function getConfiguredOrganisms() {
