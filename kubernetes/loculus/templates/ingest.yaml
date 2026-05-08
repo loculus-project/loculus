@@ -128,7 +128,8 @@ kind: Job
 metadata:
   name: loculus-ingest-trigger-{{ $key }}
   annotations:
-    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "10"
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 spec:
   activeDeadlineSeconds: 120
