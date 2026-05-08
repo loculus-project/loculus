@@ -11,6 +11,7 @@ import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
 import { LineageField } from './fields/LineageField.tsx';
 import { MultiChoiceAutoCompleteField } from './fields/MultiChoiceAutoCompleteField';
+import { MultiFieldSearchField } from './fields/MultiFieldSearchField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { SingleChoiceAutoCompleteField } from './fields/SingleChoiceAutoCompleteField.tsx';
@@ -336,6 +337,14 @@ export const SearchForm = ({
                                         fieldValues={fieldValues}
                                         setSomeFieldValues={setSomeFieldValues}
                                         lapisSearchParameters={lapisSearchParameters}
+                                    />
+                                ))}
+                                {filterSchema.multiFieldSearches.map((mfs) => (
+                                    <MultiFieldSearchField
+                                        key={mfs.name}
+                                        multiFieldSearch={mfs}
+                                        fieldValue={(fieldValues[mfs.name] as string | undefined) ?? ''}
+                                        setSomeFieldValues={setSomeFieldValues}
                                     />
                                 ))}
                             </CollapsibleSection>
