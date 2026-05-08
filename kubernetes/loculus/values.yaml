@@ -1773,6 +1773,7 @@ defaultOrganisms:
       organismName: "Andes virus"
       website:
         <<: *website
+        image: "https://raw.githubusercontent.com/loculus-project/agent_store/9607d5fb7772685222e1769ed32169db3351e2a4/andes-virus/images/copper_r.png"
         tableColumns:
           - sampleCollectionDate
           - geoLocCountry
