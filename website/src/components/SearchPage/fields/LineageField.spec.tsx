@@ -125,7 +125,7 @@ describe('LineageField', () => {
 
         const options = await screen.findAllByRole('option');
         expect(options.length).toBe(5);
-        expect(options[0].textContent).toBe('A');
+        expect(options[0].textContent).toBe('A(0)');
         expect(options[1].textContent).toBe('A.1(10)');
         // A.1.1.1 and B.1 are aliases -> B.1 should have aggregated count
         expect(options[4].textContent).toBe('B.1(35)');
