@@ -148,12 +148,18 @@ export class ReviewPage {
     async releaseValidSequences() {
         await this.page.getByRole('button', { name: /Release \d+ valid sequence/ }).click();
         await this.page.getByRole('button', { name: 'Release', exact: true }).click();
+        await expect(this.page.getByText('released successfully')).toBeVisible();
+    }
+
+    async goToReleasedSequences(): Promise<SearchPage> {
+        await this.page.getByRole('link', { name: 'released sequences' }).click();
+        await expect(this.page).toHaveURL((url) => url.pathname.endsWith('/released'));
+        return new SearchPage(this.page);
     }
 
     async releaseAndGoToReleasedSequences(): Promise<SearchPage> {
         await this.releaseValidSequences();
-        await this.page.getByRole('link', { name: 'released sequences' }).click();
-        return new SearchPage(this.page);
+        return this.goToReleasedSequences();
     }
 
     async checkFilesInReviewDialog(

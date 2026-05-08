@@ -40,8 +40,7 @@ test('Override hidden fields', async ({ page, groupId }) => {
     );
 
     await reviewPage.waitForZeroProcessing();
-    await reviewPage.releaseValidSequences();
-    await page.getByRole('link', { name: 'released sequences' }).click();
+    await reviewPage.releaseAndGoToReleasedSequences();
 
     while (!(await page.getByText('Search returned 2 sequences').isVisible())) {
         await page.reload();
@@ -81,8 +80,7 @@ test('Override hidden fields', async ({ page, groupId }) => {
 
     reviewPage = new ReviewPage(page);
     await reviewPage.waitForZeroProcessing();
-    await reviewPage.releaseValidSequences();
-    await page.getByRole('link', { name: 'released sequences' }).click();
+    await reviewPage.releaseAndGoToReleasedSequences();
     while (!(await page.getByRole('cell', { name: '2012-12-13' }).isVisible())) {
         await page.reload();
         await page.waitForTimeout(2000);
