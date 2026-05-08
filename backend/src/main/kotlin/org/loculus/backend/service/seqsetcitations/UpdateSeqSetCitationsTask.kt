@@ -1,12 +1,16 @@
 package org.loculus.backend.service.seqsetcitations
 
+import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
 import org.loculus.backend.service.crossref.CrossRefService
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
 private val log = mu.KotlinLogging.logger {}
 
 @Component
+@ConditionalOnProperty(BackendSpringProperty.ENABLE_SEQSETS, havingValue = ENABLE_SEQSETS_TRUE_VALUE)
 class UpdateSeqSetCitationsTask(
     private val crossRefService: CrossRefService,
     private val seqSetCitationsDatabaseService: SeqSetCitationsDatabaseService,
