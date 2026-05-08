@@ -20,26 +20,24 @@ export const MultiFieldSearchField = ({
     const tooltipId = useId();
 
     return (
-        <>
+        <div className='relative'>
             <DisabledUntilHydrated>
-                <div className='relative'>
-                    <TextField
-                        label={multiFieldSearch.displayName}
-                        type='string'
-                        fieldValue={fieldValue}
-                        onChange={(e) => setSomeFieldValues([multiFieldSearch.name, e.target.value])}
-                        autoComplete='off'
-                    />
-                    <div className='absolute top-1/2 -translate-y-1/3 right-1'>
-                        <span
-                            data-tooltip-id={tooltipId}
-                            className='text-gray-400 hover:text-primary-600 cursor-help inline-flex'
-                        >
-                            <MaterialSymbolsHelpOutline className='inline-block h-6 w-5' />
-                        </span>
-                    </div>
-                </div>
+                <TextField
+                    label={multiFieldSearch.displayName}
+                    type='string'
+                    fieldValue={fieldValue}
+                    onChange={(e) => setSomeFieldValues([multiFieldSearch.name, e.target.value])}
+                    autoComplete='off'
+                />
             </DisabledUntilHydrated>
+            <div className='absolute top-1/2 -translate-y-1/3 right-1'>
+                <span
+                    data-tooltip-id={tooltipId}
+                    className='text-gray-400 hover:text-primary-600 cursor-help inline-flex'
+                >
+                    <MaterialSymbolsHelpOutline className='inline-block h-6 w-5' />
+                </span>
+            </div>
             <CustomTooltip id={tooltipId} place='top'>
                 <p className='mb-1'>Search across the following fields:</p>
                 <ul className='list-disc list-inside'>
@@ -50,6 +48,6 @@ export const MultiFieldSearchField = ({
                     ))}
                 </ul>
             </CustomTooltip>
-        </>
+        </div>
     );
 };
