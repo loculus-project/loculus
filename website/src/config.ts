@@ -121,12 +121,18 @@ export type Organism = {
     image?: string;
 };
 
+export function configuredOrganismsFromConfig(config: WebsiteConfig): Organism[] {
+    return Object.entries(config.organisms)
+        .map(([key, instance]) => ({
+            key,
+            displayName: instance.schema.organismName,
+            image: instance.schema.image,
+        }))
+        .sort((a, b) => a.displayName.localeCompare(b.displayName));
+}
+
 export function getConfiguredOrganisms() {
-    return Object.entries(getWebsiteConfig().organisms).map(([key, instance]) => ({
-        key,
-        displayName: instance.schema.organismName,
-        image: instance.schema.image,
-    }));
+    return configuredOrganismsFromConfig(getWebsiteConfig());
 }
 
 function getConfig(organism: string): InstanceConfig {
