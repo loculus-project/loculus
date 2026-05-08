@@ -82,7 +82,7 @@ describe('HierarchicalField - lineage mode', () => {
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
-                mode="lineage"
+                mode='lineage'
             />,
         );
 
@@ -101,7 +101,7 @@ describe('HierarchicalField - lineage mode', () => {
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
-                mode="lineage"
+                mode='lineage'
             />,
         );
 
@@ -120,7 +120,7 @@ describe('HierarchicalField - lineage mode', () => {
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
-                mode="lineage"
+                mode='lineage'
             />,
         );
 
@@ -142,7 +142,7 @@ describe('HierarchicalField - lineage mode', () => {
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
-                mode="lineage"
+                mode='lineage'
             />,
         );
 
@@ -167,7 +167,7 @@ describe('HierarchicalField - lineage mode', () => {
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
-                mode="lineage"
+                mode='lineage'
             />,
         );
 
@@ -193,7 +193,7 @@ describe('HierarchicalField - lineage mode', () => {
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
-                mode="lineage"
+                mode='lineage'
             />,
         );
 
@@ -217,7 +217,7 @@ describe('HierarchicalField - lineage mode', () => {
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
                         lapisSearchParameters={lapisSearchParameters}
-                        mode="lineage"
+                        mode='lineage'
                     />
                     <Button onClick={() => setValue('')}>reset</Button>
                 </>
@@ -236,11 +236,14 @@ describe('HierarchicalField - lineage mode', () => {
         expect(checkbox).not.toBeChecked();
         expect(textbox).toHaveValue('');
     });
-
-}
-);
+});
 describe('HierarchicalField - default mode', () => {
-    const field: MetadataFilter = { name: 'hostTaxon', displayName: 'Host Taxon', type: 'string', hierarchicalSearchText: 'include subtaxa' };
+    const field: MetadataFilter = {
+        name: 'hostTaxon',
+        displayName: 'Host Taxon',
+        type: 'string',
+        hierarchicalSearchLabel: 'include subtaxa',
+    };
     const setSomeFieldValues = vi.fn();
     const lapisUrl = 'https://example.com/api';
     const lapisSearchParameters = {};
@@ -351,7 +354,13 @@ describe('HierarchicalField - default mode', () => {
         const optionTexts = (await screen.findAllByRole('option')).map((o) => o.textContent);
 
         // Muridae → 'True mice', Mus musculus → 'House mouse', Rattus rattus → 'Black rat'
-        expect(optionTexts).toEqual(['Black rat(8)', 'House mouse(20)', 'Mammalia(45)', 'Rodentia(43)', 'True mice(25)']);
+        expect(optionTexts).toEqual([
+            'Black rat(8)',
+            'House mouse(20)',
+            'Mammalia(45)',
+            'Rodentia(43)',
+            'True mice(25)',
+        ]);
     });
 
     it('uses the scientific name as the value when a common name is selected', async () => {
@@ -387,7 +396,7 @@ describe('HierarchicalField - default mode', () => {
         expect(await screen.findByDisplayValue('House mouse')).toBeInTheDocument();
     });
 
-    it('uses the hierarchicalSearchText as the checkbox label', () => {
+    it('uses the hierarchicalSearchLabel as the checkbox label', () => {
         render(
             <HierarchicalField
                 field={field}

@@ -237,6 +237,11 @@
           "groups": ["metadata"],
           "type": "string",
           "description": "Use this on string fields whose values form a hierarchy resolved at SILO import time. The value should be an URL to the lineage file."
+        },
+        "hierarchicalSearchLabel": {
+          "groups": ["metadata"],
+          "type": "string",
+          "description": "CheckBox label for hierarchical search - only applies when using hierarchicalFilter."
         }
       },
       "required": ["name"],

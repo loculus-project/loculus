@@ -25,7 +25,7 @@ const MODE_CONFIGS: Record<HierarchicalFieldMode, ModeConfig> = {
         includeZeroCounts: false,
         showAlias: true,
         checkBoxLabel: 'include subcategories',
-    }
+    },
 };
 
 interface HierarchicalFieldProps {
@@ -45,8 +45,13 @@ export const HierarchicalField: FC<HierarchicalFieldProps> = ({
     lapisSearchParameters,
     mode = 'default',
 }) => {
-    const { defaultIncludeSublineages, includeZeroCounts, showAlias: showAlias, checkBoxLabel: defaultCheckBoxLabel } = MODE_CONFIGS[mode];
-    const checkBoxLabel = field.hierarchicalSearchText ?? defaultCheckBoxLabel;
+    const {
+        defaultIncludeSublineages,
+        includeZeroCounts,
+        showAlias,
+        checkBoxLabel: defaultCheckBoxLabel,
+    } = MODE_CONFIGS[mode];
+    const checkBoxLabel = field.hierarchicalSearchLabel ?? defaultCheckBoxLabel;
 
     const [includeSublineages, _setIncludeSubLineages] = useState(
         fieldValue.endsWith('*') || (fieldValue === '' && defaultIncludeSublineages),
@@ -84,7 +89,7 @@ export const HierarchicalField: FC<HierarchicalFieldProps> = ({
                     lapisSearchParameters,
                     fieldName: field.name,
                     includeSublineages,
-                    showAlias: showAlias,
+                    showAlias,
                     includeZeroCounts,
                 }}
                 setSomeFieldValues={([_, value]) => {
