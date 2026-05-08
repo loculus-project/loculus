@@ -151,7 +151,7 @@ export class FieldFilterSet implements SequenceFilter {
             const value = this.fieldValues[mfs.name];
             if (value && typeof value === 'string' && value.trim()) {
                 const regex = makeCaseInsensitiveLiteralSubstringRegex(value.trim());
-                const escapedRegex = regex.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                const escapedRegex = regex.replace(/\\/g, '\\\\').replace(/'/g, "[\\']");
                 const fieldQueries = mfs.fields.map((f) => `${f}.regex='${escapedRegex}'`);
                 advancedQueryParts.push(`(${fieldQueries.join(' or ')})`);
             }

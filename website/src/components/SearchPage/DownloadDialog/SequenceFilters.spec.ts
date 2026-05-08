@@ -65,7 +65,7 @@ describe('FieldFilterSet.toApiParams — multi-field search advancedQuery', () =
         const params = filter.toApiParams();
         // The single quote inside the value must be escaped as \' in the query
         expect(params.advancedQuery).toBe(
-            "(accessionVersion.regex='(?i)O\\'Connor' or submissionId.regex='(?i)O\\'Connor')",
+            "(accessionVersion.regex='(?i)O[\\']Connor' or submissionId.regex='(?i)O[\\']Connor')",
         );
     });
 
