@@ -8,7 +8,7 @@ from pathlib import Path
 
 import orjsonl
 
-from .config import HierarchicalFilterConfig, HierarchicalFilterKind
+from .config import HierarchicalServiceUrl, MetadataField
 
 logger = logging.getLogger(__name__)
 
@@ -19,20 +19,19 @@ class NdjsonAnalysis:
 
     record_count: int
     pipeline_version: int | None
-    hierarchical_filter_values: dict[HierarchicalFilterKind, set[str]] = field(default_factory=dict)
+    hierarchical_filter_values: dict[MetadataField, set[str]] = field(default_factory=dict)
 
 
 def analyze_ndjson(
     path: Path,
-    hierarchical_filters: dict[HierarchicalFilterKind, HierarchicalFilterConfig] | None = None,
+    hierarchical_filters: dict[MetadataField, HierarchicalServiceUrl] | None = None,
 ) -> NdjsonAnalysis:
     """
     Decompress and analyze a zstd-compressed NDJSON file.
 
     Args:
         path: Path to the compressed NDJSON file
-        hierarchical_filters: Map of configured filter kinds to their config; the
-            metadata field referenced by each is collected per record.
+        hierarchical_filters: Map of hierarchical metadata field names to service URLs
 
     Returns:
         NdjsonAnalysis with record count, pipeline version, and per-kind
@@ -44,8 +43,8 @@ def analyze_ndjson(
     logger.info("Starting analyze_and_transform_ndjson")
     record_count = 0
     pipeline_version: int | None = None
-    filter_values: dict[HierarchicalFilterKind, set[str]] = (
-        {kind: set() for kind in hierarchical_filters} if hierarchical_filters else {}
+    filter_values: dict[MetadataField, set[str]] = (
+        {name: set() for name in hierarchical_filters} if hierarchical_filters else {}
     )
 
     try:
@@ -55,10 +54,10 @@ def analyze_ndjson(
             if pipeline_version is None:
                 pipeline_version = metadata.get("pipelineVersion")
             if hierarchical_filters:
-                for kind, cfg in hierarchical_filters.items():
-                    raw_value = metadata.get(cfg.metadata_field)
+                for name in hierarchical_filters:
+                    raw_value = metadata.get(name)
                     if raw_value is not None:
-                        filter_values[kind].add(str(raw_value))
+                        filter_values[name].add(str(raw_value))
 
     except Exception as exc:
         msg = f"Failed to decompress {path}: {exc}"

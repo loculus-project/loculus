@@ -38,14 +38,14 @@ def mock_records():
     ]
 
 
-def mock_records_with_host_taxa(taxa: list[str]):
-    """Like mock_records() but stamps each record's metadata with a hostTaxonId.
+def mock_records_with_hierarchical_filters(taxa: list[str], filter_name: str) -> list[dict]:
+    """Like mock_records() but stamps each record's metadata with a hierarchical filter value.
 
     Useful for exercising the hierarchical-filter value-extraction path.
     """
     records = mock_records()
     for record, taxon in zip(records, taxa, strict=False):
-        record["metadata"]["hostTaxonId"] = taxon
+        record["metadata"][filter_name] = taxon
     return records
 
 

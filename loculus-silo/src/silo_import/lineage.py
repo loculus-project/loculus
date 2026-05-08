@@ -6,7 +6,7 @@ from pathlib import Path
 import requests
 from requests import codes
 
-from .config import HierarchicalFilterKind, ImporterConfig
+from .config import ImporterConfig, MetadataField
 from .paths import ImporterPaths
 
 logger = logging.getLogger(__name__)
@@ -46,28 +46,25 @@ def update_lineage_definitions(
 
 
 def update_hierarchical_filters(
-    values_by_kind: dict[HierarchicalFilterKind, set[str]],
+    metadata_values: dict[MetadataField, set[str]],
+    old_metadata_values: dict[MetadataField, set[str]],
     config: ImporterConfig,
     paths: ImporterPaths,
-    *,
-    subset: set[HierarchicalFilterKind] | None = None,
 ) -> None:
-    """Dispatch each configured filter to its dedicated handler.
+    """Dispatch each configured filter to the taxonomy filter handler.
 
-    New filter kinds slot in by adding a HierarchicalFilterKind member and a
-    corresponding case here.
+    Skips filters whose observed values have not changed since the last run.
     """
     if not config.hierarchical_filters:
         return
-    for kind, hf in config.hierarchical_filters.items():
-        if subset is not None and kind not in subset:
+    for field, url in config.hierarchical_filters.items():
+        new_values = metadata_values.get(field, set())
+        if old_metadata_values.get(field) == new_values:
+            logger.info("No change in values for hierarchical filter '%s'; skipping update", field)
             continue
-        values = values_by_kind.get(kind, set())
-        match kind:
-            # If we add new filter kinds, we should implement a corresponding
-            # handler function and call it here
-            case HierarchicalFilterKind.HOST_TAXON:
-                update_taxonomic_lineage(kind.value, values, hf.url, paths)
+        if not url:
+            continue
+        update_taxonomic_lineage(field, new_values, url, paths)
 
 
 def update_taxonomic_lineage(

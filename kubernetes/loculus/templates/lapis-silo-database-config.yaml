@@ -5,10 +5,10 @@
 {{- $organismContent := $item.contents }}
 
 {{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" | fromYamlArray }}
-{{- $hierarchicalFilters := $organismContent | include "loculus.hierarchicalFiltersForOrganism" | fromYamlArray }}
+{{- $hierarchicalFilters := $organismContent | include "loculus.hierarchicalFiltersForOrganism" | fromYaml }}
 {{- $allLineageNames := $lineageSystem }}
-{{- range $hf := $hierarchicalFilters }}
-  {{- $allLineageNames = append $allLineageNames $hf.name }}
+{{- range $name, $_ := $hierarchicalFilters }}
+  {{- $allLineageNames = append $allLineageNames $name }}
 {{- end }}
 ---
 apiVersion: v1

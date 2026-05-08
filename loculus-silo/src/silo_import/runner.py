@@ -4,7 +4,7 @@ import logging
 import shutil
 import time
 
-from .config import HierarchicalFilterKind, ImporterConfig
+from .config import ImporterConfig, MetadataField
 from .constants import SPECIAL_ETAG_NONE
 from .download_manager import DownloadManager
 from .errors import (
@@ -31,7 +31,7 @@ class ImporterRunner:
         self.download_manager = DownloadManager()
         self.current_etag = SPECIAL_ETAG_NONE
         self.last_hard_refresh: float = 0
-        self.hierarchical_filter_values: dict[HierarchicalFilterKind, set[str]] = {}
+        self.hierarchical_filter_values: dict[MetadataField, set[str]] = {}
 
     def _clear_download_directories(self) -> None:
         """Clear all timestamped download directories on startup."""
@@ -81,29 +81,13 @@ class ImporterRunner:
 
         try:
             update_lineage_definitions(download.analysis.pipeline_version, self.config, self.paths)
-
-            # we need to update a filter if:
-            #   1) we see `kind` for the first time (first cycle)
-            #   2) the values have changed since the last cycle
-            configured_kinds = set(self.config.hierarchical_filters or {})
-            new_values = download.analysis.hierarchical_filter_values
-            filters_to_update = {
-                kind
-                for kind in configured_kinds
-                if (
-                    kind not in self.hierarchical_filter_values
-                    or new_values.get(kind, set()) != self.hierarchical_filter_values[kind]
-                )
-            }
-            if filters_to_update:
-                update_hierarchical_filters(
-                    new_values,
-                    self.config,
-                    self.paths,
-                    subset=filters_to_update,
-                )
-                for kind in filters_to_update:
-                    self.hierarchical_filter_values[kind] = new_values.get(kind, set())
+            update_hierarchical_filters(
+                download.analysis.hierarchical_filter_values,
+                self.hierarchical_filter_values,
+                self.config,
+                self.paths,
+            )
+            self.hierarchical_filter_values = download.analysis.hierarchical_filter_values
         except Exception:
             logger.exception("Failed to download lineage definitions; cleaning up input")
             safe_remove(self.paths.silo_input_data_path)

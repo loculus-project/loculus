@@ -85,18 +85,10 @@ Note: Lineages should be determined by the preprocessing pipeline and not the us
 
 For metadata fields whose values form a hierarchy that's resolved at SILO import
 time (rather than fetched as a static file per pipeline version), set
-`hierarchicalFilter: <name>` on the metadata field and add a corresponding entry under
-`hierarchicalFilterSources`. Each entry maps a name to the base URL of a
-service that provides the SILO lineage file. The importer collects observed
+`hierarchicalFilter: <URL>`, where URL is the URL of the service that will create the
+hierarchical file for SILO. The importer collects observed
 values for the field, sends them to that service, and writes the returned YAML
-into SILO's input directory as `<name>.yaml`.
-
-```yaml
-hierarchicalFilterSources:
-  hostTaxon: http://loculus-taxonomy-service:5000
-```
-
-<SchemaDocs group='hierarchical-filter-sources' fieldColumnClass='w-48' />
+into SILO's input directory as `<MetadataName>.yaml`.
 
 ### Organism (type)
 
