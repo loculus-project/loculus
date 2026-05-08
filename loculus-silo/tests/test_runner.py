@@ -197,7 +197,7 @@ def test_runner_cleans_up_on_decompress_failure(
     assert not responses_list
 
 
-HOST_TAXON_NAME: Final = "hostTaxon"
+HOST_TAXON_NAME: Final = "hostTaxonId"
 
 
 @pytest.fixture
@@ -228,7 +228,7 @@ def host_taxon_setup(
         post_calls.append((url, list(taxa)))
         return fake_response
 
-    monkeypatch.setattr(lineage, "_post_taxonomic_lineage", fake_post)
+    monkeypatch.setattr(lineage, "_post_silo_lineage", fake_post)
 
     return config, paths, post_calls
 
