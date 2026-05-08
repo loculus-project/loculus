@@ -51,7 +51,7 @@ def update_hierarchical_filters(
     config: ImporterConfig,
     paths: ImporterPaths,
 ) -> None:
-    """Dispatch each configured filter to the taxonomy filter handler.
+    """Dispatch each configured filter to the hierarchical filter handler.
 
     Skips filters whose observed values have not changed since the last run.
     """
@@ -64,35 +64,35 @@ def update_hierarchical_filters(
             continue
         if not url:
             continue
-        update_taxonomic_lineage(field, new_values, url, paths)
+        fetch_updated_hierarchy(field, new_values, url, paths)
 
 
-def update_taxonomic_lineage(
+def fetch_updated_hierarchy(
     file_base: str,
-    taxa: set[str],
+    values: set[str],
     service_url: str,
     paths: ImporterPaths,
 ) -> None:
     destination = paths.input_dir / f"{file_base}.yaml"
-    if not taxa:
-        logger.info("No taxa for filter '%s'; writing empty lineage", file_base)
+    if not values:
+        logger.info("No values for filter '%s'; writing empty file", file_base)
         _write_text(destination, "{}\n")
         return
 
     url = f"{service_url.rstrip('/')}/silo-lineage"
-    logger.info("Fetching %s hierarchy for %d taxa", file_base, len(taxa))
-    sorted_taxa = sorted(taxa)
+    logger.info("Fetching %s hierarchy over %d values", file_base, len(values))
+    sorted_values = sorted(values)
     try:
-        response = _post_taxonomic_lineage(url, sorted_taxa)
+        response = _post_silo_lineage(url, sorted_values)
         if response.status_code == codes.request_entity_too_large:
             logger.warning(
                 "Unpruned %s lineage exceeds size threshold; retrying with prune=true", file_base
             )
-            response = _post_taxonomic_lineage(url, sorted_taxa, prune=True)
+            response = _post_silo_lineage(url, sorted_values, prune=True)
         response.raise_for_status()
         _write_text(destination, response.text)
     except requests.RequestException as exc:
-        msg = f"Failed to fetch host taxonomy from {url}: {exc}"
+        msg = f"Failed to fetch lineage from {url}: {exc}"
         raise RuntimeError(msg) from exc
 
 
@@ -102,9 +102,13 @@ def _download_lineage_file(url: str, destination: Path) -> None:
     _write_text(destination, response.text)
 
 
-def _post_taxonomic_lineage(url: str, taxa: list[str], prune: bool = False) -> requests.Response:
+def _post_silo_lineage(url: str, values: list[str], prune: bool = False) -> requests.Response:
+    """The service providing hierarchical filter lineage files is expected to
+    expose a POST /silo-lineage endpoint that takes a {values: [<values>]}
+    request body and a ?prune=<boolean> query param
+    """
     params = {"prune": "true"} if prune else None
-    return requests.post(url, json={"tax_ids": taxa}, params=params, timeout=60)
+    return requests.post(url, json={"values": values}, params=params, timeout=60)
 
 
 def _write_text(path: Path, content: str) -> None:
