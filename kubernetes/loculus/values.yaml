@@ -1795,19 +1795,23 @@ defaultOrganisms:
           taxon_id: 1980442
           scientific_name: "Orthohantavirus"
           molecule_type: "genomic RNA"
+          nextclade_dataset_server: "https://raw.githubusercontent.com/loculus-project/agent_store/4cc6d9dd4240c28945eba44a1a3199cd51b95fd1/hantavirus/nextclade_data"
           segments:
             - name: L
               references:
                 - name: singleReference
-                  genes: []
+                  nextclade_dataset_name: orthohantavirus/L
+                  genes: [RdRp]
             - name: M
               references:
                 - name: singleReference
-                  genes: []
+                  nextclade_dataset_name: orthohantavirus/M
+                  genes: [GPC]
             - name: S
               references:
                 - name: singleReference
-                  genes: []
+                  nextclade_dataset_name: orthohantavirus/S
+                  genes: ["N", NSs]
     ingest:
       <<: *ingest
       configFile:
@@ -1815,24 +1819,35 @@ defaultOrganisms:
         calculate_groups_override_json: true
         segment_identification:
           method: "minimizer"
-          minimizer_url: "https://raw.githubusercontent.com/loculus-project/agent_store/d65a90b79f460203aad04dd346ca943aed55de56/hantavirus/segment-minimizer.json"
+          minimizer_url: "https://raw.githubusercontent.com/loculus-project/agent_store/4cc6d9dd4240c28945eba44a1a3199cd51b95fd1/hantavirus/segment-minimizer.json"
           minimizer_parser: ["segment"]
     referenceGenomes:
       - name: L
         references:
           - name: singleReference
-            sequence: "[[URL:https://raw.githubusercontent.com/loculus-project/agent_store/d65a90b79f460203aad04dd346ca943aed55de56/hantavirus/NC_005222.1.fasta]]"
-            insdcAccessionFull: NC_005222.1
+            sequence: "[[URL:https://raw.githubusercontent.com/loculus-project/agent_store/4cc6d9dd4240c28945eba44a1a3199cd51b95fd1/hantavirus/NC_003468.2.fasta]]"
+            insdcAccessionFull: NC_003468.2
+            genes:
+              - name: RdRp
+                sequence: "[[URL:https://raw.githubusercontent.com/loculus-project/agent_store/4cc6d9dd4240c28945eba44a1a3199cd51b95fd1/hantavirus/genes/RdRp.fasta]]"
       - name: M
         references:
           - name: singleReference
-            sequence: "[[URL:https://raw.githubusercontent.com/loculus-project/agent_store/d65a90b79f460203aad04dd346ca943aed55de56/hantavirus/NC_005219.1.fasta]]"
-            insdcAccessionFull: NC_005219.1
+            sequence: "[[URL:https://raw.githubusercontent.com/loculus-project/agent_store/4cc6d9dd4240c28945eba44a1a3199cd51b95fd1/hantavirus/NC_003467.2.fasta]]"
+            insdcAccessionFull: NC_003467.2
+            genes:
+              - name: GPC
+                sequence: "[[URL:https://raw.githubusercontent.com/loculus-project/agent_store/4cc6d9dd4240c28945eba44a1a3199cd51b95fd1/hantavirus/genes/GPC.fasta]]"
       - name: S
         references:
           - name: singleReference
-            sequence: "[[URL:https://raw.githubusercontent.com/loculus-project/agent_store/d65a90b79f460203aad04dd346ca943aed55de56/hantavirus/NC_005218.1.fasta]]"
-            insdcAccessionFull: NC_005218.1
+            sequence: "[[URL:https://raw.githubusercontent.com/loculus-project/agent_store/4cc6d9dd4240c28945eba44a1a3199cd51b95fd1/hantavirus/NC_003466.1.fasta]]"
+            insdcAccessionFull: NC_003466.1
+            genes:
+              - name: "N"
+                sequence: "[[URL:https://raw.githubusercontent.com/loculus-project/agent_store/4cc6d9dd4240c28945eba44a1a3199cd51b95fd1/hantavirus/genes/N.fasta]]"
+              - name: NSs
+                sequence: "[[URL:https://raw.githubusercontent.com/loculus-project/agent_store/4cc6d9dd4240c28945eba44a1a3199cd51b95fd1/hantavirus/genes/NSs.fasta]]"
   dummy-organism:
     schema:
       submissionDataTypes: *defaultSubmissionDataTypes
