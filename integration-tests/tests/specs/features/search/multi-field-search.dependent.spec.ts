@@ -22,7 +22,10 @@ test.describe('Multi-field search', () => {
         await searchPage.ebolaSudan();
         await searchPage.waitForSequencesInSearch(3);
 
-        const identifierField = page.getByRole('textbox', { name: 'Identifier', exact: true });
+        const identifierField = page.getByRole('textbox', {
+            name: 'Sample Identifier',
+            exact: true,
+        });
         await identifierField.fill('foobar-readonly');
         await identifierField.press('Enter');
         await page.waitForFunction(
@@ -69,7 +72,10 @@ test.describe('Multi-field search', () => {
     test('identifier filter can be removed by clicking the X', async ({ page }) => {
         await searchPage.ebolaSudan();
 
-        const identifierField = page.getByRole('textbox', { name: 'Identifier', exact: true });
+        const identifierField = page.getByRole('textbox', {
+            name: 'Sample Identifier',
+            exact: true,
+        });
         await identifierField.fill('foobar');
         await identifierField.press('Enter');
         await page.waitForFunction(
@@ -102,7 +108,10 @@ test.describe('Multi-field search', () => {
             await route.continue();
         });
 
-        const identifierField = page.getByRole('textbox', { name: 'Identifier', exact: true });
+        const identifierField = page.getByRole('textbox', {
+            name: 'Sample Identifier',
+            exact: true,
+        });
         await identifierField.fill('nonexistent-id');
         await identifierField.press('Enter');
 
@@ -128,7 +137,10 @@ test.describe('Multi-field search', () => {
             await route.fulfill({ response });
         });
 
-        const identifierField = page.getByRole('textbox', { name: 'Identifier', exact: true });
+        const identifierField = page.getByRole('textbox', {
+            name: 'Sample Identifier',
+            exact: true,
+        });
         await identifierField.fill("O'Brien");
         await identifierField.press('Enter');
 
@@ -146,7 +158,10 @@ test.describe('Multi-field search', () => {
             await route.fulfill({ response });
         });
 
-        const identifierField = page.getByRole('textbox', { name: 'Identifier', exact: true });
+        const identifierField = page.getByRole('textbox', {
+            name: 'Sample Identifier',
+            exact: true,
+        });
         await identifierField.fill('test\\value');
         await identifierField.press('Enter');
 
