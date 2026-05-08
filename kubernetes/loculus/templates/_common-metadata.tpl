@@ -320,6 +320,9 @@ organisms:
       {{- range .website.multiFieldSearches }}
         - name: {{ .name }}
           displayName: {{ .displayName }}
+          {{- if hasKey . "orderInSearchDisplay" }}
+          orderInSearchDisplay: {{ .orderInSearchDisplay }}
+          {{- end }}
           fields:
           {{- range .fields }}
           {{- if and $isSegmented (hasKey $perSegmentFields .) }}

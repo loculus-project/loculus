@@ -581,6 +581,10 @@
                         "type": "string",
                         "description": "The display name of the search field."
                       },
+                      "orderInSearchDisplay": {
+                        "type": "number",
+                        "description": "Optional display order in the search form. Lower values appear earlier."
+                      },
                       "fields": {
                         "type": "array",
                         "items": {
