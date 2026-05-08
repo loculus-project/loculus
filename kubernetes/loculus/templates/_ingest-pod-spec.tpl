@@ -8,6 +8,7 @@ Expects a dict:
   dockerTag       - resolved docker tag
   organismContent - the organism's contents (must contain .ingest)
   Values          - root .Values (for resources, image pull policy, priority class)
+  Release         - root .Release (for namespace-derived priority class name)
   args            - list of args for the ingest container
 */}}
 {{- define "loculus.ingestPodSpec" -}}

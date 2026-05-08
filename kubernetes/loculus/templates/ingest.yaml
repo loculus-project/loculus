@@ -111,6 +111,7 @@ spec:
             "dockerTag" $dockerTag
             "organismContent" $organismContent
             "Values" $.Values
+            "Release" $.Release
             "args" (list "snakemake" "results/submitted" "results/revised" "--all-temp")
           ) | nindent 8 }}
 {{/*
@@ -174,6 +175,7 @@ spec:
             "dockerTag" $dockerTag
             "organismContent" $organismContent
             "Values" $.Values
+            "Release" $.Release
             "args" (list "snakemake" "results/submitted" "results/revised" "results/revoked" "--all-temp")
           ) | nindent 8 }}
 {{- end }}
