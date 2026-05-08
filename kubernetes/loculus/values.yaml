@@ -1762,6 +1762,36 @@ defaultOrganisms:
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/env.fasta]]"
               - name: prM
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"
+  hantavirus:
+    <<: *defaultOrganismConfig
+    enabled: true
+    schema:
+      <<: *schema
+      organismName: "Hantavirus"
+    preprocessing:
+      - <<: *preprocessing
+        version: 1
+        configFile:
+          <<: *preprocessingConfigFile
+          create_embl_file: false
+          taxon_id: 1980442
+          scientific_name: "Orthohantavirus"
+          molecule_type: "genomic RNA"
+          segments:
+            - name: main
+              references:
+                - name: singleReference
+                  genes: []
+    ingest:
+      <<: *ingest
+      configFile:
+        taxon_id: 1980442
+    referenceGenomes:
+      - name: main
+        references:
+          - name: singleReference
+            sequence: "[[URL:https://www.ncbi.nlm.nih.gov/sviewer/viewer.cgi?id=NC_005218.1&db=nuccore&report=fasta&retmode=text]]"
+            insdcAccessionFull: NC_005218.1
   dummy-organism:
     schema:
       submissionDataTypes: *defaultSubmissionDataTypes
