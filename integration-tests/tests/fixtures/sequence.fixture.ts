@@ -55,9 +55,7 @@ export const test = groupTest.extend<SequenceFixtures>({
             await editPage.addSequenceFile(`>edited_S\n${CCHF_S_SEGMENT_FULL_SEQUENCE}`);
             await editPage.fillField('Authors', 'Integration, Test');
             await editPage.submitChanges();
-            await reviewPage.releaseValidSequences();
-
-            await page.getByRole('link', { name: 'Released Sequences' }).click();
+            await reviewPage.releaseAndGoToReleasedSequences();
             await expect
                 .poll(
                     async () => {

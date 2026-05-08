@@ -78,10 +78,9 @@ setup('Initialize some ebola sequences as base data', async ({ page }) => {
         );
 
         await reviewPage.waitForZeroProcessing();
-        await reviewPage.releaseValidSequences();
+        await reviewPage.releaseAndGoToReleasedSequences();
     }
 
-    await page.getByRole('link', { name: 'released sequences' }).click();
     // Reloading is required as the page does not automatically update with new data
     await expect
         .poll(

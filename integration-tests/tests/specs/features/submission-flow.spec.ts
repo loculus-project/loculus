@@ -3,6 +3,7 @@ import { test } from '../../fixtures/group.fixture';
 import { join } from 'path';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { NavigationPage } from '../../pages/navigation.page';
+import { ReviewPage } from '../../pages/review.page';
 
 test.describe('Submission flow', () => {
     test('submission page shows group creation button when not in a group', async ({
@@ -41,9 +42,8 @@ test.describe('Submission flow', () => {
             page.getByRole('heading', { name: 'Review current submissions' }),
         ).toBeVisible();
 
-        await page.getByRole('button', { name: 'Release 1 valid sequence' }).click();
-        await page.getByRole('button', { name: 'Release', exact: true }).click();
-        await page.getByRole('link', { name: 'Released Sequences' }).click();
+        const reviewPage = new ReviewPage(page);
+        await reviewPage.releaseAndGoToReleasedSequences();
 
         await expect
             .poll(
@@ -84,15 +84,13 @@ test.describe('Submission flow', () => {
                 'GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAGTTCAAGAAAGGAAATGGACTTGTGGACACTTTCACAAACTCNTATTCCTTTTGTGAAAGCGTNCCAAATCTGGACAGNTTTGTNTTCCAGATGGCNAGTGCCACTGATGATGCACAAAANGANTCCATCTACGCATCTGCNCTGGTGGANGCAACCAAATTTTGTGCACCTATATACGAGTGTGCTTGGGCTAGCTCCACTGGCATTGTTAAAAAGGGACTGGAGTGGTTCGAGAAAAATGCAGGAACCATTAAATCCTGGGATGAGAGTTATACTGAGCTTAAAGTTGAAGTTCCCAAAATAGAACAACTCTCCAACTACCAGCAGGCTGCTCTCAAATGGAGAAAAGACATAGGCTTCCGTGTCAATGCAAATACGGCAGCTTTGAGTAACAAAGTCCTAGCAGAGTACAAAGTTCCTGGCGAGATTGTAATGTCTGTCAAAGAGATGTTGTCAGATATGATTAGAAGNAGGAACCTGATTCTCAACAGAGGTGGTGATGAGAACCCACGCGGCCCAGTTAGCCGTGAACATGTGGAGTGGTGC',
         });
         await submissionPage.acceptTerms();
-        await submissionPage.submitSequence();
+        const reviewPage = await submissionPage.submitSequence();
 
         await expect(
             page.getByRole('heading', { name: 'Review current submissions' }),
         ).toBeVisible();
 
-        await page.getByRole('button', { name: 'Release 1 valid sequence' }).click();
-        await page.getByRole('button', { name: 'Release', exact: true }).click();
-        await page.getByRole('link', { name: 'Released Sequences' }).click();
+        await reviewPage.releaseAndGoToReleasedSequences();
 
         while (!(await page.getByRole('cell', { name: 'Colombia' }).isVisible())) {
             await page.reload();
