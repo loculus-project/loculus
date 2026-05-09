@@ -134,6 +134,8 @@ resources:
       cpu: "2m"
     limits:
       memory: "1Gi"
+allowedExternalRedirectUrls:
+  - "https://evolve.org/"
 defaultResources:
   requests:
     memory: "200Mi"

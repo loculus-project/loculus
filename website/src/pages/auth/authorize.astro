@@ -1,0 +1,110 @@
+---
+import { getRuntimeConfig, getWebsiteConfig } from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getAccessToken } from '../../utils/getAccessToken';
+import { validateRedirectUrl } from '../../utils/validateRedirectUrl';
+
+const session = Astro.locals.session!;
+const websiteConfig = getWebsiteConfig();
+const runtimeConfig = getRuntimeConfig();
+const instanceName = websiteConfig.name;
+const allowInsecure = runtimeConfig.insecureCookies;
+const allowedPrefixes = websiteConfig.allowedExternalRedirectUrls ?? null;
+
+const redirectParam = Astro.url.searchParams.get('redirect');
+
+// No redirect param → just go to user page (user is logged in due to enforced login)
+if (!redirectParam) {
+    return Astro.redirect('/user');
+}
+
+const validation = validateRedirectUrl(redirectParam, { allowInsecure, allowedPrefixes });
+
+// Handle POST (user confirmed consent) — render an auto-submitting form that POSTs the token to the target
+let postRedirectTarget: string | null = null;
+let accessToken: string | null = null;
+
+if (Astro.request.method === 'POST') {
+    const formData = await Astro.request.formData();
+    const postRedirect = formData.get('redirect') as string | null;
+
+    const postValidation = validateRedirectUrl(postRedirect, { allowInsecure, allowedPrefixes });
+    if (postValidation.valid && postRedirect) {
+        const token = getAccessToken(session);
+        if (token) {
+            postRedirectTarget = postRedirect;
+            accessToken = token;
+        }
+    }
+    // If validation fails on POST, fall through to render page with error
+}
+
+const isValid = validation.valid;
+const hostname = isValid ? validation.hostname : null;
+const error = !isValid ? validation.error : null;
+const username = session.user?.username ?? session.user?.name ?? 'your account';
+---
+
+{
+    postRedirectTarget && accessToken ? (
+        <html lang='en'>
+            <head>
+                <title>Redirecting...</title>
+            </head>
+            <body>
+                <noscript>
+                    <p>JavaScript is required to complete the authorization. Please enable JavaScript and try again.</p>
+                </noscript>
+                <form id='redirect-form' method='POST' action={postRedirectTarget}>
+                    <input type='hidden' name='loculusToken' value={accessToken} />
+                </form>
+                <script is:inline>document.getElementById('redirect-form').submit();</script>
+            </body>
+        </html>
+    ) : (
+        <BaseLayout title='Authorize External Application'>
+            <div class='max-w-xl mx-auto mt-12 p-6'>
+                {!isValid && (
+                    <div>
+                        <h1 class='text-2xl font-bold mb-4'>Invalid Request</h1>
+                        <p class='mb-6 text-red-600'>{error}</p>
+                        <a href='/' class='btn loculusColor text-white hover:bg-primary-700'>
+                            Return to homepage
+                        </a>
+                    </div>
+                )}
+
+                {isValid && (
+                    <div>
+                        <h1 class='text-2xl font-bold mb-4'>Authorize External Application</h1>
+                        <div class='bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6'>
+                            <p class='text-lg mb-2'>
+                                <strong>{hostname}</strong> is requesting access to your
+                                <strong>{instanceName}</strong> account.
+                            </p>
+                            <p class='text-sm text-gray-600'>
+                                Signed in as <strong>{username}</strong>
+                            </p>
+                        </div>
+                        <p class='mb-6 text-gray-600'>
+                            If you authorize, you will be redirected to <strong>{hostname}</strong> with your
+                            authentication token. Only continue if you trust this site.
+                        </p>
+                        <form method='POST'>
+                            <input type='hidden' name='redirect' value={redirectParam} />
+                            <div class='flex gap-4'>
+                                {/* eslint-disable-next-line no-restricted-syntax -- Plain HTML form, no hydration needed */}
+                                <button type='submit' class='btn loculusColor text-white hover:bg-primary-700'>
+                                    Authorize
+                                </button>
+                                <a href='/' class='btn btn-outline'>
+                                    Deny
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                )}
+            </div>
+        </BaseLayout>
+    )
+}
