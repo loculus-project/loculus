@@ -22,7 +22,7 @@ const MODE_CONFIGS: Record<HierarchicalFieldMode, ModeConfig> = {
     },
     default: {
         defaultIncludeSublineages: true,
-        includeZeroCounts: false,
+        includeZeroCounts: true,
         showAlias: true,
         checkBoxLabel: 'include subcategories',
     },
