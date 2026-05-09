@@ -226,11 +226,9 @@ export const MultiChoiceAutoCompleteField = ({
                                                     >
                                                         {option.option}
                                                     </span>
-                                                    {option.count !== undefined && (
-                                                        <span className='inline-block ml-1'>
-                                                            ({formatNumberWithDefaultLocale(option.count)})
-                                                        </span>
-                                                    )}
+                                                    <span className='inline-block ml-1'>
+                                                        ({formatNumberWithDefaultLocale(option.count)})
+                                                    </span>
                                                     {selected && (
                                                         <span
                                                             className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
