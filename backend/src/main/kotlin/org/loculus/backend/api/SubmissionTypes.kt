@@ -276,6 +276,12 @@ data class SequenceEntryStatus(
     val isRevocation: Boolean = false,
     val submissionId: String,
     val dataUseTerms: DataUseTerms,
+    @Schema(
+        description = "Comment supplied by the submitter for this version. " +
+            "For revocations this is the revocation reason; otherwise it is the value of the user-supplied " +
+            "`versionComment` metadata field. Null if no comment was provided.",
+    )
+    val versionComment: String? = null,
 ) : AccessionVersionInterface
 
 data class EditedSequenceEntryData(
