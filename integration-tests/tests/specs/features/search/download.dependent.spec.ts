@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import { test } from '../../../fixtures/console-warnings.fixture';
 import { SearchPage } from '../../../pages/search.page';
 import fs from 'fs';
+import { setUrlParamsAndGoTo } from '../../../utils/setUrlParamsAndGoTo';
 
 const NULL_QUERY_VALUE = '_null_';
 
@@ -45,7 +46,7 @@ test('Download with null filter sends isNull param to LAPIS', async ({ page, bro
     await searchPage.ebolaSudan();
 
     // Navigate with a null filter applied via URL to avoid needing the option in autocomplete
-    await page.goto(`${page.url()}?geoLocCountry=${NULL_QUERY_VALUE}`);
+    await setUrlParamsAndGoTo(page, { geoLocCountry: NULL_QUERY_VALUE });
 
     await page.getByRole('button', { name: 'Download all entries' }).click();
     await page.getByLabel('I agree to the data use terms.').check();
