@@ -34,7 +34,7 @@ def analyze_ndjson(
         hierarchical_filters: Map of hierarchical metadata field names to service URLs
 
     Returns:
-        NdjsonAnalysis with record count, pipeline version, and per-kind
+        NdjsonAnalysis with record count, pipeline version, and
         observed values for the configured hierarchical filters.
 
     Raises:
