@@ -37,7 +37,7 @@ def merge_group_overrides(group_files: list[str]) -> dict[str, list[str]]:
                 raise ValueError(msg)
 
             merged_groups[group_name] = accessions
-            accession_to_group.update({accession: group_name for accession in accessions})
+            accession_to_group.update(dict.fromkeys(accessions, group_name))
 
     return merged_groups
 

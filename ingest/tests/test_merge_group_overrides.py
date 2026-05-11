@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 
-
 SCRIPT_PATH = Path(__file__).parents[1] / "scripts" / "merge_group_overrides.py"
 SPEC = importlib.util.spec_from_file_location("merge_group_overrides", SCRIPT_PATH)
 merge_group_overrides_module = importlib.util.module_from_spec(SPEC)
