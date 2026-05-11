@@ -135,7 +135,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: parse_date_into_range
           inputs:
             date: sampleCollectionDate
-            releaseDate: ncbiReleaseDate
+            releaseDate: earliestReleaseDate
           args:
             fieldType: dateRangeString
         required: true
@@ -152,7 +152,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: parse_date_into_range
           inputs:
             date: sampleCollectionDate
-            releaseDate: ncbiReleaseDate
+            releaseDate: earliestReleaseDate
           args:
             fieldType: dateRangeLower
         rangeOverlapSearch:
@@ -171,7 +171,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: parse_date_into_range
           inputs:
             date: sampleCollectionDate
-            releaseDate: ncbiReleaseDate
+            releaseDate: earliestReleaseDate
           args:
             fieldType: dateRangeUpper
         rangeOverlapSearch:
@@ -203,6 +203,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             timestamp: ncbiReleaseDate
         noInput: true
         columnWidth: 100
+        perSegment: true
       - name: earliestReleaseDate
         displayName: Earliest release date
         definition: The earliest release date for the accession, across all versions in both Loculus and the INSDC.
@@ -2014,6 +2015,12 @@ defaultOrganisms:
       submissionDataTypes:
         <<: *defaultSubmissionDataTypes
         maxSequencesPerEntry: 3
+      earliestReleaseDate:
+        enabled: true
+        externalFields:
+          - ncbiReleaseDate_L
+          - ncbiReleaseDate_M
+          - ncbiReleaseDate_S
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
       image: "/images/organisms/cchf_small.jpg"
       linkOuts:
@@ -2059,7 +2066,7 @@ defaultOrganisms:
           - lineage
           - authors
           - authorAffiliations
-          - ncbiReleaseDate
+          - earliestReleaseDate
           - hostNameScientific
           - length_M
           - length_S
@@ -2094,6 +2101,7 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 3052518
+        calculate_groups_override_json: true
         grouping_override_url: "https://pathoplexus.github.io/curation_data/grouping_override/cchf/curated_group_02-03-2026.json"
         segment_identification:
           method: "align"
@@ -2136,6 +2144,12 @@ defaultOrganisms:
       submissionDataTypes:
         <<: *defaultSubmissionDataTypes
         maxSequencesPerEntry: 3
+      earliestReleaseDate:
+        enabled: true
+        externalFields:
+          - ncbiReleaseDate_L
+          - ncbiReleaseDate_M
+          - ncbiReleaseDate_S
       organismName: "CCHF (Multi-Ref)"
       image: "/images/organisms/cchf_small.jpg"
       linkOuts:
@@ -2267,7 +2281,7 @@ defaultOrganisms:
           - lineage
           - authors
           - authorAffiliations
-          - ncbiReleaseDate
+          - earliestReleaseDate
           - hostNameScientific
           - length_M
           - length_S
