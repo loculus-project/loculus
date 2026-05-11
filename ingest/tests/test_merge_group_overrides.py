@@ -37,6 +37,15 @@ def test_merge_group_overrides_allows_identical_group_definitions(tmp_path):
     }
 
 
+def test_merge_group_overrides_allows_identical_group_definitions_with_different_order(tmp_path):
+    first = write_groups(tmp_path / "first.json", {"assembly-1": ["A.1", "B.1"]})
+    second = write_groups(tmp_path / "second.json", {"assembly-1": ["B.1", "A.1"]})
+
+    assert merge_group_overrides_module.merge_group_overrides([first, second]) == {
+        "assembly-1": ["A.1", "B.1"],
+    }
+
+
 def test_merge_group_overrides_rejects_conflicting_group_names(tmp_path):
     first = write_groups(tmp_path / "first.json", {"assembly-1": ["A.1", "B.1"]})
     second = write_groups(tmp_path / "second.json", {"assembly-1": ["A.1", "C.1"]})

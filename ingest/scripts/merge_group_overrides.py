@@ -18,7 +18,7 @@ def merge_group_overrides(group_files: list[str]) -> dict[str, list[str]]:
 
         for group_name, accessions in groups.items():
             if group_name in merged_groups:
-                if merged_groups[group_name] == accessions:
+                if set(merged_groups[group_name]) == set(accessions):
                     continue
                 msg = f"Group name {group_name!r} is defined differently in multiple override files"
                 raise ValueError(msg)
