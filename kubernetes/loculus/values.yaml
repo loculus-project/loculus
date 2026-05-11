@@ -2120,6 +2120,7 @@ defaultOrganisms:
       configFile:
         taxon_id: 3052518
         calculate_groups_override_json: true
+        grouping_override_url: "https://pathoplexus.github.io/curation_data/grouping_override/cchf/curated_group_02-03-2026.json"
         segment_identification:
           method: "align"
           nextclade_dataset_name: community/pathoplexus/cchfv
