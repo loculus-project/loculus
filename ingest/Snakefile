@@ -468,6 +468,7 @@ if GROUPING_OVERRIDE_URL and CALCULATE_GROUPS_OVERRIDE_JSON:
             script="scripts/merge_group_overrides.py",
             downloaded=DOWNLOADED_GROUPS_JSON,
             calculated=CALCULATED_GROUPS_JSON,
+            config="results/config.yaml",
         output:
             groups_json="results/groups.json",
         shell:
@@ -475,6 +476,7 @@ if GROUPING_OVERRIDE_URL and CALCULATE_GROUPS_OVERRIDE_JSON:
             python {input.script} \
             --groups {input.calculated} \
             --groups {input.downloaded} \
+            --config-file {input.config} \
             --output-file {output.groups_json}
             """
 

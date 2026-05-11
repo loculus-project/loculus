@@ -3,8 +3,11 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+from unittest import mock
 
 import pytest
+import yaml
+from click.testing import CliRunner
 
 SCRIPT_PATH = Path(__file__).parents[1] / "scripts" / "merge_group_overrides.py"
 SPEC = importlib.util.spec_from_file_location("merge_group_overrides", SCRIPT_PATH)
@@ -60,3 +63,68 @@ def test_merge_group_overrides_rejects_accessions_in_multiple_groups(tmp_path):
 
     with pytest.raises(ValueError, match="already appear"):
         merge_group_overrides_module.merge_group_overrides([first, second])
+
+
+def test_main_sends_slack_notification_on_conflict(tmp_path):
+    first = write_groups(tmp_path / "first.json", {"assembly-1": ["A.1", "B.1"]})
+    second = write_groups(tmp_path / "second.json", {"assembly-1": ["A.1", "C.1"]})
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text(
+        yaml.safe_dump({"slack_hook": "https://hooks.slack.test/xyz", "organism": "andesvirus"}),
+        encoding="utf-8",
+    )
+    output_file = tmp_path / "groups.json"
+
+    runner = CliRunner()
+    with mock.patch.object(merge_group_overrides_module.requests, "post") as mock_post:
+        result = runner.invoke(
+            merge_group_overrides_module.main,
+            [
+                "--groups",
+                first,
+                "--groups",
+                second,
+                "--output-file",
+                str(output_file),
+                "--config-file",
+                str(config_file),
+            ],
+        )
+
+    assert result.exit_code != 0
+    assert isinstance(result.exception, ValueError)
+    assert not output_file.exists()
+    mock_post.assert_called_once()
+    args, kwargs = mock_post.call_args
+    assert args[0] == "https://hooks.slack.test/xyz"
+    payload = json.loads(kwargs["data"])
+    assert "andesvirus" in payload["text"]
+    assert "merge_group_overrides failed" in payload["text"]
+
+
+def test_main_does_not_call_slack_when_no_hook(tmp_path):
+    first = write_groups(tmp_path / "first.json", {"assembly-1": ["A.1", "B.1"]})
+    second = write_groups(tmp_path / "second.json", {"assembly-1": ["A.1", "C.1"]})
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text(yaml.safe_dump({"organism": "andesvirus"}), encoding="utf-8")
+    output_file = tmp_path / "groups.json"
+
+    runner = CliRunner()
+    with mock.patch.object(merge_group_overrides_module.requests, "post") as mock_post:
+        result = runner.invoke(
+            merge_group_overrides_module.main,
+            [
+                "--groups",
+                first,
+                "--groups",
+                second,
+                "--output-file",
+                str(output_file),
+                "--config-file",
+                str(config_file),
+            ],
+        )
+
+    assert result.exit_code != 0
+    assert isinstance(result.exception, ValueError)
+    mock_post.assert_not_called()
