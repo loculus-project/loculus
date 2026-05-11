@@ -1,12 +1,13 @@
 {{- define "loculus.siloDatabaseShared" -}}
 {{- $type := default "string" .type -}}
+{{- $lineageName := ternary .name (default "" .lineageSystem) (not (empty .hierarchicalFilter)) -}}
 - type: {{ ($type | eq "timestamp") | ternary "int" (($type | eq "authors") | ternary "string" $type) }}
   {{- if .generateIndex }}
   generateIndex: {{ .generateIndex }}
   {{- end }}
-  {{- if .lineageSystem }}
+  {{- if $lineageName }}
   generateIndex: true
-  generateLineageIndex: {{ .lineageSystem }} {{- /* must match the file name in the lineageDefinitionFilenames */}}
+  generateLineageIndex: {{ $lineageName }} {{- /* must match the file name in the lineageDefinitionFilenames */}}
   {{- end }}
 {{- end }}
 
