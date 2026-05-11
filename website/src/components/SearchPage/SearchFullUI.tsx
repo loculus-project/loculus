@@ -63,6 +63,16 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
     return `Search returned ${formattedCount} sequence${pluralSuffix}`;
 };
 
+type AggregatedData = ({ count: number } & Record<string, unknown>)[];
+
+const getRestrictedSequenceCount = (aggregatedData: AggregatedData | undefined): number | undefined => {
+    if (aggregatedData === undefined) {
+        return undefined;
+    }
+
+    return aggregatedData.find((row) => row[DATA_USE_TERMS_FIELD] === 'RESTRICTED')?.count ?? 0;
+};
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) this component is a mess a needs to be refactored */
 export const InnerSearchFullUI = ({
     accessToken,
@@ -156,6 +166,7 @@ export const InnerSearchFullUI = ({
 
     const hooks = lapisClientHooks(lapisUrl);
     const aggregatedHook = hooks.useAggregated();
+    const restrictedSequenceCountHook = hooks.useAggregated();
     const detailsHook = hooks.useDetails();
 
     const [selectedSeqs, setSelectedSeqs] = useState(new Set<string>());
@@ -179,7 +190,11 @@ export const InnerSearchFullUI = ({
      */
     const lapisSearchParameters = useMemo(() => tableFilter.toApiParams(), [tableFilter]);
 
-    const downloadFilter: SequenceFilter = sequencesSelected ? new SequenceEntrySelection(selectedSeqs) : tableFilter;
+    const downloadFilter = useMemo<SequenceFilter>(
+        () => (sequencesSelected ? new SequenceEntrySelection(selectedSeqs) : tableFilter),
+        [sequencesSelected, selectedSeqs, tableFilter],
+    );
+    const downloadLapisSearchParameters = useMemo(() => downloadFilter.toApiParams(), [downloadFilter]);
 
     useEffect(() => {
         aggregatedHook.mutate({
@@ -202,7 +217,22 @@ export const InnerSearchFullUI = ({
         });
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
+    useEffect(() => {
+        if (!dataUseTermsEnabled) {
+            return;
+        }
+
+        restrictedSequenceCountHook.mutate({
+            ...downloadLapisSearchParameters,
+            fields: [DATA_USE_TERMS_FIELD],
+        });
+    }, [dataUseTermsEnabled, downloadLapisSearchParameters]);
+
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
+    const restrictedSequenceCount =
+        dataUseTermsEnabled && !restrictedSequenceCountHook.isPending && !restrictedSequenceCountHook.isError
+            ? getRestrictedSequenceCount(restrictedSequenceCountHook.data?.data)
+            : undefined;
     const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
@@ -365,6 +395,7 @@ export const InnerSearchFullUI = ({
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
                                 selectedReferenceNames={referenceSelection?.selectedReferences}
                                 referenceIdentifierField={schema.referenceIdentifierField}
+                                restrictedSequenceCount={restrictedSequenceCount}
                             />
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu
