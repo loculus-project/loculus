@@ -52,11 +52,17 @@ def merge_group_overrides(group_files: list[str]) -> dict[str, list[str]]:
                 existing_groups = {
                     accession: accession_to_group[accession] for accession in duplicated_accessions
                 }
-                msg = (
-                    f"Accessions in group {group_name!r} already appear in other override groups: "
-                    f"{existing_groups}"
-                )
-                raise ValueError(msg)
+                # Dont raise an error if the same accessions are in the same group in multiple files
+                # even if the group names differ.
+                if (
+                    set(duplicated_accessions) != set(accessions)
+                    or len(set(existing_groups.values())) > 1
+                ):
+                    msg = (
+                        f"Accessions in group {group_name!r} already appear in other override"
+                        f"groups: {existing_groups}"
+                    )
+                    raise ValueError(msg)
 
             merged_groups[group_name] = accessions
             accession_to_group.update(dict.fromkeys(accessions, group_name))
