@@ -43,7 +43,9 @@ CALCULATE_GROUPS_OVERRIDE_JSON = config.get(
 GROUPING_OVERRIDE_URL = config.get("grouping_override_url", False)
 GROUPS_OVERRIDE_JSON = CALCULATE_GROUPS_OVERRIDE_JSON or GROUPING_OVERRIDE_URL
 DOWNLOADED_GROUPS_JSON = (
-    "results/downloaded_groups.json" if CALCULATE_GROUPS_OVERRIDE_JSON else "results/groups.json"
+    "results/downloaded_groups.json"
+    if CALCULATE_GROUPS_OVERRIDE_JSON
+    else "results/groups.json"
 )
 CALCULATED_GROUPS_JSON = (
     "results/calculated_groups.json" if GROUPING_OVERRIDE_URL else "results/groups.json"
