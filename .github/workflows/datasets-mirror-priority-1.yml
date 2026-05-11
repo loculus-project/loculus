@@ -10,6 +10,7 @@ jobs:
         taxon_id:
           - 10244    # Mpox
           - 1868215  # Orthopneumovirus
+          - 1980456  # Andes virus
           - 3048148  # Metapneumovirus hominis
           - 3048448  # West nile virus
           - 3052345  # Morbillivirus hominis
