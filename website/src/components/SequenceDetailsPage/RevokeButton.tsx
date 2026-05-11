@@ -49,7 +49,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
 
     return (
         <Button
-            className='btn btn-sm  bg-red-400'
+            className='btn btn-sm bg-red-400'
             onClick={() =>
                 displayRevocationDialog({
                     dialogText: 'Are you sure you want to create a revocation for this sequence?',

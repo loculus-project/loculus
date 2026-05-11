@@ -93,31 +93,33 @@ export const SequenceDataUI: FC<Props> = ({
                             Only visible to group members
                         </div>
 
-                        {isRestricted && (
-                            <EditDataUseTermsButton
-                                clientConfig={clientConfig}
-                                accessToken={accessToken}
-                                accessionVersion={[accessionVersion.split('.')[0]]}
-                                dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
-                            />
-                        )}
+                        <div className='flex flex-wrap gap-3'>
+                            {isRestricted && (
+                                <EditDataUseTermsButton
+                                    clientConfig={clientConfig}
+                                    accessToken={accessToken}
+                                    accessionVersion={[accessionVersion.split('.')[0]]}
+                                    dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
+                                />
+                            )}
 
-                        <a
-                            href={routes.editPage(organism, {
-                                accession: accessionVersion.split('.')[0],
-                                version: parseInt(accessionVersion.split('.')[1], 10),
-                            })}
-                            className='btn btn-sm mr-3'
-                        >
-                            Revise this sequence
-                        </a>
-                        <RevokeButton
-                            organism={organism}
-                            clientConfig={clientConfig}
-                            accessionVersion={accessionVersion.split('.')[0]}
-                            accessToken={accessToken}
-                            groupId={groupId}
-                        />
+                            <a
+                                href={routes.editPage(organism, {
+                                    accession: accessionVersion.split('.')[0],
+                                    version: parseInt(accessionVersion.split('.')[1], 10),
+                                })}
+                                className='btn btn-sm'
+                            >
+                                Revise this sequence
+                            </a>
+                            <RevokeButton
+                                organism={organism}
+                                clientConfig={clientConfig}
+                                accessionVersion={accessionVersion.split('.')[0]}
+                                accessToken={accessToken}
+                                groupId={groupId}
+                            />
+                        </div>
                     </div>
                 </>
             )}
