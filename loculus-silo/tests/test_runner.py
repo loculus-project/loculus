@@ -17,7 +17,7 @@ from helpers import (
     read_ndjson_file,
 )
 from silo_import import lineage
-from silo_import.config import ImporterConfig, MetadataField
+from silo_import.config import HierarchicalServiceUrl, ImporterConfig, MetadataField
 from silo_import.download_manager import DownloadManager
 from silo_import.paths import ImporterPaths
 from silo_import.runner import ImporterRunner
@@ -27,7 +27,7 @@ def make_config(
     tmp_path: Path,
     lineage_definitions: dict[str, dict[int, str]] | None = None,
     hard_refresh_interval: int = 1,
-    hierarchical_filters: dict[MetadataField, str] | None = None,
+    hierarchical_filters: dict[MetadataField, HierarchicalServiceUrl] | None = None,
 ) -> ImporterConfig:
     return ImporterConfig(
         backend_base_url="http://backend",
