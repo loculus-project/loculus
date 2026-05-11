@@ -75,7 +75,9 @@ class SubmissionPage {
 export class SingleSequenceSubmissionPage extends SubmissionPage {
     async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
         await super.navigateToSubmissionPage(organism);
-        await this.page.getByRole('link', { name: 'Submit single sequence' }).click();
+        await this.page
+            .getByRole('link', { name: 'Submit individual sequence entry using a form' })
+            .click();
     }
 
     async fillSubmissionForm({
@@ -151,7 +153,9 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
     ): Promise<ReviewPage> {
         if (groupId) {
             await this.page.goto(`/ebola-sudan/submission/${groupId}/submit`);
-            await this.page.getByRole('link', { name: 'Submit single sequence' }).click();
+            await this.page
+                .getByRole('link', { name: 'Submit individual sequence entry using a form' })
+                .click();
         } else {
             await this.navigateToSubmissionPage();
         }
