@@ -1,7 +1,7 @@
 .snakemake/
 results/
 assembly/
-project/
+project*/
 sample/
 __pycache__
 config/config.yaml

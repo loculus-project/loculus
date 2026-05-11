@@ -206,6 +206,25 @@ python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/
 > ```
 
 
+#### Creating a bioproject for a group
+
+In the case submitters request accessions for their restricted sequences we can offer to create a bioproject for their group. In order to do this switch to your pathoplexus kube config and run:
+```
+kubectl get configmap loculus-ena-submission-config  -n production -o jsonpath='{.data.config\.yaml}' > config.yaml
+```
+Then get the organism and groupId of the submitters and run:
+```
+micromamba activate loculus-ena-submission
+python scripts/create_bioprojects.py --group-id GROUPID --organism ORGANISM --config-file config.yaml
+```
+The script will print commands to run to submit the bioprojects using the broker credentials, e.g.:
+
+```
+curl -X POST https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit -u '$ena_submission_username:$ena_submission_password' \
+-F 'SUBMISSION=@{directory}/submission.xml' -F 'PROJECT=@{directory}/project.xml' --max-time 50
+```
+
+
 
 #### Integration tests
 
