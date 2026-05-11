@@ -38,10 +38,13 @@ def sort_authors(authors: str) -> str:
     return "; ".join(sorted([author.strip() for author in authors.split(";")]))
 
 
-def values_with_sorted_authors(values: dict[str, str]) -> dict[str, str]:
+def values_with_sorted_authors_fallback_date(values: dict[str, str]) -> dict[str, str]:
     """Sort authors values and return modified values"""
     values_copy = values.copy()
     values_copy["authors"] = sort_authors(values_copy["authors"])
+    values_copy["ncbiCollectionDate"] = (
+        values_copy["ncbiCollectionDate"] or values_copy["ncbiReleaseDate"]
+    )
     return values_copy
 
 
@@ -140,7 +143,7 @@ def main(
     for accession, values in segment_metadata.items():
         # Author order sometimes varies among segments from same isolate
         # Example: JX999734.1 (L) and JX999735.1 (M)
-        modified_values = values_with_sorted_authors(values)
+        modified_values = values_with_sorted_authors_fallback_date(values)
         group_key = str(
             tuple((field, value) for field in shared_fields if (value := modified_values[field]))
         )

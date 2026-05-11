@@ -202,6 +202,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             timestamp: ncbiReleaseDate
         noInput: true
         columnWidth: 100
+        perSegment: true
       - name: earliestReleaseDate
         displayName: Earliest release date
         definition: The earliest release date for the accession, across all versions in both Loculus and the INSDC.
@@ -2032,6 +2033,12 @@ defaultOrganisms:
       submissionDataTypes:
         <<: *defaultSubmissionDataTypes
         maxSequencesPerEntry: 3
+      earliestReleaseDate:
+        enabled: true
+        externalFields:
+          - ncbiReleaseDate_L
+          - ncbiReleaseDate_M
+          - ncbiReleaseDate_S
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
       image: "/images/organisms/cchf_small.jpg"
       linkOuts:
@@ -2077,7 +2084,7 @@ defaultOrganisms:
           - lineage
           - authors
           - authorAffiliations
-          - ncbiReleaseDate
+          - earliestReleaseDate
           - hostNameScientific
           - length_M
           - length_S
@@ -2154,6 +2161,12 @@ defaultOrganisms:
       submissionDataTypes:
         <<: *defaultSubmissionDataTypes
         maxSequencesPerEntry: 3
+      earliestReleaseDate:
+        enabled: true
+        externalFields:
+          - ncbiReleaseDate_L
+          - ncbiReleaseDate_M
+          - ncbiReleaseDate_S
       organismName: "CCHF (Multi-Ref)"
       image: "/images/organisms/cchf_small.jpg"
       linkOuts:
@@ -2285,7 +2298,7 @@ defaultOrganisms:
           - lineage
           - authors
           - authorAffiliations
-          - ncbiReleaseDate
+          - earliestReleaseDate
           - hostNameScientific
           - length_M
           - length_S
