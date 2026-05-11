@@ -6,11 +6,12 @@ import WarningTwoToneIcon from '~icons/material-symbols/warning-outline';
 interface Props {
     title?: string;
     level?: 'error' | 'warning';
+    className?: string;
     children: React.ReactNode;
 }
 
-const ErrorBox: React.FC<Props> = ({ title, children, level = 'error' }) => {
-    const alertClass = `my-8 alert ${level === 'error' ? 'alert-error' : 'alert-warning'}`;
+const ErrorBox: React.FC<Props> = ({ title, children, level = 'error', className = 'my-8' }) => {
+    const alertClass = `${className} alert ${level === 'error' ? 'alert-error' : 'alert-warning'}`;
 
     return (
         <div className={alertClass}>
