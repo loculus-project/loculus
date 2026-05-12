@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { LineageDefinition } from '../../../types/lapis.ts';
-import { stringifyMaybeAxiosError } from '../../../utils/stringifyMaybeAxiosError.ts';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
+import { stringifyMaybeAxiosError } from '../../../utils/stringifyMaybeAxiosError.ts';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters.tsx';
 
 export type Option = {
