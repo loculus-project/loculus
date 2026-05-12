@@ -26,6 +26,9 @@ interface TextFieldProps {
     type?: string;
 }
 
+const helperTextClasses = getTheme().floatingLabel.helperText.default;
+const inputClasses = getTheme().floatingLabel.input.default.outlined.md;
+
 export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldProps>(function (props, ref) {
     const { label, disabled, onChange, autoComplete, fieldValue, className, onFocus, multiline, onBlur } = props;
     const id = useId();
@@ -122,8 +125,6 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             step: props.type === 'int' ? 1 : undefined,
         };
 
-        const helperTextClasses = getTheme().floatingLabel.helperText.default;
-        const inputClasses = getTheme().floatingLabel.input.default.outlined.md;
         return (
             <div className='[&_label]:pointer-events-none'>
                 <FloatingLabel
