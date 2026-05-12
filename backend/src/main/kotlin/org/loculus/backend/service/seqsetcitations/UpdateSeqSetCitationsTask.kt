@@ -1,5 +1,7 @@
 package org.loculus.backend.service.seqsetcitations
 
+import org.loculus.backend.api.CitationOrigin
+import org.loculus.backend.api.SeqSetCitingSource
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
 import org.loculus.backend.service.crossref.CrossRefService
@@ -9,6 +11,29 @@ import org.springframework.stereotype.Component
 
 private val log = mu.KotlinLogging.logger {}
 
+private fun mergeCitingSources(citationsByDOI: Map<String, List<SeqSetCitingSource>>): Set<SeqSetCitingSource> {
+    val merged = mutableMapOf<String, SeqSetCitingSource>()
+
+    for ((seqSetDOI, citingSources) in citationsByDOI) {
+        for (incoming in citingSources) {
+            val existing = merged[incoming.sourceId]
+            if (existing == null) {
+                merged[incoming.sourceId] = incoming.copy(seqSetDOIs = setOf(seqSetDOI))
+                continue
+            }
+            if (existing.copy(seqSetDOIs = emptySet()) != incoming.copy(seqSetDOIs = emptySet())) {
+                log.warn {
+                    "Conflicting CrossRef metadata for citing source ${incoming.sourceId}: $existing and $incoming"
+                }
+            }
+            merged[incoming.sourceId] = existing.copy(
+                seqSetDOIs = existing.seqSetDOIs + seqSetDOI,
+            )
+        }
+    }
+    return merged.values.toSet()
+}
+
 @Component
 @ConditionalOnProperty(BackendSpringProperty.ENABLE_SEQSETS, havingValue = ENABLE_SEQSETS_TRUE_VALUE)
 class UpdateSeqSetCitationsTask(
@@ -17,7 +42,7 @@ class UpdateSeqSetCitationsTask(
 ) {
     /**
      * Runs every hour, with an initial delay of one minute.
-     * Resets citations for each seqSet DOI with citations fetched from Crossref.
+     * Adds citing sources from Crossref, and connects to SeqSets via their DOI.
      */
     @Scheduled(
         initialDelay = 1,
@@ -39,16 +64,18 @@ class UpdateSeqSetCitationsTask(
         }
 
         log.info { "Fetching Crossref citations for DOI prefix: $doiPrefix" }
-        val citations = crossRefService.getCrossRefCitedBy(doiPrefix)
-        val citationsByDOI = citations.groupBy { it.seqSetDOI }
+        val citationsByDOI = crossRefService.getCrossRefCitedBy(doiPrefix)
+        val citingSources = mergeCitingSources(citationsByDOI)
         log.info {
-            "Fetched ${citations.size} citation(s) across ${citationsByDOI.size} SeqSet DOI(s) from Crossref."
+            "Fetched ${citingSources.size} citation(s) across ${citationsByDOI.size} SeqSet DOI(s) from Crossref."
         }
 
-        if (citationsByDOI.isEmpty()) {
-            return
-        }
-        val updateResult = seqSetCitationsDatabaseService.updateSeqSetCitations(citationsByDOI)
+        if (citingSources.isEmpty()) return
+
+        val updateResult = seqSetCitationsDatabaseService.updateSeqSetCitingSources(
+            citingSources,
+            CitationOrigin.CROSSREF,
+        )
 
         if (updateResult.updatedSeqSetDOIs.isNotEmpty()) {
             log.info { "Successfully updated citation(s) for ${updateResult.updatedSeqSetDOIs.size} SeqSet DOI(s)." }

@@ -3,8 +3,9 @@ package org.loculus.backend.service.crossref
 import mu.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
-import org.loculus.backend.api.SeqSetCitation
+import org.loculus.backend.api.CitationSourceType
 import org.loculus.backend.api.SeqSetCitationContributor
+import org.loculus.backend.api.SeqSetCitingSource
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -63,35 +64,35 @@ class CrossRefService(private val properties: CrossRefServiceProperties) {
         }
     }
 
-    fun parseCrossRefCitedByXML(citedByXML: String): List<SeqSetCitation> {
+    fun parseCrossRefCitedByXML(citedByXML: String): Map<String, List<SeqSetCitingSource>> {
         val doc = Jsoup.parse(citedByXML, "", Parser.xmlParser())
 
-        return doc.select("forward_link").mapNotNull { link ->
-            val cite = link.children().firstOrNull() ?: return@mapNotNull null
+        return doc.select("forward_link").mapNotNull { forwardLink ->
+            val cite = forwardLink.children().firstOrNull() ?: return@mapNotNull null
             val contributors = cite.select("contributor").map { c ->
                 SeqSetCitationContributor(
                     givenName = c.selectFirst("given_name")?.text() ?: "",
                     surname = c.selectFirst("surname")?.text() ?: "",
                 )
             }
-            SeqSetCitation(
-                seqSetDOI = link.attr("doi"),
-                citationDOI = cite.selectFirst("doi")?.text() ?: "",
+            forwardLink.attr("doi") to SeqSetCitingSource(
+                sourceId = cite.selectFirst("doi")?.text() ?: "",
+                sourceType = CitationSourceType.DOI,
                 title = cite.selectFirst("title")?.text() ?: "",
                 year = cite.selectFirst("year")?.text() ?: "",
                 contributors = contributors,
             )
-        }
+        }.groupBy({ it.first }, { it.second })
     }
 
-    fun getCrossRefCitedBy(doi: String): List<SeqSetCitation> {
+    fun getCrossRefCitedBy(doiPrefix: String): Map<String, List<SeqSetCitingSource>> {
         checkIsActive()
 
         // End date is the current date at time of request
         val endDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
         val connection = URI(
             properties.endpoint +
-                "/servlet/getForwardLinks?usr=${properties.username}&pwd=${properties.password}&doi=$doi&endDate=$endDate&include_postedcontent=true",
+                "/servlet/getForwardLinks?usr=${properties.username}&pwd=${properties.password}&doi=${doiPrefix}&endDate=${endDate}&include_postedcontent=true",
         ).toURL().openConnection() as HttpURLConnection
         connection.requestMethod = "GET"
 
@@ -102,7 +103,7 @@ class CrossRefService(private val properties: CrossRefServiceProperties) {
             return try {
                 parseCrossRefCitedByXML(response)
             } catch (e: Exception) {
-                throw RuntimeException("Failed to parse CrossRef citedBy response for DOI $doi", e)
+                throw RuntimeException("Failed to parse CrossRef citedBy response for DOI $doiPrefix", e)
             }
         } else {
             throw RuntimeException("CrossRef citedBy request returned $responseCode")

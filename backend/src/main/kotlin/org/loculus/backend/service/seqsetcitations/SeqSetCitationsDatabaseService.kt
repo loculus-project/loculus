@@ -12,6 +12,7 @@ import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.batchInsert
+import org.jetbrains.exposed.sql.batchUpsert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.max
@@ -20,12 +21,13 @@ import org.jetbrains.exposed.sql.update
 import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AuthorProfile
+import org.loculus.backend.api.CitationOrigin
 import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
-import org.loculus.backend.api.SeqSetCitation
 import org.loculus.backend.api.SeqSetCitationsConstants
 import org.loculus.backend.api.SeqSetCitationsUpdateResult
+import org.loculus.backend.api.SeqSetCitingSource
 import org.loculus.backend.api.SeqSetRecord
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedSeqSetRecord
@@ -255,53 +257,81 @@ class SeqSetCitationsDatabaseService(
         return selectedSeqSetRecords
     }
 
-    fun getSeqSetCitations(seqSetId: String, version: Long): List<SeqSetCitation> {
+    fun getSeqSetCitations(seqSetId: String, version: Long): List<SeqSetCitingSource> {
         log.info { "Get seqSet citations for seqSet $seqSetId, version $version" }
 
-        val seqSetDOI = (
+        val seqSet = (
             SeqSetsTable
-                .select(SeqSetsTable.seqSetDOI)
+                .select(SeqSetsTable.seqSetId, SeqSetsTable.seqSetVersion)
                 .where { (SeqSetsTable.seqSetId eq seqSetId) and (SeqSetsTable.seqSetVersion eq version) }
                 .singleOrNull()
                 ?: throw NotFoundException("SeqSet $seqSetId, version $version does not exist")
-            )[SeqSetsTable.seqSetDOI]
+            )
 
-        if (seqSetDOI.isNullOrEmpty()) return emptyList()
-
-        return SeqSetCitationsTable
-            .selectAll()
-            .where { SeqSetCitationsTable.seqSetDOI eq seqSetDOI }
-            .map {
-                SeqSetCitation(
-                    it[SeqSetCitationsTable.seqSetDOI],
-                    it[SeqSetCitationsTable.citationDOI],
-                    it[SeqSetCitationsTable.title],
-                    it[SeqSetCitationsTable.year],
-                    it[SeqSetCitationsTable.contributors],
+        return SeqSetToCitingSourceTable.innerJoin(
+            SeqSetCitingSourceTable,
+        ).selectAll()
+            .where {
+                (SeqSetToCitingSourceTable.seqSetId eq seqSet[SeqSetsTable.seqSetId]) and
+                    (SeqSetToCitingSourceTable.seqSetVersion eq seqSet[SeqSetsTable.seqSetVersion])
+            }.map {
+                SeqSetCitingSource(
+                    it[SeqSetCitingSourceTable.sourceId],
+                    it[SeqSetCitingSourceTable.sourceType],
+                    it[SeqSetCitingSourceTable.title],
+                    it[SeqSetCitingSourceTable.year],
+                    it[SeqSetCitingSourceTable.contributors],
                 )
             }
     }
 
-    fun updateSeqSetCitations(citationsByDOI: Map<String, List<SeqSetCitation>>): SeqSetCitationsUpdateResult {
-        val lastFetched = dateProvider.getCurrentDateTime()
-        val seqSetDOIs = SeqSetsTable.select(SeqSetsTable.seqSetDOI).mapNotNull { it[SeqSetsTable.seqSetDOI] }.toSet()
-        val updateDOIs = citationsByDOI.keys.intersect(seqSetDOIs)
-        val skipDOIs = citationsByDOI.keys.subtract(seqSetDOIs)
+    fun updateSeqSetCitingSources(
+        citingSources: Set<SeqSetCitingSource>,
+        origin: CitationOrigin,
+    ): SeqSetCitationsUpdateResult {
+        // Map of seqSet DOIs to their ID and version
+        val doiToSeqSet = SeqSetsTable
+            .select(SeqSetsTable.seqSetId, SeqSetsTable.seqSetVersion, SeqSetsTable.seqSetDOI)
+            .where { SeqSetsTable.seqSetDOI.isNotNull() }
+            .associate { it[SeqSetsTable.seqSetDOI]!! to (it[SeqSetsTable.seqSetId] to it[SeqSetsTable.seqSetVersion]) }
 
-        // Remove existing citations and set new ones for each seqSet DOI
-        for ((doi, citations) in citationsByDOI.filterKeys { it in updateDOIs }) {
-            SeqSetCitationsTable.deleteWhere { SeqSetCitationsTable.seqSetDOI eq doi }
-            SeqSetCitationsTable.batchInsert(citations) {
-                this[SeqSetCitationsTable.seqSetDOI] = it.seqSetDOI
-                this[SeqSetCitationsTable.citationDOI] = it.citationDOI
-                this[SeqSetCitationsTable.title] = it.title
-                this[SeqSetCitationsTable.year] = it.year
-                this[SeqSetCitationsTable.contributors] = it.contributors
-                this[SeqSetCitationsTable.lastFetched] = lastFetched
-            }
+        // Incoming, updated and skipped seqSet DOIs from the citing sources
+        val incomingDOIs = citingSources.flatMap { it.seqSetDOIs }.toSet()
+        val updatedDOIs = incomingDOIs.intersect(doiToSeqSet.keys)
+        val skippedDOIs = incomingDOIs.subtract(updatedDOIs)
+
+        // Update or insert the citing sources
+        // Existing citing sources with a different origin are not updated
+        SeqSetCitingSourceTable.batchUpsert(
+            citingSources,
+            where = { SeqSetCitingSourceTable.origin eq origin },
+        ) {
+            this[SeqSetCitingSourceTable.sourceId] = it.sourceId
+            this[SeqSetCitingSourceTable.sourceType] = it.sourceType
+            this[SeqSetCitingSourceTable.origin] = origin
+            this[SeqSetCitingSourceTable.title] = it.title
+            this[SeqSetCitingSourceTable.year] = it.year
+            this[SeqSetCitingSourceTable.contributors] = it.contributors
         }
 
-        return SeqSetCitationsUpdateResult(updateDOIs, skipDOIs)
+        // Form triples of citation source ID, seqSet ID and version for the join table
+        val joinData = citingSources.flatMap {
+            it.seqSetDOIs
+                .filter { doi -> doi in updatedDOIs }
+                .map { doi ->
+                    Triple(it.sourceId, doiToSeqSet[doi]!!.first, doiToSeqSet[doi]!!.second)
+                }
+        }
+
+        // Insert connections in the join table
+        SeqSetToCitingSourceTable.batchInsert(joinData, ignore = true) { (sourceId, seqSetId, seqSetVersion) ->
+            this[SeqSetToCitingSourceTable.citingSourceId] = sourceId
+            this[SeqSetToCitingSourceTable.seqSetId] = seqSetId
+            this[SeqSetToCitingSourceTable.seqSetVersion] = seqSetVersion
+        }
+
+        // Return affected seqSet DOIs
+        return SeqSetCitationsUpdateResult(updatedDOIs, skippedDOIs)
     }
 
     fun getSeqSets(authenticatedUser: AuthenticatedUser): List<SeqSet> {

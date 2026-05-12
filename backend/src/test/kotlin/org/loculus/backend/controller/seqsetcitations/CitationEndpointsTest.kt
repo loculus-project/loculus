@@ -9,8 +9,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.SeqSetCitation
+import org.loculus.backend.api.CitationSourceType
 import org.loculus.backend.api.SeqSetCitationContributor
+import org.loculus.backend.api.SeqSetCitingSource
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
@@ -151,9 +152,9 @@ class CitationEndpointsTest(
             .andExpect(status().isOk)
 
         val seqSetDOI = "${MOCK_DOI_PREFIX}/$seqSetId.$seqSetVersion"
-        val seqSetCitation = SeqSetCitation(
-            seqSetDOI = seqSetDOI,
-            citationDOI = "10.5678/citing-paper",
+        val seqSetCitingSource = SeqSetCitingSource(
+            sourceId = "10.5678/citing-paper",
+            sourceType = CitationSourceType.DOI,
             title = "A paper citing the seqSet",
             year = "2024",
             contributors = listOf(SeqSetCitationContributor(givenName = "Jane", surname = "Doe")),
@@ -161,18 +162,20 @@ class CitationEndpointsTest(
 
         // Simulate running the task and updating citations
         every { crossRefService.isActive } returns true
-        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns listOf(seqSetCitation)
+        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
+            mapOf(seqSetDOI to listOf(seqSetCitingSource))
         updateSeqSetCitationsTask.task()
 
         client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$").isArray)
-            .andExpect(jsonPath("\$[0].citationDOI").value(seqSetCitation.citationDOI))
-            .andExpect(jsonPath("\$[0].title").value(seqSetCitation.title))
-            .andExpect(jsonPath("\$[0].year").value(seqSetCitation.year))
-            .andExpect(jsonPath("\$[0].contributors[0].givenName").value(seqSetCitation.contributors[0].givenName))
-            .andExpect(jsonPath("\$[0].contributors[0].surname").value(seqSetCitation.contributors[0].surname))
+            .andExpect(jsonPath("\$[0].sourceId").value(seqSetCitingSource.sourceId))
+            .andExpect(jsonPath("\$[0].sourceType").value(seqSetCitingSource.sourceType.name))
+            .andExpect(jsonPath("\$[0].title").value(seqSetCitingSource.title))
+            .andExpect(jsonPath("\$[0].year").value(seqSetCitingSource.year))
+            .andExpect(jsonPath("\$[0].contributors[0].givenName").value(seqSetCitingSource.contributors[0].givenName))
+            .andExpect(jsonPath("\$[0].contributors[0].surname").value(seqSetCitingSource.contributors[0].surname))
 
         client.deleteSeqSet(seqSetId, seqSetVersion)
             .andExpect(status().isUnprocessableEntity)

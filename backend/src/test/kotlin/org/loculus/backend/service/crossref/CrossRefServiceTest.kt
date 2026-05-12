@@ -4,8 +4,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.loculus.backend.SpringBootTestWithoutDatabase
-import org.loculus.backend.api.SeqSetCitation
+import org.loculus.backend.api.CitationSourceType
 import org.loculus.backend.api.SeqSetCitationContributor
+import org.loculus.backend.api.SeqSetCitingSource
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.Instant
 import java.time.LocalDate
@@ -57,24 +58,28 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         val result = crossRefService.parseCrossRefCitedByXML(xml)
 
         assertEquals(
-            listOf(
-                SeqSetCitation(
-                    seqSetDOI = "10.1234/seqset-1",
-                    citationDOI = "10.5678/paper-1",
-                    title = "A citing paper",
-                    year = "2024",
-                    contributors = listOf(
-                        SeqSetCitationContributor(givenName = "Jane", surname = "Doe"),
-                        SeqSetCitationContributor(givenName = "John", surname = "Smith"),
+            mapOf(
+                "10.1234/seqset-1" to listOf(
+                    SeqSetCitingSource(
+                        sourceId = "10.5678/paper-1",
+                        sourceType = CitationSourceType.DOI,
+                        title = "A citing paper",
+                        year = "2024",
+                        contributors = listOf(
+                            SeqSetCitationContributor(givenName = "Jane", surname = "Doe"),
+                            SeqSetCitationContributor(givenName = "John", surname = "Smith"),
+                        ),
                     ),
                 ),
-                SeqSetCitation(
-                    seqSetDOI = "10.1234/seqset-2",
-                    citationDOI = "10.5678/paper-2",
-                    title = "Another citing paper",
-                    year = "2023",
-                    contributors = listOf(
-                        SeqSetCitationContributor(givenName = "Alice", surname = "Jones"),
+                "10.1234/seqset-2" to listOf(
+                    SeqSetCitingSource(
+                        sourceId = "10.5678/paper-2",
+                        sourceType = CitationSourceType.DOI,
+                        title = "Another citing paper",
+                        year = "2023",
+                        contributors = listOf(
+                            SeqSetCitationContributor(givenName = "Alice", surname = "Jones"),
+                        ),
                     ),
                 ),
             ),
@@ -109,7 +114,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         val result = crossRefService.parseCrossRefCitedByXML(xml)
 
         assertEquals(1, result.size)
-        assertEquals("10.1234/seqset-2", result[0].seqSetDOI)
+        assertTrue(result.containsKey("10.1234/seqset-2"))
     }
 
     @Test
@@ -126,8 +131,16 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
 
         assertEquals(1, result.size)
         assertEquals(
-            SeqSetCitation(seqSetDOI = "", citationDOI = "", title = "", year = "", contributors = emptyList()),
-            result[0],
+            listOf(
+                SeqSetCitingSource(
+                    sourceId = "",
+                    sourceType = CitationSourceType.DOI,
+                    title = "",
+                    year = "",
+                    contributors = emptyList(),
+                ),
+            ),
+            result[""],
         )
     }
 

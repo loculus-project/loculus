@@ -3,7 +3,6 @@ package org.loculus.backend.api
 import io.swagger.v3.oas.annotations.media.Schema
 import org.loculus.backend.utils.Accession
 import java.sql.Timestamp
-import java.util.*
 
 data class SubmittedSeqSetRecord(
     @Schema(
@@ -59,12 +58,23 @@ data class SeqSet(
 
 data class SeqSetCitationContributor(val givenName: String, val surname: String)
 
-data class SeqSetCitation(
-    val seqSetDOI: String,
-    val citationDOI: String,
+enum class CitationSourceType {
+    DOI,
+    URL,
+}
+
+enum class CitationOrigin {
+    CROSSREF,
+    CURATED,
+}
+
+data class SeqSetCitingSource(
+    val sourceId: String,
+    val sourceType: CitationSourceType,
     val title: String,
     val year: String,
     val contributors: List<SeqSetCitationContributor>,
+    val seqSetDOIs: Set<String> = emptySet(),
 )
 
 data class SeqSetCitationsUpdateResult(val updatedSeqSetDOIs: Set<String>, val skippedSeqSetDOIs: Set<String>)
