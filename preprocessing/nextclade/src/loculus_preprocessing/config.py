@@ -44,8 +44,8 @@ class ProcessingSpec(BaseModel):
 
 class AlignmentRequirement(StrEnum):
     # Determines whether ALL or ANY segments that a user provides must align.
-    # ANY: warn if some segments fail and some segments align
-    # ALL: error if any segment fails even if some segments align
+    # ANY: warn if some segments can be assigned and not aligned while other segments align
+    # ALL: error if any segment fails alignment even if some segments align
     # NONE: do not align any segments, just process them as-is
     # - set if no nextclade dataset is provided
     ANY = "ANY"

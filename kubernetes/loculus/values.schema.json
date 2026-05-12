@@ -714,7 +714,7 @@
                     "docsIncludePrefix": false,
                     "type": "string",
                     "enum": ["ALL", "ANY"],
-                    "description": "If multi-segmented viruses should require ALL segments (that the user provides) align or ANY segment aligns"
+                    "description": "If multi-segmented viruses should require ALL segments (that the user provides) align or ANY segment aligns (in case ANY it must still be possible to assign the segments)"
                   },
                   "segment_classification_method": {
                     "groups": ["nextcladePipelineConfigFile"],
