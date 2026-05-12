@@ -19,16 +19,17 @@ import MdiChevronUpDown from '~icons/mdi/chevron-up-down';
 import MdiTick from '~icons/mdi/tick';
 
 const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
-    <TextField
-        ref={ref}
-        fieldValue={props.value}
-        onChange={props.onChange}
-        onFocus={props.onFocus}
-        disabled={props.disabled}
-        autoComplete='off'
-        label={props.placeholder ?? ''}
-        className='pr-16'
-    />
+    <div className='[&_input]:pr-16'>
+        <TextField
+            ref={ref}
+            fieldValue={props.value}
+            onChange={props.onChange}
+            onFocus={props.onFocus}
+            disabled={props.disabled}
+            autoComplete='off'
+            label={props.placeholder ?? ''}
+        />
+    </div>
 ));
 
 const logger = getClientLogger('SingleChoiceAutoCompleteField');
