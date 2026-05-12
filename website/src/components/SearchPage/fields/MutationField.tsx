@@ -69,7 +69,7 @@ export const MutationField: FC<MutationFieldProps> = ({ singleSegmentAndGeneInfo
                         isFocused={hasFocus}
                         hasContent={selectedOptions.length > 0 || inputValue !== ''}
                         borderClassName={hasFocus ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'}
-                        className='shadow-sm'
+                        className='shadow-sm hover:border-gray-400 transition-colors'
                         htmlFor={domId}
                     >
                         {selectedOptions.length > 0 && (
