@@ -61,6 +61,8 @@ export const SingleChoiceAutoCompleteField = ({
         }
     }, [error]);
 
+    const valueToLabel = useMemo(() => new Map(options.map((o) => [o.value, o.option])), [options]);
+
     const filteredOptions = useMemo(() => {
         const allMatchedOptions =
             query === ''
@@ -100,7 +102,8 @@ export const SingleChoiceAutoCompleteField = ({
                                 if (value === null || value === NULL_QUERY_VALUE) {
                                     return '(blank)';
                                 }
-                                return String(value);
+                                const stringValue = String(value);
+                                return valueToLabel.get(stringValue) ?? stringValue;
                             }}
                             onChange={(event) => setQuery(event.target.value)}
                             onFocus={load}
@@ -152,11 +155,9 @@ export const SingleChoiceAutoCompleteField = ({
                                                     >
                                                         {fieldDisplayNameMap?.get(option.option) ?? option.option}
                                                     </span>
-                                                    {option.count !== undefined && (
-                                                        <span className='inline-block ml-1'>
-                                                            ({formatNumberWithDefaultLocale(option.count)})
-                                                        </span>
-                                                    )}
+                                                    <span className='inline-block ml-1'>
+                                                        ({formatNumberWithDefaultLocale(option.count)})
+                                                    </span>
                                                     {selected && (
                                                         <span
                                                             className={`absolute inset-y-0 left-0 flex items-center pl-3 ${

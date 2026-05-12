@@ -246,12 +246,7 @@ class AssemblyTableEntry(Base):
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
-type TableEntry = (
-    SubmissionTableEntry
-    | ProjectTableEntry
-    | SampleTableEntry
-    | AssemblyTableEntry
-)
+type TableEntry = SubmissionTableEntry | ProjectTableEntry | SampleTableEntry | AssemblyTableEntry
 
 
 def highest_version_in_submission_table(engine: Engine) -> dict[Accession, Version]:
@@ -265,9 +260,7 @@ def highest_version_in_submission_table(engine: Engine) -> dict[Accession, Versi
     return {row.accession: row.version for row in rows}
 
 
-def find_conditions_in_db[
-    T: TableEntry
-](
+def find_conditions_in_db[T: TableEntry](
     engine: Engine,
     model_class: type[T],
     conditions: dict[str, Any],
@@ -289,9 +282,7 @@ def find_conditions_in_db[
         return rows
 
 
-def delete_records_in_db[
-    T: TableEntry
-](
+def delete_records_in_db[T: TableEntry](
     engine: Engine,
     model_class: type[T],
     conditions: dict[str, Any],
@@ -369,9 +360,7 @@ def find_waiting_in_db(
         return rows
 
 
-def update_db_where_conditions[
-    T: TableEntry
-](
+def update_db_where_conditions[T: TableEntry](
     engine: Engine,
     model_class: type[T],
     conditions: Mapping[str, Any],
@@ -415,9 +404,7 @@ def update_db_where_conditions[
     return updated_row_count
 
 
-def update_with_retry[
-    T: TableEntry
-](
+def update_with_retry[T: TableEntry](
     db_engine: Engine,
     conditions: Mapping[str, Any],
     model_class: type[T],

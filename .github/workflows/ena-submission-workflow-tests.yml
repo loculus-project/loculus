@@ -54,7 +54,7 @@ jobs:
             -locations=filesystem:./ena-submission/flyway/sql \
             migrate
       - name: Set up micromamba
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with: 
             environment-file: ena-submission/environment.yml
             micromamba-version: 'latest'

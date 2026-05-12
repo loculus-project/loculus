@@ -34,7 +34,7 @@ export const performLapisSearchQueries = async (
 
     const segmentAndGeneInfo = getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferences);
 
-    const filterSchema = new MetadataFilterSchema(schema.metadata);
+    const filterSchema = new MetadataFilterSchema(schema.metadata, schema.multiFieldSearches);
     const fieldValues = filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues, referenceGenomesInfo);
     const fieldFilter = new FieldFilterSet(
         filterSchema,

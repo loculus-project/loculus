@@ -37,6 +37,7 @@ jobs:
           - 277944   # Coronavirus NL63
           - 290028   # Coronavirus HKU1
           - 3050294  # Chickenpox virus
+          - 1980442  # Orthohantavirus
       fail-fast: false
     uses: ./.github/workflows/datasets-mirror.yml
     secrets: inherit

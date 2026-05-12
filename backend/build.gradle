@@ -63,7 +63,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-security"
 
     implementation 'org.apache.commons:commons-compress'
-    implementation 'com.github.luben:zstd-jni:1.5.7-7'
+    implementation 'com.github.luben:zstd-jni:1.5.7-8'
     implementation 'org.tukaani:xz:1.12'
 
     implementation("org.redundent:kotlin-xml-builder:1.9.3")

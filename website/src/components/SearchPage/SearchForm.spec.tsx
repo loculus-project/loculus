@@ -97,7 +97,7 @@ const renderSearchForm = ({
         referenceSelection,
     };
 
-    render(
+    return render(
         <QueryClientProvider client={queryClient}>
             <SearchForm {...props} />
         </QueryClientProvider>,
@@ -131,6 +131,37 @@ describe('SearchForm', () => {
         const resetButton = screen.getByText('Reset');
         await userEvent.click(resetButton);
         expect(window.location.href).toMatch(/\/$/);
+    });
+
+    it('orders multi-field searches with metadata filters', () => {
+        const { container } = renderSearchForm({
+            filterSchema: new MetadataFilterSchema(
+                [
+                    {
+                        name: 'field1',
+                        type: 'string',
+                        displayName: 'Field 1',
+                        initiallyVisible: true,
+                        orderInSearchDisplay: 10,
+                    },
+                ],
+                [
+                    {
+                        name: 'identifier',
+                        displayName: 'Identifier',
+                        fields: ['field1'],
+                        orderInSearchDisplay: 0,
+                    },
+                ],
+            ),
+            searchVisibilities: new Map([['field1', new MetadataVisibility(true, undefined, undefined)]]),
+        });
+
+        const identifierField = screen.getByLabelText('Identifier');
+        const metadataField = screen.getByLabelText('Field 1');
+        const inputs = Array.from(container.querySelectorAll<HTMLElement>('input'));
+
+        expect(inputs.indexOf(identifierField)).toBeLessThan(inputs.indexOf(metadataField));
     });
 
     it('should render the reference selector in the multiReference case', async () => {

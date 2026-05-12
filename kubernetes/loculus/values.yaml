@@ -1235,7 +1235,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           displayGroup: lengthCompleteness
           label: Length
       - name: hostTaxonId
-        type: int
+        type: string
         autocomplete: true
         displayName: "Host species"
         definition: "Taxon ID for the host."
@@ -1254,7 +1254,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             hostNameScientific: hostNameScientific
             hostTaxonId: hostTaxonId
           args:
-            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+            taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
       - name: hostNameScientific
         displayName: Host name - scientific
         definition: "The scientific name of the host from which the sample was collected."
@@ -1274,7 +1274,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             hostTaxonId: processed.hostTaxonId
             hostNameScientific: hostNameScientific
           args:
-            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+            taxonomy_service_url: *taxonomy_service_url
       - name: hostNameCommon
         displayName: Host name - common
         definition: "The common name of the host from which the sample was collected."
@@ -1293,7 +1293,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             hostTaxonId: processed.hostTaxonId
           args:
-            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+            taxonomy_service_url: *taxonomy_service_url
       - name: isLabHost
         displayName: Is lab host
         definition: "If a laboratory host (e.g. cultured cell line) was used to propagate the sample."
@@ -1491,6 +1491,28 @@ defaultOrganismConfig: &defaultOrganismConfig
         - length
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
+      multiFieldSearches:
+        - name: identifier
+          displayName: Sample Identifier
+          orderInSearchDisplay: -10000
+          fields:
+            - accessionVersion
+            - submissionId
+            - insdcAccessionFull
+            - bioprojectAccession
+            - gcaAccession
+            - biosampleAccession
+            - insdcRawReadsAccession
+        - name: contributor
+          displayName: Contributor
+          orderInSearchDisplay: -9999
+          fields:
+            - authors
+            - authorAffiliations
+            - sequencedByOrganization
+            - sequencedByContactName
+            - submitter
+            - groupName
     extraInputFields:
       - &hostConfig
         name: host
@@ -1511,7 +1533,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         - "prepro"
       replicas: 1
       taxonomyServiceArgs: &preprocessingTaxonomyServiceArgs
-        taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+        taxonomy_service_url: *taxonomy_service_url
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         batch_size: 100
@@ -1632,7 +1654,10 @@ defaultOrganisms:
               # - Identifier is the second to last field (extracted through named capture group)
               regex_pattern: '^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$'
         - name: hostTaxonId
-          type: int
+          type: string
+          hierarchicalFilter: *taxonomy_service_url
+          hierarchicalSearchLabel: "include subtaxa"
+          initiallyVisible: true
           autocomplete: true
           displayName: "Host species"
           definition: "Taxon ID for the host."
@@ -1652,7 +1677,7 @@ defaultOrganisms:
               hostNameScientific: hostNameScientific
               hostTaxonId: hostTaxonId
             args:
-              taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+              taxonomy_service_url: *taxonomy_service_url
         - name: lineage
           displayName: Lineage
           definition: "Assigned clade label from the nearest reference tree node."
@@ -2721,7 +2746,7 @@ enaDeposition:
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
 taxonomyService:
-  dbVersion: "ncbi_taxonomy_latest"
+  dbVersion: "ncbi_taxonomy_2026-05-01"
   taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
 subdomainSeparator: "-"
 replicas:

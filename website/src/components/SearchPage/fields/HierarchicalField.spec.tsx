@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { LineageField } from './LineageField';
+import { HierarchicalField } from './HierarchicalField.tsx';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-import type { MetadataFilter } from '../../../types/config';
-import { Button } from '../../common/Button';
+import type { MetadataFilter } from '../../../types/config.ts';
+import { Button } from '../../common/Button.tsx';
 
 vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({
@@ -24,7 +24,7 @@ lapisClientHooks.mockReturnValue({
     useLineageDefinition: mockUseLineageDefinition,
 });
 
-describe('LineageField', () => {
+describe('HierarchicalField - lineage mode', () => {
     const field: MetadataFilter = { name: 'lineage', displayName: 'My Lineage', type: 'string' };
     const setSomeFieldValues = vi.fn();
     const lapisUrl = 'https://example.com/api';
@@ -76,12 +76,13 @@ describe('LineageField', () => {
 
     it('renders correctly with initial state', () => {
         render(
-            <LineageField
+            <HierarchicalField
                 field={field}
                 fieldValue='initialValue'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                mode='lineage'
             />,
         );
 
@@ -94,12 +95,13 @@ describe('LineageField', () => {
 
     it('updates query when sublineages checkbox is toggled', () => {
         render(
-            <LineageField
+            <HierarchicalField
                 field={field}
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                mode='lineage'
             />,
         );
 
@@ -112,12 +114,13 @@ describe('LineageField', () => {
 
     it('aggregates counts for aliases correctly', async () => {
         render(
-            <LineageField
+            <HierarchicalField
                 field={field}
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                mode='lineage'
             />,
         );
 
@@ -125,7 +128,7 @@ describe('LineageField', () => {
 
         const options = await screen.findAllByRole('option');
         expect(options.length).toBe(5);
-        expect(options[0].textContent).toBe('A');
+        expect(options[0].textContent).toBe('A(0)');
         expect(options[1].textContent).toBe('A.1(10)');
         // A.1.1.1 and B.1 are aliases -> B.1 should have aggregated count
         expect(options[4].textContent).toBe('B.1(35)');
@@ -133,12 +136,13 @@ describe('LineageField', () => {
 
     it('aggregates counts for sublineages correctly', async () => {
         render(
-            <LineageField
+            <HierarchicalField
                 field={field}
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                mode='lineage'
             />,
         );
 
@@ -157,19 +161,20 @@ describe('LineageField', () => {
 
     it('handles input changes and calls setSomeFieldValues', async () => {
         render(
-            <LineageField
+            <HierarchicalField
                 field={field}
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                mode='lineage'
             />,
         );
 
         await userEvent.click(screen.getByLabelText('My Lineage'));
 
-        const options = await screen.findAllByRole('option');
-        await userEvent.click(options[2]);
+        await screen.findAllByRole('option');
+        await userEvent.click(screen.getByRole('option', { name: /A\.1\.1/ }));
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1.1']);
 
@@ -182,12 +187,13 @@ describe('LineageField', () => {
 
     it('clears wildcard when sublineages is unchecked', () => {
         render(
-            <LineageField
+            <HierarchicalField
                 field={field}
                 fieldValue='value*'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
                 lapisSearchParameters={lapisSearchParameters}
+                mode='lineage'
             />,
         );
 
@@ -205,12 +211,13 @@ describe('LineageField', () => {
 
             return (
                 <>
-                    <LineageField
+                    <HierarchicalField
                         field={field}
                         fieldValue={value}
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
                         lapisSearchParameters={lapisSearchParameters}
+                        mode='lineage'
                     />
                     <Button onClick={() => setValue('')}>reset</Button>
                 </>
@@ -228,5 +235,178 @@ describe('LineageField', () => {
 
         expect(checkbox).not.toBeChecked();
         expect(textbox).toHaveValue('');
+    });
+});
+describe('HierarchicalField - default mode', () => {
+    const field: MetadataFilter = {
+        name: 'hostTaxon',
+        displayName: 'Host Taxon',
+        type: 'string',
+        hierarchicalSearchLabel: 'include subtaxa',
+    };
+    const setSomeFieldValues = vi.fn();
+    const lapisUrl = 'https://example.com/api';
+    const lapisSearchParameters = {};
+
+    beforeEach(() => {
+        setSomeFieldValues.mockClear();
+
+        mockUseLineageDefinition.mockReturnValue({
+            /* eslint-disable @typescript-eslint/naming-convention */
+            data: {
+                'Mammalia': {},
+                'Rodentia': {
+                    parents: ['Mammalia'],
+                },
+                'Muridae': {
+                    parents: ['Rodentia'],
+                    aliases: ['True mice'],
+                },
+                'Mus musculus': {
+                    parents: ['Muridae'],
+                    aliases: ['House mouse'],
+                },
+                'Rattus rattus': {
+                    parents: ['Rodentia'],
+                    aliases: ['Black rat'],
+                },
+            },
+            /* eslint-enable @typescript-eslint/naming-convention */
+            isLoading: false,
+            error: null,
+            mutate: vi.fn(),
+        });
+
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [
+                    { hostTaxon: 'Mammalia', count: 2 },
+                    { hostTaxon: 'Rodentia', count: 10 },
+                    { hostTaxon: 'Muridae', count: 5 },
+                    { hostTaxon: 'Mus musculus', count: 20 },
+                    { hostTaxon: 'Rattus rattus', count: 8 },
+                ],
+            },
+            isPending: false,
+            error: null,
+            mutate: vi.fn(),
+        });
+    });
+
+    it('defaults the subtaxa checkbox to checked when fieldValue is empty', () => {
+        render(
+            <HierarchicalField
+                field={field}
+                fieldValue=''
+                setSomeFieldValues={setSomeFieldValues}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
+            />,
+        );
+
+        expect(screen.getByRole('checkbox')).toBeChecked();
+    });
+
+    it('appends wildcard when selecting from an empty field', async () => {
+        render(
+            <HierarchicalField
+                field={field}
+                fieldValue=''
+                setSomeFieldValues={setSomeFieldValues}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
+            />,
+        );
+
+        await userEvent.click(screen.getByLabelText('Host Taxon'));
+        await screen.findAllByRole('option');
+        await userEvent.click(screen.getByRole('option', { name: /Rodentia/ }));
+
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['hostTaxon', 'Rodentia*']);
+    });
+
+    it('respects an explicit non-wildcard fieldValue', () => {
+        render(
+            <HierarchicalField
+                field={field}
+                fieldValue='Rodentia'
+                setSomeFieldValues={setSomeFieldValues}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
+            />,
+        );
+
+        expect(screen.getByRole('checkbox')).not.toBeChecked();
+    });
+
+    it('shows common names instead of scientific names when an alias exists', async () => {
+        render(
+            <HierarchicalField
+                field={field}
+                fieldValue=''
+                setSomeFieldValues={setSomeFieldValues}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
+            />,
+        );
+
+        await userEvent.click(screen.getByLabelText('Host Taxon'));
+        const optionTexts = (await screen.findAllByRole('option')).map((o) => o.textContent);
+
+        // Muridae → 'True mice', Mus musculus → 'House mouse', Rattus rattus → 'Black rat'
+        expect(optionTexts).toEqual([
+            'Black rat(8)',
+            'House mouse(20)',
+            'Mammalia(45)',
+            'Rodentia(43)',
+            'True mice(25)',
+        ]);
+    });
+
+    it('uses the scientific name as the value when a common name is selected', async () => {
+        render(
+            <HierarchicalField
+                field={field}
+                fieldValue=''
+                setSomeFieldValues={setSomeFieldValues}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
+            />,
+        );
+
+        await userEvent.click(screen.getByLabelText('Host Taxon'));
+        await screen.findAllByRole('option');
+        // 'True mice' is the alias for canonical 'Muridae'
+        await userEvent.click(screen.getByRole('option', { name: /True mice/ }));
+
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['hostTaxon', 'Muridae*']);
+    });
+
+    it('displays the common name in the input when fieldValue is a scientific name with an alias', async () => {
+        render(
+            <HierarchicalField
+                field={field}
+                fieldValue='Mus musculus*'
+                setSomeFieldValues={setSomeFieldValues}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
+            />,
+        );
+
+        expect(await screen.findByDisplayValue('House mouse')).toBeInTheDocument();
+    });
+
+    it('uses the hierarchicalSearchLabel as the checkbox label', () => {
+        render(
+            <HierarchicalField
+                field={field}
+                fieldValue=''
+                setSomeFieldValues={setSomeFieldValues}
+                lapisUrl={lapisUrl}
+                lapisSearchParameters={lapisSearchParameters}
+            />,
+        );
+
+        expect(screen.getByText('include subtaxa')).toBeInTheDocument();
     });
 });

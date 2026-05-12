@@ -9,15 +9,22 @@ import { SegmentFilter } from './SegmentFilter.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
-import { LineageField } from './fields/LineageField.tsx';
+import { HierarchicalField } from './fields/HierarchicalField.tsx';
 import { MultiChoiceAutoCompleteField } from './fields/MultiChoiceAutoCompleteField';
+import { MultiFieldSearchField } from './fields/MultiFieldSearchField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { SingleChoiceAutoCompleteField } from './fields/SingleChoiceAutoCompleteField.tsx';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
-import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
+import type {
+    FieldValues,
+    GroupedMetadataFilter,
+    MetadataFilter,
+    MultiFieldSearch,
+    SetSomeFieldValues,
+} from '../../types/config.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
@@ -88,6 +95,18 @@ interface SearchFormProps {
     referenceSelection: ReferenceSelection;
 }
 
+const MetadataFilterItemKind = {
+    metadata: 'metadata',
+    multiFieldSearch: 'multiFieldSearch',
+} as const;
+
+type MetadataFilterItem =
+    | { kind: typeof MetadataFilterItemKind.metadata; field: GroupedMetadataFilter | MetadataFilter }
+    | { kind: typeof MetadataFilterItemKind.multiFieldSearch; field: MultiFieldSearch };
+
+const getSearchDisplayOrder = (field: GroupedMetadataFilter | MetadataFilter | MultiFieldSearch) =>
+    field.orderInSearchDisplay ?? ('order' in field ? field.order : undefined) ?? Number.POSITIVE_INFINITY;
+
 export const SearchForm = ({
     filterSchema,
     fieldValues,
@@ -121,11 +140,7 @@ export const SearchForm = ({
         )
         .filter((field) => !excluded.has(field.name));
 
-    visibleFields.sort(
-        (a, b) =>
-            (a.orderInSearchDisplay ?? a.order ?? Number.POSITIVE_INFINITY) -
-            (b.orderInSearchDisplay ?? b.order ?? Number.POSITIVE_INFINITY),
-    );
+    visibleFields.sort((a, b) => getSearchDisplayOrder(a) - getSearchDisplayOrder(b));
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);
@@ -197,6 +212,18 @@ export const SearchForm = ({
 
         return { sampleFields, sequenceFieldsBySegment };
     }, [visibleFields]);
+
+    const metadataFilterItems: MetadataFilterItem[] = useMemo(
+        () =>
+            [
+                ...sampleFields.map((field) => ({ kind: MetadataFilterItemKind.metadata, field })),
+                ...filterSchema.multiFieldSearches.map((field) => ({
+                    kind: MetadataFilterItemKind.multiFieldSearch,
+                    field,
+                })),
+            ].sort((a, b) => getSearchDisplayOrder(a.field) - getSearchDisplayOrder(b.field)),
+        [filterSchema.multiFieldSearches, sampleFields],
+    );
 
     const segmentAndGeneInfo = useMemo(() => {
         return getSegmentNames(referenceGenomesInfo).reduce<Record<string, SingleSegmentAndGeneInfo | null>>(
@@ -328,16 +355,25 @@ export const SearchForm = ({
 
                         <section className='flex flex-col gap-1.5'>
                             <CollapsibleSection title='Metadata Filters' open>
-                                {sampleFields.map((filter) => (
-                                    <SearchField
-                                        key={filter.name}
-                                        field={filter}
-                                        lapisUrl={lapisUrl}
-                                        fieldValues={fieldValues}
-                                        setSomeFieldValues={setSomeFieldValues}
-                                        lapisSearchParameters={lapisSearchParameters}
-                                    />
-                                ))}
+                                {metadataFilterItems.map((item) =>
+                                    item.kind === MetadataFilterItemKind.metadata ? (
+                                        <SearchField
+                                            key={item.field.name}
+                                            field={item.field}
+                                            lapisUrl={lapisUrl}
+                                            fieldValues={fieldValues}
+                                            setSomeFieldValues={setSomeFieldValues}
+                                            lapisSearchParameters={lapisSearchParameters}
+                                        />
+                                    ) : (
+                                        <MultiFieldSearchField
+                                            key={item.field.name}
+                                            multiFieldSearch={item.field}
+                                            fieldValue={(fieldValues[item.field.name] as string | undefined) ?? ''}
+                                            setSomeFieldValues={setSomeFieldValues}
+                                        />
+                                    ),
+                                )}
                             </CollapsibleSection>
                         </section>
 
@@ -428,14 +464,15 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 />
             );
         default:
-            if (field.lineageSearch) {
+            if (field.lineageSearch || field.hierarchicalSearch) {
                 return (
-                    <LineageField
+                    <HierarchicalField
                         field={field}
                         fieldValue={(fieldValues[field.name] ?? '') as string}
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
                         lapisSearchParameters={lapisSearchParameters}
+                        mode={field.lineageSearch ? 'lineage' : 'default'}
                     />
                 );
             }

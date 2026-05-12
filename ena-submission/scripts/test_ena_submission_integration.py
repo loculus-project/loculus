@@ -16,6 +16,7 @@ import re
 import uuid
 from dataclasses import asdict
 from datetime import datetime, timedelta
+from itertools import chain, repeat
 from typing import Any, Final
 from unittest.mock import Mock, patch
 
@@ -425,22 +426,22 @@ def _test_assembly_submission_errored(
 def _test_successful_sample_submission(
     db_engine: Engine, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
-    create_sample_sync_state_with_submission_table(db_engine, config=config)
+    create_sample_sync_state_with_submission_table(db_engine)
     check_sample_submission_started(db_engine, sequences_to_upload)
 
     sample_table_create(db_engine, config)
-    create_sample_sync_state_with_submission_table(db_engine, config)
+    create_sample_sync_state_with_submission_table(db_engine)
     check_sample_submission_submitted(db_engine, sequences_to_upload)
 
 
 def _test_successful_project_submission(
     db_engine: Engine, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
-    create_project_sync_state_with_submission_table(db_engine, config)
+    create_project_sync_state_with_submission_table(db_engine)
     check_project_submission_started(db_engine, sequences_to_upload)
 
     project_table_create(db_engine, config)
-    create_project_sync_state_with_submission_table(db_engine, config)
+    create_project_sync_state_with_submission_table(db_engine)
     check_project_submission_submitted(db_engine, sequences_to_upload)
 
 
@@ -796,8 +797,7 @@ class TestKnownBioproject(TestSubmission):
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
-        create_project_sync_state_with_submission_table(self.db_engine, self.config)
-        check_project_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
         _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
@@ -808,11 +808,13 @@ class TestKnownBioproject(TestSubmission):
 
 class TestIncorrectBioprojectPassed(TestSubmission):
     @patch("ena_deposition.notifications.notify", autospec=True)
-    def test_submit(self, mock_notify: Mock) -> None:
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    def test_submit(self, mock_get_group_info: Mock, mock_notify: Mock) -> None:
         """
         Test submitting sequences with an incorrect bioproject - this should fail
         """
         # get data
+        mock_get_group_info.return_value = TEST_GROUP
         mock_notify.return_value = None
         sequences_to_upload = get_sequences()
         for entry in sequences_to_upload.values():  # set to invalid bioproject
@@ -823,7 +825,8 @@ class TestIncorrectBioprojectPassed(TestSubmission):
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # check project submission fails and sends notification
-        create_project_sync_state_with_submission_table(self.db_engine, self.config)
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
         check_project_submission_has_errors(self.db_engine, sequences_to_upload)
         project_table_handle_errors(
             self.db_engine,
@@ -836,6 +839,33 @@ class TestIncorrectBioprojectPassed(TestSubmission):
             "in status HAS_ERRORS or SUBMITTING for over 0m"
         )
         mock_notify.assert_called_once_with(self.slack_config, msg)
+
+        project_table_handle_errors(
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=5),
+        )
+
+        # Confirm DB entry is reset to READY to retry submission
+        check_project_submission_started(self.db_engine, sequences_to_upload)
+
+        # Confirm DB entry is still in error state after retrying submission
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
+        check_project_submission_has_errors(self.db_engine, sequences_to_upload)
+
+        # Confirm retries dont change state
+        project_table_handle_errors(
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=10),
+        )
+        check_project_submission_started(self.db_engine, sequences_to_upload)
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
+        check_project_submission_has_errors(self.db_engine, sequences_to_upload)
 
 
 class TestKnownBioprojectAndBioSample(TestSubmission):
@@ -860,9 +890,127 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
-        create_project_sync_state_with_submission_table(self.db_engine, self.config)
-        check_project_submission_submitted(self.db_engine, sequences_to_upload)
-        create_sample_sync_state_with_submission_table(self.db_engine, config=self.config)
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
+
+        # send to loculus
+        get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
+        check_sent_to_loculus(self.db_engine, sequences_to_upload)
+
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    @patch("ena_deposition.create_project.accession_exists", autospec=True)
+    @patch("ena_deposition.notifications.notify", autospec=True)
+    def test_bioproject_retry(
+        self,
+        mock_notify: Mock,
+        mock_accession_exists: Mock,
+        mock_get_group_info: Mock,
+        mock_submit_external_metadata: Mock,
+    ) -> None:
+        """
+        Test submitting sequences with accurate data and known bioproject and biosample
+        Force accession_exists test to fail on first attempt to simulate ENA
+        not processing submission in time, then retrying and succeeding
+        """
+        # get data
+        mock_get_group_info.return_value = TEST_GROUP
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        mock_accession_exists.side_effect = chain([False], repeat(True))
+        mock_notify.return_value = None
+
+        sequences_to_upload = get_sequences()
+        for entry in sequences_to_upload.values():  # set to public bioproject and biosample
+            entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
+            entry["metadata"]["biosampleAccession"] = "SAMN11077987"
+
+        # upload
+        upload_sequences(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
+
+        # check project submission fails
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
+        check_project_submission_has_errors(self.db_engine, sequences_to_upload)
+
+        # Confirm DB entry is reset to READY to retry submission
+        project_table_handle_errors(
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=5),
+        )
+        check_project_submission_started(self.db_engine, sequences_to_upload)
+
+        # submit
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
+
+        # send to loculus
+        get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
+        check_sent_to_loculus(self.db_engine, sequences_to_upload)
+
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    @patch("ena_deposition.create_sample.accession_exists", autospec=True)
+    @patch("ena_deposition.notifications.notify", autospec=True)
+    def test_biosample_retry(
+        self,
+        mock_notify: Mock,
+        mock_accession_exists: Mock,
+        mock_get_group_info: Mock,
+        mock_submit_external_metadata: Mock,
+    ) -> None:
+        """
+        Test submitting sequences with accurate data and known bioproject and biosample
+        Force accession_exists test to fail on first biosample query to simulate ENA
+        not processing submission in time, then retrying and succeeding
+        """
+        # get data
+        mock_get_group_info.return_value = TEST_GROUP
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        mock_accession_exists.side_effect = chain([False], repeat(True))
+        mock_notify.return_value = None
+
+        sequences_to_upload = get_sequences()
+        for entry in sequences_to_upload.values():  # set to public bioproject and biosample
+            entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
+            entry["metadata"]["biosampleAccession"] = "SAMN11077987"
+
+        # upload
+        upload_sequences(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
+
+        # submit
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
+
+        # check sample submission fails and sends notification
+        create_sample_sync_state_with_submission_table(self.db_engine)
+        sample_table_create(self.db_engine, self.config)
+        check_sample_submission_has_errors(self.db_engine, sequences_to_upload)
+        sample_table_handle_errors(
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=5),
+        )
+        msg = (
+            f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in sample_table "
+            "in status HAS_ERRORS or SUBMITTING for over 0m"
+        )
+        mock_notify.assert_called_once_with(self.slack_config, msg)
+
+        # Confirm DB entry is reset to READY to retry submission
+        check_sample_submission_started(self.db_engine, sequences_to_upload)
+        create_sample_sync_state_with_submission_table(self.db_engine)
+        sample_table_create(self.db_engine, self.config)
+        create_sample_sync_state_with_submission_table(self.db_engine)
         check_sample_submission_submitted(self.db_engine, sequences_to_upload)
         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
@@ -872,15 +1020,9 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
 
 
 class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
-    @patch(
-        "ena_deposition.ena_submission_helper.update_with_retry",
-        autospec=True,
-    )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     @patch("ena_deposition.notifications.notify", autospec=True)
-    def test_submit(
-        self, mock_notify: Mock, mock_get_group_info: Mock, mock_update_with_retry: Mock
-    ) -> None:
+    def test_submit(self, mock_notify: Mock, mock_get_group_info: Mock) -> None:
         """
         Test submitting sequences with known public bioproject and invalid biosample
         """
@@ -897,11 +1039,11 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit project
-        create_project_sync_state_with_submission_table(self.db_engine, self.config)
-        check_project_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
 
         # check sample submission fails and sends notification
-        create_sample_sync_state_with_submission_table(self.db_engine, config=self.config)
+        create_sample_sync_state_with_submission_table(self.db_engine)
+        sample_table_create(self.db_engine, self.config)
         check_sample_submission_has_errors(self.db_engine, sequences_to_upload)
         sample_table_handle_errors(
             self.db_engine,
@@ -914,7 +1056,26 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
             "in status HAS_ERRORS or SUBMITTING for over 0m"
         )
         mock_notify.assert_called_once_with(self.slack_config, msg)
-        mock_update_with_retry.assert_called_once()
+
+        # Confirm DB entry is reset to READY to retry submission
+        check_sample_submission_started(self.db_engine, sequences_to_upload)
+
+        # Confirm DB entry is still in error state after retrying submission
+        create_project_sync_state_with_submission_table(self.db_engine)
+        sample_table_create(self.db_engine, self.config)
+        check_sample_submission_has_errors(self.db_engine, sequences_to_upload)
+
+        # Confirm retries dont change state
+        sample_table_handle_errors(
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=10),
+        )
+        check_sample_submission_started(self.db_engine, sequences_to_upload)
+        create_project_sync_state_with_submission_table(self.db_engine)
+        sample_table_create(self.db_engine, self.config)
+        check_sample_submission_has_errors(self.db_engine, sequences_to_upload)
 
 
 class TestRevisionAssemblyModificationTests(TestSubmission):
@@ -938,7 +1099,8 @@ class TestRevisionAssemblyModificationTests(TestSubmission):
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
-        create_project_sync_state_with_submission_table(self.db_engine, self.config)
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
         check_project_submission_submitted(self.db_engine, sequences_to_upload)
         _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
@@ -969,7 +1131,8 @@ class TestRevisionNoAssemblyModificationTests(TestSubmission):
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
-        create_project_sync_state_with_submission_table(self.db_engine, self.config)
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
         check_project_submission_submitted(self.db_engine, sequences_to_upload)
         _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
         _test_successful_assembly_submission_no_wait(
@@ -1007,7 +1170,7 @@ class TestRevisionWithManifestChangeTests(TestSubmission):
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
-        create_project_sync_state_with_submission_table(self.db_engine, self.config)
+        create_project_sync_state_with_submission_table(self.db_engine)
         check_project_submission_submitted(self.db_engine, sequences_to_upload)
         _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
 
