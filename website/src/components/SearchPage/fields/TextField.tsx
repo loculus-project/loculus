@@ -121,27 +121,30 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             label: label ?? '',
             step: props.type === 'int' ? 1 : undefined,
         };
+
         const helperTextClasses = getTheme().floatingLabel.helperText.default;
         const inputClasses = getTheme().floatingLabel.input.default.outlined.md;
         return (
-            <FloatingLabel
-                theme={{
-                    helperText: {
-                        default: `${helperTextClasses} my-1`,
-                    },
-                    input: {
-                        default: {
-                            outlined: {
-                                md: `${inputClasses} hover:border-gray-400 transition-colors`,
+            <div className='[&_label]:pointer-events-none'>
+                <FloatingLabel
+                    theme={{
+                        helperText: {
+                            default: `${helperTextClasses} my-1`,
+                        },
+                        input: {
+                            default: {
+                                outlined: {
+                                    md: `${inputClasses} hover:border-gray-400 transition-colors`,
+                                },
                             },
                         },
-                    },
-                }}
-                {...inputProps}
-                variant='outlined'
-                type={inputType}
-                value={fieldValue}
-            />
+                    }}
+                    {...inputProps}
+                    variant='outlined'
+                    type={inputType}
+                    value={fieldValue}
+                />
+            </div>
         );
     }
     const refTextArea = ref as ForwardedRef<HTMLTextAreaElement>;
@@ -169,7 +172,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
 
             <label
                 htmlFor={id}
-                className={`absolute text-sm text-gray-500 dark:text-gray-400 ${
+                className={`absolute text-sm text-gray-500 dark:text-gray-400 pointer-events-none ${
                     isTransitionEnabled ? 'duration-300' : ''
                 } transform -translate-y-3 scale-75 top-1 z-10 origin-[0] bg-white dark:bg-gray-900 px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-3 start-1 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto`}
             >
