@@ -27,7 +27,7 @@ const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputEl
         disabled={props.disabled}
         autoComplete='off'
         label={props.placeholder ?? ''}
-        className='pr-14'
+        className='pr-16'
     />
 ));
 
