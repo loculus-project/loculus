@@ -270,7 +270,7 @@ const InputModeTabs = ({
                 } hover:text-primary-600`}
                 href={inputModeUrl('form')}
             >
-                Submit single sequence
+                Submit individual sequence entry using a form
             </a>
         </div>
     );

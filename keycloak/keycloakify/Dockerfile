@@ -29,7 +29,7 @@ RUN if [ "$KEYCLOAK_MAJOR_VERSION" -le 25 ]; then \
 # https://docs.keycloakify.dev/targeting-specific-keycloak-versions
 # But for now this was the easiest way; In the future once we migrated away from KC<25 we can just get rid if this entirely
 
-FROM alpine:3.19
+FROM alpine:3.23
 RUN mkdir /output
 COPY --from=builder /app/keycloak-orcid*.jar /output/
 COPY --from=builder /app/loculus-theme.jar /output/

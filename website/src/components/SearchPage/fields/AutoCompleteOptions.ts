@@ -8,7 +8,7 @@ import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters.ts
 export type Option = {
     option: string;
     value: string; // Always a string, using NULL_QUERY_VALUE for nulls
-    count: number | undefined;
+    count: number;
 };
 
 /* Fetch options as all possible unique values for `fieldName` */
@@ -28,6 +28,15 @@ type LineageOptionsProvider = {
     lapisSearchParameters: LapisSearchParameters;
     fieldName: string;
     includeSublineages: boolean;
+    /**
+     * When true, show only the alias for a lineage (when one exists) instead of the canonical
+     * name. Used by hierarchical filters where the alias is the user-facing label.
+     */
+    showAlias?: boolean;
+    /**
+     * When false, only show options with a count higher than zero
+     */
+    includeZeroCounts?: boolean;
 };
 
 /* Defines where how the options in the dropdown of the AutocompleteField are fetched. */
@@ -159,6 +168,8 @@ const createLineageOptionsHook = (
     fieldName: string,
     lapisSearchParameters: LapisSearchParameters,
     includeSublineages: boolean,
+    showAlias: boolean,
+    includeZeroCounts: boolean,
 ): AutocompleteOptionsHook => {
     const otherFields = { ...lapisSearchParameters };
     delete otherFields[fieldName];
@@ -208,9 +219,14 @@ const createLineageOptionsHook = (
 
             // generate options
             Object.keys(lineageDefinition).forEach((lineageName) => {
-                let count: number | undefined = aggregatedCounts.get(lineageName);
-                if (count === 0) count = undefined;
-                options.push({ option: lineageName, value: lineageName, count });
+                const count: number = aggregatedCounts.get(lineageName) ?? 0;
+                if (count === 0) {
+                    if (!includeZeroCounts) return;
+                }
+
+                const aliases = lineageDefinition[lineageName].aliases ?? [];
+                const label = showAlias && aliases.length > 0 ? aliases[0] : lineageName;
+                options.push({ option: label, value: lineageName, count });
             });
         }
 
@@ -246,6 +262,8 @@ export const createOptionsProviderHook = (optionsProvider: OptionsProvider): Aut
                     optionsProvider.fieldName,
                     optionsProvider.lapisSearchParameters,
                     optionsProvider.includeSublineages,
+                    optionsProvider.showAlias ?? false,
+                    optionsProvider.includeZeroCounts ?? true,
                 ),
                 [optionsProvider],
             );

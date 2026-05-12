@@ -80,6 +80,8 @@ export const metadata = z.object({
     rangeOverlapSearch: rangeOverlapSearch.optional(),
     substringSearch: z.boolean().optional(),
     lineageSearch: z.boolean().optional(),
+    hierarchicalSearch: z.boolean().optional(),
+    hierarchicalSearchLabel: z.string().optional(),
     columnWidth: z.number().optional(),
     order: z.number().optional(),
     orderOnDetailsPage: z.number().optional(),
@@ -161,6 +163,15 @@ export const linkOut = z.object({
 
 export type LinkOut = z.infer<typeof linkOut>;
 
+export const multiFieldSearch = z.object({
+    name: z.string(),
+    displayName: z.string(),
+    fields: z.array(z.string()),
+    orderInSearchDisplay: z.number().optional(),
+});
+
+export type MultiFieldSearch = z.infer<typeof multiFieldSearch>;
+
 export const fileCategory = z.object({
     name: z.string(),
     displayName: z.string().optional(),
@@ -197,6 +208,7 @@ export const schema = z.object({
     richFastaHeaderFields: z.array(z.string()).optional(),
     linkOuts: z.array(linkOut).optional(),
     referenceIdentifierField: z.string().optional(),
+    multiFieldSearches: z.array(multiFieldSearch).optional(),
 });
 export type Schema = z.infer<typeof schema>;
 

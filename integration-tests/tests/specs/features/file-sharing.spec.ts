@@ -161,8 +161,9 @@ test('bulk revise 2 seqs with files', async ({ page, groupId, tmpDir }) => {
     await reviewPage2.releaseValidSequences();
 
     const searchPage2 = new SearchPage(page);
-    await searchPage2.goToReleasedSequences(ORGANISM_URL_NAME, groupId);
-    await page.goto(page.url() + '?column_submissionId=true');
+    await page.goto(
+        `/${ORGANISM_URL_NAME}/submission/${groupId}/released?column_submissionId=true`,
+    );
 
     // Check that revised sequences have the files
     await searchPage2.checkFileContentInModal('cell', revId1, REVISION_FILES);

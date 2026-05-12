@@ -88,7 +88,11 @@ export const InnerSearchFullUI = ({
     const hiddenValues: FieldValues = useMemo(() => hiddenFieldValues ?? {}, [hiddenFieldValues]);
 
     const metadataSchema = schema.metadata;
-    const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
+    const multiFieldSearches = schema.multiFieldSearches;
+    const filterSchema = useMemo(
+        () => new MetadataFilterSchema(metadataSchema, multiFieldSearches),
+        [metadataSchema, multiFieldSearches],
+    );
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 

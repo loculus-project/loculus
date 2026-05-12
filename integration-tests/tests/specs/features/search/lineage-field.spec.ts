@@ -37,8 +37,7 @@ test('Lineage field lineage counts', async ({ page, groupId }) => {
     const reviewPage = await submissionPage.submitSequence();
 
     await reviewPage.waitForZeroProcessing();
-    await reviewPage.releaseValidSequences();
-    await page.getByRole('link', { name: 'released sequences' }).click();
+    await reviewPage.releaseAndGoToReleasedSequences();
 
     while (!(await page.getByText('Search returned 6 sequences').isVisible())) {
         await page.reload();

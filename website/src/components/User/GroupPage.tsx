@@ -178,15 +178,21 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 </h1>
             )}
 
-            <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
+            <div className='max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
                 <table className='w-full'>
                     <tbody>
-                        <TableRow label='Group ID'>{groupDetails.data?.group.groupId}</TableRow>
-                        <TableRow label='Institution'>{groupDetails.data?.group.institution}</TableRow>
+                        <TableRow label='Group ID' noWrapLabel>
+                            {groupDetails.data?.group.groupId}
+                        </TableRow>
+                        <TableRow label='Institution' noWrapLabel>
+                            {groupDetails.data?.group.institution}
+                        </TableRow>
                         {accessToken && (
-                            <TableRow label='Contact email'>{groupDetails.data?.group.contactEmail}</TableRow>
+                            <TableRow label='Contact email' noWrapLabel>
+                                {groupDetails.data?.group.contactEmail}
+                            </TableRow>
                         )}
-                        <TableRow label='Address'>
+                        <TableRow label='Address' noWrapLabel>
                             <PostalAddress address={groupDetails.data?.group.address} />
                         </TableRow>
                     </tbody>
@@ -203,12 +209,12 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 </div>
             </div>
 
-            <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
+            <div className='max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
                 <h2 className='text-lg font-bold mb-2'>Sequences available in {databaseName}</h2>
                 <table className='w-full'>
                     <tbody>
                         {organisms.map((organism) => (
-                            <TableRow key={organism.key} label={organism.displayName}>
+                            <TableRow key={organism.key} label={organism.displayName} noWrapChildren>
                                 {sequenceCountsLoading ? (
                                     <span className='loading loading-spinner loading-xs'></span>
                                 ) : (
@@ -318,13 +324,25 @@ const PostalAddress: FC<{ address: Address | undefined }> = ({ address }) => {
     );
 };
 
-const TableRow = ({ label, children }: { label: string | undefined; children: ReactNode }) => (
+const TableRow = ({
+    label,
+    children,
+    noWrapLabel = false,
+    noWrapChildren = false,
+}: {
+    label: string | undefined;
+    children: ReactNode;
+    noWrapLabel?: boolean;
+    noWrapChildren?: boolean;
+}) => (
     <tr className='border-b border-gray-200'>
         <td className='py-2 pr-4 text-right align-top'>
-            <span className='text-lg font-semibold text-gray-800'>{label}</span>
+            <span className={`text-lg font-semibold text-gray-800 ${noWrapLabel ? 'whitespace-nowrap' : ''}`}>
+                {label}
+            </span>
         </td>
         <td className='py-2 pl-4'>
-            <span className='text-lg text-gray-900'>{children}</span>
+            <span className={`text-lg text-gray-900 ${noWrapChildren ? 'whitespace-nowrap' : ''}`}>{children}</span>
         </td>
     </tr>
 );
