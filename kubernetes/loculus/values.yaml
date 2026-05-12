@@ -134,7 +134,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: parse_date_into_range
           inputs:
             date: sampleCollectionDate
-            releaseDate: ncbiReleaseDate
+            releaseDate: earliestReleaseDate
           args:
             fieldType: dateRangeString
         required: true
@@ -151,7 +151,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: parse_date_into_range
           inputs:
             date: sampleCollectionDate
-            releaseDate: ncbiReleaseDate
+            releaseDate: earliestReleaseDate
           args:
             fieldType: dateRangeLower
         rangeOverlapSearch:
@@ -170,7 +170,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: parse_date_into_range
           inputs:
             date: sampleCollectionDate
-            releaseDate: ncbiReleaseDate
+            releaseDate: earliestReleaseDate
           args:
             fieldType: dateRangeUpper
         rangeOverlapSearch:
