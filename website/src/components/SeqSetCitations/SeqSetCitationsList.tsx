@@ -2,7 +2,7 @@ import { type FC } from 'react';
 
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { type SeqSet, type SeqSetCitation } from '../../types/seqSetCitation';
+import { CitationSourceType, type SeqSet, type SeqSetCitingSource } from '../../types/seqSetCitation';
 
 interface SeqSetCitationsListProps {
     clientConfig: ClientConfig;
@@ -10,8 +10,28 @@ interface SeqSetCitationsListProps {
 }
 
 interface SeqSetCitationItemProps {
-    seqSetCitation: SeqSetCitation;
+    seqSetCitation: SeqSetCitingSource;
 }
+
+const SeqSetCitationDOI: FC<SeqSetCitationItemProps> = ({ seqSetCitation }) => {
+    return (
+        <span>
+            DOI:
+            <a
+                className='text-primary-600 mx-1'
+                href={`https://doi.org/${seqSetCitation.sourceId}`}
+                target='_blank'
+                rel='noopener noreferrer'
+            >
+                {seqSetCitation.sourceId}
+            </a>
+        </span>
+    );
+};
+
+const SeqSetCitationURL: FC<SeqSetCitationItemProps> = ({ seqSetCitation }) => {
+    return <span>URL: {seqSetCitation.sourceId}</span>;
+};
 
 const SeqSetCitationItem: FC<SeqSetCitationItemProps> = ({ seqSetCitation }) => {
     return (
@@ -23,15 +43,11 @@ const SeqSetCitationItem: FC<SeqSetCitationItemProps> = ({ seqSetCitation }) => 
                 . <i>{seqSetCitation.title}</i>, {seqSetCitation.year}.
             </div>
             <div>
-                DOI:
-                <a
-                    className='text-primary-600 mx-1'
-                    href={`https://doi.org/${seqSetCitation.citationDOI}`}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                >
-                    {seqSetCitation.citationDOI}
-                </a>
+                {seqSetCitation.sourceType === CitationSourceType.DOI ? (
+                    <SeqSetCitationDOI seqSetCitation={seqSetCitation} />
+                ) : (
+                    <SeqSetCitationURL seqSetCitation={seqSetCitation} />
+                )}
             </div>
         </div>
     );
@@ -62,7 +78,7 @@ export const SeqSetCitationsList: FC<SeqSetCitationsListProps> = ({ clientConfig
                 ) : seqSetCitations.length > 0 ? (
                     <ul className='max-w-3xl space-y-8'>
                         {seqSetCitations.map((seqSetCitation) => (
-                            <li key={seqSetCitation.citationDOI}>
+                            <li key={seqSetCitation.sourceId}>
                                 <SeqSetCitationItem seqSetCitation={seqSetCitation} />
                             </li>
                         ))}

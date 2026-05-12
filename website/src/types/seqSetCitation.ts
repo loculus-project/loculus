@@ -39,18 +39,23 @@ export const authorProfile = z.object({
 });
 export type AuthorProfile = z.infer<typeof authorProfile>;
 
+export enum CitationSourceType {
+    DOI = 'DOI',
+    URL = 'URL',
+}
+
 const citationContributor = z.object({
     givenName: z.string(),
     surname: z.string(),
 });
 
-const seqSetCitation = z.object({
-    seqSetDOI: z.string(),
-    citationDOI: z.string(),
+const seqSetCitingSource = z.object({
+    sourceId: z.string(),
+    sourceType: z.nativeEnum(CitationSourceType),
     title: z.string(),
     year: z.string(),
     contributors: z.array(citationContributor),
 });
-export type SeqSetCitation = z.infer<typeof seqSetCitation>;
+export type SeqSetCitingSource = z.infer<typeof seqSetCitingSource>;
 
-export const seqSetCitations = z.array(seqSetCitation);
+export const seqSetCitations = z.array(seqSetCitingSource);
