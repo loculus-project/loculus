@@ -1150,14 +1150,14 @@ class SubmissionDatabaseService(
         )
     }
 
-    fun getSequenceEntryVersionToEdit(
+    fun getOriginalDataForEntry(
         authenticatedUser: AuthenticatedUser,
         accessionVersion: AccessionVersion,
         organism: Organism,
     ): SequenceEntryVersionToEdit {
         log.info {
-            "Getting sequence entry ${accessionVersion.displayAccessionVersion()} " +
-                "by ${authenticatedUser.username} to edit"
+            "Getting original data for sequence entry ${accessionVersion.displayAccessionVersion()} " +
+                "by ${authenticatedUser.username}"
         }
 
         accessionPreconditionValidator.validate {
@@ -1181,21 +1181,16 @@ class SubmissionDatabaseService(
             .where { SequenceEntriesView.accessionVersionEquals(accessionVersion) }
             .first()
 
-        if (selectedSequenceEntry[SequenceEntriesView.isRevocationColumn]) {
-            throw UnprocessableEntityException(
-                "Accession version ${accessionVersion.displayAccessionVersion()} is a revocation.",
-            )
-        }
+        val processedDataValue = selectedSequenceEntry[SequenceEntriesView.processedDataColumn]
+            ?.let { processedDataPostprocessor.retrieveFromStoredValue(it, organism) }
 
         return SequenceEntryVersionToEdit(
             accession = selectedSequenceEntry[SequenceEntriesView.accessionColumn],
             version = selectedSequenceEntry[SequenceEntriesView.versionColumn],
             status = Status.fromString(selectedSequenceEntry[SequenceEntriesView.statusColumn]),
             groupId = selectedSequenceEntry[SequenceEntriesView.groupIdColumn],
-            processedData = processedDataPostprocessor.retrieveFromStoredValue(
-                selectedSequenceEntry[SequenceEntriesView.processedDataColumn]!!,
-                organism,
-            ),
+            isRevocation = selectedSequenceEntry[SequenceEntriesView.isRevocationColumn],
+            processedData = processedDataValue,
             originalData = compressionService.decompressSequencesInOriginalData(
                 selectedSequenceEntry[SequenceEntriesView.unprocessedDataColumn]!!,
             ),

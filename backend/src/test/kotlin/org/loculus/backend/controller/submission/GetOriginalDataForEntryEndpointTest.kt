@@ -2,6 +2,7 @@ package org.loculus.backend.controller.submission
 
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Status
@@ -21,7 +22,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class GetDataToEditEndpointTest(
+class GetOriginalDataForEntryEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
@@ -29,7 +30,7 @@ class GetDataToEditEndpointTest(
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse {
-            client.getSequenceEntryToEdit(
+            client.getOriginalDataForEntry(
                 "ShouldNotMatterAtAll",
                 1,
                 jwt = it,
@@ -47,7 +48,7 @@ class GetDataToEditEndpointTest(
             .assertStatusIs(Status.PROCESSED)
             .assertHasError(true)
 
-        val editedData = convenienceClient.getSequenceEntryToEdit(
+        val editedData = convenienceClient.getOriginalDataForEntry(
             accession = firstAccession,
             version = 1,
         )
@@ -61,7 +62,7 @@ class GetDataToEditEndpointTest(
     fun `WHEN I query data for a non-existent accession THEN refuses request with not found`() {
         val nonExistentAccession = "DefinitelyNotExisting"
 
-        client.getSequenceEntryToEdit(nonExistentAccession, 1)
+        client.getOriginalDataForEntry(nonExistentAccession, 1)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
@@ -79,9 +80,9 @@ class GetDataToEditEndpointTest(
             organism = DEFAULT_ORGANISM,
         ).first().accession
 
-        client.getSequenceEntryToEdit(firstAccession, 1, organism = DEFAULT_ORGANISM)
+        client.getOriginalDataForEntry(firstAccession, 1, organism = DEFAULT_ORGANISM)
             .andExpect(status().isOk)
-        client.getSequenceEntryToEdit(firstAccession, 1, organism = OTHER_ORGANISM)
+        client.getOriginalDataForEntry(firstAccession, 1, organism = OTHER_ORGANISM)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
@@ -99,7 +100,7 @@ class GetDataToEditEndpointTest(
 
         convenienceClient.prepareDataTo(Status.PROCESSED, errors = true)
 
-        client.getSequenceEntryToEdit("1", nonExistentAccessionVersion)
+        client.getOriginalDataForEntry("1", nonExistentAccessionVersion)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
@@ -114,7 +115,7 @@ class GetDataToEditEndpointTest(
         val firstAccession = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true).first().accession
 
         val userNameThatDoesNotHavePermissionToQuery = "theOneWhoMustNotBeNamed"
-        client.getSequenceEntryToEdit(
+        client.getOriginalDataForEntry(
             accession = firstAccession,
             version = 1,
             jwt = generateJwtFor(userNameThatDoesNotHavePermissionToQuery),
@@ -135,7 +136,7 @@ class GetDataToEditEndpointTest(
             )
             .first()
 
-        client.getSequenceEntryToEdit(
+        client.getOriginalDataForEntry(
             accession = accessionVersion.accession,
             version = accessionVersion.version,
             jwt = jwtForSuperUser,
@@ -146,12 +147,23 @@ class GetDataToEditEndpointTest(
     }
 
     @Test
-    fun `GIVEN revocation version awaiting approval THEN throws unprocessable entity error`() {
-        val accessionVersion = convenienceClient.prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation()
-            .first()
+    fun `GIVEN revocation awaiting approval THEN returns original data with version comment and null processed data`() {
+        val versionComment = "revocation reason for test"
+        val approvedAccession = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease().first().accession
+        val accessionVersion = convenienceClient.revokeSequenceEntries(
+            listOf(approvedAccession),
+            versionComment = versionComment,
+        ).first()
 
-        client.getSequenceEntryToEdit(accessionVersion.accession, accessionVersion.version)
-            .andExpect(status().isUnprocessableEntity)
-            .andExpect(jsonPath("\$.detail", containsString("is a revocation")))
+        val originalData = convenienceClient.getOriginalDataForEntry(
+            accession = accessionVersion.accession,
+            version = accessionVersion.version,
+        )
+
+        assertThat(originalData.accession, `is`(accessionVersion.accession))
+        assertThat(originalData.version, `is`(accessionVersion.version))
+        assertThat(originalData.isRevocation, `is`(true))
+        assertThat(originalData.processedData, `is`(nullValue()))
+        assertThat(originalData.originalData.metadata["versionComment"], `is`(versionComment))
     }
 }

@@ -25,9 +25,9 @@ type GetSequencesParameters = {
 export class BackendClient {
     constructor(private readonly url: string) {}
 
-    public getDataToEdit(organism: string, token: string, accession: string, version: string | number) {
+    public getOriginalDataForEntry(organism: string, token: string, accession: string, version: string | number) {
         return this.request(
-            `/${organism}/get-data-to-edit/${accession}/${version}`,
+            `/${organism}/get-original-data-for-entry/${accession}/${version}`,
             'GET',
             sequenceEntryToEdit,
             createAuthorizationHeader(token),

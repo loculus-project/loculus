@@ -62,6 +62,7 @@ export const defaultReviewData: SequenceEntryToEdit = {
     version: 1,
     status: 'PROCESSED',
     groupId: 1,
+    isRevocation: false,
     errors: [
         {
             unprocessedFields: [
@@ -173,9 +174,9 @@ const backendRequestMocks = {
             }),
         );
     },
-    getDataToEdit: (statusCode: number = 200, response = defaultReviewData) => {
+    getOriginalDataForEntry: (statusCode: number = 200, response = defaultReviewData) => {
         testServer.use(
-            http.get(`${testConfig.serverSide.backendUrl}/${testOrganism}/get-data-to-edit/*`, () => {
+            http.get(`${testConfig.serverSide.backendUrl}/${testOrganism}/get-original-data-for-entry/*`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });

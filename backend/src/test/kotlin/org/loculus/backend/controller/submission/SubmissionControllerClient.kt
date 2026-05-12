@@ -172,14 +172,14 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .param("size", size?.toString()),
     )
 
-    fun getSequenceEntryToEdit(
+    fun getOriginalDataForEntry(
         accession: Accession,
         version: Long,
         organism: String = DEFAULT_ORGANISM,
         groupName: String = DEFAULT_GROUP_NAME,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
-        get(addOrganismToPath("/get-data-to-edit/$accession/$version", organism = organism))
+        get(addOrganismToPath("/get-original-data-for-entry/$accession/$version", organism = organism))
             .withAuth(jwt)
             .param("groupName", groupName),
     )

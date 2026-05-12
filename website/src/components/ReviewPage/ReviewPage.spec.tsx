@@ -3,7 +3,14 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test } from 'vitest';
 
 import { ReviewPage } from './ReviewPage.tsx';
-import { mockRequest, testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
+import {
+    defaultReviewData,
+    mockRequest,
+    testAccessToken,
+    testConfig,
+    testGroups,
+    testOrganism,
+} from '../../../vitest.setup.ts';
 import {
     approvedForReleaseStatus,
     processedStatus,
@@ -81,6 +88,18 @@ const awaitingApprovalTestData: SequenceEntryStatus = {
     accession: 'accession3',
     version: 1,
     isRevocation: false,
+    dataUseTerms: openDataUseTerms,
+    groupId: 42,
+    submitter: 'submitter',
+};
+
+const revocationTestData: SequenceEntryStatus = {
+    submissionId: 'custom5',
+    status: processedStatus,
+    processingResult: noIssuesProcessingResult,
+    accession: 'accession5',
+    version: 2,
+    isRevocation: true,
     dataUseTerms: openDataUseTerms,
     groupId: 42,
     submitter: 'submitter',
@@ -166,7 +185,7 @@ describe('ReviewPage', () => {
             200,
             generateGetSequencesResponse([erroneousTestData, awaitingApprovalTestData]),
         );
-        mockRequest.backend.getDataToEdit();
+        mockRequest.backend.getOriginalDataForEntry();
         mockRequest.backend.approveSequences();
         mockRequest.backend.deleteSequences();
 
@@ -201,6 +220,31 @@ describe('ReviewPage', () => {
         });
     });
 
+    test('should show the version comment for revocation entries', async () => {
+        mockRequest.backend.getSequences(200, generateGetSequencesResponse([revocationTestData]));
+        mockRequest.backend.getOriginalDataForEntry(200, {
+            ...defaultReviewData,
+            accession: revocationTestData.accession,
+            version: revocationTestData.version,
+            isRevocation: true,
+            errors: null,
+            warnings: null,
+            originalData: {
+                metadata: { versionComment: 'Withdrawn due to contamination' },
+                unalignedNucleotideSequences: {},
+                files: null,
+            },
+            processedData: null,
+        });
+
+        const { getByText } = renderReviewPage();
+
+        await waitFor(() => {
+            expect(getByText('Version comment')).toBeDefined();
+            expect(getByText('Withdrawn due to contamination')).toBeDefined();
+        });
+    });
+
     test('should render the review page and show how many sequences are processed', async () => {
         mockRequest.backend.getSequences(
             200,
@@ -211,7 +255,7 @@ describe('ReviewPage', () => {
                 awaitingApprovalTestData,
             ]),
         );
-        mockRequest.backend.getDataToEdit();
+        mockRequest.backend.getOriginalDataForEntry();
 
         const { getByText } = renderReviewPage();
 

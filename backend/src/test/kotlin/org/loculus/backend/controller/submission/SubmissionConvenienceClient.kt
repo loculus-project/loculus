@@ -351,12 +351,12 @@ class SubmissionConvenienceClient(
             ?: error("Did not find $accession.$version for $userName")
     }
 
-    fun getSequenceEntryToEdit(
+    fun getOriginalDataForEntry(
         accession: Accession,
         version: Long,
         userName: String = DEFAULT_USER_NAME,
     ): SequenceEntryVersionToEdit = deserializeJsonResponse(
-        client.getSequenceEntryToEdit(
+        client.getOriginalDataForEntry(
             accession = accession,
             version = version,
             jwt = generateJwtFor(userName),

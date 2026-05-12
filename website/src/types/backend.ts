@@ -220,6 +220,7 @@ export const sequenceEntryToEdit = accessionVersion.merge(
         status: sequenceEntryStatusNames,
         groupId: z.number(),
         submissionId: z.string(),
+        isRevocation: z.boolean(),
         errors: z.array(processingAnnotation).nullable(),
         warnings: z.array(processingAnnotation).nullable(),
         originalData: z.object({
@@ -227,16 +228,18 @@ export const sequenceEntryToEdit = accessionVersion.merge(
             unalignedNucleotideSequences: z.record(z.string()),
             files: filesByCategory.nullable(),
         }),
-        processedData: z.object({
-            metadata: metadataRecord,
-            unalignedNucleotideSequences: z.record(z.string().nullable()),
-            alignedNucleotideSequences: z.record(z.string().nullable()),
-            nucleotideInsertions: z.record(z.array(z.string())),
-            alignedAminoAcidSequences: z.record(z.string().nullable()),
-            aminoAcidInsertions: z.record(z.array(z.string())),
-            sequenceNameToFastaId: z.record(z.string().nullable()),
-            files: filesByCategory.nullable(),
-        }),
+        processedData: z
+            .object({
+                metadata: metadataRecord,
+                unalignedNucleotideSequences: z.record(z.string().nullable()),
+                alignedNucleotideSequences: z.record(z.string().nullable()),
+                nucleotideInsertions: z.record(z.array(z.string())),
+                alignedAminoAcidSequences: z.record(z.string().nullable()),
+                aminoAcidInsertions: z.record(z.array(z.string())),
+                sequenceNameToFastaId: z.record(z.string().nullable()),
+                files: filesByCategory.nullable(),
+            })
+            .nullable(),
     }),
 );
 export type SequenceEntryToEdit = z.infer<typeof sequenceEntryToEdit>;

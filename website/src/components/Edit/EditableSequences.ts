@@ -68,6 +68,9 @@ export class EditableSequences {
      */
     static fromInitialData(initialData: SequenceEntryToEdit, maxSequencesPerEntry?: number): EditableSequences {
         const maxNumberRows = maxSequencesPerEntry ?? Infinity;
+        if (initialData.processedData === null) {
+            throw new Error('Cannot edit a sequence entry without processed data (e.g. a revocation)');
+        }
         const fastaHeaderMap = EditableSequences.invertRecordMulti(initialData.processedData.sequenceNameToFastaId);
         const existingDataRows = Object.entries(initialData.originalData.unalignedNucleotideSequences).map(
             ([key, value]) => {

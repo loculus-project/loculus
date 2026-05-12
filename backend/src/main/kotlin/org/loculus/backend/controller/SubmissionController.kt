@@ -339,14 +339,17 @@ open class SubmissionController(
         return ResponseEntity.ok().headers(headers).body(streamBody)
     }
 
-    @Operation(description = GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION)
-    @GetMapping("/get-data-to-edit/{accession}/{version}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getSequenceEntryVersionToEdit(
+    @Operation(description = GET_ORIGINAL_DATA_FOR_ENTRY_DESCRIPTION)
+    @GetMapping(
+        "/get-original-data-for-entry/{accession}/{version}",
+        produces = [MediaType.APPLICATION_JSON_VALUE],
+    )
+    fun getOriginalDataForEntry(
         @PathVariable @Valid organism: Organism,
         @PathVariable accession: Accession,
         @PathVariable version: Long,
         @HiddenParam authenticatedUser: AuthenticatedUser,
-    ): SequenceEntryVersionToEdit = submissionDatabaseService.getSequenceEntryVersionToEdit(
+    ): SequenceEntryVersionToEdit = submissionDatabaseService.getOriginalDataForEntry(
         authenticatedUser,
         AccessionVersion(accession, version),
         organism,
