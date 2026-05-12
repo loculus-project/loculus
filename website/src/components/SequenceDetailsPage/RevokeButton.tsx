@@ -69,7 +69,7 @@ interface DisplayRevocationProps {
 
 export const displayRevocationDialog = ({ dialogText, onConfirmation }: DisplayRevocationProps) => {
     confirmAlert({
-        closeOnClickOutside: true,
+        closeOnClickOutside: false,
 
         customUI: ({ onClose }) => (
             <RevocationDialog
