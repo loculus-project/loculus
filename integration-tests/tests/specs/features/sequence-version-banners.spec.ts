@@ -92,6 +92,7 @@ test.describe('Sequence version banners', () => {
         await search.select('Collection country', 'Germany');
 
         // Get the accession of the sequence to revoke
+        await search.expectSequenceCount(1);
         const toRevokeLink = page.getByRole('link', { name: /LOC_[A-Z0-9]+\.1/ });
         const toRevokeId = await toRevokeLink.textContent();
         const toRevokeAccession = toRevokeId.split('.')[0];
