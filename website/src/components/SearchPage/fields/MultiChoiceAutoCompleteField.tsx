@@ -50,7 +50,7 @@ export const MultiChoiceAutoCompleteField = ({
 
     useEffect(() => {
         if (error) {
-            void logger.error(`Error while loading autocomplete options: ${error.message} - ${error.stack}`);
+            void logger.error(error);
         }
     }, [error]);
 

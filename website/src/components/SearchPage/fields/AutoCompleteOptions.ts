@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { LineageDefinition } from '../../../types/lapis.ts';
+import { stringifyMaybeAxiosError } from '../../../utils/stringifyMaybeAxiosError.ts';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters.tsx';
 
@@ -34,7 +35,7 @@ export type OptionsProvider = GenericOptionsProvider | LineageOptionsProvider;
 export type AutocompleteOptionsHook = () => {
     options: Option[];
     isPending: boolean;
-    error: Error | null;
+    error: string | null;
     load: () => void;
 };
 
@@ -80,7 +81,9 @@ const createGenericOptionsHook = (
         return {
             options,
             isPending,
-            error,
+            error: error
+                ? `Error while loading options for field "${fieldName}": ${stringifyMaybeAxiosError(error)}`
+                : null,
             load: () => mutate(lapisParams),
         };
     };
@@ -171,14 +174,14 @@ const createLineageOptionsHook = (
         const {
             data,
             isPending: aggregateIsPending,
-            error: aggregateError,
+            error: aggregatedEndpointError,
             mutate,
         } = lapisClientHooks(lapisUrl).useAggregated();
 
         const {
             data: lineageDefinition,
-            isLoading: defIsLoading,
-            error: defError,
+            isLoading: definitionIsLoading,
+            error: definitionEndpointError,
         } = lapisClientHooks(lapisUrl).useLineageDefinition(
             {
                 params: {
@@ -216,10 +219,19 @@ const createLineageOptionsHook = (
 
         options.sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
 
+        const errors = [
+            aggregatedEndpointError && `aggregated endpoint: ${stringifyMaybeAxiosError(aggregatedEndpointError)}`,
+            definitionEndpointError &&
+                `lineage definition endpoint: ${stringifyMaybeAxiosError(definitionEndpointError)}`,
+        ].filter(Boolean);
+
         return {
             options,
-            isPending: aggregateIsPending || defIsLoading,
-            error: new AggregateError([aggregateError, defError].filter(Boolean)),
+            isPending: aggregateIsPending || definitionIsLoading,
+            error:
+                errors.length > 0
+                    ? `Error while loading lineage autocomplete options for field "${fieldName}" from ${lapisUrl}: ${errors.join('; ')}`
+                    : null,
             load: () => mutate(lapisParams),
         };
     };
