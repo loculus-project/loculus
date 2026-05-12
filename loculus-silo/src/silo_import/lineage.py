@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 import requests
 from requests import codes
@@ -108,7 +109,8 @@ def _post_silo_lineage(url: str, values: list[str], prune: bool = False) -> requ
     request body and a ?prune=<boolean> query param
     """
     params = {"prune": "true"} if prune else None
-    return requests.post(url, json={"values": values}, params=params, timeout=60)
+    payload: dict[str, Any] = {"values": values}
+    return requests.post(url, json=payload, params=params, timeout=60)
 
 
 def _write_text(path: Path, content: str) -> None:
