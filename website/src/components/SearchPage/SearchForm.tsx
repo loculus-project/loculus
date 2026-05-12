@@ -371,6 +371,7 @@ export const SearchForm = ({
                                             multiFieldSearch={item.field}
                                             fieldValue={(fieldValues[item.field.name] as string | undefined) ?? ''}
                                             setSomeFieldValues={setSomeFieldValues}
+                                            filterSchema={filterSchema}
                                         />
                                     ),
                                 )}
