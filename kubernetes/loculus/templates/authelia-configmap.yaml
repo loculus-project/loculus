@@ -1,0 +1,104 @@
+{{- $authHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
+{{- $authIssuer := (include "loculus.autheliaUrl" .) }}
+{{- $websiteUrl := (include "loculus.websiteUrl" .) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authelia-config
+data:
+  configuration.yml: |
+    server:
+      address: "tcp://:9091"
+      buffers:
+        read: 4096
+        write: 4096
+
+    log:
+      level: info
+      format: text
+
+    totp:
+      issuer: "{{ $.Values.name }}"
+      disable: false
+
+    authentication_backend:
+      refresh_interval: 1m
+      ldap:
+        implementation: lldap
+        address: ldap://loculus-lldap-service:3890
+        base_dn: dc=loculus,dc=org
+        additional_users_dn: ou=people
+        additional_groups_dn: ou=groups
+        users_filter: "(&({username_attribute}={input})(objectClass=person))"
+        groups_filter: "(member={dn})"
+        user: "uid=admin,ou=people,dc=loculus,dc=org"
+        password: "[[lldapAdminPassword]]"
+
+    access_control:
+      default_policy: one_factor
+
+    session:
+      name: authelia_session
+      same_site: lax
+      inactivity: 1h
+      expiration: 1h
+      remember_me: 1M
+      cookies:
+        - domain: "{{ $.Values.host }}"
+          authelia_url: "{{ $authIssuer }}"
+      secret: "[[autheliaSessionSecret]]"
+
+    storage:
+      encryption_key: "[[autheliaStorageEncryptionKey]]"
+      local:
+        path: /data/db.sqlite3
+
+    notifier:
+      disable_startup_check: true
+      filesystem:
+        filename: /data/notification.txt
+
+    identity_validation:
+      reset_password:
+        jwt_secret: "[[autheliaJwtSecret]]"
+
+    identity_providers:
+      oidc:
+        hmac_secret: "[[autheliaOidcHmacSecret]]"
+        jwks:
+          - key: |
+              [[autheliaOidcIssuerPrivateKey]]
+        lifespans:
+          access_token: 10h
+          authorize_code: 1m
+          id_token: 1h
+          refresh_token: 90d
+        cors:
+          endpoints: [authorization, token, revocation, introspection, userinfo]
+          allowed_origins_from_client_redirect_uris: true
+        clients:
+          - client_id: backend-client
+            client_name: Loculus website
+            public: true
+            authorization_policy: one_factor
+            require_pkce: true
+            pkce_challenge_method: S256
+            redirect_uris:
+              - "{{ $websiteUrl }}/"
+              - "{{ $websiteUrl }}/*"
+              - "http://localhost:3000/"
+              - "http://localhost:3000/*"
+            scopes: [openid, profile, email, groups, offline_access]
+            grant_types: [authorization_code, refresh_token]
+            response_types: [code]
+            consent_mode: implicit
+            token_endpoint_auth_method: none
+          - client_id: loculus-cli
+            client_name: Loculus CLI
+            public: true
+            authorization_policy: one_factor
+            scopes: [openid, profile, email, groups, offline_access]
+            grant_types: [urn:ietf:params:oauth:grant-type:device_code, refresh_token]
+            response_types: [code]
+            consent_mode: implicit
+            token_endpoint_auth_method: none

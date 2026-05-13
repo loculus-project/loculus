@@ -1,0 +1,20 @@
+{{- if .Values.auth.bundledLdap.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-lldap-service
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: lldap
+  ports:
+    - name: ldap
+      port: 3890
+      targetPort: 3890
+      protocol: TCP
+    - name: http
+      port: 17170
+      targetPort: 17170
+      protocol: TCP
+{{- end }}

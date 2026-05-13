@@ -1,0 +1,81 @@
+{{- if .Values.auth.bundledLdap.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-lldap
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: loculus
+      component: lldap
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: lldap
+    spec:
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
+      containers:
+        - name: lldap
+          image: "lldap/lldap:v0.6.1"
+          {{- include "loculus.resources" (list "lldap" $.Values) | nindent 10 }}
+          env:
+            - name: LLDAP_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: lldap-secrets
+                  key: jwtSecret
+            - name: LLDAP_KEY_SEED
+              valueFrom:
+                secretKeyRef:
+                  name: lldap-secrets
+                  key: keySeed
+            - name: LLDAP_LDAP_USER_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: lldap-secrets
+                  key: adminPassword
+            - name: LLDAP_LDAP_BASE_DN
+              value: "dc=loculus,dc=org"
+            - name: LLDAP_LDAP_USER_DN
+              value: "admin"
+            - name: LLDAP_LDAP_USER_EMAIL
+              value: "admin@loculus.org"
+            - name: LLDAP_HTTP_URL
+              value: "http://loculus-lldap-service:17170"
+            - name: LLDAP_HTTP_HOST
+              value: "0.0.0.0"
+          ports:
+            - name: ldap
+              containerPort: 3890
+            - name: http
+              containerPort: 17170
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 17170
+            failureThreshold: 30
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 17170
+            periodSeconds: 30
+      volumes:
+        - name: data
+          {{- if .Values.developmentDatabasePersistence }}
+          persistentVolumeClaim:
+            claimName: lldap-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+{{- end }}

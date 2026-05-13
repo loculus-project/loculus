@@ -1,0 +1,47 @@
+{{- if .Values.auth.bundledLdap.enabled }}
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: loculus-lldap-bootstrap
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 6
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: lldap-bootstrap
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+{{- include "loculus.configProcessor" (dict "name" "lldap-bootstrap" "dockerTag" $dockerTag "imagePullPolicy" .Values.imagePullPolicy) | nindent 8 }}
+      containers:
+        - name: bootstrap
+          image: "python:3.12-slim"
+          command: ["python3", "/data/bootstrap.py"]
+          env:
+            - name: LLDAP_URL
+              value: "http://loculus-lldap-service:17170"
+            - name: LLDAP_ADMIN_USERNAME
+              value: "admin"
+            - name: LLDAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: lldap-secrets
+                  key: adminPassword
+            - name: USERS_FILE
+              value: "/data/users.json"
+            - name: GROUPS_FILE
+              value: "/data/groups.json"
+          volumeMounts:
+            - name: lldap-bootstrap-processed
+              mountPath: /data
+      volumes:
+{{ include "loculus.configVolume" (dict "name" "lldap-bootstrap") | nindent 8 }}
+{{- end }}
