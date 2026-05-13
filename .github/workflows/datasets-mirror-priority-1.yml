@@ -18,6 +18,7 @@ jobs:
           - 3052462  # Orthoebolavirus zairense
           - 3052505  # Orthomarburgvirus marburgense
           - 3052518  # CCHFV
+          - 3431483  # Mpox (parent taxon)
       fail-fast: false
     uses: ./.github/workflows/datasets-mirror.yml
     secrets: inherit
