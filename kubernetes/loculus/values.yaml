@@ -2702,6 +2702,13 @@ secrets:
       storageEncryptionKey: "loculus-authelia-storage-encryption-key-please-rotate-me-pls-rot"
       jwtSecret: "loculus-authelia-jwt-secret-please-rotate-me-please-rotate-me!!"
       oidcHmacSecret: "loculus-authelia-oidc-hmac-secret-please-rotate-me-please-rotate"
+      # The website's OIDC client secret is confidential because dev/CI uses
+      # http:// redirect URIs (Authelia forbids http on public clients).
+      # Plaintext + matching PBKDF2-SHA512 PHC hash live here so the website
+      # (which sends plaintext to /oauth2/token) and Authelia (which
+      # verifies against the hash) stay in sync. Rotate in production.
+      backendClientSecretPlain: "loculus-dev-client-secret"
+      backendClientSecretHash: "$pbkdf2-sha512$310000$hrjXuM5amwGWiA9lY.NC/A$bVLRb740tHQANA1ozr6HOwgVtSJE/qw4tkPwQ7eV5vltV5rcgv2R.P/LNm4FR95acZK9qmkJMKn9sy5DIun6JQ"
       oidcIssuerPrivateKey: |
         -----BEGIN RSA PRIVATE KEY-----
         MIIEowIBAAKCAQEApLkfmwhUv9fjisakHUrt6qzOfGXmwwTsdFRKqJ3I5505WWHH

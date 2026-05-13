@@ -15,6 +15,7 @@ export const serverConfig = serviceUrls.merge(
         autheliaUrl: z.string(),
         autheliaPublicUrl: z.string(),
         registrationUrl: z.string().optional(),
+        oidcClientSecret: z.string(),
     }),
 );
 

@@ -67,6 +67,16 @@
         secretKeyRef:
           name: authelia-secrets
           key: oidcHmacSecret
+    - name: LOCULUSSUB_backendClientSecret
+      valueFrom:
+        secretKeyRef:
+          name: authelia-secrets
+          key: backendClientSecretHash
+    - name: LOCULUSSUB_backendClientSecretPlain
+      valueFrom:
+        secretKeyRef:
+          name: authelia-secrets
+          key: backendClientSecretPlain
 {{- end }}
 
 

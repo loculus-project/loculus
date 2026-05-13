@@ -42,6 +42,7 @@ export const testConfig = {
         autheliaUrl: 'http://authentication.dummy',
         autheliaPublicUrl: 'http://authentication.dummy',
         registrationUrl: 'http://register.dummy',
+        oidcClientSecret: 'dummy-client-secret',
     },
     insecureCookies: true,
 } as RuntimeConfig;

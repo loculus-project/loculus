@@ -22,7 +22,8 @@ data:
             "lapisUrls": {{- include "loculus.generateInternalLapisUrls" . | fromYaml | toJson }},
             "autheliaUrl": "{{ if not .Values.disableWebsite -}}{{ include "loculus.autheliaUrlInternal" . }}{{ else -}}http://{{ $.Values.localHost }}:9091{{ end }}",
             "autheliaPublicUrl": "{{ include "loculus.autheliaUrl" . }}",
-            "registrationUrl": "{{ include "loculus.registrationUrl" . }}"
+            "registrationUrl": "{{ include "loculus.registrationUrl" . }}",
+            "oidcClientSecret": "[[backendClientSecretPlain]]"
             {{- end }}
         },
         "public": {

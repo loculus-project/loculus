@@ -81,11 +81,16 @@ data:
         clients:
           - client_id: backend-client
             client_name: Loculus website
-            public: true
+            # Authelia 4.39 requires http:// redirect URIs to belong to a
+            # confidential client (one with a `client_secret`). The dev/CI
+            # setup runs the website on http://loculus.test:3000, so the
+            # client is confidential with a static dev-only PHC hash for the
+            # secret "loculus-dev-client-secret". Operators rotate at deploy.
+            public: false
+            client_secret: "[[backendClientSecret]]"
             authorization_policy: one_factor
-            # TODO: enable PKCE once the website middleware persists the
-            # code_verifier across the redirect to Authelia and back.
-            require_pkce: false
+            require_pkce: true
+            pkce_challenge_method: S256
             redirect_uris:
               - "{{ $websiteUrl }}/auth/callback"
               {{- if $.Values.host }}
@@ -97,7 +102,7 @@ data:
             grant_types: [authorization_code, refresh_token]
             response_types: [code]
             consent_mode: implicit
-            token_endpoint_auth_method: none
+            token_endpoint_auth_method: client_secret_basic
           - client_id: loculus-cli
             client_name: Loculus CLI
             public: true
