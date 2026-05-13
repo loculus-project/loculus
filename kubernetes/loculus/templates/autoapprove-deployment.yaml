@@ -18,7 +18,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: {{ now | quote }}
+        valuesHash: {{ .Values | toYaml | sha256sum }}
       labels:
         app: loculus
         component: loculus-autoapprove-deployment
