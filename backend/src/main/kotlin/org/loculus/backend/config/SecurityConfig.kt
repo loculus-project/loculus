@@ -82,6 +82,10 @@ class SecurityConfig {
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
         serviceTokenFilter: ServiceTokenAuthenticationFilter,
     ): SecurityFilterChain = httpSecurity
+        // CSRF protection is not meaningful for an API that authenticates every
+        // request from scratch (bearer JWT or X-Service-Token); a stale CSRF
+        // cookie was rejecting service-token POSTs before the auth filter ran.
+        .csrf { csrf -> csrf.disable() }
         .addFilterBefore(serviceTokenFilter, AbstractPreAuthenticatedProcessingFilter::class.java)
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
