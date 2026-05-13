@@ -1,7 +1,8 @@
-{{- $hostStr := default "" $.Values.host }}
-{{- $hostNoPort := index (splitList ":" $hostStr) 0 }}
 {{- /* `loculus.autheliaUrl` already returns HTTPS in both server and local modes (local = via traefik on 8443). */}}
 {{- $authIssuer := (include "loculus.autheliaUrl" .) }}
+{{- $authIssuerNoScheme := trimPrefix "http://" (trimPrefix "https://" $authIssuer) }}
+{{- $authHostWithPort := index (splitList "/" $authIssuerNoScheme) 0 }}
+{{- $authHostNoPort := index (splitList ":" $authHostWithPort) 0 }}
 {{- $websiteUrl := (include "loculus.websiteUrl" .) }}
 apiVersion: v1
 kind: ConfigMap
@@ -57,7 +58,7 @@ data:
       expiration: 1h
       remember_me: 1M
       cookies:
-        - domain: {{ $hostNoPort | quote }}
+        - domain: {{ $authHostNoPort | quote }}
           authelia_url: "{{ $authIssuer }}"
       secret: "[[autheliaSessionSecret]]"
 
