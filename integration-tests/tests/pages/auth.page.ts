@@ -42,9 +42,12 @@ export class AuthPage {
         const successSelector = this.page.waitForSelector('text=Welcome to Loculus', {
             state: 'attached',
         });
-        const failureSelector = this.page.waitForSelector(/incorrect username or password|invalid/i, {
-            state: 'attached',
-        });
+        const failureSelector = this.page.waitForSelector(
+            /incorrect username or password|invalid/i,
+            {
+                state: 'attached',
+            },
+        );
 
         const result = await Promise.race([
             successSelector.then(() => true),
