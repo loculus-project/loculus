@@ -1,0 +1,10 @@
+name: Loculus CodeQL config
+
+query-filters:
+  # Loculus is a stateless API: every request authenticates from scratch with
+  # either a bearer JWT or X-Service-Token header, no session cookies. Spring's
+  # CSRF protection is intentionally disabled in
+  # backend/src/main/kotlin/org/loculus/backend/config/SecurityConfig.kt and
+  # the corresponding alert is not actionable.
+  - exclude:
+      id: java/spring-disabled-csrf-protection
