@@ -36,7 +36,12 @@ function getBackendBaseUrl(): URL {
     const baseUrl = new URL(process.env.PLAYWRIGHT_TEST_BASE_URL ?? 'http://localhost:3000');
 
     const hostname = baseUrl.hostname;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    if (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === 'loculus.test' ||
+        hostname.endsWith('.loculus.test')
+    ) {
         const protocol = baseUrl.protocol === 'https:' ? 'https:' : 'http:';
         return new URL(`${protocol}//localhost:8079`);
     }

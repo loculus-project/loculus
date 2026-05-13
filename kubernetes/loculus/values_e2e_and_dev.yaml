@@ -15,6 +15,8 @@ backendExtraArgs:
 disableEnaSubmission: true
 auth:
   verifyEmail: false
+  relaxOidcTokenRateLimit: true
+insecureCookies: true
 # `.test` is reserved for testing per RFC 6761 — browsers don't auto-resolve
 # (developers add a /etc/hosts entry; CI does the same), but unlike `.localhost`
 # glibc inside containers doesn't hardcode-resolve it to 127.0.0.1, so cluster

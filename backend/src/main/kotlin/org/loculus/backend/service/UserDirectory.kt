@@ -34,6 +34,7 @@ data class LoculusUser(
 
 @Component
 class UserDirectory(private val props: LdapProperties) {
+    private val userSearchBase = props.userBaseDn.relativeToBaseDn()
 
     private val ldapTemplate: LdapTemplate = LdapTemplate(
         LdapContextSource().apply {
@@ -50,9 +51,21 @@ class UserDirectory(private val props: LdapProperties) {
      * — typically zero or one entry.
      */
     fun getUsersWithName(username: String): List<LoculusUser> = ldapTemplate.search(
-        query().base(props.userBaseDn).where("uid").`is`(username),
+        query().base(userSearchBase).where("uid").`is`(username),
         UserAttributesMapper,
     )
+
+    private fun String.relativeToBaseDn(): String {
+        if (equals(props.baseDn, ignoreCase = true)) {
+            return ""
+        }
+        val baseSuffix = ",${props.baseDn}"
+        return if (endsWith(baseSuffix, ignoreCase = true)) {
+            dropLast(baseSuffix.length)
+        } else {
+            this
+        }
+    }
 
     private object UserAttributesMapper : AttributesMapper<LoculusUser> {
         override fun mapFromAttributes(attrs: Attributes): LoculusUser = LoculusUser(

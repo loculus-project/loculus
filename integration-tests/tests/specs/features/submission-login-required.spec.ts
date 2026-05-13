@@ -15,6 +15,6 @@ test.describe('Submission page login requirements', () => {
         await expect(loginLink).toBeVisible();
 
         await loginLink.click();
-        await expect(page).toHaveURL(/realms\/loculus/);
+        await expect(page).toHaveURL(/authentication\.[^/]+.*flow=openid_connect/);
     });
 });

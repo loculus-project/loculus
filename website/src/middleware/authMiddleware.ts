@@ -1,5 +1,6 @@
 import type { APIContext } from 'astro';
 import { defineMiddleware } from 'astro/middleware';
+import { serialize, type SerializeOptions } from 'cookie';
 import jsonwebtoken from 'jsonwebtoken';
 import JwksRsa from 'jwks-rsa';
 import { err, ok, ResultAsync } from 'neverthrow';
@@ -7,11 +8,12 @@ import { type BaseClient, type TokenSet } from 'openid-client';
 
 import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
-import { OidcClientManager } from '../utils/OidcClientManager.ts';
+import { getAutheliaForwardedHeaders, OidcClientManager } from '../utils/OidcClientManager.ts';
 import { decodeState, getAuthUrl } from '../utils/getAuthUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
+export const OIDC_ACCESS_TOKEN_COOKIE = 'oidc_access_token';
 export const REFRESH_TOKEN_COOKIE = 'refresh_token';
 
 enum TokenVerificationError {
@@ -91,13 +93,13 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
 
             if (token !== undefined) {
                 logger.debug(`Token found in params, setting cookie`);
-                setCookie(context, token);
+                const cookieHeaders = setCookie(context, token);
                 // OIDC roundtrip lands on /auth/callback; the original
                 // destination is encoded in `state`. Fall back to the same
                 // URL with code/state stripped (covers any legacy flow).
                 const decoded = decodeState(context.url.searchParams.get('state') ?? undefined);
                 const returnTo = decoded?.r ?? removeTokenCodeFromSearchParams(context.url);
-                return createRedirectWithModifiableHeaders(returnTo);
+                return createRedirectWithModifiableHeaders(returnTo, cookieHeaders);
             }
         }
     } else {
@@ -151,6 +153,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
 
 async function getTokenFromCookie(context: APIContext, client: BaseClient) {
     const accessToken = context.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+    const oidcAccessToken = context.cookies.get(OIDC_ACCESS_TOKEN_COOKIE)?.value;
     const refreshToken = context.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
 
     if (accessToken === undefined || refreshToken === undefined) {
@@ -158,6 +161,7 @@ async function getTokenFromCookie(context: APIContext, client: BaseClient) {
     }
     const tokenCookie = {
         accessToken,
+        oidcAccessToken,
         refreshToken,
     };
 
@@ -180,10 +184,8 @@ async function verifyToken(accessToken: string, client: BaseClient) {
     const tokenHeader = jsonwebtoken.decode(accessToken, { complete: true })?.header;
     const kid = tokenHeader?.kid;
     if (kid === undefined) {
-        return err({
-            type: TokenVerificationError.INVALID_TOKEN,
-            message: 'Token does not contain kid',
-        });
+        logger.debug(`Access token is opaque; deferring validation to userinfo`);
+        return ok(undefined);
     }
 
     if (client.issuer.metadata.jwks_uri === undefined) {
@@ -195,6 +197,7 @@ async function verifyToken(accessToken: string, client: BaseClient) {
 
     const jwksClient = new JwksRsa.JwksClient({
         jwksUri: client.issuer.metadata.jwks_uri,
+        requestHeaders: getAutheliaForwardedHeaders(),
     });
 
     try {
@@ -224,7 +227,7 @@ async function verifyToken(accessToken: string, client: BaseClient) {
 }
 
 async function getUserInfo(token: TokenCookie, client: BaseClient) {
-    return ResultAsync.fromPromise(client.userinfo(token.accessToken), (error) => {
+    return ResultAsync.fromPromise(client.userinfo(token.oidcAccessToken ?? token.accessToken), (error) => {
         logger.debug(`Error getting user info: ${error}`);
         return error;
     });
@@ -265,39 +268,61 @@ async function getTokenFromParams(context: APIContext, client: BaseClient): Prom
     return undefined;
 }
 
-function setCookie(context: APIContext, token: TokenCookie) {
+function getTokenCookieOptions(): SerializeOptions {
     const runtimeConfig = getRuntimeConfig();
-    logger.debug(`Setting token cookie`);
-    context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, {
+    return {
         httpOnly: true,
         sameSite: 'lax',
         secure: !runtimeConfig.insecureCookies,
         path: '/',
-    });
-    context.cookies.set(REFRESH_TOKEN_COOKIE, token.refreshToken, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: !runtimeConfig.insecureCookies,
-        path: '/',
-    });
+    };
 }
 
-function deleteCookie(context: APIContext) {
+function setCookie(context: APIContext, token: TokenCookie): string[] {
+    const cookieOptions = getTokenCookieOptions();
+    logger.debug(`Setting token cookie`);
+    context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, cookieOptions);
+    if (token.oidcAccessToken !== undefined) {
+        context.cookies.set(OIDC_ACCESS_TOKEN_COOKIE, token.oidcAccessToken, cookieOptions);
+    }
+    context.cookies.set(REFRESH_TOKEN_COOKIE, token.refreshToken, cookieOptions);
+    const cookieHeaders = [
+        serialize(ACCESS_TOKEN_COOKIE, token.accessToken, cookieOptions),
+        token.oidcAccessToken === undefined
+            ? undefined
+            : serialize(OIDC_ACCESS_TOKEN_COOKIE, token.oidcAccessToken, cookieOptions),
+        serialize(REFRESH_TOKEN_COOKIE, token.refreshToken, cookieOptions),
+    ];
+    return cookieHeaders.filter((it): it is string => it !== undefined);
+}
+
+function deleteCookie(context: APIContext): string[] {
     logger.debug(`Deleting token cookie`);
     try {
         context.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/' });
+        context.cookies.delete(OIDC_ACCESS_TOKEN_COOKIE, { path: '/' });
         context.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/' });
     } catch {
         logger.info(`Error deleting cookie`);
     }
+    const deleteOptions: SerializeOptions = { path: '/', maxAge: 0 };
+    return [
+        serialize(ACCESS_TOKEN_COOKIE, '', deleteOptions),
+        serialize(OIDC_ACCESS_TOKEN_COOKIE, '', deleteOptions),
+        serialize(REFRESH_TOKEN_COOKIE, '', deleteOptions),
+    ];
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Basic_concepts#guard
 // URL must be absolute, otherwise throws TypeError
-const createRedirectWithModifiableHeaders = (url: string) => {
+const createRedirectWithModifiableHeaders = (url: string, cookieHeaders: string[] = []) => {
     logger.debug(`Redirecting to ${url}`);
     const redirect = Response.redirect(url);
-    return new Response(null, { status: redirect.status, headers: redirect.headers });
+    const response = new Response(null, { status: redirect.status, headers: redirect.headers });
+    for (const cookie of cookieHeaders) {
+        response.headers.append('set-cookie', cookie);
+    }
+    return response;
 };
 
 const redirectToAuth = async (context: APIContext) => {
@@ -307,8 +332,8 @@ const redirectToAuth = async (context: APIContext) => {
     logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
     const authUrl = await getAuthUrl(redirectUrl);
 
-    deleteCookie(context);
-    return createRedirectWithModifiableHeaders(authUrl);
+    const cookieHeaders = deleteCookie(context);
+    return createRedirectWithModifiableHeaders(authUrl, cookieHeaders);
 };
 
 function removeTokenCodeFromSearchParams(url: URL): string {
@@ -330,7 +355,11 @@ async function refreshTokenViaOidc(token: TokenCookie, client: BaseClient): Prom
 }
 
 function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined): TokenCookie | undefined {
-    const accessToken = tokenSet?.access_token;
+    // Authelia access tokens are opaque. Loculus backend is a JWT resource
+    // server, so use the OIDC ID token for backend bearer auth and keep the
+    // opaque access token only for provider userinfo calls.
+    const accessToken = tokenSet?.id_token ?? tokenSet?.access_token;
+    const oidcAccessToken = tokenSet?.access_token;
     const refreshToken = tokenSet?.refresh_token;
 
     if (tokenSet === undefined || accessToken === undefined || refreshToken === undefined) {
@@ -340,6 +369,7 @@ function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined): TokenCo
 
     return {
         accessToken,
+        oidcAccessToken,
         refreshToken,
     };
 }

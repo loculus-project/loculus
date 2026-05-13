@@ -10,6 +10,7 @@ from rich.text import Text
 
 from ..auth.client import AuthClient
 from ..config import InstanceConfig
+from ..local_dev import verify_tls
 
 
 class SequenceStatus(str, Enum):
@@ -177,6 +178,7 @@ class ReviewApiClient:
             f"{backend_url}/{organism}/get-sequences",
             headers=self._get_auth_headers(),
             params=params,
+            verify=verify_tls(),
         )
         response.raise_for_status()
 
@@ -191,6 +193,7 @@ class ReviewApiClient:
         response = httpx.get(
             f"{backend_url}/{organism}/get-data-to-edit/{accession}/{version}",
             headers=self._get_auth_headers(),
+            verify=verify_tls(),
         )
         response.raise_for_status()
 
@@ -218,6 +221,7 @@ class ReviewApiClient:
             f"{backend_url}/{organism}/approve-processed-data",
             headers=self._get_auth_headers(),
             json=data,
+            verify=verify_tls(),
         )
         response.raise_for_status()
 

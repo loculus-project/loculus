@@ -5,10 +5,11 @@ admin API. Designed to be deployed alongside lldap in bundled-LDAP mode.
 """
 from __future__ import annotations
 
+import asyncio
 import os
 import re
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import AsyncIterator, Optional
 
 import httpx
 from fastapi import FastAPI, Form, Request
@@ -38,10 +39,19 @@ class LldapClient:
         self._username = username
         self._password = password
         self._token: Optional[str] = None
+        self._default_group_id: Optional[int] = None
+        self._default_group_id_loaded = False
+        self._login_lock = asyncio.Lock()
+        self._operation_lock = asyncio.Lock()
         self._http = httpx.AsyncClient(base_url=base_url, timeout=15.0)
 
     async def aclose(self) -> None:
         await self._http.aclose()
+
+    @asynccontextmanager
+    async def operation(self) -> AsyncIterator[None]:
+        async with self._operation_lock:
+            yield
 
     async def _login(self) -> str:
         # lldap 0.6 expects `username` (not `name`).
@@ -52,36 +62,97 @@ class LldapClient:
         resp.raise_for_status()
         return resp.json()["token"]
 
-    async def _gql(self, query: str, variables: dict) -> dict:
-        if not self._token:
+    async def _get_token(self) -> str:
+        if self._token is not None:
+            return self._token
+
+        async with self._login_lock:
+            if self._token is None:
+                self._token = await self._login()
+            return self._token
+
+    async def _refresh_token(self) -> str:
+        async with self._login_lock:
             self._token = await self._login()
+            return self._token
+
+    async def _gql(self, query: str, variables: dict) -> dict:
+        token = await self._get_token()
         resp = await self._http.post(
             "/api/graphql",
             json={"query": query, "variables": variables},
-            headers={"Authorization": f"Bearer {self._token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
         if resp.status_code == 401:
             # token expired, retry once
-            self._token = await self._login()
+            token = await self._refresh_token()
             resp = await self._http.post(
                 "/api/graphql",
                 json={"query": query, "variables": variables},
-                headers={"Authorization": f"Bearer {self._token}"},
+                headers={"Authorization": f"Bearer {token}"},
             )
         resp.raise_for_status()
         return resp.json()
 
+    async def _get_default_group_id(self) -> Optional[int]:
+        if self._default_group_id_loaded:
+            return self._default_group_id
+
+        groups = await self._gql("query { groups { id displayName } }", {})
+        self._default_group_id = next(
+            (
+                g["id"]
+                for g in groups["data"]["groups"]
+                if g["displayName"] == DEFAULT_GROUP
+            ),
+            None,
+        )
+        self._default_group_id_loaded = True
+        return self._default_group_id
+
+    async def _set_password(self, user_id: str, password: str) -> None:
+        token = await self._get_token()
+        process = await asyncio.create_subprocess_exec(
+            "lldap_set_password",
+            "--base-url",
+            f"{self._base}/",
+            "--token",
+            token,
+            "--username",
+            user_id,
+            "--password",
+            password,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=30)
+        except asyncio.TimeoutError as exc:
+            process.kill()
+            await process.communicate()
+            raise RuntimeError("Timed out while setting lldap password") from exc
+
+        if process.returncode != 0:
+            output = (stderr or stdout).decode(errors="replace").strip()
+            raise RuntimeError(f"Failed to set lldap password: {output}")
+
     async def user_exists(self, user_id: str) -> bool:
         q = "query($id: String!) { user(userId: $id) { id } }"
         body = await self._gql(q, {"id": user_id})
-        return body.get("data", {}).get("user") is not None
+        data = body.get("data")
+        if data is None:
+            errors = body.get("errors") or []
+            if any("Entity not found" in (error.get("message") or "") for error in errors):
+                return False
+            raise RuntimeError(f"Unexpected lldap GraphQL response: {body}")
+        return data.get("user") is not None
 
     async def email_exists(self, email: str) -> bool:
         q = "query { users { email } }"
         body = await self._gql(q, {})
         return any(
             (u.get("email") or "").lower() == email.lower()
-            for u in body.get("data", {}).get("users", [])
+            for u in (body.get("data") or {}).get("users", [])
         )
 
     async def create_user(
@@ -93,6 +164,7 @@ class LldapClient:
         organization: str,
         password: str,
     ) -> None:
+        gid = await self._get_default_group_id()
         q = """
         mutation($u: CreateUserInput!) {
           createUser(user: $u) { id }
@@ -110,28 +182,12 @@ class LldapClient:
                 }
             },
         )
-        # lldap stores password via its /auth/simple/register endpoint
-        # (privileged when called by admin).
-        await self._http.post(
-            "/auth/simple/register",
-            json={"name": user_id, "password": password, "email": email},
-            headers={"Authorization": f"Bearer {self._token}"},
-        )
-        # Add to default group
-        groups = await self._gql("query { groups { id displayName } }", {})
-        gid = next(
-            (
-                g["id"]
-                for g in groups["data"]["groups"]
-                if g["displayName"] == DEFAULT_GROUP
-            ),
-            None,
-        )
         if gid is not None:
             await self._gql(
                 "mutation($u: String!, $g: Int!) { addUserToGroup(userId: $u, groupId: $g) { ok } }",
                 {"u": user_id, "g": gid},
             )
+        await self._set_password(user_id, password)
 
 
 @asynccontextmanager
@@ -207,10 +263,20 @@ async def submit(
 
     lldap: LldapClient = request.app.state.lldap
     if not errors:
-        if await lldap.user_exists(username):
-            errors["username"] = "That username is already taken"
-        elif await lldap.email_exists(email):
-            errors["email"] = "That email is already registered"
+        async with lldap.operation():
+            if await lldap.user_exists(username):
+                errors["username"] = "That username is already taken"
+            elif await lldap.email_exists(email):
+                errors["email"] = "That email is already registered"
+            else:
+                await lldap.create_user(
+                    user_id=username,
+                    email=email,
+                    first_name=first_name.strip(),
+                    last_name=last_name.strip(),
+                    organization=organization.strip(),
+                    password=password,
+                )
 
     if errors:
         return templates.TemplateResponse(
@@ -224,15 +290,6 @@ async def submit(
             },
             status_code=400,
         )
-
-    await lldap.create_user(
-        user_id=username,
-        email=email,
-        first_name=first_name.strip(),
-        last_name=last_name.strip(),
-        organization=organization.strip(),
-        password=password,
-    )
 
     if LOGIN_URL:
         return RedirectResponse(url=f"{LOGIN_URL}?registered=1", status_code=303)

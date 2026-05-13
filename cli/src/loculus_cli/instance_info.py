@@ -5,6 +5,7 @@ from typing import Any
 
 import httpx
 
+from .local_dev import verify_tls
 from .types import Schema
 
 
@@ -30,7 +31,7 @@ class InstanceInfo:
             return self._cache
 
         try:
-            with httpx.Client(timeout=30.0) as client:
+            with httpx.Client(timeout=30.0, verify=verify_tls()) as client:
                 response = client.get(f"{self.instance_url}/loculus-info")
                 response.raise_for_status()
 

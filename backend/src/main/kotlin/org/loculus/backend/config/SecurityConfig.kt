@@ -7,12 +7,15 @@ import org.loculus.backend.auth.Roles.EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
 import org.loculus.backend.auth.ServiceTokenAuthenticationFilter
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.web.client.RestTemplateBuilder
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpMethod
+import org.springframework.http.client.ClientHttpRequestInterceptor
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -21,6 +24,9 @@ import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.core.oidc.StandardClaimNames
 import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.security.oauth2.jwt.JwtValidators
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler
@@ -32,6 +38,7 @@ import org.springframework.security.web.access.DelegatingAccessDeniedHandler
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter
 import org.springframework.security.web.csrf.CsrfException
 import org.springframework.stereotype.Component
+import java.net.URI
 
 private val log = KotlinLogging.logger { }
 
@@ -124,6 +131,49 @@ class SecurityConfig {
                 .accessDeniedHandler(LoggingAccessDeniedHandler(defaultAccessDeniedHandler))
         }
         .build()
+
+    @Bean
+    @ConditionalOnMissingBean(JwtDecoder::class)
+    fun jwtDecoder(
+        @Value("\${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}") jwkSetUri: String,
+        @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri:}") issuerUri: String,
+        restTemplateBuilder: RestTemplateBuilder,
+    ): JwtDecoder {
+        val decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri)
+            .restOperations(restTemplateBuilder.withForwardedIssuerHeaders(issuerUri).build())
+            .build()
+
+        if (issuerUri.isNotBlank()) {
+            decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuerUri))
+        }
+
+        return decoder
+    }
+}
+
+private fun RestTemplateBuilder.withForwardedIssuerHeaders(issuerUri: String): RestTemplateBuilder {
+    if (issuerUri.isBlank()) {
+        return this
+    }
+
+    val issuer = URI.create(issuerUri)
+    val scheme = issuer.scheme ?: return this
+    val host = issuer.rawAuthority ?: issuer.host ?: return this
+    val port = when {
+        issuer.port > 0 -> issuer.port.toString()
+        scheme == "https" -> "443"
+        scheme == "http" -> "80"
+        else -> return this
+    }
+
+    val forwardedHeadersInterceptor = ClientHttpRequestInterceptor { request, body, execution ->
+        request.headers.add("X-Forwarded-Proto", scheme)
+        request.headers.add("X-Forwarded-Host", host)
+        request.headers.add("X-Forwarded-Port", port)
+        execution.execute(request, body)
+    }
+
+    return additionalInterceptors(forwardedHeadersInterceptor)
 }
 
 @Component

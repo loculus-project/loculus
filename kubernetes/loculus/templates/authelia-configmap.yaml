@@ -14,6 +14,17 @@ data:
       buffers:
         read: 4096
         write: 4096
+      {{- if $.Values.auth.relaxOidcTokenRateLimit }}
+      endpoints:
+        rate_limits:
+          openid_connect_token:
+            enable: true
+            buckets:
+              - period: "1 minute"
+                requests: 10000
+              - period: "1 hour"
+                requests: 100000
+      {{- end }}
 
     log:
       level: info
@@ -75,6 +86,9 @@ data:
           authorize_code: 1m
           id_token: 1h
           refresh_token: 90d
+        claims_policies:
+          loculus_backend:
+            id_token: [preferred_username, groups, email, name]
         cors:
           endpoints: [authorization, token, revocation, introspection, userinfo]
           allowed_origins_from_client_redirect_uris: true
@@ -102,6 +116,7 @@ data:
             grant_types: [authorization_code, refresh_token]
             response_types: [code]
             consent_mode: implicit
+            claims_policy: loculus_backend
             token_endpoint_auth_method: client_secret_basic
           - client_id: loculus-cli
             client_name: Loculus CLI

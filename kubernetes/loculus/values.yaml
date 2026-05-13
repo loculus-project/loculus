@@ -2645,6 +2645,7 @@ auth:
   verifyEmail: false
   resetPasswordAllowed: true
   registrationAllowed: true
+  relaxOidcTokenRateLimit: false
   # Bundled LDAP mode: deploys lldap + a registration service.
   # When false, configure auth.ldap below to point at your existing LDAP and
   # disable the registration UI.

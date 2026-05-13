@@ -19,6 +19,8 @@ import keyring
 from pydantic import BaseModel
 from rich.console import Console
 
+from ..local_dev import verify_tls
+
 if TYPE_CHECKING:
     from ..config import InstanceConfig
 
@@ -48,7 +50,7 @@ class AuthClient:
 
     def __init__(self, instance_config: "InstanceConfig") -> None:
         self.instance_config = instance_config
-        self.client = httpx.Client(timeout=30.0)
+        self.client = httpx.Client(timeout=30.0, verify=verify_tls())
         self._service_name = os.getenv("LOCULUS_CLI_KEYRING_SERVICE", "loculus-cli")
         self._token_cache: TokenInfo | None = None
         self._discovery_cache: dict[str, str] | None = None

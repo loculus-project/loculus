@@ -7,6 +7,17 @@ import { getInstanceLogger } from '../logger.ts';
 let _client: BaseClient | undefined;
 const logger = getInstanceLogger('OidcClientManager');
 
+export function getAutheliaForwardedHeaders() {
+    const publicUrl = new URL(getRuntimeConfig().serverSide.autheliaPublicUrl);
+    return {
+        /* eslint-disable @typescript-eslint/naming-convention */
+        'X-Forwarded-Proto': publicUrl.protocol.replace(':', ''),
+        'X-Forwarded-Host': publicUrl.host,
+        'X-Forwarded-Port': publicUrl.port || (publicUrl.protocol === 'https:' ? '443' : '80'),
+        /* eslint-enable @typescript-eslint/naming-convention */
+    };
+}
+
 // We construct the Authelia OIDC client from a fixed metadata table rather than
 // running `.well-known/openid-configuration` discovery. Authelia derives the
 // issuer URL from the incoming request's Host and X-Forwarded-Proto headers,
@@ -26,8 +37,6 @@ function buildIssuer(internalUrl: string, publicUrl: string): Issuer {
         userinfo_endpoint: `${internal}/api/oidc/userinfo`,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         jwks_uri: `${internal}/jwks.json`,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        end_session_endpoint: `${pub}/api/oidc/logout`,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         revocation_endpoint: `${internal}/api/oidc/revocation`,
         // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -50,21 +59,24 @@ export const OidcClientManager = {
             const pub = getRuntimeConfig().serverSide.autheliaPublicUrl;
             logger.info(`Building OIDC client (internal=${internal}, public=${pub})`);
             const issuer = buildIssuer(internal, pub);
+            const forwardedHeaders = getAutheliaForwardedHeaders();
+            issuer[custom.http_options] = (_url, options) => ({
+                ...options,
+                headers: {
+                    ...(options.headers ?? {}),
+                    ...forwardedHeaders,
+                },
+            });
             _client = new issuer.Client(getClientMetadata());
             // Authelia derives its issuer URL from request headers. Server-side
             // calls hit the in-cluster service directly (HTTP, no proxy), so
             // without these forwarded headers it would derive a wrong issuer
             // and reject the token exchange with `invalid_grant` / `server_error`.
-            const publicUrl = new URL(pub);
             _client[custom.http_options] = (_url, options) => ({
                 ...options,
                 headers: {
                     ...(options.headers ?? {}),
-                    /* eslint-disable @typescript-eslint/naming-convention */
-                    'x-forwarded-proto': publicUrl.protocol.replace(':', ''),
-                    'x-forwarded-host': publicUrl.host,
-                    'x-forwarded-port': publicUrl.port || (publicUrl.protocol === 'https:' ? '443' : '80'),
-                    /* eslint-enable @typescript-eslint/naming-convention */
+                    ...forwardedHeaders,
                 },
             });
         } catch (error) {

@@ -69,7 +69,7 @@ spec:
             - "--spring.datasource.password=$(DB_PASSWORD)"
             - "--spring.datasource.url=$(DB_URL)"
             - "--spring.datasource.username=$(DB_USERNAME)"
-            - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-authelia-service:9091/api/oidc/jwks.json"
+            - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-authelia-service:9091/jwks.json"
             - "--spring.security.oauth2.resourceserver.jwt.issuer-uri={{ include "loculus.autheliaUrl" . }}"
             - "--loculus.cleanup.task.reset-stale-in-processing-after-seconds={{- .Values.preprocessingTimeout | default 120 }}"
             - "--loculus.pipeline-version-upgrade-check.interval-seconds={{- .Values.pipelineVersionUpgradeCheckIntervalSeconds | default 10 }}"

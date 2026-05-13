@@ -5,6 +5,7 @@ from typing import Any
 import httpx
 from pydantic import ValidationError
 
+from ..local_dev import verify_tls
 from ..utils.console import get_stderr_console
 from .models import LapisAggregatedResponse, LapisResponse, LapisSequenceResponse
 
@@ -18,6 +19,7 @@ class LapisClient:
             base_url=lapis_url,
             timeout=60.0,  # LAPIS queries can take longer
             follow_redirects=True,
+            verify=verify_tls(),
         )
         self.stderr_console = get_stderr_console()
 

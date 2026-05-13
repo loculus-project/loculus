@@ -1463,6 +1463,12 @@
           "default": true,
           "description": "If true, allows users to register new accounts in Keycloak."
         },
+        "relaxOidcTokenRateLimit": {
+          "groups": ["auth"],
+          "type": "boolean",
+          "default": false,
+          "description": "If true, raises Authelia's OIDC token endpoint rate limits for local e2e/dev auth flows."
+        },
         "identityProviders": {
           "type": "object",
           "additionalProperties": false,

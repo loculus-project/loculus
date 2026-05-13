@@ -5,6 +5,7 @@ import sys
 import click
 from rich.console import Console
 
+from .local_dev import install_local_test_dns
 from .commands.auth import auth_group
 from .commands.config import config_group
 from .commands.get import get_group
@@ -16,6 +17,8 @@ from .commands.schema import schema_group
 from .commands.status import status
 from .commands.submit import submit_group
 from .config import check_and_show_warning
+
+install_local_test_dns()
 
 console = Console()
 
