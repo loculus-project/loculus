@@ -25,7 +25,11 @@ TERMS_MESSAGE = os.environ.get("TERMS_MESSAGE", "")
 DEFAULT_GROUP = os.environ.get("DEFAULT_GROUP", "user")
 
 USERNAME_RE = re.compile(r"^[a-z0-9_-]{3,32}$")
-EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+# The character classes here are linear (single-char only, no `+`/`*` quantifier
+# stacking), but we still cap MAX_EMAIL_LEN before applying the regex to keep
+# matching predictably bounded on attacker-supplied input.
+EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,253}\.[^@\s]{1,253}$")
+MAX_EMAIL_LEN = 254
 
 
 class LldapClient:
@@ -185,7 +189,7 @@ async def submit(
     }
     if not USERNAME_RE.fullmatch(username):
         errors["username"] = "3-32 chars, lowercase letters, digits, _, -"
-    if not EMAIL_RE.fullmatch(email):
+    if len(email) > MAX_EMAIL_LEN or not EMAIL_RE.fullmatch(email):
         errors["email"] = "Invalid email"
     if not first_name.strip():
         errors["first_name"] = "Required"

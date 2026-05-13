@@ -17,7 +17,6 @@ function buildIssuer(internalUrl: string, publicUrl: string): Issuer {
     const internal = internalUrl.replace(/\/+$/, '');
     const pub = publicUrl.replace(/\/+$/, '');
     return new Issuer({
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         issuer: pub,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         authorization_endpoint: `${pub}/api/oidc/authorization`,
@@ -39,6 +38,9 @@ function buildIssuer(internalUrl: string, publicUrl: string): Issuer {
 }
 
 export const OidcClientManager = {
+    // Kept async for callsite compatibility (the previous implementation used
+    // `Issuer.discover`); building the client is now synchronous.
+    // eslint-disable-next-line @typescript-eslint/require-await
     getClient: async (): Promise<BaseClient | undefined> => {
         if (_client !== undefined) {
             return _client;
@@ -50,7 +52,7 @@ export const OidcClientManager = {
             const issuer = buildIssuer(internal, pub);
             _client = new issuer.Client(getClientMetadata());
         } catch (error) {
-            logger.error(`Error building OIDC client: ${error as unknown as string}`);
+            logger.error(`Error building OIDC client: ${String(error)}`);
         }
         return _client;
     },

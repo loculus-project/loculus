@@ -11,7 +11,6 @@ from http import HTTPStatus
 from pathlib import Path
 from urllib.parse import urlparse
 
-import jwt
 import pytz
 import requests
 
