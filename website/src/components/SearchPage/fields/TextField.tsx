@@ -20,7 +20,6 @@ interface TextFieldProps {
     fieldValue?: string | number | readonly string[];
     className?: string;
     onFocus?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
-    placeholder?: string;
     multiline?: boolean;
     onBlur?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     type?: string;
