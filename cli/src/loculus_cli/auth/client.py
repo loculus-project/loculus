@@ -12,7 +12,7 @@ prompting the user to re-authorize on every command.
 import os
 import time
 import webbrowser
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import httpx
 import keyring
@@ -99,7 +99,8 @@ class AuthClient:
     def _discovery(self) -> dict[str, str]:
         if self._discovery_cache is not None:
             return self._discovery_cache
-        url = f"{self.instance_config.authelia_url.rstrip('/')}/.well-known/openid-configuration"
+        base = self.instance_config.authelia_url.rstrip("/")
+        url = f"{base}/.well-known/openid-configuration"
         resp = self.client.get(url)
         resp.raise_for_status()
         self._discovery_cache = resp.json()
@@ -128,7 +129,8 @@ class AuthClient:
         )
         if resp.status_code != 200:
             raise DeviceCodeError(
-                f"Device authorization request failed: HTTP {resp.status_code} {resp.text}"
+                "Device authorization request failed: "
+                f"HTTP {resp.status_code} {resp.text}"
             )
         body = resp.json()
 
@@ -209,7 +211,7 @@ class AuthClient:
             return None
 
     def _token_info_from_response(
-        self, data: dict[str, object], default: TokenInfo | None = None
+        self, data: dict[str, Any], default: TokenInfo | None = None
     ) -> TokenInfo:
         return TokenInfo(
             access_token=data["access_token"],

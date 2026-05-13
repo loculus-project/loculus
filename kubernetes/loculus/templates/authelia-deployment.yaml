@@ -25,14 +25,14 @@ spec:
         - name: authelia
           image: "authelia/authelia:4.39"
           {{- include "loculus.resources" (list "authelia" $.Values) | nindent 10 }}
-          env:
-            - name: AUTHELIA_CONFIG
-              value: /config/configuration.yml
           ports:
             - containerPort: 9091
           volumeMounts:
             - name: authelia-config-processed
               mountPath: /config
+            - name: authelia-oidc-key
+              mountPath: /secrets
+              readOnly: true
             - name: data
               mountPath: /data
           startupProbe:
@@ -48,5 +48,11 @@ spec:
             periodSeconds: 30
       volumes:
 {{ include "loculus.configVolume" (dict "name" "authelia-config") | nindent 8 }}
+        - name: authelia-oidc-key
+          secret:
+            secretName: authelia-secrets
+            items:
+              - key: oidcIssuerPrivateKey
+                path: oidc-issuer.pem
         - name: data
           emptyDir: {}

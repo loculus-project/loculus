@@ -1,5 +1,8 @@
+{{- $hostNoPort := index (splitList ":" $.Values.host) 0 }}
 {{- $authHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
-{{- $authIssuer := (include "loculus.autheliaUrl" .) }}
+{{- $isLocal := eq $.Values.environment "local" }}
+{{- /* For dev/local we run Authelia on the same host the website uses, just a different port */}}
+{{- $authIssuer := ternary (printf "http://%s:9091" $hostNoPort) (printf "https://%s" $authHost) $isLocal }}
 {{- $websiteUrl := (include "loculus.websiteUrl" .) }}
 apiVersion: v1
 kind: ConfigMap
@@ -44,7 +47,7 @@ data:
       expiration: 1h
       remember_me: 1M
       cookies:
-        - domain: "{{ $.Values.host }}"
+        - domain: {{ $hostNoPort | quote }}
           authelia_url: "{{ $authIssuer }}"
       secret: "[[autheliaSessionSecret]]"
 
@@ -67,7 +70,7 @@ data:
         hmac_secret: "[[autheliaOidcHmacSecret]]"
         jwks:
           - key: |
-              [[autheliaOidcIssuerPrivateKey]]
+{{- (index $.Values.secrets "authelia-secrets" "data" "oidcIssuerPrivateKey") | nindent 14 }}
         lifespans:
           access_token: 10h
           authorize_code: 1m

@@ -67,11 +67,6 @@
         secretKeyRef:
           name: authelia-secrets
           key: oidcHmacSecret
-    - name: LOCULUSSUB_autheliaOidcIssuerPrivateKey
-      valueFrom:
-        secretKeyRef:
-          name: authelia-secrets
-          key: oidcIssuerPrivateKey
 {{- end }}
 
 
