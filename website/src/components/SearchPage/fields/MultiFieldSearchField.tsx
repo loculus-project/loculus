@@ -42,6 +42,7 @@ export const MultiFieldSearchField = ({
             <CustomTooltip
                 id={tooltipId}
                 place='top'
+                delayShow={200}
                 openEvents={{ mouseenter: true, focus: false, click: true }}
                 closeEvents={{ mouseleave: true, blur: true, click: true }}
                 globalCloseEvents={{ clickOutsideAnchor: true, scroll: true }}
