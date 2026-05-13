@@ -2,8 +2,7 @@
 
 import os
 import socket
-from collections.abc import Sequence
-from typing import Any
+from typing import Any, cast
 
 LOCAL_TEST_DOMAIN_SUFFIX = ".loculus.test"
 LOCAL_TEST_DOMAIN = "loculus.test"
@@ -37,16 +36,18 @@ def install_local_test_dns() -> None:
         return
 
     def getaddrinfo(
-        host: str | bytes | None,
-        port: str | int | None,
+        host: bytes | str | None,
+        port: bytes | str | int | None,
         family: int = 0,
-        type: int = 0,
+        socktype: int = 0,
         proto: int = 0,
         flags: int = 0,
-    ) -> Sequence[tuple[Any, ...]]:
+    ) -> list[tuple[Any, ...]]:
         if _is_local_test_host(host):
-            return _ORIGINAL_GETADDRINFO("127.0.0.1", port, family, type, proto, flags)
-        return _ORIGINAL_GETADDRINFO(host, port, family, type, proto, flags)
+            return _ORIGINAL_GETADDRINFO(
+                "127.0.0.1", port, family, socktype, proto, flags
+            )
+        return _ORIGINAL_GETADDRINFO(host, port, family, socktype, proto, flags)
 
-    socket.getaddrinfo = getaddrinfo
+    socket.getaddrinfo = cast(Any, getaddrinfo)
     _DNS_PATCHED = True
