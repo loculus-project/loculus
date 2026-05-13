@@ -53,7 +53,7 @@ dependencies {
     implementation "org.jetbrains.exposed:exposed-jdbc"
     implementation "org.jetbrains.exposed:exposed-json"
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime"
-    implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.7.1-0.6.x-compat"
+    implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.8.0-0.6.x-compat"
     implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.keycloak:keycloak-admin-client:26.0.9"
     implementation("io.minio:minio:9.0.0")
