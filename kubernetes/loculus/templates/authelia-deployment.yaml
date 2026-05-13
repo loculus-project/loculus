@@ -23,13 +23,11 @@ spec:
 {{- include "loculus.configProcessor" (dict "name" "authelia-config" "dockerTag" $dockerTag "imagePullPolicy" .Values.imagePullPolicy) | nindent 8 }}
       containers:
         - name: authelia
-          image: "ghcr.io/authelia/authelia:4.39"
+          image: "authelia/authelia:4.39"
           {{- include "loculus.resources" (list "authelia" $.Values) | nindent 10 }}
-          args:
-            - "--config=/config/configuration.yml"
           env:
-            - name: X_AUTHELIA_CONFIG_FILTERS
-              value: "expand-env"
+            - name: AUTHELIA_CONFIG
+              value: /config/configuration.yml
           ports:
             - containerPort: 9091
           volumeMounts:

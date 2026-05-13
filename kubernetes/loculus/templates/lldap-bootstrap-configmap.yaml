@@ -83,11 +83,20 @@ data:
             LLDAP_URL.rstrip("/") + path,
             data=data, headers=headers, method=method,
         )
+
+        def _decode(raw):
+            if not raw:
+                return {}
+            try:
+                return json.loads(raw)
+            except json.JSONDecodeError:
+                return {"_raw": raw.decode("utf-8", errors="replace")}
+
         try:
             with urllib.request.urlopen(req, timeout=15) as resp:
-                return resp.status, json.loads(resp.read() or b"{}")
+                return resp.status, _decode(resp.read())
         except urllib.error.HTTPError as e:
-            return e.code, json.loads(e.read() or b"{}")
+            return e.code, _decode(e.read())
 
 
     def wait_for_lldap():
@@ -101,8 +110,9 @@ data:
 
 
     def login():
+        # lldap 0.6 expects `username`, not `name`.
         status, body = http("POST", "/auth/simple/login",
-                            {"name": ADMIN_USER, "password": ADMIN_PASS})
+                            {"username": ADMIN_USER, "password": ADMIN_PASS})
         if status != 200:
             sys.exit(f"login failed: {status} {body}")
         return body["token"]
