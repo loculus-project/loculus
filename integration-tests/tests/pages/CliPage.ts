@@ -26,6 +26,7 @@ export class CliPage {
     private configFile: string;
     private dataHome: string;
     private localCliSource: string;
+    private keyringPython?: string;
 
     constructor(private page?: Page) {
         const uuid = randomUUID();
@@ -385,7 +386,7 @@ keyring.set_password(service, f"{authelia_url}#{username}", json.dumps(token_inf
 keyring.set_password(service, "current_user", username)
 `;
 
-        await execFileAsync('/usr/bin/python3', ['-c', script], {
+        await execFileAsync(await this.getKeyringPython(), ['-c', script], {
             env: this.commandEnv({
                 LOCULUS_CLI_SEED_USERNAME: username,
                 LOCULUS_CLI_SEED_AUTHELIA_URL: autheliaUrl,
@@ -393,6 +394,37 @@ keyring.set_password(service, "current_user", username)
             }),
             timeout: 10000,
         });
+    }
+
+    private async getKeyringPython(): Promise<string> {
+        if (this.keyringPython) {
+            return this.keyringPython;
+        }
+
+        const candidates = [
+            process.env.LOCULUS_CLI_KEYRING_PYTHON,
+            'python3',
+            '/usr/bin/python3',
+        ].filter((candidate): candidate is string => Boolean(candidate));
+
+        const errors: string[] = [];
+        for (const candidate of candidates) {
+            try {
+                await execFileAsync(candidate, ['-c', 'import keyring'], {
+                    env: this.commandEnv(),
+                    timeout: 10000,
+                });
+                this.keyringPython = candidate;
+                return candidate;
+            } catch (error: unknown) {
+                const execError = error as { stderr?: string; message?: string };
+                errors.push(
+                    `${candidate}: ${execError.stderr?.trim() || execError.message || 'failed'}`,
+                );
+            }
+        }
+
+        throw new Error(`No Python interpreter with keyring is available (${errors.join('; ')})`);
     }
 
     private async fetchInstanceInfo(): Promise<{ hosts: { authelia: string } }> {
