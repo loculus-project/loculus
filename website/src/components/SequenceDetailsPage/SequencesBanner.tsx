@@ -39,7 +39,7 @@ const SequencesBanner: FC<SequencesBannerProps> = ({ sequenceEntryHistory, acces
             {ownHistoryEntry?.isRevocation && (
                 <div className='bg-red-100 border-l-4 border-red-500 text-red-700 p-3' role='alert'>
                     <p className='font-bold'>
-                        This is a revocation version. It essentially contains no data, it's just a marker that all
+                        This is a revocation version. It essentially contains no data: it is just a marker that all
                         previous versions have been revoked.
                     </p>
                 </div>
