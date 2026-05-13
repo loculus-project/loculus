@@ -22,10 +22,7 @@ object Roles {
 
 open class User
 
-class AuthenticatedUser private constructor(
-    val username: String,
-    val authorities: Collection<String>,
-) : User() {
+class AuthenticatedUser private constructor(val username: String, val authorities: Collection<String>) : User() {
     companion object {
         fun fromJwt(jwt: JwtAuthenticationToken): AuthenticatedUser = AuthenticatedUser(
             username = jwt.token.claims[StandardClaimNames.PREFERRED_USERNAME] as String,

@@ -36,11 +36,8 @@ data class ServiceTokenProperties(
     val backend: String? = null,
 )
 
-
-class ServiceTokenAuthentication(
-    private val name: String,
-    authorities: Collection<SimpleGrantedAuthority>,
-) : AbstractAuthenticationToken(authorities) {
+class ServiceTokenAuthentication(private val name: String, authorities: Collection<SimpleGrantedAuthority>) :
+    AbstractAuthenticationToken(authorities) {
     init {
         isAuthenticated = true
     }
@@ -50,9 +47,7 @@ class ServiceTokenAuthentication(
     override fun getName(): String = name
 }
 
-
 private data class ServiceAccount(val username: String, val roles: List<String>)
-
 
 @Component
 class ServiceTokenAuthenticationFilter(props: ServiceTokenProperties) : OncePerRequestFilter() {
@@ -85,11 +80,7 @@ class ServiceTokenAuthenticationFilter(props: ServiceTokenProperties) : OncePerR
         }
     }
 
-    override fun doFilterInternal(
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-        chain: FilterChain,
-    ) {
+    override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, chain: FilterChain) {
         val token = request.getHeader(HEADER)
         if (!token.isNullOrBlank()) {
             val account = byToken[token]

@@ -12,10 +12,10 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'Content-Type',
 } as const;
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = ({ request }) => {
     const runtime = getRuntimeConfig();
     const website = getWebsiteConfig();
-    const authUrl = await getAuthBaseUrl();
+    const authUrl = getAuthBaseUrl();
     const response = {
         hosts: {
             backend: runtime.public.backendUrl,

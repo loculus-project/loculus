@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.headers.Header
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.servlet.http.HttpServletRequest
-import org.springframework.http.HttpStatus
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.FileIdAndEtags
 import org.loculus.backend.api.FileIdAndMultipartWriteUrl
@@ -23,6 +22,7 @@ import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.generateFileId
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping

@@ -6,7 +6,7 @@ import { routes } from '../../routes/routes.ts';
 import { getAuthBaseUrl } from '../../utils/getAuthUrl';
 
 const clientConfig = getRuntimeConfig().public;
-const authUrl = await getAuthBaseUrl();
+const authUrl = getAuthBaseUrl();
 
 const websiteConfig = getWebsiteConfig();
 

@@ -3,8 +3,8 @@ package org.loculus.backend.controller.seqsetcitations
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import org.junit.jupiter.api.Test
-import org.loculus.backend.service.LoculusUser
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.service.LoculusUser
 import org.loculus.backend.service.UserDirectory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType

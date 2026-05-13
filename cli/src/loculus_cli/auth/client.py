@@ -132,7 +132,9 @@ class AuthClient:
             )
         body = resp.json()
 
-        verification_uri = body.get("verification_uri_complete") or body["verification_uri"]
+        verification_uri = (
+            body.get("verification_uri_complete") or body["verification_uri"]
+        )
         device_code = body["device_code"]
         user_code = body.get("user_code")
         interval = int(body.get("interval", 5))
@@ -207,14 +209,16 @@ class AuthClient:
             return None
 
     def _token_info_from_response(
-        self, data: dict, default: TokenInfo | None = None
+        self, data: dict[str, object], default: TokenInfo | None = None
     ) -> TokenInfo:
         return TokenInfo(
             access_token=data["access_token"],
             refresh_token=data.get(
                 "refresh_token", default.refresh_token if default else None
             ),
-            expires_in=int(data.get("expires_in", default.expires_in if default else 3600)),
+            expires_in=int(
+                data.get("expires_in", default.expires_in if default else 3600)
+            ),
             refresh_expires_in=int(
                 data.get(
                     "refresh_expires_in",
@@ -273,7 +277,9 @@ class AuthClient:
     def get_auth_headers(self, subject: str | None = None) -> dict[str, str]:
         token = self.get_valid_token(subject)
         if not token:
-            raise RuntimeError("Not authenticated. Please run 'loculus auth login' first.")
+            raise RuntimeError(
+                "Not authenticated. Please run 'loculus auth login' first."
+            )
         return {"Authorization": f"{token.token_type} {token.access_token}"}
 
     def is_authenticated(self, subject: str | None = None) -> bool:

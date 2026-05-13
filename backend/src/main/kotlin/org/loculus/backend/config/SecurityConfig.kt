@@ -7,7 +7,6 @@ import org.loculus.backend.auth.Roles.EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
 import org.loculus.backend.auth.ServiceTokenAuthenticationFilter
-import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -29,6 +28,7 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.access.AccessDeniedHandler
 import org.springframework.security.web.access.AccessDeniedHandlerImpl
 import org.springframework.security.web.access.DelegatingAccessDeniedHandler
+import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter
 import org.springframework.security.web.csrf.CsrfException
 import org.springframework.stereotype.Component
 
@@ -136,7 +136,9 @@ class KeycloakAuthoritiesConverter : Converter<Jwt, List<SimpleGrantedAuthority>
 
 fun getRoles(jwt: Jwt): List<String> = when (val groups = jwt.claims["groups"]) {
     null -> emptyList()
+
     is List<*> -> groups.filterIsInstance<String>()
+
     else -> {
         log.debug { "Ignoring value of `groups` in jwt because type was not List<*>" }
         emptyList()

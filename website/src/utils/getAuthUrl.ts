@@ -24,11 +24,9 @@ export const getAuthUrl = async (redirectUrl: string) => {
 
 // External-facing base URL of the auth provider (Authelia). Used in user-facing
 // API documentation and `/loculus-info` for CLI discovery.
-export const getAuthBaseUrl = async () => {
+export const getAuthBaseUrl = (): string => {
     return getRuntimeConfig().serverSide.autheliaPublicUrl;
 };
 
 // Authelia exposes a self-service portal at the root of the auth URL.
-export const getUrlForAccountPage = async () => {
-    return await getAuthBaseUrl();
-};
+export const getUrlForAccountPage = (): string => getAuthBaseUrl();

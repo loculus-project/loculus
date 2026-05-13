@@ -13,7 +13,6 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.loculus.backend.service.LoculusUser
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
@@ -30,6 +29,7 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
+import org.loculus.backend.service.LoculusUser
 import org.loculus.backend.service.UserDirectory
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired

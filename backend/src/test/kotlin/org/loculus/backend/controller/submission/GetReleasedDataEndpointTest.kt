@@ -35,7 +35,6 @@ import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.loculus.backend.service.LoculusUser
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsChangeRequest
@@ -63,6 +62,7 @@ import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.GetReleasedDataEndpointWithDataUseTermsUrlTest.GetReleasedDataEndpointWithDataUseTermsUrlTestConfig
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
+import org.loculus.backend.service.LoculusUser
 import org.loculus.backend.service.UserDirectory
 import org.loculus.backend.service.submission.SequenceEntriesTable
 import org.loculus.backend.service.submission.SubmissionDatabaseService

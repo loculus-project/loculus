@@ -24,7 +24,7 @@ fun generateJwtFor(username: String, roles: List<String> = emptyList()): String 
     .issuedAt(Date.from(Instant.now()))
     .signWith(keyPair.private, Jwts.SIG.RS256)
     .claim("preferred_username", username)
-    .claim("realm_access", mapOf("roles" to roles))
+    .claim("groups", roles)
     .compact()
 
 fun MockHttpServletRequestBuilder.withAuth(bearerToken: String? = jwtForDefaultUser): MockHttpServletRequestBuilder =

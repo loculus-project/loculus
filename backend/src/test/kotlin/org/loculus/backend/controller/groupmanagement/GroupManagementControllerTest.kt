@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.loculus.backend.service.LoculusUser
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
@@ -24,6 +23,7 @@ import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.jwtForAlternativeUser
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForSuperUser
+import org.loculus.backend.service.LoculusUser
 import org.loculus.backend.service.UserDirectory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType

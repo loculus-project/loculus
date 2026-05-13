@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.loculus.backend.service.LoculusUser
 import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
@@ -35,6 +34,7 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
+import org.loculus.backend.service.LoculusUser
 import org.loculus.backend.service.UserDirectory
 import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired

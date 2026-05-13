@@ -2,8 +2,8 @@ package org.loculus.backend.service
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.ldap.core.AttributesMapper
-import org.springframework.ldap.core.support.LdapContextSource
 import org.springframework.ldap.core.LdapTemplate
+import org.springframework.ldap.core.support.LdapContextSource
 import org.springframework.ldap.query.LdapQueryBuilder.query
 import org.springframework.stereotype.Component
 import javax.naming.directory.Attributes
