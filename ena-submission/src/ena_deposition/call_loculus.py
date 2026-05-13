@@ -24,28 +24,13 @@ def organism_url(config: Config, organism: str) -> str:
     return f"{backend_url(config)}/{organism.strip('/')}"
 
 
-def get_jwt(config: Config) -> str:
-    """Get a JWT token for the given username and password"""
+def service_token(config: Config) -> str:
+    """The pre-shared service token for the external metadata updater.
 
-    external_metadata_updater_password = os.getenv("EXTERNAL_METADATA_UPDATER_PASSWORD")
-    if not external_metadata_updater_password:
-        external_metadata_updater_password = config.password
-
-    data = {
-        "username": config.username,
-        "password": external_metadata_updater_password,
-        "grant_type": "password",
-        "client_id": config.keycloak_client_id,
-    }
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-    keycloak_token_url = config.keycloak_token_url
-
-    response = requests.post(keycloak_token_url, data=data, headers=headers, timeout=60)
-    response.raise_for_status()
-
-    jwt_keycloak = response.json()
-    return jwt_keycloak["access_token"]
+    Authelia OIDC does not support OAuth2 ROPC. Service-to-service auth
+    now uses an X-Service-Token header against the backend's static filter.
+    """
+    return os.getenv("EXTERNAL_METADATA_UPDATER_PASSWORD") or config.password
 
 
 def make_request(
@@ -63,8 +48,7 @@ def make_request(
     if headers is None:
         headers = {}
     if auth:
-        jwt = get_jwt(config)
-        headers["Authorization"] = f"Bearer {jwt}"
+        headers["X-Service-Token"] = service_token(config)
 
     match method:
         case HTTPMethod.GET:

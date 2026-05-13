@@ -96,7 +96,7 @@ def fetch_unprocessed_sequences(etag: str | None, n: int) -> tuple[str | None, l
     url = backendHost + "/extract-unprocessed-data"
     params = {"numberOfSequenceEntries": n, "pipelineVersion": pipeline_version}
     headers = {
-        "Authorization": "Bearer " + get_jwt(),
+        **service_token_header(),
         **({"If-None-Match": etag} if etag else {}),
     }
     response = requests.post(url, data=params, headers=headers)
@@ -238,7 +238,7 @@ def submit_processed_sequences(processed: list[Sequence]):
     ndjson_string = "\n".join(json_strings)
     logging.info(ndjson_string)
     url = backendHost + "/submit-processed-data?pipelineVersion=" + str(pipeline_version)
-    headers = {"Content-Type": "application/x-ndjson", "Authorization": "Bearer " + get_jwt()}
+    headers = {"Content-Type": "application/x-ndjson", **service_token_header()}
     response = requests.post(url, data=ndjson_string, headers=headers)
     if not response.ok:
         raise Exception(
@@ -248,17 +248,14 @@ def submit_processed_sequences(processed: list[Sequence]):
 
 
 def get_jwt():
-    url = keycloakHost + keycloakTokenPath
-    data = {
-        "client_id": "backend-client",
-        "username": keycloakUser,
-        "password": keycloakPassword,
-        "grant_type": "password",
-    }
-    response = requests.post(url, data=data)
-    if not response.ok:
-        raise Exception(f"Fetching JWT failed. Status code: {response.status_code}", response.text)
-    return response.json()["access_token"]
+    # Backwards-compatible name; we now use a static service token. Returning
+    # it here lets the existing `**service_token_header()`
+    # call sites keep working without changes to every header dict.
+    return keycloakPassword
+
+
+def service_token_header():
+    return {"X-Service-Token": keycloakPassword}
 
 
 def main():

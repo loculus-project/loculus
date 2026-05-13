@@ -46,32 +46,16 @@ class JwtCache:
 jwt_cache = JwtCache()
 
 
-def get_jwt(config: Config) -> str:
-    if cached_token := jwt_cache.get_token():
-        logger.debug("Using cached JWT")
-        return cached_token
+def auth_headers(config: Config) -> dict[str, str]:
+    """Return the pre-shared service-token header.
 
-    url = config.keycloak_host.rstrip("/") + "/" + config.keycloak_token_path.lstrip("/")
-    data = {
-        "client_id": "backend-client",
-        "username": config.keycloak_user,
-        "password": config.keycloak_password,
-        "grant_type": "password",
-    }
-
-    logger.debug(f"Requesting JWT from {url}")
-
-    with requests.post(url, data=data, timeout=10) as response:
-        if response.ok:
-            logger.debug("JWT fetched successfully.")
-            token = response.json()["access_token"]
-            decoded = jwt.decode(token, options={"verify_signature": False})
-            expiration = dt.datetime.fromtimestamp(decoded.get("exp", 0), tz=pytz.UTC)
-            jwt_cache.set_token(token, expiration)
-            return token
-        error_msg = f"Fetching JWT failed with status code {response.status_code}: {response.text}"
-        logger.error(error_msg)
-        raise Exception(error_msg)
+    Authelia's OIDC provider does not support OAuth2 ROPC, so service-to-
+    service authentication uses an X-Service-Token header against the
+    backend's static filter instead of getting a JWT from the IDP. The
+    token value is the same secret the previous Keycloak password used,
+    rebound to a Spring Boot property in the backend.
+    """
+    return {"X-Service-Token": config.keycloak_password}
 
 
 def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
@@ -120,7 +104,7 @@ def fetch_unprocessed_sequences(
     logger.debug(f"[{request_id}] Fetching {n} unprocessed sequences from {url}")
     params = {"numberOfSequenceEntries": n, "pipelineVersion": config.pipeline_version}
     headers = {
-        "Authorization": "Bearer " + get_jwt(config),
+        **auth_headers(config),
         "x-request-id": request_id,
         **({"If-None-Match": etag} if etag else {}),
     }
@@ -169,7 +153,7 @@ def submit_processed_sequences(
     url = config.backend_host.rstrip("/") + "/submit-processed-data"
     headers = {
         "Content-Type": "application/x-ndjson",
-        "Authorization": "Bearer " + get_jwt(config),
+        **auth_headers(config),
         "x-request-id": request_id,
     }
     params = {"pipelineVersion": config.pipeline_version}
@@ -198,7 +182,7 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
     url = base_url + "/files/request-upload"
     params = {"groupId": group_id, "numberFiles": number_of_files}
     headers = {
-        "Authorization": "Bearer " + get_jwt(config),
+        **auth_headers(config),
         "x-request-id": request_id,
     }
     logger.info(

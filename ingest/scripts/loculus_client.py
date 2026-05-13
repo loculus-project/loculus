@@ -47,35 +47,14 @@ def organism_url(config: ApproveConfig) -> str:
     return f"{backend_url(config)}/{config.organism.strip('/')}"
 
 
-def get_jwt(config: ApproveConfig) -> str:
+def service_token(config: ApproveConfig) -> str:
+    """The pre-shared service token for the ingest user.
+
+    The Authelia OIDC provider doesn't support OAuth2 ROPC, so service-to-
+    service authentication uses an X-Service-Token header against the
+    backend's static filter instead of obtaining a JWT.
     """
-    Get a JWT token for the given username and password
-    """
-
-    keycloak_ingest_password = os.getenv("KEYCLOAK_INGEST_PASSWORD")
-    if not keycloak_ingest_password:
-        keycloak_ingest_password = config.password
-
-    data = {
-        "username": config.username,
-        "password": keycloak_ingest_password,
-        "grant_type": "password",
-        "client_id": config.keycloak_client_id,
-    }
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-    keycloak_token_url = config.keycloak_token_url
-
-    response = requests.post(
-        keycloak_token_url,
-        data=data,
-        headers=headers,
-        timeout=config.backend_request_timeout_seconds,
-    )
-    response.raise_for_status()
-
-    jwt_keycloak = response.json()
-    return jwt_keycloak["access_token"]
+    return os.getenv("KEYCLOAK_INGEST_PASSWORD") or config.password
 
 
 def make_request(  # noqa: PLR0913, PLR0917
@@ -89,8 +68,7 @@ def make_request(  # noqa: PLR0913, PLR0917
     """
     Generic request function to handle repetitive tasks like fetching JWT and setting headers.
     """
-    jwt = get_jwt(config)
-    headers = {"Authorization": f"Bearer {jwt}", "Content-Type": "application/json"}
+    headers = {"X-Service-Token": service_token(config), "Content-Type": "application/json"}
     timeout = config.backend_request_timeout_seconds
     match method:
         case HTTPMethod.GET:

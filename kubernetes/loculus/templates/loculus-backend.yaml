@@ -117,6 +117,26 @@ spec:
                 secretKeyRef:
                   name: lldap-secrets
                   key: adminPassword
+            - name: LOCULUS_SERVICE_TOKENS_PREPROCESSING_PIPELINE
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUS_SERVICE_TOKENS_EXTERNAL_METADATA_UPDATER
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUS_SERVICE_TOKENS_INSDC_INGEST_USER
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUS_SERVICE_TOKENS_BACKEND
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
             - name: DB_URL
               valueFrom:
                secretKeyRef:

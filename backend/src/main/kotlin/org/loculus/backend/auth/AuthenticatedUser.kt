@@ -22,15 +22,27 @@ object Roles {
 
 open class User
 
-class AuthenticatedUser(private val source: JwtAuthenticationToken) : User() {
-    val username: String
-        get() = source.token.claims[StandardClaimNames.PREFERRED_USERNAME] as String
+class AuthenticatedUser private constructor(
+    val username: String,
+    val authorities: Collection<String>,
+) : User() {
+    companion object {
+        fun fromJwt(jwt: JwtAuthenticationToken): AuthenticatedUser = AuthenticatedUser(
+            username = jwt.token.claims[StandardClaimNames.PREFERRED_USERNAME] as String,
+            authorities = jwt.authorities.map { it.authority },
+        )
+
+        fun fromServiceToken(token: ServiceTokenAuthentication): AuthenticatedUser = AuthenticatedUser(
+            username = token.principal,
+            authorities = token.authorities.map { it.authority },
+        )
+    }
 
     val isSuperUser: Boolean
-        get() = source.authorities.any { it.authority == SUPER_USER }
+        get() = authorities.any { it == SUPER_USER }
 
     val isPreprocessingPipeline: Boolean
-        get() = source.authorities.any { it.authority == PREPROCESSING_PIPELINE }
+        get() = authorities.any { it == PREPROCESSING_PIPELINE }
 }
 
 class AnonymousUser : User()
@@ -48,7 +60,10 @@ class UserConverter : HandlerMethodArgumentResolver {
     ): Any? {
         val authentication = SecurityContextHolder.getContext().authentication
         if (authentication is JwtAuthenticationToken) {
-            return AuthenticatedUser(authentication)
+            return AuthenticatedUser.fromJwt(authentication)
+        }
+        if (authentication is ServiceTokenAuthentication) {
+            return AuthenticatedUser.fromServiceToken(authentication)
         }
         if (authentication is AnonymousAuthenticationToken) {
             return AnonymousUser()

@@ -6,6 +6,8 @@ import mu.KotlinLogging
 import org.loculus.backend.auth.Roles.EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
+import org.loculus.backend.auth.ServiceTokenAuthenticationFilter
+import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -78,7 +80,9 @@ class SecurityConfig {
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
+        serviceTokenFilter: ServiceTokenAuthenticationFilter,
     ): SecurityFilterChain = httpSecurity
+        .addFilterBefore(serviceTokenFilter, AbstractPreAuthenticatedProcessingFilter::class.java)
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
                 "/",
