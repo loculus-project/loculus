@@ -33,7 +33,7 @@ export const MultiFieldSearchField = ({
                     autoComplete='off'
                 />
             </DisabledUntilHydrated>
-            <div className='absolute top-1/2 -translate-y-1/3 right-1'>
+            <div className='absolute top-1/2 -translate-y-1/3 right-1.5'>
                 <span data-tooltip-id={tooltipId} className='text-gray-400 hover:text-primary-600 inline-flex'>
                     <MaterialSymbolsHelpOutline className='inline-block h-6 w-5' />
                 </span>
