@@ -63,10 +63,10 @@ jobs:
     uses: ./.github/workflows/ena-submission-flyway-image.yaml
     with:
       build_arm: true
-  trigger-keycloakify:
+  trigger-registration-service:
     needs: should-build
     if: needs.should-build.outputs.should_run == 'true'
-    uses: ./.github/workflows/keycloakify-image.yml
+    uses: ./.github/workflows/registration-service-image.yml
     with:
       build_arm: true
   trigger-preprocessing-nextclade:

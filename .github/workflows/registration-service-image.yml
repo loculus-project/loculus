@@ -1,4 +1,4 @@
-name: keycloakify-image
+name: registration-service-image
 on:
   pull_request:
   push:
@@ -19,36 +19,29 @@ on:
         default: false
         required: false
 env:
-  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/keycloakify
+  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/registration-service
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
   sha: ${{ github.event.pull_request.head.sha || github.sha }}
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-keycloak-buil-${{github.event.inputs.build_arm}}d
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-registration-service-${{github.event.inputs.build_arm}}
   cancel-in-progress: true
 jobs:
-  keycloakify-image:
-    name: Build keycloakify Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
+  registration-service-image:
+    name: Registration service docker image build # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     permissions:
       contents: read
       packages: write
-      checks: read
     steps:
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
       - uses: actions/checkout@v6
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate files hash
         id: files-hash
         run: |
-          DIR_HASH=$(echo -n ${{ hashFiles('./keycloak/keycloakify/**','.github/workflows/keycloakify-image.yml', './website/.nvmrc' ) }})
+          DIR_HASH=$(echo -n ${{ hashFiles('registration-service/**', '.github/workflows/registration-service-image.yml') }})
           echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}" >> $GITHUB_ENV
       - name: Setup Docker metadata
         id: dockerMetadata
@@ -61,6 +54,12 @@ jobs:
             type=raw,value=${{ env.BRANCH_NAME }}
             type=raw,value=commit-${{ env.sha }}
             type=raw,value=${{ env.BRANCH_NAME }}-arm,enable=${{ env.BUILD_ARM }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Check if image exists
         id: check-image
         run: |
@@ -68,23 +67,16 @@ jobs:
           echo "CACHE_HIT=$EXISTS" >> $GITHUB_ENV
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
-      - name: Get node version build arg
-        id: get-node-version
-        if: env.CACHE_HIT == 'false'
-        run: |
-          NODE_VERSION=$(grep -v "^[[:space:]]*#" website/.nvmrc | tr -d 'v')
-          echo "NODE_VERSION=$NODE_VERSION" >> $GITHUB_OUTPUT
       - name: Build and push image
         if: env.CACHE_HIT == 'false'
         uses: docker/build-push-action@v7
         with:
-          context: ./keycloak/keycloakify
+          context: ./registration-service
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
-          cache-from: type=gha,scope=keycloakify-${{ github.ref }}
-          cache-to: type=gha,mode=max,scope=keycloakify-${{ github.ref }}
+          cache-from: type=gha,scope=registration-service-${{ github.ref }}
+          cache-to: type=gha,mode=max,scope=registration-service-${{ github.ref }}
           platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
-          build-args: NODE_VERSION=${{ steps.get-node-version.outputs.NODE_VERSION }}
       - name: Tag and push image if cache hit
         if: env.CACHE_HIT == 'true'
         run: |
