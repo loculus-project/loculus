@@ -5,7 +5,6 @@
 {{- $key := $item.key }}
 {{- $organismContent := $item.contents }}
 {{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" | fromYamlArray }}
-{{- $hierarchicalFilters := $organismContent | include "loculus.hierarchicalFiltersForOrganism" | fromYaml }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -93,10 +92,6 @@ spec:
               {{- end }}
             - name: LINEAGE_DEFINITIONS
               value: {{ $defsBySystem | toJson | quote }}
-            {{- end }}
-            {{- if $hierarchicalFilters }}
-            - name: HIERARCHICAL_FILTERS
-              value: {{ $hierarchicalFilters | toJson | quote }}
             {{- end }}
             - name: SILO_RUN_TIMEOUT_SECONDS
               value: {{ $.Values.siloImport.siloTimeoutSeconds | quote }}

@@ -232,16 +232,6 @@
           "groups": ["metadata"],
           "type": "string",
           "description": "Use this on string fields that contain lineages, if you want to enable searches that can include sublineages. The value needs to be a lineage system that is defined under the `lineageSystemDefinitions` key."
-        },
-        "hierarchicalFilter": {
-          "groups": ["metadata"],
-          "type": "string",
-          "description": "Use this on string fields whose values form a hierarchy resolved at SILO import time. The value should be an URL to the lineage file."
-        },
-        "hierarchicalSearchLabel": {
-          "groups": ["metadata"],
-          "type": "string",
-          "description": "CheckBox label for hierarchical search - only applies when using hierarchicalFilter."
         }
       },
       "required": ["name"],
@@ -298,24 +288,6 @@
               "type": { "enum": ["string", "authors"] }
             },
             "errorMessage": "When lineageSystem is set, type must be 'string' or 'authors'"
-          }
-        },
-        {
-          "if": {
-            "properties": { "hierarchicalFilter": { "type": "string" } },
-            "required": ["hierarchicalFilter"]
-          },
-          "then": {
-            "properties": {
-              "type": { "enum": ["string", "authors"] }
-            },
-            "errorMessage": "When hierarchicalFilter is set, type must be 'string' or 'authors'"
-          }
-        },
-        {
-          "not": {
-            "description": "lineageSystem and hierarchicalFilter cannot both be set",
-            "required": ["lineageSystem", "hierarchicalFilter"]
           }
         },
         {

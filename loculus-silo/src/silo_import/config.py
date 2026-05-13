@@ -5,9 +5,6 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-MetadataField = str
-HierarchicalServiceUrl = str
-
 
 @dataclass(frozen=True)
 class ImporterConfig:
@@ -19,7 +16,6 @@ class ImporterConfig:
     root_dir: Path
     silo_binary: Path
     preprocessing_config: Path
-    hierarchical_filters: dict[MetadataField, HierarchicalServiceUrl] | None = None
 
     @classmethod
     def from_env(cls) -> ImporterConfig:
@@ -51,8 +47,6 @@ class ImporterConfig:
             except TypeError as exc:
                 raise RuntimeError(str(exc)) from exc
 
-        hierarchical_filters = _parse_hierarchical_filters(env.get("HIERARCHICAL_FILTERS"))
-
         hard_refresh_interval = int(env.get("HARD_REFRESH_INTERVAL", "3600"))
         poll_interval = int(env.get("SILO_IMPORT_POLL_INTERVAL_SECONDS", "30"))
         silo_run_timeout = int(env.get("SILO_RUN_TIMEOUT_SECONDS", "3600"))
@@ -72,28 +66,8 @@ class ImporterConfig:
             root_dir=root_dir,
             silo_binary=silo_binary,
             preprocessing_config=preprocessing_config,
-            hierarchical_filters=hierarchical_filters,
         )
 
     @property
     def released_data_endpoint(self) -> str:
         return f"{self.backend_base_url}/get-released-data?compression=zstd"
-
-
-def _parse_hierarchical_filters(
-    raw: str | None,
-) -> dict[MetadataField, HierarchicalServiceUrl] | None:
-    if not raw:
-        return None
-
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        msg = "HIERARCHICAL_FILTERS must be valid JSON"
-        raise RuntimeError(msg) from exc
-
-    if not isinstance(data, dict):
-        msg = f"HIERARCHICAL_FILTERS must be a JSON object, got: {raw}"
-        raise TypeError(msg)
-
-    return data or None
