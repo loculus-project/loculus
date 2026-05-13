@@ -2,7 +2,6 @@
 
 import click
 from rich.console import Console
-from rich.prompt import Prompt
 
 from ..auth.client import AuthClient
 from ..config import get_instance_config
@@ -19,40 +18,21 @@ def auth_group() -> None:
 
 
 @auth_group.command()
-@click.option(
-    "--username",
-    "-u",
-    help="Username for authentication",
-)
-@click.option(
-    "--password",
-    "-p",
-    help="Password for authentication",
-)
 @click.pass_context
-def login(ctx: click.Context, username: str, password: str) -> None:
-    """Login to Loculus."""
+def login(ctx: click.Context) -> None:
+    """Login to Loculus using the OIDC device-code flow."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
 
-    # Display instance information
     console.print(f"[dim]Logging into instance: {instance}[/dim]")
-
-    # Prompt for credentials if not provided
-    if not username:
-        username = Prompt.ask("Username")
-    if not password:
-        password = Prompt.ask("Password", password=True)
 
     auth_client = AuthClient(instance_config)
 
     try:
-        with console.status("Logging in..."):
-            token_info = auth_client.login(username, password)
-            auth_client.set_current_user(username)
-
+        token_info = auth_client.login()
+        current_user = auth_client.get_current_user() or "current"
         console.print(
-            f"✓ Successfully logged in as [bold green]{username}[/bold green]"
+            f"✓ Successfully logged in as [bold green]{current_user}[/bold green]"
         )
         console.print(f"Instance: [bold cyan]{instance}[/bold cyan]")
         console.print(f"Token expires in {token_info.expires_in // 60} minutes")
@@ -74,7 +54,6 @@ def logout(ctx: click.Context) -> None:
         current_user = auth_client.get_current_user()
         if current_user:
             auth_client.logout(current_user)
-            auth_client.clear_current_user()
             console.print(
                 f"✓ Successfully logged out [bold green]{current_user}[/bold green]"
             )

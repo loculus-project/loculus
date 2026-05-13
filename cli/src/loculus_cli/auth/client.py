@@ -1,246 +1,300 @@
-"""Authentication client for Keycloak integration."""
+"""Authentication client for the Loculus CLI.
+
+The CLI talks to Authelia's OIDC provider using the device authorization grant
+(RFC 8628). Authelia does not support the Resource Owner Password Credentials
+grant, so there is no longer a username+password login codepath.
+
+Tokens are cached in the system keyring keyed by the Authelia URL + the
+authenticated subject. Refresh tokens are used opportunistically to avoid
+prompting the user to re-authorize on every command.
+"""
 
 import os
 import time
+import webbrowser
+from typing import TYPE_CHECKING
 
 import httpx
 import keyring
 from pydantic import BaseModel
+from rich.console import Console
 
-from ..config import InstanceConfig
+if TYPE_CHECKING:
+    from ..config import InstanceConfig
 
 
 class TokenInfo(BaseModel):
-    """Token information from Keycloak."""
+    """OIDC tokens returned by the Authelia token endpoint."""
 
     access_token: str
-    refresh_token: str
+    refresh_token: str | None = None
     expires_in: int
-    refresh_expires_in: int
-    token_type: str
-    created_at: float  # Unix timestamp when token was created
+    refresh_expires_in: int = 0
+    token_type: str = "Bearer"
+    id_token: str | None = None
+    subject: str | None = None
+    created_at: float
+
+
+class DeviceCodeError(RuntimeError):
+    """Raised when device-code authorization fails or is denied."""
+
+
+_CONSOLE = Console()
 
 
 class AuthClient:
-    """Authentication client for Keycloak."""
+    """OIDC device-code authentication client."""
 
-    def __init__(self, instance_config: InstanceConfig):
+    def __init__(self, instance_config: "InstanceConfig") -> None:
         self.instance_config = instance_config
         self.client = httpx.Client(timeout=30.0)
         self._service_name = os.getenv("LOCULUS_CLI_KEYRING_SERVICE", "loculus-cli")
         self._token_cache: TokenInfo | None = None
+        self._discovery_cache: dict[str, str] | None = None
 
-    def _get_keyring_key(self, username: str) -> str:
-        """Get keyring key for storing tokens."""
-        return f"{self.instance_config.keycloak_url}#{username}"
+    # ---------------------------------------------------------------- keyring
 
-    def _store_token(self, username: str, token_info: TokenInfo) -> None:
-        """Store token in keyring."""
+    def _key(self, subject: str) -> str:
+        return f"{self.instance_config.authelia_url}#{subject}"
+
+    def _store_token(self, subject: str, token_info: TokenInfo) -> None:
         try:
             keyring.set_password(
                 self._service_name,
-                self._get_keyring_key(username),
+                self._key(subject),
                 token_info.model_dump_json(),
             )
         except Exception as e:
             raise RuntimeError(f"Failed to store token: {e}") from e
 
-    def _load_token(self, username: str) -> TokenInfo | None:
-        """Load token from keyring."""
+    def _load_token(self, subject: str) -> TokenInfo | None:
         try:
-            token_data = keyring.get_password(
-                self._service_name, self._get_keyring_key(username)
-            )
-            if token_data:
-                return TokenInfo.model_validate_json(token_data)
-            return None
+            blob = keyring.get_password(self._service_name, self._key(subject))
+            if blob:
+                return TokenInfo.model_validate_json(blob)
         except Exception:
             return None
+        return None
 
-    def _delete_token(self, username: str) -> None:
-        """Delete token from keyring."""
+    def _delete_token(self, subject: str) -> None:
         try:
-            keyring.delete_password(self._service_name, self._get_keyring_key(username))
+            keyring.delete_password(self._service_name, self._key(subject))
         except Exception:
-            pass  # Ignore errors when deleting
+            pass
 
-    def _is_token_expired(self, token_info: TokenInfo) -> bool:
-        """Check if token is expired."""
-        current_time = time.time()
-        # Consider token expired if it expires in less than 5 minutes
-        return (token_info.created_at + token_info.expires_in - 300) < current_time
+    # ---------------------------------------------------------------- expiry
+
+    def _is_access_token_expired(self, token_info: TokenInfo) -> bool:
+        # Treat as expired 5 minutes early to give callers headroom.
+        return (token_info.created_at + token_info.expires_in - 300) < time.time()
 
     def _is_refresh_token_expired(self, token_info: TokenInfo) -> bool:
-        """Check if refresh token is expired."""
-        current_time = time.time()
-        return (token_info.created_at + token_info.refresh_expires_in) < current_time
+        if token_info.refresh_expires_in <= 0:
+            return False
+        return (token_info.created_at + token_info.refresh_expires_in) < time.time()
 
-    def login(self, username: str, password: str) -> TokenInfo:
-        """Login with username and password."""
-        token_url = (
-            f"{self.instance_config.keycloak_url}/realms/"
-            f"{self.instance_config.keycloak_realm}/protocol/openid-connect/token"
+    # ---------------------------------------------------------------- oidc
+
+    def _discovery(self) -> dict[str, str]:
+        if self._discovery_cache is not None:
+            return self._discovery_cache
+        url = f"{self.instance_config.authelia_url.rstrip('/')}/.well-known/openid-configuration"
+        resp = self.client.get(url)
+        resp.raise_for_status()
+        self._discovery_cache = resp.json()
+        return self._discovery_cache
+
+    def login(self) -> TokenInfo:
+        """Interactive device-code login. Returns the resulting tokens.
+
+        Prints the verification URL and user code to stderr and (best-effort)
+        opens the browser. Polls the token endpoint until the user finishes
+        authentication or the device code expires.
+        """
+        disc = self._discovery()
+        device_endpoint = disc.get(
+            "device_authorization_endpoint",
+            f"{self.instance_config.authelia_url.rstrip('/')}/api/oidc/device-authorization",
         )
+        token_endpoint = disc["token_endpoint"]
 
-        data = {
-            "grant_type": "password",
-            "client_id": self.instance_config.keycloak_client_id,
-            "username": username,
-            "password": password,
-        }
-
-        try:
-            response = self.client.post(token_url, data=data)
-            response.raise_for_status()
-
-            token_data = response.json()
-            token_info = TokenInfo(
-                access_token=token_data["access_token"],
-                refresh_token=token_data["refresh_token"],
-                expires_in=token_data["expires_in"],
-                refresh_expires_in=token_data["refresh_expires_in"],
-                token_type=token_data.get("token_type", "Bearer"),
-                created_at=time.time(),
-            )
-
-            # Store token in keyring
-            self._store_token(username, token_info)
-            self._token_cache = token_info
-
-            return token_info
-
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 401:
-                raise RuntimeError("Invalid username or password") from e
-            elif e.response.status_code == 400:
-                # Try to get more specific error message
-                try:
-                    error_data = e.response.json()
-                    error_description = error_data.get(
-                        "error_description", "Bad request"
-                    )
-                    raise RuntimeError(
-                        f"Authentication failed: {error_description}"
-                    ) from e
-                except Exception:
-                    raise RuntimeError("Authentication failed: Bad request") from e
-            else:
-                raise RuntimeError(
-                    f"Authentication failed: HTTP {e.response.status_code}"
-                ) from e
-        except Exception as e:
-            raise RuntimeError(f"Authentication failed: {e}") from e
-
-    def refresh_token(self, username: str) -> TokenInfo | None:
-        """Refresh access token using refresh token."""
-        token_info = self._load_token(username)
-        if not token_info:
-            return None
-
-        if self._is_refresh_token_expired(token_info):
-            # Refresh token is expired, need to login again
-            self._delete_token(username)
-            return None
-
-        token_url = (
-            f"{self.instance_config.keycloak_url}/realms/"
-            f"{self.instance_config.keycloak_realm}/protocol/openid-connect/token"
+        resp = self.client.post(
+            device_endpoint,
+            data={
+                "client_id": self.instance_config.oidc_client_id,
+                "scope": "openid profile email groups offline_access",
+            },
         )
-
-        data = {
-            "grant_type": "refresh_token",
-            "client_id": self.instance_config.keycloak_client_id,
-            "refresh_token": token_info.refresh_token,
-        }
-
-        try:
-            response = self.client.post(token_url, data=data)
-            response.raise_for_status()
-
-            token_data = response.json()
-            new_token_info = TokenInfo(
-                access_token=token_data["access_token"],
-                refresh_token=token_data.get("refresh_token", token_info.refresh_token),
-                expires_in=token_data["expires_in"],
-                refresh_expires_in=token_data.get(
-                    "refresh_expires_in", token_info.refresh_expires_in
-                ),
-                token_type=token_data.get("token_type", "Bearer"),
-                created_at=time.time(),
+        if resp.status_code != 200:
+            raise DeviceCodeError(
+                f"Device authorization request failed: HTTP {resp.status_code} {resp.text}"
             )
+        body = resp.json()
 
-            # Store updated token
-            self._store_token(username, new_token_info)
-            self._token_cache = new_token_info
+        verification_uri = body.get("verification_uri_complete") or body["verification_uri"]
+        device_code = body["device_code"]
+        user_code = body.get("user_code")
+        interval = int(body.get("interval", 5))
+        expires_in = int(body.get("expires_in", 600))
 
-            return new_token_info
-
+        _CONSOLE.print(
+            f"To sign in, visit [bold]{verification_uri}[/bold]"
+            + (f" and enter the code [bold]{user_code}[/bold]" if user_code else "")
+        )
+        try:
+            webbrowser.open(verification_uri, new=2)
         except Exception:
-            # If refresh fails, delete the token
-            self._delete_token(username)
-            return None
+            pass
 
-    def get_valid_token(self, username: str) -> TokenInfo | None:
-        """Get a valid access token, refreshing if necessary."""
-        # Try cache first
-        if self._token_cache and not self._is_token_expired(self._token_cache):
-            return self._token_cache
-
-        # Load from keyring
-        token_info = self._load_token(username)
-        if not token_info:
-            return None
-
-        # Check if token is expired
-        if self._is_token_expired(token_info):
-            # Try to refresh
-            token_info = self.refresh_token(username)
-            if not token_info:
-                return None
-
-        self._token_cache = token_info
-        return token_info
-
-    def logout(self, username: str) -> None:
-        """Logout and clear stored token."""
-        self._delete_token(username)
-        self._token_cache = None
-
-    def get_auth_headers(self, username: str) -> dict[str, str]:
-        """Get authentication headers for API requests."""
-        token_info = self.get_valid_token(username)
-        if not token_info:
-            raise RuntimeError(
-                "Not authenticated. Please run 'loculus auth login' first."
+        deadline = time.time() + expires_in
+        while time.time() < deadline:
+            time.sleep(interval)
+            poll = self.client.post(
+                token_endpoint,
+                data={
+                    "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+                    "device_code": device_code,
+                    "client_id": self.instance_config.oidc_client_id,
+                },
             )
+            if poll.status_code == 200:
+                token = self._token_info_from_response(poll.json())
+                subject = self._subject_for(token)
+                self._store_token(subject, token)
+                self._token_cache = token
+                self.set_current_user(subject)
+                return token
+            err = poll.json().get("error", "")
+            if err == "authorization_pending":
+                continue
+            if err == "slow_down":
+                interval += 5
+                continue
+            if err in ("expired_token", "access_denied"):
+                raise DeviceCodeError(f"Device authorization failed: {err}")
+            raise DeviceCodeError(
+                f"Unexpected device-code response: HTTP {poll.status_code} {poll.text}"
+            )
+        raise DeviceCodeError("Device code expired before login completed")
 
-        return {"Authorization": f"{token_info.token_type} {token_info.access_token}"}
+    def refresh_token(self, subject: str) -> TokenInfo | None:
+        """Refresh tokens for `subject`. Returns None on failure."""
+        token_info = self._load_token(subject)
+        if not token_info or not token_info.refresh_token:
+            return None
+        if self._is_refresh_token_expired(token_info):
+            self._delete_token(subject)
+            return None
 
-    def is_authenticated(self, username: str) -> bool:
-        """Check if user is authenticated."""
-        return self.get_valid_token(username) is not None
+        token_endpoint = self._discovery()["token_endpoint"]
+        try:
+            resp = self.client.post(
+                token_endpoint,
+                data={
+                    "grant_type": "refresh_token",
+                    "client_id": self.instance_config.oidc_client_id,
+                    "refresh_token": token_info.refresh_token,
+                },
+            )
+            resp.raise_for_status()
+            new_token = self._token_info_from_response(resp.json(), default=token_info)
+            self._store_token(subject, new_token)
+            self._token_cache = new_token
+            return new_token
+        except Exception:
+            self._delete_token(subject)
+            return None
+
+    def _token_info_from_response(
+        self, data: dict, default: TokenInfo | None = None
+    ) -> TokenInfo:
+        return TokenInfo(
+            access_token=data["access_token"],
+            refresh_token=data.get(
+                "refresh_token", default.refresh_token if default else None
+            ),
+            expires_in=int(data.get("expires_in", default.expires_in if default else 3600)),
+            refresh_expires_in=int(
+                data.get(
+                    "refresh_expires_in",
+                    default.refresh_expires_in if default else 0,
+                )
+            ),
+            token_type=data.get("token_type", "Bearer"),
+            id_token=data.get("id_token", default.id_token if default else None),
+            subject=default.subject if default else None,
+            created_at=time.time(),
+        )
+
+    def _subject_for(self, token: TokenInfo) -> str:
+        # Best-effort: decode JWT to find the subject. Without verification —
+        # the keyring key just needs to be stable per user.
+        import base64
+        import json
+
+        if token.subject:
+            return token.subject
+        try:
+            _, payload, _ = token.access_token.split(".")
+            padded = payload + "=" * (-len(payload) % 4)
+            claims = json.loads(base64.urlsafe_b64decode(padded))
+        except Exception:
+            return "current"
+        sub = claims.get("preferred_username") or claims.get("sub") or "current"
+        token.subject = sub
+        return sub
+
+    # ---------------------------------------------------------------- public
+
+    def get_valid_token(self, subject: str | None = None) -> TokenInfo | None:
+        sub = subject or self.get_current_user()
+        if sub is None:
+            return None
+        if self._token_cache and not self._is_access_token_expired(self._token_cache):
+            return self._token_cache
+        token = self._load_token(sub)
+        if not token:
+            return None
+        if self._is_access_token_expired(token):
+            token = self.refresh_token(sub)
+            if not token:
+                return None
+        self._token_cache = token
+        return token
+
+    def logout(self, subject: str | None = None) -> None:
+        sub = subject or self.get_current_user()
+        if sub:
+            self._delete_token(sub)
+        self._token_cache = None
+        self.clear_current_user()
+
+    def get_auth_headers(self, subject: str | None = None) -> dict[str, str]:
+        token = self.get_valid_token(subject)
+        if not token:
+            raise RuntimeError("Not authenticated. Please run 'loculus auth login' first.")
+        return {"Authorization": f"{token.token_type} {token.access_token}"}
+
+    def is_authenticated(self, subject: str | None = None) -> bool:
+        return self.get_valid_token(subject) is not None
 
     def get_current_user(self) -> str | None:
-        """Get current authenticated user."""
-        # For now, we'll need to store the username separately
-        # This is a limitation of the current design
         try:
             username = keyring.get_password(self._service_name, "current_user")
             if username and self.is_authenticated(username):
                 return username
-            return None
         except Exception:
             return None
+        return None
 
     def set_current_user(self, username: str) -> None:
-        """Set current authenticated user."""
         try:
             keyring.set_password(self._service_name, "current_user", username)
         except Exception as e:
             raise RuntimeError(f"Failed to store current user: {e}") from e
 
     def clear_current_user(self) -> None:
-        """Clear current authenticated user."""
         try:
             keyring.delete_password(self._service_name, "current_user")
         except Exception:

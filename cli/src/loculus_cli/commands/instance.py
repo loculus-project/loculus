@@ -121,16 +121,16 @@ def select_instance(name: str | None, none: bool) -> None:
 @click.argument("url")
 @click.option("--name", help="Custom name for the instance (default: derived from URL)")
 @click.option("--set-default", is_flag=True, help="Set as default instance")
-@click.option("--keycloak-realm", default="loculus", help="Keycloak realm")
 @click.option(
-    "--keycloak-client-id", default="backend-client", help="Keycloak client ID"
+    "--oidc-client-id",
+    default="loculus-cli",
+    help="OIDC client ID used for device-code login",
 )
 def add_instance(
     url: str,
     name: str | None,
     set_default: bool,
-    keycloak_realm: str,
-    keycloak_client_id: str,
+    oidc_client_id: str,
 ) -> None:
     """Add a new instance."""
     try:
@@ -161,8 +161,7 @@ def add_instance(
         config = load_config()
         config.instances[name] = InstanceConfig(
             instance_url=url,
-            keycloak_realm=keycloak_realm,
-            keycloak_client_id=keycloak_client_id,
+            oidc_client_id=oidc_client_id,
         )
 
         if set_default or not config.default_instance:
@@ -228,8 +227,7 @@ def show_instance(name: str | None) -> None:
         # Show configuration
         console.print("[bold]Configuration:[/bold]")
         console.print(f"  URL: {instance_config.instance_url}")
-        console.print(f"  Keycloak Realm: {instance_config.keycloak_realm}")
-        console.print(f"  Keycloak Client ID: {instance_config.keycloak_client_id}")
+        console.print(f"  OIDC Client ID: {instance_config.oidc_client_id}")
 
         # Try to fetch live info
         try:
