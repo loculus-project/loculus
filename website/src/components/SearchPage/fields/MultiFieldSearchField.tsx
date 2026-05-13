@@ -44,7 +44,7 @@ export const MultiFieldSearchField = ({
                 place='top'
                 openEvents={{ mouseenter: true, focus: false, click: true }}
                 closeEvents={{ mouseleave: true, blur: true, click: true }}
-                globalCloseEvents={{ clickOutsideAnchor: true }}
+                globalCloseEvents={{ clickOutsideAnchor: true, scroll: true }}
             >
                 <p className='mb-1'>Search across the following fields:</p>
                 <ul className='list-disc list-inside'>
