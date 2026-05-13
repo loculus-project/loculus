@@ -1,4 +1,6 @@
-import { type BaseClient, Issuer, custom } from 'openid-client';
+import { type OutgoingHttpHeaders } from 'http';
+
+import { type BaseClient, type HttpOptions, Issuer, custom } from 'openid-client';
 
 import { getClientMetadata } from './clientMetadata.ts';
 import { getRuntimeConfig } from '../config.ts';
@@ -46,6 +48,35 @@ function buildIssuer(internalUrl: string, publicUrl: string): Issuer {
     });
 }
 
+function isRawHeaderList(headers: OutgoingHttpHeaders | readonly string[] | undefined): headers is readonly string[] {
+    return Array.isArray(headers);
+}
+
+function normalizeHeaders(headers: OutgoingHttpHeaders | readonly string[] | undefined): OutgoingHttpHeaders {
+    if (!isRawHeaderList(headers)) {
+        return headers ?? {};
+    }
+
+    const normalized: OutgoingHttpHeaders = {};
+    for (let index = 0; index < headers.length - 1; index += 2) {
+        normalized[headers[index]] = headers[index + 1];
+    }
+    return normalized;
+}
+
+function withAutheliaForwardedHeaders(
+    options: HttpOptions,
+    forwardedHeaders: ReturnType<typeof getAutheliaForwardedHeaders>,
+): HttpOptions {
+    return {
+        ...options,
+        headers: {
+            ...normalizeHeaders(options.headers),
+            ...forwardedHeaders,
+        },
+    };
+}
+
 export const OidcClientManager = {
     // Kept async for callsite compatibility (the previous implementation used
     // `Issuer.discover`); building the client is now synchronous.
@@ -60,25 +91,13 @@ export const OidcClientManager = {
             logger.info(`Building OIDC client (internal=${internal}, public=${pub})`);
             const issuer = buildIssuer(internal, pub);
             const forwardedHeaders = getAutheliaForwardedHeaders();
-            issuer[custom.http_options] = (_url, options) => ({
-                ...options,
-                headers: {
-                    ...(options.headers ?? {}),
-                    ...forwardedHeaders,
-                },
-            });
+            issuer[custom.http_options] = (_url, options) => withAutheliaForwardedHeaders(options, forwardedHeaders);
             _client = new issuer.Client(getClientMetadata());
             // Authelia derives its issuer URL from request headers. Server-side
             // calls hit the in-cluster service directly (HTTP, no proxy), so
             // without these forwarded headers it would derive a wrong issuer
             // and reject the token exchange with `invalid_grant` / `server_error`.
-            _client[custom.http_options] = (_url, options) => ({
-                ...options,
-                headers: {
-                    ...(options.headers ?? {}),
-                    ...forwardedHeaders,
-                },
-            });
+            _client[custom.http_options] = (_url, options) => withAutheliaForwardedHeaders(options, forwardedHeaders);
         } catch (error) {
             logger.error(`Error building OIDC client: ${String(error)}`);
         }

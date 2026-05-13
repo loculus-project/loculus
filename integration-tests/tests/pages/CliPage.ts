@@ -295,12 +295,16 @@ export class CliPage {
     }
 
     private async loginWithBrowserToken(username: string, password: string): Promise<CliResult> {
+        const page = this.page;
+        if (!page) {
+            return this.execute(['auth', 'login', '--username', username, '--password', password]);
+        }
         const timestamp = new Date().toISOString();
         const startTime = Date.now();
 
         try {
-            await this.page!.context().clearCookies();
-            const authPage = new AuthPage(this.page!);
+            await page.context().clearCookies();
+            const authPage = new AuthPage(page);
             const loggedIn = await authPage.login(username, password);
             if (!loggedIn) {
                 return this.cliResult({
@@ -313,7 +317,7 @@ export class CliPage {
                 });
             }
 
-            const cookies = await this.page!.context().cookies(this.baseUrl);
+            const cookies = await page.context().cookies(this.baseUrl);
             const accessToken = cookies.find((cookie) => cookie.name === 'access_token')?.value;
             if (!accessToken) {
                 throw new Error('Browser login did not produce an access_token cookie');
@@ -400,9 +404,13 @@ keyring.set_password(service, "current_user", username)
             url.hostname = '127.0.0.1';
         }
 
-        const response = await fetch(url, { headers });
-        if (!response.ok) {
-            throw new Error(`Failed to fetch instance info: HTTP ${response.status}`);
+        if (!this.page) {
+            throw new Error('Browser-backed CLI login requires a Playwright page');
+        }
+
+        const response = await this.page.request.get(url.toString(), { headers });
+        if (!response.ok()) {
+            throw new Error(`Failed to fetch instance info: HTTP ${response.status()}`);
         }
         return (await response.json()) as { hosts: { authelia: string } };
     }

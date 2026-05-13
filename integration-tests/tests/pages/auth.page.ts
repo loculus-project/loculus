@@ -13,8 +13,7 @@ export class AuthPage {
         // surface a register link by default; in production deployments the
         // operator advertises the registration URL elsewhere.
         const registrationUrl =
-            process.env.LOCULUS_REGISTRATION_URL ||
-            'https://register.loculus.localhost:8443/';
+            process.env.LOCULUS_REGISTRATION_URL || 'https://register.loculus.test:8443/';
         await this.page.goto(registrationUrl);
         await expect(this.page.getByTestId('register-form')).toBeVisible();
     }
@@ -36,7 +35,7 @@ export class AuthPage {
         ]);
 
         if (options.loginAfterCreate ?? true) {
-            await expect(await this.login(account.username, account.password)).toBe(true);
+            expect(await this.login(account.username, account.password)).toBe(true);
         }
     }
 
@@ -86,7 +85,7 @@ export class AuthPage {
             .first()
             .waitFor({ state: 'attached', timeout: 30_000 });
 
-        return await Promise.race([success.then(() => true), failure.then(() => false)]).catch(
+        return Promise.race([success.then(() => true), failure.then(() => false)]).catch(
             () => false,
         );
     }

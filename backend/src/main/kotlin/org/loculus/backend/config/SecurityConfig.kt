@@ -7,10 +7,10 @@ import org.loculus.backend.auth.Roles.EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
 import org.loculus.backend.auth.ServiceTokenAuthenticationFilter
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.boot.web.client.RestTemplateBuilder
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.web.client.RestTemplateBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.converter.Converter

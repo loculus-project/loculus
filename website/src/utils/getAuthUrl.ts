@@ -27,9 +27,13 @@ export function decodeState(state: string | undefined): StatePayload | undefined
     if (!state) return undefined;
     try {
         const raw = Buffer.from(state, 'base64url').toString('utf8');
-        const obj = JSON.parse(raw) as StatePayload;
-        if (!obj || typeof obj !== 'object' || !('r' in obj) || !('v' in obj)) return undefined;
-        return obj;
+        const obj = JSON.parse(raw) as unknown;
+        if (typeof obj !== 'object' || obj === null) return undefined;
+        const payload = obj as Record<string, unknown>;
+        if (typeof payload.n !== 'string' || typeof payload.r !== 'string' || typeof payload.v !== 'string') {
+            return undefined;
+        }
+        return { n: payload.n, r: payload.r, v: payload.v };
     } catch {
         return undefined;
     }
