@@ -176,7 +176,7 @@ export class SearchPage {
         await this.page.getByPlaceholder('Enter reason for revocation').fill(revocationReason);
         await this.page.getByRole('button', { name: 'Confirm' }).click();
 
-        await expect(this.page.getByText('Sequence revoked successfully.')).toBeVisible();
+        await expect(this.page.getByText('Sequence revoked successfully. (This may take several minutes to become visible on the website.)')).toBeVisible();
     }
 
     async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string> {
