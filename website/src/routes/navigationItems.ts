@@ -60,28 +60,43 @@ function getSeqSetsItems() {
     ];
 }
 
-function getAccountItems(isLoggedIn: boolean, loginUrl: string) {
+function getAccountItems(isLoggedIn: boolean, loginUrl: string, registrationUrl?: string) {
     if (!getWebsiteConfig().enableLoginNavigationItem || getWebsiteConfig().readOnlyMode) {
         return [];
     }
 
-    const accountItem = isLoggedIn
-        ? {
-              id: 'account',
-              text: 'My account',
-              path: routes.userOverviewPage(),
-          }
-        : {
-              id: 'login',
-              text: 'Login',
-              path: loginUrl,
-          };
-    return [accountItem];
+    if (isLoggedIn) {
+        return [
+            {
+                id: 'account',
+                text: 'My account',
+                path: routes.userOverviewPage(),
+            },
+        ];
+    }
+
+    const signedOutItems: TopNavigationItems = [
+        {
+            id: 'login',
+            text: 'Login',
+            path: loginUrl,
+        },
+    ];
+
+    if (registrationUrl !== undefined) {
+        signedOutItems.push({
+            id: 'register',
+            text: 'Register',
+            path: registrationUrl,
+        });
+    }
+
+    return signedOutItems;
 }
 
-function topNavigationItems(isLoggedIn: boolean, loginUrl: string) {
+function topNavigationItems(isLoggedIn: boolean, loginUrl: string, registrationUrl?: string) {
     const seqSetsItems = getSeqSetsItems();
-    const accountItems = getAccountItems(isLoggedIn, loginUrl);
+    const accountItems = getAccountItems(isLoggedIn, loginUrl, registrationUrl);
 
     return [...seqSetsItems, ...extraStaticTopNavigationItems, ...accountItems];
 }
