@@ -274,6 +274,7 @@ export const websiteConfig = z.object({
     readOnlyMode: z.boolean().default(false),
     dataUseTermsAgreementHTML: z.string().optional(),
     sequenceFlagging: sequenceFlaggingConfig.optional(),
+    dateFieldForGroupGraph: z.string().nullable(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 
