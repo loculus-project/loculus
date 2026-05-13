@@ -2,8 +2,8 @@ import { type FC, useState } from 'react';
 import { confirmAlert } from 'react-confirm-alert';
 import { toast } from 'react-toastify';
 
-import { routes } from '../../routes/routes';
 import { backendClientHooks } from '../../services/serviceHooks';
+import { approveAllDataScope } from '../../types/backend';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
@@ -18,6 +18,8 @@ type RevokeSequenceEntryProps = {
     groupId: number;
 };
 
+const REVOCATION_TOAST_ID = 'revocation-toast';
+
 const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
     organism,
     accessToken,
@@ -26,24 +28,61 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
     groupId,
 }) => {
     const hooks = backendClientHooks(clientConfig);
-    const useRevokeSequenceEntries = hooks.useRevokeSequences(
+
+    const useApproveProcessedData = hooks.useApproveProcessedData(
         {
             headers: createAuthorizationHeader(accessToken),
             params: { organism },
         },
         {
             onSuccess: () => {
-                document.location = routes.userSequenceReviewPage(organism, groupId);
+                toast.update(REVOCATION_TOAST_ID, {
+                    render: 'Sequence revoked successfully.',
+                    type: 'success',
+                    isLoading: false,
+                    autoClose: 4000,
+                });
             },
-            onError: (error) =>
-                toast.error(getRevokeSequenceEntryErrorMessage(error), {
-                    position: 'top-center',
+            onError: (error) => {
+                toast.update(REVOCATION_TOAST_ID, {
+                    render: getApproveRevocationErrorMessage(error),
+                    type: 'error',
+                    isLoading: false,
                     autoClose: false,
-                }),
+                });
+            },
+        },
+    );
+
+    const useRevokeSequenceEntries = hooks.useRevokeSequences(
+        {
+            headers: createAuthorizationHeader(accessToken),
+            params: { organism },
+        },
+        {
+            onSuccess: (data) => {
+                useApproveProcessedData.mutate({
+                    accessionVersionsFilter: data.map(({ accession, version }) => ({ accession, version })),
+                    groupIdsFilter: [groupId],
+                    scope: approveAllDataScope.value,
+                });
+            },
+            onError: (error) => {
+                toast.update(REVOCATION_TOAST_ID, {
+                    render: getRevokeSequenceEntryErrorMessage(error),
+                    type: 'error',
+                    isLoading: false,
+                    autoClose: false,
+                });
+            },
         },
     );
 
     const handleRevokeSequenceEntry = (inputValue: string) => {
+        toast.loading('Revoking sequence...', {
+            toastId: REVOCATION_TOAST_ID,
+            position: 'top-center',
+        });
         useRevokeSequenceEntries.mutate({ accessions: [accessionVersion], versionComment: inputValue });
     };
 
@@ -52,7 +91,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
             className='btn btn-sm bg-red-400'
             onClick={() =>
                 displayRevocationDialog({
-                    dialogText: 'Are you sure you want to create a revocation for this sequence?',
+                    dialogText: 'Are you sure you want to revoke this sequence?',
                     onConfirmation: handleRevokeSequenceEntry,
                 })
             }
@@ -134,4 +173,8 @@ export const RevokeButton = withQueryProvider(InnerRevokeButton);
 
 function getRevokeSequenceEntryErrorMessage(error: unknown) {
     return 'Failed to revoke sequence entry: ' + stringifyMaybeAxiosError(error);
+}
+
+function getApproveRevocationErrorMessage(error: unknown) {
+    return 'Failed to approve revocation: ' + stringifyMaybeAxiosError(error);
 }

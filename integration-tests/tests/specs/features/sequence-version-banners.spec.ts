@@ -97,13 +97,15 @@ test.describe('Sequence version banners', () => {
         const toRevokeId = await toRevokeLink.textContent();
         const toRevokeAccession = toRevokeId.split('.')[0];
 
-        // Click on the sequence and revoke it
+        // Click on the sequence and revoke it (auto-approves on confirmation)
         await page.getByRole('cell', { name: 'Germany' }).click();
         await page.getByRole('button', { name: 'Revoke this sequence' }).click();
         await page.getByRole('button', { name: 'Confirm' }).click();
+        await expect(page.getByText('Sequence revoked successfully.')).toBeVisible();
 
-        // Release the revision and revocation
+        // Release the revision (the revocation is already approved automatically)
         const reviewPage2 = new ReviewPage(page);
+        await reviewPage2.navigateToReviewPage();
         await reviewPage2.waitForZeroProcessing();
         await reviewPage2.releaseAndGoToReleasedSequences();
 
