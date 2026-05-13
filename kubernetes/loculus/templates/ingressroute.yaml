@@ -78,6 +78,9 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForWebsite }}"
 spec:
+  {{- if $.Values.ingressClassName }}
+  ingressClassName: "{{ $.Values.ingressClassName }}"
+  {{- end }}
   rules:
     - host: "{{ $hostBare }}"
       http:
@@ -111,6 +114,9 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
 spec:
+  {{- if $.Values.ingressClassName }}
+  ingressClassName: "{{ $.Values.ingressClassName }}"
+  {{- end }}
   rules:
     - host: "{{ $backendHost }}"
       http:
@@ -133,7 +139,11 @@ metadata:
   name: loculus-authelia-ingress
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForKeycloak }}"
+    traefik.ingress.kubernetes.io/router.priority: "1000"
 spec:
+  {{- if $.Values.ingressClassName }}
+  ingressClassName: "{{ $.Values.ingressClassName }}"
+  {{- end }}
   rules:
     - host: "{{ $keycloakHost }}"
       http:
@@ -157,6 +167,9 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
 spec:
+  {{- if $.Values.ingressClassName }}
+  ingressClassName: "{{ $.Values.ingressClassName }}"
+  {{- end }}
   rules:
     - host: "{{ $registerHost }}"
       http:
@@ -181,6 +194,9 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
 spec:
+  {{- if $.Values.ingressClassName }}
+  ingressClassName: "{{ $.Values.ingressClassName }}"
+  {{- end }}
   rules:
     - host: "{{ $minioHost }}"
       http:

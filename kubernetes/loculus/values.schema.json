@@ -1639,6 +1639,12 @@
       "default": 2,
       "description": "Traefik major version for CRD API group. Use 2 for traefik.containo.us/v1alpha1 (Traefik v2) or 3 for traefik.io/v1alpha1 (Traefik v3)."
     },
+    "ingressClassName": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "traefik",
+      "description": "Ingress class name used for Kubernetes Ingress resources."
+    },
     "ingestLimitSeconds": {
       "type": "integer",
       "default": 1800,
