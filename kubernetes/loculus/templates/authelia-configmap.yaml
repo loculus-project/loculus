@@ -1,4 +1,5 @@
-{{- $hostNoPort := index (splitList ":" $.Values.host) 0 }}
+{{- $hostStr := default "" $.Values.host }}
+{{- $hostNoPort := index (splitList ":" $hostStr) 0 }}
 {{- /* `loculus.autheliaUrl` already returns HTTPS in both server and local modes (local = via traefik on 8443). */}}
 {{- $authIssuer := (include "loculus.autheliaUrl" .) }}
 {{- $websiteUrl := (include "loculus.websiteUrl" .) }}

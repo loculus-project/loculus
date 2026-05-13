@@ -42,7 +42,8 @@
 
 {{- define "loculus.autheliaUrl" -}}
 {{- $publicRuntimeConfig := $.Values.public }}
-  {{- $hostNoPort := index (splitList ":" $.Values.host) 0 -}}
+  {{- $hostStr := default "" $.Values.host -}}
+  {{- $hostNoPort := index (splitList ":" $hostStr) 0 -}}
   {{- if $publicRuntimeConfig.autheliaUrl }}
     {{- $publicRuntimeConfig.autheliaUrl -}}
   {{- else if eq $.Values.environment "server" -}}
