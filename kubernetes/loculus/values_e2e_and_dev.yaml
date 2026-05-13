@@ -12,6 +12,9 @@ backendExtraArgs:
 disableEnaSubmission: true
 auth:
   verifyEmail: false
-host: localhost:3000
+# `.localhost` resolves to 127.0.0.1 in every browser per RFC 6761 and
+# contains a period, satisfying Authelia's cookie-domain validation.
+host: loculus.localhost:3000
+subdomainSeparator: "."
 siloImport:
   pollIntervalSeconds: 5

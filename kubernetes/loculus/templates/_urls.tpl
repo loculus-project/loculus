@@ -42,12 +42,14 @@
 
 {{- define "loculus.autheliaUrl" -}}
 {{- $publicRuntimeConfig := $.Values.public }}
+  {{- $hostNoPort := index (splitList ":" $.Values.host) 0 -}}
   {{- if $publicRuntimeConfig.autheliaUrl }}
     {{- $publicRuntimeConfig.autheliaUrl -}}
   {{- else if eq $.Values.environment "server" -}}
     {{- (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) -}}
   {{- else -}}
-    {{- printf "http://%s:9091" $.Values.localHost -}}
+    {{- /* dev: traefik terminates HTTPS on host port 8443 with a self-signed cert */ -}}
+    {{- printf "https://authentication%s%s:8443" $.Values.subdomainSeparator $hostNoPort -}}
   {{- end -}}
 {{- end -}}
 
