@@ -3,9 +3,9 @@ import { ListOfGroupsOfUser } from './ListOfGroupsOfUser.tsx';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes';
 import { GroupManagementClient } from '../../services/groupManagementClient';
-import { KeycloakClientManager } from '../../utils/KeycloakClientManager';
+import { OidcClientManager } from '../../utils/OidcClientManager';
 import { getAccessToken } from '../../utils/getAccessToken';
-import { getUrlForKeycloakAccountPage } from '../../utils/getAuthUrl.ts';
+import { getUrlForAccountPage } from '../../utils/getAuthUrl.ts';
 import ErrorBox from '../common/ErrorBox.tsx';
 import DashiconsGroups from '~icons/dashicons/groups';
 import IconoirOpenNewWindow from '~icons/iconoir/open-new-window';
@@ -18,11 +18,11 @@ const name = user.name;
 const accessToken = getAccessToken(session)!;
 const logoutUrl = new URL(Astro.request.url);
 logoutUrl.pathname = routes.logout();
-const keycloakClient = await KeycloakClientManager.getClient();
+const keycloakClient = await OidcClientManager.getClient();
 const keycloakLogoutUrl = keycloakClient!.endSessionUrl({
     post_logout_redirect_uri: logoutUrl.href, // eslint-disable-line @typescript-eslint/naming-convention
 });
-const accountPageUrl = await getUrlForKeycloakAccountPage();
+const accountPageUrl = await getUrlForAccountPage();
 const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
 ---
 

@@ -7,7 +7,7 @@ import { type BaseClient, type TokenSet } from 'openid-client';
 
 import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
-import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
+import { OidcClientManager } from '../utils/OidcClientManager.ts';
 import { getAuthUrl } from '../utils/getAuthUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
@@ -78,9 +78,9 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         return next();
     }
 
-    const client = await KeycloakClientManager.getClient();
+    const client = await OidcClientManager.getClient();
     if (client !== undefined) {
-        // Only run this when keycloak up
+        // Only run this when OIDC client up
         const cookieResult = await getValidTokenAndUserInfoFromCookie(context, client);
         token = cookieResult?.token;
         userInfo = cookieResult?.userInfo;
@@ -96,7 +96,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
             }
         }
     } else {
-        logger.warn(`Keycloak client not available, pretending user logged out`);
+        logger.warn(`OIDC client not available, pretending user logged out`);
     }
 
     const enforceLogin = shouldMiddlewareEnforceLogin(
@@ -106,7 +106,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
 
     if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {
         if (client === undefined) {
-            logger.error(`Keycloak client not available, cannot redirect to auth`);
+            logger.error(`OIDC client not available, cannot redirect to auth`);
             return context.redirect('/503?service=Authentication');
         }
         return redirectToAuth(context);
@@ -159,7 +159,7 @@ async function getTokenFromCookie(context: APIContext, client: BaseClient) {
     const verifiedTokenResult = await verifyToken(accessToken, client);
     if (verifiedTokenResult.isErr() && verifiedTokenResult.error.type === TokenVerificationError.EXPIRED) {
         logger.debug(`Token expired, trying to refresh`);
-        return refreshTokenViaKeycloak(tokenCookie, client);
+        return refreshTokenViaOidc(tokenCookie, client);
     }
     if (verifiedTokenResult.isErr()) {
         logger.info(`Error verifying token: ${verifiedTokenResult.error.message}`);
@@ -184,7 +184,7 @@ async function verifyToken(accessToken: string, client: BaseClient) {
     if (client.issuer.metadata.jwks_uri === undefined) {
         return err({
             type: TokenVerificationError.REQUEST_ERROR,
-            message: `Keycloak client does not contain jwks_uri: ${JSON.stringify(client.issuer.metadata.jwks_uri)}`,
+            message: `OIDC client does not contain jwks_uri: ${JSON.stringify(client.issuer.metadata.jwks_uri)}`,
         });
     }
 
@@ -227,16 +227,16 @@ async function getUserInfo(token: TokenCookie, client: BaseClient) {
 
 async function getTokenFromParams(context: APIContext, client: BaseClient): Promise<TokenCookie | undefined> {
     const params = client.callbackParams(context.url.toString());
-    logger.debug(`Keycloak callback params: ${JSON.stringify(params)}`);
+    logger.debug(`OIDC callback params: ${JSON.stringify(params)}`);
     if (params.code !== undefined) {
         const redirectUri = removeTokenCodeFromSearchParams(context.url);
-        logger.debug(`Keycloak callback redirect uri: ${redirectUri}`);
+        logger.debug(`OIDC callback redirect uri: ${redirectUri}`);
         const tokenSet = await client
             .callback(redirectUri, params, {
                 response_type: 'code', // eslint-disable-line @typescript-eslint/naming-convention
             })
             .catch((error: unknown) => {
-                logger.info(`Keycloak callback error: ${error}`);
+                logger.info(`OIDC callback error: ${error}`);
                 return undefined;
             });
         return extractTokenCookieFromTokenSet(tokenSet);
@@ -300,7 +300,7 @@ function removeTokenCodeFromSearchParams(url: URL): string {
     return newUrl.toString();
 }
 
-async function refreshTokenViaKeycloak(token: TokenCookie, client: BaseClient): Promise<TokenCookie | undefined> {
+async function refreshTokenViaOidc(token: TokenCookie, client: BaseClient): Promise<TokenCookie | undefined> {
     const refreshedTokenSet = await client.refresh(token.refreshToken).catch(() => {
         logger.info(`Failed to refresh token`);
         return undefined;

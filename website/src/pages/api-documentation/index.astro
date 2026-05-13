@@ -6,7 +6,7 @@ import { routes } from '../../routes/routes.ts';
 import { getAuthBaseUrl } from '../../utils/getAuthUrl';
 
 const clientConfig = getRuntimeConfig().public;
-const keycloakUrl = getAuthBaseUrl();
+const authUrl = await getAuthBaseUrl();
 
 const websiteConfig = getWebsiteConfig();
 
@@ -104,13 +104,13 @@ const BUTTON_CLASS =
         </div>
 
         <div>
-            <h2 class='text-xl font-semibold text-primary-400 mb-4'>Keycloak server</h2>
+            <h2 class='text-xl font-semibold text-primary-400 mb-4'>Authentication</h2>
             <div>
-                We use the open source software <a href='https://www.keycloak.org/'>Keycloak</a> for authentication.
+                We use the open source software <a href='https://www.authelia.com/'>Authelia</a> for authentication.
             </div>
             <div class='mt-2'>
-                <span class='font-medium'>URL of Keycloak server:</span>
-                <code>{keycloakUrl}</code>
+                <span class='font-medium'>OIDC issuer URL:</span>
+                <code>{authUrl}</code>
             </div>
         </div>
     </div>

@@ -1,5 +1,5 @@
-import { KeycloakClientManager } from './KeycloakClientManager';
-import { realmPath } from './realmPath.ts';
+import { OidcClientManager } from './OidcClientManager';
+import { getRuntimeConfig } from '../config';
 import { routes } from '../routes/routes';
 
 export const getAuthUrl = async (redirectUrl: string) => {
@@ -9,29 +9,26 @@ export const getAuthUrl = async (redirectUrl: string) => {
     }
 
     // Beware: relative url does not work with Redirect.response()
-    const client = await KeycloakClientManager.getClient();
+    const client = await OidcClientManager.getClient();
     if (client === undefined) {
         return `/503?service=Authentication`;
     }
     /* eslint-disable @typescript-eslint/naming-convention */
     return client.authorizationUrl({
         redirect_uri: redirectUrl,
-        scope: 'openid',
+        scope: 'openid profile email groups offline_access',
         response_type: 'code',
     });
     /* eslint-enable @typescript-eslint/naming-convention */
 };
 
+// External-facing base URL of the auth provider (Authelia). Used in user-facing
+// API documentation and `/loculus-info` for CLI discovery.
 export const getAuthBaseUrl = async () => {
-    const authUrl = await getAuthUrl('/');
-    const index = authUrl.indexOf('/realms');
-    if (index === -1) {
-        return null;
-    }
-    return authUrl.substring(0, index);
+    return getRuntimeConfig().serverSide.autheliaPublicUrl;
 };
 
-export const getUrlForKeycloakAccountPage = async () => {
-    const baseUrl = await getAuthBaseUrl();
-    return `${baseUrl}${realmPath}/account`;
+// Authelia exposes a self-service portal at the root of the auth URL.
+export const getUrlForAccountPage = async () => {
+    return await getAuthBaseUrl();
 };

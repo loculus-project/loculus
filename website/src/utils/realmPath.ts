@@ -1,1 +1,2 @@
-export const realmPath = '/realms/loculus'; // TODO: #1339 Move realm path to config
+// Authelia is its own realm — the OIDC discovery doc lives at the root.
+export const realmPath = '';
