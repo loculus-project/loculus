@@ -1,4 +1,4 @@
-import { FloatingLabel } from 'flowbite-react';
+import { FloatingLabel, getTheme } from 'flowbite-react';
 import {
     useId,
     forwardRef,
@@ -26,8 +26,12 @@ interface TextFieldProps {
     type?: string;
 }
 
+const helperTextClasses = getTheme().floatingLabel.helperText.default;
+const inputClasses = getTheme().floatingLabel.input.default.outlined.md;
+
 export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldProps>(function (props, ref) {
-    const { label, disabled, onChange, autoComplete, fieldValue, className, onFocus, multiline, onBlur } = props;
+    const { label, disabled, onChange, autoComplete, fieldValue, className, onFocus, placeholder, multiline, onBlur } =
+        props;
     const id = useId();
     const [isTransitionEnabled, setIsTransitionEnabled] = useState(false);
     const [hasFocus, setHasFocus] = useState(false);
@@ -117,11 +121,33 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             onBlur: inputOnBlur,
             onPaste: handlePaste,
             ref: ref as LegacyRef<HTMLInputElement>,
-            placeholder: '',
             label: label ?? '',
             step: props.type === 'int' ? 1 : undefined,
+            placeholder: placeholder ?? ' ',
         };
-        return <FloatingLabel {...inputProps} variant='outlined' type={inputType} value={fieldValue} />;
+
+        return (
+            <div className='[&_label]:pointer-events-none'>
+                <FloatingLabel
+                    theme={{
+                        helperText: {
+                            default: `${helperTextClasses} my-1`,
+                        },
+                        input: {
+                            default: {
+                                outlined: {
+                                    md: `${inputClasses} hover:border-gray-400 transition-colors`,
+                                },
+                            },
+                        },
+                    }}
+                    {...inputProps}
+                    variant='outlined'
+                    type={inputType}
+                    value={fieldValue}
+                />
+            </div>
+        );
     }
     const refTextArea = ref as ForwardedRef<HTMLTextAreaElement>;
 
@@ -131,10 +157,10 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     const textareaProps = {
         ...standardProps,
         ref: refTextArea,
-        placeholder: '',
         onFocus: onFocusHTMLArea,
         onBlur: onBlurHTMLArea,
         value: fieldValue,
+        placeholder: placeholder ?? ' ',
     };
 
     return (
@@ -142,13 +168,12 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             <textarea
                 {...textareaProps}
                 rows={hasFocus || (fieldValue !== undefined && fieldValue.toString().split('\n').length > 1) ? 4 : 1}
-                className={`rounded-md block px-2.5 pb-1.5 pt-3 w-full text-sm text-gray-900 bg-transparent border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer ${className}`}
-                placeholder=''
+                className={`rounded-md block px-2.5 pb-2 pt-4 w-full text-sm text-gray-900 bg-transparent border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer hover:border-gray-400 transition-colors ${className}`}
             ></textarea>
 
             <label
                 htmlFor={id}
-                className={`absolute text-sm text-gray-500 dark:text-gray-400 ${
+                className={`absolute text-sm text-gray-500 dark:text-gray-400 pointer-events-none ${
                     isTransitionEnabled ? 'duration-300' : ''
                 } transform -translate-y-3 scale-75 top-1 z-10 origin-[0] bg-white dark:bg-gray-900 px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-3 start-1 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto`}
             >
