@@ -46,7 +46,7 @@ function getBackendBaseUrl(): URL {
 }
 
 test.describe('Backend authentication', () => {
-    test('rejects tokens that were not signed by Keycloak', async ({ backendRequest }) => {
+    test('rejects tokens that were not signed by the IDP', async ({ backendRequest }) => {
         const response = await backendRequest.get('/dummy-organism/get-data-to-edit/1/1', {
             headers: {
                 Authorization: `Bearer ${tokenSignedWithDifferentKey}`,
