@@ -16,6 +16,7 @@ type RevokeSequenceEntryProps = {
     clientConfig: ClientConfig;
     accessionVersion: string;
     groupId: number;
+    onRevokeSuccess?: () => void;
 };
 
 const REVOCATION_TOAST_ID = 'revocation-toast';
@@ -26,6 +27,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
     clientConfig,
     accessionVersion,
     groupId,
+    onRevokeSuccess,
 }) => {
     const hooks = backendClientHooks(clientConfig);
 
@@ -42,6 +44,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
                     isLoading: false,
                     autoClose: 4000,
                 });
+                onRevokeSuccess?.();
             },
             onError: (error) => {
                 toast.update(REVOCATION_TOAST_ID, {
