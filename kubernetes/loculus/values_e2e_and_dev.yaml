@@ -2,19 +2,24 @@ secrets:
   service-accounts:
     type: raw
     data:
-      insdcIngestUserPassword: "insdc_ingest_user"
-      preprocessingPipelinePassword: "preprocessing_pipeline"
-      externalMetadataUpdaterPassword: "external_metadata_updater"
-      backendUserPassword: "backend"
+      # lldap rejects passwords shorter than 8 chars; the e2e service-account
+      # passwords also double as X-Service-Token values the backend trusts, so
+      # they need to be specific and ≥ 8 chars.
+      insdcIngestUserPassword: "insdc_ingest_user_devpw"
+      preprocessingPipelinePassword: "preprocessing_pipeline_devpw"
+      externalMetadataUpdaterPassword: "external_metadata_updater_devpw"
+      backendUserPassword: "backend_devpw_for_tests"
 createTestAccounts: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
 disableEnaSubmission: true
 auth:
   verifyEmail: false
-# `.localhost` resolves to 127.0.0.1 in every browser per RFC 6761 and
-# contains a period, satisfying Authelia's cookie-domain validation.
-host: loculus.localhost:3000
+# `.test` is reserved for testing per RFC 6761 — browsers don't auto-resolve
+# (developers add a /etc/hosts entry; CI does the same), but unlike `.localhost`
+# glibc inside containers doesn't hardcode-resolve it to 127.0.0.1, so cluster
+# pods can route through CoreDNS to traefik.
+host: loculus.test:3000
 subdomainSeparator: "."
 siloImport:
   pollIntervalSeconds: 5

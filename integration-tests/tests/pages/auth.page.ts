@@ -9,11 +9,13 @@ export class AuthPage {
     constructor(private page: Page) {}
 
     async navigateToRegister() {
-        await this.page.goto('/');
-        await this.page.getByRole('link', { name: 'Login' }).click();
-        // Authelia exposes a "Register" link below the password field that
-        // redirects to the registration-service host.
-        await this.page.getByRole('link', { name: /register/i }).click();
+        // Go directly to the registration service host. Authelia itself doesn't
+        // surface a register link by default; in production deployments the
+        // operator advertises the registration URL elsewhere.
+        const registrationUrl =
+            process.env.LOCULUS_REGISTRATION_URL ||
+            'https://register.loculus.localhost:8443/';
+        await this.page.goto(registrationUrl);
         await expect(this.page.getByTestId('register-form')).toBeVisible();
     }
 
@@ -34,27 +36,30 @@ export class AuthPage {
     async login(username: string, password: string): Promise<boolean> {
         await this.page.goto('/');
         await this.page.getByRole('link', { name: 'Login' }).click();
-        // Authelia login form
-        await this.page.getByLabel(/username/i).fill(username);
-        await this.page.getByLabel(/password/i).fill(password);
+        // Authelia login form — use roles to avoid matching the toggle-visibility
+        // button that also has "password" in its aria-label.
+        await this.page.getByRole('textbox', { name: /username/i }).fill(username);
+        await this.page.getByRole('textbox', { name: /^password$/i }).fill(password);
         await this.page.getByRole('button', { name: /sign in|log in/i }).click();
 
-        const successSelector = this.page.waitForSelector('text=Welcome to Loculus', {
+        // Authelia shows an OIDC consent screen for the website on first login;
+        // accept it if present. We don't gate on it so subsequent logins where
+        // consent is remembered work unchanged.
+        const consent = this.page.getByRole('button', { name: /^accept$/i });
+        await consent.click({ timeout: 5000 }).catch(() => {});
+
+        const success = this.page.waitForSelector('text=Welcome to Loculus', {
             state: 'attached',
         });
-        const failureSelector = this.page.waitForSelector(
-            /incorrect username or password|invalid/i,
-            {
-                state: 'attached',
-            },
-        );
+        const failure = this.page
+            .getByText(/incorrect username or password|invalid|authentication failed/i)
+            .first()
+            .waitFor({ state: 'attached' });
 
-        const result = await Promise.race([
-            successSelector.then(() => true),
-            failureSelector.then(() => false),
+        return await Promise.race([
+            success.then(() => true),
+            failure.then(() => false),
         ]);
-
-        return result;
     }
 
     async tryLoginOrRegister(account: TestAccount) {

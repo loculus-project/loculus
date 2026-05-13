@@ -83,13 +83,16 @@ data:
             client_name: Loculus website
             public: true
             authorization_policy: one_factor
-            require_pkce: true
-            pkce_challenge_method: S256
+            # TODO: enable PKCE once the website middleware persists the
+            # code_verifier across the redirect to Authelia and back.
+            require_pkce: false
             redirect_uris:
-              - "{{ $websiteUrl }}/"
-              - "{{ $websiteUrl }}/*"
-              - "http://localhost:3000/"
-              - "http://localhost:3000/*"
+              - "{{ $websiteUrl }}/auth/callback"
+              {{- if $.Values.host }}
+              - "http://{{ $.Values.host }}/auth/callback"
+              - "https://{{ $.Values.host }}/auth/callback"
+              {{- end }}
+              - "http://localhost:3000/auth/callback"
             scopes: [openid, profile, email, groups, offline_access]
             grant_types: [authorization_code, refresh_token]
             response_types: [code]

@@ -44,9 +44,10 @@ class LldapClient:
         await self._http.aclose()
 
     async def _login(self) -> str:
+        # lldap 0.6 expects `username` (not `name`).
         resp = await self._http.post(
             "/auth/simple/login",
-            json={"name": self._username, "password": self._password},
+            json={"username": self._username, "password": self._password},
         )
         resp.raise_for_status()
         return resp.json()["token"]

@@ -1,4 +1,4 @@
-import { type BaseClient, Issuer } from 'openid-client';
+import { type BaseClient, Issuer, custom } from 'openid-client';
 
 import { getClientMetadata } from './clientMetadata.ts';
 import { getRuntimeConfig } from '../config.ts';
@@ -51,6 +51,22 @@ export const OidcClientManager = {
             logger.info(`Building OIDC client (internal=${internal}, public=${pub})`);
             const issuer = buildIssuer(internal, pub);
             _client = new issuer.Client(getClientMetadata());
+            // Authelia derives its issuer URL from request headers. Server-side
+            // calls hit the in-cluster service directly (HTTP, no proxy), so
+            // without these forwarded headers it would derive a wrong issuer
+            // and reject the token exchange with `invalid_grant` / `server_error`.
+            const publicUrl = new URL(pub);
+            _client[custom.http_options] = (_url, options) => ({
+                ...options,
+                headers: {
+                    ...(options.headers ?? {}),
+                    /* eslint-disable @typescript-eslint/naming-convention */
+                    'x-forwarded-proto': publicUrl.protocol.replace(':', ''),
+                    'x-forwarded-host': publicUrl.host,
+                    'x-forwarded-port': publicUrl.port || (publicUrl.protocol === 'https:' ? '443' : '80'),
+                    /* eslint-enable @typescript-eslint/naming-convention */
+                },
+            });
         } catch (error) {
             logger.error(`Error building OIDC client: ${String(error)}`);
         }

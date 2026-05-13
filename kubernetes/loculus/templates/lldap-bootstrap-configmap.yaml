@@ -1,5 +1,9 @@
 {{- if .Values.auth.bundledLdap.enabled }}
-{{- /* Build the user list (templating happens in Helm; secret substitution happens later in the config processor). */}}
+{{- /* Build the lists; secret placeholders ([[xxx]]) are substituted later
+       by loculus.configProcessor. lldap's own /app/bootstrap.sh script
+       reads one JSON file per user / group from /bootstrap/user-configs and
+       /bootstrap/group-configs, then calls /app/lldap_set_password to set
+       passwords via OPAQUE — which is the only supported path. */}}
 {{- $users := list }}
 {{- if .Values.createTestAccounts }}
   {{- range $_, $browser := list "firefox" "webkit" "chromium" }}
@@ -22,6 +26,13 @@
     "id" "superuser" "email" "superuser@void.o"
     "firstName" "Dummy" "lastName" "SuperUser" "displayName" "Dummy SuperUser"
     "password" "superuser" "groups" (list "super_user" "user")) }}
+  {{- $users = append $users (dict
+    "id" "playwright-readonly-setup-user"
+    "email" "playwright-readonly-setup-user@example.com"
+    "firstName" "Playwright" "lastName" "Setup"
+    "displayName" "Playwright Setup"
+    "password" "a-very-secure-password-for-testing"
+    "groups" (list "user")) }}
 {{- end }}
 {{- $users = append $users (dict
   "id" "insdc_ingest_user" "email" "insdc_ingest_user@void.o"
@@ -40,174 +51,19 @@
   "id" "backend" "email" "nothing@void.o"
   "firstName" "Backend" "lastName" "Technical-User" "displayName" "Backend Technical-User"
   "password" "[[backendUserPassword]]" "groups" (list "user")) }}
-{{- $groups := list
-    (dict "name" "user")
-    (dict "name" "admin")
-    (dict "name" "preprocessing_pipeline")
-    (dict "name" "external_metadata_updater")
-    (dict "name" "get_released_data")
-    (dict "name" "super_user") }}
+{{- $groups := list "user" "admin" "preprocessing_pipeline" "external_metadata_updater" "get_released_data" "super_user" }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: lldap-bootstrap
 data:
-  users.json: |-
-{{ $users | toJson | indent 4 }}
-  groups.json: |-
-{{ $groups | toJson | indent 4 }}
-  bootstrap.py: |
-    #!/usr/bin/env python3
-    """Idempotent bootstrap of groups, users, and group memberships in lldap."""
-    import json
-    import os
-    import sys
-    import time
-    import urllib.error
-    import urllib.request
-
-    LLDAP_URL = os.environ["LLDAP_URL"]
-    ADMIN_USER = os.environ["LLDAP_ADMIN_USERNAME"]
-    ADMIN_PASS = os.environ["LLDAP_ADMIN_PASSWORD"]
-    USERS_FILE = os.environ.get("USERS_FILE", "/data/users.json")
-    GROUPS_FILE = os.environ.get("GROUPS_FILE", "/data/groups.json")
-
-
-    def http(method, path, body=None, token=None):
-        headers = {"Content-Type": "application/json"}
-        if token:
-            headers["Authorization"] = f"Bearer {token}"
-        data = json.dumps(body).encode() if body is not None else None
-        req = urllib.request.Request(
-            LLDAP_URL.rstrip("/") + path,
-            data=data, headers=headers, method=method,
-        )
-
-        def _decode(raw):
-            if not raw:
-                return {}
-            try:
-                return json.loads(raw)
-            except json.JSONDecodeError:
-                return {"_raw": raw.decode("utf-8", errors="replace")}
-
-        try:
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                return resp.status, _decode(resp.read())
-        except urllib.error.HTTPError as e:
-            return e.code, _decode(e.read())
-
-
-    def wait_for_lldap():
-        for _ in range(120):
-            try:
-                with urllib.request.urlopen(LLDAP_URL.rstrip("/") + "/health", timeout=3):
-                    return
-            except Exception:
-                time.sleep(1)
-        sys.exit("lldap never became ready")
-
-
-    def login():
-        # lldap 0.6 expects `username`, not `name`.
-        status, body = http("POST", "/auth/simple/login",
-                            {"username": ADMIN_USER, "password": ADMIN_PASS})
-        if status != 200:
-            sys.exit(f"login failed: {status} {body}")
-        return body["token"]
-
-
-    def gql(token, query, variables):
-        status, body = http("POST", "/api/graphql",
-                            {"query": query, "variables": variables}, token=token)
-        if status != 200:
-            sys.exit(f"graphql failed: {status} {body}")
-        return body
-
-
-    def list_groups(token):
-        return {g["displayName"]: g["id"]
-                for g in gql(token, "query { groups { id displayName } }", {})["data"]["groups"]}
-
-
-    def create_group(token, name):
-        body = gql(token,
-                   "mutation($name: String!) { createGroup(name: $name) { id } }",
-                   {"name": name})
-        if body.get("errors"):
-            msg = body["errors"][0].get("message", "")
-            if "exist" in msg.lower() or "duplicate" in msg.lower():
-                return None
-            sys.exit(f"createGroup({name}) failed: {body}")
-        return body["data"]["createGroup"]["id"]
-
-
-    def list_users(token):
-        return {u["id"] for u in gql(token, "query { users { id email } }", {})["data"]["users"]}
-
-
-    def create_user(token, user):
-        q = "mutation($user: CreateUserInput!) { createUser(user: $user) { id } }"
-        body = gql(token, q, {"user": {
-            "id": user["id"],
-            "email": user["email"],
-            "displayName": user.get("displayName") or user["id"],
-            "firstName": user.get("firstName") or "",
-            "lastName": user.get("lastName") or "",
-        }})
-        if body.get("errors"):
-            msg = body["errors"][0].get("message", "")
-            if "exist" in msg.lower() or "duplicate" in msg.lower():
-                return
-            sys.exit(f"createUser({user['id']}) failed: {body}")
-
-
-    def set_password(token, user_id, password):
-        # lldap exposes a privileged password reset via the REST endpoint.
-        status, body = http(
-            "POST", "/auth/simple/register",
-            {"name": user_id, "password": password, "email": ""}, token=token,
-        )
-        if status >= 500:
-            sys.exit(f"set_password({user_id}) failed: {status} {body}")
-
-
-    def add_to_group(token, user_id, group_id):
-        q = "mutation($u: String!, $g: Int!) { addUserToGroup(userId: $u, groupId: $g) { ok } }"
-        body = gql(token, q, {"u": user_id, "g": group_id})
-        if body.get("errors"):
-            print(f"warn: addUserToGroup({user_id},{group_id}): {body['errors']}")
-
-
-    def main():
-        with open(GROUPS_FILE) as f:
-            groups = json.load(f)
-        with open(USERS_FILE) as f:
-            users = json.load(f)
-        wait_for_lldap()
-        token = login()
-        existing_groups = list_groups(token)
-        for g in groups:
-            if g["name"] not in existing_groups:
-                gid = create_group(token, g["name"])
-                if gid is not None:
-                    existing_groups[g["name"]] = gid
-        existing_groups = list_groups(token)
-        existing_users = list_users(token)
-        for u in users:
-            if u["id"] not in existing_users:
-                create_user(token, u)
-            set_password(token, u["id"], u["password"])
-            for gname in u.get("groups", []):
-                gid = existing_groups.get(gname)
-                if gid is None:
-                    print(f"warn: group {gname} missing for user {u['id']}")
-                    continue
-                add_to_group(token, u["id"], gid)
-        print("bootstrap complete")
-
-
-    if __name__ == "__main__":
-        main()
+{{- range $g := $groups }}
+  group-{{ $g }}.json: |-
+    {"name": "{{ $g }}"}
+{{- end }}
+{{- range $u := $users }}
+  user-{{ $u.id }}.json: |-
+{{ $u | toJson | indent 4 }}
+{{- end }}
 {{- end }}

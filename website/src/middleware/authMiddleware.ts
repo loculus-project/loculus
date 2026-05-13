@@ -8,7 +8,7 @@ import { type BaseClient, type TokenSet } from 'openid-client';
 import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 import { OidcClientManager } from '../utils/OidcClientManager.ts';
-import { getAuthUrl } from '../utils/getAuthUrl.ts';
+import { decodeState, getAuthUrl } from '../utils/getAuthUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
@@ -92,7 +92,12 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
             if (token !== undefined) {
                 logger.debug(`Token found in params, setting cookie`);
                 setCookie(context, token);
-                return createRedirectWithModifiableHeaders(removeTokenCodeFromSearchParams(context.url));
+                // OIDC roundtrip lands on /auth/callback; the original
+                // destination is encoded in `state`. Fall back to the same
+                // URL with code/state stripped (covers any legacy flow).
+                const decoded = decodeState(context.url.searchParams.get('state') ?? undefined);
+                const returnTo = decoded?.r ?? removeTokenCodeFromSearchParams(context.url);
+                return createRedirectWithModifiableHeaders(returnTo);
             }
         }
     } else {
@@ -229,11 +234,27 @@ async function getTokenFromParams(context: APIContext, client: BaseClient): Prom
     const params = client.callbackParams(context.url.toString());
     logger.debug(`OIDC callback params: ${JSON.stringify(params)}`);
     if (params.code !== undefined) {
-        const redirectUri = removeTokenCodeFromSearchParams(context.url);
+        // The redirect_uri sent on the token exchange must match the one from
+        // the original authorize request exactly. Our authorize call uses the
+        // bare /auth/callback URL (no query string), so reconstruct that here
+        // regardless of which extra params the IDP appended on its way back.
+        const callbackUrl = new URL(context.url.toString());
+        callbackUrl.search = '';
+        callbackUrl.hash = '';
+        const redirectUri = callbackUrl.toString();
         logger.debug(`OIDC callback redirect uri: ${redirectUri}`);
+        const decoded = decodeState(params.state);
+        if (!decoded) {
+            logger.info('OIDC callback received without a recognisable state payload');
+            return undefined;
+        }
         const tokenSet = await client
             .callback(redirectUri, params, {
-                response_type: 'code', // eslint-disable-line @typescript-eslint/naming-convention
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                response_type: 'code',
+                state: params.state,
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                code_verifier: decoded.v,
             })
             .catch((error: unknown) => {
                 logger.info(`OIDC callback error: ${error}`);

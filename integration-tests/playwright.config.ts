@@ -30,8 +30,16 @@ const config = {
     use: {
         /* Base URL to use in actions like `await page.goto('/')`. */
         baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
-        /* Ignore HTTPS errors when requested via environment variable. */
-        ignoreHTTPSErrors: process.env.PLAYWRIGHT_TEST_IGNORE_HTTPS_ERRORS === 'true',
+        /* Authelia is served over HTTPS via traefik using a self-signed cert in
+         * dev/CI; production deployments use a real cert. Always accept. */
+        ignoreHTTPSErrors: true,
+        /* Map the *.loculus.test dev domain to localhost without needing an
+         * /etc/hosts entry on the host. */
+        launchOptions: {
+            args: [
+                '--host-resolver-rules=MAP *.loculus.test 127.0.0.1, MAP loculus.test 127.0.0.1',
+            ],
+        },
 
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: (process.env.CI ? 'retain-on-failure' : 'on') as

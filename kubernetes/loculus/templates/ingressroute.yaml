@@ -46,11 +46,15 @@ spec:
     replacement: "https://$1"
     permanent: true
 ---
-{{- if eq $.Values.environment "server" }}
-{{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
-{{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
-{{- $minioHost := (printf "s3%s%s" $.Values.subdomainSeparator $.Values.host) }}
+{{- /* Ingress rules require bare hostnames (no port). */}}
+{{- $hostBare := index (splitList ":" (default "" $.Values.host)) 0 }}
+{{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator $hostBare }}
+{{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $hostBare) }}
+{{- $minioHost := (printf "s3%s%s" $.Values.subdomainSeparator $hostBare) }}
+{{- $registerHost := (printf "register%s%s" $.Values.subdomainSeparator $hostBare) }}
 {{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
+{{- $middlewareListForKeycloak := $middlewareList }}
+{{- if eq $.Values.environment "server" }}
 {{- if $.Values.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
@@ -59,7 +63,6 @@ spec:
 {{ end }}
 
 {{ $middlewareListForWebsite := $middlewareList }}
-{{ $middlewareListForKeycloak := $middlewareList }}
 
 {{ if $.Values.secrets.basicauth }}
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
@@ -76,7 +79,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForWebsite }}"
 spec:
   rules:
-    - host: "{{ .Values.host }}"
+    - host: "{{ $hostBare }}"
       http:
         paths:
           - path: /
@@ -86,7 +89,7 @@ spec:
                 name: loculus-website-service
                 port:
                   number: 3000
-    - host: "www.{{ .Values.host }}"
+    - host: "www.{{ $hostBare }}"
       http:
         paths:
           - path: /
@@ -98,8 +101,8 @@ spec:
                   number: 3000
   tls:
   - hosts:
-    - "{{ .Values.host }}"
-    - "www.{{ .Values.host }}"
+    - "{{ $hostBare }}"
+    - "www.{{ $hostBare }}"
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -122,6 +125,7 @@ spec:
   tls:
   - hosts:
     - "{{ $backendHost }}"
+{{- end }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -154,7 +158,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
 spec:
   rules:
-    - host: "register{{ $.Values.subdomainSeparator }}{{ $.Values.host }}"
+    - host: "{{ $registerHost }}"
       http:
         paths:
           - path: /
@@ -166,7 +170,7 @@ spec:
                   number: 8090
   tls:
     - hosts:
-        - "register{{ $.Values.subdomainSeparator }}{{ $.Values.host }}"
+        - "{{ $registerHost }}"
 {{- end }}
 ---
 {{- if and .Values.s3.enabled .Values.runDevelopmentS3 }}
@@ -191,5 +195,4 @@ spec:
   tls:
     - hosts:
         - "{{ $minioHost }}"
-{{- end }}
 {{- end }}
