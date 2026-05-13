@@ -9,7 +9,7 @@ import { SegmentFilter } from './SegmentFilter.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
-import { HierarchicalField } from './fields/HierarchicalField.tsx';
+import { LineageField } from './fields/LineageField.tsx';
 import { MultiChoiceAutoCompleteField } from './fields/MultiChoiceAutoCompleteField';
 import { MultiFieldSearchField } from './fields/MultiFieldSearchField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
@@ -469,15 +469,14 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 />
             );
         default:
-            if (field.lineageSearch || field.hierarchicalSearch) {
+            if (field.lineageSearch) {
                 return (
-                    <HierarchicalField
+                    <LineageField
                         field={field}
                         fieldValue={(fieldValues[field.name] ?? '') as string}
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
                         lapisSearchParameters={lapisSearchParameters}
-                        mode={field.lineageSearch ? 'lineage' : 'default'}
                     />
                 );
             }

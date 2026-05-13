@@ -6,6 +6,7 @@ metadata:
   name: loculus-database
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
+    argocd.argoproj.io/sync-wave: "-5"
 spec:
   replicas: 1
   selector:
@@ -61,6 +62,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: loculus-database-init
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
 data:
   init-pg-stat.sql: |
     CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
