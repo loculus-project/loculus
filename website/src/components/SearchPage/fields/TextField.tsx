@@ -30,7 +30,7 @@ const helperTextClasses = getTheme().floatingLabel.helperText.default;
 const inputClasses = getTheme().floatingLabel.input.default.outlined.md;
 
 export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldProps>(function (props, ref) {
-    const { label, disabled, onChange, autoComplete, fieldValue, className, onFocus, multiline, onBlur, placeholder } =
+    const { label, disabled, onChange, autoComplete, fieldValue, className, onFocus, placeholder, multiline, onBlur } =
         props;
     const id = useId();
     const [isTransitionEnabled, setIsTransitionEnabled] = useState(false);
