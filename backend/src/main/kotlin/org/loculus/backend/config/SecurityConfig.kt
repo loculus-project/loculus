@@ -16,6 +16,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.core.oidc.StandardClaimNames
@@ -82,10 +83,15 @@ class SecurityConfig {
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
         serviceTokenFilter: ServiceTokenAuthenticationFilter,
     ): SecurityFilterChain = httpSecurity
-        // CSRF protection is not meaningful for an API that authenticates every
-        // request from scratch (bearer JWT or X-Service-Token); a stale CSRF
-        // cookie was rejecting service-token POSTs before the auth filter ran.
-        .csrf { csrf -> csrf.disable() }
+        // The API authenticates every request from scratch via either bearer
+        // JWT or X-Service-Token; no session is established. Marking the
+        // session policy STATELESS makes Spring skip both session creation
+        // and CSRF enforcement, so service-token POSTs aren't rejected by the
+        // CsrfFilter before our auth filter runs.
+        .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+        .csrf {
+            it.disable()
+        } // codeql[java/spring-disabled-csrf-protection] -- stateless API; tokens travel in headers, no session cookie.
         .addFilterBefore(serviceTokenFilter, AbstractPreAuthenticatedProcessingFilter::class.java)
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
