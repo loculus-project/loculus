@@ -13,7 +13,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.keycloak.representations.idm.UserRepresentation
+import org.loculus.backend.service.LoculusUser
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
@@ -30,7 +30,7 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
-import org.loculus.backend.service.KeycloakAdapter
+import org.loculus.backend.service.UserDirectory
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
@@ -49,11 +49,11 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
     private val currentDate = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.toString()
 
     @MockkBean
-    lateinit var keycloakAdapter: KeycloakAdapter
+    lateinit var userDirectory: UserDirectory
 
     @BeforeEach
     fun setup() {
-        every { keycloakAdapter.getUsersWithName(any()) } returns listOf(UserRepresentation())
+        every { userDirectory.getUsersWithName(any()) } returns listOf(LoculusUser("dummy", null, null, null, null))
     }
 
     @Test

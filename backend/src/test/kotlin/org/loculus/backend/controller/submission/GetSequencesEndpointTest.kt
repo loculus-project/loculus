@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.keycloak.representations.idm.UserRepresentation
+import org.loculus.backend.service.LoculusUser
 import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
@@ -35,7 +35,7 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
-import org.loculus.backend.service.KeycloakAdapter
+import org.loculus.backend.service.UserDirectory
 import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -48,11 +48,11 @@ class GetSequencesEndpointTest(
     @Autowired private val groupManagementClient: GroupManagementControllerClient,
 ) {
     @MockkBean
-    lateinit var keycloakAdapter: KeycloakAdapter
+    lateinit var userDirectory: UserDirectory
 
     @BeforeEach
     fun setup() {
-        every { keycloakAdapter.getUsersWithName(any()) } returns listOf(UserRepresentation())
+        every { userDirectory.getUsersWithName(any()) } returns listOf(LoculusUser("dummy", null, null, null, null))
     }
 
     @Test

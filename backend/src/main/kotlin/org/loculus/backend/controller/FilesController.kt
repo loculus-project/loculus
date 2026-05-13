@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.headers.Header
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.servlet.http.HttpServletRequest
-import org.apache.http.HttpStatus
+import org.springframework.http.HttpStatus
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.FileIdAndEtags
 import org.loculus.backend.api.FileIdAndMultipartWriteUrl
@@ -98,7 +98,7 @@ class FilesController(
             HttpMethod.GET -> s3Service.createUrlToReadPrivateFile(fileId, fileName)
             else -> throw RuntimeException("Unexpected error: /files/get was called with HTTP method $method")
         }
-        return ResponseEntity.status(HttpStatus.SC_TEMPORARY_REDIRECT)
+        return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT)
             .location(URI.create(presignedUrl))
             .build()
     }

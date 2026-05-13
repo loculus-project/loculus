@@ -10,7 +10,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.keycloak.representations.idm.UserRepresentation
+import org.loculus.backend.service.LoculusUser
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
@@ -24,7 +24,7 @@ import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.jwtForAlternativeUser
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForSuperUser
-import org.loculus.backend.service.KeycloakAdapter
+import org.loculus.backend.service.UserDirectory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
@@ -36,11 +36,11 @@ import java.util.UUID
 @EndpointTest
 class GroupManagementControllerTest(@Autowired private val client: GroupManagementControllerClient) {
     @MockkBean
-    lateinit var keycloakAdapter: KeycloakAdapter
+    lateinit var userDirectory: UserDirectory
 
     @BeforeEach
     fun setup() {
-        every { keycloakAdapter.getUsersWithName(any()) } returns listOf(UserRepresentation())
+        every { userDirectory.getUsersWithName(any()) } returns listOf(LoculusUser("dummy", null, null, null, null))
     }
 
     @Test
@@ -260,7 +260,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
 
     @Test
     fun `GIVEN a group WHEN I add a user that does not exists to the group THEN expect user is not found`() {
-        every { keycloakAdapter.getUsersWithName(any()) } returns listOf()
+        every { userDirectory.getUsersWithName(any()) } returns listOf()
 
         val otherUser = "otherUserThatDoesNotExist"
 
