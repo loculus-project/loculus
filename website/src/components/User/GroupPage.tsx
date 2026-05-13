@@ -32,7 +32,7 @@ type GroupPageProps = {
     databaseName: string;
     continueSubmissionIntent?: ContinueSubmissionIntent;
     loginUrl: string;
-    metadataItemForCumulativeGroupGraph: string | null;
+    dateFieldForGroupGraph: string | null;
 };
 
 const InnerGroupPage: FC<GroupPageProps> = ({
@@ -45,7 +45,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     databaseName,
     continueSubmissionIntent,
     loginUrl,
-    metadataItemForCumulativeGroupGraph,
+    dateFieldForGroupGraph,
 }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
     const groupId = prefetchedGroupDetails.group.groupId;
@@ -75,14 +75,14 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     });
 
     const { data: timeSeriesData, isLoading: timeSeriesLoading } = useQuery({
-        queryKey: ['group-time-series', groupId, clientConfig, organisms, metadataItemForCumulativeGroupGraph],
+        queryKey: ['group-time-series', groupId, clientConfig, organisms, dateFieldForGroupGraph],
         queryFn: () => {
-            if (metadataItemForCumulativeGroupGraph === null) {
+            if (dateFieldForGroupGraph === null) {
                 return Promise.resolve({});
             }
-            return fetchTimeSeriesData(groupId, clientConfig, organisms, metadataItemForCumulativeGroupGraph);
+            return fetchTimeSeriesData(groupId, clientConfig, organisms, dateFieldForGroupGraph);
         },
-        enabled: metadataItemForCumulativeGroupGraph !== null,
+        enabled: dateFieldForGroupGraph !== null,
     });
 
     const continueSubmissionCta = useMemo(() => {
@@ -243,7 +243,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 </table>
             </div>
 
-            {metadataItemForCumulativeGroupGraph !== null && (
+            {dateFieldForGroupGraph !== null && (
                 <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
                     <h2 className='text-lg font-bold mb-2'>Cumulative submissions over time</h2>
                     <CumulativeSubmissionsChart

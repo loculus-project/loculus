@@ -16,7 +16,7 @@ const clientConfig = getRuntimeConfig().public;
 const organisms = getConfiguredOrganisms();
 const websiteConfig = getWebsiteConfig();
 const databaseName = websiteConfig.name;
-const metadataItemForCumulativeGroupGraph = websiteConfig.metadataItemForCumulativeGroupGraph;
+const dateFieldForGroupGraph = websiteConfig.dateFieldForGroupGraph;
 const loginUrl = await getAuthUrl(Astro.url.toString());
 
 const continueSubmissionOrganism = Astro.url.searchParams.get('continueSubmissionOrganism');
@@ -59,7 +59,7 @@ const userGroups = userGroupsResponse.match(
                     databaseName={databaseName}
                     continueSubmissionIntent={continueSubmissionIntent}
                     loginUrl={loginUrl}
-                    metadataItemForCumulativeGroupGraph={metadataItemForCumulativeGroupGraph}
+                    dateFieldForGroupGraph={dateFieldForGroupGraph}
                     client:load
                 />
             ),

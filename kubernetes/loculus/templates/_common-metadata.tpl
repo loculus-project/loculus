@@ -221,7 +221,7 @@ enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
 dataUseTermsAgreementHTML: {{ quote $.Values.dataUseTerms.agreementHTML }}
 {{- end }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
-metadataItemForCumulativeGroupGraph: {{ if $.Values.metadataItemForCumulativeGroupGraph }}{{ quote $.Values.metadataItemForCumulativeGroupGraph }}{{ else }}null{{ end }}
+dateFieldForGroupGraph: {{ if $.Values.dateFieldForGroupGraph }}{{ quote $.Values.dateFieldForGroupGraph }}{{ else }}null{{ end }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
   {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}

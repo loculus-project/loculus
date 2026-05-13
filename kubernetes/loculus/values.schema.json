@@ -1060,7 +1060,7 @@
       "default": "LOC_",
       "description": "Prefix used for accession numbers"
     },
-    "metadataItemForCumulativeGroupGraph": {
+    "dateFieldForGroupGraph": {
       "groups": ["general"],
       "group": "general",
       "type": ["string", "null"],
