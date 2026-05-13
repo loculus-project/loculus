@@ -1,0 +1,57 @@
+{{- if .Values.auth.bundledLdap.enabled }}
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-registration-service
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: registration-service
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: registration-service
+    spec:
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
+      containers:
+        - name: registration-service
+          image: "{{ .Values.images.registrationService.repository }}:{{ $dockerTag }}"
+          imagePullPolicy: {{ .Values.images.registrationService.pullPolicy | default .Values.imagePullPolicy }}
+          {{- include "loculus.resources" (list "registration-service" $.Values) | nindent 10 }}
+          env:
+            - name: LLDAP_URL
+              value: "http://loculus-lldap-service:17170"
+            - name: LLDAP_ADMIN_USERNAME
+              value: "admin"
+            - name: LLDAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: lldap-secrets
+                  key: adminPassword
+            - name: BASE_URL
+              value: "{{ include "loculus.registrationUrl" . }}"
+            - name: LOGIN_URL
+              value: "{{ include "loculus.autheliaUrl" . }}"
+            - name: TERMS_MESSAGE
+              value: {{ $.Values.registrationTermsMessage | quote }}
+          ports:
+            - containerPort: 8090
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            failureThreshold: 30
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            periodSeconds: 30
+{{- end }}

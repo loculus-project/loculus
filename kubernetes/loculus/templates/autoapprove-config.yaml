@@ -1,7 +1,7 @@
 {{- if not .Values.disableIngest }}
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary (printf "http://%s:8079" $.Values.localHost) "http://loculus-backend-service:8079") }}
-{{- $keycloakHost := $testconfig | ternary (printf "http://%s:8083" $.Values.localHost) "http://loculus-keycloak-service:8083" }}
+{{- $keycloakHost := $testconfig | ternary (printf "http://%s:9091" $.Values.localHost) "http://loculus-authelia-service:9091" }}
 {{- $organismKeys := list }}
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
   {{- if $item.contents.ingest }}
@@ -17,5 +17,5 @@ data:
   config.yaml: |
     organisms: {{ $organismKeys | toJson }}
     backend_url: {{ $backendHost }}
-    keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
+    keycloak_token_url: {{ $keycloakHost -}}/api/oidc/token
 {{- end }}

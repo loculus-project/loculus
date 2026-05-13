@@ -2,7 +2,7 @@
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary (printf "http://%s:8079" $.Values.localHost) "http://loculus-backend-service:8079") }}
 {{- $enaDepositionHost := $testconfig | ternary (printf "http://%s:5000" $.Values.localHost) "http://loculus-ena-submission-service:5000" }}
-{{- $keycloakHost := $testconfig | ternary (printf "http://%s:8083" $.Values.localHost) "http://loculus-keycloak-service:8083" }}
+{{- $keycloakHost := $testconfig | ternary (printf "http://%s:9091" $.Values.localHost) "http://loculus-authelia-service:9091" }}
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 {{- $values := $item.contents }}
@@ -25,7 +25,7 @@ data:
     {{- end }}
     organism: {{ $key }}
     backend_url: {{ $backendHost }}
-    keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
+    keycloak_token_url: {{ $keycloakHost -}}/api/oidc/token
     {{- if $.Values.ingest.ncbiGatewayUrl }}
     ncbi_gateway_url: {{ $.Values.ingest.ncbiGatewayUrl }}
     {{- end }}

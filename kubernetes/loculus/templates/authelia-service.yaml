@@ -1,17 +1,17 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: loculus-keycloak-service
+  name: loculus-authelia-service
 spec:
   {{- template "loculus.serviceType" . }}
   selector:
     app: loculus
-    component: keycloak
+    component: authelia
   ports:
-    - port: 8083
-      targetPort: 8080
+    - port: 9091
+      targetPort: 9091
       {{- if ne $.Values.environment "server" }}
-      nodePort: 30083
+      nodePort: 30091
       {{- end }}
       protocol: TCP
       name: http

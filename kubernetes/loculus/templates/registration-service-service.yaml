@@ -1,0 +1,16 @@
+{{- if .Values.auth.bundledLdap.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-registration-service
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: registration-service
+  ports:
+    - port: 8090
+      targetPort: 8090
+      protocol: TCP
+      name: http
+{{- end }}

@@ -1,0 +1,54 @@
+---
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-authelia
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: authelia
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: authelia
+    spec:
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
+      initContainers:
+{{- include "loculus.configProcessor" (dict "name" "authelia-config" "dockerTag" $dockerTag "imagePullPolicy" .Values.imagePullPolicy) | nindent 8 }}
+      containers:
+        - name: authelia
+          image: "ghcr.io/authelia/authelia:4.39"
+          {{- include "loculus.resources" (list "authelia" $.Values) | nindent 10 }}
+          args:
+            - "--config=/config/configuration.yml"
+          env:
+            - name: X_AUTHELIA_CONFIG_FILTERS
+              value: "expand-env"
+          ports:
+            - containerPort: 9091
+          volumeMounts:
+            - name: authelia-config-processed
+              mountPath: /config
+            - name: data
+              mountPath: /data
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: 9091
+            failureThreshold: 60
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 9091
+            periodSeconds: 30
+      volumes:
+{{ include "loculus.configVolume" (dict "name" "authelia-config") | nindent 8 }}
+        - name: data
+          emptyDir: {}

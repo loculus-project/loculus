@@ -40,15 +40,29 @@
   {{- end -}}
 {{- end -}}
 
-{{- define "loculus.keycloakUrl" -}}
+{{- define "loculus.autheliaUrl" -}}
 {{- $publicRuntimeConfig := $.Values.public }}
-  {{- if $publicRuntimeConfig.keycloakUrl }}
-    {{- $publicRuntimeConfig.keycloakUrl -}}
+  {{- if $publicRuntimeConfig.autheliaUrl }}
+    {{- $publicRuntimeConfig.autheliaUrl -}}
   {{- else if eq $.Values.environment "server" -}}
     {{- (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) -}}
   {{- else -}}
-    {{- printf "http://%s:8083" $.Values.localHost -}}
+    {{- printf "http://%s:9091" $.Values.localHost -}}
   {{- end -}}
+{{- end -}}
+
+{{- define "loculus.autheliaUrlInternal" -}}
+  {{- "http://loculus-authelia-service:9091" -}}
+{{- end -}}
+
+{{- define "loculus.registrationUrl" -}}
+{{- if .Values.auth.bundledLdap.enabled -}}
+  {{- if eq $.Values.environment "server" -}}
+    {{- (printf "https://register%s%s" $.Values.subdomainSeparator $.Values.host) -}}
+  {{- else -}}
+    {{- printf "http://%s:8090" $.Values.localHost -}}
+  {{- end -}}
+{{- end -}}
 {{- end -}}
 
 {{/* generates internal LAPIS urls from given config object */}}
