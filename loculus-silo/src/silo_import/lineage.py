@@ -51,16 +51,6 @@ def _download_lineage_file(url: str, destination: Path) -> None:
     _write_text(destination, response.text)
 
 
-def _post_silo_lineage(url: str, values: list[str], prune: bool = False) -> requests.Response:
-    """The service providing hierarchical filter lineage files is expected to
-    expose a POST /silo-lineage endpoint that takes a {values: [<values>]}
-    request body and a ?prune=<boolean> query param
-    """
-    params = {"prune": "true"} if prune else None
-    payload: dict[str, Any] = {"values": values}
-    return requests.post(url, json=payload, params=params, timeout=60)
-
-
 def _write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
