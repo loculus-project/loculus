@@ -55,6 +55,7 @@ describe('MultiChoiceAutoCompleteField', () => {
                 field={field}
                 optionsProvider={{
                     type: 'generic',
+                    organism: 'testOrganism',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
@@ -124,6 +125,7 @@ describe('MultiChoiceAutoCompleteField', () => {
                 field={field}
                 optionsProvider={{
                     type: 'generic',
+                    organism: 'testOrganism',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,

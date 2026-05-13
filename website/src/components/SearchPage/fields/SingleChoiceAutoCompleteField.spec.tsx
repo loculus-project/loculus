@@ -53,6 +53,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 field={field}
                 optionsProvider={{
                     type: 'generic',
+                    organism: 'testOrganism',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
@@ -89,6 +90,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 field={field}
                 optionsProvider={{
                     type: 'generic',
+                    organism: 'testOrganism',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
@@ -119,6 +121,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 field={field}
                 optionsProvider={{
                     type: 'generic',
+                    organism: 'testOrganism',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
@@ -145,6 +148,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 field={field}
                 optionsProvider={{
                     type: 'generic',
+                    organism: 'testOrganism',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
@@ -176,6 +180,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 field={field}
                 optionsProvider={{
                     type: 'generic',
+                    organism: 'testOrganism',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
@@ -210,6 +215,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 field={field}
                 optionsProvider={{
                     type: 'generic',
+                    organism: 'testOrganism',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
@@ -242,6 +248,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 field={field}
                 optionsProvider={{
                     type: 'generic',
+                    organism: 'testOrganism',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,
@@ -277,6 +284,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 field={field}
                 optionsProvider={{
                     type: 'generic',
+                    organism: 'testOrganism',
                     lapisUrl,
                     lapisSearchParameters,
                     fieldName: field.name,

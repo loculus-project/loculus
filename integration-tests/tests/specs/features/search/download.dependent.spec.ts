@@ -51,7 +51,7 @@ test('Download with null filter sends isNull param to LAPIS', async ({ page, bro
     await page.getByRole('button', { name: 'Download all entries' }).click();
     await page.getByLabel('I agree to the data use terms.').check();
 
-    const requestPromise = page.waitForRequest((req) => req.url().includes('/sample/details'));
+    const requestPromise = page.waitForRequest((req) => req.url().includes('/v1/details'));
     const downloadPromise = page.waitForEvent('download');
     await page.getByTestId('start-download').click();
 

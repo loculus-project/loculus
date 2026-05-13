@@ -10,8 +10,7 @@ import {
     getSchema,
     getWebsiteConfig,
 } from '../../../../config';
-import { GROUP_ID_FIELD, VERSION_STATUS_FIELD } from '../../../../settings';
-import { versionStatuses } from '../../../../types/lapis';
+import { GROUP_ID_FIELD } from '../../../../settings';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { parseUrlSearchParams } from '../../../../utils/parseUrlSearchParams';
 import { performLapisSearchQueries } from '../../../../utils/serversideSearch';
@@ -39,18 +38,26 @@ const accessToken = getAccessToken(Astro.locals.session);
 
 const referenceGenomesInfo = getReferenceGenomes(cleanedOrganism.key);
 
+// Only the group-id constraint is a "hidden" filter on this page —
+// versionStatus / isRevocation defaults are now applied by query-service.
 const hiddenFieldValues = {
-    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
     [GROUP_ID_FIELD]: String(group.groupId),
 };
 
+// Default to the current/non-revoked view here. The in-page link from
+// the review page (routes.mySequencesPage) ships users in with
+// `?include=all` so they see every version they've just released; the
+// page-level checkbox toggles between modes. We deliberately don't
+// rewrite the URL server-side because tests / external links commonly
+// append further query params with `?`, and a server-side redirect
+// would corrupt those.
 const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
 const { data, totalCount } = await performLapisSearchQueries(
     initialQueryDict,
     schema,
     referenceGenomesInfo,
-    hiddenFieldValues,
     cleanedOrganism.key,
+    hiddenFieldValues,
 );
 
 const websiteConfig = getWebsiteConfig();

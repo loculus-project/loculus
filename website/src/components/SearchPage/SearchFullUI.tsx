@@ -14,7 +14,7 @@ import { Table, type TableSequenceData } from './Table';
 import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
 import { useSearchPageState } from './useSearchPageState.ts';
 import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
-import { getLapisUrl } from '../../config.ts';
+import { getQueryServiceUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
@@ -82,7 +82,10 @@ export const InnerSearchFullUI = ({
     linkOuts,
     contactConfig,
 }: InnerSearchFullUIProps) => {
-    hiddenFieldValues ??= {};
+    // Stabilise the default so downstream `useMemo`s don't see a fresh
+    // empty object on every render — that previously cascaded into an
+    // effect that refired every render and pelted the query-service.
+    const hiddenValues: FieldValues = useMemo(() => hiddenFieldValues ?? {}, [hiddenFieldValues]);
 
     const metadataSchema = schema.metadata;
     const multiFieldSearches = schema.multiFieldSearches;
@@ -110,7 +113,13 @@ export const InnerSearchFullUI = ({
         setOrderDirection,
         setASearchVisibility,
         setAColumnVisibility,
-    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema, referenceGenomesInfo });
+    } = useSearchPageState({
+        initialQueryDict,
+        schema,
+        hiddenFieldValues: hiddenValues,
+        filterSchema,
+        referenceGenomesInfo,
+    });
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -133,12 +142,12 @@ export const InnerSearchFullUI = ({
 
     /**
      * The `fieldValues` are the values of the search fields.
-     * The values are initially loaded from the default values set in `hiddenFieldValues`
+     * The values are initially loaded from the default values set in `hiddenValues`
      * and the initial `state` (URL search params).
      */
     const fieldValues = useMemo(() => {
-        return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues, referenceGenomesInfo);
-    }, [state, hiddenFieldValues, filterSchema, referenceGenomesInfo]);
+        return filterSchema.getFieldValuesFromQuery(state, hiddenValues, referenceGenomesInfo);
+    }, [state, hiddenValues, filterSchema, referenceGenomesInfo]);
 
     useEffect(() => {
         if (showEditDataUseTermsControls && dataUseTermsEnabled) {
@@ -146,15 +155,28 @@ export const InnerSearchFullUI = ({
         }
     }, []);
 
-    const lapisUrl = getLapisUrl(clientConfig, organism);
+    // `lapisUrl` is a misnomer now — this is the query-service base URL —
+    // but we keep the prop name through the search components for now to
+    // avoid a rename cascade.
+    const lapisUrl = getQueryServiceUrl(clientConfig);
+
+    // By default the search shows latest non-revoked sequences (query-service
+    // applies those defaults). The user can flip the "Include older versions
+    // and revocations" toggle to send `?include=all` and see everything.
+    const includeRaw = state.include;
+    const include = Array.isArray(includeRaw) ? includeRaw[0] : includeRaw;
+    const includeAll = include === 'all';
+    const setIncludeAll = (next: boolean) => {
+        setSomeFieldValues(['include', next ? 'all' : '']);
+    };
     const downloadUrlGenerator = new DownloadUrlGenerator(
         organism,
         lapisUrl,
         dataUseTermsEnabled,
         schema.richFastaHeaderFields,
+        include,
     );
-
-    const hooks = lapisClientHooks(lapisUrl);
+    const hooks = lapisClientHooks(lapisUrl, organism, include ? { include } : {});
     const aggregatedHook = hooks.useAggregated();
     const detailsHook = hooks.useDetails();
 
@@ -168,9 +190,8 @@ export const InnerSearchFullUI = ({
     );
 
     const tableFilter = useMemo(
-        () =>
-            new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, segmentAndGeneInfo, referenceGenomesInfo),
-        [fieldValues, hiddenFieldValues, referenceGenomesInfo, filterSchema],
+        () => new FieldFilterSet(filterSchema, fieldValues, hiddenValues, segmentAndGeneInfo, referenceGenomesInfo),
+        [fieldValues, hiddenValues, referenceGenomesInfo, filterSchema],
     );
 
     /**
@@ -251,6 +272,19 @@ export const InnerSearchFullUI = ({
                 sequenceFlaggingConfig={sequenceFlaggingConfig}
             />
             <div className='md:w-[18rem]'>
+                <label
+                    className='mb-3 flex cursor-pointer items-center gap-2 text-sm text-gray-600'
+                    data-testid='include-all-toggle-label'
+                >
+                    <input
+                        type='checkbox'
+                        className='checkbox checkbox-sm'
+                        data-testid='include-all-toggle'
+                        checked={includeAll}
+                        onChange={(e) => setIncludeAll(e.target.checked)}
+                    />
+                    Include older versions and revocations
+                </label>
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}
@@ -334,6 +368,7 @@ export const InnerSearchFullUI = ({
                             {showEditDataUseTermsControls && dataUseTermsEnabled && (
                                 <EditDataUseTermsModal
                                     lapisUrl={lapisUrl}
+                                    organism={organism}
                                     clientConfig={clientConfig}
                                     accessToken={accessToken}
                                     sequenceFilter={downloadFilter}

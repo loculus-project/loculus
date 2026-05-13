@@ -21,21 +21,18 @@ test.describe('Search', () => {
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
 
-    test('hidden field values are kept in the URL params', async ({ page }) => {
+    test('include-all toggle puts include=all in the URL', async ({ page }) => {
         await searchPage.ebolaSudan();
 
-        // This is just to ensure that things are interactive and ready - bit of a hack for now
-        await searchPage.select('Collection country', 'France');
-        await searchPage.clearSelect('Collection country');
-        await searchPage.enableSearchFields('Is revocation', 'Version status');
-        await searchPage.clearSelect('Is revocation');
-        await searchPage.clearSelect('Version status');
+        // Default: query-service applies the latest-version / no-revocations
+        // defaults; the website does not need to put anything in the URL.
+        expect(new URL(page.url()).searchParams.has('include')).toBe(false);
 
-        // Assert that the empty values are in the search Params
-        const searchParams = new URL(page.url()).searchParams;
-        expect(searchParams.has('isRevocation')).toBeTruthy();
-        expect(searchParams.get('isRevocation')).toBe('');
-        expect(searchParams.has('versionStatus')).toBeTruthy();
-        expect(searchParams.get('versionStatus')).toBe('');
+        await page.getByTestId('include-all-toggle').check();
+        await expect(page.getByTestId('include-all-toggle')).toBeChecked();
+        expect(new URL(page.url()).searchParams.get('include')).toBe('all');
+
+        await page.getByTestId('include-all-toggle').uncheck();
+        expect(new URL(page.url()).searchParams.has('include')).toBe(false);
     });
 });

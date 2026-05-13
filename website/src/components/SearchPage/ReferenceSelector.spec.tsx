@@ -75,6 +75,7 @@ describe('ReferenceSelector', () => {
                 fieldValues={{}}
                 setSomeFieldValues={vi.fn()}
                 lapisUrl={lapisUrl}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
                 segmentName='main'
             />,
@@ -92,6 +93,7 @@ describe('ReferenceSelector', () => {
                 fieldValues={{}}
                 setSomeFieldValues={vi.fn()}
                 lapisUrl={lapisUrl}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
                 segmentName='main'
             />,
@@ -129,6 +131,7 @@ describe('ReferenceSelector', () => {
                 fieldValues={{}}
                 setSomeFieldValues={vi.fn()}
                 lapisUrl={lapisUrl}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
                 segmentName='L'
             />,
@@ -153,6 +156,7 @@ describe('ReferenceSelector', () => {
                 fieldValues={{}}
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
                 segmentName='main'
             />,
@@ -177,6 +181,7 @@ describe('ReferenceSelector', () => {
                 fieldValues={{ genotype: 'ref1' }}
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
                 segmentName='main'
             />,

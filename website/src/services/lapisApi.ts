@@ -1,4 +1,8 @@
-import { makeApi, makeEndpoint } from '@zodios/core';
+// Note: this is the website's client for the Loculus query-service v1 API.
+// (See query-service/README.md.) The verbs here mirror the query-service
+// surface, not LAPIS's. `organism` is required and passed as a query param.
+
+import { makeApi, makeEndpoint, makeParameters } from '@zodios/core';
 import z from 'zod';
 
 import {
@@ -12,15 +16,34 @@ import {
     sequenceRequest,
 } from '../types/lapis.ts';
 
-function withSample<Path extends `/${string}`>(path: Path) {
-    return `/sample${path}` as const;
+function v1<Path extends `/${string}`>(path: Path) {
+    return `/v1${path}` as const;
 }
+
+// Every /v1/ endpoint takes `?organism=` (required) and may take
+// `?include=` (optional) to opt out of query-service's implicit defaults
+// (`versionStatus=LATEST_VERSION` and `isRevocation=false`). Valid values:
+// `revoked`, `older-versions`, `all`. The search UI passes `all` because
+// it manages those defaults itself via hiddenFieldValues.
+const organismParam = makeParameters([
+    {
+        name: 'organism',
+        type: 'Query',
+        schema: z.string(),
+    },
+    {
+        name: 'include',
+        type: 'Query',
+        schema: z.string().optional(),
+    },
+] as const);
 
 const detailsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/details'),
+    path: v1('/details'),
     alias: 'details',
     parameters: [
+        ...organismParam,
         {
             name: 'request',
             type: 'Body',
@@ -32,9 +55,10 @@ const detailsEndpoint = makeEndpoint({
 
 const aggregatedEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/aggregated'),
+    path: v1('/aggregated'),
     alias: 'aggregated',
     parameters: [
+        ...organismParam,
         {
             name: 'request',
             type: 'Body',
@@ -46,9 +70,10 @@ const aggregatedEndpoint = makeEndpoint({
 
 const nucleotideMutationsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/nucleotideMutations'),
+    path: v1('/mutations'),
     alias: 'nucleotideMutations',
     parameters: [
+        ...organismParam,
         {
             name: 'request',
             type: 'Body',
@@ -60,9 +85,10 @@ const nucleotideMutationsEndpoint = makeEndpoint({
 
 const aminoAcidMutationsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/aminoAcidMutations'),
+    path: v1('/aaMutations'),
     alias: 'aminoAcidMutations',
     parameters: [
+        ...organismParam,
         {
             name: 'request',
             type: 'Body',
@@ -74,9 +100,10 @@ const aminoAcidMutationsEndpoint = makeEndpoint({
 
 const nucleotideInsertionsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/nucleotideInsertions'),
+    path: v1('/insertions'),
     alias: 'nucleotideInsertions',
     parameters: [
+        ...organismParam,
         {
             name: 'request',
             type: 'Body',
@@ -88,9 +115,10 @@ const nucleotideInsertionsEndpoint = makeEndpoint({
 
 const aminoAcidInsertionsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/aminoAcidInsertions'),
+    path: v1('/aaInsertions'),
     alias: 'aminoAcidInsertions',
     parameters: [
+        ...organismParam,
         {
             name: 'request',
             type: 'Body',
@@ -100,12 +128,17 @@ const aminoAcidInsertionsEndpoint = makeEndpoint({
     response: insertionsResponse,
 });
 
+// Sequences: aligned vs unaligned are distinct verbs (Zodios requires each
+// endpoint definition to have a unique path), and the segment / protein
+// selector lives in the URL path. The single-segment / single-protein cases
+// drop the trailing path segment.
 const alignedNucleotideSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/alignedNucleotideSequences'),
+    path: v1('/alignedSequences'),
     alias: 'alignedNucleotideSequences',
     immutable: true,
     parameters: [
+        ...organismParam,
         {
             name: 'request',
             type: 'Body',
@@ -117,25 +150,11 @@ const alignedNucleotideSequencesEndpoint = makeEndpoint({
 
 const alignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/alignedNucleotideSequences/:segment'),
+    path: v1('/alignedSequences/:segment'),
     alias: 'alignedNucleotideSequencesMultiSegment',
     immutable: true,
     parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: sequenceRequest,
-        },
-    ],
-    response: z.string(),
-});
-
-const unalignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/unalignedNucleotideSequences/:segment'),
-    alias: 'unalignedNucleotideSequencesMultiSegment',
-    immutable: true,
-    parameters: [
+        ...organismParam,
         {
             name: 'request',
             type: 'Body',
@@ -147,10 +166,27 @@ const unalignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
 
 const unalignedNucleotideSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/unalignedNucleotideSequences'),
+    path: v1('/unalignedSequences'),
     alias: 'unalignedNucleotideSequences',
     immutable: true,
     parameters: [
+        ...organismParam,
+        {
+            name: 'request',
+            type: 'Body',
+            schema: sequenceRequest,
+        },
+    ],
+    response: z.string(),
+});
+
+const unalignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
+    method: 'post',
+    path: v1('/unalignedSequences/:segment'),
+    alias: 'unalignedNucleotideSequencesMultiSegment',
+    immutable: true,
+    parameters: [
+        ...organismParam,
         {
             name: 'request',
             type: 'Body',
@@ -162,10 +198,11 @@ const unalignedNucleotideSequencesEndpoint = makeEndpoint({
 
 const alignedAminoAcidSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/alignedAminoAcidSequences/:gene'),
+    path: v1('/aaSequences/:proteinName'),
     alias: 'alignedAminoAcidSequences',
     immutable: true,
     parameters: [
+        ...organismParam,
         {
             name: 'request',
             type: 'Body',
@@ -177,9 +214,17 @@ const alignedAminoAcidSequencesEndpoint = makeEndpoint({
 
 const lineageDefinitionEndpoint = makeEndpoint({
     method: 'get',
-    path: withSample('/lineageDefinition/:column'),
+    path: v1('/lineageDefinition'),
     alias: 'lineageDefinition',
     immutable: true,
+    parameters: [
+        ...organismParam,
+        {
+            name: 'column',
+            type: 'Query',
+            schema: z.string(),
+        },
+    ],
     response: lineageDefinition,
 });
 

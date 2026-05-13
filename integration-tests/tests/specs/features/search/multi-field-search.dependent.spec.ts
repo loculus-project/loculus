@@ -100,7 +100,7 @@ test.describe('Multi-field search', () => {
         await searchPage.cchf();
 
         const lapisRequestBodies: string[] = [];
-        await page.route('**/sample/aggregated', async (route) => {
+        await page.route('**/v1/aggregated*', async (route) => {
             const body = route.request().postData();
             if (body) {
                 lapisRequestBodies.push(body);
@@ -131,7 +131,7 @@ test.describe('Multi-field search', () => {
         await searchPage.ebolaSudan();
 
         let lapisStatus: number | undefined;
-        await page.route('**/sample/aggregated', async (route) => {
+        await page.route('**/v1/aggregated*', async (route) => {
             const response = await route.fetch();
             lapisStatus = response.status();
             await route.fulfill({ response });
@@ -152,7 +152,7 @@ test.describe('Multi-field search', () => {
         await searchPage.ebolaSudan();
 
         let lapisStatus: number | undefined;
-        await page.route('**/sample/aggregated', async (route) => {
+        await page.route('**/v1/aggregated*', async (route) => {
             const response = await route.fetch();
             lapisStatus = response.status();
             await route.fulfill({ response });
