@@ -10,12 +10,12 @@ frame Loculus as loculus {
     component "Loculus Website" as website
     component "Loculus Backend Infrastructure" as backend
     component "LAPIS" as lapis
-    component "Keycloak" as keycloak
+    component "Authelia + lldap" as authelia
 }
 
 submitter --> website
 submitter -right-> backend
-submitter --> keycloak
+submitter --> authelia
 
 user --> website
 user --> lapis
@@ -26,7 +26,7 @@ lapis --> backend
 
 backend --> insdc
 
-backend -left-> keycloak
-website -left-> keycloak
+backend -left-> authelia
+website -left-> authelia
 
 @enduml

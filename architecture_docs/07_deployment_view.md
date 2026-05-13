@@ -30,9 +30,9 @@ We configured Traefik to expose the relevant services to the public:
 * the website,
 * the backend,
 * LAPIS,
-* Keycloak.
+* Authelia + lldap.
 
-We only need a single instance of the website, the backend and keycloak (and their respective databases).
+We only need a single instance of the website, the backend and authelia (and their respective databases).
 The other services (LAPIS, SILO, preprocessing pipeline, ingest and ENA deposition) have to be configured
 and deployed per organism that the Loculus instance supports.
 We utilize Helm to generate those multiple service instances.
