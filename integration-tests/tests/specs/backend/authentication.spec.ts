@@ -36,7 +36,12 @@ function getBackendBaseUrl(): URL {
     const baseUrl = new URL(process.env.PLAYWRIGHT_TEST_BASE_URL ?? 'http://localhost:3000');
 
     const hostname = baseUrl.hostname;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    if (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === 'loculus.test' ||
+        hostname.endsWith('.loculus.test')
+    ) {
         const protocol = baseUrl.protocol === 'https:' ? 'https:' : 'http:';
         return new URL(`${protocol}//localhost:8079`);
     }
@@ -46,7 +51,7 @@ function getBackendBaseUrl(): URL {
 }
 
 test.describe('Backend authentication', () => {
-    test('rejects tokens that were not signed by Keycloak', async ({ backendRequest }) => {
+    test('rejects tokens that were not signed by the IDP', async ({ backendRequest }) => {
         const response = await backendRequest.get('/dummy-organism/get-data-to-edit/1/1', {
             headers: {
                 Authorization: `Bearer ${tokenSignedWithDifferentKey}`,

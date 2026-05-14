@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Register</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <main class="register">
+      <h1>Create a Loculus account</h1>
+      {% if terms_message %}
+        <p class="terms">{{ terms_message|safe }}</p>
+      {% endif %}
+      <form method="post" novalidate data-testid="register-form">
+        <label>
+          Username
+          <input
+            type="text"
+            name="username"
+            data-testid="username"
+            autocomplete="username"
+            value="{{ values.username|default('') }}"
+            required
+          />
+          {% if errors.username %}<span class="err">{{ errors.username }}</span>{% endif %}
+        </label>
+        <label>
+          Email
+          <input
+            type="email"
+            name="email"
+            data-testid="email"
+            autocomplete="email"
+            value="{{ values.email|default('') }}"
+            required
+          />
+          {% if errors.email %}<span class="err">{{ errors.email }}</span>{% endif %}
+        </label>
+        <label>
+          First name
+          <input
+            type="text"
+            name="first_name"
+            data-testid="first-name"
+            value="{{ values.first_name|default('') }}"
+            required
+          />
+          {% if errors.first_name %}<span class="err">{{ errors.first_name }}</span>{% endif %}
+        </label>
+        <label>
+          Last name
+          <input
+            type="text"
+            name="last_name"
+            data-testid="last-name"
+            value="{{ values.last_name|default('') }}"
+            required
+          />
+          {% if errors.last_name %}<span class="err">{{ errors.last_name }}</span>{% endif %}
+        </label>
+        <label>
+          University / Organisation
+          <input
+            type="text"
+            name="organization"
+            data-testid="organization"
+            value="{{ values.organization|default('') }}"
+            required
+          />
+          {% if errors.organization %}<span class="err">{{ errors.organization }}</span>{% endif %}
+        </label>
+        <label>
+          Password
+          <input
+            type="password"
+            name="password"
+            data-testid="password"
+            autocomplete="new-password"
+            minlength="8"
+            required
+          />
+          {% if errors.password %}<span class="err">{{ errors.password }}</span>{% endif %}
+        </label>
+        <label>
+          Confirm password
+          <input
+            type="password"
+            name="confirm_password"
+            data-testid="confirm-password"
+            autocomplete="new-password"
+            minlength="8"
+            required
+          />
+          {% if errors.confirm_password %}<span class="err">{{ errors.confirm_password }}</span>{% endif %}
+        </label>
+        <label class="checkbox">
+          <input
+            type="checkbox"
+            name="accept_terms"
+            data-testid="accept-terms"
+            value="yes"
+          />
+          I agree to the terms.
+          {% if errors.accept_terms %}<span class="err">{{ errors.accept_terms }}</span>{% endif %}
+        </label>
+        <button type="submit" data-testid="register-submit">Create account</button>
+      </form>
+      {% if login_url %}
+        <p class="login-link">
+          Already have an account?
+          <a href="{{ login_url }}">Sign in</a>
+        </p>
+      {% endif %}
+    </main>
+  </body>
+</html>

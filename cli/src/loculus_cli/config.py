@@ -18,9 +18,8 @@ class InstanceConfig(BaseModel):
     """Configuration for a specific Loculus instance."""
 
     instance_url: str = Field(description="Base instance URL")
-    keycloak_realm: str = Field(default="loculus", description="Keycloak realm")
-    keycloak_client_id: str = Field(
-        default="backend-client", description="Keycloak client ID"
+    oidc_client_id: str = Field(
+        default="loculus-cli", description="OIDC client ID used for device-code login"
     )
 
     _instance_info: InstanceInfo | None = None
@@ -38,9 +37,9 @@ class InstanceConfig(BaseModel):
         return self.instance_info.get_hosts()["backend"]
 
     @property
-    def keycloak_url(self) -> str:
-        """Get Keycloak URL dynamically."""
-        return self.instance_info.get_hosts()["keycloak"]
+    def authelia_url(self) -> str:
+        """Get the authentication base URL dynamically."""
+        return self.instance_info.get_hosts()["authelia"]
 
     @property
     def website_url(self) -> str:

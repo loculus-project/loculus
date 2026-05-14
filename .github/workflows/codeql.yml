@@ -41,6 +41,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
+          config-file: .github/codeql-config.yml
       - if: matrix.language == 'java-kotlin' && matrix.build-mode == 'manual'
         name: Set up JDK
         uses: actions/setup-java@v5

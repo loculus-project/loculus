@@ -14,7 +14,7 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
-import org.loculus.backend.service.KeycloakAdapter
+import org.loculus.backend.service.UserDirectory
 import org.loculus.backend.service.seqsetcitations.SeqSetCitationsDatabaseService
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController
 class SeqSetCitationsController(
     private val seqSetCitationsService: SeqSetCitationsDatabaseService,
     private val submissionDatabaseService: SubmissionDatabaseService,
-    private val keycloakAdapter: KeycloakAdapter,
+    private val userDirectory: UserDirectory,
 ) {
     @Operation(description = "Get a SeqSet")
     @GetMapping("/get-seqset")
@@ -111,9 +111,9 @@ class SeqSetCitationsController(
     @Operation(description = "Get an author")
     @GetMapping("/get-author")
     fun getAuthor(@RequestParam username: String): AuthorProfile {
-        val keycloakUser = keycloakAdapter.getUsersWithName(username).firstOrNull()
+        val user = userDirectory.getUsersWithName(username).firstOrNull()
             ?: throw NotFoundException("Author profile $username does not exist")
 
-        return seqSetCitationsService.transformKeycloakUserToAuthorProfile(keycloakUser)
+        return seqSetCitationsService.transformUserToAuthorProfile(user)
     }
 }

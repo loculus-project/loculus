@@ -10,7 +10,7 @@ test.describe('Test redirect to Edit Account page', () => {
         await myAccountPage.expectEditAccountLinkHasCorrectHref();
     });
 
-    test('Edit account information opens Keycloak account management page', async ({
+    test('Edit account information opens the Authelia account page', async ({
         page,
         authenticatedUser,
     }) => {
@@ -18,8 +18,8 @@ test.describe('Test redirect to Edit Account page', () => {
         const myAccountPage = new MyAccountPage(page);
         await myAccountPage.goto();
 
-        const keycloakPage = await myAccountPage.clickEditAccountAndGetKeycloakPage();
-        await expect(keycloakPage).toHaveTitle('Keycloak Account Management');
-        await keycloakPage.close();
+        const accountPage = await myAccountPage.clickEditAccountAndGetAccountPage();
+        await expect(accountPage).toHaveTitle(/Authelia|Account/);
+        await accountPage.close();
     });
 });

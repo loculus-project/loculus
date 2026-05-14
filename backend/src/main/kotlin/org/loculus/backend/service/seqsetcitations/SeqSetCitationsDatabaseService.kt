@@ -16,7 +16,6 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
-import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitedBy
@@ -30,6 +29,7 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.service.LoculusUser
 import org.loculus.backend.service.crossref.CrossRefService
 import org.loculus.backend.service.crossref.DoiEntry
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
@@ -535,14 +535,14 @@ class SeqSetCitationsDatabaseService(
         }
     }
 
-    fun transformKeycloakUserToAuthorProfile(keycloakUser: UserRepresentation): AuthorProfile {
-        val emailDomain = keycloakUser.email?.substringAfterLast("@") ?: ""
+    fun transformUserToAuthorProfile(user: LoculusUser): AuthorProfile {
+        val emailDomain = user.email?.substringAfterLast("@") ?: ""
         return AuthorProfile(
-            keycloakUser.username,
-            keycloakUser.firstName,
-            keycloakUser.lastName,
-            emailDomain,
-            keycloakUser.attributes["university"]?.firstOrNull(),
+            username = user.username,
+            firstName = user.firstName.orEmpty(),
+            lastName = user.lastName.orEmpty(),
+            emailDomain = emailDomain,
+            university = user.organization,
         )
     }
 }

@@ -12,14 +12,16 @@ export type ClientConfig = z.infer<typeof serviceUrls>;
 
 export const serverConfig = serviceUrls.merge(
     z.object({
-        keycloakUrl: z.string(),
+        autheliaUrl: z.string(),
+        autheliaPublicUrl: z.string(),
+        registrationUrl: z.string().optional(),
+        oidcClientSecret: z.string(),
     }),
 );
 
 export const runtimeConfig = z.object({
     public: serviceUrls,
     serverSide: serverConfig,
-    backendKeycloakClientSecret: z.string().min(5),
     insecureCookies: z.boolean(),
 });
 

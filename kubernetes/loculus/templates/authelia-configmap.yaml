@@ -1,0 +1,130 @@
+{{- /* `loculus.autheliaUrl` already returns HTTPS in both server and local modes (local = via traefik on 8443). */}}
+{{- $authIssuer := (include "loculus.autheliaUrl" .) }}
+{{- $authIssuerNoScheme := trimPrefix "http://" (trimPrefix "https://" $authIssuer) }}
+{{- $authHostWithPort := index (splitList "/" $authIssuerNoScheme) 0 }}
+{{- $authHostNoPort := index (splitList ":" $authHostWithPort) 0 }}
+{{- $websiteUrl := (include "loculus.websiteUrl" .) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authelia-config
+data:
+  configuration.yml: |
+    server:
+      address: "tcp://:9091"
+      buffers:
+        read: 4096
+        write: 4096
+      {{- if $.Values.auth.relaxOidcTokenRateLimit }}
+      endpoints:
+        rate_limits:
+          openid_connect_token:
+            enable: true
+            buckets:
+              - period: "1 minute"
+                requests: 10000
+              - period: "1 hour"
+                requests: 100000
+      {{- end }}
+
+    log:
+      level: info
+      format: text
+
+    totp:
+      issuer: "{{ $.Values.name }}"
+      disable: false
+
+    authentication_backend:
+      refresh_interval: 1m
+      ldap:
+        implementation: lldap
+        address: ldap://loculus-lldap-service:3890
+        base_dn: dc=loculus,dc=org
+        additional_users_dn: ou=people
+        additional_groups_dn: ou=groups
+        users_filter: "(&({username_attribute}={input})(objectClass=person))"
+        groups_filter: "(member={dn})"
+        user: "uid=admin,ou=people,dc=loculus,dc=org"
+        password: "[[lldapAdminPassword]]"
+
+    access_control:
+      default_policy: one_factor
+
+    session:
+      name: authelia_session
+      same_site: lax
+      inactivity: 1h
+      expiration: 1h
+      remember_me: 1M
+      cookies:
+        - domain: {{ $authHostNoPort | quote }}
+          authelia_url: "{{ $authIssuer }}"
+      secret: "[[autheliaSessionSecret]]"
+
+    storage:
+      encryption_key: "[[autheliaStorageEncryptionKey]]"
+      local:
+        path: /data/db.sqlite3
+
+    notifier:
+      disable_startup_check: true
+      filesystem:
+        filename: /data/notification.txt
+
+    identity_validation:
+      reset_password:
+        jwt_secret: "[[autheliaJwtSecret]]"
+
+    identity_providers:
+      oidc:
+        hmac_secret: "[[autheliaOidcHmacSecret]]"
+        jwks:
+          - key: |
+{{- (index $.Values.secrets "authelia-secrets" "data" "oidcIssuerPrivateKey") | nindent 14 }}
+        lifespans:
+          access_token: 10h
+          authorize_code: 1m
+          id_token: 1h
+          refresh_token: 90d
+        claims_policies:
+          loculus_backend:
+            id_token: [preferred_username, groups, email, name]
+        cors:
+          endpoints: [authorization, token, revocation, introspection, userinfo]
+          allowed_origins_from_client_redirect_uris: true
+        clients:
+          - client_id: backend-client
+            client_name: Loculus website
+            # Authelia 4.39 requires http:// redirect URIs to belong to a
+            # confidential client (one with a `client_secret`). The dev/CI
+            # setup runs the website on http://loculus.test:3000, so the
+            # client is confidential with a static dev-only PHC hash for the
+            # secret "loculus-dev-client-secret". Operators rotate at deploy.
+            public: false
+            client_secret: "[[backendClientSecret]]"
+            authorization_policy: one_factor
+            require_pkce: true
+            pkce_challenge_method: S256
+            redirect_uris:
+              - "{{ $websiteUrl }}/auth/callback"
+              {{- if $.Values.host }}
+              - "http://{{ $.Values.host }}/auth/callback"
+              - "https://{{ $.Values.host }}/auth/callback"
+              {{- end }}
+              - "http://localhost:3000/auth/callback"
+            scopes: [openid, profile, email, groups, offline_access]
+            grant_types: [authorization_code, refresh_token]
+            response_types: [code]
+            consent_mode: implicit
+            claims_policy: loculus_backend
+            token_endpoint_auth_method: client_secret_basic
+          - client_id: loculus-cli
+            client_name: Loculus CLI
+            public: true
+            authorization_policy: one_factor
+            scopes: [openid, profile, email, groups, offline_access]
+            grant_types: [urn:ietf:params:oauth:grant-type:device_code, refresh_token]
+            response_types: [code]
+            consent_mode: implicit
+            token_endpoint_auth_method: none

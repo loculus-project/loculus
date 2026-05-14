@@ -32,7 +32,6 @@ export const testConfig = {
         lapisUrls: {
             [testOrganism]: 'http://lapis.dummy',
         },
-        keycloakUrl: 'http://authentication.dummy',
     },
     serverSide: {
         discriminator: 'server',
@@ -40,10 +39,12 @@ export const testConfig = {
         lapisUrls: {
             [testOrganism]: 'http://lapis.dummy',
         },
-        keycloakUrl: 'http://authentication.dummy',
+        autheliaUrl: 'http://authentication.dummy',
+        autheliaPublicUrl: 'http://authentication.dummy',
+        registrationUrl: 'http://register.dummy',
+        oidcClientSecret: 'dummy-client-secret',
     },
     insecureCookies: true,
-    backendKeycloakClientSecret: 'dummy',
 } as RuntimeConfig;
 
 // Stubbing necessary since headlessui v2

@@ -7,9 +7,9 @@ node "Kubernetes Cluster" as loculus {
 }
 
 database "Loculus Database" as db
-database "Keycloak Database" as kc_db
+database "Authelia + lldap Database" as ldap_data
 
 services --> db
-services --> kc_db
+services --> ldap_data
 
 @enduml

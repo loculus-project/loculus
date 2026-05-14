@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/console-warnings.fixture';
 import { SearchPage } from '../../pages/search.page';
+import { getWithLocalTestDns } from '../../utils/link-helpers';
 
 test.describe('Sequence FASTA endpoint', () => {
     test('returns valid FASTA with CORS headers', async ({ page, baseURL, request }) => {
@@ -9,7 +10,10 @@ test.describe('Sequence FASTA endpoint', () => {
         const accessionVersions = await searchPage.waitForSequencesInSearch(1);
         const { accessionVersion } = accessionVersions[0];
 
-        const response = await request.get(`${baseURL}/seq/${accessionVersion}.fa`);
+        const response = await getWithLocalTestDns(
+            request,
+            `${baseURL}/seq/${accessionVersion}.fa`,
+        );
 
         expect(response.ok()).toBe(true);
         expect(response.headers()['access-control-allow-origin']).toBe('*');
@@ -30,7 +34,10 @@ test.describe('Sequence FASTA endpoint', () => {
         const accessionVersions = await searchPage.waitForSequencesInSearch(1);
         const { accessionVersion } = accessionVersions[0];
 
-        const response = await request.get(`${baseURL}/seq/${accessionVersion}.fa?download=true`);
+        const response = await getWithLocalTestDns(
+            request,
+            `${baseURL}/seq/${accessionVersion}.fa?download=true`,
+        );
 
         expect(response.ok()).toBe(true);
         expect(response.headers()['access-control-allow-origin']).toBe('*');

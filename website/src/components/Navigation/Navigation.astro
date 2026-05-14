@@ -4,7 +4,7 @@ import { NavigationTab } from './NavigationTab.tsx';
 import { OrganismNavigation } from './OrganismNavigation.tsx';
 import { SandwichMenu } from './SandwichMenu.tsx';
 import { cleanOrganism } from './cleanOrganism';
-import { getWebsiteConfig } from '../../config';
+import { getRuntimeConfig, getWebsiteConfig } from '../../config';
 import { navigationItems } from '../../routes/navigationItems';
 import { getAuthUrl } from '../../utils/getAuthUrl';
 
@@ -24,8 +24,9 @@ const siteName = websiteConfig.name;
 const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 
 const loginUrl = await getAuthUrl(Astro.url.toString());
+const registrationUrl = getRuntimeConfig().serverSide.registrationUrl;
 
-const topNavigationItems = navigationItems.top(isLoggedIn, loginUrl);
+const topNavigationItems = navigationItems.top(isLoggedIn, loginUrl, registrationUrl);
 const accessionPrefix = getWebsiteConfig().accessionPrefix;
 ---
 

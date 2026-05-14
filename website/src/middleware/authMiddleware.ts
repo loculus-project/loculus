@@ -1,5 +1,6 @@
 import type { APIContext } from 'astro';
 import { defineMiddleware } from 'astro/middleware';
+import { serialize, type SerializeOptions } from 'cookie';
 import jsonwebtoken from 'jsonwebtoken';
 import JwksRsa from 'jwks-rsa';
 import { err, ok, ResultAsync } from 'neverthrow';
@@ -7,11 +8,12 @@ import { type BaseClient, type TokenSet } from 'openid-client';
 
 import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
-import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
-import { getAuthUrl } from '../utils/getAuthUrl.ts';
+import { getAutheliaForwardedHeaders, OidcClientManager } from '../utils/OidcClientManager.ts';
+import { decodeState, getAuthUrl } from '../utils/getAuthUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
+export const OIDC_ACCESS_TOKEN_COOKIE = 'oidc_access_token';
 export const REFRESH_TOKEN_COOKIE = 'refresh_token';
 
 enum TokenVerificationError {
@@ -78,9 +80,9 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         return next();
     }
 
-    const client = await KeycloakClientManager.getClient();
+    const client = await OidcClientManager.getClient();
     if (client !== undefined) {
-        // Only run this when keycloak up
+        // Only run this when OIDC client up
         const cookieResult = await getValidTokenAndUserInfoFromCookie(context, client);
         token = cookieResult?.token;
         userInfo = cookieResult?.userInfo;
@@ -91,12 +93,17 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
 
             if (token !== undefined) {
                 logger.debug(`Token found in params, setting cookie`);
-                setCookie(context, token);
-                return createRedirectWithModifiableHeaders(removeTokenCodeFromSearchParams(context.url));
+                const cookieHeaders = setCookie(context, token);
+                // OIDC roundtrip lands on /auth/callback; the original
+                // destination is encoded in `state`. Fall back to the same
+                // URL with code/state stripped (covers any legacy flow).
+                const decoded = decodeState(context.url.searchParams.get('state') ?? undefined);
+                const returnTo = decoded?.r ?? removeTokenCodeFromSearchParams(context.url);
+                return createRedirectWithModifiableHeaders(returnTo, cookieHeaders);
             }
         }
     } else {
-        logger.warn(`Keycloak client not available, pretending user logged out`);
+        logger.warn(`OIDC client not available, pretending user logged out`);
     }
 
     const enforceLogin = shouldMiddlewareEnforceLogin(
@@ -106,7 +113,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
 
     if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {
         if (client === undefined) {
-            logger.error(`Keycloak client not available, cannot redirect to auth`);
+            logger.error(`OIDC client not available, cannot redirect to auth`);
             return context.redirect('/503?service=Authentication');
         }
         return redirectToAuth(context);
@@ -146,6 +153,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
 
 async function getTokenFromCookie(context: APIContext, client: BaseClient) {
     const accessToken = context.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+    const oidcAccessToken = context.cookies.get(OIDC_ACCESS_TOKEN_COOKIE)?.value;
     const refreshToken = context.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
 
     if (accessToken === undefined || refreshToken === undefined) {
@@ -153,13 +161,14 @@ async function getTokenFromCookie(context: APIContext, client: BaseClient) {
     }
     const tokenCookie = {
         accessToken,
+        oidcAccessToken,
         refreshToken,
     };
 
     const verifiedTokenResult = await verifyToken(accessToken, client);
     if (verifiedTokenResult.isErr() && verifiedTokenResult.error.type === TokenVerificationError.EXPIRED) {
         logger.debug(`Token expired, trying to refresh`);
-        return refreshTokenViaKeycloak(tokenCookie, client);
+        return refreshTokenViaOidc(tokenCookie, client);
     }
     if (verifiedTokenResult.isErr()) {
         logger.info(`Error verifying token: ${verifiedTokenResult.error.message}`);
@@ -175,21 +184,20 @@ async function verifyToken(accessToken: string, client: BaseClient) {
     const tokenHeader = jsonwebtoken.decode(accessToken, { complete: true })?.header;
     const kid = tokenHeader?.kid;
     if (kid === undefined) {
-        return err({
-            type: TokenVerificationError.INVALID_TOKEN,
-            message: 'Token does not contain kid',
-        });
+        logger.debug(`Access token is opaque; deferring validation to userinfo`);
+        return ok(undefined);
     }
 
     if (client.issuer.metadata.jwks_uri === undefined) {
         return err({
             type: TokenVerificationError.REQUEST_ERROR,
-            message: `Keycloak client does not contain jwks_uri: ${JSON.stringify(client.issuer.metadata.jwks_uri)}`,
+            message: `OIDC client does not contain jwks_uri: ${JSON.stringify(client.issuer.metadata.jwks_uri)}`,
         });
     }
 
     const jwksClient = new JwksRsa.JwksClient({
         jwksUri: client.issuer.metadata.jwks_uri,
+        requestHeaders: getAutheliaForwardedHeaders(),
     });
 
     try {
@@ -219,7 +227,7 @@ async function verifyToken(accessToken: string, client: BaseClient) {
 }
 
 async function getUserInfo(token: TokenCookie, client: BaseClient) {
-    return ResultAsync.fromPromise(client.userinfo(token.accessToken), (error) => {
+    return ResultAsync.fromPromise(client.userinfo(token.oidcAccessToken ?? token.accessToken), (error) => {
         logger.debug(`Error getting user info: ${error}`);
         return error;
     });
@@ -227,16 +235,32 @@ async function getUserInfo(token: TokenCookie, client: BaseClient) {
 
 async function getTokenFromParams(context: APIContext, client: BaseClient): Promise<TokenCookie | undefined> {
     const params = client.callbackParams(context.url.toString());
-    logger.debug(`Keycloak callback params: ${JSON.stringify(params)}`);
+    logger.debug(`OIDC callback params: ${JSON.stringify(params)}`);
     if (params.code !== undefined) {
-        const redirectUri = removeTokenCodeFromSearchParams(context.url);
-        logger.debug(`Keycloak callback redirect uri: ${redirectUri}`);
+        // The redirect_uri sent on the token exchange must match the one from
+        // the original authorize request exactly. Our authorize call uses the
+        // bare /auth/callback URL (no query string), so reconstruct that here
+        // regardless of which extra params the IDP appended on its way back.
+        const callbackUrl = new URL(context.url.toString());
+        callbackUrl.search = '';
+        callbackUrl.hash = '';
+        const redirectUri = callbackUrl.toString();
+        logger.debug(`OIDC callback redirect uri: ${redirectUri}`);
+        const decoded = decodeState(params.state);
+        if (!decoded) {
+            logger.info('OIDC callback received without a recognisable state payload');
+            return undefined;
+        }
         const tokenSet = await client
             .callback(redirectUri, params, {
-                response_type: 'code', // eslint-disable-line @typescript-eslint/naming-convention
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                response_type: 'code',
+                state: params.state,
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                code_verifier: decoded.v,
             })
             .catch((error: unknown) => {
-                logger.info(`Keycloak callback error: ${error}`);
+                logger.info(`OIDC callback error: ${error}`);
                 return undefined;
             });
         return extractTokenCookieFromTokenSet(tokenSet);
@@ -244,39 +268,61 @@ async function getTokenFromParams(context: APIContext, client: BaseClient): Prom
     return undefined;
 }
 
-function setCookie(context: APIContext, token: TokenCookie) {
+function getTokenCookieOptions(): SerializeOptions {
     const runtimeConfig = getRuntimeConfig();
-    logger.debug(`Setting token cookie`);
-    context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, {
+    return {
         httpOnly: true,
         sameSite: 'lax',
         secure: !runtimeConfig.insecureCookies,
         path: '/',
-    });
-    context.cookies.set(REFRESH_TOKEN_COOKIE, token.refreshToken, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: !runtimeConfig.insecureCookies,
-        path: '/',
-    });
+    };
 }
 
-function deleteCookie(context: APIContext) {
+function setCookie(context: APIContext, token: TokenCookie): string[] {
+    const cookieOptions = getTokenCookieOptions();
+    logger.debug(`Setting token cookie`);
+    context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, cookieOptions);
+    if (token.oidcAccessToken !== undefined) {
+        context.cookies.set(OIDC_ACCESS_TOKEN_COOKIE, token.oidcAccessToken, cookieOptions);
+    }
+    context.cookies.set(REFRESH_TOKEN_COOKIE, token.refreshToken, cookieOptions);
+    const cookieHeaders = [
+        serialize(ACCESS_TOKEN_COOKIE, token.accessToken, cookieOptions),
+        token.oidcAccessToken === undefined
+            ? undefined
+            : serialize(OIDC_ACCESS_TOKEN_COOKIE, token.oidcAccessToken, cookieOptions),
+        serialize(REFRESH_TOKEN_COOKIE, token.refreshToken, cookieOptions),
+    ];
+    return cookieHeaders.filter((it): it is string => it !== undefined);
+}
+
+function deleteCookie(context: APIContext): string[] {
     logger.debug(`Deleting token cookie`);
     try {
         context.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/' });
+        context.cookies.delete(OIDC_ACCESS_TOKEN_COOKIE, { path: '/' });
         context.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/' });
     } catch {
         logger.info(`Error deleting cookie`);
     }
+    const deleteOptions: SerializeOptions = { path: '/', maxAge: 0 };
+    return [
+        serialize(ACCESS_TOKEN_COOKIE, '', deleteOptions),
+        serialize(OIDC_ACCESS_TOKEN_COOKIE, '', deleteOptions),
+        serialize(REFRESH_TOKEN_COOKIE, '', deleteOptions),
+    ];
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Basic_concepts#guard
 // URL must be absolute, otherwise throws TypeError
-const createRedirectWithModifiableHeaders = (url: string) => {
+const createRedirectWithModifiableHeaders = (url: string, cookieHeaders: string[] = []) => {
     logger.debug(`Redirecting to ${url}`);
     const redirect = Response.redirect(url);
-    return new Response(null, { status: redirect.status, headers: redirect.headers });
+    const response = new Response(null, { status: redirect.status, headers: redirect.headers });
+    for (const cookie of cookieHeaders) {
+        response.headers.append('set-cookie', cookie);
+    }
+    return response;
 };
 
 const redirectToAuth = async (context: APIContext) => {
@@ -286,8 +332,8 @@ const redirectToAuth = async (context: APIContext) => {
     logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
     const authUrl = await getAuthUrl(redirectUrl);
 
-    deleteCookie(context);
-    return createRedirectWithModifiableHeaders(authUrl);
+    const cookieHeaders = deleteCookie(context);
+    return createRedirectWithModifiableHeaders(authUrl, cookieHeaders);
 };
 
 function removeTokenCodeFromSearchParams(url: URL): string {
@@ -300,7 +346,7 @@ function removeTokenCodeFromSearchParams(url: URL): string {
     return newUrl.toString();
 }
 
-async function refreshTokenViaKeycloak(token: TokenCookie, client: BaseClient): Promise<TokenCookie | undefined> {
+async function refreshTokenViaOidc(token: TokenCookie, client: BaseClient): Promise<TokenCookie | undefined> {
     const refreshedTokenSet = await client.refresh(token.refreshToken).catch(() => {
         logger.info(`Failed to refresh token`);
         return undefined;
@@ -309,7 +355,11 @@ async function refreshTokenViaKeycloak(token: TokenCookie, client: BaseClient): 
 }
 
 function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined): TokenCookie | undefined {
-    const accessToken = tokenSet?.access_token;
+    // Authelia access tokens are opaque. Loculus backend is a JWT resource
+    // server, so use the OIDC ID token for backend bearer auth and keep the
+    // opaque access token only for provider userinfo calls.
+    const accessToken = tokenSet?.id_token ?? tokenSet?.access_token;
+    const oidcAccessToken = tokenSet?.access_token;
     const refreshToken = tokenSet?.refresh_token;
 
     if (tokenSet === undefined || accessToken === undefined || refreshToken === undefined) {
@@ -319,6 +369,7 @@ function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined): TokenCo
 
     return {
         accessToken,
+        oidcAccessToken,
         refreshToken,
     };
 }

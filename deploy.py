@@ -42,7 +42,9 @@ WEBSITE_PORT_MAPPING = "-p 127.0.0.1:3000:30081@agent:0"
 BACKEND_PORT_MAPPING = "-p 127.0.0.1:8079:30082@agent:0"
 LAPIS_PORT_MAPPING = "-p 127.0.0.1:8080:80@loadbalancer"
 DATABASE_PORT_MAPPING = "-p 127.0.0.1:5432:30432@agent:0"
-KEYCLOAK_PORT_MAPPING = "-p 127.0.0.1:8083:30083@agent:0"
+# Authelia is routed via traefik on HTTPS so its cookie+url validation
+# accepts the configuration. 8443 → 443 on the traefik loadbalancer.
+AUTHELIA_HTTPS_PORT_MAPPING = "-p 127.0.0.1:8443:443@loadbalancer"
 S3_PORT_MAPPING = "-p 127.0.0.1:8084:30084@agent:0"
 
 PORTS = [
@@ -50,7 +52,7 @@ PORTS = [
     BACKEND_PORT_MAPPING,
     LAPIS_PORT_MAPPING,
     DATABASE_PORT_MAPPING,
-    KEYCLOAK_PORT_MAPPING,
+    AUTHELIA_HTTPS_PORT_MAPPING,
     S3_PORT_MAPPING,
 ]
 

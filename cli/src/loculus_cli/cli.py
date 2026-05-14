@@ -16,6 +16,9 @@ from .commands.schema import schema_group
 from .commands.status import status
 from .commands.submit import submit_group
 from .config import check_and_show_warning
+from .local_dev import install_local_test_dns
+
+install_local_test_dns()
 
 console = Console()
 

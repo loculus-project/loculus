@@ -12,15 +12,15 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'Content-Type',
 } as const;
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = ({ request }) => {
     const runtime = getRuntimeConfig();
     const website = getWebsiteConfig();
-    const keycloakUrl = await getAuthBaseUrl();
+    const authUrl = getAuthBaseUrl();
     const response = {
         hosts: {
             backend: runtime.public.backendUrl,
             lapis: runtime.public.lapisUrls,
-            keycloak: keycloakUrl,
+            authelia: authUrl,
             website: new URL(request.url).origin,
         },
         minCliVersion: '0.0.0',

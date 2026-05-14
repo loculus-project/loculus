@@ -1,0 +1,65 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #111;
+}
+body {
+  margin: 0;
+  background: #f6f7f9;
+}
+.register {
+  max-width: 28rem;
+  margin: 4rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.register h1 {
+  margin-top: 0;
+}
+.terms {
+  font-size: 0.9rem;
+  color: #555;
+}
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0.75rem 0;
+  font-size: 0.9rem;
+}
+label.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #d0d4da;
+  border-radius: 4px;
+  font: inherit;
+}
+.err {
+  color: #b00020;
+  font-size: 0.8rem;
+}
+button {
+  margin-top: 1rem;
+  padding: 0.6rem 1rem;
+  background: #2563eb;
+  color: #fff;
+  border: 0;
+  border-radius: 4px;
+  font: inherit;
+  cursor: pointer;
+}
+button:hover {
+  background: #1d4fc7;
+}
+.login-link {
+  margin-top: 1.25rem;
+  font-size: 0.9rem;
+  color: #555;
+}

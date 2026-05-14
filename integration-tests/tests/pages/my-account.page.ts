@@ -17,16 +17,17 @@ export class MyAccountPage {
         const link = this.getEditAccountInformationLink();
         await expect(link).toBeVisible();
         await expect(link).toHaveAttribute('target', '_blank');
-        await expect(link).toHaveAttribute('href', /\/realms\/loculus\/account$/);
+        // Authelia hosts its account portal at the auth root.
+        await expect(link).toHaveAttribute('href', /authentication.*/);
     }
 
-    async clickEditAccountAndGetKeycloakPage() {
+    async clickEditAccountAndGetAccountPage() {
         const link = this.getEditAccountInformationLink();
         const popupPromise = this.page.waitForEvent('popup');
         await link.click();
-        const keycloakPage = await popupPromise;
-        await keycloakPage.waitForLoadState();
-        return keycloakPage;
+        const accountPage = await popupPromise;
+        await accountPage.waitForLoadState();
+        return accountPage;
     }
 
     private groupListItem(groupName: string) {

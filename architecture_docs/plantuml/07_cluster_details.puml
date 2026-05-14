@@ -8,7 +8,7 @@ node "Kubernetes Cluster" as loculus {
 
     component "Loculus Website" as website
     component "Loculus Backend" as backend
-    component "Keycloak" as keycloak
+    component "Authelia + lldap" as authelia
 
     node "One instance per organism" {
         component "Processing Pipeline" as processing
@@ -21,17 +21,17 @@ node "Kubernetes Cluster" as loculus {
 }
 
 database "Loculus Database" as db
-database "Keycloak Database" as kc_db
+database "Authelia + lldap Database" as ldap_data
 
 " " --> traefik : HTTP
 traefik --> website
 traefik --> backend
 traefik --> lapis
-traefik --> keycloak
+traefik --> authelia
 
 backend --> db
 deposition --> db
-keycloak --> kc_db
+authelia --> ldap_data
 
 
 @enduml

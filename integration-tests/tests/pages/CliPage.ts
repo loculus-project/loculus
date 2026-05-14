@@ -1,12 +1,15 @@
-import { exec } from 'child_process';
+import { exec, execFile } from 'child_process';
 import { promisify, stripVTControlCharacters } from 'util';
 import { writeFile, unlink, rm } from 'fs/promises';
-import { join } from 'path';
+import { delimiter, join, resolve } from 'path';
 import { tmpdir } from 'os';
-import { test } from '@playwright/test';
+import { Page, test } from '@playwright/test';
 import { randomUUID } from 'crypto';
+import { AuthPage } from './auth.page';
 
 const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
+const LOCAL_TEST_DOMAIN_SUFFIX = '.loculus.test';
 
 export interface CliResult {
     stdout: string;
@@ -22,8 +25,10 @@ export class CliPage {
     private keyringService: string;
     private configFile: string;
     private dataHome: string;
+    private localCliSource: string;
+    private keyringPython?: string;
 
-    constructor() {
+    constructor(private page?: Page) {
         const uuid = randomUUID();
         // Get base URL from environment or default to localhost
         this.baseUrl = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
@@ -36,6 +41,34 @@ export class CliPage {
         // XDG_DATA_HOME. Without isolation, parallel tests perform concurrent read-modify-write
         // on that file, causing race conditions that silently clobber each other's tokens.
         this.dataHome = join(tmpdir(), `loculus-cli-test-data-${uuid}`);
+        this.localCliSource = resolve(__dirname, '../../..', 'cli/src');
+    }
+
+    private commandEnv(env: Record<string, string> = {}): NodeJS.ProcessEnv {
+        const pythonPath = [this.localCliSource, env.PYTHONPATH ?? process.env.PYTHONPATH]
+            .filter(Boolean)
+            .join(delimiter);
+
+        return {
+            ...process.env,
+            ...env,
+            // Extract instance from base URL
+            LOCULUS_INSTANCE: this.baseUrl.replace(/https?:\/\//, ''),
+            // Use unique keyring service for test isolation (stable per test instance)
+            LOCULUS_CLI_KEYRING_SERVICE: this.keyringService,
+            // Use unique config file for test isolation
+            LOCULUS_CONFIG: this.configFile,
+            // Use unique data directory so each test gets its own keyring file
+            XDG_DATA_HOME: this.dataHome,
+            // Route .loculus.test through localhost for spawned Python CLI processes.
+            LOCULUS_CLI_LOCAL_TEST_DNS: '1',
+            LOCULUS_CLI_ALLOW_INSECURE_LOCAL_TEST_TLS: '1',
+            // Run the CLI from this checkout so integration tests exercise local edits.
+            PYTHONPATH: pythonPath,
+            // Disable interactive features like spinners
+            CI: 'true',
+            NO_COLOR: '1',
+        };
     }
 
     /**
@@ -51,22 +84,7 @@ export class CliPage {
     ): Promise<CliResult> {
         const { cwd, env = {}, timeout = 30000 } = options || {};
 
-        // Set up environment variables
-        const cmdEnv = {
-            ...process.env,
-            ...env,
-            // Extract instance from base URL
-            LOCULUS_INSTANCE: this.baseUrl.replace(/https?:\/\//, ''),
-            // Use unique keyring service for test isolation (stable per test instance)
-            LOCULUS_CLI_KEYRING_SERVICE: this.keyringService,
-            // Use unique config file for test isolation
-            LOCULUS_CONFIG: this.configFile,
-            // Use unique data directory so each test gets its own keyring file
-            XDG_DATA_HOME: this.dataHome,
-            // Disable interactive features like spinners
-            CI: 'true',
-            NO_COLOR: '1',
-        };
+        const cmdEnv = this.commandEnv(env);
 
         const command = `loculus ${args.join(' ')}`;
         const timestamp = new Date().toISOString();
@@ -271,7 +289,198 @@ export class CliPage {
      * Login with username and password
      */
     async login(username: string, password: string): Promise<CliResult> {
+        if (this.page) {
+            return this.loginWithBrowserToken(username, password);
+        }
         return this.execute(['auth', 'login', '--username', username, '--password', password]);
+    }
+
+    private async loginWithBrowserToken(username: string, password: string): Promise<CliResult> {
+        const page = this.page;
+        if (!page) {
+            return this.execute(['auth', 'login', '--username', username, '--password', password]);
+        }
+        const timestamp = new Date().toISOString();
+        const startTime = Date.now();
+
+        try {
+            await page.context().clearCookies();
+            const authPage = new AuthPage(page);
+            const loggedIn = await authPage.login(username, password);
+            if (!loggedIn) {
+                return this.cliResult({
+                    exitCode: 1,
+                    stdout: '',
+                    stderr: 'Invalid username or password',
+                    command: 'browser-backed loculus auth login',
+                    timestamp,
+                    startTime,
+                });
+            }
+
+            const cookies = await page.context().cookies(this.baseUrl);
+            const accessToken = cookies.find((cookie) => cookie.name === 'access_token')?.value;
+            if (!accessToken) {
+                throw new Error('Browser login did not produce an access_token cookie');
+            }
+            const tokenUsername = this.usernameFromToken(accessToken);
+            if (tokenUsername !== username) {
+                return this.cliResult({
+                    exitCode: 1,
+                    stdout: '',
+                    stderr: 'Invalid username or password',
+                    command: 'browser-backed loculus auth login',
+                    timestamp,
+                    startTime,
+                });
+            }
+
+            await this.seedToken(username, accessToken);
+            return this.cliResult({
+                exitCode: 0,
+                stdout: `✓ Successfully logged in as ${username}`,
+                stderr: '',
+                command: 'browser-backed loculus auth login',
+                timestamp,
+                startTime,
+            });
+        } catch (error) {
+            return this.cliResult({
+                exitCode: 1,
+                stdout: '',
+                stderr: error instanceof Error ? error.message : String(error),
+                command: 'browser-backed loculus auth login',
+                timestamp,
+                startTime,
+            });
+        }
+    }
+
+    private async seedToken(username: string, accessToken: string): Promise<void> {
+        const instanceInfo = await this.fetchInstanceInfo();
+        const autheliaUrl = instanceInfo.hosts.authelia;
+        const script = `
+import json
+import os
+import time
+
+import keyring
+
+service = os.environ["LOCULUS_CLI_KEYRING_SERVICE"]
+username = os.environ["LOCULUS_CLI_SEED_USERNAME"]
+authelia_url = os.environ["LOCULUS_CLI_SEED_AUTHELIA_URL"]
+access_token = os.environ["LOCULUS_CLI_SEED_ACCESS_TOKEN"]
+
+token_info = {
+    "access_token": access_token,
+    "refresh_token": None,
+    "expires_in": 3600,
+    "refresh_expires_in": 0,
+    "token_type": "Bearer",
+    "id_token": access_token,
+    "subject": username,
+    "created_at": time.time(),
+}
+
+keyring.set_password(service, f"{authelia_url}#{username}", json.dumps(token_info))
+keyring.set_password(service, "current_user", username)
+`;
+
+        await execFileAsync(await this.getKeyringPython(), ['-c', script], {
+            env: this.commandEnv({
+                LOCULUS_CLI_SEED_USERNAME: username,
+                LOCULUS_CLI_SEED_AUTHELIA_URL: autheliaUrl,
+                LOCULUS_CLI_SEED_ACCESS_TOKEN: accessToken,
+            }),
+            timeout: 10000,
+        });
+    }
+
+    private async getKeyringPython(): Promise<string> {
+        if (this.keyringPython) {
+            return this.keyringPython;
+        }
+
+        const candidates = [
+            process.env.LOCULUS_CLI_KEYRING_PYTHON,
+            'python3',
+            '/usr/bin/python3',
+        ].filter((candidate): candidate is string => Boolean(candidate));
+
+        const errors: string[] = [];
+        for (const candidate of candidates) {
+            try {
+                await execFileAsync(candidate, ['-c', 'import keyring'], {
+                    env: this.commandEnv(),
+                    timeout: 10000,
+                });
+                this.keyringPython = candidate;
+                return candidate;
+            } catch (error: unknown) {
+                const execError = error as { stderr?: string; message?: string };
+                errors.push(
+                    `${candidate}: ${execError.stderr?.trim() || execError.message || 'failed'}`,
+                );
+            }
+        }
+
+        throw new Error(`No Python interpreter with keyring is available (${errors.join('; ')})`);
+    }
+
+    private async fetchInstanceInfo(): Promise<{ hosts: { authelia: string } }> {
+        const url = new URL('/loculus-info', this.baseUrl);
+        const headers: Record<string, string> = {};
+
+        if (url.hostname === 'loculus.test' || url.hostname.endsWith(LOCAL_TEST_DOMAIN_SUFFIX)) {
+            headers.Host = url.host;
+            url.hostname = '127.0.0.1';
+        }
+
+        if (!this.page) {
+            throw new Error('Browser-backed CLI login requires a Playwright page');
+        }
+
+        const response = await this.page.request.get(url.toString(), { headers });
+        if (!response.ok()) {
+            throw new Error(`Failed to fetch instance info: HTTP ${response.status()}`);
+        }
+        return (await response.json()) as { hosts: { authelia: string } };
+    }
+
+    private usernameFromToken(token: string): string | undefined {
+        const [, payload] = token.split('.');
+        if (!payload) {
+            return undefined;
+        }
+        const paddedPayload = payload.padEnd(
+            payload.length + ((4 - (payload.length % 4)) % 4),
+            '=',
+        );
+        const claims = JSON.parse(Buffer.from(paddedPayload, 'base64url').toString('utf8')) as {
+            preferred_username?: string;
+            sub?: string;
+        };
+        return claims.preferred_username ?? claims.sub;
+    }
+
+    private cliResult(input: {
+        exitCode: number;
+        stdout: string;
+        stderr: string;
+        command: string;
+        timestamp: string;
+        startTime: number;
+    }): CliResult {
+        const result = {
+            stdout: stripVTControlCharacters(input.stdout.trim()),
+            stderr: stripVTControlCharacters(input.stderr.trim()),
+            exitCode: input.exitCode,
+            command: input.command,
+            timestamp: input.timestamp,
+            duration: Date.now() - input.startTime,
+        };
+        this.attachToTest(result);
+        return result;
     }
 
     /**
