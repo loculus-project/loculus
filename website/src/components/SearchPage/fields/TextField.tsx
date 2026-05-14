@@ -127,7 +127,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
         };
 
         return (
-            <div className='[&_label]:pointer-events-none my-2'>
+            <div className='[&_label]:pointer-events-none my-1.5'>
                 <FloatingLabel
                     theme={{
                         helperText: {
