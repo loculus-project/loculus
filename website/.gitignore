@@ -25,6 +25,7 @@ justfile
 /tests/config/backend_config.json
 /tests/config/website_config.json
 /tests/config/runtime_config.json
+/tests/config/organisms/
 
 /tests/config/*.yaml
 

@@ -57,8 +57,28 @@
 
 {{- define "loculus.configVolume" -}}
 - name: {{ .name }}
+  {{- if .configmaps }}
+  projected:
+    sources:
+      {{- range .configmaps }}
+      - configMap:
+          name: {{ .name }}
+          {{- if .items }}
+          items:
+            {{- range .items }}
+            - key: {{ .key }}
+              path: {{ .path | quote }}
+            {{- end }}
+          {{- end }}
+      {{- end }}
+  {{- else }}
   configMap:
     name: {{ if .configmap }}{{ .configmap }}{{ else }}{{ .name }}{{ end }}
+  {{- end }}
 - name: {{ .name }}-processed
   emptyDir: {}
+{{- end }}
+
+{{- define "loculus.websiteOrganismConfigMapName" -}}
+{{- printf "loculus-web-org-config-%s" . | trunc 63 | trimSuffix "-" -}}
 {{- end }}

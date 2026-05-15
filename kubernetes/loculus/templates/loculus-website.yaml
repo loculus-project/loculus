@@ -1,5 +1,12 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- if not .Values.disableWebsite }}
+{{- $websiteConfigMaps := list (dict "name" "loculus-website-config") }}
+{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $websiteConfigMaps = append $websiteConfigMaps (dict
+  "name" (include "loculus.websiteOrganismConfigMapName" $item.key)
+  "items" (list (dict "key" (printf "%s.json" $item.key) "path" (printf "organisms/%s.json" $item.key)))
+) }}
+{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -50,5 +57,5 @@ spec:
       imagePullSecrets:
         - name: custom-website-sealed-secret
       volumes:
-{{ include "loculus.configVolume" (dict "name" "loculus-website-config") | nindent 8 }}
+{{ include "loculus.configVolume" (dict "name" "loculus-website-config" "configmaps" $websiteConfigMaps) | nindent 8 }}
 {{- end }}
