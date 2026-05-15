@@ -11,11 +11,13 @@ jobs:
           - 10244    # Mpox
           - 1868215  # Orthopneumovirus
           - 1980456  # Andes virus
+          - 3046277  # Yellow fever virus
           - 3048148  # Metapneumovirus hominis
           - 3048448  # West nile virus
           - 3052345  # Morbillivirus hominis
           - 3052460  # Orthoebolavirus sudanense
           - 3052462  # Orthoebolavirus zairense
+          - 3052464  # Dengue virus
           - 3052505  # Orthomarburgvirus marburgense
           - 3052518  # CCHFV
           - 3431483  # Mpox (parental taxon)
