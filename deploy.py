@@ -486,19 +486,40 @@ def generate_config(
         return
 
     parsed_yaml = list(yaml.full_load_all(helm_output))
-    if len(parsed_yaml) == 1:
-        config_data = parsed_yaml[0]["data"][configmap_path.name]
-
-        with open(output_path, "w") as f:
-            f.write(config_data)
-
-        print(f"Wrote config to {output_path}")
-    elif any(substring in template for substring in ["ingest", "preprocessing"]):
+    if any(substring in template for substring in ["ingest", "preprocessing"]):
         for doc in parsed_yaml:
             config_data = yaml.safe_load(doc["data"][configmap_path.name])
             with open(output_path.with_suffix(f".{config_data['organism']}.yaml"), "w") as f:
                 yaml.dump(config_data, f)
                 print(f"Wrote config to {f.name}")
+        return
+
+    wrote_config = False
+    for doc in parsed_yaml:
+        config_data = doc.get("data", {})
+        if configmap_path.name not in config_data:
+            continue
+
+        with open(output_path, "w") as f:
+            f.write(config_data[configmap_path.name])
+
+        print(f"Wrote config to {output_path}")
+        wrote_config = True
+
+    if configmap_path.name == "website_config.json":
+        organisms_dir = output_path.parent / "organisms"
+        for doc in parsed_yaml:
+            for filename, config_data in doc.get("data", {}).items():
+                if filename in ["website_config.json", "runtime_config.json"] or not filename.endswith(".json"):
+                    continue
+                organisms_dir.mkdir(exist_ok=True)
+                organism_config_path = organisms_dir / filename
+                with open(organism_config_path, "w") as f:
+                    f.write(config_data)
+                print(f"Wrote config to {organism_config_path}")
+
+    if not wrote_config:
+        raise RuntimeError(f"Could not find {configmap_path.name} in rendered template {template}")
 
 
 def get_codespace_params(codespace_name):

@@ -28,6 +28,10 @@ __pycache__/
 
 .astro/
 
+/website/tests/config/*.json
+/website/tests/config/*.yaml
+/website/tests/config/organisms/
+
 
 .venv*
 
