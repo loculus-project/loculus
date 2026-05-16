@@ -21,10 +21,14 @@ test.describe('Download Original Data', () => {
 
         const submissionPage = new SingleSequenceSubmissionPage(page);
         const timestamp = Date.now();
+        const submissionIds = Array.from(
+            { length: 2 },
+            (_, i) => `download-test-${timestamp}-${i}`,
+        );
 
-        for (let i = 0; i < 2; i++) {
+        for (const submissionId of submissionIds) {
             await submissionPage.completeSubmission(
-                createTestMetadata({ submissionId: `download-test-${timestamp}-${i}` }),
+                createTestMetadata({ submissionId }),
                 createTestSequenceData(),
             );
         }
@@ -84,8 +88,11 @@ test.describe('Download Original Data', () => {
                 .slice(1)
                 .map((line) => line.split('\t')[accessionIndex]);
 
+            for (const submissionId of submissionIds) {
+                expect(downloadedIds).toContain(submissionId);
+            }
+
             for (const av of accessionVersions) {
-                expect(downloadedIds).toContain(av.accessionVersion);
                 expect(downloadedAccessions).toContain(av.accession);
             }
 
@@ -94,8 +101,8 @@ test.describe('Download Original Data', () => {
 
             expect(fastaHeaders.length).toBe(2);
 
-            for (const av of accessionVersions) {
-                expect(fastaHeaders.some((h) => h.includes(av.accessionVersion))).toBe(true);
+            for (const submissionId of submissionIds) {
+                expect(fastaHeaders.some((h) => h.includes(submissionId))).toBe(true);
             }
         } finally {
             fs.rmSync(tmpDir, { recursive: true, force: true });

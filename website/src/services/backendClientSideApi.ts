@@ -38,12 +38,23 @@ export async function getOriginalData(
 
     if (!response.ok) {
         const errorText = await response.text();
+        let detail = errorText;
+        try {
+            const errorJson = JSON.parse(errorText) as { detail?: unknown; message?: unknown };
+            detail =
+                (typeof errorJson.detail === 'string' && errorJson.detail) ||
+                (typeof errorJson.message === 'string' && errorJson.message) ||
+                errorText;
+        } catch {
+            // Keep text response when the backend did not return JSON.
+        }
+
         return {
             ok: false,
             error: {
                 status: response.status,
                 statusText: response.statusText,
-                detail: errorText,
+                detail,
             },
         };
     }

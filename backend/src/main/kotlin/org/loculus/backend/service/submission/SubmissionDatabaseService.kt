@@ -75,7 +75,6 @@ import org.loculus.backend.api.getFileId
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.BadRequestException
-import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
@@ -1186,7 +1185,6 @@ class SubmissionDatabaseService(
         organism: Organism,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
-        accessionVersionsFilter: List<AccessionVersion>?,
     ): Op<Boolean> {
         val organismCondition = SequenceEntriesView.organismIs(organism)
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
@@ -1195,14 +1193,7 @@ class SubmissionDatabaseService(
         } else {
             Op.TRUE
         }
-        val accessionVersionCondition = if (accessionVersionsFilter != null) {
-            SequenceEntriesView.accessionVersionIsIn(accessionVersionsFilter)
-        } else {
-            Op.TRUE
-        }
-        val conditions = organismCondition and groupCondition and statusCondition and accessionVersionCondition
-
-        return conditions
+        return organismCondition and groupCondition and statusCondition
     }
 
     fun countOriginalMetadata(
@@ -1210,7 +1201,6 @@ class SubmissionDatabaseService(
         organism: Organism,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
-        accessionVersionsFilter: List<AccessionVersion>?,
     ): Long = SequenceEntriesView
         .selectAll()
         .where(
@@ -1219,7 +1209,6 @@ class SubmissionDatabaseService(
                 organism,
                 groupIdsFilter,
                 statusesFilter,
-                accessionVersionsFilter,
             ),
         )
         .count()
@@ -1230,7 +1219,6 @@ class SubmissionDatabaseService(
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
         fields: List<String>?,
-        accessionVersionsFilter: List<AccessionVersion>?,
     ): Sequence<AccessionVersionOriginalMetadata> {
         val originalMetadata = SequenceEntriesView.originalDataColumn
             // It's actually <Map<String, String>?> but exposed does not support nullable types here
@@ -1251,7 +1239,6 @@ class SubmissionDatabaseService(
                     organism,
                     groupIdsFilter,
                     statusesFilter,
-                    accessionVersionsFilter,
                 ),
             )
             .fetchSize(streamBatchSize)
@@ -1315,6 +1302,7 @@ class SubmissionDatabaseService(
             .select(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
+                SequenceEntriesView.submissionIdColumn,
                 SequenceEntriesView.originalDataColumn,
             )
             .where(originalDataConditions(organism, groupId, accessionsFilter))
@@ -1328,6 +1316,7 @@ class SubmissionDatabaseService(
                 OriginalDataResponse(
                     it[SequenceEntriesView.accessionColumn],
                     it[SequenceEntriesView.versionColumn],
+                    it[SequenceEntriesView.submissionIdColumn],
                     decompressedOriginalData,
                 )
             }
