@@ -33,7 +33,6 @@ class OriginalDataRevisionWorkflowTest(
 
         assertThat(accessionVersions, hasSize(greaterThan(0)))
         val firstAccession = accessionVersions[0].accession
-        val firstAccessionVersion = accessionVersions[0].displayAccessionVersion()
 
         val response = submissionControllerClient.getOriginalData(groupId = groupId)
             .andExpect(status().isOk)
@@ -58,9 +57,9 @@ class OriginalDataRevisionWorkflowTest(
         val dateIndex = headers.indexOf("date")
 
         val firstDataRow = metadataLines[1].split("\t")
-        assertThat(firstDataRow[idIndex], `is`(firstAccessionVersion))
+        assertThat(firstDataRow[idIndex], `is`("custom0"))
         assertThat(firstDataRow[accessionIndex], `is`(firstAccession))
-        assertThat(sequencesFasta.contains(">$firstAccessionVersion"), `is`(true))
+        assertThat(sequencesFasta.contains(">custom0"), `is`(true))
 
         val originalDate = firstDataRow[dateIndex]
         val newDate = "2099-01-01"
