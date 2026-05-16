@@ -479,10 +479,9 @@ open class SubmissionController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestBody body: GetOriginalDataRequest,
     ): ResponseEntity<StreamingResponseBody> {
-        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(body.groupId, authenticatedUser)
-
         val entryCount = transaction {
             submissionDatabaseService.countOriginalData(
+                authenticatedUser,
                 organism,
                 body.groupId,
                 body.accessionsFilter,
@@ -517,6 +516,7 @@ open class SubmissionController(
                 java.util.zip.ZipOutputStream(responseBodyStream).use { zipOut ->
                     transaction {
                         val data = submissionDatabaseService.streamOriginalData(
+                            authenticatedUser,
                             organism,
                             body.groupId,
                             body.accessionsFilter,

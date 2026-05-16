@@ -1278,37 +1278,49 @@ class SubmissionDatabaseService(
             accessionsCondition
     }
 
-    fun countOriginalData(organism: Organism, groupId: Int, accessionsFilter: List<String>?): Long = SequenceEntriesView
-        .select(SequenceEntriesView.accessionColumn)
-        .where(originalDataConditions(organism, groupId, accessionsFilter))
-        .count()
-
-    fun streamOriginalData(
+    fun countOriginalData(
+        authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupId: Int,
         accessionsFilter: List<String>?,
-    ): Sequence<OriginalDataResponse> = SequenceEntriesView
-        .select(
-            SequenceEntriesView.accessionColumn,
-            SequenceEntriesView.versionColumn,
-            SequenceEntriesView.submissionIdColumn,
-            SequenceEntriesView.originalDataColumn,
-        )
-        .where(originalDataConditions(organism, groupId, accessionsFilter))
-        .fetchSize(streamBatchSize)
-        .asSequence()
-        .map {
-            val compressedOriginalData = it[SequenceEntriesView.originalDataColumn]!!
-            val decompressedOriginalData = compressionService.decompressSequencesInOriginalData(
-                compressedOriginalData,
+    ): Long {
+        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
+        return SequenceEntriesView
+            .select(SequenceEntriesView.accessionColumn)
+            .where(originalDataConditions(organism, groupId, accessionsFilter))
+            .count()
+    }
+
+    fun streamOriginalData(
+        authenticatedUser: AuthenticatedUser,
+        organism: Organism,
+        groupId: Int,
+        accessionsFilter: List<String>?,
+    ): Sequence<OriginalDataResponse> {
+        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
+        return SequenceEntriesView
+            .select(
+                SequenceEntriesView.accessionColumn,
+                SequenceEntriesView.versionColumn,
+                SequenceEntriesView.submissionIdColumn,
+                SequenceEntriesView.originalDataColumn,
             )
-            OriginalDataResponse(
-                it[SequenceEntriesView.accessionColumn],
-                it[SequenceEntriesView.versionColumn],
-                it[SequenceEntriesView.submissionIdColumn],
-                decompressedOriginalData,
-            )
-        }
+            .where(originalDataConditions(organism, groupId, accessionsFilter))
+            .fetchSize(streamBatchSize)
+            .asSequence()
+            .map {
+                val compressedOriginalData = it[SequenceEntriesView.originalDataColumn]!!
+                val decompressedOriginalData = compressionService.decompressSequencesInOriginalData(
+                    compressedOriginalData,
+                )
+                OriginalDataResponse(
+                    it[SequenceEntriesView.accessionColumn],
+                    it[SequenceEntriesView.versionColumn],
+                    it[SequenceEntriesView.submissionIdColumn],
+                    decompressedOriginalData,
+                )
+            }
+    }
 
     fun cleanUpStaleSequencesInProcessing(timeToStaleInSeconds: Long) {
         val staleDateTime = dateProvider.getCurrentInstant()
