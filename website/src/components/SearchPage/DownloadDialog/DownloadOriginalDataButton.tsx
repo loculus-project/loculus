@@ -65,11 +65,6 @@ export const DownloadOriginalDataButton: FC<DownloadOriginalDataButtonProps> = (
                 accessionVersions = selectedVersions;
             } else {
                 accessionVersions = await fetchAccessions();
-                if (accessionVersions.length > MAX_DOWNLOAD_ENTRIES) {
-                    throw new Error(
-                        `Too many sequences (${accessionVersions.length}). Please filter to ${MAX_DOWNLOAD_ENTRIES} or fewer.`,
-                    );
-                }
             }
 
             const accessions = extractAccessions(accessionVersions);
@@ -125,7 +120,11 @@ export const DownloadOriginalDataButton: FC<DownloadOriginalDataButtonProps> = (
             {error !== null && (
                 <div className='absolute top-full left-0 mt-1 text-sm text-red-600 bg-white p-2 rounded shadow-md z-10 max-w-xs'>
                     {error}
-                    <Button className='ml-2 text-gray-500 hover:text-gray-700' onClick={() => setError(null)}>
+                    <Button
+                        className='ml-2 text-gray-500 hover:text-gray-700'
+                        onClick={() => setError(null)}
+                        aria-label='Dismiss error'
+                    >
                         x
                     </Button>
                 </div>

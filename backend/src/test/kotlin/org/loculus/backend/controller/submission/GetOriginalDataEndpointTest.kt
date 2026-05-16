@@ -13,7 +13,6 @@ import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
-import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -95,7 +94,7 @@ class GetOriginalDataEndpointTest(
     @Test
     fun `GIVEN data exists THEN metadata TSV contains id and accession columns`() {
         val submissionResult = convenienceClient.submitDefaultFiles()
-        val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
             groupId = submissionResult.groupId,
         )
 
@@ -116,14 +115,14 @@ class GetOriginalDataEndpointTest(
         assertThat(header[1], `is`("accession"))
 
         val firstDataRow = lines[1].split("\t")
-        assertThat(firstDataRow[0], `is`(accessionVersions[0].displayAccessionVersion()))
-        assertThat(firstDataRow[1], `is`(accessionVersions[0].accession))
+        assertThat(firstDataRow[0], `is`(submissionResult.submissionIdMappings[0].submissionId))
+        assertThat(firstDataRow[1], `is`(submissionResult.submissionIdMappings[0].accession))
     }
 
     @Test
     fun `GIVEN data exists THEN FASTA headers match metadata ids`() {
         val submissionResult = convenienceClient.submitDefaultFiles()
-        val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
             groupId = submissionResult.groupId,
         )
 
@@ -150,7 +149,7 @@ class GetOriginalDataEndpointTest(
 
         assertThat(fastaIds, `is`(metadataIds))
 
-        val expectedIds = accessionVersions.map { it.displayAccessionVersion() }.toSet()
+        val expectedIds = submissionResult.submissionIdMappings.map { it.submissionId }.toSet()
         assertThat(metadataIds, `is`(expectedIds))
     }
 
@@ -278,9 +277,9 @@ class GetOriginalDataEndpointTest(
     }
 
     @Test
-    fun `GIVEN multi-segmented organism THEN fastaIds contain accession version and original fasta id`() {
+    fun `GIVEN multi-segmented organism THEN fastaIds contain original fasta ids`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
-        val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
             organism = OTHER_ORGANISM,
             groupId = groupId,
         )
@@ -303,16 +302,16 @@ class GetOriginalDataEndpointTest(
         val fastaIdsIndex = header.indexOf("fastaIds")
 
         val firstDataRow = lines[1].split("\t")
+        val submissionId = firstDataRow[0]
         val fastaIds = firstDataRow[fastaIdsIndex]
-        val accessionVersion = accessionVersions[0].displayAccessionVersion()
 
-        assertThat(fastaIds, containsString("$accessionVersion|"))
+        assertThat(fastaIds, containsString("${submissionId}_"))
     }
 
     @Test
-    fun `GIVEN multi-segmented organism THEN FASTA headers contain accession version and original fasta id`() {
+    fun `GIVEN multi-segmented organism THEN FASTA headers contain original fasta ids`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
-        val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
             organism = OTHER_ORGANISM,
             groupId = groupId,
         )
@@ -331,14 +330,8 @@ class GetOriginalDataEndpointTest(
         val (_, sequencesFasta) = extractZipContents(zipContent)
 
         val fastaHeaders = sequencesFasta.lines().filter { it.startsWith(">") }
-        val accessionVersion = accessionVersions[0].displayAccessionVersion()
 
-        val matchingHeaders = fastaHeaders.filter { it.contains("$accessionVersion|") }
-        assertThat(matchingHeaders.size, org.hamcrest.Matchers.greaterThan(0))
-
-        for (header in matchingHeaders) {
-            assertThat(header, containsString("|"))
-        }
+        assertThat(fastaHeaders.contains(">custom0_notOnlySegment"), `is`(true))
     }
 
     @Test

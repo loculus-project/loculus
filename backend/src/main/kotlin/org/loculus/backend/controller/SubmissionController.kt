@@ -443,7 +443,6 @@ open class SubmissionController(
             organism,
             groupIdsFilter?.takeIf { it.isNotEmpty() },
             statusesFilter?.takeIf { it.isNotEmpty() },
-            null,
         )
         headers.add(X_TOTAL_RECORDS, totalRecords.toString())
         // TODO(https://github.com/loculus-project/loculus/issues/2778)
@@ -459,7 +458,6 @@ open class SubmissionController(
                 groupIdsFilter?.takeIf { it.isNotEmpty() },
                 statusesFilter?.takeIf { it.isNotEmpty() },
                 fields?.takeIf { it.isNotEmpty() },
-                null,
             )
         }
 
@@ -481,9 +479,10 @@ open class SubmissionController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestBody body: GetOriginalDataRequest,
     ): ResponseEntity<StreamingResponseBody> {
+        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(body.groupId, authenticatedUser)
+
         val entryCount = transaction {
             submissionDatabaseService.countOriginalData(
-                authenticatedUser,
                 organism,
                 body.groupId,
                 body.accessionsFilter,
@@ -518,7 +517,6 @@ open class SubmissionController(
                 java.util.zip.ZipOutputStream(responseBodyStream).use { zipOut ->
                     transaction {
                         val data = submissionDatabaseService.streamOriginalData(
-                            authenticatedUser,
                             organism,
                             body.groupId,
                             body.accessionsFilter,
@@ -535,17 +533,16 @@ open class SubmissionController(
                         }
                     }
                 }
+                val duration = System.currentTimeMillis() - startTime
+                log.info { "[get-original-data] Completed in ${duration}ms" }
             } catch (e: Exception) {
                 val duration = System.currentTimeMillis() - startTime
                 log.error(e) { "[get-original-data] Error after ${duration}ms: $e" }
                 throw e
+            } finally {
+                MDC.remove(REQUEST_ID_MDC_KEY)
+                MDC.remove(ORGANISM_MDC_KEY)
             }
-
-            val duration = System.currentTimeMillis() - startTime
-            log.info { "[get-original-data] Completed in ${duration}ms" }
-
-            MDC.remove(REQUEST_ID_MDC_KEY)
-            MDC.remove(ORGANISM_MDC_KEY)
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -556,7 +553,7 @@ open class SubmissionController(
         outputStream: java.io.OutputStream,
         isMultiSegmented: Boolean,
     ) {
-        val metadataKeys = data.flatMap { it.originalData.metadata.keys }.toSet().sorted()
+        val metadataKeys = data.flatMapTo(mutableSetOf()) { it.originalData.metadata.keys }.sorted()
         val headers = if (isMultiSegmented) {
             listOf("id", "accession", "fastaIds") + metadataKeys
         } else {
@@ -565,11 +562,10 @@ open class SubmissionController(
 
         TsvWriter(outputStream, headers).use { writer ->
             for (entry in data) {
-                val id = "${entry.accession}.${entry.version}"
+                val id = entry.submissionId
                 val metadataValues = metadataKeys.map { entry.originalData.metadata[it] ?: "" }
                 val row = if (isMultiSegmented) {
                     val fastaIds = entry.originalData.unalignedNucleotideSequences.keys
-                        .map { originalFastaId -> "$id|$originalFastaId" }
                         .joinToString(" ")
                     listOf(id, entry.accession, fastaIds) + metadataValues
                 } else {
@@ -587,10 +583,9 @@ open class SubmissionController(
     ) {
         FastaWriter(outputStream).use { writer ->
             for (entry in data) {
-                val id = "${entry.accession}.${entry.version}"
                 for ((originalFastaId, sequence) in entry.originalData.unalignedNucleotideSequences) {
                     if (sequence != null) {
-                        val header = if (isMultiSegmented) "$id|$originalFastaId" else id
+                        val header = if (isMultiSegmented) originalFastaId else entry.submissionId
                         writer.write(FastaEntry(header, sequence))
                     }
                 }

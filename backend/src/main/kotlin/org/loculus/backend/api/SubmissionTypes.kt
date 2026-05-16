@@ -331,7 +331,6 @@ data class AccessionVersionOriginalMetadata(
 data class GetOriginalDataRequest(
     @Schema(
         description = "The group ID to download data for.",
-        required = true,
     )
     val groupId: Int,
     @Schema(
@@ -343,6 +342,7 @@ data class GetOriginalDataRequest(
 data class OriginalDataResponse(
     override val accession: Accession,
     override val version: Version,
+    val submissionId: String,
     val originalData: OriginalData<GeneticSequence>,
 ) : AccessionVersionInterface
 
