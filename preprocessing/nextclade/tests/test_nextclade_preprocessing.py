@@ -32,7 +32,7 @@ from loculus_preprocessing.datatypes import (
     UnprocessedEntry,
 )
 from loculus_preprocessing.embl import create_flatfile, reformat_authors_from_loculus_to_embl_style
-from loculus_preprocessing.prepro import process_all
+from loculus_preprocessing.prepro import get_nested_metadata, process_all
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
     format_stop_codon,
@@ -57,6 +57,25 @@ CCHF_DATASET = "tests/cchfv"
 SINGLE_SEGMENT_EMBL = "tests/flatfiles/single_segment.embl"
 MUTATIONS_FROM_FOUNDER_CLADE = "tests/mutationsFromFounderClade.json"
 LABELED_PRIVATE_MUTATIONS = "tests/labeledPrivateMutations.json"
+
+
+def test_get_nested_metadata_uses_simple_dot_paths():
+    metadata = {
+        "coverage": 0.98,
+        "qc": {"stopCodons": {"totalStopCodons": 0, "stopCodons": []}},
+        "cladeFounderInfo": {
+            "aaMutations": [{"privateSubstitutions": ["NS1:Y35H"]}],
+        },
+    }
+
+    assert get_nested_metadata(metadata, "coverage") == 0.98
+    assert get_nested_metadata(metadata, "qc.stopCodons.totalStopCodons") == 0
+    assert get_nested_metadata(metadata, "qc.stopCodons.stopCodons") == []
+    assert get_nested_metadata(metadata, "cladeFounderInfo.aaMutations") == [
+        {"privateSubstitutions": ["NS1:Y35H"]},
+    ]
+    assert get_nested_metadata(metadata, "qc.missing.total") is None
+    assert get_nested_metadata(metadata, "coverage.value") is None
 
 
 def consensus_sequence(
