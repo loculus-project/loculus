@@ -316,14 +316,12 @@ ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
 --
 
 CREATE TABLE public.seqset_citing_source (
-    source_id text NOT NULL,
-    source_type text NOT NULL,
+    source_doi text NOT NULL,
     origin text NOT NULL,
     title text NOT NULL,
     year character varying(10) NOT NULL,
     contributors jsonb NOT NULL,
-    CONSTRAINT seqset_citing_source_origin_check CHECK ((origin = ANY (ARRAY['CROSSREF'::text, 'CURATED'::text]))),
-    CONSTRAINT seqset_citing_source_source_type_check CHECK ((source_type = ANY (ARRAY['DOI'::text, 'URL'::text])))
+    CONSTRAINT seqset_citing_source_origin_check CHECK ((origin = ANY (ARRAY['CROSSREF'::text, 'CURATED'::text])))
 );
 
 
@@ -383,7 +381,7 @@ ALTER SEQUENCE public.seqset_records_seqset_record_id_seq OWNED BY public.seqset
 --
 
 CREATE TABLE public.seqset_to_citing_source (
-    citing_source_id text NOT NULL,
+    source_doi text NOT NULL,
     seqset_id text NOT NULL,
     seqset_version bigint NOT NULL
 );
@@ -718,7 +716,7 @@ ALTER TABLE ONLY public.metadata_upload_aux_table
 --
 
 ALTER TABLE ONLY public.seqset_citing_source
-    ADD CONSTRAINT seqset_citing_source_pkey PRIMARY KEY (source_id);
+    ADD CONSTRAINT seqset_citing_source_pkey PRIMARY KEY (source_doi);
 
 
 --
@@ -734,7 +732,7 @@ ALTER TABLE ONLY public.seqset_records
 --
 
 ALTER TABLE ONLY public.seqset_to_citing_source
-    ADD CONSTRAINT seqset_to_citing_source_pkey PRIMARY KEY (citing_source_id, seqset_id, seqset_version);
+    ADD CONSTRAINT seqset_to_citing_source_pkey PRIMARY KEY (source_doi, seqset_id, seqset_version);
 
 
 --
@@ -937,19 +935,19 @@ ALTER TABLE ONLY public.files
 
 
 --
--- Name: seqset_to_citing_source foreign_key_citing_source_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: seqset_to_citing_source foreign_key_citing_source; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.seqset_to_citing_source
-    ADD CONSTRAINT foreign_key_citing_source_id FOREIGN KEY (citing_source_id) REFERENCES public.seqset_citing_source(source_id) ON DELETE CASCADE;
+    ADD CONSTRAINT foreign_key_citing_source FOREIGN KEY (source_doi) REFERENCES public.seqset_citing_source(source_doi) ON DELETE CASCADE;
 
 
 --
--- Name: seqset_to_citing_source foreign_key_seqset_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: seqset_to_citing_source foreign_key_seqset; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.seqset_to_citing_source
-    ADD CONSTRAINT foreign_key_seqset_id FOREIGN KEY (seqset_id, seqset_version) REFERENCES public.seqsets(seqset_id, seqset_version) ON DELETE CASCADE;
+    ADD CONSTRAINT foreign_key_seqset FOREIGN KEY (seqset_id, seqset_version) REFERENCES public.seqsets(seqset_id, seqset_version) ON DELETE CASCADE;
 
 
 --
