@@ -8,18 +8,17 @@ jobs:
     strategy:
       matrix:
         taxon_id:
-          - 10244    # Mpox
-          - 1868215  # Orthopneumovirus
-          - 1980456  # Andes virus
+          - 1868215  # Orthopneumovirus (RSV)
+          - 1980456  # Orthohantavirus andesense
           - 3048148  # Metapneumovirus hominis
-          - 3048448  # West nile virus
-          - 3052345  # Morbillivirus hominis
+          - 3048448  # Orthoflavivirus nilense (West nile virus)
+          - 3052345  # Morbillivirus hominis (Measles)
           - 3052458  # Orthoebolavirus bundibugyoense
           - 3052460  # Orthoebolavirus sudanense
           - 3052462  # Orthoebolavirus zairense
           - 3052505  # Orthomarburgvirus marburgense
-          - 3052518  # CCHFV
-          - 3431483  # Mpox (parental taxon)
+          - 3052518  # Orthonairovirus haemorrhagiae (CCHFV)
+          - 3431483  # Orthopoxvirus monkeypox
       fail-fast: false
     uses: ./.github/workflows/datasets-mirror.yml
     secrets: inherit
