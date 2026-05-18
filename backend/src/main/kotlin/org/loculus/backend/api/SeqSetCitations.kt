@@ -58,19 +58,13 @@ data class SeqSet(
 
 data class SeqSetCitationContributor(val givenName: String, val surname: String)
 
-enum class CitationSourceType {
-    DOI,
-    URL,
-}
-
 enum class CitationOrigin {
     CROSSREF,
     CURATED,
 }
 
 data class SeqSetCitingSource(
-    val sourceId: String,
-    val sourceType: CitationSourceType,
+    val sourceDOI: String,
     val title: String,
     val year: String,
     val contributors: List<SeqSetCitationContributor>,

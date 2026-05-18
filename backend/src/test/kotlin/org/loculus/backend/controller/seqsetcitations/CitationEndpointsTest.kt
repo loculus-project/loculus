@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.CitationSourceType
 import org.loculus.backend.api.SeqSetCitationContributor
 import org.loculus.backend.api.SeqSetCitingSource
 import org.loculus.backend.controller.DEFAULT_USER_NAME
@@ -153,8 +152,7 @@ class CitationEndpointsTest(
 
         val seqSetDOI = "${MOCK_DOI_PREFIX}/$seqSetId.$seqSetVersion"
         val seqSetCitingSource = SeqSetCitingSource(
-            sourceId = "10.5678/citing-paper",
-            sourceType = CitationSourceType.DOI,
+            sourceDOI = "10.5678/citing-paper",
             title = "A paper citing the seqSet",
             year = "2024",
             contributors = listOf(SeqSetCitationContributor(givenName = "Jane", surname = "Doe")),
@@ -170,8 +168,7 @@ class CitationEndpointsTest(
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$").isArray)
-            .andExpect(jsonPath("\$[0].sourceId").value(seqSetCitingSource.sourceId))
-            .andExpect(jsonPath("\$[0].sourceType").value(seqSetCitingSource.sourceType.name))
+            .andExpect(jsonPath("\$[0].sourceDOI").value(seqSetCitingSource.sourceDOI))
             .andExpect(jsonPath("\$[0].title").value(seqSetCitingSource.title))
             .andExpect(jsonPath("\$[0].year").value(seqSetCitingSource.year))
             .andExpect(jsonPath("\$[0].contributors[0].givenName").value(seqSetCitingSource.contributors[0].givenName))

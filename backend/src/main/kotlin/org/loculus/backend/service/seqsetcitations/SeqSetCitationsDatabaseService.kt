@@ -276,8 +276,7 @@ class SeqSetCitationsDatabaseService(
                     (SeqSetToCitingSourceTable.seqSetVersion eq seqSet[SeqSetsTable.seqSetVersion])
             }.map {
                 SeqSetCitingSource(
-                    it[SeqSetCitingSourceTable.sourceId],
-                    it[SeqSetCitingSourceTable.sourceType],
+                    it[SeqSetCitingSourceTable.sourceDOI],
                     it[SeqSetCitingSourceTable.title],
                     it[SeqSetCitingSourceTable.year],
                     it[SeqSetCitingSourceTable.contributors],
@@ -306,8 +305,7 @@ class SeqSetCitationsDatabaseService(
             citingSources,
             where = { SeqSetCitingSourceTable.origin eq origin },
         ) {
-            this[SeqSetCitingSourceTable.sourceId] = it.sourceId
-            this[SeqSetCitingSourceTable.sourceType] = it.sourceType
+            this[SeqSetCitingSourceTable.sourceDOI] = it.sourceDOI
             this[SeqSetCitingSourceTable.origin] = origin
             this[SeqSetCitingSourceTable.title] = it.title
             this[SeqSetCitingSourceTable.year] = it.year
@@ -319,13 +317,13 @@ class SeqSetCitationsDatabaseService(
             it.seqSetDOIs
                 .filter { doi -> doi in updatedDOIs }
                 .map { doi ->
-                    Triple(it.sourceId, doiToSeqSet[doi]!!.first, doiToSeqSet[doi]!!.second)
+                    Triple(it.sourceDOI, doiToSeqSet[doi]!!.first, doiToSeqSet[doi]!!.second)
                 }
         }
 
         // Insert connections in the join table
-        SeqSetToCitingSourceTable.batchInsert(joinData, ignore = true) { (sourceId, seqSetId, seqSetVersion) ->
-            this[SeqSetToCitingSourceTable.citingSourceId] = sourceId
+        SeqSetToCitingSourceTable.batchInsert(joinData, ignore = true) { (sourceDOI, seqSetId, seqSetVersion) ->
+            this[SeqSetToCitingSourceTable.sourceDOI] = sourceDOI
             this[SeqSetToCitingSourceTable.seqSetId] = seqSetId
             this[SeqSetToCitingSourceTable.seqSetVersion] = seqSetVersion
         }

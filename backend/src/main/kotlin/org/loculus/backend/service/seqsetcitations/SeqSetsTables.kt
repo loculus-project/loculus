@@ -3,7 +3,6 @@ package org.loculus.backend.service.seqsetcitations
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.loculus.backend.api.CitationOrigin
-import org.loculus.backend.api.CitationSourceType
 import org.loculus.backend.api.SeqSetCitationContributor
 import org.loculus.backend.service.jacksonSerializableJsonb
 
@@ -34,18 +33,17 @@ object SeqSetToRecordsTable : Table("seqset_to_records") {
 }
 
 object SeqSetCitingSourceTable : Table("seqset_citing_source") {
-    val sourceId = text("source_id")
-    val sourceType = enumerationByName<CitationSourceType>("source_type", 10)
+    val sourceDOI = text("source_doi")
     val origin = enumerationByName<CitationOrigin>("origin", 10)
     val title = text("title")
     val year = varchar("year", 10)
     val contributors = jacksonSerializableJsonb<List<SeqSetCitationContributor>>("contributors")
-    override val primaryKey = PrimaryKey(sourceId)
+    override val primaryKey = PrimaryKey(sourceDOI)
 }
 
 object SeqSetToCitingSourceTable : Table("seqset_to_citing_source") {
-    val citingSourceId = text("citing_source_id") references SeqSetCitingSourceTable.sourceId
+    val sourceDOI = text("source_doi") references SeqSetCitingSourceTable.sourceDOI
     val seqSetId = text("seqset_id") references SeqSetsTable.seqSetId
     val seqSetVersion = long("seqset_version") references SeqSetsTable.seqSetVersion
-    override val primaryKey = PrimaryKey(citingSourceId, seqSetVersion)
+    override val primaryKey = PrimaryKey(sourceDOI, seqSetId, seqSetVersion)
 }

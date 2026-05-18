@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.loculus.backend.SpringBootTestWithoutDatabase
-import org.loculus.backend.api.CitationSourceType
 import org.loculus.backend.api.SeqSetCitationContributor
 import org.loculus.backend.api.SeqSetCitingSource
 import org.springframework.beans.factory.annotation.Autowired
@@ -61,8 +60,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
             mapOf(
                 "10.1234/seqset-1" to listOf(
                     SeqSetCitingSource(
-                        sourceId = "10.5678/paper-1",
-                        sourceType = CitationSourceType.DOI,
+                        sourceDOI = "10.5678/paper-1",
                         title = "A citing paper",
                         year = "2024",
                         contributors = listOf(
@@ -73,8 +71,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                 ),
                 "10.1234/seqset-2" to listOf(
                     SeqSetCitingSource(
-                        sourceId = "10.5678/paper-2",
-                        sourceType = CitationSourceType.DOI,
+                        sourceDOI = "10.5678/paper-2",
                         title = "Another citing paper",
                         year = "2023",
                         contributors = listOf(
@@ -133,8 +130,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         assertEquals(
             listOf(
                 SeqSetCitingSource(
-                    sourceId = "",
-                    sourceType = CitationSourceType.DOI,
+                    sourceDOI = "",
                     title = "",
                     year = "",
                     contributors = emptyList(),

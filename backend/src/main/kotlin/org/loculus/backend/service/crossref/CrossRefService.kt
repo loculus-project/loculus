@@ -3,7 +3,6 @@ package org.loculus.backend.service.crossref
 import mu.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
-import org.loculus.backend.api.CitationSourceType
 import org.loculus.backend.api.SeqSetCitationContributor
 import org.loculus.backend.api.SeqSetCitingSource
 import org.redundent.kotlin.xml.PrintOptions
@@ -76,8 +75,7 @@ class CrossRefService(private val properties: CrossRefServiceProperties) {
                 )
             }
             forwardLink.attr("doi") to SeqSetCitingSource(
-                sourceId = cite.selectFirst("doi")?.text() ?: "",
-                sourceType = CitationSourceType.DOI,
+                sourceDOI = cite.selectFirst("doi")?.text() ?: "",
                 title = cite.selectFirst("title")?.text() ?: "",
                 year = cite.selectFirst("year")?.text() ?: "",
                 contributors = contributors,

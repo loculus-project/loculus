@@ -16,17 +16,17 @@ private fun mergeCitingSources(citationsByDOI: Map<String, List<SeqSetCitingSour
 
     for ((seqSetDOI, citingSources) in citationsByDOI) {
         for (incoming in citingSources) {
-            val existing = merged[incoming.sourceId]
+            val existing = merged[incoming.sourceDOI]
             if (existing == null) {
-                merged[incoming.sourceId] = incoming.copy(seqSetDOIs = setOf(seqSetDOI))
+                merged[incoming.sourceDOI] = incoming.copy(seqSetDOIs = setOf(seqSetDOI))
                 continue
             }
             if (existing.copy(seqSetDOIs = emptySet()) != incoming.copy(seqSetDOIs = emptySet())) {
                 log.warn {
-                    "Conflicting CrossRef metadata for citing source ${incoming.sourceId}: $existing and $incoming"
+                    "Conflicting CrossRef metadata for citing source ${incoming.sourceDOI}: $existing and $incoming"
                 }
             }
-            merged[incoming.sourceId] = existing.copy(
+            merged[incoming.sourceDOI] = existing.copy(
                 seqSetDOIs = existing.seqSetDOIs + seqSetDOI,
             )
         }
