@@ -77,6 +77,9 @@ def test_get_nested_metadata_uses_simple_dot_paths():
     assert get_nested_metadata(metadata, "qc.missing.total") is None
     assert get_nested_metadata(metadata, "coverage.value") is None
 
+    metadata_with_zero = {"qc": {"score": 0}}
+    assert get_nested_metadata(metadata_with_zero, "qc.score") == 0
+
 
 def consensus_sequence(
     type: Literal["single"]
