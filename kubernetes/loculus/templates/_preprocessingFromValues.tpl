@@ -8,8 +8,17 @@
   {{- end }}
   {{- if hasKey .preprocessing "inputs" }}
   inputs:
-    {{- with index .preprocessing "inputs" }}
-    {{- . | toYaml | nindent 4 }}
+    {{- $segment := .segment }}
+    {{- $perSegmentFields := .perSegmentFields | default dict }}
+    {{- range $argName, $inputField := (index .preprocessing "inputs") }}
+    {{- /* When generating a per-segment spec, inputs that reference a per-segment
+           metadata field must be suffixed with the segment, because the submitted
+           metadata for those fields is itself segment-specific (e.g. ncbiReleaseDate_L). */}}
+    {{- if and $segment (hasKey $perSegmentFields $inputField) }}
+    {{ $argName }}: {{ printf "%s_%s" $inputField $segment }}
+    {{- else }}
+    {{ $argName }}: {{ $inputField }}
+    {{- end }}
     {{- end }}
   {{- end }}
   args:
@@ -67,12 +76,21 @@
 {{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" $referenceGenomes | fromYaml).segments }}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 
+{{- /* Names of fields that are split per segment. Inputs referencing these must be
+       segment-suffixed when generating per-segment specs. */}}
+{{- $perSegmentFields := dict }}
+{{- if $isSegmented }}
+{{- range $metadata }}
+{{- if .perSegment }}{{- $_ := set $perSegmentFields .name true }}{{- end }}
+{{- end }}
+{{- end }}
+
 {{- range $metadata }}
     {{- $currentItem := . }}
     {{- if and $isSegmented .perSegment }}
         {{- range $segment := $rawUniqueSegments }}
             {{- with $currentItem }}
-            {{- $args := deepCopy . | merge (dict "segment" $segment "key" (printf "%s_%s" .name $segment)) }}
+            {{- $args := deepCopy . | merge (dict "segment" $segment "key" (printf "%s_%s" .name $segment) "perSegmentFields" $perSegmentFields) }}
             {{- include "loculus.sharedPreproSpecs" $args }}
             {{- end }}
         {{- end }}
@@ -81,7 +99,7 @@
         {{- if .relatesToSegment }}
         {{- $segment = .relatesToSegment }}
         {{- end }}
-        {{- $args := deepCopy . | merge (dict "segment" $segment "key" .name) }}
+        {{- $args := deepCopy . | merge (dict "segment" $segment "key" .name "perSegmentFields" $perSegmentFields) }}
         {{- include "loculus.sharedPreproSpecs" $args }}
     {{- end }}
 {{- end }}
