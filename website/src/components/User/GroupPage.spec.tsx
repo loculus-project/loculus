@@ -21,6 +21,7 @@ describe('GroupPage', () => {
                 organisms={[]}
                 databaseName={testDatabaseName}
                 loginUrl=''
+                dateFieldForGroupGraph={null}
             />,
         );
 
@@ -42,6 +43,7 @@ describe('GroupPage', () => {
                 organisms={[]}
                 databaseName={testDatabaseName}
                 loginUrl=''
+                dateFieldForGroupGraph={null}
             />,
         );
 
@@ -63,6 +65,7 @@ describe('GroupPage', () => {
                 organisms={[]}
                 databaseName={testDatabaseName}
                 loginUrl=''
+                dateFieldForGroupGraph={null}
             />,
         );
 

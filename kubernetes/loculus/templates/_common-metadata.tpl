@@ -240,6 +240,7 @@ enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
 dataUseTermsAgreementHTML: {{ quote $.Values.dataUseTerms.agreementHTML }}
 {{- end }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
+dateFieldForGroupGraph: {{ if $.Values.dateFieldForGroupGraph }}{{ quote $.Values.dateFieldForGroupGraph }}{{ else }}null{{ end }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
   {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
@@ -370,12 +371,6 @@ organisms:
   {{- end}}
   {{- if .lineageSystem }}
   lineageSearch: true
-  {{- end }}
-  {{- if .hierarchicalFilter }}
-  hierarchicalSearch: true
-  {{- end }}
-  {{- if and .hierarchicalFilter .hierarchicalSearchLabel }}
-  hierarchicalSearchLabel: {{ .hierarchicalSearchLabel }}
   {{- end }}
   {{- if .hideOnSequenceDetailsPage }}
   hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}

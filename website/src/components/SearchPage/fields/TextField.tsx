@@ -127,7 +127,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
         };
 
         return (
-            <div className='[&_label]:pointer-events-none'>
+            <div className='[&_label]:pointer-events-none my-1.5'>
                 <FloatingLabel
                     theme={{
                         helperText: {
@@ -164,7 +164,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     };
 
     return (
-        <div className='relative my-1'>
+        <div className='relative my-2'>
             <textarea
                 {...textareaProps}
                 rows={hasFocus || (fieldValue !== undefined && fieldValue.toString().split('\n').length > 1) ? 4 : 1}
