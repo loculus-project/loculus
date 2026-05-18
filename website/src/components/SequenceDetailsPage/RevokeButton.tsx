@@ -39,7 +39,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
         {
             onSuccess: () => {
                 toast.update(REVOCATION_TOAST_ID, {
-                    render: 'Sequence revoked successfully. (This may take several minutes to become visible on the website.)',
+                    render: 'Sequence revoked successfully. This may take several minutes to become visible on the website.',
                     type: 'success',
                     isLoading: false,
                     autoClose: 4000,
