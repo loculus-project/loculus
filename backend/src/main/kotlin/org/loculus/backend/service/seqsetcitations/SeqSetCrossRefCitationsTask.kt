@@ -38,12 +38,12 @@ class SeqSetCrossRefCitationsTask(
     private val seqSetCitationsDatabaseService: SeqSetCitationsDatabaseService,
 ) {
     /**
-     * Runs every hour, with an initial delay of one minute.
+     * Runs every six hours, with an initial delay of one minute.
      * Adds citing sources from CrossRef, and connects to SeqSets via their DOI.
      */
     @Scheduled(
         initialDelay = 1,
-        fixedDelay = 60,
+        fixedDelay = 360,
         timeUnit = java.util.concurrent.TimeUnit.MINUTES,
     )
     fun task() {

@@ -301,11 +301,7 @@ class SeqSetCitationsDatabaseService(
         }
 
         // Update or insert the matched citing sources
-        // Existing citing sources with a different origin are not updated
-        SeqSetCitingSourceTable.batchUpsert(
-            matchedSources,
-            where = { SeqSetCitingSourceTable.origin eq CitationOrigin.CROSSREF },
-        ) {
+        SeqSetCitingSourceTable.batchUpsert(matchedSources) {
             this[SeqSetCitingSourceTable.sourceDOI] = it.sourceDOI
             this[SeqSetCitingSourceTable.origin] = CitationOrigin.CROSSREF
             this[SeqSetCitingSourceTable.title] = it.title
