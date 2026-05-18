@@ -17,7 +17,7 @@ from .constants import (
     DATA_FILENAME,
     TRANSFORMED_DATA_FILENAME,
 )
-from .decompressor import NdjsonAnalysis, analyze_ndjson
+from .decompressor import analyze_ndjson
 from .errors import (
     DecompressionFailedError,
     HashUnchangedError,
@@ -78,7 +78,7 @@ class DownloadResult:
     directory: Path
     transformed_path: Path
     etag: str
-    analysis: NdjsonAnalysis
+    pipeline_version: int | None
 
 
 def _download_file(
@@ -205,7 +205,7 @@ class DownloadManager:
 
             # Decompress and analyze the data
             try:
-                analysis = analyze_ndjson(data_path, config.hierarchical_filters)
+                analysis = analyze_ndjson(data_path)
             except RuntimeError as exc:
                 logger.warning(
                     "Failed to decompress %s (size=%s bytes): %s",
@@ -244,7 +244,7 @@ class DownloadManager:
                 directory=download_dir,
                 transformed_path=transformed_path,
                 etag=etag_value,
-                analysis=analysis,
+                pipeline_version=analysis.pipeline_version,
             )
 
         except (

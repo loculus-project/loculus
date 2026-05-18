@@ -9,7 +9,7 @@ import { SegmentFilter } from './SegmentFilter.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
-import { HierarchicalField } from './fields/HierarchicalField.tsx';
+import { LineageField } from './fields/LineageField.tsx';
 import { MultiChoiceAutoCompleteField } from './fields/MultiChoiceAutoCompleteField';
 import { MultiFieldSearchField } from './fields/MultiFieldSearchField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
@@ -60,7 +60,7 @@ type CollapsibleSectionProps = {
 };
 
 function CollapsibleSection({ title, open = true, children, subgroups = false }: CollapsibleSectionProps) {
-    const className = subgroups ? 'group/inner rounded-lg border px-4 pt-4' : 'group px-2 pt-2';
+    const className = subgroups ? 'group/inner rounded-lg border px-4 pt-3 pb-1' : 'group px-2 pt-2';
     const arrowClassName = subgroups ? 'group-open/inner:rotate-180' : 'group-open:rotate-180';
     return (
         <DisabledUntilHydrated>
@@ -390,22 +390,26 @@ export const SearchForm = ({
                                         filterSchema={filterSchema}
                                     />
                                 )}
-
                                 {!referenceGenomesInfo.isMultiSegmented &&
                                     segmentNames.map((segmentName) => (
                                         <div key={segmentName}>{renderSegmentContents(segmentName)}</div>
                                     ))}
-                                {referenceGenomesInfo.isMultiSegmented &&
-                                    segmentNames.map((segmentName) => (
-                                        <CollapsibleSection
-                                            key={segmentName}
-                                            title={referenceGenomesInfo.segmentDisplayNames[segmentName] ?? segmentName}
-                                            open={false}
-                                            subgroups
-                                        >
-                                            {renderSegmentContents(segmentName)}
-                                        </CollapsibleSection>
-                                    ))}
+                                {referenceGenomesInfo.isMultiSegmented && (
+                                    <div className='space-y-1'>
+                                        {segmentNames.map((segmentName) => (
+                                            <CollapsibleSection
+                                                key={segmentName}
+                                                title={
+                                                    referenceGenomesInfo.segmentDisplayNames[segmentName] ?? segmentName
+                                                }
+                                                open={false}
+                                                subgroups
+                                            >
+                                                {renderSegmentContents(segmentName)}
+                                            </CollapsibleSection>
+                                        ))}
+                                    </div>
+                                )}
                             </CollapsibleSection>
                         </section>
                     </div>
@@ -465,15 +469,14 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 />
             );
         default:
-            if (field.lineageSearch || field.hierarchicalSearch) {
+            if (field.lineageSearch) {
                 return (
-                    <HierarchicalField
+                    <LineageField
                         field={field}
                         fieldValue={(fieldValues[field.name] ?? '') as string}
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
                         lapisSearchParameters={lapisSearchParameters}
-                        mode={field.lineageSearch ? 'lineage' : 'default'}
                     />
                 );
             }

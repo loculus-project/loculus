@@ -1,7 +1,6 @@
 import { type Locator, type Page, expect } from '@playwright/test';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 import { EditPage } from './edit.page';
-import { ReviewPage } from './review.page';
 
 function makeAccessionVersion({
     accession,
@@ -172,12 +171,12 @@ export class SearchPage {
         await revokeButton.click();
 
         await expect(
-            this.page.getByText('Are you sure you want to create a revocation for this sequence?'),
+            this.page.getByText('Are you sure you want to revoke this sequence?'),
         ).toBeVisible();
         await this.page.getByPlaceholder('Enter reason for revocation').fill(revocationReason);
         await this.page.getByRole('button', { name: 'Confirm' }).click();
 
-        return new ReviewPage(this.page);
+        await expect(this.page.getByText('Sequence revoked successfully.')).toBeVisible();
     }
 
     async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string> {
