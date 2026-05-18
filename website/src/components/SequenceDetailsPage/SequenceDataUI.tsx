@@ -30,6 +30,7 @@ interface Props {
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     referenceGenomesInfo: ReferenceGenomesInfo;
     isRevocation?: boolean;
+    onRevokeSuccess?: () => void;
 }
 
 export const SequenceDataUI: FC<Props> = ({
@@ -45,6 +46,7 @@ export const SequenceDataUI: FC<Props> = ({
     sequenceFlaggingConfig,
     referenceGenomesInfo,
     isRevocation,
+    onRevokeSuccess,
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
 
@@ -118,6 +120,7 @@ export const SequenceDataUI: FC<Props> = ({
                                 accessionVersion={accessionVersion.split('.')[0]}
                                 accessToken={accessToken}
                                 groupId={groupId}
+                                onRevokeSuccess={onRevokeSuccess}
                             />
                         </div>
                     </div>
