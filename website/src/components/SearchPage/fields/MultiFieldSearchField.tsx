@@ -22,7 +22,6 @@ export const MultiFieldSearchField = ({
     filterSchema,
 }: MultiFieldSearchFieldProps) => {
     const tooltipId = useId();
-    const isTouchOnly = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
     return (
         <div className='relative'>
@@ -40,13 +39,7 @@ export const MultiFieldSearchField = ({
                     <MaterialSymbolsHelpOutline className='inline-block h-6 w-5' />
                 </Button>
             </div>
-            <CustomTooltip
-                id={tooltipId}
-                place='top'
-                openEvents={{ mouseenter: !isTouchOnly, focus: false, click: true }}
-                closeEvents={{ mouseleave: !isTouchOnly, blur: true, click: true }}
-                globalCloseEvents={{ clickOutsideAnchor: true, scroll: true }}
-            >
+            <CustomTooltip id={tooltipId} place='top'>
                 <p className='mb-1'>Search across the following fields:</p>
                 <ul className='list-disc list-inside'>
                     {multiFieldSearch.fields.map((field) => (
