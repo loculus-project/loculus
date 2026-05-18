@@ -56,7 +56,7 @@ data class SeqSet(
     val seqSetDOI: String?,
 )
 
-data class SeqSetCitationContributor(val givenName: String, val surname: String)
+data class CitationContributor(val givenName: String, val surname: String)
 
 enum class CitationOrigin {
     CROSSREF,
@@ -67,11 +67,16 @@ data class SeqSetCitingSource(
     val sourceDOI: String,
     val title: String,
     val year: String,
-    val contributors: List<SeqSetCitationContributor>,
+    val contributors: List<CitationContributor>,
     val seqSetDOIs: Set<String> = emptySet(),
 )
 
-data class SeqSetCitationsUpdateResult(val updatedSeqSetDOIs: Set<String>, val skippedSeqSetDOIs: Set<String>)
+data class SeqSetCitation(
+    val sourceDOI: String,
+    val title: String,
+    val year: String,
+    val contributors: List<CitationContributor>,
+)
 
 data class ResponseSeqSet(val seqSetId: String, val seqSetVersion: Long)
 

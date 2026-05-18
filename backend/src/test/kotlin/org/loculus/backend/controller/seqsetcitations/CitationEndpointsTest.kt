@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.SeqSetCitationContributor
+import org.loculus.backend.api.CitationContributor
 import org.loculus.backend.api.SeqSetCitingSource
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.service.crossref.CrossRefService
-import org.loculus.backend.service.seqsetcitations.UpdateSeqSetCitationsTask
+import org.loculus.backend.service.seqsetcitations.SeqSetCrossRefCitationsTask
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.springframework.beans.factory.annotation.Autowired
@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @EndpointTest
 class CitationEndpointsTest(
     @Autowired private val client: SeqSetCitationsControllerClient,
-    @Autowired private val updateSeqSetCitationsTask: UpdateSeqSetCitationsTask,
+    @Autowired private val seqSetCrossRefCitationsTask: SeqSetCrossRefCitationsTask,
 ) {
     @MockkBean
     lateinit var submissionDatabaseService: SubmissionDatabaseService
@@ -114,7 +114,7 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN calling get seqSet citations for seqSet without DOI THEN returns empty list`() {
+    fun `WHEN calling get seqSet citations for seqSet without crossref citations THEN returns empty list`() {
         val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -124,6 +124,12 @@ class CitationEndpointsTest(
 
         val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
         val seqSetVersion = JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
+
+        // Simulate running the crossref citations task
+        every { crossRefService.isActive } returns true
+        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
+            emptyMap()
+        seqSetCrossRefCitationsTask.task()
 
         client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
             .andExpect(status().isOk)
@@ -136,7 +142,7 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN calling get seqSet citations for seqSet with DOI THEN returns citations`() {
+    fun `WHEN calling get seqSet citations for seqSet with crossref citations THEN returns citations`() {
         val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -146,23 +152,21 @@ class CitationEndpointsTest(
 
         val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
         val seqSetVersion = JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
-
         client.createSeqSetDOI(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
             .andExpect(status().isOk)
 
+        // Simulate running the task and adding a citing source
         val seqSetDOI = "${MOCK_DOI_PREFIX}/$seqSetId.$seqSetVersion"
         val seqSetCitingSource = SeqSetCitingSource(
             sourceDOI = "10.5678/citing-paper",
             title = "A paper citing the seqSet",
             year = "2024",
-            contributors = listOf(SeqSetCitationContributor(givenName = "Jane", surname = "Doe")),
+            contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
         )
-
-        // Simulate running the task and updating citations
         every { crossRefService.isActive } returns true
         every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
             mapOf(seqSetDOI to listOf(seqSetCitingSource))
-        updateSeqSetCitationsTask.task()
+        seqSetCrossRefCitationsTask.task()
 
         client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
             .andExpect(status().isOk)

@@ -3,7 +3,7 @@ package org.loculus.backend.service.crossref
 import mu.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
-import org.loculus.backend.api.SeqSetCitationContributor
+import org.loculus.backend.api.CitationContributor
 import org.loculus.backend.api.SeqSetCitingSource
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
@@ -66,18 +66,36 @@ class CrossRefService(private val properties: CrossRefServiceProperties) {
     fun parseCrossRefCitedByXML(citedByXML: String): Map<String, List<SeqSetCitingSource>> {
         val doc = Jsoup.parse(citedByXML, "", Parser.xmlParser())
 
-        return doc.select("forward_link").mapNotNull { forwardLink ->
-            val cite = forwardLink.children().firstOrNull() ?: return@mapNotNull null
-            val contributors = cite.select("contributor").map { c ->
-                SeqSetCitationContributor(
-                    givenName = c.selectFirst("given_name")?.text() ?: "",
-                    surname = c.selectFirst("surname")?.text() ?: "",
-                )
+        return doc.select("forward_link").map { forwardLink ->
+            val seqSetDOI = forwardLink.attr("doi").ifEmpty {
+                throw IllegalStateException("CrossRef forward_link missing SeqSet DOI: $forwardLink")
             }
-            forwardLink.attr("doi") to SeqSetCitingSource(
-                sourceDOI = cite.selectFirst("doi")?.text() ?: "",
-                title = cite.selectFirst("title")?.text() ?: "",
-                year = cite.selectFirst("year")?.text() ?: "",
+            val citationElement =
+                forwardLink.children().firstOrNull()
+                    ?: throw IllegalStateException(
+                        "CrossRef forward_link has no citation element under SeqSet $seqSetDOI: $forwardLink",
+                    )
+            val sourceDOI = citationElement.selectFirst("doi")?.text()?.ifEmpty { null }
+                ?: throw IllegalStateException(
+                    "CrossRef citing source missing DOI for SeqSet $seqSetDOI: $citationElement",
+                )
+
+            val title = citationElement.selectFirst("title")?.text() ?: ""
+            val year = citationElement.selectFirst("year")?.text() ?: ""
+            val contributors = citationElement.select("contributor").mapNotNull { c ->
+                val givenName = c.selectFirst("given_name")?.text().orEmpty()
+                val surname = c.selectFirst("surname")?.text().orEmpty()
+                if (givenName.isEmpty() && surname.isEmpty()) {
+                    null
+                } else {
+                    CitationContributor(givenName, surname)
+                }
+            }
+
+            seqSetDOI to SeqSetCitingSource(
+                sourceDOI = sourceDOI,
+                title = title,
+                year = year,
                 contributors = contributors,
             )
         }.groupBy({ it.first }, { it.second })

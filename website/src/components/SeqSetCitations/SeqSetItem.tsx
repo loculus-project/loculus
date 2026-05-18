@@ -140,7 +140,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                         href={getCrossRefUrl()}
                         target='_blank'
                         rel='noopener noreferrer'
-                        title='View DOI on Crossref'
+                        title='View DOI on CrossRef'
                     >
                         <OouiNewWindowLtr className='w-4 h-4' />
                     </a>

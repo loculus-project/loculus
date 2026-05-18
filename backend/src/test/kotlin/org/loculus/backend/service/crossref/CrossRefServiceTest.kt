@@ -3,8 +3,9 @@ package org.loculus.backend.service.crossref
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.loculus.backend.SpringBootTestWithoutDatabase
-import org.loculus.backend.api.SeqSetCitationContributor
+import org.loculus.backend.api.CitationContributor
 import org.loculus.backend.api.SeqSetCitingSource
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.Instant
@@ -64,8 +65,8 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                         title = "A citing paper",
                         year = "2024",
                         contributors = listOf(
-                            SeqSetCitationContributor(givenName = "Jane", surname = "Doe"),
-                            SeqSetCitationContributor(givenName = "John", surname = "Smith"),
+                            CitationContributor(givenName = "Jane", surname = "Doe"),
+                            CitationContributor(givenName = "John", surname = "Smith"),
                         ),
                     ),
                 ),
@@ -75,7 +76,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                         title = "Another citing paper",
                         year = "2023",
                         contributors = listOf(
-                            SeqSetCitationContributor(givenName = "Alice", surname = "Jones"),
+                            CitationContributor(givenName = "Alice", surname = "Jones"),
                         ),
                     ),
                 ),
@@ -87,64 +88,117 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
     @Test
     fun `parseCrossRefCitedByXML returns empty list when no forward_link elements present`() {
         val xml = "<crossref_result></crossref_result>"
-
         val result = crossRefService.parseCrossRefCitedByXML(xml)
-
         assertTrue(result.isEmpty())
     }
 
     @Test
-    fun `parseCrossRefCitedByXML skips forward_link elements with no children`() {
-        val xml = """
-            <crossref_result>
-                <forward_link doi="10.1234/seqset-1"/>
-                <forward_link doi="10.1234/seqset-2">
-                    <journal_cite>
-                        <doi>10.5678/paper-1</doi>
-                        <title>A citing paper</title>
-                        <year>2024</year>
-                    </journal_cite>
-                </forward_link>
-            </crossref_result>
+    fun `parseCrossRefCitedByXML throws when forward_link is missing the seqSet DOI attribute`() {
+        val xml = """                           
+          <crossref_result>                                                                         
+              <forward_link>                                                                      
+                  <journal_cite>                                                                    
+                      <doi>10.5678/paper-1</doi>
+                  </journal_cite>                                                                   
+              </forward_link>                                                                     
+          </crossref_result>
         """.trimIndent()
 
-        val result = crossRefService.parseCrossRefCitedByXML(xml)
-
-        assertEquals(1, result.size)
-        assertTrue(result.containsKey("10.1234/seqset-2"))
+        val ex = assertThrows<IllegalStateException> {
+            crossRefService.parseCrossRefCitedByXML(xml)
+        }
+        assertTrue(ex.message!!.contains("missing SeqSet DOI"))
     }
 
     @Test
-    fun `parseCrossRefCitedByXML returns empty strings for missing fields within a forward_link`() {
+    fun `parseCrossRefCitedByXML throws when forward_link has no citation element`() {
         val xml = """
-            <crossref_result>
-                <forward_link>
-                    <journal_cite/>
-                </forward_link>
-            </crossref_result>
+          <crossref_result>                                                                         
+              <forward_link doi="10.1234/seqset-1"/>
+          </crossref_result>                                                                        
         """.trimIndent()
 
-        val result = crossRefService.parseCrossRefCitedByXML(xml)
+        val ex = assertThrows<IllegalStateException> {
+            crossRefService.parseCrossRefCitedByXML(xml)
+        }
+        assertTrue(ex.message!!.contains("no citation element"))
+    }
 
-        assertEquals(1, result.size)
-        assertEquals(
-            listOf(
-                SeqSetCitingSource(
-                    sourceDOI = "",
-                    title = "",
-                    year = "",
-                    contributors = emptyList(),
-                ),
-            ),
-            result[""],
-        )
+    @Test
+    fun `parseCrossRefCitedByXML throws when citing source has no DOI`() {
+        val xml = """                                                                               
+          <crossref_result>               
+              <forward_link doi="10.1234/seqset-1">
+                  <journal_cite>                                                                    
+                      <title>A citing paper</title>
+                  </journal_cite>                                                                   
+              </forward_link>                                                                     
+          </crossref_result>                                                                        
+        """.trimIndent()
+
+        val ex = assertThrows<IllegalStateException> {
+            crossRefService.parseCrossRefCitedByXML(xml)
+        }
+        assertTrue(ex.message!!.contains("missing DOI"))
     }
 
     @Test
     fun `parseCrossRefCitedByXML returns empty list for completely malformed input`() {
         val result = crossRefService.parseCrossRefCitedByXML("this is not xml at all !!!!")
-
         assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `parseCrossRefCitedByXML returns empty defaults for missing metadata fields`() {
+        val xml = """                                                                                 
+          <crossref_result>                                                                       
+              <forward_link doi="10.1234/seqset-1">
+                  <journal_cite>                                                                    
+                      <doi>10.5678/paper-1</doi>
+                  </journal_cite>                                                                   
+              </forward_link>                                                                     
+          </crossref_result>
+        """.trimIndent()
+
+        val result = crossRefService.parseCrossRefCitedByXML(xml)
+        assertEquals(
+            listOf(
+                SeqSetCitingSource(
+                    sourceDOI = "10.5678/paper-1",
+                    title = "",
+                    year = "",
+                    contributors = emptyList(),
+                ),
+            ),
+            result["10.1234/seqset-1"],
+        )
+    }
+
+    @Test
+    fun `parseCrossRefCitedByXML filters out empty contributors`() {
+        val xml = """
+          <crossref_result>                                                                         
+              <forward_link doi="10.1234/seqset-1">                                               
+                  <journal_cite>
+                      <doi>10.5678/paper-1</doi>                                                    
+                      <contributors>
+                          <contributor><given_name>Jane</given_name><surname>Doe</surname></contributor>                  
+                          <contributor></contributor>
+                          <contributor><surname>Solo</surname></contributor>                        
+                      </contributors>         
+                  </journal_cite>                                                                   
+              </forward_link>                                                                     
+          </crossref_result>                                                                        
+        """.trimIndent()
+
+        val result = crossRefService.parseCrossRefCitedByXML(xml)
+        assertEquals(
+            listOf(
+                CitationContributor("Jane", "Doe"),
+                CitationContributor("", "Solo"),
+            ),
+            result["10.1234/seqset-1"]!!.single().contributors,
+        )
     }
 
     @Test
