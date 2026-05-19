@@ -87,14 +87,16 @@ const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-inf
                             </div>
                         </div>
                     </div>
-                    <div class='w-1/4 flex flex-col items-start pl-4'>
+                    <div class='md:w-1/4 flex flex-col pl-4'>
                         <span class='text-xl'>Cited by</span>
                         {/* We show an empty plot for now until we get real data. */}
-                        <CitationPlot
-                            citedByData={{ years: [2020, 2021, 2022, 2023, 2024], citations: [0, 0, 0, 0, 0] }}
-                            description='Number of times your sequences have been cited in publications'
-                            client:load
-                        />
+                        <div class='w-80'>
+                            <CitationPlot
+                                citedByData={{ years: [2020, 2021, 2022, 2023, 2024], citations: [0, 0, 0, 0, 0] }}
+                                description='Number of times your sequences have been cited in publications'
+                                client:load
+                            />
+                        </div>
                     </div>
                 </div>
             )
