@@ -28,13 +28,13 @@ const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-inf
 ---
 
 <BaseLayout title='SeqSets' data-testid='seqSets-list-container' activeTopNavigationItem='seqsets'>
-    <div class='flex flex-col justify-center items-center'>
+    <div class='flex flex-col items-center'>
         {
             !accessToken ? (
                 <NeedToLogin message='You need to be logged in to create new SeqSets.' />
             ) : (
-                <div class='flex flex-row justify-center w-5/6 divide-x max-w-7xl'>
-                    <div class='w-3/4 flex flex-col justify-start'>
+                <div class='flex flex-wrap w-full gap-y-6 lg:divide-x'>
+                    <div class='flex flex-col lg:w-3/4'>
                         {authorResponse.match(
                             (authorProfile) => (
                                 <AuthorDetails
@@ -54,53 +54,49 @@ const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-inf
                             ),
                         )}
                         <hr />
-                        <div class='flex justify-start'>
-                            <div class='w-11/12'>
-                                <div class='flex justify-between items-center py-8'>
-                                    <h1 class='text-2xl font-semibold'>SeqSets</h1>
-                                    <SeqSetListActions
-                                        clientConfig={clientConfig}
-                                        accessToken={accessToken}
-                                        client:load
-                                    />
-                                </div>
-                                <div>
-                                    <p>
-                                        SeqSets are collections of sequences with a unique identifier that can be used
-                                        to reference that set of sequences. SeqSets can also be used to generate DOIs,
-                                        which can in turn be used in publications, public communications etc.
-                                    </p>
-                                    <p class='py-4'>
-                                        You can learn how to generate SeqSets
-                                        <a href='/docs/how-to/generate-seqset' class='text-primary-700  opacity-90'>
-                                            here.
-                                        </a>
-                                    </p>
-                                </div>
-                                <div>
-                                    {seqSetsResponse.match(
-                                        (seqSets) => (
-                                            <SeqSetList seqSets={seqSets} client:load />
-                                        ),
-                                        (error) => (
-                                            <ErrorFeedback
-                                                message={'Error while fetching seqSets: ' + JSON.stringify(error)}
-                                                client:load
-                                            />
-                                        ),
-                                    )}
-                                </div>
+                        <div class='flex flex-col lg:pr-4'>
+                            <div class='flex justify-between items-center py-8'>
+                                <h1 class='text-2xl font-semibold'>SeqSets</h1>
+                                <SeqSetListActions clientConfig={clientConfig} accessToken={accessToken} client:load />
+                            </div>
+                            <div>
+                                <p>
+                                    SeqSets are collections of sequences with a unique identifier that can be used to
+                                    reference that set of sequences. SeqSets can also be used to generate DOIs, which
+                                    can in turn be used in publications, public communications etc.
+                                </p>
+                                <p class='py-4'>
+                                    You can learn how to generate SeqSets
+                                    <a href='/docs/how-to/generate-seqset' class='text-primary-700 opacity-90'>
+                                        here.
+                                    </a>
+                                </p>
+                            </div>
+                            <div>
+                                {seqSetsResponse.match(
+                                    (seqSets) => (
+                                        <SeqSetList seqSets={seqSets} client:load />
+                                    ),
+                                    (error) => (
+                                        <ErrorFeedback
+                                            message={'Error while fetching seqSets: ' + JSON.stringify(error)}
+                                            client:load
+                                        />
+                                    ),
+                                )}
                             </div>
                         </div>
                     </div>
-                    <div class='w-1/4 flex flex-col justify-start items-start pl-4'>
+                    <div class='flex flex-col lg:w-1/4 lg:pl-4'>
                         <span class='text-xl'>Cited by</span>
                         {/* We show an empty plot for now until we get real data. */}
-                        <CitationPlot
-                            citedByData={{ years: [2020, 2021, 2022, 2023, 2024], citations: [0, 0, 0, 0, 0] }}
-                            description='Number of times your sequences have been cited in publications'
-                            client:load
-                        />
+                        <div class='max-w-96'>
+                            <CitationPlot
+                                citedByData={{ years: [2020, 2021, 2022, 2023, 2024], citations: [0, 0, 0, 0, 0] }}
+                                description='Number of times your sequences have been cited in publications'
+                                client:load
+                            />
+                        </div>
                     </div>
                 </div>
             )
