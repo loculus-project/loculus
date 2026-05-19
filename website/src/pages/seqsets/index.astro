@@ -33,8 +33,8 @@ const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-inf
             !accessToken ? (
                 <NeedToLogin message='You need to be logged in to create new SeqSets.' />
             ) : (
-                <div class='flex flex-col md:flex-row w-full md:w-5/6 md:divide-x gap-y-6'>
-                    <div class='md:w-3/4 flex flex-col'>
+                <div class='flex flex-wrap w-full gap-y-6 lg:divide-x'>
+                    <div class='flex flex-col lg:w-3/4'>
                         {authorResponse.match(
                             (authorProfile) => (
                                 <AuthorDetails
@@ -54,7 +54,7 @@ const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-inf
                             ),
                         )}
                         <hr />
-                        <div class='flex flex-col md:pr-4'>
+                        <div class='flex flex-col lg:pr-4'>
                             <div class='flex justify-between items-center py-8'>
                                 <h1 class='text-2xl font-semibold'>SeqSets</h1>
                                 <SeqSetListActions clientConfig={clientConfig} accessToken={accessToken} client:load />
@@ -87,10 +87,10 @@ const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-inf
                             </div>
                         </div>
                     </div>
-                    <div class='md:w-1/4 flex flex-col pl-4'>
+                    <div class='flex flex-col lg:w-1/4 lg:pl-4'>
                         <span class='text-xl'>Cited by</span>
                         {/* We show an empty plot for now until we get real data. */}
-                        <div class='w-80'>
+                        <div class='max-w-96'>
                             <CitationPlot
                                 citedByData={{ years: [2020, 2021, 2022, 2023, 2024], citations: [0, 0, 0, 0, 0] }}
                                 description='Number of times your sequences have been cited in publications'
