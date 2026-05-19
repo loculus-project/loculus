@@ -2,7 +2,7 @@ import { type FC } from 'react';
 
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { type SeqSet, type SeqSetCitingSource } from '../../types/seqSetCitation';
+import { type SeqSet, type SeqSetCitation } from '../../types/seqSetCitation';
 
 interface SeqSetCitationsListProps {
     clientConfig: ClientConfig;
@@ -10,7 +10,7 @@ interface SeqSetCitationsListProps {
 }
 
 interface SeqSetCitationItemProps {
-    seqSetCitation: SeqSetCitingSource;
+    seqSetCitation: SeqSetCitation;
 }
 
 const SeqSetCitationDOI: FC<SeqSetCitationItemProps> = ({ seqSetCitation }) => {
@@ -50,10 +50,9 @@ export const SeqSetCitationsList: FC<SeqSetCitationsListProps> = ({ clientConfig
         isLoading: isSeqSetCitationsLoading,
         error: isSeqSetCitationsError,
         data: seqSetCitations,
-    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitations(
-        { params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion } },
-        { enabled: !!seqSet.seqSetDOI },
-    );
+    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitations({
+        params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion },
+    });
 
     return (
         <div className='flex flex-col items-center w-full'>
@@ -61,9 +60,7 @@ export const SeqSetCitationsList: FC<SeqSetCitationsListProps> = ({ clientConfig
                 <h1 className='text-xl font-semibold py-4'>SeqSet Citations</h1>
             </div>
             <div className='overflow-y-auto max-h-[60vh]'>
-                {!seqSet.seqSetDOI ? (
-                    <span>This SeqSet does not have a DOI, so no citation data is available.</span>
-                ) : isSeqSetCitationsLoading ? (
+                {isSeqSetCitationsLoading ? (
                     <span className='loading loading-spinner'></span>
                 ) : isSeqSetCitationsError ? (
                     <span>Failed to load citations.</span>

@@ -414,7 +414,7 @@ const Acknowledgement = ({
                             />
                             <div>
                                 <p className='text-xs pl-4 text-gray-500'>
-                                    I confirm that the data submitted is not sensitive or human-identifiable.
+                                    I confirm that the data submitted is not sensitive or human-identifiable
                                 </p>
                             </div>
                         </label>

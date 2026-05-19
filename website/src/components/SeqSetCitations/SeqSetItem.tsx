@@ -82,10 +82,9 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         isLoading: isSeqSetCitationsLoading,
         error: isSeqSetCitationsError,
         data: seqSetCitations,
-    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitations(
-        { params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion } },
-        { enabled: !!seqSet.seqSetDOI },
-    );
+    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitations({
+        params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion },
+    });
 
     const totalCitations = useMemo(() => {
         if (isSeqSetCitationsLoading || isSeqSetCitationsError) return 0;
@@ -210,16 +209,12 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     <SeqSetSectionEntry
                         label='Total citations'
                         value={
-                            seqSet.seqSetDOI ? (
-                                isSeqSetCitationsLoading ? (
-                                    <span className='loading loading-spinner loading-xs'></span>
-                                ) : isSeqSetCitationsError ? (
-                                    <span>Failed to load citations.</span>
-                                ) : (
-                                    <span>Cited by {totalCitations}</span>
-                                )
+                            isSeqSetCitationsLoading ? (
+                                <span className='loading loading-spinner loading-xs'></span>
+                            ) : isSeqSetCitationsError ? (
+                                <span>Failed to load citations.</span>
                             ) : (
-                                <span>Cited by 0</span>
+                                <span>Cited by {totalCitations}</span>
                             )
                         }
                     />
