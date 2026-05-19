@@ -10,12 +10,14 @@ jobs:
         taxon_id:
           - 1868215  # Orthopneumovirus (RSV)
           - 1980456  # Orthohantavirus andesense
+          - 3046277  # Orthoflavivirus flavi
           - 3048148  # Metapneumovirus hominis
           - 3048448  # Orthoflavivirus nilense (West nile virus)
           - 3052345  # Morbillivirus hominis (Measles)
           - 3052458  # Orthoebolavirus bundibugyoense
           - 3052460  # Orthoebolavirus sudanense
           - 3052462  # Orthoebolavirus zairense
+          - 3052464  # Orthoflavivirus denguei
           - 3052505  # Orthomarburgvirus marburgense
           - 3052518  # Orthonairovirus haemorrhagiae (CCHFV)
           - 3431483  # Orthopoxvirus monkeypox
