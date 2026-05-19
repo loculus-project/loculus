@@ -57,17 +57,13 @@ const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-inf
                         <div class='flex flex-col md:pr-4'>
                             <div class='flex justify-between items-center py-8'>
                                 <h1 class='text-2xl font-semibold'>SeqSets</h1>
-                                <SeqSetListActions
-                                    clientConfig={clientConfig}
-                                    accessToken={accessToken}
-                                    client:load
-                                />
+                                <SeqSetListActions clientConfig={clientConfig} accessToken={accessToken} client:load />
                             </div>
                             <div>
                                 <p>
-                                    SeqSets are collections of sequences with a unique identifier that can be used
-                                    to reference that set of sequences. SeqSets can also be used to generate DOIs,
-                                    which can in turn be used in publications, public communications etc.
+                                    SeqSets are collections of sequences with a unique identifier that can be used to
+                                    reference that set of sequences. SeqSets can also be used to generate DOIs, which
+                                    can in turn be used in publications, public communications etc.
                                 </p>
                                 <p class='py-4'>
                                     You can learn how to generate SeqSets
