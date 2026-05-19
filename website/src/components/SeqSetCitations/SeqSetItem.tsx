@@ -3,7 +3,6 @@ import { AxiosError } from 'axios';
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { AuthorDetails } from './AuthorDetails.tsx';
 import { CitationPlot } from './CitationPlot';
 import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
@@ -15,15 +14,13 @@ import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { type AuthorProfile, type CitedByResult, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
+import { type CitedByResult, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { BaseDialog } from '../common/BaseDialog.tsx';
 import { Button } from '../common/Button.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDotsGrid from '~icons/mdi/dots-grid';
 import MdiViewGrid from '~icons/mdi/view-grid';
-import RiInformationLine from '~icons/ri/information-line';
 
 const logger = getClientLogger('SeqSetItem');
 
@@ -55,7 +52,6 @@ type SeqSetItemProps = {
     accessToken: string;
     seqSetAccessionVersion: string;
     seqSet: SeqSet;
-    seqSetAuthor?: AuthorProfile;
     seqSetRecords: SeqSetRecord[];
     citedByData: CitedByResult;
     seqSetGraphs: SeqSetGraph[];
@@ -70,7 +66,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     accessToken,
     seqSetAccessionVersion,
     seqSet,
-    seqSetAuthor,
     seqSetRecords,
     citedByData,
     seqSetGraphs,
@@ -81,7 +76,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
 }) => {
     const [page, setPage] = useState(1);
     const [wideGraphs, setWideGraphs] = useState(false);
-    const [isCreatorInfoOpen, setIsCreatorInfoOpen] = useState(false);
     const sequencesPerPage = 10;
 
     const {
@@ -104,14 +98,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
 
     const getCrossRefUrl = () => {
         return `https://search.crossref.org/search/works?from_ui=yes&q=${seqSet.seqSetDOI}`;
-    };
-
-    const formatDate = (date?: string) => {
-        if (date === undefined) {
-            return 'N/A';
-        }
-        const dateObj = new Date(date);
-        return dateObj.toISOString().split('T')[0];
     };
 
     const renderDOI = () => {
@@ -149,28 +135,10 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     // Colour used for the plots, derived from colors.json
     const barPlotColor = mainTailwindColor[500];
 
-    const createdByValue = seqSetAuthor ? (
-        <AuthorDetails displayFullDetails={false} firstName={seqSetAuthor.firstName} lastName={seqSetAuthor.lastName} />
-    ) : (
-        'Unknown'
-    );
-
     return (
         <div className='flex flex-col'>
             <div className='grid grid-cols-1 lg:grid-cols-2'>
-                <SeqSetSection
-                    title='Details'
-                    headerContent={
-                        <Button
-                            className='text-gray-400 hover:text-gray-600'
-                            title='Show creator details'
-                            aria-label='Show creator details'
-                            onClick={() => setIsCreatorInfoOpen(true)}
-                        >
-                            <RiInformationLine className='w-5 h-5' />
-                        </Button>
-                    }
-                >
+                <SeqSetSection title='Details'>
                     <SeqSetSectionEntry label='Name' value={seqSet.name} />
                     <SeqSetSectionEntry label='Description' value={seqSet.description ?? 'N/A'} />
                     <SeqSetSectionEntry label='Version' value={seqSet.seqSetVersion} />
@@ -179,19 +147,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                         value={`${seqSetRecords.length} sequence${seqSetRecords.length === 1 ? '' : 's'}`}
                     />
                 </SeqSetSection>
-                <BaseDialog
-                    title='Creator details'
-                    isOpen={isCreatorInfoOpen}
-                    onClose={() => setIsCreatorInfoOpen(false)}
-                    fullWidth={false}
-                >
-                    <p className='mb-4 text-sm text-gray-500'>
-                        The creator is the person who assembled this SeqSet on Loculus. They are not necessarily the
-                        originator of the underlying sequence data.
-                    </p>
-                    <SeqSetSectionEntry label='Created by' value={createdByValue} />
-                    <SeqSetSectionEntry label='Created date' value={formatDate(seqSet.createdAt)} />
-                </BaseDialog>
                 <SeqSetSection title='Citations'>
                     <SeqSetSectionEntry label='DOI' value={renderDOI()} />
                     <SeqSetSectionEntry
