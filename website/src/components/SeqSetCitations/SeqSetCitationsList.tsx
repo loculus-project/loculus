@@ -48,7 +48,7 @@ const SeqSetCitationItem: FC<SeqSetCitationItemProps> = ({ seqSetCitation }) => 
 export const SeqSetCitationsList: FC<SeqSetCitationsListProps> = ({ clientConfig, seqSet }) => {
     const {
         isLoading: isSeqSetCitationsLoading,
-        error: isSeqSetCitationsError,
+        error: seqSetCitationsError,
         data: seqSetCitations,
     } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitations({
         params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion },
@@ -62,7 +62,7 @@ export const SeqSetCitationsList: FC<SeqSetCitationsListProps> = ({ clientConfig
             <div className='overflow-y-auto max-h-[60vh]'>
                 {isSeqSetCitationsLoading ? (
                     <span className='loading loading-spinner'></span>
-                ) : isSeqSetCitationsError ? (
+                ) : seqSetCitationsError ? (
                     <span>Failed to load citations.</span>
                 ) : seqSetCitations.length > 0 ? (
                     <ul className='max-w-3xl space-y-8'>

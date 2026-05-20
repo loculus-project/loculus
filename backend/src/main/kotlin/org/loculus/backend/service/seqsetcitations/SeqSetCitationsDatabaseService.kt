@@ -7,6 +7,7 @@ import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
@@ -278,7 +279,7 @@ class SeqSetCitationsDatabaseService(
             .where {
                 (SeqSetToCitingSourceTable.seqSetId eq seqSet[SeqSetsTable.seqSetId]) and
                     (SeqSetToCitingSourceTable.seqSetVersion eq seqSet[SeqSetsTable.seqSetVersion])
-            }.map {
+            }.orderBy(SeqSetCitingSourceTable.year to SortOrder.DESC).map {
                 SeqSetCitation(
                     it[SeqSetCitingSourceTable.sourceDOI],
                     it[SeqSetCitingSourceTable.title],

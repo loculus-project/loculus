@@ -80,20 +80,20 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
 
     const {
         isLoading: isSeqSetCitationsLoading,
-        error: isSeqSetCitationsError,
+        error: seqSetCitationsError,
         data: seqSetCitations,
     } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitations({
         params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion },
     });
 
     const totalCitations = useMemo(() => {
-        if (isSeqSetCitationsLoading || isSeqSetCitationsError) return 0;
+        if (isSeqSetCitationsLoading || seqSetCitationsError) return 0;
 
         return seqSetCitations.length;
-    }, [isSeqSetCitationsLoading, isSeqSetCitationsError, seqSetCitations]);
+    }, [isSeqSetCitationsLoading, seqSetCitationsError, seqSetCitations]);
 
     const citationDates: AggregateRow[] = useMemo(() => {
-        if (isSeqSetCitationsLoading || isSeqSetCitationsError) return [];
+        if (isSeqSetCitationsLoading || seqSetCitationsError) return [];
 
         const citationDatesAggregate = new Map<string, number>();
         seqSetCitations.forEach((citation) =>
@@ -103,7 +103,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
             value: year,
             count: citations,
         }));
-    }, [isSeqSetCitationsLoading, isSeqSetCitationsError, seqSetCitations]);
+    }, [isSeqSetCitationsLoading, seqSetCitationsError, seqSetCitations]);
 
     const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(
         clientConfig,
@@ -211,7 +211,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                         value={
                             isSeqSetCitationsLoading ? (
                                 <span className='loading loading-spinner loading-xs'></span>
-                            ) : isSeqSetCitationsError ? (
+                            ) : seqSetCitationsError ? (
                                 <span>Failed to load citations.</span>
                             ) : (
                                 <span>Cited by {totalCitations}</span>
