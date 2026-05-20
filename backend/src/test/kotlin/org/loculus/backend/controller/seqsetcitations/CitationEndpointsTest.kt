@@ -128,7 +128,7 @@ class CitationEndpointsTest(
         // Simulate running the crossref citations task
         every { crossRefService.isActive } returns true
         every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
-            emptyMap()
+            emptyList()
         seqSetCrossRefCitationsTask.task()
 
         client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
@@ -162,10 +162,11 @@ class CitationEndpointsTest(
             title = "A paper citing the seqSet",
             year = "2024",
             contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
+            seqSetDOIs = setOf(seqSetDOI),
         )
         every { crossRefService.isActive } returns true
         every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
-            mapOf(seqSetDOI to listOf(seqSetCitingSource))
+            listOf(seqSetCitingSource)
         seqSetCrossRefCitationsTask.task()
 
         client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)

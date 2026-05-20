@@ -10,6 +10,7 @@ import org.redundent.kotlin.xml.xml
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Service
 import java.io.DataOutputStream
+import java.io.IOException
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import java.net.HttpURLConnection
@@ -63,7 +64,7 @@ class CrossRefService(private val properties: CrossRefServiceProperties) {
         }
     }
 
-    fun parseCrossRefCitedByXML(citedByXML: String): Map<String, List<SeqSetCitingSource>> {
+    fun parseCrossRefCitedByXML(citedByXML: String): List<SeqSetCitingSource> {
         val doc = Jsoup.parse(citedByXML, "", Parser.xmlParser())
 
         return doc.select("forward_link").map { forwardLink ->
@@ -92,16 +93,17 @@ class CrossRefService(private val properties: CrossRefServiceProperties) {
                 }
             }
 
-            seqSetDOI to SeqSetCitingSource(
+            SeqSetCitingSource(
                 sourceDOI = sourceDOI,
                 title = title,
                 year = year,
                 contributors = contributors,
+                seqSetDOIs = setOf(seqSetDOI),
             )
-        }.groupBy({ it.first }, { it.second })
+        }
     }
 
-    fun getCrossRefCitedBy(doiPrefix: String): Map<String, List<SeqSetCitingSource>> {
+    fun getCrossRefCitedBy(doiPrefix: String): List<SeqSetCitingSource> {
         checkIsActive()
 
         // End date is the current date at time of request

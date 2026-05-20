@@ -58,27 +58,25 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         val result = crossRefService.parseCrossRefCitedByXML(xml)
 
         assertEquals(
-            mapOf(
-                "10.1234/seqset-1" to listOf(
-                    SeqSetCitingSource(
-                        sourceDOI = "10.5678/paper-1",
-                        title = "A citing paper",
-                        year = "2024",
-                        contributors = listOf(
-                            CitationContributor(givenName = "Jane", surname = "Doe"),
-                            CitationContributor(givenName = "John", surname = "Smith"),
-                        ),
+            listOf(
+                SeqSetCitingSource(
+                    sourceDOI = "10.5678/paper-1",
+                    title = "A citing paper",
+                    year = "2024",
+                    contributors = listOf(
+                        CitationContributor(givenName = "Jane", surname = "Doe"),
+                        CitationContributor(givenName = "John", surname = "Smith"),
                     ),
+                    seqSetDOIs = setOf("10.1234/seqset-1"),
                 ),
-                "10.1234/seqset-2" to listOf(
-                    SeqSetCitingSource(
-                        sourceDOI = "10.5678/paper-2",
-                        title = "Another citing paper",
-                        year = "2023",
-                        contributors = listOf(
-                            CitationContributor(givenName = "Alice", surname = "Jones"),
-                        ),
+                SeqSetCitingSource(
+                    sourceDOI = "10.5678/paper-2",
+                    title = "Another citing paper",
+                    year = "2023",
+                    contributors = listOf(
+                        CitationContributor(givenName = "Alice", surname = "Jones"),
                     ),
+                    seqSetDOIs = setOf("10.1234/seqset-2"),
                 ),
             ),
             result,
@@ -168,9 +166,10 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                     title = "",
                     year = "",
                     contributors = emptyList(),
+                    seqSetDOIs = setOf("10.1234/seqset-1"),
                 ),
             ),
-            result["10.1234/seqset-1"],
+            result,
         )
     }
 
@@ -197,7 +196,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                 CitationContributor("Jane", "Doe"),
                 CitationContributor("", "Solo"),
             ),
-            result["10.1234/seqset-1"]!!.single().contributors,
+            result[0].contributors,
         )
     }
 

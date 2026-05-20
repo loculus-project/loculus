@@ -10,23 +10,21 @@ import org.springframework.stereotype.Component
 
 private val log = mu.KotlinLogging.logger {}
 
-private fun mergeCitingSources(citationsByDOI: Map<String, List<SeqSetCitingSource>>): Set<SeqSetCitingSource> {
+internal fun mergeCitingSources(citingSources: List<SeqSetCitingSource>): Set<SeqSetCitingSource> {
     val mergedSources = mutableMapOf<String, SeqSetCitingSource>()
 
-    for ((seqSetDOI, citingSources) in citationsByDOI) {
-        for (incomingSource in citingSources) {
-            val existingSource = mergedSources[incomingSource.sourceDOI]
-            if (existingSource != null &&
-                existingSource.copy(seqSetDOIs = emptySet()) != incomingSource.copy(seqSetDOIs = emptySet())
-            ) {
-                log.warn {
-                    "Conflicting CrossRef metadata for citing source ${incomingSource.sourceDOI} (keeping latest): $existingSource and $incomingSource"
-                }
+    for (citingSource in citingSources) {
+        val existingSource = mergedSources[citingSource.sourceDOI]
+        if (existingSource != null &&
+            existingSource.copy(seqSetDOIs = emptySet()) != citingSource.copy(seqSetDOIs = emptySet())
+        ) {
+            log.warn {
+                "Conflicting CrossRef metadata for citing source ${citingSource.sourceDOI} (keeping latest): $existingSource and $citingSource"
             }
-            mergedSources[incomingSource.sourceDOI] = incomingSource.copy(
-                seqSetDOIs = existingSource?.seqSetDOIs.orEmpty() + seqSetDOI,
-            )
         }
+        mergedSources[citingSource.sourceDOI] = citingSource.copy(
+            seqSetDOIs = existingSource?.seqSetDOIs.orEmpty() + citingSource.seqSetDOIs,
+        )
     }
     return mergedSources.values.toSet()
 }
@@ -61,10 +59,10 @@ class SeqSetCrossRefCitationsTask(
         }
 
         log.info { "Fetching CrossRef citations for DOI prefix: $doiPrefix" }
-        val citationsByDOI = crossRefService.getCrossRefCitedBy(doiPrefix)
-        val citingSources = mergeCitingSources(citationsByDOI)
+        val citingSources = mergeCitingSources(crossRefService.getCrossRefCitedBy(doiPrefix))
+        val seqSetDOIs = citingSources.flatMap { it.seqSetDOIs }.toSet()
         log.info {
-            "Fetched ${citingSources.size} citing source(s) from CrossRef covering ${citationsByDOI.size} SeqSet DOI(s)."
+            "Fetched ${citingSources.size} citing source(s) from CrossRef covering ${seqSetDOIs.size} SeqSet DOI(s)."
         }
         if (citingSources.isEmpty()) return
 
