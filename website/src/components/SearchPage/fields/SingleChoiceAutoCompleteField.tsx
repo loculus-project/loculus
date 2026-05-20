@@ -26,7 +26,6 @@ const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputEl
         onFocus={props.onFocus}
         disabled={props.disabled}
         autoComplete='off'
-        placeholder={props.placeholder ?? ''}
         label={props.placeholder ?? ''}
     />
 ));
