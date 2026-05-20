@@ -10,8 +10,8 @@ import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
 import type { ReferenceSelection } from '../../../utils/referenceSelection';
 import { getSegmentLapisNames } from '../../../utils/sequenceTypeHelpers';
 import { processTemplate, matchPlaceholders } from '../../../utils/templateProcessor';
+import { BaseDialog } from '../../common/BaseDialog';
 import { Button } from '../../common/Button';
-import BasicModal from '../../common/Modal';
 import DashiconsExternal from '~icons/dashicons/external';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
@@ -256,17 +256,19 @@ function LinkOutMenuDataUseTermModal(props: {
     onClick1: () => void;
 }) {
     return (
-        <BasicModal isModalVisible={props.modalVisible} setModalVisible={props.setModalVisible}>
-            <div className='p-6'>
-                <h2 className='text-xl font-bold mb-2'>
-                    Options for launching {props.currentLinkOut.current?.name ?? 'Tool'}
-                </h2>
-                <h3 className='text-lg font-medium text-gray-700 mb-4 mt-6'>Data use terms</h3>
-                <p className='mb-6 text-gray-600'>
+        <BaseDialog
+            title={`Options for launching ${props.currentLinkOut.current?.name ?? 'Tool'}`}
+            isOpen={props.modalVisible}
+            onClose={() => props.setModalVisible(false)}
+            fullWidth={false}
+        >
+            <div className='max-w-lg'>
+                <h3 className='text-lg font-medium text-gray-700 mb-3'>Data use terms</h3>
+                <p className='mb-6 text-gray-600 leading-relaxed'>
                     Would you like to include Restricted-Use sequences in this analysis? (If you do, you must comply
                     with the Restricted-Use terms.)
                 </p>
-                <div className='flex justify-end space-x-4'>
+                <div className='flex flex-col-reverse sm:flex-row sm:justify-end gap-3'>
                     <Button
                         className='px-4 py-2 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition-colors'
                         onClick={props.onClick}
@@ -281,6 +283,6 @@ function LinkOutMenuDataUseTermModal(props: {
                     </Button>
                 </div>
             </div>
-        </BasicModal>
+        </BaseDialog>
     );
 }
