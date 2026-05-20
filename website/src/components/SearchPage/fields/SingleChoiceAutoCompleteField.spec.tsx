@@ -63,6 +63,7 @@ describe('SingleChoiceAutoCompleteField', () => {
 
         const input = screen.getByLabelText('Test Field');
         expect(input).toBeInTheDocument();
+        expect(input).toHaveAttribute('placeholder', ' ');
 
         await userEvent.click(input);
 
