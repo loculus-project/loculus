@@ -180,7 +180,7 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN multiple crossref citation runs link the same citing source to new seqSets THEN all seqSets are still cited`() {
+    fun `WHEN multiple crossref citation runs link the same citing source THEN all citations are recorded`() {
         val seqSetAResult = client.createSeqSet().andExpect(status().isOk).andReturn()
         val seqSetIdA = JsonPath.read<String>(seqSetAResult.response.contentAsString, "$.seqSetId")
         val seqSetVersionA =
