@@ -316,6 +316,7 @@ ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
 --
 
 CREATE TABLE public.seqset_citing_source (
+    citing_source_id bigint NOT NULL,
     source_doi text NOT NULL,
     origin text NOT NULL,
     title text NOT NULL,
@@ -326,6 +327,27 @@ CREATE TABLE public.seqset_citing_source (
 
 
 ALTER TABLE public.seqset_citing_source OWNER TO postgres;
+
+--
+-- Name: seqset_citing_source_citing_source_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.seqset_citing_source_citing_source_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.seqset_citing_source_citing_source_id_seq OWNER TO postgres;
+
+--
+-- Name: seqset_citing_source_citing_source_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.seqset_citing_source_citing_source_id_seq OWNED BY public.seqset_citing_source.citing_source_id;
+
 
 --
 -- Name: seqset_id_sequence; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -381,7 +403,7 @@ ALTER SEQUENCE public.seqset_records_seqset_record_id_seq OWNED BY public.seqset
 --
 
 CREATE TABLE public.seqset_to_citing_source (
-    source_doi text NOT NULL,
+    citing_source_id bigint NOT NULL,
     seqset_id text NOT NULL,
     seqset_version bigint NOT NULL
 );
@@ -611,6 +633,13 @@ ALTER TABLE ONLY public.groups_table ALTER COLUMN group_id SET DEFAULT nextval('
 
 
 --
+-- Name: seqset_citing_source citing_source_id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_citing_source ALTER COLUMN citing_source_id SET DEFAULT nextval('public.seqset_citing_source_citing_source_id_seq'::regclass);
+
+
+--
 -- Name: seqset_records seqset_record_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -716,7 +745,15 @@ ALTER TABLE ONLY public.metadata_upload_aux_table
 --
 
 ALTER TABLE ONLY public.seqset_citing_source
-    ADD CONSTRAINT seqset_citing_source_pkey PRIMARY KEY (source_doi);
+    ADD CONSTRAINT seqset_citing_source_pkey PRIMARY KEY (citing_source_id);
+
+
+--
+-- Name: seqset_citing_source seqset_citing_source_source_doi_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_citing_source
+    ADD CONSTRAINT seqset_citing_source_source_doi_key UNIQUE (source_doi);
 
 
 --
@@ -732,7 +769,7 @@ ALTER TABLE ONLY public.seqset_records
 --
 
 ALTER TABLE ONLY public.seqset_to_citing_source
-    ADD CONSTRAINT seqset_to_citing_source_pkey PRIMARY KEY (source_doi, seqset_id, seqset_version);
+    ADD CONSTRAINT seqset_to_citing_source_pkey PRIMARY KEY (citing_source_id, seqset_id, seqset_version);
 
 
 --
@@ -931,7 +968,7 @@ ALTER TABLE ONLY public.files
 --
 
 ALTER TABLE ONLY public.seqset_to_citing_source
-    ADD CONSTRAINT foreign_key_citing_source FOREIGN KEY (source_doi) REFERENCES public.seqset_citing_source(source_doi) ON DELETE CASCADE;
+    ADD CONSTRAINT foreign_key_citing_source FOREIGN KEY (citing_source_id) REFERENCES public.seqset_citing_source(citing_source_id) ON DELETE CASCADE;
 
 
 --
