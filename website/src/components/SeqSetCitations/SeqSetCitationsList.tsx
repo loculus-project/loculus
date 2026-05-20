@@ -1,12 +1,11 @@
 import { type FC } from 'react';
 
-import { seqSetCitationClientHooks } from '../../services/serviceHooks';
-import type { ClientConfig } from '../../types/runtimeConfig';
-import { type SeqSet, type SeqSetCitation } from '../../types/seqSetCitation';
+import { type SeqSetCitation } from '../../types/seqSetCitation';
 
 interface SeqSetCitationsListProps {
-    clientConfig: ClientConfig;
-    seqSet: SeqSet;
+    isLoading: boolean;
+    error: Error | null;
+    seqSetCitations: SeqSetCitation[];
 }
 
 interface SeqSetCitationItemProps {
@@ -45,24 +44,16 @@ const SeqSetCitationItem: FC<SeqSetCitationItemProps> = ({ seqSetCitation }) => 
     );
 };
 
-export const SeqSetCitationsList: FC<SeqSetCitationsListProps> = ({ clientConfig, seqSet }) => {
-    const {
-        isLoading: isSeqSetCitationsLoading,
-        error: seqSetCitationsError,
-        data: seqSetCitations,
-    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitedBy({
-        params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion },
-    });
-
+export const SeqSetCitationsList: FC<SeqSetCitationsListProps> = ({ isLoading, error, seqSetCitations }) => {
     return (
         <div className='flex flex-col items-center w-full'>
             <div className='flex justify-start items-center py-5'>
                 <h1 className='text-xl font-semibold py-4'>SeqSet Citations</h1>
             </div>
             <div className='overflow-y-auto max-h-[60vh]'>
-                {isSeqSetCitationsLoading ? (
+                {isLoading ? (
                     <span className='loading loading-spinner'></span>
-                ) : seqSetCitationsError ? (
+                ) : error ? (
                     <span>Failed to load citations.</span>
                 ) : seqSetCitations.length > 0 ? (
                     <ul className='max-w-3xl space-y-8'>

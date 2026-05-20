@@ -47,6 +47,14 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     const [exportModalVisible, setExportModalVisible] = useState(false);
     const [citationsModalVisible, setCitationsModalVisible] = useState(false);
 
+    const {
+        isLoading: isSeqSetCitationsLoading,
+        error: seqSetCitationsError,
+        data: seqSetCitations,
+    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitedBy({
+        params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion },
+    });
+
     const { mutate: deleteSeqSet } = useDeleteSeqSetAction(
         clientConfig,
         accessToken,
@@ -138,7 +146,11 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 className='min-h-[60vh]'
             >
                 <div className='min-w-[1000px]'></div>
-                <SeqSetCitationsList clientConfig={clientConfig} seqSet={seqSet} />
+                <SeqSetCitationsList
+                    isLoading={isSeqSetCitationsLoading}
+                    error={seqSetCitationsError}
+                    seqSetCitations={seqSetCitations ?? []}
+                />
             </BaseDialog>
         </div>
     );
