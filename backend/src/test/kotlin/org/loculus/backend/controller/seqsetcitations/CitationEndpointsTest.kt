@@ -179,6 +179,57 @@ class CitationEndpointsTest(
             )
     }
 
+    @Test
+    fun `WHEN multiple crossref citation runs link the same citing source to new seqSets THEN all seqSets are still cited`() {
+        val seqSetAResult = client.createSeqSet().andExpect(status().isOk).andReturn()
+        val seqSetIdA = JsonPath.read<String>(seqSetAResult.response.contentAsString, "$.seqSetId")
+        val seqSetVersionA =
+            JsonPath.read<Int>(seqSetAResult.response.contentAsString, "$.seqSetVersion").toLong()
+        client.createSeqSetDOI(seqSetId = seqSetIdA, seqSetVersion = seqSetVersionA).andExpect(status().isOk)
+        val seqSetDOIA = "${MOCK_DOI_PREFIX}/$seqSetIdA.$seqSetVersionA"
+
+        val seqSetBResult = client.createSeqSet().andExpect(status().isOk).andReturn()
+        val seqSetIdB = JsonPath.read<String>(seqSetBResult.response.contentAsString, "$.seqSetId")
+        val seqSetVersionB =
+            JsonPath.read<Int>(seqSetBResult.response.contentAsString, "$.seqSetVersion").toLong()
+        client.createSeqSetDOI(seqSetId = seqSetIdB, seqSetVersion = seqSetVersionB).andExpect(status().isOk)
+        val seqSetDOIB = "${MOCK_DOI_PREFIX}/$seqSetIdB.$seqSetVersionB"
+
+        every { crossRefService.isActive } returns true
+
+        val citingSource = SeqSetCitingSource(
+            sourceDOI = "10.5678/citing-paper",
+            title = "A paper citing the seqSet",
+            year = 2024,
+            contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
+            seqSetDOIs = setOf(seqSetDOIA),
+        )
+
+        // Citing source cites only seqSet A
+        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns listOf(citingSource)
+        seqSetCrossRefCitationsTask.task()
+
+        client.getSeqSetCitedByPublication(seqSetId = seqSetIdA, seqSetVersion = seqSetVersionA)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.length()").value(1))
+            .andExpect(jsonPath("\$[0].sourceDOI").value(citingSource.sourceDOI))
+
+        // Now, citing source also cites seqSet B
+        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
+            listOf(citingSource.copy(seqSetDOIs = setOf(seqSetDOIA, seqSetDOIB)))
+        seqSetCrossRefCitationsTask.task()
+
+        client.getSeqSetCitedByPublication(seqSetId = seqSetIdA, seqSetVersion = seqSetVersionA)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.length()").value(1))
+            .andExpect(jsonPath("\$[0].sourceDOI").value(citingSource.sourceDOI))
+
+        client.getSeqSetCitedByPublication(seqSetId = seqSetIdB, seqSetVersion = seqSetVersionB)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.length()").value(1))
+            .andExpect(jsonPath("\$[0].sourceDOI").value(citingSource.sourceDOI))
+    }
+
     companion object {
         data class Scenario(
             val testFunction: (String?, SeqSetCitationsControllerClient) -> ResultActions,

@@ -51,7 +51,7 @@ private val log = KotlinLogging.logger { }
 
 data class CitingSourcesUpdateResult(val updatedCitingSourceDOIs: Set<String>)
 
-data class SeqSetToCitingSourceEntry(val sourceDOI: String, val seqSetId: String, val seqSetVersion: Long)
+data class SeqSetToCitingSourceEntry(val citingSourceId: Long, val seqSetId: String, val seqSetVersion: Long)
 
 @Service
 @Transactional
@@ -378,38 +378,43 @@ class SeqSetCitationsDatabaseService(
     }
 
     fun updateCitingSourcesFromCrossRef(citingSources: Set<SeqSetCitingSource>): CitingSourcesUpdateResult {
-        // Map of seqSet DOIs to their ID and version
+        // Map of database seqSet DOIs to their ID and version
         val doiToSeqSet = SeqSetsTable
             .select(SeqSetsTable.seqSetId, SeqSetsTable.seqSetVersion, SeqSetsTable.seqSetDOI)
             .where { SeqSetsTable.seqSetDOI.isNotNull() }
             .associate { it[SeqSetsTable.seqSetDOI]!! to (it[SeqSetsTable.seqSetId] to it[SeqSetsTable.seqSetVersion]) }
 
-        // Citing sources with at least one SeqSet present in the database
+        // Citing sources matched with at least one seqSet present in the database
         val matchedSources = citingSources.filter { source ->
             source.seqSetDOIs.any { it in doiToSeqSet }
         }
 
-        // Update or insert the matched citing sources
-        SeqSetCitingSourceTable.batchUpsert(matchedSources) {
-            this[SeqSetCitingSourceTable.sourceDOI] = it.sourceDOI
-            this[SeqSetCitingSourceTable.origin] = CitationOrigin.CROSSREF
-            this[SeqSetCitingSourceTable.title] = it.title
-            this[SeqSetCitingSourceTable.year] = it.year
-            this[SeqSetCitingSourceTable.contributors] = it.contributors
-        }
+        // Map of matched sources to their seqSet DOIs
+        val matchedSourceToSeqSetDOIs = matchedSources.associate { it.sourceDOI to it.seqSetDOIs }
 
-        // Build join entries linking each matched source to its known seqsets
-        val joinEntries = matchedSources.flatMap { source ->
-            source.seqSetDOIs.mapNotNull { doi ->
-                doiToSeqSet[doi]?.let { (seqSetId, version) ->
-                    SeqSetToCitingSourceEntry(source.sourceDOI, seqSetId, version)
+        // Upsert matched citing sources based on their DOI
+        // Build entries for the join table from the returned source DOIs + primary keys
+        val joinEntries = SeqSetCitingSourceTable
+            .batchUpsert(matchedSources, SeqSetCitingSourceTable.sourceDOI) {
+                this[SeqSetCitingSourceTable.sourceDOI] = it.sourceDOI
+                this[SeqSetCitingSourceTable.origin] = CitationOrigin.CROSSREF
+                this[SeqSetCitingSourceTable.title] = it.title
+                this[SeqSetCitingSourceTable.year] = it.year
+                this[SeqSetCitingSourceTable.contributors] = it.contributors
+            }
+            .flatMap { result ->
+                val citingSourceId = result[SeqSetCitingSourceTable.citingSourceId]
+                val seqSetDOIs = matchedSourceToSeqSetDOIs.getValue(result[SeqSetCitingSourceTable.sourceDOI])
+                seqSetDOIs.mapNotNull { doi ->
+                    doiToSeqSet[doi]?.let { (seqSetId, version) ->
+                        SeqSetToCitingSourceEntry(citingSourceId, seqSetId, version)
+                    }
                 }
             }
-        }
 
         // Insert entries in the join table
-        SeqSetToCitingSourceTable.batchInsert(joinEntries, ignore = true) { (sourceDOI, seqSetId, seqSetVersion) ->
-            this[SeqSetToCitingSourceTable.sourceDOI] = sourceDOI
+        SeqSetToCitingSourceTable.batchInsert(joinEntries, ignore = true) { (citingSourceId, seqSetId, seqSetVersion) ->
+            this[SeqSetToCitingSourceTable.citingSourceId] = citingSourceId
             this[SeqSetToCitingSourceTable.seqSetId] = seqSetId
             this[SeqSetToCitingSourceTable.seqSetVersion] = seqSetVersion
         }
