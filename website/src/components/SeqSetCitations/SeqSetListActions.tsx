@@ -23,7 +23,7 @@ const SeqSetListActionsInner: FC<SeqSetListActionsProps> = ({ clientConfig, acce
                     className='btn btn-sm loculusColor text-white flex items-center gap-1'
                     onClick={() => setCreateModalVisible(true)}
                 >
-                    <AddBoxIcon fontSize='large' />
+                    <AddBoxIcon className='w-4 h-4' />
                     Create SeqSet
                 </Button>
             </div>
