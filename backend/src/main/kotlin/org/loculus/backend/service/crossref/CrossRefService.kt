@@ -124,6 +124,8 @@ class CrossRefService(private val properties: CrossRefServiceProperties) {
             connection.inputStream.use { String(it.readAllBytes()) }
         } catch (e: IOException) {
             throw RuntimeException("CrossRef citedBy request failed for DOI $doiPrefix", e)
+        } finally {
+            connection.disconnect()
         }
 
         return try {
