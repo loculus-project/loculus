@@ -97,24 +97,13 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN calling get seqSet cited by publication of non-existing seqSet THEN returns empty results`() {
+    fun `WHEN calling get seqSet cited by publication of non-existing seqSet THEN returns not found`() {
         client.getSeqSetCitedByPublication()
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.years").isArray)
-            .andExpect(jsonPath("\$.years").isEmpty)
-            .andExpect(jsonPath("\$.citations").isArray)
-            .andExpect(jsonPath("\$.citations").isEmpty)
-    }
-
-    @Test
-    fun `WHEN calling get seqSet citations for non-existing seqSet THEN returns 404`() {
-        client.getSeqSetCitations(seqSetId = "non-existing-id", seqSetVersion = 1L)
             .andExpect(status().isNotFound)
     }
 
     @Test
-    fun `WHEN calling get seqSet citations for seqSet without crossref citations THEN returns empty list`() {
+    fun `WHEN calling get seqSet cited by publication for seqSet without crossref citations THEN returns empty list`() {
         val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -131,7 +120,7 @@ class CitationEndpointsTest(
             emptyList()
         seqSetCrossRefCitationsTask.task()
 
-        client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
+        client.getSeqSetCitedByPublication(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$").isArray)
@@ -142,7 +131,7 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN calling get seqSet citations for seqSet with crossref citations THEN returns citations`() {
+    fun `WHEN calling get seqSet cited by publication for seqSet with crossref citations THEN returns citations`() {
         val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -169,7 +158,7 @@ class CitationEndpointsTest(
             listOf(seqSetCitingSource)
         seqSetCrossRefCitationsTask.task()
 
-        client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
+        client.getSeqSetCitedByPublication(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$").isArray)

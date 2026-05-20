@@ -55,7 +55,6 @@ class SecurityConfig {
         "/data-use-terms/*",
         "/get-seqset",
         "/get-seqset-records",
-        "/get-seqset-citations",
         "/get-seqset-cited-by-publication",
         "/get-author",
         "/*/get-released-data",

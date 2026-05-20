@@ -50,7 +50,7 @@ export const SeqSetCitationsList: FC<SeqSetCitationsListProps> = ({ clientConfig
         isLoading: isSeqSetCitationsLoading,
         error: seqSetCitationsError,
         data: seqSetCitations,
-    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitations({
+    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitedBy({
         params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion },
     });
 

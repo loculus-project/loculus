@@ -81,11 +81,6 @@ class SeqSetCitationsController(
     fun getSeqSetRecords(@RequestParam seqSetId: String, @RequestParam version: Long?): List<SeqSetRecord> =
         seqSetCitationsService.getSeqSetRecords(seqSetId, version)
 
-    @Operation(description = "Get citations for a SeqSet")
-    @GetMapping("/get-seqset-citations")
-    fun getSeqSetCitations(@RequestParam seqSetId: String, @RequestParam version: Long): List<SeqSetCitation> =
-        seqSetCitationsService.getSeqSetCitations(seqSetId, version)
-
     @Operation(description = "Delete a SeqSet")
     @DeleteMapping("/delete-seqset")
     fun deleteSeqSet(
@@ -109,9 +104,9 @@ class SeqSetCitationsController(
             submissionDatabaseService.getApprovedUserAccessionVersions(authenticatedUser),
         )
 
-    @Operation(description = "Get count of SeqSet cited by publications")
+    @Operation(description = "Get SeqSet citations from publications")
     @GetMapping("/get-seqset-cited-by-publication")
-    fun getSeqSetCitedByPublication(@RequestParam seqSetId: String, @RequestParam version: Long): CitedBy =
+    fun getSeqSetCitedByPublication(@RequestParam seqSetId: String, @RequestParam version: Long): List<SeqSetCitation> =
         seqSetCitationsService.getSeqSetCitedByPublication(seqSetId, version)
 
     @Operation(description = "Get an author")

@@ -26,7 +26,7 @@ const getSeqSetCitedByEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-seqset-cited-by-publication?seqSetId=:seqSetId&version=:version',
     alias: 'getSeqSetCitedBy',
-    response: citedByResult,
+    response: seqSetCitations,
     errors: [notAuthorizedError],
 });
 
@@ -51,14 +51,6 @@ const getSeqSetRecordsEndpoint = makeEndpoint({
     path: '/get-seqset-records?seqSetId=:seqSetId&version=:version',
     alias: 'getSeqSetRecords',
     response: seqSetRecords,
-    errors: [notAuthorizedError],
-});
-
-const getSeqSetCitationsEndpoint = makeEndpoint({
-    method: 'get',
-    path: '/get-seqset-citations?seqSetId=:seqSetId&version=:version',
-    alias: 'getSeqSetCitations',
-    response: seqSetCitations,
     errors: [notAuthorizedError],
 });
 
@@ -185,7 +177,6 @@ export const seqSetCitationApi = makeApi([
     getSeqSetEndpoint,
     getSeqSetVersionsEndpoint,
     getSeqSetRecordsEndpoint,
-    getSeqSetCitationsEndpoint,
     validateSeqSetRecords,
     createSeqSetEndpoint,
     createSeqSetDOIEndpoint,
