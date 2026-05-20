@@ -47,7 +47,7 @@ const citationContributor = z.object({
 const seqSetCitation = z.object({
     sourceDOI: z.string(),
     title: z.string(),
-    year: z.string(),
+    year: z.number(),
     contributors: z.array(citationContributor),
 });
 export type SeqSetCitation = z.infer<typeof seqSetCitation>;

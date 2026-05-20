@@ -36,7 +36,7 @@ object SeqSetCitingSourceTable : Table("seqset_citing_source") {
     val sourceDOI = text("source_doi")
     val origin = enumerationByName<CitationOrigin>("origin", 10)
     val title = text("title")
-    val year = varchar("year", 10)
+    val year = integer("year")
     val contributors = jacksonSerializableJsonb<List<CitationContributor>>("contributors")
     override val primaryKey = PrimaryKey(sourceDOI)
 }

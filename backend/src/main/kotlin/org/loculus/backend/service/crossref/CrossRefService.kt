@@ -68,21 +68,27 @@ class CrossRefService(private val properties: CrossRefServiceProperties) {
         val doc = Jsoup.parse(citedByXML, "", Parser.xmlParser())
 
         return doc.select("forward_link").map { forwardLink ->
-            val seqSetDOI = forwardLink.attr("doi").ifEmpty {
-                throw IllegalStateException("CrossRef forward_link missing SeqSet DOI: $forwardLink")
-            }
+            val seqSetDOI = forwardLink.attr("doi").takeIf { it.isNotBlank() }
+                ?: throw IllegalStateException("CrossRef forward_link missing SeqSet DOI: $forwardLink")
+
             val citationElement =
                 forwardLink.children().firstOrNull()
                     ?: throw IllegalStateException(
                         "CrossRef forward_link has no citation element under SeqSet $seqSetDOI: $forwardLink",
                     )
-            val sourceDOI = citationElement.selectFirst("doi")?.text()?.ifEmpty { null }
+
+            val sourceDOI = citationElement.selectFirst("doi")?.text()?.takeIf { it.isNotBlank() }
                 ?: throw IllegalStateException(
                     "CrossRef citing source missing DOI for SeqSet $seqSetDOI: $citationElement",
                 )
-
-            val title = citationElement.selectFirst("title")?.text() ?: ""
-            val year = citationElement.selectFirst("year")?.text() ?: ""
+            val title = citationElement.selectFirst("title")?.text()?.takeIf { it.isNotBlank() }
+                ?: throw IllegalStateException(
+                    "CrossRef citing source missing title for SeqSet $seqSetDOI: $citationElement",
+                )
+            val year = citationElement.selectFirst("year")?.text()?.toIntOrNull()
+                ?: throw IllegalStateException(
+                    "CrossRef citing source missing or non-numeric year for SeqSet $seqSetDOI: $citationElement",
+                )
             val contributors = citationElement.select("contributor").mapNotNull { c ->
                 val givenName = c.selectFirst("given_name")?.text().orEmpty()
                 val surname = c.selectFirst("surname")?.text().orEmpty()

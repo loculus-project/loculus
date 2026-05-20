@@ -66,7 +66,7 @@ enum class CitationOrigin {
 data class SeqSetCitingSource(
     val sourceDOI: String,
     val title: String,
-    val year: String,
+    val year: Int,
     val contributors: List<CitationContributor>,
     val seqSetDOIs: Set<String> = emptySet(),
 )
@@ -74,7 +74,7 @@ data class SeqSetCitingSource(
 data class SeqSetCitation(
     val sourceDOI: String,
     val title: String,
-    val year: String,
+    val year: Int,
     val contributors: List<CitationContributor>,
 )
 

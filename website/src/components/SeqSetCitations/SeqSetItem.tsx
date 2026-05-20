@@ -96,9 +96,10 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         if (isSeqSetCitationsLoading || seqSetCitationsError) return [];
 
         const citationDatesAggregate = new Map<string, number>();
-        seqSetCitations.forEach((citation) =>
-            citationDatesAggregate.set(citation.year, (citationDatesAggregate.get(citation.year) ?? 0) + 1),
-        );
+        seqSetCitations.forEach((citation) => {
+            const year = String(citation.year);
+            citationDatesAggregate.set(year, (citationDatesAggregate.get(year) ?? 0) + 1);
+        });
         return Array.from(citationDatesAggregate.entries()).map(([year, citations]) => ({
             value: year,
             count: citations,

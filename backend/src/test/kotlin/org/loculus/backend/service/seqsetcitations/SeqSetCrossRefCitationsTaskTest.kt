@@ -9,7 +9,7 @@ class SeqSetCrossRefCitationsTaskTest {
     private fun citingSource(
         sourceDOI: String,
         title: String = "A citing paper",
-        year: String = "2024",
+        year: Int = 2024,
         contributors: List<CitationContributor> = listOf(CitationContributor("Jane", "Doe")),
         seqSetDOIs: Set<String> = emptySet(),
     ) = SeqSetCitingSource(

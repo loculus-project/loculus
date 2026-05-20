@@ -149,7 +149,7 @@ class CitationEndpointsTest(
         val seqSetCitingSource = SeqSetCitingSource(
             sourceDOI = "10.5678/citing-paper",
             title = "A paper citing the seqSet",
-            year = "2024",
+            year = 2024,
             contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
             seqSetDOIs = setOf(seqSetDOI),
         )

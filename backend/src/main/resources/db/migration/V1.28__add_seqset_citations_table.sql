@@ -2,7 +2,7 @@ create table seqset_citing_source (
     source_doi         text not null,
     origin             text not null check (origin in ('CROSSREF', 'CURATED')),
     title              text not null,
-    year               varchar(10) not null,
+    year               integer not null,
     contributors       jsonb not null,
 
     primary key (source_doi)

@@ -62,7 +62,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                 SeqSetCitingSource(
                     sourceDOI = "10.5678/paper-1",
                     title = "A citing paper",
-                    year = "2024",
+                    year = 2024,
                     contributors = listOf(
                         CitationContributor(givenName = "Jane", surname = "Doe"),
                         CitationContributor(givenName = "John", surname = "Smith"),
@@ -72,7 +72,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                 SeqSetCitingSource(
                     sourceDOI = "10.5678/paper-2",
                     title = "Another citing paper",
-                    year = "2023",
+                    year = 2023,
                     contributors = listOf(
                         CitationContributor(givenName = "Alice", surname = "Jones"),
                     ),
@@ -147,14 +147,16 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
     }
 
     @Test
-    fun `parseCrossRefCitedByXML returns empty defaults for missing metadata fields`() {
-        val xml = """                                                                                 
-          <crossref_result>                                                                       
+    fun `parseCrossRefCitedByXML returns empty contributor list when contributors element is missing`() {
+        val xml = """
+          <crossref_result>
               <forward_link doi="10.1234/seqset-1">
-                  <journal_cite>                                                                    
+                  <journal_cite>
                       <doi>10.5678/paper-1</doi>
-                  </journal_cite>                                                                   
-              </forward_link>                                                                     
+                      <title>A citing paper</title>
+                      <year>2024</year>
+                  </journal_cite>
+              </forward_link>
           </crossref_result>
         """.trimIndent()
 
@@ -163,8 +165,8 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
             listOf(
                 SeqSetCitingSource(
                     sourceDOI = "10.5678/paper-1",
-                    title = "",
-                    year = "",
+                    title = "A citing paper",
+                    year = 2024,
                     contributors = emptyList(),
                     seqSetDOIs = setOf("10.1234/seqset-1"),
                 ),
@@ -174,20 +176,100 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
     }
 
     @Test
+    fun `parseCrossRefCitedByXML throws when citing source title is missing`() {
+        val xml = """
+          <crossref_result>
+              <forward_link doi="10.1234/seqset-1">
+                  <journal_cite>
+                      <doi>10.5678/paper-1</doi>
+                      <year>2024</year>
+                  </journal_cite>
+              </forward_link>
+          </crossref_result>
+        """.trimIndent()
+
+        val ex = assertThrows<IllegalStateException> {
+            crossRefService.parseCrossRefCitedByXML(xml)
+        }
+        assertTrue(ex.message!!.contains("missing title"))
+    }
+
+    @Test
+    fun `parseCrossRefCitedByXML throws when citing source title is blank`() {
+        val xml = """
+          <crossref_result>
+              <forward_link doi="10.1234/seqset-1">
+                  <journal_cite>
+                      <doi>10.5678/paper-1</doi>
+                      <title>   </title>
+                      <year>2024</year>
+                  </journal_cite>
+              </forward_link>
+          </crossref_result>
+        """.trimIndent()
+
+        val ex = assertThrows<IllegalStateException> {
+            crossRefService.parseCrossRefCitedByXML(xml)
+        }
+        assertTrue(ex.message!!.contains("missing title"))
+    }
+
+    @Test
+    fun `parseCrossRefCitedByXML throws when citing source year is missing`() {
+        val xml = """
+          <crossref_result>
+              <forward_link doi="10.1234/seqset-1">
+                  <journal_cite>
+                      <doi>10.5678/paper-1</doi>
+                      <title>A citing paper</title>
+                  </journal_cite>
+              </forward_link>
+          </crossref_result>
+        """.trimIndent()
+
+        val ex = assertThrows<IllegalStateException> {
+            crossRefService.parseCrossRefCitedByXML(xml)
+        }
+        assertTrue(ex.message!!.contains("missing or non-numeric year"))
+    }
+
+    @Test
+    fun `parseCrossRefCitedByXML throws when citing source year is non-numeric`() {
+        val xml = """
+          <crossref_result>
+              <forward_link doi="10.1234/seqset-1">
+                  <journal_cite>
+                      <doi>10.5678/paper-1</doi>
+                      <title>A citing paper</title>
+                      <year>not-a-year</year>
+                  </journal_cite>
+              </forward_link>
+          </crossref_result>
+        """.trimIndent()
+
+        val ex = assertThrows<IllegalStateException> {
+            crossRefService.parseCrossRefCitedByXML(xml)
+        }
+        assertTrue(ex.message!!.contains("missing or non-numeric year"))
+    }
+
+    @Test
     fun `parseCrossRefCitedByXML filters out empty contributors`() {
         val xml = """
-          <crossref_result>                                                                         
-              <forward_link doi="10.1234/seqset-1">                                               
+          <crossref_result>
+              <forward_link doi="10.1234/seqset-1">
                   <journal_cite>
-                      <doi>10.5678/paper-1</doi>                                                    
+                      <doi>10.5678/paper-1</doi>
+                      <title>A citing paper</title>
+                      <year>2024</year>
                       <contributors>
-                          <contributor><given_name>Jane</given_name><surname>Doe</surname></contributor>                  
+                          <contributor><given_name>Jane</given_name><surname>Doe</surname></contributor>
                           <contributor></contributor>
-                          <contributor><surname>Solo</surname></contributor>                        
-                      </contributors>         
-                  </journal_cite>                                                                   
-              </forward_link>                                                                     
-          </crossref_result>                                                                        
+                          <contributor><surname>Solo</surname></contributor>
+                      </contributors>
+                  </journal_cite>
+              </forward_link>
+          </crossref_result>
         """.trimIndent()
 
         val result = crossRefService.parseCrossRefCitedByXML(xml)
