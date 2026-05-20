@@ -1,4 +1,4 @@
-import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
+import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import React, { type ReactNode } from 'react';
 
 import { Button } from './Button';
@@ -21,15 +21,13 @@ export const BaseDialog: React.FC<BaseDialogProps> = ({
     className,
 }) => {
     const fullWidthClasses = fullWidth ? 'w-full w-max-5xl' : '';
-    const transitionClasses = 'transition duration-200 ease-out data-[closed]:opacity-0';
     return (
         <Dialog open={isOpen} onClose={onClose} className='relative z-40'>
-            <DialogBackdrop transition className={`fixed inset-0 bg-black/25 ${transitionClasses}`} />
+            <div className='fixed inset-0 bg-black bg-opacity-25' />
             <div className='fixed inset-0 overflow-y-auto'>
                 <div className='flex min-h-full items-center justify-center p-4 text-center'>
                     <DialogPanel
-                        transition
-                        className={`${fullWidthClasses} transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl ${transitionClasses} ${className ?? ''}`}
+                        className={`${fullWidthClasses} ${className ?? ''} transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl`}
                     >
                         <DialogTitle as='h3' className='text-2xl font-bold leading-6 text-gray-900 mb-4'>
                             {title}
