@@ -752,14 +752,6 @@ ALTER TABLE ONLY public.seqsets
 
 
 --
--- Name: seqsets seqsets_seqset_doi_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.seqsets
-    ADD CONSTRAINT seqsets_seqset_doi_unique UNIQUE (seqset_doi);
-
-
---
 -- Name: sequence_entries sequence_entries_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
