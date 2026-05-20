@@ -256,9 +256,7 @@ describe('SearchFullUI', () => {
         const closeButton = await screen.findByTestId('field-selector-close-button');
         await userEvent.click(closeButton);
 
-        await waitFor(() => {
-            expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
-        });
+        expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
     });
 
     it('does not store default invisible search field visibilities in URL when set to false as this is unneeded', async () => {
