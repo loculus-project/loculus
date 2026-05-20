@@ -1,5 +1,3 @@
-ALTER TABLE seqsets ADD CONSTRAINT seqsets_seqset_doi_unique UNIQUE (seqset_doi);
-
 create table seqset_citing_source (
     source_doi         text not null,
     origin             text not null check (origin in ('CROSSREF', 'CURATED')),
