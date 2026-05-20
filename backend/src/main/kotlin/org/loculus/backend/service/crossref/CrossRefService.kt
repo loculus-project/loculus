@@ -110,19 +110,24 @@ class CrossRefService(private val properties: CrossRefServiceProperties) {
             properties.endpoint +
                 "/servlet/getForwardLinks?usr=${properties.username}&pwd=${properties.password}&doi=$doiPrefix&endDate=$endDate&include_postedcontent=true",
         ).toURL().openConnection() as HttpURLConnection
+        connection.connectTimeout = 10_000
+        connection.readTimeout = 30_000
         connection.requestMethod = "GET"
 
-        val responseCode = connection.responseCode
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            val response = String(connection.inputStream.readAllBytes())
-            connection.inputStream.close()
-            return try {
-                parseCrossRefCitedByXML(response)
-            } catch (e: Exception) {
-                throw RuntimeException("Failed to parse CrossRef citedBy response for DOI $doiPrefix", e)
+        val response = try {
+            val responseCode = connection.responseCode
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                throw RuntimeException("CrossRef citedBy request returned $responseCode")
             }
-        } else {
-            throw RuntimeException("CrossRef citedBy request returned $responseCode")
+            connection.inputStream.use { String(it.readAllBytes()) }
+        } catch (e: IOException) {
+            throw RuntimeException("CrossRef citedBy request failed for DOI $doiPrefix", e)
+        }
+
+        return try {
+            parseCrossRefCitedByXML(response)
+        } catch (e: Exception) {
+            throw RuntimeException("Failed to parse CrossRef citedBy response for DOI $doiPrefix", e)
         }
     }
 
