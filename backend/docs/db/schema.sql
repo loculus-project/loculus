@@ -319,7 +319,7 @@ CREATE TABLE public.seqset_citing_source (
     source_doi text NOT NULL,
     origin text NOT NULL,
     title text NOT NULL,
-    year character varying(10) NOT NULL,
+    year integer NOT NULL,
     contributors jsonb NOT NULL,
     CONSTRAINT seqset_citing_source_origin_check CHECK ((origin = ANY (ARRAY['CROSSREF'::text, 'CURATED'::text])))
 );
