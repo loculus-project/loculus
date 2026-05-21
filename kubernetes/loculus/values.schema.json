@@ -1181,6 +1181,11 @@
         "description": {
           "type": "string",
           "description": "Default Open Graph / meta description for pages."
+        },
+        "twitterCard": {
+          "type": "string",
+          "enum": ["summary", "summary_large_image", "player", "app"],
+          "description": "Value for `<meta name=\"twitter:card\">`. When unset, defaults to `summary_large_image` if a card image is configured (per-organism or site-wide), otherwise `summary`."
         }
       }
     },

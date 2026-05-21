@@ -241,6 +241,7 @@ const fieldToDisplay = z.object({
 const openGraphConfig = z.object({
     image: z.string().optional(),
     description: z.string().optional(),
+    twitterCard: z.enum(['summary', 'summary_large_image', 'player', 'app']).optional(),
 });
 export type OpenGraphConfig = z.infer<typeof openGraphConfig>;
 
