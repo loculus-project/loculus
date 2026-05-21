@@ -180,6 +180,39 @@ class CitationEndpointsTest(
     }
 
     @Test
+    fun `WHEN get sequence cited by publication for sequence in cited seqSet THEN returns citations`() {
+        val seqSetResult = client.createSeqSet().andExpect(status().isOk).andReturn()
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+        val seqSetVersion =
+            JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
+        client.createSeqSetDOI(seqSetId = seqSetId, seqSetVersion = seqSetVersion).andExpect(status().isOk)
+        val seqSetDOI = "${MOCK_DOI_PREFIX}/$seqSetId.$seqSetVersion"
+
+        val seqSetCitingSource = SeqSetCitingSource(
+            sourceDOI = "10.5678/citing-paper",
+            title = "A paper citing the seqSet",
+            year = 2024,
+            contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
+            seqSetDOIs = setOf(seqSetDOI),
+        )
+        every { crossRefService.isActive } returns true
+        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns listOf(seqSetCitingSource)
+        seqSetCrossRefCitationsTask.task()
+
+        client.getSequenceCitedByPublication(accession = MOCK_SEQ_ACCESSION, version = MOCK_SEQ_VERSION)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$").isArray)
+            .andExpect(jsonPath("\$.length()").value(1))
+            .andExpect(jsonPath("\$[0].sourceDOI").value(seqSetCitingSource.sourceDOI))
+            .andExpect(jsonPath("\$[0].title").value(seqSetCitingSource.title))
+            .andExpect(jsonPath("\$[0].year").value(seqSetCitingSource.year))
+            .andExpect(jsonPath("\$[0].seqSets.length()").value(1))
+            .andExpect(jsonPath("\$[0].seqSets[0].seqSetAccession").value("$seqSetId.$seqSetVersion"))
+            .andExpect(jsonPath("\$[0].seqSets[0].sequenceAccession").value(MOCK_ACCESSION_VERSION))
+    }
+
+    @Test
     fun `WHEN multiple crossref citation runs link the same citing source THEN all citations are recorded`() {
         val seqSetAResult = client.createSeqSet().andExpect(status().isOk).andReturn()
         val seqSetIdA = JsonPath.read<String>(seqSetAResult.response.contentAsString, "$.seqSetId")

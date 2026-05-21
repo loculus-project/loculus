@@ -2,12 +2,14 @@ package org.loculus.backend.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
 import org.loculus.backend.api.SeqSetCitation
 import org.loculus.backend.api.SeqSetRecord
+import org.loculus.backend.api.SequenceCitation
 import org.loculus.backend.api.SubmittedSeqSet
 import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.api.SubmittedSeqSetUpdate
@@ -108,6 +110,13 @@ class SeqSetCitationsController(
     @GetMapping("/get-seqset-cited-by-publication")
     fun getSeqSetCitedByPublication(@RequestParam seqSetId: String, @RequestParam version: Long): List<SeqSetCitation> =
         seqSetCitationsService.getSeqSetCitedByPublication(seqSetId, version)
+
+    @Operation(description = "Get sequence citations from publications")
+    @GetMapping("/get-sequence-cited-by-publication")
+    fun getSequenceCitedByPublication(
+        @RequestParam accession: String,
+        @RequestParam version: Long,
+    ): List<SequenceCitation> = seqSetCitationsService.getSequenceCitedByPublication(accession, version)
 
     @Operation(description = "Get an author")
     @GetMapping("/get-author")

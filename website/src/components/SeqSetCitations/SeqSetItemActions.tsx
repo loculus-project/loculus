@@ -1,8 +1,8 @@
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import { CitationsList } from './CitationsList.tsx';
 import { ExportSeqSet } from './ExportSeqSet';
-import { SeqSetCitationsList } from './SeqSetCitationsList.tsx';
 import { SeqSetForm } from './SeqSetForm';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
@@ -146,10 +146,11 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 className='min-h-[60vh]'
             >
                 <div className='min-w-[1000px]'></div>
-                <SeqSetCitationsList
+                <CitationsList
+                    title='SeqSet Citations'
                     isLoading={isSeqSetCitationsLoading}
                     error={seqSetCitationsError}
-                    seqSetCitations={seqSetCitations ?? []}
+                    citations={seqSetCitations ?? []}
                 />
             </BaseDialog>
         </div>
