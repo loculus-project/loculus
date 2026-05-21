@@ -1674,7 +1674,7 @@ class ProcessingFunctions:
         else:
             taxon = body
 
-        tax_id: int | None = taxon.get("tax_id")
+        tax_id = taxon.get("tax_id")
         if tax_id is None:
             return ProcessingResult(
                 datum=None,
