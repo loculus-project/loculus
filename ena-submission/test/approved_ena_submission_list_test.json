@@ -58,7 +58,7 @@
             "hostNameScientific": "Homo sapiens",
             "hostOriginCountry": null,
             "hostRole": null,
-            "hostTaxonId": 9606,
+            "hostTaxonId": "9606",
             "hostVaccinationStatus": null,
             "insdcAccessionBase_L": null,
             "insdcAccessionBase_M": null,
