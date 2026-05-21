@@ -1610,14 +1610,14 @@ class ProcessingFunctions:
         # the rest of the function is set up to validate INSDC-ingested data as well
         if args["is_insdc_ingest_group"]:
             tax_id = input_data.get("hostTaxonId")
-            if isinstance(tax_id, str) and tax_id.isdigit():
+            if not isinstance(tax_id, str) or not tax_id.isdigit():
                 return ProcessingResult(
-                    datum=int(tax_id),
+                    datum=None,
                     warnings=[],
                     errors=[],
                 )
             return ProcessingResult(
-                datum=None,
+                datum=tax_id,
                 warnings=[],
                 errors=[],
             )
@@ -1674,7 +1674,7 @@ class ProcessingFunctions:
         else:
             taxon = body
 
-        tax_id = taxon.get("tax_id")
+        tax_id: int | None = taxon.get("tax_id")
         if tax_id is None:
             return ProcessingResult(
                 datum=None,
@@ -1684,13 +1684,15 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"Internal error: host validation for '{unvalidated}' was successful but response json had no 'tax_id'. Please contact the administrator",
+                        message=f"Internal error: host validation for '{unvalidated}' "
+                        f"was successful but response json 'tax_id' was missing. "
+                        f"Please contact the administrator",
                     )
                 ],
             )
 
         return ProcessingResult(
-            datum=tax_id,
+            datum=str(tax_id),
             warnings=[],
             errors=[],
         )

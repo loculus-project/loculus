@@ -1235,8 +1235,9 @@ defaultOrganismConfig: &defaultOrganismConfig
           type: lengthCompleteness
           displayGroup: lengthCompleteness
           label: Length
-      - name: hostTaxonId
-        type: int
+      - &hostTaxonIdConfig
+        name: hostTaxonId
+        type: string
         autocomplete: true
         displayName: "Host species"
         definition: "Taxon ID for the host."
@@ -1654,28 +1655,8 @@ defaultOrganisms:
               # - Last field is a date in format YYYY, YYYY-MM, or YYYY-MM-DD
               # - Identifier is the second to last field (extracted through named capture group)
               regex_pattern: '^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$'
-        - name: hostTaxonId
-          type: int
-          autocomplete: true
-          displayName: "Host species"
-          definition: "Taxon ID for the host."
-          customDisplay:
-            type: hostSpecies
-            displayGroup: hostSpecies
-            label: Host
-          header: "Host"
-          ingest: ncbiHostTaxId
-          noInput: true
+        - <<: *hostTaxonIdConfig
           required: true
-          orderOnDetailsPage: 1540
-          preprocessing:
-            function: validate_host
-            inputs:
-              host: host
-              hostNameScientific: hostNameScientific
-              hostTaxonId: hostTaxonId
-            args:
-              taxonomy_service_url: "http://loculus-taxonomy-service:5000"
         - name: lineage
           displayName: Lineage
           definition: "Assigned clade label from the nearest reference tree node."
