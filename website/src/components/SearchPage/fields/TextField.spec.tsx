@@ -37,6 +37,8 @@ describe('TextField', () => {
         const label = screen.getByText('Test Field');
         expect(label).toHaveClass('peer-placeholder-shown:bg-transparent');
         expect(label).toHaveClass('peer-placeholder-shown:dark:bg-transparent');
+        expect(label).toHaveClass('peer-focus:bg-white');
+        expect(label).toHaveClass('peer-focus:dark:bg-gray-900');
     });
 
     it('strips newlines on paste in single-line input', () => {
