@@ -31,6 +31,13 @@ describe('TextField', () => {
         expect(handleChange).toHaveBeenCalled();
     });
 
+    it('uses transparent label background in placeholder state', () => {
+        render(<TextField label='Test Field' />);
+
+        const label = screen.getByText('Test Field');
+        expect(label).toHaveClass('peer-placeholder-shown:bg-transparent');
+    });
+
     it('strips newlines on paste in single-line input', () => {
         const handleChange = vi.fn();
         render(<TextField label='Test Field' onChange={handleChange} />);
