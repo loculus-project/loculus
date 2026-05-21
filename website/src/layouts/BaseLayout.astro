@@ -42,6 +42,10 @@ const implicitOrganismObject = implicitOrganism ? knownOrganisms.find((o) => o.k
 const currentOrganismObject = implicitOrganismObject || organism;
 const currentOrganism = currentOrganismObject?.key;
 
+const socialCardImage = currentOrganismObject?.image
+    ? new URL(currentOrganismObject.image, Astro.url).toString()
+    : undefined;
+
 const currentPath = Astro.url.pathname;
 
 const backendIsInDebugMode = await createBackendClient().isInDebugMode();
@@ -58,8 +62,10 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
         <meta name='generator' content={Astro.generator} />
         <meta property='og:url' content={Astro.url} />
         <meta property='og:title' content={websiteName + ' | ' + title} />
+        {socialCardImage && <meta property='og:image' content={socialCardImage} />}
         <meta property='twitter:url' content={Astro.url} />
         <meta property='twitter:title' content={websiteName + ' | ' + title} />
+        {socialCardImage && <meta property='twitter:image' content={socialCardImage} />}
         <title>{title} | {websiteName}</title>
         <Fragment set:html={additionalHeadHTML} />
     </head>
