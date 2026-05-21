@@ -238,6 +238,12 @@ const fieldToDisplay = z.object({
     displayName: z.string(),
 });
 
+const openGraphConfig = z.object({
+    image: z.string().optional(),
+    description: z.string().optional(),
+});
+export type OpenGraphConfig = z.infer<typeof openGraphConfig>;
+
 const seqSetGraphTypes = z.enum(['date', 'category']);
 export const seqSetGraph = z.object({
     name: z.string(),
@@ -258,6 +264,7 @@ export const websiteConfig = z.object({
     submissionBannerMessageURL: z.string().optional(),
     welcomeMessageHTML: z.string().optional().nullable(),
     additionalHeadHTML: z.string().optional(),
+    openGraph: openGraphConfig.optional(),
     gitHubEditLink: z.string().optional(),
     gitHubMainUrl: z.string().optional(),
     gitHubIssuesUrl: z.string().optional(),
