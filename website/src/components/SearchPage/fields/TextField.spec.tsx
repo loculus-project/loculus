@@ -31,11 +31,12 @@ describe('TextField', () => {
         expect(handleChange).toHaveBeenCalled();
     });
 
-    it('uses transparent label background in placeholder state', () => {
+    it('applies transparent background classes to label in placeholder state', () => {
         render(<TextField label='Test Field' />);
 
         const label = screen.getByText('Test Field');
         expect(label).toHaveClass('peer-placeholder-shown:bg-transparent');
+        expect(label).toHaveClass('peer-placeholder-shown:dark:bg-transparent');
     });
 
     it('strips newlines on paste in single-line input', () => {
