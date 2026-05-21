@@ -13,7 +13,7 @@ silo-import = "silo_import.__main__:main"
 
 [project.optional-dependencies]
 test = ["pytest", "mypy",
-    "ruff",]
+    "ruff==0.15.13",]
 
 [build-system]
 requires = ["hatchling"]
