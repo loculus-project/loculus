@@ -6,7 +6,20 @@ import requests
 
 
 def copy_structure(input_dir, output_dir):
-    for root, dirs, files in os.walk(input_dir):
+    seen_dirs = set()
+    for root, dirs, files in os.walk(input_dir, followlinks=True):
+        # Kubernetes ConfigMap/projected volumes expose visible files as symlinks
+        # into hidden `..data` directories. Copy the visible tree only, while
+        # still following visible symlinked directories such as `organisms/`.
+        dirs[:] = [dir for dir in dirs if not dir.startswith("..")]
+        files = [file for file in files if not file.startswith("..")]
+
+        real_root = os.path.realpath(root)
+        if real_root in seen_dirs:
+            dirs[:] = []
+            continue
+        seen_dirs.add(real_root)
+
         for dir in dirs:
             dir_path = os.path.join(output_dir, os.path.relpath(os.path.join(root, dir), input_dir))
             os.makedirs(dir_path, exist_ok=True)
@@ -15,6 +28,7 @@ def copy_structure(input_dir, output_dir):
             # Make sure the directory exists
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             shutil.copy(os.path.join(root, file), file_path)
+
 
 def replace_url_with_content(file_content):
     urls = re.findall(r'\[\[URL:([^\]]*)\]\]', file_content)
@@ -27,10 +41,12 @@ def replace_url_with_content(file_content):
             raise ValueError(f"Problem downloading {error_details}")
     return file_content
 
+
 def make_substitutions(file_content, substitutions):
     for key, value in substitutions.items():
         file_content = file_content.replace(f"[[{key}]]", value)
     return file_content
+
 
 def process_files(output_dir, substitutions):
     for root, dirs, files in os.walk(output_dir):
@@ -46,17 +62,18 @@ def process_files(output_dir, substitutions):
                     f.write(new_content)
                     f.truncate()
 
+
 def main(input_dir, output_dir, substitutions):
     print(f"Processing {input_dir} to {output_dir}")
     copy_structure(input_dir, output_dir)
     print(f"Copied directory structure from {input_dir} to {output_dir}")
     process_files(output_dir, substitutions)
 
+
 if __name__ == "__main__":
     import sys
     input_dir = sys.argv[1]
     output_dir = sys.argv[2]
-    
 
     substitutions = {}
     for var in os.environ:
