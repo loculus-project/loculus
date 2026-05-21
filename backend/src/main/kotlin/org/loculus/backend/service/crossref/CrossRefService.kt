@@ -5,6 +5,7 @@ import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.loculus.backend.api.CitationContributor
 import org.loculus.backend.api.SeqSetCitingSource
+import org.loculus.backend.utils.DateProvider
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -44,7 +45,7 @@ data class DoiEntry(
 )
 
 @Service
-class CrossRefService(private val properties: CrossRefServiceProperties) {
+class CrossRefService(private val properties: CrossRefServiceProperties, private val dateProvider: DateProvider) {
     val isActive = properties.endpoint != null &&
         properties.username != null &&
         properties.password != null &&
@@ -113,7 +114,7 @@ class CrossRefService(private val properties: CrossRefServiceProperties) {
         checkIsActive()
 
         // End date is the current date at time of request
-        val endDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val endDate = dateProvider.getCurrentDate()
         val connection = URI(
             properties.endpoint +
                 "/servlet/getForwardLinks?usr=${properties.username}&pwd=${properties.password}&doi=$doiPrefix&endDate=$endDate&include_postedcontent=true",
