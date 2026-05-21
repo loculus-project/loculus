@@ -101,6 +101,12 @@ describe('DateRangeField', () => {
         }
     });
 
+    it('renders strict checkbox without animation classes that cause load-time jumping', () => {
+        render(<DateRangeField field={field} fieldValues={fieldValues} setSomeFieldValues={setSomeFieldValues} />);
+
+        expect(screen.getByRole('checkbox')).toHaveClass('transition-none');
+    });
+
     it('derives switches mode correctly', async () => {
         render(
             <DateRangeField
