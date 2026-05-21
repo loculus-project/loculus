@@ -214,7 +214,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     }
 
     return (
-        <div className='flex flex-row flex-wrap mb-4 gap-4 py-4'>
+        <div className='flex flex-row flex-wrap mb-4 gap-4 py-4 m-2'>
             {dataUseTermsEnabled && (
                 <RadioOptionBlock
                     name='includeRestricted'
