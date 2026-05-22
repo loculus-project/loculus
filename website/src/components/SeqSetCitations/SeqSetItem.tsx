@@ -3,7 +3,6 @@ import { AxiosError } from 'axios';
 import { type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { AuthorDetails } from './AuthorDetails.tsx';
 import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
@@ -13,7 +12,7 @@ import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { type AuthorProfile, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
+import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
@@ -52,7 +51,6 @@ type SeqSetItemProps = {
     accessToken: string;
     seqSetAccessionVersion: string;
     seqSet: SeqSet;
-    seqSetAuthor?: AuthorProfile;
     seqSetRecords: SeqSetRecord[];
     seqSetGraphs: SeqSetGraph[];
     seqSetGraphsData: Record<string, AggregateRow[]>;
@@ -66,7 +64,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     accessToken,
     seqSetAccessionVersion,
     seqSet,
-    seqSetAuthor,
     seqSetRecords,
     seqSetGraphs,
     seqSetGraphsData,
@@ -120,14 +117,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
 
     const getCrossRefUrl = () => {
         return `https://search.crossref.org/search/works?from_ui=yes&q=${seqSet.seqSetDOI}`;
-    };
-
-    const formatDate = (date?: string) => {
-        if (date === undefined) {
-            return 'N/A';
-        }
-        const dateObj = new Date(date);
-        return dateObj.toISOString().split('T')[0];
     };
 
     const renderDOI = () => {
@@ -185,21 +174,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     <SeqSetSectionEntry label='Name' value={seqSet.name} />
                     <SeqSetSectionEntry label='Description' value={seqSet.description ?? 'N/A'} />
                     <SeqSetSectionEntry label='Version' value={seqSet.seqSetVersion} />
-                    <SeqSetSectionEntry
-                        label='Created by'
-                        value={
-                            seqSetAuthor ? (
-                                <AuthorDetails
-                                    displayFullDetails={false}
-                                    firstName={seqSetAuthor.firstName}
-                                    lastName={seqSetAuthor.lastName}
-                                />
-                            ) : (
-                                'Unknown'
-                            )
-                        }
-                    />
-                    <SeqSetSectionEntry label='Created date' value={formatDate(seqSet.createdAt)} />
                     <SeqSetSectionEntry
                         label='Size'
                         value={`${seqSetRecords.length} sequence${seqSetRecords.length === 1 ? '' : 's'}`}
