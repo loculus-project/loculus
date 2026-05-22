@@ -50,7 +50,7 @@ export const MultiChoiceAutoCompleteField = ({
 
     useEffect(() => {
         if (error) {
-            void logger.warn(error);
+            void logger.error(error);
         }
     }, [error]);
 
