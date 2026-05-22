@@ -20,7 +20,6 @@ interface TextFieldProps {
     fieldValue?: string | number | readonly string[];
     className?: string;
     onFocus?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
-    placeholder?: string;
     multiline?: boolean;
     onBlur?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     type?: string;
@@ -30,8 +29,7 @@ const helperTextClasses = getTheme().floatingLabel.helperText.default;
 const inputClasses = getTheme().floatingLabel.input.default.outlined.md;
 
 export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldProps>(function (props, ref) {
-    const { label, disabled, onChange, autoComplete, fieldValue, className, onFocus, placeholder, multiline, onBlur } =
-        props;
+    const { label, disabled, onChange, autoComplete, fieldValue, className, onFocus, multiline, onBlur } = props;
     const id = useId();
     const [isTransitionEnabled, setIsTransitionEnabled] = useState(false);
     const [hasFocus, setHasFocus] = useState(false);
@@ -123,7 +121,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             ref: ref as LegacyRef<HTMLInputElement>,
             label: label ?? '',
             step: props.type === 'int' ? 1 : undefined,
-            placeholder: placeholder ?? ' ',
+            placeholder: ' ', // Label already serves as placeholder
         };
 
         return (
@@ -160,7 +158,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
         onFocus: onFocusHTMLArea,
         onBlur: onBlurHTMLArea,
         value: fieldValue,
-        placeholder: placeholder ?? ' ',
+        placeholder: ' ', // Label already serves as placeholder
     };
 
     return (
