@@ -69,6 +69,26 @@ describe('LinkOutMenu with enabled data use terms', () => {
         expect(screen.getByText('Data use terms')).toBeInTheDocument();
     });
 
+    test('closes modal without opening tool when close button is clicked', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={linkOuts}
+                dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        fireEvent.click(screen.getByText('Basic'));
+        fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+        expect(screen.queryByText('Options for launching Basic')).not.toBeInTheDocument();
+        expect(window.open).not.toHaveBeenCalled();
+    });
+
     test('generates URLs with open-access only when selected', () => {
         const generateDownloadUrlSpy = vi.spyOn(realDownloadUrlGenerator, 'generateDownloadUrl');
 
