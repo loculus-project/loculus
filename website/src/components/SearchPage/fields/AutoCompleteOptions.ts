@@ -173,7 +173,7 @@ const createLineageOptionsHook = (
     return function hook() {
         const {
             data,
-            isPending: aggregateIsPending,
+            isPending: aggregatedEndpointIsPending,
             error: aggregatedEndpointError,
             mutate,
         } = lapisClientHooks(lapisUrl).useAggregated();
@@ -227,7 +227,7 @@ const createLineageOptionsHook = (
 
         return {
             options,
-            isPending: aggregateIsPending || definitionIsLoading,
+            isPending: aggregatedEndpointIsPending || definitionIsLoading,
             error:
                 errors.length > 0
                     ? `Error while loading lineage autocomplete options for field "${fieldName}" from ${lapisUrl}: ${errors.join('; ')}`
