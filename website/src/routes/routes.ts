@@ -10,7 +10,7 @@ export type ContinueSubmissionIntent = {
     organism: string;
 };
 
-export const approxMaxAcceptableUrlLength = 7900;
+export const approxMaxAcceptableUrlLength = 7400;
 
 export const routes = {
     apiDocumentationPage: () => '/api-documentation',
