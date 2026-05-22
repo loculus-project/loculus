@@ -113,13 +113,15 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                         <MdiInformationOutline className='w-4 h-4' />
                         <span className='hidden sm:block'>More details</span>
                     </Button>
-                    <Button
-                        className='outlineButton flex items-center gap-2'
-                        onClick={() => setCitationsModalVisible(true)}
-                    >
-                        <MdiViewListOutline className='w-4 h-4' />
-                        <span className='hidden sm:block'>View Citations</span>
-                    </Button>
+                    {seqSetCitations && seqSetCitations.length > 0 && (
+                        <Button
+                            className='outlineButton flex items-center gap-2'
+                            onClick={() => setCitationsModalVisible(true)}
+                        >
+                            <MdiViewListOutline className='w-4 h-4' />
+                            <span className='hidden sm:block'>View Citations</span>
+                        </Button>
+                    )}
                     {isAdminView ? (
                         <Button
                             className='outlineButton flex items-center gap-2'
@@ -173,13 +175,11 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
             <BaseDialog
                 isOpen={citationsModalVisible}
                 onClose={() => setCitationsModalVisible(false)}
-                title=''
+                title='SeqSet Citations'
                 fullWidth={false}
                 className='min-h-[60vh]'
             >
-                <div className='min-w-[1000px]'></div>
                 <CitationsList
-                    title='SeqSet Citations'
                     isLoading={isSeqSetCitationsLoading}
                     error={seqSetCitationsError}
                     citations={seqSetCitations ?? []}

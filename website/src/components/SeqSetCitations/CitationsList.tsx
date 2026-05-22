@@ -4,7 +4,6 @@ import { routes } from '../../routes/routes';
 import { type SeqSetCitation, type SequenceCitation, type SeqSetCitingSequence } from '../../types/seqSetCitation';
 
 interface CitationsListProps {
-    title: string;
     isLoading: boolean;
     error: Error | null;
     citations: SeqSetCitation[] | SequenceCitation[];
@@ -67,21 +66,18 @@ const CitationItem: FC<CitationItemProps> = ({ citation }) => {
     );
 };
 
-export const CitationsList: FC<CitationsListProps> = ({ title, isLoading, error, citations }) => {
+export const CitationsList: FC<CitationsListProps> = ({ isLoading, error, citations }) => {
     return (
-        <div className='flex flex-col items-center w-full'>
-            <div className='flex justify-start items-center py-5'>
-                <h1 className='text-xl font-semibold py-4'>{title}</h1>
-            </div>
+        <div className='w-full pt-2'>
             <div className='overflow-y-auto max-h-[60vh]'>
                 {isLoading ? (
                     <span className='loading loading-spinner'></span>
                 ) : error ? (
                     <span>Failed to load citations.</span>
                 ) : citations.length > 0 ? (
-                    <ul className='max-w-3xl space-y-8'>
+                    <ul className='max-w-3xl space-y-4'>
                         {citations.map((citation) => (
-                            <li key={citation.sourceDOI}>
+                            <li key={citation.sourceDOI} className='border border-gray-200 p-4 rounded-lg'>
                                 <CitationItem citation={citation} />
                             </li>
                         ))}

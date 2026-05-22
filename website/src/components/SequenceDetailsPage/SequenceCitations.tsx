@@ -31,22 +31,22 @@ const SequenceCitationsInner: FC<SequenceCitationsProps> = ({ clientConfig, acce
             <BaseDialog
                 isOpen={isOpen}
                 onClose={() => setIsOpen(false)}
-                title=''
+                title='Sequence Citations'
                 fullWidth={false}
                 className='min-h-[60vh]'
             >
-                <div className='min-w-[1000px]'></div>
                 <CitationsList
-                    title='Sequence Citations'
                     isLoading={isSequenceCitationsLoading}
                     error={sequenceCitationsError}
                     citations={sequenceCitations ?? []}
                 />
             </BaseDialog>
-            <Button className='btn btn-sm btn-outline mr-2' onClick={() => setIsOpen(true)}>
-                <MdiViewListOutline className='w-4 h-4' />
-                <span className='hidden sm:block '>View Citations</span>
-            </Button>
+            {sequenceCitations && sequenceCitations.length > 0 && (
+                <Button className='btn btn-sm btn-outline mr-2' onClick={() => setIsOpen(true)}>
+                    <MdiViewListOutline className='w-4 h-4' />
+                    <span className='hidden sm:block '>View Citations</span>
+                </Button>
+            )}
         </>
     );
 };
