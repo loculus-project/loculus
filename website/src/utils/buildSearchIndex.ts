@@ -25,7 +25,7 @@ const aboutRaw = import.meta.glob<string>('../pages/about/**/*.mdx', {
     import: 'default',
 });
 
-const FRONTMATTER_RE = /^---\n([\s\S]*?)\n---\n?/;
+const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
 
 const splitFrontmatter = (content: string): { frontmatter: Record<string, unknown>; body: string } => {
     const match = FRONTMATTER_RE.exec(content);

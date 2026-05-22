@@ -95,8 +95,7 @@ const DocsSearch: FC = () => {
                             setIsOpen(true);
                         }}
                         onFocus={() => setIsOpen(true)}
-                        disabled={isLoading}
-                        className='flex-1 ml-2 bg-transparent border-none outline-none text-sm text-gray-700 placeholder-primary-500 disabled:opacity-50'
+                        className='flex-1 ml-2 bg-transparent border-none outline-none text-sm text-gray-700 placeholder-primary-500'
                         aria-label='Search documentation'
                     />
                     {query && (
@@ -115,10 +114,11 @@ const DocsSearch: FC = () => {
                     )}
                 </div>
 
-                {/* Results dropdown */}
                 {isOpen && query && (
                     <div className='absolute top-full left-0 right-0 mt-1 bg-white border border-primary-200 rounded-md shadow-lg z-50 max-h-96 overflow-y-auto'>
-                        {results.length === 0 ? (
+                        {isLoading ? (
+                            <div className='px-4 py-3 text-sm text-gray-500'>Loading search…</div>
+                        ) : results.length === 0 ? (
                             <div className='px-4 py-3 text-sm text-gray-500'>No results found</div>
                         ) : (
                             <>
@@ -175,7 +175,6 @@ const DocsSearch: FC = () => {
                 )}
             </div>
 
-            {isLoading && <div className='text-xs text-gray-500 mt-1'>Loading search...</div>}
         </div>
     );
 };
