@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import type MiniSearch from 'minisearch';
 import { parse as parseYaml } from 'yaml';
 
@@ -80,3 +82,4 @@ const payload: SearchIndexPayload = {
 };
 
 export const searchIndexJson: string = JSON.stringify(payload);
+export const searchIndexETag: string = `"${createHash('sha1').update(searchIndexJson).digest('hex')}"`;

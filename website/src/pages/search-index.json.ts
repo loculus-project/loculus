@@ -1,8 +1,23 @@
-import { searchIndexJson } from '../utils/buildSearchIndex';
+import { searchIndexETag, searchIndexJson } from '../utils/buildSearchIndex';
 
-export function GET() {
+/* eslint-disable @typescript-eslint/naming-convention -- HTTP header names */
+export function GET({ request }: { request: Request }) {
+    if (request.headers.get('if-none-match') === searchIndexETag) {
+        return new Response(null, {
+            status: 304,
+            headers: {
+                'ETag': searchIndexETag,
+                'Cache-Control': 'public, max-age=3600',
+            },
+        });
+    }
+
     return new Response(searchIndexJson, {
-        // eslint-disable-next-line @typescript-eslint/naming-convention -- HTTP header name
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, max-age=3600',
+            'ETag': searchIndexETag,
+        },
     });
 }
+/* eslint-enable @typescript-eslint/naming-convention */
