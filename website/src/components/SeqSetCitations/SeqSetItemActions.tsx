@@ -58,7 +58,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     const [exportModalVisible, setExportModalVisible] = useState(false);
     const [citationsModalVisible, setCitationsModalVisible] = useState(false);
     const [creatorInfoVisible, setCreatorInfoVisible] = useState(false);
-  
+
     const {
         isLoading: isSeqSetCitationsLoading,
         error: seqSetCitationsError,
@@ -183,6 +183,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                     error={seqSetCitationsError}
                     seqSetCitations={seqSetCitations ?? []}
                 />
+            </BaseDialog>
             <BaseDialog
                 title='Creator details'
                 isOpen={creatorInfoVisible}
