@@ -66,9 +66,19 @@ class CrossRefService(private val properties: CrossRefServiceProperties, private
     }
 
     fun parseCrossRefCitedByXML(citedByXML: String): List<SeqSetCitingSource> {
-        val doc = Jsoup.parse(citedByXML, "", Parser.xmlParser())
+        val parser = Parser.xmlParser().setTrackErrors(1)
+        val doc = Jsoup.parse(citedByXML, "", parser)
 
-        return doc.select("forward_link").map { forwardLink ->
+        if (parser.errors.isNotEmpty()) {
+            throw IllegalStateException("Invalid XML: ${parser.errors}")
+        }
+
+        val crossRefResult = doc.children().firstOrNull()
+        if (crossRefResult?.tagName() != "crossref_result") {
+            throw IllegalStateException("Invalid CrossRef root element: ${crossRefResult?.tagName()}")
+        }
+
+        return crossRefResult.select("forward_link").map { forwardLink ->
             val seqSetDOI = forwardLink.attr("doi").takeIf { it.isNotBlank() }
                 ?: throw IllegalStateException("CrossRef forward_link missing SeqSet DOI: $forwardLink")
 
