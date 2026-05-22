@@ -58,7 +58,7 @@ export const SingleChoiceAutoCompleteField = ({
 
     useEffect(() => {
         if (error) {
-            void logger.error(error);
+            void logger.warn(error);
         }
     }, [error]);
 
