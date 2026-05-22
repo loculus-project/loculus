@@ -1,6 +1,7 @@
 import MiniSearch from 'minisearch';
 import { useState, useEffect, useRef, type FC } from 'react';
 
+import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { Button } from '../common/Button';
 import CloseIcon from '~icons/material-symbols/close';
 import SearchIcon from '~icons/material-symbols/search';
@@ -85,19 +86,21 @@ const DocsSearch: FC = () => {
             <div className='relative'>
                 <div className='flex items-center bg-primary-50 border border-primary-200 rounded-md px-3 py-2 focus-within:border-primary-400'>
                     <SearchIcon className='w-4 h-4 text-primary-600 flex-shrink-0' aria-hidden='true' />
-                    <input
-                        ref={inputRef}
-                        type='text'
-                        placeholder='Search documentation...'
-                        value={query}
-                        onChange={(e) => {
-                            setQuery(e.target.value);
-                            setIsOpen(true);
-                        }}
-                        onFocus={() => setIsOpen(true)}
-                        className='flex-1 ml-2 bg-transparent border-none text-sm text-gray-700 placeholder-primary-500 focus:outline-none focus:ring-0'
-                        aria-label='Search documentation'
-                    />
+                    <DisabledUntilHydrated>
+                        <input
+                            ref={inputRef}
+                            type='text'
+                            placeholder='Search documentation...'
+                            value={query}
+                            onChange={(e) => {
+                                setQuery(e.target.value);
+                                setIsOpen(true);
+                            }}
+                            onFocus={() => setIsOpen(true)}
+                            className='flex-1 ml-2 bg-transparent border-none text-sm text-gray-700 placeholder-primary-500 focus:outline-none focus:ring-0 disabled:cursor-not-allowed'
+                            aria-label='Search documentation'
+                        />
+                    </DisabledUntilHydrated>
                     {query && (
                         <Button
                             type='button'
