@@ -62,7 +62,7 @@ jobs:
       - name: Get runner IP
         run: curl -4 ifconfig.me
       - name: Collect Workflow Telemetry
-        uses: catchpoint/workflow-telemetry-action@v2
+        uses: ycfreeman/workflow-telemetry-action@cad169ff11f718319d5468b0a67a238db000ef3f
       - name: Checkout repository
         uses: actions/checkout@v6
       - name: Install k3d
