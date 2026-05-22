@@ -40,23 +40,14 @@ const splitFrontmatter = (content: string): { frontmatter: Record<string, unknow
     return { frontmatter, body: content.slice(match[0].length) };
 };
 
-const stripMarkdown = (body: string): string => {
-    let current = body;
-    let previous: string;
-    do {
-        previous = current;
-        current = current
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-            .replace(/^#{1,6}\s+/gm, '')
-            .replace(/```[\s\S]*?```/g, '')
-            .replace(/`([^`]+)`/g, '$1')
-            .replace(/<!--[\s\S]*?-->/g, '')
-            .replace(/\s+/g, ' ')
-            .trim();
-    } while (current !== previous);
-
-    return current;
-};
+const stripMarkdown = (body: string): string =>
+    body
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/^#{1,6}\s+/gm, '')
+        .replace(/```[\s\S]*?```/g, '')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/\s+/g, ' ')
+        .trim();
 
 const pathToUrl = (modulePath: string): string => {
     // ../pages/docs/how-to/revise-submissions.mdx -> /docs/how-to/revise-submissions
