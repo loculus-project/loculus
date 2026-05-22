@@ -35,7 +35,12 @@ object SeqSetToRecordsTable : Table("seqset_to_records") {
 object SeqSetCitingSourceTable : Table("seqset_citing_source") {
     val citingSourceId = long("citing_source_id").autoIncrement()
     val sourceDOI = text("source_doi").uniqueIndex()
-    val origin = enumerationByName<CitationOrigin>("origin", 10)
+    val origin = customEnumeration(
+        name = "origin",
+        sql = "text",
+        fromDb = { CitationOrigin.valueOf(it as String) },
+        toDb = { it.name },
+    )
     val title = text("title")
     val year = integer("year")
     val contributors = jacksonSerializableJsonb<List<CitationContributor>>("contributors")
