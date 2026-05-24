@@ -95,6 +95,14 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                             disableTruncate
                         />
                     )}
+                    {sequenceEntryStatus.isRevocation && sequenceEntryStatus.versionComment && (
+                        <KeyValueComponent
+                            accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
+                            keyName='Version comment'
+                            value={sequenceEntryStatus.versionComment}
+                            disableTruncate
+                        />
+                    )}
                 </div>
                 <ButtonBar
                     sequenceEntryStatus={sequenceEntryStatus}
