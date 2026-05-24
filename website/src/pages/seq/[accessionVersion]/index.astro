@@ -43,17 +43,6 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
     implicitOrganism={sequenceDetailsTableData.isOk() ? sequenceDetailsTableData.value.organism : undefined}
 >
     {
-        sequenceDetailsTableData.isOk() &&
-            sequenceDetailsTableData.value.result.type === SequenceDetailsTableResultType.TABLE_DATA && (
-                <div slot='banner'>
-                    <SequencesBanner
-                        sequenceEntryHistory={sequenceDetailsTableData.value.result.sequenceEntryHistory}
-                        accessionVersion={accessionVersion}
-                    />
-                </div>
-            )
-    }
-    {
         sequenceDetailsTableData.match(
             ({ organism, result }) => {
                 const showDownloadAndReport =
@@ -72,6 +61,12 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                                 showDownloadAndReport && getSegmentNames(getReferenceGenomes(organism)).length > 0
                             }
                         />
+                        {result.type === SequenceDetailsTableResultType.TABLE_DATA && (
+                            <SequencesBanner
+                                sequenceEntryHistory={result.sequenceEntryHistory}
+                                accessionVersion={accessionVersion}
+                            />
+                        )}
                         {result.type === SequenceDetailsTableResultType.TABLE_DATA &&
                             (result.isRevocation ? (
                                 <RevocationEntryDataTable
