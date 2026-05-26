@@ -1605,23 +1605,6 @@ class ProcessingFunctions:
         return the tax_id of the most generic taxon (i.e., the one that's closest to
         the root of the taxonomy)
         """
-        # for INSDC-ingested sequences we just return the id INSDC gives us (if any)
-        # if we ever want to change this behaviour, we just have to remove this short-circuit,
-        # the rest of the function is set up to validate INSDC-ingested data as well
-        if args["is_insdc_ingest_group"]:
-            tax_id = input_data.get("hostTaxonId")
-            if not isinstance(tax_id, str) or not tax_id.isdigit():
-                return ProcessingResult(
-                    datum=None,
-                    warnings=[],
-                    errors=[],
-                )
-            return ProcessingResult(
-                datum=tax_id,
-                warnings=[],
-                errors=[],
-            )
-
         tax_service = args.get("taxonomy_service_url")
         if not tax_service:
             return missing_taxonomy_service_error(input_fields, output_field)
