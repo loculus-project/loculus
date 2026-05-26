@@ -4,6 +4,7 @@
     "backendUrl": "http://dummy-backend.com",
     "organisms": {
         "dummyOrganism": {
+            "lapisUrl": "http://localhost:8080",
             "referenceGenome": {
                 "nucleotideSequences": [
                     {
@@ -103,6 +104,7 @@
             }
         },
         "otherOrganism": {
+            "lapisUrl": "http://localhost:8080",
             "referenceGenome": {
                 "nucleotideSequences": [
                     {
@@ -187,6 +189,7 @@
             }
         },
         "dummyOrganismWithoutConsensusSequences": {
+            "lapisUrl": "http://localhost:8080",
             "referenceGenome": {
                 "nucleotideSequences": [],
                 "genes": []

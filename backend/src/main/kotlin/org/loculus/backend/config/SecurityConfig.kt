@@ -60,6 +60,7 @@ class SecurityConfig {
         "/*/get-released-data",
         "/files/get/**",
         "/groups/*",
+        "/*/lapis/**",
     )
 
     private val headEndpointsThatArePublic = arrayOf(
@@ -90,6 +91,7 @@ class SecurityConfig {
                 "/swagger-ui/**",
             ).permitAll()
             auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
+            auth.requestMatchers(HttpMethod.POST, "/*/lapis/**").permitAll()
             auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
             auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
@@ -99,6 +101,9 @@ class SecurityConfig {
             auth.requestMatchers(*adminEndpoints).hasAuthority(SUPER_USER)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
+        }
+        .csrf { csrf ->
+            csrf.ignoringRequestMatchers("/*/lapis/**")
         }
         .oauth2ResourceServer { oauth2 ->
             oauth2.jwt { jwt ->

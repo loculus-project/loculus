@@ -25,20 +25,22 @@ export const testOrganism = 'testOrganism';
 
 export const testDatabaseName = 'testDatabase';
 
+const testBackendUrl = 'http://backend.dummy';
+
 export const testConfig = {
     public: {
         discriminator: 'client',
-        backendUrl: 'http://backend.dummy',
+        backendUrl: testBackendUrl,
         lapisUrls: {
-            [testOrganism]: 'http://lapis.dummy',
+            [testOrganism]: `${testBackendUrl}/${testOrganism}/lapis`,
         },
         keycloakUrl: 'http://authentication.dummy',
     },
     serverSide: {
         discriminator: 'server',
-        backendUrl: 'http://backend.dummy',
+        backendUrl: testBackendUrl,
         lapisUrls: {
-            [testOrganism]: 'http://lapis.dummy',
+            [testOrganism]: `${testBackendUrl}/${testOrganism}/lapis`,
         },
         keycloakUrl: 'http://authentication.dummy',
     },
