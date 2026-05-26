@@ -1,6 +1,6 @@
 package org.loculus.backend.service.seqsetcitations
 
-import org.loculus.backend.api.SeqSetCitingSource
+import org.loculus.backend.api.SeqSetCitationSource
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
 import org.loculus.backend.service.crossref.CrossRefService
@@ -10,20 +10,20 @@ import org.springframework.stereotype.Component
 
 private val log = mu.KotlinLogging.logger {}
 
-internal fun mergeCitingSources(citingSources: List<SeqSetCitingSource>): Set<SeqSetCitingSource> {
-    val mergedSources = mutableMapOf<String, SeqSetCitingSource>()
+internal fun mergeCitationSources(citationSources: List<SeqSetCitationSource>): Set<SeqSetCitationSource> {
+    val mergedSources = mutableMapOf<String, SeqSetCitationSource>()
 
-    for (citingSource in citingSources) {
-        val existingSource = mergedSources[citingSource.sourceDOI]
+    for (citationSource in citationSources) {
+        val existingSource = mergedSources[citationSource.source.sourceDOI]
         if (existingSource != null &&
-            existingSource.copy(seqSetDOIs = emptySet()) != citingSource.copy(seqSetDOIs = emptySet())
+            existingSource.source != citationSource.source
         ) {
             log.warn {
-                "Conflicting CrossRef metadata for citing source ${citingSource.sourceDOI} (keeping latest): $existingSource and $citingSource"
+                "Conflicting CrossRef metadata for citation source ${citationSource.source.sourceDOI} (keeping latest): $existingSource and $citationSource"
             }
         }
-        mergedSources[citingSource.sourceDOI] = citingSource.copy(
-            seqSetDOIs = existingSource?.seqSetDOIs.orEmpty() + citingSource.seqSetDOIs,
+        mergedSources[citationSource.source.sourceDOI] = citationSource.copy(
+            seqSetDOIs = existingSource?.seqSetDOIs.orEmpty() + citationSource.seqSetDOIs,
         )
     }
     return mergedSources.values.toSet()
@@ -37,7 +37,7 @@ class SeqSetCrossRefCitationsTask(
 ) {
     /**
      * Runs every six hours, with an initial delay of one minute.
-     * Adds citing sources from CrossRef, and connects to SeqSets via their DOI.
+     * Adds citation sources from CrossRef, and connects to SeqSets via their DOI.
      */
     @Scheduled(
         initialDelay = 1,
@@ -59,20 +59,20 @@ class SeqSetCrossRefCitationsTask(
         }
 
         log.info { "Fetching CrossRef citations for DOI prefix: $doiPrefix" }
-        val citingSources = mergeCitingSources(crossRefService.getCrossRefCitedBy(doiPrefix))
-        val seqSetDOIs = citingSources.flatMap { it.seqSetDOIs }.toSet()
+        val citationSources = mergeCitationSources(crossRefService.getCrossRefCitedBy(doiPrefix))
+        val seqSetDOIs = citationSources.flatMap { it.seqSetDOIs }.toSet()
         log.info {
-            "Fetched ${citingSources.size} citing source(s) from CrossRef covering ${seqSetDOIs.size} SeqSet DOI(s)."
+            "Fetched ${citationSources.size} citation source(s) from CrossRef covering ${seqSetDOIs.size} SeqSet DOI(s)."
         }
-        if (citingSources.isEmpty()) return
+        if (citationSources.isEmpty()) return
 
-        val updateResult = seqSetCitationsDatabaseService.updateCitingSourcesFromCrossRef(citingSources)
-        if (updateResult.updatedCitingSourceDOIs.isNotEmpty()) {
-            log.info { "Updated ${updateResult.updatedCitingSourceDOIs.size} citing source(s)." }
+        val updateResult = seqSetCitationsDatabaseService.updateCitationSourcesFromCrossRef(citationSources)
+        if (updateResult.updatedCitationSourceDOIs.isNotEmpty()) {
+            log.info { "Updated ${updateResult.updatedCitationSourceDOIs.size} citation source(s)." }
         }
-        val skippedCitingSources = citingSources.size - updateResult.updatedCitingSourceDOIs.size
-        if (skippedCitingSources > 0) {
-            log.warn { "Skipped $skippedCitingSources citing source(s) with no matching SeqSet." }
+        val skippedCitationSources = citationSources.size - updateResult.updatedCitationSourceDOIs.size
+        if (skippedCitationSources > 0) {
+            log.warn { "Skipped $skippedCitationSources citation source(s) with no matching SeqSet." }
         }
     }
 }

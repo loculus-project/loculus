@@ -18,11 +18,11 @@ const SeqSetCitationDOI: FC<SeqSetCitationItemProps> = ({ seqSetCitation }) => {
             DOI:
             <a
                 className='text-primary-600 mx-1'
-                href={`https://doi.org/${seqSetCitation.sourceDOI}`}
+                href={`https://doi.org/${seqSetCitation.source.sourceDOI}`}
                 target='_blank'
                 rel='noopener noreferrer'
             >
-                {seqSetCitation.sourceDOI}
+                {seqSetCitation.source.sourceDOI}
             </a>
         </span>
     );
@@ -32,10 +32,10 @@ const SeqSetCitationItem: FC<SeqSetCitationItemProps> = ({ seqSetCitation }) => 
     return (
         <div className='flex flex-col gap-2'>
             <div>
-                {seqSetCitation.contributors
+                {seqSetCitation.source.contributors
                     .map((contributor) => `${contributor.givenName} ${contributor.surname}`)
                     .join(', ')}
-                . <i>{seqSetCitation.title}</i>, {seqSetCitation.year}.
+                . <i>{seqSetCitation.source.title}</i>, {seqSetCitation.source.year}.
             </div>
             <div>
                 <SeqSetCitationDOI seqSetCitation={seqSetCitation} />
@@ -58,7 +58,7 @@ export const SeqSetCitationsList: FC<SeqSetCitationsListProps> = ({ isLoading, e
                 ) : seqSetCitations.length > 0 ? (
                     <ul className='max-w-3xl space-y-8'>
                         {seqSetCitations.map((seqSetCitation) => (
-                            <li key={seqSetCitation.sourceDOI}>
+                            <li key={seqSetCitation.source.sourceDOI}>
                                 <SeqSetCitationItem seqSetCitation={seqSetCitation} />
                             </li>
                         ))}

@@ -32,8 +32,8 @@ object SeqSetToRecordsTable : Table("seqset_to_records") {
     override val primaryKey = PrimaryKey(seqSetRecordId, seqSetId, seqSetVersion)
 }
 
-object SeqSetCitingSourceTable : Table("seqset_citing_source") {
-    val citingSourceId = long("citing_source_id").autoIncrement()
+object SeqSetCitationSourceTable : Table("seqset_citation_source") {
+    val citationSourceId = long("citation_source_id").autoIncrement()
     val sourceDOI = text("source_doi").uniqueIndex()
     val origin = customEnumeration(
         name = "origin",
@@ -44,12 +44,12 @@ object SeqSetCitingSourceTable : Table("seqset_citing_source") {
     val title = text("title")
     val year = integer("year")
     val contributors = jacksonSerializableJsonb<List<CitationContributor>>("contributors")
-    override val primaryKey = PrimaryKey(citingSourceId)
+    override val primaryKey = PrimaryKey(citationSourceId)
 }
 
-object SeqSetToCitingSourceTable : Table("seqset_to_citing_source") {
-    val citingSourceId = long("citing_source_id") references SeqSetCitingSourceTable.citingSourceId
+object SeqSetToCitationSourceTable : Table("seqset_to_citation_source") {
+    val citationSourceId = long("citation_source_id") references SeqSetCitationSourceTable.citationSourceId
     val seqSetId = text("seqset_id") references SeqSetsTable.seqSetId
     val seqSetVersion = long("seqset_version") references SeqSetsTable.seqSetVersion
-    override val primaryKey = PrimaryKey(citingSourceId, seqSetId, seqSetVersion)
+    override val primaryKey = PrimaryKey(citationSourceId, seqSetId, seqSetVersion)
 }
