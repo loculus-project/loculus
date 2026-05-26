@@ -499,24 +499,27 @@ def generate_config(
             write_config(output_path.with_suffix(f".{config_data['organism']}.yaml"), yaml.dump(config_data))
         return
 
-    wrote_config = False
     for doc in parsed_yaml:
         config_data = doc.get("data", {})
         if configmap_path.name not in config_data:
             continue
 
-        write_config(output_path, config_data[configmap_path.name])
-        wrote_config = True
+        output_config = config_data[configmap_path.name]
+        if configmap_path.name == "website_config.json":
+            output_config = json.dumps({
+                **json.loads(output_config),
+                "organisms": {
+                    Path(filename).stem: json.loads(data)
+                    for doc in parsed_yaml
+                    for filename, data in doc.get("data", {}).items()
+                    if filename not in ["website_config.json", "runtime_config.json"] and filename.endswith(".json")
+                },
+            })
 
-    if configmap_path.name == "website_config.json":
-        for doc in parsed_yaml:
-            for filename, config_data in doc.get("data", {}).items():
-                if filename in ["website_config.json", "runtime_config.json"] or not filename.endswith(".json"):
-                    continue
-                write_config(output_path.parent / "organisms" / filename, config_data)
+        write_config(output_path, output_config)
+        return
 
-    if not wrote_config:
-        raise RuntimeError(f"Could not find {configmap_path.name} in rendered template {template}")
+    raise RuntimeError(f"Could not find {configmap_path.name} in rendered template {template}")
 
 
 def get_codespace_params(codespace_name):
