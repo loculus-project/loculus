@@ -502,7 +502,7 @@ organisms:
 {{- $key := $item.key }}
 {{- $instance := $item.contents }}
   {{ $key }}:
-    lapisUrl: "http://{{ template "loculus.lapisServiceName" $key }}:8080"
+    lapisUrl: "{{ if $.Values.disableBackend }}http://{{ $.Values.localHost }}:8080/{{ $key }}{{ else }}http://{{ template "loculus.lapisServiceName" $key }}:8080{{ end }}"
     schema:
       {{- with $instance.schema }}
       organismName: {{ quote .organismName }}
