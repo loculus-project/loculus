@@ -79,7 +79,10 @@ export function readWebsiteConfigFromDir(configDir: string): WebsiteConfig {
         return config;
     }
 
-    for (const fileName of fs.readdirSync(organismsDir).filter((fileName) => fileName.endsWith('.json')).sort()) {
+    for (const fileName of fs
+        .readdirSync(organismsDir)
+        .filter((fileName) => fileName.endsWith('.json'))
+        .sort()) {
         config.organisms[path.basename(fileName, '.json')] = readTypedConfigFile(
             configDir,
             path.join('organisms', fileName),
