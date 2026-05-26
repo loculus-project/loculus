@@ -6,28 +6,8 @@ import requests
 
 
 def copy_structure(input_dir, output_dir):
-    seen_dirs = set()
-    for root, dirs, files in os.walk(input_dir, followlinks=True):
-        # Kubernetes ConfigMap/projected volumes expose visible files as symlinks
-        # into hidden `..data` directories. Copy the visible tree only, while
-        # still following visible symlinked directories such as `organisms/`.
-        dirs[:] = [dir for dir in dirs if not dir.startswith("..")]
-        files = [file for file in files if not file.startswith("..")]
-
-        real_root = os.path.realpath(root)
-        if real_root in seen_dirs:
-            dirs[:] = []
-            continue
-        seen_dirs.add(real_root)
-
-        for dir in dirs:
-            dir_path = os.path.join(output_dir, os.path.relpath(os.path.join(root, dir), input_dir))
-            os.makedirs(dir_path, exist_ok=True)
-        for file in files:
-            file_path = os.path.join(output_dir, os.path.relpath(os.path.join(root, file), input_dir))
-            # Make sure the directory exists
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            shutil.copy(os.path.join(root, file), file_path)
+    ignore_hidden_kubernetes_dirs = shutil.ignore_patterns("..*")
+    shutil.copytree(input_dir, output_dir, dirs_exist_ok=True, ignore=ignore_hidden_kubernetes_dirs)
 
 
 def replace_url_with_content(file_content):

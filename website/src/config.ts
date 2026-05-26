@@ -73,34 +73,19 @@ export function getWebsiteConfig(): WebsiteConfig {
 
 export function readWebsiteConfigFromDir(configDir: string): WebsiteConfig {
     const config = readTypedConfigFile(configDir, 'website_config.json', websiteConfig);
-    const organismConfigs = readSplitOrganismConfigs(configDir);
-    if (Object.keys(organismConfigs).length === 0) {
-        return config;
-    }
-    return {
-        ...config,
-        organisms: {
-            ...config.organisms,
-            ...organismConfigs,
-        },
-    };
-}
-
-function readSplitOrganismConfigs(configDir: string): Record<string, InstanceConfig> {
     const organismsDir = path.join(configDir, 'organisms');
     if (!fs.existsSync(organismsDir)) {
-        return {};
+        return config;
     }
-    return Object.fromEntries(
-        fs
-            .readdirSync(organismsDir)
-            .filter((fileName) => fileName.endsWith('.json'))
-            .sort()
-            .map((fileName) => {
-                const organism = path.basename(fileName, '.json');
-                return [organism, readTypedConfigFile(configDir, path.join('organisms', fileName), instanceConfig)];
-            }),
-    );
+
+    for (const fileName of fs.readdirSync(organismsDir).filter((fileName) => fileName.endsWith('.json')).sort()) {
+        config.organisms[path.basename(fileName, '.json')] = readTypedConfigFile(
+            configDir,
+            path.join('organisms', fileName),
+            instanceConfig,
+        );
+    }
+    return config;
 }
 
 export function getContactConfig(websiteConfig: WebsiteConfig) {

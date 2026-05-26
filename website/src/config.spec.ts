@@ -41,16 +41,7 @@ describe('validateWebsiteConfig', () => {
             ...defaultConfig,
             organisms: {
                 dummyOrganism: {
-                    schema: {
-                        organismName: 'dummy',
-                        inputFields: [],
-                        tableColumns: [],
-                        primaryKey: '',
-                        metadata: [],
-                        defaultOrderBy: '',
-                        defaultOrder: 'ascending',
-                        submissionDataTypes: { consensusSequences: false },
-                    },
+                    ...defaultOrganismConfig('dummy'),
                     referenceGenomes: SINGLE_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA,
                 },
             },
@@ -97,30 +88,8 @@ describe('configuredOrganismsFromConfig', () => {
         const organisms = configuredOrganismsFromConfig({
             ...defaultConfig,
             organisms: {
-                zika: {
-                    schema: {
-                        organismName: 'Zika Virus',
-                        inputFields: [],
-                        tableColumns: [],
-                        primaryKey: '',
-                        metadata: [],
-                        defaultOrderBy: '',
-                        defaultOrder: 'ascending',
-                        submissionDataTypes: { consensusSequences: false },
-                    },
-                },
-                andes: {
-                    schema: {
-                        organismName: 'Andes Virus [Hantavirus]',
-                        inputFields: [],
-                        tableColumns: [],
-                        primaryKey: '',
-                        metadata: [],
-                        defaultOrderBy: '',
-                        defaultOrder: 'ascending',
-                        submissionDataTypes: { consensusSequences: false },
-                    },
-                },
+                zika: defaultOrganismConfig('Zika Virus'),
+                andes: defaultOrganismConfig('Andes Virus [Hantavirus]'),
             },
         });
 
