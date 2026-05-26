@@ -32,6 +32,7 @@ ROOT_DIR = script_path.parent
 CLUSTER_NAME = "testCluster"
 HELM_RELEASE_NAME = "preview"
 HELM_CHART_DIR = ROOT_DIR / "kubernetes" / "loculus"
+WEBSITE_ORGANISM_CONFIGMAP_PREFIX = "loculus-web-org-config-"
 
 # By default, uses K3s v1.31: https://hub.docker.com/r/rancher/k3s/tags?name=v1.31
 # K3s v1.31 is the latest version which installs Traefik v2 (Traefik v3 is not yet supported by Loculus)
@@ -506,20 +507,27 @@ def generate_config(
 
         output_config = config_data[configmap_path.name]
         if configmap_path.name == "website_config.json":
-            output_config = json.dumps({
-                **json.loads(output_config),
-                "organisms": {
-                    Path(filename).stem: json.loads(data)
-                    for doc in parsed_yaml
-                    for filename, data in doc.get("data", {}).items()
-                    if filename not in ["website_config.json", "runtime_config.json"] and filename.endswith(".json")
-                },
-            })
+            output_config = merge_split_website_config(output_config, parsed_yaml)
 
         write_config(output_path, output_config)
         return
 
     raise RuntimeError(f"Could not find {configmap_path.name} in rendered template {template}")
+
+
+def merge_split_website_config(website_config, rendered_docs):
+    config = json.loads(website_config)
+    config["organisms"] = {}
+
+    for doc in rendered_docs:
+        configmap_name = doc.get("metadata", {}).get("name", "")
+        if not configmap_name.startswith(WEBSITE_ORGANISM_CONFIGMAP_PREFIX):
+            continue
+
+        for filename, data in doc.get("data", {}).items():
+            config["organisms"][Path(filename).stem] = json.loads(data)
+
+    return json.dumps(config)
 
 
 def get_codespace_params(codespace_name):
