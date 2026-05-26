@@ -76,13 +76,7 @@ data class SeqSetCitation(val source: CitationSource)
 
 data class SeqSetCitingSequence(val seqSetAccession: String, val sequenceAccession: String)
 
-data class SequenceCitation(
-    val sourceDOI: String,
-    val title: String,
-    val year: Int,
-    val contributors: List<CitationContributor>,
-    val seqSets: List<SeqSetCitingSequence>,
-)
+data class SequenceCitation(val source: CitationSource, val seqSets: List<SeqSetCitingSequence>)
 
 data class ResponseSeqSet(val seqSetId: String, val seqSetVersion: Long)
 

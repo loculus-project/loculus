@@ -65,10 +65,7 @@ const seqSetCitingSequence = z.object({
 export type SeqSetCitingSequence = z.infer<typeof seqSetCitingSequence>;
 
 const sequenceCitation = z.object({
-    sourceDOI: z.string(),
-    title: z.string(),
-    year: z.number(),
-    contributors: z.array(citationContributor),
+    source: citationSource,
     seqSets: z.array(seqSetCitingSequence),
 });
 export type SequenceCitation = z.infer<typeof sequenceCitation>;

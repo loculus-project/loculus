@@ -23,11 +23,11 @@ const CitationDOI: FC<CitationItemProps> = ({ citation }) => {
             DOI:
             <a
                 className='text-primary-600 mx-1'
-                href={`https://doi.org/${citation.sourceDOI}`}
+                href={`https://doi.org/${citation.source.sourceDOI}`}
                 target='_blank'
                 rel='noopener noreferrer'
             >
-                {citation.sourceDOI}
+                {citation.source.sourceDOI}
             </a>
         </span>
     );
@@ -53,10 +53,10 @@ const CitationItem: FC<CitationItemProps> = ({ citation }) => {
     return (
         <div className='flex flex-col gap-2'>
             <div>
-                {citation.contributors
+                {citation.source.contributors
                     .map((contributor) => `${contributor.givenName} ${contributor.surname}`)
                     .join(', ')}
-                . <i>{citation.title}</i>, {citation.year}.
+                . <i>{citation.source.title}</i>, {citation.source.year}.
             </div>
             <div>
                 <CitationDOI citation={citation} />
@@ -77,7 +77,7 @@ export const CitationsList: FC<CitationsListProps> = ({ isLoading, error, citati
                 ) : citations.length > 0 ? (
                     <ul className='max-w-3xl space-y-4'>
                         {citations.map((citation) => (
-                            <li key={citation.sourceDOI} className='border border-gray-200 p-4 rounded-lg'>
+                            <li key={citation.source.sourceDOI} className='border border-gray-200 p-4 rounded-lg'>
                                 <CitationItem citation={citation} />
                             </li>
                         ))}

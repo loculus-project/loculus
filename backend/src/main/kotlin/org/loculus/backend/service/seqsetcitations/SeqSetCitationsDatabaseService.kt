@@ -30,6 +30,7 @@ import org.loculus.backend.api.SeqSet
 import org.loculus.backend.api.SeqSetCitation
 import org.loculus.backend.api.SeqSetCitationSource
 import org.loculus.backend.api.SeqSetCitationsConstants
+import org.loculus.backend.api.SeqSetCitingSequence
 import org.loculus.backend.api.SeqSetRecord
 import org.loculus.backend.api.SequenceCitation
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
@@ -529,20 +530,22 @@ class SeqSetCitationsDatabaseService(
         log.info { "Get sequence cited by publication for accession ${accessionVersion.displayAccessionVersion()}" }
         val accessions = setOf(accessionVersion.accession, accessionVersion.displayAccessionVersion())
 
-        return SeqSetCitingSourceTable.innerJoin(
-            SeqSetToCitingSourceTable,
+        return SeqSetCitationSourceTable.innerJoin(
+            SeqSetToCitationSourceTable,
         ).innerJoin(
             SeqSetsTable,
         ).innerJoin(SeqSetToRecordsTable).innerJoin(SeqSetRecordsTable).selectAll()
             .where { SeqSetRecordsTable.accession inList accessions }
-            .groupBy { it[SeqSetCitingSourceTable.citingSourceId] }
+            .groupBy { it[SeqSetCitationSourceTable.citationSourceId] }
             .map { (_, rows) ->
                 val first = rows.first()
                 SequenceCitation(
-                    sourceDOI = first[SeqSetCitingSourceTable.sourceDOI],
-                    title = first[SeqSetCitingSourceTable.title],
-                    year = first[SeqSetCitingSourceTable.year],
-                    contributors = first[SeqSetCitingSourceTable.contributors],
+                    source = CitationSource(
+                        sourceDOI = first[SeqSetCitationSourceTable.sourceDOI],
+                        title = first[SeqSetCitationSourceTable.title],
+                        year = first[SeqSetCitationSourceTable.year],
+                        contributors = first[SeqSetCitationSourceTable.contributors],
+                    ),
                     seqSets = rows.map {
                         SeqSetCitingSequence(
                             seqSetAccession = AccessionVersion(

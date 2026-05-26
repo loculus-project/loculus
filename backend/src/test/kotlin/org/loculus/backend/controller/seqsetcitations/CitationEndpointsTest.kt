@@ -199,15 +199,17 @@ class CitationEndpointsTest(
         client.createSeqSetDOI(seqSetId = seqSetId, seqSetVersion = seqSetVersion).andExpect(status().isOk)
         val seqSetDOI = "${MOCK_DOI_PREFIX}/$seqSetId.$seqSetVersion"
 
-        val seqSetCitingSource = SeqSetCitingSource(
-            sourceDOI = "10.5678/citing-paper",
-            title = "A paper citing the seqSet",
-            year = 2024,
-            contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
+        val seqSetCitationSource = SeqSetCitationSource(
+            CitationSource(
+                sourceDOI = "10.5678/citing-paper",
+                title = "A paper citing the seqSet",
+                year = 2024,
+                contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
+            ),
             seqSetDOIs = setOf(seqSetDOI),
         )
         every { crossRefService.isActive } returns true
-        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns listOf(seqSetCitingSource)
+        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns listOf(seqSetCitationSource)
         seqSetCrossRefCitationsTask.task()
 
         client.getSequenceCitedByPublication(accession = MOCK_SEQ_ACCESSION, version = MOCK_SEQ_VERSION)
@@ -215,9 +217,9 @@ class CitationEndpointsTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$").isArray)
             .andExpect(jsonPath("\$.length()").value(1))
-            .andExpect(jsonPath("\$[0].sourceDOI").value(seqSetCitingSource.sourceDOI))
-            .andExpect(jsonPath("\$[0].title").value(seqSetCitingSource.title))
-            .andExpect(jsonPath("\$[0].year").value(seqSetCitingSource.year))
+            .andExpect(jsonPath("\$[0].source.sourceDOI").value(seqSetCitationSource.source.sourceDOI))
+            .andExpect(jsonPath("\$[0].source.title").value(seqSetCitationSource.source.title))
+            .andExpect(jsonPath("\$[0].source.year").value(seqSetCitationSource.source.year))
             .andExpect(jsonPath("\$[0].seqSets.length()").value(1))
             .andExpect(jsonPath("\$[0].seqSets[0].seqSetAccession").value("$seqSetId.$seqSetVersion"))
             .andExpect(jsonPath("\$[0].seqSets[0].sequenceAccession").value(MOCK_ACCESSION_VERSION))
