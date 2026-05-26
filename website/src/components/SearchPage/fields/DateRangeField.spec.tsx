@@ -158,6 +158,38 @@ describe('DateRangeField', () => {
         );
     });
 
+    it('does not snap back to strict when user toggles without having entered dates', async () => {
+        function Wrapper() {
+            const [values, _setValues] = useState<FieldValues>({});
+
+            const setValues: SetSomeFieldValues = useCallback((...fieldValuesToSet) => {
+                _setValues((state) => {
+                    const newState = { ...state };
+                    fieldValuesToSet.forEach(([k, v]) => {
+                        // mirror the production behaviour of useSearchPageState: null/'' deletes
+                        if (v === null || v === '') {
+                            delete newState[k];
+                        } else {
+                            newState[k] = v;
+                        }
+                    });
+                    return newState;
+                });
+            }, []);
+
+            return <DateRangeField field={field} fieldValues={values} setSomeFieldValues={setValues} />;
+        }
+
+        const user = userEvent.setup();
+        render(<Wrapper />);
+
+        const strictCheckbox = screen.getByRole('checkbox');
+        expect(strictCheckbox).toBeChecked();
+
+        await user.click(strictCheckbox);
+        expect(strictCheckbox).not.toBeChecked();
+    });
+
     it('setting fieldValue to empty string clears date field', async () => {
         function Wrapper() {
             const [values, _setValues] = useState<FieldValues>({

@@ -20,6 +20,8 @@
     "dependencies": {
         "@astrojs/mdx": "^4.3.13",
         "@astrojs/node": "^9.5.2",
+        "minisearch": "^6.3.0",
+        "yaml": "^2.4.5",
         "@emotion/react": "^11.14.0",
         "@headlessui/react": "^2.2.0",
         "@lokalise/xlsx": "^0.20.3",
@@ -55,7 +57,7 @@
         "react-toastify": "^11.0.5",
         "react-tooltip": "^6.0.0",
         "rsuite": "^6.1.3",
-        "sanitize-html": "^2.17.3",
+        "sanitize-html": "^2.17.4",
         "unplugin-icons": "^22.5.0",
         "winston": "^3.19.0",
         "zod": "^3.25.67"

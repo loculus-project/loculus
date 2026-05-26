@@ -24,3 +24,4 @@ This means that the code that we develop needs to be suitably general and config
 
 The backend offers a Swagger UI and an OpenAPI specification.
 Try to keep the OpenAPI specification as correct and as useful as possible.
+

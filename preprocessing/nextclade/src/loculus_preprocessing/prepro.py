@@ -5,8 +5,6 @@ from collections.abc import Sequence
 from tempfile import TemporaryDirectory
 from typing import Any
 
-import dpath
-
 from .backend import (
     download_diamond_db,
     download_minimizer,
@@ -134,6 +132,17 @@ def truncate_after_wildcard(path: str, separator: str = ".") -> str:
     return path
 
 
+def get_nested_metadata(metadata: dict[str, Any], path: str, separator: str = ".") -> Any | None:
+    value: Any = metadata
+    for part in path.split(separator):
+        if not isinstance(value, dict):
+            return None
+        value = value.get(part)
+        if value is None:
+            return None
+    return value
+
+
 def add_nextclade_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
@@ -169,12 +178,10 @@ def add_nextclade_metadata(
     ):
         return InputData(datum=None)
 
-    raw: str | None = dpath.get(
+    raw: Any | None = get_nested_metadata(
         unprocessed.nextcladeMetadata[sequence_name],
         truncate_after_wildcard(nextclade_path),
-        separator=".",
-        default=None,
-    )  # type: ignore[assignment]
+    )
 
     match nextclade_path:
         case "frameShifts":

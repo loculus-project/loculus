@@ -6,7 +6,6 @@ channels:
 dependencies:
   - python=3.14.4
   - biopython=1.87
-  - dpath=2.2.0
   - nextclade=3.21.2
   - pip=25.2
   - uv=0.11.8
