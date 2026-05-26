@@ -4,7 +4,8 @@ import mu.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.loculus.backend.api.CitationContributor
-import org.loculus.backend.api.SeqSetCitingSource
+import org.loculus.backend.api.CitationSource
+import org.loculus.backend.api.SeqSetCitationSource
 import org.loculus.backend.utils.DateProvider
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
@@ -65,10 +66,20 @@ class CrossRefService(private val properties: CrossRefServiceProperties, private
         }
     }
 
-    fun parseCrossRefCitedByXML(citedByXML: String): List<SeqSetCitingSource> {
-        val doc = Jsoup.parse(citedByXML, "", Parser.xmlParser())
+    fun parseCrossRefCitedByXML(citedByXML: String): List<SeqSetCitationSource> {
+        val parser = Parser.xmlParser().setTrackErrors(1)
+        val doc = Jsoup.parse(citedByXML, "", parser)
 
-        return doc.select("forward_link").map { forwardLink ->
+        if (parser.errors.isNotEmpty()) {
+            throw IllegalStateException("Invalid XML: ${parser.errors}")
+        }
+
+        val crossRefResult = doc.children().firstOrNull()
+        if (crossRefResult?.tagName() != "crossref_result") {
+            throw IllegalStateException("Invalid CrossRef root element: ${crossRefResult?.tagName()}")
+        }
+
+        return crossRefResult.select("forward_link").map { forwardLink ->
             val seqSetDOI = forwardLink.attr("doi").takeIf { it.isNotBlank() }
                 ?: throw IllegalStateException("CrossRef forward_link missing SeqSet DOI: $forwardLink")
 
@@ -80,15 +91,15 @@ class CrossRefService(private val properties: CrossRefServiceProperties, private
 
             val sourceDOI = citationElement.selectFirst("doi")?.text()?.takeIf { it.isNotBlank() }
                 ?: throw IllegalStateException(
-                    "CrossRef citing source missing DOI for SeqSet $seqSetDOI: $citationElement",
+                    "CrossRef citation source missing DOI for SeqSet $seqSetDOI: $citationElement",
                 )
             val title = citationElement.selectFirst("title")?.text()?.takeIf { it.isNotBlank() }
                 ?: throw IllegalStateException(
-                    "CrossRef citing source missing title for SeqSet $seqSetDOI: $citationElement",
+                    "CrossRef citation source missing title for SeqSet $seqSetDOI: $citationElement",
                 )
             val year = citationElement.selectFirst("year")?.text()?.toIntOrNull()
                 ?: throw IllegalStateException(
-                    "CrossRef citing source missing or non-numeric year for SeqSet $seqSetDOI: $citationElement",
+                    "CrossRef citation source missing or non-numeric year for SeqSet $seqSetDOI: $citationElement",
                 )
             val contributors = citationElement.select("contributor").mapNotNull { c ->
                 val givenName = c.selectFirst("given_name")?.text().orEmpty()
@@ -100,17 +111,19 @@ class CrossRefService(private val properties: CrossRefServiceProperties, private
                 }
             }
 
-            SeqSetCitingSource(
-                sourceDOI = sourceDOI,
-                title = title,
-                year = year,
-                contributors = contributors,
+            SeqSetCitationSource(
+                source = CitationSource(
+                    sourceDOI = sourceDOI,
+                    title = title,
+                    year = year,
+                    contributors = contributors,
+                ),
                 seqSetDOIs = setOf(seqSetDOI),
             )
         }
     }
 
-    fun getCrossRefCitedBy(doiPrefix: String): List<SeqSetCitingSource> {
+    fun getCrossRefCitedBy(doiPrefix: String): List<SeqSetCitationSource> {
         checkIsActive()
 
         // End date is the current date at time of request

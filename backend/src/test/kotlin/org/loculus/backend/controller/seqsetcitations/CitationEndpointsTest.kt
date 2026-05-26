@@ -10,7 +10,8 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.CitationContributor
-import org.loculus.backend.api.SeqSetCitingSource
+import org.loculus.backend.api.CitationSource
+import org.loculus.backend.api.SeqSetCitationSource
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
@@ -144,29 +145,39 @@ class CitationEndpointsTest(
         client.createSeqSetDOI(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
             .andExpect(status().isOk)
 
-        // Simulate running the task and adding a citing source
+        // Simulate running the task and adding a citation source
         val seqSetDOI = "${MOCK_DOI_PREFIX}/$seqSetId.$seqSetVersion"
-        val seqSetCitingSource = SeqSetCitingSource(
-            sourceDOI = "10.5678/citing-paper",
-            title = "A paper citing the seqSet",
-            year = 2024,
-            contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
+        val seqSetCitationSource = SeqSetCitationSource(
+            CitationSource(
+                sourceDOI = "10.5678/citing-paper",
+                title = "A paper citing the seqSet",
+                year = 2024,
+                contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
+            ),
             seqSetDOIs = setOf(seqSetDOI),
         )
         every { crossRefService.isActive } returns true
         every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
-            listOf(seqSetCitingSource)
+            listOf(seqSetCitationSource)
         seqSetCrossRefCitationsTask.task()
 
         client.getSeqSetCitedByPublication(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$").isArray)
-            .andExpect(jsonPath("\$[0].sourceDOI").value(seqSetCitingSource.sourceDOI))
-            .andExpect(jsonPath("\$[0].title").value(seqSetCitingSource.title))
-            .andExpect(jsonPath("\$[0].year").value(seqSetCitingSource.year))
-            .andExpect(jsonPath("\$[0].contributors[0].givenName").value(seqSetCitingSource.contributors[0].givenName))
-            .andExpect(jsonPath("\$[0].contributors[0].surname").value(seqSetCitingSource.contributors[0].surname))
+            .andExpect(jsonPath("\$[0].source.sourceDOI").value(seqSetCitationSource.source.sourceDOI))
+            .andExpect(jsonPath("\$[0].source.title").value(seqSetCitationSource.source.title))
+            .andExpect(jsonPath("\$[0].source.year").value(seqSetCitationSource.source.year))
+            .andExpect(
+                jsonPath(
+                    "\$[0].source.contributors[0].givenName",
+                ).value(seqSetCitationSource.source.contributors[0].givenName),
+            )
+            .andExpect(
+                jsonPath(
+                    "\$[0].source.contributors[0].surname",
+                ).value(seqSetCitationSource.source.contributors[0].surname),
+            )
 
         client.deleteSeqSet(seqSetId, seqSetVersion)
             .andExpect(status().isUnprocessableEntity)
@@ -213,7 +224,7 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN multiple crossref citation runs link the same citing source THEN all citations are recorded`() {
+    fun `WHEN multiple crossref citation runs link the same citation source THEN all citations are recorded`() {
         val seqSetAResult = client.createSeqSet().andExpect(status().isOk).andReturn()
         val seqSetIdA = JsonPath.read<String>(seqSetAResult.response.contentAsString, "$.seqSetId")
         val seqSetVersionA =
@@ -230,37 +241,39 @@ class CitationEndpointsTest(
 
         every { crossRefService.isActive } returns true
 
-        val citingSource = SeqSetCitingSource(
-            sourceDOI = "10.5678/citing-paper",
-            title = "A paper citing the seqSet",
-            year = 2024,
-            contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
+        val citationSource = SeqSetCitationSource(
+            CitationSource(
+                sourceDOI = "10.5678/citing-paper",
+                title = "A paper citing the seqSet",
+                year = 2024,
+                contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
+            ),
             seqSetDOIs = setOf(seqSetDOIA),
         )
 
-        // Citing source cites only seqSet A
-        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns listOf(citingSource)
+        // Citation source cites only seqSet A
+        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns listOf(citationSource)
         seqSetCrossRefCitationsTask.task()
 
         client.getSeqSetCitedByPublication(seqSetId = seqSetIdA, seqSetVersion = seqSetVersionA)
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.length()").value(1))
-            .andExpect(jsonPath("\$[0].sourceDOI").value(citingSource.sourceDOI))
+            .andExpect(jsonPath("\$[0].source.sourceDOI").value(citationSource.source.sourceDOI))
 
-        // Now, citing source also cites seqSet B
+        // Now, citation source also cites seqSet B
         every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
-            listOf(citingSource.copy(seqSetDOIs = setOf(seqSetDOIA, seqSetDOIB)))
+            listOf(citationSource.copy(seqSetDOIs = setOf(seqSetDOIA, seqSetDOIB)))
         seqSetCrossRefCitationsTask.task()
 
         client.getSeqSetCitedByPublication(seqSetId = seqSetIdA, seqSetVersion = seqSetVersionA)
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.length()").value(1))
-            .andExpect(jsonPath("\$[0].sourceDOI").value(citingSource.sourceDOI))
+            .andExpect(jsonPath("\$[0].source.sourceDOI").value(citationSource.source.sourceDOI))
 
         client.getSeqSetCitedByPublication(seqSetId = seqSetIdB, seqSetVersion = seqSetVersionB)
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.length()").value(1))
-            .andExpect(jsonPath("\$[0].sourceDOI").value(citingSource.sourceDOI))
+            .andExpect(jsonPath("\$[0].source.sourceDOI").value(citationSource.source.sourceDOI))
     }
 
     companion object {

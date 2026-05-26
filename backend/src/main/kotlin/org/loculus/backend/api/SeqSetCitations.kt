@@ -63,20 +63,16 @@ enum class CitationOrigin {
     CURATED,
 }
 
-data class SeqSetCitingSource(
+data class CitationSource(
     val sourceDOI: String,
     val title: String,
     val year: Int,
     val contributors: List<CitationContributor>,
-    val seqSetDOIs: Set<String> = emptySet(),
 )
 
-data class SeqSetCitation(
-    val sourceDOI: String,
-    val title: String,
-    val year: Int,
-    val contributors: List<CitationContributor>,
-)
+data class SeqSetCitationSource(val source: CitationSource, val seqSetDOIs: Set<String> = emptySet())
+
+data class SeqSetCitation(val source: CitationSource)
 
 data class SeqSetCitingSequence(val seqSetAccession: String, val sequenceAccession: String)
 

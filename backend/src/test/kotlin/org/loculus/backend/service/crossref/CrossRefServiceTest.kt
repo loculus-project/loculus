@@ -6,7 +6,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.loculus.backend.SpringBootTestWithoutDatabase
 import org.loculus.backend.api.CitationContributor
-import org.loculus.backend.api.SeqSetCitingSource
+import org.loculus.backend.api.CitationSource
+import org.loculus.backend.api.SeqSetCitationSource
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.Instant
 import java.time.LocalDate
@@ -59,22 +60,26 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
 
         assertEquals(
             listOf(
-                SeqSetCitingSource(
-                    sourceDOI = "10.5678/paper-1",
-                    title = "A citing paper",
-                    year = 2024,
-                    contributors = listOf(
-                        CitationContributor(givenName = "Jane", surname = "Doe"),
-                        CitationContributor(givenName = "John", surname = "Smith"),
+                SeqSetCitationSource(
+                    CitationSource(
+                        sourceDOI = "10.5678/paper-1",
+                        title = "A citing paper",
+                        year = 2024,
+                        contributors = listOf(
+                            CitationContributor(givenName = "Jane", surname = "Doe"),
+                            CitationContributor(givenName = "John", surname = "Smith"),
+                        ),
                     ),
                     seqSetDOIs = setOf("10.1234/seqset-1"),
                 ),
-                SeqSetCitingSource(
-                    sourceDOI = "10.5678/paper-2",
-                    title = "Another citing paper",
-                    year = 2023,
-                    contributors = listOf(
-                        CitationContributor(givenName = "Alice", surname = "Jones"),
+                SeqSetCitationSource(
+                    CitationSource(
+                        sourceDOI = "10.5678/paper-2",
+                        title = "Another citing paper",
+                        year = 2023,
+                        contributors = listOf(
+                            CitationContributor(givenName = "Alice", surname = "Jones"),
+                        ),
                     ),
                     seqSetDOIs = setOf("10.1234/seqset-2"),
                 ),
@@ -105,7 +110,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         val ex = assertThrows<IllegalStateException> {
             crossRefService.parseCrossRefCitedByXML(xml)
         }
-        assertTrue(ex.message!!.contains("missing SeqSet DOI"))
+        assertTrue(ex.message!!.contains("missing seqset doi", ignoreCase = true))
     }
 
     @Test
@@ -119,11 +124,11 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         val ex = assertThrows<IllegalStateException> {
             crossRefService.parseCrossRefCitedByXML(xml)
         }
-        assertTrue(ex.message!!.contains("no citation element"))
+        assertTrue(ex.message!!.contains("no citation element", ignoreCase = true))
     }
 
     @Test
-    fun `parseCrossRefCitedByXML throws when citing source has no DOI`() {
+    fun `parseCrossRefCitedByXML throws when citation source has no DOI`() {
         val xml = """                                                                               
           <crossref_result>               
               <forward_link doi="10.1234/seqset-1">
@@ -137,13 +142,25 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         val ex = assertThrows<IllegalStateException> {
             crossRefService.parseCrossRefCitedByXML(xml)
         }
-        assertTrue(ex.message!!.contains("missing DOI"))
+        assertTrue(ex.message!!.contains("missing doi", ignoreCase = true))
     }
 
     @Test
-    fun `parseCrossRefCitedByXML returns empty list for completely malformed input`() {
-        val result = crossRefService.parseCrossRefCitedByXML("this is not xml at all !!!!")
-        assertTrue(result.isEmpty())
+    fun `parseCrossRefCitedByXML throws for completely malformed input`() {
+        val xml = "<<crossref_result>this is not valid xml at all !!!!"
+        val ex = assertThrows<IllegalStateException> {
+            crossRefService.parseCrossRefCitedByXML(xml)
+        }
+        assertTrue(ex.message!!.contains("invalid xml", ignoreCase = true))
+    }
+
+    @Test
+    fun `parseCrossRefCitedByXML throws for valid xml missing crossref_result`() {
+        val xml = "<someother_result>this is valid xml</someother_result>"
+        val ex = assertThrows<IllegalStateException> {
+            crossRefService.parseCrossRefCitedByXML(xml)
+        }
+        assertTrue(ex.message!!.contains("invalid crossref root element", ignoreCase = true))
     }
 
     @Test
@@ -163,11 +180,13 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         val result = crossRefService.parseCrossRefCitedByXML(xml)
         assertEquals(
             listOf(
-                SeqSetCitingSource(
-                    sourceDOI = "10.5678/paper-1",
-                    title = "A citing paper",
-                    year = 2024,
-                    contributors = emptyList(),
+                SeqSetCitationSource(
+                    CitationSource(
+                        sourceDOI = "10.5678/paper-1",
+                        title = "A citing paper",
+                        year = 2024,
+                        contributors = emptyList(),
+                    ),
                     seqSetDOIs = setOf("10.1234/seqset-1"),
                 ),
             ),
@@ -176,7 +195,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
     }
 
     @Test
-    fun `parseCrossRefCitedByXML throws when citing source title is missing`() {
+    fun `parseCrossRefCitedByXML throws when citation source title is missing`() {
         val xml = """
           <crossref_result>
               <forward_link doi="10.1234/seqset-1">
@@ -191,11 +210,11 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         val ex = assertThrows<IllegalStateException> {
             crossRefService.parseCrossRefCitedByXML(xml)
         }
-        assertTrue(ex.message!!.contains("missing title"))
+        assertTrue(ex.message!!.contains("missing title", ignoreCase = true))
     }
 
     @Test
-    fun `parseCrossRefCitedByXML throws when citing source title is blank`() {
+    fun `parseCrossRefCitedByXML throws when citation source title is blank`() {
         val xml = """
           <crossref_result>
               <forward_link doi="10.1234/seqset-1">
@@ -211,11 +230,11 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         val ex = assertThrows<IllegalStateException> {
             crossRefService.parseCrossRefCitedByXML(xml)
         }
-        assertTrue(ex.message!!.contains("missing title"))
+        assertTrue(ex.message!!.contains("missing title", ignoreCase = true))
     }
 
     @Test
-    fun `parseCrossRefCitedByXML throws when citing source year is missing`() {
+    fun `parseCrossRefCitedByXML throws when citation source year is missing`() {
         val xml = """
           <crossref_result>
               <forward_link doi="10.1234/seqset-1">
@@ -230,11 +249,11 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         val ex = assertThrows<IllegalStateException> {
             crossRefService.parseCrossRefCitedByXML(xml)
         }
-        assertTrue(ex.message!!.contains("missing or non-numeric year"))
+        assertTrue(ex.message!!.contains("missing or non-numeric year", ignoreCase = true))
     }
 
     @Test
-    fun `parseCrossRefCitedByXML throws when citing source year is non-numeric`() {
+    fun `parseCrossRefCitedByXML throws when citation source year is non-numeric`() {
         val xml = """
           <crossref_result>
               <forward_link doi="10.1234/seqset-1">
@@ -250,7 +269,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         val ex = assertThrows<IllegalStateException> {
             crossRefService.parseCrossRefCitedByXML(xml)
         }
-        assertTrue(ex.message!!.contains("missing or non-numeric year"))
+        assertTrue(ex.message!!.contains("missing or non-numeric year", ignoreCase = true))
     }
 
     @Test
@@ -278,7 +297,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                 CitationContributor("Jane", "Doe"),
                 CitationContributor("", "Solo"),
             ),
-            result[0].contributors,
+            result[0].source.contributors,
         )
     }
 
