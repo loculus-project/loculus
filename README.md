@@ -93,3 +93,4 @@ For testing we added all users declared above to the group `testGroup`.
 Contributions are very welcome!
 Please see [`CONTRIBUTING.md`](https://github.com/loculus-project/loculus/blob/main/CONTRIBUTING.md)
 for more information or ping us in case you need help.
+
