@@ -239,10 +239,7 @@ export function getRuntimeConfig(): RuntimeConfig {
 }
 
 export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): string {
-    if (!(organism in serviceConfig.lapisUrls)) {
-        throw new Error(`No lapis url configured for organism ${organism}`);
-    }
-    return serviceConfig.lapisUrls[organism];
+    return `${serviceConfig.backendUrl}/${organism}/lapis`;
 }
 
 export function getReferenceGenomes(organism: string): ReferenceGenomesInfo {

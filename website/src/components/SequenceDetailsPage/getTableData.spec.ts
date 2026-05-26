@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { getTableData, type GetTableDataResult } from './getTableData.ts';
 import { type TableDataEntry } from './types.ts';
 import { mockRequest, testConfig, testOrganism } from '../../../vitest.setup.ts';
+import { getLapisUrl } from '../../config.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
 import {
@@ -56,7 +57,7 @@ const info = {
 
 const accessionVersion = 'accession';
 
-const lapisClient = LapisClient.create(testConfig.serverSide.lapisUrls[testOrganism], schema);
+const lapisClient = LapisClient.create(getLapisUrl(testConfig.serverSide, testOrganism), schema);
 
 describe('getTableData', () => {
     beforeEach(() => {

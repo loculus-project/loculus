@@ -1,6 +1,6 @@
 ---
 import { authenticationApiDocsUrl } from './authenticationApiDocsUrl';
-import { dataUseTermsAreEnabled, getRuntimeConfig, getWebsiteConfig } from '../../config';
+import { dataUseTermsAreEnabled, getLapisUrl, getRuntimeConfig, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes.ts';
 import { getAuthBaseUrl } from '../../utils/getAuthUrl';
@@ -82,22 +82,28 @@ const BUTTON_CLASS =
             <h2 class='text-xl font-semibold text-primary-400 mb-4'>LAPIS query engines</h2>
             <div class='flex flex-wrap gap-x-2 gap-y-4'>
                 {
-                    Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
-                        <a class={BUTTON_CLASS} href={url + '/swagger-ui/index.html'}>
-                            {organismToDisplayName[organism]} LAPIS API documentation
-                        </a>
-                    ))
+                    organismKeys.map((organism) => {
+                        const url = getLapisUrl(clientConfig, organism);
+                        return (
+                            <a class={BUTTON_CLASS} href={url + '/swagger-ui/index.html'}>
+                                {organismToDisplayName[organism]} LAPIS API documentation
+                            </a>
+                        );
+                    })
                 }
             </div>
             <div class='mt-8'>
                 <span class='font-medium'>URLs of LAPIS query engines:</span>
                 <ul class='list-disc ml-6'>
                     {
-                        Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
-                            <li>
-                                {organismToDisplayName[organism]}: <code>{url}</code>
-                            </li>
-                        ))
+                        organismKeys.map((organism) => {
+                            const url = getLapisUrl(clientConfig, organism);
+                            return (
+                                <li>
+                                    {organismToDisplayName[organism]}: <code>{url}</code>
+                                </li>
+                            );
+                        })
                     }
                 </ul>
             </div>

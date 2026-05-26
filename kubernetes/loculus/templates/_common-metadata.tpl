@@ -617,10 +617,7 @@ fields:
 
 {{- define "loculus.publicRuntimeConfig" }}
 {{- $backendUrl := include "loculus.backendUrl" . }}
-{{- $lapisUrlTemplate := printf "%s/%%organism%%/lapis" $backendUrl }}
-{{- $externalLapisUrlConfig := dict "lapisUrlTemplate" $lapisUrlTemplate "config" $.Values }}
             "backendUrl": "{{ $backendUrl }}",
-            "lapisUrls": {{- include "loculus.generateExternalLapisUrls" $externalLapisUrlConfig | fromYaml | toJson }},
             "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}"
 {{- end }}
 

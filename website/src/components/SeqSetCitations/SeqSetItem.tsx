@@ -50,6 +50,7 @@ const SeqSetSectionEntry: FC<{ label: string; value: React.ReactNode }> = ({ lab
 
 type SeqSetItemProps = {
     clientConfig: ClientConfig;
+    organisms: string[];
     accessToken: string;
     seqSetAccessionVersion: string;
     seqSet: SeqSet;
@@ -64,6 +65,7 @@ type SeqSetItemProps = {
 
 const SeqSetItemInner: FC<SeqSetItemProps> = ({
     clientConfig,
+    organisms,
     accessToken,
     seqSetAccessionVersion,
     seqSet,
@@ -222,6 +224,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                 <SeqSetRecordsTableWithMetadata
                     seqSetRecords={getPaginatedSeqSetRecords()}
                     clientConfig={clientConfig}
+                    organisms={organisms}
                     fieldsToDisplay={fieldsToDisplay}
                     organismDisplayNames={organismDisplayNames}
                 />

@@ -4,7 +4,7 @@ import { type FC, type FormEvent, useMemo, useState, type ReactNode } from 'reac
 
 import { CumulativeSubmissionsChart, type TimeSeriesData } from './CumulativeSubmissionsChart.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
-import type { Organism } from '../../config.ts';
+import { getLapisUrl, type Organism } from '../../config.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { ContinueSubmissionIntent } from '../../routes/routes.ts';
@@ -315,11 +315,7 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
     const counts: Record<string, number> = {};
     await Promise.all(
         organisms.map(async ({ key }) => {
-            const url = clientConfig.lapisUrls[key];
-            if (!url) {
-                counts[key] = 0;
-                return;
-            }
+            const url = getLapisUrl(clientConfig, key);
             try {
                 const response = await axios.post(`${url}/sample/aggregated`, {
                     [GROUP_ID_FIELD]: groupId,
@@ -347,11 +343,7 @@ async function fetchTimeSeriesData(
     const data: TimeSeriesData = {};
     await Promise.all(
         organisms.map(async ({ key }) => {
-            const url = clientConfig.lapisUrls[key];
-            if (!url) {
-                data[key] = [];
-                return;
-            }
+            const url = getLapisUrl(clientConfig, key);
             try {
                 const response = await axios.post(`${url}/sample/aggregated`, {
                     [GROUP_ID_FIELD]: groupId,
