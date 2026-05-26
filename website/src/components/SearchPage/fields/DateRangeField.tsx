@@ -60,14 +60,17 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
     const [upperValue, setUpperValue] = useState(getFieldValue(upperField.name));
 
     useEffect(() => {
-        setStrictMode(
-            isStrictMode(
-                lowerFromField.name in fieldValues,
-                lowerToField.name in fieldValues,
-                upperFromField.name in fieldValues,
-                upperToField.name in fieldValues,
-            ),
-        );
+        const lowerFromDefined = lowerFromField.name in fieldValues;
+        const lowerToDefined = lowerToField.name in fieldValues;
+        const upperFromDefined = upperFromField.name in fieldValues;
+        const upperToDefined = upperToField.name in fieldValues;
+        // Only re-derive strictMode from fieldValues when at least one bound is actually defined.
+        // When the user toggles strictness without having entered any dates the other effect
+        // below clears all four fields, which would otherwise feed back into isStrictMode and
+        // collapse strictMode back to its default `true` — making the checkbox appear stuck on.
+        if (lowerFromDefined || lowerToDefined || upperFromDefined || upperToDefined) {
+            setStrictMode(isStrictMode(lowerFromDefined, lowerToDefined, upperFromDefined, upperToDefined));
+        }
         setLowerValue(validateSingleValue(fieldValues[lowerField.name], lowerField.name));
         setUpperValue(validateSingleValue(fieldValues[upperField.name], upperField.name));
     }, [field, fieldValues]);
