@@ -56,7 +56,7 @@ const MockSaveWrapper = ({
     return (
         <>
             <FormOrUploadWrapper
-                inputMode='individual'
+                inputMode='form'
                 action='submit'
                 organism='foo'
                 setFileFactory={setFileFactory}

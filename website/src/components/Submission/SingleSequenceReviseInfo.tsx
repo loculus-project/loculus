@@ -13,7 +13,7 @@ export const SingleSequenceReviseInfo: FC<SingleSequenceReviseInfoProps> = ({ or
         <div className='text-left mt-3 max-w-4xl mb-3 w-full'>
             <div className='flex-col flex gap-8'>
                 <h1 className='title'>Revise sequence</h1>
-                <InputModeTabs action='revise' organism={organism} groupId={groupId} currentInputMode='individual' />
+                <InputModeTabs action='revise' organism={organism} groupId={groupId} currentInputMode='form' />
                 <div className='rounded border border-gray-200 bg-gray-50 p-6'>
                     <h2 className='font-medium text-lg mb-2'>Revising a single sequence entry</h2>
                     <p className='text-sm text-gray-700 mb-3'>

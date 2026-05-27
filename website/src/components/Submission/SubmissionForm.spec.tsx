@@ -92,7 +92,7 @@ describe('SubmitForm', () => {
         vi.clearAllMocks();
     });
 
-    test.each<InputMode>(['bulk', 'individual'])(
+    test.each<InputMode>(['bulk', 'form'])(
         '%s: should handle file upload and server response',
         async (inputMode: InputMode) => {
             mockRequest.backend.submit(200, testResponse);
@@ -101,7 +101,7 @@ describe('SubmitForm', () => {
             const { getByLabelText, getByRole, findByRole } = renderSubmissionForm({ inputMode });
 
             switch (inputMode) {
-                case 'individual': {
+                case 'form': {
                     await userEvent.type(getByLabelText(/ID/), 'myId');
                     await userEvent.type(getByLabelText(/Foo/), 'foo');
                     await userEvent.upload(getByLabelText(/Add a segment/i), sequenceFile);
@@ -159,7 +159,7 @@ describe('SubmitForm', () => {
         mockRequest.backend.submit(200, testResponse);
         mockRequest.backend.getGroupsOfUser();
 
-        const { getByLabelText, getByRole } = renderSubmissionForm({ inputMode: 'individual' });
+        const { getByLabelText, getByRole } = renderSubmissionForm({ inputMode: 'form' });
 
         await userEvent.type(getByLabelText(/ID/), 'myId');
         await userEvent.type(getByLabelText(/Foo/), 'foo');
@@ -185,7 +185,7 @@ describe('SubmitForm', () => {
         mockRequest.backend.submit(200, testResponse);
         mockRequest.backend.getGroupsOfUser();
 
-        const { getByLabelText, getByRole } = renderSubmissionForm({ inputMode: 'individual' });
+        const { getByLabelText, getByRole } = renderSubmissionForm({ inputMode: 'form' });
 
         await userEvent.type(getByLabelText(/ID/), 'myId');
         await userEvent.upload(getByLabelText(/Add a segment/i), sequenceFile);
@@ -318,7 +318,7 @@ describe('SubmitForm', () => {
         });
     });
 
-    test.each<InputMode>(['bulk', 'individual'])(
+    test.each<InputMode>(['bulk', 'form'])(
         '%s: should allow submission without checkings boxes when data use terms are disabled',
         async (inputMode: InputMode) => {
             mockRequest.backend.submit(200, testResponse);
@@ -327,7 +327,7 @@ describe('SubmitForm', () => {
             const { getByLabelText, getByRole } = renderSubmissionForm({ dataUseTermsEnabled: false, inputMode });
 
             switch (inputMode) {
-                case 'individual': {
+                case 'form': {
                     await userEvent.type(getByLabelText(/ID/), 'myId');
                     await userEvent.type(getByLabelText(/Foo/), 'foo');
                     await userEvent.upload(getByLabelText(/Add a segment/i), sequenceFile);
