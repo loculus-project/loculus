@@ -522,6 +522,10 @@ class ProcessingFunctions:
                     if lower_date is None or upper_date is None:
                         msg = "Could not parse lower or upper date in range"
                         raise ValueError(msg)
+                    # Use ISO format for date_range_string, e.g. "2021-01-01/2021-12-31"
+                    input_date_str = (
+                        f"{lower_date.date_range_string}/{upper_date.date_range_string}"
+                    )
                     datum = DateRange(
                         date_range_string=input_date_str,
                         date_range_lower=lower_date.date_range_lower,
