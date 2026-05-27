@@ -15,8 +15,6 @@ updates:
       versions: [ ">=5.0.0" ]
     - dependency-name: "@mui/material"
     - dependency-name: "change-case"
-    # see https://github.com/loculus-project/loculus/issues/4020
-    - dependency-name: "flowbite-react"
     - dependency-name: "@types/node"
       versions: [">=23"] # Increase when we update node version in .nvmrc
     groups:
