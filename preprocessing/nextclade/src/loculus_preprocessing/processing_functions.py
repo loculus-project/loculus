@@ -600,7 +600,7 @@ class ProcessingFunctions:
                     [output_field],
                     AnnotationSourceType.METADATA,
                     message=(
-                        f"Metadata field {output_field}:'{input_date_str}'is after release date."
+                        f"Metadata field {output_field}:'{input_date_str}' is after release date."
                     ),
                 )
             )
