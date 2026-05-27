@@ -345,7 +345,7 @@ def compress_date_range(
         and date_range_lower.year == date_range_upper.year
     ):
         return date_range_lower.strftime("%Y")
-    return None
+    return f"{date_range_lower}/{date_range_upper}"
 
 
 class ProcessingFunctions:
