@@ -76,7 +76,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
                                             className={`
                                                 flex items-center gap-3 py-1.5 transition-colors
                                                 ${
-                                                    organism === currentOrganism
+                                                    organism.key === currentOrganism?.key
                                                         ? 'text-primary-600 font-semibold'
                                                         : 'text-gray-700 hover:text-primary-600'
                                                 }

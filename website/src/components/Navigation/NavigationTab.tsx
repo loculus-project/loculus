@@ -18,7 +18,7 @@ type NavigationTabProps =
           className?: string;
       };
 
-export const NavigationTab: React.FC<NavigationTabProps> = (props) => {
+export const NavigationTab = React.forwardRef<HTMLButtonElement, NavigationTabProps>((props, ref) => {
     const { isActive = false, children, className = '' } = props;
 
     const baseClasses =
@@ -38,8 +38,10 @@ export const NavigationTab: React.FC<NavigationTabProps> = (props) => {
     }
 
     return (
-        <Button onClick={props.onClick} className={combinedClassName}>
+        <Button ref={ref} onClick={props.onClick} className={combinedClassName}>
             {children}
         </Button>
     );
-};
+});
+
+NavigationTab.displayName = 'NavigationTab';
