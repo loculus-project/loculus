@@ -85,7 +85,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
     return (
         <>
             <Button
-                className='text-xs wrap-break-word text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+                className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
                 data-tooltip-id='columnMapping'
                 onClick={(e) => {
                     e.preventDefault();
