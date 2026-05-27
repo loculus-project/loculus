@@ -1,4 +1,4 @@
-import { Datepicker, type FlowbiteDatepickerTheme } from 'flowbite-react';
+import { Datepicker, type DatepickerTheme } from 'flowbite-react';
 import { DateTime } from 'luxon';
 import { useState } from 'react';
 
@@ -7,7 +7,7 @@ import { Button } from '../common/Button';
 
 const logger = getClientLogger('DateChangeModal');
 
-export const datePickerTheme: FlowbiteDatepickerTheme = {
+export const datePickerTheme: DatepickerTheme = {
     root: {
         base: 'relative',
     },
@@ -54,6 +54,7 @@ export const datePickerTheme: FlowbiteDatepickerTheme = {
                     base: 'block flex-1 cursor-pointer rounded-lg border-0 text-center text-sm font-semibold leading-9 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600 ',
                     selected: 'bg-primary-700 text-white hover:bg-primary-600',
                     disabled: 'text-gray-300 disabled',
+                    today: 'bg-gray-100 dark:bg-gray-600',
                 },
             },
         },
@@ -107,7 +108,7 @@ export const DateChangeModal = ({
 }) => {
     const [date, setDate] = useState(restrictedUntil.toJSDate());
     return (
-        <div className='fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50'>
+        <div className='fixed inset-0 bg-gray-900/75 flex justify-center items-center z-50'>
             <div className='bg-white p-6 rounded-lg w-120'>
                 <h2 className='font-medium text-lg'>{title}</h2>
                 {description !== null && <p className='text-sm text-gray-700 py-2'>{description}</p>}

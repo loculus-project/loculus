@@ -35,7 +35,9 @@ export const CopyUrlButton: FC<{ url: string }> = ({ url }) => {
         >
             <MaterialSymbolsContentCopyOutline className='h-4 w-4' />
             {copied && (
-                <span className='absolute bg-gray-800 text-white text-xs px-2 py-1 rounded-sm -mt-10 -ml-2'>Copied!</span>
+                <span className='absolute bg-gray-800 text-white text-xs px-2 py-1 rounded-sm -mt-10 -ml-2'>
+                    Copied!
+                </span>
             )}
         </Button>
     );
