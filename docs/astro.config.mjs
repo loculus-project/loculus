@@ -29,7 +29,7 @@ export default defineConfig({
                 baseUrl: 'https://github.com/loculus-project/loculus/edit/main/docs/',
             },
             customCss: ['./src/styles/global.css', './src/styles/custom.css'],
-            social: [{ icon: 'github', label: 'Github', href: 'https://github.com/loculus-project/loculus' }],
+            social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/loculus-project/loculus' }],
             sidebar: [
                 {
                     label: 'Introduction',
