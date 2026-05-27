@@ -2,6 +2,7 @@ import { type FC } from 'react';
 import { toast } from 'react-toastify';
 
 import { DataUploadForm } from './DataUploadForm.tsx';
+import type { InputMode } from './FormOrUploadWrapper.tsx';
 import { routes } from '../../routes/routes.ts';
 import { type Group } from '../../types/backend.ts';
 import type { InputField } from '../../types/config.ts';
@@ -14,6 +15,7 @@ type RevisionFormProps = {
     organism: string;
     clientConfig: ClientConfig;
     group: Group;
+    inputMode: InputMode;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
@@ -25,6 +27,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
     organism,
     clientConfig,
     group,
+    inputMode,
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
@@ -38,7 +41,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
                 metadataTemplateFields={metadataTemplateFields}
                 clientConfig={clientConfig}
                 action='revise'
-                inputMode='bulk'
+                inputMode={inputMode}
                 onError={(message) => toast.error(message, { position: 'top-center', autoClose: false })}
                 group={group}
                 onSuccess={() => {
