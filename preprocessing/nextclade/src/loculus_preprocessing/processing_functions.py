@@ -551,9 +551,7 @@ class ProcessingFunctions:
                         ],
                     )
                 # Use ISO format for date_range_string
-                date_range_string = (
-                    f"{lower_date.date_range_string}/{upper_date.date_range_string}"
-                )
+                date_range_string = f"{lower_date.date_range_string}/{upper_date.date_range_string}"
 
                 datum = DateRange(
                     date_range_string=date_range_string,
