@@ -119,7 +119,9 @@ data class SequenceEntryVersionToEdit(
     override val version: Version,
     val status: Status,
     val groupId: Int,
-    val processedData: ProcessedData<GeneticSequence>,
+    val isRevocation: Boolean = false,
+    @Schema(description = "Null for revocations, which are not preprocessed.")
+    val processedData: ProcessedData<GeneticSequence>? = null,
     val originalData: OriginalData<GeneticSequence>,
     @Schema(description = "The preprocessing will be considered failed if this is not empty")
     val errors: List<PreprocessingAnnotation>? = null,

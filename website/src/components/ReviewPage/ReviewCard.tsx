@@ -63,7 +63,11 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     const [isSequencesDialogOpen, setSequencesDialogOpen] = useState(false);
     const [isFilesDialogOpen, setFilesDialogOpen] = useState(false);
     const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
-    const hasFiles = Object.entries(data?.processedData.files ?? {}).length > 0;
+    const hasFiles = Object.entries(data?.processedData?.files ?? {}).length > 0;
+    const revocationVersionComment =
+        sequenceEntryStatus.isRevocation && typeof data?.originalData.metadata.versionComment === 'string'
+            ? data.originalData.metadata.versionComment
+            : undefined;
 
     const notProcessed = sequenceEntryStatus.status !== processedStatus;
 
@@ -83,7 +87,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                         keyName={getAccessionVersionString(sequenceEntryStatus)}
                         value={sequenceEntryStatus.submissionId}
                     />
-                    {data !== undefined && (
+                    {data?.processedData != null && (
                         <MetadataList data={data} metadataDisplayNames={metadataDisplayNames} isLoading={isLoading} />
                     )}
                     {sequenceEntryStatus.isRevocation && (
@@ -95,14 +99,26 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                             disableTruncate
                         />
                     )}
+                    {revocationVersionComment !== undefined && (
+                        <KeyValueComponent
+                            accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
+                            keyName='Version comment'
+                            value={revocationVersionComment}
+                            disableTruncate
+                        />
+                    )}
                 </div>
                 <ButtonBar
                     sequenceEntryStatus={sequenceEntryStatus}
                     approveAccessionVersion={approveAccessionVersion}
                     deleteAccessionVersion={deleteAccessionVersion}
                     editAccessionVersion={editAccessionVersion}
-                    viewSequences={data && !notProcessed ? () => setSequencesDialogOpen(true) : undefined}
-                    viewFiles={data && !notProcessed ? () => setFilesDialogOpen(true) : undefined}
+                    viewSequences={
+                        data?.processedData != null && !notProcessed ? () => setSequencesDialogOpen(true) : undefined
+                    }
+                    viewFiles={
+                        data?.processedData != null && !notProcessed ? () => setFilesDialogOpen(true) : undefined
+                    }
                     filesEnabled={filesEnabled}
                     hasFiles={hasFiles}
                 />
@@ -259,9 +275,11 @@ type MetadataListProps = {
 const isAnnotationPresent = (metadataField: string) => (item: ProcessingAnnotation) =>
     item.processedFields[0].name === metadataField;
 
-const MetadataList: FC<MetadataListProps> = ({ data, isLoading, metadataDisplayNames }) =>
-    !isLoading &&
-    Object.entries(data.processedData.metadata).map(([metadataName, value], index) =>
+const MetadataList: FC<MetadataListProps> = ({ data, isLoading, metadataDisplayNames }) => {
+    if (isLoading || data.processedData === null) {
+        return null;
+    }
+    return Object.entries(data.processedData.metadata).map(([metadataName, value], index) =>
         value === null ? null : (
             <KeyValueComponent
                 accessionVersion={getAccessionVersionString(data)}
@@ -273,6 +291,7 @@ const MetadataList: FC<MetadataListProps> = ({ data, isLoading, metadataDisplayN
             />
         ),
     );
+};
 
 type ErrorsProps = {
     errors: ProcessingAnnotation[];
@@ -519,14 +538,14 @@ function useGetMetadataAndAnnotations(
     accessToken: string,
     sequenceEntryStatus: SequenceEntryStatus,
 ) {
-    const { status, accession, version, isRevocation } = sequenceEntryStatus;
-    return backendClientHooks(clientConfig).useGetDataToEdit(
+    const { status, accession, version } = sequenceEntryStatus;
+    return backendClientHooks(clientConfig).useGetOriginalDataForEntry(
         {
             headers: createAuthorizationHeader(accessToken),
             params: { organism, accession, version },
         },
         {
-            enabled: status !== receivedStatus && status !== inProcessingStatus && !isRevocation,
+            enabled: status !== receivedStatus && status !== inProcessingStatus,
         },
     );
 }

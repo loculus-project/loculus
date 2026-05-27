@@ -105,12 +105,16 @@ class SubmitProcessedDataEndpointTest(
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.PROCESSED)
 
-        val sequenceEntryToEdit = convenienceClient.getSequenceEntryToEdit(accession = accessions.first(), version = 1)
-        assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("qc", DoubleNode(0.987654321)))
-        assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("age", IntNode(42)))
-        assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("region", TextNode("Europe")))
-        assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("pangoLineage", TextNode("XBB.1.5")))
-        assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("booleanColumn", BooleanNode.TRUE))
+        val sequenceEntryToEdit = convenienceClient.getOriginalDataForEntry(
+            accession = accessions.first(),
+            version = 1,
+        )
+        val metadata = sequenceEntryToEdit.processedData!!.metadata
+        assertThat(metadata, hasEntry("qc", DoubleNode(0.987654321)))
+        assertThat(metadata, hasEntry("age", IntNode(42)))
+        assertThat(metadata, hasEntry("region", TextNode("Europe")))
+        assertThat(metadata, hasEntry("pangoLineage", TextNode("XBB.1.5")))
+        assertThat(metadata, hasEntry("booleanColumn", BooleanNode.TRUE))
     }
 
     @Test
@@ -135,8 +139,8 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isNoContent)
 
-        val processedData = convenienceClient.getSequenceEntryToEdit(accession = accession, version = version)
-            .processedData
+        val processedData = convenienceClient.getOriginalDataForEntry(accession = accession, version = version)
+            .processedData!!
 
         assertThat(processedData.unalignedNucleotideSequences, hasEntry(MAIN_SEGMENT, "NACTG"))
         assertThat(

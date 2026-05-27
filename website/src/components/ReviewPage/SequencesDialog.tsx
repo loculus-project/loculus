@@ -22,7 +22,7 @@ type ProcessedSequence = {
 export const SequencesDialog: FC<SequencesDialogProps> = ({ isOpen, onClose, dataToView, referenceGenomesInfo }) => {
     const [activeTab, setActiveTab] = useState(0);
 
-    if (!isOpen || !dataToView) return null;
+    if (!isOpen || !dataToView?.processedData) return null;
 
     const processedSequences = extractProcessedSequences(dataToView, lapisNameToDisplayName(referenceGenomesInfo));
 
@@ -66,10 +66,12 @@ const extractProcessedSequences = (
     data: SequenceEntryToEdit,
     lapisNameToDisplayNameMap: Map<string, string | undefined>,
 ): ProcessedSequence[] => {
+    if (data.processedData === null) return [];
+    const processedData = data.processedData;
     return [
-        { type: 'unaligned', sequences: data.processedData.unalignedNucleotideSequences },
-        { type: 'aligned', sequences: data.processedData.alignedNucleotideSequences },
-        { type: 'gene', sequences: data.processedData.alignedAminoAcidSequences },
+        { type: 'unaligned', sequences: processedData.unalignedNucleotideSequences },
+        { type: 'aligned', sequences: processedData.alignedNucleotideSequences },
+        { type: 'gene', sequences: processedData.alignedAminoAcidSequences },
     ].flatMap(({ type, sequences }) =>
         Object.entries(sequences)
             .filter((tuple): tuple is [string, string] => tuple[1] !== null)

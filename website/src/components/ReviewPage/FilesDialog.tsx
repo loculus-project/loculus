@@ -10,7 +10,7 @@ type FilesDialogProps = {
 };
 
 export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView }) => {
-    if (!isOpen || !dataToView) return null;
+    if (!isOpen || !dataToView?.processedData) return null;
 
     return (
         <div className='fixed inset-0 flex items-center justify-center z-50 overflow-auto bg-black bg-opacity-30'>

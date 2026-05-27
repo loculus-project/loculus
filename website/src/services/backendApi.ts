@@ -69,10 +69,10 @@ const reviseEndpoint = makeEndpoint({
     ],
 });
 
-const getDataToEditEndpoint = makeEndpoint({
+const getOriginalDataForEntryEndpoint = makeEndpoint({
     method: 'get',
-    path: withOrganismPathSegment('/get-data-to-edit/:accession/:version'),
-    alias: 'getDataToEdit',
+    path: withOrganismPathSegment('/get-original-data-for-entry/:accession/:version'),
+    alias: 'getOriginalDataForEntry',
     parameters: [authorizationHeader],
     response: sequenceEntryToEdit,
     errors: [notAuthorizedError],
@@ -256,7 +256,7 @@ const setDataUseTerms = makeEndpoint({
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
-    getDataToEditEndpoint,
+    getOriginalDataForEntryEndpoint,
     revokeSequencesEndpoint,
     submitReviewedSequenceEndpoint,
     getSequencesEndpoint,

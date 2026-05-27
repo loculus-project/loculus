@@ -189,7 +189,7 @@ class ReviewApiClient:
         backend_url = self.instance_config.backend_url
 
         response = httpx.get(
-            f"{backend_url}/{organism}/get-data-to-edit/{accession}/{version}",
+            f"{backend_url}/{organism}/get-original-data-for-entry/{accession}/{version}",
             headers=self._get_auth_headers(),
         )
         response.raise_for_status()

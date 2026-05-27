@@ -86,8 +86,10 @@ The submitted external data cannot be written to the database, e.g. if the acces
 state, if the pipeline submits invalid data or if the name of external metadata updater is not known. Rolls back the whole transaction.
 """
 
-const val GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION = """
-Get original data for a single accession version for subsequent editing and edit/revision.
+const val GET_ORIGINAL_DATA_FOR_ENTRY_DESCRIPTION = """
+Get original data for a single accession version. Used both for displaying read-only details of an entry
+(including for revocations) and as the basis for subsequent editing or revising.
+For revocations, no processed data is returned.
 """
 
 const val GET_SEQUENCES_DESCRIPTION = """
