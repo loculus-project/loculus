@@ -879,6 +879,18 @@ class ProcessingFunctions:
                         if null_per_backend(processed.datum)
                         else str(processed.datum)
                     )
+                elif field_types[i] == "dateRangeString":
+                    # Assumes date ranges are in ISO format
+                    raw_value = str(input_data[order[i]])
+                    if raw_value.count("/") > 1:
+                        date_string = None
+                    else:
+                        date_string = raw_value.replace("/", " TO ")
+                    formatted_input_data.append(
+                        fallback_value
+                        if null_per_backend(date_string)
+                        else str(date_string)
+                    )
                 elif field_types[i] == "timestamp":
                     processed = ProcessingFunctions.parse_timestamp(
                         {"timestamp": input_data[order[i]]}, output_field, input_fields, args
