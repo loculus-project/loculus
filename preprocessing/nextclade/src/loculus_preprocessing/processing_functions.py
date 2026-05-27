@@ -524,7 +524,7 @@ class ProcessingFunctions:
             # Try ISO range ("YYYY-MM-DD/YYYY-MM-DD")
             range_patterns = [
                 r"^\s*\[([0-9-]+)\s*TO\s*([0-9-]+)\s*\]\s*$",  # Lucene
-                r"^\s*([0-9-]+)\s*/\s*([0-9-]+)\s*$",          # ISO-ish
+                r"^\s*([0-9-]+)\s*/\s*([0-9-]+)\s*$",  # ISO-ish
             ]
 
             for pattern in range_patterns:
@@ -541,8 +541,7 @@ class ProcessingFunctions:
                         raise ValueError(msg)
                     # Use ISO format for date_range_string
                     date_range_string = (
-                        f"{lower_date.date_range_string}/"
-                        f"{upper_date.date_range_string}"
+                        f"{lower_date.date_range_string}/{upper_date.date_range_string}"
                     )
 
                     datum = DateRange(
