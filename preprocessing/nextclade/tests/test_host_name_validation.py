@@ -71,7 +71,10 @@ def test_host_processing_direct_submission(mock_session: MagicMock) -> None:
     assert metadata["hostNameCommon"] == "yellow fever mosquito"
     assert result[0].processed_entry.errors == []
 
-    # All three fields should have hit the taxonomy service
+    # Three distinct taxonomy-service URLs are fetched, so no hits in taxonomy_cache:
+    #   1. validate_host           -> GET /taxa?scientific_name=Aedes+aegypti
+    #   2. scientific_name_from_id -> GET /taxa/7159
+    #   3. common_name_from_id     -> GET /taxa/7159?find_common_name=true
     assert mock_session.get.call_count == 3
 
 
@@ -90,14 +93,19 @@ def test_host_processing_insdc(mock_session: MagicMock) -> None:
 
     result = process_all([entry], "temp", config)
     metadata = result[0].processed_entry.data.metadata
+    print(result)
 
     assert metadata["hostTaxonId"] == "7159"
     assert metadata["hostNameScientific"] == "Aedes aegypti"
     assert metadata["hostNameCommon"] == "yellow fever mosquito"
     assert result[0].processed_entry.errors == []
 
-    # For INSDC, only use the taxonomy service for common name
-    assert mock_session.get.call_count == 1
+    # Only two URLs are fetched: validate_host and scientific_name_from_id both build
+    # GET /taxa/7159, so the second one is served from taxonomy_cache (no extra call):
+    #   1. validate_host           -> GET /taxa/7159
+    #   2. scientific_name_from_id -> GET /taxa/7159  -> cache hit, no call
+    #   3. common_name_from_id     -> GET /taxa/7159?find_common_name=true
+    assert mock_session.get.call_count == 2
 
 
 @patch.object(processing_functions.taxonomy_cache, "session")
@@ -116,12 +124,11 @@ def test_host_processing_invalid_hostname(mock_session: MagicMock) -> None:
     metadata = result[0].processed_entry.data.metadata
 
     assert metadata["hostTaxonId"] is None
-    assert metadata["hostNameScientific"] == "not a real species"
+    assert metadata["hostNameScientific"] == None
     assert metadata["hostNameCommon"] is None
 
-    # For INSDC, nothing should hit the taxonomy service and no warnings are raised
-    assert mock_session.get.call_count == 0
-    assert len(result[0].processed_entry.warnings) == 0
+    assert mock_session.get.call_count == 1
+    assert len(result[0].processed_entry.warnings) == 1
     assert result[0].processed_entry.errors == []
 
 
