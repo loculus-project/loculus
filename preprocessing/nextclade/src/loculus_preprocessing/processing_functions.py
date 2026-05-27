@@ -323,29 +323,27 @@ def convert_to_date_range(date_str: str) -> DateRange | None:
     return datum
 
 
-def compress_date_range(date_range_lower: DateRange, date_range_upper: DateRange) -> str | None:
-    if date_range_lower == date_range_upper:
-        return date_range_lower.date_range_string
-    if not date_range_lower.date_range_lower or not date_range_upper.date_range_upper:
+def compress_date_range(lower: DateRange, upper: DateRange) -> str | None:
+    if lower == upper:
+        return lower.date_range_string
+    if not lower.date_range_lower or not upper.date_range_upper:
         return None
     if (
-        date_range_lower.date_range_lower.day == 1
-        and date_range_upper.date_range_upper.day
-        == calendar.monthrange(
-            date_range_upper.date_range_upper.year, date_range_upper.date_range_upper.month
-        )[1]
-        and date_range_lower.date_range_lower.month == date_range_upper.date_range_upper.month
+        lower.date_range_lower.day == 1
+        and upper.date_range_upper.day
+        == calendar.monthrange(upper.date_range_upper.year, upper.date_range_upper.month)[1]
+        and lower.date_range_lower.month == upper.date_range_upper.month
     ):
-        return f"{date_range_lower.date_range_lower.year}-{date_range_lower.date_range_lower.month:02d}"
+        return f"{lower.date_range_lower.year}-{lower.date_range_lower.month:02d}"
     if (
-        date_range_lower.date_range_lower.month == 1
-        and date_range_lower.date_range_lower.day == 1
-        and date_range_upper.date_range_upper.month == 12  # noqa: PLR2004
-        and date_range_upper.date_range_upper.day == 31  # noqa: PLR2004
-        and date_range_lower.date_range_lower.year == date_range_upper.date_range_upper.year
+        lower.date_range_lower.month == 1
+        and lower.date_range_lower.day == 1
+        and upper.date_range_upper.month == 12  # noqa: PLR2004
+        and upper.date_range_upper.day == 31  # noqa: PLR2004
+        and lower.date_range_lower.year == upper.date_range_upper.year
     ):
-        return f"{date_range_lower.date_range_lower.year}"
-    return f"{date_range_lower.date_range_string}/{date_range_upper.date_range_string}"
+        return f"{lower.date_range_lower.year}"
+    return f"{lower.date_range_string}/{upper.date_range_string}"
 
 
 class ProcessingFunctions:
