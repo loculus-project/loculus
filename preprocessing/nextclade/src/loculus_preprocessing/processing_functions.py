@@ -533,25 +533,33 @@ class ProcessingFunctions:
                 if not match:
                     continue
 
-                try:
-                    lower_date = convert_to_date_range(match.group(1))
-                    upper_date = convert_to_date_range(match.group(2))
+                lower_date = convert_to_date_range(match.group(1))
+                upper_date = convert_to_date_range(match.group(2))
 
-                    if lower_date is None or upper_date is None:
-                        msg = "Could not parse lower or upper date in range"
-                        raise ValueError(msg)
-                    # Use ISO format for date_range_string
-                    date_range_string = (
-                        f"{lower_date.date_range_string}/{upper_date.date_range_string}"
+                if lower_date is None or upper_date is None:
+                    return ProcessingResult(
+                        datum=None,
+                        warnings=[],
+                        errors=[
+                            ProcessingAnnotation.from_fields(
+                                input_fields,
+                                [output_field],
+                                AnnotationSourceType.METADATA,
+                                message=f"Metadata field {output_field}: "
+                                f"Detected data range but could not parse date: {input_date_str}.",
+                            )
+                        ],
                     )
+                # Use ISO format for date_range_string
+                date_range_string = (
+                    f"{lower_date.date_range_string}/{upper_date.date_range_string}"
+                )
 
-                    datum = DateRange(
-                        date_range_string=date_range_string,
-                        date_range_lower=lower_date.date_range_lower,
-                        date_range_upper=upper_date.date_range_upper,
-                    )
-                except ValueError:
-                    pass
+                datum = DateRange(
+                    date_range_string=date_range_string,
+                    date_range_lower=lower_date.date_range_lower,
+                    date_range_upper=upper_date.date_range_upper,
+                )
 
         if datum is None:
             return ProcessingResult(

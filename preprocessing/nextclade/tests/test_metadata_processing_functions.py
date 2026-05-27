@@ -1098,6 +1098,17 @@ def test_parse_date_into_range() -> None:
         ).datum
         == "2021-01/2021-06-30"
     ), "dateRangeString: ISO range should be returned as-is."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "20-01-2020/2021-06-30"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        ).errors[0].message == "Metadata field field_name: Detected data range but could not parse date: 20-01-2020/2021-06-30."
+    ), "Invalid date range format errors."
     # Upper bound tightened by submittedAt for range formats
     assert (
         ProcessingFunctions.parse_date_into_range(
