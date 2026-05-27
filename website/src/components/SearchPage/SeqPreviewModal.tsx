@@ -1,4 +1,4 @@
-import { Dialog, DialogPanel, Transition } from '@headlessui/react';
+import { Dialog, DialogPanel } from '@headlessui/react';
 import React, { useEffect, useState } from 'react';
 
 import { getClientLogger } from '../../clientLogger.ts';
@@ -143,33 +143,35 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         </div>
     );
 
+    if (isHalfScreen) {
+        return (
+            <div
+                className='fixed bottom-0 w-full left-0 z-40 bg-white p-6 border-t border-gray-400'
+                data-testid='half-screen-preview'
+            >
+                {controls}
+                {content}
+            </div>
+        );
+    }
+
     return (
-        <Transition appear show={isOpen} as={React.Fragment}>
-            {isHalfScreen ? (
-                <div
-                    className='fixed bottom-0 w-full left-0 z-40 bg-white p-6 border-t border-gray-400'
-                    data-testid='half-screen-preview'
-                >
-                    {controls}
-                    {content}
+        <Dialog
+            open={isOpen}
+            onClose={onClose}
+            className='relative z-40'
+            data-testid='sequence-preview-modal'
+        >
+            <div className='fixed inset-0 bg-black/30' aria-hidden='true' />
+            <div className='fixed inset-0 overflow-y-auto'>
+                <div className='flex min-h-full items-center justify-center px-8 py-8'>
+                    <DialogPanel className='w-full overflow-hidden text-left bg-white shadow-xl rounded-2xl p-6 pb-0'>
+                        {controls}
+                        {content}
+                    </DialogPanel>
                 </div>
-            ) : (
-                <Dialog
-                    as='div'
-                    className='fixed inset-0 z-40 overflow-y-auto'
-                    onClose={onClose}
-                    data-testid='sequence-preview-modal'
-                >
-                    <div className='min-h-screen px-8 text-center'>
-                        <div className='fixed inset-0 bg-black/30' />
-                        <DialogPanel className='inline-block w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl pb-0'>
-                            {controls}
-                            {content}
-                        </DialogPanel>
-                    </div>
-                </Dialog>
-            )}
-        </Transition>
+            </div>
+        </Dialog>
     );
 };
 
