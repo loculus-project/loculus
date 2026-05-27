@@ -26,7 +26,7 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({
     closeButtonText = 'Cancel',
 }) => {
     return (
-        <div className='modal-box'>
+        <div className='relative bg-white rounded-xl p-6 max-w-sm w-full shadow-xl'>
             <form method='dialog'>
                 <Button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2' onClick={onClose}>
                     ✕
