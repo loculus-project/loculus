@@ -109,15 +109,17 @@ const InnerInlineRevisionForm: FC<InlineRevisionFormProps> = ({
                     )}
                 </form>
                 {data && (
-                    <EditPage
-                        key={`${data.accession}.${data.version}`}
-                        organism={organism}
-                        accessToken={accessToken}
-                        clientConfig={clientConfig}
-                        dataToEdit={data}
-                        groupedInputFields={metadataTemplateFields}
-                        submissionDataTypes={submissionDataTypes}
-                    />
+                    <div>
+                        <EditPage
+                            key={`${data.accession}.${data.version}`}
+                            organism={organism}
+                            accessToken={accessToken}
+                            clientConfig={clientConfig}
+                            dataToEdit={data}
+                            groupedInputFields={metadataTemplateFields}
+                            submissionDataTypes={submissionDataTypes}
+                        />
+                    </div>
                 )}
             </div>
         </div>
