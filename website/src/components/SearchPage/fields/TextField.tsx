@@ -137,7 +137,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
                         label: {
                             default: {
                                 outlined: {
-                                    md: `${labelClasses} bg-white! dark:bg-gray-900! peer-placeholder-shown:bg-transparent! peer-focus:bg-white! dark:peer-focus:bg-gray-900!`,
+                                    md: `${labelClasses} bg-white! peer-placeholder-shown:bg-transparent! peer-focus:bg-white!`,
                                 },
                             },
                         },
@@ -170,14 +170,14 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             <textarea
                 {...textareaProps}
                 rows={hasFocus || (fieldValue !== undefined && fieldValue.toString().split('\n').length > 1) ? 4 : 1}
-                className={`rounded-md block px-2.5 pb-2 pt-4 w-full text-sm text-gray-900 bg-transparent border border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-hidden focus:ring-0 focus:border-blue-600 peer hover:border-gray-400 transition-colors ${className}`}
+                className={`rounded-md block px-2.5 pb-2 pt-4 w-full text-sm text-gray-900 bg-transparent border border-gray-300 appearance-none focus:outline-hidden focus:ring-0 focus:border-blue-600 peer hover:border-gray-400 transition-colors ${className}`}
             ></textarea>
 
             <label
                 htmlFor={id}
-                className={`absolute text-sm text-gray-500 dark:text-gray-400 pointer-events-none ${
+                className={`absolute text-sm text-gray-500 pointer-events-none ${
                     isTransitionEnabled ? 'duration-300' : ''
-                } transform -translate-y-3 scale-75 top-1 z-10 origin-left bg-white! dark:bg-gray-900! px-2 peer-focus:px-2 peer-focus:bg-white! dark:peer-focus:bg-gray-900! peer-focus:text-blue-600 dark:peer-focus:text-blue-500 peer-placeholder-shown:bg-transparent! peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-3 inset-s-1 peer-focus:rtl:translate-x-1/4 peer-focus:rtl:left-auto`}
+                } transform -translate-y-3 scale-75 top-1 z-10 origin-left bg-white! px-2 peer-focus:px-2 peer-focus:bg-white! peer-focus:text-blue-600 peer-placeholder-shown:bg-transparent! peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-3 inset-s-1 peer-focus:rtl:translate-x-1/4 peer-focus:rtl:left-auto`}
             >
                 {label}
             </label>

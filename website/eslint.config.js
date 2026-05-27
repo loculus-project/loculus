@@ -63,6 +63,14 @@ const enableFromEslint = {
                 'The wrapped Button component automatically disables until hydration completes, ' +
                 'preventing race conditions in Playwright tests.',
         },
+        {
+            selector: 'Literal[value=/\\bdark:/]',
+            message: 'Do not add Tailwind dark: classes. The website does not currently support dark mode.',
+        },
+        {
+            selector: 'TemplateElement[value.raw=/\\bdark:/]',
+            message: 'Do not add Tailwind dark: classes. The website does not currently support dark mode.',
+        },
     ],
 };
 
