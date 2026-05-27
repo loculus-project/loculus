@@ -20,8 +20,6 @@
     "dependencies": {
         "@astrojs/mdx": "^4.3.13",
         "@astrojs/node": "^9.5.2",
-        "minisearch": "^6.3.0",
-        "yaml": "^2.4.5",
         "@emotion/react": "^11.14.0",
         "@headlessui/react": "^2.2.0",
         "@lokalise/xlsx": "^0.20.3",
@@ -47,6 +45,7 @@
         "just-kebab-case": "^4.2.0",
         "jwks-rsa": "^4.0.1",
         "luxon": "^3.7.2",
+        "minisearch": "^6.3.0",
         "neverthrow": "^8.2.0",
         "openid-client": "^5.7.1",
         "papaparse": "^5.5.3",
@@ -60,6 +59,7 @@
         "sanitize-html": "^2.17.4",
         "unplugin-icons": "^22.5.0",
         "winston": "^3.19.0",
+        "yaml": "^2.4.5",
         "zod": "^3.25.67"
     },
     "devDependencies": {
@@ -101,7 +101,7 @@
         "prettier-plugin-astro": "^0.14.1",
         "resize-observer-polyfill": "^1.5.1",
         "sass": "^1.99.0",
-        "tailwindcss": "^3.4.19",
+        "tailwindcss": "^4.3.0",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.59.4",
         "uuid": "^14.0.0",

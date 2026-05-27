@@ -140,7 +140,7 @@ export const MultiChoiceAutoCompleteField = ({
                         )}
                         <ComboboxInput
                             ref={inputRef}
-                            className={`flex-grow border-0 outline-none text-sm text-gray-900 bg-transparent appearance-none focus:ring-0 ${
+                            className={`grow border-0 outline-hidden text-sm text-gray-900 bg-transparent appearance-none focus:ring-0 ${
                                 selectedValues.size > 0 ? 'px-3 pb-1.5 pt-1' : 'px-2.5 pb-1.5 pt-3'
                             }`}
                             displayValue={() => ''}
@@ -173,7 +173,7 @@ export const MultiChoiceAutoCompleteField = ({
 
                     <ComboboxOptions
                         modal={false}
-                        className='absolute z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm min-h-32'
+                        className='absolute z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm min-h-32'
                     >
                         {isOptionListPending ? (
                             <div className='px-4 py-2 text-gray-500'>Loading...</div>

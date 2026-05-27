@@ -110,7 +110,7 @@ export const SingleChoiceAutoCompleteField = ({
                         />
                         {((fieldValue !== '' && fieldValue !== undefined) || query !== '') && (
                             <Button
-                                className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
+                                className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-xs'
                                 onClick={handleClear}
                                 aria-label={`Clear ${field.displayName ?? field.name}`}
                                 type='button'
@@ -125,7 +125,7 @@ export const SingleChoiceAutoCompleteField = ({
 
                     <ComboboxOptions
                         modal={false}
-                        className='absolute z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm min-h-32'
+                        className='absolute z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm min-h-32'
                     >
                         {isOptionListPending ? (
                             <div className='px-4 py-2 text-gray-500'>Loading...</div>

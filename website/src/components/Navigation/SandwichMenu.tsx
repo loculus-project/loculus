@@ -65,7 +65,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
                                 onSubmitSuccess={closeMenu}
                             />
                         </div>
-                        <div className='flex-grow divide-y-2 divide-gray-300 border-y-2 border-gray-300'>
+                        <div className='grow divide-y-2 divide-gray-300 border-y-2 border-gray-300'>
                             <div className='py-3'>
                                 <h3 className='ml-4 mb-3 font-semibold text-gray-700'>Organisms</h3>
                                 <div className='ml-4 space-y-1'>
@@ -86,7 +86,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
                                                 <img
                                                     src={organism.image}
                                                     alt=''
-                                                    className='w-5 h-5 rounded-full object-cover flex-shrink-0'
+                                                    className='w-5 h-5 rounded-full object-cover shrink-0'
                                                     onError={(e) => {
                                                         e.currentTarget.classList.add('invisible');
                                                     }}

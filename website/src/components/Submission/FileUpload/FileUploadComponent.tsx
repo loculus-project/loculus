@@ -133,7 +133,7 @@ export const FileUploadComponent = <F extends ProcessedFile>({
             {!myFile ? (
                 <div className={`flex flex-col items-center justify-center flex-1 py-2 px-4`}>
                     <div>
-                        <label className='inline cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
+                        <label className='inline cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-hidden focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
                             <span
                                 onClick={(e) => {
                                     e.preventDefault();
@@ -170,7 +170,7 @@ export const FileUploadComponent = <F extends ProcessedFile>({
                     <Button
                         onClick={() => void setMyFile(null)}
                         data-testid={`discard_${name}`}
-                        className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+                        className='text-xs wrap-break-word text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
                     >
                         Discard file
                     </Button>

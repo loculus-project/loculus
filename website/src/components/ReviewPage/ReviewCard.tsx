@@ -70,7 +70,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     return (
         <div className='px-3 py-2 relative transition-all duration-500'>
             <div className='flex'>
-                <div className='flex flex-grow flex-wrap '>
+                <div className='flex grow flex-wrap '>
                     <StatusIcon
                         status={sequenceEntryStatus.status}
                         dataUseTerms={sequenceEntryStatus.dataUseTerms}
@@ -291,7 +291,7 @@ const Errors: FC<ErrorsProps> = ({ errors, accession, metadataDisplayNames }) =>
                         .map((field) => metadataDisplayNames.get(field.name) ?? field.name)
                         .join(', ');
                     return (
-                        <div key={uniqueKey} className='flex flex-shrink-0'>
+                        <div key={uniqueKey} className='flex shrink-0'>
                             <p
                                 className='text-red-600'
                                 data-tooltip-id={'error-tooltip-' + accession + '-' + uniqueKey}

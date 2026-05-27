@@ -23,7 +23,7 @@ export const datePickerTheme: FlowbiteDatepickerTheme = {
             selectors: {
                 base: 'flex justify-between mb-2',
                 button: {
-                    base: 'text-sm rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 font-semibold py-2.5 px-5 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-200',
+                    base: 'text-sm rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 font-semibold py-2.5 px-5 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-gray-200',
                     prev: '',
                     next: '',
                     view: 'cursor-default pointer-events-none',
@@ -108,7 +108,7 @@ export const DateChangeModal = ({
     const [date, setDate] = useState(restrictedUntil.toJSDate());
     return (
         <div className='fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50'>
-            <div className='bg-white p-6 rounded-lg w-[30rem]'>
+            <div className='bg-white p-6 rounded-lg w-120'>
                 <h2 className='font-medium text-lg'>{title}</h2>
                 {description !== null && <p className='text-sm text-gray-700 py-2'>{description}</p>}
                 <div className='text-center'>

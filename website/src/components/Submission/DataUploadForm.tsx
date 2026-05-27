@@ -216,7 +216,7 @@ const InnerDataUploadForm = ({
                     <Button
                         name='submit'
                         type='submit'
-                        className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
+                        className='rounded-md py-2 text-sm font-semibold shadow-xs focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
                         onClick={(e) => void handleSubmit(e)}
                         alsoDisabledIf={isPending}
                     >
@@ -408,7 +408,7 @@ const Acknowledgement = ({
                             <input
                                 type='checkbox'
                                 name='confirmation-no-pii'
-                                className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-600'
+                                className='mr-3 ml-1 h-5 w-5 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-600'
                                 checked={confirmedNoPII}
                                 onChange={() => setConfirmedNoPII(!confirmedNoPII)}
                             />
@@ -424,7 +424,7 @@ const Acknowledgement = ({
                             <input
                                 type='checkbox'
                                 name='confirmation-INSDC-upload-terms'
-                                className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-600'
+                                className='mr-3 ml-1 h-5 w-5 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-600'
                                 checked={agreedToINSDCUploadTerms}
                                 onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
                             />
