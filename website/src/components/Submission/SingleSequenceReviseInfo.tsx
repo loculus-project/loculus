@@ -29,7 +29,7 @@ export const SingleSequenceReviseInfo: FC<SingleSequenceReviseInfoProps> = ({ or
                             href={routes.mySequencesPage(organism, groupId)}
                             className='text-primary-600 hover:underline'
                         >
-                            My sequences
+                            Released sequences
                         </a>{' '}
                         page.
                     </p>
@@ -37,7 +37,7 @@ export const SingleSequenceReviseInfo: FC<SingleSequenceReviseInfoProps> = ({ or
                         href={routes.mySequencesPage(organism, groupId)}
                         className='inline-block rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-500'
                     >
-                        Browse my sequences
+                        Browse released sequences
                     </a>
                 </div>
                 <p className='text-sm text-gray-500'>
