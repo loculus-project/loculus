@@ -1,6 +1,6 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
-import tailwind from '@astrojs/tailwind';
+import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
@@ -27,7 +27,7 @@ export default defineConfig({
             editLink: {
                 baseUrl: 'https://github.com/loculus-project/loculus/edit/main/docs/',
             },
-            customCss: ['./src/styles/tailwind.css', './src/styles/custom.css'],
+            customCss: ['./src/styles/global.css', './src/styles/custom.css'],
             social: [{ icon: 'github', label: 'Github', href: 'https://github.com/loculus-project/loculus' }],
             sidebar: [
                 {
@@ -78,12 +78,13 @@ export default defineConfig({
                 },
                 {
                     label: 'Reference',
-                    autogenerate: { directory: 'reference' },
+                    items: [{ autogenerate: { directory: 'reference' } }],
                 },
             ],
         }),
-        tailwind({
-            applyBaseStyles: false,
-        }),
     ],
+
+    vite: {
+        plugins: [tailwindcss()],
+    },
 });
