@@ -830,6 +830,62 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
             sequenceNameToFastaId={"ebola-zaire": "fastaHeader2", "ebola-sudan": "fastaHeader1"},
         ),
     ),
+    Case(
+        name="with two failed alignment (but classified)",
+        input_metadata={},
+        input_sequence={
+            "fastaHeader1": fragment("ebola-sudan"),
+            "fastaHeader2": fragment("ebola-zaire"),
+        },
+        accession_id="1",
+        expected_metadata={
+            "totalInsertedNucs_ebola-sudan": None,
+            "totalSnps_ebola-sudan": None,
+            "totalDeletedNucs_ebola-sudan": None,
+            "length_ebola-sudan": len(fragment("ebola-sudan")),
+            "totalInsertedNucs_ebola-zaire": None,
+            "totalSnps_ebola-zaire": None,
+            "totalDeletedNucs_ebola-zaire": None,
+            "length_ebola-zaire": len(fragment("ebola-zaire")),
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["alignment"],
+                    ["alignment"],
+                    "No sequence aligned.",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
+            ]
+        ),
+        expected_warnings=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["ebola-sudan"],
+                    ["ebola-sudan"],
+                    "Nucleotide sequence for ebola-sudan failed to align",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
+                ProcessingAnnotationHelper(
+                    ["ebola-zaire"],
+                    ["ebola-zaire"],
+                    "Nucleotide sequence for ebola-zaire failed to align",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
+            ]
+        ),
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={
+                "ebola-zaire": fragment("ebola-zaire"),
+                "ebola-sudan": fragment("ebola-sudan"),
+            },
+            alignedNucleotideSequences={},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
+            aminoAcidInsertions={},
+            sequenceNameToFastaId={"ebola-zaire": "fastaHeader2", "ebola-sudan": "fastaHeader1"},
+        ),
+    ),
 ]
 
 multi_segment_case_definitions_any_requirement_align_classification = [
