@@ -161,7 +161,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     data-testid='sequence-preview-modal'
                 >
                     <div className='min-h-screen px-8 text-center'>
-                        <div className='fixed inset-0 bg-black opacity-30' />
+                        <div className='fixed inset-0 bg-black/30' />
                         <DialogPanel className='inline-block w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl pb-0'>
                             {controls}
                             {content}

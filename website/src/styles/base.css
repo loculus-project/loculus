@@ -1,10 +1,14 @@
-@config '../../tailwind.config.cjs';
 @import 'tailwindcss';
 @import 'flowbite-react/plugin/tailwindcss';
 @source '../../.flowbite-react/class-list.json';
 
 @plugin '@tailwindcss/forms' {
     strategy: 'class';
+}
+
+@plugin 'daisyui' {
+    themes: light --default;
+    logs: false;
 }
 
 @theme {
