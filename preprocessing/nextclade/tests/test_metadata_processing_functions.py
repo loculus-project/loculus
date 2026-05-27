@@ -1084,7 +1084,7 @@ def test_parse_date_into_range() -> None:
                 "submittedAt": ts_from_ymd(2022, 1, 1),
             },
         ).datum
-        == "2021-06-12"
+        == "2021-06-30"
     ), "dateRangeUpper: ISO range should return upper bound of trailing date."
     assert (
         ProcessingFunctions.parse_date_into_range(
