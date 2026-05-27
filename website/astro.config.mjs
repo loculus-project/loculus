@@ -1,6 +1,6 @@
 import { defineConfig } from 'astro/config';
 import node from '@astrojs/node';
-import tailwind from '@astrojs/tailwind';
+import tailwindcss from '@tailwindcss/vite';
 import Icons from 'unplugin-icons/vite';
 import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
@@ -8,7 +8,7 @@ import mdx from '@astrojs/mdx';
 // https://astro.build/config
 export default defineConfig({
     output: 'server',
-    integrations: [tailwind(), react(), mdx()],
+    integrations: [react(), mdx()],
     adapter: node({
         mode: 'standalone',
     }),
@@ -20,6 +20,6 @@ export default defineConfig({
         optimizeDeps: {
             exclude: ['fsevents', 'msw/node', 'msw', 'chromium-bidi'],
         },
-        plugins: [Icons({ compiler: 'jsx', jsx: 'react' })],
+        plugins: [tailwindcss(), Icons({ compiler: 'jsx', jsx: 'react' })],
     },
 });
