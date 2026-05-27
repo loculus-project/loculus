@@ -24,7 +24,7 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
                     </span>
                 )}
                 <svg
-                    className='w-4 h-4 transition-transform group-data-[open]:rotate-180'
+                    className='w-4 h-4 transition-transform group-data-open:rotate-180'
                     fill='none'
                     stroke='currentColor'
                     viewBox='0 0 24 24'
@@ -43,7 +43,7 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
                 leaveFrom='transform opacity-100 scale-100'
                 leaveTo='transform opacity-0 scale-95'
             >
-                <MenuItems className='absolute left-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 focus:outline-none'>
+                <MenuItems className='absolute left-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 focus:outline-hidden'>
                     <div className='py-1'>
                         {knownOrganisms.map((organism) => {
                             const isActive = currentOrganism?.key === organism.key;
@@ -70,13 +70,13 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
                                                     <img
                                                         src={organism.image}
                                                         alt=''
-                                                        className='w-5 h-5 rounded-full object-cover flex-shrink-0'
+                                                        className='w-5 h-5 rounded-full object-cover shrink-0'
                                                         onError={(e) => {
                                                             e.currentTarget.classList.add('invisible');
                                                         }}
                                                     />
                                                 ) : (
-                                                    <div className='w-5 h-5 flex-shrink-0' />
+                                                    <div className='w-5 h-5 shrink-0' />
                                                 )}
                                                 <span>{organism.displayName}</span>
                                             </a>

@@ -68,7 +68,7 @@ export const MutationField: FC<MutationFieldProps> = ({ singleSegmentAndGeneInfo
                         label='Mutations'
                         isFocused={hasFocus}
                         hasContent={selectedOptions.length > 0 || inputValue !== ''}
-                        className='shadow-sm '
+                        className='shadow-xs '
                         htmlFor={domId}
                     >
                         {selectedOptions.length > 0 && (
@@ -89,7 +89,7 @@ export const MutationField: FC<MutationFieldProps> = ({ singleSegmentAndGeneInfo
                                                 event.stopPropagation();
                                                 handleTagDelete(index);
                                             }}
-                                            className='ml-1 focus:outline-none'
+                                            className='ml-1 focus:outline-hidden'
                                         >
                                             &times;
                                         </Button>
@@ -106,7 +106,7 @@ export const MutationField: FC<MutationFieldProps> = ({ singleSegmentAndGeneInfo
                                 displayValue={(option: MutationQuery) => option.text}
                                 value={inputValue}
                                 id={domId}
-                                className={`block w-full text-sm text-gray-900 bg-transparent focus:outline-none focus:ring-0 border-0 ${
+                                className={`block w-full text-sm text-gray-900 bg-transparent focus:outline-hidden focus:ring-0 border-0 ${
                                     selectedOptions.length === 0 ? 'px-2.5 pb-1.5 pt-3' : 'px-3 pb-1.5 pt-1'
                                 }`}
                             />
@@ -123,7 +123,7 @@ export const MutationField: FC<MutationFieldProps> = ({ singleSegmentAndGeneInfo
                     >
                         <ComboboxOptions
                             modal={false}
-                            className='absolute w-full z-20 py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm'
+                            className='absolute w-full z-20 py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm'
                         >
                             {options.map((option, index) => (
                                 <ComboboxOption

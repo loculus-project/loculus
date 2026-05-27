@@ -336,7 +336,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             />
             <div>
                 {fileUploadState === undefined ? (
-                    <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
+                    <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-hidden focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
                         <span
                             onClick={(e) => {
                                 e.preventDefault();
@@ -388,7 +388,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             <Button
                 onClick={() => setFileUploadState(undefined)}
                 data-testid={`discard_${fileCategory.name}`}
-                className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+                className='text-xs wrap-break-word text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
             >
                 Discard files
             </Button>

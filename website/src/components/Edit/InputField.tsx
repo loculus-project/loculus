@@ -45,7 +45,7 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                         />
                         <ComboboxOptions
                             modal={false}
-                            className='absolute border empty:invisible z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm min-h-32'
+                            className='absolute border empty:invisible z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm min-h-32'
                         >
                             {filteredOptions.map((option) => (
                                 <ComboboxOption

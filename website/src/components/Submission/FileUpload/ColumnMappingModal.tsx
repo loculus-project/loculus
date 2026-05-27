@@ -85,7 +85,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
     return (
         <>
             <Button
-                className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+                className='text-xs wrap-break-word text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
                 data-tooltip-id='columnMapping'
                 onClick={(e) => {
                     e.preventDefault();
@@ -204,7 +204,7 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
         <ListboxOption
             key={`${header}-${field.name}`}
             value={field.name}
-            className={`data-[focus]:bg-primary-200 p-1 pl-3 rounded-sm ${selectedOption === field.name ? 'bg-gray-200' : ''}`}
+            className={`data-focus:bg-primary-200 p-1 pl-3 rounded-xs ${selectedOption === field.name ? 'bg-gray-200' : ''}`}
             data-tooltip-id={`${header}-${field.name}-tooltip`}
         >
             <span className={usedOptions.includes(field.name) ? 'text-gray-400' : ''}>
@@ -244,8 +244,8 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
                             </span>
                         </div>
                     </ListboxButton>
-                    <ListboxOptions anchor='top' className='bg-gray-100 p-1 rounded-sm text-sm'>
-                        <ListboxOption key={''} value={null} className='data-[focus]:bg-primary-200 p-1'>
+                    <ListboxOptions anchor='top' className='bg-gray-100 p-1 rounded-xs text-sm'>
+                        <ListboxOption key={''} value={null} className='data-focus:bg-primary-200 p-1'>
                             <span className='italic'>unmapped</span>
                         </ListboxOption>
                         <div key='border' className='w-10/12 mx-auto my-1 h-0.5 bg-gray-200'></div>
