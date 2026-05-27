@@ -1589,7 +1589,7 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def validate_host(
+    def resolve_host_taxon_id(
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -1633,10 +1633,10 @@ class ProcessingFunctions:
 
         try:
             response = taxonomy_cache.get_or_fetch(url)
+            body = response.json()
         except requests.exceptions.RequestException as e:
             return taxonomy_network_error(unvalidated, "validating", e, input_fields, output_field)
 
-        body = response.json()
         if response.status_code != requests.codes.ok:
             # an invalid host organism is a warning for INSDC ingested sequences, but an error for everyone else
             message = ProcessingAnnotation.from_fields(
@@ -1696,7 +1696,9 @@ class ProcessingFunctions:
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
             return ProcessingResult(
-                datum=None,
+                datum=input_data.get("hostNameScientific")
+                if args["is_insdc_ingest_group"]
+                else None,
                 warnings=[],
                 errors=[],
             )
@@ -1704,23 +1706,25 @@ class ProcessingFunctions:
         url = f"{tax_service}/taxa/{tax_id}"
         try:
             response = taxonomy_cache.get_or_fetch(url)
+            body = response.json()
         except requests.exceptions.RequestException as e:
             return taxonomy_network_error(tax_id, "validating", e, input_fields, output_field)
 
-        body = response.json()
         if response.status_code != requests.codes.ok:
-            message = ProcessingAnnotation.from_fields(
+            message = f"Could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}"
+            logger.warning(message)
+            processing_annotation = ProcessingAnnotation.from_fields(
                 input_fields,
                 [output_field],
                 AnnotationSourceType.METADATA,
-                message=f"Could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}",
+                message=message,
             )
             return ProcessingResult(
                 datum=input_data.get("hostNameScientific")
                 if args["is_insdc_ingest_group"]
                 else None,
-                warnings=[message] if args["is_insdc_ingest_group"] else [],
-                errors=[message] if not args["is_insdc_ingest_group"] else [],
+                warnings=[processing_annotation] if args["is_insdc_ingest_group"] else [],
+                errors=[processing_annotation] if not args["is_insdc_ingest_group"] else [],
             )
 
         scientific_name = body.get("scientific_name")
@@ -1766,12 +1770,12 @@ class ProcessingFunctions:
         url = f"{tax_service}/taxa/{tax_id}?find_common_name=true"
         try:
             response = taxonomy_cache.get_or_fetch(url)
+            body = response.json()
         except requests.exceptions.RequestException as e:
             return taxonomy_network_error(
                 tax_id, "getting common name for", e, input_fields, output_field
             )
 
-        body = response.json()
         if response.status_code != requests.codes.ok:
             return ProcessingResult(
                 datum=None,
