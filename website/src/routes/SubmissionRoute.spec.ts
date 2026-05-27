@@ -12,11 +12,11 @@ describe('SubmissionRouteUtils', () => {
     });
 
     test('parseToRoute - valid submit route with inputMode', () => {
-        expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/submit', '?inputMode=form')).toEqual({
+        expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/submit', '?inputMode=individual')).toEqual({
             name: 'submit',
             organism: 'cchf',
             groupId: 123,
-            inputMode: 'form',
+            inputMode: 'individual',
         });
         expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/submit', '?inputMode=bulk')).toEqual({
             name: 'submit',
@@ -55,8 +55,8 @@ describe('SubmissionRouteUtils', () => {
         expect(SubmissionRouteUtils.toUrl({ name: 'submit', organism: 'cchf', groupId: 123, inputMode: 'bulk' })).toBe(
             '/cchf/submission/123/submit?inputMode=bulk',
         );
-        expect(SubmissionRouteUtils.toUrl({ name: 'submit', organism: 'ebola', groupId: 123, inputMode: 'form' })).toBe(
-            '/ebola/submission/123/submit?inputMode=form',
-        );
+        expect(
+            SubmissionRouteUtils.toUrl({ name: 'submit', organism: 'ebola', groupId: 123, inputMode: 'individual' }),
+        ).toBe('/ebola/submission/123/submit?inputMode=individual');
     });
 });

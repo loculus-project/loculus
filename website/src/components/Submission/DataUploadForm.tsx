@@ -84,7 +84,7 @@ const InnerDataUploadForm = ({
 
         const { metadataFile, sequenceFile, submissionId } = sequenceDataResult;
 
-        if (submissionId === undefined && inputMode === 'form') {
+        if (submissionId === undefined && inputMode === 'individual') {
             onError('No ID specified.');
             return;
         }
@@ -103,7 +103,7 @@ const InnerDataUploadForm = ({
 
         let fileMappingWithSubmissionId = fileMapping;
         // for single submission, use the submissionID that the user gave in the form
-        if (extraFilesEnabled && inputMode === 'form' && fileMapping !== undefined) {
+        if (extraFilesEnabled && inputMode === 'individual' && fileMapping !== undefined) {
             fileMappingWithSubmissionId = { [submissionId!]: Object.values(fileMapping)[0] };
         }
 
@@ -280,11 +280,11 @@ export const InputModeTabs = ({
             </a>
             <a
                 className={`py-2 px-4 border-b-2 ${
-                    currentInputMode === 'form'
+                    currentInputMode === 'individual'
                         ? 'border-primary-600 text-primary-600'
                         : 'border-transparent text-gray-500'
                 } hover:text-primary-600`}
-                href={inputModeUrl('form')}
+                href={inputModeUrl('individual')}
             >
                 {action === 'submit'
                     ? 'Submit individual sequence entry using a form'

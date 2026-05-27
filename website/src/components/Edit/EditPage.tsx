@@ -163,7 +163,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     <ExtraFilesUpload
                         accessToken={accessToken}
                         clientConfig={clientConfig}
-                        inputMode='form'
+                        inputMode='individual'
                         groupId={dataToEdit.groupId}
                         fileCategories={submissionDataTypes.files?.categories ?? []}
                         setFileMapping={setFileMapping}

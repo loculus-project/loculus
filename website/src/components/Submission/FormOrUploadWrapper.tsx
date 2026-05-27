@@ -9,7 +9,7 @@ import { EditableSequences } from '../Edit/EditableSequences';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { SequencesForm } from '../Edit/SequencesForm';
 
-export type InputMode = 'form' | 'bulk';
+export type InputMode = 'individual' | 'bulk';
 
 /**
  * A wrapper type for a metadata file (TSV) and sequence file (FASTA) which together
@@ -47,7 +47,7 @@ type FormOrUploadWrapperProps = {
 
 /**
  * A component that allows users to upload sequence data. Two modes are supported, see {@link InputMode}.
- * In 'form' mode, a form is displayed, and the user can directly enter stuff into the form to upload their
+ * In 'individual' mode, a form is displayed, and the user can directly enter stuff into the form to upload their
  * metadata. In 'bulk' mode, the user needs to upload files containing the sequences and metadata.
  * Either way, the component turns the uploaded data into files, so they can be submitted to the API.
  * Set the 'setFileFactory' to get the files - have a look at existing usage on how this works.
@@ -76,7 +76,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
             // Returns a function that the parent component can call to get the files needed for submission
             return async (): Promise<SequenceData | InputError> => {
                 switch (inputMode) {
-                    case 'form': {
+                    case 'individual': {
                         const submissionId = editableMetadata.getSubmissionId();
                         if (!submissionId) {
                             return { type: 'error', errorMessage: 'Please specify an ID.' };

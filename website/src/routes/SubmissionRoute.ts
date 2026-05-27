@@ -52,13 +52,13 @@ export const SubmissionRouteUtils = {
                 return {
                     ...baseRoute,
                     name: 'submit',
-                    inputMode: searchParams.get('inputMode') === 'form' ? 'form' : 'bulk',
+                    inputMode: searchParams.get('inputMode') === 'individual' ? 'individual' : 'bulk',
                 };
             case 'revise':
                 return {
                     ...baseRoute,
                     name: 'revise',
-                    inputMode: searchParams.get('inputMode') === 'form' ? 'form' : 'bulk',
+                    inputMode: searchParams.get('inputMode') === 'individual' ? 'individual' : 'bulk',
                 };
             case 'review':
                 return { ...baseRoute, name: 'review' };

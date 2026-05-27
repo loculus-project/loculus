@@ -35,7 +35,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
 }) => {
     return (
         <div className='flex flex-col items-center'>
-            {inputMode === 'form' ? (
+            {inputMode === 'individual' ? (
                 <SingleSequenceReviseInfo organism={organism} groupId={group.groupId} />
             ) : (
                 <DataUploadForm

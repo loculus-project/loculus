@@ -271,7 +271,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 return;
             }
 
-            if (inputMode === 'form') {
+            if (inputMode === 'individual') {
                 setFileUploadState({
                     type: 'awaitingUrls',
                     files: { dummySubmissionId: filesArray.map((f) => ({ file: f, name: f.name })) },
@@ -371,7 +371,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             <div className='flex justify-between items-center mb-3'>
                 <div>
                     <h3 className='text-sm font-medium'>Files</h3>
-                    {inputMode === 'form'
+                    {inputMode === 'individual'
                         ? Object.values(fileUploadState.files)[0].map((file) => (
                               <FileListItem key={file.name} file={file} />
                           ))
@@ -458,14 +458,14 @@ const filterDotFiles = (files: File[]): File[] => {
 const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefined => {
     const subdirectories = files
         .map((file) => file.webkitRelativePath.split('/'))
-        .filter((pathSegments) => pathSegments.length > (inputMode === 'form' ? 2 : 3))
+        .filter((pathSegments) => pathSegments.length > (inputMode === 'individual' ? 2 : 3))
         .map((pathSegments) => pathSegments[pathSegments.length - 2]);
     if (subdirectories.length > 0) {
         return 'Subdirectories are not yet supported.';
     }
     const toplevelFiles = files
         .map((file) => file.webkitRelativePath.split('/'))
-        .filter((pathSegments) => pathSegments.length < (inputMode === 'form' ? 2 : 3))
+        .filter((pathSegments) => pathSegments.length < (inputMode === 'individual' ? 2 : 3))
         .map((pathSegments) => pathSegments[pathSegments.length - 1]);
     if (toplevelFiles.length > 0) {
         return `All files need to be inside a directory named with a sequence ID; these files are not: ${toplevelFiles.join(', ')}`;
