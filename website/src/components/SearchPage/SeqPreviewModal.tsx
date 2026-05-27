@@ -154,16 +154,14 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     {content}
                 </div>
             ) : (
-                <Dialog
-                    as='div'
-                    className='relative z-40'
-                    onClose={onClose}
-                    data-testid='sequence-preview-modal'
-                >
+                <Dialog as='div' className='relative z-40' onClose={onClose}>
                     <div className='fixed inset-0 bg-black/30' aria-hidden='true' />
                     <div className='fixed inset-0 overflow-y-auto'>
                         <div className='flex min-h-full items-center justify-center px-8 py-8'>
-                            <DialogPanel className='w-full overflow-hidden text-left bg-white shadow-xl rounded-2xl p-6 pb-0'>
+                            <DialogPanel
+                                data-testid='sequence-preview-modal'
+                                className='w-full overflow-hidden text-left bg-white shadow-xl rounded-2xl p-6 pb-0'
+                            >
                                 {controls}
                                 {content}
                             </DialogPanel>
