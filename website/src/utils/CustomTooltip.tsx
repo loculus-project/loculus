@@ -6,7 +6,7 @@ export const CustomTooltip: FC<ComponentProps<typeof Tooltip>> = ({ className, .
     <Tooltip
         positionStrategy='fixed'
         place='right'
-        className={`z-20 max-w-sm whitespace-pre-wrap wrap-break-word ${className ?? ''}`}
+        className={`z-20 max-w-sm whitespace-pre-wrap break-words ${className ?? ''}`}
         {...props}
     />
 );
