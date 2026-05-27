@@ -444,17 +444,25 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def parse_date_into_range(  # noqa: C901, PLR0912, PLR0915
+    def parse_date_into_range(  # noqa: C901, PLR0912, PLR0914, PLR0915
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
-        """Parse date string (`input.date`) formatted as one of YYYY | YYYY-MM | YYYY-MM-DD into
-        a range using upper bound (`input.releaseDate`)
+        """
+        Parse date string (`input.date`) with input formats:
+        - YYYY
+        - YYYY-MM
+        - YYYY-MM-DD
+        Or date string as a range formatted as:
+        - ISO format: date/date (where date is in one of the above formats)
+        - lucene format: [date TO date] (where date is in one of the above formats)
+        Uses (`input.releaseDate`) as an upper bound when parsing into a range.
         Return value determined FunctionArgs:
         fieldType: "dateRangeString" | "dateRangeLower" | "dateRangeUpper"
-        Default fieldType is "dateRangeString"
+        Default fieldType is "dateRangeString" - in the case of a range the date is returned
+        as a single month/year or an ISO date range format
         """
         if not args:
             args = {"fieldType": "dateRangeString"}
