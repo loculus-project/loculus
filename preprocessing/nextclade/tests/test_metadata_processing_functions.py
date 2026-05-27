@@ -1128,6 +1128,19 @@ def test_parse_date_into_range() -> None:
 
 
 def test_concatenate() -> None:
+    assert (
+        ProcessingFunctions.concatenate(
+            {"date": "2021-01-01/2021-12-31", "country": "USA"},
+            "field_name",
+            ["date", "country"],
+            {
+                "type": ["dateRangeString", "string"],
+                "order": ["date", "country"],
+                "ACCESSION_VERSION": "version.1",
+            },
+        ).datum
+        == "[2021-01-01_TO_2021-12-31]/USA"
+    ), "ISO date range is converted to lucene format for displayNames."
     input_data: InputMetadata = {
         "someInt": "",
         "geoLocCountry": "",
