@@ -20,7 +20,7 @@ class WebConfig(private val backendConfig: BackendConfig) : WebMvcConfigurer {
 
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(ReadOnlyModeInterceptor(backendConfig))
-            .excludePathPatterns("/*/lapis/**")
+            .excludePathPatterns("/*/lapis/**", "/query/**")
         registry.addInterceptor(OrganismMdcInterceptor())
     }
 
