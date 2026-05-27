@@ -408,7 +408,7 @@ const Acknowledgement = ({
                             <input
                                 type='checkbox'
                                 name='confirmation-no-pii'
-                                className='mr-3 ml-1 h-5 w-5 appearance-none rounded border border-gray-300 bg-white checked:bg-primary-600 focus:ring-primary-600'
+                                className='shrink-0 checkbox checkbox-sm mr-3 ml-1'
                                 checked={confirmedNoPII}
                                 onChange={() => setConfirmedNoPII(!confirmedNoPII)}
                             />
@@ -424,7 +424,7 @@ const Acknowledgement = ({
                             <input
                                 type='checkbox'
                                 name='confirmation-INSDC-upload-terms'
-                                className='mr-3 ml-1 h-5 w-5 appearance-none rounded border border-gray-300 bg-white checked:bg-primary-600 focus:ring-primary-600'
+                                className='shrink-0 checkbox checkbox-sm mr-3 ml-1'
                                 checked={agreedToINSDCUploadTerms}
                                 onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
                             />
