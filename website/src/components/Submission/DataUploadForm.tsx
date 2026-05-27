@@ -286,7 +286,9 @@ export const InputModeTabs = ({
                 } hover:text-primary-600`}
                 href={inputModeUrl('form')}
             >
-                {`${action === 'submit' ? 'Submit' : 'Revise'} individual sequence entry using a form`}
+                {action === 'submit'
+                    ? 'Submit individual sequence entry using a form'
+                    : 'Revising individual sequences'}
             </a>
         </div>
     );
