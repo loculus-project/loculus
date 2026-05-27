@@ -272,6 +272,56 @@ def taxonomy_network_error(
     )
 
 
+@dataclass
+class DateRange:
+    date_range_string: str | None
+    date_range_lower: datetime | None
+    date_range_upper: datetime
+    message: str | None = None
+
+
+def convert_to_date_range(date_str: str) -> DateRange | None:
+    formats_to_messages = {
+        "%Y-%m-%d": None,
+        "%Y-%m": "Day is missing. Assuming date is some time in the month.",
+        "%Y": "Month and day are missing. Assuming date is some time in the year.",
+    }
+
+    datum: DateRange | None = None
+
+    for fmt, msg in formats_to_messages.items():
+        try:
+            parsed_date = datetime.strptime(date_str, fmt).replace(tzinfo=pytz.utc)
+        except ValueError:
+            continue
+        match fmt:
+            case "%Y-%m-%d":
+                datum = DateRange(
+                    date_range_string=parsed_date.strftime(fmt),
+                    date_range_lower=parsed_date,
+                    date_range_upper=parsed_date,
+                )
+            case "%Y-%m":
+                datum = DateRange(
+                    date_range_string=parsed_date.strftime(fmt),
+                    date_range_lower=parsed_date.replace(day=1),
+                    date_range_upper=(
+                        parsed_date.replace(
+                            day=calendar.monthrange(parsed_date.year, parsed_date.month)[1]
+                        )
+                    ),
+                    message=msg,
+                )
+            case "%Y":
+                datum = DateRange(
+                    date_range_string=parsed_date.strftime(fmt),
+                    date_range_lower=parsed_date.replace(month=1, day=1),
+                    date_range_upper=parsed_date.replace(month=12, day=31),
+                    message=msg,
+                )
+    return datum
+
+
 class ProcessingFunctions:
     @classmethod
     def call_function(
@@ -394,7 +444,7 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def parse_date_into_range(
+    def parse_date_into_range(  # noqa: C901, PLR0912, PLR0915
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -409,10 +459,7 @@ class ProcessingFunctions:
         if not args:
             args = {"fieldType": "dateRangeString"}
 
-        logger.debug(f"input_data: {input_data}")
-
         input_date_str = input_data["date"]
-
         release_date_str = input_data.get("releaseDate", "") or ""
         try:
             release_date = dateutil.parse(release_date_str).replace(tzinfo=pytz.utc)
@@ -450,131 +497,109 @@ class ProcessingFunctions:
                 errors=[],
             )
 
-        formats_to_messages = {
-            "%Y-%m-%d": None,
-            "%Y-%m": "Day is missing. Assuming date is some time in the month.",
-            "%Y": "Month and day are missing. Assuming date is some time in the year.",
-        }
+        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
 
-        warnings = []
-        errors = []
-
-        @dataclass
-        class DateRange:
-            date_range_string: str | None
-            date_range_lower: datetime | None
-            date_range_upper: datetime
-
-        for format, message in formats_to_messages.items():
-            try:
-                parsed_date = datetime.strptime(input_date_str, format).replace(tzinfo=pytz.utc)
-            except ValueError:
-                continue
-            match format:
-                case "%Y-%m-%d":
-                    datum = DateRange(
-                        date_range_string=parsed_date.strftime(format),
-                        date_range_lower=parsed_date,
-                        date_range_upper=parsed_date,
-                    )
-                case "%Y-%m":
-                    datum = DateRange(
-                        date_range_string=parsed_date.strftime(format),
-                        date_range_lower=parsed_date.replace(day=1),
-                        date_range_upper=(
-                            parsed_date.replace(
-                                day=calendar.monthrange(parsed_date.year, parsed_date.month)[1]
-                            )
-                        ),
-                    )
-                case "%Y":
-                    datum = DateRange(
-                        date_range_string=parsed_date.strftime(format),
-                        date_range_lower=parsed_date.replace(month=1, day=1),
-                        date_range_upper=parsed_date.replace(month=12, day=31),
-                    )
-
-            logger.debug(f"parsed_date: {datum}")
-
-            if datum.date_range_upper > max_upper_limit:
-                logger.debug(
-                    "Tightening upper limit due to release date or current date. "
-                    f"Original upper limit: {datum.date_range_upper},"
-                    f"new upper limit: {max_upper_limit}"
-                )
-                datum.date_range_upper = max_upper_limit
-
-            if message:
-                warnings.append(
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=f"Metadata field {output_field}:'{input_date_str}' - " + message,
-                    )
-                )
-
-            if datum.date_range_lower and datum.date_range_lower > datetime.now(tz=pytz.utc):
-                logger.debug(
-                    f"Lower range of date: {datum.date_range_lower} > {datetime.now(tz=pytz.utc)}"
-                )
-                errors.append(
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=(
-                            f"Metadata field {output_field}:'{input_date_str}' is in the future."
-                        ),
-                    )
-                )
-
-            if release_date and datum.date_range_lower and (datum.date_range_lower > release_date):
-                logger.debug(f"Lower range of date: {parsed_date} > release_date: {release_date}")
-                errors.append(
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=(
-                            f"Metadata field {output_field}:'{input_date_str}'"
-                            "is after release date."
-                        ),
-                    )
-                )
-
-            match args["fieldType"]:
-                case "dateRangeString":
-                    return_value = datum.date_range_string
-                case "dateRangeLower":
-                    if datum.date_range_lower is None:
-                        return_value = None
-                    else:
-                        return_value = datum.date_range_lower.strftime("%Y-%m-%d")
-                    warnings = errors = []
-                case "dateRangeUpper":
-                    return_value = datum.date_range_upper.strftime("%Y-%m-%d")
-                    warnings = errors = []
-                case _:
-                    msg = f"Config error: Unknown fieldType: {args['fieldType']}"
-                    raise ValueError(msg)
-
-            return ProcessingResult(datum=return_value, warnings=warnings, errors=errors)
-
-        # If all parsing attempts fail, it's an unrecognized format
-        return ProcessingResult(
-            datum=None,
-            warnings=[],
-            errors=[
+        datum = convert_to_date_range(input_date_str)
+        if datum and datum.message:
+            warnings.append(
                 ProcessingAnnotation.from_fields(
                     input_fields,
                     [output_field],
                     AnnotationSourceType.METADATA,
-                    message=f"Metadata field {output_field}: "
-                    f"Date {input_date_str} could not be parsed.",
+                    message=f"Metadata field {output_field}:'{input_date_str}' - " + datum.message,
                 )
-            ],
-        )
+            )
+
+        if datum is None:
+            # Try lucerne format ("YYYY-MM-DD TO YYYY-MM-DD") and ISO range ("YYYY-MM-DD/YYYY-MM-DD")
+            pattern = r"^\s*([0-9-]+)\s*(?:TO|/)\s*([0-9-]+)\s*$"
+            range_match = re.fullmatch(pattern, input_date_str)
+            if range_match:
+                try:
+                    lower_date = convert_to_date_range(range_match.group(1))
+                    upper_date = convert_to_date_range(range_match.group(2))
+                    if lower_date is None or upper_date is None:
+                        msg = "Could not parse lower or upper date in range"
+                        raise ValueError(msg)
+                    datum = DateRange(
+                        date_range_string=input_date_str,
+                        date_range_lower=lower_date.date_range_lower,
+                        date_range_upper=upper_date.date_range_upper,
+                    )
+                except ValueError:
+                    pass
+
+        if datum is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Metadata field {output_field}: "
+                        f"Date {input_date_str} could not be parsed.",
+                    )
+                ],
+            )
+
+        logger.debug(f"parsed_date: {datum}")
+
+        if datum.date_range_upper > max_upper_limit:
+            logger.debug(
+                "Tightening upper limit due to release date or current date. "
+                f"Original upper limit: {datum.date_range_upper},"
+                f"new upper limit: {max_upper_limit}"
+            )
+            datum.date_range_upper = max_upper_limit
+
+        if datum.date_range_lower and datum.date_range_lower > datetime.now(tz=pytz.utc):
+            logger.debug(
+                f"Lower range of date: {datum.date_range_lower} > {datetime.now(tz=pytz.utc)}"
+            )
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=(f"Metadata field {output_field}:'{input_date_str}' is in the future."),
+                )
+            )
+
+        if release_date and datum.date_range_lower and (datum.date_range_lower > release_date):
+            logger.debug(
+                f"Lower range of date: {datum.date_range_lower} > release_date: {release_date}"
+            )
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=(
+                        f"Metadata field {output_field}:'{input_date_str}'is after release date."
+                    ),
+                )
+            )
+
+        match args["fieldType"]:
+            case "dateRangeString":
+                return_value = datum.date_range_string
+            case "dateRangeLower":
+                if datum.date_range_lower is None:
+                    return_value = None
+                else:
+                    return_value = datum.date_range_lower.strftime("%Y-%m-%d")
+                warnings = errors = []
+            case "dateRangeUpper":
+                return_value = datum.date_range_upper.strftime("%Y-%m-%d")
+                warnings = errors = []
+            case _:
+                msg = f"Config error: Unknown fieldType: {args['fieldType']}"
+                raise ValueError(msg)
+
+        return ProcessingResult(datum=return_value, warnings=warnings, errors=errors)
 
     @staticmethod
     def parse_and_assert_past_date(  # noqa: C901
@@ -588,7 +613,6 @@ class ProcessingFunctions:
             date: str, date string to parse
             release_date: str, optional release date to compare against if None use today
         """
-        logger.debug(f"input_data: {input_data}")
         date_str = input_data["date"]
 
         if not date_str:
@@ -602,8 +626,6 @@ class ProcessingFunctions:
             release_date = dateutil.parse(release_date_str)
         except Exception:
             release_date = None
-        logger.debug(f"release_date: {release_date}")
-        logger.debug(f"date_str: {date_str}")
 
         formats_to_messages = {
             "%Y-%m-%d": None,
