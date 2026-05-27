@@ -123,6 +123,11 @@ def sequence_with_mutation(
     return str(seq[: pos - 1]) + "A" + str(seq[pos:])
 
 
+def fragment(type: Literal["single"] | Literal["ebola-sudan"] | Literal["ebola-zaire"]) -> str:
+    seq = consensus_sequence(type)
+    return str(seq[:90])
+
+
 def ebola_sudan_aa(nuc: str, gene: Literal["VP35", "NP"]) -> str:
     match gene:
         case "NP":
@@ -763,20 +768,13 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
         expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "No sequence data could be classified - "
-                    "check you are submitting to the correct organism.",
-                )
-            ]
-        ),
-        expected_warnings=build_processing_annotations(
-            [
-                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence with fasta id fastaHeader1 does not match any reference "
                     "for organism: multi-ebola-test per `nextclade sort`. "
                     "Double check you are submitting to the correct organism.",
                 )
             ]
         ),
+        expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={},
             alignedNucleotideSequences={},
@@ -787,10 +785,10 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
         ),
     ),
     Case(
-        name="with one failed alignment, one succeeded",
+        name="with one failed alignment (but classified), one succeeded",
         input_metadata={},
         input_sequence={
-            "fastaHeader1": invalid_sequence(),
+            "fastaHeader1": fragment("ebola-sudan"),
             "fastaHeader2": sequence_with_mutation("ebola-zaire"),
         },
         accession_id="1",
@@ -798,7 +796,7 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
             "totalInsertedNucs_ebola-sudan": None,
             "totalSnps_ebola-sudan": None,
             "totalDeletedNucs_ebola-sudan": None,
-            "length_ebola-sudan": 0,
+            "length_ebola-sudan": len(fragment("ebola-sudan")),
             "totalInsertedNucs_ebola-zaire": 0,
             "totalSnps_ebola-zaire": 1,
             "totalDeletedNucs_ebola-zaire": 0,
@@ -807,16 +805,18 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
         expected_errors=[],
         expected_warnings=build_processing_annotations(
             [
-                ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "Sequence with fasta id fastaHeader1 does not match any reference"
-                    " for organism: multi-ebola-test per `nextclade sort`. "
-                    "Double check you are submitting to the correct organism.",
-                )
+                ProcessingAnnotationHelper(
+                    ["ebola-sudan"],
+                    ["ebola-sudan"],
+                    "Nucleotide sequence for ebola-sudan failed to align",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
             ]
         ),
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+                "ebola-sudan": fragment("ebola-sudan"),
             },
             alignedNucleotideSequences={
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
@@ -827,7 +827,63 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
                 "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
             },
             aminoAcidInsertions={},
-            sequenceNameToFastaId={"ebola-zaire": "fastaHeader2"},
+            sequenceNameToFastaId={"ebola-zaire": "fastaHeader2", "ebola-sudan": "fastaHeader1"},
+        ),
+    ),
+    Case(
+        name="with two failed alignment (but classified)",
+        input_metadata={},
+        input_sequence={
+            "fastaHeader1": fragment("ebola-sudan"),
+            "fastaHeader2": fragment("ebola-zaire"),
+        },
+        accession_id="1",
+        expected_metadata={
+            "totalInsertedNucs_ebola-sudan": None,
+            "totalSnps_ebola-sudan": None,
+            "totalDeletedNucs_ebola-sudan": None,
+            "length_ebola-sudan": len(fragment("ebola-sudan")),
+            "totalInsertedNucs_ebola-zaire": None,
+            "totalSnps_ebola-zaire": None,
+            "totalDeletedNucs_ebola-zaire": None,
+            "length_ebola-zaire": len(fragment("ebola-zaire")),
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["alignment"],
+                    ["alignment"],
+                    "No sequence aligned.",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
+            ]
+        ),
+        expected_warnings=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["ebola-sudan"],
+                    ["ebola-sudan"],
+                    "Nucleotide sequence for ebola-sudan failed to align",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
+                ProcessingAnnotationHelper(
+                    ["ebola-zaire"],
+                    ["ebola-zaire"],
+                    "Nucleotide sequence for ebola-zaire failed to align",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
+            ]
+        ),
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={
+                "ebola-zaire": fragment("ebola-zaire"),
+                "ebola-sudan": fragment("ebola-sudan"),
+            },
+            alignedNucleotideSequences={},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
+            aminoAcidInsertions={},
+            sequenceNameToFastaId={"ebola-zaire": "fastaHeader2", "ebola-sudan": "fastaHeader1"},
         ),
     ),
 ]
@@ -851,20 +907,13 @@ multi_segment_case_definitions_any_requirement_align_classification = [
         expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "No sequence data could be classified - "
-                    "check you are submitting to the correct organism.",
-                )
-            ]
-        ),
-        expected_warnings=build_processing_annotations(
-            [
-                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence with fasta id fastaHeader1 does not match any reference for "
                     "organism: multi-ebola-test per `nextclade align`. "
                     "Double check you are submitting to the correct organism.",
                 )
             ]
         ),
+        expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={},
             alignedNucleotideSequences={},
@@ -892,8 +941,8 @@ multi_segment_case_definitions_any_requirement_align_classification = [
             "totalDeletedNucs_ebola-zaire": 0,
             "length_ebola-zaire": len(consensus_sequence("ebola-zaire")),
         },
-        expected_errors=[],
-        expected_warnings=build_processing_annotations(
+        expected_warnings=[],
+        expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence with fasta id fastaHeader1 does not match any reference for "
