@@ -613,10 +613,12 @@ class ProcessingFunctions:
                     return_value = None
                 else:
                     return_value = datum.date_range_lower.strftime("%Y-%m-%d")
-                warnings = errors = []
+                warnings = []
+                errors = []
             case "dateRangeUpper":
                 return_value = datum.date_range_upper.strftime("%Y-%m-%d")
-                warnings = errors = []
+                warnings = []
+                errors = []
             case _:
                 msg = f"Config error: Unknown fieldType: {args['fieldType']}"
                 raise ValueError(msg)
