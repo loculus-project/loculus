@@ -3,11 +3,12 @@ package org.loculus.backend.controller
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
-import io.swagger.v3.oas.annotations.Hidden
+import jakarta.servlet.http.HttpServletRequest
 import org.loculus.backend.config.BackendConfig
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 
-@Hidden
 @RestController
 @RequestMapping("/query/{organism}")
 class QueryController(
@@ -54,6 +54,12 @@ class QueryController(
         return objectMapper.writeValueAsBytes(node)
     }
 
+    private fun prepareQuery(queryString: String?, vg: VersionGroup): String {
+        val filter = vg.lapisFilter ?: return if (queryString.isNullOrEmpty()) "" else "?$queryString"
+        val versionParam = "versionStatus=$filter"
+        return if (queryString.isNullOrEmpty()) "?$versionParam" else "?$queryString&$versionParam"
+    }
+
     private fun post(
         organism: String,
         versionGroup: String,
@@ -64,6 +70,18 @@ class QueryController(
         val config = getInstanceConfig(organism)
         val vg = VersionGroup.fromPath(versionGroup)
         return lapisProxyService.proxyPost(config.lapisUrl, lapisPath, prepareBody(body, vg), accept)
+    }
+
+    private fun get(
+        organism: String,
+        versionGroup: String,
+        lapisPath: String,
+        request: HttpServletRequest,
+        accept: String?,
+    ): ResponseEntity<StreamingResponseBody> {
+        val config = getInstanceConfig(organism)
+        val vg = VersionGroup.fromPath(versionGroup)
+        return lapisProxyService.proxyGet(config.lapisUrl, lapisPath, prepareQuery(request.queryString, vg), accept)
     }
 
     @PostMapping("/{versionGroup}/metadata")
@@ -167,4 +185,55 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
     ) = post(organism, versionGroup, "/sample/aminoAcidMutations", body, accept)
+
+    @GetMapping("/{versionGroup}/metadata")
+    fun metadataGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        request: HttpServletRequest,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/details", request, accept)
+
+    @GetMapping("/{versionGroup}/sequences")
+    fun sequencesGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        request: HttpServletRequest,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/unalignedNucleotideSequences", request, accept)
+
+    @GetMapping("/{versionGroup}/sequences/{segment}")
+    fun sequencesForSegmentGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        @PathVariable segment: String,
+        request: HttpServletRequest,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/unalignedNucleotideSequences/$segment", request, accept)
+
+    @GetMapping("/{versionGroup}/sequencesAligned")
+    fun sequencesAlignedGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        request: HttpServletRequest,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/alignedNucleotideSequences", request, accept)
+
+    @GetMapping("/{versionGroup}/sequencesAligned/{referenceName}")
+    fun sequencesAlignedForSegmentGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        @PathVariable referenceName: String,
+        request: HttpServletRequest,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/alignedNucleotideSequences/$referenceName", request, accept)
+
+    @GetMapping("/{versionGroup}/translations/{geneName}")
+    fun translationsGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        @PathVariable geneName: String,
+        request: HttpServletRequest,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/alignedAminoAcidSequences/$geneName", request, accept)
 }

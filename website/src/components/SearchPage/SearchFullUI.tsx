@@ -151,7 +151,7 @@ export const InnerSearchFullUI = ({
     const queryCurrentUrl = getQueryUrl(clientConfig, organism, 'current');
     const downloadUrlGenerator = new DownloadUrlGenerator(
         organism,
-        lapisUrl,
+        queryCurrentUrl,
         dataUseTermsEnabled,
         schema.richFastaHeaderFields,
     );
