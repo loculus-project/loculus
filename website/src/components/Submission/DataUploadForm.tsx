@@ -247,7 +247,7 @@ const InnerDataUploadForm = ({
 
 export const DataUploadForm = withQueryProvider(InnerDataUploadForm);
 
-const InputModeTabs = ({
+export const InputModeTabs = ({
     action,
     organism,
     groupId,
@@ -286,7 +286,7 @@ const InputModeTabs = ({
                 } hover:text-primary-600`}
                 href={inputModeUrl('form')}
             >
-                Submit individual sequence entry using a form
+                {`${action === 'submit' ? 'Submit' : 'Revise'} individual sequence entry using a form`}
             </a>
         </div>
     );
