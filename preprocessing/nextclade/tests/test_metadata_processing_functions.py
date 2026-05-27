@@ -977,7 +977,7 @@ def test_parse_date_into_range() -> None:
             },
         ).datum
         == "2021-01-02"
-    ), "dateRangeLower: lucerne range should return lower bound."
+    ), "dateRangeLower: lucene range should return lower bound."
     assert (
         ProcessingFunctions.parse_date_into_range(
             {"date": "[2021 TO 2021-06-30]"},
@@ -989,7 +989,7 @@ def test_parse_date_into_range() -> None:
             },
         ).datum
         == "2021-01-01"
-    ), "dateRangeLower: lucerne range should return lower bound of leading year."
+    ), "dateRangeLower: lucene range should return lower bound of leading year."
     assert (
         ProcessingFunctions.parse_date_into_range(
             {"date": "[2021-01-01 TO 2021-06-30]"},
@@ -1001,7 +1001,7 @@ def test_parse_date_into_range() -> None:
             },
         ).datum
         == "2021-06-30"
-    ), "dateRangeUpper: lucerne range should return upper bound."
+    ), "dateRangeUpper: lucene range should return upper bound."
     assert (
         ProcessingFunctions.parse_date_into_range(
             {"date": "[2021-01-01 TO 2021]"},
@@ -1013,7 +1013,7 @@ def test_parse_date_into_range() -> None:
             },
         ).datum
         == "2021-12-31"
-    ), "dateRangeUpper: lucerne range should return upper bound of final date."
+    ), "dateRangeUpper: lucene range should return upper bound of final date."
     assert (
         ProcessingFunctions.parse_date_into_range(
             {"date": "[2021-05-01 TO 2021-06-30]"},
@@ -1025,7 +1025,7 @@ def test_parse_date_into_range() -> None:
             },
         ).datum
         == "2021-05-01/2021-06-30"
-    ), "dateRangeString: lucerne range should be returned in ISO format."
+    ), "dateRangeString: lucene range should be returned in ISO format."
     assert (
         ProcessingFunctions.parse_date_into_range(
             {"date": "[2021 TO 2021-06]"},
@@ -1037,7 +1037,7 @@ def test_parse_date_into_range() -> None:
             },
         ).datum
         == "2021/2021-06"
-    ), "dateRangeString: lucerne range should be returned in ISO format."
+    ), "dateRangeString: lucene range should be returned in ISO format."
     assert (
         ProcessingFunctions.parse_date_into_range(
             {"date": "2021-03-05/2021-06-30"},
@@ -1110,7 +1110,7 @@ def test_parse_date_into_range() -> None:
             },
         ).datum
         == "2021-06-15"
-    ), "dateRangeUpper: lucerne range upper bound should be tightened by submittedAt."
+    ), "dateRangeUpper: lucene range upper bound should be tightened by submittedAt."
 
 
 def test_concatenate() -> None:
