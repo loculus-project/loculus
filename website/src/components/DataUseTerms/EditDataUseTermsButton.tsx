@@ -50,41 +50,43 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
             <Button className='btn btn-sm' onClick={openDialog}>
                 Edit data use terms
             </Button>
-            <dialog ref={dialogRef} className='modal-box'>
-                <Button
-                    className='btn btn-sm btn-circle btn-ghost text-gray-900 absolute right-2 top-2'
-                    onClick={closeDialog}
-                >
-                    ✕
-                </Button>
-                <label className='block text-sm font-medium leading-6 text-gray-900'>Edit data use terms</label>
-                <p className='text-sm text-gray-900 mb-4 py-2'>
-                    Currently restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>
-                </p>
-                <div className='mt-2'>
-                    <div className='mt-6 space-y-2'>
-                        <div className='flex flex-col items-center gap-x-3'>
-                            <DataUseTermsSelector
-                                initialDataUseTermsOption={selectedDataUseTerms.type}
-                                maxRestrictedUntil={restrictedUntil}
-                                setDataUseTerms={setDataUseTerms}
-                            />
+            <dialog ref={dialogRef} className='modal'>
+                <div className='modal-box'>
+                    <Button
+                        className='btn btn-sm btn-circle btn-ghost text-gray-900 absolute right-2 top-2'
+                        onClick={closeDialog}
+                    >
+                        ✕
+                    </Button>
+                    <label className='block text-sm font-medium leading-6 text-gray-900'>Edit data use terms</label>
+                    <p className='text-sm text-gray-900 mb-4 py-2'>
+                        Currently restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>
+                    </p>
+                    <div className='mt-2'>
+                        <div className='mt-6 space-y-2'>
+                            <div className='flex flex-col items-center gap-x-3'>
+                                <DataUseTermsSelector
+                                    initialDataUseTermsOption={selectedDataUseTerms.type}
+                                    maxRestrictedUntil={restrictedUntil}
+                                    setDataUseTerms={setDataUseTerms}
+                                />
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div className='flex items-center justify-end my-2'>
-                    <Button
-                        className='btn btn-sm'
-                        onClick={() => {
-                            closeDialog();
-                            useSetDataUseTerms.mutate({
-                                accessions: accessionVersion,
-                                newDataUseTerms: selectedDataUseTerms,
-                            });
-                        }}
-                    >
-                        Submit
-                    </Button>
+                    <div className='flex items-center justify-end my-2'>
+                        <Button
+                            className='btn btn-sm'
+                            onClick={() => {
+                                closeDialog();
+                                useSetDataUseTerms.mutate({
+                                    accessions: accessionVersion,
+                                    newDataUseTerms: selectedDataUseTerms,
+                                });
+                            }}
+                        >
+                            Submit
+                        </Button>
+                    </div>
                 </div>
             </dialog>
         </>
