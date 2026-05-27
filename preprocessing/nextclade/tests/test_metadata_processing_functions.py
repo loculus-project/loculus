@@ -968,7 +968,7 @@ def test_parse_date_into_range() -> None:
     ), "dateRangeLower: empty date should be returned as None."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-01-02 TO 2021-06-30"},
+            {"date": "[2021-01-02 TO 2021-06-30]"},
             "field_name",
             ["field_name"],
             {
@@ -980,7 +980,7 @@ def test_parse_date_into_range() -> None:
     ), "dateRangeLower: lucerne range should return lower bound."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021 TO 2021-06-30"},
+            {"date": "[2021 TO 2021-06-30]"},
             "field_name",
             ["field_name"],
             {
@@ -992,7 +992,7 @@ def test_parse_date_into_range() -> None:
     ), "dateRangeLower: lucerne range should return lower bound of leading year."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-01-01 TO 2021-06-30"},
+            {"date": "[2021-01-01 TO 2021-06-30]"},
             "field_name",
             ["field_name"],
             {
@@ -1004,7 +1004,7 @@ def test_parse_date_into_range() -> None:
     ), "dateRangeUpper: lucerne range should return upper bound."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-01-01 TO 2021"},
+            {"date": "[2021-01-01 TO 2021]"},
             "field_name",
             ["field_name"],
             {
@@ -1016,7 +1016,7 @@ def test_parse_date_into_range() -> None:
     ), "dateRangeUpper: lucerne range should return upper bound of final date."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-05-01 TO 2021-06-30"},
+            {"date": "[2021-05-01 TO 2021-06-30]"},
             "field_name",
             ["field_name"],
             {
@@ -1028,7 +1028,7 @@ def test_parse_date_into_range() -> None:
     ), "dateRangeString: lucerne range should be returned in ISO format."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021 TO 2021-06"},
+            {"date": "[2021 TO 2021-06]"},
             "field_name",
             ["field_name"],
             {
@@ -1101,7 +1101,7 @@ def test_parse_date_into_range() -> None:
     # Upper bound tightened by submittedAt for range formats
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-01-01 TO 2021-12-31"},
+            {"date": "[2021-01-01 TO 2021-12-31]"},
             "field_name",
             ["field_name"],
             {

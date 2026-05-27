@@ -512,22 +512,33 @@ class ProcessingFunctions:
             )
 
         if datum is None:
-            # Try lucerne format ("YYYY-MM-DD TO YYYY-MM-DD") and ISO range ("YYYY-MM-DD/YYYY-MM-DD")
-            pattern = r"^\s*([0-9-]+)\s*(?:TO|/)\s*([0-9-]+)\s*$"
-            range_match = re.fullmatch(pattern, input_date_str)
-            if range_match:
+            # Try lucene format ("[YYYY-MM-DD TO YYYY-MM-DD]")
+            # Try ISO range ("YYYY-MM-DD/YYYY-MM-DD")
+            range_patterns = [
+                r"^\s*\[([0-9-]+)\s*TO\s*([0-9-]+)\s*\]\s*$",  # Lucene
+                r"^\s*([0-9-]+)\s*/\s*([0-9-]+)\s*$",          # ISO-ish
+            ]
+
+            for pattern in range_patterns:
+                match = re.fullmatch(pattern, input_date_str)
+                if not match:
+                    continue
+
                 try:
-                    lower_date = convert_to_date_range(range_match.group(1))
-                    upper_date = convert_to_date_range(range_match.group(2))
+                    lower_date = convert_to_date_range(match.group(1))
+                    upper_date = convert_to_date_range(match.group(2))
+
                     if lower_date is None or upper_date is None:
                         msg = "Could not parse lower or upper date in range"
                         raise ValueError(msg)
-                    # Use ISO format for date_range_string, e.g. "2021-01-01/2021-12-31"
-                    input_date_str = (
-                        f"{lower_date.date_range_string}/{upper_date.date_range_string}"
+                    # Use ISO format for date_range_string
+                    date_range_string = (
+                        f"{lower_date.date_range_string}/"
+                        f"{upper_date.date_range_string}"
                     )
+
                     datum = DateRange(
-                        date_range_string=input_date_str,
+                        date_range_string=date_range_string,
                         date_range_lower=lower_date.date_range_lower,
                         date_range_upper=upper_date.date_range_upper,
                     )
