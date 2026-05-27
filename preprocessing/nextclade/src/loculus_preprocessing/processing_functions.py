@@ -319,6 +319,7 @@ def convert_to_date_range(date_str: str) -> DateRange | None:
                     date_range_upper=parsed_date.replace(month=12, day=31),
                     message=msg,
                 )
+        break
     return datum
 
 
