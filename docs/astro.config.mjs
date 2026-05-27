@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
+    site: 'https://loculus.org',
     integrations: [
         starlight({
             title: 'Loculus',
