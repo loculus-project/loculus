@@ -282,6 +282,7 @@ export const ExtraFilesUpload = ({
     inputMode,
     groupId,
     fileCategories,
+    fileMapping,
     setFileMapping,
     onError,
 }: {
@@ -290,6 +291,7 @@ export const ExtraFilesUpload = ({
     inputMode: InputMode;
     groupId: number;
     fileCategories: FileCategory[];
+    fileMapping?: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
     onError: (message: string) => void;
 }) => {
@@ -313,6 +315,7 @@ export const ExtraFilesUpload = ({
                         clientConfig={clientConfig}
                         groupId={groupId}
                         onError={onError}
+                        fileMapping={fileMapping}
                         setFileMapping={setFileMapping}
                     />
                 ))}

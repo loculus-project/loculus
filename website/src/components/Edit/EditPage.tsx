@@ -51,14 +51,18 @@ const InnerEditPage: FC<EditPageProps> = ({
     groupedInputFields,
     submissionDataTypes,
 }) => {
+    const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
+    const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
+
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.fromInitialData(dataToEdit));
     const [editableSequences, setEditableSequences] = useState(
         EditableSequences.fromInitialData(dataToEdit, submissionDataTypes.maxSequencesPerEntry),
     );
-    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
-
-    const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
-    const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
+    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(() =>
+        extraFilesEnabled && dataToEdit.originalData.files
+            ? { [dataToEdit.submissionId]: dataToEdit.originalData.files }
+            : undefined,
+    );
 
     const { mutate: submitRevision, isPending: isRevisionPending } = useSubmitRevision(
         organism,
@@ -116,12 +120,16 @@ const InnerEditPage: FC<EditPageProps> = ({
                 fileMapping: fileMappingWithSubmissionId,
             });
         } else {
+            const fileMappingForEdit =
+                extraFilesEnabled && fileMapping !== undefined ? Object.values(fileMapping)[0] : null;
+
             submitEdit({
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,
                 data: {
                     metadata: editableMetadata.getMetadataRecord(),
                     unalignedNucleotideSequences: editableSequences.getSequenceRecord(),
+                    files: fileMappingForEdit,
                 },
             });
         }
@@ -158,7 +166,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
                 </div>
             )}
-            {isCreatingRevision && extraFilesEnabled && (
+            {extraFilesEnabled && (
                 <div className='mt-4'>
                     <ExtraFilesUpload
                         accessToken={accessToken}
@@ -166,6 +174,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                         inputMode='form'
                         groupId={dataToEdit.groupId}
                         fileCategories={submissionDataTypes.files?.categories ?? []}
+                        fileMapping={fileMapping}
                         setFileMapping={setFileMapping}
                         onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
                     />

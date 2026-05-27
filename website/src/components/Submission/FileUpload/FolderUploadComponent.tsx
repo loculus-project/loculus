@@ -81,6 +81,7 @@ type FolderUploadComponentProps = {
     accessToken: string;
     clientConfig: ClientConfig;
     groupId: number;
+    fileMapping: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
     onError: (message: string) => void;
 };
@@ -91,11 +92,26 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     accessToken,
     clientConfig,
     groupId,
+    fileMapping,
     setFileMapping,
     onError,
 }) => {
     const isClient = useClientFlag();
-    const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(undefined);
+    const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
+        if (fileMapping === undefined) return undefined;
+
+        const preExistingFiles: Record<SubmissionId, Uploaded[]> = {};
+
+        Object.entries(fileMapping).forEach(([submissionId, categories]) => {
+            preExistingFiles[submissionId] = categories[fileCategory.name].map((file) => ({
+                type: 'uploaded',
+                fileId: file.fileId,
+                name: file.name,
+                size: 0,
+            }));
+        });
+        return { type: 'uploadCompleted', files: preExistingFiles };
+    });
     const [isDragging, setIsDragging] = useState(false);
 
     const backendClient = new BackendClient(clientConfig.backendUrl);
