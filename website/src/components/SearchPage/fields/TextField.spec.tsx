@@ -19,6 +19,8 @@ describe('TextField', () => {
         const textarea = screen.getByLabelText('Test Field');
         expect(textarea).toBeInTheDocument();
         expect(textarea.tagName).toBe('TEXTAREA');
+        expect(textarea).toHaveClass('border');
+        expect(textarea).not.toHaveClass('border-1');
     });
 
     it('calls onChange when value changes', async () => {

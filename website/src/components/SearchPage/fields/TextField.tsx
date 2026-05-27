@@ -1,4 +1,4 @@
-import { FloatingLabel, getTheme } from 'flowbite-react';
+import { FloatingLabel, theme } from 'flowbite-react';
 import {
     useId,
     forwardRef,
@@ -25,9 +25,8 @@ interface TextFieldProps {
     type?: string;
 }
 
-const helperTextClasses = getTheme().floatingLabel.helperText.default;
-const inputClasses = getTheme().floatingLabel.input.default.outlined.md;
-const labelClasses = getTheme().floatingLabel.label.default.outlined.md;
+const inputClasses = theme.floatingLabel.input.default.outlined.md;
+const labelClasses = theme.floatingLabel.label.default.outlined.md;
 
 export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldProps>(function (props, ref) {
     const { label, disabled, onChange, autoComplete, fieldValue, className, onFocus, multiline, onBlur } = props;
@@ -77,7 +76,6 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     };
 
     const standardProps = {
-        id,
         onChange: handleChange,
         autoComplete,
         disabled,
@@ -129,9 +127,6 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             <div className='[&_label]:pointer-events-none my-1.5'>
                 <FloatingLabel
                     theme={{
-                        helperText: {
-                            default: `${helperTextClasses} my-1`,
-                        },
                         input: {
                             default: {
                                 outlined: {
@@ -162,6 +157,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
 
     const textareaProps = {
         ...standardProps,
+        id,
         ref: refTextArea,
         onFocus: onFocusHTMLArea,
         onBlur: onBlurHTMLArea,
@@ -174,7 +170,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             <textarea
                 {...textareaProps}
                 rows={hasFocus || (fieldValue !== undefined && fieldValue.toString().split('\n').length > 1) ? 4 : 1}
-                className={`rounded-md block px-2.5 pb-2 pt-4 w-full text-sm text-gray-900 bg-transparent border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer hover:border-gray-400 transition-colors ${className}`}
+                className={`rounded-md block px-2.5 pb-2 pt-4 w-full text-sm text-gray-900 bg-transparent border border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer hover:border-gray-400 transition-colors ${className ?? ''}`}
             ></textarea>
 
             <label

@@ -3,6 +3,7 @@ import '../styles/base.scss';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 
+import { FlowbiteThemeInit } from '../components/FlowbiteThemeInit';
 import Navigation from '../components/Navigation/Navigation.astro';
 import OrganismSubmenu from '../components/Navigation/OrganismSubmenu.astro';
 import { cleanOrganism } from '../components/Navigation/cleanOrganism';
@@ -64,6 +65,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
         <Fragment set:html={additionalHeadHTML} />
     </head>
     <body>
+        <FlowbiteThemeInit />
         {backendIsInDebugMode && <div class='bg-red-500 text-white text-center p-2'>Backend is in debug mode</div>}
         <Banner
             message={bannerMessage}

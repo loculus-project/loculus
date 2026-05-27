@@ -20,8 +20,6 @@
     "dependencies": {
         "@astrojs/mdx": "^4.3.13",
         "@astrojs/node": "^9.5.2",
-        "minisearch": "^6.3.0",
-        "yaml": "^2.4.5",
         "@emotion/react": "^11.14.0",
         "@headlessui/react": "^2.2.0",
         "@lokalise/xlsx": "^0.20.3",
@@ -39,7 +37,7 @@
         "chartjs-adapter-date-fns": "^3.0.0",
         "cookie": "^1.1.1",
         "fflate": "^0.8.2",
-        "flowbite-react": "^0.10.2",
+        "flowbite-react": "^0.12.17",
         "fzstd": "^0.1.1",
         "immer": "^11.1.7",
         "jsonwebtoken": "^9.0.3",
@@ -47,6 +45,7 @@
         "just-kebab-case": "^4.2.0",
         "jwks-rsa": "^4.0.1",
         "luxon": "^3.7.2",
+        "minisearch": "^6.3.0",
         "neverthrow": "^8.2.0",
         "openid-client": "^5.7.1",
         "papaparse": "^5.5.3",
@@ -60,6 +59,7 @@
         "sanitize-html": "^2.17.4",
         "unplugin-icons": "^22.5.0",
         "winston": "^3.19.0",
+        "yaml": "^2.4.5",
         "zod": "^3.25.67"
     },
     "devDependencies": {
