@@ -323,29 +323,29 @@ def convert_to_date_range(date_str: str) -> DateRange | None:
     return datum
 
 
-def compress_date_range(
-    date_range_lower: datetime | None, date_range_upper: datetime | None
-) -> str | None:
+def compress_date_range(date_range_lower: DateRange, date_range_upper: DateRange) -> str | None:
     if date_range_lower == date_range_upper:
-        return date_range_lower.strftime("%Y-%m-%d") if date_range_lower else None
-    if not date_range_lower or not date_range_upper:
+        return date_range_lower.date_range_string
+    if not date_range_lower.date_range_lower or not date_range_upper.date_range_upper:
         return None
     if (
-        date_range_lower.day == 1
-        and date_range_upper.day
-        == calendar.monthrange(date_range_upper.year, date_range_upper.month)[1]
-        and date_range_lower.month == date_range_upper.month
+        date_range_lower.date_range_lower.day == 1
+        and date_range_upper.date_range_upper.day
+        == calendar.monthrange(
+            date_range_upper.date_range_upper.year, date_range_upper.date_range_upper.month
+        )[1]
+        and date_range_lower.date_range_lower.month == date_range_upper.date_range_upper.month
     ):
-        return date_range_lower.strftime("%Y-%m")
+        return f"{date_range_lower.date_range_lower.year}-{date_range_lower.date_range_lower.month:02d}"
     if (
-        date_range_lower.month == 1
-        and date_range_lower.day == 1
-        and date_range_upper.month == 12  # noqa: PLR2004
-        and date_range_upper.day == 31  # noqa: PLR2004
-        and date_range_lower.year == date_range_upper.year
+        date_range_lower.date_range_lower.month == 1
+        and date_range_lower.date_range_lower.day == 1
+        and date_range_upper.date_range_upper.month == 12  # noqa: PLR2004
+        and date_range_upper.date_range_upper.day == 31  # noqa: PLR2004
+        and date_range_lower.date_range_lower.year == date_range_upper.date_range_upper.year
     ):
-        return date_range_lower.strftime("%Y")
-    return f"{date_range_lower}/{date_range_upper}"
+        return f"{date_range_lower.date_range_lower.year}"
+    return f"{date_range_lower.date_range_string}/{date_range_upper.date_range_string}"
 
 
 class ProcessingFunctions:
@@ -576,9 +576,7 @@ class ProcessingFunctions:
                         ],
                     )
                 # Use ISO format for date_range_string
-                date_range_string = compress_date_range(
-                    lower_date.date_range_lower, upper_date.date_range_upper
-                )
+                date_range_string = compress_date_range(lower_date, upper_date)
 
                 datum = DateRange(
                     date_range_string=date_range_string,
