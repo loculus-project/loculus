@@ -274,10 +274,34 @@ def taxonomy_network_error(
 
 @dataclass
 class DateRange:
-    date_range_string: str | None
-    date_range_lower: datetime | None
+    date_range_lower: datetime
     date_range_upper: datetime
     message: str | None = None
+
+    @property
+    def date_range_string(self) -> str:
+        return derive_date_range_string(self.date_range_lower, self.date_range_upper)
+
+
+def derive_date_range_string(lower: datetime, upper: datetime) -> str:
+    if lower == upper:
+        return lower.strftime("%Y-%m-%d")
+    if (
+        lower.day == 1
+        and upper.day == calendar.monthrange(upper.year, upper.month)[1]
+        and lower.month == upper.month
+        and lower.year == upper.year
+    ):
+        return f"{lower.year}-{lower.month:02d}"
+    if (
+        lower.month == 1
+        and lower.day == 1
+        and upper.month == 12  # noqa: PLR2004
+        and upper.day == 31  # noqa: PLR2004
+        and lower.year == upper.year
+    ):
+        return f"{lower.year}"
+    return f"{lower.strftime('%Y-%m-%d')}/{upper.strftime('%Y-%m-%d')}"
 
 
 def convert_to_date_range(date_str: str) -> DateRange | None:
@@ -287,8 +311,6 @@ def convert_to_date_range(date_str: str) -> DateRange | None:
         "%Y": "Month and day are missing. Assuming date is some time in the year.",
     }
 
-    datum: DateRange | None = None
-
     for fmt, msg in formats_to_messages.items():
         try:
             parsed_date = datetime.strptime(date_str, fmt).replace(tzinfo=pytz.utc)
@@ -296,14 +318,9 @@ def convert_to_date_range(date_str: str) -> DateRange | None:
             continue
         match fmt:
             case "%Y-%m-%d":
-                datum = DateRange(
-                    date_range_string=parsed_date.strftime(fmt),
-                    date_range_lower=parsed_date,
-                    date_range_upper=parsed_date,
-                )
+                return DateRange(date_range_lower=parsed_date, date_range_upper=parsed_date)
             case "%Y-%m":
-                datum = DateRange(
-                    date_range_string=parsed_date.strftime(fmt),
+                return DateRange(
                     date_range_lower=parsed_date.replace(day=1),
                     date_range_upper=(
                         parsed_date.replace(
@@ -313,37 +330,12 @@ def convert_to_date_range(date_str: str) -> DateRange | None:
                     message=msg,
                 )
             case "%Y":
-                datum = DateRange(
-                    date_range_string=parsed_date.strftime(fmt),
+                return DateRange(
                     date_range_lower=parsed_date.replace(month=1, day=1),
                     date_range_upper=parsed_date.replace(month=12, day=31),
                     message=msg,
                 )
-        break
-    return datum
-
-
-def compress_date_range(lower: DateRange, upper: DateRange) -> str | None:
-    if lower == upper:
-        return lower.date_range_string
-    if not lower.date_range_lower or not upper.date_range_upper:
-        return None
-    if (
-        lower.date_range_lower.day == 1
-        and upper.date_range_upper.day
-        == calendar.monthrange(upper.date_range_upper.year, upper.date_range_upper.month)[1]
-        and lower.date_range_lower.month == upper.date_range_upper.month
-    ):
-        return f"{lower.date_range_lower.year}-{lower.date_range_lower.month:02d}"
-    if (
-        lower.date_range_lower.month == 1
-        and lower.date_range_lower.day == 1
-        and upper.date_range_upper.month == 12  # noqa: PLR2004
-        and upper.date_range_upper.day == 31  # noqa: PLR2004
-        and lower.date_range_lower.year == upper.date_range_upper.year
-    ):
-        return f"{lower.date_range_lower.year}"
-    return f"{lower.date_range_string}/{upper.date_range_string}"
+    return None
 
 
 class ProcessingFunctions:
@@ -468,7 +460,7 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def parse_date_into_range(  # noqa: C901, PLR0912, PLR0914, PLR0915
+    def parse_date_into_range(  # noqa: C901, PLR0912, PLR0915
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -573,11 +565,7 @@ class ProcessingFunctions:
                             )
                         ],
                     )
-                # Use ISO format for date_range_string
-                date_range_string = compress_date_range(lower_date, upper_date)
-
                 datum = DateRange(
-                    date_range_string=date_range_string,
                     date_range_lower=lower_date.date_range_lower,
                     date_range_upper=upper_date.date_range_upper,
                 )

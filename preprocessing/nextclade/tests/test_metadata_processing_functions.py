@@ -829,11 +829,23 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2021, 12, 15),
+                "submittedAt": ts_from_ymd(2022, 1, 15),
             },
         ).datum
         == "2021-12"
-    ), "dateRangeString: 2021-12 should be returned as is."
+    ), "dateRangeString: 2021-12 should be returned as is when upper bound is not tightened."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "2021-12"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": ts_from_ymd(2021, 12, 15),
+            },
+        ).datum
+        == "2021-12-01/2021-12-15"
+    ), "dateRangeString: 2021-12 should reflect a tightened upper bound."
     assert (
         ProcessingFunctions.parse_date_into_range(
             {"date": "2021-12"},
@@ -1036,8 +1048,8 @@ def test_parse_date_into_range() -> None:
                 "submittedAt": ts_from_ymd(2022, 1, 1),
             },
         ).datum
-        == "2021/2021-06"
-    ), "dateRangeString: lucene range should be returned in ISO format."
+        == "2021-01-01/2021-06-30"
+    ), "dateRangeString: lucene range should be derived from the actual lower and upper bounds."
     assert (
         ProcessingFunctions.parse_date_into_range(
             {"date": "2021-03-05/2021-06-30"},
@@ -1096,8 +1108,8 @@ def test_parse_date_into_range() -> None:
                 "submittedAt": ts_from_ymd(2022, 1, 1),
             },
         ).datum
-        == "2021-01/2021-06-30"
-    ), "dateRangeString: ISO range should be returned as-is."
+        == "2021-01-01/2021-06-30"
+    ), "dateRangeString: ISO range should be derived from the actual lower and upper bounds."
     assert (
         ProcessingFunctions.parse_date_into_range(
             {"date": "20-01-2020/2021-06-30"},
