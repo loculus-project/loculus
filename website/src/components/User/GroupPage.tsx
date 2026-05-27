@@ -4,13 +4,12 @@ import { type FC, type FormEvent, useMemo, useState, type ReactNode } from 'reac
 
 import { CumulativeSubmissionsChart, type TimeSeriesData } from './CumulativeSubmissionsChart.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
-import { getLapisUrl, type Organism } from '../../config.ts';
+import { getQueryUrl, type Organism } from '../../config.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { ContinueSubmissionIntent } from '../../routes/routes.ts';
-import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
+import { GROUP_ID_FIELD, IS_REVOCATION_FIELD } from '../../settings.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
-import { versionStatuses } from '../../types/lapis.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.js';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
@@ -315,11 +314,10 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
     const counts: Record<string, number> = {};
     await Promise.all(
         organisms.map(async ({ key }) => {
-            const url = getLapisUrl(clientConfig, key);
+            const url = getQueryUrl(clientConfig, key, 'current');
             try {
-                const response = await axios.post(`${url}/sample/aggregated`, {
+                const response = await axios.post(`${url}/aggregated`, {
                     [GROUP_ID_FIELD]: groupId,
-                    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
                     [IS_REVOCATION_FIELD]: 'false',
                     fields: [],
                 });
@@ -343,11 +341,10 @@ async function fetchTimeSeriesData(
     const data: TimeSeriesData = {};
     await Promise.all(
         organisms.map(async ({ key }) => {
-            const url = getLapisUrl(clientConfig, key);
+            const url = getQueryUrl(clientConfig, key, 'current');
             try {
-                const response = await axios.post(`${url}/sample/aggregated`, {
+                const response = await axios.post(`${url}/aggregated`, {
                     [GROUP_ID_FIELD]: groupId,
-                    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
                     [IS_REVOCATION_FIELD]: 'false',
                     fields: [metadataField],
                 });

@@ -17,7 +17,12 @@ describe('LapisClient', () => {
             inputFields: [],
             submissionDataTypes: { consensusSequences: false },
         };
-        const client = LapisClient.create('http://lapis.example', schema);
+        const client = LapisClient.create(
+            'http://lapis.example',
+            'http://backend.example/query/organism/current',
+            'http://backend.example/query/organism/allVersions',
+            schema,
+        );
         const spy = vi
             .spyOn(client, 'call')
             .mockResolvedValue(ok({ data: [], info: { dataVersion: '' } } as InsertionsResponse));

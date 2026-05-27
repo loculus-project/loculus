@@ -242,6 +242,14 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
     return `${serviceConfig.backendUrl}/${organism}/lapis`;
 }
 
+export function getQueryUrl(
+    serviceConfig: ServiceUrls,
+    organism: string,
+    versionGroup: 'current' | 'allVersions',
+): string {
+    return `${serviceConfig.backendUrl}/query/${organism}/${versionGroup}`;
+}
+
 export function getReferenceGenomes(organism: string): ReferenceGenomesInfo {
     return toReferenceGenomes(getConfig(organism).referenceGenomes);
 }

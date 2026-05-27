@@ -4,6 +4,7 @@ import { isAxiosError } from 'axios';
 
 import { backendApi } from './backendApi.ts';
 import { lapisApi } from './lapisApi.ts';
+import { queryApi } from './queryApi.ts';
 import { seqSetCitationApi } from './seqSetCitationApi.ts';
 import { problemDetail } from '../types/backend.ts';
 import type { SequenceRequest } from '../types/lapis.ts';
@@ -26,16 +27,26 @@ export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
 }
 
-export function lapisClientHooks(lapisUrl: string) {
-    const zodiosHooks = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
+export function lapisClientHooks(lapisUrl: string, queryCurrentUrl?: string) {
+    const proxyZodios = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
+    const queryZodios = queryCurrentUrl
+        ? new ZodiosHooks('lapis-query', new Zodios(queryCurrentUrl, queryApi, { transform: false }))
+        : null;
     return {
-        // All POST hooks must include retry options manually to enable retries
-        useAggregated: () => zodiosHooks.useAggregated({}, { ...LAPIS_RETRY_OPTIONS }),
-        useDetails: () => zodiosHooks.useDetails({}, { ...LAPIS_RETRY_OPTIONS }),
-        useLineageDefinition: zodiosHooks.useLineageDefinition,
+        // useDetails and useAggregated use the structured QueryController endpoint when available
+        useAggregated: () =>
+            queryZodios
+                ? queryZodios.useAggregated({}, { ...LAPIS_RETRY_OPTIONS })
+                : proxyZodios.useAggregated({}, { ...LAPIS_RETRY_OPTIONS }),
+        useDetails: () =>
+            queryZodios
+                ? queryZodios.useDetails({}, { ...LAPIS_RETRY_OPTIONS })
+                : proxyZodios.useDetails({}, { ...LAPIS_RETRY_OPTIONS }),
+        // lineageDefinition and sequences stay at proxy (no QueryController equivalent)
+        useLineageDefinition: proxyZodios.useLineageDefinition,
         useGetSequence(accessionVersion: string, sequenceType: SequenceType, useLapisMultiSegmentedEndpoint: boolean) {
             return getSequenceHook(
-                zodiosHooks,
+                proxyZodios,
                 {
                     accessionVersion,
                     dataFormat: 'FASTA',

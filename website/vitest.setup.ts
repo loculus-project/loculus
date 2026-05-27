@@ -10,6 +10,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
 mockAnimationsApi();
 
+import { getLapisUrl, getQueryUrl } from './src/config.ts';
 import {
     type GetSequencesResponse,
     type Group,
@@ -18,7 +19,6 @@ import {
 } from './src/types/backend.ts';
 import type { DetailsResponse, InsertionsResponse, LapisError, MutationsResponse } from './src/types/lapis.ts';
 import type { RuntimeConfig } from './src/types/runtimeConfig.ts';
-import { getLapisUrl } from './src/config.ts';
 
 export const DEFAULT_GROUP_NAME = 'testGroup';
 
@@ -202,7 +202,7 @@ const backendRequestMocks = {
 const lapisRequestMocks = {
     details: (statusCode: number = 200, response: DetailsResponse | LapisError) => {
         testServer.use(
-            http.post(`${getLapisUrl(testConfig.serverSide, testOrganism)}/sample/details`, () => {
+            http.post(`${getQueryUrl(testConfig.serverSide, testOrganism, 'allVersions')}/metadata`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -276,7 +276,7 @@ const lapisRequestMocks = {
     },
     nucleotideMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            http.post(`${getLapisUrl(testConfig.serverSide, testOrganism)}/sample/nucleotideMutations`, () => {
+            http.post(`${getQueryUrl(testConfig.serverSide, testOrganism, 'allVersions')}/sequencesAligned/mutations`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });

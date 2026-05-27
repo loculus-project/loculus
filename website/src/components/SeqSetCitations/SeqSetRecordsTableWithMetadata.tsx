@@ -2,8 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { type FC, useMemo } from 'react';
 
-import { getLapisUrl } from '../../config';
-import { versionStatuses } from '../../types/lapis';
+import { getQueryUrl } from '../../config';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSetRecord, SeqSetRecordType } from '../../types/seqSetCitation';
 import { Spinner } from '../common/Spinner';
@@ -29,12 +28,12 @@ type SeqSetRecordsTableWithMetadataProps = {
 };
 
 async function queryLapisDetails(
-    lapisUrl: string,
+    url: string,
     filter: Record<string, unknown>,
     fields: string[],
 ): Promise<Record<string, unknown>[]> {
     try {
-        const response = await axios.post(`${lapisUrl}/sample/details`, {
+        const response = await axios.post(`${url}/metadata`, {
             ...filter,
             fields,
             dataFormat: 'json',
@@ -69,13 +68,14 @@ const fetchRecordsMetadata = async (
 
     // Query all LAPIS instances in parallel
     const lapisPromises = organisms.map(async (organism) => {
-        const lapisUrl = getLapisUrl(clientConfig, organism);
+        const allVersionsUrl = getQueryUrl(clientConfig, organism, 'allVersions');
+        const currentUrl = getQueryUrl(clientConfig, organism, 'current');
         const queries: Promise<{ data: Record<string, unknown>[]; keyField: string }>[] = [];
 
         // Query versioned accessions by accessionVersion
         if (versionedAccessions.length > 0) {
             queries.push(
-                queryLapisDetails(lapisUrl, { accessionVersion: versionedAccessions }, [
+                queryLapisDetails(allVersionsUrl, { accessionVersion: versionedAccessions }, [
                     'accessionVersion',
                     ...fields,
                 ]).then((data) => ({ data, keyField: 'accessionVersion' })),
@@ -86,8 +86,8 @@ const fetchRecordsMetadata = async (
         if (bareAccessions.length > 0) {
             queries.push(
                 queryLapisDetails(
-                    lapisUrl,
-                    { accession: bareAccessions, versionStatus: versionStatuses.latestVersion },
+                    currentUrl,
+                    { accession: bareAccessions },
                     ['accession', ...fields],
                 ).then((data) => ({ data, keyField: 'accession' })),
             );
