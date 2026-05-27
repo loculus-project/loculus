@@ -1,3 +1,5 @@
+@reference './base.css';
+
 .mdContainerItself {
     @apply max-w-3xl mx-auto break-normal w-full;
 }

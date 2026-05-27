@@ -1,6 +1,56 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@config '../../tailwind.config.cjs';
+@import 'tailwindcss';
+@import 'flowbite-react/plugin/tailwindcss';
+@source '../../.flowbite-react/class-list.json';
+
+@plugin '@tailwindcss/forms' {
+    strategy: 'class';
+}
+
+@theme {
+    --color-primary: #88a1d2;
+    --color-primary-50: #f3f6fb;
+    --color-primary-100: #e4e9f5;
+    --color-primary-200: #cfdaee;
+    --color-primary-300: #aec1e2;
+    --color-primary-400: #88a1d2;
+    --color-primary-500: #6b84c6;
+    --color-primary-600: #586bb8;
+    --color-primary-700: #4d5ba8;
+    --color-primary-800: #3e467e;
+    --color-primary-900: #3a416e;
+    --color-primary-950: #272b44;
+    --color-primary-1500: #25396e;
+    --color-main: #586bb8;
+    --color-logoSecondary: #586bb8;
+
+    --color-base-100: #ffffff;
+    --color-secondary: #f000b8;
+    --color-accent: #1dcdbc;
+    --color-info: #9ab9bd;
+    --color-success: #36d399;
+    --color-warning: #fbbd23;
+    --color-error: #f87272;
+}
+
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+
+    button:not(:disabled),
+    [role='button']:not(:disabled) {
+        cursor: pointer;
+    }
+
+    dialog {
+        margin: auto;
+    }
+}
 
 :root {
     --animation-btn: 0;
@@ -21,16 +71,11 @@ a {
 }
 
 .fillColor {
-    background-color: theme('colors.main');
+    background-color: var(--color-main);
 }
 
 .fancytitle {
-    background: linear-gradient(
-        to right,
-        theme('colors.main') 15%,
-        theme('colors.logoSecondary') 50%,
-        theme('colors.main') 90%
-    );
+    background: linear-gradient(to right, var(--color-main) 15%, var(--color-logoSecondary) 50%, var(--color-main) 90%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-decoration: red;
@@ -39,13 +84,13 @@ a {
 }
 
 .title {
-    color: theme('colors.main');
+    color: var(--color-main);
     font-size: 24px;
     font-weight: 600;
 }
 
 .subtitle {
-    color: theme('colors.main');
+    color: var(--color-main);
     font-size: 18px;
     font-weight: 400;
 }
@@ -62,9 +107,9 @@ a {
 }
 
 .loculusColor {
-    background: theme('colors.main');
+    background: var(--color-main);
     &:hover {
-        background: theme('colors.primary.700');
+        background: var(--color-primary-700);
     }
 }
 
@@ -107,7 +152,7 @@ a {
 }
 
 .message {
-    background-color: theme('colors.primary.50');
+    background-color: var(--color-primary-50);
     padding: 2rem;
     gap: 1rem;
     align-content: flex-start;
@@ -122,7 +167,7 @@ a {
 }
 
 .rs-input {
-    background: transparent; //overwrites the datepicker search element background which is otherwise white
+    background: transparent; /* overwrites the datepicker search element background which is otherwise white */
 }
 
 .rs-picker input {
