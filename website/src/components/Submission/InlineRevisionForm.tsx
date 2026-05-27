@@ -98,7 +98,7 @@ const InnerInlineRevisionForm: FC<InlineRevisionFormProps> = ({
                             className='rounded-md px-4 py-2 text-sm font-semibold bg-primary-600 text-white hover:bg-primary-500'
                             alsoDisabledIf={isFetching}
                         >
-                            {isFetching ? 'Loading…' : 'Find sequence'}
+                            {isFetching ? 'Loading…' : 'Find sequence entry'}
                         </Button>
                     </div>
                     {parseError && <p className='text-sm text-red-600'>{parseError}</p>}
