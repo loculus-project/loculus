@@ -1,4 +1,4 @@
-import { FloatingLabel, getTheme } from 'flowbite-react';
+import { FloatingLabel, floatingLabelTheme } from 'flowbite-react';
 import {
     useId,
     forwardRef,
@@ -25,9 +25,8 @@ interface TextFieldProps {
     type?: string;
 }
 
-const helperTextClasses = getTheme().floatingLabel.helperText.default;
-const inputClasses = getTheme().floatingLabel.input.default.outlined.md;
-const labelClasses = getTheme().floatingLabel.label.default.outlined.md;
+const inputClasses = floatingLabelTheme.input.default.outlined.md;
+const labelClasses = floatingLabelTheme.label.default.outlined.md;
 
 export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldProps>(function (props, ref) {
     const { label, disabled, onChange, autoComplete, fieldValue, className, onFocus, multiline, onBlur } = props;
@@ -77,7 +76,6 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     };
 
     const standardProps = {
-        id,
         onChange: handleChange,
         autoComplete,
         disabled,
@@ -129,9 +127,6 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             <div className='[&_label]:pointer-events-none my-1.5'>
                 <FloatingLabel
                     theme={{
-                        helperText: {
-                            default: `${helperTextClasses} my-1`,
-                        },
                         input: {
                             default: {
                                 outlined: {
@@ -162,6 +157,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
 
     const textareaProps = {
         ...standardProps,
+        id,
         ref: refTextArea,
         onFocus: onFocusHTMLArea,
         onBlur: onBlurHTMLArea,
