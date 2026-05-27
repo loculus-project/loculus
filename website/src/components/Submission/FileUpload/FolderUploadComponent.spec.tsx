@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ok } from 'neverthrow';
-import type { Result } from 'neverthrow';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { FolderUploadComponent } from './FolderUploadComponent';
@@ -79,7 +78,7 @@ describe('FolderUploadComponent', () => {
         mockRequestMultipartUpload.mockReturnValue(
             ok([{ fileId: 'file-1', urls: ['http://test.com/url1', 'http://test.com/url2'] }]),
         );
-        mockCompleteMultipartUpload.mockReturnValue(new Promise(() => {}) as unknown as Result<void, never>);
+        mockCompleteMultipartUpload.mockReturnValue(new Promise(() => {}));
 
         let uploadCount = 0;
         vi.mocked(multipartUpload.uploadPart).mockImplementation(async () => {
