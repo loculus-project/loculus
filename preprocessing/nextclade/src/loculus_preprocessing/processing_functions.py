@@ -885,11 +885,9 @@ class ProcessingFunctions:
                     if raw_value.count("/") > 1:
                         date_string = None
                     else:
-                        date_string = raw_value.replace("/", " TO ")
+                        date_string = "[" + raw_value.replace("/", " TO ") + "]"
                     formatted_input_data.append(
-                        fallback_value
-                        if null_per_backend(date_string)
-                        else str(date_string)
+                        fallback_value if null_per_backend(date_string) else str(date_string)
                     )
                 elif field_types[i] == "timestamp":
                     processed = ProcessingFunctions.parse_timestamp(
