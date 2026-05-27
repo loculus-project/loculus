@@ -884,8 +884,10 @@ class ProcessingFunctions:
                     raw_value = str(input_data[order[i]])
                     if raw_value.count("/") > 1:
                         date_string = None
-                    else:
+                    elif raw_value.count("/") == 1:
                         date_string = "[" + raw_value.replace("/", " TO ") + "]"
+                    else:
+                        date_string = raw_value
                     formatted_input_data.append(
                         fallback_value if null_per_backend(date_string) else str(date_string)
                     )
