@@ -1126,7 +1126,7 @@ def test_parse_date_into_range() -> None:
     ), "Years are compressed in dateRangeString."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "[2021 TO 2022]"},
+            {"date": "[2021-01-01 TO 2022-12-31]"},
             "field_name",
             ["field_name"],
             {

@@ -333,6 +333,7 @@ def compress_date_range(lower: DateRange, upper: DateRange) -> str | None:
         and upper.date_range_upper.day
         == calendar.monthrange(upper.date_range_upper.year, upper.date_range_upper.month)[1]
         and lower.date_range_lower.month == upper.date_range_upper.month
+        and lower.date_range_lower.year == upper.date_range_upper.year
     ):
         return f"{lower.date_range_lower.year}-{lower.date_range_lower.month:02d}"
     if (
@@ -343,6 +344,16 @@ def compress_date_range(lower: DateRange, upper: DateRange) -> str | None:
         and lower.date_range_lower.year == upper.date_range_upper.year
     ):
         return f"{lower.date_range_lower.year}"
+    if (
+        lower.date_range_lower.month == 1
+        and lower.date_range_lower.day == 1
+        and upper.date_range_upper.month == 12  # noqa: PLR2004
+        and upper.date_range_upper.day == 31  # noqa: PLR2004
+    ):
+        return (
+            f"{lower.date_range_lower.year}"
+            f"/{upper.date_range_upper.year}"
+        )
     return f"{lower.date_range_string}/{upper.date_range_string}"
 
 
