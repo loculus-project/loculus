@@ -26,7 +26,7 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({
     closeButtonText = 'Cancel',
 }) => {
     return (
-        <div className='relative bg-white rounded-xl p-6 max-w-sm w-full shadow-xl'>
+        <div className='modal-box'>
             <form method='dialog'>
                 <Button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2' onClick={onClose}>
                     ✕
@@ -60,6 +60,8 @@ export const displayConfirmationDialog = ({
 }: DisplayConfirmationProps) => {
     confirmAlert({
         closeOnClickOutside: true,
+        // Make the overlay an open daisyUI modal so the `.modal-box` child is visible.
+        overlayClassName: 'modal modal-open',
 
         customUI: ({ onClose }) => (
             <ConfirmationDialog

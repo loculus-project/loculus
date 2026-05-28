@@ -112,6 +112,8 @@ interface DisplayRevocationProps {
 export const displayRevocationDialog = ({ dialogText, onConfirmation }: DisplayRevocationProps) => {
     confirmAlert({
         closeOnClickOutside: false,
+        // Make the overlay an open daisyUI modal so the `.modal-box` child is visible.
+        overlayClassName: 'modal modal-open',
 
         customUI: ({ onClose }) => (
             <RevocationDialog
@@ -136,7 +138,7 @@ export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConf
     const [inputValue, setInputValue] = useState('');
 
     return (
-        <div className='relative bg-white rounded-xl p-6 max-w-sm w-full shadow-xl'>
+        <div className='modal-box'>
             <form method='dialog'>
                 <Button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2' onClick={onClose}>
                     ✕
