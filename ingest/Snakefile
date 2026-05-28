@@ -40,8 +40,15 @@ FILTER = config.get("metadata_filter", None)
 CALCULATE_GROUPS_OVERRIDE_JSON = config.get(
     "calculate_groups_override_json", False
 )  # Calculate the groups override JSON based on assembly report data.
-GROUPS_OVERRIDE_JSON = CALCULATE_GROUPS_OVERRIDE_JSON or config.get(
-    "grouping_override_url", False
+GROUPING_OVERRIDE_URL = config.get("grouping_override_url", False)
+GROUPS_OVERRIDE_JSON = CALCULATE_GROUPS_OVERRIDE_JSON or GROUPING_OVERRIDE_URL
+DOWNLOADED_GROUPS_JSON = (
+    "results/downloaded_groups.json"
+    if CALCULATE_GROUPS_OVERRIDE_JSON
+    else "results/groups.json"
+)
+CALCULATED_GROUPS_JSON = (
+    "results/calculated_groups.json" if GROUPING_OVERRIDE_URL else "results/groups.json"
 )
 
 
@@ -366,13 +373,13 @@ rule prepare_metadata:
         """
 
 
-if GROUPS_OVERRIDE_JSON and not CALCULATE_GROUPS_OVERRIDE_JSON:
+if GROUPING_OVERRIDE_URL:
 
     rule download_groups:
         output:
-            results="results/groups.json",
+            results=DOWNLOADED_GROUPS_JSON,
         params:
-            grouping=config.get("grouping_override_url"),
+            grouping=GROUPING_OVERRIDE_URL,
         shell:
             """
             curl -L -o {output.results} {params.grouping}
@@ -439,7 +446,7 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             ignore_list="results/grouping_ignore_list.txt",
             config_file="results/config.yaml",
         output:
-            groups_json="results/groups.json",
+            groups_json=CALCULATED_GROUPS_JSON,
         params:
             genbank_dir="results/genbank_assembly/ncbi_dataset/data",
             refseq_dir="results/refseq_assembly/ncbi_dataset/data",
@@ -451,6 +458,26 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             --output-file {output.groups_json} \
             --ignore-list {input.ignore_list} \
             --config-file {input.config_file}
+            """
+
+
+if GROUPING_OVERRIDE_URL and CALCULATE_GROUPS_OVERRIDE_JSON:
+
+    rule merge_groups:
+        input:
+            script="scripts/merge_group_overrides.py",
+            downloaded=DOWNLOADED_GROUPS_JSON,
+            calculated=CALCULATED_GROUPS_JSON,
+            config="results/config.yaml",
+        output:
+            groups_json="results/groups.json",
+        shell:
+            """
+            python {input.script} \
+            --groups {input.calculated} \
+            --groups {input.downloaded} \
+            --config-file {input.config} \
+            --output-file {output.groups_json}
             """
 
 
