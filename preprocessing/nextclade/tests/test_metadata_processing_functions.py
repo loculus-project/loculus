@@ -1088,7 +1088,7 @@ def test_parse_date_into_range() -> None:
     ), "dateRangeUpper: ISO range should return upper bound of trailing date."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-01/2021-06-30"},
+            {"date": "2020-01/2021-06-30"},
             "field_name",
             ["field_name"],
             {
@@ -1096,7 +1096,7 @@ def test_parse_date_into_range() -> None:
                 "submittedAt": ts_from_ymd(2022, 1, 1),
             },
         ).datum
-        == "2021-01/2021-06"
+        == "2020-01/2021-06"
     ), "dateRangeString: ISO range should be returned compressed to month range."
     assert (
         ProcessingFunctions.parse_date_into_range(

@@ -327,9 +327,9 @@ def derive_date_range_string(lower: datetime, upper: datetime) -> str:
 
     - Single day:           2026-05-28
     - Full month:           2026-05
-    - Multiple full months: 2026-01/2026-03 (ISO range)
     - Full year:            2026
     - Multiple full years:  2024/2026 (ISO range)
+    - Multiple full months: 2025-01/2026-03 (ISO range)
     - Arbitrary range:      2026-05-10/2026-05-28 (ISO range)
     """
     if lower == upper:
