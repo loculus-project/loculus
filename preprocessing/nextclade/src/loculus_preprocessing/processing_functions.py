@@ -501,7 +501,7 @@ class ProcessingFunctions:
         Return value determined FunctionArgs:
         fieldType: "dateRangeString" | "dateRangeLower" | "dateRangeUpper"
         Default fieldType is "dateRangeString" - in the case of a range the date is returned
-        as a single month/year or an ISO date range format
+        as a single month/year or an ISO date range format by function `derive_date_range_string`
         """
         if not args:
             args = {"fieldType": "dateRangeString"}
@@ -584,7 +584,7 @@ class ProcessingFunctions:
                                 [output_field],
                                 AnnotationSourceType.METADATA,
                                 message=f"Metadata field {output_field}: "
-                                f"Detected data range but could not parse date: {input_date_str}.",
+                                f"Detected date range but could not parse date: {input_date_str}.",
                             )
                         ],
                     )
