@@ -3,7 +3,7 @@ import { useState, type FC } from 'react';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { parseAccessionVersionFromString } from '../../utils/extractAccessionVersion';
-import { CitationsList } from '../SeqSetCitations/CitationsList';
+import { CitationTable } from '../SeqSetCitations/CitationTable';
 import { BaseDialog } from '../common/BaseDialog';
 import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider';
@@ -35,7 +35,7 @@ const SequenceCitationsInner: FC<SequenceCitationsProps> = ({ clientConfig, acce
                 fullWidth={false}
                 className='min-h-[60vh]'
             >
-                <CitationsList
+                <CitationTable
                     isLoading={isSequenceCitationsLoading}
                     error={sequenceCitationsError}
                     citations={sequenceCitations ?? []}

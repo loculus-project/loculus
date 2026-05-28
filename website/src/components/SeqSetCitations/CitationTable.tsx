@@ -1,15 +1,16 @@
 import { type FC } from 'react';
 
-import { type SeqSetCitation } from '../../types/seqSetCitation';
+import { routes } from '../../routes/routes';
+import { type SeqSetCitation, type SequenceCitation } from '../../types/seqSetCitation';
 
 interface CitationTableProps {
     isLoading: boolean;
     error: Error | null;
-    citations: SeqSetCitation[];
+    citations: SeqSetCitation[] | SequenceCitation[];
 }
 
 interface CitationRowProps {
-    citation: SeqSetCitation;
+    citation: SeqSetCitation | SequenceCitation;
 }
 
 const CitationRow: FC<CitationRowProps> = ({ citation }) => {
@@ -34,6 +35,21 @@ const CitationRow: FC<CitationRowProps> = ({ citation }) => {
                             {citation.source.sourceDOI}
                         </a>
                     </div>
+                    {'seqSets' in citation && citation.seqSets.length > 0 && (
+                        <span>
+                            Via SeqSet{citation.seqSets.length > 1 ? 's' : ''}:
+                            {citation.seqSets.map((seqSet) => (
+                                <span key={seqSet.seqSetAccession} className='mx-1'>
+                                    <a className='text-primary-600' href={routes.seqSetPage(seqSet.seqSetAccession)}>
+                                        {seqSet.seqSetAccession}
+                                    </a>
+                                    <span className='text-gray-500 text-sm ml-1'>
+                                        (references {seqSet.sequenceAccession})
+                                    </span>
+                                </span>
+                            ))}
+                        </span>
+                    )}
                 </div>
             </td>
             <td className='p-4 align-top text-nowrap'>{citation.source.year}</td>
