@@ -1110,7 +1110,7 @@ def test_parse_date_into_range() -> None:
         )
         .errors[0]
         .message
-        == "Metadata field field_name: Detected data range but could not parse date: 20-01-2020/2021-06-30."
+        == "Metadata field field_name: Detected date range but could not parse date: 20-01-2020/2021-06-30."
     ), "Invalid date range format errors."
     assert (
         ProcessingFunctions.parse_date_into_range(

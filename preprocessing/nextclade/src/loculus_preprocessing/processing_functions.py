@@ -611,6 +611,23 @@ class ProcessingFunctions:
 
         logger.debug(f"parsed_date: {datum}")
 
+        if datum.date_range_lower > datum.date_range_upper:
+            logger.debug(
+                f"Lower range of date: {datum.date_range_lower} > upper: {datum.date_range_upper}"
+            )
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=(
+                        f"Metadata field {output_field}:'{input_date_str}' is an invalid date "
+                        f"range. Lower bound: {datum.date_range_lower} is after upper "
+                        f"bound: {datum.date_range_upper}."
+                    ),
+                )
+            )
+
         if datum.date_range_upper > max_upper_limit:
             logger.debug(
                 "Tightening upper limit due to release date or current date. "
@@ -643,23 +660,6 @@ class ProcessingFunctions:
                     AnnotationSourceType.METADATA,
                     message=(
                         f"Metadata field {output_field}:'{input_date_str}' is after release date."
-                    ),
-                )
-            )
-
-        if datum.date_range_lower > datum.date_range_upper:
-            logger.debug(
-                f"Lower range of date: {datum.date_range_lower} > upper: {datum.date_range_upper}"
-            )
-            errors.append(
-                ProcessingAnnotation.from_fields(
-                    input_fields,
-                    [output_field],
-                    AnnotationSourceType.METADATA,
-                    message=(
-                        f"Metadata field {output_field}:'{input_date_str}' is an invalid date "
-                        f"range. Lower bound: {datum.date_range_lower} is after upper "
-                        f"bound: {datum.date_range_upper}."
                     ),
                 )
             )
