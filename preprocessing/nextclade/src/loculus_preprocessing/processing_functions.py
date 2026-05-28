@@ -340,7 +340,7 @@ def derive_date_range_string(lower: datetime, upper: datetime) -> str:
         and lower.month == upper.month
         and lower.year == upper.year
     ):
-        return f"{lower.year}-{lower.month:02d}"
+        return lower.strftime("%Y-%m")
     if (
         lower.month == 1
         and lower.day == 1
@@ -348,16 +348,16 @@ def derive_date_range_string(lower: datetime, upper: datetime) -> str:
         and upper.day == 31  # noqa: PLR2004
         and lower.year == upper.year
     ):
-        return f"{lower.year}"
+        return lower.strftime("%Y")
     if (
         lower.month == 1
         and lower.day == 1
         and upper.month == 12  # noqa: PLR2004
         and upper.day == 31  # noqa: PLR2004
     ):
-        return f"{lower.year}/{upper.year}"
+        return f"{lower.strftime('%Y')}/{upper.strftime('%Y')}"
     if lower.day == 1 and upper.day == calendar.monthrange(upper.year, upper.month)[1]:
-        return f"{lower.year}-{lower.month:02d}/{upper.year}-{upper.month:02d}"
+        return f"{lower.strftime('%Y-%m')}/{upper.strftime('%Y-%m')}"
     return f"{lower.strftime('%Y-%m-%d')}/{upper.strftime('%Y-%m-%d')}"
 
 
