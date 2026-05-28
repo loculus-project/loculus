@@ -829,7 +829,7 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2021, 12, 15),
+                "submittedAt": ts_from_ymd(2022, 12, 15),
             },
         ).datum
         == "2021-12"
@@ -1024,8 +1024,8 @@ def test_parse_date_into_range() -> None:
                 "submittedAt": ts_from_ymd(2022, 1, 1),
             },
         ).datum
-        == "2021-05-01/2021-06-30"
-    ), "dateRangeString: lucene range should be returned in ISO format."
+        == "2021-05/2021-06"
+    ), "dateRangeString: lucene range should be returned in ISO format (compressed to month range)."
     assert (
         ProcessingFunctions.parse_date_into_range(
             {"date": "[2021 TO 2021-06]"},
@@ -1036,8 +1036,8 @@ def test_parse_date_into_range() -> None:
                 "submittedAt": ts_from_ymd(2022, 1, 1),
             },
         ).datum
-        == "2021/2021-06"
-    ), "dateRangeString: lucene range should be returned in ISO format."
+        == "2021-01/2021-06"
+    ), "dateRangeString: lucene range should be returned in ISO format (compressed to month range)."
     assert (
         ProcessingFunctions.parse_date_into_range(
             {"date": "2021-03-05/2021-06-30"},
@@ -1096,8 +1096,8 @@ def test_parse_date_into_range() -> None:
                 "submittedAt": ts_from_ymd(2022, 1, 1),
             },
         ).datum
-        == "2021-01/2021-06-30"
-    ), "dateRangeString: ISO range should be returned as-is."
+        == "2021-01/2021-06"
+    ), "dateRangeString: ISO range should be returned compressed to month range."
     assert (
         ProcessingFunctions.parse_date_into_range(
             {"date": "20-01-2020/2021-06-30"},
@@ -1148,7 +1148,6 @@ def test_parse_date_into_range() -> None:
         ).datum
         == "2024-02"
     ), "Months are compressed in dateRangeString (also for leap years)."
-    # Upper bound tightened by submittedAt for range formats
     assert (
         ProcessingFunctions.parse_date_into_range(
             {"date": "[2021-01-01 TO 2021-12-31]"},
