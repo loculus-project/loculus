@@ -2,7 +2,6 @@ import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { AuthorDetails } from './AuthorDetails.tsx';
-import { CitationsList } from './CitationsList.tsx';
 import { ExportSeqSet } from './ExportSeqSet';
 import { SeqSetForm } from './SeqSetForm';
 import { getClientLogger } from '../../clientLogger';
@@ -12,6 +11,7 @@ import type { AuthorProfile, SeqSetRecord, SeqSet } from '../../types/seqSetCita
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { CitationsList } from './CitationsList.tsx';
 import { CitationsList } from './CitationsList.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { Button } from '../common/Button';
