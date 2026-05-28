@@ -154,7 +154,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                         className={getInputFieldStyles(seqSetNameValidation)}
                         value={seqSetName}
                         onChange={(e) => {
-                            setSeqSetName((e.target as HTMLInputElement).value);
+                            setSeqSetName(e.target.value);
                             setSeqSetNameValidation('');
                         }}
                         maxLength={255}
@@ -178,7 +178,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                         className={getInputFieldStyles()}
                         value={seqSetDescription}
                         onChange={(e) => {
-                            setSeqSetDescription((e.target as HTMLInputElement).value);
+                            setSeqSetDescription(e.target.value);
                         }}
                         maxLength={255}
                     />

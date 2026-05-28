@@ -383,21 +383,15 @@ export const InnerSearchFullUI = ({
 
                     <Table
                         schema={schema}
-                        data={
-                            detailsHook.data?.data !== undefined
-                                ? (detailsHook.data.data as TableSequenceData[])
-                                : (oldData ?? initialData)
-                        }
+                        data={detailsHook.data?.data ?? oldData ?? initialData}
                         selectedSeqs={selectedSeqs}
                         setSelectedSeqs={setSelectedSeqs}
                         setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
                         previewedSeqId={previewedSeqId}
-                        orderBy={
-                            {
-                                field: orderByField,
-                                type: orderDirection,
-                            } as OrderBy
-                        }
+                        orderBy={{
+                            field: orderByField,
+                            type: orderDirection,
+                        }}
                         setOrderByField={setOrderByField}
                         setOrderDirection={setOrderDirection}
                         columnsToShow={columnsToShow}

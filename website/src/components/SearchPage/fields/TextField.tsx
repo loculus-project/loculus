@@ -27,6 +27,7 @@ interface TextFieldProps {
 
 const helperTextClasses = getTheme().floatingLabel.helperText.default;
 const inputClasses = getTheme().floatingLabel.input.default.outlined.md;
+const labelClasses = getTheme().floatingLabel.label.default.outlined.md;
 
 export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldProps>(function (props, ref) {
     const { label, disabled, onChange, autoComplete, fieldValue, className, onFocus, multiline, onBlur } = props;
@@ -138,6 +139,13 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
                                 },
                             },
                         },
+                        label: {
+                            default: {
+                                outlined: {
+                                    md: `${labelClasses} !bg-white dark:!bg-gray-900 peer-placeholder-shown:!bg-transparent peer-focus:!bg-white peer-focus:dark:!bg-gray-900`,
+                                },
+                            },
+                        },
                     }}
                     {...inputProps}
                     variant='outlined'
@@ -173,7 +181,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
                 htmlFor={id}
                 className={`absolute text-sm text-gray-500 dark:text-gray-400 pointer-events-none ${
                     isTransitionEnabled ? 'duration-300' : ''
-                } transform -translate-y-3 scale-75 top-1 z-10 origin-[0] bg-white dark:bg-gray-900 px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-3 start-1 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto`}
+                } transform -translate-y-3 scale-75 top-1 z-10 origin-[0] !bg-white dark:!bg-gray-900 px-2 peer-focus:px-2 peer-focus:!bg-white peer-focus:dark:!bg-gray-900 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:!bg-transparent peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-3 start-1 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto`}
             >
                 {label}
             </label>
