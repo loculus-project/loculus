@@ -933,7 +933,11 @@ class ProcessingFunctions:
                     )
                 elif field_types[i] == "dateRangeString":
                     # Assumes date ranges are in ISO format
-                    raw_value = str(input_data[order[i]])
+                    raw = input_data[order[i]]
+                    if null_per_backend(raw):
+                        formatted_input_data.append(fallback_value)
+                        break
+                    raw_value = str(raw).strip()
                     if raw_value.count("/") > 1:
                         date_string = None
                     elif raw_value.count("/") == 1:
