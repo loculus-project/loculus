@@ -1188,7 +1188,7 @@ def test_concatenate() -> None:
                 "ACCESSION_VERSION": "version.1",
             },
         ).datum
-        == "[2021-01-01_TO_2021-12-31]/USA"
+        == "2021-01-01_TO_2021-12-31/USA"
     ), "ISO date range is converted to lucene format for displayNames."
     input_data: InputMetadata = {
         "someInt": "",
