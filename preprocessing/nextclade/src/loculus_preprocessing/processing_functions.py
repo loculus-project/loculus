@@ -936,7 +936,7 @@ class ProcessingFunctions:
                     raw = input_data[order[i]]
                     if null_per_backend(raw):
                         formatted_input_data.append(fallback_value)
-                        break
+                        continue
                     raw_value = str(raw).strip()
                     if raw_value.count("/") > 1:
                         date_string = None
