@@ -11,8 +11,7 @@ import type { AuthorProfile, SeqSetRecord, SeqSet } from '../../types/seqSetCita
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { CitationsList } from './CitationsList.tsx';
-import { CitationsList } from './CitationsList.tsx';
+import { CitationTable } from './CitationTable.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
@@ -114,15 +113,13 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                         <MdiInformationOutline className='w-4 h-4' />
                         <span className='hidden sm:block'>More details</span>
                     </Button>
-                    {seqSetCitations && seqSetCitations.length > 0 && (
-                        <Button
-                            className='outlineButton flex items-center gap-2'
-                            onClick={() => setCitationsModalVisible(true)}
-                        >
-                            <MdiViewListOutline className='w-4 h-4' />
-                            <span className='hidden sm:block'>View Citations</span>
-                        </Button>
-                    )}
+                    <Button
+                        className='outlineButton flex items-center gap-2'
+                        onClick={() => setCitationsModalVisible(true)}
+                    >
+                        <MdiViewListOutline className='w-4 h-4' />
+                        <span className='hidden sm:block'>View Citations ({seqSetCitations?.length ?? 0})</span>
+                    </Button>
                     {isAdminView ? (
                         <Button
                             className='outlineButton flex items-center gap-2'
@@ -180,7 +177,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 fullWidth={false}
                 className='min-h-[60vh]'
             >
-                <CitationsList
+                <CitationTable
                     isLoading={isSeqSetCitationsLoading}
                     error={seqSetCitationsError}
                     citations={seqSetCitations ?? []}
