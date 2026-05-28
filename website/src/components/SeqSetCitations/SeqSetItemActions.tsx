@@ -3,7 +3,6 @@ import { toast } from 'react-toastify';
 
 import { AuthorDetails } from './AuthorDetails.tsx';
 import { ExportSeqSet } from './ExportSeqSet';
-import { SeqSetCitationsList } from './SeqSetCitationsList.tsx';
 import { SeqSetForm } from './SeqSetForm';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
@@ -12,6 +11,7 @@ import type { AuthorProfile, SeqSetRecord, SeqSet } from '../../types/seqSetCita
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { CitationsList } from './CitationsList.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
@@ -173,15 +173,14 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
             <BaseDialog
                 isOpen={citationsModalVisible}
                 onClose={() => setCitationsModalVisible(false)}
-                title=''
+                title='SeqSet Citations'
                 fullWidth={false}
                 className='min-h-[60vh]'
             >
-                <div className='min-w-[1000px]'></div>
-                <SeqSetCitationsList
+                <CitationsList
                     isLoading={isSeqSetCitationsLoading}
                     error={seqSetCitationsError}
-                    seqSetCitations={seqSetCitations ?? []}
+                    citations={seqSetCitations ?? []}
                 />
             </BaseDialog>
             <BaseDialog
