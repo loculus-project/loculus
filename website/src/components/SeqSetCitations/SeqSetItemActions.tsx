@@ -118,7 +118,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                         onClick={() => setCitationsModalVisible(true)}
                     >
                         <MdiViewListOutline className='w-4 h-4' />
-                        <span className='hidden sm:block'>View Citations</span>
+                        <span className='hidden sm:block'>View Citations ({seqSetCitations?.length ?? 0})</span>
                     </Button>
                     {isAdminView ? (
                         <Button
