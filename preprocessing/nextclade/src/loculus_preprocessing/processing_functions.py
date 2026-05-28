@@ -581,14 +581,14 @@ class ProcessingFunctions:
                     )
                 msg = None
                 if lower_date.message or upper_date.message:
-                    msg = f"Metadata field {output_field}:'{input_date_str}' - Detected date range."
+                    msg = "Detected date range."
                     msg += (
-                        f" For lower date: {match.group(1)} - {lower_date.message}."
+                        f" For lower date: {match.group(1)} - {lower_date.message}"
                         if lower_date.message
                         else ""
                     )
                     msg += (
-                        f" For upper date: {match.group(2)} - {upper_date.message}."
+                        f" For upper date: {match.group(2)} - {upper_date.message}"
                         if upper_date.message
                         else ""
                     )
