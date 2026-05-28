@@ -14,11 +14,20 @@
     logs: false;
 }
 
+/*
+ * Customize the built-in daisyUI `light` theme; unlisted values (neutral,
+ * base-200/300, *-content) are inherited from it. `default: true` applies it at
+ * `:root`, as <html> carries no `data-theme` attribute.
+ *
+ * daisyUI's semantic colors are `--color-*`, sharing Tailwind's namespace, so
+ * `--color-primary` backs both daisyUI components and the `text-primary` /
+ * `border-primary` utilities.
+ */
 @plugin 'daisyui/theme' {
     name: 'light';
     default: true;
     color-scheme: light;
-    --color-primary: #88a1d2;
+    --color-primary: var(--color-primary-400);
     --color-secondary: #f000b8;
     --color-accent: #1dcdbc;
     --color-base-100: #ffffff;
@@ -28,8 +37,13 @@
     --color-error: #f87272;
 }
 
+/*
+ * Brand color palette. Edit `--color-primary-*` to re-skin the instance: these
+ * generate the `*-primary-NNN` utilities (e.g. `bg-primary-600`) and feed
+ * `--color-main` and the daisyUI `--color-primary`, so they drive Tailwind
+ * utilities, daisyUI components, and runtime reads via `getThemeColor()`.
+ */
 @theme {
-    --color-primary: #88a1d2;
     --color-primary-50: #f3f6fb;
     --color-primary-100: #e4e9f5;
     --color-primary-200: #cfdaee;
@@ -42,16 +56,8 @@
     --color-primary-900: #3a416e;
     --color-primary-950: #272b44;
     --color-primary-1500: #25396e;
-    --color-main: #586bb8;
-    --color-logoSecondary: #586bb8;
-
-    --color-base-100: #ffffff;
-    --color-secondary: #f000b8;
-    --color-accent: #1dcdbc;
-    --color-info: #9ab9bd;
-    --color-success: #36d399;
-    --color-warning: #fbbd23;
-    --color-error: #f87272;
+    --color-main: var(--color-primary-600);
+    --color-logoSecondary: var(--color-primary-600);
 }
 
 @layer base {
