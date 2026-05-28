@@ -10,8 +10,22 @@
 }
 
 @plugin 'daisyui' {
-    themes: light --default;
+    themes: false;
     logs: false;
+}
+
+@plugin 'daisyui/theme' {
+    name: 'light';
+    default: true;
+    color-scheme: light;
+    --color-primary: #88a1d2;
+    --color-secondary: #f000b8;
+    --color-accent: #1dcdbc;
+    --color-base-100: #ffffff;
+    --color-info: #9ab9bd;
+    --color-success: #36d399;
+    --color-warning: #fbbd23;
+    --color-error: #f87272;
 }
 
 @theme {
