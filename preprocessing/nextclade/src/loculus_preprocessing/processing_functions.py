@@ -548,15 +548,6 @@ class ProcessingFunctions:
         errors: list[ProcessingAnnotation] = []
 
         datum = convert_to_date_range(input_date_str)
-        if datum and datum.message:
-            warnings.append(
-                ProcessingAnnotation.from_fields(
-                    input_fields,
-                    [output_field],
-                    AnnotationSourceType.METADATA,
-                    message=f"Metadata field {output_field}:'{input_date_str}' - " + datum.message,
-                )
-            )
 
         if datum is None:
             # Try lucene format ("[YYYY-MM-DD TO YYYY-MM-DD]")
@@ -588,11 +579,35 @@ class ProcessingFunctions:
                             )
                         ],
                     )
+                msg = None
+                if lower_date.message or upper_date.message:
+                    msg = f"Metadata field {output_field}:'{input_date_str}' - Detected date range."
+                    msg += (
+                        f" For lower date: {match.group(1)} - {lower_date.message}."
+                        if lower_date.message
+                        else ""
+                    )
+                    msg += (
+                        f" For upper date: {match.group(2)} - {upper_date.message}."
+                        if upper_date.message
+                        else ""
+                    )
 
                 datum = DateRange(
                     date_range_lower=lower_date.date_range_lower,
                     date_range_upper=upper_date.date_range_upper,
+                    message=msg,
                 )
+
+        if datum and datum.message:
+            warnings.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=f"Metadata field {output_field}:'{input_date_str}' - " + datum.message,
+                )
+            )
 
         if datum is None:
             return ProcessingResult(
