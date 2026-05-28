@@ -1126,6 +1126,18 @@ def test_parse_date_into_range() -> None:
     ), "Years are compressed in dateRangeString."
     assert (
         ProcessingFunctions.parse_date_into_range(
+            {"date": "[2021 TO 2022]"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": ts_from_ymd(2024, 6, 15),
+            },
+        ).datum
+        == "2021/2022"
+    ), "Multiple years are compressed in dateRangeString."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
             {"date": "[2024-02-01 TO 2024-02-29]"},
             "field_name",
             ["field_name"],
