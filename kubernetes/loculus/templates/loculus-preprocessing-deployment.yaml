@@ -28,7 +28,7 @@ spec:
   template:
     metadata:
       annotations:
-        valuesHash: {{ .Values | toYaml | sha256sum }}
+        valuesHash: {{ .Values | toJson | sha256sum | quote }}
       labels:
         app: loculus
         component: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}

@@ -16,7 +16,7 @@ spec:
     metadata:
       {{- if and .Values.runDevelopmentKeycloakDatabase (not .Values.developmentDatabasePersistence) }}
       annotations:
-        valuesHash: {{ .Values | toYaml | sha256sum }}
+        valuesHash: {{ .Values | toJson | sha256sum | quote }}
       {{- end }}
       labels:
         app: loculus
