@@ -1114,6 +1114,20 @@ def test_parse_date_into_range() -> None:
     ), "Invalid date range format errors."
     assert (
         ProcessingFunctions.parse_date_into_range(
+            {"date": "2022-01-01/2021-06-30"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        )
+        .errors[0]
+        .message
+        == "Metadata field field_name:'2022-01-01/2021-06-30' is an invalid date range. Lower bound: 2022-01-01 00:00:00+00:00 is after upper bound: 2021-06-30 00:00:00+00:00."
+    ), "Invalid date range format errors."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
             {"date": "[2021-01-01 TO 2021-12-31]"},
             "field_name",
             ["field_name"],

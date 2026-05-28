@@ -647,6 +647,23 @@ class ProcessingFunctions:
                 )
             )
 
+        if datum.date_range_lower > datum.date_range_upper:
+            logger.debug(
+                f"Lower range of date: {datum.date_range_lower} > upper: {datum.date_range_upper}"
+            )
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=(
+                        f"Metadata field {output_field}:'{input_date_str}' is an invalid date "
+                        f"range. Lower bound: {datum.date_range_lower} is after upper "
+                        f"bound: {datum.date_range_upper}."
+                    ),
+                )
+            )
+
         match args["fieldType"]:
             case "dateRangeString":
                 return_value = datum.date_range_string
