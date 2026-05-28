@@ -135,7 +135,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: parse_date_into_range
           inputs:
             date: sampleCollectionDate
-            releaseDate: earliestReleaseDate
+            releaseDate: processed.earliestReleaseDate
           args:
             fieldType: dateRangeString
         required: true
@@ -152,7 +152,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: parse_date_into_range
           inputs:
             date: sampleCollectionDate
-            releaseDate: earliestReleaseDate
+            releaseDate: processed.earliestReleaseDate
           args:
             fieldType: dateRangeLower
         rangeOverlapSearch:
@@ -171,7 +171,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: parse_date_into_range
           inputs:
             date: sampleCollectionDate
-            releaseDate: earliestReleaseDate
+            releaseDate: processed.earliestReleaseDate
           args:
             fieldType: dateRangeUpper
         rangeOverlapSearch:
@@ -196,6 +196,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         definition: Date the viral nucleotide accession was first released on the INSDC.
         type: date
         header: "INSDC"
+        oneHeader: true
         orderOnDetailsPage: 1000
         preprocessing:
           function: parse_timestamp
