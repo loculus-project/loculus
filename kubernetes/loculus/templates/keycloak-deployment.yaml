@@ -14,6 +14,8 @@ spec:
       component: keycloak
   template:
     metadata:
+      annotations:
+        valuesHash: {{ .Values | toYaml | sha256sum }}
       labels:
         app: loculus
         component: keycloak
