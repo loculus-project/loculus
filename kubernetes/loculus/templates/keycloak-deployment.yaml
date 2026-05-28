@@ -14,8 +14,10 @@ spec:
       component: keycloak
   template:
     metadata:
+      {{- if and .Values.runDevelopmentKeycloakDatabase (not .Values.developmentDatabasePersistence) }}
       annotations:
         valuesHash: {{ .Values | toYaml | sha256sum }}
+      {{- end }}
       labels:
         app: loculus
         component: keycloak
