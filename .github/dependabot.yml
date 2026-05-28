@@ -6,6 +6,7 @@ updates:
       interval: weekly
     ignore:
       - dependency-name: "dtolnay/rust-toolchain"
+        # See https://github.com/loculus-project/loculus/pull/6516#issuecomment-4564199837
   - package-ecosystem: npm
     directory: website/
     schedule:
