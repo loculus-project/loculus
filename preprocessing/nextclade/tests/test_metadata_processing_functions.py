@@ -1109,7 +1109,6 @@ def test_parse_date_into_range() -> None:
             },
         )
         .errors[0]
-        .message
         == "Metadata field field_name: Detected date range but could not parse date: 20-01-2020/2021-06-30."
     ), "Invalid date range format errors."
     assert (
@@ -1123,7 +1122,6 @@ def test_parse_date_into_range() -> None:
             },
         )
         .errors[0]
-        .message
         == "Metadata field field_name:'2022-01-01/2021-06-30' is an invalid date range. Lower bound: 2022-01-01 00:00:00+00:00 is after upper bound: 2021-06-30 00:00:00+00:00."
     ), "Invalid date range format errors."
     assert (
@@ -1362,7 +1360,7 @@ def test_display_name_construction() -> None:  # noqa: PLR0915
     assert res.datum == "DENV-1/unknown/version.1/2025"
     assert len(res.warnings) == 1
     assert (
-        res.warnings[0].message
+        res.warnings[0]
         == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
     )
     assert res_insdc.datum == "DENV-1/unknown/version.1/2025"
@@ -1370,7 +1368,7 @@ def test_display_name_construction() -> None:  # noqa: PLR0915
     assert res_prefix.datum == "hYF/unknown/version.1/2025"
     assert len(res_prefix.warnings) == 1
     assert (
-        res_prefix.warnings[0].message
+        res_prefix.warnings[0]
         == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
     )
 
@@ -1396,7 +1394,7 @@ def test_display_name_construction() -> None:  # noqa: PLR0915
     assert res.datum == "DENV-1/another_fallback/version.1/2025"
     assert len(res.warnings) == 1
     assert (
-        res.warnings[0].message
+        res.warnings[0]
         == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
     )
     assert res_insdc.datum == "DENV-1/another_fallback/version.1/2025"
@@ -1404,7 +1402,7 @@ def test_display_name_construction() -> None:  # noqa: PLR0915
     assert res_prefix.datum == "hYF/another_fallback/version.1/2025"
     assert len(res_prefix.warnings) == 1
     assert (
-        res_prefix.warnings[0].message
+        res_prefix.warnings[0]
         == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
     )
 
