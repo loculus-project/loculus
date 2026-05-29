@@ -90,17 +90,16 @@ open class ReleasedDataModel(
 
     @Transactional(readOnly = true)
     open fun getLastDatabaseWriteETag(tableNames: List<String>? = null, organism: Organism? = null): String {
-        val tableFilter = tableNames?.let { UpdateTrackerTable.tableNameColumn inList it }
-        // Include both the organism-specific rows and the '' rows (tables without per-organism tracking).
-        val orgFilter = organism?.let {
-            (UpdateTrackerTable.organismColumn eq it.name) or (UpdateTrackerTable.organismColumn eq "")
-        }
-
         val query = UpdateTrackerTable.select(UpdateTrackerTable.lastTimeUpdatedDbColumn).apply {
+            val tableOp = tableNames?.let { UpdateTrackerTable.tableNameColumn inList it }
+            // Include organism-specific rows and NULL-organism rows (tables without per-organism tracking).
+            val orgOp = organism?.let {
+                (UpdateTrackerTable.organismColumn eq it.name) or UpdateTrackerTable.organismColumn.isNull()
+            }
             when {
-                tableFilter != null && orgFilter != null -> where { tableFilter and orgFilter }
-                tableFilter != null -> where { tableFilter }
-                orgFilter != null -> where { orgFilter }
+                tableOp != null && orgOp != null -> where { tableOp and orgOp }
+                tableOp != null -> where { tableOp }
+                orgOp != null -> where { orgOp }
             }
         }
 
