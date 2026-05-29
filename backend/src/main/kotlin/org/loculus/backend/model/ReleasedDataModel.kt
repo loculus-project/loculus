@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import mu.KotlinLogging
+import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.or
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileCategoryFilesMap
