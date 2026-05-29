@@ -23,7 +23,7 @@
         "prettier-plugin-tailwindcss": "^0.8.0",
         "sharp": "^0.34.5",
         "tailwindcss": "^4.3.0",
-        "typescript": "^5.9.3"
+        "typescript": "^6.0.3"
     },
     "devDependencies": {
         "@types/json-schema": "^7.0.15"
