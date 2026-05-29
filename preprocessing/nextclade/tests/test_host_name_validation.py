@@ -71,7 +71,10 @@ def test_host_processing_direct_submission(mock_session: MagicMock) -> None:
     assert metadata["hostNameCommon"] == "yellow fever mosquito"
     assert result[0].processed_entry.errors == []
 
-    # All three fields should have hit the taxonomy service
+    # Three distinct taxonomy-service URLs are fetched, so no hits in taxonomy_cache:
+    #   1. resolve_host_taxon_id   -> GET /taxa?scientific_name=Aedes+aegypti
+    #   2. scientific_name_from_id -> GET /taxa/7159
+    #   3. common_name_from_id     -> GET /taxa/7159?find_common_name=true
     assert mock_session.get.call_count == 3
 
 
@@ -96,14 +99,21 @@ def test_host_processing_insdc(mock_session: MagicMock) -> None:
     assert metadata["hostNameCommon"] == "yellow fever mosquito"
     assert result[0].processed_entry.errors == []
 
-    # For INSDC, only use the taxonomy service for common name
-    assert mock_session.get.call_count == 1
+    # Only two URLs are fetched: resolve_host_taxon_id and scientific_name_from_id both build
+    # GET /taxa/7159, so the second one is served from taxonomy_cache (no extra call):
+    #   1. resolve_host_taxon_id   -> GET /taxa/7159
+    #   2. scientific_name_from_id -> GET /taxa/7159  -> cache hit, no call
+    #   3. common_name_from_id     -> GET /taxa/7159?find_common_name=true
+    assert mock_session.get.call_count == 2
 
 
 @patch.object(processing_functions.taxonomy_cache, "session")
 def test_host_processing_invalid_hostname(mock_session: MagicMock) -> None:
-    """When hostNameScientific is not found in the taxonomy, hostTaxonId is None,
-    which causes hostNameScientific and hostNameCommon to also fail."""
+    """For an INSDC-ingested sequence whithout a scientific name but with a
+    taxon id, hostTaxonId should be None but hostNameScientific should be set
+    to the provided value.
+    There should also be a warning saying host validation failed
+    """
     mock_session.get.return_value = make_response(404, {"detail": "not found"})
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
 
@@ -119,9 +129,9 @@ def test_host_processing_invalid_hostname(mock_session: MagicMock) -> None:
     assert metadata["hostNameScientific"] == "not a real species"
     assert metadata["hostNameCommon"] is None
 
-    # For INSDC, nothing should hit the taxonomy service and no warnings are raised
-    assert mock_session.get.call_count == 0
-    assert len(result[0].processed_entry.warnings) == 0
+    assert mock_session.get.call_count == 1
+    assert len(result[0].processed_entry.warnings) == 1
+    assert "Host validation for" in result[0].processed_entry.warnings[0].message
     assert result[0].processed_entry.errors == []
 
 

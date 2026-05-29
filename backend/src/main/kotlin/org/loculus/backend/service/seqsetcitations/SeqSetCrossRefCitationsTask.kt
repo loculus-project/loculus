@@ -59,7 +59,18 @@ class SeqSetCrossRefCitationsTask(
         }
 
         log.info { "Fetching CrossRef citations for DOI prefix: $doiPrefix" }
-        val citationSources = mergeCitationSources(crossRefService.getCrossRefCitedBy(doiPrefix))
+        val citedByResult = crossRefService.getCrossRefCitedBy(doiPrefix)
+        if (citedByResult.validationErrors.isNotEmpty()) {
+            log.warn {
+                "Skipped ${citedByResult.validationErrors.size} CrossRef citation(s) due to validation errors."
+            }
+            citedByResult.validationErrors.forEach { error ->
+                log.warn {
+                    "Validation error: ${error.reason}"
+                }
+            }
+        }
+        val citationSources = mergeCitationSources(citedByResult.sources)
         val seqSetDOIs = citationSources.flatMap { it.seqSetDOIs }.toSet()
         log.info {
             "Fetched ${citationSources.size} citation source(s) from CrossRef covering ${seqSetDOIs.size} SeqSet DOI(s)."

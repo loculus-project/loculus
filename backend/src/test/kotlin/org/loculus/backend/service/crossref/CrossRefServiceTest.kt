@@ -84,65 +84,68 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                     seqSetDOIs = setOf("10.1234/seqset-2"),
                 ),
             ),
-            result,
+            result.sources,
         )
+        assertTrue(result.validationErrors.isEmpty())
     }
 
     @Test
-    fun `parseCrossRefCitedByXML returns empty list when no forward_link elements present`() {
+    fun `parseCrossRefCitedByXML returns empty result when no forward_link elements present`() {
         val xml = "<crossref_result></crossref_result>"
         val result = crossRefService.parseCrossRefCitedByXML(xml)
-        assertTrue(result.isEmpty())
+        assertTrue(result.sources.isEmpty())
+        assertTrue(result.validationErrors.isEmpty())
     }
 
     @Test
-    fun `parseCrossRefCitedByXML throws when forward_link is missing the seqSet DOI attribute`() {
-        val xml = """                           
-          <crossref_result>                                                                         
-              <forward_link>                                                                      
-                  <journal_cite>                                                                    
+    fun `parseCrossRefCitedByXML records validation error when forward_link is missing the seqSet DOI attribute`() {
+        val xml = """
+          <crossref_result>
+              <forward_link>
+                  <journal_cite>
                       <doi>10.5678/paper-1</doi>
-                  </journal_cite>                                                                   
-              </forward_link>                                                                     
+                  </journal_cite>
+              </forward_link>
           </crossref_result>
         """.trimIndent()
 
-        val ex = assertThrows<IllegalStateException> {
-            crossRefService.parseCrossRefCitedByXML(xml)
-        }
-        assertTrue(ex.message!!.contains("missing seqset doi", ignoreCase = true))
+        val result = crossRefService.parseCrossRefCitedByXML(xml)
+        assertTrue(result.sources.isEmpty())
+        assertEquals(1, result.validationErrors.size)
+        assertTrue(result.validationErrors[0].reason.contains("missing seqset doi", ignoreCase = true))
     }
 
     @Test
-    fun `parseCrossRefCitedByXML throws when forward_link has no citation element`() {
+    fun `parseCrossRefCitedByXML records validation error when forward_link has no citation element`() {
         val xml = """
-          <crossref_result>                                                                         
+          <crossref_result>
               <forward_link doi="10.1234/seqset-1"/>
-          </crossref_result>                                                                        
+          </crossref_result>
         """.trimIndent()
 
-        val ex = assertThrows<IllegalStateException> {
-            crossRefService.parseCrossRefCitedByXML(xml)
-        }
-        assertTrue(ex.message!!.contains("no citation element", ignoreCase = true))
+        val result = crossRefService.parseCrossRefCitedByXML(xml)
+        assertTrue(result.sources.isEmpty())
+        assertEquals(1, result.validationErrors.size)
+        assertTrue(result.validationErrors[0].reason.contains("no citation element", ignoreCase = true))
     }
 
     @Test
-    fun `parseCrossRefCitedByXML throws when citation source has no DOI`() {
-        val xml = """                                                                               
-          <crossref_result>               
+    fun `parseCrossRefCitedByXML records validation error when citation source has no DOI`() {
+        val xml = """
+          <crossref_result>
               <forward_link doi="10.1234/seqset-1">
-                  <journal_cite>                                                                    
+                  <journal_cite>
                       <title>A citing paper</title>
-                  </journal_cite>                                                                   
-              </forward_link>                                                                     
-          </crossref_result>                                                                        
+                      <year>2024</year>
+                  </journal_cite>
+              </forward_link>
+          </crossref_result>
         """.trimIndent()
 
-        val ex = assertThrows<IllegalStateException> {
-            crossRefService.parseCrossRefCitedByXML(xml)
-        }
-        assertTrue(ex.message!!.contains("missing doi", ignoreCase = true))
+        val result = crossRefService.parseCrossRefCitedByXML(xml)
+        assertTrue(result.sources.isEmpty())
+        assertEquals(1, result.validationErrors.size)
+        assertTrue(result.validationErrors[0].reason.contains("source missing doi", ignoreCase = true))
     }
 
     @Test
@@ -190,12 +193,12 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                     seqSetDOIs = setOf("10.1234/seqset-1"),
                 ),
             ),
-            result,
+            result.sources,
         )
     }
 
     @Test
-    fun `parseCrossRefCitedByXML throws when citation source title is missing`() {
+    fun `parseCrossRefCitedByXML records validation error when citation source title is missing`() {
         val xml = """
           <crossref_result>
               <forward_link doi="10.1234/seqset-1">
@@ -207,14 +210,14 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
           </crossref_result>
         """.trimIndent()
 
-        val ex = assertThrows<IllegalStateException> {
-            crossRefService.parseCrossRefCitedByXML(xml)
-        }
-        assertTrue(ex.message!!.contains("missing title", ignoreCase = true))
+        val result = crossRefService.parseCrossRefCitedByXML(xml)
+        assertTrue(result.sources.isEmpty())
+        assertEquals(1, result.validationErrors.size)
+        assertTrue(result.validationErrors[0].reason.contains("missing title", ignoreCase = true))
     }
 
     @Test
-    fun `parseCrossRefCitedByXML throws when citation source title is blank`() {
+    fun `parseCrossRefCitedByXML records validation error when citation source title is blank`() {
         val xml = """
           <crossref_result>
               <forward_link doi="10.1234/seqset-1">
@@ -227,14 +230,14 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
           </crossref_result>
         """.trimIndent()
 
-        val ex = assertThrows<IllegalStateException> {
-            crossRefService.parseCrossRefCitedByXML(xml)
-        }
-        assertTrue(ex.message!!.contains("missing title", ignoreCase = true))
+        val result = crossRefService.parseCrossRefCitedByXML(xml)
+        assertTrue(result.sources.isEmpty())
+        assertEquals(1, result.validationErrors.size)
+        assertTrue(result.validationErrors[0].reason.contains("missing title", ignoreCase = true))
     }
 
     @Test
-    fun `parseCrossRefCitedByXML throws when citation source year is missing`() {
+    fun `parseCrossRefCitedByXML records validation error when citation source year is missing`() {
         val xml = """
           <crossref_result>
               <forward_link doi="10.1234/seqset-1">
@@ -246,14 +249,14 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
           </crossref_result>
         """.trimIndent()
 
-        val ex = assertThrows<IllegalStateException> {
-            crossRefService.parseCrossRefCitedByXML(xml)
-        }
-        assertTrue(ex.message!!.contains("missing or non-numeric year", ignoreCase = true))
+        val result = crossRefService.parseCrossRefCitedByXML(xml)
+        assertTrue(result.sources.isEmpty())
+        assertEquals(1, result.validationErrors.size)
+        assertTrue(result.validationErrors[0].reason.contains("missing or non-numeric year", ignoreCase = true))
     }
 
     @Test
-    fun `parseCrossRefCitedByXML throws when citation source year is non-numeric`() {
+    fun `parseCrossRefCitedByXML records validation error when citation source year is non-numeric`() {
         val xml = """
           <crossref_result>
               <forward_link doi="10.1234/seqset-1">
@@ -266,10 +269,76 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
           </crossref_result>
         """.trimIndent()
 
-        val ex = assertThrows<IllegalStateException> {
-            crossRefService.parseCrossRefCitedByXML(xml)
-        }
-        assertTrue(ex.message!!.contains("missing or non-numeric year", ignoreCase = true))
+        val result = crossRefService.parseCrossRefCitedByXML(xml)
+        assertTrue(result.sources.isEmpty())
+        assertEquals(1, result.validationErrors.size)
+        assertTrue(result.validationErrors[0].reason.contains("missing or non-numeric year", ignoreCase = true))
+    }
+
+    @Test
+    fun `parseCrossRefCitedByXML returns valid sources and records errors for invalid ones in a mixed batch`() {
+        val xml = """
+          <crossref_result>
+              <forward_link doi="10.1234/seqset-1">
+                  <journal_cite>
+                      <doi>10.5678/paper-1</doi>
+                      <title>A valid citing paper</title>
+                      <year>2024</year>
+                  </journal_cite>
+              </forward_link>
+              <forward_link doi="10.1234/seqset-2">
+                  <journal_cite>
+                      <title>Another paper</title>
+                      <year>2023</year>
+                  </journal_cite>
+              </forward_link>
+              <forward_link doi="10.1234/seqset-3">
+                  <journal_cite>
+                      <doi>10.5678/paper-3</doi>
+                      <year>2022</year>
+                  </journal_cite>
+              </forward_link>
+              <forward_link doi="10.1234/seqset-4">
+                  <journal_cite>
+                      <doi>10.5678/paper-4</doi>
+                      <title>Another valid paper</title>
+                      <year>2021</year>
+                  </journal_cite>
+              </forward_link>
+          </crossref_result>
+        """.trimIndent()
+
+        val result = crossRefService.parseCrossRefCitedByXML(xml)
+
+        assertEquals(
+            listOf(
+                SeqSetCitationSource(
+                    CitationSource(
+                        sourceDOI = "10.5678/paper-1",
+                        title = "A valid citing paper",
+                        year = 2024,
+                        contributors = emptyList(),
+                    ),
+                    seqSetDOIs = setOf("10.1234/seqset-1"),
+                ),
+                SeqSetCitationSource(
+                    CitationSource(
+                        sourceDOI = "10.5678/paper-4",
+                        title = "Another valid paper",
+                        year = 2021,
+                        contributors = emptyList(),
+                    ),
+                    seqSetDOIs = setOf("10.1234/seqset-4"),
+                ),
+            ),
+            result.sources,
+        )
+
+        assertEquals(2, result.validationErrors.size)
+        assertTrue(result.validationErrors[0].reason.contains("source missing doi", ignoreCase = true))
+        assertTrue(result.validationErrors[0].reason.contains("10.1234/seqset-2"))
+        assertTrue(result.validationErrors[1].reason.contains("missing title", ignoreCase = true))
+        assertTrue(result.validationErrors[1].reason.contains("10.1234/seqset-3"))
     }
 
     @Test
@@ -297,7 +366,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                 CitationContributor("Jane", "Doe"),
                 CitationContributor("", "Solo"),
             ),
-            result[0].source.contributors,
+            result.sources[0].source.contributors,
         )
     }
 
