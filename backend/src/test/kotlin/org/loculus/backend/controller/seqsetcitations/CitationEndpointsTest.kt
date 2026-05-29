@@ -210,7 +210,8 @@ class CitationEndpointsTest(
             seqSetDOIs = setOf(seqSetDOI),
         )
         every { crossRefService.isActive } returns true
-        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns listOf(seqSetCitationSource)
+        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
+            CrossRefCitedByResult(listOf(seqSetCitationSource), emptyList())
         seqSetCrossRefCitationsTask.task()
 
         client.getSequenceCitedByPublication(accession = MOCK_SEQ_ACCESSION, version = MOCK_SEQ_VERSION)
