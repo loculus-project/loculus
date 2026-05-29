@@ -6,8 +6,6 @@ const val UPDATE_TRACKER_TABLE_NAME = "table_update_tracker"
 
 object UpdateTrackerTable : Table(UPDATE_TRACKER_TABLE_NAME) {
     val tableNameColumn = text("table_name")
-    val organismColumn = text("organism")
+    val organismColumn = text("organism").nullable()
     val lastTimeUpdatedDbColumn = text("last_time_updated")
-
-    override val primaryKey = PrimaryKey(tableNameColumn, organismColumn)
 }
