@@ -4,8 +4,8 @@
 
 \restrict dummy
 
--- Dumped from database version 15.18 (Debian 15.18-1.pgdg13+1)
--- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
+-- Dumped from database version 15.17 (Debian 15.17-1.pgdg13+1)
+-- Dumped by pg_dump version 16.13 (Debian 16.13-1.pgdg13+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
