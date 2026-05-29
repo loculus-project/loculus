@@ -48,10 +48,8 @@ val RELEASED_DATA_RELATED_TABLES: List<String> =
         CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
         EXTERNAL_METADATA_TABLE_NAME,
         GROUPS_TABLE_NAME,
-        METADATA_UPLOAD_AUX_TABLE_NAME,
         SEQUENCE_ENTRIES_TABLE_NAME,
         SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME,
-        SEQUENCE_UPLOAD_AUX_TABLE_NAME,
         DATA_USE_TERMS_TABLE_NAME,
     )
 
@@ -91,10 +89,18 @@ open class ReleasedDataModel(
     }
 
     @Transactional(readOnly = true)
-    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null): String {
+    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null, organism: Organism? = null): String {
+        val tableFilter = tableNames?.let { UpdateTrackerTable.tableNameColumn inList it }
+        // Include both the organism-specific rows and the '' rows (tables without per-organism tracking).
+        val orgFilter = organism?.let {
+            (UpdateTrackerTable.organismColumn eq it.name) or (UpdateTrackerTable.organismColumn eq "")
+        }
+
         val query = UpdateTrackerTable.select(UpdateTrackerTable.lastTimeUpdatedDbColumn).apply {
-            tableNames?.let {
-                where { UpdateTrackerTable.tableNameColumn inList it }
+            when {
+                tableFilter != null && orgFilter != null -> where { tableFilter and orgFilter }
+                tableFilter != null -> where { tableFilter }
+                orgFilter != null -> where { orgFilter }
             }
         }
 

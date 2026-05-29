@@ -14,6 +14,7 @@ const val DATA_USE_TERMS_TABLE_NAME = "data_use_terms_table"
 
 object DataUseTermsTable : Table(DATA_USE_TERMS_TABLE_NAME) {
     val accessionColumn = text("accession")
+    val organismColumn = text("organism")
     val changeDateColumn = datetime("change_date")
     val dataUseTermsTypeColumn = text("data_use_terms_type")
     val restrictedUntilColumn = date("restricted_until").nullable()

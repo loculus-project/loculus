@@ -925,11 +925,10 @@ class SubmissionDatabaseService(
     fun getPipelineVersionStatistics(): Map<String, Map<Long, Int>> {
         val result = mutableMapOf<String, MutableMap<Long, Int>>()
         val sql = """
-            SELECT se.organism, sep.pipeline_version, COUNT(*) as count
+            SELECT sep.organism, sep.pipeline_version, COUNT(*) as count
             FROM sequence_entries_preprocessed_data sep
-            JOIN sequence_entries se ON se.accession = sep.accession AND se.version = sep.version
             WHERE sep.processing_status = 'PROCESSED'
-            GROUP BY se.organism, sep.pipeline_version
+            GROUP BY sep.organism, sep.pipeline_version
         """.trimIndent()
         transaction {
             exec(sql) { rs ->
@@ -1334,8 +1333,8 @@ class SubmissionDatabaseService(
             UpdateTrackerTable
                 .select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
                 .where { UpdateTrackerTable.tableNameColumn eq SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME }
-                .map { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
-                .firstOrNull()
+                .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
+                .maxOrNull()
         }
 
         if (latestUpdate == null || latestUpdate == lastPreprocessedDataUpdate) {
@@ -1363,8 +1362,7 @@ class SubmissionDatabaseService(
         (accession, version) IN (
             SELECT sep.accession, sep.version
             FROM sequence_entries_preprocessed_data sep
-            JOIN sequence_entries se ON sep.accession = se.accession AND sep.version = se.version
-            WHERE se.organism = ?
+            WHERE sep.organism = ?
         )
         """.trimIndent()
         transaction {

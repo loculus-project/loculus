@@ -10,6 +10,7 @@ const val EXTERNAL_METADATA_TABLE_NAME = "external_metadata"
 object ExternalMetadataTable : Table(EXTERNAL_METADATA_TABLE_NAME) {
     val accessionColumn = varchar("accession", 255)
     val versionColumn = long("version")
+    val organismColumn = varchar("organism", 255)
     val updaterIdColumn = varchar("external_metadata_updater", 255)
     val externalMetadataColumn =
         jacksonSerializableJsonb<MetadataMap>("external_metadata").nullable()

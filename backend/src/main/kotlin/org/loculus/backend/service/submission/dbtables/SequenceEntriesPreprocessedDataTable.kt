@@ -15,6 +15,7 @@ const val SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME = "sequence_entries_prep
 object SequenceEntriesPreprocessedDataTable : Table(SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME) {
     val accessionColumn = varchar("accession", 255)
     val versionColumn = long("version")
+    val organismColumn = varchar("organism", 255)
     val pipelineVersionColumn = long("pipeline_version")
     val processedDataColumn =
         jacksonSerializableJsonb<ProcessedData<CompressedSequence>>("processed_data").nullable()

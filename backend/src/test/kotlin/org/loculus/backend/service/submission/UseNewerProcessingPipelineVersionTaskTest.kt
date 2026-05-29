@@ -172,12 +172,8 @@ class UseNewerProcessingPipelineVersionTaskTest(
      * SequenceEntriesPreprocessedDataTable table.
      */
     private fun getExistingPipelineVersions(organism: String) = SequenceEntriesPreprocessedDataTable
-        .join(SequenceEntriesTable, joinType = JoinType.INNER) {
-            (SequenceEntriesPreprocessedDataTable.accessionColumn eq SequenceEntriesTable.accessionColumn) and
-                (SequenceEntriesPreprocessedDataTable.versionColumn eq SequenceEntriesTable.versionColumn)
-        }
         .select(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
-        .where { SequenceEntriesTable.organismColumn eq organism }
+        .where { SequenceEntriesPreprocessedDataTable.organismColumn eq organism }
         .orderBy(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
         .groupBy(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
         .map { it[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] }
