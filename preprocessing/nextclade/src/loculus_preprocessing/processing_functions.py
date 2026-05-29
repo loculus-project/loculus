@@ -1589,7 +1589,7 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def validate_host(
+    def resolve_host_taxon_id(
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -1605,23 +1605,6 @@ class ProcessingFunctions:
         return the tax_id of the most generic taxon (i.e., the one that's closest to
         the root of the taxonomy)
         """
-        # for INSDC-ingested sequences we just return the id INSDC gives us (if any)
-        # if we ever want to change this behaviour, we just have to remove this short-circuit,
-        # the rest of the function is set up to validate INSDC-ingested data as well
-        if args["is_insdc_ingest_group"]:
-            tax_id = input_data.get("hostTaxonId")
-            if not isinstance(tax_id, str) or not tax_id.isdigit():
-                return ProcessingResult(
-                    datum=None,
-                    warnings=[],
-                    errors=[],
-                )
-            return ProcessingResult(
-                datum=tax_id,
-                warnings=[],
-                errors=[],
-            )
-
         tax_service = args.get("taxonomy_service_url")
         if not tax_service:
             return missing_taxonomy_service_error(input_fields, output_field)
@@ -1650,10 +1633,10 @@ class ProcessingFunctions:
 
         try:
             response = taxonomy_cache.get_or_fetch(url)
+            body = response.json()
         except requests.exceptions.RequestException as e:
             return taxonomy_network_error(unvalidated, "validating", e, input_fields, output_field)
 
-        body = response.json()
         if response.status_code != requests.codes.ok:
             # an invalid host organism is a warning for INSDC ingested sequences, but an error for everyone else
             message = ProcessingAnnotation.from_fields(
@@ -1663,7 +1646,9 @@ class ProcessingFunctions:
                 message=f"Host validation for '{unvalidated}' failed with code {response.status_code}: {body.get('detail', '')}",
             )
             return ProcessingResult(
-                datum=None,
+                datum=unvalidated
+                if args["is_insdc_ingest_group"] and unvalidated.isdigit()
+                else None,
                 warnings=[message] if args["is_insdc_ingest_group"] else [],
                 errors=[message] if not args["is_insdc_ingest_group"] else [],
             )
@@ -1704,16 +1689,6 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        # for INSDC-ingested sequences we just return the name INSDC gives us (if any)
-        # if we ever want to change this behaviour, we just have to remove this short-circuit,
-        # the rest of the function is set up to validate INSDC-ingested data as well
-        if args["is_insdc_ingest_group"]:
-            return ProcessingResult(
-                datum=input_data.get("hostNameScientific"),
-                warnings=[],
-                errors=[],
-            )
-
         tax_service = args.get("taxonomy_service_url")
         if not tax_service:
             return missing_taxonomy_service_error(input_fields, output_field)
@@ -1721,7 +1696,9 @@ class ProcessingFunctions:
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
             return ProcessingResult(
-                datum=None,
+                datum=input_data.get("hostNameScientific")
+                if args["is_insdc_ingest_group"]
+                else None,
                 warnings=[],
                 errors=[],
             )
@@ -1729,22 +1706,25 @@ class ProcessingFunctions:
         url = f"{tax_service}/taxa/{tax_id}"
         try:
             response = taxonomy_cache.get_or_fetch(url)
+            body = response.json()
         except requests.exceptions.RequestException as e:
             return taxonomy_network_error(tax_id, "validating", e, input_fields, output_field)
 
-        body = response.json()
         if response.status_code != requests.codes.ok:
+            message = f"Could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}"
+            logger.warning(message)
+            processing_annotation = ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message=message,
+            )
             return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=f"Internal error: could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}",
-                    )
-                ],
+                datum=input_data.get("hostNameScientific")
+                if args["is_insdc_ingest_group"]
+                else None,
+                warnings=[processing_annotation] if args["is_insdc_ingest_group"] else [],
+                errors=[processing_annotation] if not args["is_insdc_ingest_group"] else [],
             )
 
         scientific_name = body.get("scientific_name")
@@ -1790,12 +1770,12 @@ class ProcessingFunctions:
         url = f"{tax_service}/taxa/{tax_id}?find_common_name=true"
         try:
             response = taxonomy_cache.get_or_fetch(url)
+            body = response.json()
         except requests.exceptions.RequestException as e:
             return taxonomy_network_error(
                 tax_id, "getting common name for", e, input_fields, output_field
             )
 
-        body = response.json()
         if response.status_code != requests.codes.ok:
             return ProcessingResult(
                 datum=None,

@@ -12,7 +12,7 @@ processing_spec:
       hostTaxonId: processed.hostTaxonId
     args: *preprocessingTaxonomyTestArgs
   hostTaxonId:
-    function: validate_host
+    function: resolve_host_taxon_id
     inputs:
       host: host
       hostNameScientific: hostNameScientific

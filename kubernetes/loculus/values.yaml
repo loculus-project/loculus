@@ -1250,7 +1250,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         orderOnDetailsPage: 1540
         preprocessing:
-          function: validate_host
+          function: resolve_host_taxon_id
           inputs:
             host: host
             hostNameScientific: hostNameScientific
