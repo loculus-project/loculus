@@ -251,7 +251,7 @@ def main(
 
         row["id"] = joint_key
         row["fastaIds"] = segments_list_str
-        row["ncbiReleaseDate"] = max(
+        row["ncbiReleaseDate"] = min(
             segment_metadata[group[segment]]["ncbiReleaseDate"] for segment in group
         )
 
