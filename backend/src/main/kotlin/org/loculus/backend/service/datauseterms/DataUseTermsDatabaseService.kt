@@ -9,6 +9,7 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
+import org.loculus.backend.service.submission.SequenceEntriesTable
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.processInDatabaseSafeChunks
@@ -39,8 +40,14 @@ class DataUseTermsDatabaseService(
 
             dataUseTermsPreconditionValidator.checkThatTransitionIsAllowed(chunk, newDataUseTerms)
 
+            val accessionToOrganism = SequenceEntriesTable
+                .select(SequenceEntriesTable.accessionColumn, SequenceEntriesTable.organismColumn)
+                .where { SequenceEntriesTable.accessionColumn inList chunk }
+                .associate { it[SequenceEntriesTable.accessionColumn] to it[SequenceEntriesTable.organismColumn] }
+
             DataUseTermsTable.batchInsert(chunk) {
                 this[DataUseTermsTable.accessionColumn] = it
+                this[DataUseTermsTable.organismColumn] = accessionToOrganism.getValue(it)
                 this[DataUseTermsTable.changeDateColumn] = now
                 this[DataUseTermsTable.dataUseTermsTypeColumn] = newDataUseTerms.type.toString()
                 this[DataUseTermsTable.restrictedUntilColumn] = when (newDataUseTerms) {

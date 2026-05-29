@@ -219,7 +219,7 @@ class SubmissionDatabaseService(
                         submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
                     )
                 }
-                updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
+                updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion, organism)
             }
             .flatten()
     }
@@ -227,6 +227,7 @@ class SubmissionDatabaseService(
     private fun updateStatusToProcessing(
         sequenceEntries: List<UnprocessedData>,
         pipelineVersion: Long,
+        organism: Organism,
     ): List<UnprocessedData> {
         log.info { "updating status to processing. Number of sequence entries: ${sequenceEntries.size}" }
 
@@ -236,6 +237,7 @@ class SubmissionDatabaseService(
         table.batchInsert(sequenceEntries, ignore = true, shouldReturnGeneratedValues = false) {
             this[table.accessionColumn] = it.accession
             this[table.versionColumn] = it.version
+            this[table.organismColumn] = organism.name
             this[table.pipelineVersionColumn] = pipelineVersion
             this[table.processingStatusColumn] = IN_PROCESSING.name
             this[table.startedProcessingAtColumn] = now
@@ -387,6 +389,7 @@ class SubmissionDatabaseService(
             ) {
                 it[accessionColumn] = submittedExternalMetadata.accession
                 it[versionColumn] = submittedExternalMetadata.version
+                it[organismColumn] = organism.name
                 it[updaterIdColumn] = externalMetadataUpdater
                 it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
                 it[updatedAtColumn] = dateProvider.getCurrentDateTime()
@@ -396,6 +399,7 @@ class SubmissionDatabaseService(
             ExternalMetadataTable.insert {
                 it[accessionColumn] = submittedExternalMetadata.accession
                 it[versionColumn] = submittedExternalMetadata.version
+                it[organismColumn] = organism.name
                 it[updaterIdColumn] = externalMetadataUpdater
                 it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
                 it[updatedAtColumn] = dateProvider.getCurrentDateTime()
