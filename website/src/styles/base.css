@@ -79,10 +79,6 @@
     }
 }
 
-:root {
-    --animation-btn: 0;
-}
-
 a {
     &:hover {
         @apply underline decoration-primary-700;
@@ -130,6 +126,25 @@ a {
 
     .outlineButtonDropdownItem {
         @apply text-primary-600 hover:text-primary-600 hover:bg-gray-100;
+    }
+
+    /*
+     * daisyUI v5 darkens input/select/textarea focus borders to full-opacity
+     * base-content, and adds a 2px outline in that same color (border + outline
+     * = a heavy "double border"). daisyUI v4 (main) used base-content at 20%
+     * for both. Both the focus border-color and outline-color resolve from the
+     * single `--input-color` var, so overriding just that restores the subtler
+     * focus ring. This `@layer utilities` rule wins over daisyUI's component
+     * layer. Note: it also applies to color variants (select-primary, etc.);
+     * none are used in this app today — add `:not(...)` exclusions if that changes.
+     */
+    .input:focus,
+    .input:focus-within,
+    .select:focus,
+    .select:focus-within,
+    .textarea:focus,
+    .textarea:focus-within {
+        --input-color: color-mix(in oklab, var(--color-base-content) 20%, transparent);
     }
 }
 

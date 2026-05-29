@@ -45,7 +45,7 @@ export const RadioOptionBlock: FC<OptionBlockProps> = ({
                             disabled={disabled}
                         />
                         <span
-                            className={`label-text ${disabled ? 'text-gray-500' : ''} ${variant === 'nested' ? 'text-sm' : ''}`}
+                            className={`text-sm ${disabled ? 'text-gray-500' : ''} ${variant === 'nested' ? 'text-sm' : ''}`}
                         >
                             {option.label}
                         </span>
@@ -70,7 +70,7 @@ export const DropdownOptionBlock: FC<OptionBlockProps> = ({
             <Select
                 name={name}
                 title={title ?? name}
-                className='select select-bordered w-full max-w-xs min-h-0 h-auto py-0'
+                className='select w-full max-w-xs min-h-0 h-auto py-0'
                 disabled={disabled}
                 value={selected}
                 onChange={(event) => onSelect(event.target.selectedIndex)}

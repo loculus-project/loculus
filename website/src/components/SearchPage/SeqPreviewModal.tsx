@@ -186,7 +186,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId, allowFastaDownlo
 
                 <CharmMenuKebab className=' w-4 h-6 -ml-1.5 pb-1 pt-1.5' />
             </Button>
-            <ul className='dropdown-content z-20 menu p-1 shadow-sm bg-base-100 rounded-btn absolute top-full w-52 -left-32'>
+            <ul className='dropdown-content z-20 menu p-1 shadow-sm bg-base-100 rounded-field absolute top-full w-52 -left-32'>
                 {allowFastaDownload && (
                     <li>
                         <a

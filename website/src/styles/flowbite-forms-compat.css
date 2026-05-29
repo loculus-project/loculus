@@ -138,46 +138,6 @@
         box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
     }
 
-    [type='checkbox']:checked,
-    [type='radio']:checked,
-    .dark [type='checkbox']:checked,
-    .dark [type='radio']:checked {
-        border-color: transparent;
-        background-color: currentColor;
-        background-size: 0.55em 0.55em;
-        background-position: center;
-        background-repeat: no-repeat;
-    }
-
-    [type='checkbox']:checked {
-        background-image: url("data:image/svg+xml,%3csvg aria-hidden='true' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 12'%3e %3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M1 5.917 5.724 10.5 15 1.5'/%3e %3c/svg%3e");
-        background-repeat: no-repeat;
-        background-size: 0.55em 0.55em;
-        print-color-adjust: exact;
-    }
-
-    [type='radio']:checked,
-    .dark [type='radio']:checked {
-        background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");
-        background-size: 1em 1em;
-    }
-
-    [type='checkbox']:indeterminate {
-        background-image: url("data:image/svg+xml,%3csvg aria-hidden='true' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 12'%3e %3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M0.5 6h14'/%3e %3c/svg%3e");
-        background-color: currentColor;
-        border-color: transparent;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-size: 0.55em 0.55em;
-        print-color-adjust: exact;
-    }
-
-    [type='checkbox']:indeterminate:hover,
-    [type='checkbox']:indeterminate:focus {
-        border-color: transparent;
-        background-color: currentColor;
-    }
-
     [type='file'] {
         background: unset;
         border-color: inherit;
@@ -286,5 +246,68 @@
     input[type='range'].range-lg::-moz-range-thumb {
         height: 1.5rem;
         width: 1.5rem;
+    }
+}
+
+/*
+ * Checked / indeterminate state styling lives in `@layer utilities`, NOT
+ * `@layer base`. Tailwind `bg-*` / `border-*` utilities also live in
+ * `utilities`, and that layer always beats `base` regardless of specificity.
+ * If these state rules stayed in `base`, a radio/checkbox carrying e.g.
+ * `bg-gray-100` (as Flowbite's default markup does) would keep its utility
+ * background instead of the checked fill, hiding the dot/checkmark.
+ *
+ * Within the same `utilities` layer the cascade falls back to specificity, so
+ * `[type='radio']:not(.radio):checked` (0,3,0) reliably wins over a single-class
+ * utility like `.bg-gray-100` (0,1,0). This keeps the checked appearance robust
+ * no matter what utilities are added.
+ *
+ * The `:not(.checkbox)` / `:not(.radio)` exclusions are essential: daisyUI's own
+ * `.checkbox` / `.radio` components render their own checkmark/dot and live in a
+ * layer *below* `utilities`. Without the exclusion these rules would win over
+ * daisyUI too, painting the Flowbite SVG on top of daisyUI's mark (two stacked
+ * checkboxes). Layer placement alone can't fix this — the order is
+ * `base < daisyui < utilities`, so we must beat utilities yet skip daisyUI, and
+ * only selector scoping can express "everything except the daisyUI component".
+ */
+@layer utilities {
+    [type='checkbox']:not(.checkbox):checked,
+    [type='radio']:not(.radio):checked,
+    .dark [type='checkbox']:not(.checkbox):checked,
+    .dark [type='radio']:not(.radio):checked {
+        border-color: transparent;
+        background-color: currentColor;
+        background-size: 0.55em 0.55em;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+
+    [type='checkbox']:not(.checkbox):checked {
+        background-image: url("data:image/svg+xml,%3csvg aria-hidden='true' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 12'%3e %3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M1 5.917 5.724 10.5 15 1.5'/%3e %3c/svg%3e");
+        background-repeat: no-repeat;
+        background-size: 0.55em 0.55em;
+        print-color-adjust: exact;
+    }
+
+    [type='radio']:not(.radio):checked,
+    .dark [type='radio']:not(.radio):checked {
+        background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");
+        background-size: 1em 1em;
+    }
+
+    [type='checkbox']:not(.checkbox):indeterminate {
+        background-image: url("data:image/svg+xml,%3csvg aria-hidden='true' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 12'%3e %3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M0.5 6h14'/%3e %3c/svg%3e");
+        background-color: currentColor;
+        border-color: transparent;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: 0.55em 0.55em;
+        print-color-adjust: exact;
+    }
+
+    [type='checkbox']:not(.checkbox):indeterminate:hover,
+    [type='checkbox']:not(.checkbox):indeterminate:focus {
+        border-color: transparent;
+        background-color: currentColor;
     }
 }

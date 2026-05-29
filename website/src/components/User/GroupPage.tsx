@@ -138,7 +138,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             </label>
                             <ul
                                 tabIndex={0}
-                                className='dropdown-content z-1 menu p-1 shadow-sm bg-base-100 rounded-btn absolute top-full -left-4 min-w-60'
+                                className='dropdown-content z-1 menu p-1 shadow-sm bg-base-100 rounded-field absolute top-full -left-4 min-w-60'
                             >
                                 {userGroups.map(
                                     (group) =>
