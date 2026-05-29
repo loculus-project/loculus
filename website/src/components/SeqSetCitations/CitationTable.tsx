@@ -17,22 +17,18 @@ const CitationRow: FC<CitationRowProps> = ({ citation }) => {
         <tr className='border-b border-gray-200'>
             <td className='p-4'>
                 <div className='flex flex-col gap-2'>
-                    <div>{citation.source.title}</div>
+                    <a
+                        className='text-primary-700'
+                        href={`https://doi.org/${citation.source.sourceDOI}`}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                    >
+                        {citation.source.title}
+                    </a>
                     <div className='text-sm text-gray-500'>
                         {citation.source.contributors
                             .map((contributor) => `${contributor.givenName} ${contributor.surname}`)
                             .join(', ')}
-                    </div>
-                    <div>
-                        DOI:
-                        <a
-                            className='text-primary-600 mx-1'
-                            href={`https://doi.org/${citation.source.sourceDOI}`}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                        >
-                            {citation.source.sourceDOI}
-                        </a>
                     </div>
                 </div>
             </td>
@@ -46,11 +42,15 @@ export const CitationTable: FC<CitationTableProps> = ({ isLoading, error, citati
         <div className='w-full pt-2'>
             <div className='overflow-y-auto max-h-[60vh]'>
                 {isLoading ? (
-                    <span className='loading loading-spinner'></span>
+                    <div className='flex justify-center py-8'>
+                        <span className='loading loading-spinner'></span>
+                    </div>
                 ) : error ? (
-                    <span>Failed to load citations.</span>
+                    <div className='py-8 text-center'>
+                        <span>Failed to load citations.</span>
+                    </div>
                 ) : citations.length > 0 ? (
-                    <table className='max-w-3xl w-full border-collapse'>
+                    <table className='w-full border-collapse'>
                         <thead>
                             <tr className='text-left'>
                                 <th className='sticky top-0 bg-white p-4 border-b border-gray-200'>Title</th>
@@ -64,7 +64,9 @@ export const CitationTable: FC<CitationTableProps> = ({ isLoading, error, citati
                         </tbody>
                     </table>
                 ) : (
-                    <span>No citations found.</span>
+                    <div className='py-8 text-center'>
+                        <span>No citations found.</span>
+                    </div>
                 )}
             </div>
         </div>
