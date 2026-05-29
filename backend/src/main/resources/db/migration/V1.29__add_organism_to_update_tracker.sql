@@ -1,22 +1,32 @@
--- Add organism column to table_update_tracker so the last-modified time
--- can be queried per (table, organism) pair. Tables without an organism
--- column use the empty string ''.
+-- Add a nullable organism column to table_update_tracker.
+-- Rows for organism-specific tables carry the organism name;
+-- rows for tables without an organism column have organism = NULL.
 
-ALTER TABLE table_update_tracker ADD COLUMN organism TEXT NOT NULL DEFAULT '';
+ALTER TABLE table_update_tracker ADD COLUMN organism TEXT;
 ALTER TABLE table_update_tracker DROP CONSTRAINT table_update_tracker_pkey;
-ALTER TABLE table_update_tracker ADD PRIMARY KEY (table_name, organism);
+
+-- Two partial unique indexes replace the old single-column primary key.
+-- ON CONFLICT inference in the trigger upserts references these indexes.
+CREATE UNIQUE INDEX table_update_tracker_no_organism_idx
+    ON table_update_tracker (table_name)
+    WHERE organism IS NULL;
+
+CREATE UNIQUE INDEX table_update_tracker_with_organism_idx
+    ON table_update_tracker (table_name, organism)
+    WHERE organism IS NOT NULL;
 
 -- Drop the old trigger function (CASCADE removes all dependent triggers).
 DROP FUNCTION IF EXISTS update_table_tracker() CASCADE;
 DROP FUNCTION IF EXISTS create_update_trigger_for_table(TEXT) CASCADE;
 
 -- Trigger function for tables that do NOT have an organism column.
+-- Inserts/updates a row with organism = NULL.
 CREATE OR REPLACE FUNCTION update_table_tracker_no_organism()
 RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO table_update_tracker (table_name, organism, last_time_updated)
-    VALUES (TG_TABLE_NAME, '', timezone('UTC', CURRENT_TIMESTAMP))
-    ON CONFLICT (table_name, organism)
+    VALUES (TG_TABLE_NAME, NULL, timezone('UTC', CURRENT_TIMESTAMP))
+    ON CONFLICT (table_name) WHERE organism IS NULL
     DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
     RETURN NULL;
 END;
@@ -30,7 +40,7 @@ BEGIN
     INSERT INTO table_update_tracker (table_name, organism, last_time_updated)
     SELECT TG_TABLE_NAME, organism, timezone('UTC', CURRENT_TIMESTAMP)
     FROM (SELECT DISTINCT organism FROM new_rows) t
-    ON CONFLICT (table_name, organism)
+    ON CONFLICT (table_name, organism) WHERE organism IS NOT NULL
     DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
     RETURN NULL;
 END;
@@ -44,7 +54,7 @@ BEGIN
     INSERT INTO table_update_tracker (table_name, organism, last_time_updated)
     SELECT TG_TABLE_NAME, organism, timezone('UTC', CURRENT_TIMESTAMP)
     FROM (SELECT DISTINCT organism FROM old_rows) t
-    ON CONFLICT (table_name, organism)
+    ON CONFLICT (table_name, organism) WHERE organism IS NOT NULL
     DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
     RETURN NULL;
 END;
@@ -52,7 +62,7 @@ $$ LANGUAGE plpgsql;
 
 -- Trigger function for TRUNCATE on tables WITH an organism column.
 -- Transition tables are unavailable for TRUNCATE, so we update all existing
--- per-organism entries for the table and add a catch-all '' entry.
+-- per-organism entries for the table and add a NULL-organism catch-all.
 CREATE OR REPLACE FUNCTION update_table_tracker_on_truncate()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -61,16 +71,15 @@ BEGIN
     WHERE table_name = TG_TABLE_NAME;
 
     INSERT INTO table_update_tracker (table_name, organism, last_time_updated)
-    VALUES (TG_TABLE_NAME, '', timezone('UTC', CURRENT_TIMESTAMP))
-    ON CONFLICT (table_name, organism)
+    VALUES (TG_TABLE_NAME, NULL, timezone('UTC', CURRENT_TIMESTAMP))
+    ON CONFLICT (table_name) WHERE organism IS NULL
     DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
 
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
--- Helper: create organism-aware triggers (INSERT/UPDATE/DELETE/TRUNCATE)
--- for a table that has an organism column.
+-- Helper: create organism-aware triggers for a table that has an organism column.
 CREATE OR REPLACE FUNCTION create_organism_update_trigger_for_table(p_table_name TEXT)
 RETURNS VOID AS $$
 BEGIN
@@ -97,7 +106,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Helper: create a simple statement-level trigger for tables WITHOUT
--- an organism column (records with organism='').
+-- an organism column (inserts with organism = NULL).
 CREATE OR REPLACE FUNCTION create_update_trigger_for_table(p_table_name TEXT)
 RETURNS VOID AS $$
 BEGIN
