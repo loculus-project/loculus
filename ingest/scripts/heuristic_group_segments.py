@@ -251,9 +251,8 @@ def main(
 
         row["id"] = joint_key
         row["fastaIds"] = segments_list_str
-        row["ncbiReleaseDate"] = min(
-            segment_metadata[group[segment]]["ncbiReleaseDate"] for segment in group
-        )
+        dates = [segment_metadata[group[s]].get("ncbiReleaseDate") for s in group]
+        row["ncbiReleaseDate"] = min((d for d in dates if d), default=None)
 
         # Hash of all metadata fields should be the same if
         # 1. field is not in keys_to_keep and
