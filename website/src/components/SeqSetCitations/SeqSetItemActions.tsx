@@ -177,6 +177,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 fullWidth={false}
                 className='min-h-[60vh]'
             >
+                <div className='min-w-[48rem]'></div>
                 <CitationTable
                     isLoading={isSeqSetCitationsLoading}
                     error={seqSetCitationsError}
