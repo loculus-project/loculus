@@ -124,7 +124,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: sampleCollectionDate
         displayName: Collection date
         definition: "The date on which the sample was collected."
-        guidance: "Please format the date as `YYYY-MM-DD`. If day is unknown, use `YYYY-MM` (e.g., `2020-03`). If both day and month are unknown, use `YYYY` (e.g., `2020`). Please provide at least a year."
+        guidance: "Please format the date as `YYYY-MM-DD`. If day is unknown, use `YYYY-MM` (e.g., `2020-03`). If both day and month are unknown, use `YYYY` (e.g., `2020`). If only a range is known please supply the range in ISO format `date_lower/date_upper` where `date_lower` and `date_upper` are in the format `YYYY-MM-DD`, `YYYY-MM` or `YYYY`. Please provide at least a year."
         example: "2020-03-15"
         header: Sample details
         ingest: ncbiCollectionDate
@@ -186,10 +186,10 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: concatenate
           inputs:
             geoLocCountry: geoLocCountry
-            sampleCollectionDate: sampleCollectionDate
+            sampleCollectionDate: processed.sampleCollectionDate
           args:
             order: [geoLocCountry, ACCESSION_VERSION, sampleCollectionDate]
-            type: [string, ACCESSION_VERSION, string]
+            type: [string, ACCESSION_VERSION, dateRangeString]
         noInput: true
       - name: ncbiReleaseDate
         displayName: NCBI release date
