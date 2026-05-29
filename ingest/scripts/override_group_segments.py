@@ -170,6 +170,16 @@ def get_metadata_of_group(
         json.dumps(filtered_record, sort_keys=True).encode(), usedforsecurity=False
     ).hexdigest()
 
+    # Create a new host field and populate it from hostTaxonId or hostNameScientific
+    # to be consistent with how direct submissions specify the host organism.
+    # Done after computing hash to not trigger revisions for all INSDC data
+    host = grouped_metadata.get("hostTaxonId") or grouped_metadata.get("hostNameScientific")
+    grouped_metadata.pop("hostTaxonId", None)
+    grouped_metadata.pop("hostNameScientific", None)
+    grouped_metadata.pop("hostNameCommon", None)
+    if host:
+        grouped_metadata["host"] = host
+
     return grouped_metadata
 
 
@@ -236,7 +246,9 @@ def write_grouped_metadata(
                 prev_acc = f"{acc}.{prev_ver}"
                 if prev_acc in groups.accession_to_group:
                     group = groups.accession_to_group[prev_acc]
-                    logger.warning(f"Matched {full_accession} to group via previous version {prev_acc}")
+                    logger.warning(
+                        f"Matched {full_accession} to group via previous version {prev_acc}"
+                    )
                     break
 
         if group is None:
@@ -334,13 +346,13 @@ def get_groups_object(groups_json_path: str) -> Groups:
     "--groups",
     required=True,
     type=click.Path(exists=True),
-    help="Path to the JSON file containing the map from group names to lists of accessions."
+    help="Path to the JSON file containing the map from group names to lists of accessions.",
 )
 @click.option(
     "--input-seq",
     required=True,
     type=click.Path(exists=True),
-    help="Path to the JSONL file of input data."
+    help="Path to the JSONL file of input data.",
 )
 @click.option("--input-metadata", required=True, type=click.Path(exists=True))
 @click.option("--output-seq", required=True, type=click.Path())
@@ -355,7 +367,7 @@ def get_groups_object(groups_json_path: str) -> Groups:
 @click.option(
     "--match-previous-accession-versions/--no-match-previous-accession-versions",
     default=False,
-    help="Whether to match against previous versions of accessions (e.g., XX123.1 when XX123.2 is provided)"
+    help="Whether to match against previous versions of accessions (e.g., XX123.1 when XX123.2 is provided)",
 )
 def main(  # noqa: PLR0913, PLR0917
     config_file: str,
