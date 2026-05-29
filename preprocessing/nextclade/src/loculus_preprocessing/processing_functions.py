@@ -272,6 +272,95 @@ def taxonomy_network_error(
     )
 
 
+@dataclass
+class DateRange:
+    date_range_lower: datetime
+    date_range_upper: datetime
+    message: str | None = None
+
+    @property
+    def date_range_string(self) -> str:
+        return derive_date_range_string(self.date_range_lower, self.date_range_upper)
+
+
+def convert_to_date_range(date_str: str) -> DateRange | None:
+    formats_to_messages = {
+        "%Y-%m-%d": None,
+        "%Y-%m": "Day is missing. Assuming date is some time in the month.",
+        "%Y": "Month and day are missing. Assuming date is some time in the year.",
+    }
+
+    for fmt, msg in formats_to_messages.items():
+        try:
+            parsed_date = datetime.strptime(date_str, fmt).replace(tzinfo=pytz.utc)
+        except ValueError:
+            continue
+        match fmt:
+            case "%Y-%m-%d":
+                return DateRange(
+                    date_range_lower=parsed_date,
+                    date_range_upper=parsed_date,
+                )
+            case "%Y-%m":
+                return DateRange(
+                    date_range_lower=parsed_date.replace(day=1),
+                    date_range_upper=(
+                        parsed_date.replace(
+                            day=calendar.monthrange(parsed_date.year, parsed_date.month)[1]
+                        )
+                    ),
+                    message=msg,
+                )
+            case "%Y":
+                return DateRange(
+                    date_range_lower=parsed_date.replace(month=1, day=1),
+                    date_range_upper=parsed_date.replace(month=12, day=31),
+                    message=msg,
+                )
+        break
+    return None
+
+
+def derive_date_range_string(lower: datetime, upper: datetime) -> str:
+    """
+    Convert a date range into the most compact string representation possible.
+
+    - Single day:           2026-05-28
+    - Full month:           2026-05
+    - Full year:            2026
+    - Multiple full years:  2024/2026 (ISO range)
+    - Multiple full months: 2025-01/2026-03 (ISO range)
+    - Arbitrary range:      2026-05-10/2026-05-28 (ISO range)
+    """
+    if lower == upper:
+        return lower.strftime("%Y-%m-%d")
+    if (
+        lower.day == 1
+        and upper.day == calendar.monthrange(upper.year, upper.month)[1]
+        and lower.month == upper.month
+        and lower.year == upper.year
+    ):
+        return lower.strftime("%Y-%m")
+    if (
+        lower.month == 1
+        and lower.day == 1
+        and upper.month == 12  # noqa: PLR2004
+        and upper.day == 31  # noqa: PLR2004
+        and lower.year == upper.year
+    ):
+        return lower.strftime("%Y")
+    if (
+        lower.month == 1
+        and lower.day == 1
+        and upper.month == 12  # noqa: PLR2004
+        and upper.day == 31  # noqa: PLR2004
+    ):
+        return f"{lower.strftime('%Y')}/{upper.strftime('%Y')}"
+    if lower.day == 1 and upper.day == calendar.monthrange(upper.year, upper.month)[1]:
+        return f"{lower.strftime('%Y-%m')}/{upper.strftime('%Y-%m')}"
+    return f"{lower.strftime('%Y-%m-%d')}/{upper.strftime('%Y-%m-%d')}"
+
+
 class ProcessingFunctions:
     @classmethod
     def call_function(
@@ -394,25 +483,30 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def parse_date_into_range(
+    def parse_date_into_range(  # noqa: C901, PLR0912, PLR0915
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
-        """Parse date string (`input.date`) formatted as one of YYYY | YYYY-MM | YYYY-MM-DD into
-        a range using upper bound (`input.releaseDate`)
+        """
+        Parse date string (`input.date`) with input formats:
+        - YYYY
+        - YYYY-MM
+        - YYYY-MM-DD
+        Or date string as a range formatted as:
+        - ISO format: date/date (where date is in one of the above formats)
+        - lucene format: [date TO date] (where date is in one of the above formats)
+        Uses (`input.releaseDate`) as an upper bound when parsing into a range.
         Return value determined FunctionArgs:
         fieldType: "dateRangeString" | "dateRangeLower" | "dateRangeUpper"
-        Default fieldType is "dateRangeString"
+        Default fieldType is "dateRangeString" - in the case of a range the date is returned
+        as a single month/year or an ISO date range format by function `derive_date_range_string`
         """
         if not args:
             args = {"fieldType": "dateRangeString"}
 
-        logger.debug(f"input_data: {input_data}")
-
         input_date_str = input_data["date"]
-
         release_date_str = input_data.get("releaseDate", "") or ""
         try:
             release_date = dateutil.parse(release_date_str).replace(tzinfo=pytz.utc)
@@ -450,131 +544,160 @@ class ProcessingFunctions:
                 errors=[],
             )
 
-        formats_to_messages = {
-            "%Y-%m-%d": None,
-            "%Y-%m": "Day is missing. Assuming date is some time in the month.",
-            "%Y": "Month and day are missing. Assuming date is some time in the year.",
-        }
+        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
 
-        warnings = []
-        errors = []
+        datum = convert_to_date_range(input_date_str)
 
-        @dataclass
-        class DateRange:
-            date_range_string: str | None
-            date_range_lower: datetime | None
-            date_range_upper: datetime
+        if datum is None:
+            # Try lucene format ("[YYYY-MM-DD TO YYYY-MM-DD]")
+            # Try ISO range ("YYYY-MM-DD/YYYY-MM-DD")
+            range_patterns = [
+                r"^\s*\[([0-9-]+)\s*TO\s*([0-9-]+)\s*\]\s*$",  # Lucene
+                r"^\s*([0-9-]+)\s*/\s*([0-9-]+)\s*$",  # ISO-ish
+            ]
 
-        for format, message in formats_to_messages.items():
-            try:
-                parsed_date = datetime.strptime(input_date_str, format).replace(tzinfo=pytz.utc)
-            except ValueError:
-                continue
-            match format:
-                case "%Y-%m-%d":
-                    datum = DateRange(
-                        date_range_string=parsed_date.strftime(format),
-                        date_range_lower=parsed_date,
-                        date_range_upper=parsed_date,
-                    )
-                case "%Y-%m":
-                    datum = DateRange(
-                        date_range_string=parsed_date.strftime(format),
-                        date_range_lower=parsed_date.replace(day=1),
-                        date_range_upper=(
-                            parsed_date.replace(
-                                day=calendar.monthrange(parsed_date.year, parsed_date.month)[1]
+            for pattern in range_patterns:
+                match = re.fullmatch(pattern, input_date_str)
+                if not match:
+                    continue
+
+                lower_date = convert_to_date_range(match.group(1))
+                upper_date = convert_to_date_range(match.group(2))
+
+                if lower_date is None or upper_date is None:
+                    return ProcessingResult(
+                        datum=None,
+                        warnings=[],
+                        errors=[
+                            ProcessingAnnotation.from_fields(
+                                input_fields,
+                                [output_field],
+                                AnnotationSourceType.METADATA,
+                                message=f"Metadata field {output_field}: "
+                                f"Detected date range but could not parse date: {input_date_str}.",
                             )
-                        ),
+                        ],
                     )
-                case "%Y":
-                    datum = DateRange(
-                        date_range_string=parsed_date.strftime(format),
-                        date_range_lower=parsed_date.replace(month=1, day=1),
-                        date_range_upper=parsed_date.replace(month=12, day=31),
+                msg = None
+                if lower_date.message or upper_date.message:
+                    msg = "Detected date range."
+                    msg += (
+                        f" For lower date: {match.group(1)} - {lower_date.message}"
+                        if lower_date.message
+                        else ""
+                    )
+                    msg += (
+                        f" For upper date: {match.group(2)} - {upper_date.message}"
+                        if upper_date.message
+                        else ""
                     )
 
-            logger.debug(f"parsed_date: {datum}")
-
-            if datum.date_range_upper > max_upper_limit:
-                logger.debug(
-                    "Tightening upper limit due to release date or current date. "
-                    f"Original upper limit: {datum.date_range_upper},"
-                    f"new upper limit: {max_upper_limit}"
-                )
-                datum.date_range_upper = max_upper_limit
-
-            if message:
-                warnings.append(
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=f"Metadata field {output_field}:'{input_date_str}' - " + message,
-                    )
+                datum = DateRange(
+                    date_range_lower=lower_date.date_range_lower,
+                    date_range_upper=upper_date.date_range_upper,
+                    message=msg,
                 )
 
-            if datum.date_range_lower and datum.date_range_lower > datetime.now(tz=pytz.utc):
-                logger.debug(
-                    f"Lower range of date: {datum.date_range_lower} > {datetime.now(tz=pytz.utc)}"
-                )
-                errors.append(
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=(
-                            f"Metadata field {output_field}:'{input_date_str}' is in the future."
-                        ),
-                    )
-                )
-
-            if release_date and datum.date_range_lower and (datum.date_range_lower > release_date):
-                logger.debug(f"Lower range of date: {parsed_date} > release_date: {release_date}")
-                errors.append(
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=(
-                            f"Metadata field {output_field}:'{input_date_str}'"
-                            "is after release date."
-                        ),
-                    )
-                )
-
-            match args["fieldType"]:
-                case "dateRangeString":
-                    return_value = datum.date_range_string
-                case "dateRangeLower":
-                    if datum.date_range_lower is None:
-                        return_value = None
-                    else:
-                        return_value = datum.date_range_lower.strftime("%Y-%m-%d")
-                    warnings = errors = []
-                case "dateRangeUpper":
-                    return_value = datum.date_range_upper.strftime("%Y-%m-%d")
-                    warnings = errors = []
-                case _:
-                    msg = f"Config error: Unknown fieldType: {args['fieldType']}"
-                    raise ValueError(msg)
-
-            return ProcessingResult(datum=return_value, warnings=warnings, errors=errors)
-
-        # If all parsing attempts fail, it's an unrecognized format
-        return ProcessingResult(
-            datum=None,
-            warnings=[],
-            errors=[
+        if datum and datum.message:
+            warnings.append(
                 ProcessingAnnotation.from_fields(
                     input_fields,
                     [output_field],
                     AnnotationSourceType.METADATA,
-                    message=f"Metadata field {output_field}: "
-                    f"Date {input_date_str} could not be parsed.",
+                    message=f"Metadata field {output_field}:'{input_date_str}' - " + datum.message,
                 )
-            ],
-        )
+            )
+
+        if datum is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=f"Metadata field {output_field}: "
+                        f"Date {input_date_str} could not be parsed.",
+                    )
+                ],
+            )
+
+        logger.debug(f"parsed_date: {datum}")
+
+        if datum.date_range_lower > datum.date_range_upper:
+            logger.debug(
+                f"Lower range of date: {datum.date_range_lower} > upper: {datum.date_range_upper}"
+            )
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=(
+                        f"Metadata field {output_field}:'{input_date_str}' is an invalid date "
+                        f"range. Lower bound: {datum.date_range_lower} is after upper "
+                        f"bound: {datum.date_range_upper}."
+                    ),
+                )
+            )
+
+        if datum.date_range_upper > max_upper_limit:
+            logger.debug(
+                "Tightening upper limit due to release date or current date. "
+                f"Original upper limit: {datum.date_range_upper},"
+                f"new upper limit: {max_upper_limit}"
+            )
+            datum.date_range_upper = max_upper_limit
+
+        if datum.date_range_lower and datum.date_range_lower > datetime.now(tz=pytz.utc):
+            logger.debug(
+                f"Lower range of date: {datum.date_range_lower} > {datetime.now(tz=pytz.utc)}"
+            )
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=(f"Metadata field {output_field}:'{input_date_str}' is in the future."),
+                )
+            )
+
+        if release_date and datum.date_range_lower and (datum.date_range_lower > release_date):
+            logger.debug(
+                f"Lower range of date: {datum.date_range_lower} > release_date: {release_date}"
+            )
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=(
+                        f"Metadata field {output_field}:'{input_date_str}' is after release date."
+                    ),
+                )
+            )
+
+        match args["fieldType"]:
+            case "dateRangeString":
+                return_value = datum.date_range_string
+            case "dateRangeLower":
+                if datum.date_range_lower is None:
+                    return_value = None
+                else:
+                    return_value = datum.date_range_lower.strftime("%Y-%m-%d")
+                warnings = []
+                errors = []
+            case "dateRangeUpper":
+                return_value = datum.date_range_upper.strftime("%Y-%m-%d")
+                warnings = []
+                errors = []
+            case _:
+                msg = f"Config error: Unknown fieldType: {args['fieldType']}"
+                raise ValueError(msg)
+
+        return ProcessingResult(datum=return_value, warnings=warnings, errors=errors)
 
     @staticmethod
     def parse_and_assert_past_date(  # noqa: C901
@@ -588,7 +711,6 @@ class ProcessingFunctions:
             date: str, date string to parse
             release_date: str, optional release date to compare against if None use today
         """
-        logger.debug(f"input_data: {input_data}")
         date_str = input_data["date"]
 
         if not date_str:
@@ -602,8 +724,6 @@ class ProcessingFunctions:
             release_date = dateutil.parse(release_date_str)
         except Exception:
             release_date = None
-        logger.debug(f"release_date: {release_date}")
-        logger.debug(f"date_str: {date_str}")
 
         formats_to_messages = {
             "%Y-%m-%d": None,
@@ -825,6 +945,21 @@ class ProcessingFunctions:
                         fallback_value
                         if null_per_backend(processed.datum)
                         else str(processed.datum)
+                    )
+                elif field_types[i] == "dateRangeString":
+                    # Assumes date ranges are in ISO format
+                    raw = input_data[order[i]]
+                    if null_per_backend(raw):
+                        formatted_input_data.append(fallback_value)
+                        continue
+                    raw_value = str(raw).strip()
+                    if raw_value.count("/") > 1:
+                        date_string = None
+                        add_errors()
+                    else:
+                        date_string = raw_value.replace("/", " TO ")
+                    formatted_input_data.append(
+                        fallback_value if null_per_backend(date_string) else str(date_string)
                     )
                 elif field_types[i] == "timestamp":
                     processed = ProcessingFunctions.parse_timestamp(
@@ -1589,7 +1724,7 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def validate_host(
+    def resolve_host_taxon_id(
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -1605,23 +1740,6 @@ class ProcessingFunctions:
         return the tax_id of the most generic taxon (i.e., the one that's closest to
         the root of the taxonomy)
         """
-        # for INSDC-ingested sequences we just return the id INSDC gives us (if any)
-        # if we ever want to change this behaviour, we just have to remove this short-circuit,
-        # the rest of the function is set up to validate INSDC-ingested data as well
-        if args["is_insdc_ingest_group"]:
-            tax_id = input_data.get("hostTaxonId")
-            if not isinstance(tax_id, str) or not tax_id.isdigit():
-                return ProcessingResult(
-                    datum=None,
-                    warnings=[],
-                    errors=[],
-                )
-            return ProcessingResult(
-                datum=tax_id,
-                warnings=[],
-                errors=[],
-            )
-
         tax_service = args.get("taxonomy_service_url")
         if not tax_service:
             return missing_taxonomy_service_error(input_fields, output_field)
@@ -1650,10 +1768,10 @@ class ProcessingFunctions:
 
         try:
             response = taxonomy_cache.get_or_fetch(url)
+            body = response.json()
         except requests.exceptions.RequestException as e:
             return taxonomy_network_error(unvalidated, "validating", e, input_fields, output_field)
 
-        body = response.json()
         if response.status_code != requests.codes.ok:
             # an invalid host organism is a warning for INSDC ingested sequences, but an error for everyone else
             message = ProcessingAnnotation.from_fields(
@@ -1663,7 +1781,9 @@ class ProcessingFunctions:
                 message=f"Host validation for '{unvalidated}' failed with code {response.status_code}: {body.get('detail', '')}",
             )
             return ProcessingResult(
-                datum=None,
+                datum=unvalidated
+                if args["is_insdc_ingest_group"] and unvalidated.isdigit()
+                else None,
                 warnings=[message] if args["is_insdc_ingest_group"] else [],
                 errors=[message] if not args["is_insdc_ingest_group"] else [],
             )
@@ -1704,16 +1824,6 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        # for INSDC-ingested sequences we just return the name INSDC gives us (if any)
-        # if we ever want to change this behaviour, we just have to remove this short-circuit,
-        # the rest of the function is set up to validate INSDC-ingested data as well
-        if args["is_insdc_ingest_group"]:
-            return ProcessingResult(
-                datum=input_data.get("hostNameScientific"),
-                warnings=[],
-                errors=[],
-            )
-
         tax_service = args.get("taxonomy_service_url")
         if not tax_service:
             return missing_taxonomy_service_error(input_fields, output_field)
@@ -1721,7 +1831,9 @@ class ProcessingFunctions:
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
             return ProcessingResult(
-                datum=None,
+                datum=input_data.get("hostNameScientific")
+                if args["is_insdc_ingest_group"]
+                else None,
                 warnings=[],
                 errors=[],
             )
@@ -1729,22 +1841,25 @@ class ProcessingFunctions:
         url = f"{tax_service}/taxa/{tax_id}"
         try:
             response = taxonomy_cache.get_or_fetch(url)
+            body = response.json()
         except requests.exceptions.RequestException as e:
             return taxonomy_network_error(tax_id, "validating", e, input_fields, output_field)
 
-        body = response.json()
         if response.status_code != requests.codes.ok:
+            message = f"Could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}"
+            logger.warning(message)
+            processing_annotation = ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message=message,
+            )
             return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=f"Internal error: could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}",
-                    )
-                ],
+                datum=input_data.get("hostNameScientific")
+                if args["is_insdc_ingest_group"]
+                else None,
+                warnings=[processing_annotation] if args["is_insdc_ingest_group"] else [],
+                errors=[processing_annotation] if not args["is_insdc_ingest_group"] else [],
             )
 
         scientific_name = body.get("scientific_name")
@@ -1790,12 +1905,12 @@ class ProcessingFunctions:
         url = f"{tax_service}/taxa/{tax_id}?find_common_name=true"
         try:
             response = taxonomy_cache.get_or_fetch(url)
+            body = response.json()
         except requests.exceptions.RequestException as e:
             return taxonomy_network_error(
                 tax_id, "getting common name for", e, input_fields, output_field
             )
 
-        body = response.json()
         if response.status_code != requests.codes.ok:
             return ProcessingResult(
                 datum=None,

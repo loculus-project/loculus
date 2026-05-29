@@ -98,8 +98,8 @@ Indirect requirements:
 
 The pipeline runs in different kubernetes resources:
 
-- An "approve" deployment (uses the `autoapprove.py` script) that continuously polls the Loculus backend for sequences in status `WAITING_FOR_APPROVAL` and approves them, one replica with kubernetes resource type apps/v1/Deployment.
-- An "ingest" cronjob batch/v1/CronJob that runs the ingest pipeline regularly. Cronjobs are scheduled to start ingest for a different organism every 30min to reduce load. To improve development experience ArgoCD spawns ingest pods using a PostSync-hook trigger (this waits for all other pods to be healthy after an ArgoCD sync - reducing ingest failures due to the backend being unreachable)
+- An "approve" deployment (uses the `autoapprove.py` script) that continuously polls the Loculus backend for sequences in status `WAITING_FOR_APPROVAL` and approves them. This has one replica with kubernetes resource type apps/v1/Deployment.
+- An "ingest" cronjob batch/v1/CronJob that runs the ingest pipeline regularly. Cronjobs are scheduled to start ingest for a different organism every 30min to reduce load. To improve development experience ArgoCD spawns ingest pods using sync waves (10th wave).
 
 In production the ingest pipeline runs in a docker container that takes a config file as input.
 
