@@ -15,6 +15,7 @@ import org.loculus.backend.api.SeqSetCitationSource
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
+import org.loculus.backend.service.crossref.CrossRefCitedByResult
 import org.loculus.backend.service.crossref.CrossRefService
 import org.loculus.backend.service.seqsetcitations.SeqSetCrossRefCitationsTask
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
@@ -118,7 +119,7 @@ class CitationEndpointsTest(
         // Simulate running the crossref citations task
         every { crossRefService.isActive } returns true
         every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
-            emptyList()
+            CrossRefCitedByResult(emptyList(), emptyList())
         seqSetCrossRefCitationsTask.task()
 
         client.getSeqSetCitedByPublication(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
@@ -158,7 +159,7 @@ class CitationEndpointsTest(
         )
         every { crossRefService.isActive } returns true
         every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
-            listOf(seqSetCitationSource)
+            CrossRefCitedByResult(listOf(seqSetCitationSource), emptyList())
         seqSetCrossRefCitationsTask.task()
 
         client.getSeqSetCitedByPublication(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
@@ -219,7 +220,8 @@ class CitationEndpointsTest(
         )
 
         // Citation source cites only seqSet A
-        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns listOf(citationSource)
+        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
+            CrossRefCitedByResult(listOf(citationSource), emptyList())
         seqSetCrossRefCitationsTask.task()
 
         client.getSeqSetCitedByPublication(seqSetId = seqSetIdA, seqSetVersion = seqSetVersionA)
@@ -229,7 +231,10 @@ class CitationEndpointsTest(
 
         // Now, citation source also cites seqSet B
         every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
-            listOf(citationSource.copy(seqSetDOIs = setOf(seqSetDOIA, seqSetDOIB)))
+            CrossRefCitedByResult(
+                listOf(citationSource.copy(seqSetDOIs = setOf(seqSetDOIA, seqSetDOIB))),
+                emptyList(),
+            )
         seqSetCrossRefCitationsTask.task()
 
         client.getSeqSetCitedByPublication(seqSetId = seqSetIdA, seqSetVersion = seqSetVersionA)
