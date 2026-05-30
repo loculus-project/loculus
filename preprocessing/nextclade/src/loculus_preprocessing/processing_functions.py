@@ -1825,9 +1825,7 @@ class ProcessingFunctions:
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
             return ProcessingResult(
-                datum=input_data.get("hostNameScientific")
-                if args["is_insdc_ingest_group"]
-                else None,
+                datum=None,
                 warnings=[],
                 errors=[],
             )
@@ -1849,9 +1847,7 @@ class ProcessingFunctions:
                 message=message,
             )
             return ProcessingResult(
-                datum=input_data.get("hostNameScientific")
-                if args["is_insdc_ingest_group"]
-                else None,
+                datum=None,
                 warnings=[processing_annotation] if args["is_insdc_ingest_group"] else [],
                 errors=[processing_annotation] if not args["is_insdc_ingest_group"] else [],
             )
