@@ -7,6 +7,7 @@ import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.hasProperty
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -17,7 +18,7 @@ import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.PROCESSED
 import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.config.fixtures.ConfigFixtures
 import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
@@ -25,7 +26,7 @@ import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
-import org.loculus.backend.controller.S3_CONFIG
+import org.loculus.backend.controller.S3_VARIANT
 import org.loculus.backend.controller.SUPER_USER_NAME
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectNdjsonAndGetContent
@@ -51,15 +52,20 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.UUID
 
-@EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
-)
+@EndpointTest
 class ReviseEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
     @Autowired val filesClient: FilesClient,
+    @Autowired private val configFixtures: ConfigFixtures,
 ) {
+
+    @BeforeEach
+    fun loadS3Fixture() {
+        configFixtures.loadVariant(S3_VARIANT)
+    }
+
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) {

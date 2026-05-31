@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import type { z, ZodError } from 'zod';
+import { type z, type ZodError } from 'zod';
 
 import { ACCESSION_FIELD, FASTA_IDS_FIELD, SUBMISSION_ID_INPUT_FIELD } from './settings.ts';
 import {
@@ -10,21 +10,29 @@ import {
     type Schema,
     type SequenceFlaggingConfig,
     type WebsiteConfig,
-    websiteConfig,
 } from './types/config.ts';
 import { type ReferenceGenomesInfo } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
 import { toReferenceGenomes } from './utils/sequenceTypeHelpers.ts';
 
-let _config: WebsiteConfig | null = null;
 let _runtimeConfig: RuntimeConfig | null = null;
 
-function getConfigDir(): string {
-    const configDir = import.meta.env.CONFIG_DIR;
-    if (typeof configDir !== 'string' || configDir === '') {
-        throw new Error(`CONFIG_DIR environment variable was not set during build time, is '${configDir}'`);
+// Read via `globalThis` so this file (which is also pulled into the client
+// bundle) does not import `serverWebsiteConfigStore.ts` and its `async_hooks`.
+function getCurrentWebsiteConfig(): WebsiteConfig {
+    const ctx = globalThis.__loculusWebsiteConfigStore?.getStore();
+    if (ctx === undefined) {
+        throw new Error(
+            'getWebsiteConfig() called outside of a request context. The website config ' +
+                'is loaded by configMiddleware and is only available inside the per-request ' +
+                'async context on the server.',
+        );
     }
-    return configDir;
+    return ctx.websiteConfig;
+}
+
+function getCurrentWebsiteConfigOrNull(): WebsiteConfig | null {
+    return globalThis.__loculusWebsiteConfigStore?.getStore()?.websiteConfig ?? null;
 }
 
 export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
@@ -59,15 +67,7 @@ export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
 }
 
 export function getWebsiteConfig(): WebsiteConfig {
-    if (_config === null) {
-        const config = readTypedConfigFile('website_config.json', websiteConfig);
-        const validationErrors = validateWebsiteConfig(config);
-        if (validationErrors.length > 0) {
-            throw new AggregateError(validationErrors, 'There were validation errors in the website_config.json');
-        }
-        _config = config;
-    }
-    return _config;
+    return getCurrentWebsiteConfig();
 }
 
 export function getContactConfig(websiteConfig: WebsiteConfig) {
@@ -99,11 +99,7 @@ export function getGitHubReportUrl(
 }
 
 export function safeGetWebsiteConfig(): WebsiteConfig | null {
-    try {
-        return getWebsiteConfig();
-    } catch (_) {
-        return null;
-    }
+    return getCurrentWebsiteConfigOrNull();
 }
 
 export function getMetadataDisplayNames(organism: string): Map<string, string> {
@@ -259,6 +255,14 @@ export function dataUseTermsAreEnabled() {
 
 export function getDataUseTermsAgreementHTML() {
     return getWebsiteConfig().dataUseTermsAgreementHTML;
+}
+
+function getConfigDir(): string {
+    const configDir = import.meta.env.CONFIG_DIR;
+    if (typeof configDir !== 'string' || configDir === '') {
+        throw new Error(`CONFIG_DIR environment variable was not set during build time, is '${configDir}'`);
+    }
+    return configDir;
 }
 
 function readTypedConfigFile<Schema extends z.ZodTypeAny>(fileName: string, schema: Schema): z.infer<Schema> {

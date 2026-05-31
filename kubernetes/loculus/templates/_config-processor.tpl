@@ -42,6 +42,11 @@
         secretKeyRef:
           name: service-accounts
           key: backendUserPassword
+    - name: LOCULUSSUB_configLoaderUserPassword
+      valueFrom:
+        secretKeyRef:
+          name: service-accounts
+          key: configLoaderUserPassword
     - name: LOCULUSSUB_backendKeycloakClientSecret
       valueFrom:
         secretKeyRef:

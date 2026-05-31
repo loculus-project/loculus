@@ -5,7 +5,11 @@ description: How to enable and configure sequence reporting
 
 By default, sequence reporting is disabled.
 
-You can enable it in the `values.yaml` by configuring the `sequenceFlagging` section. For example:
+:::note[Where this config now lives]
+`sequenceFlagging` is part of Loculus's [database-backed instance config](../configuration-system/) — configure it through the admin dashboard (or the `kubernetes/loculus/fixtures/instance.yaml` seeded by the config loader), not in `values.yaml`. The YAML shape shown below is still correct; only its location has changed.
+:::
+
+You enable it by configuring the `sequenceFlagging` section. For example:
 
 ```yaml
 sequenceFlagging:

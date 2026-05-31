@@ -13,6 +13,7 @@ export const metadataPossibleTypes = z.enum([
     'date',
     'int',
     'float',
+    'number',
     'timestamp',
     'boolean',
     'authors',

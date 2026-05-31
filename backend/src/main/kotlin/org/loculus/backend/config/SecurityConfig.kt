@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
 import org.loculus.backend.auth.Roles.EXTERNAL_METADATA_UPDATER
+import org.loculus.backend.auth.Roles.LOCULUS_ADMINISTRATOR
 import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
 import org.springframework.beans.factory.InitializingBean
@@ -60,6 +61,7 @@ class SecurityConfig {
         "/*/get-released-data",
         "/files/get/**",
         "/groups/*",
+        "/api/config/**",
     )
 
     private val headEndpointsThatArePublic = arrayOf(
@@ -72,6 +74,7 @@ class SecurityConfig {
 
     private val adminEndpoints = arrayOf(
         "/admin/*",
+        "/api/admin/config/**",
     )
 
     @Bean
@@ -96,7 +99,7 @@ class SecurityConfig {
             auth.requestMatchers(
                 *endpointsForExternalMetadataUpdater,
             ).hasAuthority(EXTERNAL_METADATA_UPDATER)
-            auth.requestMatchers(*adminEndpoints).hasAuthority(SUPER_USER)
+            auth.requestMatchers(*adminEndpoints).hasAuthority(LOCULUS_ADMINISTRATOR)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
         }

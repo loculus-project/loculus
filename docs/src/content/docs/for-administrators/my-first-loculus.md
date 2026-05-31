@@ -5,6 +5,12 @@ description: Experimenting with a Loculus interface running in a local mini Kube
 
 This tutorial will guide you through setting up a test instance for Loculus locally, running on a mini Kubernetes cluster. You'll learn how to install dependencies, deploy Loculus, configure a custom organism, and submit sample data. By the end, you'll have a Loculus database running on your machine, providing hands-on experience of how things work (but the setup will not be suitable for production use).
 
+:::tip[Want a feature-complete dev instance?]
+If you just want a local Loculus instance that matches the dev/preview environments (all 8 default organisms, ingest, preprocessing, the admin dashboard), follow [Local development instance](../local-dev-instance) instead. That guide gets you a working full-stack instance in a few commands without writing any custom YAML.
+
+This page stays useful if you want to learn the system by walking through it manually.
+:::
+
 :::note[System requirements]
 This tutorial is intended for Linux. It has been tested on a fresh Ubuntu installation running on a DigitalOcean droplet (though you will find it simpler if you are able to run it locally.)
 
@@ -97,99 +103,39 @@ Once the pods are running, you can access Loculus locally - the website will be 
 curl http://127.0.0.1:3000
 ```
 
-## Reconfiguring Loculus
+## Customizing the configuration
 
-Now that we know we can get Loculus working we can tweak it.
+Your instance already ships with a set of default organisms — you'll see them in the organism dropdown on the website. Beyond that you can customize the instance: change its name and branding, and add or edit organisms.
 
-Let's create a new configuration.
+Configuration like this is **no longer set in `values.yaml`**. Organism and instance domain config now lives in Loculus's database-backed configuration system, edited through the **admin dashboard** at `/admin/config/`:
 
-Create a new file (for now we will call it `custom_values.yaml` and it can be in your current working directory) with the following content:
+- To understand how configuration is structured (the config layers, versioning, and where each component reads it), read [Configuration system](../configuration-system/).
+- For the step-by-step admin workflow — changing the instance name, creating and publishing a new organism, and rolling it out to SILO/LAPIS — see [Managing configuration](../managing-configuration/).
+
+The admin dashboard requires a user with the `loculus_administrator` role. The quickest way to get a fully-featured local instance that already includes such an account (`loculus_administrator` / `loculus_administrator`) along with all the default organisms, ingest, and preprocessing is the [Local development instance](../local-dev-instance/) guide — that is the recommended path once you want to go beyond this minimal walkthrough.
+
+## Submitting some data
+
+Let's submit a little data and watch it flow through the system. For that we need a login, so enable the built-in test accounts. Create a `custom_values.yaml`:
 
 ```yaml
-name: 'My awesome database'
-```
-
-Now we can "upgrade" the existing Loculus with this configuration:
-
-```bash
-helm upgrade loculus ./kubernetes/loculus --set environment=local --set branch=latest --set disableIngest=true --set disableEnaSubmission=true -f custom_values.yaml
-```
-
-Again you can check the status of the pods with `kubectl get pods` and once they are all running you can check the website again at `http://127.0.0.1:3000`.
-
-You should find that the name of the database has changed to "My awesome database"!
-
-### Configuring an organism
-
-Loculus ships with some default organisms, but you probably want to overwrite these with your own.
-
-Let's edit the `custom_values.yaml` file to the following:
-
-<!-- prettier-ignore-start -->
-```yaml
-name: 'Angelovirus DB'
-organisms:
-  angelovirus:
-    schema:
-      organismName: 'Angelovirus'
-      metadata:
-        - name: country
-          type: string
-          initiallyVisible: true
-        - name: city
-          type: string
-          initiallyVisible: true
-      website:
-        tableColumns:
-          - country
-          - city
-        defaultOrder: descending
-        defaultOrderBy: country
-    preprocessing:
-      - version: 1
-        image: ghcr.io/loculus-project/preprocessing-nextclade
-        args:
-          - 'prepro'
-        configFile:
-          log_level: DEBUG
-          batch_size: 100
-          segments:
-            - name: main
-              references:
-              - name: singleReference
-                genes: []
-    referenceGenomes:
-      - name: main
-        references:
-          - name: singleReference
-            sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
 createTestAccounts: true
 ```
-<!-- prettier-ignore-end -->
 
-Because we have enabled the `createTestAccounts` option, we need to delete the existing keycloak database to ensure that the test users are added.
-
-First we need to run `kubectl get pods` to get the name of the keycloak pod, which will be something like `loculus-keycloak-database-665b964c6b-gm9t5` (but with the random string at the end being different).
-
-Then we can delete the pod with `kubectl delete pod loculus-keycloak-database-[the rest of the pod name]`.
-
-:::tip
-
-If you struggled with deleting the pod, an alternative approach would be to delete the entire helm release with `helm delete loculus` and then re-run the `helm install` command (`helm install loculus ./kubernetes/loculus --set environment=local --set branch=latest --set disableIngest=true --set disableEnaSubmission=true -f custom_values.yaml`).
-
-:::
-
-Now we can upgrade the Loculus installation again:
+The accounts are created when Keycloak first initialises, so delete the Keycloak database pod to have it re-seeded (find its name with `kubectl get pods`), then upgrade:
 
 ```bash
+kubectl delete pod loculus-keycloak-database-<...>
 helm upgrade loculus ./kubernetes/loculus --set environment=local --set branch=latest --set disableIngest=true --set disableEnaSubmission=true -f custom_values.yaml
 ```
 
-### Testing it out with some data
+:::tip
+If deleting the pod is fiddly, you can instead `helm delete loculus` and re-run the original `helm install ... -f custom_values.yaml`.
+:::
 
-While that's getting ready, let's create some data to submit.
+Once the pods are running again, open `http://localhost:3000` and log in with username `testuser`, password `testuser`.
 
-First let's make our sequence file, which we might name `sequences.fasta`:
+Go to **Submit** and choose one of the default organisms. The submission page offers a **metadata template** download for the selected organism — that lists exactly the columns the organism expects and is the easiest way to prepare a valid metadata file. Fill in a row or two, and prepare a matching FASTA, e.g. `sequences.fasta`:
 
 ```txt
 >sample1
@@ -198,33 +144,17 @@ ATGGGATTTTGGCATATATATACGA
 GCAGAGAGAGATACGTATATATATA
 ```
 
-Then our metadata file, which we might name `metadata.tsv`:
-
-<div class="font-mono">
-<pre>
-id	city	country
-sample1	Paris	France
-sample2	Bogota	Colombia
-</pre>
-</div>
-
 :::warning
-
-The metadata file must be tab-separated (TSV) -- sometimes code editors will try to convert tabs to a number of spaces, causing confusion.
-
+The metadata file must be tab-separated (TSV) — some editors silently convert tabs to spaces, which causes confusing errors.
 :::
-
-Now we can check everything is running with `kubectl get pods` and once it is, we can open up the website at `http://localhost:3000` again. Because we enabled the `createTestAccounts` option, you should be able to log in with the username `testuser` and password `testuser`.
-
-You can then go to `Submit`. You will be prompted to create a submitting group.
 
 :::note
-To successfully create a submitting group you will need to be able to access `127.0.0.1` on port `8079` (if you are running this on a remote machine you will need to set up port forwarding for this port too!).
+You will first be prompted to create a submitting group. To create one you need to be able to reach the backend on `127.0.0.1:8079` (set up port forwarding too if you're on a remote machine).
 :::
 
-Once you have created a submitting group, you can submit your data. You will need to upload the `sequences.fasta` and `metadata.tsv` files. You can then select the organism you created earlier (`Angelovirus`) and submit the data.
+Upload the metadata and sequence files and submit. Your sequences appear on the **Review** page, where you can release them. After a moment, refresh the **Search** page and your data should appear. **🎉 You've submitted and released your first sequences!**
 
-You should find that they appear on your Review page and you can choose to release them. If you wait a minute and then refresh the Search page you should find your sequences have appeared! **🎉 We've released the first data for our new database!**
+(If the organism dropdown is empty, the config loader that seeds the default organisms didn't run in this minimal install — the [Local development instance](../local-dev-instance/) guide is the reliable way to get a fully-seeded instance.)
 
 ### Cleaning up
 

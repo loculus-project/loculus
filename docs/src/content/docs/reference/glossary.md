@@ -19,6 +19,22 @@ An aligned sequence is a sequence that has been aligned to a [reference sequence
 
 The "Loculus backend" is the central server service of Loculus and responsible for managing submissions and ensuring data persistence. Among other things, it offers APIs to submit and revise data. For querying and retrieving data, [LAPIS](#lapis) is usually used. The backend is written in Kotlin and uses the Spring framework.
 
+### Configuration
+
+Loculus configuration is split into **domain config** — [organism](#organism) [schemas](#schema), [metadata](#metadata) fields, [reference sequences](#reference-sequences), link-outs, instance branding, etc. — and **deployment/runtime config**. Domain config is stored in the [backend](#backend) database (versioned, with an audit log) and edited through the [configuration dashboard](#configuration-dashboard) or the `/api/admin/config` API. Deployment config (service URLs, secrets, image tags, replica counts) lives in the Helm `values.yaml`. See the administrator guide [Configuration system](../../for-administrators/configuration-system/).
+
+### Configuration adapter
+
+An init container that runs in each [SILO](#silo) and [LAPIS](#lapis) pod. Before those services start, it fetches the pinned organism config version from the backend's public config API and renders the files SILO and LAPIS expect (`database_config.yaml`, `reference_genomes.json`, …).
+
+### Configuration dashboard
+
+The admin web interface at `/admin/config/` for viewing and editing the database-backed [configuration](#configuration). Access requires the `super_user` role in [Keycloak](#keycloak). Edits are made as drafts and published as new immutable versions, with every change recorded in an audit log.
+
+### Configuration loader
+
+A command-line tool (`loculus-config-loader`) that seeds the database-backed [configuration](#configuration) from fixture files, bringing a fresh instance to a known config state (e.g. in CI and local development).
+
 ### Deletion
 
 A deletion is a type of [mutation](#mutation) where a nucleotide or amino acid is present in a reference sequence but not present in the sample sequence. The notation for a deletion in the case of a single-segmented nucleotide sequence is `<base of reference genome><position>-` (e.g., C100-). A mutation in the case of an amino acid sequence is further prefixed with the gene name by adding `<gene name>:` (e.g., E:S100-).
@@ -107,7 +123,7 @@ A Secret Key might look like: `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`
 
 ### Schema
 
-A schema is a part of the configuration and describes the data structure of an instance. It includes the list of organisms and, for each [organism](#organism), the available [metadata](#metadata) fields and [segments](#segment).
+A schema describes the data structure of an [organism](#organism): its available [metadata](#metadata) fields, [segments](#segment), and reference sequences. Each organism's schema is part of the database-backed [configuration](#configuration) and is edited through the [configuration dashboard](#configuration-dashboard).
 
 ### Secret key (S3)
 
@@ -143,7 +159,7 @@ A substitution is a type of [mutation](#mutation) where at a given position in a
 
 ### Superuser
 
-A superuser is a user role. Superusers have the privileges to act on behalf of any [submitting group](#submitting-group). This role is designed to be used by curators.
+A superuser is a user role. Superusers have the privileges to act on behalf of any [submitting group](#submitting-group). This role is designed to be used by curators. The same `super_user` [Keycloak](#keycloak) role also grants access to the [configuration dashboard](#configuration-dashboard).
 
 ### Unaligned sequence
 

@@ -19,9 +19,12 @@ describe('shouldMiddlewareEnforceLogin', () => {
     test('should return true on routes which should force login', () => {
         expectForceLogin('/user');
         expectForceLogin('/user/someUsername');
+        expectForceLogin('/admin');
+        expectForceLogin('/admin/config');
     });
 
     test('should return false for various public routes', () => {
+        expectNoLogin('/administrator');
         expectNoLogin(`/${testOrganism}/search`);
         expectNoLogin(`/`);
         expectNoLogin(`/${testOrganism}`);

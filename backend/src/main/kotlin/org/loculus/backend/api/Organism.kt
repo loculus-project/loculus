@@ -5,8 +5,8 @@ import jakarta.validation.Constraint
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 import jakarta.validation.Payload
-import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.ORGANISM_SCHEMA_NAME
+import org.loculus.backend.config.service.ConfigService
 import org.springframework.core.convert.converter.Converter
 import org.springframework.stereotype.Component
 import kotlin.reflect.KClass
@@ -24,9 +24,9 @@ annotation class ValidOrganism(
     val payload: Array<KClass<out Payload>> = [],
 )
 
-class OrganismValidator(private val backendConfig: BackendConfig) : ConstraintValidator<ValidOrganism, Organism> {
+class OrganismValidator(private val configService: ConfigService) : ConstraintValidator<ValidOrganism, Organism> {
     override fun isValid(value: Organism, context: ConstraintValidatorContext): Boolean {
-        val keys = backendConfig.organisms.keys
+        val keys = configService.listOrganismKeys()
         if (keys.contains(value.name)) {
             return true
         }

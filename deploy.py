@@ -255,6 +255,17 @@ def handle_helm():  # noqa: C901
     if args.for_e2e or args.dev:
         parameters += ["-f", HELM_CHART_DIR / "values_e2e_and_dev.yaml"]
         parameters += ["--skip-schema-validation"]
+        # Helm waits for post-install hooks (the config-loader Job is one).
+        # On a fresh cluster, Keycloak's cold start can take longer than
+        # Helm's default 5-minute hook wait. Give it 15 minutes of headroom.
+        if not args.template:
+            parameters += ["--timeout", "15m"]
+    # `--branch local` is the convention for running locally-built images imported
+    # into k3d via `./build-local-images.sh`. Without IfNotPresent kubelet would
+    # try to fetch `:local` from ghcr.io and fail with 403, even though the image
+    # is sitting right there in the cluster's containerd.
+    if branch == "local":
+        parameters += ["-f", HELM_CHART_DIR / "values_local_images.yaml"]
     if args.sha:
         parameters += ["--set", f"sha={args.sha[:7]}"]
 
@@ -357,17 +368,9 @@ def generate_configs(from_live, live_host, enable_ena, values_files=None):
         values_files=values_files,
     )
 
-    website_config_path = temp_dir_path / "website_config.json"
-    generate_config(
-        helm_chart,
-        "templates/loculus-website-config.yaml",
-        website_config_path,
-        codespace_name,
-        from_live,
-        live_host,
-        values_files=values_files,
-    )
-
+    # website_config.json is no longer generated: organism domain config now
+    # lives in the backend DB and the website fetches it per request via
+    # configMiddleware. Only the technical runtime_config.json is still needed.
     runtime_config_path = temp_dir_path / "runtime_config.json"
     generate_config(
         helm_chart,
@@ -408,19 +411,10 @@ def generate_configs(from_live, live_host, enable_ena, values_files=None):
         values_files=values_files,
     )
 
-    prepro_configmap_path = temp_dir_path / "preprocessing-config.yaml"
-    prepro_template_path = "templates/loculus-preprocessing-config.yaml"
-    prepro_configout_path = temp_dir_path / "preprocessing-config.yaml"
-    generate_config(
-        helm_chart,
-        prepro_template_path,
-        prepro_configmap_path,
-        codespace_name,
-        from_live,
-        live_host,
-        prepro_configout_path,
-        values_files=values_files,
-    )
+    # The Loculus preprocessing pipeline config is no longer rendered from Helm:
+    # the pipeline fetches its opaque config file and organism metadata directly
+    # from the backend (see config-architecture/61_preprocessingPipeline.md), so
+    # the old templates/loculus-preprocessing-config.yaml has been removed.
 
     run_command(
         [

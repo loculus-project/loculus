@@ -49,6 +49,16 @@ Superusers have the privilege to submit, revise, revoke and approve sequences on
 
 You can similarly unassign a role by selecting it from the current roles of the user, and clicking 'Unassign' (next to the 'Assign role' button)
 
+## Loculus administrators
+
+Loculus administrators have access to the admin dashboard and can change database-backed instance, organism, and preprocessing-pipeline configuration. This is intentionally separate from `super_user`, which is intended for curation privileges.
+
+1. Click on 'Users' on the left-hand menu
+2. Click on the user you want and go to ‘Role mapping’
+3. Click ‘Assign role’ button
+4. Tick `loculus_administrator`
+5. Click ‘Assign’
+
 ## Processing pipeline
 
 The processing pipeline requires a technical user to authenticate with the Loculus API. To create a new technical user, you can use the usual user registration form on the website. Afterwards, go to the Keycloak admin console, click on "Users" in the left navigation bar, select the user, click on "Role Mappings" and assign the `preprocessing_pipeline` role.

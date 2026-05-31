@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.module.SimpleModule
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import org.springframework.context.annotation.Configuration
 
 @Configuration
@@ -15,6 +16,8 @@ class LocalDateJacksonModule : SimpleModule() {
     init {
         addSerializer(LocalDate::class.java, LocalDateSerializer())
         addDeserializer(LocalDate::class.java, LocalDateDeserializer())
+        addSerializer(LocalDateTime::class.java, LocalDateTimeSerializer())
+        addDeserializer(LocalDateTime::class.java, LocalDateTimeDeserializer())
     }
 }
 
@@ -26,4 +29,14 @@ class LocalDateSerializer : JsonSerializer<LocalDate>() {
 
 class LocalDateDeserializer : JsonDeserializer<LocalDate>() {
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext): LocalDate = LocalDate.parse(p.text)
+}
+
+class LocalDateTimeSerializer : JsonSerializer<LocalDateTime>() {
+    override fun serialize(value: LocalDateTime, gen: JsonGenerator, serializers: SerializerProvider) {
+        gen.writeString(value.toString())
+    }
+}
+
+class LocalDateTimeDeserializer : JsonDeserializer<LocalDateTime>() {
+    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): LocalDateTime = LocalDateTime.parse(p.text)
 }

@@ -1,12 +1,15 @@
 package org.loculus.backend.service
 
-import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class GenerateAccessionFromNumberService(@Autowired val backendConfig: BackendConfig) {
+class GenerateAccessionFromNumberService(@Autowired private val configService: ConfigService) {
+
+    private val accessionPrefix: String
+        get() = configService.getInstanceConfig().config.accessionPrefix
 
     fun generateCustomId(sequenceNumber: Long): String {
         val base34Digits: MutableList<Char> = mutableListOf()
@@ -21,14 +24,14 @@ class GenerateAccessionFromNumberService(@Autowired val backendConfig: BackendCo
         val serialAccessionPart = base34Digits
             .joinToString("")
             .padStart(6, '0')
-        return backendConfig.accessionPrefix + serialAccessionPart + generateCheckCharacter(serialAccessionPart)
+        return accessionPrefix + serialAccessionPart + generateCheckCharacter(serialAccessionPart)
     }
 
     fun validateAccession(accession: Accession): Boolean {
-        if (!accession.startsWith(backendConfig.accessionPrefix)) {
+        if (!accession.startsWith(accessionPrefix)) {
             return false
         }
-        return validateCheckCharacter(accession.removePrefix(backendConfig.accessionPrefix))
+        return validateCheckCharacter(accession.removePrefix(accessionPrefix))
     }
 
     // See https://en.wikipedia.org/wiki/Luhn_mod_N_algorithm for details

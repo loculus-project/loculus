@@ -10,7 +10,7 @@ import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.getAllFileIds
 import org.loculus.backend.auth.AuthenticatedUser
-import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
@@ -84,7 +84,7 @@ class SubmitModel(
     private val filesDatabaseService: FilesDatabaseService,
     private val submissionIdFilesMappingPreconditionValidator: SubmissionIdFilesMappingPreconditionValidator,
     private val dateProvider: DateProvider,
-    private val backendConfig: BackendConfig,
+    private val configService: ConfigService,
 ) {
 
     companion object AcceptedFileTypes {
@@ -414,8 +414,6 @@ class SubmitModel(
         }
     }
 
-    private fun requiresConsensusSequenceFile(organism: Organism): Boolean = backendConfig.getInstanceConfig(organism)
-        .schema
-        .submissionDataTypes
-        .consensusSequences
+    private fun requiresConsensusSequenceFile(organism: Organism): Boolean =
+        configService.getOrganismConfig(organism).config.schema.submissionDataTypes.consensusSequences
 }

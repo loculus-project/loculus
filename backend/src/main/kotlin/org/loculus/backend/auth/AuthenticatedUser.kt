@@ -15,6 +15,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.method.support.ModelAndViewContainer
 
 object Roles {
+    const val LOCULUS_ADMINISTRATOR = "loculus_administrator"
     const val SUPER_USER = "super_user"
     const val PREPROCESSING_PIPELINE = "preprocessing_pipeline"
     const val EXTERNAL_METADATA_UPDATER = "external_metadata_updater"
