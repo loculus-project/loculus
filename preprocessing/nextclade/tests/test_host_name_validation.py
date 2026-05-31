@@ -139,7 +139,7 @@ def test_host_processing_legacy(mock_session: MagicMock) -> None:
 def test_host_processing_invalid_host_insdc(mock_session: MagicMock) -> None:
     """For an INSDC-ingested sequence with an invalid host, the derived host
     fields (hostTaxonId, hostNameScientific, hostNameCommon) should all be
-    None, and a warning  should be added explaining that host validation failed.
+    None, and a warning should be added explaining that host validation failed.
     """
     mock_session.get.return_value = make_response(404, {"detail": "not found"})
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
