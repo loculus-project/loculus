@@ -31,7 +31,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         }
     }
 
-    fun deleteFileEntry(fileId: FiledId) {
+    fun deleteFileEntry(fileId: UUID) {
         FilesTable.deleteWhere { FilesTable.idColumn eq fileId }
     }
 
