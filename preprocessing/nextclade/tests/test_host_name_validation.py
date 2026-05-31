@@ -126,9 +126,9 @@ def test_host_processing_legacy(mock_session: MagicMock) -> None:
     result = process_all([entry], "temp", config)
     metadata = result[0].processed_entry.data.metadata
 
-    assert metadata["hostTaxonId"] == None
-    assert metadata["hostNameScientific"] == None
-    assert metadata["hostNameCommon"] == None
+    assert metadata["hostTaxonId"] is None
+    assert metadata["hostNameScientific"] is None
+    assert metadata["hostNameCommon"] is None
     assert result[0].processed_entry.errors == []
 
     # No host field exists so taxonomy service never gets called
@@ -137,10 +137,9 @@ def test_host_processing_legacy(mock_session: MagicMock) -> None:
 
 @patch.object(processing_functions.taxonomy_cache, "session")
 def test_host_processing_invalid_host_insdc(mock_session: MagicMock) -> None:
-    """For an INSDC-ingested sequence whithout a scientific name but with a
-    taxon id, hostTaxonId should be None but hostNameScientific should be set
-    to the provided value.
-    There should also be a warning saying host validation failed
+    """For an INSDC-ingested sequence with an invalid host, the derived host
+    fields (hostTaxonId, hostNameScientific, hostNameCommon) should all be
+    None, and a warning  should be added explaining that host validation failed.
     """
     mock_session.get.return_value = make_response(404, {"detail": "not found"})
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
@@ -153,7 +152,9 @@ def test_host_processing_invalid_host_insdc(mock_session: MagicMock) -> None:
     result = process_all([entry], "temp", config)
     metadata = result[0].processed_entry.data.metadata
 
-    assert metadata.get("host") == None
+    assert metadata["hostTaxonId"] is None
+    assert metadata["hostNameScientific"] is None
+    assert metadata["hostNameCommon"] is None
 
     assert mock_session.get.call_count == 1
     assert result[0].processed_entry.errors == []
@@ -163,12 +164,11 @@ def test_host_processing_invalid_host_insdc(mock_session: MagicMock) -> None:
 
 @patch.object(processing_functions.taxonomy_cache, "session")
 def test_host_processing_invalid_host_direct(mock_session: MagicMock) -> None:
-    """For an INSDC-ingested sequence whithout a scientific name but with a
-    taxon id, hostTaxonId should be None but hostNameScientific should be set
-    to the provided value.
-    There should also be a warning saying host validation failed
+    """When a direct submitter provides an invalid host, the derived host
+    fields (hostTaxonId, hostNameScientific, hostNameCommon) should all be
+    None, and an error (not a warning) should be added explaining that host
+    validation failed.
     """
-    # mock_session.get.side_effect = make_response(404, {"detail": "not found"})
     mock_session.get.return_value = make_response(404, {"detail": "not found"})
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
 
@@ -180,7 +180,9 @@ def test_host_processing_invalid_host_direct(mock_session: MagicMock) -> None:
     result = process_all([entry], "temp", config)
     metadata = result[0].processed_entry.data.metadata
 
-    assert metadata.get("host") == None
+    assert metadata["hostTaxonId"] is None
+    assert metadata["hostNameScientific"] is None
+    assert metadata["hostNameCommon"] is None
 
     assert mock_session.get.call_count == 1
     assert result[0].processed_entry.warnings == []

@@ -151,7 +151,7 @@ def main(
 
         record["hash"] = hashlib.md5(prehash.encode(), usedforsecurity=False).hexdigest()
 
-        # for segemented organisms, this has to happen in `heuristic_group_segments.py`
+        # for segmented organisms, this has to happen in `heuristic_group_segments.py`
         # and `override_group_segments.py`
         if not config.segmented:
             # Create a new host field and populate it from hostTaxonId or hostNameScientific
