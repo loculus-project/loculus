@@ -36,7 +36,7 @@ import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
-import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
 import org.loculus.backend.log.ORGANISM_MDC_KEY
 import org.loculus.backend.log.REQUEST_ID_MDC_KEY
@@ -84,7 +84,7 @@ open class SubmissionController(
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val iteratorStreamer: IteratorStreamer,
     private val requestIdContext: RequestIdContext,
-    private val backendConfig: BackendConfig,
+    private val configService: ConfigService,
     private val objectMapper: ObjectMapper,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
@@ -264,7 +264,7 @@ open class SubmissionController(
         @Parameter(
             description = (
                 "Name of the pipeline submitting the external metadata update. This should match the " +
-                    "externalMetadataUpdater value of the externalMetadata fields (in the backend_config.json) that are being updated."
+                    "externalMetadataUpdater value of the externalMetadata fields (configured per organism) that are being updated."
                 ),
         ) @RequestParam externalMetadataUpdater: String,
         request: HttpServletRequest,
@@ -539,7 +539,7 @@ open class SubmissionController(
 
     fun parseFileMapping(fileMapping: String?, organism: Organism): SubmissionIdFilesMap? {
         val fileMappingParsed = fileMapping?.let {
-            if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
+            if (!configService.getOrganismConfig(organism).config.schema.submissionDataTypes.files.enabled) {
                 throw BadRequestException("the ${organism.name} organism does not support file submission.")
             }
             try {

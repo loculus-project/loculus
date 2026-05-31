@@ -16,9 +16,9 @@ import org.junit.jupiter.api.Test
 import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.config.BackendSpringProperty
-import org.loculus.backend.controller.DATA_USE_TERMS_DISABLED_CONFIG
+import org.loculus.backend.config.fixtures.ConfigFixtures
+import org.loculus.backend.config.service.ConfigService
+import org.loculus.backend.controller.DATA_USE_TERMS_DISABLED_VARIANT
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_GROUP_CHANGED
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME_CHANGED
@@ -37,15 +37,19 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import kotlin.time.Clock
 
-@EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$DATA_USE_TERMS_DISABLED_CONFIG"],
-)
+@EndpointTest
 class GetReleasedDataDataUseTermsDisabledEndpointTest(
     @Autowired private val convenienceClient: SubmissionConvenienceClient,
     @Autowired private val submissionControllerClient: SubmissionControllerClient,
     @Autowired private val groupClient: GroupManagementControllerClient,
-    @Autowired private val backendConfig: BackendConfig,
+    @Autowired private val configService: ConfigService,
+    @Autowired private val configFixtures: ConfigFixtures,
 ) {
+
+    @BeforeEach
+    fun loadDataUseTermsDisabledFixture() {
+        configFixtures.loadVariant(DATA_USE_TERMS_DISABLED_VARIANT)
+    }
     private val currentDate = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.toString()
 
     @MockkBean
@@ -58,7 +62,7 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
 
     @Test
     fun `config has been read and data use terms are configured to be off`() {
-        assertThat(backendConfig.dataUseTerms.enabled, `is`(false))
+        assertThat(configService.getInstanceConfig().config.dataUseTerms.enabled, `is`(false))
     }
 
     @Test

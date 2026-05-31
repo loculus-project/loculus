@@ -65,9 +65,13 @@ The helm chart for deploying pathoplexus is within the Loculus repo, in the `kub
 
 ## Organism Configuration
 
-Loculus supports multiple organisms, each with its own configuration. The organisms section in the values.yaml file allows you to define the specific settings for each organism. See [here](../../reference/helm-chart-config/) for a list of the available config fields.
+:::caution[Domain config has moved to the database]
+Organism **domain** config — the schema, metadata fields, reference genomes, link-outs, file categories, etc. — is now stored in Loculus's [database-backed configuration system](../configuration-system/), not in `values.yaml`. It is seeded from `kubernetes/loculus/fixtures/` by the config loader and edited through the admin dashboard; the backend, website, SILO, and LAPIS all read it from there. The `values.yaml` `organisms`/`defaultOrganisms` block is now used only for **deployment-level** per-organism settings: which pipelines run (preprocessing/ingest image, version, args), the pinned `configVersion`, and replicas. The schema-style fields shown in the example below are legacy and no longer drive the running instance (the ingest pipeline still reads some of them). See [Configuration (new)](../configuration-system/) for the current workflow.
+:::
 
-Here's an example of how the organism configuration might look:
+Loculus supports multiple organisms, each with its own configuration. See [here](../../reference/helm-chart-config/) for a list of the available config fields.
+
+Here's an example of how the (legacy) organism configuration looked:
 
 ```yaml
 organisms:
@@ -126,7 +130,7 @@ organisms:
       singleReference:
         nucleotideSequences:
           - name: 'main'
-            sequence: '[[URL:https://cov2tree.nyc3.cdn.digitaloceanspaces.com/reference.txt]]'
+            sequence: 'ACGT…'  # the full reference sequence
         genes: []
 ```
 

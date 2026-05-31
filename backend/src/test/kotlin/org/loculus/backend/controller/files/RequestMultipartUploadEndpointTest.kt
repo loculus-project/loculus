@@ -7,10 +7,11 @@ import org.apache.http.entity.ContentType
 import org.apache.http.impl.client.HttpClients
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.config.fixtures.ConfigFixtures
 import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.S3_CONFIG
+import org.loculus.backend.controller.S3_VARIANT
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForAlternativeUser
@@ -18,14 +19,18 @@ import org.loculus.backend.controller.jwtForProcessingPipeline
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
-)
+@EndpointTest
 class RequestMultipartUploadEndpointTest(
     @Autowired private val client: FilesClient,
     @Autowired private val groupManagementClient: GroupManagementControllerClient,
     @Autowired private val objectMapper: ObjectMapper,
+    @Autowired private val configFixtures: ConfigFixtures,
 ) {
+
+    @BeforeEach
+    fun loadS3Fixture() {
+        configFixtures.loadVariant(S3_VARIANT)
+    }
 
     @Test
     fun `GIVEN a request for 2 URLs and 3 parts THEN returns a response with 2x3 URLs`() {

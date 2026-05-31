@@ -3,9 +3,12 @@ import graphlib
 import logging
 import os
 from enum import StrEnum
+from http import HTTPStatus
 from types import UnionType
 from typing import Any, get_args
+from urllib.parse import urlparse
 
+import requests
 import yaml
 from pydantic import BaseModel, Field, model_validator
 
@@ -270,6 +273,82 @@ def get_processing_order(config: Config) -> tuple[str, ...]:
     return processing_order
 
 
+def build_identity_processing_specs(
+    metadata: list[dict[str, Any]], segment_names: list[str]
+) -> dict[str, dict[str, Any]]:
+    """Identity processing entries for every organism metadata field.
+
+    The backend config no longer carries per-field `preprocessing` directives —
+    those (the non-identity ones) live in the pipeline's own config file. Here we
+    fill the gaps: every metadata field that the config file does not already
+    specify gets a plain identity copy. Multi-segment fields marked `perSegment`
+    are expanded to one entry per segment (`name_<segment>`), matching what the
+    Helm chart used to generate.
+    """
+    is_segmented = len(segment_names) > 1
+    specs: dict[str, dict[str, Any]] = {}
+    for field in metadata:
+        name = field["name"]
+        if is_segmented and field.get("perSegment"):
+            output_names = [f"{name}_{segment}" for segment in segment_names]
+        else:
+            output_names = [name]
+        for output_name in output_names:
+            specs[output_name] = {"function": "identity", "inputs": {"input": output_name}}
+    return specs
+
+
+def fetch_config_from_backend(
+    backend_host: str, organism: str, pipeline_version: int
+) -> dict[str, Any]:
+    """Assemble the pipeline config for a deployed run from the public config API.
+
+    Two sources are combined:
+      * the opaque, pipeline-owned config file stored per (organism, pipeline
+        version) — nextclade datasets, alignment knobs, EMBL settings, and any
+        non-identity `processing_spec` entries; and
+      * the organism's metadata field list, used to fill in identity
+        `processing_spec` entries for fields the config file does not specify.
+
+    The core backend never interprets the config file; this function is the
+    pipeline-side translation into the pipeline's own `Config` shape.
+    """
+    parsed = urlparse(backend_host)
+    base_url = f"{parsed.scheme}://{parsed.netloc}"
+
+    config_url = f"{base_url}/api/config/organisms/{organism}/preprocessing/{pipeline_version}"
+    config_response = requests.get(config_url, timeout=30)
+    if config_response.status_code == HTTPStatus.OK:
+        config_dict: dict[str, Any] = yaml.safe_load(config_response.text) or {}
+    elif config_response.status_code == HTTPStatus.NOT_FOUND:
+        # No config file configured for this organism + pipeline version. That's
+        # allowed; we still derive identity processing specs from the metadata.
+        config_dict = {}
+    else:
+        msg = (
+            f"Failed to fetch preprocessing config from {config_url}: "
+            f"status {config_response.status_code}"
+        )
+        raise RuntimeError(msg)
+
+    organism_url = f"{base_url}/api/config/organisms/{organism}"
+    organism_response = requests.get(organism_url, timeout=30)
+    if not organism_response.ok:
+        msg = (
+            f"Failed to fetch organism config from {organism_url}: "
+            f"status {organism_response.status_code}"
+        )
+        raise RuntimeError(msg)
+    metadata = organism_response.json().get("config", {}).get("schema", {}).get("metadata", [])
+
+    segment_names = [segment["name"] for segment in config_dict.get("segments", [])]
+    identity_specs = build_identity_processing_specs(metadata, segment_names)
+    # The config file's explicit specs take precedence over the identity defaults.
+    config_dict["processing_spec"] = {**identity_specs, **config_dict.get("processing_spec", {})}
+    config_dict.setdefault("organism", organism)
+    return config_dict
+
+
 def get_config(config_file: str | None = None, ignore_args: bool = False) -> Config:
     """
     Config precedence: Direct function args > CLI args > ENV variables > config file > default
@@ -294,12 +373,21 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
         config_file or args.config_file or os.environ.get("PREPROCESSING_CONFIG_FILE")
     )
 
-    # Start with lowest precedence config, then overwrite with higher precedence
+    # Start with lowest precedence config, then overwrite with higher precedence.
+    # Precedence of the base layer: an explicit config file (used by tests) wins;
+    # otherwise, in a deployed run (backend host + organism known), fetch the
+    # pipeline config from the backend; otherwise fall back to defaults.
+    backend_host = getattr(args, "backend_host", None)
+    organism = getattr(args, "organism", None)
+    pipeline_version = getattr(args, "pipeline_version", None) or 1
     if config_file_path:
         with open(config_file_path, encoding="utf-8") as file:
             yaml_config = yaml.safe_load(file)
             logger.debug(f"Loaded config from {config_file_path}: {yaml_config}")
         config = Config(**yaml_config)
+    elif backend_host and organism:
+        logger.info(f"Fetching preprocessing config for organism '{organism}' from {backend_host}")
+        config = Config(**fetch_config_from_backend(backend_host, organism, pipeline_version))
     else:
         config = Config()
     # Use environment variables if available

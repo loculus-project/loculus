@@ -1,0 +1,29 @@
+---
+import { AuditLogTable } from '../../../components/admin/AuditLogTable';
+import AdminConfigLayout from '../../../layouts/AdminConfigLayout.astro';
+import { AdminConfigError, getAdminConfigClient } from '../../../services/adminConfigClient';
+import type { AuditEntry } from '../../../types/loculusConfig';
+
+const session = Astro.locals.session!;
+const client = await getAdminConfigClient(session);
+
+let entries: AuditEntry[] = [];
+let organismKeys: string[] = [];
+let loadError: string | null = null;
+try {
+    const [audit, organismList] = await Promise.all([client.audit(), client.listOrganisms()]);
+    entries = audit.entries;
+    organismKeys = organismList.organisms.map((o) => o.key).sort();
+} catch (e) {
+    loadError = AdminConfigError.isInstance(e) ? (e.body.message ?? e.body.error) : String(e);
+}
+---
+
+<AdminConfigLayout title='Audit log'>
+    <p class='text-sm text-gray-600 mb-4'>
+        Combined audit log for instance and organism config changes. The backend returns the most recent 200 entries;
+        use the filter to narrow by scope or by a specific organism.
+    </p>
+    {loadError !== null && <p class='text-red-600 mb-4'>Failed to load: {loadError}</p>}
+    {loadError === null && <AuditLogTable entries={entries} organismKeys={organismKeys} client:load />}
+</AdminConfigLayout>

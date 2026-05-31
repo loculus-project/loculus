@@ -1,10 +1,17 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token" }}
-
+{{- $backendHost := .Values.disableBackend | ternary
+    "http://host.k3d.internal:8079"
+    "http://loculus-backend-service:8079"
+}}
+{{- /* Lineage system definitions live in the backend DB (canonical
+       InstanceConfig.lineageSystemDefinitions). The config-adapter init container
+       fetches them and writes lineage_definitions.json into the shared volume;
+       the silo-importer reads that file and downloads the definitions itself. */ -}}
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 {{- $organismContent := $item.contents }}
-{{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" | fromYamlArray }}
+{{- $configVersion := default 1 ($organismContent.configVersion) }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -29,7 +36,13 @@ spec:
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
-        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
+        {{- include "loculus.configAdapterInitContainer" (dict
+              "organismKey" $key
+              "configVersion" $configVersion
+              "dockerTag" $dockerTag
+              "imagePullPolicy" $.Values.imagePullPolicy
+              "images" $.Values.images
+              "backendUrl" $backendHost) | nindent 8 }}
       containers:
         - name: silo
           image: "{{ $.Values.images.loculusSilo.repository }}:{{ $.Values.images.loculusSilo.tag | default $dockerTag }}"
@@ -81,18 +94,8 @@ spec:
               {{- else }}
               value: "http://loculus-backend-service:8079/{{ $key }}"
               {{- end }}
-            {{- if $lineageSystem }}
-              {{- $defsBySystem := dict -}}
-              {{- range $ls := $lineageSystem }}
-                {{- $def := index $.Values.lineageSystemDefinitions $ls -}}
-                {{- if not $def -}}
-                  {{- fail (printf "lineageSystemDefinitions missing entry for lineage system '%s'" $ls) -}}
-                {{- end -}}
-                {{- $defsBySystem = set $defsBySystem $ls $def -}}
-              {{- end }}
-            - name: LINEAGE_DEFINITIONS
-              value: {{ $defsBySystem | toJson | quote }}
-            {{- end }}
+            - name: LINEAGE_DEFINITIONS_FILE
+              value: "/app/lineage_definitions.json"
             - name: SILO_RUN_TIMEOUT_SECONDS
               value: {{ $.Values.siloImport.siloTimeoutSeconds | quote }}
             - name: HARD_REFRESH_INTERVAL
@@ -113,12 +116,15 @@ spec:
             - name: lapis-silo-database-config-processed
               mountPath: /app/preprocessing_config.yaml
               subPath: preprocessing_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/lineage_definitions.json
+              subPath: lineage_definitions.json
             - name: lapis-silo-shared-data
               mountPath: /preprocessing/output
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
       volumes:
-        {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
+        {{- include "loculus.adapterVolume" . | nindent 8 }}
         - name: lapis-silo-shared-data
           emptyDir: {}
         - name: lapis-silo-input-data-cache

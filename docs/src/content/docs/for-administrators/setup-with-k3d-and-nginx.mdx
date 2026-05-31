@@ -113,12 +113,11 @@ helm upgrade --install kubernetes-secret-generator mittwald/kubernetes-secret-ge
 
 ## Step 3: Configure the instance
 
-Create a file `my-values.yaml` with the following configuration for the instance. Please enter your domain name (e.g., `loculus.example.com`), define an initial admin password and give your instance a name. This instance uses a cluster-internal test database and a very simple organism. We will improve the configuration later.
+Create a file `my-values.yaml` with the **deployment/infrastructure** configuration for your instance. Enter your domain name (e.g. `loculus.example.com`) and an initial admin password. This instance uses a cluster-internal test database.
 
 ```yaml
-name: '<your instance name>'
 host: '<your domain>'
-environment: local # Do not change this: this setup uses a "local" environment as the public traffic is proxied through nginx.
+environment: local # Do not change this: this setup proxies public traffic through nginx.
 
 runDevelopmentMainDatabase: true
 runDevelopmentKeycloakDatabase: true
@@ -144,42 +143,11 @@ secrets:
     type: raw
     data:
       initialAdminPassword: '<your initial admin password>'
-
-organisms:
-  angelovirus:
-    schema:
-      organismName: 'Angelovirus'
-      metadata:
-        - name: country
-          type: string
-          initiallyVisible: true
-        - name: city
-          type: string
-          initiallyVisible: true
-      website:
-        tableColumns:
-          - country
-          - city
-        defaultOrder: descending
-        defaultOrderBy: country
-    preprocessing:
-      - version: 1
-        image: ghcr.io/loculus-project/preprocessing-nextclade
-        args:
-          - 'prepro'
-        configFile:
-          log_level: DEBUG
-          batch_size: 100
-          nextclade_sequence_and_datasets:
-            - name: 'main'
-              genes: []
-    referenceGenomes:
-      singleReference:
-        nucleotideSequences:
-          - name: 'main'
-            sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
-        genes: []
 ```
+
+<Aside type='note'>
+  Notice there are no organisms or an instance `name` here. The instance name, branding, and the **organisms** (their schema, metadata, reference genomes, …) are *domain config*, which is no longer set in `values.yaml`. It lives in Loculus's database-backed configuration system — edited through the admin dashboard or seeded from fixture files with the config loader. Read [Configuration system](../configuration-system/) for the concepts and [Managing configuration](../managing-configuration/) for the step-by-step workflow: creating an organism, publishing it, and rolling it out to SILO/LAPIS (this is where each organism's `configVersion` scaffolding is added back into `values.yaml`).
+</Aside>
 
 ## Step 4: Install and deploy
 

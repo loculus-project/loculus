@@ -223,11 +223,6 @@
           "type": "string",
           "description": "Which NCBI field to map to this field."
         },
-        "preprocessing": {
-          "groups": ["metadata"],
-          "type": "object",
-          "description": "The values of this field will be added to the preprocessing pipeline config file and the available values depend on the chosen pipeline. For the Nextclade pipeline, please see [here](https://github.com/loculus-project/loculus/blob/main/preprocessing/nextclade/README.md#custom-preprocessing-functions)."
-        },
         "lineageSystem": {
           "groups": ["metadata"],
           "type": "string",
@@ -244,72 +239,108 @@
         },
         {
           "if": {
-            "properties": { "generateIndex": { "const": true } },
+            "properties": {
+              "generateIndex": {
+                "const": true
+              }
+            },
             "required": ["generateIndex"]
           },
           "then": {
             "properties": {
-              "type": { "enum": ["string", "authors"] }
+              "type": {
+                "enum": ["string", "authors"]
+              }
             },
             "errorMessage": "When generateIndex is true, type must be 'string' or 'authors'"
           }
         },
         {
           "if": {
-            "properties": { "autocomplete": { "const": true } },
+            "properties": {
+              "autocomplete": {
+                "const": true
+              }
+            },
             "required": ["autocomplete"]
           },
           "then": {
             "properties": {
-              "type": { "enum": ["string", "authors", "int", "float", "number", "boolean"] }
+              "type": {
+                "enum": ["string", "authors", "int", "float", "number", "boolean"]
+              }
             },
             "errorMessage": "When autocomplete is true, type must be 'string', 'authors', 'int', 'float', 'number', or 'boolean'"
           }
         },
         {
           "if": {
-            "properties": { "enableSubstringSearch": { "const": true } },
+            "properties": {
+              "enableSubstringSearch": {
+                "const": true
+              }
+            },
             "required": ["enableSubstringSearch"]
           },
           "then": {
             "properties": {
-              "type": { "enum": ["string", "authors"] }
+              "type": {
+                "enum": ["string", "authors"]
+              }
             },
             "errorMessage": "When enableSubstringSearch is true, type must be 'string' or 'authors'"
           }
         },
         {
           "if": {
-            "properties": { "lineageSystem": { "type": "string" } },
+            "properties": {
+              "lineageSystem": {
+                "type": "string"
+              }
+            },
             "required": ["lineageSystem"]
           },
           "then": {
             "properties": {
-              "type": { "enum": ["string", "authors"] }
+              "type": {
+                "enum": ["string", "authors"]
+              }
             },
             "errorMessage": "When lineageSystem is set, type must be 'string' or 'authors'"
           }
         },
         {
           "if": {
-            "properties": { "rangeSearch": { "const": true } },
+            "properties": {
+              "rangeSearch": {
+                "const": true
+              }
+            },
             "required": ["rangeSearch"]
           },
           "then": {
             "properties": {
-              "type": { "enum": ["int", "float", "number", "date"] }
+              "type": {
+                "enum": ["int", "float", "number", "date"]
+              }
             },
             "errorMessage": "When rangeSearch is true, type must be numeric or date ('int', 'float', 'number', or 'date')"
           }
         },
         {
           "if": {
-            "properties": { "rangeOverlapSearch": { "type": "object" } },
+            "properties": {
+              "rangeOverlapSearch": {
+                "type": "object"
+              }
+            },
             "required": ["rangeOverlapSearch"]
           },
           "then": {
             "properties": {
-              "type": { "enum": ["int", "float", "number", "date"] }
+              "type": {
+                "enum": ["int", "float", "number", "date"]
+              }
             },
             "errorMessage": "When rangeOverlapSearch is set, type must be numeric or date ('int', 'float', 'number', or 'date')"
           }
@@ -325,6 +356,13 @@
           "type": "boolean",
           "default": true,
           "description": "Whether this organism is enabled."
+        },
+        "configVersion": {
+          "groups": ["organism"],
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Pinned DB-backed organism config version (Phase 3). The adapter init container fetches /api/config/organisms/{key}?version={configVersion}; bump this to roll out a new published config."
         },
         "schema": {
           "groups": ["organism"],
@@ -438,14 +476,18 @@
               "docsIncludePrefix": false,
               "type": "array",
               "description": "Array of [Metadata fields (type)](#metadata-type) associated with the organism.",
-              "items": { "$ref": "#/definitions/metadata" }
+              "items": {
+                "$ref": "#/definitions/metadata"
+              }
             },
             "metadataAdd": {
               "groups": ["schema"],
               "docsIncludePrefix": false,
               "type": "array",
               "description": "Array of [Metadata fields (type)](#metadata-type) associated with the organism, in addtion to the fields in `metadata`.",
-              "items": { "$ref": "#/definitions/metadata" }
+              "items": {
+                "$ref": "#/definitions/metadata"
+              }
             },
             "metadataTemplate": {
               "groups": ["schema"],
@@ -501,7 +543,9 @@
                   },
                   "onlyForReferences": {
                     "type": "object",
-                    "additionalProperties": { "type": "string" },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
                     "description": "Optional filter: maps segment name to reference name. When specified, this linkOut is only shown in the tool dropdown when the user has selected a matching reference (or no reference) for each listed segment. Use this to avoid showing reference-specific Nextclade datasets for the wrong reference in multi-reference organisms. Example: {main: CV-A16} or {M: MH396653}."
                   },
                   "category": {
@@ -655,144 +699,6 @@
                   "type": "string"
                 },
                 "description": "Array of Strings. Arguments passed to the preprocessing pipeline."
-              },
-              "taxonomyServiceArgs": {
-                "groups": ["preprocessing"],
-                "docsIncludePrefix": false,
-                "type": "object",
-                "description": "Settings to configure the taxonomy service host and port",
-                "properties": {
-                  "taxonomy_service_url": {
-                    "groups": ["preprocessing"],
-                    "type": "string",
-                    "description": "Host and port where the taxonomy service runs"
-                  }
-                }
-              },
-              "configFile": {
-                "groups": ["preprocessing"],
-                "docsIncludePrefix": false,
-                "type": "object",
-                "description": "Object of type [ConfigFile](#nextclade-preprocessing-pipeline-configfile-type), Fields that should be added to the preprocessing pipeline config file.",
-                "properties": {
-                  "create_embl_file": {
-                    "groups": ["nextcladePipelineConfigFile"],
-                    "docsIncludePrefix": false,
-                    "type": "boolean",
-                    "description": "If prepreprocessing should generate an EMBL file for each sequence, note this requires additional metadata fields to be present (taxon_id, scientific_name, molecule_type)."
-                  },
-                  "alignment_requirement": {
-                    "groups": ["nextcladePipelineConfigFile"],
-                    "docsIncludePrefix": false,
-                    "type": "string",
-                    "enum": ["ALL", "ANY"],
-                    "description": "Applies only to multi-segmented organisms. Determines whether ALL or ANY segments that are submitted must align. In the case ANY it must still be possible to assign the segment."
-                  },
-                  "segment_classification_method": {
-                    "groups": ["nextcladePipelineConfigFile"],
-                    "docsIncludePrefix": false,
-                    "type": "string",
-                    "enum": ["minimizer", "align", "diamond"],
-                    "description": "Method to classify segments for multi-segmented viruses"
-                  },
-                  "nextclade_dataset_server": {
-                    "groups": ["nextcladePipelineConfigFile"],
-                    "docsIncludePrefix": false,
-                    "type": "string",
-                    "description": "Server from which to download nextclade datasets."
-                  },
-                  "segments": {
-                    "groups": ["nextcladePipelineConfigFile"],
-                    "docsIncludePrefix": false,
-                    "type": "array",
-                    "description": "Array of [segment](#nextclade-preprocessing-pipeline-segment-objects-type) objects containing nucleotide sequences, references and their corresponding nextclade datasets.",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "properties": {
-                        "name": {
-                          "groups": ["nextcladeSegment"],
-                          "docsIncludePrefix": false,
-                          "type": "string",
-                          "description": "Name of the nucleotide sequence to which this dataset applies - defaults to 'main'."
-                        },
-                        "references": {
-                          "groups": ["nextcladeSegment"],
-                          "docsIncludePrefix": false,
-                          "type": "array",
-                          "description": "Details of the nextclade dataset for each reference",
-                          "items": {
-                            "type": "object",
-                            "additionalProperties": false,
-                            "required": ["name"],
-                            "properties": {
-                              "name": {
-                                "groups": ["nextcladeSegment"],
-                                "docsIncludePrefix": false,
-                                "type": "string",
-                                "description": "Name of the reference to use for alignment  - set name to 'singleReference' if there is only one reference."
-                              },
-                              "nextclade_dataset_name": {
-                                "groups": ["nextcladeSegment"],
-                                "docsIncludePrefix": false,
-                                "type": "string",
-                                "description": "Name of the nextclade dataset to use to align the sequence - required if this sequence should be aligned."
-                              },
-                              "nextclade_dataset_tag": {
-                                "groups": ["nextcladeSegment"],
-                                "docsIncludePrefix": false,
-                                "type": "string",
-                                "description": "Optional. Tag of the nextclade dataset to use to align the sequence."
-                              },
-                              "nextclade_dataset_server": {
-                                "groups": ["nextcladeSegment"],
-                                "docsIncludePrefix": false,
-                                "type": "string",
-                                "description": "Optional. Server from which to download the nextclade dataset to use to align the sequence. If not specified, use the global nextclade_dataset_server."
-                              },
-                              "accepted_dataset_matches": {
-                                "groups": ["nextcladeSegment"],
-                                "docsIncludePrefix": false,
-                                "type": "array",
-                                "description": "Optional. Array of strings. The dataset names that are accepted as matches when using nextclade sort or diamond, if not specified use only accept matches with the same name or nextclade_dataset_name."
-                              },
-                              "genes": {
-                                "groups": ["nextcladeSegment"],
-                                "docsIncludePrefix": false,
-                                "type": "array",
-                                "description": "Array of strings. The names of the genes to be extracted from the sequence alignment results (should correspond to gene names in the nextclade dataset)."
-                              },
-                              "nextclade_additional_args": {
-                                "groups": ["nextcladeSegment"],
-                                "docsIncludePrefix": false,
-                                "type": "array",
-                                "description": "Array of strings. Additional arguments to pass to nextclade when aligning this segment."
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "require_nextclade_sort_match": {
-                    "groups": ["nextcladePipelineConfigFile"],
-                    "docsIncludePrefix": false,
-                    "type": "boolean",
-                    "description": "If true run nextclade sort and require that the highest scoring match is in the config.accepted_dataset_matches"
-                  },
-                  "minimizer_url": {
-                    "groups": ["nextcladePipelineConfigFile"],
-                    "docsIncludePrefix": false,
-                    "type": "string",
-                    "description": "Minimizer used for nextclade sort (if require_nextclade_sort_match or if segments are to be assigned using nextclade sort)"
-                  },
-                  "backend_request_timeout_seconds": {
-                    "groups": ["nextcladePipelineConfigFile"],
-                    "docsIncludePrefix": false,
-                    "type": "integer",
-                    "description": "Timeout in seconds for requests to the backend server for data to process"
-                  }
-                }
               }
             },
             "required": ["version", "image"]
@@ -985,12 +891,12 @@
                             "description": "The amino acid or nucleotide sequence for this gene"
                           }
                         },
-                        "required": ["name", "sequence"]
+                        "required": ["name"]
                       },
                       "additionalProperties": false
                     }
                   },
-                  "required": ["name", "sequence"]
+                  "required": ["name"]
                 }
               },
               "additionalProperties": false
@@ -1007,15 +913,23 @@
         "requests": {
           "type": "object",
           "properties": {
-            "memory": { "type": "string" },
-            "cpu": { "type": "string" }
+            "memory": {
+              "type": "string"
+            },
+            "cpu": {
+              "type": "string"
+            }
           }
         },
         "limits": {
           "type": "object",
           "properties": {
-            "memory": { "type": "string" },
-            "cpu": { "type": "string" }
+            "memory": {
+              "type": "string"
+            },
+            "cpu": {
+              "type": "string"
+            }
           }
         }
       }
@@ -1171,7 +1085,7 @@
     "createTestAccounts": {
       "groups": ["general"],
       "type": "boolean",
-      "description": "If true, creates the users testuser and superuser"
+      "description": "If true, creates the users testuser, superuser, and loculus_administrator"
     },
     "robotsNoindexHeader": {
       "groups": ["general"],
@@ -1565,7 +1479,9 @@
       "type": "object",
       "description": "An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type)",
       "patternProperties": {
-        "^[a-z0-9-]+$": { "$ref": "#/definitions/organism" }
+        "^[a-z0-9-]+$": {
+          "$ref": "#/definitions/organism"
+        }
       }
     },
     "defaultOrganismConfig": {
@@ -1574,30 +1490,8 @@
     "defaultOrganisms": {
       "type": "object",
       "patternProperties": {
-        "^[a-z0-9-]+$": { "$ref": "#/definitions/organism" }
-      }
-    },
-    "lineageSystemDefinitions": {
-      "groups": ["organism-conf"],
-      "type": "object",
-      "description": "An object where the keys are the lineage system names and values are links to lineage system definition files per pipeline version (See [Lineage system definitions](#lineage-system-definitions))",
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[a-zA-Z0-9-]+$": {
-          "groups": ["lineage-system-definitions"],
-          "placeholder": "name",
-          "type": "object",
-          "description": "A map from pipeline versions to file URLs.",
-          "additionalProperties": false,
-          "patternProperties": {
-            "^[0-9]+$": {
-              "groups": ["lineage-system-definitions"],
-              "placeholder": "pipelineVersion",
-              "type": "string",
-              "format": "uri",
-              "description": "The URL to the lineage definition file for that lineage system and that pipeline version."
-            }
-          }
+        "^[a-z0-9-]+$": {
+          "$ref": "#/definitions/organism"
         }
       }
     },
@@ -1706,12 +1600,16 @@
           "oneOf": [
             {
               "properties": {
-                "enabled": { "const": false }
+                "enabled": {
+                  "const": false
+                }
               }
             },
             {
               "properties": {
-                "enabled": { "const": true }
+                "enabled": {
+                  "const": true
+                }
               },
               "required": ["bucket"]
             }
@@ -1804,13 +1702,29 @@
     "images": {
       "groups": ["general"],
       "type": "object",
-      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend.`",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website`, `backend`, `configLoader`, and `configAdapter`.",
       "properties": {
-        "lapis": { "$ref": "#/definitions/imageSpec" },
-        "lapisSilo": { "$ref": "#/definitions/imageSpec" },
-        "loculusSilo": { "$ref": "#/definitions/imageSpec" },
-        "website": { "$ref": "#/definitions/imageSpec" },
-        "backend": { "$ref": "#/definitions/imageSpec" }
+        "lapis": {
+          "$ref": "#/definitions/imageSpec"
+        },
+        "lapisSilo": {
+          "$ref": "#/definitions/imageSpec"
+        },
+        "loculusSilo": {
+          "$ref": "#/definitions/imageSpec"
+        },
+        "website": {
+          "$ref": "#/definitions/imageSpec"
+        },
+        "backend": {
+          "$ref": "#/definitions/imageSpec"
+        },
+        "configLoader": {
+          "$ref": "#/definitions/imageSpec"
+        },
+        "configAdapter": {
+          "$ref": "#/definitions/imageSpec"
+        }
       },
       "additionalProperties": false
     },
@@ -1875,16 +1789,24 @@
         "requests": {
           "type": "object",
           "properties": {
-            "memory": { "type": "string" },
-            "cpu": { "type": "string" }
+            "memory": {
+              "type": "string"
+            },
+            "cpu": {
+              "type": "string"
+            }
           },
           "additionalProperties": false
         },
         "limits": {
           "type": "object",
           "properties": {
-            "memory": { "type": "string" },
-            "cpu": { "type": "string" }
+            "memory": {
+              "type": "string"
+            },
+            "cpu": {
+              "type": "string"
+            }
           },
           "additionalProperties": false
         }
@@ -1894,35 +1816,75 @@
     "resources": {
       "type": "object",
       "properties": {
-        "website": { "$ref": "#/definitions/resourceSpec" },
-        "docs": { "$ref": "#/definitions/resourceSpec" },
-        "ena-submission": { "$ref": "#/definitions/resourceSpec" },
-        "ena-submission-list-cronjob": { "$ref": "#/definitions/resourceSpec" },
-        "ingest": { "$ref": "#/definitions/resourceSpec" },
-        "keycloak": { "$ref": "#/definitions/resourceSpec" },
-        "silo": { "$ref": "#/definitions/resourceSpec" },
-        "lapis": { "$ref": "#/definitions/resourceSpec" },
-        "silo-importer": { "$ref": "#/definitions/resourceSpec" },
-        "backend": { "$ref": "#/definitions/resourceSpec" },
-        "preprocessing": { "$ref": "#/definitions/resourceSpec" },
+        "website": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "docs": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "ena-submission": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "ena-submission-list-cronjob": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "ingest": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "keycloak": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "silo": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "lapis": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "silo-importer": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "backend": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "preprocessing": {
+          "$ref": "#/definitions/resourceSpec"
+        },
         "organismSpecific": {
           "type": "object",
           "patternProperties": {
             ".*": {
               "type": "object",
               "properties": {
-                "website": { "$ref": "#/definitions/resourceSpec" },
-                "ena-submission": { "$ref": "#/definitions/resourceSpec" },
+                "website": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "ena-submission": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
                 "ena-submission-list-cronjob": {
                   "$ref": "#/definitions/resourceSpec"
                 },
-                "ingest": { "$ref": "#/definitions/resourceSpec" },
-                "keycloak": { "$ref": "#/definitions/resourceSpec" },
-                "silo": { "$ref": "#/definitions/resourceSpec" },
-                "lapis": { "$ref": "#/definitions/resourceSpec" },
-                "silo-importer": { "$ref": "#/definitions/resourceSpec" },
-                "backend": { "$ref": "#/definitions/resourceSpec" },
-                "preprocessing": { "$ref": "#/definitions/resourceSpec" }
+                "ingest": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "keycloak": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "silo": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "lapis": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "silo-importer": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "backend": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "preprocessing": {
+                  "$ref": "#/definitions/resourceSpec"
+                }
               },
               "additionalProperties": false
             }

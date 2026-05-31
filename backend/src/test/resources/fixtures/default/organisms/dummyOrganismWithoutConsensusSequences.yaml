@@ -1,0 +1,14 @@
+schema:
+  organismName: Test without consensus sequences
+  submissionDataTypes:
+    consensusSequences: false
+  files: []
+  metadata:
+    - { name: date, type: date, required: true }
+    - { name: region, type: string, autocomplete: true, required: true }
+    - { name: country, type: string, autocomplete: true, required: true }
+    - { name: division, type: string, autocomplete: true }
+    - { name: host, type: string, autocomplete: true }
+referenceGenome:
+  nucleotideSequences: []
+  genes: []

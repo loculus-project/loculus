@@ -1,17 +1,22 @@
 package org.loculus.backend.service
 
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.datetime.LocalDateTime
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasKey
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.loculus.backend.SpringBootTestWithoutDatabase
 import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.OrganismConfig
+import org.loculus.backend.config.ReferenceGenome
+import org.loculus.backend.config.ReferenceSequence
+import org.loculus.backend.config.Schema
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.service.submission.ProcessedSequencesPostprocessor
-import org.springframework.beans.factory.annotation.Autowired
 
 fun <K, V> assertMapStorage(actual: Map<K, V>, expected: Map<K, V>, presentSeg: K, absentSegs: List<K>) {
     absentSegs.forEach { key ->
@@ -30,32 +35,41 @@ fun <K, V> assertMapRetrieval(actual: Map<K, V>, expected: Map<K, V>, presentKey
     }
 }
 
-@SpringBootTestWithoutDatabase
-class ProcessedSequencesPostprocessorTest(
-    @Autowired private val processedSequencesPostprocessor: ProcessedSequencesPostprocessor,
-    @Autowired private val backendConfig: BackendConfig,
-) {
+class ProcessedSequencesPostprocessorTest {
+
+    private val configService: ConfigService = mockk()
+    private val processedSequencesPostprocessor = ProcessedSequencesPostprocessor(configService)
 
     @Test
     fun `Processed Sequences Postprocessor correctly round trips sequences`() {
-        val organism = Organism("otherOrganism")
-        val configuredSequences = backendConfig.getInstanceConfig(organism).referenceGenome.nucleotideSequences
-            .map { it.name }
-            .sorted()
-        require(configuredSequences.size >= 2) { "Test requires at least 2 configured sequences" }
+        val organism = Organism("multiSegment")
+        val configuredPresentSeg = "seg1"
+        val configuredNullSeg = "seg2"
+        val configuredPresentGene = "gene1"
+        val configuredNullGene = "gene2"
 
-        val configuredGenes = backendConfig.getInstanceConfig(organism).referenceGenome.genes
-            .map { it.name }
-            .sorted()
-        require(configuredGenes.size >= 2) { "Test requires at least 2 configured genes" }
+        every { configService.getOrganismConfig(organism) } returns ConfigService.VersionedOrganism(
+            key = organism.name,
+            version = 1L,
+            publishedAt = LocalDateTime(2024, 1, 1, 0, 0),
+            publishedBy = "test",
+            config = OrganismConfig(
+                schema = Schema(organismName = "Test", metadata = emptyList()),
+                referenceGenome = ReferenceGenome(
+                    nucleotideSequences = listOf(
+                        ReferenceSequence(configuredPresentSeg, "AAAA"),
+                        ReferenceSequence(configuredNullSeg, "CCCC"),
+                    ),
+                    genes = listOf(
+                        ReferenceSequence(configuredPresentGene, "MMMM"),
+                        ReferenceSequence(configuredNullGene, "AAAA"),
+                    ),
+                ),
+            ),
+        )
 
-        val configuredPresentSeg = configuredSequences[0]
-        val configuredNullSeg = configuredSequences[1]
         val unconfiguredPresentSeg = "unconfigured_present"
         val unconfiguredNullSeg = "unconfigured_null"
-
-        val configuredPresentGene = configuredGenes[0]
-        val configuredNullGene = configuredGenes[1]
         val unconfiguredPresentGene = "unconfigured_present"
         val unconfiguredNullGene = "unconfigured_null"
 
@@ -111,7 +125,6 @@ class ProcessedSequencesPostprocessorTest(
         val retrievalPresentGenes = listOf(configuredPresentGene, configuredNullGene)
         val retrievalAbsentGenes = listOf(unconfiguredPresentGene, unconfiguredNullGene)
 
-        // Check storage
         assertMapStorage(
             condensed.unalignedNucleotideSequences,
             testData.unalignedNucleotideSequences,
@@ -133,7 +146,6 @@ class ProcessedSequencesPostprocessorTest(
         )
         assertMapStorage(condensed.aminoAcidInsertions, testData.aminoAcidInsertions, presentGene, absentGenes)
 
-        // Check retrieval
         assertMapRetrieval(
             expanded.unalignedNucleotideSequences,
             testData.unalignedNucleotideSequences,

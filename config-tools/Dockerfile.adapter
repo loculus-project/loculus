@@ -1,0 +1,37 @@
+# syntax=docker/dockerfile:1
+#
+# loculus-config-adapter: init-container that fetches a pinned organism config
+# from the Loculus public API and writes SILO/LAPIS/preprocessing files into
+# /loculus-config (override via LOCULUS_CONFIG_OUTPUT_DIR).
+#
+# Two-stage build keeps the runtime image small.
+
+# ── Stage 1: install deps + typecheck ──────────────────────────────────────────
+FROM node:22-alpine AS builder
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+COPY tsconfig.json ./
+COPY src ./src
+
+RUN npm run check-types
+
+# ── Stage 2: runtime image ─────────────────────────────────────────────────────
+FROM node:22-alpine
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev && npm install --no-save tsx@^4.19.0
+
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+
+# Runs as root by default: as a k8s init container we write to a shared
+# emptyDir mount point that kubelet creates owned by root. The container is
+# short-lived (exits as soon as the render is done), so dropping privileges
+# here would just require a securityContext override on the deployment side
+# without giving us meaningful isolation.
+
+ENTRYPOINT ["npx", "tsx", "/app/src/adapter/cli.ts"]

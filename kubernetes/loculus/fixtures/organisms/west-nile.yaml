@@ -1,0 +1,1714 @@
+schema:
+  submissionDataTypes:
+    consensusSequences: true
+    maxSequencesPerEntry: 1
+  loadSequencesAutomatically: true
+  earliestReleaseDate:
+    enabled: true
+    externalFields:
+    - ncbiReleaseDate
+  richFastaHeaderFields:
+  - displayName
+  files:
+  - name: annotations
+    displayName: Annotations
+  metadata:
+  - name: sampleCollectionDate
+    displayName: Collection date
+    definition: The date on which the sample was collected.
+    header: Sample details
+    ingest: ncbiCollectionDate
+    order: 10
+    orderOnDetailsPage: 200
+    includeInDownloadsByDefault: true
+    notSearchable: true
+    columnWidth: 100
+    type: string
+  - name: sampleCollectionDateRangeLower
+    displayName: Collection date (lower bound)
+    type: date
+    initiallyVisible: true
+    hideInSearchResultsTable: true
+    hideOnSequenceDetailsPage: true
+    header: Sample details
+    rangeOverlapSearch:
+      rangeName: sampleCollectionDateRange
+      rangeDisplayName: Collection date
+      bound: lower
+    noInput: true
+  - name: sampleCollectionDateRangeUpper
+    displayName: Collection date (upper bound)
+    type: date
+    initiallyVisible: true
+    hideInSearchResultsTable: true
+    hideOnSequenceDetailsPage: true
+    header: Sample details
+    rangeOverlapSearch:
+      rangeName: sampleCollectionDateRange
+      rangeDisplayName: Collection date
+      bound: upper
+    noInput: true
+  - name: displayName
+    displayName: Display name
+    definition: A human-readable label for the sequence record, with the format `{geoLocCountry}/{accessionVersion}/{sampleCollectionDate}`.
+    noInput: true
+    type: string
+  - name: ncbiReleaseDate
+    displayName: NCBI release date
+    definition: Date the viral nucleotide accession was first released on the INSDC.
+    type: date
+    header: INSDC
+    orderOnDetailsPage: 1000
+    noInput: true
+    columnWidth: 100
+  - name: earliestReleaseDate
+    displayName: Earliest release date
+    definition: The earliest release date for the accession, across all versions in
+      both Loculus and the INSDC.
+    header: Sample details
+    type: date
+    rangeSearch: true
+    noInput: true
+    includeInDownloadsByDefault: true
+    orderOnDetailsPage: 300
+  - name: ncbiUpdateDate
+    type: date
+    displayName: NCBI update date
+    definition: Date the viral nucleotide accession was last updated on the INSDC.
+    header: INSDC
+    orderOnDetailsPage: 1020
+    noInput: true
+    perSegment: true
+    oneHeader: true
+    columnWidth: 100
+  - name: geoLocLatitude
+    displayName: Latitude
+    definition: Geo-coordinate latitude in decimal degree (WGS84) format.
+    header: Sample details
+    type: float
+    orderOnDetailsPage: 420
+  - name: geoLocLongitude
+    displayName: Longitude
+    definition: Geo-coordinate longitude in decimal degree (WGS84) format.
+    header: Sample details
+    type: float
+    orderOnDetailsPage: 440
+  - name: geoLocCountry
+    displayName: Collection country
+    definition: The country from which the sample was collected.
+    generateIndex: true
+    autocomplete: true
+    initiallyVisible: true
+    includeInDownloadsByDefault: true
+    customDisplay:
+      type: geoLocation
+      displayGroup: geoLocation
+      label: Sampling location
+    header: Sample details
+    order: 20
+    orderOnDetailsPage: 400
+    ingest: country
+    options: &id001
+    - name: Afghanistan
+    - name: Albania
+    - name: Algeria
+    - name: American Samoa
+    - name: Andorra
+    - name: Angola
+    - name: Anguilla
+    - name: Antarctica
+    - name: Antigua and Barbuda
+    - name: Arctic Ocean
+    - name: Argentina
+    - name: Armenia
+    - name: Aruba
+    - name: Ashmore and Cartier Islands
+    - name: Atlantic Ocean
+    - name: Australia
+    - name: Austria
+    - name: Azerbaijan
+    - name: Bahamas
+    - name: Bahrain
+    - name: Baltic Sea
+    - name: Baker Island
+    - name: Bangladesh
+    - name: Barbados
+    - name: Bassas da India
+    - name: Belarus
+    - name: Belgium
+    - name: Belize
+    - name: Benin
+    - name: Bermuda
+    - name: Bhutan
+    - name: Bolivia
+    - name: Borneo
+    - name: Bosnia and Herzegovina
+    - name: Botswana
+    - name: Bouvet Island
+    - name: Brazil
+    - name: British Virgin Islands
+    - name: Brunei
+    - name: Bulgaria
+    - name: Burkina Faso
+    - name: Burundi
+    - name: Cambodia
+    - name: Cameroon
+    - name: Canada
+    - name: Cape Verde
+    - name: Cayman Islands
+    - name: Central African Republic
+    - name: Chad
+    - name: Chile
+    - name: China
+    - name: Christmas Island
+    - name: Clipperton Island
+    - name: Cocos Islands
+    - name: Colombia
+    - name: Comoros
+    - name: Cook Islands
+    - name: Coral Sea Islands
+    - name: Costa Rica
+    - name: Cote d'Ivoire
+    - name: Croatia
+    - name: Cuba
+    - name: Curacao
+    - name: Cyprus
+    - name: Czechia
+    - name: Democratic Republic of the Congo
+    - name: Denmark
+    - name: Djibouti
+    - name: Dominica
+    - name: Dominican Republic
+    - name: Ecuador
+    - name: Egypt
+    - name: El Salvador
+    - name: Equatorial Guinea
+    - name: Eritrea
+    - name: Estonia
+    - name: Eswatini
+    - name: Ethiopia
+    - name: Europa Island
+    - name: Falkland Islands (Islas Malvinas)
+    - name: Faroe Islands
+    - name: Fiji
+    - name: Finland
+    - name: France
+    - name: French Guiana
+    - name: French Polynesia
+    - name: French Southern and Antarctic Lands
+    - name: Gabon
+    - name: Gambia
+    - name: Gaza Strip
+    - name: Georgia
+    - name: Germany
+    - name: Ghana
+    - name: Gibraltar
+    - name: Glorioso Islands
+    - name: Greece
+    - name: Greenland
+    - name: Grenada
+    - name: Guadeloupe
+    - name: Guam
+    - name: Guatemala
+    - name: Guernsey
+    - name: Guinea
+    - name: Guinea-Bissau
+    - name: Guyana
+    - name: Haiti
+    - name: Heard Island and McDonald Islands
+    - name: Honduras
+    - name: Hong Kong
+    - name: Howland Island
+    - name: Hungary
+    - name: Iceland
+    - name: India
+    - name: Indian Ocean
+    - name: Indonesia
+    - name: Iran
+    - name: Iraq
+    - name: Ireland
+    - name: Isle of Man
+    - name: Israel
+    - name: Italy
+    - name: Jamaica
+    - name: Jan Mayen
+    - name: Japan
+    - name: Jarvis Island
+    - name: Jersey
+    - name: Johnston Atoll
+    - name: Jordan
+    - name: Juan de Nova Island
+    - name: Kazakhstan
+    - name: Kenya
+    - name: Kerguelen Archipelago
+    - name: Kingman Reef
+    - name: Kiribati
+    - name: Kosovo
+    - name: Kuwait
+    - name: Kyrgyzstan
+    - name: Laos
+    - name: Latvia
+    - name: Lebanon
+    - name: Lesotho
+    - name: Liberia
+    - name: Libya
+    - name: Liechtenstein
+    - name: Line Islands
+    - name: Lithuania
+    - name: Luxembourg
+    - name: Macau
+    - name: Madagascar
+    - name: Malawi
+    - name: Malaysia
+    - name: Maldives
+    - name: Mali
+    - name: Malta
+    - name: Marshall Islands
+    - name: Martinique
+    - name: Mauritania
+    - name: Mauritius
+    - name: Mayotte
+    - name: Mediterranean Sea
+    - name: Mexico
+    - name: Micronesia, Federated States of
+    - name: Midway Islands
+    - name: Moldova
+    - name: Monaco
+    - name: Mongolia
+    - name: Montenegro
+    - name: Montserrat
+    - name: Morocco
+    - name: Mozambique
+    - name: Myanmar
+    - name: Namibia
+    - name: Nauru
+    - name: Navassa Island
+    - name: Nepal
+    - name: Netherlands
+    - name: New Caledonia
+    - name: New Zealand
+    - name: Nicaragua
+    - name: Niger
+    - name: Nigeria
+    - name: Niue
+    - name: Norfolk Island
+    - name: North Korea
+    - name: North Macedonia
+    - name: North Sea
+    - name: Northern Mariana Islands
+    - name: Norway
+    - name: Oman
+    - name: Pacific Ocean
+    - name: Pakistan
+    - name: Palau
+    - name: Palmyra Atoll
+    - name: Panama
+    - name: Papua New Guinea
+    - name: Paracel Islands
+    - name: Paraguay
+    - name: Peru
+    - name: Philippines
+    - name: Pitcairn Islands
+    - name: Poland
+    - name: Portugal
+    - name: Puerto Rico
+    - name: Qatar
+    - name: Republic of the Congo
+    - name: Reunion
+    - name: Romania
+    - name: Ross Sea
+    - name: Russia
+    - name: Rwanda
+    - name: Saint Barthelemy
+    - name: Saint Helena
+    - name: Saint Kitts and Nevis
+    - name: Saint Lucia
+    - name: Saint Martin
+    - name: Saint Pierre and Miquelon
+    - name: Saint Vincent and the Grenadines
+    - name: Samoa
+    - name: San Marino
+    - name: Sao Tome and Principe
+    - name: Saudi Arabia
+    - name: Senegal
+    - name: Serbia
+    - name: Seychelles
+    - name: Sierra Leone
+    - name: Singapore
+    - name: Sint Maarten
+    - name: Slovakia
+    - name: Slovenia
+    - name: Solomon Islands
+    - name: Somalia
+    - name: South Africa
+    - name: South Georgia and the South Sandwich Islands
+    - name: South Korea
+    - name: South Sudan
+    - name: Southern Ocean
+    - name: Spain
+    - name: Spratly Islands
+    - name: Sri Lanka
+    - name: State of Palestine
+    - name: Sudan
+    - name: Suriname
+    - name: Svalbard
+    - name: Sweden
+    - name: Switzerland
+    - name: Syria
+    - name: Taiwan
+    - name: Tajikistan
+    - name: Tanzania
+    - name: Tasman Sea
+    - name: Thailand
+    - name: Timor-Leste
+    - name: Togo
+    - name: Tokelau
+    - name: Tonga
+    - name: Trinidad and Tobago
+    - name: Tromelin Island
+    - name: Tunisia
+    - name: Turkey
+    - name: Turkmenistan
+    - name: Turks and Caicos Islands
+    - name: Tuvalu
+    - name: Uganda
+    - name: Ukraine
+    - name: United Arab Emirates
+    - name: United Kingdom
+    - name: Uruguay
+    - name: USA
+    - name: Uzbekistan
+    - name: Vanuatu
+    - name: Venezuela
+    - name: Viet Nam
+    - name: Virgin Islands
+    - name: Wake Island
+    - name: Wallis and Futuna
+    - name: West Bank
+    - name: Western Sahara
+    - name: Yemen
+    - name: Zambia
+    - name: Zimbabwe
+    - name: Belgian Congo
+    - name: British Guiana
+    - name: Burma
+    - name: Czechoslovakia
+    - name: Czech Republic
+    - name: East Timor
+    - name: Korea
+    - name: Macedonia
+    - name: Micronesia
+    - name: Netherlands Antilles
+    - name: Serbia and Montenegro
+    - name: Siam
+    - name: Swaziland
+    - name: The former Yugoslav Republic of Macedonia
+    - name: USSR
+    - name: Yugoslavia
+    - name: Zaire
+    type: string
+  - name: geoLocAdmin1
+    displayName: Collection subdivision level 1
+    definition: 'A local administrative region from which the sample was collected
+      (ex: Province, State, Canton).'
+    generateIndex: true
+    autocomplete: true
+    initiallyVisible: true
+    customDisplay:
+      type: geoLocation
+      displayGroup: geoLocation
+      label: Sampling location
+    header: Sample details
+    order: 30
+    orderOnDetailsPage: 460
+    ingest: division
+    type: string
+  - name: geoLocAdmin2
+    displayName: Collection subdivision level 2
+    definition: 'A local administrative region from which the sample was collected
+      (ex: county or municipality).'
+    generateIndex: true
+    autocomplete: true
+    customDisplay:
+      type: geoLocation
+      displayGroup: geoLocation
+      label: Sampling location
+    header: Sample details
+    orderOnDetailsPage: 480
+    type: string
+  - name: geoLocCity
+    displayName: Collection city
+    definition: The city from which the sample was collected.
+    generateIndex: true
+    autocomplete: true
+    header: Sample details
+    orderOnDetailsPage: 500
+    type: string
+  - name: geoLocSite
+    ontology_id: GENEPIO:0100436
+    definition: The name of a specific geographical location e.g. Credit River (rather
+      than river).
+    displayName: Collection site
+    header: Sample details
+    orderOnDetailsPage: 520
+    type: string
+  - name: specimenCollectorSampleId
+    displayName: Isolate name
+    definition: A de-identified ID for the sample the sequence was obtained from.
+    header: Sample details
+    ingest: ncbiIsolateName
+    substringSearch: true
+    orderOnDetailsPage: 600
+    type: string
+  - name: authors
+    displayName: Authors
+    definition: List of authors who should be listed on the sample.
+    type: authors
+    header: Authors
+    substringSearch: true
+    order: 40
+    orderOnDetailsPage: 800
+    includeInDownloadsByDefault: true
+    ingest: ncbiSubmitterNames
+    columnWidth: 140
+  - name: authorAffiliations
+    displayName: Author affiliations
+    definition: List of author affiliations.
+    substringSearch: true
+    header: Authors
+    ingest: ncbiSubmitterAffiliation
+    includeInDownloadsByDefault: true
+    orderOnDetailsPage: 820
+    type: string
+  - name: ncbiSubmitterCountry
+    displayName: NCBI submitter country
+    definition: The country representing the submitter's affilation.
+    generateIndex: true
+    autocomplete: true
+    hideOnSequenceDetailsPage: true
+    noInput: true
+    header: INSDC
+    type: string
+  - name: insdcAccessionBase
+    displayName: INSDC accession base
+    definition: The base accession assigned by the INSDC (GenBank/ENA/DDBJ) for this
+      sequence, without the version number.
+    header: INSDC
+    hideOnSequenceDetailsPage: true
+    noInput: true
+    perSegment: true
+    oneHeader: true
+    type: string
+  - name: insdcVersion
+    displayName: INSDC version
+    definition: The version number of the INSDC record, incremented each time the
+      sequence record is updated.
+    type: int
+    header: INSDC
+    hideOnSequenceDetailsPage: true
+    noInput: true
+    perSegment: true
+    oneHeader: true
+  - name: insdcAccessionFull
+    displayName: INSDC accession
+    definition: The full versioned INSDC accession (base accession plus version number),
+      searchable across GenBank, ENA, and DDBJ.
+    customDisplay:
+      type: linkWithMenu
+      linkMenuItems:
+      - name: View in NCBI
+        url: https://www.ncbi.nlm.nih.gov/nuccore/__value__
+      - name: View in ENA
+        url: https://www.ebi.ac.uk/ena/browser/view/__value__
+      - name: View in DDBJ
+        url: https://getentry.ddbj.nig.ac.jp/getentry/na/__value__
+    header: INSDC
+    orderOnDetailsPage: 1040
+    ingest: genbankAccession
+    noInput: true
+    perSegment: true
+    oneHeader: true
+    type: string
+  - name: bioprojectAccession
+    displayName: BioProject accession
+    customDisplay:
+      type: linkWithMenu
+      linkMenuItems:
+      - name: View in NCBI
+        url: https://www.ncbi.nlm.nih.gov/bioproject/__value__
+      - name: View in ENA
+        url: https://www.ebi.ac.uk/ena/browser/view/__value__
+      - name: View in DDBJ
+        url: https://ddbj.nig.ac.jp/search/entry/bioproject/__value__
+    header: INSDC
+    orderOnDetailsPage: 1060
+    ingest: bioprojects
+    definition: Accession of public bioproject in the INSDC your consensus sequences
+      should be uploaded to.
+    type: string
+  - name: gcaAccession
+    displayName: GCA accession
+    definition: The GenBank genome assembly accession number for the sequence.
+    customDisplay:
+      type: link
+      url: https://www.ebi.ac.uk/ena/browser/view/__value__
+    header: INSDC
+    orderOnDetailsPage: 1100
+    noInput: true
+    oneHeader: true
+    type: string
+  - name: biosampleAccession
+    displayName: BioSample accession
+    customDisplay:
+      type: linkWithMenu
+      linkMenuItems:
+      - name: View in NCBI
+        url: https://www.ncbi.nlm.nih.gov/biosample/__value__
+      - name: View in ENA
+        url: https://www.ebi.ac.uk/ena/browser/view/__value__
+      - name: View in DDBJ
+        url: https://ddbj.nig.ac.jp/search/entry/biosample/__value__
+    header: INSDC
+    orderOnDetailsPage: 1080
+    definition: Accession of corresponding public biosample of the raw reads in the
+      INSDC.
+    oneHeader: true
+    type: string
+  - name: cultureId
+    displayName: Culture ID
+    definition: An ID useful to linking to a culture.
+    header: Sample details
+    orderOnDetailsPage: 620
+    type: string
+  - name: sampleReceivedDate
+    ontology_id: GENEPIO:0001177
+    definition: The date on which the sample was received by the laboratory.
+    displayName: Sample received date
+    type: date
+    orderOnDetailsPage: 260
+    header: Sample details
+  - name: sampleType
+    displayName: Sample type
+    definition: Method of sampling.
+    header: Sampling
+    orderOnDetailsPage: 1200
+    type: string
+  - name: purposeOfSampling
+    displayName: Purpose of sampling
+    ontology_id: GENEPIO:0001198
+    definition: The reason that the sample was collected.
+    header: Sampling
+    orderOnDetailsPage: 1220
+    ingest: ncbiPurposeOfSampling
+    type: string
+  - name: presamplingActivity
+    ontology_id: GENEPIO:0100433
+    definition: The activities or variables introduced upstream of sample collection
+      that may affect the sample collected.
+    displayName: Presampling activity
+    header: Sampling
+    orderOnDetailsPage: 1240
+    type: string
+  - name: anatomicalMaterial
+    ontology_id: GENEPIO:0001211
+    definition: A substance obtained from an anatomical part of an organism e.g. tissue,
+      blood.
+    displayName: Anatomical material
+    header: Sampling
+    orderOnDetailsPage: 1260
+    type: string
+  - name: anatomicalPart
+    ontology_id: GENEPIO:0001214
+    definition: An anatomical part of an organism e.g. oropharynx.
+    displayName: Anatomical part
+    header: Sampling
+    orderOnDetailsPage: 1280
+    type: string
+  - name: bodyProduct
+    ontology_id: GENEPIO:0001216
+    definition: A substance excreted/secreted from an organism e.g. feces, urine,
+      sweat.
+    displayName: Body product
+    header: Sampling
+    orderOnDetailsPage: 1300
+    type: string
+  - name: environmentalMaterial
+    ontology_id: GENEPIO:0001223
+    definition: A substance obtained from the natural or man-made environment e.g.
+      soil, water, sewage, door handle, bed handrail, face mask.
+    displayName: Environmental material
+    header: Sampling
+    orderOnDetailsPage: 1320
+    type: string
+  - name: environmentalSite
+    ontology_id: GENEPIO:0001232
+    definition: An environmental location may describe a site in the natural or built
+      environment e.g. hospital, wet market, bat cave.
+    displayName: Environmental site
+    header: Sampling
+    orderOnDetailsPage: 1340
+    type: string
+  - name: collectionDevice
+    ontology_id: GENEPIO:0001234
+    definition: The instrument or container used to collect the sample e.g. swab.
+    displayName: Collection device
+    header: Sampling
+    orderOnDetailsPage: 1360
+    type: string
+  - name: collectionMethod
+    ontology_id: GENEPIO:0001241
+    definition: The process used to collect the sample e.g. phlebotomy, necropsy.
+    displayName: Collection method
+    header: Sampling
+    orderOnDetailsPage: 1380
+    type: string
+  - name: foodProduct
+    ontology_id: GENEPIO:0100444
+    definition: A material consumed and digested for nutritional value or enjoyment.
+    displayName: Food product
+    header: Sampling
+    orderOnDetailsPage: 1400
+    type: string
+  - name: foodProductProperties
+    ontology_id: GENEPIO:0100445
+    definition: Any characteristic of the food product pertaining to its state, processing,
+      a label claim, or implications for consumers.
+    displayName: Food product properties
+    header: Sampling
+    orderOnDetailsPage: 1420
+    type: string
+  - name: specimenProcessing
+    ontology_id: GENEPIO:0100435
+    definition: The processing applied to samples post-collection, prior to further
+      testing, characterization, or isolation procedures.
+    displayName: Specimen processing
+    header: Specimen processing
+    orderOnDetailsPage: 1500
+    type: string
+  - name: specimenProcessingDetails
+    ontology_id: GENEPIO:0100311
+    definition: Detailed information regarding the processing applied to a sample
+      during or after receiving the sample.
+    displayName: Specimen processing details
+    header: Specimen processing
+    orderOnDetailsPage: 1520
+    type: string
+  - name: experimentalSpecimenRoleType
+    ontology_id: GENEPIO:0100921
+    definition: The type of role that the sample represents in the experiment.
+    displayName: Experimental specimen role type
+    header: Specimen processing
+    type: string
+  - name: hostAge
+    ontology_id: GENEPIO:0001392
+    definition: Age of host at the time of sampling.
+    displayName: Host age
+    type: int
+    header: Host
+    rangeSearch: true
+  - name: hostAgeBin
+    ontology_id: GENEPIO:0001394
+    definition: The age category of the host at the time of sampling.
+    displayName: Host age bin
+    header: Host
+    type: string
+  - name: hostGender
+    ontology_id: GENEPIO:0001395
+    definition: The gender of the host at the time of sample collection.
+    displayName: Host gender
+    header: Host
+    ingest: ncbiHostSex
+    orderOnDetailsPage: 1640
+    type: string
+  - name: hostOriginCountry
+    ontology_id: GENEPIO:0100438
+    definition: The country of origin of the host.
+    displayName: Host origin country
+    header: Host
+    type: string
+  - name: hostDisease
+    ontology_id: GENEPIO:0001391
+    definition: The name of the disease experienced by the host.
+    displayName: Host disease
+    header: Host
+    type: string
+  - name: signsAndSymptoms
+    ontology_id: GENEPIO:0001400
+    definition: A perceived change in function or sensation, (loss, disturbance or
+      appearance) indicative of a disease, reported by a patient.
+    displayName: Signs and symptoms
+    header: Host
+    type: string
+  - name: hostHealthState
+    ontology_id: GENEPIO:0001388
+    definition: Health status of the host at the time of sample collection.
+    displayName: Host health state
+    header: Host
+    type: string
+  - name: hostHealthOutcome
+    ontology_id: GENEPIO:0001390
+    definition: Disease outcome in the host.
+    displayName: Host health outcome
+    header: Host
+    orderOnDetailsPage: 1740
+    type: string
+  - name: travelHistory
+    ontology_id: GENEPIO:0001416
+    definition: Travel history in last six months.
+    displayName: Travel history
+    header: Host
+    orderOnDetailsPage: 1760
+    type: string
+  - name: exposureEvent
+    ontology_id: GENEPIO:0001417
+    definition: Event leading to exposure.
+    displayName: Exposure event
+    header: Host
+    orderOnDetailsPage: 1780
+    type: string
+  - name: hostRole
+    ontology_id: GENEPIO:0001419
+    definition: The role of the host in relation to the exposure setting.
+    displayName: Host role
+    header: Host
+    orderOnDetailsPage: 1800
+    type: string
+  - name: exposureSetting
+    ontology_id: GENEPIO:0001428
+    definition: The setting leading to exposure.
+    displayName: Exposure setting
+    header: Host
+    orderOnDetailsPage: 1820
+    type: string
+  - name: exposureDetails
+    ontology_id: GENEPIO:0001431
+    definition: Additional host exposure information.
+    displayName: Exposure details
+    header: Host
+    orderOnDetailsPage: 1840
+    type: string
+  - name: previousInfectionDisease
+    definition: The name of the disease previously experienced by the host.
+    displayName: Previous infection (disease)
+    header: Host
+    orderOnDetailsPage: 1860
+    type: string
+  - name: previousInfectionOrganism
+    definition: The name of the pathogen causing the disease previously experienced
+      by the host.
+    displayName: Previous infection (organism)
+    header: Host
+    orderOnDetailsPage: 1880
+    type: string
+  - name: hostVaccinationStatus
+    ontology_id: GENEPIO:0001404
+    definition: The vaccination status of the host (fully vaccinated, partially vaccinated,
+      or not vaccinated).
+    displayName: Host vaccination status
+    header: Host
+    orderOnDetailsPage: 1900
+    type: string
+  - name: purposeOfSequencing
+    ontology_id: GENEPIO:0001445
+    definition: The reason that the sample was sequenced.
+    displayName: Purpose of sequencing
+    header: Sequencing
+    orderOnDetailsPage: 2000
+    type: string
+  - name: sequencingDate
+    ontology_id: GENEPIO:0001447
+    definition: The date the sample was sequenced.
+    displayName: Sequencing date
+    type: date
+    orderOnDetailsPage: 2020
+    header: Sequencing
+  - name: ampliconPcrPrimerScheme
+    ontology_id: GENEPIO:0001456
+    definition: The specifications of the primers (primer sequences, binding positions,
+      fragment size generated etc) used to generate the amplicons to be sequenced.
+    displayName: Amplicon PCR primer scheme
+    header: Sequencing
+    orderOnDetailsPage: 2040
+    type: string
+  - name: ampliconSize
+    ontology_id: GENEPIO:0001449
+    definition: The length of the amplicon generated by PCR amplification.
+    displayName: Amplicon size
+    header: Sequencing
+    orderOnDetailsPage: 2060
+    type: string
+  - name: sequencingInstrument
+    ontology_id: GENEPIO:0001452
+    definition: The model of the sequencing instrument used.
+    displayName: Sequencing instrument
+    header: Sequencing
+    orderOnDetailsPage: 2080
+    type: string
+  - name: sequencingProtocol
+    ontology_id: GENEPIO:0001454
+    definition: The protocol used to generate the sequence.
+    displayName: Sequencing protocol
+    header: Sequencing
+    orderOnDetailsPage: 2100
+    type: string
+  - name: sequencingAssayType
+    ontology_id: GENEPIO:0100997
+    definition: The overarching sequencing methodology that was used to determine
+      the sequence of a biomaterial.
+    displayName: Sequencing assay type
+    header: Sequencing
+    orderOnDetailsPage: 2120
+    type: string
+  - name: sequencedByOrganization
+    ontology_id: GENEPIO:0100416
+    definition: The name of the agency, organization or institution responsible for
+      sequencing the isolate's genome.
+    displayName: Sequenced by
+    header: Sequencing
+    orderOnDetailsPage: 2140
+    type: string
+  - name: sequencedByContactName
+    ontology_id: GENEPIO:0100471
+    definition: The name or title of the contact responsible for follow-up regarding
+      the sequence.
+    displayName: Sequenced by - contact name
+    header: Sequencing
+    orderOnDetailsPage: 2160
+    type: string
+  - name: sequencedByContactEmail
+    ontology_id: GENEPIO:0100422
+    definition: The email address of the contact responsible for follow-up regarding
+      the sequence.
+    displayName: Sequenced by - contact email
+    header: Sequencing
+    orderOnDetailsPage: 2180
+    type: string
+  - name: rawSequenceDataProcessingMethod
+    ontology_id: GENEPIO:0001458
+    definition: The method used for raw data processing such as removing barcodes,
+      adapter trimming, filtering etc.
+    displayName: Raw sequence data processing method
+    header: Sequencing
+    orderOnDetailsPage: 2200
+    type: string
+  - name: dehostingMethod
+    ontology_id: GENEPIO:0001459
+    definition: The method used to remove host reads from the pathogen sequence.
+    displayName: Dehosting method
+    header: Sequencing
+    orderOnDetailsPage: 2220
+    type: string
+  - name: referenceGenomeAccession
+    ontology_id: GENEPIO:0001485
+    definition: A persistent, unique identifier of a genome database entry.
+    displayName: Reference genome accession
+    header: Sequencing
+    orderOnDetailsPage: 2240
+    type: string
+  - name: consensusSequenceSoftwareName
+    ontology_id: GENEPIO:0001463
+    definition: The name of software used to generate the consensus sequence.
+    displayName: Consensus sequence software name
+    header: Sequencing
+    orderOnDetailsPage: 2260
+    type: string
+  - name: consensusSequenceSoftwareVersion
+    ontology_id: GENEPIO:0001469
+    definition: The version of the software used to generate the consensus sequence.
+    displayName: Consensus sequence software version
+    header: Sequencing
+    orderOnDetailsPage: 2280
+    type: string
+  - name: depthOfCoverage
+    ontology_id: GENEPIO:0001474
+    definition: The average number of reads representing a given nucleotide in the
+      reconstructed sequence.
+    displayName: Depth of coverage
+    type: int
+    header: Sequencing
+    orderOnDetailsPage: 2300
+  - name: breadthOfCoverage
+    ontology_id: GENEPIO:0001475
+    definition: The threshold used as a cut-off for the depth of coverage.
+    displayName: Breadth of coverage
+    type: int
+    header: Sequencing
+    orderOnDetailsPage: 2320
+  - name: qualityControlMethodName
+    ontology_id: GENEPIO:0100557
+    definition: The name of the method used to assess whether a sequence passed a
+      predetermined quality control threshold.
+    displayName: Quality control method name
+    header: Sequencing
+    orderOnDetailsPage: 2340
+    type: string
+  - name: qualityControlMethodVersion
+    ontology_id: GENEPIO:0100558
+    definition: The version number of the method used to assess whether a sequence
+      passed a predetermined quality control threshold.
+    displayName: Quality control method version
+    header: Sequencing
+    orderOnDetailsPage: 2360
+    type: string
+  - name: qualityControlDetermination
+    ontology_id: GENEPIO:0100559
+    definition: The determination of a quality control assessment.
+    displayName: Quality control determination
+    header: Sequencing
+    orderOnDetailsPage: 2380
+    type: string
+  - name: qualityControlIssues
+    ontology_id: GENEPIO:0100560
+    definition: The reason contributing to, or causing, a low quality determination
+      in a quality control assessment.
+    displayName: Quality control issues
+    header: Sequencing
+    orderOnDetailsPage: 2400
+    type: string
+  - name: qualityControlDetails
+    ontology_id: GENEPIO:0100561
+    definition: The details surrounding a low quality determination in a quality control
+      assessment.
+    displayName: Quality control details
+    header: Diagnostics
+    orderOnDetailsPage: 2500
+    type: string
+  - name: diagnosticMeasurementMethod
+    displayName: Diagnostic measurement method
+    definition: Type of diagnostic test performed.
+    header: Diagnostics
+    orderOnDetailsPage: 2520
+    type: string
+  - name: diagnosticTargetPresence
+    displayName: Diagnostic target presence
+    definition: Boolean value, if the diagnostic target was present.
+    header: Diagnostics
+    orderOnDetailsPage: 2540
+    type: string
+  - name: diagnosticTargetGeneName
+    displayName: Gene name
+    definition: Name of the gene targeted by the diagnostic RT-PCR test.
+    header: Diagnostics
+    orderOnDetailsPage: 2560
+    type: string
+  - name: diagnosticMeasurementValue
+    displayName: Diagnostic measurement value
+    definition: 'Value of the diagnostic test. Ex: The Ct value result from a diagnostic
+      SARS-CoV-2 RT-PCR test.'
+    header: Diagnostics
+    orderOnDetailsPage: 2580
+    type: string
+  - name: diagnosticMeasurementUnit
+    displayName: Diagnostic measurement unit
+    definition: Unit of the diagnostic measurement value.
+    orderOnDetailsPage: 2600
+    header: Diagnostics
+    type: string
+  - name: length
+    type: int
+    header: Alignment and QC metrics
+    isSequenceFilter: true
+    noInput: true
+    rangeSearch: true
+    initiallyVisible: true
+    perSegment: true
+    displayName: Length
+    definition: The length of the sequence.
+    orderOnDetailsPage: 2700
+    customDisplay:
+      type: lengthCompleteness
+      displayGroup: lengthCompleteness
+      label: Length
+  - name: hostTaxonId
+    type: string
+    autocomplete: true
+    displayName: Host species
+    definition: Taxon ID for the host.
+    customDisplay:
+      type: hostSpecies
+      displayGroup: hostSpecies
+      label: Host
+    header: Host
+    ingest: ncbiHostTaxId
+    noInput: true
+    orderOnDetailsPage: 1540
+  - name: hostNameScientific
+    displayName: Host name - scientific
+    definition: The scientific name of the host from which the sample was collected.
+    generateIndex: true
+    autocomplete: true
+    customDisplay:
+      type: hostSpecies
+      displayGroup: hostSpecies
+      label: Host
+    header: Host
+    ingest: ncbiHostName
+    noInput: true
+    orderOnDetailsPage: 1560
+    type: string
+  - name: hostNameCommon
+    displayName: Host name - common
+    definition: The common name of the host from which the sample was collected.
+    generateIndex: true
+    autocomplete: true
+    customDisplay:
+      type: hostSpecies
+      displayGroup: hostSpecies
+      label: Host
+    header: Host
+    ingest: ncbiHostCommonName
+    noInput: true
+    orderOnDetailsPage: 1580
+    type: string
+  - name: isLabHost
+    displayName: Is lab host
+    definition: If a laboratory host (e.g. cultured cell line) was used to propagate
+      the sample.
+    type: boolean
+    autocomplete: true
+    header: Host
+    ingest: ncbiIsLabHost
+    orderOnDetailsPage: 1920
+  - name: cellLine
+    displayName: Cell line
+    definition: Population of cells derived from a single cell or group of cells,
+      which are cultured in the laboratory under controlled conditions.
+    generateIndex: true
+    orderOnDetailsPage: 1940
+    autocomplete: true
+    header: Host
+    type: string
+  - name: passageNumber
+    displayName: Passage number
+    definition: The number of times a cell culture has been subcultured or transferred
+      from one vessel to another.
+    type: int
+    header: Host
+    orderOnDetailsPage: 1960
+  - name: passageMethod
+    displayName: Passage method
+    definition: The techniques used to subculture cells.
+    generateIndex: true
+    autocomplete: true
+    header: Host
+    orderOnDetailsPage: 1980
+    type: string
+  - name: ncbiSourceDb
+    displayName: NCBI source DB
+    definition: Indicates if the source of the viral nucleotide record is from a GenBank
+      submitter or from NCBI-derived curation (RefSeq).
+    generateIndex: true
+    autocomplete: true
+    header: INSDC
+    hideOnSequenceDetailsPage: true
+    noInput: true
+    type: string
+  - name: ncbiVirusName
+    displayName: NCBI Virus name
+    definition: Scientific name for the organism from the NCBI Taxonomy.
+    generateIndex: true
+    autocomplete: true
+    hideOnSequenceDetailsPage: true
+    noInput: true
+    header: INSDC
+    type: string
+  - name: ncbiVirusTaxId
+    displayName: NCBI Virus tax ID
+    definition: Identifier for the organism from the NCBI Taxonomy.
+    type: int
+    autocomplete: true
+    customDisplay:
+      type: link
+      url: https://www.ncbi.nlm.nih.gov/labs/virus/vssi/#/virus?SeqType_s=Nucleotide&VirusLineage_ss=taxid:__value__
+    hideOnSequenceDetailsPage: true
+    noInput: true
+    header: INSDC
+  - name: insdcRawReadsAccession
+    displayName: Raw reads accession
+    definition: Accession of corresponding raw reads in the INSDC, e.g. SRR27477368.
+    customDisplay:
+      type: link
+      url: https://www.ncbi.nlm.nih.gov/sra/?term=__value__
+    header: INSDC
+    orderOnDetailsPage: 1120
+    ingest: ncbiSraAccessions
+    type: string
+  - name: totalSnps
+    type: int
+    isSequenceFilter: true
+    header: Alignment and QC metrics
+    noInput: true
+    rangeSearch: true
+    perSegment: true
+    displayName: Total SNPs
+    definition: Total count of nucleotide substitutions.
+    orderOnDetailsPage: 2720
+  - name: totalInsertedNucs
+    type: int
+    isSequenceFilter: true
+    header: Alignment and QC metrics
+    noInput: true
+    rangeSearch: true
+    perSegment: true
+    displayName: Total inserted nucs
+    definition: Total count of inserted nucleotide positions.
+    orderOnDetailsPage: 2740
+  - name: totalDeletedNucs
+    type: int
+    isSequenceFilter: true
+    header: Alignment and QC metrics
+    noInput: true
+    rangeSearch: true
+    perSegment: true
+    orderOnDetailsPage: 2760
+    displayName: Total deleted nucs
+    definition: Total count of deleted nucleotide positions.
+  - name: totalAmbiguousNucs
+    type: int
+    isSequenceFilter: true
+    header: Alignment and QC metrics
+    noInput: true
+    rangeSearch: true
+    perSegment: true
+    displayName: Total ambiguous nucs
+    definition: Total count of ambiguous nucleotides (not A, C, G, T, or N).
+    orderOnDetailsPage: 2780
+  - name: totalUnknownNucs
+    orderOnDetailsPage: 2800
+    type: int
+    isSequenceFilter: true
+    header: Alignment and QC metrics
+    noInput: true
+    rangeSearch: true
+    perSegment: true
+    displayName: Total unknown nucs
+    definition: Total count of missing (N) nucleotides.
+  - name: totalFrameShifts
+    isSequenceFilter: true
+    type: int
+    rangeSearch: true
+    header: Alignment and QC metrics
+    noInput: true
+    perSegment: true
+    displayName: Total frame shifts
+    definition: Total count of detected frame shifts.
+    orderOnDetailsPage: 2820
+  - name: frameShifts
+    isSequenceFilter: true
+    header: Alignment and QC metrics
+    noInput: true
+    perSegment: true
+    displayName: Frame shifts
+    definition: Frame-shifting insertions or deletions detected in CDS regions.
+    orderOnDetailsPage: 2840
+    type: string
+  - name: totalStopCodons
+    isSequenceFilter: true
+    perSegment: true
+    displayName: Total stop codons
+    definition: Number of penalized premature stop codons.
+    type: int
+    header: Alignment and QC metrics
+    noInput: true
+  - name: stopCodons
+    isSequenceFilter: true
+    perSegment: true
+    displayName: Stop codons
+    definition: Premature stop codons not in the ignored list (penalized).
+    header: Alignment and QC metrics
+    noInput: true
+    type: string
+  - name: completeness
+    isSequenceFilter: true
+    type: float
+    header: Alignment and QC metrics
+    noInput: true
+    perSegment: true
+    displayName: Completeness
+    definition: Fraction of reference positions covered by the sequence (0.0 to 1.0).
+    rangeSearch: true
+    percentage: true
+    orderOnDetailsPage: 2860
+    customDisplay:
+      type: lengthCompleteness
+      displayGroup: lengthCompleteness
+      label: Length
+  - name: lineage
+    type: string
+  - name: mutations_from_founder
+    type: string
+  - name: variant
+    type: boolean
+  - name: versionComment
+    type: string
+  extraInputFields:
+  - name: host
+    type: string
+    displayName: Host
+    definition: NCBI taxon ID or scientific name that uniquely identifies the host
+      from which the sample was collected.
+    guidance: You can provide either the scientific name of the organism (e.g., `Aedes
+      aegypti`) or its NCBI taxon ID (e.g., `7159`) in this field. We will validate
+      your input and use it to populate the `host common name` and `host scientific
+      name` fields. When uploading data from a pooled sample, we recommend using a
+      higher-level taxon that includes all host organisms in the sample pool. For
+      example, you can use `Culicidae` when uploading data for a pooled mosquito sample
+      (in addition to setting the `specimenProcessing` field to `Samples pooled`,
+      see [OBI:0600016]).
+    example: Aedes aegypti
+    hideInSearchResultsTable: true
+    hideOnSequenceDetailsPage: true
+    desired: false
+    position: last
+    required: true
+  organismName: West Nile Virus
+  image: /images/organisms/wnv_small.jpg
+  linkOuts:
+  - name: Nextclade
+    url: https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/wnv/all-lineages&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
+  - name: Country map
+    url: https://mapoplexus.genomium.org/?url={{[metadata+accessionVersion,accession,version,geoLocAdmin1,geoLocAdmin2,geoLocCity,geoLocCountry,geoLocSite,hostNameCommon,hostNameScientific,authors,sampleCollectionDate]}}
+  metadataAdd:
+  - name: displayName
+    displayName: Display name
+    definition: A human-readable label for the sequence record, with the format `{geoLocCountry}/{identifier}/{sampleCollectionDate}`.
+      The identifier is provided from `specimenCollectorSampleId` if set, otherwise
+      `submissionId`. For sequences ingested from the INSDC, the identifier is taken
+      directly as the provided field, assuming it contains no slashes or spaces, otherwise
+      the `accessionVersion` is used. For other sequences, if the provided field has
+      a display-name format itself (four or three items, separated by slashes), then
+      the identifier is extracted as the second to last item within this. If the identifier
+      cannot be extracted (due to invalid format of the provided field), the `accessionVersion`
+      is used. Missing `geoLocCountry`/`sampleCollectionDate` default to `unknown`.
+    noInput: true
+  - name: hostTaxonId
+    type: string
+    autocomplete: true
+    displayName: Host species
+    definition: Taxon ID for the host.
+    customDisplay:
+      type: hostSpecies
+      displayGroup: hostSpecies
+      label: Host
+    header: Host
+    ingest: ncbiHostTaxId
+    noInput: true
+    required: true
+    orderOnDetailsPage: 1540
+  - name: lineage
+    displayName: Lineage
+    definition: Assigned clade label from the nearest reference tree node.
+    isSequenceFilter: true
+    header: Lineage
+    noInput: true
+    generateIndex: true
+    autocomplete: true
+    initiallyVisible: true
+    includeInDownloadsByDefault: true
+  - name: mutations_from_founder
+    header: Alignment and QC metrics
+    displayName: Amino Acid Mutations from founder clade
+    definition: Private amino acid mutations in this sequence relative to the founder
+      of its assigned clade.
+    customDisplay:
+      type: generatedBadge
+    noInput: true
+    generateIndex: false
+    autocomplete: false
+    initiallyVisible: false
+    includeInDownloadsByDefault: false
+  - name: variant
+    isSequenceFilter: true
+    perSegment: true
+    header: Alignment and QC metrics
+    displayName: Variant
+    definition: Indicates whether the sequence is sufficiently divergent from its
+      closest reference to be classified as a distinct variant, based on whether the
+      number of private nucleotide substitutions exceeds a threshold relative to sequence
+      length.
+    type: boolean
+    noInput: true
+    autocomplete: true
+    initiallyVisible: false
+    includeInDownloadsByDefault: false
+  tableColumns:
+  - sampleCollectionDate
+  - ncbiReleaseDate
+  - authors
+  - authorAffiliations
+  - geoLocCountry
+  - geoLocAdmin1
+  - length
+  - lineage
+  defaultOrderBy: sampleCollectionDate
+  defaultOrder: descending
+  multiFieldSearches:
+  - name: identifier
+    displayName: Sample Identifier
+    orderInSearchDisplay: -10000
+    fields:
+    - accessionVersion
+    - submissionId
+    - insdcAccessionFull
+    - bioprojectAccession
+    - gcaAccession
+    - biosampleAccession
+    - insdcRawReadsAccession
+  - name: contributor
+    displayName: Contributor
+    orderInSearchDisplay: -9999
+    fields:
+    - authors
+    - authorAffiliations
+    - sequencedByOrganization
+    - sequencedByContactName
+    - submitter
+    - groupName
+  inputFields:
+  - name: id
+    displayName: ID
+    example: GJP123
+    noEdit: true
+    required: true
+    definition: Your sequence identifier; should match the sequence's id in the FASTA
+      file - this is used to link the metadata to the FASTA sequence.
+  - name: sampleCollectionDate
+    displayName: Collection date
+    definition: The date on which the sample was collected.
+    required: true
+  - name: geoLocLatitude
+    displayName: Latitude
+    definition: Geo-coordinate latitude in decimal degree (WGS84) format.
+  - name: geoLocLongitude
+    displayName: Longitude
+    definition: Geo-coordinate longitude in decimal degree (WGS84) format.
+  - name: geoLocCountry
+    displayName: Collection country
+    definition: The country from which the sample was collected.
+    required: true
+    options: *id001
+  - name: geoLocAdmin1
+    displayName: Collection subdivision level 1
+    definition: 'A local administrative region from which the sample was collected
+      (ex: Province, State, Canton).'
+  - name: geoLocAdmin2
+    displayName: Collection subdivision level 2
+    definition: 'A local administrative region from which the sample was collected
+      (ex: county or municipality).'
+  - name: geoLocCity
+    displayName: Collection city
+    definition: The city from which the sample was collected.
+  - name: geoLocSite
+    definition: The name of a specific geographical location e.g. Credit River (rather
+      than river).
+    displayName: Collection site
+  - name: specimenCollectorSampleId
+    displayName: Isolate name
+    definition: A de-identified ID for the sample the sequence was obtained from.
+  - name: authors
+    displayName: Authors
+    definition: List of authors who should be listed on the sample.
+  - name: authorAffiliations
+    displayName: Author affiliations
+    definition: List of author affiliations.
+  - name: bioprojectAccession
+    displayName: BioProject accession
+    definition: Accession of public bioproject in the INSDC your consensus sequences
+      should be uploaded to.
+  - name: biosampleAccession
+    displayName: BioSample accession
+    definition: Accession of corresponding public biosample of the raw reads in the
+      INSDC.
+  - name: cultureId
+    displayName: Culture ID
+    definition: An ID useful to linking to a culture.
+  - name: sampleReceivedDate
+    definition: The date on which the sample was received by the laboratory.
+    displayName: Sample received date
+  - name: sampleType
+    displayName: Sample type
+    definition: Method of sampling.
+  - name: purposeOfSampling
+    displayName: Purpose of sampling
+    definition: The reason that the sample was collected.
+  - name: presamplingActivity
+    definition: The activities or variables introduced upstream of sample collection
+      that may affect the sample collected.
+    displayName: Presampling activity
+  - name: anatomicalMaterial
+    definition: A substance obtained from an anatomical part of an organism e.g. tissue,
+      blood.
+    displayName: Anatomical material
+  - name: anatomicalPart
+    definition: An anatomical part of an organism e.g. oropharynx.
+    displayName: Anatomical part
+  - name: bodyProduct
+    definition: A substance excreted/secreted from an organism e.g. feces, urine,
+      sweat.
+    displayName: Body product
+  - name: environmentalMaterial
+    definition: A substance obtained from the natural or man-made environment e.g.
+      soil, water, sewage, door handle, bed handrail, face mask.
+    displayName: Environmental material
+  - name: environmentalSite
+    definition: An environmental location may describe a site in the natural or built
+      environment e.g. hospital, wet market, bat cave.
+    displayName: Environmental site
+  - name: collectionDevice
+    definition: The instrument or container used to collect the sample e.g. swab.
+    displayName: Collection device
+  - name: collectionMethod
+    definition: The process used to collect the sample e.g. phlebotomy, necropsy.
+    displayName: Collection method
+  - name: foodProduct
+    definition: A material consumed and digested for nutritional value or enjoyment.
+    displayName: Food product
+  - name: foodProductProperties
+    definition: Any characteristic of the food product pertaining to its state, processing,
+      a label claim, or implications for consumers.
+    displayName: Food product properties
+  - name: specimenProcessing
+    definition: The processing applied to samples post-collection, prior to further
+      testing, characterization, or isolation procedures.
+    displayName: Specimen processing
+  - name: specimenProcessingDetails
+    definition: Detailed information regarding the processing applied to a sample
+      during or after receiving the sample.
+    displayName: Specimen processing details
+  - name: experimentalSpecimenRoleType
+    definition: The type of role that the sample represents in the experiment.
+    displayName: Experimental specimen role type
+  - name: hostAge
+    definition: Age of host at the time of sampling.
+    displayName: Host age
+  - name: hostAgeBin
+    definition: The age category of the host at the time of sampling.
+    displayName: Host age bin
+  - name: hostGender
+    definition: The gender of the host at the time of sample collection.
+    displayName: Host gender
+  - name: hostOriginCountry
+    definition: The country of origin of the host.
+    displayName: Host origin country
+  - name: hostDisease
+    definition: The name of the disease experienced by the host.
+    displayName: Host disease
+  - name: signsAndSymptoms
+    definition: A perceived change in function or sensation, (loss, disturbance or
+      appearance) indicative of a disease, reported by a patient.
+    displayName: Signs and symptoms
+  - name: hostHealthState
+    definition: Health status of the host at the time of sample collection.
+    displayName: Host health state
+  - name: hostHealthOutcome
+    definition: Disease outcome in the host.
+    displayName: Host health outcome
+  - name: travelHistory
+    definition: Travel history in last six months.
+    displayName: Travel history
+  - name: exposureEvent
+    definition: Event leading to exposure.
+    displayName: Exposure event
+  - name: hostRole
+    definition: The role of the host in relation to the exposure setting.
+    displayName: Host role
+  - name: exposureSetting
+    definition: The setting leading to exposure.
+    displayName: Exposure setting
+  - name: exposureDetails
+    definition: Additional host exposure information.
+    displayName: Exposure details
+  - name: previousInfectionDisease
+    definition: The name of the disease previously experienced by the host.
+    displayName: Previous infection (disease)
+  - name: previousInfectionOrganism
+    definition: The name of the pathogen causing the disease previously experienced
+      by the host.
+    displayName: Previous infection (organism)
+  - name: hostVaccinationStatus
+    definition: The vaccination status of the host (fully vaccinated, partially vaccinated,
+      or not vaccinated).
+    displayName: Host vaccination status
+  - name: purposeOfSequencing
+    definition: The reason that the sample was sequenced.
+    displayName: Purpose of sequencing
+  - name: sequencingDate
+    definition: The date the sample was sequenced.
+    displayName: Sequencing date
+  - name: ampliconPcrPrimerScheme
+    definition: The specifications of the primers (primer sequences, binding positions,
+      fragment size generated etc) used to generate the amplicons to be sequenced.
+    displayName: Amplicon PCR primer scheme
+  - name: ampliconSize
+    definition: The length of the amplicon generated by PCR amplification.
+    displayName: Amplicon size
+  - name: sequencingInstrument
+    definition: The model of the sequencing instrument used.
+    displayName: Sequencing instrument
+  - name: sequencingProtocol
+    definition: The protocol used to generate the sequence.
+    displayName: Sequencing protocol
+  - name: sequencingAssayType
+    definition: The overarching sequencing methodology that was used to determine
+      the sequence of a biomaterial.
+    displayName: Sequencing assay type
+  - name: sequencedByOrganization
+    definition: The name of the agency, organization or institution responsible for
+      sequencing the isolate's genome.
+    displayName: Sequenced by
+  - name: sequencedByContactName
+    definition: The name or title of the contact responsible for follow-up regarding
+      the sequence.
+    displayName: Sequenced by - contact name
+  - name: sequencedByContactEmail
+    definition: The email address of the contact responsible for follow-up regarding
+      the sequence.
+    displayName: Sequenced by - contact email
+  - name: rawSequenceDataProcessingMethod
+    definition: The method used for raw data processing such as removing barcodes,
+      adapter trimming, filtering etc.
+    displayName: Raw sequence data processing method
+  - name: dehostingMethod
+    definition: The method used to remove host reads from the pathogen sequence.
+    displayName: Dehosting method
+  - name: referenceGenomeAccession
+    definition: A persistent, unique identifier of a genome database entry.
+    displayName: Reference genome accession
+  - name: consensusSequenceSoftwareName
+    definition: The name of software used to generate the consensus sequence.
+    displayName: Consensus sequence software name
+  - name: consensusSequenceSoftwareVersion
+    definition: The version of the software used to generate the consensus sequence.
+    displayName: Consensus sequence software version
+  - name: depthOfCoverage
+    definition: The average number of reads representing a given nucleotide in the
+      reconstructed sequence.
+    displayName: Depth of coverage
+  - name: breadthOfCoverage
+    definition: The threshold used as a cut-off for the depth of coverage.
+    displayName: Breadth of coverage
+  - name: qualityControlMethodName
+    definition: The name of the method used to assess whether a sequence passed a
+      predetermined quality control threshold.
+    displayName: Quality control method name
+  - name: qualityControlMethodVersion
+    definition: The version number of the method used to assess whether a sequence
+      passed a predetermined quality control threshold.
+    displayName: Quality control method version
+  - name: qualityControlDetermination
+    definition: The determination of a quality control assessment.
+    displayName: Quality control determination
+  - name: qualityControlIssues
+    definition: The reason contributing to, or causing, a low quality determination
+      in a quality control assessment.
+    displayName: Quality control issues
+  - name: qualityControlDetails
+    definition: The details surrounding a low quality determination in a quality control
+      assessment.
+    displayName: Quality control details
+  - name: diagnosticMeasurementMethod
+    displayName: Diagnostic measurement method
+    definition: Type of diagnostic test performed.
+  - name: diagnosticTargetPresence
+    displayName: Diagnostic target presence
+    definition: Boolean value, if the diagnostic target was present.
+  - name: diagnosticTargetGeneName
+    displayName: Gene name
+    definition: Name of the gene targeted by the diagnostic RT-PCR test.
+  - name: diagnosticMeasurementValue
+    displayName: Diagnostic measurement value
+    definition: 'Value of the diagnostic test. Ex: The Ct value result from a diagnostic
+      SARS-CoV-2 RT-PCR test.'
+  - name: diagnosticMeasurementUnit
+    displayName: Diagnostic measurement unit
+    definition: Unit of the diagnostic measurement value.
+  - name: isLabHost
+    displayName: Is lab host
+    definition: If a laboratory host (e.g. cultured cell line) was used to propagate
+      the sample.
+  - name: cellLine
+    displayName: Cell line
+    definition: Population of cells derived from a single cell or group of cells,
+      which are cultured in the laboratory under controlled conditions.
+  - name: passageNumber
+    displayName: Passage number
+    definition: The number of times a cell culture has been subcultured or transferred
+      from one vessel to another.
+  - name: passageMethod
+    displayName: Passage method
+    definition: The techniques used to subculture cells.
+  - name: insdcRawReadsAccession
+    displayName: Raw reads accession
+    definition: Accession of corresponding raw reads in the INSDC, e.g. SRR27477368.
+  - name: host
+    displayName: Host
+    definition: NCBI taxon ID or scientific name that uniquely identifies the host
+      from which the sample was collected.
+    guidance: You can provide either the scientific name of the organism (e.g., `Aedes
+      aegypti`) or its NCBI taxon ID (e.g., `7159`) in this field. We will validate
+      your input and use it to populate the `host common name` and `host scientific
+      name` fields. When uploading data from a pooled sample, we recommend using a
+      higher-level taxon that includes all host organisms in the sample pool. For
+      example, you can use `Culicidae` when uploading data for a pooled mosquito sample
+      (in addition to setting the `specimenProcessing` field to `Samples pooled`,
+      see [OBI:0600016]).
+    example: Aedes aegypti
+    desired: false
+    required: true
+referenceGenomes:
+- name: main
+  references:
+  - name: singleReference
+    sequence: 'AGTAGTTCGCCTGTGTGAGCTGACAAACTTAGTAGTGTTTGTGAGGATTAACAACAATTAACACAGTGCGAGCTGTTTCTTAGCACGAAGATCTCGATGTCTAAGAAACCAGGAGGGCCCGGCAAGAGCCGGGCTGTCAATATGCTAAAACGCGGAATGCCCCGCGTGTTGTCCTTGATTGGACTGAAGAGGGCTATGTTGAGCCTGATCGACGGCAAGGGGCCAATACGATTTGTGTTGGCTCTCTTGGCGTTCTTCAGGTTCACAGCAATTGCTCCGACCCGAGCAGTGCTGGATCGATGGAGAGGTGTGAACAAACAAACAGCGATGAAACACCTTCTGAGTTTTAAGAAGGAACTAGGGACCTTGACCAGTGCTATCAATCGGCGGAGCTCAAAACAAAAGAAAAGAGGAGGAAAGACCGGAATTGCAGTCATGATTGGCCTGATCGCCAGCGTAGGAGCAGTTACCCTCTCTAACTTCCAAGGGAAGGTGATGATGACGGTAAATGCTACTGACGTCACAGATGTCATCACGATTCCAACAGCTGCTGGAAAGAACCTATGCATTGTCAGAGCAATGGATGTGGGATACATGTGCGATGATACTATCACTTATGAATGCCCAGTACTGTCGGCTGGTAATGATCCAGAAGACATCGACTGTTGGTGCACAAAGTCAGCAGTCTACGTCAGGTATGGAAGATGCACCAAGACACGCCACTCAAGACGCAGTCGGAGGTCACTGACAGTGCAGACACACGGAGAAAGCACTCTAGCGAACAAGAAGGGGGCTTGGATGGACAGCACCAAGGCCACAAGGTATTTGGTAAAAACAGAATCATGGATCTTGAGGAACCCTGGATATGCCCTGGTGGCAGCCGTCATTGGTTGGATGCTTGGGAGCAACACCATGCAGAGAGTTGTGTTTGTCGTGCTATTGCTTTTGGTGGCCCCAGCTTACAGCTTCAACTGCCTTGGAATGAGCAACAGAGACTTCTTGGAAGGAGTGTCTGGAGCAACATGGGTGGATTTGGTTCTCGAAGGCGACAGCTGCGTGACTATCATGTCTAAGGACAAGCCTACCATCGATGTGAAGATGATGAATATGGAGGCGGCCAACCTGGCAGAGGTCCGCAGTTATTGCTATTTGGCTACCGTCAGCGATCTCTCCACCAAAGCTGCGTGCCCGACCATGGGAGAAGCTCACAATGACAAACGTGCTGACCCAGCTTTTGTGTGCAGACAAGGAGTGGTGGACAGGGGCTGGGGCAACGGCTGCGGACTATTTGGCAAAGGAAGCATTGACACATGCGCCAAATTTGCCTGCTCTACCAAGGCAATAGGAAGAACCATCTTGAAAGAGAATATCAAGTACGAAGTGGCCATTTTTGTCCATGGACCAACTACTGTGGAGTCGCACGGAAACTACTCCACACAGGTTGGAGCCACTCAGGCAGGGAGACTCAGCATCACTCCTGCGGCGCCTTCATACACACTAAAGCTTGGAGAATATGGAGAGGTGACAGTGGACTGTGAACCACGGTCAGGGATTGACACCAATGCATACTACGTGATGACTGTTGGAACAAAGACGTTCTTGGTCCATCGTGAGTGGTTCATGGACCTCAACCTCCCTTGGAGCAGTGCTGGAAGTACTGTGTGGAGGAACAGAGAGACGTTAATGGAGTTTGAGGAACCACACGCCACGAAGCAGTCTGTGATAGCATTGGGCTCACAAGAGGGAGCTCTGCATCAAGCTTTGGCTGGAGCCATTCCTGTGGAATTTTCAAGCAACACTGTCAAGTTGACGTCGGGTCATTTGAAGTGTAGAGTGAAGATGGAAAAATTGCAGTTGAAGGGAACAACCTATGGCGTCTGTTCAAAGGCTTTCAAGTTTCTTGGGACTCCCGCAGACACAGGTCACGGCACTGTGGTGTTGGAATTGCAGTACACTGGCACGGATGGACCTTGCAAAGTTCCTATCTCGTCAGTGGCTTCATTGAACGACCTAACGCCAGTGGGCAGATTGGTCACTGTCAACCCTTTTGTTTCAGTGGCCACGGCCAACGCTAAGGTCCTGATTGAATTGGAACCACCCTTTGGAGACTCATACATAGTGGTGGGCAGAGGAGAACAACAGATCAATCACCATTGGCACAAGTCTGGAAGCAGCATTGGCAAAGCCTTTACAACCACCCTCAAAGGAGCGCAGAGACTAGCCGCTCTAGGAGACACAGCTTGGGACTTTGGATCAGTTGGAGGGGTGTTCACCTCAGTTGGGAAGGCTGTCCATCAAGTGTTCGGAGGAGCATTCCGCTCACTGTTCGGAGGCATGTCCTGGATAACGCAAGGATTGCTGGGGGCTCTCCTGTTGTGGATGGGCATCAATGCTCGTGATAGGTCCATAGCTCTCACGTTTCTCGCAGTTGGAGGAGTTCTGCTCTTCCTCTCCGTGAACGTGCACGCTGACACTGGGTGTGCCATAGACATCAGCCGGCAAGAGCTGAGATGTGGAAGTGGAGTGTTCATACACAATGATGTGGAGGCTTGGATGGACCGGTACAAGTATTACCCTGAAACGCCACAAGGCCTAGCCAAGATCATTCAGAAAGCTCATAAGGAAGGAGTGTGCGGTCTACGATCAGTTTCCAGACTGGAGCATCAAATGTGGGAAGCAGTGAAGGACGAGCTGAACACTCTTTTGAAGGAGAATGGTGTGGACCTTAGTGTCGTGGTTGAGAAACAGGAGGGAATGTACAAGTCAGCACCTAAACGCCTCACCGCCACCACGGAAAAATTGGAAATTGGCTGGAAGGCCTGGGGAAAGAGTATTTTATTTGCACCAGAACTCGCCAACAACACCTTTGTGGTTGATGGTCCGGAGACCAAGGAATGTCCGACTCAGAATCGCGCTTGGAATAGCTTAGAAGTGGAGGATTTTGGATTTGGTCTCACCAGCACTCGGATGTTCCTGAAGGTCAGAGAGAGCAACACAACTGAATGTGACTCGAAGATCATTGGAACGGCTGTCAAGAACAACTTGGCGATCCACAGTGACCTGTCCTATTGGATTGAAAGCAGGCTCAATGATACGTGGAAGCTTGAAAGGGCAGTTCTGGGTGAAGTCAAATCATGTACGTGGCCTGAGACGCATACCTTGTGGGGCGATGGAATCCTTGAGAGTGACTTGATAATACCAGTCACACTGGCGGGACCACGAAGCAATCACAATCGGAGACCTGGGTACAAGACACAAAACCAGGGCCCATGGGACGAAGGCCGGGTAGAGATTGACTTCGATTACTGCCCAGGAACTACGGTCACCCTGAGTGAGAGCTGCGGACACCGTGGACCTGCCACTCGCACCACCACAGAGAGCGGAAAGTTGATAACAGATTGGTGCTGCAGGAGCTGCACCTTACCACCACTGCGCTACCAAACTGACAGCGGCTGTTGGTATGGTATGGAGATCAGACCACAGAGACATGATGAAAAGACCCTCGTGCAGTCACAAGTGAATGCTTATAATGCTGATATGATTGACCCTTTTCAGTTGGGCCTTCTGGTCGTGTTCTTGGCCACCCAGGAGGTCCTTCGCAAGAGGTGGACAGCCAAGATCAGCATGCCAGCTATACTGATTGCTCTGCTAGTCCTGGTGTTTGGGGGCATTACTTACACTGATGTGTTACGCTATGTCATCTTGGTGGGGGCAGCTTTCGCAGAATCTAATTCGGGAGGAGACGTGGTACACTTGGCGCTCATGGCGACCTTCAAGATACAACCAGTGTTTATGGTGGCATCGTTTCTCAAAGCGAGATGGACCAACCAGGAGAACATTTTGTTGATGTTGGCGGCTGTTTTCTTTCAAATGGCTTATCACGATGCCCGCCAAATTCTGCTCTGGGAGATCCCTGATGTGTTGAATTCACTGGCGGTAGCTTGGATGATACTGAGAGCCATAACATTCACAACGACATCAAACGTGGTTGTTCCGCTGCTAGCCCTGCTAACACCCGGGCTGAGATGCTTGAATCTGGATGTGTACAGGATACTGCTGTTGATGGTCGGAATAGGCAGCTTGATCAGGGAGAAGAGGAGTGCAGCCGCAAAAAAGAAAGGAGCAAGTCTGCTATGCTTGGCTCTAGCCTCAACAGGACTTTTCAACCCCATGATCCTTGCTGCTGGACTGATTGCATGTGATCCCAACCGTAAACGCGGATGGCCCGCAACTGAAGTGATGACAGCTGTCGGCCTAATGTTTGCCATCGTCGGAGGGCTGGCAGAGCTTGACATTGACTCCATGGCCATTCCAATGACTATCGCGGGGCTCATGTTTGCTGCTTTCGTGATTTCTGGGAAATCAACAGATATGTGGATTGAGAGAACGGCGGACATTTCCTGGGAAAGTGATGCAGAAATTACAGGCTCGAGCGAAAGAGTTGATGTGCGGCTTGATGATGATGGAAACTTCCAGCTCATGAATGATCCAGGAGCACCTTGGAAGATATGGATGCTCAGAATGGTCTGTCTCGCGATTAGTGCGTACACCCCCTGGGCAATCTTGCCCTCAGTAGTTGGATTTTGGATAACTCTCCAATACACAAAGAGAGGAGGCGTGTTGTGGGACACTCCCTCACCAAAGGAGTACAAAAAGGGGGACACGACCACCGGCGTCTACAGGATCATGACTCGTGGGCTGCTCGGCAGTTATCAAGCAGGAGCGGGCGTGATGGTTGAAGGTGTTTTCCACACCCTTTGGCATACAACAAAAGGAGCCGCTTTGATGAGCGGAGAGGGCCGCCTGGACCCATACTGGGGCAGTGTCAAGGAGGATCGACTTTGTTACGGAGGACCCTGGAAATTGCAGCACAAGTGGAACGGGCAGGATGAGGTGCAGATGATTGTGGTGGAACCTGGCAAGAACGTTAAGAACGTCCAGACGAAACCAGGGGTGTTCAAAACACCTGAAGGAGAAATCGGGGCCGTGACTTTGGACTTCCCCACTGGAACATCAGGCTCACCAATAGTGGACAAAAACGGTGATGTGATTGGGCTTTATGGCAATGGAGTCATAATGCCCAACGGCTCATACATAAGCGCGATAGTGCAGGGTGAAAGGATGGATGAGCCAATCCCAGCCGGATTCGAACCTGAGATGCTGAGGAAAAAACAGATCACTGTACTGGATCTCCATCCCGGCGCCGGTAAAACAAGGAGGATTCTGCCACAGATCATCAAAGAGGCCATAAACAGAAGACTGAGAACAGCCGTGCTAGCGCCAACCAGGGTTGTGGCTGCTGAGATGGCTGAAGCACTGAGAGGACTGCCCATCCGGTACCAGACATCCGCAGTGCCCAGAGAACATAATGGAAATGAGATTGTTGATGTCATGTGTCATGCTACCCTCACCCACAGGCTGATGTCTCCTCACAGGGTGCCGAACTACAACCTGTTCGTGATGGATGAGGCTCATTTCACCGACCCAGCTAGCATTGCAGCAAGAGGTTACATTTCCACAAAGGTCGAGCTAGGGGAGGCGGCGGCAATATTCATGACAGCCACCCCACCAGGCACTTCAGATCCATTCCCAGAGTCCAATTCACCAATTTCCGACTTACAGACTGAGATCCCGGATCGAGCTTGGAACTCTGGATACGAATGGATCACAGAATACACCGGGAAGACGGTTTGGTTTGTGCCTAGTGTCAAGATGGGGAATGAGATTGCCCTTTGCCTACAACGTGCTGGAAAGAAAGTAGTCCAATTGAACAGAAAGTCGTACGAGACGGAGTACCCAAAATGTAAGAACGATGATTGGGACTTTGTTATCACAACAGACATATCTGAAATGGGGGCTAACTTCAAGGCGAGCAGGGTGATTGACAGCCGGAAGAGTGTGAAACCAACCATCATAACAGAAGGAGAAGGGAGAGTGATCCTGGGAGAACCATCTGCAGTGACAGCAGCTAGTGCCGCCCAGAGACGTGGACGTATCGGTAGAAATCCGTCGCAAGTTGGTGATGAGTACTGTTATGGGGGGCACACGAATGAAGACGACTCGAACTTCGCCCATTGGACTGAGGCACGAATCATGCTGGACAACATCAACATGCCAAACGGACTGATCGCTCAATTCTACCAACCAGAGCGTGAGAAGGTATATACCATGGATGGGGAATACCGGCTCAGAGGAGAAGAGAGAAAAAACTTTCTGGAACTGTTGAGGACTGCAGATCTGCCAGTTTGGCTGGCTTACAAGGTTGCAGCGGCTGGAGTGTCATACCACGACCGGAGGTGGTGCTTTGATGGTCCTAGGACAAACACAATTTTAGAAGACAACAACGAAGTGGAAGTCATCACGAAGCTTGGTGAAAGGAAGATTCTGAGGCCGCGCTGGATTGATGCCAGGGTGTACTCGGATCACCAGGCACTAAAGGCGTTCAAGGACTTCGCCTCGGGAAAACGTTCTCAGATAGGGCTCATTGAGGTTCTGGGAAAGATGCCTGAGCACTTCATGGGGAAGACATGGGAAGCACTTGACACCATGTACGTTGTGGCCACTGCAGAGAAAGGAGGAAGAGCTCACAGAATGGCCCTGGAGGAACTGCCAGATGCTCTTCAGACAATTGCCTTGATTGCCTTATTGAGTGTGATGACCATGGGAGTATTCTTCCTCCTCATGCAGCGGAAGGGCATTGGAAAGATAGGTTTGGGAGGCGCTGTCTTGGGAGTCGCGACCTTTTTCTGTTGGATGGCTGAAGTTCCAGGAACGAAGATCGCCGGAATGTTGCTGCTCTCCCTTCTCTTGATGATTGTGCTAATTCCTGAGCCAGAGAAGCAACGTTCGCAGACAGACAACCAGCTAGCCGTGTTCCTGATTTGTGTCATGACCCTTGTGAGCGCAGTGGCAGCCAACGAGATGGGTTGGCTAGATAAGACCAAGAGTGACATAAGCAGTTTGTTTGGGCAAAGAATTGAGGTCAAGGAGAATTTCAGCATGGGAGAGTTTCTTCTGGACTTGAGGCCGGCAACAGCCTGGTCACTGTACGCTGTGACAACAGCGGTCCTCACTCCACTGCTAAAGCATTTGATCACGTCAGATTACATCAACACCTCATTGACCTCAATAAACGTTCAGGCAAGTGCACTATTCACACTCGCGCGAGGCTTCCCCTTCGTCGATGTTGGAGTGTCGGCTCTCCTGCTAGCAGCCGGATGCTGGGGACAAGTCACCCTCACCGTTACGGTAACAGCGGCAACACTCCTTTTTTGCCACTATGCCTACATGGTTCCCGGTTGGCAAGCTGAGGCAATGCGCTCAGCCCAGCGGCGGACAGCGGCCGGAATCATGAAGAACGCTGTAGTGGATGGCATCGTGGCCACGGACGTCCCAGAATTAGAGCGCACCACACCCATCATGCAGAAGAAAGTTGGACAGATCATGCTGATCTTGGTGTCTCTAGCTGCAGTAGTAGTGAACCCGTCTGTGAAGACAGTACGAGAAGCCGGAATTTTGATCACGGCCGCAGCGGTGACGCTTTGGGAGAATGGAGCAAGCTCTGTTTGGAACGCAACAACTGCCATCGGACTCTGCCACATCATGCGTGGGGGTTGGTTGTCATGTCTATCCATAACATGGACACTCATAAAGAACATGGAAAAACCAGGACTAAAAAGAGGTGGGGCAAAAGGACGCACCTTGGGAGAGGTTTGGAAAGAAAGACTCAACCAGATGACAAAAGAAGAGTTCACTAGGTACCGCAAAGAGGCCATCATCGAAGTCGATCGCTCAGCGGCAAAACACGCCAGGAAAGAAGGCAATGTCACTGGAGGGCATCCAGTCTCTAGGGGCACAGCAAAACTGAGATGGCTGGTCGAACGGAGGTTTCTCGAACCGGTCGGAAAAGTGATTGACCTTGGATGTGGAAGAGGCGGTTGGTGTTACTATATGGCAACCCAAAAAAGAGTCCAAGAAGTCAGAGGGTACACAAAGGGCGGTCCCGGACATGAAGAGCCCCAACTAGTGCAAAGTTATGGATGGAACATTGTCACCATGAAGAGTGGAGTGGATGTGTTCTACAGACCTTCTGAGTGTTGTGACACCCTCCTTTGTGACATCGGAGAGTCCTCGTCAAGTGCTGAGGTTGAAGAGCATAGGACGATTCGGGTCCTTGAAATGGTTGAGGACTGGCTGCACCGAGGGCCAAGGGAATTTTGCGTGAAGGTGCTCTGTCCCTACATGCCGAAAGTCATAGAGAAGATGGAGCTGCTCCAACGCCGGTATGGGGGGGGACTGGTCAGAAACCCACTCTCACGGAATTCCACGCACGAGATGTATTGGGTGAGTCGAGCTTCAGGCAATGTGGTACATTCAGTGAATATGACCAGCCAGGTGCTCCTAGGAAGAATGGAAAAAAGGACCTGGAAGGGACCCCAATACGAGGAAGATGTAAACTTGGGAAGTGGAACCAGGGCGGTGGGAAAACCCCTGCTCAACTCAGACACCAGTAAAATCAAGAACAGGATTGAACGACTCAGGCGTGAGTACAGTTCGACGTGGCACCACGATGAGAACCACCCATATAGAACCTGGAACTATCACGGCAGTTATGATGTGAAGCCCACAGGCTCCGCCAGTTCGCTGGTCAATGGAGTGGTCAGGCTCCTCTCAAAACCATGGGACACCATCACGAATGTTACCACCATGGCCATGACTGACACTACTCCCTTCGGGCAGCAGCGAGTGTTCAAAGAGAAGGTGGACACGAAAGCTCCTGAACCGCCAGAAGGAGTGAAGTACGTGCTCAACGAGACCACCAACTGGTTGTGGGCGTTTTTGGCCAGAGAAAAACGTCCCAGAATGTGCTCTCGAGAGGAATTCATAAGAAAGGTCAACAGCAATGCAGCTTTGGGTGCCATGTTTGAAGAGCAGAATCAATGGAGGAGCGCCAGAGAAGCAGTTGAAGATCCAAAATTTTGGGAGATGGTGGATGAGGAGCGCGAGGCACATCTGCGGGGGGAATGTCACACTTGCATTTACAACATGATGGGAAAGAGAGAGAAAAAACCCGGAGAGTTCGGAAAGGCCAAGGGAAGCAGAGCCATTTGGTTCATGTGGCTCGGAGCTCGCTTTCTGGAGTTCGAGGCTCTGGGTTTTCTCAATGAAGACCACTGGCTTGGAAGAAAGAACTCAGGAGGAGGTGTCGAGGGCTTGGGCCTCCAAAAACTGGGTTACATCCTGCGTGAAGTTGGCACCCGGCCTGGGGGCAAGATCTATGCTGATGACACAGCTGGCTGGGACACCCGCATCACGAGAGCTGACTTGGAAAATGAAGCTAAGGTGCTTGAGCTGCTTGATGGGGAACATCGGCGTCTTGCCAGGGCCATCATTGAGCTCACCTATCGTCACAAAGTTGTGAAAGTGATGCGCCCGGCTGCTGATGGAAGAACCGTCATGGATGTTATCTCCAGAGAAGATCAGAGGGGGAGTGGACAAGTTGTCACCTACGCCCTAAACACTTTCACCAACCTGGCCGTCCAGCTGGTGAGGATGATGGAAGGGGAAGGAGTGATTGGCCCAGATGATGTGGAGAAACTCACAAAAGGGAAAGGACCCAAAGTCAGGACCTGGCTGTTTGAGAATGGGGAAGAAAGACTCAGCCGCATGGCTGTCAGTGGAGATGACTGTGTGGTAAAGCCCCTGGACGATCGCTTTGCCACCTCGCTCCACTTCCTCAATGCTATGTCAAAGGTTCGCAAAGACATCCAAGAGTGGAAACCGTCAACTGGATGGTATGATTGGCAGCAGGTTCCATTTTGCTCAAACCATTTCACTGAATTGATCATGAAAGATGGAAGAACACTGGTGGTTCCATGCCGAGGACAGGATGAATTGGTAGGCAGAGCTCGCATATCTCCAGGGGCCGGATGGAACGTCCGCGACACTGCTTGTCTGGCTAAGTCTTATGCCCAGATGTGGCTGCTTCTGTACTTCCACAGAAGAGACCTGCGGCTCATGGCCAACGCCATTTGCTCCGCTGTCCCTGTGAATTGGGTCCCTACCGGAAGAACCACGTGGTCCATCCATGCAGGAGGAGAGTGGATGACAACAGAGGACATGTTGGAGGTCTGGAACCGTGTTTGGATAGAGGAGAATGAATGGATGGAAGACAAAACCCCAGTGGAGAAATGGAGTGACGTCCCATATTCAGGAAAACGAGAGGACATCTGGTGTGGCAGCCTGATTGGCACAAGAGCCCGAGCCACGTGGGCAGAAAACATCCAGGTGGCTATCAACCAAGTCAGAGCAATCATCGGAGATGAGAAGTATGTGGACTACATGAGTTCACTAAAGAGATATGAAGACACAACTTTGGTTGAGGACACAGTACTGTAGATATTTAATCAATTGTAAATAGACAATATAAGTATGCATAAAAGTGTAGTTTTATAGTAGTATTTAGTGGTGTTAGTGTAAATAGTTAAGAAAATTTTGAGGAGAAAGTCAGGCCGGGAAGTTCCCGCCACCGGAAGTTGAGTAGACGGTGCTGCCTGCGACTCAACCCCAGGAGGACTGGGTGAACAAAGCCGCGAAGTGATCCATGTAAGCCCTCAGAACCGTCTCGGAAGGAGGACCCCACATGTTGTAACTTCAAAGCCCAATGTCAGACCACGCTACGGCGTGCTACTCTGCGGAGAGTGCAGTCTGCGATAGTGCCCCAGGAGGACTGGGTTAACAAAGGCAAACCAACGCCCCACGCGGCCCTAGCCCCGGTAATGGTGTTAACCAGGGCGAAAGGACTAGAGGTTAGAGGAGACCCCGCGGTTTAAAGTGCACGGCCCAGCCTGGCTGAAGCTGTAGGTCAGGGGAAGGACTAGAGGTTAGTGGAGACCCCGTGCCACAAAACACCACAACAAAACAGCATATTGACACCTGGGATAGACTAGGAGATCTTCTGCTCTGCACAACCAGCCACACGGCACAGTGCGCCGACAATGGTGGCTGGTGGTGCGAGAACACAGGATCT'
+    insdcAccessionFull: NC_009942.1
+    genes:
+    - name: 2K
+      sequence: 'SQTDNQLAVFLICVMTLVSAVAA'
+    - name: NS1
+      sequence: 'DTGCAIDISRQELRCGSGVFIHNDVEAWMDRYKYYPETPQGLAKIIQKAHKEGVCGLRSVSRLEHQMWEAVKDELNTLLKENGVDLSVVVEKQEGMYKSAPKRLTATTEKLEIGWKAWGKSILFAPELANNTFVVDGPETKECPTQNRAWNSLEVEDFGFGLTSTRMFLKVRESNTTECDSKIIGTAVKNNLAIHSDLSYWIESRLNDTWKLERAVLGEVKSCTWPETHTLWGDGILESDLIIPVTLAGPRSNHNRRPGYKTQNQGPWDEGRVEIDFDYCPGTTVTLSESCGHRGPATRTTTESGKLITDWCCRSCTLPPLRYQTDSGCWYGMEIRPQRHDEKTLVQSQVNA'
+    - name: NS2A
+      sequence: 'YNADMIDPFQLGLLVVFLATQEVLRKRWTAKISMPAILIALLVLVFGGITYTDVLRYVILVGAAFAESNSGGDVVHLALMATFKIQPVFMVASFLKARWTNQENILLMLAAVFFQMAYHDARQILLWEIPDVLNSLAVAWMILRAITFTTTSNVVVPLLALLTPGLRCLNLDVYRILLLMVGIGSLIREKRSAAAKKKGASLLCLALASTGLFNPMILAAGLIACDPNRKR'
+    - name: NS2B
+      sequence: 'GWPATEVMTAVGLMFAIVGGLAELDIDSMAIPMTIAGLMFAAFVISGKSTDMWIERTADISWESDAEITGSSERVDVRLDDDGNFQLMNDPGAPWKIWMLRMVCLAISAYTPWAILPSVVGFWITLQYTKR'
+    - name: NS3
+      sequence: 'GGVLWDTPSPKEYKKGDTTTGVYRIMTRGLLGSYQAGAGVMVEGVFHTLWHTTKGAALMSGEGRLDPYWGSVKEDRLCYGGPWKLQHKWNGQDEVQMIVVEPGKNVKNVQTKPGVFKTPEGEIGAVTLDFPTGTSGSPIVDKNGDVIGLYGNGVIMPNGSYISAIVQGERMDEPIPAGFEPEMLRKKQITVLDLHPGAGKTRRILPQIIKEAINRRLRTAVLAPTRVVAAEMAEALRGLPIRYQTSAVPREHNGNEIVDVMCHATLTHRLMSPHRVPNYNLFVMDEAHFTDPASIAARGYISTKVELGEAAAIFMTATPPGTSDPFPESNSPISDLQTEIPDRAWNSGYEWITEYTGKTVWFVPSVKMGNEIALCLQRAGKKVVQLNRKSYETEYPKCKNDDWDFVITTDISEMGANFKASRVIDSRKSVKPTIITEGEGRVILGEPSAVTAASAAQRRGRIGRNPSQVGDEYCYGGHTNEDDSNFAHWTEARIMLDNINMPNGLIAQFYQPEREKVYTMDGEYRLRGEERKNFLELLRTADLPVWLAYKVAAAGVSYHDRRWCFDGPRTNTILEDNNEVEVITKLGERKILRPRWIDARVYSDHQALKAFKDFASGKR'
+    - name: NS4A
+      sequence: 'SQIGLIEVLGKMPEHFMGKTWEALDTMYVVATAEKGGRAHRMALEELPDALQTIALIALLSVMTMGVFFLLMQRKGIGKIGLGGAVLGVATFFCWMAEVPGTKIAGMLLLSLLLMIVLIPEPEKQR'
+    - name: NS4B
+      sequence: 'NEMGWLDKTKSDISSLFGQRIEVKENFSMGEFLLDLRPATAWSLYAVTTAVLTPLLKHLITSDYINTSLTSINVQASALFTLARGFPFVDVGVSALLLAAGCWGQVTLTVTVTAATLLFCHYAYMVPGWQAEAMRSAQRRTAAGIMKNAVVDGIVATDVPELERTTPIMQKKVGQIMLILVSLAAVVVNPSVKTVREAGILITAAAVTLWENGASSVWNATTAIGLCHIMRGGWLSCLSITWTLIKNMEKPGLKR'
+    - name: NS5
+      sequence: 'GGAKGRTLGEVWKERLNQMTKEEFTRYRKEAIIEVDRSAAKHARKEGNVTGGHPVSRGTAKLRWLVERRFLEPVGKVIDLGCGRGGWCYYMATQKRVQEVRGYTKGGPGHEEPQLVQSYGWNIVTMKSGVDVFYRPSECCDTLLCDIGESSSSAEVEEHRTIRVLEMVEDWLHRGPREFCVKVLCPYMPKVIEKMELLQRRYGGGLVRNPLSRNSTHEMYWVSRASGNVVHSVNMTSQVLLGRMEKRTWKGPQYEEDVNLGSGTRAVGKPLLNSDTSKIKNRIERLRREYSSTWHHDENHPYRTWNYHGSYDVKPTGSASSLVNGVVRLLSKPWDTITNVTTMAMTDTTPFGQQRVFKEKVDTKAPEPPEGVKYVLNETTNWLWAFLAREKRPRMCSREEFIRKVNSNAALGAMFEEQNQWRSAREAVEDPKFWEMVDEEREAHLRGECHTCIYNMMGKREKKPGEFGKAKGSRAIWFMWLGARFLEFEALGFLNEDHWLGRKNSGGGVEGLGLQKLGYILREVGTRPGGKIYADDTAGWDTRITRADLENEAKVLELLDGEHRRLARAIIELTYRHKVVKVMRPAADGRTVMDVISREDQRGSGQVVTYALNTFTNLAVQLVRMMEGEGVIGPDDVEKLTKGKGPKVRTWLFENGEERLSRMAVSGDDCVVKPLDDRFATSLHFLNAMSKVRKDIQEWKPSTGWYDWQQVPFCSNHFTELIMKDGRTLVVPCRGQDELVGRARISPGAGWNVRDTACLAKSYAQMWLLLYFHRRDLRLMANAICSAVPVNWVPTGRTTWSIHAGGEWMTTEDMLEVWNRVWIEENEWMEDKTPVEKWSDVPYSGKREDIWCGSLIGTRARATWAENIQVAINQVRAIIGDEKYVDYMSSLKRYEDTTLVEDTVL'
+    - name: capsid
+      sequence: 'MSKKPGGPGKSRAVNMLKRGMPRVLSLIGLKRAMLSLIDGKGPIRFVLALLAFFRFTAIAPTRAVLDRWRGVNKQTAMKHLLSFKKELGTLTSAINRRSSKQKKRGGKTGIAVMIGLIASVGA'
+    - name: env
+      sequence: 'FNCLGMSNRDFLEGVSGATWVDLVLEGDSCVTIMSKDKPTIDVKMMNMEAANLAEVRSYCYLATVSDLSTKAACPTMGEAHNDKRADPAFVCRQGVVDRGWGNGCGLFGKGSIDTCAKFACSTKAIGRTILKENIKYEVAIFVHGPTTVESHGNYSTQVGATQAGRLSITPAAPSYTLKLGEYGEVTVDCEPRSGIDTNAYYVMTVGTKTFLVHREWFMDLNLPWSSAGSTVWRNRETLMEFEEPHATKQSVIALGSQEGALHQALAGAIPVEFSSNTVKLTSGHLKCRVKMEKLQLKGTTYGVCSKAFKFLGTPADTGHGTVVLELQYTGTDGPCKVPISSVASLNDLTPVGRLVTVNPFVSVATANAKVLIELEPPFGDSYIVVGRGEQQINHHWHKSGSSIGKAFTTTLKGAQRLAALGDTAWDFGSVGGVFTSVGKAVHQVFGGAFRSLFGGMSWITQGLLGALLLWMGINARDRSIALTFLAVGGVLLFLSVNVHA'
+    - name: prM
+      sequence: 'VTLSNFQGKVMMTVNATDVTDVITIPTAAGKNLCIVRAMDVGYMCDDTITYECPVLSAGNDPEDIDCWCTKSAVYVRYGRCTKTRHSRRSRRSLTVQTHGESTLANKKGAWMDSTKATRYLVKTESWILRNPGYALVAAVIGWMLGSNTMQRVVFVVLLLLVAPAYS'
+referenceGenome:
+  nucleotideSequences:
+  - name: main
+    sequence: 'AGTAGTTCGCCTGTGTGAGCTGACAAACTTAGTAGTGTTTGTGAGGATTAACAACAATTAACACAGTGCGAGCTGTTTCTTAGCACGAAGATCTCGATGTCTAAGAAACCAGGAGGGCCCGGCAAGAGCCGGGCTGTCAATATGCTAAAACGCGGAATGCCCCGCGTGTTGTCCTTGATTGGACTGAAGAGGGCTATGTTGAGCCTGATCGACGGCAAGGGGCCAATACGATTTGTGTTGGCTCTCTTGGCGTTCTTCAGGTTCACAGCAATTGCTCCGACCCGAGCAGTGCTGGATCGATGGAGAGGTGTGAACAAACAAACAGCGATGAAACACCTTCTGAGTTTTAAGAAGGAACTAGGGACCTTGACCAGTGCTATCAATCGGCGGAGCTCAAAACAAAAGAAAAGAGGAGGAAAGACCGGAATTGCAGTCATGATTGGCCTGATCGCCAGCGTAGGAGCAGTTACCCTCTCTAACTTCCAAGGGAAGGTGATGATGACGGTAAATGCTACTGACGTCACAGATGTCATCACGATTCCAACAGCTGCTGGAAAGAACCTATGCATTGTCAGAGCAATGGATGTGGGATACATGTGCGATGATACTATCACTTATGAATGCCCAGTACTGTCGGCTGGTAATGATCCAGAAGACATCGACTGTTGGTGCACAAAGTCAGCAGTCTACGTCAGGTATGGAAGATGCACCAAGACACGCCACTCAAGACGCAGTCGGAGGTCACTGACAGTGCAGACACACGGAGAAAGCACTCTAGCGAACAAGAAGGGGGCTTGGATGGACAGCACCAAGGCCACAAGGTATTTGGTAAAAACAGAATCATGGATCTTGAGGAACCCTGGATATGCCCTGGTGGCAGCCGTCATTGGTTGGATGCTTGGGAGCAACACCATGCAGAGAGTTGTGTTTGTCGTGCTATTGCTTTTGGTGGCCCCAGCTTACAGCTTCAACTGCCTTGGAATGAGCAACAGAGACTTCTTGGAAGGAGTGTCTGGAGCAACATGGGTGGATTTGGTTCTCGAAGGCGACAGCTGCGTGACTATCATGTCTAAGGACAAGCCTACCATCGATGTGAAGATGATGAATATGGAGGCGGCCAACCTGGCAGAGGTCCGCAGTTATTGCTATTTGGCTACCGTCAGCGATCTCTCCACCAAAGCTGCGTGCCCGACCATGGGAGAAGCTCACAATGACAAACGTGCTGACCCAGCTTTTGTGTGCAGACAAGGAGTGGTGGACAGGGGCTGGGGCAACGGCTGCGGACTATTTGGCAAAGGAAGCATTGACACATGCGCCAAATTTGCCTGCTCTACCAAGGCAATAGGAAGAACCATCTTGAAAGAGAATATCAAGTACGAAGTGGCCATTTTTGTCCATGGACCAACTACTGTGGAGTCGCACGGAAACTACTCCACACAGGTTGGAGCCACTCAGGCAGGGAGACTCAGCATCACTCCTGCGGCGCCTTCATACACACTAAAGCTTGGAGAATATGGAGAGGTGACAGTGGACTGTGAACCACGGTCAGGGATTGACACCAATGCATACTACGTGATGACTGTTGGAACAAAGACGTTCTTGGTCCATCGTGAGTGGTTCATGGACCTCAACCTCCCTTGGAGCAGTGCTGGAAGTACTGTGTGGAGGAACAGAGAGACGTTAATGGAGTTTGAGGAACCACACGCCACGAAGCAGTCTGTGATAGCATTGGGCTCACAAGAGGGAGCTCTGCATCAAGCTTTGGCTGGAGCCATTCCTGTGGAATTTTCAAGCAACACTGTCAAGTTGACGTCGGGTCATTTGAAGTGTAGAGTGAAGATGGAAAAATTGCAGTTGAAGGGAACAACCTATGGCGTCTGTTCAAAGGCTTTCAAGTTTCTTGGGACTCCCGCAGACACAGGTCACGGCACTGTGGTGTTGGAATTGCAGTACACTGGCACGGATGGACCTTGCAAAGTTCCTATCTCGTCAGTGGCTTCATTGAACGACCTAACGCCAGTGGGCAGATTGGTCACTGTCAACCCTTTTGTTTCAGTGGCCACGGCCAACGCTAAGGTCCTGATTGAATTGGAACCACCCTTTGGAGACTCATACATAGTGGTGGGCAGAGGAGAACAACAGATCAATCACCATTGGCACAAGTCTGGAAGCAGCATTGGCAAAGCCTTTACAACCACCCTCAAAGGAGCGCAGAGACTAGCCGCTCTAGGAGACACAGCTTGGGACTTTGGATCAGTTGGAGGGGTGTTCACCTCAGTTGGGAAGGCTGTCCATCAAGTGTTCGGAGGAGCATTCCGCTCACTGTTCGGAGGCATGTCCTGGATAACGCAAGGATTGCTGGGGGCTCTCCTGTTGTGGATGGGCATCAATGCTCGTGATAGGTCCATAGCTCTCACGTTTCTCGCAGTTGGAGGAGTTCTGCTCTTCCTCTCCGTGAACGTGCACGCTGACACTGGGTGTGCCATAGACATCAGCCGGCAAGAGCTGAGATGTGGAAGTGGAGTGTTCATACACAATGATGTGGAGGCTTGGATGGACCGGTACAAGTATTACCCTGAAACGCCACAAGGCCTAGCCAAGATCATTCAGAAAGCTCATAAGGAAGGAGTGTGCGGTCTACGATCAGTTTCCAGACTGGAGCATCAAATGTGGGAAGCAGTGAAGGACGAGCTGAACACTCTTTTGAAGGAGAATGGTGTGGACCTTAGTGTCGTGGTTGAGAAACAGGAGGGAATGTACAAGTCAGCACCTAAACGCCTCACCGCCACCACGGAAAAATTGGAAATTGGCTGGAAGGCCTGGGGAAAGAGTATTTTATTTGCACCAGAACTCGCCAACAACACCTTTGTGGTTGATGGTCCGGAGACCAAGGAATGTCCGACTCAGAATCGCGCTTGGAATAGCTTAGAAGTGGAGGATTTTGGATTTGGTCTCACCAGCACTCGGATGTTCCTGAAGGTCAGAGAGAGCAACACAACTGAATGTGACTCGAAGATCATTGGAACGGCTGTCAAGAACAACTTGGCGATCCACAGTGACCTGTCCTATTGGATTGAAAGCAGGCTCAATGATACGTGGAAGCTTGAAAGGGCAGTTCTGGGTGAAGTCAAATCATGTACGTGGCCTGAGACGCATACCTTGTGGGGCGATGGAATCCTTGAGAGTGACTTGATAATACCAGTCACACTGGCGGGACCACGAAGCAATCACAATCGGAGACCTGGGTACAAGACACAAAACCAGGGCCCATGGGACGAAGGCCGGGTAGAGATTGACTTCGATTACTGCCCAGGAACTACGGTCACCCTGAGTGAGAGCTGCGGACACCGTGGACCTGCCACTCGCACCACCACAGAGAGCGGAAAGTTGATAACAGATTGGTGCTGCAGGAGCTGCACCTTACCACCACTGCGCTACCAAACTGACAGCGGCTGTTGGTATGGTATGGAGATCAGACCACAGAGACATGATGAAAAGACCCTCGTGCAGTCACAAGTGAATGCTTATAATGCTGATATGATTGACCCTTTTCAGTTGGGCCTTCTGGTCGTGTTCTTGGCCACCCAGGAGGTCCTTCGCAAGAGGTGGACAGCCAAGATCAGCATGCCAGCTATACTGATTGCTCTGCTAGTCCTGGTGTTTGGGGGCATTACTTACACTGATGTGTTACGCTATGTCATCTTGGTGGGGGCAGCTTTCGCAGAATCTAATTCGGGAGGAGACGTGGTACACTTGGCGCTCATGGCGACCTTCAAGATACAACCAGTGTTTATGGTGGCATCGTTTCTCAAAGCGAGATGGACCAACCAGGAGAACATTTTGTTGATGTTGGCGGCTGTTTTCTTTCAAATGGCTTATCACGATGCCCGCCAAATTCTGCTCTGGGAGATCCCTGATGTGTTGAATTCACTGGCGGTAGCTTGGATGATACTGAGAGCCATAACATTCACAACGACATCAAACGTGGTTGTTCCGCTGCTAGCCCTGCTAACACCCGGGCTGAGATGCTTGAATCTGGATGTGTACAGGATACTGCTGTTGATGGTCGGAATAGGCAGCTTGATCAGGGAGAAGAGGAGTGCAGCCGCAAAAAAGAAAGGAGCAAGTCTGCTATGCTTGGCTCTAGCCTCAACAGGACTTTTCAACCCCATGATCCTTGCTGCTGGACTGATTGCATGTGATCCCAACCGTAAACGCGGATGGCCCGCAACTGAAGTGATGACAGCTGTCGGCCTAATGTTTGCCATCGTCGGAGGGCTGGCAGAGCTTGACATTGACTCCATGGCCATTCCAATGACTATCGCGGGGCTCATGTTTGCTGCTTTCGTGATTTCTGGGAAATCAACAGATATGTGGATTGAGAGAACGGCGGACATTTCCTGGGAAAGTGATGCAGAAATTACAGGCTCGAGCGAAAGAGTTGATGTGCGGCTTGATGATGATGGAAACTTCCAGCTCATGAATGATCCAGGAGCACCTTGGAAGATATGGATGCTCAGAATGGTCTGTCTCGCGATTAGTGCGTACACCCCCTGGGCAATCTTGCCCTCAGTAGTTGGATTTTGGATAACTCTCCAATACACAAAGAGAGGAGGCGTGTTGTGGGACACTCCCTCACCAAAGGAGTACAAAAAGGGGGACACGACCACCGGCGTCTACAGGATCATGACTCGTGGGCTGCTCGGCAGTTATCAAGCAGGAGCGGGCGTGATGGTTGAAGGTGTTTTCCACACCCTTTGGCATACAACAAAAGGAGCCGCTTTGATGAGCGGAGAGGGCCGCCTGGACCCATACTGGGGCAGTGTCAAGGAGGATCGACTTTGTTACGGAGGACCCTGGAAATTGCAGCACAAGTGGAACGGGCAGGATGAGGTGCAGATGATTGTGGTGGAACCTGGCAAGAACGTTAAGAACGTCCAGACGAAACCAGGGGTGTTCAAAACACCTGAAGGAGAAATCGGGGCCGTGACTTTGGACTTCCCCACTGGAACATCAGGCTCACCAATAGTGGACAAAAACGGTGATGTGATTGGGCTTTATGGCAATGGAGTCATAATGCCCAACGGCTCATACATAAGCGCGATAGTGCAGGGTGAAAGGATGGATGAGCCAATCCCAGCCGGATTCGAACCTGAGATGCTGAGGAAAAAACAGATCACTGTACTGGATCTCCATCCCGGCGCCGGTAAAACAAGGAGGATTCTGCCACAGATCATCAAAGAGGCCATAAACAGAAGACTGAGAACAGCCGTGCTAGCGCCAACCAGGGTTGTGGCTGCTGAGATGGCTGAAGCACTGAGAGGACTGCCCATCCGGTACCAGACATCCGCAGTGCCCAGAGAACATAATGGAAATGAGATTGTTGATGTCATGTGTCATGCTACCCTCACCCACAGGCTGATGTCTCCTCACAGGGTGCCGAACTACAACCTGTTCGTGATGGATGAGGCTCATTTCACCGACCCAGCTAGCATTGCAGCAAGAGGTTACATTTCCACAAAGGTCGAGCTAGGGGAGGCGGCGGCAATATTCATGACAGCCACCCCACCAGGCACTTCAGATCCATTCCCAGAGTCCAATTCACCAATTTCCGACTTACAGACTGAGATCCCGGATCGAGCTTGGAACTCTGGATACGAATGGATCACAGAATACACCGGGAAGACGGTTTGGTTTGTGCCTAGTGTCAAGATGGGGAATGAGATTGCCCTTTGCCTACAACGTGCTGGAAAGAAAGTAGTCCAATTGAACAGAAAGTCGTACGAGACGGAGTACCCAAAATGTAAGAACGATGATTGGGACTTTGTTATCACAACAGACATATCTGAAATGGGGGCTAACTTCAAGGCGAGCAGGGTGATTGACAGCCGGAAGAGTGTGAAACCAACCATCATAACAGAAGGAGAAGGGAGAGTGATCCTGGGAGAACCATCTGCAGTGACAGCAGCTAGTGCCGCCCAGAGACGTGGACGTATCGGTAGAAATCCGTCGCAAGTTGGTGATGAGTACTGTTATGGGGGGCACACGAATGAAGACGACTCGAACTTCGCCCATTGGACTGAGGCACGAATCATGCTGGACAACATCAACATGCCAAACGGACTGATCGCTCAATTCTACCAACCAGAGCGTGAGAAGGTATATACCATGGATGGGGAATACCGGCTCAGAGGAGAAGAGAGAAAAAACTTTCTGGAACTGTTGAGGACTGCAGATCTGCCAGTTTGGCTGGCTTACAAGGTTGCAGCGGCTGGAGTGTCATACCACGACCGGAGGTGGTGCTTTGATGGTCCTAGGACAAACACAATTTTAGAAGACAACAACGAAGTGGAAGTCATCACGAAGCTTGGTGAAAGGAAGATTCTGAGGCCGCGCTGGATTGATGCCAGGGTGTACTCGGATCACCAGGCACTAAAGGCGTTCAAGGACTTCGCCTCGGGAAAACGTTCTCAGATAGGGCTCATTGAGGTTCTGGGAAAGATGCCTGAGCACTTCATGGGGAAGACATGGGAAGCACTTGACACCATGTACGTTGTGGCCACTGCAGAGAAAGGAGGAAGAGCTCACAGAATGGCCCTGGAGGAACTGCCAGATGCTCTTCAGACAATTGCCTTGATTGCCTTATTGAGTGTGATGACCATGGGAGTATTCTTCCTCCTCATGCAGCGGAAGGGCATTGGAAAGATAGGTTTGGGAGGCGCTGTCTTGGGAGTCGCGACCTTTTTCTGTTGGATGGCTGAAGTTCCAGGAACGAAGATCGCCGGAATGTTGCTGCTCTCCCTTCTCTTGATGATTGTGCTAATTCCTGAGCCAGAGAAGCAACGTTCGCAGACAGACAACCAGCTAGCCGTGTTCCTGATTTGTGTCATGACCCTTGTGAGCGCAGTGGCAGCCAACGAGATGGGTTGGCTAGATAAGACCAAGAGTGACATAAGCAGTTTGTTTGGGCAAAGAATTGAGGTCAAGGAGAATTTCAGCATGGGAGAGTTTCTTCTGGACTTGAGGCCGGCAACAGCCTGGTCACTGTACGCTGTGACAACAGCGGTCCTCACTCCACTGCTAAAGCATTTGATCACGTCAGATTACATCAACACCTCATTGACCTCAATAAACGTTCAGGCAAGTGCACTATTCACACTCGCGCGAGGCTTCCCCTTCGTCGATGTTGGAGTGTCGGCTCTCCTGCTAGCAGCCGGATGCTGGGGACAAGTCACCCTCACCGTTACGGTAACAGCGGCAACACTCCTTTTTTGCCACTATGCCTACATGGTTCCCGGTTGGCAAGCTGAGGCAATGCGCTCAGCCCAGCGGCGGACAGCGGCCGGAATCATGAAGAACGCTGTAGTGGATGGCATCGTGGCCACGGACGTCCCAGAATTAGAGCGCACCACACCCATCATGCAGAAGAAAGTTGGACAGATCATGCTGATCTTGGTGTCTCTAGCTGCAGTAGTAGTGAACCCGTCTGTGAAGACAGTACGAGAAGCCGGAATTTTGATCACGGCCGCAGCGGTGACGCTTTGGGAGAATGGAGCAAGCTCTGTTTGGAACGCAACAACTGCCATCGGACTCTGCCACATCATGCGTGGGGGTTGGTTGTCATGTCTATCCATAACATGGACACTCATAAAGAACATGGAAAAACCAGGACTAAAAAGAGGTGGGGCAAAAGGACGCACCTTGGGAGAGGTTTGGAAAGAAAGACTCAACCAGATGACAAAAGAAGAGTTCACTAGGTACCGCAAAGAGGCCATCATCGAAGTCGATCGCTCAGCGGCAAAACACGCCAGGAAAGAAGGCAATGTCACTGGAGGGCATCCAGTCTCTAGGGGCACAGCAAAACTGAGATGGCTGGTCGAACGGAGGTTTCTCGAACCGGTCGGAAAAGTGATTGACCTTGGATGTGGAAGAGGCGGTTGGTGTTACTATATGGCAACCCAAAAAAGAGTCCAAGAAGTCAGAGGGTACACAAAGGGCGGTCCCGGACATGAAGAGCCCCAACTAGTGCAAAGTTATGGATGGAACATTGTCACCATGAAGAGTGGAGTGGATGTGTTCTACAGACCTTCTGAGTGTTGTGACACCCTCCTTTGTGACATCGGAGAGTCCTCGTCAAGTGCTGAGGTTGAAGAGCATAGGACGATTCGGGTCCTTGAAATGGTTGAGGACTGGCTGCACCGAGGGCCAAGGGAATTTTGCGTGAAGGTGCTCTGTCCCTACATGCCGAAAGTCATAGAGAAGATGGAGCTGCTCCAACGCCGGTATGGGGGGGGACTGGTCAGAAACCCACTCTCACGGAATTCCACGCACGAGATGTATTGGGTGAGTCGAGCTTCAGGCAATGTGGTACATTCAGTGAATATGACCAGCCAGGTGCTCCTAGGAAGAATGGAAAAAAGGACCTGGAAGGGACCCCAATACGAGGAAGATGTAAACTTGGGAAGTGGAACCAGGGCGGTGGGAAAACCCCTGCTCAACTCAGACACCAGTAAAATCAAGAACAGGATTGAACGACTCAGGCGTGAGTACAGTTCGACGTGGCACCACGATGAGAACCACCCATATAGAACCTGGAACTATCACGGCAGTTATGATGTGAAGCCCACAGGCTCCGCCAGTTCGCTGGTCAATGGAGTGGTCAGGCTCCTCTCAAAACCATGGGACACCATCACGAATGTTACCACCATGGCCATGACTGACACTACTCCCTTCGGGCAGCAGCGAGTGTTCAAAGAGAAGGTGGACACGAAAGCTCCTGAACCGCCAGAAGGAGTGAAGTACGTGCTCAACGAGACCACCAACTGGTTGTGGGCGTTTTTGGCCAGAGAAAAACGTCCCAGAATGTGCTCTCGAGAGGAATTCATAAGAAAGGTCAACAGCAATGCAGCTTTGGGTGCCATGTTTGAAGAGCAGAATCAATGGAGGAGCGCCAGAGAAGCAGTTGAAGATCCAAAATTTTGGGAGATGGTGGATGAGGAGCGCGAGGCACATCTGCGGGGGGAATGTCACACTTGCATTTACAACATGATGGGAAAGAGAGAGAAAAAACCCGGAGAGTTCGGAAAGGCCAAGGGAAGCAGAGCCATTTGGTTCATGTGGCTCGGAGCTCGCTTTCTGGAGTTCGAGGCTCTGGGTTTTCTCAATGAAGACCACTGGCTTGGAAGAAAGAACTCAGGAGGAGGTGTCGAGGGCTTGGGCCTCCAAAAACTGGGTTACATCCTGCGTGAAGTTGGCACCCGGCCTGGGGGCAAGATCTATGCTGATGACACAGCTGGCTGGGACACCCGCATCACGAGAGCTGACTTGGAAAATGAAGCTAAGGTGCTTGAGCTGCTTGATGGGGAACATCGGCGTCTTGCCAGGGCCATCATTGAGCTCACCTATCGTCACAAAGTTGTGAAAGTGATGCGCCCGGCTGCTGATGGAAGAACCGTCATGGATGTTATCTCCAGAGAAGATCAGAGGGGGAGTGGACAAGTTGTCACCTACGCCCTAAACACTTTCACCAACCTGGCCGTCCAGCTGGTGAGGATGATGGAAGGGGAAGGAGTGATTGGCCCAGATGATGTGGAGAAACTCACAAAAGGGAAAGGACCCAAAGTCAGGACCTGGCTGTTTGAGAATGGGGAAGAAAGACTCAGCCGCATGGCTGTCAGTGGAGATGACTGTGTGGTAAAGCCCCTGGACGATCGCTTTGCCACCTCGCTCCACTTCCTCAATGCTATGTCAAAGGTTCGCAAAGACATCCAAGAGTGGAAACCGTCAACTGGATGGTATGATTGGCAGCAGGTTCCATTTTGCTCAAACCATTTCACTGAATTGATCATGAAAGATGGAAGAACACTGGTGGTTCCATGCCGAGGACAGGATGAATTGGTAGGCAGAGCTCGCATATCTCCAGGGGCCGGATGGAACGTCCGCGACACTGCTTGTCTGGCTAAGTCTTATGCCCAGATGTGGCTGCTTCTGTACTTCCACAGAAGAGACCTGCGGCTCATGGCCAACGCCATTTGCTCCGCTGTCCCTGTGAATTGGGTCCCTACCGGAAGAACCACGTGGTCCATCCATGCAGGAGGAGAGTGGATGACAACAGAGGACATGTTGGAGGTCTGGAACCGTGTTTGGATAGAGGAGAATGAATGGATGGAAGACAAAACCCCAGTGGAGAAATGGAGTGACGTCCCATATTCAGGAAAACGAGAGGACATCTGGTGTGGCAGCCTGATTGGCACAAGAGCCCGAGCCACGTGGGCAGAAAACATCCAGGTGGCTATCAACCAAGTCAGAGCAATCATCGGAGATGAGAAGTATGTGGACTACATGAGTTCACTAAAGAGATATGAAGACACAACTTTGGTTGAGGACACAGTACTGTAGATATTTAATCAATTGTAAATAGACAATATAAGTATGCATAAAAGTGTAGTTTTATAGTAGTATTTAGTGGTGTTAGTGTAAATAGTTAAGAAAATTTTGAGGAGAAAGTCAGGCCGGGAAGTTCCCGCCACCGGAAGTTGAGTAGACGGTGCTGCCTGCGACTCAACCCCAGGAGGACTGGGTGAACAAAGCCGCGAAGTGATCCATGTAAGCCCTCAGAACCGTCTCGGAAGGAGGACCCCACATGTTGTAACTTCAAAGCCCAATGTCAGACCACGCTACGGCGTGCTACTCTGCGGAGAGTGCAGTCTGCGATAGTGCCCCAGGAGGACTGGGTTAACAAAGGCAAACCAACGCCCCACGCGGCCCTAGCCCCGGTAATGGTGTTAACCAGGGCGAAAGGACTAGAGGTTAGAGGAGACCCCGCGGTTTAAAGTGCACGGCCCAGCCTGGCTGAAGCTGTAGGTCAGGGGAAGGACTAGAGGTTAGTGGAGACCCCGTGCCACAAAACACCACAACAAAACAGCATATTGACACCTGGGATAGACTAGGAGATCTTCTGCTCTGCACAACCAGCCACACGGCACAGTGCGCCGACAATGGTGGCTGGTGGTGCGAGAACACAGGATCT'
+  genes:
+  - name: 2K
+    sequence: 'SQTDNQLAVFLICVMTLVSAVAA'
+  - name: NS1
+    sequence: 'DTGCAIDISRQELRCGSGVFIHNDVEAWMDRYKYYPETPQGLAKIIQKAHKEGVCGLRSVSRLEHQMWEAVKDELNTLLKENGVDLSVVVEKQEGMYKSAPKRLTATTEKLEIGWKAWGKSILFAPELANNTFVVDGPETKECPTQNRAWNSLEVEDFGFGLTSTRMFLKVRESNTTECDSKIIGTAVKNNLAIHSDLSYWIESRLNDTWKLERAVLGEVKSCTWPETHTLWGDGILESDLIIPVTLAGPRSNHNRRPGYKTQNQGPWDEGRVEIDFDYCPGTTVTLSESCGHRGPATRTTTESGKLITDWCCRSCTLPPLRYQTDSGCWYGMEIRPQRHDEKTLVQSQVNA'
+  - name: NS2A
+    sequence: 'YNADMIDPFQLGLLVVFLATQEVLRKRWTAKISMPAILIALLVLVFGGITYTDVLRYVILVGAAFAESNSGGDVVHLALMATFKIQPVFMVASFLKARWTNQENILLMLAAVFFQMAYHDARQILLWEIPDVLNSLAVAWMILRAITFTTTSNVVVPLLALLTPGLRCLNLDVYRILLLMVGIGSLIREKRSAAAKKKGASLLCLALASTGLFNPMILAAGLIACDPNRKR'
+  - name: NS2B
+    sequence: 'GWPATEVMTAVGLMFAIVGGLAELDIDSMAIPMTIAGLMFAAFVISGKSTDMWIERTADISWESDAEITGSSERVDVRLDDDGNFQLMNDPGAPWKIWMLRMVCLAISAYTPWAILPSVVGFWITLQYTKR'
+  - name: NS3
+    sequence: 'GGVLWDTPSPKEYKKGDTTTGVYRIMTRGLLGSYQAGAGVMVEGVFHTLWHTTKGAALMSGEGRLDPYWGSVKEDRLCYGGPWKLQHKWNGQDEVQMIVVEPGKNVKNVQTKPGVFKTPEGEIGAVTLDFPTGTSGSPIVDKNGDVIGLYGNGVIMPNGSYISAIVQGERMDEPIPAGFEPEMLRKKQITVLDLHPGAGKTRRILPQIIKEAINRRLRTAVLAPTRVVAAEMAEALRGLPIRYQTSAVPREHNGNEIVDVMCHATLTHRLMSPHRVPNYNLFVMDEAHFTDPASIAARGYISTKVELGEAAAIFMTATPPGTSDPFPESNSPISDLQTEIPDRAWNSGYEWITEYTGKTVWFVPSVKMGNEIALCLQRAGKKVVQLNRKSYETEYPKCKNDDWDFVITTDISEMGANFKASRVIDSRKSVKPTIITEGEGRVILGEPSAVTAASAAQRRGRIGRNPSQVGDEYCYGGHTNEDDSNFAHWTEARIMLDNINMPNGLIAQFYQPEREKVYTMDGEYRLRGEERKNFLELLRTADLPVWLAYKVAAAGVSYHDRRWCFDGPRTNTILEDNNEVEVITKLGERKILRPRWIDARVYSDHQALKAFKDFASGKR'
+  - name: NS4A
+    sequence: 'SQIGLIEVLGKMPEHFMGKTWEALDTMYVVATAEKGGRAHRMALEELPDALQTIALIALLSVMTMGVFFLLMQRKGIGKIGLGGAVLGVATFFCWMAEVPGTKIAGMLLLSLLLMIVLIPEPEKQR'
+  - name: NS4B
+    sequence: 'NEMGWLDKTKSDISSLFGQRIEVKENFSMGEFLLDLRPATAWSLYAVTTAVLTPLLKHLITSDYINTSLTSINVQASALFTLARGFPFVDVGVSALLLAAGCWGQVTLTVTVTAATLLFCHYAYMVPGWQAEAMRSAQRRTAAGIMKNAVVDGIVATDVPELERTTPIMQKKVGQIMLILVSLAAVVVNPSVKTVREAGILITAAAVTLWENGASSVWNATTAIGLCHIMRGGWLSCLSITWTLIKNMEKPGLKR'
+  - name: NS5
+    sequence: 'GGAKGRTLGEVWKERLNQMTKEEFTRYRKEAIIEVDRSAAKHARKEGNVTGGHPVSRGTAKLRWLVERRFLEPVGKVIDLGCGRGGWCYYMATQKRVQEVRGYTKGGPGHEEPQLVQSYGWNIVTMKSGVDVFYRPSECCDTLLCDIGESSSSAEVEEHRTIRVLEMVEDWLHRGPREFCVKVLCPYMPKVIEKMELLQRRYGGGLVRNPLSRNSTHEMYWVSRASGNVVHSVNMTSQVLLGRMEKRTWKGPQYEEDVNLGSGTRAVGKPLLNSDTSKIKNRIERLRREYSSTWHHDENHPYRTWNYHGSYDVKPTGSASSLVNGVVRLLSKPWDTITNVTTMAMTDTTPFGQQRVFKEKVDTKAPEPPEGVKYVLNETTNWLWAFLAREKRPRMCSREEFIRKVNSNAALGAMFEEQNQWRSAREAVEDPKFWEMVDEEREAHLRGECHTCIYNMMGKREKKPGEFGKAKGSRAIWFMWLGARFLEFEALGFLNEDHWLGRKNSGGGVEGLGLQKLGYILREVGTRPGGKIYADDTAGWDTRITRADLENEAKVLELLDGEHRRLARAIIELTYRHKVVKVMRPAADGRTVMDVISREDQRGSGQVVTYALNTFTNLAVQLVRMMEGEGVIGPDDVEKLTKGKGPKVRTWLFENGEERLSRMAVSGDDCVVKPLDDRFATSLHFLNAMSKVRKDIQEWKPSTGWYDWQQVPFCSNHFTELIMKDGRTLVVPCRGQDELVGRARISPGAGWNVRDTACLAKSYAQMWLLLYFHRRDLRLMANAICSAVPVNWVPTGRTTWSIHAGGEWMTTEDMLEVWNRVWIEENEWMEDKTPVEKWSDVPYSGKREDIWCGSLIGTRARATWAENIQVAINQVRAIIGDEKYVDYMSSLKRYEDTTLVEDTVL'
+  - name: capsid
+    sequence: 'MSKKPGGPGKSRAVNMLKRGMPRVLSLIGLKRAMLSLIDGKGPIRFVLALLAFFRFTAIAPTRAVLDRWRGVNKQTAMKHLLSFKKELGTLTSAINRRSSKQKKRGGKTGIAVMIGLIASVGA'
+  - name: env
+    sequence: 'FNCLGMSNRDFLEGVSGATWVDLVLEGDSCVTIMSKDKPTIDVKMMNMEAANLAEVRSYCYLATVSDLSTKAACPTMGEAHNDKRADPAFVCRQGVVDRGWGNGCGLFGKGSIDTCAKFACSTKAIGRTILKENIKYEVAIFVHGPTTVESHGNYSTQVGATQAGRLSITPAAPSYTLKLGEYGEVTVDCEPRSGIDTNAYYVMTVGTKTFLVHREWFMDLNLPWSSAGSTVWRNRETLMEFEEPHATKQSVIALGSQEGALHQALAGAIPVEFSSNTVKLTSGHLKCRVKMEKLQLKGTTYGVCSKAFKFLGTPADTGHGTVVLELQYTGTDGPCKVPISSVASLNDLTPVGRLVTVNPFVSVATANAKVLIELEPPFGDSYIVVGRGEQQINHHWHKSGSSIGKAFTTTLKGAQRLAALGDTAWDFGSVGGVFTSVGKAVHQVFGGAFRSLFGGMSWITQGLLGALLLWMGINARDRSIALTFLAVGGVLLFLSVNVHA'
+  - name: prM
+    sequence: 'VTLSNFQGKVMMTVNATDVTDVITIPTAAGKNLCIVRAMDVGYMCDDTITYECPVLSAGNDPEDIDCWCTKSAVYVRYGRCTKTRHSRRSRRSLTVQTHGESTLANKKGAWMDSTKATRYLVKTESWILRNPGYALVAAVIGWMLGSNTMQRVVFVVLLLLVAPAYS'
+displayName: West Nile Virus

@@ -8,6 +8,7 @@ import { type BaseClient, type TokenSet } from 'openid-client';
 import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
+import { extractRealmRoles } from '../utils/extractRealmRoles.ts';
 import { getAuthUrl } from '../utils/getAuthUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
@@ -74,7 +75,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
             return context.redirect('/503?service=readonly');
         }
         deleteCookie(context);
-        context.locals.session = { isLoggedIn: false };
+        context.locals.session = { isLoggedIn: false, roles: [] };
         return next();
     }
 
@@ -115,6 +116,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     if (token === undefined || userInfo === undefined) {
         context.locals.session = {
             isLoggedIn: false,
+            roles: [],
         };
 
         return next();
@@ -123,6 +125,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     if (userInfo.isErr()) {
         context.locals.session = {
             isLoggedIn: false,
+            roles: [],
         };
         logger.debug(`Error getting user info: ${userInfo.error}`);
         logger.debug(`Clearing auth cookies.`);
@@ -138,6 +141,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
             email: userInfo.value.email,
             emailVerified: userInfo.value.email_verified,
         },
+        roles: extractRealmRoles(token.accessToken),
         token,
     };
 

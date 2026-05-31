@@ -11,7 +11,7 @@ Although Loculus is in principle stable and can be used in production, we plan t
 
 ## Define your schema
 
-The first step to setting up a new Loculus instance is to define its schema. You can read about [a few example schemas](../schema-designs).
+The first step to setting up a new Loculus instance is to define its schema. You can read about [a few example schemas](../schema-designs). Schemas and the rest of the organism + instance domain config are managed through Loculus's database-backed configuration system — see [Configuration system](../configuration-system) for how it is structured, seeded, and edited.
 
 ## Choose a preprocessing pipeline
 

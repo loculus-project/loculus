@@ -1,8 +1,5 @@
 package org.loculus.backend.config
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.models.headers.Header
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
@@ -11,12 +8,8 @@ import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.DatabaseConfig
 import org.jetbrains.exposed.sql.Slf4jSqlDebugLogger
-import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.controller.LoculusCustomHeaders
 import org.loculus.backend.log.REQUEST_ID_HEADER_DESCRIPTION
-import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
-import org.loculus.backend.utils.DateProvider
 import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
@@ -29,11 +22,9 @@ import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.CommonsRequestLoggingFilter
-import java.io.File
 import javax.sql.DataSource
 
 object BackendSpringProperty {
-    const val BACKEND_CONFIG_PATH = "loculus.config.path"
     const val STALE_AFTER_SECONDS = "loculus.cleanup.task.reset-stale-in-processing-after-seconds"
     const val CLEAN_UP_RUN_EVERY_SECONDS = "loculus.cleanup.task.run-every-seconds"
     const val PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS =
@@ -83,13 +74,7 @@ class BackendSpringConfig {
     }
 
     @Bean
-    fun backendConfig(
-        objectMapper: ObjectMapper,
-        @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
-    ): BackendConfig = readBackendConfig(objectMapper, configPath)
-
-    @Bean
-    fun openApi(backendConfig: BackendConfig) = buildOpenApiSchema(backendConfig)
+    fun openApi() = buildOpenApiSchema()
 
     @Bean
     fun s3Config(
@@ -146,8 +131,6 @@ class BackendSpringConfig {
 class FlywayInit(
     // get Flyway from the Spring autoconfiguration so that Java based migrations can use Spring beans
     private val flyway: Flyway,
-    private val backendConfig: BackendConfig,
-    private val dateProvider: DateProvider,
     private val dataSource: DataSource,
 ) : InitializingBean {
     override fun afterPropertiesSet() {
@@ -155,60 +138,6 @@ class FlywayInit(
 
         flyway.migrate()
 
-        // Since migration V1.10 we need to initialize the CurrentProcessingPipelineTable
-        // in code, because the configured organisms are not known in the SQL table definitions.
-        logger.info("Initializing CurrentProcessingPipelineTable")
-        transaction {
-            val insertedRows = CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
-                backendConfig.organisms.keys,
-                dateProvider.getCurrentDateTime(),
-            )
-            logger.info("$insertedRows inserted.")
-        }
+        logger.info("Flyway migration complete")
     }
-}
-
-/**
- * Check whether configured metadata fields for earliestReleaseDate are actually fields and are of type date.
- * Returns a non-empty list of errors if validation errors were found.
- */
-internal fun validateEarliestReleaseDateFields(config: BackendConfig): List<String> {
-    val errors = mutableListOf<String>()
-    config.organisms.values.forEach {
-        val organism = it.schema.organismName
-        val allFields = it.schema.metadata.map { it.name }.toSet()
-        val dateFields = it.schema.metadata.filter { it.type == MetadataType.DATE }.map { it.name }.toSet()
-        it.schema.earliestReleaseDate.externalFields.forEach {
-            if (!allFields.contains(it)) {
-                errors.add(
-                    "Error on organism $organism in earliestReleaseDate.externalFields: " +
-                        "Field $it does not exist.",
-                )
-            } else {
-                if (!dateFields.contains(it)) {
-                    errors.add(
-                        "Error on organism $organism in earliestReleaseDate.externalFields: " +
-                            "Field $it is not of type ${MetadataType.DATE}.",
-                    )
-                }
-            }
-        }
-    }
-    return errors
-}
-
-fun readBackendConfig(objectMapper: ObjectMapper, configPath: String): BackendConfig {
-    val config = objectMapper
-        .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
-        .readValue<BackendConfig>(File(configPath))
-    logger.info { "Loaded backend config from $configPath" }
-    logger.info { "Config: $config" }
-    val validationErrors = validateEarliestReleaseDateFields(config)
-    if (validationErrors.isNotEmpty()) {
-        throw IllegalArgumentException(
-            "The configuration file at $configPath is invalid: " +
-                validationErrors.joinToString(" "),
-        )
-    }
-    return config
 }

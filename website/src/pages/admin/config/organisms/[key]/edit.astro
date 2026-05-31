@@ -1,0 +1,113 @@
+---
+import { EditOrganismSection } from '../../../../../components/admin/EditOrganismSection';
+import { getRuntimeConfig } from '../../../../../config';
+import AdminConfigLayout from '../../../../../layouts/AdminConfigLayout.astro';
+import { AdminConfigError, getAdminConfigClient } from '../../../../../services/adminConfigClient';
+import { fetchOrganismConfig } from '../../../../../services/configClient';
+import type { OrganismDraftResponse } from '../../../../../types/loculusConfig';
+
+const key = Astro.params.key!;
+const session = Astro.locals.session!;
+const client = await getAdminConfigClient(session);
+const runtime = getRuntimeConfig();
+const publicBackendUrl = runtime.public.backendUrl;
+
+let loadError: string | null = null;
+try {
+    const list = await client.listOrganisms();
+    const found = list.organisms.find((o) => o.key === key);
+    if (found === undefined) {
+        return Astro.redirect('/admin/config/organisms');
+    }
+    if (found.status === 'unreleased') {
+        return Astro.redirect(`/admin/config/organisms/${encodeURIComponent(key)}/draft`);
+    }
+} catch (e) {
+    loadError = AdminConfigError.isInstance(e) ? (e.body.message ?? e.body.error) : String(e);
+}
+
+let draft: OrganismDraftResponse | null = null;
+if (loadError === null) {
+    try {
+        draft = await client.getOrganismDraft(key);
+        if (draft === null) {
+            const released = await fetchOrganismConfig(runtime.serverSide.backendUrl, key);
+            draft = {
+                config: released.config,
+                baseVersion: released.version,
+                revision: 0,
+                operations: [],
+            };
+        }
+    } catch (e) {
+        loadError = AdminConfigError.isInstance(e) ? (e.body.message ?? e.body.error) : String(e);
+    }
+}
+
+const subPages = [
+    {
+        href: `/admin/config/organisms/${encodeURIComponent(key)}/edit/display`,
+        title: 'Organism display',
+        description: 'Display name, scientific name, description, hero image.',
+    },
+    {
+        href: `/admin/config/organisms/${encodeURIComponent(key)}/edit/metadata`,
+        title: 'Metadata fields',
+        description: 'Reorder fields and edit their display attributes in one table.',
+    },
+    {
+        href: `/admin/config/organisms/${encodeURIComponent(key)}/edit/add-field`,
+        title: 'Add metadata field',
+        description: 'Add a new optional metadata field to the schema.',
+    },
+    {
+        href: `/admin/config/organisms/${encodeURIComponent(key)}/edit/linkouts`,
+        title: 'Link-outs',
+        description: 'Per-sequence external links shown on details pages.',
+    },
+    {
+        href: `/admin/config/organisms/${encodeURIComponent(key)}/edit/preprocessing`,
+        title: 'Preprocessing',
+        description: 'Optional, opaque config files for the preprocessing pipeline (per version).',
+    },
+];
+---
+
+<AdminConfigLayout title={`Edit · ${key}`}>
+    {loadError !== null && <p class='text-red-600 mb-4'>Failed to load: {loadError}</p>}
+    {
+        loadError === null && draft !== null && (
+            <div class='space-y-6'>
+                <EditOrganismSection
+                    accessToken={session.token!.accessToken}
+                    backendUrl={publicBackendUrl}
+                    organismKey={key}
+                    initialDraft={draft}
+                    formKind='overview'
+                    client:load
+                />
+
+                <section>
+                    <h2 class='text-base font-semibold mb-2'>Edit sections</h2>
+                    <p class='text-sm text-gray-600 mb-3'>
+                        Each section edits the same draft. Make changes across sections and publish them together from
+                        the banner above.
+                    </p>
+                    <ul class='grid sm:grid-cols-2 gap-3'>
+                        {subPages.map(({ href, title: sectionTitle, description }) => (
+                            <li>
+                                <a
+                                    href={href}
+                                    class='block border border-gray-200 rounded p-3 hover:bg-gray-50 hover:border-gray-300'
+                                >
+                                    <span class='block text-sm font-semibold text-gray-900'>{sectionTitle}</span>
+                                    <span class='block text-xs text-gray-600 mt-1'>{description}</span>
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            </div>
+        )
+    }
+</AdminConfigLayout>

@@ -33,6 +33,14 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
             .andExpect(content().contentType("application/json"))
             .andExpect(jsonPath("\$.openapi").exists())
             .andExpect(jsonPath("\$.paths./{organism}/submit").exists())
+            .andExpect(jsonPath("\$.components.schemas.OrganismResponse.properties.publishedAt.type").value("string"))
+            .andExpect(
+                jsonPath("\$.components.schemas.OrganismResponse.properties.publishedAt.format").value("date-time"),
+            )
+            .andExpect(
+                jsonPath("\$.components.schemas.OrganismResponse.properties.publishedAt.example")
+                    .value("2026-05-24T12:15:55.221007"),
+            )
     }
 
     @Test

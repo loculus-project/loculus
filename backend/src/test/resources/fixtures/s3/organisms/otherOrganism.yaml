@@ -1,0 +1,25 @@
+schema:
+  organismName: Test
+  metadata:
+    - { name: date, type: date, required: true }
+    - { name: dateSubmitted, type: date }
+    - { name: region, type: string, autocomplete: true, required: true }
+    - { name: specialOtherField, type: string, required: false }
+    - { name: country, type: string, autocomplete: true, required: true }
+    - { name: division, type: string, autocomplete: true }
+    - { name: host, type: string, autocomplete: true }
+    - { name: age, type: int }
+    - { name: sex, type: string, autocomplete: true }
+    - { name: pangoLineage, type: string, autocomplete: true }
+    - { name: qc, type: float }
+referenceGenome:
+  nucleotideSequences:
+    - name: notOnlySegment
+      sequence: ATCG
+    - name: secondSegment
+      sequence: AAAAAAAAAAAAAAAA
+  genes:
+    - name: someLongGene
+      sequence: AAAAAAAAAAAAAAAAAAAAAAAAA
+    - name: someShortGene
+      sequence: MADS

@@ -3,11 +3,11 @@ package org.loculus.backend.service.submission
 import com.fasterxml.jackson.databind.node.NullNode
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.service.ConfigService
 import org.springframework.stereotype.Service
 
 @Service
-class ProcessedSequencesPostprocessor(private val backendConfig: BackendConfig) {
+class ProcessedSequencesPostprocessor(private val configService: ConfigService) {
     fun <SequenceType> stripNullValuesFromSequences(processedData: ProcessedData<SequenceType>) = processedData.copy(
         unalignedNucleotideSequences = processedData.unalignedNucleotideSequences
             .filterValues { it != null },
@@ -25,46 +25,26 @@ class ProcessedSequencesPostprocessor(private val backendConfig: BackendConfig) 
     fun <SequenceType> filterOutExtraSequencesAndAddNulls(
         processedData: ProcessedData<SequenceType>,
         organism: Organism,
-    ) = processedData.copy(
-        unalignedNucleotideSequences = backendConfig
-            .getInstanceConfig(organism)
-            .referenceGenome
-            .nucleotideSequences
-            .map { it.name }
-            .associateWith { seqName ->
-                processedData.unalignedNucleotideSequences[seqName]
+    ): ProcessedData<SequenceType> {
+        val referenceGenome = configService.getOrganismConfig(organism).config.referenceGenome
+        val nucleotideSequenceNames = referenceGenome.nucleotideSequences.map { it.name }
+        val geneNames = referenceGenome.genes.map { it.name }
+        return processedData.copy(
+            unalignedNucleotideSequences = nucleotideSequenceNames.associateWith {
+                processedData.unalignedNucleotideSequences[it]
             },
-        alignedNucleotideSequences = backendConfig
-            .getInstanceConfig(organism)
-            .referenceGenome
-            .nucleotideSequences
-            .map { it.name }
-            .associateWith { seqName ->
-                processedData.alignedNucleotideSequences[seqName]
+            alignedNucleotideSequences = nucleotideSequenceNames.associateWith {
+                processedData.alignedNucleotideSequences[it]
             },
-        alignedAminoAcidSequences = backendConfig
-            .getInstanceConfig(organism)
-            .referenceGenome
-            .genes
-            .map { it.name }
-            .associateWith { geneName ->
-                processedData.alignedAminoAcidSequences[geneName]
+            alignedAminoAcidSequences = geneNames.associateWith {
+                processedData.alignedAminoAcidSequences[it]
             },
-        aminoAcidInsertions = backendConfig
-            .getInstanceConfig(organism)
-            .referenceGenome
-            .genes
-            .map { it.name }
-            .associateWith { geneName ->
-                processedData.aminoAcidInsertions[geneName] ?: emptyList()
+            aminoAcidInsertions = geneNames.associateWith {
+                processedData.aminoAcidInsertions[it] ?: emptyList()
             },
-        nucleotideInsertions = backendConfig
-            .getInstanceConfig(organism)
-            .referenceGenome
-            .nucleotideSequences
-            .map { it.name }
-            .associateWith { seqName ->
-                processedData.nucleotideInsertions[seqName] ?: emptyList()
+            nucleotideInsertions = nucleotideSequenceNames.associateWith {
+                processedData.nucleotideInsertions[it] ?: emptyList()
             },
-    )
+        )
+    }
 }

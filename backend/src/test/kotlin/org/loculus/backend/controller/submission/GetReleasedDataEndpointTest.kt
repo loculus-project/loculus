@@ -42,10 +42,9 @@ import org.loculus.backend.api.DataUseTermsChangeRequest
 import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.VersionStatus
-import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.DataUseTermsUrls
-import org.loculus.backend.config.readBackendConfig
+import org.loculus.backend.config.fixtures.ConfigFixtures
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_GROUP_CHANGED
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
@@ -490,7 +489,24 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     @Autowired val dataUseTermsClient: DataUseTermsControllerClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired var dateProvider: DateProvider,
+    @Autowired val configFixtures: ConfigFixtures,
+    @Autowired val configService: ConfigService,
 ) {
+    @BeforeEach
+    fun installDataUseTermsUrls() {
+        val current = configService.getInstanceConfig().config
+        configFixtures.setInstanceConfig(
+            current.copy(
+                dataUseTerms = current.dataUseTerms.copy(
+                    urls = DataUseTermsUrls(
+                        open = OPEN_DATA_USE_TERMS_URL,
+                        restricted = RESTRICTED_DATA_USE_TERMS_URL,
+                    ),
+                ),
+            ),
+        )
+    }
+
     @Test
     fun `GIVEN sequence entry WHEN I change data use terms THEN returns updated data use terms`() {
         every { dateProvider.getCurrentInstant() } answers { callOriginal() }
@@ -679,22 +695,8 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
 
     @TestConfiguration
     class GetReleasedDataEndpointWithDataUseTermsUrlTestConfig {
-        @Bean
-        @Primary
-        fun configWithModifiedDataUseTermsUrl(
-            objectMapper: ObjectMapper,
-            @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
-        ): BackendConfig {
-            val originalConfig = readBackendConfig(objectMapper = objectMapper, configPath = configPath)
-            return originalConfig.copy(
-                dataUseTerms = originalConfig.dataUseTerms.copy(
-                    urls = DataUseTermsUrls(
-                        open = OPEN_DATA_USE_TERMS_URL,
-                        restricted = RESTRICTED_DATA_USE_TERMS_URL,
-                    ),
-                ),
-            )
-        }
+        // Data-use-terms URLs are installed per-test via ConfigFixtures.setInstanceConfig; see
+        // installDataUseTermsUrls @BeforeEach above.
 
         @Bean
         @Primary

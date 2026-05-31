@@ -18,6 +18,7 @@ import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.FileUrlType
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
@@ -59,6 +60,7 @@ val RELEASED_DATA_RELATED_TABLES: List<String> =
 open class ReleasedDataModel(
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val backendConfig: BackendConfig,
+    private val configService: ConfigService,
     private val dateProvider: DateProvider,
     private val s3Service: S3Service,
     private val objectMapper: ObjectMapper,
@@ -70,7 +72,8 @@ open class ReleasedDataModel(
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
         val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
 
-        val earliestReleaseDateConfig = backendConfig.getInstanceConfig(organism).schema.earliestReleaseDate
+        val earliestReleaseDateConfig =
+            configService.getOrganismConfig(organism).config.schema.earliestReleaseDate
         val finder = if (earliestReleaseDateConfig.enabled) {
             EarliestReleaseDateFinder(earliestReleaseDateConfig.externalFields)
         } else {
@@ -129,14 +132,16 @@ open class ReleasedDataModel(
 
         val earliestReleaseDate = earliestReleaseDateFinder?.calculateEarliestReleaseDate(rawProcessedData)
 
-        val dataUseTermsUrl: String? = backendConfig.dataUseTerms.urls?.let { urls ->
+        val instanceConfig = configService.getInstanceConfig().config
+        val dataUseTermsUrl: String? = instanceConfig.dataUseTerms.urls?.let { urls ->
             when (currentDataUseTerms) {
                 DataUseTerms.Open -> urls.open
                 is DataUseTerms.Restricted -> urls.restricted
             }
         }
 
-        val filesFieldNames = backendConfig.getInstanceConfig(organism).schema.files.map { it.name }
+        val filesFieldNames =
+            configService.getOrganismConfig(organism).config.schema.files.map { it.name }
 
         val metadata = rawProcessedData.processedData.metadata +
             mapOf(
@@ -156,7 +161,7 @@ open class ReleasedDataModel(
                 ("pipelineVersion" to LongNode(rawProcessedData.pipelineVersion)),
             ) +
             conditionalMetadata(
-                backendConfig.dataUseTerms.enabled,
+                instanceConfig.dataUseTerms.enabled,
                 {
                     mapOf(
                         "dataUseTerms" to TextNode(currentDataUseTerms.type.name),
@@ -212,7 +217,7 @@ open class ReleasedDataModel(
     ): Map<FileCategory, List<FileIdAndNameAndReadUrl>> = filesMap.mapValues { (category, fileIdandName) ->
         fileIdandName.map { (fileId, name) ->
             val encoded = URLEncoder.encode(name, StandardCharsets.UTF_8)
-            val url = when (backendConfig.fileSharing.outputFileUrlType) {
+            val url = when (configService.getInstanceConfig().config.fileSharing.outputFileUrlType) {
                 FileUrlType.WEBSITE -> "${backendConfig.websiteUrl}/seq/$accession.$version/$category/$encoded"
                 FileUrlType.BACKEND -> "${backendConfig.backendUrl}/files/get/$accession/$version/$category/$encoded"
                 FileUrlType.S3 -> s3Service.getPublicUrl(fileId)

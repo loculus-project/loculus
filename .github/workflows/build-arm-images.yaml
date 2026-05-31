@@ -75,3 +75,15 @@ jobs:
     uses: ./.github/workflows/preprocessing-nextclade-image.yml
     with:
       build_arm: true
+  trigger-config-loader:
+    needs: should-build
+    if: needs.should-build.outputs.should_run == 'true'
+    uses: ./.github/workflows/config-loader-image.yml
+    with:
+      build_arm: true
+  trigger-config-adapter:
+    needs: should-build
+    if: needs.should-build.outputs.should_run == 'true'
+    uses: ./.github/workflows/config-adapter-image.yml
+    with:
+      build_arm: true

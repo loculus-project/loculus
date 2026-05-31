@@ -22,7 +22,7 @@ import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
@@ -57,7 +57,7 @@ data class SubmissionResult(
 
 class SubmissionConvenienceClient(
     private val groupManagementClient: GroupManagementControllerClient,
-    private val backendConfig: BackendConfig,
+    private val configService: ConfigService,
     private val client: SubmissionControllerClient,
     private val filesClient: FilesClient,
     private val objectMapper: ObjectMapper,
@@ -74,13 +74,13 @@ class SubmissionConvenienceClient(
                 .createNewGroup(group = DEFAULT_GROUP, jwt = generateJwtFor(username))
                 .andGetGroupId()
 
-        val instanceConfig = backendConfig.getInstanceConfig(Organism(organism))
+        val organismConfig = configService.getOrganismConfig(Organism(organism)).config
 
-        val isMultiSegmented = instanceConfig
+        val isMultiSegmented = organismConfig
             .referenceGenome
             .nucleotideSequences.size > 1
 
-        val doesNotAllowConsensusSequenceFile = !instanceConfig.schema
+        val doesNotAllowConsensusSequenceFile = !organismConfig.schema
             .submissionDataTypes
             .consensusSequences
 

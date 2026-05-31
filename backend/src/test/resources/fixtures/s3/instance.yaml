@@ -1,0 +1,7 @@
+name: Loculus
+accessionPrefix: LOC_
+dataUseTerms:
+  enabled: true
+  urls: null
+fileSharing:
+  outputFileUrlType: s3

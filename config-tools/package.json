@@ -1,0 +1,29 @@
+{
+    "name": "@loculus/config-tools",
+    "version": "0.0.1",
+    "type": "module",
+    "description": "Shared canonical config schemas and CLIs (loader/adapter) for the Loculus DB-backed config system",
+    "private": true,
+    "scripts": {
+        "check-types": "tsc --noEmit",
+        "test": "vitest",
+        "test-fast": "vitest --bail=1",
+        "build": "tsc",
+        "loader": "tsx src/loader/cli.ts",
+        "adapter": "tsx src/adapter/cli.ts"
+    },
+    "bin": {
+        "loculus-config-loader": "./dist/loader/cli.js",
+        "loculus-config-adapter": "./dist/adapter/cli.js"
+    },
+    "dependencies": {
+        "yaml": "^2.9.0",
+        "zod": "^3.25.67"
+    },
+    "devDependencies": {
+        "@types/node": "^22.10.0",
+        "tsx": "^4.19.0",
+        "typescript": "^5.9.0",
+        "vitest": "^3.0.0"
+    }
+}
