@@ -42,6 +42,34 @@ async function readYamlFile<T>(path: string, parser: (raw: unknown) => T): Promi
     }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function normalizeLegacyMetadataAdd(raw: unknown): unknown {
+    if (!isRecord(raw) || !isRecord(raw.schema)) return raw;
+    const { schema } = raw;
+    if (!Array.isArray(schema.metadata) || !Array.isArray(schema.metadataAdd)) return raw;
+
+    const metadataByName = new Map<string, Record<string, unknown>>();
+    for (const field of schema.metadata) {
+        if (isRecord(field) && typeof field.name === 'string') {
+            metadataByName.set(field.name, field);
+        }
+    }
+
+    for (const field of schema.metadataAdd) {
+        if (!isRecord(field) || typeof field.name !== 'string') continue;
+        const existing = metadataByName.get(field.name);
+        if (existing !== undefined) {
+            Object.assign(existing, field);
+        }
+    }
+
+    delete schema.metadataAdd;
+    return raw;
+}
+
 export async function loadFixtures(dir: string): Promise<LoadedFixtures> {
     const instancePath = join(dir, 'instance.yaml');
     const instance = await readYamlFile(instancePath, (raw) => canonicalInstanceConfig.parse(raw));
@@ -62,7 +90,9 @@ export async function loadFixtures(dir: string): Promise<LoadedFixtures> {
     const organisms = new Map<string, CanonicalOrganismConfig>();
     for (const filename of organismFiles) {
         const key = filename.replace(/\.ya?ml$/, '');
-        const config = await readYamlFile(join(organismsDir, filename), (raw) => canonicalOrganismConfig.parse(raw));
+        const config = await readYamlFile(join(organismsDir, filename), (raw) =>
+            canonicalOrganismConfig.parse(normalizeLegacyMetadataAdd(raw)),
+        );
         organisms.set(key, config);
     }
 

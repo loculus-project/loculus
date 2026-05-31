@@ -277,7 +277,20 @@ fun expandPerSegmentMetadata(metadata: List<Metadata>, segments: List<String>): 
     }
     return metadata.flatMap { field ->
         if (field.perSegment == true) {
-            segments.map { segment -> field.copy(name = "${field.name}_$segment") }
+            val baseDisplayName = field.displayName ?: field.name
+            segments.map { segment ->
+                field.copy(
+                    name = "${field.name}_$segment",
+                    displayName = "$baseDisplayName $segment",
+                    customDisplay = field.customDisplay?.let { customDisplay ->
+                        val updated = customDisplay.toMutableMap()
+                        customDisplay["displayGroup"]?.let { updated["displayGroup"] = "${it}_$segment" }
+                        customDisplay["label"]?.let { updated["label"] = "$it $segment" }
+                        updated
+                    },
+                    perSegment = false,
+                )
+            }
         } else {
             listOf(field)
         }

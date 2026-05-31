@@ -6,6 +6,8 @@ import kotlinx.datetime.LocalDateTime
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.InstanceConfig
 import org.loculus.backend.config.OrganismConfig
+import org.loculus.backend.config.expandPerSegmentMetadata
+import org.loculus.backend.config.perSegmentExpansionSegments
 import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.config.service.OrganismNotFoundException
 import org.loculus.backend.config.service.PreprocessingConfigService
@@ -84,7 +86,7 @@ class PublicConfigController(
             key = versioned.key,
             version = versioned.version,
             publishedAt = versioned.publishedAt,
-            config = versioned.config,
+            config = versioned.config.withEffectiveWebsiteMetadata(),
         )
     }
 
@@ -115,6 +117,13 @@ class PublicConfigController(
     fun handleVersionNotFound(e: VersionNotFoundException): ResponseEntity<Map<String, String>> =
         ResponseEntity(mapOf("error" to "version_not_found", "message" to e.message!!), HttpStatus.NOT_FOUND)
 }
+
+private fun OrganismConfig.withEffectiveWebsiteMetadata(): OrganismConfig =
+    copy(
+        schema = schema.copy(
+            metadata = expandPerSegmentMetadata(schema.metadata, perSegmentExpansionSegments(this)),
+        ),
+    )
 
 class VersionNotFoundException(message: String) : RuntimeException(message)
 

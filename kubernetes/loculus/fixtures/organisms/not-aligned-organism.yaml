@@ -12,6 +12,7 @@ schema:
     header: Collection Details
   - name: lineage
     isSequenceFilter: true
+    lineageSearch: true
     initiallyVisible: true
     displayName: Lineage
     autocomplete: true
