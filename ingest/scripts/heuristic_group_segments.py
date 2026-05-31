@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from typing import Final
 
 import click
+from ingest.scripts.prepare_metadata import resolve_host_information
 import orjsonl
 import yaml
 
@@ -267,15 +268,7 @@ def main(
             json.dumps(filtered_record, sort_keys=True).encode(), usedforsecurity=False
         ).hexdigest()
 
-        # Create a new host field and populate it from hostTaxonId or hostNameScientific
-        # to be consistent with how direct submissions specify the host organism.
-        # Done after computing hash to not trigger revisions for all INSDC data
-        host = row.get("hostTaxonId") or row.get("hostNameScientific")
-        row.pop("hostTaxonId", None)
-        row.pop("hostNameScientific", None)
-        row.pop("hostNameCommon", None)
-        if host:
-            row["host"] = host
+        row = resolve_host_information(row)
 
         orjsonl.append(output_metadata, {"id": joint_key, "metadata": row})
         count += 1

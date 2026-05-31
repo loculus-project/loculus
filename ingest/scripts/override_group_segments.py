@@ -35,6 +35,7 @@ from dataclasses import dataclass
 from typing import Any, Final
 
 import click
+from ingest.scripts.prepare_metadata import resolve_host_information
 import orjsonl  # type: ignore
 import requests
 import yaml
@@ -170,17 +171,7 @@ def get_metadata_of_group(
         json.dumps(filtered_record, sort_keys=True).encode(), usedforsecurity=False
     ).hexdigest()
 
-    # Create a new host field and populate it from hostTaxonId or hostNameScientific
-    # to be consistent with how direct submissions specify the host organism.
-    # Done after computing hash to not trigger revisions for all INSDC data
-    host = grouped_metadata.get("hostTaxonId") or grouped_metadata.get("hostNameScientific")
-    grouped_metadata.pop("hostTaxonId", None)
-    grouped_metadata.pop("hostNameScientific", None)
-    grouped_metadata.pop("hostNameCommon", None)
-    if host:
-        grouped_metadata["host"] = host
-
-    return grouped_metadata
+    return resolve_host_information(grouped_metadata)
 
 
 def group_records(
