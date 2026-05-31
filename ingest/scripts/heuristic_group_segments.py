@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from typing import Final
 
 import click
-from ingest.scripts.prepare_metadata import resolve_host_information
+from prepare_metadata import resolve_host_information
 import orjsonl
 import yaml
 
