@@ -15,7 +15,7 @@ dependencies:
   - ncbi-datasets-cli=18.25.1
   - nextclade=3.21.2
   - orjsonl=1.0.0
-  - pandas=2.3.3
+  - pandas=3.0.3
   - psycopg2=2.9.11
   - pytz=2026.2
   - pyyaml=6.0.3
