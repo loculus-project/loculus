@@ -133,7 +133,8 @@ metadata:
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 spec:
   activeDeadlineSeconds: 600
-  backoffLimit: 0
+  backoffLimit: 2
+  {{- include "possiblePriorityClassName" . | nindent 6 }}
   ttlSecondsAfterFinished: 600
   template:
     metadata:
