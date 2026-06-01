@@ -141,6 +141,7 @@ spec:
         app: loculus
         component: loculus-ingest-trigger-{{ $key }}
     spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
       restartPolicy: Never
       serviceAccountName: loculus-ingest-trigger
       containers:
