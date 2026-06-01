@@ -11,15 +11,8 @@ thread_local = threading.local()
 
 
 def copy_structure(input_dir, output_dir):
-    for root, dirs, files in os.walk(input_dir):
-        for dir in dirs:
-            dir_path = os.path.join(output_dir, os.path.relpath(os.path.join(root, dir), input_dir))
-            os.makedirs(dir_path, exist_ok=True)
-        for file in files:
-            file_path = os.path.join(output_dir, os.path.relpath(os.path.join(root, file), input_dir))
-            # Make sure the directory exists
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            shutil.copy(os.path.join(root, file), file_path)
+    ignore_hidden_kubernetes_dirs = shutil.ignore_patterns("..*")
+    shutil.copytree(input_dir, output_dir, dirs_exist_ok=True, ignore=ignore_hidden_kubernetes_dirs)
 
 
 def download_urls(urls):
@@ -66,10 +59,12 @@ def replace_url_with_content(file_content, downloaded_content):
         file_content = file_content.replace(f"[[URL:{url}]]", downloaded_content[url])
     return file_content
 
+
 def make_substitutions(file_content, substitutions):
     for key, value in substitutions.items():
         file_content = file_content.replace(f"[[{key}]]", value)
     return file_content
+
 
 def collect_urls(output_dir):
     urls = set()
@@ -79,6 +74,7 @@ def collect_urls(output_dir):
             with open(file_path) as f:
                 urls.update(re.findall(r'\[\[URL:([^\]]*)\]\]', f.read()))
     return urls
+
 
 def process_files(output_dir, substitutions):
     downloaded_content = download_urls(collect_urls(output_dir))
@@ -95,17 +91,18 @@ def process_files(output_dir, substitutions):
                     f.write(new_content)
                     f.truncate()
 
+
 def main(input_dir, output_dir, substitutions):
     print(f"Processing {input_dir} to {output_dir}")
     copy_structure(input_dir, output_dir)
     print(f"Copied directory structure from {input_dir} to {output_dir}")
     process_files(output_dir, substitutions)
 
+
 if __name__ == "__main__":
     import sys
     input_dir = sys.argv[1]
     output_dir = sys.argv[2]
-    
 
     substitutions = {}
     for var in os.environ:

@@ -49,5 +49,18 @@ spec:
       imagePullSecrets:
         - name: custom-website-sealed-secret
       volumes:
-{{ include "loculus.configVolume" (dict "name" "loculus-website-config") | nindent 8 }}
+        - name: loculus-website-config
+          projected:
+            sources:
+              - configMap:
+                  name: loculus-website-config
+              {{ range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+              - configMap:
+                  name: {{ include "loculus.websiteOrganismConfigMapName" $item.key }}
+                  items:
+                    - key: {{ printf "%s.json" $item.key | quote }}
+                      path: {{ printf "organisms/%s.json" $item.key | quote }}
+              {{ end }}
+        - name: loculus-website-config-processed
+          emptyDir: {}
 {{- end }}
