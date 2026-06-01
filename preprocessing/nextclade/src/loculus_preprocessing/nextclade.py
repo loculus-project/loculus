@@ -470,7 +470,6 @@ def assign_segment_with_nextclade_align(
                 "--retry-reverse-complement=true",
                 f"--output-tsv={result_file_seg}",
                 f"--input-dataset={dataset_dir}/{name}",
-                "--jobs=1",
                 "--",
                 input_file,
             ]
@@ -857,7 +856,6 @@ def enrich_with_nextclade(  # noqa: PLR0914
                 f"--output-all={result_dir_seg}",
                 f"--input-dataset={dataset_dir}/{name}",
                 f"--output-translations={result_dir_seg}/nextclade.cds_translation.{{cds}}.fasta",
-                "--jobs=1",
                 *sequence_and_dataset.nextclade_additional_args,
                 "--",
                 input_file,
