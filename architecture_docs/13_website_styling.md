@@ -10,7 +10,7 @@ In practice this means three things, in order of preference.
 
 **Use Headless UI when the design is more complex.** When you need behaviour that goes beyond static markup — accessible dropdowns, modals, comboboxes, tabs, and similar interactive primitives — use [Headless UI](https://headlessui.com/) rather than reinventing the accessibility and state handling yourself. Headless UI gives you the unstyled, accessible behaviour, and you style it with Tailwind classes as usual. This pairing covers the large majority of complex cases.
 
-**Achieve uniformity by creating a shared component.** When the same styled element appears in several places and you want it to stay consistent, do not copy the class list around. Extract a shared component (for example a `Button` or `Card`) that owns the Tailwind classes in one place. Uniformity comes from reuse of components, not from a global stylesheet or a shared CSS class. If a pattern changes, you change it once.
+**Achieve uniformity by creating a shared component.** When the same styled element appears in several places and you want it to stay consistent, this can be achieved by extracting a shared component (for example a `Button` or `Card`) that owns the Tailwind classes in one place. Uniformity comes from reuse of components, not from a global stylesheet or a shared CSS class.
 
 The rule of thumb: Tailwind classes by default, Headless UI for interactive complexity, and a shared component whenever you need the same thing to look the same in more than one place.
 
