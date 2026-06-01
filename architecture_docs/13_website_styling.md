@@ -4,7 +4,7 @@
 
 We take a Tailwind-based approach to styling. The core idea is that styling lives next to the markup it applies to, rather than in separate stylesheets that drift out of sync with the components they describe.
 
-In practice this means three things, in order of preference.
+In practice this means three things.
 
 **Couple the CSS to the code with Tailwind classes.** Apply utility classes directly to elements. This keeps the styling and the structure in one place, so a component is fully described by reading its own source. Reach for this first; most UI needs nothing more.
 
