@@ -23,6 +23,22 @@ spec:
         app: loculus
         component: lapis-{{ $key }}
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - loculus
+                    - key: component
+                      operator: In
+                      values:
+                        - lapis-{{ $key }}
+                topologyKey: kubernetes.io/hostname
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
@@ -67,4 +83,15 @@ spec:
             timeoutSeconds: 5
       volumes:
         {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: loculus-lapis-{{ $key }}-pdb
+spec:
+  maxUnavailable: {{ $.Values.pdb.lapis.maxUnavailable | default 1 }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: lapis-{{ $key }}
 {{- end }}
