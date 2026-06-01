@@ -312,6 +312,10 @@ open class SubmissionController(
             description = "(Optional) Only retrieve all released data if Etag has changed.",
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
+        val getLastUpdated = releasedDataModel.getLastUpdated()
+        if (ifNoneMatch == getLastUpdated) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+        }
         val lastDatabaseWriteETag = releasedDataModel.getOrganismReleasedLastProcessedTime(organism)
         if (ifNoneMatch == lastDatabaseWriteETag) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()

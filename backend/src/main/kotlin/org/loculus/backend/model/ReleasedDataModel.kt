@@ -18,13 +18,16 @@ import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.FileUrlType
+import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
 import org.loculus.backend.service.submission.METADATA_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.RawProcessedData
+import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
+import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
+import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.service.submission.UpdateTrackerTable
-import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.EXTERNAL_METADATA_TABLE_NAME
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
@@ -75,6 +78,28 @@ open class ReleasedDataModel(
     }
 
     @Transactional(readOnly = true)
+    open fun getLastUpdated(): String {
+        val trackerTimestamps = UpdateTrackerTable
+            .select(UpdateTrackerTable.tableNameColumn, UpdateTrackerTable.lastTimeUpdatedDbColumn)
+            .where {
+                UpdateTrackerTable.tableNameColumn inList listOf(
+                    SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME,
+                    EXTERNAL_METADATA_TABLE_NAME,
+                    DATA_USE_TERMS_TABLE_NAME,
+                )
+            }
+            .associate {
+                it[UpdateTrackerTable.tableNameColumn] to
+                    it[UpdateTrackerTable.lastTimeUpdatedDbColumn].replace(" ", "Z")
+            }
+
+        val etagValue = "${trackerTimestamps[SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME] ?: ""}:" +
+            "${trackerTimestamps[EXTERNAL_METADATA_TABLE_NAME] ?: ""}:" +
+            "${trackerTimestamps[DATA_USE_TERMS_TABLE_NAME] ?: ""}"
+        return etagValue.let { "\"$it\"" } // ETag must be enclosed in double quotes
+    }
+
+    @Transactional(readOnly = true)
     open fun getOrganismReleasedLastProcessedTime(organism: Organism): String {
         val pipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion(organism)
         val lastFinishedProcessingAt =
@@ -87,7 +112,7 @@ open class ReleasedDataModel(
         val lastExternalMetadataUpdatedAtFormatted = lastExternalMetadataUpdatedAt ?: ""
         val lastDataUseTermsUpdatedAtFormatted = lastDataUseTermsUpdatedAt ?: ""
         val etagValue =
-            "$pipelineVersion:$lastFinishedProcessingAtFormatted:$lastExternalMetadataUpdatedAtFormatted:$lastDataUseTermsUpdatedAtFormatted"
+            "$lastFinishedProcessingAtFormatted:$lastExternalMetadataUpdatedAtFormatted:$lastDataUseTermsUpdatedAtFormatted"
         return "\"$etagValue\""
     }
 
