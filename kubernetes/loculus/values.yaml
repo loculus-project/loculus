@@ -1657,6 +1657,9 @@ defaultOrganisms:
               regex_pattern: '^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$'
         - <<: *hostTaxonIdConfig
           required: true
+          hierarchicalFilter: *taxonomy_service_url
+          hierarchicalSearchLabel: "include subtaxa"
+          initiallyVisible: true
         - name: lineage
           displayName: Lineage
           definition: "Assigned clade label from the nearest reference tree node."
