@@ -127,7 +127,7 @@ handled by the shared lock init container in the spawned pod.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: loculus-ingest-trigger-{{ $key }}
+  name: {{ printf "loculus-ingest-trigger-%s-%d" $key (now | unixEpoch) | trunc 63 | trimSuffix "-" }}
   annotations:
     argocd.argoproj.io/hook: PostSync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
