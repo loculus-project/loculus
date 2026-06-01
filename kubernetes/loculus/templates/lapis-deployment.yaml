@@ -9,6 +9,7 @@ kind: Deployment
 metadata:
   name: loculus-lapis-{{ $key }}
   annotations:
+    argocd.argoproj.io/sync-wave: "10"
 spec:
   replicas: {{ $.Values.replicas.lapis | default 1 }}
   selector:
