@@ -124,10 +124,11 @@ metadata:
   name: loculus-ingest-trigger-{{ $key }}
   annotations:
     argocd.argoproj.io/sync-wave: "10"
+    valuesHash: {{ .Values | toJson | sha256sum | quote }}
 spec:
   activeDeadlineSeconds: 120
   backoffLimit: 0
-  ttlSecondsAfterFinished: 600
+  ttlSecondsAfterFinished: 900000
   template:
     metadata:
       labels:
