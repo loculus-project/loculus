@@ -132,9 +132,9 @@ metadata:
     argocd.argoproj.io/hook: PostSync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 spec:
+  {{- include "possiblePriorityClassName" . | nindent 6 }}
   activeDeadlineSeconds: 600
   backoffLimit: 2
-  {{- include "possiblePriorityClassName" . | nindent 6 }}
   ttlSecondsAfterFinished: 600
   template:
     metadata:
