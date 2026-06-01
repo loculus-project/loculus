@@ -4,8 +4,8 @@
 
 \restrict dummy
 
--- Dumped from database version 15.17 (Debian 15.17-1.pgdg13+1)
--- Dumped by pg_dump version 16.13 (Debian 16.13-1.pgdg13+1)
+-- Dumped from database version 15.18 (Debian 15.18-1.pgdg13+1)
+-- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -790,10 +790,24 @@ CREATE INDEX sequence_entries_organism_not_revocation_idx ON public.sequence_ent
 
 
 --
+-- Name: sequence_entries_organism_released_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sequence_entries_organism_released_idx ON public.sequence_entries USING btree (organism) WHERE (released_at IS NOT NULL);
+
+
+--
 -- Name: sequence_entries_preprocessed_data_accession_version_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX sequence_entries_preprocessed_data_accession_version_idx ON public.sequence_entries_preprocessed_data USING btree (accession, version);
+
+
+--
+-- Name: sequence_entries_preprocessed_data_pipeline_status_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sequence_entries_preprocessed_data_pipeline_status_idx ON public.sequence_entries_preprocessed_data USING btree (pipeline_version) WHERE (processing_status = 'FINISHED'::text);
 
 
 --
