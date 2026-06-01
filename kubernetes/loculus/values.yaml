@@ -29,6 +29,7 @@ seqSets:
       fields: [dataUseTerms]
 disableWebsite: false
 disableBackend: false
+runConfigLoaderAsArgoJob: false
 disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true

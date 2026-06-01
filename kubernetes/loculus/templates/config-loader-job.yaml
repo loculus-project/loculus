@@ -1,7 +1,11 @@
 {{- /*
-  loculus-config-loader: post-install Helm hook that POSTs the fixture YAMLs
-  in `kubernetes/loculus/fixtures/` to the Loculus admin config API. Runs as a
-  Job once per Helm install/upgrade.
+  loculus-config-loader: Job that POSTs the fixture YAMLs in
+  `kubernetes/loculus/fixtures/` to the Loculus admin config API.
+
+  By default this runs as a post-install/post-upgrade Helm hook. Argo-managed
+  preview deployments set `runConfigLoaderAsArgoJob=true`, which renders the
+  same workload as a normal replaceable Job so previews load the bundled
+  instance, organism, and preprocessing config by default.
 
   Skipped when `disableBackend=true` (the `--dev` flow). In that mode the
   backend runs in the developer's IDE on the host and is typically not yet
@@ -36,9 +40,14 @@ kind: Job
 metadata:
   name: loculus-config-loader
   annotations:
+{{- if .Values.runConfigLoaderAsArgoJob }}
+    "argocd.argoproj.io/sync-options": "Force=true,Replace=true"
+    "argocd.argoproj.io/sync-wave": "0"
+{{- else }}
     "helm.sh/hook": "post-install,post-upgrade"
     "helm.sh/hook-weight": "10"
     "helm.sh/hook-delete-policy": "before-hook-creation"
+{{- end }}
 spec:
   backoffLimit: 6
   ttlSecondsAfterFinished: 3600

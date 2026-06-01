@@ -18,8 +18,7 @@ kind: ConfigMap
 metadata:
   name: loculus-config-loader-fixtures
   annotations:
-    "helm.sh/hook": "pre-install,pre-upgrade"
-    "helm.sh/hook-weight": "-5"
+    "argocd.argoproj.io/sync-wave": "-1"
 data:
   instance.yaml: |-
 {{ .Files.Get "fixtures/instance.yaml" | indent 4 }}

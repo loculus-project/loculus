@@ -1087,6 +1087,12 @@
       "type": "boolean",
       "description": "If true, creates the users testuser, superuser, and loculus_administrator"
     },
+    "runConfigLoaderAsArgoJob": {
+      "groups": ["general"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, renders the config loader as a normal Argo CD replaceable Job instead of a Helm hook."
+    },
     "robotsNoindexHeader": {
       "groups": ["general"],
       "type": "boolean",
