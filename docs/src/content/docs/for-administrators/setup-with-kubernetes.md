@@ -130,7 +130,7 @@ organisms:
       singleReference:
         nucleotideSequences:
           - name: 'main'
-            sequence: 'ACGT…'  # the full reference sequence
+            sequence: 'ACGT…' # the full reference sequence
         genes: []
 ```
 

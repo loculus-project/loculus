@@ -41,7 +41,7 @@ export function InstanceConfigEditor({ accessToken, backendUrl, initialDraft, pu
 
     // Maps '' → null so cleared optional fields are dropped rather than stored as "".
     function patchText(key: keyof CanonicalInstanceConfig, value: string) {
-        patch({ [key]: value === '' ? null : value } as Partial<CanonicalInstanceConfig>);
+        patch({ [key]: value === '' ? null : value });
     }
 
     function setLogoUrl(value: string) {

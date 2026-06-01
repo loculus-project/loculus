@@ -146,7 +146,13 @@ secrets:
 ```
 
 <Aside type='note'>
-  Notice there are no organisms or an instance `name` here. The instance name, branding, and the **organisms** (their schema, metadata, reference genomes, …) are *domain config*, which is no longer set in `values.yaml`. It lives in Loculus's database-backed configuration system — edited through the admin dashboard or seeded from fixture files with the config loader. Read [Configuration system](../configuration-system/) for the concepts and [Managing configuration](../managing-configuration/) for the step-by-step workflow: creating an organism, publishing it, and rolling it out to SILO/LAPIS (this is where each organism's `configVersion` scaffolding is added back into `values.yaml`).
+  Notice there are no organisms or an instance `name` here. The instance name, branding, and the **organisms** (their
+  schema, metadata, reference genomes, …) are *domain config*, which is no longer set in `values.yaml`. It lives in
+  Loculus's database-backed configuration system — edited through the admin dashboard or seeded from fixture files with
+  the config loader. Read [Configuration system](../configuration-system/) for the concepts and [Managing
+  configuration](../managing-configuration/) for the step-by-step workflow: creating an organism, publishing it, and
+  rolling it out to SILO/LAPIS (this is where each organism's `configVersion` scaffolding is added back into
+  `values.yaml`).
 </Aside>
 
 ## Step 4: Install and deploy

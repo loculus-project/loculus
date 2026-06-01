@@ -33,7 +33,7 @@ describe('toWebsiteConfig', () => {
         const config = toWebsiteConfig(instance, { test: organism });
 
         expect(config.logo).toEqual({ url: '/logo.svg', width: 0, height: 0 });
-        expect(config.organisms.test.schema.metadata[0].type).toBe('number');
+        expect(config.organisms.test.schema.metadata.find((field) => field.name === 'coverage')?.type).toBe('number');
     });
 
     it('normalizes nullable submission data type fields from backend config', () => {

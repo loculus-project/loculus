@@ -30,15 +30,15 @@ Both flavours can run entirely offline once images are local — there's a secti
 
 ## 1. Install prerequisites
 
-| Tool | Why | Install |
-|---|---|---|
-| Docker | k3d runs Kubernetes inside Docker | <https://docs.docker.com/get-started/get-docker/> |
-| k3d | Lightweight Kubernetes-in-Docker | `curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh \| bash` |
-| kubectl | Cluster CLI | <https://kubernetes.io/docs/tasks/tools/> |
-| Helm | Chart deployer | <https://helm.sh/docs/intro/install/> |
-| Python 3.9+ with `pyyaml` | `./deploy.py` wrapper | `pip install pyyaml` |
-| Node 22+, npm | For `config-tools/` (loader CLI), and optionally for running the website in your IDE | <https://nodejs.org/> |
-| Java 21+, Gradle | For running the backend in your IDE | <https://adoptium.net/> |
+| Tool                      | Why                                                                                  | Install                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Docker                    | k3d runs Kubernetes inside Docker                                                    | <https://docs.docker.com/get-started/get-docker/>                              |
+| k3d                       | Lightweight Kubernetes-in-Docker                                                     | `curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh \| bash` |
+| kubectl                   | Cluster CLI                                                                          | <https://kubernetes.io/docs/tasks/tools/>                                      |
+| Helm                      | Chart deployer                                                                       | <https://helm.sh/docs/intro/install/>                                          |
+| Python 3.9+ with `pyyaml` | `./deploy.py` wrapper                                                                | `pip install pyyaml`                                                           |
+| Node 22+, npm             | For `config-tools/` (loader CLI), and optionally for running the website in your IDE | <https://nodejs.org/>                                                          |
+| Java 21+, Gradle          | For running the backend in your IDE                                                  | <https://adoptium.net/>                                                        |
 
 ## 2. Clone the repo
 

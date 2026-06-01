@@ -75,7 +75,7 @@ function toSchema(
         // pre-dates the displayName field.
         organismName: organism.displayName ?? canonical.organismName,
         image: canonical.image ?? organism.image?.url ?? undefined,
-        files: canonical.files,
+        files: canonical.files.map(stripNulls),
         metadata: mergedMetadata,
         metadataTemplate: canonical.metadataTemplate ?? undefined,
         inputFields: canonical.inputFields.map(stripNulls),
@@ -93,7 +93,7 @@ function toSchema(
 }
 
 function fileMetadata(canonical: CanonicalSchema): Schema['metadata'] {
-    return (canonical.files ?? []).map((file) => ({
+    return canonical.files.map((file) => ({
         name: file.name,
         displayName: file.displayName ?? undefined,
         type: 'string',

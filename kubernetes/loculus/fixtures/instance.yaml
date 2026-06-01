@@ -1,6 +1,5 @@
 gitHubMainUrl: https://github.com/loculus-project/loculus
-bannerMessage: This is a demonstration environment. It may contain non-accurate test
-  data and should not be used for real-world applications. Data will be deleted regularly.
+bannerMessage: This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly.
 logo:
   url: /favicon.svg
   width: 100
@@ -20,30 +19,30 @@ fileSharing:
   outputFileUrlType: backend
 enableSeqSets: true
 seqSetsFieldsToDisplay:
-- field: geoLocCountry
-  displayName: Country
-- field: sampleCollectionDate
-  displayName: Collection Date
-- field: authors
-  displayName: Authors
+  - field: geoLocCountry
+    displayName: Country
+  - field: sampleCollectionDate
+    displayName: Collection Date
+  - field: authors
+    displayName: Authors
 seqSetsGraphs:
-- name: sampleCollectionDates
-  displayName: Sample collection dates
-  type: date
-  fields:
-  - sampleCollectionDate
-  - date
-- name: sampleCollectionCountries
-  displayName: Sample collection countries
-  type: category
-  fields:
-  - geoLocCountry
-  - country
-- name: dataUseTerms
-  displayName: Data use terms
-  type: category
-  fields:
-  - dataUseTerms
+  - name: sampleCollectionDates
+    displayName: Sample collection dates
+    type: date
+    fields:
+      - sampleCollectionDate
+      - date
+  - name: sampleCollectionCountries
+    displayName: Sample collection countries
+    type: category
+    fields:
+      - geoLocCountry
+      - country
+  - name: dataUseTerms
+    displayName: Data use terms
+    type: category
+    fields:
+      - dataUseTerms
 enableLoginNavigationItem: true
 enableSubmissionNavigationItem: true
 enableSubmissionPages: true

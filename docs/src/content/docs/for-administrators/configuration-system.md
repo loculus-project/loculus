@@ -5,10 +5,10 @@ description: How Loculus configuration is structured — the database-backed dom
 
 Loculus configuration is split into two layers, with a deliberate boundary between them:
 
-| Layer | Examples | Where it lives | How you change it |
-|---|---|---|---|
-| **Domain config** | Organism schemas, metadata fields, reference genomes, link-outs, lineage system definitions; instance name, branding, banners, GitHub links, `dataUseTerms`, `fileSharing`, feature toggles | The backend **database** (`config_*` tables — versioned, with an audit log) | The [admin dashboard](managing-configuration/) or the `/api/admin/config/...` API |
-| **Deployment / infrastructure config** | Service URLs, image tags, resource requests, replica counts, secrets, which pipelines run | Helm `values.yaml` (and `runtime_config.json` for the website) | Edit the files; redeploy |
+| Layer                                  | Examples                                                                                                                                                                                    | Where it lives                                                              | How you change it                                                                 |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **Domain config**                      | Organism schemas, metadata fields, reference genomes, link-outs, lineage system definitions; instance name, branding, banners, GitHub links, `dataUseTerms`, `fileSharing`, feature toggles | The backend **database** (`config_*` tables — versioned, with an audit log) | The [admin dashboard](managing-configuration/) or the `/api/admin/config/...` API |
+| **Deployment / infrastructure config** | Service URLs, image tags, resource requests, replica counts, secrets, which pipelines run                                                                                                   | Helm `values.yaml` (and `runtime_config.json` for the website)              | Edit the files; redeploy                                                          |
 
 The split is deliberate: domain config changes routinely and benefits from versioning + an audit trail, while deployment config changes rarely and belongs in version control with the rest of the deployment. Secrets and infrastructure never enter the database-backed config, which is why its read API can be public.
 
@@ -40,7 +40,7 @@ The database is the single source of truth; the components read from it in diffe
 - **SILO + LAPIS** do not read the database directly. Each per-organism SILO/LAPIS pod runs a `config-adapter` init container that fetches the **pinned** organism config version (set by `configVersion` in `values.yaml`) from the public API and renders the files SILO/LAPIS expect. Publishing a new version therefore does **not** automatically restart SILO/LAPIS — see [Managing configuration → Update an organism](managing-configuration/#3-update-an-organism) for the rollout step.
 - **Preprocessing pipelines** are external and fetch what they need from the public API themselves. They may optionally read an opaque per-organism config file you store in Loculus — see [Configuring pipelines in the admin panel](configure-pipeline-admin-panel/).
 
-## What is *not* in the database-backed config
+## What is _not_ in the database-backed config
 
 Deployment and infrastructure settings stay in Helm `values.yaml`: service URLs, image tags/versions, replicas, resource limits, secrets (as Kubernetes Secrets), and the per-organism scaffolding that declares which pipelines run and which `configVersion` each SILO/LAPIS pod pins. See the [Helm chart config reference](../../reference/helm-chart-config/).
 

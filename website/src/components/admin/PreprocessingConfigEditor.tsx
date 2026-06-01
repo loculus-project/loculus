@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { ConfirmDialog } from './ConfirmDialog';
+import { useUnsavedGuard } from '../../hooks/useUnsavedGuard';
 import { AdminConfigClient, AdminConfigError } from '../../services/adminConfigClient';
 import { Button } from '../common/Button';
-import { useUnsavedGuard } from '../../hooks/useUnsavedGuard';
 
 interface InitialConfig {
     pipelineVersion: number;
@@ -165,7 +165,7 @@ export function PreprocessingConfigEditor({ accessToken, backendUrl, organismKey
                         <div className='flex justify-end'>
                             <Button
                                 type='button'
-                                onClick={() => save(row.pipelineVersion)}
+                                onClick={() => void save(row.pipelineVersion)}
                                 disabled={rowBusy || !rowDirty}
                                 className='bg-primary-700 hover:bg-primary-800 text-white px-3 py-1.5 rounded text-sm disabled:opacity-50'
                             >
@@ -206,7 +206,7 @@ export function PreprocessingConfigEditor({ accessToken, backendUrl, organismKey
                     confirmLabel='Remove'
                     destructive
                     busy={busyVersion === deleteTarget}
-                    onConfirm={confirmDelete}
+                    onConfirm={() => void confirmDelete()}
                     onCancel={() => setDeleteTarget(null)}
                 />
             )}

@@ -7,7 +7,7 @@ import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.Test
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.controller.jwtForSuperUser
+import org.loculus.backend.controller.jwtForLoculusAdministrator
 import org.loculus.backend.controller.withAuth
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
@@ -35,7 +35,7 @@ class PreprocessingConfigEndpointTest(@Autowired val mockMvc: MockMvc, @Autowire
     private fun createOrganism(key: String) {
         mockMvc.perform(
             post("/api/admin/config/organisms")
-                .withAuth(jwtForSuperUser)
+                .withAuth(jwtForLoculusAdministrator)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"key":"$key"}"""),
         ).andExpect(status().isCreated)
@@ -43,7 +43,7 @@ class PreprocessingConfigEndpointTest(@Autowired val mockMvc: MockMvc, @Autowire
 
     private fun putConfig(key: String, version: Int, body: String) = mockMvc.perform(
         put("/api/admin/config/organisms/$key/preprocessing/$version")
-            .withAuth(jwtForSuperUser)
+            .withAuth(jwtForLoculusAdministrator)
             .contentType(MediaType.TEXT_PLAIN)
             .content(body),
     )
@@ -60,7 +60,7 @@ class PreprocessingConfigEndpointTest(@Autowired val mockMvc: MockMvc, @Autowire
                 .content("x"),
         ).andExpect(status().is4xxClientError)
 
-        // An authenticated non-super-user is forbidden.
+        // An authenticated non-admin user is forbidden.
         mockMvc.perform(
             put("/api/admin/config/organisms/auth-org/preprocessing/1")
                 .withAuth(jwtForDefaultUser)
@@ -95,7 +95,7 @@ class PreprocessingConfigEndpointTest(@Autowired val mockMvc: MockMvc, @Autowire
 
         // Delete then GET 404
         mockMvc.perform(
-            delete("/api/admin/config/organisms/prepro-org/preprocessing/1").withAuth(jwtForSuperUser),
+            delete("/api/admin/config/organisms/prepro-org/preprocessing/1").withAuth(jwtForLoculusAdministrator),
         ).andExpect(status().isNoContent)
         mockMvc.perform(get("/api/config/organisms/prepro-org/preprocessing/1"))
             .andExpect(status().isNotFound)

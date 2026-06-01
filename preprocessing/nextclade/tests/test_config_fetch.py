@@ -6,8 +6,6 @@ them: the config file provides datasets/alignment/EMBL and any non-identity
 processing specs, while every remaining metadata field gets an identity copy.
 """
 
-import json
-
 import pytest
 
 from loculus_preprocessing.config import (
@@ -79,7 +77,7 @@ def patched_backend(monkeypatch):
         }
     }
 
-    def fake_get(url, timeout=None):  # noqa: ARG001
+    def fake_get(url, timeout=None):
         if url.endswith("/preprocessing/1"):
             return _FakeResponse(200, text=config_yaml)
         if url.endswith("/organisms/ebola-sudan"):
@@ -90,9 +88,7 @@ def patched_backend(monkeypatch):
 
 
 def test_fetch_merges_config_file_and_identity_defaults(patched_backend):
-    config_dict = fetch_config_from_backend(
-        "http://backend:8079/ebola-sudan", "ebola-sudan", 1
-    )
+    config_dict = fetch_config_from_backend("http://backend:8079/ebola-sudan", "ebola-sudan", 1)
 
     # The explicit config-file values survive.
     assert config_dict["batch_size"] == 50
@@ -110,7 +106,7 @@ def test_fetch_merges_config_file_and_identity_defaults(patched_backend):
 def test_fetch_handles_missing_config_file(monkeypatch):
     metadata_payload = {"config": {"schema": {"metadata": [{"name": "country", "type": "string"}]}}}
 
-    def fake_get(url, timeout=None):  # noqa: ARG001
+    def fake_get(url, timeout=None):
         if url.endswith("/preprocessing/1"):
             return _FakeResponse(404)
         return _FakeResponse(200, payload=metadata_payload)
