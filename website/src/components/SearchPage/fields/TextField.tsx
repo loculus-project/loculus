@@ -130,14 +130,14 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
                         input: {
                             default: {
                                 outlined: {
-                                    md: `${inputClasses} hover:border-gray-400 transition-colors`,
+                                    md: `${inputClasses} focus:border-blue-600! hover:border-gray-400 transition-colors`,
                                 },
                             },
                         },
                         label: {
                             default: {
                                 outlined: {
-                                    md: `${labelClasses} bg-white! dark:bg-gray-900! peer-placeholder-shown:bg-transparent! peer-focus:bg-white! dark:peer-focus:bg-gray-900!`,
+                                    md: `${labelClasses} focus:border-blue-600! bg-white! dark:bg-gray-900! peer-placeholder-shown:bg-transparent! peer-focus:bg-white! dark:peer-focus:bg-gray-900!`,
                                 },
                             },
                         },
