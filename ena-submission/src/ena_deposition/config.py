@@ -125,6 +125,7 @@ class Config(BaseModel):
     log_level: str = "DEBUG"
 
     retry_threshold_min: int = 240
+    slack_retry_substrings: list[str] = field(default_factory=lambda: ["does not exist in ENA"])
     slack_retry_threshold_min: int = 720
     submitting_time_threshold_min: int = 15
     waiting_threshold_hours: int = 48
