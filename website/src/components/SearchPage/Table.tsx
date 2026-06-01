@@ -203,7 +203,7 @@ export const Table: FC<TableProps> = ({
             <ScrollContainer>
                 <Tooltip id='table-tip' />
                 {data.length !== 0 ? (
-                    <table className='min-w-full text-left border-collapse'>
+                    <table className='w-max text-left border-collapse'>
                         <thead>
                             <tr className='border-gray-400 border-b mb-100'>
                                 <th className='px-2 py-2 md:pl-6 text-xs text-gray-500 cursor-pointer text-left'>
