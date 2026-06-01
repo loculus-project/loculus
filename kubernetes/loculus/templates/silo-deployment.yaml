@@ -14,6 +14,7 @@ metadata:
     # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
     argocd.argoproj.io/sync-options: Replace=true{{ if (and (not $.Values.developmentDatabasePersistence) $.Values.runDevelopmentMainDatabase) }},Force=true{{ end }}
 spec:
+  progressDeadlineSeconds: 1200  # 20 minute timeout to allow for long silo imports e.g. mpox
   replicas: 1
   selector:
     matchLabels:

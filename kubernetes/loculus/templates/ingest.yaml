@@ -132,7 +132,7 @@ metadata:
     argocd.argoproj.io/hook: PostSync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 spec:
-  activeDeadlineSeconds: 120
+  activeDeadlineSeconds: 600
   backoffLimit: 0
   ttlSecondsAfterFinished: 600
   template:
@@ -141,6 +141,7 @@ spec:
         app: loculus
         component: loculus-ingest-trigger-{{ $key }}
     spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
       restartPolicy: Never
       serviceAccountName: loculus-ingest-trigger
       containers:
