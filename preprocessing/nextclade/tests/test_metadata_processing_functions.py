@@ -829,7 +829,7 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2021, 12, 15),
+                "submittedAt": ts_from_ymd(2022, 12, 15),
             },
         ).datum
         == "2021-12"
@@ -966,9 +966,230 @@ def test_parse_date_into_range() -> None:
         ).datum
         is None
     ), "dateRangeLower: empty date should be returned as None."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "[2021-01-02 TO 2021-06-30]"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeLower",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        ).datum
+        == "2021-01-02"
+    ), "dateRangeLower: lucene range should return lower bound."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "[2021 TO 2021-06-30]"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeLower",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        ).datum
+        == "2021-01-01"
+    ), "dateRangeLower: lucene range should return lower bound of leading year."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "[2021-01-01 TO 2021-06-30]"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeUpper",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        ).datum
+        == "2021-06-30"
+    ), "dateRangeUpper: lucene range should return upper bound."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "[2021-01-01 TO 2021]"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeUpper",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        ).datum
+        == "2021-12-31"
+    ), "dateRangeUpper: lucene range should return upper bound of final date."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "[2021-05-01 TO 2021-06-30]"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        ).datum
+        == "2021-05/2021-06"
+    ), "dateRangeString: lucene range should be returned in ISO format (compressed to month range)."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "[2021 TO 2021-06]"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        ).datum
+        == "2021-01/2021-06"
+    ), "dateRangeString: lucene range should be returned in ISO format (compressed to month range)."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "2021-03-05/2021-06-30"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeLower",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        ).datum
+        == "2021-03-05"
+    ), "dateRangeLower: ISO range should return lower bound."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "2021/2021-06-30"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeLower",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        ).datum
+        == "2021-01-01"
+    ), "dateRangeLower: ISO range should return lower bound of leading date."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "2021-01-01/2021-06-12"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeUpper",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        ).datum
+        == "2021-06-12"
+    ), "dateRangeUpper: ISO range should return upper bound."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "2021-01-01/2021-06"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeUpper",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        ).datum
+        == "2021-06-30"
+    ), "dateRangeUpper: ISO range should return upper bound of trailing date."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "2020-01/2021-06-30"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        ).datum
+        == "2020-01/2021-06"
+    ), "dateRangeString: ISO range should be returned compressed to month range."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "20-01-2020/2021-06-30"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        )
+        .errors[0]
+        .message
+        == "Metadata field field_name: Detected date range but could not parse date: 20-01-2020/2021-06-30."
+    ), "Invalid date range format errors."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "2022-01-01/2021-06-30"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": ts_from_ymd(2022, 1, 1),
+            },
+        )
+        .errors[0]
+        .message
+        == "Metadata field field_name:'2022-01-01/2021-06-30' is an invalid date range. Lower bound: 2022-01-01 00:00:00+00:00 is after upper bound: 2021-06-30 00:00:00+00:00."
+    ), "Invalid date range format errors."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "[2021-01-01 TO 2021-12-31]"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": ts_from_ymd(2022, 6, 15),
+            },
+        ).datum
+        == "2021"
+    ), "Years are compressed in dateRangeString."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "[2021-01-01 TO 2022-12-31]"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": ts_from_ymd(2024, 6, 15),
+            },
+        ).datum
+        == "2021/2022"
+    ), "Multiple years are compressed in dateRangeString."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "[2024-02-01 TO 2024-02-29]"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": ts_from_ymd(2024, 6, 15),
+            },
+        ).datum
+        == "2024-02"
+    ), "Months are compressed in dateRangeString (also for leap years)."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "[2021-01-01 TO 2021-12-31]"},
+            "field_name",
+            ["field_name"],
+            {
+                "fieldType": "dateRangeUpper",
+                "submittedAt": ts_from_ymd(2021, 6, 15),
+            },
+        ).datum
+        == "2021-06-15"
+    ), "dateRangeUpper: lucene range upper bound should be tightened by submittedAt."
 
 
 def test_concatenate() -> None:
+    assert (
+        ProcessingFunctions.concatenate(
+            {"date": "2021-01-01/2021-12-31", "country": "USA"},
+            "field_name",
+            ["date", "country"],
+            {
+                "type": ["dateRangeString", "string"],
+                "order": ["date", "country"],
+                "ACCESSION_VERSION": "version.1",
+            },
+        ).datum
+        == "2021-01-01_TO_2021-12-31/USA"
+    ), "ISO date range is converted to lucene format for displayNames."
     input_data: InputMetadata = {
         "someInt": "",
         "geoLocCountry": "",
