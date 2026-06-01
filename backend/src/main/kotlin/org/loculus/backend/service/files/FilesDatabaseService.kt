@@ -72,12 +72,12 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             -- but are not referenced by a submission. For this, check the unprocessed_data
             -- and processed_data jsonb objects, but not original_data
             WITH referenced AS (
-                SELECT (fil->>'fileId')::uuid
+                SELECT (fil->>'fileId')::uuid as file_id
                 FROM sequence_entries,
                    LATERAL jsonb_each(COALESCE(unprocessed_data->'files','{}'::jsonb)) AS cat(k,v),
                    LATERAL jsonb_array_elements(cat.v) AS fil
                 UNION
-                SELECT (fil->>'fileId')::uuid
+                SELECT (fil->>'fileId')::uuid as file_id
                 FROM sequence_entries_preprocessed_data,
                    LATERAL jsonb_each(COALESCE(processed_data->'files','{}'::jsonb)) AS cat(k,v),
                    LATERAL jsonb_array_elements(cat.v) AS fil
