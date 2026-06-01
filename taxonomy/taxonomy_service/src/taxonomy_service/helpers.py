@@ -228,9 +228,10 @@ def convert_to_lineage_dict(taxa: Iterable[Taxon]) -> dict[str, dict]:
     result: dict[str, dict] = {}
 
     for taxon in taxa:
-        alias = f"Taxon {taxon.tax_id}: {taxon.scientific_name}"
+        alias = str(taxon.scientific_name)
         if taxon.common_name is not None:
             alias += f"; {taxon.common_name}"
+        alias += f" [Taxon {taxon.tax_id}]"
         result[str(taxon.tax_id)] = {
             "aliases": [alias],
             "parents": [str(taxon.parent_id)]
