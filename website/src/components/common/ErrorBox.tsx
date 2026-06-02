@@ -11,10 +11,13 @@ interface Props {
 }
 
 const ErrorBox: React.FC<Props> = ({ title, children, level = 'error', className = 'my-8' }) => {
-    const alertClass = `${className} alert ${level === 'error' ? 'alert-error' : 'alert-warning'}`;
+    // Reproduces daisyUI's `alert alert-error` / `alert-warning`: a horizontal
+    // icon + content row (grid auto-flow column) with the semantic fill colour.
+    const levelClass = level === 'error' ? 'bg-error text-error-content' : 'bg-warning text-warning-content';
+    const alertClass = `${className} grid grid-flow-col auto-cols-max items-center gap-4 px-4 py-3 rounded-lg text-sm [&_a]:font-bold [&_a]:underline ${levelClass}`;
 
     return (
-        <div className={alertClass}>
+        <div role='alert' className={alertClass}>
             {level === 'error' && <DangerousTwoToneIcon />}
             {level === 'warning' && <WarningTwoToneIcon />}
             <div className='grid-flow-row'>
