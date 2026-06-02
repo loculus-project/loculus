@@ -7,7 +7,7 @@ from typing import Any
 import requests
 from requests import codes
 
-from .config import ImporterConfig, MetadataField
+from .config import HierarchicalServiceUrl, ImporterConfig, MetadataField
 from .paths import ImporterPaths
 
 logger = logging.getLogger(__name__)
@@ -63,15 +63,13 @@ def update_hierarchical_filters(
         if old_metadata_values.get(field) == new_values:
             logger.info("No change in values for hierarchical filter '%s'; skipping update", field)
             continue
-        if not url:
-            continue
         fetch_updated_hierarchy(field, new_values, url, paths)
 
 
 def fetch_updated_hierarchy(
-    file_base: str,
+    file_base: MetadataField,
     values: set[str],
-    service_url: str,
+    service_url: HierarchicalServiceUrl,
     paths: ImporterPaths,
 ) -> None:
     destination = paths.input_dir / f"{file_base}.yaml"
