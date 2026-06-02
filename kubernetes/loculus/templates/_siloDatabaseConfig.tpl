@@ -2,7 +2,7 @@
 {{- $type := default "string" .type -}}
 {{- $lineageName := ternary .name (default "" .lineageSystem) (not (empty .hierarchicalFilter)) -}}
 - type: {{ ($type | eq "timestamp") | ternary "int" (($type | eq "authors") | ternary "string" $type) }}
-  {{- if .generateIndex }}
+  {{- if and .generateIndex (not $lineageName) }}
   generateIndex: {{ .generateIndex }}
   {{- end }}
   {{- if $lineageName }}
