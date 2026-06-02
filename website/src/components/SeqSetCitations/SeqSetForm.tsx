@@ -192,7 +192,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                     ) : null}
                 </div>
                 <div className='pb-4'>
-                    <span className='label-text'>
+                    <span className='text-sm'>
                         Review
                         <a href={routes.datauseTermsPage()} target='_blank' className='underline ml-1'>
                             data use terms

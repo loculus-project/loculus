@@ -176,7 +176,7 @@ const FieldSelectorModalField: FC<FieldSelectorModalFieldProps> = ({ field, hand
             <input
                 type='checkbox'
                 id={`field-${field.name}`}
-                className={`h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 ${
+                className={`h-4 w-4 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-600 ${
                     disableCheckbox ? 'opacity-60 cursor-not-allowed' : ''
                 }`}
                 checked={isCheckboxChecked(field)}

@@ -7,7 +7,7 @@ type BoxWithTabsTabBarProps = {
 };
 
 export const BoxWithTabsTabBar: FC<BoxWithTabsTabBarProps> = ({ children }) => (
-    <div className='tabs -mb-px tabs-lifted flex flex-wrap'>{children}</div>
+    <div className='tabs -mb-px tabs-lift flex flex-wrap'>{children}</div>
 );
 
 type BoxWithTabsTabProps = {

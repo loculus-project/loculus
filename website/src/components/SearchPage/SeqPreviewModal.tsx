@@ -20,7 +20,7 @@ import MdiDockBottom from '~icons/mdi/dock-bottom';
 import OouiNewWindowLtr from '~icons/ooui/new-window-ltr';
 
 const BUTTONCLASS =
-    'inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-900 border border-transparent rounded-md hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500';
+    'inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-900 border border-transparent rounded-md hover:bg-blue-200 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500';
 
 interface SeqPreviewModalProps {
     seqId: string;
@@ -154,18 +154,18 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     {content}
                 </div>
             ) : (
-                <Dialog
-                    as='div'
-                    className='fixed inset-0 z-40 overflow-y-auto'
-                    onClose={onClose}
-                    data-testid='sequence-preview-modal'
-                >
-                    <div className='min-h-screen px-8 text-center'>
-                        <div className='fixed inset-0 bg-black opacity-30' />
-                        <DialogPanel className='inline-block w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl pb-0'>
-                            {controls}
-                            {content}
-                        </DialogPanel>
+                <Dialog as='div' className='relative z-40' onClose={onClose}>
+                    <div className='fixed inset-0 bg-black/30' aria-hidden='true' />
+                    <div className='fixed inset-0 overflow-y-auto'>
+                        <div className='flex min-h-full items-center justify-center px-8 py-8'>
+                            <DialogPanel
+                                data-testid='sequence-preview-modal'
+                                className='w-full overflow-hidden text-left bg-white shadow-xl rounded-2xl p-6 pb-0'
+                            >
+                                {controls}
+                                {content}
+                            </DialogPanel>
+                        </div>
                     </div>
                 </Dialog>
             )}
@@ -186,7 +186,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId, allowFastaDownlo
 
                 <CharmMenuKebab className=' w-4 h-6 -ml-1.5 pb-1 pt-1.5' />
             </Button>
-            <ul className='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn absolute top-full w-52 -left-32'>
+            <ul className='dropdown-content z-20 menu p-1 shadow-sm bg-base-100 rounded-field absolute top-full w-52 -left-32'>
                 {allowFastaDownload && (
                     <li>
                         <a
