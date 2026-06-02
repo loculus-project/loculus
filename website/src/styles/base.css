@@ -58,6 +58,35 @@
     --color-primary-1500: #25396e;
     --color-main: var(--color-primary-600);
     --color-logoSecondary: var(--color-primary-600);
+
+    /*
+     * Semantic color tokens, formerly supplied by the daisyUI `light` theme.
+     * Defined here in `@theme` so the `text-primary` / `bg-base-100` / ...
+     * utilities and the daisyUI components both resolve from Tailwind, letting
+     * the design survive once the daisyUI plugin is removed. Values are the
+     * daisyUI v5 `light` theme, with this instance's overrides (primary,
+     * secondary, accent, base-100, info, success, warning, error).
+     */
+    --color-primary: var(--color-primary-400);
+    --color-primary-content: oklch(93% 0.034 272.788);
+    --color-secondary: #f000b8;
+    --color-secondary-content: oklch(94% 0.028 342.258);
+    --color-accent: #1dcdbc;
+    --color-accent-content: oklch(38% 0.063 188.416);
+    --color-neutral: oklch(14% 0.005 285.823);
+    --color-neutral-content: oklch(92% 0.004 286.32);
+    --color-base-100: #ffffff;
+    --color-base-200: oklch(98% 0 0);
+    --color-base-300: oklch(95% 0 0);
+    --color-base-content: oklch(21% 0.006 285.885);
+    --color-info: #9ab9bd;
+    --color-info-content: oklch(29% 0.066 243.157);
+    --color-success: #36d399;
+    --color-success-content: oklch(37% 0.077 168.94);
+    --color-warning: #fbbd23;
+    --color-warning-content: oklch(41% 0.112 45.904);
+    --color-error: #f87272;
+    --color-error-content: oklch(27% 0.105 12.094);
 }
 
 @layer base {
