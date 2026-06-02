@@ -1,6 +1,7 @@
 package org.loculus.backend.service.files
 
 import kotlinx.datetime.LocalDateTime
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
