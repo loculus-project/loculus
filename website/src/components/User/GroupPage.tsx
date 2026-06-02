@@ -15,6 +15,7 @@ import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.js';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { Button } from '../common/Button';
+import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import DashiconsGroups from '~icons/dashicons/groups';
 import DashiconsPlus from '~icons/dashicons/plus';
@@ -234,7 +235,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         {organisms.map((organism) => (
                             <TableRow key={organism.key} label={organism.displayName} noWrapChildren>
                                 {sequenceCountsLoading ? (
-                                    <span className='loading loading-spinner loading-xs'></span>
+                                    <Spinner size='xs' />
                                 ) : (
                                     <a
                                         href={`${routes.searchPage(organism.key)}?${GROUP_ID_FIELD}=${groupId}`}

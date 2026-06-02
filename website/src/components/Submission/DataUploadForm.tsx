@@ -25,6 +25,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button';
+import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 export type UploadAction = 'submit' | 'revise';
@@ -221,7 +222,7 @@ const InnerDataUploadForm = ({
                         alsoDisabledIf={isPending}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
-                            <span className='loading loading-spinner loading-sm' />
+                            <Spinner size='sm' />
                         </div>
                         <span className='flex-1 text-center mx-8'>Submit sequences</span>
                     </Button>

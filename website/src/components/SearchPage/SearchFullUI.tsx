@@ -34,6 +34,7 @@ import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 import ErrorContactMessage from '../common/ErrorContactMessage.tsx';
+import { Spinner } from '../common/Spinner';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -327,7 +328,7 @@ export const InnerSearchFullUI = ({
                             aggregatedHook.isPending ||
                             !firstClientSideLoadOfCountCompleted ||
                             !firstClientSideLoadOfDataCompleted ? (
-                                <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
+                                <Spinner size='xs' className='ml-3 appearSlowly' />
                             ) : null}
                         </div>
                         <div className='flex'>

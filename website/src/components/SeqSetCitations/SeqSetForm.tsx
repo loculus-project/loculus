@@ -12,6 +12,7 @@ import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { deserializeAccessionInput, serializeSeqSetRecords } from '../../utils/parseAccessionInput';
 import { Button } from '../common/Button';
+import { Spinner } from '../common/Spinner';
 import { buttonClasses } from '../common/buttonStyles';
 
 const logger = getClientLogger('SeqSetForm');
@@ -207,7 +208,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                 disabled={isPending || seqSetRecordValidation !== '' || seqSetNameValidation !== ''}
                 onClick={handleSubmit}
             >
-                {isPending ? <span className='loading loading-spinner loading-sm mr-2 relative top-1' /> : 'Save'}
+                {isPending ? <Spinner size='sm' className='mr-2 relative top-1' /> : 'Save'}
             </Button>
         </div>
     );

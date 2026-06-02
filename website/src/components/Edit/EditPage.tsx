@@ -17,6 +17,7 @@ import { getAccessionVersionString } from '../../utils/extractAccessionVersion.t
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
 import { Button } from '../common/Button';
+import { Spinner } from '../common/Spinner';
 import { buttonClasses } from '../common/buttonStyles';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
@@ -183,7 +184,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     }
                     disabled={isPending}
                 >
-                    {isPending && <span className='loading loading-spinner loading-sm mr-2' />}
+                    {isPending && <Spinner size='sm' className='mr-2' />}
                     Submit
                 </Button>
             </div>
