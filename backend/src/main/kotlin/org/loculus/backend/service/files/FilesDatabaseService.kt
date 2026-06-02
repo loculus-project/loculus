@@ -67,25 +67,35 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
     }, 1).toSet()
 
     fun getOrphanedFileIds(threshold: LocalDateTime): Set<FileId> {
-        val sql = """
+        val sql = """           
             -- check for files for which an upload was requested > threshold days ago
             -- but are not referenced by a submission. For this, check the unprocessed_data
             -- and processed_data jsonb objects, but not original_data
             WITH referenced AS (
-                SELECT (fil->>'fileId')::uuid as file_id
-                FROM sequence_entries,
-                   LATERAL jsonb_each(COALESCE(unprocessed_data->'files','{}'::jsonb)) AS cat(k,v),
-                   LATERAL jsonb_array_elements(cat.v) AS fil
-                UNION
-                SELECT (fil->>'fileId')::uuid as file_id
-                FROM sequence_entries_preprocessed_data,
-                   LATERAL jsonb_each(COALESCE(processed_data->'files','{}'::jsonb)) AS cat(k,v),
-                   LATERAL jsonb_array_elements(cat.v) AS fil
+              SELECT (fil->>'fileId')::uuid AS file_id
+              -- files uploaded by users and referenced in submissions
+              FROM sequence_entries,
+                 LATERAL jsonb_each(COALESCE(unprocessed_data->'files','{}'::jsonb)) AS cat(k,v),
+                 LATERAL jsonb_array_elements(cat.v) AS fil
+              UNION
+              -- files produced by preprocessing. For these, we keep only files referenced
+              -- by the current pipeline version or newer.
+              -- (newer than current versions will only exist during rollouts)
+              SELECT (fil->>'fileId')::uuid AS file_id
+              FROM sequence_entries_preprocessed_data sepd
+              JOIN sequence_entries se
+                  ON se.accession = sepd.accession
+                 AND se.version   = sepd.version
+              JOIN current_processing_pipeline cpp
+                  ON cpp.organism = se.organism
+                 AND sepd.pipeline_version >= cpp.version,
+                 LATERAL jsonb_each(COALESCE(sepd.processed_data->'files','{}'::jsonb)) AS cat(k,v),
+                 LATERAL jsonb_array_elements(cat.v) AS fil
             )
             SELECT f.id FROM files f
-                LEFT JOIN referenced r ON r.file_id = f.id
-                WHERE r.file_id IS NULL
-                    AND f.upload_requested_at < ?;
+              LEFT JOIN referenced r ON r.file_id = f.id
+              WHERE r.file_id IS NULL
+                  AND f.upload_requested_at < ?;
         """.trimIndent()
         return transaction {
             exec(sql, listOf(KotlinLocalDateTimeColumnType() to threshold),
