@@ -60,6 +60,12 @@ fun extractAndValidateFastaIds(record: CSVRecord, submissionId: String, recordNu
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
 
+            if (fastaIds.isEmpty()) {
+                throw UnprocessableEntityException(
+                    "In metadata file: record #$recordNumber: column `$FASTA_IDS_HEADER` is empty or contains only whitespace. This is invalid. Full record: $record",
+                )
+            }
+
             val duplicateFastaIds = fastaIds.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
             if (duplicateFastaIds.isNotEmpty()) {
                 throw UnprocessableEntityException(

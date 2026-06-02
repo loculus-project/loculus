@@ -141,6 +141,20 @@ class MetadataEntryTest {
         assertThat(entries[0].fastaIds, equalTo(setOf("seq1", "seq2", "seq3")))
     }
 
+
+    @Test
+    fun `test whitespace-only fastaIds are rejected`() {
+        val str = """
+            submissionId${'	'}fastaIds${'	'}Country
+            foo${'	'}   ${'	'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(inputStream).toList()
+        }
+        assertThat(exception.message, containsString("record #1"))
+        assertThat(exception.message, containsString("empty or contains only whitespace"))
+    }
     @Test
     fun `test multiple duplicate fasta IDs are all reported`() {
         val str = """
