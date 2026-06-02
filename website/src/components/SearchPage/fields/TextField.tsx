@@ -137,7 +137,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
                         label: {
                             default: {
                                 outlined: {
-                                    md: `${labelClasses} focus:border-blue-600! bg-white! dark:bg-gray-900! peer-placeholder-shown:bg-transparent! peer-focus:bg-white! dark:peer-focus:bg-gray-900!`,
+                                    md: `${labelClasses} peer-focus:text-blue-600! bg-white! dark:bg-gray-900! peer-placeholder-shown:bg-transparent! peer-focus:bg-white! dark:peer-focus:bg-gray-900!`,
                                 },
                             },
                         },
