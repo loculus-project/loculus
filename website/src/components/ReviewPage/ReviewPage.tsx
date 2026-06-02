@@ -190,7 +190,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     const controlPanel = (
         <div className='flex flex-col' data-testid='review-page-control-panel'>
             <div className='text-gray-600 mr-3'>
-                {unprocessedCount > 0 && <Spinner size='sm' className='mr-2 relative top-1' />}
+                {unprocessedCount > 0 && <Spinner size='sm' className='mr-2' />}
                 {processedCount} of {total} sequences processed
             </div>
             <div className='border border-slate-200 p-3 mt-3 flex items-start'>

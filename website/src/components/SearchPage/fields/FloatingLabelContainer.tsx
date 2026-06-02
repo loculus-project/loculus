@@ -37,7 +37,8 @@ export const FloatingLabelContainer: React.FC<FloatingLabelContainerProps> = ({
     }, []);
 
     // Use provided border classes or default based on focus state
-    const borderClasses = borderClassName ?? (isFocused ? 'border-blue-600' : 'border-gray-300 hover:border-gray-400');
+    const borderClasses =
+        borderClassName ?? (isFocused ? 'border-primary-600' : 'border-gray-300 hover:border-gray-400');
 
     return (
         <div className='relative my-1.5'>

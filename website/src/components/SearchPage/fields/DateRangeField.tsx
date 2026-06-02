@@ -125,7 +125,8 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                     <span className='text-gray-400 text-sm mr-2'>strict</span>
                     <Checkbox
                         size='sm'
-                        className='text-3xl text-gray-700 checked:border-gray-300'
+                        outline
+                        className='checked:border-gray-300'
                         checked={strictMode}
                         onChange={(event) => setStrictMode(event.target.checked)}
                     />

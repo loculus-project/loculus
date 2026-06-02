@@ -7,7 +7,9 @@ type BoxWithTabsTabBarProps = {
 };
 
 export const BoxWithTabsTabBar: FC<BoxWithTabsTabBarProps> = ({ children }) => (
-    <div className='-mb-px flex flex-wrap'>{children}</div>
+    <div role='tablist' className='-mb-px flex flex-wrap'>
+        {children}
+    </div>
 );
 
 type BoxWithTabsTabProps = {
@@ -23,6 +25,8 @@ const tabActive = 'z-10 font-semibold text-base-content bg-white border-base-300
 
 export const BoxWithTabsTab: FC<BoxWithTabsTabProps> = ({ isActive, label, onClick, className }) => (
     <Button
+        role='tab'
+        aria-selected={isActive}
         className={`${tabBase} ${isActive ? tabActive : tabInactive} ${className ?? ''}`.trimEnd()}
         onClick={onClick}
     >

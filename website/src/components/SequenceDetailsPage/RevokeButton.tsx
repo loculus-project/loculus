@@ -144,7 +144,7 @@ export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConf
                     ✕
                 </Button>
             </form>
-            <h3 className='font-bold text-lg'>{dialogText}</h3>
+            <h3 className='font-bold text-lg pr-8'>{dialogText}</h3>
             <input
                 type='text'
                 value={inputValue}

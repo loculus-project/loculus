@@ -130,7 +130,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
                         input: {
                             default: {
                                 outlined: {
-                                    md: `${inputClasses} focus:border-blue-600! hover:border-gray-400 transition-colors`,
+                                    md: `${inputClasses} focus:border-primary-600! hover:border-gray-400 transition-colors`,
                                 },
                             },
                         },
@@ -170,7 +170,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             <textarea
                 {...textareaProps}
                 rows={hasFocus || (fieldValue !== undefined && fieldValue.toString().split('\n').length > 1) ? 4 : 1}
-                className={`rounded-md block px-2.5 pb-2 pt-4 w-full text-sm text-gray-900 bg-transparent border border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-hidden focus:ring-0 focus:border-blue-600 peer hover:border-gray-400 transition-colors ${className}`}
+                className={`rounded-md block px-2.5 pb-2 pt-4 w-full text-sm text-gray-900 bg-transparent border border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-primary-500 focus:outline-hidden focus:ring-0 focus:border-primary-600 peer hover:border-gray-400 transition-colors ${className}`}
             ></textarea>
 
             <label

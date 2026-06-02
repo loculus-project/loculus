@@ -65,7 +65,8 @@ export const LineageField: FC<LineageFieldProps> = ({
                     <span className='text-gray-400 text-sm mr-2'>include sublineages</span>
                     <Checkbox
                         size='sm'
-                        className='text-3xl text-gray-700 checked:border-gray-300'
+                        outline
+                        className='checked:border-gray-300'
                         checked={includeSublineages}
                         onChange={(event) => setIncludeSubLineages(event.target.checked)}
                     />

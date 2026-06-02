@@ -33,7 +33,7 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({
                     ✕
                 </Button>
             </form>
-            <h3 className='font-bold text-lg'>{dialogText}</h3>
+            <h3 className='font-bold text-lg pr-8'>{dialogText}</h3>
             <div className='flex justify-end gap-4 mt-4'>
                 <form method='dialog'>
                     <Button variant='primary' onClick={onClose}>

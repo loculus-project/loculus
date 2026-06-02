@@ -24,17 +24,17 @@ describe('SequencesDialog', () => {
             expect(getByText('ATTTGCC')).toBeVisible();
         });
 
-        await userEvent.click(getByRole('button', { name: `L (aligned)` }));
+        await userEvent.click(getByRole('tab', { name: `L (aligned)` }));
         await waitFor(() => {
             expect(getByText('A-T-T-T-G-C-C')).toBeVisible();
         });
 
-        await userEvent.click(getByRole('button', { name: `L (unaligned)` }));
+        await userEvent.click(getByRole('tab', { name: `L (unaligned)` }));
         await waitFor(() => {
             expect(getByText('ATTTGCC')).toBeVisible();
         });
 
-        await userEvent.click(getByRole('button', { name: gene1 }));
+        await userEvent.click(getByRole('tab', { name: gene1 }));
         await waitFor(() => {
             expect(getByText('MADS*')).toBeVisible();
         });
@@ -54,9 +54,9 @@ describe('SequencesDialog', () => {
         );
 
         await waitFor(() => {
-            expect(getByRole('button', { name: `Sequence` })).toBeVisible();
-            expect(getByRole('button', { name: `Aligned` })).toBeVisible();
-            expect(getByRole('button', { name: gene1 })).toBeVisible();
+            expect(getByRole('tab', { name: `Sequence` })).toBeVisible();
+            expect(getByRole('tab', { name: `Aligned` })).toBeVisible();
+            expect(getByRole('tab', { name: gene1 })).toBeVisible();
         });
     });
 });

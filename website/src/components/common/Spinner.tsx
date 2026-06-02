@@ -19,7 +19,7 @@ export const Spinner: FC<SpinnerProps> = ({ size = 'md', className = '', label }
     const px = sizePx[size];
     return (
         <svg
-            className={`animate-spin inline-block shrink-0 ${className}`}
+            className={`animate-spin inline-block shrink-0 align-middle ${className}`}
             width={px}
             height={px}
             viewBox='0 0 24 24'
