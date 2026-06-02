@@ -2,6 +2,7 @@ import { type FC } from 'react';
 import { confirmAlert } from 'react-confirm-alert';
 
 import { Button } from '../components/common/Button';
+import { ModalBox } from '../components/common/ModalBox';
 
 type ConfirmationDialogProps = {
     dialogText: string;
@@ -26,7 +27,7 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({
     closeButtonText = 'Cancel',
 }) => {
     return (
-        <div className='modal-box'>
+        <ModalBox>
             <form method='dialog'>
                 <Button circle size='sm' variant='ghost' className='absolute right-2 top-2' onClick={onClose}>
                     ✕
@@ -45,7 +46,7 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({
                     </Button>
                 </form>
             </div>
-        </div>
+        </ModalBox>
     );
 };
 
@@ -57,9 +58,6 @@ export const displayConfirmationDialog = ({
 }: DisplayConfirmationProps) => {
     confirmAlert({
         closeOnClickOutside: true,
-        // Make the overlay an open daisyUI modal so the `.modal-box` child is visible.
-        overlayClassName: 'modal modal-open',
-
         customUI: ({ onClose }) => (
             <ConfirmationDialog
                 dialogText={dialogText}

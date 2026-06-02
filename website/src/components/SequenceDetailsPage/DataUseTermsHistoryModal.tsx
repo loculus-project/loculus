@@ -3,6 +3,7 @@ import { type FC, useRef } from 'react';
 
 import { type DataUseTermsHistoryEntry, restrictedDataUseTermsOption } from '../../types/backend.ts';
 import { Button } from '../common/Button';
+import { ModalBox } from '../common/ModalBox';
 
 export type DataUseTermsHistoryProps = {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
@@ -19,7 +20,7 @@ export const DataUseTermsHistoryModal: FC<DataUseTermsHistoryProps> = ({ dataUse
 
     return (
         <>
-            <dialog ref={dialogRef} className='modal'>
+            <dialog ref={dialogRef} className='bg-transparent p-0 backdrop:bg-black/40'>
                 <DataUseTermsHistoryDialog dataUseTermsHistory={dataUseTermsHistory} />
             </dialog>
             <span>
@@ -40,14 +41,14 @@ const DataUseTermsHistoryDialog: FC<DataUseTermsHistoryContainerProps> = ({ data
         DateTime.fromISO(dateString, { zone: FixedOffsetZone.utcInstance }).setLocale('en').toFormat('yyyy-MM-dd T');
 
     return (
-        <div className='modal-box w-auto max-w-md'>
+        <ModalBox className='w-auto max-w-md'>
             <form method='dialog'>
                 <Button circle size='sm' variant='ghost' className='absolute right-2 top-2'>
                     ✕
                 </Button>
             </form>
             <h3 className='font-bold text-lg'>Data use terms history</h3>
-            <table className='table'>
+            <table className='w-full text-sm [&_:where(th,td)]:px-3 [&_:where(th,td)]:py-2 [&_:where(th,td)]:text-left [&_th]:font-semibold [&_tbody_tr]:border-t [&_tbody_tr]:border-base-200'>
                 <thead>
                     <tr>
                         <th>Changed</th>
@@ -75,6 +76,6 @@ const DataUseTermsHistoryDialog: FC<DataUseTermsHistoryContainerProps> = ({ data
                     <Button variant='neutral'>Close</Button>
                 </form>
             </div>
-        </div>
+        </ModalBox>
     );
 };
