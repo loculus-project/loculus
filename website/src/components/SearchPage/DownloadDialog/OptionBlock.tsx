@@ -1,5 +1,6 @@
 import type { FC, ReactElement } from 'react';
 
+import { selectClasses } from '../../common/formStyles';
 import { Select } from '../../common/Select';
 
 export type OptionBlockOption = {
@@ -66,7 +67,7 @@ export const DropdownOptionBlock: FC<OptionBlockProps> = ({
             <Select
                 name={name}
                 title={title ?? name}
-                className='select w-full max-w-xs min-h-0 h-auto py-0'
+                className={`${selectClasses} w-full max-w-xs min-h-0 h-auto py-0`}
                 disabled={disabled}
                 value={selected}
                 onChange={(event) => onSelect(event.target.selectedIndex)}

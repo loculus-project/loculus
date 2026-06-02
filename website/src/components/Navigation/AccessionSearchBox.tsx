@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FC, type FormEvent } from 'react';
 
 import { routes } from '../../routes/routes';
 import { Button } from '../common/Button';
+import { inputClasses } from '../common/formStyles';
 import SearchIcon from '~icons/material-symbols/search';
 
 interface Props {
@@ -95,7 +96,7 @@ export const AccessionSearchBox: FC<Props> = ({
                     }}
                     placeholder='Search by accession'
                     className={
-                        `input input-md text-sm placeholder:text-gray-500 text-gray-900 ` +
+                        `${inputClasses} text-sm placeholder:text-gray-500 text-gray-900 ` +
                         `bg-white focus:border-primary focus:outline-hidden transition-all duration-200 ease-out ml-2 ` +
                         (open
                             ? `px-3 ${fullWidth ? 'w-full' : 'w-36 lg:w-48'} opacity-100`
