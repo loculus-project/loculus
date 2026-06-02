@@ -7,7 +7,7 @@ import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.categories
 import org.loculus.backend.api.fileIds
 import org.loculus.backend.api.getDuplicateFileNames
-import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class FileMappingPreconditionValidator(
-    private val backendConfig: BackendConfig,
+    private val configService: ConfigService,
     private val s3Service: S3Service,
     private val filesDatabaseService: FilesDatabaseService,
 ) {
@@ -55,8 +55,8 @@ class FileMappingPreconditionValidator(
         organism: Organism,
     ): FileMappingPreconditionValidator {
         if (fileCategoriesFilesMap == null) return this
-        val allowedCategories = backendConfig
-            .getInstanceConfig(organism).schema.submissionDataTypes.files.categories
+        val allowedCategories = configService
+            .getOrganismConfig(organism).config.schema.submissionDataTypes.files.categories
         return validateCategoriesMatchSchema(fileCategoriesFilesMap, allowedCategories, organism, "submission")
     }
 
@@ -69,7 +69,7 @@ class FileMappingPreconditionValidator(
         organism: Organism,
     ): FileMappingPreconditionValidator {
         if (fileCategoriesFilesMap == null) return this
-        val allowedCategories = backendConfig.getInstanceConfig(organism).schema.files
+        val allowedCategories = configService.getOrganismConfig(organism).config.schema.files
         return validateCategoriesMatchSchema(fileCategoriesFilesMap, allowedCategories, organism, "output")
     }
 

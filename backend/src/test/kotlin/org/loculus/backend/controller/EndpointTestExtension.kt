@@ -15,6 +15,16 @@ import org.junit.platform.launcher.TestPlan
 import org.loculus.backend.api.Address
 import org.loculus.backend.api.NewGroup
 import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.config.dbtables.CONFIG_AUDIT_LOG_TABLE_NAME
+import org.loculus.backend.config.dbtables.CONFIG_INSTANCE_DRAFT_TABLE_NAME
+import org.loculus.backend.config.dbtables.CONFIG_INSTANCE_STATE_TABLE_NAME
+import org.loculus.backend.config.dbtables.CONFIG_INSTANCE_VERSIONS_TABLE_NAME
+import org.loculus.backend.config.dbtables.CONFIG_ORGANISMS_TABLE_NAME
+import org.loculus.backend.config.dbtables.CONFIG_ORGANISM_DRAFTS_TABLE_NAME
+import org.loculus.backend.config.dbtables.CONFIG_ORGANISM_VERSIONS_TABLE_NAME
+import org.loculus.backend.config.fixtures.ConfigFixtures
+import org.loculus.backend.config.fixtures.ConfigFixturesConfig
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
@@ -37,12 +47,14 @@ import org.springframework.context.annotation.Import
 import org.springframework.core.annotation.AliasFor
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.junit.jupiter.SpringExtension
 
 /**
  * The main annotation for tests. It also loads the [EndpointTestExtension], which initializes
- * a PostgreSQL test container.
- * You can set additional properties to - for example - override the backend config file, like in
- * [org.loculus.backend.controller.submission.GetReleasedDataDataUseTermsDisabledEndpointTest].
+ * a PostgreSQL test container. By default the extension loads the `default` fixture variant
+ * before each test; tests that need a different organism set autowire [ConfigFixtures] and
+ * call [ConfigFixtures.loadVariant] in their own `@BeforeEach` (see
+ * [org.loculus.backend.controller.submission.GetReleasedDataDataUseTermsDisabledEndpointTest]).
  */
 @Target(AnnotationTarget.TYPE, AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
@@ -59,14 +71,13 @@ import org.springframework.test.context.ActiveProfiles
     SeqSetCitationsControllerClient::class,
     PublicJwtKeyConfig::class,
     FilesClient::class,
+    ConfigFixturesConfig::class,
 )
 annotation class EndpointTest(@get:AliasFor(annotation = SpringBootTest::class) val properties: Array<String> = [])
 
-const val SINGLE_SEGMENTED_REFERENCE_GENOME = "src/test/resources/backend_config_single_segment.json"
-
-const val DATA_USE_TERMS_DISABLED_CONFIG = "src/test/resources/backend_config_data_use_terms_disabled.json"
-
-const val S3_CONFIG = "src/test/resources/backend_config_s3.json"
+const val SINGLE_SEGMENT_VARIANT = "single-segment"
+const val DATA_USE_TERMS_DISABLED_VARIANT = "data-use-terms-disabled"
+const val S3_VARIANT = "s3"
 
 const val SPRING_DATASOURCE_URL = "spring.datasource.url"
 const val SPRING_DATASOURCE_USERNAME = "spring.datasource.username"
@@ -211,6 +222,10 @@ class EndpointTestExtension :
     override fun beforeEach(context: ExtensionContext) {
         log.debug("Clearing database")
         env.postgres.exec(clearDatabaseStatement())
+
+        val springContext = runCatching { SpringExtension.getApplicationContext(context) }.getOrNull()
+        springContext?.getBean(ConfigService::class.java)?.invalidateCache()
+        springContext?.getBean(ConfigFixtures::class.java)?.loadDefault()
     }
 
     override fun testPlanExecutionFinished(testPlan: TestPlan) {
@@ -240,13 +255,20 @@ private fun clearDatabaseStatement(): String = """
             $DATA_USE_TERMS_TABLE_NAME,
             $CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
             $FILES_TABLE_NAME,
+            $CONFIG_AUDIT_LOG_TABLE_NAME,
+            $CONFIG_INSTANCE_DRAFT_TABLE_NAME,
+            $CONFIG_ORGANISM_DRAFTS_TABLE_NAME,
+            $CONFIG_ORGANISM_VERSIONS_TABLE_NAME,
+            $CONFIG_ORGANISMS_TABLE_NAME,
+            $CONFIG_INSTANCE_STATE_TABLE_NAME,
+            $CONFIG_INSTANCE_VERSIONS_TABLE_NAME,
             external_metadata,
             seqsets,
             seqset_records,
             seqset_to_records,
             audit_log,
             table_update_tracker
-            cascade;
+            restart identity cascade;
         alter sequence $ACCESSION_SEQUENCE_NAME restart with 1;
         alter sequence groups_table_group_id_seq restart with 1;
         alter sequence seqset_id_sequence restart with 1;
@@ -254,10 +276,6 @@ private fun clearDatabaseStatement(): String = """
         alter sequence seqset_to_records_seqset_record_id_seq restart with 1;
         alter sequence user_groups_table_id_seq restart with 1;
         alter sequence audit_log_id_seq restart with 1;
-        insert into $CURRENT_PROCESSING_PIPELINE_TABLE_NAME values
-            (1, now(), '$DEFAULT_ORGANISM'),
-            (1, now(), '$OTHER_ORGANISM'),
-            (1, now(), '$ORGANISM_WITHOUT_CONSENSUS_SEQUENCES');
     """
 
 private fun createBucket(endpoint: String, accessKey: String, secretKey: String, region: String, bucket: String) {

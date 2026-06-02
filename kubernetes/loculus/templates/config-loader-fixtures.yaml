@@ -1,0 +1,32 @@
+{{- /*
+  ConfigMap that bundles the fixture YAMLs in `kubernetes/loculus/fixtures/`
+  for the loculus-config-loader Job to mount and post to the backend admin API.
+
+  Keys are flattened so a single mount serves `instance.yaml`, every
+  `organisms/<key>.yaml`, and every `preprocessing/<organism>/<version>.<ext>`
+  config file. The Job's loader CLI walks the mount as if it were the on-disk
+  fixtures directory, so paths must match the loader's `<dir>/instance.yaml` +
+  `<dir>/organisms/<key>.yaml` + `<dir>/preprocessing/<organism>/<version>.<ext>`
+  layout.
+
+  ConfigMap keys can't contain `/`, so the nested organism/preprocessing paths
+  are flattened with `__` separators here and mapped back to their real paths
+  via volume `items` in the Job spec.
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-config-loader-fixtures
+  annotations:
+    "argocd.argoproj.io/sync-wave": "-1"
+data:
+  instance.yaml: |-
+{{ .Files.Get "fixtures/instance.yaml" | indent 4 }}
+{{- range $path, $_ := .Files.Glob "fixtures/organisms/*.yaml" }}
+  {{ base $path }}: |-
+{{ $.Files.Get $path | indent 4 }}
+{{- end }}
+{{- range $path, $_ := .Files.Glob "fixtures/preprocessing/*/*" }}
+  preprocessing__{{ base (dir $path) }}__{{ base $path }}: |-
+{{ $.Files.Get $path | indent 4 }}
+{{- end }}

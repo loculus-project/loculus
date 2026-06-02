@@ -1,0 +1,27 @@
+---
+import { EditOrganismSection } from '../../../../../../components/admin/EditOrganismSection';
+import AdminConfigLayout from '../../../../../../layouts/AdminConfigLayout.astro';
+import { loadOrganismEditDraft } from '../../../../../../utils/loadOrganismEditDraft';
+
+const key = Astro.params.key!;
+const session = Astro.locals.session!;
+const loaded = await loadOrganismEditDraft(session, key);
+if (loaded.redirectTo !== null) return Astro.redirect(loaded.redirectTo);
+---
+
+<AdminConfigLayout title={`Display · ${key}`}>
+    {loaded.loadError !== null && <p class='text-red-600 mb-4'>Failed to load: {loaded.loadError}</p>}
+    {
+        loaded.loadError === null && loaded.draft !== null && loaded.accessToken !== null && (
+            <EditOrganismSection
+                accessToken={loaded.accessToken}
+                backendUrl={loaded.publicBackendUrl}
+                organismKey={key}
+                initialDraft={loaded.draft}
+                publishedConfig={loaded.publishedConfig}
+                formKind='display'
+                client:load
+            />
+        )
+    }
+</AdminConfigLayout>

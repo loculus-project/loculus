@@ -16,28 +16,27 @@ To call the backend, the preprocessing pipeline needs to use an account with the
 
 The [preprocessing pipeline specification](https://github.com/loculus-project/loculus/blob/main/preprocessing/specification.md) describes the interface between a pipeline and the [Loculus backend server](../../reference/glossary.md#backend).
 
-## Deployment with Kubernetes and Helm
+## Deployment
 
-If you use [Kubernetes and Helm to deploy Loculus](../setup-with-kubernetes/) and have a Docker image of your pipeline, you can configure it to be used in the `preprocessing` field ([reference](http://localhost:4321/reference/helm-chart-config/#organism-type)). In that field, you have to specify the `version` of the pipeline and the `image` name. Additionally, you can provide a list of `args` and values for the `configFile`.
+A preprocessing pipeline is simply a process that authenticates with the `preprocessing_pipeline` role, polls the backend for unprocessed data, processes it, and submits the results back. **How and where you run it is entirely up to you** — a long-running service, a scheduled job, any orchestrator, or a managed/cloud service. It only needs network access to the backend (and Keycloak). The sections below describe how _our_ Helm chart does it, but none of this is mandatory.
 
-The pipeline will be started with the following arguments
+### With Kubernetes and Helm
+
+If you use [Kubernetes and Helm to deploy Loculus](../setup-with-kubernetes/) and have a Docker image of your pipeline, you can configure it in the `preprocessing` field ([reference](../../reference/helm-chart-config/#organism-type)). Specify the `version` of the pipeline and the `image` name, and optionally a list of `args`.
+
+The pipeline will be started with the following arguments:
 
 ```
 { values from the args field }
 --backend-host={ backend host }/{ organism }
 --keycloak-host={ Keycloak host }
 --pipeline-version={ pipeline version }
+--organism={ organism }
 --keycloak-password={ Keycloak password }
 ```
 
-If `configFile` is set, the `preprocessing-config.yaml` will be created, mounted onto the container and added as an argument. [This template](https://github.com/loculus-project/loculus/blob/c723c562ed2ca4a0252b3899fd375dab9a652c5a/kubernetes/loculus/templates/loculus-preprocessing-config.yaml#L12) specifies how the content of the file will be generated.
+The Loculus Helm chart creates a user for the pipeline (username `preprocessing_pipeline`); its password is provided through the `--keycloak-password` argument shown above. For further detail you can view the [Helm template code](https://github.com/loculus-project/loculus/blob/main/kubernetes/loculus/templates/loculus-preprocessing-deployment.yaml).
 
-The config is then added as an argument using
+### Providing per-organism configuration
 
-```
- --config=/etc/config/preprocessing-config.yaml
-```
-
-For further information on how arguments are passed you can view the [Helm template code](https://github.com/loculus-project/loculus/blob/c723c562ed2ca4a0252b3899fd375dab9a652c5a/kubernetes/loculus/templates/loculus-preprocessing-deployment.yaml#L43) where this is defined.
-
-The Loculus Helm chart will create a user for the pipeline. The username is `preprocessing_pipeline` and the password will be provided, as shown above, through the arguments.
+Loculus does **not** mount a config file into your pipeline. (Earlier versions generated a `preprocessing-config.yaml` from a `configFile` field in `values.yaml` and mounted it via `--config`; that mechanism has been removed.) If your pipeline needs per-organism configuration, it can fetch it from the backend's public config API — see [Configuring pipelines in the admin panel](../configure-pipeline-admin-panel/). That, too, is optional: many pipelines need no per-organism config (the [dummy pipeline](https://github.com/loculus-project/loculus/tree/main/preprocessing/dummy) reads none), and you can equally bake configuration into your image or pass it through `args`/environment variables. Whatever config you store in the admin panel is opaque text that the backend serves verbatim; your pipeline decides what to do with it.

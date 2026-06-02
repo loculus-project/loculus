@@ -7,7 +7,7 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.and
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
-import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.utils.Accession
@@ -17,10 +17,13 @@ import org.springframework.stereotype.Component
 private val logger = KotlinLogging.logger { }
 
 @Component
-class DataUseTermsPreconditionValidator(private val dateProvider: DateProvider, val backendConfig: BackendConfig) {
+class DataUseTermsPreconditionValidator(
+    private val dateProvider: DateProvider,
+    private val configService: ConfigService,
+) {
 
     fun constructDataUseTermsAndValidate(dataUseTermsType: DataUseTermsType?, restrictedUntil: String?): DataUseTerms =
-        when (backendConfig.dataUseTerms.enabled) {
+        when (configService.getInstanceConfig().config.dataUseTerms.enabled) {
             false -> DataUseTerms.Open
 
             true -> when (dataUseTermsType) {

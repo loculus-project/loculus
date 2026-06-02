@@ -22,10 +22,11 @@ const websiteConfig = getWebsiteConfig();
 const siteName = websiteConfig.name;
 
 const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
+const userRoles = Astro.locals.session?.roles ?? [];
 
 const loginUrl = await getAuthUrl(Astro.url.toString());
 
-const topNavigationItems = navigationItems.top(isLoggedIn, loginUrl);
+const topNavigationItems = navigationItems.top(isLoggedIn, loginUrl, userRoles);
 const accessionPrefix = getWebsiteConfig().accessionPrefix;
 ---
 

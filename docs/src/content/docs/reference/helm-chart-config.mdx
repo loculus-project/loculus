@@ -62,6 +62,10 @@ windows. It defaults to `false`.
 
 ## Organism Configuration
 
+:::caution[Organism domain config has moved to the database]
+The organism **domain** config documented in this section — `schema`, metadata fields, reference genomes, link-outs, file categories, lineage system definitions, etc. — is now stored in Loculus's [database-backed configuration system](../../for-administrators/configuration-system/), seeded from `kubernetes/loculus/fixtures/` and edited through the admin dashboard. The backend, website, SILO, and LAPIS read it from there, **not** from `values.yaml`. The `organisms`/`defaultOrganisms` fields below remain in `values.yaml` for deployment-level settings (pipeline declarations, pinned `configVersion`, replicas) and are still partly read by the ingest pipeline, but the schema/metadata fields no longer drive the running instance. The dead `preprocessing[].configFile` and `metadata[].preprocessing` fields have been removed (pipelines fetch their config from the backend — see [Configuring pipelines in the admin panel](../../for-administrators/configure-pipeline-admin-panel/)). The remaining organism `schema`/`metadata`/`referenceGenomes` fields stay here only because the ingest pipeline still reads them from `values.yaml`.
+:::
+
 <SchemaDocs group='organism-conf' fieldColumnClass='w-48' />
 
 ### Lineage system definitions
@@ -142,20 +146,13 @@ into a single row.
 
 ### Preprocessing (type)
 
+This declares the preprocessing pipeline deployment for an organism (which image and version to run, arguments, replicas). The values for `args` depend on the used preprocessing pipeline.
+
 <SchemaDocs group='preprocessing' fieldColumnClass='w-28' />
 
-The values for `args` and `configFile` depend on the used preprocessing pipeline.
-
-#### Nextclade Preprocessing Pipeline ConfigFile (type)
-
-<SchemaDocs group='nextcladePipelineConfigFile' fieldColumnClass='w-28' />
-
-##### Nextclade Preprocessing Pipeline Sequence and Dataset Objects (type)
-
-<SchemaDocs group='nextcladeSegment' fieldColumnClass='w-28' />
-
-For more details on the Nextclade preprocessing pipeline, please see
-[here](../../for-administrators/existing-preprocessing-pipelines/#nextclade-based-pipeline).
+:::note
+A preprocessing pipeline's own config file is no longer set here. Pipelines fetch their config from the backend's public config API — see [Configuring pipelines in the admin panel](../../for-administrators/configure-pipeline-admin-panel/). For more details on the Nextclade pipeline, see [here](../../for-administrators/existing-preprocessing-pipelines/#nextclade-based-pipeline).
+:::
 
 ### Ingest (type)
 

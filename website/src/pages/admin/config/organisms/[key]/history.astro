@@ -1,0 +1,94 @@
+---
+import AdminConfigLayout from '../../../../../layouts/AdminConfigLayout.astro';
+import { AdminConfigError, getAdminConfigClient } from '../../../../../services/adminConfigClient';
+import type { AuditEntry, VersionListing } from '../../../../../types/loculusConfig';
+
+const key = Astro.params.key!;
+const session = Astro.locals.session!;
+const client = await getAdminConfigClient(session);
+
+let versions: VersionListing[] = [];
+let entries: AuditEntry[] = [];
+let loadError: string | null = null;
+try {
+    const [v, a] = await Promise.all([client.listOrganismVersions(key), client.audit(key)]);
+    versions = v.versions;
+    entries = a.entries;
+} catch (e) {
+    loadError = AdminConfigError.isInstance(e) ? (e.body.message ?? e.body.error) : String(e);
+}
+---
+
+<AdminConfigLayout title={`History · ${key}`}>
+    {loadError !== null && <p class='text-red-600 mb-4'>Failed to load: {loadError}</p>}
+
+    <section class='mb-8'>
+        <h2 class='text-base font-semibold mb-2'>Versions</h2>
+        <table class='w-full text-sm border-collapse'>
+            <thead>
+                <tr class='border-b border-gray-200 text-left'>
+                    <th class='py-1.5 pr-4 font-semibold'>Version</th>
+                    <th class='py-1.5 pr-4 font-semibold'>Published at</th>
+                    <th class='py-1.5 pr-4 font-semibold'>By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {
+                    versions.map((v) => (
+                        <tr class='border-b border-gray-100'>
+                            <td class='py-1.5 pr-4'>v{v.version}</td>
+                            <td class='py-1.5 pr-4 font-mono text-xs'>{v.publishedAt}</td>
+                            <td class='py-1.5 pr-4'>{v.publishedBy}</td>
+                        </tr>
+                    ))
+                }
+                {
+                    versions.length === 0 && (
+                        <tr>
+                            <td class='py-2 italic text-gray-500' colspan='3'>
+                                No published versions yet.
+                            </td>
+                        </tr>
+                    )
+                }
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2 class='text-base font-semibold mb-2'>Audit log (most recent first)</h2>
+        <table class='w-full text-sm border-collapse'>
+            <thead>
+                <tr class='border-b border-gray-200 text-left'>
+                    <th class='py-1.5 pr-4 font-semibold'>When</th>
+                    <th class='py-1.5 pr-4 font-semibold'>Actor</th>
+                    <th class='py-1.5 pr-4 font-semibold'>Action</th>
+                    <th class='py-1.5 pr-4 font-semibold'>Summary</th>
+                </tr>
+            </thead>
+            <tbody>
+                {
+                    entries.map((e) => (
+                        <tr class='border-b border-gray-100'>
+                            <td class='py-1.5 pr-4 font-mono text-xs'>{e.occurredAt}</td>
+                            <td class='py-1.5 pr-4'>{e.actor}</td>
+                            <td class='py-1.5 pr-4 font-mono text-xs'>{e.action}</td>
+                            <td class='py-1.5 pr-4 text-xs'>
+                                {typeof e.details?.summary === 'string' ? e.details.summary : ''}
+                            </td>
+                        </tr>
+                    ))
+                }
+                {
+                    entries.length === 0 && (
+                        <tr>
+                            <td class='py-2 italic text-gray-500' colspan='4'>
+                                No audit entries.
+                            </td>
+                        </tr>
+                    )
+                }
+            </tbody>
+        </table>
+    </section>
+</AdminConfigLayout>

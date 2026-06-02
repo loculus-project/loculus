@@ -1,0 +1,110 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+    title: string;
+}
+
+const { title } = Astro.props;
+const path = Astro.url.pathname;
+
+const sections = [
+    { label: 'Instance', href: '/admin/config/instance', match: '/admin/config/instance' },
+    { label: 'Organisms', href: '/admin/config/organisms', match: '/admin/config/organisms' },
+    { label: 'Audit', href: '/admin/config/audit', match: '/admin/config/audit' },
+] as const;
+
+function isActive(match: string): boolean {
+    return path === match || path.startsWith(`${match}/`);
+}
+
+// Detect "we are inside a specific organism" and render a sub-nav for it.
+const organismMatch = path.match(/^\/admin\/config\/organisms\/([^/]+)(?:\/|$)/);
+const organismKey = organismMatch !== null ? decodeURIComponent(organismMatch[1]) : null;
+
+type OrganismNavItem = { label: string; href: string; exact?: boolean };
+const organismSections: OrganismNavItem[] =
+    organismKey === null
+        ? []
+        : [
+              {
+                  label: 'Overview',
+                  href: `/admin/config/organisms/${encodeURIComponent(organismKey)}/edit`,
+                  exact: true,
+              },
+              { label: 'Display', href: `/admin/config/organisms/${encodeURIComponent(organismKey)}/edit/display` },
+              {
+                  label: 'Metadata fields',
+                  href: `/admin/config/organisms/${encodeURIComponent(organismKey)}/edit/metadata`,
+              },
+              { label: 'Add field', href: `/admin/config/organisms/${encodeURIComponent(organismKey)}/edit/add-field` },
+              { label: 'Link-outs', href: `/admin/config/organisms/${encodeURIComponent(organismKey)}/edit/linkouts` },
+              { label: 'JSON', href: `/admin/config/organisms/${encodeURIComponent(organismKey)}/json` },
+              { label: 'History', href: `/admin/config/organisms/${encodeURIComponent(organismKey)}/history` },
+          ];
+
+function isSubActive(href: string, exact?: boolean): boolean {
+    return exact === true ? path === href : path === href || path.startsWith(`${href}/`);
+}
+---
+
+<BaseLayout title={`Admin · ${title}`}>
+    <div class='flex flex-col md:flex-row gap-8'>
+        <aside class='md:w-56 shrink-0 border-b md:border-b-0 md:border-r border-gray-200 pb-4 md:pb-0 md:pr-4'>
+            <h2 class='text-xs font-semibold uppercase text-gray-500 mb-2'>Admin · Config</h2>
+            <nav>
+                <ul class='space-y-1'>
+                    {
+                        sections.map(({ label, href, match }) => (
+                            <li>
+                                <a
+                                    href={href}
+                                    class:list={[
+                                        'block px-3 py-2 rounded text-sm',
+                                        isActive(match)
+                                            ? 'bg-gray-100 font-semibold text-gray-900'
+                                            : 'text-gray-700 hover:bg-gray-50',
+                                    ]}
+                                >
+                                    {label}
+                                </a>
+                            </li>
+                        ))
+                    }
+                </ul>
+            </nav>
+            {
+                organismKey !== null && (
+                    <div class='mt-6'>
+                        <h3 class='text-xs font-semibold uppercase text-gray-500 mb-2'>
+                            Organism · <span class='font-mono normal-case'>{organismKey}</span>
+                        </h3>
+                        <nav>
+                            <ul class='space-y-1'>
+                                {organismSections.map(({ label, href, exact }) => (
+                                    <li>
+                                        <a
+                                            href={href}
+                                            class:list={[
+                                                'block px-3 py-1.5 rounded text-sm',
+                                                isSubActive(href, exact)
+                                                    ? 'bg-gray-100 font-semibold text-gray-900'
+                                                    : 'text-gray-700 hover:bg-gray-50',
+                                            ]}
+                                        >
+                                            {label}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
+                    </div>
+                )
+            }
+        </aside>
+        <main class='flex-grow min-w-0'>
+            <h1 class='text-2xl font-semibold mb-4'>{title}</h1>
+            <slot />
+        </main>
+    </div>
+</BaseLayout>

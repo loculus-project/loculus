@@ -1,0 +1,56 @@
+gitHubMainUrl: https://github.com/loculus-project/loculus
+bannerMessage: This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly.
+logo:
+  url: /favicon.svg
+  width: 100
+  height: 100
+issuesEmail: noreply@loculus.org
+gitHubEditLink: https://github.com/loculus-project/loculus/edit/main/monorepo/website/
+additionalHeadHTML: ''
+accessionPrefix: LOC_
+gitHubIssuesUrl: https://github.com/loculus-project/loculus/issues
+name: Loculus
+dataUseTerms:
+  enabled: true
+  urls:
+    open: https://#TODO-MVP/open
+    restricted: https://#TODO-MVP/restricted
+fileSharing:
+  outputFileUrlType: backend
+enableSeqSets: true
+seqSetsFieldsToDisplay:
+  - field: geoLocCountry
+    displayName: Country
+  - field: sampleCollectionDate
+    displayName: Collection Date
+  - field: authors
+    displayName: Authors
+seqSetsGraphs:
+  - name: sampleCollectionDates
+    displayName: Sample collection dates
+    type: date
+    fields:
+      - sampleCollectionDate
+      - date
+  - name: sampleCollectionCountries
+    displayName: Sample collection countries
+    type: category
+    fields:
+      - geoLocCountry
+      - country
+  - name: dataUseTerms
+    displayName: Data use terms
+    type: category
+    fields:
+      - dataUseTerms
+enableLoginNavigationItem: true
+enableSubmissionNavigationItem: true
+enableSubmissionPages: true
+lineageSystemDefinitions:
+  pangoLineage:
+    '1': https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
+    '2': https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
+  alternativeLineage:
+    '4': https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml
+  cchfS:
+    '1': https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml

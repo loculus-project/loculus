@@ -5,9 +5,9 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.config.BackendSpringProperty
-import org.loculus.backend.controller.DATA_USE_TERMS_DISABLED_CONFIG
+import org.loculus.backend.config.fixtures.ConfigFixtures
+import org.loculus.backend.config.service.ConfigService
+import org.loculus.backend.controller.DATA_USE_TERMS_DISABLED_VARIANT
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
@@ -20,14 +20,18 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$DATA_USE_TERMS_DISABLED_CONFIG"],
-)
+@EndpointTest
 class SubmitEndpointDataUseTermsDisabledTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
-    @Autowired val backendConfig: BackendConfig,
+    @Autowired val configService: ConfigService,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
+    @Autowired private val configFixtures: ConfigFixtures,
 ) {
+
+    @BeforeEach
+    fun loadDataUseTermsDisabledFixture() {
+        configFixtures.loadVariant(DATA_USE_TERMS_DISABLED_VARIANT)
+    }
     var groupId: Int = 0
 
     @BeforeEach
@@ -37,7 +41,7 @@ class SubmitEndpointDataUseTermsDisabledTest(
 
     @Test
     fun `config has been read and data use terms are configured to be off`() {
-        assertThat(backendConfig.dataUseTerms.enabled, `is`(false))
+        assertThat(configService.getInstanceConfig().config.dataUseTerms.enabled, `is`(false))
     }
 
     @Test
@@ -52,7 +56,9 @@ class SubmitEndpointDataUseTermsDisabledTest(
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
-            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(
+                jsonPath("\$[0].accession", containsString(configService.getInstanceConfig().config.accessionPrefix)),
+            )
             .andExpect(jsonPath("\$[0].version").value(1))
     }
 }

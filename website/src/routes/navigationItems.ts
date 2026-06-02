@@ -79,9 +79,17 @@ function getAccountItems(isLoggedIn: boolean, loginUrl: string) {
     return [accountItem];
 }
 
-function topNavigationItems(isLoggedIn: boolean, loginUrl: string) {
+function getAdminItems(roles: string[]) {
+    if (!roles.includes('loculus_administrator')) {
+        return [];
+    }
+    return [{ id: 'admin', text: 'Admin', path: '/admin/config' }];
+}
+
+function topNavigationItems(isLoggedIn: boolean, loginUrl: string, roles: string[] = []) {
     const seqSetsItems = getSeqSetsItems();
     const accountItems = getAccountItems(isLoggedIn, loginUrl);
+    const adminItems = getAdminItems(roles);
 
-    return [...seqSetsItems, ...extraStaticTopNavigationItems, ...accountItems];
+    return [...seqSetsItems, ...extraStaticTopNavigationItems, ...accountItems, ...adminItems];
 }

@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.utils.Accession
 
@@ -118,12 +117,6 @@ data class DataUseTermsChangeRequest(
 
 private class LocalDateSerializer : StdSerializer<LocalDate>(LocalDate::class.java) {
     override fun serialize(value: LocalDate, gen: JsonGenerator, provider: SerializerProvider) {
-        gen.writeString(value.toString())
-    }
-}
-
-private class LocalDateTimeSerializer : StdSerializer<LocalDateTime>(LocalDateTime::class.java) {
-    override fun serialize(value: LocalDateTime, gen: JsonGenerator, provider: SerializerProvider) {
         gen.writeString(value.toString())
     }
 }

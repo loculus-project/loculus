@@ -1,0 +1,65 @@
+organism: not-aligned-organism
+batch_size: 100
+log_level: DEBUG
+segments:
+  - name: main
+    references:
+      - genes: []
+        name: singleReference
+max_sequences_per_entry: 1
+processing_spec:
+
+  country:
+    function: identity
+    inputs:
+      input: country
+    args:
+      type: string
+  date:
+    function: parse_and_assert_past_date
+    inputs:
+      date: date
+    args:
+      type: date
+    required: true
+  division:
+    function: identity
+    inputs:
+      input: division
+    args:
+      type: string
+  host:
+    function: identity
+    inputs:
+      input: host
+    args:
+      type: string
+  lineage:
+    function: process_options
+    inputs:
+      input: lineage
+    args:
+      type: string
+      options:
+        - A
+        - A.1
+        - A.1.1
+        - A.2
+        - B
+        - B.1
+        - B.1.1
+        - B.1.1.1
+        - C
+        - C.1
+    required: true
+  region:
+    function: identity
+    inputs:
+      input: region
+    args:
+      type: string
+  versionComment:
+    function: identity
+    inputs:
+      input: versionComment
+    args:

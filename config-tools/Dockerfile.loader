@@ -1,0 +1,40 @@
+# syntax=docker/dockerfile:1
+#
+# loculus-config-loader: posts fixture YAML to the Loculus admin config API.
+# Used by:
+#   - Local dev (replaces backend/import_local_test_config.py)
+#   - Phase-3 Helm post-install Job
+#
+# Two-stage build keeps the runtime image small (no tsc, no devDeps).
+
+# ── Stage 1: install deps + build via tsx-style execution ──────────────────────
+FROM node:22-alpine AS builder
+WORKDIR /app
+
+# Install full deps (incl. dev) for typecheck + tests.
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+COPY tsconfig.json ./
+COPY src ./src
+
+# Sanity-check the build artefacts in CI by typechecking and running tests.
+# Comment out if image-build time becomes an issue.
+RUN npm run check-types
+
+# ── Stage 2: runtime image ─────────────────────────────────────────────────────
+FROM node:22-alpine
+WORKDIR /app
+
+# Production deps only — tsx is the runtime executor (no separate build step).
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev && npm install --no-save tsx@^4.19.0
+
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+
+# Drop privileges.
+RUN addgroup -S loculus && adduser -S loculus -G loculus
+USER loculus
+
+ENTRYPOINT ["npx", "tsx", "/app/src/loader/cli.ts"]

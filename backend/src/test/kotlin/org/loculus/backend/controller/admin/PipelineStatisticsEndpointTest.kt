@@ -3,6 +3,7 @@ package org.loculus.backend.controller.admin
 import org.junit.jupiter.api.Test
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.controller.jwtForLoculusAdministrator
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.withAuth
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,14 +20,20 @@ class PipelineStatisticsEndpointTest(@Autowired val mockMvc: MockMvc) {
     }
 
     @Test
-    fun `WHEN non superuser THEN forbidden`() {
+    fun `WHEN non administrator THEN forbidden`() {
         mockMvc.perform(get("/admin/pipeline-statistics").withAuth(jwtForDefaultUser))
             .andExpect(status().isForbidden)
     }
 
     @Test
-    fun `WHEN superuser THEN ok`() {
+    fun `WHEN superuser THEN forbidden`() {
         mockMvc.perform(get("/admin/pipeline-statistics").withAuth(jwtForSuperUser))
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `WHEN loculus administrator THEN ok`() {
+        mockMvc.perform(get("/admin/pipeline-statistics").withAuth(jwtForLoculusAdministrator))
             .andExpect(status().isOk)
     }
 }

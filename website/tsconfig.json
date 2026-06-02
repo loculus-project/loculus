@@ -8,6 +8,6 @@
         "allowImportingTsExtensions": true,
         "lib": ["ES2021", "DOM"]
     },
-    "include": [".astro/types.d.ts", ".astro/env.d.ts", "**/*"],
+    "include": [".astro/types.d.ts", ".astro/env.d.ts", "**/*", "../config-tools/src/**/*"],
     "exclude": ["playwright-report", "dist", "node_modules"]
 }

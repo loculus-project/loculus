@@ -2,6 +2,7 @@ package org.loculus.backend.controller
 
 import io.jsonwebtoken.Jwts
 import org.loculus.backend.auth.Roles.EXTERNAL_METADATA_UPDATER
+import org.loculus.backend.auth.Roles.LOCULUS_ADMINISTRATOR
 import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
@@ -17,6 +18,7 @@ val jwtForAlternativeUser = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME)
 val jwtForProcessingPipeline = generateJwtFor("preprocessing_pipeline", listOf(PREPROCESSING_PIPELINE))
 val jwtForExternalMetadataUpdatePipeline =
     generateJwtFor("external_metadata_updater", listOf(EXTERNAL_METADATA_UPDATER))
+val jwtForLoculusAdministrator = generateJwtFor(LOCULUS_ADMINISTRATOR, listOf(LOCULUS_ADMINISTRATOR))
 val jwtForSuperUser = generateJwtFor(SUPER_USER_NAME, listOf(SUPER_USER))
 
 fun generateJwtFor(username: String, roles: List<String> = emptyList()): String = Jwts.builder()

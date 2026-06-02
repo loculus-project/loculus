@@ -14,6 +14,8 @@ type Session = {
         email?: string;
         emailVerified?: boolean;
     };
+    /** Realm roles decoded from the access token; populated by `authMiddleware`. */
+    roles: string[];
     token?: TokenCookie;
 };
 

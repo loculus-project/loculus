@@ -21,7 +21,7 @@ BACKEND_BASE_URL="http://localhost:8079/organism" python -m silo_import
 Environment variables mirror the historical shell scripts:
 
 - `BACKEND_BASE_URL` (required)
-- `LINEAGE_DEFINITIONS` (optional JSON mapping `pipelineVersion -> URL`)
+- `LINEAGE_DEFINITIONS_FILE` (optional, default `/app/lineage_definitions.json`) — path to a JSON file mapping `lineageSystem -> { pipelineVersion -> URL }`. Written by the `config-adapter` init container from the backend's `lineageSystemDefinitions`; the importer downloads each definition file at import time. A missing or empty file means no lineage systems.
 - `HARD_REFRESH_INTERVAL` (seconds, default `3600`)
 - `SILO_IMPORT_POLL_INTERVAL_SECONDS` (default `30`)
 - `SILO_RUN_TIMEOUT_SECONDS` (default `3600`)

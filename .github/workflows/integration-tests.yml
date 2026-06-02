@@ -110,6 +110,17 @@ jobs:
         run: cd integration-tests && npx playwright install --with-deps --only-shell chromium ${{ matrix.browser == 'firefox' && 'firefox' || '' }}
       - name: Wait for the pods to be ready
         run: ./.github/scripts/wait_for_pods_to_be_ready.py --timeout ${{ env.wait_timeout }}
+      # Phase 3.6: the config-loader Job posts fixture YAMLs to the backend admin API
+      # as a Helm post-install hook. SILO + LAPIS adapter init containers depend on
+      # those organisms existing in the backend, so wait for the Job to complete
+      # before continuing.
+      - name: Wait for config-loader Job to complete
+        run: |
+          kubectl wait --for=condition=complete --timeout=300s job/loculus-config-loader || {
+            echo '--- config-loader Job logs ---'
+            kubectl logs job/loculus-config-loader --all-containers --tail=200 || true
+            exit 1
+          }
       - name: Sleep for 10 secs
         run: sleep 10
       - name: Run Integration test

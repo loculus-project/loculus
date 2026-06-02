@@ -6,17 +6,17 @@ import org.junit.jupiter.api.assertThrows
 import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
 import java.util.UUID
 
 class ValidateFileNameTest {
-    private val backendConfig: BackendConfig = mockk()
+    private val configService: ConfigService = mockk()
     private val s3Service: S3Service = mockk()
     private val filesDatabaseService: FilesDatabaseService = mockk()
-    private val validator = FileMappingPreconditionValidator(backendConfig, s3Service, filesDatabaseService)
+    private val validator = FileMappingPreconditionValidator(configService, s3Service, filesDatabaseService)
 
     private fun createFileMapping(category: FileCategory, filenames: List<String>): FileCategoryFilesMap {
         val files = filenames.map { FileIdAndName(UUID.randomUUID(), it) }
