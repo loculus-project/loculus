@@ -2,6 +2,7 @@ import { Dialog, DialogPanel, Transition } from '@headlessui/react';
 import React, { useEffect, useState } from 'react';
 
 import { getClientLogger } from '../../clientLogger.ts';
+import { DropdownMenu, DropdownMenuItem } from '../common/DropdownMenu';
 import { routes } from '../../routes/routes';
 import { type Group } from '../../types/backend';
 import type { SequenceFlaggingConfig } from '../../types/config.ts';
@@ -180,29 +181,21 @@ interface DownloadButtonProps {
 
 const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId, allowFastaDownload = true }) => {
     return (
-        <div className='dropdown dropdown-hover relative inline-block'>
-            <Button className={BUTTONCLASS}>
-                <IcBaselineDownload className='w-6 h-6' />
+        <DropdownMenu
+            className='inline-block'
+            panelClassName='top-full w-52 -left-32'
+            trigger={
+                <Button className={BUTTONCLASS}>
+                    <IcBaselineDownload className='w-6 h-6' />
 
-                <CharmMenuKebab className=' w-4 h-6 -ml-1.5 pb-1 pt-1.5' />
-            </Button>
-            <ul className='dropdown-content z-20 menu p-1 shadow-sm bg-base-100 rounded-field absolute top-full w-52 -left-32'>
-                {allowFastaDownload && (
-                    <li>
-                        <a
-                            href={routes.sequenceEntryFastaPage(seqId, true)}
-                            className='block px-4 py-2 hover:bg-gray-100'
-                        >
-                            Download FASTA
-                        </a>
-                    </li>
-                )}
-                <li>
-                    <a href={routes.sequenceEntryTsvPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>
-                        Download metadata TSV
-                    </a>
-                </li>
-            </ul>
-        </div>
+                    <CharmMenuKebab className=' w-4 h-6 -ml-1.5 pb-1 pt-1.5' />
+                </Button>
+            }
+        >
+            {allowFastaDownload && (
+                <DropdownMenuItem href={routes.sequenceEntryFastaPage(seqId, true)}>Download FASTA</DropdownMenuItem>
+            )}
+            <DropdownMenuItem href={routes.sequenceEntryTsvPage(seqId, true)}>Download metadata TSV</DropdownMenuItem>
+        </DropdownMenu>
     );
 };

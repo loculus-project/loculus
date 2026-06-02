@@ -21,8 +21,8 @@ vi.mock('../../config', () => ({
 const queryClient = new QueryClient();
 const accessionVersion = 'accession';
 
-// CSS Classes
-const TAB_ACTIVE_CLASS = 'tab-active';
+// CSS Classes — the active tab in BoxWithTabsTab is distinguished by `font-semibold`
+const TAB_ACTIVE_CLASS = 'font-semibold';
 
 // Button Labels
 const LOAD_SEQUENCES_BUTTON = 'Load sequences';
