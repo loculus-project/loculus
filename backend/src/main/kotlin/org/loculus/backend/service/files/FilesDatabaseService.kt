@@ -72,14 +72,15 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             -- but are not referenced by a submission. For this, check the unprocessed_data
             -- and processed_data jsonb objects, but not original_data
             WITH referenced AS (
-              SELECT (fil->>'fileId')::uuid AS file_id
-              -- files uploaded by users and referenced in submissions
+              -- fetch ids for files uploaded by users and referenced in submissions
+              SELECT (fil->>'fileId')::uuid AS file_id              
               FROM sequence_entries,
                  LATERAL jsonb_each(COALESCE(unprocessed_data->'files','{}'::jsonb)) AS cat(k,v),
                  LATERAL jsonb_array_elements(cat.v) AS fil
               UNION
-              -- files produced by preprocessing. For these, we keep only files referenced
-              -- by the current pipeline version or newer.
+              -- fetch ids for files produced by preprocessing.
+              -- For these, we consider only files referenced by the current pipeline 
+              -- version or newer. 
               -- (newer than current versions will only exist during rollouts)
               SELECT (fil->>'fileId')::uuid AS file_id
               FROM sequence_entries_preprocessed_data sepd
