@@ -33,11 +33,10 @@ export const HoverTooltip: FC<HoverTooltipProps> = ({
 }) => {
     const id = useId();
     return (
-        <span className={`inline-block ${className}`} data-tooltip-id={id}>
+        <span className={`inline-block ${className}`} data-tooltip-id={id} data-tooltip-content={content}>
             {children}
             <Tooltip
                 id={id}
-                content={content}
                 place={place}
                 variant={variant}
                 isOpen={alwaysOpen}
