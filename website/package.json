@@ -68,7 +68,7 @@
         "@tailwindcss/vite": "^4.3.0",
         "@emotion/styled": "^11.14.1",
         "@eslint/js": "^9.39.2",
-        "@iconify/json": "^2.2.480",
+        "@iconify/json": "^2.2.482",
         "@tailwindcss/forms": "^0.5.11",
         "@tanstack/eslint-plugin-query": "^5.100.14",
         "@testing-library/dom": "^10.4.1",
@@ -82,8 +82,8 @@
         "@types/papaparse": "^5.5.2",
         "@types/react": "^18.3.12",
         "@types/react-dom": "^18.3.1",
-        "@typescript-eslint/eslint-plugin": "^8.60.0",
-        "@typescript-eslint/parser": "^8.60.0",
+        "@typescript-eslint/eslint-plugin": "^8.60.1",
+        "@typescript-eslint/parser": "^8.60.1",
         "@vitejs/plugin-react": "^5.1.4",
         "astro-eslint-parser": "^1.4.0",
         "cross-env": "^10.1.0",
@@ -103,10 +103,10 @@
         "sass": "^1.100.0",
         "tailwindcss": "^4.3.0",
         "typescript": "^5.9.3",
-        "typescript-eslint": "^8.60.0",
+        "typescript-eslint": "^8.60.1",
         "uuid": "^14.0.0",
         "vite": "^6.4.2",
-        "vitest": "4.1.7"
+        "vitest": "4.1.8"
     },
     "comments": {
         "vite": "Keep the explicit Vite dev dependency pinned to Astro 5's Vite major. npm ci --omit=dev can otherwise resolve Astro's optional vitefu peer to root Vite 7, mixing esbuild 0.25 and 0.27 in the production Docker install. Relax this after upgrading to Astro 6+, which uses Vite 7 across Astro packages."
