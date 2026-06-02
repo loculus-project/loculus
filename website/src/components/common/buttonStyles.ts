@@ -1,25 +1,10 @@
-/*
- * Single source of truth for button styling, replacing the daisyUI `btn`
- * component classes. Returns a Tailwind class string so it can be used from
- * React components, `.astro` templates, and plain anchors alike.
- *
- * The shape (height, padding, font, radius, border) reproduces daisyUI v5's
- * `btn` / `btn-sm` / `btn-xs` / `btn-circle` as rendered on this instance; the
- * `variant` colours map the combinations actually used in the app:
- *   - neutral: bare `btn` (base-200 fill, base-300 border)
- *   - primary: `btn loculusColor text-white`
- *   - ghost:   `btn btn-ghost`
- *   - outline: `btn btn-outline`
- */
 export type ButtonSize = 'md' | 'sm' | 'xs';
 export type ButtonVariant = 'neutral' | 'primary' | 'ghost' | 'outline' | 'unstyled';
 
 interface ButtonClassOptions {
     size?: ButtonSize;
     variant?: ButtonVariant;
-    /** Square icon button with a fully rounded shape (daisyUI `btn-circle`). */
     circle?: boolean;
-    /** Extra classes appended after the generated ones. */
     className?: string;
 }
 
@@ -44,7 +29,6 @@ const variantClasses: Record<ButtonVariant, string> = {
     primary: 'bg-[var(--color-main)] text-white border-transparent hover:bg-primary-700',
     ghost: 'bg-transparent border-transparent hover:bg-base-200',
     outline: 'bg-transparent border-base-content text-base-content hover:bg-base-content hover:text-base-100',
-    // Shape only: caller supplies all colours (bg/text/border) via `className`.
     unstyled: '',
 };
 

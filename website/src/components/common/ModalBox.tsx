@@ -1,12 +1,5 @@
 import { type FC, type ReactNode } from 'react';
 
-/*
- * The content box of a modal, replacing daisyUI's `modal-box`. Reproduces its
- * look as rendered on this instance: white, rounded, padded, drop-shadowed, up
- * to ~lg wide and scrollable when tall. The surrounding centering/backdrop is
- * provided by the modal container (a native <dialog> or the confirm-alert
- * overlay), as before.
- */
 interface ModalBoxProps {
     className?: string;
     children: ReactNode;

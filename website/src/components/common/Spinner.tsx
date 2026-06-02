@@ -1,10 +1,5 @@
 import type { FC } from 'react';
 
-/*
- * Shared loading spinner, replacing daisyUI's `loading loading-spinner`
- * classes. Sizes match daisyUI v5 (xs 16px, sm 20px, md 24px, lg 28px) and the
- * colour follows the surrounding text via `currentColor`, as daisyUI's did.
- */
 export type SpinnerSize = 'xs' | 'sm' | 'md' | 'lg';
 
 const sizePx: Record<SpinnerSize, number> = {
@@ -17,11 +12,6 @@ const sizePx: Record<SpinnerSize, number> = {
 interface SpinnerProps {
     size?: SpinnerSize;
     className?: string;
-    /**
-     * Accessible label. When omitted the spinner is decorative (`aria-hidden`),
-     * matching daisyUI's spinner and avoiding polluting the accessible name of a
-     * parent button/link it sits inside.
-     */
     label?: string;
 }
 

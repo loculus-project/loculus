@@ -1,14 +1,5 @@
 import { type AnchorHTMLAttributes, type FC, type ReactNode } from 'react';
 
-/*
- * Hover/focus dropdown menu, replacing daisyUI's `dropdown` + `dropdown-content
- * menu` components. The panel reveals on hover of the container or when focus
- * moves inside it (keyboard), reproducing daisyUI's `dropdown-hover` behaviour.
- *
- *   <DropdownMenu trigger={<label tabIndex={0}>…</label>} panelClassName='top-full -right-32 w-80'>
- *       <DropdownMenuItem href='…'>…</DropdownMenuItem>
- *   </DropdownMenu>
- */
 const panelClasses = [
     'invisible absolute z-20 opacity-0 transition-opacity duration-150',
     'group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100',
@@ -16,12 +7,9 @@ const panelClasses = [
 ].join(' ');
 
 interface DropdownMenuProps {
-    /** Visible trigger element (give it `tabIndex={0}` to support keyboard focus). */
     trigger: ReactNode;
     children: ReactNode;
-    /** Position/width utilities for the panel, e.g. `top-full -right-32 w-80`. */
     panelClassName?: string;
-    /** Extra classes for the container. */
     className?: string;
 }
 

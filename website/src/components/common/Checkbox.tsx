@@ -2,15 +2,6 @@ import { type InputHTMLAttributes, forwardRef } from 'react';
 
 import DisabledUntilHydrated from '../DisabledUntilHydrated';
 
-/*
- * Shared checkbox, replacing daisyUI's `checkbox`. Sizes match daisyUI v5
- * (sm 20px / md 24px), rounded, with a base-content/20 border. The unchecked
- * white fill and the checked fill + checkmark come from the global
- * @tailwindcss/forms reset (the checked fill follows `text-base-content`).
- *
- * Like Button/Select it is disabled until React has hydrated, so Playwright
- * can't toggle it before its onChange handler is wired up.
- */
 type CheckboxSize = 'sm' | 'md';
 
 const base = 'border border-base-content/20 text-base-content shrink-0 rounded-md';

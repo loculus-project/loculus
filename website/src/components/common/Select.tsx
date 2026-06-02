@@ -2,11 +2,6 @@ import { type SelectHTMLAttributes, forwardRef } from 'react';
 
 import DisabledUntilHydrated from '../DisabledUntilHydrated';
 
-/*
- * `styled` applies the shared select styling (the daisyUI-`select` replacement:
- * 40px tall, rounded, base-content/20 border). Left off, the component is a bare
- * hydration-safe <select> wrapper whose className passes through unchanged.
- */
 const styledSelectClasses =
     'h-10 px-3 pr-8 rounded border border-base-content/20 bg-white text-sm ' +
     'focus:outline-none focus:border-base-content/40 focus:ring-1 focus:ring-base-content/20';

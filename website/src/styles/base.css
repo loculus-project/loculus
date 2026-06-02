@@ -4,12 +4,6 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/*
- * Global form-element reset. Replaces the hand-copied Flowbite v3 form styles
- * (formerly flowbite-forms-compat.css) with the official @tailwindcss/forms
- * plugin in `base` (global) strategy — the same baseline that copy was derived
- * from, so inputs/selects/textareas/checkboxes/radios keep their styling.
- */
 @plugin '@tailwindcss/forms' {
     strategy: 'base';
 }
@@ -36,13 +30,6 @@
     --color-main: var(--color-primary-600);
     --color-logoSecondary: var(--color-primary-600);
 
-    /*
-     * Semantic color tokens, formerly supplied by the daisyUI `light` theme.
-     * Defined here in `@theme` so the `text-primary` / `bg-base-100` / ...
-     * utilities resolve from Tailwind. Values are the daisyUI v5 `light` theme
-     * we used to ship, with this instance's overrides (primary, secondary,
-     * accent, base-100, info, success, warning, error).
-     */
     --color-primary: var(--color-primary-400);
     --color-primary-content: oklch(93% 0.034 272.788);
     --color-secondary: #f000b8;
