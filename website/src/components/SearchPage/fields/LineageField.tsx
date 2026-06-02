@@ -2,8 +2,8 @@ import { useEffect, useState, type FC } from 'react';
 
 import { SingleChoiceAutoCompleteField } from './SingleChoiceAutoCompleteField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
+import { Checkbox } from '../../common/Checkbox';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters';
-import { checkboxClasses } from '../../common/formStyles';
 
 interface LineageFieldProps {
     lapisUrl: string;
@@ -63,9 +63,9 @@ export const LineageField: FC<LineageFieldProps> = ({
             <div className='flex flex-row justify-end'>
                 <label>
                     <span className='text-gray-400 text-sm mr-2'>include sublineages</span>
-                    <input
-                        type='checkbox'
-                        className={`${checkboxClasses('sm')} text-3xl text-gray-700 checked:border-gray-300`}
+                    <Checkbox
+                        size='sm'
+                        className='text-3xl text-gray-700 checked:border-gray-300'
                         checked={includeSublineages}
                         onChange={(event) => setIncludeSubLineages(event.target.checked)}
                     />

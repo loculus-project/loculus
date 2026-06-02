@@ -4,7 +4,7 @@ import { DateField } from './DateField';
 import type { FieldValues, GroupedMetadataFilter, SetSomeFieldValues } from '../../../types/config';
 import { CustomTooltip } from '../../../utils/CustomTooltip';
 import { validateSingleValue } from '../../../utils/extractFieldValue';
-import { checkboxClasses } from '../../common/formStyles';
+import { Checkbox } from '../../common/Checkbox';
 
 export type DateRangeFieldProps = {
     field: GroupedMetadataFilter;
@@ -123,9 +123,9 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                 </CustomTooltip>
                 <label data-tooltip-id={'strict-tooltip' + field.name}>
                     <span className='text-gray-400 text-sm mr-2'>strict</span>
-                    <input
-                        type='checkbox'
-                        className={`${checkboxClasses('sm')} text-3xl text-gray-700 checked:border-gray-300`}
+                    <Checkbox
+                        size='sm'
+                        className='text-3xl text-gray-700 checked:border-gray-300'
                         checked={strictMode}
                         onChange={(event) => setStrictMode(event.target.checked)}
                     />

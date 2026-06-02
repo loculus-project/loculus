@@ -25,7 +25,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button';
-import { checkboxClasses } from '../common/formStyles';
+import { Checkbox } from '../common/Checkbox';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
@@ -407,10 +407,10 @@ const Acknowledgement = ({
                     </p>
                     <div className='mt-2 py-5'>
                         <label className='flex items-center'>
-                            <input
-                                type='checkbox'
+                            <Checkbox
+                                size='sm'
                                 name='confirmation-no-pii'
-                                className={`shrink-0 ${checkboxClasses('sm')} mr-3 ml-1`}
+                                className='mr-3 ml-1'
                                 checked={confirmedNoPII}
                                 onChange={() => setConfirmedNoPII(!confirmedNoPII)}
                             />
@@ -423,10 +423,10 @@ const Acknowledgement = ({
                     </div>
                     <div className='mb-4 py-3'>
                         <label className='flex items-center'>
-                            <input
-                                type='checkbox'
+                            <Checkbox
+                                size='sm'
                                 name='confirmation-INSDC-upload-terms'
-                                className={`shrink-0 ${checkboxClasses('sm')} mr-3 ml-1`}
+                                className='mr-3 ml-1'
                                 checked={agreedToINSDCUploadTerms}
                                 onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
                             />
