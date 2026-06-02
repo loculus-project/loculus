@@ -12,6 +12,7 @@ import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { deserializeAccessionInput, serializeSeqSetRecords } from '../../utils/parseAccessionInput';
 import { Button } from '../common/Button';
+import { buttonClasses } from '../common/buttonStyles';
 
 const logger = getClientLogger('SeqSetForm');
 
@@ -202,7 +203,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                 </div>
             </div>
             <Button
-                className='flex items-center btn loculusColor text-white hover:bg-primary-700'
+                className={buttonClasses({ variant: 'primary', className: 'flex items-center' })}
                 disabled={isPending || seqSetRecordValidation !== '' || seqSetNameValidation !== ''}
                 onClick={handleSubmit}
             >

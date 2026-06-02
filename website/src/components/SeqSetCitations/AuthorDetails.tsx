@@ -1,5 +1,6 @@
 import type { FC } from 'react';
 
+import { buttonClasses } from '../common/buttonStyles';
 import AccountCircleIcon from '~icons/ic/baseline-account-circle';
 import EditIcon from '~icons/ic/baseline-edit';
 
@@ -47,7 +48,11 @@ export const AuthorDetails: FC<Props> = ({
                 <div className='flex flex-row justify-start items-center pt-2 pb-4'>
                     <h1 className='flex text-xl font-semibold pr-2'>{renderName()}</h1>
                     {editAccountUrl !== null ? (
-                        <a href={editAccountUrl} data-testid='EditIcon' className='btn btn-sm btn-circle btn-ghost'>
+                        <a
+                            href={editAccountUrl}
+                            data-testid='EditIcon'
+                            className={buttonClasses({ size: 'sm', circle: true, variant: 'ghost' })}
+                        >
                             <EditIcon fontSize='large' />
                         </a>
                     ) : null}

@@ -2,6 +2,7 @@ import { DateTime } from 'luxon';
 import { type FC, useState, useRef } from 'react';
 
 import { Button } from '../common/Button';
+import { buttonClasses } from '../common/buttonStyles';
 import { withQueryProvider } from './../common/withQueryProvider';
 import DataUseTermsSelector from './DataUseTermsSelector';
 import { errorToast, successToast } from './EditDataUseTermsToasts.ts';
@@ -47,13 +48,18 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
 
     return (
         <>
-            <Button className='btn btn-sm' onClick={openDialog}>
+            <Button className={buttonClasses({ size: 'sm' })} onClick={openDialog}>
                 Edit data use terms
             </Button>
             <dialog ref={dialogRef} className='modal'>
                 <div className='modal-box'>
                     <Button
-                        className='btn btn-sm btn-circle btn-ghost text-gray-900 absolute right-2 top-2'
+                        className={buttonClasses({
+                            size: 'sm',
+                            circle: true,
+                            variant: 'ghost',
+                            className: 'text-gray-900 absolute right-2 top-2',
+                        })}
                         onClick={closeDialog}
                     >
                         ✕
@@ -75,7 +81,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                     </div>
                     <div className='flex items-center justify-end my-2'>
                         <Button
-                            className='btn btn-sm'
+                            className={buttonClasses({ size: 'sm' })}
                             onClick={() => {
                                 closeDialog();
                                 useSetDataUseTerms.mutate({

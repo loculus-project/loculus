@@ -8,6 +8,7 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
 import { Button } from '../common/Button';
+import { buttonClasses } from '../common/buttonStyles';
 import { withQueryProvider } from '../common/withQueryProvider';
 
 type RevokeSequenceEntryProps = {
@@ -91,7 +92,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
 
     return (
         <Button
-            className='btn btn-sm bg-red-400'
+            className={buttonClasses({ size: 'sm', variant: 'unstyled', className: 'bg-red-400' })}
             onClick={() =>
                 displayRevocationDialog({
                     dialogText: 'Are you sure you want to revoke this sequence?',
@@ -140,7 +141,15 @@ export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConf
     return (
         <div className='modal-box'>
             <form method='dialog'>
-                <Button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2' onClick={onClose}>
+                <Button
+                    className={buttonClasses({
+                        size: 'sm',
+                        circle: true,
+                        variant: 'ghost',
+                        className: 'absolute right-2 top-2',
+                    })}
+                    onClick={onClose}
+                >
                     ✕
                 </Button>
             </form>
@@ -154,13 +163,13 @@ export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConf
             />
             <div className='flex justify-end gap-4 mt-4'>
                 <form method='dialog'>
-                    <Button className='btn loculusColor text-white hover:bg-primary-700' onClick={onClose}>
+                    <Button className={buttonClasses({ variant: 'primary' })} onClick={onClose}>
                         Cancel
                     </Button>
                 </form>
                 <form method='dialog'>
                     <Button
-                        className='btn loculusColor text-white hover:bg-primary-700'
+                        className={buttonClasses({ variant: 'primary' })}
                         onClick={(e) => {
                             e.preventDefault();
                             onConfirmation(inputValue);

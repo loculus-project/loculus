@@ -1,6 +1,7 @@
 import { type FC, useState } from 'react';
 
 import { Button } from '../../common/Button';
+import { buttonClasses } from '../../common/buttonStyles';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import MaterialSymbolsContentCopyOutline from '~icons/material-symbols/content-copy-outline';
 
@@ -39,7 +40,11 @@ export const SequenceActionButtons: FC<Props> = ({ sequenceName, sequence }) => 
     return (
         <div className='flex items-center gap-1'>
             <Button
-                className='btn btn-sm btn-ghost text-gray-600 hover:text-primary-600 hover:bg-gray-100 bg-white/80'
+                className={buttonClasses({
+                    size: 'sm',
+                    variant: 'ghost',
+                    className: 'text-gray-600 hover:text-primary-600 hover:bg-gray-100 bg-white/80',
+                })}
                 onClick={handleCopy}
                 title='Copy sequence to clipboard'
                 data-testid='copy-sequence-button'
@@ -48,7 +53,11 @@ export const SequenceActionButtons: FC<Props> = ({ sequenceName, sequence }) => 
                 <span className='ml-1'>{copied ? 'Copied!' : 'Copy'}</span>
             </Button>
             <Button
-                className='btn btn-sm btn-ghost text-gray-600 hover:text-primary-600 hover:bg-gray-100 bg-white/80'
+                className={buttonClasses({
+                    size: 'sm',
+                    variant: 'ghost',
+                    className: 'text-gray-600 hover:text-primary-600 hover:bg-gray-100 bg-white/80',
+                })}
                 onClick={handleDownload}
                 title='Download sequence as FASTA'
                 data-testid='download-sequence-button'

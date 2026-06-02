@@ -2,6 +2,7 @@ import { type FC } from 'react';
 import { confirmAlert } from 'react-confirm-alert';
 
 import { Button } from '../components/common/Button';
+import { buttonClasses } from './common/buttonStyles';
 
 type ConfirmationDialogProps = {
     dialogText: string;
@@ -28,22 +29,27 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({
     return (
         <div className='modal-box'>
             <form method='dialog'>
-                <Button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2' onClick={onClose}>
+                <Button
+                    className={buttonClasses({
+                        size: 'sm',
+                        variant: 'ghost',
+                        circle: true,
+                        className: 'absolute right-2 top-2',
+                    })}
+                    onClick={onClose}
+                >
                     ✕
                 </Button>
             </form>
             <h3 className='font-bold text-lg'>{dialogText}</h3>
             <div className='flex justify-end gap-4 mt-4'>
                 <form method='dialog'>
-                    <Button className='btn loculusColor text-white hover:bg-primary-700' onClick={onClose}>
+                    <Button className={buttonClasses({ variant: 'primary' })} onClick={onClose}>
                         {closeButtonText}
                     </Button>
                 </form>
                 <form method='dialog'>
-                    <Button
-                        className='btn loculusColor text-white hover:bg-primary-700'
-                        onClick={() => void onConfirmation()}
-                    >
+                    <Button className={buttonClasses({ variant: 'primary' })} onClick={() => void onConfirmation()}>
                         {confirmButtonText}
                     </Button>
                 </form>

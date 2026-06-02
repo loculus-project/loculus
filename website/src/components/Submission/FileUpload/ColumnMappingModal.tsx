@@ -10,6 +10,7 @@ import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
 import { BaseDialog } from '../../common/BaseDialog';
 import { Button } from '../../common/Button';
+import { buttonClasses } from '../../common/buttonStyles';
 import { InputFieldTooltip } from '../InputFieldTooltip';
 
 interface ColumnMappingModalProps {
@@ -138,7 +139,10 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                             {columnMapping !== null && (
                                 <>
                                     <Button
-                                        className='btn bg-white text-red-800 border-red-800'
+                                        className={buttonClasses({
+                                            variant: 'unstyled',
+                                            className: 'bg-white text-red-800 border-red-800',
+                                        })}
                                         onClick={handleDiscard}
                                     >
                                         Discard Mapping
@@ -146,11 +150,11 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                                     <div className='flex-1' />
                                 </>
                             )}
-                            <Button className='btn' onClick={closeDialog}>
+                            <Button className={buttonClasses({})} onClick={closeDialog}>
                                 Cancel
                             </Button>
                             <Button
-                                className='btn loculusColor text-white'
+                                className={buttonClasses({ variant: 'primary' })}
                                 onClick={handleSubmit}
                                 disabled={!submittable}
                             >

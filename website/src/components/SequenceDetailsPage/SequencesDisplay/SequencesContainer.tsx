@@ -18,6 +18,7 @@ import {
 } from '../../../utils/sequenceTypeHelpers.ts';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../../common/BoxWithTabs.tsx';
 import { Button } from '../../common/Button';
+import { buttonClasses } from '../../common/buttonStyles';
 import { Select } from '../../common/Select.tsx';
 import { withQueryProvider } from '../../common/withQueryProvider.tsx';
 
@@ -45,7 +46,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
 
     if (!loadSequences) {
         return (
-            <Button className='btn btn-sm m-4' onClick={() => setLoadSequences(true)}>
+            <Button className={buttonClasses({ size: 'sm', className: 'm-4' })} onClick={() => setLoadSequences(true)}>
                 Load sequences
             </Button>
         );

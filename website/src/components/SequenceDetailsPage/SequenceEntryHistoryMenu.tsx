@@ -3,6 +3,7 @@ import React from 'react';
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
 import { getVersionStatusColor, getVersionStatusLabel } from '../../utils/getVersionStatusColor';
+import { buttonClasses } from '../common/buttonStyles';
 import IcBaselineHistory from '~icons/ic/baseline-history';
 import Arrow from '~icons/ic/sharp-keyboard-arrow-down';
 
@@ -21,7 +22,7 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
     return (
         <>
             <div className='dropdown dropdown-hover hidden sm:inline-block mr-2'>
-                <label tabIndex={0} className='btn btn-sm btn-outline py-1'>
+                <label tabIndex={0} className={buttonClasses({ size: 'sm', variant: 'outline', className: 'py-1' })}>
                     <span className='text-sm'>
                         {selectedVersion === undefined ? 'All versions' : `Version ${selectedVersion.version}`}
                     </span>

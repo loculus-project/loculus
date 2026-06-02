@@ -3,6 +3,7 @@ import { useMemo, useState, type FC } from 'react';
 
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import { Button } from '../common/Button';
+import { buttonClasses } from '../common/buttonStyles';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
 import { ReferenceSelector } from './ReferenceSelector.tsx';
 import { SegmentFilter } from './SegmentFilter.tsx';
@@ -291,7 +292,7 @@ export const SearchForm = ({
     return (
         <QueryClientProvider client={queryClient}>
             <div className='text-right -mb-10 md:hidden'>
-                <Button onClick={toggleMobileOpen} className='btn btn-xs bg-primary-600 text-white'>
+                <Button onClick={toggleMobileOpen} className={buttonClasses({ size: 'xs', variant: 'primary' })}>
                     Modify search query
                 </Button>
             </div>
@@ -563,7 +564,7 @@ const AdvancedOptionsModal = ({
                 ))}
             </div>
             <div className='mt-6 flex justify-end'>
-                <Button type='button' className='btn loculusColor text-white -py-1' onClick={onClose}>
+                <Button type='button' className={buttonClasses({ variant: 'primary' })} onClick={onClose}>
                     Close
                 </Button>
             </div>

@@ -4,6 +4,7 @@ import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGen
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import { Button } from '../../common/Button';
+import { buttonClasses } from '../../common/buttonStyles';
 import MaterialSymbolsContentCopyOutline from '~icons/material-symbols/content-copy-outline';
 
 type DownloadButtonProps = {
@@ -108,7 +109,16 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
         <div className='flex items-center'>
             <div className={message && 'tooltip tooltip-open tooltip-right tooltip-info'} data-tip={message}>
                 <a
-                    className={`btn loculusColor ${disabled || handleClick === undefined ? 'btn-disabled' : ''} text-white`}
+                    className={
+                        disabled || handleClick === undefined
+                            ? buttonClasses({
+                                  variant: 'unstyled',
+                                  className:
+                                      'bg-base-content/10 text-base-content/20 border-transparent pointer-events-none',
+                              })
+                            : buttonClasses({ variant: 'primary' })
+                    }
+                    aria-disabled={disabled || handleClick === undefined || undefined}
                     href={downloadUrl}
                     onClick={handleClick}
                     data-testid='start-download'

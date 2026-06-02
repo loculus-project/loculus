@@ -15,6 +15,7 @@ import { type ClientConfig } from '../../types/runtimeConfig';
 import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
+import { buttonClasses } from '../common/buttonStyles';
 import MdiEye from '~icons/mdi/eye';
 
 interface Props {
@@ -110,7 +111,7 @@ export const SequenceDataUI: FC<Props> = ({
                                     accession: accessionVersion.split('.')[0],
                                     version: parseInt(accessionVersion.split('.')[1], 10),
                                 })}
-                                className='btn btn-sm'
+                                className={buttonClasses({ size: 'sm' })}
                             >
                                 Revise this sequence
                             </a>
@@ -131,7 +132,7 @@ export const SequenceDataUI: FC<Props> = ({
                     <hr className='my-4' />
                     <div className='my-8'>
                         <h2 className='text-xl font-bold mb-3'>Report an issue with this sequence or metadata</h2>
-                        <a href={reportUrl} className='btn btn-sm'>
+                        <a href={reportUrl} className={buttonClasses({ size: 'sm' })}>
                             Create GitHub issue
                         </a>
                     </div>
