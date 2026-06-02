@@ -18,7 +18,7 @@ dependencies:
   - ruff=0.15.15
   - types-pyyaml=6.0.12.20260518
   - types-requests=2.33.0.20260518
-  - types-python-dateutil=2.9.0.20260408
+  - types-python-dateutil=2.9.0.20260518
   - types-pytz=2026.2.0.20260518
   - unidecode=1.4.0
   - pytest=9.0.3
