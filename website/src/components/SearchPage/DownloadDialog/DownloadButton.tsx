@@ -4,8 +4,8 @@ import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGen
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import { Button } from '../../common/Button';
-import { buttonClasses } from '../../common/buttonStyles';
 import { HoverTooltip } from '../../common/HoverTooltip';
+import { buttonClasses } from '../../common/buttonStyles';
 import MaterialSymbolsContentCopyOutline from '~icons/material-symbols/content-copy-outline';
 
 type DownloadButtonProps = {

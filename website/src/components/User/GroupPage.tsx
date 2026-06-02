@@ -5,7 +5,6 @@ import { type FC, type FormEvent, useMemo, useState, type ReactNode } from 'reac
 import { CumulativeSubmissionsChart, type TimeSeriesData } from './CumulativeSubmissionsChart.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import type { Organism } from '../../config.ts';
-import { DropdownMenu, DropdownMenuItem } from '../common/DropdownMenu';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { ContinueSubmissionIntent } from '../../routes/routes.ts';
@@ -16,6 +15,7 @@ import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.js';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { Button } from '../common/Button';
+import { DropdownMenu, DropdownMenuItem } from '../common/DropdownMenu';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import DashiconsGroups from '~icons/dashicons/groups';

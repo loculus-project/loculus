@@ -3,8 +3,8 @@ import React from 'react';
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
 import { getVersionStatusColor, getVersionStatusLabel } from '../../utils/getVersionStatusColor';
-import { buttonClasses } from '../common/buttonStyles';
 import { DropdownMenu, DropdownMenuItem } from '../common/DropdownMenu';
+import { buttonClasses } from '../common/buttonStyles';
 import IcBaselineHistory from '~icons/ic/baseline-history';
 import Arrow from '~icons/ic/sharp-keyboard-arrow-down';
 

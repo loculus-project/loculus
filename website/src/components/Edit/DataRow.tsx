@@ -2,8 +2,8 @@ import { type FC } from 'react';
 
 import { InputField as InputFieldComponent, type Row } from './InputField.tsx';
 import type { InputField } from '../../types/config.ts';
-import { HoverTooltip } from '../common/HoverTooltip.tsx';
 import { InputFieldTooltip } from '../Submission/InputFieldTooltip.tsx';
+import { HoverTooltip } from '../common/HoverTooltip.tsx';
 import WarningAmberIcon from '~icons/ic/baseline-warning-amber';
 import DangerousTwoToneIcon from '~icons/ic/twotone-dangerous';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
