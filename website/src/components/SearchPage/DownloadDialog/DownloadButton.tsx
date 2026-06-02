@@ -5,7 +5,6 @@ import type { SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import { Button } from '../../common/Button';
 import { HoverTooltip } from '../../common/HoverTooltip';
-import { buttonClasses } from '../../common/buttonStyles';
 import MaterialSymbolsContentCopyOutline from '~icons/material-symbols/content-copy-outline';
 
 type DownloadButtonProps = {
@@ -106,23 +105,23 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
         };
     }, [downloadUrlGenerator, downloadOption, disabled, sequenceFilter, onClick]);
 
+    const isDisabled = disabled || handleClick === undefined;
     const downloadAnchor = (
-        <a
+        <Button
+            as='a'
+            variant={isDisabled ? 'unstyled' : 'primary'}
             className={
-                disabled || handleClick === undefined
-                    ? buttonClasses({
-                          variant: 'unstyled',
-                          className: 'bg-base-content/10 text-base-content/20 border-transparent pointer-events-none',
-                      })
-                    : buttonClasses({ variant: 'primary' })
+                isDisabled
+                    ? 'bg-base-content/10 text-base-content/20 border-transparent pointer-events-none'
+                    : undefined
             }
-            aria-disabled={disabled || handleClick === undefined || undefined}
+            aria-disabled={isDisabled || undefined}
             href={downloadUrl}
             onClick={handleClick}
             data-testid='start-download'
         >
             Download
-        </a>
+        </Button>
     );
 
     return (
