@@ -23,7 +23,10 @@ export const textareaClasses = `${fieldBase} px-3 py-2`;
 
 type CheckSize = 'sm' | 'md';
 
-const checkBase = 'appearance-none border border-base-content/20 bg-white text-base-content shrink-0';
+// No `bg-white` here: @tailwindcss/forms supplies the unchecked white fill and
+// the checked fill (currentColor → `text-base-content`) + checkmark. A bg-white
+// utility would override the checked fill and hide the mark.
+const checkBase = 'border border-base-content/20 text-base-content shrink-0';
 
 const checkSizeClasses: Record<CheckSize, string> = {
     sm: 'w-5 h-5',

@@ -1,12 +1,17 @@
 @import 'tailwindcss';
 @import 'flowbite-react/plugin/tailwindcss';
-@import './flowbite-forms-compat.css';
 @source '../../.flowbite-react/class-list.json';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Global form-element reset. Replaces the hand-copied Flowbite v3 form styles
+ * (formerly flowbite-forms-compat.css) with the official @tailwindcss/forms
+ * plugin in `base` (global) strategy — the same baseline that copy was derived
+ * from, so inputs/selects/textareas/checkboxes/radios keep their styling.
+ */
 @plugin '@tailwindcss/forms' {
-    strategy: 'class';
+    strategy: 'base';
 }
 
 /*
