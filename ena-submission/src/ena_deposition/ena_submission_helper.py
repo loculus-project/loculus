@@ -888,18 +888,17 @@ def retry_failed_submissions_for_matching_errors(
     | Iterable[AssemblyTableEntry],
     db_engine: Engine,
     model_class: type[ProjectTableEntry] | type[SampleTableEntry] | type[AssemblyTableEntry],
-    retry_threshold_min: int,
-    error_substrings: Sequence[str] = ("does not exist in ENA",),
+    config: Config,
     last_retry: datetime | None = None,
 ) -> datetime | None:
     if (
         last_retry
-        and datetime.now(tz=pytz.utc) - timedelta(minutes=retry_threshold_min) < last_retry
+        and datetime.now(tz=pytz.utc) - timedelta(minutes=config.retry_threshold_min) < last_retry
     ):
         return last_retry
     for entry in entries_with_errors:
         errors = str(entry.errors or "")
-        if not any(substring in errors for substring in error_substrings):
+        if not any(substring in errors for substring in config.slack_retry_substrings):
             continue
 
         pkey = entry.pkey
