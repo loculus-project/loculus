@@ -34,7 +34,7 @@ export const RadioOptionBlock: FC<OptionBlockProps> = ({
             {options.map((option, index) => (
                 <div key={index} className={disabled ? 'bg-gray-100 cursor-not-allowed' : ''}>
                     <label
-                        className={`label justify-start py-1 items-baseline ${disabled ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer text-base-content'}`}
+                        className={`flex justify-start py-1 items-baseline ${disabled ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer text-base-content'}`}
                     >
                         <input
                             type='radio'
