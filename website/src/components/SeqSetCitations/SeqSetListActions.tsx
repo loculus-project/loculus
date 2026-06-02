@@ -3,7 +3,6 @@ import { type FC, useState } from 'react';
 import { SeqSetForm } from './SeqSetForm';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { Button } from '../common/Button';
-import { buttonClasses } from '../common/buttonStyles';
 import Modal from '../common/Modal';
 import { withQueryProvider } from '../common/withQueryProvider';
 import AddBoxIcon from '~icons/ic/baseline-library-add';
@@ -21,7 +20,9 @@ const SeqSetListActionsInner: FC<SeqSetListActionsProps> = ({ clientConfig, acce
             <div className='pl-2 ml-auto'>
                 <Button
                     data-testid='AddIcon'
-                    className={buttonClasses({ size: 'sm', variant: 'primary', className: 'flex items-center gap-1' })}
+                    size='sm'
+                    variant='primary'
+                    className='flex items-center gap-1'
                     onClick={() => setCreateModalVisible(true)}
                 >
                     <AddBoxIcon className='w-4 h-4' />

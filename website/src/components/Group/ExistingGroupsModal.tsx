@@ -3,7 +3,6 @@ import type { FC } from 'react';
 import type { Group, NewGroup } from '../../types/backend';
 import { BaseDialog } from '../common/BaseDialog';
 import { Button } from '../common/Button';
-import { buttonClasses } from '../common/buttonStyles';
 
 type ExistingGroupsModalProps = {
     isOpen: boolean;
@@ -64,7 +63,7 @@ export const ExistingGroupsModal: FC<ExistingGroupsModalProps> = ({
             <div className='mt-4 flex justify-center'>
                 <Button
                     type='button'
-                    className={buttonClasses({ variant: 'primary' })}
+                    variant='primary'
                     onClick={() => void submitFromModal(newGroup)}
                     disabled={isSubmitting}
                 >

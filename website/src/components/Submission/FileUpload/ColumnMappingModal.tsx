@@ -10,7 +10,6 @@ import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
 import { BaseDialog } from '../../common/BaseDialog';
 import { Button } from '../../common/Button';
-import { buttonClasses } from '../../common/buttonStyles';
 import { InputFieldTooltip } from '../InputFieldTooltip';
 
 interface ColumnMappingModalProps {
@@ -139,10 +138,8 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                             {columnMapping !== null && (
                                 <>
                                     <Button
-                                        className={buttonClasses({
-                                            variant: 'unstyled',
-                                            className: 'bg-white text-red-800 border-red-800',
-                                        })}
+                                        variant='unstyled'
+                                        className='bg-white text-red-800 border-red-800'
                                         onClick={handleDiscard}
                                     >
                                         Discard Mapping
@@ -150,14 +147,10 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                                     <div className='flex-1' />
                                 </>
                             )}
-                            <Button className={buttonClasses({})} onClick={closeDialog}>
+                            <Button variant='neutral' onClick={closeDialog}>
                                 Cancel
                             </Button>
-                            <Button
-                                className={buttonClasses({ variant: 'primary' })}
-                                onClick={handleSubmit}
-                                disabled={!submittable}
-                            >
+                            <Button variant='primary' onClick={handleSubmit} disabled={!submittable}>
                                 {saveButtonText}
                             </Button>
                         </div>

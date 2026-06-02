@@ -4,7 +4,6 @@ import { toast } from 'react-toastify';
 import type { SeqSet, SeqSetRecord } from '../../types/seqSetCitation';
 import { serializeSeqSetRecords } from '../../utils/parseAccessionInput';
 import { Button } from '../common/Button';
-import { buttonClasses } from '../common/buttonStyles';
 
 type ExportSeqSetProps = {
     seqSet: SeqSet;
@@ -151,7 +150,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                         </div>
                     </div>
                     <div className='pb-8 pt-4'>
-                        <Button className={buttonClasses({})} onClick={downloadSeqSet} disabled={isDownloading}>
+                        <Button variant='neutral' onClick={downloadSeqSet} disabled={isDownloading}>
                             Download
                         </Button>
                     </div>
@@ -219,11 +218,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                     />
                 </div>
                 <div className='pb-8'>
-                    <Button
-                        className={buttonClasses({})}
-                        onClick={() => void copyToClipboard()}
-                        disabled={isDownloading}
-                    >
+                    <Button variant='neutral' onClick={() => void copyToClipboard()} disabled={isDownloading}>
                         Copy to clipboard
                     </Button>
                 </div>

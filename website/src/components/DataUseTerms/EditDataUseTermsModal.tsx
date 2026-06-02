@@ -20,7 +20,6 @@ import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilter
 import { ActiveFilters } from '../common/ActiveFilters';
 import { BaseDialog } from '../common/BaseDialog';
 import { Button } from '../common/Button';
-import { buttonClasses } from '../common/buttonStyles';
 
 interface EditDataUseTermsModalProps {
     lapisUrl: string;
@@ -293,11 +292,11 @@ const CancelSubmitButtons: FC<CancelSubmitButtonProps> = ({
 
     return (
         <div className='flex flex-row gap-2 justify-end'>
-            <Button className={buttonClasses({})} onClick={closeDialog}>
+            <Button variant='neutral' onClick={closeDialog}>
                 Cancel
             </Button>
             <Button
-                className={buttonClasses({ variant: 'primary' })}
+                variant='primary'
                 disabled={!updatePossible}
                 onClick={() => {
                     closeDialog();

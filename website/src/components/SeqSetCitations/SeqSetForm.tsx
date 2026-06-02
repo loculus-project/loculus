@@ -13,7 +13,6 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { deserializeAccessionInput, serializeSeqSetRecords } from '../../utils/parseAccessionInput';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
-import { buttonClasses } from '../common/buttonStyles';
 
 const logger = getClientLogger('SeqSetForm');
 
@@ -204,7 +203,8 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                 </div>
             </div>
             <Button
-                className={buttonClasses({ variant: 'primary', className: 'flex items-center' })}
+                variant='primary'
+                className='flex items-center'
                 disabled={isPending || seqSetRecordValidation !== '' || seqSetNameValidation !== ''}
                 onClick={handleSubmit}
             >

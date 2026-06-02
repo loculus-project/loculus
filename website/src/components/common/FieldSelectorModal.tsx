@@ -2,7 +2,6 @@ import { type FC, useId } from 'react';
 
 import { BaseDialog } from './BaseDialog.tsx';
 import { Button } from './Button';
-import { buttonClasses } from './buttonStyles';
 import { ACCESSION_VERSION_FIELD } from '../../settings.ts';
 import type { Metadata } from '../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
@@ -147,7 +146,8 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                 <div className='mt-6 flex justify-end'>
                     <Button
                         type='button'
-                        className={buttonClasses({ variant: 'primary', className: '-py-1' })}
+                        variant='primary'
+                        className='-py-1'
                         onClick={onClose}
                         data-testid='field-selector-close-button'
                     >

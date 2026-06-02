@@ -18,7 +18,6 @@ import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
-import { buttonClasses } from '../common/buttonStyles';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type EditPageProps = {
@@ -175,7 +174,7 @@ const InnerEditPage: FC<EditPageProps> = ({
             )}
             <div className='flex items-center gap-4 mt-4'>
                 <Button
-                    className={buttonClasses({})}
+                    variant='neutral'
                     onClick={() =>
                         displayConfirmationDialog({
                             dialogText: 'Do you really want to submit?',

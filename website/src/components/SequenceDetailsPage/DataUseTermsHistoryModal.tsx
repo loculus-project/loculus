@@ -3,7 +3,6 @@ import { type FC, useRef } from 'react';
 
 import { type DataUseTermsHistoryEntry, restrictedDataUseTermsOption } from '../../types/backend.ts';
 import { Button } from '../common/Button';
-import { buttonClasses } from '../common/buttonStyles';
 
 export type DataUseTermsHistoryProps = {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
@@ -43,14 +42,7 @@ const DataUseTermsHistoryDialog: FC<DataUseTermsHistoryContainerProps> = ({ data
     return (
         <div className='modal-box w-auto max-w-md'>
             <form method='dialog'>
-                <Button
-                    className={buttonClasses({
-                        size: 'sm',
-                        circle: true,
-                        variant: 'ghost',
-                        className: 'absolute right-2 top-2',
-                    })}
-                >
+                <Button circle size='sm' variant='ghost' className='absolute right-2 top-2'>
                     ✕
                 </Button>
             </form>
@@ -80,7 +72,7 @@ const DataUseTermsHistoryDialog: FC<DataUseTermsHistoryContainerProps> = ({ data
             </table>
             <div className='flex justify-end gap-4 mt-4'>
                 <form method='dialog'>
-                    <Button className={buttonClasses({})}>Close</Button>
+                    <Button variant='neutral'>Close</Button>
                 </form>
             </div>
         </div>

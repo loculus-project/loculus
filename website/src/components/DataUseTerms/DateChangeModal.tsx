@@ -4,7 +4,6 @@ import { useState } from 'react';
 
 import { getClientLogger } from '../../clientLogger';
 import { Button } from '../common/Button';
-import { buttonClasses } from '../common/buttonStyles';
 
 const logger = getClientLogger('DateChangeModal');
 
@@ -132,14 +131,12 @@ export const DateChangeModal = ({
                     />
                 </div>
                 <div className='flex justify-end gap-4 mt-4'>
-                    <Button
-                        className={buttonClasses({ className: 'px-4 py-2' })}
-                        onClick={() => setDateChangeModalOpen(false)}
-                    >
+                    <Button variant='neutral' className='px-4 py-2' onClick={() => setDateChangeModalOpen(false)}>
                         Cancel
                     </Button>
                     <Button
-                        className={buttonClasses({ variant: 'primary', className: 'px-4 py-2' })}
+                        variant='primary'
+                        className='px-4 py-2'
                         onClick={() => {
                             setRestrictedUntil(DateTime.fromJSDate(date));
 

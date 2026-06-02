@@ -18,7 +18,6 @@ import { type GetGroupsResult } from '../../hooks/useGroupOperations.ts';
 import { type Group, type NewGroup } from '../../types/backend';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { Button } from '../common/Button';
-import { buttonClasses } from '../common/buttonStyles';
 
 const PLACEHOLDER_NEWGROUP: NewGroup = {
     groupName: '',
@@ -164,10 +163,7 @@ export const GroupForm: FC<GroupFormProps> = ({
                     </div>
 
                     <div className='flex justify-end py-8 gap-4 '>
-                        <Button
-                            type='submit'
-                            className={buttonClasses({ variant: 'primary', className: 'px-4 py-2 rounded-sm' })}
-                        >
+                        <Button type='submit' variant='primary' className='px-4 py-2 rounded-sm'>
                             {buttonText}
                         </Button>
                     </div>
