@@ -895,10 +895,14 @@ def retry_failed_submissions_for_matching_errors(
         last_retry
         and datetime.now(tz=pytz.utc) - timedelta(minutes=config.retry_threshold_min) < last_retry
     ):
+        logger.debug("Last retry was less than retry_threshold_min ago, skipping retry")
         return last_retry
     for entry in entries_with_errors:
         errors = str(entry.errors or "")
         if not any(substring in errors for substring in config.slack_retry_substrings):
+            logger.debug(
+                f"Not retrying submission {entry.pkey} in {model_class.__tablename__} because error '{errors}' does not contain any of the retry substrings"
+            )
             continue
 
         pkey = entry.pkey
