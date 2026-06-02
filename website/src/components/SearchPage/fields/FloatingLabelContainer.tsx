@@ -53,7 +53,7 @@ export const FloatingLabelContainer: React.FC<FloatingLabelContainerProps> = ({
                 htmlFor={htmlFor}
                 className={`absolute text-sm ${isTransitionEnabled ? 'duration-300' : ''} transform z-10 origin-left bg-white px-2 inset-s-1 pointer-events-none ${
                     hasContent || isFocused
-                        ? `-translate-y-3 scale-75 top-1 ${isFocused ? 'text-blue-600' : 'text-gray-500'}`
+                        ? `-translate-y-3 scale-75 top-1 ${isFocused ? 'text-primary-600' : 'text-gray-500'}`
                         : 'text-gray-500 scale-100 -translate-y-1/2 top-1/2'
                 }`}
             >

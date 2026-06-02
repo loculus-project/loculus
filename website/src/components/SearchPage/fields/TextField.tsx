@@ -137,7 +137,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
                         label: {
                             default: {
                                 outlined: {
-                                    md: `${labelClasses} peer-focus:text-blue-600! bg-white! dark:bg-gray-900! peer-placeholder-shown:bg-transparent! peer-focus:bg-white! dark:peer-focus:bg-gray-900!`,
+                                    md: `${labelClasses} peer-focus:text-primary-600! bg-white! dark:bg-gray-900! peer-placeholder-shown:bg-transparent! peer-focus:bg-white! dark:peer-focus:bg-gray-900!`,
                                 },
                             },
                         },
@@ -177,7 +177,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
                 htmlFor={id}
                 className={`absolute text-sm text-gray-500 dark:text-gray-400 pointer-events-none ${
                     isTransitionEnabled ? 'duration-300' : ''
-                } transform -translate-y-3 scale-75 top-1 z-10 origin-left bg-white! dark:bg-gray-900! px-2 peer-focus:px-2 peer-focus:bg-white! dark:peer-focus:bg-gray-900! peer-focus:text-blue-600 dark:peer-focus:text-blue-500 peer-placeholder-shown:bg-transparent! peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-3 inset-s-1 peer-focus:rtl:translate-x-1/4 peer-focus:rtl:left-auto`}
+                } transform -translate-y-3 scale-75 top-1 z-10 origin-left bg-white! dark:bg-gray-900! px-2 peer-focus:px-2 peer-focus:bg-white! dark:peer-focus:bg-gray-900! peer-focus:text-primary-600 dark:peer-focus:text-primary-500 peer-placeholder-shown:bg-transparent! peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-3 inset-s-1 peer-focus:rtl:translate-x-1/4 peer-focus:rtl:left-auto`}
             >
                 {label}
             </label>
