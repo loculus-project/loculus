@@ -7,7 +7,6 @@ import { CitationPlot } from './CitationPlot';
 import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
-import { mainTailwindColor } from '../../../colors.json';
 import { getClientLogger } from '../../clientLogger';
 import { useCrossRefWork } from '../../hooks/useCrossRefOperations.ts';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
@@ -16,6 +15,7 @@ import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type CitedByResult, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
+import { getThemeColor } from '../../utils/getThemeColor';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
@@ -132,8 +132,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         return seqSetRecords.slice((page - 1) * sequencesPerPage, page * sequencesPerPage);
     };
 
-    // Colour used for the plots, derived from colors.json
-    const barPlotColor = mainTailwindColor[500];
+    const barPlotColor = getThemeColor('--color-primary-500', '#6b84c6');
 
     return (
         <div className='flex flex-col'>

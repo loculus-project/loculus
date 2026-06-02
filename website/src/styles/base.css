@@ -1,0 +1,229 @@
+@import 'tailwindcss';
+@import 'flowbite-react/plugin/tailwindcss';
+@import './flowbite-forms-compat.css';
+@source '../../.flowbite-react/class-list.json';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@plugin '@tailwindcss/forms' {
+    strategy: 'class';
+}
+
+@plugin 'daisyui' {
+    themes: false;
+    logs: false;
+}
+
+/*
+ * Customize the built-in daisyUI `light` theme; unlisted values (neutral,
+ * base-200/300, *-content) are inherited from it. `default: true` applies it at
+ * `:root`, as <html> carries no `data-theme` attribute.
+ *
+ * daisyUI's semantic colors are `--color-*`, sharing Tailwind's namespace, so
+ * `--color-primary` backs both daisyUI components and the `text-primary` /
+ * `border-primary` utilities.
+ */
+@plugin 'daisyui/theme' {
+    name: 'light';
+    default: true;
+    color-scheme: light;
+    --color-primary: var(--color-primary-400);
+    --color-secondary: #f000b8;
+    --color-accent: #1dcdbc;
+    --color-base-100: #ffffff;
+    --color-info: #9ab9bd;
+    --color-success: #36d399;
+    --color-warning: #fbbd23;
+    --color-error: #f87272;
+}
+
+/*
+ * Brand color palette. Edit `--color-primary-*` to re-skin the instance: these
+ * generate the `*-primary-NNN` utilities (e.g. `bg-primary-600`) and feed
+ * `--color-main` and the daisyUI `--color-primary`, so they drive Tailwind
+ * utilities, daisyUI components, and runtime reads via `getThemeColor()`.
+ */
+@theme {
+    --color-primary-50: #f3f6fb;
+    --color-primary-100: #e4e9f5;
+    --color-primary-200: #cfdaee;
+    --color-primary-300: #aec1e2;
+    --color-primary-400: #88a1d2;
+    --color-primary-500: #6b84c6;
+    --color-primary-600: #586bb8;
+    --color-primary-700: #4d5ba8;
+    --color-primary-800: #3e467e;
+    --color-primary-900: #3a416e;
+    --color-primary-950: #272b44;
+    --color-primary-1500: #25396e;
+    --color-main: var(--color-primary-600);
+    --color-logoSecondary: var(--color-primary-600);
+}
+
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+
+    button:not(:disabled),
+    [role='button']:not(:disabled) {
+        cursor: pointer;
+    }
+
+    dialog {
+        margin: auto;
+    }
+}
+
+a {
+    &:hover {
+        @apply underline decoration-primary-700;
+    }
+}
+
+.alert a {
+    @apply font-bold underline;
+}
+
+.dataAgreement a {
+    @apply underline;
+}
+
+.fillColor {
+    background-color: var(--color-main);
+}
+
+.fancytitle {
+    background: linear-gradient(to right, var(--color-main) 15%, var(--color-logoSecondary) 50%, var(--color-main) 90%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-decoration: red;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.title {
+    color: var(--color-main);
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.subtitle {
+    color: var(--color-main);
+    font-size: 18px;
+    font-weight: 400;
+}
+
+@layer utilities {
+    .outlineButton {
+        @apply normal-case py-2 rounded-md font-semibold px-4 text-sm border-primary-600 border text-primary-600 bg-white
+    hover:bg-primary-600 hover:text-white;
+    }
+
+    .outlineButtonDropdownItem {
+        @apply text-primary-600 hover:text-primary-600 hover:bg-gray-100;
+    }
+
+    /*
+     * daisyUI v5 darkens input/select/textarea focus borders to full-opacity
+     * base-content, and adds a 2px outline in that same color (border + outline
+     * = a heavy "double border"). daisyUI v4 (main) used base-content at 20%
+     * for both. Both the focus border-color and outline-color resolve from the
+     * single `--input-color` var, so overriding just that restores the subtler
+     * focus ring. This `@layer utilities` rule wins over daisyUI's component
+     * layer. Note: it also applies to color variants (select-primary, etc.);
+     * none are used in this app today — add `:not(...)` exclusions if that changes.
+     */
+    .input:focus,
+    .input:focus-within,
+    .select:focus,
+    .select:focus-within,
+    .textarea:focus,
+    .textarea:focus-within {
+        --input-color: color-mix(in oklab, var(--color-base-content) 20%, transparent);
+    }
+}
+
+.loculusColor {
+    background: var(--color-main);
+    &:hover {
+        background: var(--color-primary-700);
+    }
+}
+
+.offCanvasTransform {
+    @apply transform transition-transform duration-300 ease-in-out z-40;
+}
+
+.customTable {
+    display: table;
+    border: none;
+}
+
+.customTable table,
+.customTable tr,
+.customTable td {
+    border: none;
+    padding: 5px 0;
+}
+
+.react-confirm-alert-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: react-confirm-alert-fadeIn 0.5s 0.2s forwards;
+}
+
+.message {
+    background-color: var(--color-primary-50);
+    padding: 2rem;
+    gap: 1rem;
+    align-content: flex-start;
+    border-radius: 1rem;
+    display: flex;
+}
+
+* {
+    @apply break-words;
+    word-break: break-word;
+}
+
+.rs-input {
+    background: transparent; /* overwrites the datepicker search element background which is otherwise white */
+}
+
+.rs-picker input {
+    text-transform: lowercase;
+}
+
+.appearSlowly {
+    animation: appearAnim 0s 1s forwards;
+    opacity: 0;
+}
+
+@keyframes appearAnim {
+    to {
+        opacity: 1;
+    }
+}
+
+.hide-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* Hide scrollbars for Chrome, Safari, and Opera */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}

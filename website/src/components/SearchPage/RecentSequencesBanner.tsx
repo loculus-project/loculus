@@ -33,7 +33,7 @@ export const RecentSequencesBanner: React.FC<RecentSequencesBannerProps> = ({ or
         return null;
     }
     return (
-        <div className='bg-green-100 text-center p-4 text-green-800  rounded border-green-600 border mb-4 opacity-70'>
+        <div className='bg-green-100 text-center p-4 text-green-800  rounded-sm border-green-600 border mb-4 opacity-70'>
             <MdiClockOutline className='inline-block mr-2' />
             You recently approved new sequences for release. Sequences take time to load into the database and so it may
             be several minutes before they appear here.

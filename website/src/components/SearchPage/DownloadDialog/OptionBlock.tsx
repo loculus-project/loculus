@@ -34,7 +34,7 @@ export const RadioOptionBlock: FC<OptionBlockProps> = ({
             {options.map((option, index) => (
                 <div key={index} className={disabled ? 'bg-gray-100 cursor-not-allowed' : ''}>
                     <label
-                        className={`label justify-start py-1 items-baseline ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                        className={`label justify-start py-1 items-baseline ${disabled ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer text-base-content'}`}
                     >
                         <input
                             type='radio'
@@ -44,11 +44,7 @@ export const RadioOptionBlock: FC<OptionBlockProps> = ({
                             onChange={() => onSelect(index)}
                             disabled={disabled}
                         />
-                        <span
-                            className={`label-text ${disabled ? 'text-gray-500' : ''} ${variant === 'nested' ? 'text-sm' : ''}`}
-                        >
-                            {option.label}
-                        </span>
+                        <span className='text-sm'>{option.label}</span>
                     </label>
                     {option.subOptions}
                 </div>
@@ -70,7 +66,7 @@ export const DropdownOptionBlock: FC<OptionBlockProps> = ({
             <Select
                 name={name}
                 title={title ?? name}
-                className='select select-bordered w-full max-w-xs min-h-0 h-auto py-0'
+                className='select w-full max-w-xs min-h-0 h-auto py-0'
                 disabled={disabled}
                 value={selected}
                 onChange={(event) => onSelect(event.target.selectedIndex)}

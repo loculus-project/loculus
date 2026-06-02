@@ -60,6 +60,8 @@ export const displayConfirmationDialog = ({
 }: DisplayConfirmationProps) => {
     confirmAlert({
         closeOnClickOutside: true,
+        // Make the overlay an open daisyUI modal so the `.modal-box` child is visible.
+        overlayClassName: 'modal modal-open',
 
         customUI: ({ onClose }) => (
             <ConfirmationDialog

@@ -246,7 +246,7 @@ const SegmentDropdown: FC<SegmentDropdownProps> = ({ segments, sequenceType, set
     return (
         <div className='mb-4'>
             <Select
-                className='select select-bordered w-full max-w-xs'
+                className='select w-full max-w-xs'
                 value={currentSegmentName}
                 onChange={(e) => {
                     const segment = segments.find((s) => s.name === e.target.value);
@@ -279,7 +279,7 @@ const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) =
         <div className='mb-4'>
             <Select
                 data-testid='gene-dropdown'
-                className='select select-bordered w-full max-w-xs'
+                className='select w-full max-w-xs'
                 value={selectedGene}
                 onChange={(e) => {
                     const gene = genes.find((gene) => gene.name === e.target.value);

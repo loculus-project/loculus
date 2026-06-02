@@ -29,7 +29,7 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
                 </label>
                 <ul
                     tabIndex={0}
-                    className='dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-box absolute top-full right-[-8rem] text-sm w-80'
+                    className='dropdown-content z-1 menu p-1 shadow-sm bg-base-100 rounded-box absolute top-full -right-32 text-sm w-80'
                 >
                     {sequenceEntryHistory.map((version) => {
                         const isSelected = accessionVersion === version.accessionVersion;
