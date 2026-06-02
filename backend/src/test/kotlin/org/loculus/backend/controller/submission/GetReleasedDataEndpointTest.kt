@@ -54,6 +54,7 @@ import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.dateMonthsFromNow
 import org.loculus.backend.controller.expectNdjsonAndGetContent
@@ -227,6 +228,60 @@ class GetReleasedDataEndpointTest(
         val responseBodyMoreData = responseAfterMoreDataAdded
             .expectNdjsonAndGetContent<ReleasedData>()
         assertThat(responseBodyMoreData.size, greaterThan(NUMBER_OF_SEQUENCES))
+    }
+
+    @Test
+    fun `GIVEN data processed for a non-current pipeline version THEN etag is unchanged until it becomes current`() {
+        val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        val processedData = accessionVersions.map {
+            PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version)
+        }
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 1)
+        convenienceClient.approveProcessedSequenceEntries(accessionVersions)
+
+        val initialEtag = submissionControllerClient.getReleasedData().andReturn().response.getHeader(ETAG)
+
+        // A newer pipeline version processes the same entries in the background. Released data is
+        // still served from version 1, so this must not invalidate the etag.
+        convenienceClient.extractUnprocessedData(pipelineVersion = 2)
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
+
+        submissionControllerClient.getReleasedData(ifNoneMatch = initialEtag)
+            .andExpect(status().isNotModified)
+
+        // Once version 2 becomes the current pipeline, the released data (and therefore the etag) changes.
+        submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+
+        submissionControllerClient.getReleasedData(ifNoneMatch = initialEtag)
+            .andExpect(status().isOk)
+            .andExpect(header().string(ETAG, greaterThan(initialEtag)))
+    }
+
+    @Test
+    fun `GIVEN reprocessing of another organism THEN this organism's released-data etag is unchanged`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(organism = DEFAULT_ORGANISM)
+        val otherAccessionVersions =
+            convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(organism = OTHER_ORGANISM)
+
+        val initialEtag = submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM)
+            .andReturn().response.getHeader(ETAG)
+
+        // A newer pipeline version reprocesses the OTHER organism. This only writes preprocessed data
+        // tagged with the other organism, so it must not invalidate the default organism's etag.
+        convenienceClient.extractUnprocessedData(organism = OTHER_ORGANISM, pipelineVersion = 2)
+        convenienceClient.submitProcessedData(
+            otherAccessionVersions.map {
+                PreparedProcessedData.successfullyProcessedOtherOrganismData(
+                    accession = it.accession,
+                    version = it.version,
+                )
+            },
+            organism = OTHER_ORGANISM,
+            pipelineVersion = 2,
+        )
+
+        submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM, ifNoneMatch = initialEtag)
+            .andExpect(status().isNotModified)
     }
 
     @Test

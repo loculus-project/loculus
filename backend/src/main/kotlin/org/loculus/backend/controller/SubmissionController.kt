@@ -314,7 +314,9 @@ open class SubmissionController(
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
-            RELEASED_DATA_RELATED_TABLES,
+            tableNames = RELEASED_DATA_RELATED_TABLES,
+            organism = organism,
+            pipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion(organism),
         )
         if (ifNoneMatch == lastDatabaseWriteETag) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
