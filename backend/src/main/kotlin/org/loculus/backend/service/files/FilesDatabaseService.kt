@@ -99,8 +99,11 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
                   AND f.upload_requested_at < ?;
         """.trimIndent()
         return transaction {
-            exec(sql, listOf(KotlinLocalDateTimeColumnType() to threshold),
-                explicitStatementType = StatementType.SELECT) { rs ->
+            exec(
+                sql,
+                listOf(KotlinLocalDateTimeColumnType() to threshold),
+                explicitStatementType = StatementType.SELECT,
+            ) { rs ->
                 val ids = mutableSetOf<FileId>()
                 while (rs.next()) {
                     ids += rs.getObject("id", UUID::class.java)

@@ -42,10 +42,13 @@ class S3GarbageCollectionTask(
         }
 
         if (orphans.isNotEmpty()) {
-            log.info { "Deleted ${orphans.size} orphans that were not referenced by a submission after $maxOrphanAge days" }
+            log.info {
+                "Deleted ${orphans.size} orphans that were not referenced by a submission after $maxOrphanAge days"
+            }
             auditLogger
                 .log(
-                    "CLEANUP", "Deleted ${orphans.size} orphans that were not referenced by a submission after $maxOrphanAge days"
+                    "CLEANUP",
+                    "Deleted ${orphans.size} orphans that were not referenced by a submission after $maxOrphanAge days",
                 )
         }
     }

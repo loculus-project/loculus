@@ -184,7 +184,7 @@ class S3Service(private val s3Config: S3Config) {
                 .builder()
                 .bucket(config.bucket)
                 .key(getFileIdPath(fileId))
-                .build()
+                .build(),
         )
         Unit
     }
