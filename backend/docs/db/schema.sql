@@ -4,8 +4,8 @@
 
 \restrict dummy
 
--- Dumped from database version 15.17 (Debian 15.17-1.pgdg13+1)
--- Dumped by pg_dump version 16.13 (Debian 16.13-1.pgdg13+1)
+-- Dumped from database version 15.18 (Debian 15.18-1.pgdg13+1)
+-- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -51,6 +51,29 @@ CREATE FUNCTION public.jsonb_concat(a jsonb, b jsonb) RETURNS jsonb
 ALTER FUNCTION public.jsonb_concat(a jsonb, b jsonb) OWNER TO postgres;
 
 --
+-- Name: update_preprocessed_data_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_preprocessed_data_tracker() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, se.organism, cr.pipeline_version, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    JOIN sequence_entries se
+      ON se.accession = cr.accession AND se.version = cr.version
+    GROUP BY se.organism, cr.pipeline_version
+    ON CONFLICT (table_name, organism, pipeline_version)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_preprocessed_data_tracker() OWNER TO postgres;
+
+--
 -- Name: update_table_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -59,9 +82,9 @@ CREATE FUNCTION public.update_table_tracker() RETURNS trigger
     AS $$
 BEGIN
     IF TG_TABLE_NAME != 'table_update_tracker' THEN
-        INSERT INTO table_update_tracker (table_name, last_time_updated)
-        VALUES (TG_TABLE_NAME, timezone('UTC', CURRENT_TIMESTAMP))
-        ON CONFLICT (table_name)
+        INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+        VALUES (TG_TABLE_NAME, '', 0, timezone('UTC', CURRENT_TIMESTAMP))
+        ON CONFLICT (table_name, organism, pipeline_version)
         DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
     END IF;
     RETURN NULL;
@@ -526,7 +549,9 @@ ALTER TABLE public.sequence_upload_aux_table OWNER TO postgres;
 
 CREATE TABLE public.table_update_tracker (
     table_name text NOT NULL,
-    last_time_updated timestamp without time zone DEFAULT timezone('UTC'::text, CURRENT_TIMESTAMP)
+    last_time_updated timestamp without time zone DEFAULT timezone('UTC'::text, CURRENT_TIMESTAMP),
+    organism text DEFAULT ''::text NOT NULL,
+    pipeline_version bigint DEFAULT 0 NOT NULL
 );
 
 
@@ -735,7 +760,7 @@ ALTER TABLE ONLY public.sequence_upload_aux_table
 --
 
 ALTER TABLE ONLY public.table_update_tracker
-    ADD CONSTRAINT table_update_tracker_pkey PRIMARY KEY (table_name);
+    ADD CONSTRAINT table_update_tracker_pkey PRIMARY KEY (table_name, organism, pipeline_version);
 
 
 --
@@ -853,13 +878,6 @@ CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCA
 
 
 --
--- Name: sequence_entries_preprocessed_data update_tracker_trigger; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.sequence_entries_preprocessed_data FOR EACH STATEMENT EXECUTE FUNCTION public.update_table_tracker();
-
-
---
 -- Name: sequence_upload_aux_table update_tracker_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -871,6 +889,27 @@ CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCA
 --
 
 CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.user_groups_table FOR EACH STATEMENT EXECUTE FUNCTION public.update_table_tracker();
+
+
+--
+-- Name: sequence_entries_preprocessed_data update_tracker_trigger_del; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.sequence_entries_preprocessed_data REFERENCING OLD TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_preprocessed_data_tracker();
+
+
+--
+-- Name: sequence_entries_preprocessed_data update_tracker_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.sequence_entries_preprocessed_data REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_preprocessed_data_tracker();
+
+
+--
+-- Name: sequence_entries_preprocessed_data update_tracker_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.sequence_entries_preprocessed_data REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_preprocessed_data_tracker();
 
 
 --
