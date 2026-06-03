@@ -102,11 +102,10 @@ open class ReleasedDataModel(
      * version) no longer invalidates the ETag of other organisms.
      */
     @Transactional(readOnly = true)
-    open fun getLastDatabaseWriteETag(
-        tableNames: List<String>? = null,
-        organism: Organism? = null,
-        pipelineVersion: Long? = null,
-    ): String {
+    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null, organism: Organism? = null): String {
+        val pipelineVersion = organism?.let {
+            submissionDatabaseService.getCurrentProcessingPipelineVersion(it)
+        }
         val query = UpdateTrackerTable.select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
         tableNames?.let { query.andWhere { UpdateTrackerTable.tableNameColumn inList it } }
         organism?.let { o ->

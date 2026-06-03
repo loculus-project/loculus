@@ -316,7 +316,6 @@ open class SubmissionController(
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
             tableNames = RELEASED_DATA_RELATED_TABLES,
             organism = organism,
-            pipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion(organism),
         )
         if (ifNoneMatch == lastDatabaseWriteETag) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()

@@ -86,3 +86,88 @@ CREATE TRIGGER update_tracker_trigger_del
 AFTER DELETE ON sequence_entries_preprocessed_data
 REFERENCING OLD TABLE AS changed_rows
 FOR EACH STATEMENT EXECUTE FUNCTION update_preprocessed_data_tracker();
+
+-- Replace the generic per-statement trigger on the preprocessed-data table with
+-- organism/pipeline-version aware ones. organism is resolved via the
+-- (accession, version) foreign key into sequence_entries; pipeline_version is a
+-- native column of the preprocessed-data table.
+DROP TRIGGER IF EXISTS update_tracker_trigger ON external_metadata;
+
+CREATE OR REPLACE FUNCTION update_external_metadata_tracker()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    JOIN sequence_entries se
+      ON se.accession = cr.accession AND se.version = cr.version
+    GROUP BY se.organism
+    ON CONFLICT (table_name, organism)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- One trigger per event, because each must name its transition table
+-- `changed_rows`, and Postgres forbids transition tables on triggers that cover
+-- more than one event. NEW TABLE exists for INSERT/UPDATE, OLD TABLE for DELETE.
+-- Cascading deletes from sequence_entries are still covered by sequence_entries'
+-- own table-wide trigger, so the ETag changes even when the parent rows are
+-- already gone.
+CREATE TRIGGER update_tracker_trigger_ins
+AFTER INSERT ON external_metadata
+REFERENCING NEW TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_external_metadata_tracker();
+
+CREATE TRIGGER update_tracker_trigger_upd
+AFTER UPDATE ON external_metadata
+REFERENCING NEW TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_external_metadata_tracker();
+
+CREATE TRIGGER update_tracker_trigger_del
+AFTER DELETE ON external_metadata
+REFERENCING OLD TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_external_metadata_tracker();
+
+
+-- Replace the generic per-statement trigger on the preprocessed-data table with
+-- organism/pipeline-version aware ones. organism is resolved via the
+-- (accession, version) foreign key into sequence_entries; pipeline_version is a
+-- native column of the preprocessed-data table.
+DROP TRIGGER IF EXISTS update_tracker_trigger ON data_use_terms_table;
+
+CREATE OR REPLACE FUNCTION update_data_use_terms_table_tracker()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    JOIN sequence_entries se
+      ON se.accession = cr.accession
+    GROUP BY se.organism
+    ON CONFLICT (table_name, organism)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- One trigger per event, because each must name its transition table
+-- `changed_rows`, and Postgres forbids transition tables on triggers that cover
+-- more than one event. NEW TABLE exists for INSERT/UPDATE, OLD TABLE for DELETE.
+-- Cascading deletes from sequence_entries are still covered by sequence_entries'
+-- own table-wide trigger, so the ETag changes even when the parent rows are
+-- already gone.
+CREATE TRIGGER update_tracker_trigger_ins
+AFTER INSERT ON data_use_terms_table
+REFERENCING NEW TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_data_use_terms_table_tracker();
+
+CREATE TRIGGER update_tracker_trigger_upd
+AFTER UPDATE ON data_use_terms_table
+REFERENCING NEW TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_data_use_terms_table_tracker();
+
+CREATE TRIGGER update_tracker_trigger_del
+AFTER DELETE ON data_use_terms_table
+REFERENCING OLD TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_data_use_terms_table_tracker();
