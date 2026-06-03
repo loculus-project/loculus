@@ -50,7 +50,7 @@ def resolve_host_information(record: dict[str, str]) -> dict[str, str]:
     record.pop("hostTaxonId", None)
     record.pop("hostNameScientific", None)
     record.pop("hostNameCommon", None)
-    record["host"] = host or ""
+    record["host"] = host
 
     return record
 
