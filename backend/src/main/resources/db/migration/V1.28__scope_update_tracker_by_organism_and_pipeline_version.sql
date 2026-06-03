@@ -161,8 +161,8 @@ FOR EACH STATEMENT EXECUTE FUNCTION update_data_use_terms_table_tracker();
 
 
 -- Replace the generic per-statement trigger on the sequence_entries table with
--- organism aware ones. organism is resolved via the
--- (accession, version) foreign key into sequence_entries.
+-- organism aware ones. organism is read directly from the changed rows, since
+-- it is a native column of sequence_entries.
 DROP TRIGGER IF EXISTS update_tracker_trigger ON sequence_entries;
 
 CREATE OR REPLACE FUNCTION update_sequence_entries_tracker()
