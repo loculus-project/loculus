@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.or
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileCategoryFilesMap
@@ -97,10 +98,10 @@ open class ReleasedDataModel(
      *
      * When [organism] and/or [pipelineVersion] are given, the lookup is scoped to
      * the rows that affect that organism's released data at that pipeline version:
-     * table-wide writes (tagged with the '' / 0 sentinels) are always included,
-     * plus the organism- and pipeline-specific preprocessed-data rows. This means
-     * preprocessing of one organism (or of a not-yet-current pipeline version) no
-     * longer invalidates the ETag of other organisms.
+     * table-wide writes (tagged with NULL organism / pipeline_version) are always
+     * included, plus the organism- and pipeline-specific preprocessed-data rows.
+     * This means preprocessing of one organism (or of a not-yet-current pipeline
+     * version) no longer invalidates the ETag of other organisms.
      */
     @Transactional(readOnly = true)
     open fun getLastDatabaseWriteETag(
@@ -110,8 +111,16 @@ open class ReleasedDataModel(
     ): String {
         val query = UpdateTrackerTable.select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
         tableNames?.let { query.andWhere { UpdateTrackerTable.tableNameColumn inList it } }
-        organism?.let { query.andWhere { UpdateTrackerTable.organismColumn inList listOf("", it.name) } }
-        pipelineVersion?.let { query.andWhere { UpdateTrackerTable.pipelineVersionColumn inList listOf(0L, it) } }
+        organism?.let { o ->
+            query.andWhere {
+                UpdateTrackerTable.organismColumn.isNull() or (UpdateTrackerTable.organismColumn eq o.name)
+            }
+        }
+        pipelineVersion?.let { v ->
+            query.andWhere {
+                UpdateTrackerTable.pipelineVersionColumn.isNull() or (UpdateTrackerTable.pipelineVersionColumn eq v)
+            }
+        }
 
         val lastUpdateTime = query
             .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }

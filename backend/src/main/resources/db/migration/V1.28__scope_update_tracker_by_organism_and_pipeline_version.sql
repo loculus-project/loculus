@@ -8,26 +8,36 @@
 -- preprocessed-data writes only invalidate the ETag of the affected organism and
 -- pipeline version.
 --
--- All other tables keep writing table-wide rows using the '' (organism) and 0
--- (pipeline_version) sentinels. The ETag query then unions the sentinel rows
--- with the organism/pipeline-specific rows (organism IN ('', :organism) AND
--- pipeline_version IN (0, :currentPipelineVersion)), so correctness is preserved
--- while preprocessing churn no longer crosses organism boundaries.
+-- All other tables keep writing table-wide rows, using NULL for both organism
+-- and pipeline_version to mean "applies to every organism / pipeline version".
+-- The ETag query then unions these table-wide rows with the
+-- organism/pipeline-specific rows (organism IS NULL OR organism = :organism, and
+-- likewise for pipeline_version), so correctness is preserved while preprocessing
+-- churn no longer crosses organism boundaries.
+--
+-- The columns are nullable, so the composite key cannot be a PRIMARY KEY. We use
+-- UNIQUE NULLS NOT DISTINCT (Postgres 15+) instead: it still backs the ON CONFLICT
+-- upserts below, but treats two NULLs as equal so there is only ever one
+-- table-wide row per table (a default UNIQUE would treat NULLs as distinct and
+-- let duplicate table-wide rows accumulate).
 
-ALTER TABLE table_update_tracker ADD COLUMN organism TEXT NOT NULL DEFAULT '';
-ALTER TABLE table_update_tracker ADD COLUMN pipeline_version BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE table_update_tracker ADD COLUMN organism TEXT;
+ALTER TABLE table_update_tracker ADD COLUMN pipeline_version BIGINT;
 ALTER TABLE table_update_tracker DROP CONSTRAINT table_update_tracker_pkey;
-ALTER TABLE table_update_tracker ADD PRIMARY KEY (table_name, organism, pipeline_version);
+ALTER TABLE table_update_tracker
+    ADD CONSTRAINT table_update_tracker_unique
+    UNIQUE NULLS NOT DISTINCT (table_name, organism, pipeline_version);
 
--- The generic tracker function still writes table-wide rows, but its ON CONFLICT
--- target must now match the new composite primary key (the previous
--- ON CONFLICT (table_name) is no longer backed by a unique constraint).
+-- The generic tracker function still writes table-wide rows, but with NULL
+-- organism/pipeline_version and an ON CONFLICT target matching the new unique
+-- constraint (the previous ON CONFLICT (table_name) is no longer backed by a
+-- unique constraint).
 CREATE OR REPLACE FUNCTION update_table_tracker()
 RETURNS TRIGGER AS $$
 BEGIN
     IF TG_TABLE_NAME != 'table_update_tracker' THEN
         INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
-        VALUES (TG_TABLE_NAME, '', 0, timezone('UTC', CURRENT_TIMESTAMP))
+        VALUES (TG_TABLE_NAME, NULL, NULL, timezone('UTC', CURRENT_TIMESTAMP))
         ON CONFLICT (table_name, organism, pipeline_version)
         DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
     END IF;
