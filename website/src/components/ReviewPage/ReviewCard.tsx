@@ -460,7 +460,7 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
     return (
         <div className={`flex flex-col m-2 `}>
             <span className={keyStyle ?? 'text-gray-500 uppercase text-xs'}>{keyName}</span>
-            <span className={`text-base ${extraStyle}`}>
+            <span className={`text-base ${extraStyle ?? ''}`}>
                 <span
                     ref={textRef}
                     className={`${textColor} ${disableTruncate ? '' : 'truncate max-w-xs inline-block'}`}
