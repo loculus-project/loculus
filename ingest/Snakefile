@@ -677,6 +677,7 @@ rule hash_metadata:
     input:
         script="scripts/calculate_metadata_hashes.py",
         prepped_metadata=prepped_metadata(),
+        config="results/config.yaml",
     output:
         hashed_metadata="results/metadata_with_hashes.ndjson",
     shell:
