@@ -1,6 +1,17 @@
 @import 'tailwindcss';
 @import 'flowbite-react/plugin/tailwindcss';
 @source '../../.flowbite-react/class-list.json';
+/*
+ * Explicitly source the website source tree. Tailwind v4's automatic content
+ * detection skips files matched by `.gitignore`. In this repo those files are
+ * tracked, so detection works either way -- but in downstream overlays such as
+ * Pathoplexus the website source is synced in and listed in `.gitignore`, which
+ * makes automatic detection skip it and silently drops ~half the utility
+ * classes. An explicit `@source` glob bypasses the gitignore filter, so styling
+ * is correct in both setups. (A bare `@source '../'` does NOT help -- a
+ * directory source still re-applies the gitignore filter; the glob is required.)
+ */
+@source '../**/*.{astro,html,js,jsx,ts,tsx,vue,svelte,md,mdx}';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
