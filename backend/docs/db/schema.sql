@@ -64,7 +64,7 @@ BEGIN
     JOIN sequence_entries se
       ON se.accession = cr.accession
     GROUP BY se.organism
-    ON CONFLICT (table_name, organism)
+    ON CONFLICT (table_name, organism, pipeline_version)
     DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
     RETURN NULL;
 END;
@@ -87,7 +87,7 @@ BEGIN
     JOIN sequence_entries se
       ON se.accession = cr.accession AND se.version = cr.version
     GROUP BY se.organism
-    ON CONFLICT (table_name, organism)
+    ON CONFLICT (table_name, organism, pipeline_version)
     DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
     RETURN NULL;
 END;
