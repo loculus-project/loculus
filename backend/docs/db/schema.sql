@@ -128,11 +128,9 @@ CREATE FUNCTION public.update_sequence_entries_tracker() RETURNS trigger
     AS $$
 BEGIN
     INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
-    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    SELECT TG_TABLE_NAME, cr.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
     FROM changed_rows cr
-    JOIN sequence_entries se
-      ON se.accession = cr.accession
-    GROUP BY se.organism
+    GROUP BY cr.organism
     ON CONFLICT (table_name, organism, pipeline_version)
     DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
     RETURN NULL;
