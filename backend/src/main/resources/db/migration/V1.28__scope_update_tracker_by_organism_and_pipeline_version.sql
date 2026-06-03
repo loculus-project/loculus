@@ -6,7 +6,8 @@
 -- the one shared timestamp and therefore invalidated the released-data ETag for
 -- *every* organism. We add organism and pipeline_version dimensions so that
 -- preprocessed-data writes only invalidate the ETag of the affected organism and
--- pipeline version.
+-- pipeline version. We also add organism to the external-metadata and data-use-terms 
+-- tracker triggers.
 --
 -- All other tables keep writing table-wide rows, using NULL for both organism
 -- and pipeline_version to mean "applies to every organism / pipeline version".
@@ -86,3 +87,74 @@ CREATE TRIGGER update_tracker_trigger_del
 AFTER DELETE ON sequence_entries_preprocessed_data
 REFERENCING OLD TABLE AS changed_rows
 FOR EACH STATEMENT EXECUTE FUNCTION update_preprocessed_data_tracker();
+
+-- Replace the generic per-statement trigger on the external-metadata table with
+-- organism aware ones. organism is resolved via the
+-- (accession, version) foreign key into sequence_entries.
+DROP TRIGGER IF EXISTS update_tracker_trigger ON external_metadata;
+
+CREATE OR REPLACE FUNCTION update_external_metadata_tracker()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    JOIN sequence_entries se
+      ON se.accession = cr.accession AND se.version = cr.version
+    GROUP BY se.organism
+    ON CONFLICT (table_name, organism, pipeline_version)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_tracker_trigger_ins
+AFTER INSERT ON external_metadata
+REFERENCING NEW TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_external_metadata_tracker();
+
+CREATE TRIGGER update_tracker_trigger_upd
+AFTER UPDATE ON external_metadata
+REFERENCING NEW TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_external_metadata_tracker();
+
+CREATE TRIGGER update_tracker_trigger_del
+AFTER DELETE ON external_metadata
+REFERENCING OLD TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_external_metadata_tracker();
+
+
+-- Replace the generic per-statement trigger on the data-use-terms table with
+-- organism aware ones. organism is resolved via the
+-- (accession, version) foreign key into sequence_entries.
+DROP TRIGGER IF EXISTS update_tracker_trigger ON data_use_terms_table;
+
+CREATE OR REPLACE FUNCTION update_data_use_terms_table_tracker()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    JOIN sequence_entries se
+      ON se.accession = cr.accession
+    GROUP BY se.organism
+    ON CONFLICT (table_name, organism, pipeline_version)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_tracker_trigger_ins
+AFTER INSERT ON data_use_terms_table
+REFERENCING NEW TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_data_use_terms_table_tracker();
+
+CREATE TRIGGER update_tracker_trigger_upd
+AFTER UPDATE ON data_use_terms_table
+REFERENCING NEW TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_data_use_terms_table_tracker();
+
+CREATE TRIGGER update_tracker_trigger_del
+AFTER DELETE ON data_use_terms_table
+REFERENCING OLD TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_data_use_terms_table_tracker();
