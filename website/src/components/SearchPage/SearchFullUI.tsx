@@ -328,7 +328,9 @@ export const InnerSearchFullUI = ({
                             aggregatedHook.isPending ||
                             !firstClientSideLoadOfCountCompleted ||
                             !firstClientSideLoadOfDataCompleted ? (
-                                <Spinner size='xs' className='ml-3 appearSlowly' />
+                                <span className='ml-3 appearSlowly inline-block'>
+                                    <Spinner size='xs' />
+                                </span>
                             ) : null}
                         </div>
                         <div className='flex'>
