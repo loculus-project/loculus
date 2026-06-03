@@ -1744,33 +1744,27 @@ class ProcessingFunctions:
         if not tax_service:
             return missing_taxonomy_service_error(input_fields, output_field)
 
-        # host will exist only for direct submissions
-        # hostTaxonId and hostNameScientific are noInput, so the only case where they exist is
-        # for INSDC ingested sequences or for legacy direct submissions
-        unvalidated = (
-            input_data.get("host")
-            or input_data.get("hostTaxonId")
-            or input_data.get("hostNameScientific")
-        )
-
-        if not unvalidated:
+        unvalidated_host = input_data.get("host")
+        if not unvalidated_host:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
                 errors=[],
             )
 
-        if unvalidated.isdigit():
-            url = f"{tax_service}/taxa/{unvalidated}"
+        if unvalidated_host.isdigit():
+            url = f"{tax_service}/taxa/{unvalidated_host}"
         else:
-            query = urllib.parse.urlencode({"scientific_name": unvalidated})
+            query = urllib.parse.urlencode({"scientific_name": unvalidated_host})
             url = f"{tax_service}/taxa?{query}"
 
         try:
             response = taxonomy_cache.get_or_fetch(url)
             body = response.json()
         except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(unvalidated, "validating", e, input_fields, output_field)
+            return taxonomy_network_error(
+                unvalidated_host, "validating", e, input_fields, output_field
+            )
 
         if response.status_code != requests.codes.ok:
             # an invalid host organism is a warning for INSDC ingested sequences, but an error for everyone else
@@ -1778,11 +1772,11 @@ class ProcessingFunctions:
                 input_fields,
                 [output_field],
                 AnnotationSourceType.METADATA,
-                message=f"Host validation for '{unvalidated}' failed with code {response.status_code}: {body.get('detail', '')}",
+                message=f"Host validation for '{unvalidated_host}' failed with code {response.status_code}: {body.get('detail', '')}",
             )
             return ProcessingResult(
-                datum=unvalidated
-                if args["is_insdc_ingest_group"] and unvalidated.isdigit()
+                datum=unvalidated_host
+                if args["is_insdc_ingest_group"] and unvalidated_host.isdigit()
                 else None,
                 warnings=[message] if args["is_insdc_ingest_group"] else [],
                 errors=[message] if not args["is_insdc_ingest_group"] else [],
@@ -1804,7 +1798,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"Internal error: host validation for '{unvalidated}' "
+                        message=f"Internal error: host validation for '{unvalidated_host}' "
                         f"was successful but response json 'tax_id' was missing. "
                         f"Please contact the administrator",
                     )
@@ -1831,9 +1825,7 @@ class ProcessingFunctions:
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
             return ProcessingResult(
-                datum=input_data.get("hostNameScientific")
-                if args["is_insdc_ingest_group"]
-                else None,
+                datum=None,
                 warnings=[],
                 errors=[],
             )
@@ -1855,9 +1847,7 @@ class ProcessingFunctions:
                 message=message,
             )
             return ProcessingResult(
-                datum=input_data.get("hostNameScientific")
-                if args["is_insdc_ingest_group"]
-                else None,
+                datum=None,
                 warnings=[processing_annotation] if args["is_insdc_ingest_group"] else [],
                 errors=[processing_annotation] if not args["is_insdc_ingest_group"] else [],
             )
