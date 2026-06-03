@@ -22,11 +22,9 @@ Example output for a single isolate with 3 segments:
     "hash_L": "ddbfc33d45267e9c1a08f8f5e76d3e39",
     "hash_M": "f64777883ba9f5293257698255767f2c",
     "hash_S": "f716ed13dca9c8a033d46da2f3dc2ff1",
-    "hash": "ce7056d0bd7e3d6d3eca38f56b9d10f8",
     "id": "KJ682796.1.L/KJ682809.1.M/KJ682819.1.S"
 }}"""
 
-import hashlib
 import json
 import logging
 import os
@@ -156,19 +154,6 @@ def get_metadata_of_group(
     )
     grouped_metadata["id"] = joint_key
     grouped_metadata["fastaIds"] = segments_list_str
-
-    # Hash of all metadata fields should be the same if
-    # 1. field is not in keys_to_keep and
-    # 2. field is in keys_to_keep but is "" or None
-    filtered_record = {k: str(v) for k, v in grouped_metadata.items() if v is not None and str(v)}
-
-    # rename "id" to "submissionId" and ignore fastaIds for back-compatibility with old hashes
-    filtered_record["submissionId"] = filtered_record.pop("id")
-    filtered_record.pop("fastaIds", None)
-
-    grouped_metadata["hash"] = hashlib.md5(
-        json.dumps(filtered_record, sort_keys=True).encode(), usedforsecurity=False
-    ).hexdigest()
 
     return grouped_metadata
 
