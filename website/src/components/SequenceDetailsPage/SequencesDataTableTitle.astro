@@ -31,7 +31,7 @@ const { sequenceEntryHistory, accessionVersion, showDownload, showFastaDownloadB
         }
         {
             showDownload && (
-                <div class='inline-block dropdown dropdown-hover dropdown-end'>
+                <div class='inline-block relative group'>
                     <label
                         tabindex='0'
                         class='hidden sm:block py-1 text-primary-700 cursor-pointer'
@@ -46,7 +46,7 @@ const { sequenceEntryHistory, accessionVersion, showDownload, showFastaDownloadB
                     <span tabindex='0' class='sm:hidden inline text-xl cursor-pointer'>
                         <IcBaselineDownload />
                     </span>
-                    <ul class='dropdown-content z-20 menu p-1 shadow-sm bg-base-100 rounded-field top-full -left-44 sm:-left-24 w-52'>
+                    <ul class='invisible absolute z-20 opacity-0 transition-opacity duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 flex flex-col gap-px bg-base-100 rounded-lg shadow-sm p-1 top-full -left-44 sm:-left-24 w-52'>
                         {showFastaDownloadButton && (
                             <li>
                                 <a

@@ -25,6 +25,8 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button';
+import { Checkbox } from '../common/Checkbox';
+import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 export type UploadAction = 'submit' | 'revise';
@@ -221,7 +223,7 @@ const InnerDataUploadForm = ({
                         alsoDisabledIf={isPending}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
-                            <span className='loading loading-spinner loading-sm' />
+                            <Spinner size='sm' />
                         </div>
                         <span className='flex-1 text-center mx-8'>Submit sequences</span>
                     </Button>
@@ -405,10 +407,10 @@ const Acknowledgement = ({
                     </p>
                     <div className='mt-2 py-5'>
                         <label className='flex items-center'>
-                            <input
-                                type='checkbox'
+                            <Checkbox
+                                size='sm'
                                 name='confirmation-no-pii'
-                                className='shrink-0 checkbox checkbox-sm mr-3 ml-1'
+                                className='mr-3 ml-1'
                                 checked={confirmedNoPII}
                                 onChange={() => setConfirmedNoPII(!confirmedNoPII)}
                             />
@@ -421,10 +423,10 @@ const Acknowledgement = ({
                     </div>
                     <div className='mb-4 py-3'>
                         <label className='flex items-center'>
-                            <input
-                                type='checkbox'
+                            <Checkbox
+                                size='sm'
                                 name='confirmation-INSDC-upload-terms'
-                                className='shrink-0 checkbox checkbox-sm mr-3 ml-1'
+                                className='mr-3 ml-1'
                                 checked={agreedToINSDCUploadTerms}
                                 onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
                             />

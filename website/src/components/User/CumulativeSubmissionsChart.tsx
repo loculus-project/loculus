@@ -12,6 +12,7 @@ import { type FC, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 
 import type { Organism } from '../../config.ts';
+import { Spinner } from '../common/Spinner';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -81,7 +82,7 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
     if (isLoading) {
         return (
             <div className='flex justify-center items-center h-64'>
-                <span className='loading loading-spinner loading-lg'></span>
+                <Spinner size='lg' />
             </div>
         );
     }

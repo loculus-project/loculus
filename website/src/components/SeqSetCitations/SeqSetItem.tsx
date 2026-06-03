@@ -18,6 +18,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { getThemeColor } from '../../utils/getThemeColor';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
+import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDotsGrid from '~icons/mdi/dots-grid';
 import MdiViewGrid from '~icons/mdi/view-grid';
@@ -153,7 +154,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                         value={
                             seqSet.seqSetDOI ? (
                                 isCrossRefWorkLoading ? (
-                                    <span className='loading loading-spinner loading-xs'></span>
+                                    <Spinner size='xs' />
                                 ) : isCrossRefWorkError ? (
                                     <span>Failed to load citations.</span>
                                 ) : (

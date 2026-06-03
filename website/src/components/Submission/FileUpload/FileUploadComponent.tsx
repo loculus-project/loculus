@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import type { FileKind, ProcessedFile } from './fileProcessing.ts';
 import useClientFlag from '../../../hooks/isClient.ts';
 import { Button } from '../../common/Button';
+import { HoverTooltip } from '../../common/HoverTooltip';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import UndoTwoToneIcon from '~icons/ic/twotone-undo';
 
@@ -184,9 +185,9 @@ export const FileUploadComponent = <F extends ProcessedFile>({
                         aria-label={`Undo ${name}`}
                         data-testid={`undo_${name}`}
                     >
-                        <div className='tooltip tooltip-info whitespace-pre-line' data-tip='Revert to initial data'>
+                        <HoverTooltip content='Revert to initial data'>
                             <UndoTwoToneIcon color='action' />
-                        </div>
+                        </HoverTooltip>
                     </Button>
                 </div>
             )}
@@ -199,11 +200,11 @@ export const FileUploadComponent = <F extends ProcessedFile>({
                         aria-label={`Download ${name}`}
                         data-testid={`download_${name}`}
                     >
-                        <div className='tooltip tooltip-info whitespace-pre-line' data-tip='Download sequence'>
+                        <HoverTooltip content='Download sequence'>
                             <IcBaselineDownload
                                 className={`${downloadDisabled ? 'text-gray-200' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
                             />
-                        </div>
+                        </HoverTooltip>
                     </Button>
                 </div>
             )}

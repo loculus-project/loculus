@@ -88,8 +88,8 @@ describe('EditPage', () => {
     test('should show error and warning tooltips', () => {
         renderEditPage();
 
-        expect(document.querySelector('.tooltip[data-tip="errorMessage"]')).toBeTruthy();
-        expect(document.querySelector('.tooltip[data-tip="warningMessage"]')).toBeTruthy();
+        expect(document.querySelector('[data-tooltip-content="errorMessage"]')).toBeTruthy();
+        expect(document.querySelector('[data-tooltip-content="warningMessage"]')).toBeTruthy();
     });
 
     test('should edit, show errors and undo input', async () => {
@@ -106,7 +106,7 @@ describe('EditPage', () => {
         expectTextInSequenceData.unprocessedMetadata({
             [metadataKey]: editableEntry + someTextToAdd,
         });
-        const undoButton = document.querySelector(`.tooltip[data-tip="Revert to: ${editableEntry}"]`);
+        const undoButton = document.querySelector(`[data-tooltip-content="Revert to: ${editableEntry}"]`);
         expect(undoButton).not.toBeNull();
 
         await userEvent.click(undoButton!);

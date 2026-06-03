@@ -95,7 +95,9 @@ export const AccessionSearchBox: FC<Props> = ({
                     }}
                     placeholder='Search by accession'
                     className={
-                        `input input-md text-sm placeholder:text-gray-500 text-gray-900 ` +
+                        `rounded border border-base-content/20 bg-white text-sm h-10 px-3 ` +
+                        `focus:outline-none focus:border-base-content/40 focus:ring-1 focus:ring-base-content/20 ` +
+                        `placeholder:text-gray-500 text-gray-900 ` +
                         `bg-white focus:border-primary focus:outline-hidden transition-all duration-200 ease-out ml-2 ` +
                         (open
                             ? `px-3 ${fullWidth ? 'w-full' : 'w-36 lg:w-48'} opacity-100`

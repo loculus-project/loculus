@@ -12,6 +12,7 @@ import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu';
 import SequencesBanner from '../SequenceDetailsPage/SequencesBanner.tsx';
 import { Button } from '../common/Button';
+import { DropdownMenu, DropdownMenuItem } from '../common/DropdownMenu';
 import CharmMenuKebab from '~icons/charm/menu-kebab';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
@@ -20,7 +21,7 @@ import MdiDockBottom from '~icons/mdi/dock-bottom';
 import OouiNewWindowLtr from '~icons/ooui/new-window-ltr';
 
 const BUTTONCLASS =
-    'inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-900 border border-transparent rounded-md hover:bg-blue-200 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500';
+    'inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-900 border border-transparent rounded-md hover:bg-blue-200 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500';
 
 interface SeqPreviewModalProps {
     seqId: string;
@@ -180,29 +181,21 @@ interface DownloadButtonProps {
 
 const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId, allowFastaDownload = true }) => {
     return (
-        <div className='dropdown dropdown-hover relative inline-block'>
-            <Button className={BUTTONCLASS}>
-                <IcBaselineDownload className='w-6 h-6' />
+        <DropdownMenu
+            className='inline-block'
+            panelClassName='top-full w-52 -left-32'
+            trigger={
+                <Button className={BUTTONCLASS}>
+                    <IcBaselineDownload className='w-6 h-6' />
 
-                <CharmMenuKebab className=' w-4 h-6 -ml-1.5 pb-1 pt-1.5' />
-            </Button>
-            <ul className='dropdown-content z-20 menu p-1 shadow-sm bg-base-100 rounded-field absolute top-full w-52 -left-32'>
-                {allowFastaDownload && (
-                    <li>
-                        <a
-                            href={routes.sequenceEntryFastaPage(seqId, true)}
-                            className='block px-4 py-2 hover:bg-gray-100'
-                        >
-                            Download FASTA
-                        </a>
-                    </li>
-                )}
-                <li>
-                    <a href={routes.sequenceEntryTsvPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>
-                        Download metadata TSV
-                    </a>
-                </li>
-            </ul>
-        </div>
+                    <CharmMenuKebab className=' w-4 h-6 -ml-1.5 pb-1 pt-1.5' />
+                </Button>
+            }
+        >
+            {allowFastaDownload && (
+                <DropdownMenuItem href={routes.sequenceEntryFastaPage(seqId, true)}>Download FASTA</DropdownMenuItem>
+            )}
+            <DropdownMenuItem href={routes.sequenceEntryTsvPage(seqId, true)}>Download metadata TSV</DropdownMenuItem>
+        </DropdownMenu>
     );
 };

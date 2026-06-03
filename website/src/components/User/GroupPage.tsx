@@ -15,6 +15,8 @@ import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.js';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { Button } from '../common/Button';
+import { DropdownMenu, DropdownMenuItem } from '../common/DropdownMenu';
+import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import DashiconsGroups from '~icons/dashicons/groups';
 import DashiconsPlus from '~icons/dashicons/plus';
@@ -129,36 +131,35 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         <label className='mt-1.5'>
                             <DashiconsGroups />
                         </label>
-                        <div className='dropdown dropdown-hover hidden sm:flex relative'>
-                            <label tabIndex={0} className='py-1 block cursor-pointer title'>
-                                {groupName}
-                                <span className='text-primary'>
-                                    <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4 ' />
-                                </span>
-                            </label>
-                            <ul
-                                tabIndex={0}
-                                className='dropdown-content z-1 menu p-1 shadow-sm bg-base-100 rounded-field absolute top-full -left-4 min-w-60'
-                            >
-                                {userGroups.map(
-                                    (group) =>
-                                        group.groupId !== prefetchedGroupDetails.group.groupId && (
-                                            <li key={group.groupId}>
-                                                <a href={routes.groupOverviewPage(group.groupId)}>
-                                                    <DashiconsGroups className='w-6 h-6 inline-block mr-2' />
-                                                    {group.groupName}
-                                                </a>
-                                            </li>
-                                        ),
-                                )}
-                                <li>
-                                    <a href={routes.createGroup()}>
-                                        <DashiconsPlus className='w-6 h-6 inline-block mr-2' />
-                                        Create a new group...
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
+                        <DropdownMenu
+                            className='hidden sm:flex'
+                            panelClassName='top-full -left-4 min-w-60'
+                            trigger={
+                                <label tabIndex={0} className='py-1 block cursor-pointer title'>
+                                    {groupName}
+                                    <span className='text-primary'>
+                                        <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4 ' />
+                                    </span>
+                                </label>
+                            }
+                        >
+                            {userGroups.map(
+                                (group) =>
+                                    group.groupId !== prefetchedGroupDetails.group.groupId && (
+                                        <DropdownMenuItem
+                                            key={group.groupId}
+                                            href={routes.groupOverviewPage(group.groupId)}
+                                        >
+                                            <DashiconsGroups className='w-6 h-6 inline-block' />
+                                            {group.groupName}
+                                        </DropdownMenuItem>
+                                    ),
+                            )}
+                            <DropdownMenuItem href={routes.createGroup()}>
+                                <DashiconsPlus className='w-6 h-6 inline-block' />
+                                Create a new group...
+                            </DropdownMenuItem>
+                        </DropdownMenu>
                     </h1>
                     {userIsGroupMember && (
                         <>
@@ -234,7 +235,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         {organisms.map((organism) => (
                             <TableRow key={organism.key} label={organism.displayName} noWrapChildren>
                                 {sequenceCountsLoading ? (
-                                    <span className='loading loading-spinner loading-xs'></span>
+                                    <Spinner size='xs' />
                                 ) : (
                                     <a
                                         href={`${routes.searchPage(organism.key)}?${GROUP_ID_FIELD}=${groupId}`}

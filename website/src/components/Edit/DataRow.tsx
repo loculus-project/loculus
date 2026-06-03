@@ -3,6 +3,7 @@ import { type FC } from 'react';
 import { InputField as InputFieldComponent, type Row } from './InputField.tsx';
 import type { InputField } from '../../types/config.ts';
 import { InputFieldTooltip } from '../Submission/InputFieldTooltip.tsx';
+import { HoverTooltip } from '../common/HoverTooltip.tsx';
 import WarningAmberIcon from '~icons/ic/baseline-warning-amber';
 import DangerousTwoToneIcon from '~icons/ic/twotone-dangerous';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
@@ -95,17 +96,14 @@ const ErrorAndWarningIcons: FC<ErrorAndWarningIconsProps> = ({ row }) => {
     return (
         <>
             {row.errors.length > 0 ? (
-                <div className='tooltip tooltip-error whitespace-pre-line text-error' data-tip={row.errors.join('\n')}>
+                <HoverTooltip content={row.errors.join('\n')} variant='error' className='text-error'>
                     <DangerousTwoToneIcon />
-                </div>
+                </HoverTooltip>
             ) : null}
             {row.warnings.length > 0 ? (
-                <div
-                    className='tooltip tooltip-warning whitespace-pre-line text-warning'
-                    data-tip={row.warnings.join('\n')}
-                >
+                <HoverTooltip content={row.warnings.join('\n')} variant='warning' className='text-warning'>
                     <WarningAmberIcon />
-                </div>
+                </HoverTooltip>
             ) : null}
         </>
     );

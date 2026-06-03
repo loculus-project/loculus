@@ -291,7 +291,7 @@ export const SearchForm = ({
     return (
         <QueryClientProvider client={queryClient}>
             <div className='text-right -mb-10 md:hidden'>
-                <Button onClick={toggleMobileOpen} className='btn btn-xs bg-primary-600 text-white'>
+                <Button onClick={toggleMobileOpen} size='xs' variant='primary'>
                     Modify search query
                 </Button>
             </div>
@@ -563,7 +563,7 @@ const AdvancedOptionsModal = ({
                 ))}
             </div>
             <div className='mt-6 flex justify-end'>
-                <Button type='button' className='btn loculusColor text-white -py-1' onClick={onClose}>
+                <Button type='button' variant='primary' onClick={onClose}>
                     Close
                 </Button>
             </div>

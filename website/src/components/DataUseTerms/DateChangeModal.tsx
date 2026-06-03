@@ -131,11 +131,12 @@ export const DateChangeModal = ({
                     />
                 </div>
                 <div className='flex justify-end gap-4 mt-4'>
-                    <Button className='px-4 py-2 btn normal-case' onClick={() => setDateChangeModalOpen(false)}>
+                    <Button variant='neutral' className='px-4 py-2' onClick={() => setDateChangeModalOpen(false)}>
                         Cancel
                     </Button>
                     <Button
-                        className='px-4 py-2 btn loculusColor text-white normal-case'
+                        variant='primary'
+                        className='px-4 py-2'
                         onClick={() => {
                             setRestrictedUntil(DateTime.fromJSDate(date));
 

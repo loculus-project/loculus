@@ -2,6 +2,7 @@ import { DateTime } from 'luxon';
 import { type FC, useState, useRef } from 'react';
 
 import { Button } from '../common/Button';
+import { ModalBox } from '../common/ModalBox';
 import { withQueryProvider } from './../common/withQueryProvider';
 import DataUseTermsSelector from './DataUseTermsSelector';
 import { errorToast, successToast } from './EditDataUseTermsToasts.ts';
@@ -47,13 +48,16 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
 
     return (
         <>
-            <Button className='btn btn-sm' onClick={openDialog}>
+            <Button size='sm' onClick={openDialog}>
                 Edit data use terms
             </Button>
-            <dialog ref={dialogRef} className='modal'>
-                <div className='modal-box'>
+            <dialog ref={dialogRef} className='bg-transparent p-0 backdrop:bg-black/40'>
+                <ModalBox>
                     <Button
-                        className='btn btn-sm btn-circle btn-ghost text-gray-900 absolute right-2 top-2'
+                        size='sm'
+                        circle
+                        variant='ghost'
+                        className='text-gray-900 absolute right-2 top-2'
                         onClick={closeDialog}
                     >
                         ✕
@@ -75,7 +79,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                     </div>
                     <div className='flex items-center justify-end my-2'>
                         <Button
-                            className='btn btn-sm'
+                            size='sm'
                             onClick={() => {
                                 closeDialog();
                                 useSetDataUseTerms.mutate({
@@ -87,7 +91,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                             Submit
                         </Button>
                     </div>
-                </div>
+                </ModalBox>
             </dialog>
         </>
     );

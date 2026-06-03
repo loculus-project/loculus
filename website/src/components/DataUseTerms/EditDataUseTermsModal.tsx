@@ -292,11 +292,11 @@ const CancelSubmitButtons: FC<CancelSubmitButtonProps> = ({
 
     return (
         <div className='flex flex-row gap-2 justify-end'>
-            <Button className='btn' onClick={closeDialog}>
+            <Button variant='neutral' onClick={closeDialog}>
                 Cancel
             </Button>
             <Button
-                className='btn loculusColor text-white'
+                variant='primary'
                 disabled={!updatePossible}
                 onClick={() => {
                     closeDialog();

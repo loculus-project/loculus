@@ -8,6 +8,7 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
 import { Button } from '../common/Button';
+import { ModalBox } from '../common/ModalBox';
 import { withQueryProvider } from '../common/withQueryProvider';
 
 type RevokeSequenceEntryProps = {
@@ -91,7 +92,9 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
 
     return (
         <Button
-            className='btn btn-sm bg-red-400'
+            size='sm'
+            variant='unstyled'
+            className='bg-red-400'
             onClick={() =>
                 displayRevocationDialog({
                     dialogText: 'Are you sure you want to revoke this sequence?',
@@ -112,9 +115,6 @@ interface DisplayRevocationProps {
 export const displayRevocationDialog = ({ dialogText, onConfirmation }: DisplayRevocationProps) => {
     confirmAlert({
         closeOnClickOutside: false,
-        // Make the overlay an open daisyUI modal so the `.modal-box` child is visible.
-        overlayClassName: 'modal modal-open',
-
         customUI: ({ onClose }) => (
             <RevocationDialog
                 dialogText={dialogText}
@@ -138,13 +138,13 @@ export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConf
     const [inputValue, setInputValue] = useState('');
 
     return (
-        <div className='modal-box'>
+        <ModalBox>
             <form method='dialog'>
-                <Button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2' onClick={onClose}>
+                <Button size='sm' circle variant='ghost' className='absolute right-2 top-2' onClick={onClose}>
                     ✕
                 </Button>
             </form>
-            <h3 className='font-bold text-lg'>{dialogText}</h3>
+            <h3 className='font-bold text-lg pr-8'>{dialogText}</h3>
             <input
                 type='text'
                 value={inputValue}
@@ -154,13 +154,13 @@ export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConf
             />
             <div className='flex justify-end gap-4 mt-4'>
                 <form method='dialog'>
-                    <Button className='btn loculusColor text-white hover:bg-primary-700' onClick={onClose}>
+                    <Button variant='primary' onClick={onClose}>
                         Cancel
                     </Button>
                 </form>
                 <form method='dialog'>
                     <Button
-                        className='btn loculusColor text-white hover:bg-primary-700'
+                        variant='primary'
                         onClick={(e) => {
                             e.preventDefault();
                             onConfirmation(inputValue);
@@ -170,7 +170,7 @@ export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConf
                     </Button>
                 </form>
             </div>
-        </div>
+        </ModalBox>
     );
 };
 

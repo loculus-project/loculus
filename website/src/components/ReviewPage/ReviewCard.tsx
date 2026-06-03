@@ -23,6 +23,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { Button } from '../common/Button';
+import { Spinner } from '../common/Spinner';
 import BiTrash from '~icons/bi/trash';
 import ClarityNoteEditLine from '~icons/clarity/note-edit-line';
 import Note from '~icons/fluent/note-24-filled';
@@ -393,7 +394,7 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
         return (
             <div className='p-2 flex flex-col justify-between'>
                 <div data-tooltip-id={'inProcessing-tooltip-' + accession} key={'inProcessing-tooltip-' + accession}>
-                    <span className='loading loading-spinner loading-sm' />
+                    <Spinner size='sm' />
                 </div>
                 <CustomTooltip id={'inProcessing-tooltip-' + accession} content='In processing' />
                 <DataUseTermsIcon dataUseTerms={dataUseTerms} accession={accession} />

@@ -138,7 +138,8 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                             {columnMapping !== null && (
                                 <>
                                     <Button
-                                        className='btn bg-white text-red-800 border-red-800'
+                                        variant='unstyled'
+                                        className='bg-white text-red-800 border-red-800'
                                         onClick={handleDiscard}
                                     >
                                         Discard Mapping
@@ -146,14 +147,10 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                                     <div className='flex-1' />
                                 </>
                             )}
-                            <Button className='btn' onClick={closeDialog}>
+                            <Button variant='neutral' onClick={closeDialog}>
                                 Cancel
                             </Button>
-                            <Button
-                                className='btn loculusColor text-white'
-                                onClick={handleSubmit}
-                                disabled={!submittable}
-                            >
+                            <Button variant='primary' onClick={handleSubmit} disabled={!submittable}>
                                 {saveButtonText}
                             </Button>
                         </div>

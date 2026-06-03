@@ -9,11 +9,11 @@ export class SequenceDetailPage {
     }
 
     private get unalignedTab() {
-        return this.page.getByRole('button', { name: /unaligned/i });
+        return this.page.getByRole('tab', { name: /unaligned/i });
     }
 
     private get alignedTab() {
-        return this.page.getByRole('button', { name: /^aligned/i }).first();
+        return this.page.getByRole('tab', { name: /^aligned/i }).first();
     }
 
     async waitForSequenceTabs(timeout = 30000) {
