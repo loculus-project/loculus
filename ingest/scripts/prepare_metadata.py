@@ -38,9 +38,10 @@ class Config:
 
 def resolve_host_information(record: dict[str, str]) -> dict[str, str]:
     """Create a new host field and populate it from hostTaxonId or
-    hostNameScientific to be consistent with how direct submissions
-    specify the host organism. Any existing hostTaxonId, hostNameScientific,
-    and hostNameCommon fields on the record will be removed.
+    hostNameScientific (falling back to the empty string) to be consistent
+    with how direct submissions specify the host organism. Any existing
+    hostTaxonId, hostNameScientific, and hostNameCommon fields on the
+    record will be removed.
 
     This should be done after computing the hash for a record to not trigger
     revisions for all INSDC data
@@ -49,8 +50,7 @@ def resolve_host_information(record: dict[str, str]) -> dict[str, str]:
     record.pop("hostTaxonId", None)
     record.pop("hostNameScientific", None)
     record.pop("hostNameCommon", None)
-    if host:
-        record["host"] = host
+    record["host"] = host or ""
 
     return record
 
