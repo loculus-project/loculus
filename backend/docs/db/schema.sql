@@ -83,7 +83,7 @@ CREATE FUNCTION public.update_table_tracker() RETURNS trigger
 BEGIN
     IF TG_TABLE_NAME != 'table_update_tracker' THEN
         INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
-        VALUES (TG_TABLE_NAME, '', 0, timezone('UTC', CURRENT_TIMESTAMP))
+        VALUES (TG_TABLE_NAME, NULL, NULL, timezone('UTC', CURRENT_TIMESTAMP))
         ON CONFLICT (table_name, organism, pipeline_version)
         DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
     END IF;
@@ -550,8 +550,8 @@ ALTER TABLE public.sequence_upload_aux_table OWNER TO postgres;
 CREATE TABLE public.table_update_tracker (
     table_name text NOT NULL,
     last_time_updated timestamp without time zone DEFAULT timezone('UTC'::text, CURRENT_TIMESTAMP),
-    organism text DEFAULT ''::text NOT NULL,
-    pipeline_version bigint DEFAULT 0 NOT NULL
+    organism text,
+    pipeline_version bigint
 );
 
 
@@ -756,11 +756,11 @@ ALTER TABLE ONLY public.sequence_upload_aux_table
 
 
 --
--- Name: table_update_tracker table_update_tracker_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: table_update_tracker table_update_tracker_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.table_update_tracker
-    ADD CONSTRAINT table_update_tracker_pkey PRIMARY KEY (table_name, organism, pipeline_version);
+    ADD CONSTRAINT table_update_tracker_unique UNIQUE NULLS NOT DISTINCT (table_name, organism, pipeline_version);
 
 
 --
