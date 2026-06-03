@@ -673,11 +673,27 @@ rule compare_hashes:
         """
 
 
+rule hash_metadata:
+    input:
+        script="scripts/calculate_metadata_hashes.py",
+        prepped_metadata=prepped_metadata(),
+        config="results/config.yaml",
+    output:
+        hashed_metadata="results/metadata_with_hashes.ndjson",
+    shell:
+        """
+        python {input.script} \
+            --config-file {input.config} \
+            --input {input.prepped_metadata} \
+            --output {output.hashed_metadata} \
+        """
+
+
 rule prepare_files:
     input:
         script="scripts/prepare_files.py",
         config="results/config.yaml",
-        metadata=prepped_metadata(),
+        metadata="results/metadata_with_hashes.ndjson",
         sequences=(
             "results/sequences_filtered.ndjson"
             if FILTER
