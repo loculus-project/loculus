@@ -97,7 +97,7 @@ CREATE OR REPLACE FUNCTION update_external_metadata_tracker()
 RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
-    SELECT TG_TABLE_NAME, se.organism, 0, timezone('UTC', CURRENT_TIMESTAMP)
+    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
     FROM changed_rows cr
     JOIN sequence_entries se
       ON se.accession = cr.accession AND se.version = cr.version
@@ -140,7 +140,7 @@ CREATE OR REPLACE FUNCTION update_data_use_terms_table_tracker()
 RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
-    SELECT TG_TABLE_NAME, se.organism, 0, timezone('UTC', CURRENT_TIMESTAMP)
+    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
     FROM changed_rows cr
     JOIN sequence_entries se
       ON se.accession = cr.accession
