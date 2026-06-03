@@ -463,7 +463,7 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
             <span className={`text-base ${extraStyle ?? ''}`}>
                 <span
                     ref={textRef}
-                    className={`${textColor} ${disableTruncate ? '' : 'truncate max-w-xs inline-block'}`}
+                    className={`${textColor} ${disableTruncate ? '' : 'truncate max-w-xs inline-block align-middle'}`}
                     data-tooltip-id={showTooltip ? textTooltipId : undefined}
                 >
                     {value}
@@ -471,7 +471,10 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
                 {showTooltip && <CustomTooltip id={textTooltipId} content={tooltipContent} />}
                 {secondaryMessages !== undefined && (
                     <>
-                        <Note className='text-yellow-500 inline-block' data-tooltip-id={noteTooltipId} />
+                        <Note
+                            className='text-yellow-500 inline-block align-middle ml-1'
+                            data-tooltip-id={noteTooltipId}
+                        />
                         <CustomTooltip
                             id={noteTooltipId}
                             content={secondaryMessages.map((annotation) => annotation.message).join(', ')}
