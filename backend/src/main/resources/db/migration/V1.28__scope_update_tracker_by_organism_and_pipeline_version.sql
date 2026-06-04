@@ -158,3 +158,37 @@ CREATE TRIGGER update_tracker_trigger_del
 AFTER DELETE ON data_use_terms_table
 REFERENCING OLD TABLE AS changed_rows
 FOR EACH STATEMENT EXECUTE FUNCTION update_data_use_terms_table_tracker();
+
+
+-- Replace the generic per-statement trigger on the sequence_entries table with
+-- organism aware ones. organism is read directly from the changed rows, since
+-- it is a native column of sequence_entries.
+DROP TRIGGER IF EXISTS update_tracker_trigger ON sequence_entries;
+
+CREATE OR REPLACE FUNCTION update_sequence_entries_tracker()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, cr.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    GROUP BY cr.organism
+    ON CONFLICT (table_name, organism, pipeline_version)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_tracker_trigger_ins
+AFTER INSERT ON sequence_entries
+REFERENCING NEW TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_sequence_entries_tracker();
+
+CREATE TRIGGER update_tracker_trigger_upd
+AFTER UPDATE ON sequence_entries
+REFERENCING NEW TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_sequence_entries_tracker();
+
+CREATE TRIGGER update_tracker_trigger_del
+AFTER DELETE ON sequence_entries
+REFERENCING OLD TABLE AS changed_rows
+FOR EACH STATEMENT EXECUTE FUNCTION update_sequence_entries_tracker();
