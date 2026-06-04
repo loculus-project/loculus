@@ -1775,9 +1775,7 @@ class ProcessingFunctions:
                 message=f"Host validation for '{unvalidated_host}' failed with code {response.status_code}: {body.get('detail', '')}",
             )
             return ProcessingResult(
-                datum=unvalidated_host
-                if args["is_insdc_ingest_group"] and unvalidated_host.isdigit()
-                else None,
+                datum=None,
                 warnings=[message] if args["is_insdc_ingest_group"] else [],
                 errors=[message] if not args["is_insdc_ingest_group"] else [],
             )
