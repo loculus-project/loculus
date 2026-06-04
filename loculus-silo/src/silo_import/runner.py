@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import shutil
 import time
 
@@ -31,6 +32,9 @@ class ImporterRunner:
         self.download_manager = DownloadManager()
         self.current_etag = SPECIAL_ETAG_NONE
         self.last_hard_refresh: float = 0
+        self.last_successful_import_time: str | None = None
+        self.has_existing_silo_db: bool = False
+        self._last_lineage_pipeline_version: int | None = None
 
     def _clear_download_directories(self) -> None:
         """Clear all timestamped download directories on startup."""
@@ -41,13 +45,62 @@ class ImporterRunner:
                 logger.info("Clearing download directory on startup: %s", item)
                 safe_remove(item)
 
+    def _needs_full_preprocessing(self) -> bool:
+        """Determine if a full preprocessing run is needed."""
+        if not self.has_existing_silo_db:
+            return True
+        if self.last_successful_import_time is None:
+            return True
+        return time.time() - self.last_hard_refresh >= self.config.hard_refresh_interval
+
+    @staticmethod
+    def _parse_etag_timestamp(etag: str) -> str:
+        """Extract the ISO-8601 timestamp from a backend ETag.
+
+        The backend ETag format is ``"<timestamp>"`` (with double quotes),
+        where ``<timestamp>`` is a UTC ISO-8601 string such as
+        ``2024-01-15T10:30:00.123456``.  This method strips the surrounding
+        quotes and weak-validator prefix (W/) so the value can be passed
+        directly as a ``releasedSince`` parameter.
+        """
+        return re.sub(r'^(?:W/)?"(.*)"$', r"\1", etag)
+
+    def _update_lineage_if_needed(
+        self, pipeline_version: int | None, hard_refresh: bool = False
+    ) -> None:
+        """
+        Download lineage definitions only when the pipeline
+        version has changed or hard refresh is requested.
+        """
+        if pipeline_version == self._last_lineage_pipeline_version and not hard_refresh:
+            logger.info(
+                "Pipeline version %s unchanged; skipping lineage definition download",
+                pipeline_version,
+            )
+            return
+        update_lineage_definitions(pipeline_version, self.config, self.paths)
+        self._last_lineage_pipeline_version = pipeline_version
+
     def run_once(self) -> None:
         prune_timestamped_directories(self.paths.output_dir)
 
-        # Determine if hard refresh needed
+        if self._needs_full_preprocessing():
+            self._run_full_preprocessing()
+        else:
+            try:
+                self._run_incremental_append()
+            except Exception:
+                logger.warning(
+                    "Incremental append failed; falling back to full preprocessing",
+                    exc_info=True,
+                )
+                self._run_full_preprocessing()
+
+    def _run_full_preprocessing(self) -> None:
         hard_refresh = time.time() - self.last_hard_refresh >= self.config.hard_refresh_interval
 
         if hard_refresh:
+            self._last_lineage_pipeline_version = None
             logger.info(
                 f"Hard refresh triggered: "
                 f"time_since_last={time.time() - self.last_hard_refresh:.1f}s, "
@@ -56,7 +109,7 @@ class ImporterRunner:
             )
         else:
             logger.info(
-                f"Soft refresh: time_since_last={time.time() - self.last_hard_refresh:.1f}s, "
+                f"Full preprocessing: time_since_last={time.time() - self.last_hard_refresh:.1f}s, "
                 f"using etag={self.current_etag}"
             )
 
@@ -74,12 +127,10 @@ class ImporterRunner:
             return
         except (DecompressionFailedError, RecordCountMismatchError) as skip:
             logger.warning("Skipping run: %s", skip)
-            if skip.new_etag is not None:
-                self.current_etag = skip.new_etag
             return
 
         try:
-            update_lineage_definitions(download.pipeline_version, self.config, self.paths)
+            self._update_lineage_if_needed(download.pipeline_version, hard_refresh)
         except Exception:
             logger.exception("Failed to download lineage definitions; cleaning up input")
             safe_remove(self.paths.silo_input_data_path)
@@ -100,11 +151,72 @@ class ImporterRunner:
 
         # Mark success and update state
         self.current_etag = download.etag
+        self.has_existing_silo_db = True
+        self.last_successful_import_time = self._parse_etag_timestamp(download.etag)
 
         if hard_refresh:
             self.last_hard_refresh = time.time()
 
-        logger.info("Run complete; waiting %s seconds", self.config.poll_interval)
+        logger.info("Full preprocessing complete; waiting %s seconds", self.config.poll_interval)
+
+    def _run_incremental_append(self) -> None:
+        logger.info(
+            f"Incremental append: fetching data released since {self.last_successful_import_time}"
+        )
+
+        last_etag = self.current_etag
+
+        try:
+            download = self.download_manager.download_release(
+                self.config,
+                self.paths,
+                last_etag,
+                released_since=self.last_successful_import_time,
+            )
+        except (NotModifiedError, HashUnchangedError) as skip:
+            logger.info("Skipping incremental append: %s", skip)
+            if skip.new_etag is not None:
+                self.current_etag = skip.new_etag
+            return
+        except (DecompressionFailedError, RecordCountMismatchError) as skip:
+            logger.warning("Skipping incremental append: %s", skip)
+            return
+
+        if download.record_count == 0:
+            logger.info("No new records to append; skipping")
+            safe_remove(download.directory)
+            self.current_etag = download.etag
+            return
+
+        try:
+            self._update_lineage_if_needed(download.pipeline_version)
+        except Exception:
+            logger.exception(
+                "Failed to download lineage definitions during incremental append; cleaning up"
+            )
+            safe_remove(download.directory)
+            raise
+
+        try:
+            self.silo.run_append(
+                download.transformed_path,
+                self.paths.output_dir,
+                self.config.silo_run_timeout,
+            )
+        except Exception:
+            logger.exception("SILO append failed; cleaning up")
+            safe_remove(download.directory)
+            raise
+
+        # Mark success and update state
+        self.current_etag = download.etag
+        self.last_successful_import_time = self._parse_etag_timestamp(download.etag)
+
+        logger.info(
+            "Incremental append complete (%d records); waiting %s seconds",
+            download.record_count,
+            self.config.poll_interval,
+        )
 
 
 def run_forever(config: ImporterConfig, paths: ImporterPaths) -> None:

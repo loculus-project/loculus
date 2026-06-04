@@ -64,8 +64,14 @@ open class ReleasedDataModel(
     private val objectMapper: ObjectMapper,
 ) {
     @Transactional(readOnly = true)
-    open fun getReleasedData(organism: Organism): Sequence<ReleasedData> {
-        log.info { "Fetching released submissions from database for organism $organism" }
+    open fun getReleasedData(
+        organism: Organism,
+        releasedSince: kotlinx.datetime.LocalDateTime? = null,
+    ): Sequence<ReleasedData> {
+        log.info {
+            "Fetching released submissions from database for organism $organism" +
+                (releasedSince?.let { " since $it" } ?: "")
+        }
 
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
         val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
@@ -78,7 +84,7 @@ open class ReleasedDataModel(
         }
 
         log.info { "Starting to stream released submissions for organism $organism" }
-        return submissionDatabaseService.streamReleasedSubmissions(organism)
+        return submissionDatabaseService.streamReleasedSubmissions(organism, releasedSince)
             .map {
                 computeAdditionalMetadataFields(
                     it,
@@ -101,8 +107,9 @@ open class ReleasedDataModel(
         val lastUpdateTime = query
             .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
             .maxOrNull()
-            // Replace not strictly necessary but does no harm and a) shows UTC, b) simplifies silo import script logic
-            ?.replace(" ", "Z")
+            // Replace space with T so timestamp is valid ISO-8601 (e.g. 2024-01-15T10:30:00)
+            // This allows silo-import to parse the ETag as a releasedSince timestamp
+            ?.replace(" ", "T")
             ?: ""
         return "\"$lastUpdateTime\"" // ETag must be enclosed in double quotes
     }
