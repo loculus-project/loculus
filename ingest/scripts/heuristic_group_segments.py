@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from typing import Final
 
 import click
+from prepare_metadata import resolve_host_information
 import orjsonl
 import yaml
 
@@ -266,6 +267,8 @@ def main(
         row["hash"] = hashlib.md5(
             json.dumps(filtered_record, sort_keys=True).encode(), usedforsecurity=False
         ).hexdigest()
+
+        row = resolve_host_information(row)
 
         orjsonl.append(output_metadata, {"id": joint_key, "metadata": row})
         count += 1
