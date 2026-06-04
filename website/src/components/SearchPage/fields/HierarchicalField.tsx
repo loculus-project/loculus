@@ -100,7 +100,7 @@ export const HierarchicalField: FC<HierarchicalFieldProps> = ({
             />
             <div className='flex flex-row justify-end'>
                 <label>
-                    <span className='text-gray-400 text-sm mr-2'>include sublineages</span>
+                    <span className='text-gray-400 text-sm mr-2'>{checkBoxLabel}</span>
                     <Checkbox
                         size='sm'
                         outline
