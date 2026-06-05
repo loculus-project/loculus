@@ -1330,12 +1330,14 @@ class SubmissionDatabaseService(
     }
 
     fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> {
+        // The preprocessed-data tracker now holds one row per (organism, pipeline_version),
+        // so take the most recent timestamp across all of them to detect any new processing.
         val latestUpdate = transaction {
             UpdateTrackerTable
                 .select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
                 .where { UpdateTrackerTable.tableNameColumn eq SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME }
                 .map { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
-                .firstOrNull()
+                .maxOrNull()
         }
 
         if (latestUpdate == null || latestUpdate == lastPreprocessedDataUpdate) {
