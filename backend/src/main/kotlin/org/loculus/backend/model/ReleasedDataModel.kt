@@ -18,14 +18,10 @@ import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.FileUrlType
-import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
 import org.loculus.backend.service.submission.METADATA_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.RawProcessedData
-import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
-import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
-import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.service.submission.UpdateTrackerTable
 import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
@@ -42,18 +38,6 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 private val log = KotlinLogging.logger { }
-
-val RELEASED_DATA_RELATED_TABLES: List<String> =
-    listOf(
-        CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
-        EXTERNAL_METADATA_TABLE_NAME,
-        GROUPS_TABLE_NAME,
-        METADATA_UPLOAD_AUX_TABLE_NAME,
-        SEQUENCE_ENTRIES_TABLE_NAME,
-        SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME,
-        SEQUENCE_UPLOAD_AUX_TABLE_NAME,
-        DATA_USE_TERMS_TABLE_NAME,
-    )
 
 @Service
 open class ReleasedDataModel(
@@ -88,6 +72,23 @@ open class ReleasedDataModel(
                     organism,
                 )
             }
+    }
+
+    @Transactional(readOnly = true)
+    open fun getOrganismReleasedLastProcessedTime(organism: Organism): String {
+        val pipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion(organism)
+        val lastFinishedProcessingAt =
+            submissionDatabaseService.getLatestFinishedProcessingAtForReleasedData(organism, pipelineVersion)
+        val lastExternalMetadataUpdatedAt =
+            submissionDatabaseService.getLatestExternalMetadataUpdatedAtForReleasedData(organism)
+        val lastDataUseTermsUpdatedAt =
+            submissionDatabaseService.getLatestDataUseTermsUpdatedAtForReleasedData(organism)
+        val lastFinishedProcessingAtFormatted = lastFinishedProcessingAt ?: ""
+        val lastExternalMetadataUpdatedAtFormatted = lastExternalMetadataUpdatedAt ?: ""
+        val lastDataUseTermsUpdatedAtFormatted = lastDataUseTermsUpdatedAt ?: ""
+        val etagValue =
+            "$pipelineVersion:$lastFinishedProcessingAtFormatted:$lastExternalMetadataUpdatedAtFormatted:$lastDataUseTermsUpdatedAtFormatted"
+        return "\"$etagValue\""
     }
 
     @Transactional(readOnly = true)
