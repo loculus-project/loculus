@@ -245,7 +245,9 @@ class GetReleasedDataEndpointTest(
         convenienceClient.submitProcessedData(processedData)
         convenienceClient.approveProcessedSequenceEntries(accessionVersions)
 
-        val initialEtag = submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM)
+        val initialEtagOtherOrganism = submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM)
+            .andReturn().response.getHeader(ETAG)
+        val initialEtagDefaultOrganism = submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM)
             .andReturn().response.getHeader(ETAG)
 
         // Reuse the existing group — submitDefaultFiles would otherwise create a new group and
@@ -254,10 +256,13 @@ class GetReleasedDataEndpointTest(
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
         )
-        submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM, ifNoneMatch = initialEtag)
+        submissionControllerClient.getReleasedData(
+            organism = DEFAULT_ORGANISM,
+            ifNoneMatch = initialEtagDefaultOrganism,
+        )
             .andExpect(status().isOk)
-            .andExpect(header().string(ETAG, greaterThan(initialEtag)))
-        submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM, ifNoneMatch = initialEtag)
+            .andExpect(header().string(ETAG, greaterThan(initialEtagDefaultOrganism)))
+        submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM, ifNoneMatch = initialEtagOtherOrganism)
             .andExpect(status().isNotModified)
     }
 
