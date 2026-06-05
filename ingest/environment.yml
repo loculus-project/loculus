@@ -21,7 +21,7 @@ dependencies:
   - pyyaml=6.0.3
   - requests=2.33.1
   - seqkit=2.13.0
-  - snakefmt=1.1.0
+  - snakefmt=2.0.1
   - snakemake=9.20.0
   - unzip=6.0
   - pytest=9.0.3
