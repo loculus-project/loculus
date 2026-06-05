@@ -106,7 +106,7 @@ def _download_file(
     if etag and etag != "0":
         headers["If-None-Match"] = etag
 
-    try:
+    try:  # noqa: PLW0717
         session = requests.Session()
         session.headers.update(headers)
         response = session.get(url, timeout=timeout, stream=True)
@@ -167,7 +167,7 @@ class DownloadManager:
         data_path = download_dir / DATA_FILENAME
         transformed_path = download_dir / TRANSFORMED_DATA_FILENAME
 
-        try:
+        try:  # noqa: PLW0717
             # Download data from backend
             logger.info("Requesting released data from %s", config.released_data_endpoint)
             response = self.download_func(
