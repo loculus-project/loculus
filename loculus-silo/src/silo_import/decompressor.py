@@ -47,7 +47,7 @@ def analyze_ndjson(
         {name: set() for name in hierarchical_filters} if hierarchical_filters else {}
     )
 
-    try:
+    try:  # noqa: PLW0717
         for record in orjsonl.stream(path):
             record_count += 1
             metadata = record.get("metadata", {})  # type: ignore
