@@ -76,7 +76,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
               -- fetch ids for files uploaded by users and referenced in submissions
               SELECT (fil->>'fileId')::uuid AS file_id              
               FROM sequence_entries,
-                 LATERAL jsonb_each(COALESCE(unprocessed_data->'files','{}'::jsonb)) AS cat(k,v),
+                 LATERAL jsonb_each(COALESCE(NULLIF(unprocessed_data->'files', 'null'::jsonb),'{}'::jsonb)) AS cat(k,v),
                  LATERAL jsonb_array_elements(cat.v) AS fil
               UNION
               -- fetch ids for files produced by preprocessing.
@@ -91,7 +91,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
               JOIN current_processing_pipeline cpp
                   ON cpp.organism = se.organism
                  AND sepd.pipeline_version >= cpp.version,
-                 LATERAL jsonb_each(COALESCE(sepd.processed_data->'files','{}'::jsonb)) AS cat(k,v),
+                 LATERAL jsonb_each(COALESCE(NULLIF(sepd.processed_data->'files', 'null'::jsonb),'{}'::jsonb)) AS cat(k,v),
                  LATERAL jsonb_array_elements(cat.v) AS fil
             )
             SELECT f.id FROM files f
