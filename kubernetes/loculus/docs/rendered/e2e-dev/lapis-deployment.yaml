@@ -1,0 +1,889 @@
+# Source: loculus/templates/lapis-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-lapis-cchf
+  annotations:
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: lapis-cchf
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: lapis-cchf
+    spec:
+      
+      initContainers:
+        - name: config-processor-lapis-silo-database-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /input
+            - name: lapis-silo-database-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: lapis
+          image: "ghcr.io/genspectrum/lapis:v0.5.19@sha256:6a6e434e8670541dc8478a5e6bd9e7c70ecd5cf3232b81834253398b0e260ece"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 5Gi
+            requests:
+              cpu: 100m
+              memory: 500Mi
+          ports:
+            - containerPort: 8080
+          args:
+            - "--silo.url=http://loculus-silo-service-cchf:8081"
+          env:
+            - name: JVM_OPTS
+              value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /workspace/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /workspace/reference_genomes.json
+              subPath: reference_genomes.json
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 36 # 3 minutes to start
+          readinessProbe:
+            httpGet:
+              path: /sample/info
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-cchf
+        - name: lapis-silo-database-config-processed
+          emptyDir: {}
+---
+# Source: loculus/templates/lapis-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-lapis-dummy-organism
+  annotations:
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: lapis-dummy-organism
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: lapis-dummy-organism
+    spec:
+      
+      initContainers:
+        - name: config-processor-lapis-silo-database-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /input
+            - name: lapis-silo-database-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: lapis
+          image: "ghcr.io/genspectrum/lapis:v0.5.19@sha256:6a6e434e8670541dc8478a5e6bd9e7c70ecd5cf3232b81834253398b0e260ece"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 5Gi
+            requests:
+              cpu: 100m
+              memory: 500Mi
+          ports:
+            - containerPort: 8080
+          args:
+            - "--silo.url=http://loculus-silo-service-dummy-organism:8081"
+          env:
+            - name: JVM_OPTS
+              value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /workspace/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /workspace/reference_genomes.json
+              subPath: reference_genomes.json
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 36 # 3 minutes to start
+          readinessProbe:
+            httpGet:
+              path: /sample/info
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-dummy-organism
+        - name: lapis-silo-database-config-processed
+          emptyDir: {}
+---
+# Source: loculus/templates/lapis-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-lapis-dummy-organism-with-files
+  annotations:
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: lapis-dummy-organism-with-files
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: lapis-dummy-organism-with-files
+    spec:
+      
+      initContainers:
+        - name: config-processor-lapis-silo-database-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /input
+            - name: lapis-silo-database-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: lapis
+          image: "ghcr.io/genspectrum/lapis:v0.5.19@sha256:6a6e434e8670541dc8478a5e6bd9e7c70ecd5cf3232b81834253398b0e260ece"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 5Gi
+            requests:
+              cpu: 100m
+              memory: 500Mi
+          ports:
+            - containerPort: 8080
+          args:
+            - "--silo.url=http://loculus-silo-service-dummy-organism-with-files:8081"
+          env:
+            - name: JVM_OPTS
+              value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /workspace/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /workspace/reference_genomes.json
+              subPath: reference_genomes.json
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 36 # 3 minutes to start
+          readinessProbe:
+            httpGet:
+              path: /sample/info
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-dummy-organism-with-files
+        - name: lapis-silo-database-config-processed
+          emptyDir: {}
+---
+# Source: loculus/templates/lapis-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-lapis-ebola-sudan
+  annotations:
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: lapis-ebola-sudan
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: lapis-ebola-sudan
+    spec:
+      
+      initContainers:
+        - name: config-processor-lapis-silo-database-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /input
+            - name: lapis-silo-database-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: lapis
+          image: "ghcr.io/genspectrum/lapis:v0.5.19@sha256:6a6e434e8670541dc8478a5e6bd9e7c70ecd5cf3232b81834253398b0e260ece"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 5Gi
+            requests:
+              cpu: 100m
+              memory: 500Mi
+          ports:
+            - containerPort: 8080
+          args:
+            - "--silo.url=http://loculus-silo-service-ebola-sudan:8081"
+          env:
+            - name: JVM_OPTS
+              value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /workspace/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /workspace/reference_genomes.json
+              subPath: reference_genomes.json
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 36 # 3 minutes to start
+          readinessProbe:
+            httpGet:
+              path: /sample/info
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-ebola-sudan
+        - name: lapis-silo-database-config-processed
+          emptyDir: {}
+---
+# Source: loculus/templates/lapis-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-lapis-enteroviruses
+  annotations:
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: lapis-enteroviruses
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: lapis-enteroviruses
+    spec:
+      
+      initContainers:
+        - name: config-processor-lapis-silo-database-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /input
+            - name: lapis-silo-database-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: lapis
+          image: "ghcr.io/genspectrum/lapis:v0.5.19@sha256:6a6e434e8670541dc8478a5e6bd9e7c70ecd5cf3232b81834253398b0e260ece"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 5Gi
+            requests:
+              cpu: 100m
+              memory: 500Mi
+          ports:
+            - containerPort: 8080
+          args:
+            - "--silo.url=http://loculus-silo-service-enteroviruses:8081"
+          env:
+            - name: JVM_OPTS
+              value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /workspace/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /workspace/reference_genomes.json
+              subPath: reference_genomes.json
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 36 # 3 minutes to start
+          readinessProbe:
+            httpGet:
+              path: /sample/info
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-enteroviruses
+        - name: lapis-silo-database-config-processed
+          emptyDir: {}
+---
+# Source: loculus/templates/lapis-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-lapis-not-aligned-organism
+  annotations:
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: lapis-not-aligned-organism
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: lapis-not-aligned-organism
+    spec:
+      
+      initContainers:
+        - name: config-processor-lapis-silo-database-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /input
+            - name: lapis-silo-database-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: lapis
+          image: "ghcr.io/genspectrum/lapis:v0.5.19@sha256:6a6e434e8670541dc8478a5e6bd9e7c70ecd5cf3232b81834253398b0e260ece"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 5Gi
+            requests:
+              cpu: 100m
+              memory: 500Mi
+          ports:
+            - containerPort: 8080
+          args:
+            - "--silo.url=http://loculus-silo-service-not-aligned-organism:8081"
+          env:
+            - name: JVM_OPTS
+              value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /workspace/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /workspace/reference_genomes.json
+              subPath: reference_genomes.json
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 36 # 3 minutes to start
+          readinessProbe:
+            httpGet:
+              path: /sample/info
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-not-aligned-organism
+        - name: lapis-silo-database-config-processed
+          emptyDir: {}
+---
+# Source: loculus/templates/lapis-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-lapis-west-nile
+  annotations:
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: lapis-west-nile
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: lapis-west-nile
+    spec:
+      
+      initContainers:
+        - name: config-processor-lapis-silo-database-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /input
+            - name: lapis-silo-database-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: lapis
+          image: "ghcr.io/genspectrum/lapis:v0.5.19@sha256:6a6e434e8670541dc8478a5e6bd9e7c70ecd5cf3232b81834253398b0e260ece"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 5Gi
+            requests:
+              cpu: 100m
+              memory: 500Mi
+          ports:
+            - containerPort: 8080
+          args:
+            - "--silo.url=http://loculus-silo-service-west-nile:8081"
+          env:
+            - name: JVM_OPTS
+              value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /workspace/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /workspace/reference_genomes.json
+              subPath: reference_genomes.json
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 36 # 3 minutes to start
+          readinessProbe:
+            httpGet:
+              path: /sample/info
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-west-nile
+        - name: lapis-silo-database-config-processed
+          emptyDir: {}
+---

@@ -1,0 +1,207 @@
+# Source: loculus/templates/loculus-backend.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-backend
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: backend
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: backend
+    spec:
+      
+      initContainers:
+        - name: config-processor-loculus-backend-config
+          image: ghcr.io/loculus-project/config-processor:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: loculus-backend-config
+              mountPath: /input
+            - name: loculus-backend-config-processed
+              mountPath: /output
+          command: ["python3"]
+          args: ["/app/config-processor.py", "/input", "/output"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: LOCULUSSUB_smtpPassword
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            - name: LOCULUSSUB_insdcIngestUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUSSUB_preprocessingPipelinePassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUSSUB_externalMetadataUpdaterPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUSSUB_backendUserPassword
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: LOCULUSSUB_backendKeycloakClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: LOCULUSSUB_orcidSecret
+              valueFrom:
+                secretKeyRef:
+                  name: orcid
+                  key: orcidSecret
+      containers:
+        - name: backend
+          image: "ghcr.io/loculus-project/backend:latest"
+          imagePullPolicy: "Always"
+          
+          resources:
+            limits:
+              memory: 3Gi
+            requests:
+              cpu: 100m
+              memory: 500Mi
+          startupProbe:
+            httpGet:
+              path: "/actuator/health/liveness"
+              port: 8079
+            periodSeconds: 5
+            failureThreshold: 36 # 3 minutes to start
+          livenessProbe:
+            httpGet:
+              path: "/actuator/health/liveness"
+              port: 8079
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: "/actuator/health/readiness"
+              port: 8079
+          ports:
+            - containerPort: 8079
+          args:
+            - "--loculus.enable-seqsets=true"
+            - "--crossref.doi-prefix=$(CROSSREF_DOI_PREFIX)"
+            - "--crossref.endpoint=$(CROSSREF_ENDPOINT)"
+            - "--crossref.username=$(CROSSREF_USERNAME)"
+            - "--crossref.password=$(CROSSREF_PASSWORD)"
+            - "--crossref.database-name=$(CROSSREF_DATABASE_NAME)"
+            - "--crossref.email=$(CROSSREF_EMAIL)"
+            - "--crossref.organization=$(CROSSREF_ORGANIZATION)"
+            - "--crossref.host-url=$(CROSSREF_HOST_URL)"
+            - "--keycloak.password=$(BACKEND_KEYCLOAK_PASSWORD)"
+            - "--keycloak.realm=loculus"
+            - "--keycloak.client=backend-client"
+            - "--keycloak.url=http://loculus-keycloak-service:8083"
+            - "--keycloak.user=backend"
+            - "--spring.datasource.password=$(DB_PASSWORD)"
+            - "--spring.datasource.url=$(DB_URL)"
+            - "--spring.datasource.username=$(DB_USERNAME)"
+            - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
+            - "--loculus.cleanup.task.reset-stale-in-processing-after-seconds=600"
+            - "--loculus.s3.enabled=$(S3_ENABLED)"
+            - "--loculus.s3.bucket.endpoint=$(S3_BUCKET_ENDPOINT)"
+            - "--loculus.s3.bucket.internal-endpoint=$(S3_BUCKET_INTERNAL_ENDPOINT)"
+            - "--loculus.s3.bucket.region=$(S3_BUCKET_REGION)"
+            - "--loculus.s3.bucket.bucket=$(S3_BUCKET_BUCKET)"
+            - "--loculus.s3.bucket.access-key=$(S3_BUCKET_ACCESS_KEY)"
+            - "--loculus.s3.bucket.secret-key=$(S3_BUCKET_SECRET_KEY)"
+          env:
+            - name: JVM_OPTS
+              value: -XX:+UseContainerSupport -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2
+            - name: CROSSREF_USERNAME
+              valueFrom:
+               secretKeyRef:
+                 name: crossref
+                 key: username
+            - name: CROSSREF_PASSWORD
+              valueFrom:
+               secretKeyRef:
+                 name: crossref
+                 key: password
+            - name: CROSSREF_DOI_PREFIX
+              value: "placeholder"
+            - name: CROSSREF_ENDPOINT
+              value: "https://test.crossref.org"
+            - name: CROSSREF_DATABASE_NAME
+              value: 
+            - name: CROSSREF_EMAIL
+              value: 
+            - name: CROSSREF_ORGANIZATION
+              value: 
+            - name: CROSSREF_HOST_URL
+              value: 
+            - name: BACKEND_KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
+            - name: DB_URL
+              valueFrom:
+               secretKeyRef:
+                 name: database
+                 key: url
+            - name: DB_USERNAME
+              valueFrom:
+               secretKeyRef:
+                 name: database
+                 key: username
+            - name: DB_PASSWORD
+              valueFrom:
+               secretKeyRef:
+                 name: database
+                 key: password
+            - name: S3_ENABLED
+              value: "true"
+            - name: S3_BUCKET_ENDPOINT
+              value: "https://s3-%!s(<nil>)"
+            - name: S3_BUCKET_INTERNAL_ENDPOINT
+              value: "http://loculus-minio-service:8084"
+            - name: S3_BUCKET_REGION
+              value: "us-east-1"
+            - name: S3_BUCKET_BUCKET
+              value: "loculus-preview-private"
+            - name: S3_BUCKET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-bucket
+                  key: accessKey
+            - name: S3_BUCKET_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-bucket
+                  key: secretKey
+          volumeMounts:
+            - name: loculus-backend-config-processed
+              mountPath: /config
+      volumes:
+
+        - name: loculus-backend-config
+          configMap:
+            name: loculus-backend-config
+        - name: loculus-backend-config-processed
+          emptyDir: {}
+---
