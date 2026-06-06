@@ -55,13 +55,13 @@ export interface InnerSearchFullUIProps {
     contactConfig?: ContactConfig;
 }
 
-const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
-    const sequenceCount = totalSequences ?? oldCount ?? initialCount;
+const buildEntriesCountText = (totalEntries: number | undefined, oldCount: number | null, initialCount: number) => {
+    const entryCount = totalEntries ?? oldCount ?? initialCount;
 
-    const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
-    const pluralSuffix = sequenceCount === 1 ? '' : 's';
+    const formattedCount = formatNumberWithDefaultLocale(entryCount);
+    const entryLabel = entryCount === 1 ? 'sequence entry' : 'sequence entries';
 
-    return `Search returned ${formattedCount} sequence${pluralSuffix}`;
+    return `Search returned ${formattedCount} ${entryLabel}`;
 };
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) this component is a mess a needs to be refactored */
@@ -203,8 +203,8 @@ export const InnerSearchFullUI = ({
         });
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
-    const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
-    const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
+    const totalEntries = aggregatedHook.data?.data[0].count ?? undefined;
+    const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalEntries;
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
@@ -323,7 +323,7 @@ export const InnerSearchFullUI = ({
                     )}
                     <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
                         <div className='mt-auto'>
-                            {buildSequenceCountText(totalSequences, oldCount, initialCount)}
+                            {buildEntriesCountText(totalEntries, oldCount, initialCount)}
                             {detailsHook.isPending ||
                             aggregatedHook.isPending ||
                             !firstClientSideLoadOfCountCompleted ||
@@ -400,9 +400,9 @@ export const InnerSearchFullUI = ({
                     />
 
                     <div className='mt-4 flex justify-center'>
-                        {totalSequences !== undefined && (
+                        {totalEntries !== undefined && (
                             <SearchPagination
-                                count={Math.ceil(totalSequences / pageSize)}
+                                count={Math.ceil(totalEntries / pageSize)}
                                 page={page}
                                 setPage={setPage}
                             />

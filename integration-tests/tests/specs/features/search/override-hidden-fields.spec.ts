@@ -42,7 +42,7 @@ test('Override hidden fields', async ({ page, groupId }) => {
     await reviewPage.waitForZeroProcessing();
     await reviewPage.releaseAndGoToReleasedSequences();
 
-    while (!(await page.getByText('Search returned 2 sequences').isVisible())) {
+    while (!(await page.getByText('Search returned 2 sequence entries').isVisible())) {
         await page.reload();
         await page.waitForTimeout(2000);
     }

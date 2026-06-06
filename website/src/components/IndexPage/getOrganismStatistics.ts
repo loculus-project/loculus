@@ -11,8 +11,8 @@ import {
 import { versionStatuses } from '../../types/lapis';
 
 export type OrganismStatistics = {
-    totalSequences: number;
-    recentSequences: number;
+    totalEntries: number;
+    recentEntries: number;
     lastUpdatedAt: DateTime | undefined;
 };
 type OrganismStatisticsMap = Map<string, OrganismStatistics>;
@@ -39,8 +39,8 @@ const getOrganismStatistics = async (organism: string, numberDaysAgo: number): P
         withTimeout(getRecent(organism, numberDaysAgo), TIMEOUT_MS, 0),
     ]);
     return {
-        totalSequences: total,
-        recentSequences: recent,
+        totalEntries: total,
+        recentEntries: recent,
         lastUpdatedAt,
     };
 };
