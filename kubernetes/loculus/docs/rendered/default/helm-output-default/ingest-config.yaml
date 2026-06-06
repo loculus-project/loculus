@@ -1,0 +1,162 @@
+# Source: loculus/templates/ingest-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-ingest-config-cchf
+data:
+  config.yaml: |
+    segment_identification:
+      method: align
+      nextclade_dataset_name: community/pathoplexus/cchfv
+    taxon_id: 3052518
+    nucleotide_sequences:
+    - L
+    - M
+    - S
+    verify_loculus_version_is: latest
+    check_ena_deposition: false
+    organism: cchf
+    backend_url: https://backend-%!s(<nil>)
+    keycloak_token_url: http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token
+    rename:
+      bioprojects: bioprojectAccession
+      country: geoLocCountry
+      division: geoLocAdmin1
+      genbankAccession: insdcAccessionFull
+      ncbiCollectionDate: sampleCollectionDate
+      ncbiHostCommonName: hostNameCommon
+      ncbiHostName: hostNameScientific
+      ncbiHostSex: hostGender
+      ncbiHostTaxId: hostTaxonId
+      ncbiIsLabHost: isLabHost
+      ncbiIsolateName: specimenCollectorSampleId
+      ncbiPurposeOfSampling: purposeOfSampling
+      ncbiSraAccessions: insdcRawReadsAccession
+      ncbiSubmitterAffiliation: authorAffiliations
+      ncbiSubmitterNames: authors
+    insdc_segment_specific_fields:
+      - insdcAccessionBase
+      - insdcAccessionFull
+      - insdcVersion
+      - ncbiUpdateDate
+---
+# Source: loculus/templates/ingest-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-ingest-config-ebola-sudan
+data:
+  config.yaml: |
+    taxon_id: 3052460
+    nucleotide_sequences:
+    - main
+    verify_loculus_version_is: latest
+    check_ena_deposition: false
+    organism: ebola-sudan
+    backend_url: https://backend-%!s(<nil>)
+    keycloak_token_url: http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token
+    rename:
+      bioprojects: bioprojectAccession
+      country: geoLocCountry
+      division: geoLocAdmin1
+      genbankAccession: insdcAccessionFull
+      ncbiCollectionDate: sampleCollectionDate
+      ncbiHostCommonName: hostNameCommon
+      ncbiHostName: hostNameScientific
+      ncbiHostSex: hostGender
+      ncbiHostTaxId: hostTaxonId
+      ncbiIsLabHost: isLabHost
+      ncbiIsolateName: specimenCollectorSampleId
+      ncbiPurposeOfSampling: purposeOfSampling
+      ncbiSraAccessions: insdcRawReadsAccession
+      ncbiSubmitterAffiliation: authorAffiliations
+      ncbiSubmitterNames: authors
+    insdc_segment_specific_fields:
+      - insdcAccessionBase
+      - insdcAccessionFull
+      - insdcVersion
+      - ncbiUpdateDate
+---
+# Source: loculus/templates/ingest-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-ingest-config-enteroviruses
+data:
+  config.yaml: |
+    segment_identification:
+      method: minimizer
+      minimizer_index: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json
+      minimizer_parser:
+      - segment
+    taxon_id: 138948
+    nucleotide_sequences:
+    - CV-A16
+    - CV-A10
+    - EV-A71
+    - EV-D68
+    verify_loculus_version_is: latest
+    check_ena_deposition: false
+    organism: enteroviruses
+    backend_url: https://backend-%!s(<nil>)
+    keycloak_token_url: http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token
+    rename:
+      bioprojects: bioprojectAccession
+      country: geoLocCountry
+      division: geoLocAdmin1
+      genbankAccession: insdcAccessionFull
+      ncbiCollectionDate: sampleCollectionDate
+      ncbiHostCommonName: hostNameCommon
+      ncbiHostName: hostNameScientific
+      ncbiHostSex: hostGender
+      ncbiHostTaxId: hostTaxonId
+      ncbiIsLabHost: isLabHost
+      ncbiIsolateName: specimenCollectorSampleId
+      ncbiPurposeOfSampling: purposeOfSampling
+      ncbiSraAccessions: insdcRawReadsAccession
+      ncbiSubmitterAffiliation: authorAffiliations
+      ncbiSubmitterNames: authors
+      segment: genotype
+    insdc_segment_specific_fields:
+      - insdcAccessionBase
+      - insdcAccessionFull
+      - insdcVersion
+      - ncbiUpdateDate
+---
+# Source: loculus/templates/ingest-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-ingest-config-west-nile
+data:
+  config.yaml: |
+    taxon_id: 3048448
+    nucleotide_sequences:
+    - main
+    verify_loculus_version_is: latest
+    check_ena_deposition: false
+    organism: west-nile
+    backend_url: https://backend-%!s(<nil>)
+    keycloak_token_url: http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token
+    rename:
+      bioprojects: bioprojectAccession
+      country: geoLocCountry
+      division: geoLocAdmin1
+      genbankAccession: insdcAccessionFull
+      ncbiCollectionDate: sampleCollectionDate
+      ncbiHostCommonName: hostNameCommon
+      ncbiHostName: hostNameScientific
+      ncbiHostSex: hostGender
+      ncbiHostTaxId: hostTaxonId
+      ncbiIsLabHost: isLabHost
+      ncbiIsolateName: specimenCollectorSampleId
+      ncbiPurposeOfSampling: purposeOfSampling
+      ncbiSraAccessions: insdcRawReadsAccession
+      ncbiSubmitterAffiliation: authorAffiliations
+      ncbiSubmitterNames: authors
+    insdc_segment_specific_fields:
+      - insdcAccessionBase
+      - insdcAccessionFull
+      - insdcVersion
+      - ncbiUpdateDate
+---
