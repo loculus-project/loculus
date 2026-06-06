@@ -66,6 +66,15 @@ export const accessionVersion = z.object({
 });
 export type AccessionVersion = z.infer<typeof accessionVersion>;
 
+export const accessionVersionWithOrganism = accessionVersion.merge(
+    z.object({
+        organism: z.string(),
+        isRevocation: z.boolean(),
+        submittedAt: z.number(),
+    }),
+);
+export type AccessionVersionWithOrganism = z.infer<typeof accessionVersionWithOrganism>;
+
 export const accessionVersionsFilter = z.object({
     accessionVersionsFilter: z.array(accessionVersion).optional(),
 });

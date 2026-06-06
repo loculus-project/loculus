@@ -284,6 +284,15 @@ data class EditedSequenceEntryData(
     val data: OriginalData<GeneticSequence>,
 ) : AccessionVersionInterface
 
+data class AccessionVersionWithOrganism(
+    override val accession: Accession,
+    override val version: Version,
+    val organism: String,
+    val isRevocation: Boolean,
+    @Schema(example = "1720304713", description = "Unix timestamp in seconds of submission time")
+    val submittedAt: Long,
+) : AccessionVersionInterface
+
 data class UnprocessedData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
