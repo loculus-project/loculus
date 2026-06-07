@@ -18,7 +18,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
 
 @EndpointTest
-class OriginalDataRevisionWorkflowTest(
+class SubmittedDataRevisionWorkflowTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
@@ -32,7 +32,7 @@ class OriginalDataRevisionWorkflowTest(
         assertThat(accessionVersions, hasSize(greaterThan(0)))
         val firstAccession = accessionVersions[0].accession
 
-        val response = submissionControllerClient.getOriginalData(groupId = groupId)
+        val response = submissionControllerClient.getSubmittedData(groupId = groupId)
             .andExpect(status().isOk)
             .andExpect(content().contentType("application/zip"))
             .andReturn()
@@ -103,7 +103,7 @@ class OriginalDataRevisionWorkflowTest(
 
         val selectedAccession = accessionVersions[0].accession
 
-        val response = submissionControllerClient.getOriginalData(
+        val response = submissionControllerClient.getSubmittedData(
             groupId = groupId,
             accessionsFilter = listOf(selectedAccession),
         )

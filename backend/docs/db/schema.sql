@@ -516,8 +516,8 @@ CREATE TABLE public.sequence_entries (
     submitted_at timestamp without time zone NOT NULL,
     released_at timestamp without time zone,
     is_revocation boolean DEFAULT false NOT NULL,
-    original_data jsonb,
-    unprocessed_data jsonb
+    original_submission_data jsonb,
+    submission_data jsonb
 );
 
 
@@ -557,12 +557,12 @@ CREATE VIEW public.sequence_entries_view AS
     se.submitted_at,
     se.released_at,
     se.is_revocation,
-    se.unprocessed_data,
+    se.submission_data,
     sepd.started_processing_at,
     sepd.finished_processing_at,
     sepd.processed_data,
         CASE
-            WHEN se.is_revocation THEN jsonb_build_object('metadata', COALESCE((se.unprocessed_data -> 'metadata'::text), '{}'::jsonb), 'unalignedNucleotideSequences', '{}'::jsonb, 'alignedNucleotideSequences', '{}'::jsonb, 'nucleotideInsertions', '{}'::jsonb, 'alignedAminoAcidSequences', '{}'::jsonb, 'aminoAcidInsertions', '{}'::jsonb, 'files', 'null'::jsonb)
+            WHEN se.is_revocation THEN jsonb_build_object('metadata', COALESCE((se.submission_data -> 'metadata'::text), '{}'::jsonb), 'unalignedNucleotideSequences', '{}'::jsonb, 'alignedNucleotideSequences', '{}'::jsonb, 'nucleotideInsertions', '{}'::jsonb, 'alignedAminoAcidSequences', '{}'::jsonb, 'aminoAcidInsertions', '{}'::jsonb, 'files', 'null'::jsonb)
             WHEN (aem.external_metadata IS NULL) THEN sepd.processed_data
             ELSE (sepd.processed_data || jsonb_build_object('metadata', ((sepd.processed_data -> 'metadata'::text) || aem.external_metadata)))
         END AS joint_metadata,

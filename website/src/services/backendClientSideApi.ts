@@ -1,17 +1,17 @@
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
-export type GetOriginalDataRequest = {
+export type GetSubmittedDataRequest = {
     groupId: number;
     accessionsFilter: string[];
 };
 
-export type GetOriginalDataError = {
+export type GetSubmittedDataError = {
     status: number;
     statusText: string;
     detail: string;
 };
 
-export type GetOriginalDataResult = { ok: true; blob: Blob } | { ok: false; error: GetOriginalDataError };
+export type GetSubmittedDataResult = { ok: true; blob: Blob } | { ok: false; error: GetSubmittedDataError };
 
 function extractErrorDetail(errorText: string) {
     try {
@@ -29,13 +29,13 @@ function extractErrorDetail(errorText: string) {
     return errorText;
 }
 
-export async function getOriginalData(
+export async function getSubmittedData(
     backendUrl: string,
     organism: string,
     accessToken: string,
-    request: GetOriginalDataRequest,
-): Promise<GetOriginalDataResult> {
-    const url = `${backendUrl}/${organism}/get-original-data`;
+    request: GetSubmittedDataRequest,
+): Promise<GetSubmittedDataResult> {
+    const url = `${backendUrl}/${organism}/get-submitted-data`;
 
     const response = await fetch(url, {
         method: 'POST',

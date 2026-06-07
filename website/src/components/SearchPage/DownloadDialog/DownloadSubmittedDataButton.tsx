@@ -1,15 +1,15 @@
 import { type FC, useState, useCallback } from 'react';
 
 import { type SequenceFilter } from './SequenceFilters';
-import { getOriginalData } from '../../../services/backendClientSideApi';
+import { getSubmittedData } from '../../../services/backendClientSideApi';
 import { downloadBlob } from '../../../utils/downloadBlob';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
 import { Button } from '../../common/Button';
 
-export const MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES = 500;
+export const MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES = 500;
 
-type DownloadOriginalDataButtonProps = {
+type DownloadSubmittedDataButtonProps = {
     sequenceFilter: SequenceFilter;
     backendUrl: string;
     accessToken: string;
@@ -24,7 +24,7 @@ const extractAccessions = (accessionVersions: string[]): string[] => {
     return [...new Set(accessions)];
 };
 
-export const DownloadOriginalDataButton: FC<DownloadOriginalDataButtonProps> = ({
+export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> = ({
     sequenceFilter,
     backendUrl,
     accessToken,
@@ -38,15 +38,15 @@ export const DownloadOriginalDataButton: FC<DownloadOriginalDataButtonProps> = (
 
     const sequenceCount = sequenceFilter.sequenceCount();
     const effectiveCount = sequenceCount ?? totalSequences;
-    const exceedsLimit = effectiveCount !== undefined && effectiveCount > MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES;
+    const exceedsLimit = effectiveCount !== undefined && effectiveCount > MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES;
 
     let buttonText: string;
     if (sequenceCount === undefined) {
         const formattedCount = totalSequences !== undefined ? formatNumberWithDefaultLocale(totalSequences) : 'all';
-        buttonText = `Download original data (${formattedCount})`;
+        buttonText = `Download originally submitted data (${formattedCount})`;
     } else {
         const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
-        buttonText = `Download original data (${formattedCount} selected)`;
+        buttonText = `Download originally submitted data (${formattedCount} selected)`;
     }
 
     const handleDownload = useCallback(async () => {
@@ -71,13 +71,13 @@ export const DownloadOriginalDataButton: FC<DownloadOriginalDataButtonProps> = (
             if (accessions.length === 0) {
                 throw new Error('No sequences to download');
             }
-            if (accessions.length > MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES) {
+            if (accessions.length > MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES) {
                 throw new Error(
-                    `Download is limited to ${formatNumberWithDefaultLocale(MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES)} entries. Please select fewer.`,
+                    `Download is limited to ${formatNumberWithDefaultLocale(MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES)} entries. Please select fewer.`,
                 );
             }
 
-            const result = await getOriginalData(backendUrl, organism, accessToken, {
+            const result = await getSubmittedData(backendUrl, organism, accessToken, {
                 groupId,
                 accessionsFilter: accessions,
             });
@@ -93,7 +93,7 @@ export const DownloadOriginalDataButton: FC<DownloadOriginalDataButtonProps> = (
             }
 
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-            const filename = `${organism}_original_data_${timestamp}.zip`;
+            const filename = `${organism}_submitted_data_${timestamp}.zip`;
             downloadBlob(result.blob, filename);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Download failed';
@@ -117,7 +117,7 @@ export const DownloadOriginalDataButton: FC<DownloadOriginalDataButtonProps> = (
                 </Button>
                 {exceedsLimit && (
                     <div className='invisible group-hover:visible absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 text-sm text-white bg-gray-800 rounded-md shadow-lg whitespace-nowrap z-20'>
-                        Limited to {formatNumberWithDefaultLocale(MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES)} entries. Please
+                        Limited to {formatNumberWithDefaultLocale(MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES)} entries. Please
                         select fewer.
                         <div className='absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-gray-800' />
                     </div>

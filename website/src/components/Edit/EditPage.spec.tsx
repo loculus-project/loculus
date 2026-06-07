@@ -75,14 +75,14 @@ describe('EditPage', () => {
         renderEditPage({ allowSubmissionOfConsensusSequences: false });
 
         expect(screen.getByText(/Original data/i)).toBeInTheDocument();
-        expectTextInSequenceData.unprocessedMetadata(defaultReviewData.originalData.metadata);
+        expectTextInSequenceData.unprocessedMetadata(defaultReviewData.submittedData.metadata);
     });
 
     test('should show original data', () => {
         renderEditPage();
 
         expect(screen.getByText(/Original data/i)).toBeInTheDocument();
-        expectTextInSequenceData.unprocessedMetadata(defaultReviewData.originalData.metadata);
+        expectTextInSequenceData.unprocessedMetadata(defaultReviewData.submittedData.metadata);
     });
 
     test('should show error and warning tooltips', () => {
@@ -110,7 +110,7 @@ describe('EditPage', () => {
         expect(undoButton).not.toBeNull();
 
         await userEvent.click(undoButton!);
-        expectTextInSequenceData.unprocessedMetadata(defaultReviewData.originalData.metadata);
+        expectTextInSequenceData.unprocessedMetadata(defaultReviewData.submittedData.metadata);
     });
 });
 

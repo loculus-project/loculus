@@ -35,7 +35,7 @@ import java.io.ByteArrayInputStream
 import java.util.zip.ZipInputStream
 
 @EndpointTest
-class GetOriginalDataEndpointTest(
+class GetSubmittedDataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
@@ -44,7 +44,7 @@ class GetOriginalDataEndpointTest(
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
         expectUnauthorizedResponse(isModifyingRequest = true) {
-            submissionControllerClient.getOriginalData(groupId = groupId, jwt = it)
+            submissionControllerClient.getSubmittedData(groupId = groupId, jwt = it)
         }
     }
 
@@ -54,7 +54,7 @@ class GetOriginalDataEndpointTest(
         val otherUserJwt = generateJwtFor("otherUser")
         groupManagementClient.createNewGroup(jwt = otherUserJwt)
 
-        submissionControllerClient.getOriginalData(groupId = groupId, jwt = otherUserJwt)
+        submissionControllerClient.getSubmittedData(groupId = groupId, jwt = otherUserJwt)
             .andExpect(status().isForbidden)
     }
 
@@ -62,7 +62,7 @@ class GetOriginalDataEndpointTest(
     fun `GIVEN no sequence entries in database THEN returns zip with header-only metadata and empty sequences`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
 
-        val response = submissionControllerClient.getOriginalData(groupId = groupId)
+        val response = submissionControllerClient.getSubmittedData(groupId = groupId)
             .andExpect(status().isOk)
             .andExpect(content().contentType("application/zip"))
             .andReturn()
@@ -87,7 +87,7 @@ class GetOriginalDataEndpointTest(
         val submissionResult = convenienceClient.submitDefaultFiles()
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(groupId = submissionResult.groupId)
 
-        val response = submissionControllerClient.getOriginalData(groupId = submissionResult.groupId)
+        val response = submissionControllerClient.getSubmittedData(groupId = submissionResult.groupId)
             .andExpect(status().isOk)
             .andExpect(content().contentType("application/zip"))
             .andExpect(
@@ -95,7 +95,7 @@ class GetOriginalDataEndpointTest(
                     HttpHeaders.CONTENT_DISPOSITION,
                     matchesPattern(
                         "attachment; filename=\"$DEFAULT_ORGANISM" +
-                            "_original_data_[0-9]{8}T[0-9]{6}Z\\.zip\"",
+                            "_submitted_data_[0-9]{8}T[0-9]{6}Z\\.zip\"",
                     ),
                 ),
             )
@@ -121,12 +121,12 @@ class GetOriginalDataEndpointTest(
 
         transaction {
             val unprocessedData = SequenceEntriesTable
-                .select(SequenceEntriesTable.unprocessedDataColumn)
+                .select(SequenceEntriesTable.submissionDataColumn)
                 .where {
                     (SequenceEntriesTable.accessionColumn eq correctedAccession.accession) and
                         (SequenceEntriesTable.versionColumn eq correctedAccession.version)
                 }
-                .single()[SequenceEntriesTable.unprocessedDataColumn]!!
+                .single()[SequenceEntriesTable.submissionDataColumn]!!
 
             SequenceEntriesTable.update(
                 where = {
@@ -134,13 +134,13 @@ class GetOriginalDataEndpointTest(
                         (SequenceEntriesTable.versionColumn eq correctedAccession.version)
                 },
             ) {
-                it[unprocessedDataColumn] = unprocessedData.copy(
+                it[submissionDataColumn] = unprocessedData.copy(
                     metadata = unprocessedData.metadata + ("authors" to "Corrected Author"),
                 )
             }
         }
 
-        val response = submissionControllerClient.getOriginalData(groupId = groupId)
+        val response = submissionControllerClient.getSubmittedData(groupId = groupId)
             .andExpect(status().isOk)
             .andReturn()
             .response
@@ -161,7 +161,7 @@ class GetOriginalDataEndpointTest(
             groupId = submissionResult.groupId,
         )
 
-        val response = submissionControllerClient.getOriginalData(groupId = submissionResult.groupId)
+        val response = submissionControllerClient.getSubmittedData(groupId = submissionResult.groupId)
             .andExpect(status().isOk)
             .andReturn()
             .response
@@ -189,7 +189,7 @@ class GetOriginalDataEndpointTest(
             groupId = submissionResult.groupId,
         )
 
-        val response = submissionControllerClient.getOriginalData(groupId = submissionResult.groupId)
+        val response = submissionControllerClient.getSubmittedData(groupId = submissionResult.groupId)
             .andExpect(status().isOk)
             .andReturn()
             .response
@@ -224,7 +224,7 @@ class GetOriginalDataEndpointTest(
             groupId,
         )
 
-        val response = submissionControllerClient.getOriginalData(groupId = groupId)
+        val response = submissionControllerClient.getSubmittedData(groupId = groupId)
             .andExpect(status().isOk)
             .andReturn()
             .response
@@ -257,7 +257,7 @@ class GetOriginalDataEndpointTest(
 
         val selectedAccessions = accessionVersions.take(2).map { it.accession }
 
-        val response = submissionControllerClient.getOriginalData(
+        val response = submissionControllerClient.getSubmittedData(
             groupId = submissionResult.groupId,
             accessionsFilter = selectedAccessions,
         )
@@ -282,7 +282,7 @@ class GetOriginalDataEndpointTest(
         val submissionResult = convenienceClient.submitDefaultFiles()
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(groupId = submissionResult.groupId)
 
-        val response = submissionControllerClient.getOriginalData(
+        val response = submissionControllerClient.getSubmittedData(
             groupId = submissionResult.groupId,
             accessionsFilter = listOf("NON_EXISTENT", "ALSO_NOT_THERE"),
         )
@@ -308,7 +308,7 @@ class GetOriginalDataEndpointTest(
             groupId = groupId,
         )
 
-        val response = submissionControllerClient.getOriginalData(
+        val response = submissionControllerClient.getSubmittedData(
             organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
             groupId = groupId,
         )
@@ -328,7 +328,7 @@ class GetOriginalDataEndpointTest(
     fun `GIVEN only non-released sequences THEN returns empty data`() {
         val submissionResult = convenienceClient.submitDefaultFiles()
 
-        val response = submissionControllerClient.getOriginalData(groupId = submissionResult.groupId)
+        val response = submissionControllerClient.getSubmittedData(groupId = submissionResult.groupId)
             .andExpect(status().isOk)
             .andReturn()
             .response
@@ -350,7 +350,7 @@ class GetOriginalDataEndpointTest(
             groupId = groupId,
         )
 
-        val response = submissionControllerClient.getOriginalData(
+        val response = submissionControllerClient.getSubmittedData(
             organism = OTHER_ORGANISM,
             groupId = groupId,
         )
@@ -379,7 +379,7 @@ class GetOriginalDataEndpointTest(
             groupId = groupId,
         )
 
-        val response = submissionControllerClient.getOriginalData(
+        val response = submissionControllerClient.getSubmittedData(
             organism = OTHER_ORGANISM,
             groupId = groupId,
         )
@@ -410,7 +410,7 @@ class GetOriginalDataEndpointTest(
             groupId = groupId,
         )
 
-        val response = submissionControllerClient.getOriginalData(
+        val response = submissionControllerClient.getSubmittedData(
             organism = OTHER_ORGANISM,
             groupId = groupId,
         )
@@ -436,7 +436,7 @@ class GetOriginalDataEndpointTest(
             groupId = groupId,
         )
 
-        val response = submissionControllerClient.getOriginalData(
+        val response = submissionControllerClient.getSubmittedData(
             organism = OTHER_ORGANISM,
             groupId = groupId,
         )

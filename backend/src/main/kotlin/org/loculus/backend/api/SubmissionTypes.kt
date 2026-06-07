@@ -146,7 +146,7 @@ data class SequenceEntryVersionToEdit(
     val status: Status,
     val groupId: Int,
     val processedData: ProcessedData<GeneticSequence>,
-    val originalData: OriginalData<GeneticSequence>,
+    val submittedData: SubmittedData<GeneticSequence>,
     @Schema(description = "The preprocessing will be considered failed if this is not empty")
     val errors: List<PreprocessingAnnotation>? = null,
     @Schema(
@@ -307,13 +307,13 @@ data class SequenceEntryStatus(
 data class EditedSequenceEntryData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
-    val data: OriginalData<GeneticSequence>,
+    val data: SubmittedData<GeneticSequence>,
 ) : AccessionVersionInterface
 
 data class UnprocessedData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
-    val data: UnprocessedDataContentWithFileUrls<GeneticSequence>,
+    val data: SubmittedContentWithFileUrls<GeneticSequence>,
     @Schema(description = "The submission id that was used in the upload to link metadata and sequences")
     val submissionId: String,
     @Schema(description = "The username of the submitter")
@@ -324,7 +324,7 @@ data class UnprocessedData(
     val submittedAt: Long,
 ) : AccessionVersionInterface
 
-data class UnprocessedDataContentInternal<SequenceType, FilesType>(
+data class SubmittedContentInternal<SequenceType, FilesType>(
     @Schema(
         example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\"}",
         description = "Key value pairs of metadata, as submitted in the metadata file",
@@ -342,20 +342,19 @@ data class UnprocessedDataContentInternal<SequenceType, FilesType>(
     val files: Map<String, List<FilesType>>? = null,
 )
 
-typealias UnprocessedDataContent<SequenceType> = UnprocessedDataContentInternal<SequenceType, FileIdAndName>
-typealias OriginalData<SequenceType> = UnprocessedDataContent<SequenceType>
-typealias UnprocessedDataContentWithFileUrls<SequenceType> =
-    UnprocessedDataContentInternal<SequenceType, FileIdAndNameAndReadUrl>
+typealias SubmittedData<SequenceType> = SubmittedContentInternal<SequenceType, FileIdAndName>
+typealias SubmittedContentWithFileUrls<SequenceType> =
+    SubmittedContentInternal<SequenceType, FileIdAndNameAndReadUrl>
 
-data class AccessionVersionUnprocessedMetadata(
+data class AccessionVersionSubmittedMetadata(
     override val accession: Accession,
     override val version: Version,
     val submitter: String,
     val isRevocation: Boolean,
-    val unprocessedMetadata: Map<String, String?>?,
+    val submittedMetadata: Map<String, String?>?,
 ) : AccessionVersionInterface
 
-data class GetOriginalDataRequest(
+data class GetSubmittedDataRequest(
     @Schema(
         description = "The group ID to download data for.",
     )
@@ -366,11 +365,11 @@ data class GetOriginalDataRequest(
     val accessionsFilter: List<Accession>? = null,
 )
 
-data class UnprocessedDataDownloadEntry(
+data class SubmittedDataDownloadEntry(
     override val accession: Accession,
     override val version: Version,
     val submissionId: String,
-    val unprocessedData: UnprocessedDataContent<GeneticSequence>,
+    val submittedData: SubmittedData<GeneticSequence>,
 ) : AccessionVersionInterface
 
 enum class Status {

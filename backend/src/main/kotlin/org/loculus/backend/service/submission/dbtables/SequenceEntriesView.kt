@@ -13,19 +13,19 @@ import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
-import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.PreprocessingAnnotation
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.api.toPairs
 import org.loculus.backend.service.jacksonSerializableJsonb
 
 const val SEQUENCE_ENTRIES_VIEW_NAME = "sequence_entries_view"
 
 object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
-    val unprocessedDataColumn = jacksonSerializableJsonb<OriginalData<CompressedSequence>>(
-        "unprocessed_data",
+    val submissionDataColumn = jacksonSerializableJsonb<SubmittedData<CompressedSequence>>(
+        "submission_data",
     ).nullable()
     val processedDataColumn =
         jacksonSerializableJsonb<ProcessedData<CompressedSequence>>("processed_data").nullable()

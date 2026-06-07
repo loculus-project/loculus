@@ -42,7 +42,7 @@ import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.ForUpdate
 import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.MODE
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.AccessionVersionUnprocessedMetadata
+import org.loculus.backend.api.AccessionVersionSubmittedMetadata
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
@@ -55,7 +55,6 @@ import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
-import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.PreprocessingStatus.PROCESSED
 import org.loculus.backend.api.ProcessedData
@@ -68,10 +67,11 @@ import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmissionIdMapping
+import org.loculus.backend.api.SubmittedContentWithFileUrls
+import org.loculus.backend.api.SubmittedData
+import org.loculus.backend.api.SubmittedDataDownloadEntry
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.api.UnprocessedDataContentWithFileUrls
-import org.loculus.backend.api.UnprocessedDataDownloadEntry
 import org.loculus.backend.api.fileIds
 import org.loculus.backend.api.getFileId
 import org.loculus.backend.auth.AuthenticatedUser
@@ -172,7 +172,7 @@ class SubmissionDatabaseService(
             .select(
                 table.accessionColumn,
                 table.versionColumn,
-                table.unprocessedDataColumn,
+                table.submissionDataColumn,
                 table.submissionIdColumn,
                 table.submitterColumn,
                 table.groupIdColumn,
@@ -197,10 +197,10 @@ class SubmissionDatabaseService(
             .chunked(streamBatchSize)
             .map { chunk ->
                 val chunkOfUnprocessedData = chunk.map {
-                    val unprocessedData = compressionService.decompressSequencesInOriginalData(
-                        it[table.unprocessedDataColumn]!!,
+                    val unprocessedData = compressionService.decompressSequencesInSubmittedData(
+                        it[table.submissionDataColumn]!!,
                     )
-                    val unprocessedDataWithFileUrls = UnprocessedDataContentWithFileUrls(
+                    val unprocessedDataWithFileUrls = SubmittedContentWithFileUrls(
                         unprocessedData.metadata,
                         unprocessedData.unalignedNucleotideSequences,
                         unprocessedData.files?.let {
@@ -964,11 +964,11 @@ class SubmissionDatabaseService(
         }
 
         val metadata = versionComment?.let { mapOf("versionComment" to it) } ?: emptyMap()
-        val originalData = compressionService.compressSequencesInOriginalData(
-            OriginalData(metadata = metadata, unalignedNucleotideSequences = emptyMap()),
+        val submissionData = compressionService.compressSequencesInSubmittedData(
+            SubmittedData(metadata = metadata, unalignedNucleotideSequences = emptyMap()),
             organism,
         )
-        val originalDataParam = QueryParameter(originalData, SequenceEntriesTable.originalDataColumn.columnType)
+        val submissionDataParam = QueryParameter(submissionData, SequenceEntriesTable.submissionDataColumn.columnType)
 
         SequenceEntriesTable.insert(
             SequenceEntriesTable.select(
@@ -980,8 +980,8 @@ class SubmissionDatabaseService(
                 dateTimeParam(dateProvider.getCurrentDateTime()),
                 booleanParam(true),
                 SequenceEntriesTable.organismColumn,
-                originalDataParam,
-                originalDataParam,
+                submissionDataParam,
+                submissionDataParam,
             ).where {
                 (
                     SequenceEntriesTable.accessionColumn inList
@@ -999,7 +999,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesTable.isRevocationColumn,
                 SequenceEntriesTable.organismColumn,
                 SequenceEntriesTable.originalDataColumn,
-                SequenceEntriesTable.unprocessedDataColumn,
+                SequenceEntriesTable.submissionDataColumn,
             ),
         )
 
@@ -1138,8 +1138,8 @@ class SubmissionDatabaseService(
                 SequenceEntriesTable.accessionVersionIsIn(listOf(editedSequenceEntryData))
             },
         ) {
-            it[unprocessedDataColumn] = compressionService
-                .compressSequencesInOriginalData(editedSequenceEntryData.data, organism)
+            it[submissionDataColumn] = compressionService
+                .compressSequencesInSubmittedData(editedSequenceEntryData.data, organism)
         }
 
         SequenceEntriesPreprocessedDataTable.deleteWhere {
@@ -1175,7 +1175,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.groupIdColumn,
             SequenceEntriesView.statusColumn,
             SequenceEntriesView.processedDataColumn,
-            SequenceEntriesView.unprocessedDataColumn,
+            SequenceEntriesView.submissionDataColumn,
             SequenceEntriesView.errorsColumn,
             SequenceEntriesView.warningsColumn,
             SequenceEntriesView.isRevocationColumn,
@@ -1199,8 +1199,8 @@ class SubmissionDatabaseService(
                 selectedSequenceEntry[SequenceEntriesView.processedDataColumn]!!,
                 organism,
             ),
-            originalData = compressionService.decompressSequencesInOriginalData(
-                selectedSequenceEntry[SequenceEntriesView.unprocessedDataColumn]!!,
+            submittedData = compressionService.decompressSequencesInSubmittedData(
+                selectedSequenceEntry[SequenceEntriesView.submissionDataColumn]!!,
             ),
             errors = selectedSequenceEntry[SequenceEntriesView.errorsColumn],
             warnings = selectedSequenceEntry[SequenceEntriesView.warningsColumn],
@@ -1226,7 +1226,7 @@ class SubmissionDatabaseService(
                 )
             }
 
-    private fun unprocessedMetadataFilter(
+    private fun submittedMetadataFilter(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupIdsFilter: List<Int>?,
@@ -1250,7 +1250,7 @@ class SubmissionDatabaseService(
         return conditions
     }
 
-    fun countUnprocessedMetadata(
+    fun countSubmittedMetadata(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupIdsFilter: List<Int>?,
@@ -1259,7 +1259,7 @@ class SubmissionDatabaseService(
     ): Long = SequenceEntriesView
         .selectAll()
         .where(
-            unprocessedMetadataFilter(
+            submittedMetadataFilter(
                 authenticatedUser,
                 organism,
                 groupIdsFilter,
@@ -1269,29 +1269,29 @@ class SubmissionDatabaseService(
         )
         .count()
 
-    fun streamUnprocessedMetadata(
+    fun streamSubmittedMetadata(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
         fields: List<String>?,
         accessionVersionsFilter: List<AccessionVersion>?,
-    ): Sequence<AccessionVersionUnprocessedMetadata> {
-        val unprocessedMetadata = SequenceEntriesView.unprocessedDataColumn
+    ): Sequence<AccessionVersionSubmittedMetadata> {
+        val submittedMetadata = SequenceEntriesView.submissionDataColumn
             // It's actually <Map<String, String>?> but exposed does not support nullable types here
             .extract<Map<String, String>>("metadata")
-            .alias("unprocessed_metadata")
+            .alias("submitted_metadata")
 
         return SequenceEntriesView
             .select(
-                unprocessedMetadata,
+                submittedMetadata,
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
                 SequenceEntriesView.isRevocationColumn,
             )
             .where(
-                unprocessedMetadataFilter(
+                submittedMetadataFilter(
                     authenticatedUser,
                     organism,
                     groupIdsFilter,
@@ -1304,10 +1304,10 @@ class SubmissionDatabaseService(
             .map {
                 // Revoked sequences have no original metadata, hence null can happen
                 @Suppress("USELESS_ELVIS")
-                val metadata = it[unprocessedMetadata] ?: null
+                val metadata = it[submittedMetadata] ?: null
                 val selectedMetadata = fields?.associateWith { field -> metadata?.get(field) }
                     ?: metadata
-                AccessionVersionUnprocessedMetadata(
+                AccessionVersionSubmittedMetadata(
                     it[SequenceEntriesView.accessionColumn],
                     it[SequenceEntriesView.versionColumn],
                     it[SequenceEntriesView.submitterColumn],
@@ -1317,7 +1317,7 @@ class SubmissionDatabaseService(
             }
     }
 
-    private fun originalDataDownloadConditions(
+    private fun submittedDataDownloadConditions(
         organism: Organism,
         groupId: Int,
         accessionsFilter: List<String>?,
@@ -1336,18 +1336,18 @@ class SubmissionDatabaseService(
             accessionsCondition
     }
 
-    fun countOriginalDataDownloadEntries(organism: Organism, groupId: Int, accessionsFilter: List<String>?): Long =
+    fun countSubmittedDataDownloadEntries(organism: Organism, groupId: Int, accessionsFilter: List<String>?): Long =
         SequenceEntriesView
             .select(SequenceEntriesView.accessionColumn)
-            .where(originalDataDownloadConditions(organism, groupId, accessionsFilter))
+            .where(submittedDataDownloadConditions(organism, groupId, accessionsFilter))
             .count()
 
-    fun streamUnprocessedDataForOriginalDataDownload(
+    fun streamSubmittedDataDownload(
         organism: Organism,
         groupId: Int,
         accessionsFilter: List<String>?,
-    ): Sequence<UnprocessedDataDownloadEntry> {
-        val unprocessedDataQuery = SequenceEntriesView.join(
+    ): Sequence<SubmittedDataDownloadEntry> {
+        val submittedDataQuery = SequenceEntriesView.join(
             SequenceEntriesTable,
             JoinType.INNER,
             additionalConstraint = {
@@ -1356,27 +1356,27 @@ class SubmissionDatabaseService(
             },
         )
 
-        return unprocessedDataQuery
+        return submittedDataQuery
             .select(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submissionIdColumn,
-                SequenceEntriesTable.unprocessedDataColumn,
+                SequenceEntriesTable.submissionDataColumn,
             )
-            .where(originalDataDownloadConditions(organism, groupId, accessionsFilter))
+            .where(submittedDataDownloadConditions(organism, groupId, accessionsFilter))
             .orderBy(SequenceEntriesView.accessionColumn to SortOrder.ASC)
             .fetchSize(streamBatchSize)
             .asSequence()
             .map {
-                val compressedUnprocessedData = it[SequenceEntriesTable.unprocessedDataColumn]!!
-                val decompressedUnprocessedData = compressionService.decompressSequencesInOriginalData(
-                    compressedUnprocessedData,
+                val compressedSubmittedData = it[SequenceEntriesTable.submissionDataColumn]!!
+                val decompressedSubmittedData = compressionService.decompressSequencesInSubmittedData(
+                    compressedSubmittedData,
                 )
-                UnprocessedDataDownloadEntry(
+                SubmittedDataDownloadEntry(
                     it[SequenceEntriesView.accessionColumn],
                     it[SequenceEntriesView.versionColumn],
                     it[SequenceEntriesView.submissionIdColumn],
-                    decompressedUnprocessedData,
+                    decompressedSubmittedData,
                 )
             }
     }

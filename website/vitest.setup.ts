@@ -96,7 +96,7 @@ export const defaultReviewData: SequenceEntryToEdit = {
             message: 'warningMessage',
         },
     ],
-    originalData: {
+    submittedData: {
         metadata: {
             [metadataKey]: editableEntry,
         },

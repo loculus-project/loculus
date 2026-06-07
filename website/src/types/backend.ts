@@ -222,7 +222,7 @@ export const sequenceEntryToEdit = accessionVersion.merge(
         submissionId: z.string(),
         errors: z.array(processingAnnotation).nullable(),
         warnings: z.array(processingAnnotation).nullable(),
-        originalData: z.object({
+        submittedData: z.object({
             metadata: unprocessedMetadataRecord,
             unalignedNucleotideSequences: z.record(z.string()),
             files: filesByCategory.nullable(),

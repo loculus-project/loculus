@@ -208,8 +208,8 @@ class UploadDatabaseService(
                 submitter,
                 group_id,
                 submitted_at,
-                unprocessed_data,
-                original_data
+                submission_data,
+                original_submission_data
             )
             SELECT
                 m.accession,

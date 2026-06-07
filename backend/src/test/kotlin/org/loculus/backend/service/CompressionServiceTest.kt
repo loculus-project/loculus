@@ -5,7 +5,7 @@ import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Organism
-import org.loculus.backend.api.OriginalData
+import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.service.submission.CompressionDictService
@@ -38,12 +38,12 @@ class CompressionServiceTest {
             "NNACTGACTGACTGACTGATCGATCGATCGATCGATCGATCGATC----NNNNATCGCGATCGATCGATCGATCGGGATCGTAGC--NNNNATGC"
 
         val segmentName = "main"
-        val testData = OriginalData(
+        val testData = SubmittedData(
             mapOf("test" to "test"),
             mapOf(segmentName to input),
         )
-        val compressed = compressor.compressSequencesInOriginalData(testData, organism)
-        val decompressed = compressor.decompressSequencesInOriginalData(compressed)
+        val compressed = compressor.compressSequencesInSubmittedData(testData, organism)
+        val decompressed = compressor.decompressSequencesInSubmittedData(compressed)
 
         assertEquals(testData, decompressed)
     }
