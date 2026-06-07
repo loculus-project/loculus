@@ -39,10 +39,12 @@ export const EditableDataRow: FC<EditableRowProps> = ({ inputField, row, onChang
                             {lastWord}
                             {hasDescription && (
                                 <>
-                                    <MaterialSymbolsInfoOutline
-                                        className='inline-block h-4 w-4 text-gray-500 shrink-0 ml-1 mb-0.5'
+                                    <span
+                                        className='inline-block shrink-0 ml-1 mb-0.5'
                                         data-tooltip-id={'field-tooltip' + row.key}
-                                    />
+                                    >
+                                        <MaterialSymbolsInfoOutline className='h-4 w-4 text-gray-500' />
+                                    </span>
                                     <InputFieldTooltip
                                         id={'field-tooltip' + row.key}
                                         field={inputField}
