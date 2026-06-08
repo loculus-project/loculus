@@ -472,10 +472,9 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
                 {showTooltip && <CustomTooltip id={textTooltipId} content={tooltipContent} />}
                 {secondaryMessages !== undefined && (
                     <>
-                        <Note
-                            className='text-yellow-500 inline-block align-middle ml-1'
-                            data-tooltip-id={noteTooltipId}
-                        />
+                        <span className='inline-block' data-tooltip-id={noteTooltipId}>
+                            <Note className='text-yellow-500' />
+                        </span>
                         <CustomTooltip
                             id={noteTooltipId}
                             content={secondaryMessages.map((annotation) => annotation.message).join(', ')}
