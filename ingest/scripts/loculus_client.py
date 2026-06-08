@@ -447,7 +447,7 @@ def get_sequence_status(config: Config):
     return result
 
 
-def get_submitted(config: Config, output: str):
+def get_submitted(config: Config, output: str | None, fields: list[str] | None = None, accessionVersionsFilter: list[str] | None = None):
     """Get previously submitted sequences as ndjson
     This way we can avoid submitting the same sequences again
     Adds status to the output (as this is not returned by get-unprocessed-metadata)
@@ -455,20 +455,14 @@ def get_submitted(config: Config, output: str):
 
     url = f"{organism_url(config)}/get-unprocessed-metadata"
 
-    if config.segmented:
-        insdc_key = [
-            "insdcAccessionBase" + "_" + segment for segment in config.nucleotide_sequences
-        ]
-    else:
-        insdc_key = ["insdcAccessionBase"]
-
-    fields = ["hash", *insdc_key]
-
     params = {
-        "fields": fields,
         "groupIdsFilter": [],
         "statusesFilter": [],
     }
+    if fields:
+        params["fields"] = fields
+    if accessionVersionsFilter:
+        params["accessionVersionsFilter"] = accessionVersionsFilter
 
     while True:
         logger.info("Getting previously submitted sequences")
@@ -499,6 +493,9 @@ def get_submitted(config: Config, output: str):
     statuses: dict[str, dict[int, str]] = get_sequence_status(config)
     logger.info(f"Got info on {len(statuses.keys())} previously submitted sequences/accessions")
 
+    if not output:
+        return entries
+
     for entry in entries:
         status = statuses.get(entry["accession"], {}).get(entry["version"], "UNKNOWN")
         entry_with_status = entry.copy()
@@ -508,3 +505,4 @@ def get_submitted(config: Config, output: str):
     if len(entries) == 0:
         with open(output, "w", encoding="utf-8"):
             pass
+    return None

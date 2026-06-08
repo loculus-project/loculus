@@ -1228,6 +1228,7 @@ class SubmissionDatabaseService(
         organism: Organism,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
+        accessionVersionsFilter: List<AccessionVersion>?,
     ): Op<Boolean> {
         val organismCondition = SequenceEntriesView.organismIs(organism)
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
@@ -1236,7 +1237,12 @@ class SubmissionDatabaseService(
         } else {
             Op.TRUE
         }
-        val conditions = organismCondition and groupCondition and statusCondition
+        val accessionVersionCondition = if (accessionVersionsFilter != null) {
+            SequenceEntriesView.accessionVersionIsIn(accessionVersionsFilter)
+        } else {
+            Op.TRUE
+        }
+        val conditions = organismCondition and groupCondition and statusCondition and accessionVersionCondition
 
         return conditions
     }
@@ -1246,6 +1252,7 @@ class SubmissionDatabaseService(
         organism: Organism,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
+        accessionVersionsFilter: List<AccessionVersion>?,
     ): Long = SequenceEntriesView
         .selectAll()
         .where(
@@ -1254,6 +1261,7 @@ class SubmissionDatabaseService(
                 organism,
                 groupIdsFilter,
                 statusesFilter,
+                accessionVersionsFilter,
             ),
         )
         .count()
@@ -1264,6 +1272,7 @@ class SubmissionDatabaseService(
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
         fields: List<String>?,
+        accessionVersionsFilter: List<AccessionVersion>?,
     ): Sequence<AccessionVersionUnprocessedMetadata> {
         val unprocessedMetadata = SequenceEntriesView.unprocessedDataColumn
             // It's actually <Map<String, String>?> but exposed does not support nullable types here
@@ -1284,6 +1293,7 @@ class SubmissionDatabaseService(
                     organism,
                     groupIdsFilter,
                     statusesFilter,
+                    accessionVersionsFilter,
                 ),
             )
             .fetchSize(streamBatchSize)
