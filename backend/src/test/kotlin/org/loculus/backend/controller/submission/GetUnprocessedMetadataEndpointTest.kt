@@ -196,19 +196,19 @@ class GetUnprocessedMetadataEndpointTest(
         val target = entries.first()
         val accessionVersion = target.displayAccessionVersion()
 
-        val response = submissionControllerClient.getSubmittedMetadata(
+        val response = submissionControllerClient.getUnprocessedMetadata(
             accessionVersionsFilter = listOf(accessionVersion),
         )
         response.andExpect(status().isOk)
             .andExpect(header().string("x-total-records", `is`("1")))
-        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionSubmittedMetadata>()
+        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionUnprocessedMetadata>()
         assertThat(responseBody, hasSize(1))
         assertThat(responseBody[0].displayAccessionVersion(), `is`(accessionVersion))
     }
 
     @Test
     fun `WHEN I filter by accessionVersions with invalid format THEN returns 400`() {
-        submissionControllerClient.getSubmittedMetadata(
+        submissionControllerClient.getUnprocessedMetadata(
             accessionVersionsFilter = listOf("not-a-valid-accession-version"),
         ).andExpect(status().isBadRequest)
     }
