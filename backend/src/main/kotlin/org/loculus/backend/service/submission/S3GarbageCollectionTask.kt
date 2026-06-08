@@ -56,7 +56,7 @@ class S3GarbageCollectionTask(
                 .log(
                     "CLEANUP",
                     "Deleted ${orphans.size - deleteFailures} orphans that were not referenced by a" +
-                            "submission after $maxOrphanAge days",
+                        "submission after $maxOrphanAge days",
                 )
 
             if (deleteFailures > 0) {
