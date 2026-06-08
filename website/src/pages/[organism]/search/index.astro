@@ -43,13 +43,17 @@ const referenceGenomesInfo = getReferenceGenomes(cleanedOrganism.key);
 
 // Build initialQueryDict with support for multi-value parameters
 const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
-const { data, totalCount } = await performLapisSearchQueries(
-    initialQueryDict,
-    schema,
-    referenceGenomesInfo,
-    hiddenFieldValues,
-    cleanedOrganism.key,
-);
+const { data, totalCount } =
+    accessToken === undefined
+        ? { data: [], totalCount: 0 }
+        : await performLapisSearchQueries(
+              initialQueryDict,
+              schema,
+              referenceGenomesInfo,
+              hiddenFieldValues,
+              cleanedOrganism.key,
+              accessToken,
+          );
 
 const websiteConfig = getWebsiteConfig();
 const sequenceFlaggingConfig = websiteConfig.sequenceFlagging;

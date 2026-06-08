@@ -10,7 +10,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
 mockAnimationsApi();
 
-import { getLapisUrl, getQueryUrl } from './src/config.ts';
+import { getQueryUrl } from './src/config.ts';
 import {
     type GetSequencesResponse,
     type Group,
@@ -211,7 +211,7 @@ const lapisRequestMocks = {
     },
     alignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError) => {
         testServer.use(
-            http.post(`${getLapisUrl(testConfig.serverSide, testOrganism)}/sample/alignedNucleotideSequences`, () => {
+            http.post(`${getQueryUrl(testConfig.serverSide, testOrganism, 'allVersions')}/sequencesAligned`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -225,7 +225,7 @@ const lapisRequestMocks = {
     ) => {
         testServer.use(
             http.post(
-                `${getLapisUrl(testConfig.serverSide, testOrganism)}/sample/alignedNucleotideSequences/${segmentName}`,
+                `${getQueryUrl(testConfig.serverSide, testOrganism, 'allVersions')}/sequencesAligned/${segmentName}`,
                 () => {
                     return new Response(JSON.stringify(response), {
                         status: statusCode,
@@ -236,7 +236,7 @@ const lapisRequestMocks = {
     },
     unalignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError, dataVersion?: string) => {
         testServer.use(
-            http.post(`${getLapisUrl(testConfig.serverSide, testOrganism)}/sample/unalignedNucleotideSequences`, () => {
+            http.post(`${getQueryUrl(testConfig.serverSide, testOrganism, 'allVersions')}/sequences`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                     headers:
@@ -258,7 +258,7 @@ const lapisRequestMocks = {
     ) => {
         testServer.use(
             http.post(
-                `${getLapisUrl(testConfig.serverSide, testOrganism)}/sample/unalignedNucleotideSequences/${segmentName}`,
+                `${getQueryUrl(testConfig.serverSide, testOrganism, 'allVersions')}/sequences/${segmentName}`,
                 () => {
                     return new Response(JSON.stringify(response), {
                         status: statusCode,
@@ -276,38 +276,50 @@ const lapisRequestMocks = {
     },
     nucleotideMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            http.post(`${getQueryUrl(testConfig.serverSide, testOrganism, 'allVersions')}/sequencesAligned/mutations`, () => {
-                return new Response(JSON.stringify(response), {
-                    status: statusCode,
-                });
-            }),
+            http.post(
+                `${getQueryUrl(testConfig.serverSide, testOrganism, 'allVersions')}/sequencesAligned/mutations`,
+                () => {
+                    return new Response(JSON.stringify(response), {
+                        status: statusCode,
+                    });
+                },
+            ),
         );
     },
     aminoAcidMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            http.post(`${getLapisUrl(testConfig.serverSide, testOrganism)}/sample/aminoAcidMutations`, () => {
-                return new Response(JSON.stringify(response), {
-                    status: statusCode,
-                });
-            }),
+            http.post(
+                `${getQueryUrl(testConfig.serverSide, testOrganism, 'allVersions')}/translations/mutations`,
+                () => {
+                    return new Response(JSON.stringify(response), {
+                        status: statusCode,
+                    });
+                },
+            ),
         );
     },
     nucleotideInsertions: (statusCode: number = 200, response: InsertionsResponse | LapisError) => {
         testServer.use(
-            http.post(`${getLapisUrl(testConfig.serverSide, testOrganism)}/sample/nucleotideInsertions`, () => {
-                return new Response(JSON.stringify(response), {
-                    status: statusCode,
-                });
-            }),
+            http.post(
+                `${getQueryUrl(testConfig.serverSide, testOrganism, 'allVersions')}/sequencesAligned/insertions`,
+                () => {
+                    return new Response(JSON.stringify(response), {
+                        status: statusCode,
+                    });
+                },
+            ),
         );
     },
     aminoAcidInsertions: (statusCode: number = 200, response: InsertionsResponse | LapisError) => {
         testServer.use(
-            http.post(`${getLapisUrl(testConfig.serverSide, testOrganism)}/sample/aminoAcidInsertions`, () => {
-                return new Response(JSON.stringify(response), {
-                    status: statusCode,
-                });
-            }),
+            http.post(
+                `${getQueryUrl(testConfig.serverSide, testOrganism, 'allVersions')}/translations/insertions`,
+                () => {
+                    return new Response(JSON.stringify(response), {
+                        status: statusCode,
+                    });
+                },
+            ),
         );
     },
 };

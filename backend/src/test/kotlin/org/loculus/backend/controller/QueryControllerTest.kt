@@ -106,7 +106,7 @@ class QueryControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val object
     }
 
     @Test
-    fun `group IDs from user are injected into forwarded body`() {
+    fun `regular user can query own groups`() {
         every { groupManagementDatabaseService.getGroupIdsOfUser(any()) } returns listOf(10, 20)
         val bodySlot = slot<ByteArray>()
         every { lapisProxyService.proxyPost(any(), any(), capture(bodySlot), any()) } returns okResponse
@@ -119,13 +119,11 @@ class QueryControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val object
         ).andExpect(status().isOk)
 
         val forwarded = objectMapper.readTree(bodySlot.captured)
-        val groupIdNode = forwarded.get("groupId")
-        assert(groupIdNode != null && groupIdNode.isArray) {
-            "Expected groupId array in forwarded body, got: $forwarded"
+        assert(forwarded.get("groupId") == null) {
+            "Expected no direct groupId filter in forwarded body, got: $forwarded"
         }
-        val groupIds = groupIdNode.map { it.asInt() }.toSet()
-        assert(groupIds == setOf(10, 20)) {
-            "Expected groupIds [10, 20], got: $groupIds"
+        assert(forwarded.get("advancedQuery")?.asText() == "(groupId=10 or groupId=20)") {
+            "Expected own-group visibility filter, got: $forwarded"
         }
     }
 
@@ -148,7 +146,7 @@ class QueryControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val object
     }
 
     @Test
-    fun `user with no groups gets groupId sentinel -1`() {
+    fun `user with no groups cannot query any groups`() {
         every { groupManagementDatabaseService.getGroupIdsOfUser(any()) } returns emptyList()
         val bodySlot = slot<ByteArray>()
         every { lapisProxyService.proxyPost(any(), any(), capture(bodySlot), any()) } returns okResponse
@@ -161,9 +159,11 @@ class QueryControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val object
         ).andExpect(status().isOk)
 
         val forwarded = objectMapper.readTree(bodySlot.captured)
-        val groupIdNode = forwarded.get("groupId")
-        assert(groupIdNode != null && groupIdNode.isArray && groupIdNode.first().asInt() == -1) {
-            "Expected groupId [-1] for user with no groups, got: $forwarded"
+        assert(forwarded.get("groupId") == null) {
+            "Expected no direct groupId filter for user with no groups, got: $forwarded"
+        }
+        assert(forwarded.get("advancedQuery")?.asText() == "(groupId=-1)") {
+            "Expected impossible group visibility filter for user with no groups, got: $forwarded"
         }
     }
 
@@ -233,6 +233,18 @@ class QueryControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val object
         ).andExpect(status().isOk)
 
         verify { lapisProxyService.proxyPost(any(), eq("/sample/alignedNucleotideSequences/main"), any(), any()) }
+    }
+
+    @Test
+    fun `sequences with segment routes to unalignedNucleotideSequences with segment`() {
+        mockMvc.perform(
+            post("/query/$ORGANISM/current/sequences/main")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}")
+                .withAuth(),
+        ).andExpect(status().isOk)
+
+        verify { lapisProxyService.proxyPost(any(), eq("/sample/unalignedNucleotideSequences/main"), any(), any()) }
     }
 
     @Test

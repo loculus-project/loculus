@@ -1,5 +1,5 @@
 ---
-import { err, type Result } from 'neverthrow';
+import { err, ok, type Result } from 'neverthrow';
 
 import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { SeqSetItem } from '../../components/SeqSetCitations/SeqSetItem';
@@ -57,7 +57,9 @@ const seqSetAuthorResponse = seqSetResponse.isOk()
 const accessions = seqSetRecordsResponse.unwrapOr([]).map((record) => record.accession);
 const seqSetGraphs = websiteConfig.seqSetsGraphs ?? [];
 const seqSetGraphResponses = await Promise.all(
-    seqSetGraphs.map((graph) => getSeqSetStatistics(accessions, graph.fields)),
+    accessToken === undefined
+        ? seqSetGraphs.map(() => ok([]))
+        : seqSetGraphs.map((graph) => getSeqSetStatistics(accessions, graph.fields, accessToken)),
 );
 
 const seqSetAuthor = seqSetAuthorResponse.unwrapOr(undefined);

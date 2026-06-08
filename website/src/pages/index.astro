@@ -5,14 +5,17 @@ import WelcomeMessage from '../components/IndexPage/WelcomeMessage.astro';
 import { getOrganismStatisticsMap } from '../components/IndexPage/getOrganismStatistics';
 import { getConfiguredOrganisms, getWebsiteConfig } from '../config';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getAccessToken } from '../utils/getAccessToken';
 const websiteConfig = getWebsiteConfig();
 const { name: websiteName, welcomeMessageHTML } = websiteConfig;
 import '../styles/mdcontainer.css';
 
 const numberDaysAgoStatistics = 30;
+const accessToken = getAccessToken(Astro.locals.session);
 const organismStatisticsMap = await getOrganismStatisticsMap(
     getConfiguredOrganisms().map((organism) => organism.key),
     numberDaysAgoStatistics,
+    accessToken,
 );
 ---
 

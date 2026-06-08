@@ -23,6 +23,7 @@ export const performLapisSearchQueries = async (
     referenceGenomesInfo: ReferenceGenomesInfo,
     hiddenFieldValues: FieldValues,
     organism: string,
+    accessToken: string,
 ): Promise<SearchResponse> => {
     const selectedReferences = schema.referenceIdentifierField
         ? getSelectedReferences({
@@ -62,11 +63,11 @@ export const performLapisSearchQueries = async (
         )
         .map((field) => field.name);
 
-    const client = LapisClient.createForOrganism(organism);
+    const client = LapisClient.createForOrganism(organism, accessToken);
 
     const [detailsResult, aggregatedResult] = await Promise.all([
         // @ts-expect-error because OrderBy typing does not accept this for unknown reasons
-        client.call('details', {
+        client.getCurrentDetails({
             ...lapisSearchParameters,
             fields: [...columnsToShow, schema.primaryKey],
             limit: pageSize,
@@ -78,7 +79,7 @@ export const performLapisSearchQueries = async (
                 },
             ],
         }),
-        client.call('aggregated', {
+        client.getCurrentAggregated({
             ...lapisSearchParameters,
             fields: [],
         }),

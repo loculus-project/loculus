@@ -85,11 +85,10 @@ const fetchRecordsMetadata = async (
         // Query bare accessions by accession, filtering for the latest version
         if (bareAccessions.length > 0) {
             queries.push(
-                queryLapisDetails(
-                    currentUrl,
-                    { accession: bareAccessions },
-                    ['accession', ...fields],
-                ).then((data) => ({ data, keyField: 'accession' })),
+                queryLapisDetails(currentUrl, { accession: bareAccessions }, ['accession', ...fields]).then((data) => ({
+                    data,
+                    keyField: 'accession',
+                })),
             );
         }
 

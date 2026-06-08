@@ -8,49 +8,55 @@ import {
     getAccessionVersionString,
     parseAccessionVersionFromString,
 } from '../../../utils/extractAccessionVersion';
+import { getAccessToken } from '../../../utils/getAccessToken';
 import { getVersionStatusColor, getVersionStatusLabel } from '../../../utils/getVersionStatusColor';
 
 const accessionVersion = Astro.params.accessionVersion!;
 const { accession } = parseAccessionVersionFromString(accessionVersion);
-const { organism, versionListResult } = await getVersionsData(accession);
+const accessToken = getAccessToken(Astro.locals.session);
+const versionsData = accessToken === undefined ? undefined : await getVersionsData(accession, accessToken);
 ---
 
-<BaseLayout title={accession + ' versions'} implicitOrganism={organism}>
+<BaseLayout title={accession + ' versions'} implicitOrganism={versionsData?.organism}>
     <div class='flex flex-row pb-2'>
         <h1 class='title'>Versions for accession {accession}</h1>
     </div>
 
     <ul class='p-3'>
         {
-            versionListResult.match(
-                (list) => {
-                    return list.map((version) => (
-                        <li class='mb-4'>
-                            <div class='mb-2'>
-                                <div class='font-semibold'>{version.submittedAtTimestamp}</div>
-                                <div class='flex flex-row gap-3 justify-start'>
-                                    <a
-                                        href={routes.sequenceEntryDetailsPage(
-                                            getAccessionVersionString(extractAccessionVersion(version)),
-                                        )}
-                                        class='hover:no-underline'
-                                    >
-                                        {getAccessionVersionString(extractAccessionVersion(version))}
-                                    </a>
+            accessToken === undefined ? (
+                <ErrorBox title='Authentication required'>Please log in to view sequence data.</ErrorBox>
+            ) : (
+                versionsData!.versionListResult.match(
+                    (list) => {
+                        return list.map((version) => (
+                            <li class='mb-4'>
+                                <div class='mb-2'>
+                                    <div class='font-semibold'>{version.submittedAtTimestamp}</div>
+                                    <div class='flex flex-row gap-3 justify-start'>
+                                        <a
+                                            href={routes.sequenceEntryDetailsPage(
+                                                getAccessionVersionString(extractAccessionVersion(version)),
+                                            )}
+                                            class='hover:no-underline'
+                                        >
+                                            {getAccessionVersionString(extractAccessionVersion(version))}
+                                        </a>
 
-                                    <p
-                                        class={`${getVersionStatusColor(version.versionStatus, version.isRevocation)} ml-2`}
-                                    >
-                                        {getVersionStatusLabel(version.versionStatus, version.isRevocation)}
-                                    </p>
+                                        <p
+                                            class={`${getVersionStatusColor(version.versionStatus, version.isRevocation)} ml-2`}
+                                        >
+                                            {getVersionStatusLabel(version.versionStatus, version.isRevocation)}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        </li>
-                    ));
-                },
-                (error) => {
-                    return <ErrorBox title='Request for sequence history failed'>{error}</ErrorBox>;
-                },
+                            </li>
+                        ));
+                    },
+                    (error) => {
+                        return <ErrorBox title='Request for sequence history failed'>{error}</ErrorBox>;
+                    },
+                )
             )
         }
     </ul>

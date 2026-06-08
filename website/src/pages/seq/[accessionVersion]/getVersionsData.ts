@@ -3,10 +3,10 @@ import { err, ok } from 'neverthrow';
 import { getConfiguredOrganisms } from '../../../config.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 
-export const getVersionsData = async (accession: string) => {
+export const getVersionsData = async (accession: string, accessToken: string) => {
     const organisms = getConfiguredOrganisms();
     const promises = organisms.map(async ({ key }) => {
-        const lapisClient = LapisClient.createForOrganism(key);
+        const lapisClient = LapisClient.createForOrganism(key, accessToken);
 
         const versionListResult = (await lapisClient.getAllSequenceEntryHistoryForAccession(accession))
             .mapErr((error) => error.detail)

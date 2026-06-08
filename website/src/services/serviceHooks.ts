@@ -9,6 +9,7 @@ import { seqSetCitationApi } from './seqSetCitationApi.ts';
 import { problemDetail } from '../types/backend.ts';
 import type { SequenceRequest } from '../types/lapis.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
+import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
 import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../utils/sequenceTypeHelpers.ts';
 
@@ -23,20 +24,33 @@ const LAPIS_RETRY_OPTIONS = {
     retryDelay: (attemptIndex: number) => Math.min(250 * 2 ** attemptIndex, 30000),
 };
 
+type SequenceHooks = Pick<
+    ZodiosHooksInstance<typeof lapisApi>,
+    | 'useUnalignedNucleotideSequences'
+    | 'useUnalignedNucleotideSequencesMultiSegment'
+    | 'useAlignedNucleotideSequences'
+    | 'useAlignedNucleotideSequencesMultiSegment'
+    | 'useAlignedAminoAcidSequences'
+>;
+
 export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
 }
 
 export function lapisClientHooks(lapisUrl: string, queryCurrentUrl?: string, accessToken?: string) {
-    const proxyZodios = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
+    const authenticatedAxios = axios.create({
+        headers: createAuthorizationHeader(accessToken) ?? {},
+    });
+    const proxyZodios = new ZodiosHooks(
+        'lapis',
+        new Zodios(lapisUrl, lapisApi, { transform: false, axiosInstance: authenticatedAxios }),
+    );
     const queryZodios = queryCurrentUrl
         ? new ZodiosHooks(
               'lapis-query',
               new Zodios(queryCurrentUrl, queryApi, {
                   transform: false,
-                  axiosInstance: axios.create({
-                      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-                  }),
+                  axiosInstance: authenticatedAxios,
               }),
           )
         : null;
@@ -50,11 +64,11 @@ export function lapisClientHooks(lapisUrl: string, queryCurrentUrl?: string, acc
             queryZodios
                 ? queryZodios.useDetails({}, { ...LAPIS_RETRY_OPTIONS })
                 : proxyZodios.useDetails({}, { ...LAPIS_RETRY_OPTIONS }),
-        // lineageDefinition and sequences stay at proxy (no QueryController equivalent)
-        useLineageDefinition: proxyZodios.useLineageDefinition,
+        // lineageDefinition stays at the raw LAPIS proxy; it is reference metadata, not sequence data.
+        useLineageDefinition: proxyZodios.useLineageDefinition.bind(proxyZodios),
         useGetSequence(accessionVersion: string, sequenceType: SequenceType, useLapisMultiSegmentedEndpoint: boolean) {
             return getSequenceHook(
-                proxyZodios,
+                (queryZodios ?? proxyZodios) as SequenceHooks,
                 {
                     accessionVersion,
                     dataFormat: 'FASTA',
@@ -67,7 +81,7 @@ export function lapisClientHooks(lapisUrl: string, queryCurrentUrl?: string, acc
 }
 
 function getSequenceHook(
-    hooks: ZodiosHooksInstance<typeof lapisApi>,
+    hooks: SequenceHooks,
     request: SequenceRequest, // these are request PARAMETERS, not requests
     sequenceType: SequenceType,
     isMultiSegmented: boolean,
@@ -106,7 +120,7 @@ function getSequenceHook(
 }
 
 function selectSequenceHook(
-    hooks: ZodiosHooksInstance<typeof lapisApi>,
+    hooks: SequenceHooks,
     request: SequenceRequest,
     sequenceType: SequenceType,
     isMultiSegmented: boolean,

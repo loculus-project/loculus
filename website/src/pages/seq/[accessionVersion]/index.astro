@@ -16,18 +16,19 @@ import { getSegmentNames } from '../../../utils/sequenceTypeHelpers';
 
 const accessionVersion = Astro.params.accessionVersion!;
 
-const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
+const session = Astro.locals.session;
+const accessToken = getAccessToken(session);
+const clientConfig = getRuntimeConfig().public;
+
+const sequenceDetailsTableData =
+    accessToken === undefined ? undefined : await findOrganismAndData(accessionVersion, accessToken);
 
 if (
-    sequenceDetailsTableData.isOk() &&
+    sequenceDetailsTableData?.isOk() &&
     sequenceDetailsTableData.value.result.type === SequenceDetailsTableResultType.REDIRECT
 ) {
     return Astro.redirect(sequenceDetailsTableData.value.result.redirectUrl);
 }
-
-const session = Astro.locals.session;
-const accessToken = getAccessToken(session);
-const clientConfig = getRuntimeConfig().public;
 
 let myGroups: Group[] = [];
 
@@ -39,11 +40,11 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
 ---
 
 <BaseLayout
-    title={sequenceDetailsTableData.isOk() ? accessionVersion : 'Sequence not found'}
-    implicitOrganism={sequenceDetailsTableData.isOk() ? sequenceDetailsTableData.value.organism : undefined}
+    title={sequenceDetailsTableData?.isOk() ? accessionVersion : 'Sequence not found'}
+    implicitOrganism={sequenceDetailsTableData?.isOk() ? sequenceDetailsTableData.value.organism : undefined}
 >
     {
-        sequenceDetailsTableData.isOk() &&
+        sequenceDetailsTableData?.isOk() &&
             sequenceDetailsTableData.value.result.type === SequenceDetailsTableResultType.TABLE_DATA && (
                 <div slot='banner'>
                     <SequencesBanner
@@ -54,7 +55,7 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
             )
     }
     {
-        sequenceDetailsTableData.match(
+        sequenceDetailsTableData?.match(
             ({ organism, result }) => {
                 const showDownloadAndReport =
                     result.type === SequenceDetailsTableResultType.TABLE_DATA && !result.isRevocation;
@@ -100,6 +101,6 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                 );
             },
             () => <ErrorBox title='Entry not found'>No data found for accession version {accessionVersion}</ErrorBox>,
-        )
+        ) ?? <ErrorBox title='Authentication required'>Please log in to view sequence data.</ErrorBox>
     }
 </BaseLayout>

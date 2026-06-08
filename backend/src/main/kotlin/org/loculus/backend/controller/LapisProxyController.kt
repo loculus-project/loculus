@@ -1,6 +1,8 @@
 package org.loculus.backend.controller
 
 import jakarta.servlet.http.HttpServletRequest
+import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendConfig
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -15,13 +17,18 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 class LapisProxyController(
     private val backendConfig: BackendConfig,
     private val lapisProxyService: LapisProxyService,
+    private val lapisAccessFilter: LapisAccessFilter,
 ) {
 
     @RequestMapping(
         value = ["/{organism}/lapis/**"],
         method = [RequestMethod.GET, RequestMethod.POST],
     )
-    fun proxy(@PathVariable organism: String, request: HttpServletRequest): ResponseEntity<StreamingResponseBody> {
+    fun proxy(
+        @PathVariable organism: String,
+        request: HttpServletRequest,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<StreamingResponseBody> {
         val instanceConfig = backendConfig.organisms[organism]
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown organism: $organism")
 
@@ -32,7 +39,7 @@ class LapisProxyController(
             lapisProxyService.proxyPost(
                 instanceConfig.lapisUrl,
                 "$lapisPath$query",
-                request.inputStream.readBytes(),
+                lapisAccessFilter.prepareBody(request.inputStream.readBytes(), authenticatedUser),
                 request.getHeader("Accept"),
                 request.contentType ?: "application/json",
             )
@@ -40,7 +47,7 @@ class LapisProxyController(
             lapisProxyService.proxyGet(
                 instanceConfig.lapisUrl,
                 lapisPath,
-                query,
+                lapisAccessFilter.prepareQuery(request.queryString, authenticatedUser),
                 request.getHeader("Accept"),
             )
         }
