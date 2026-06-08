@@ -50,7 +50,8 @@ class S3GarbageCollectionTask(
 
         if (orphans.isNotEmpty()) {
             log.info {
-                "Deleted ${orphans.size} orphans that were not referenced by a submission after $maxOrphanAge days"
+                "Deleted ${orphans.size - deleteFailures} orphans that were not referenced by a submission after" +
+                    "$maxOrphanAge days"
             }
             auditLogger
                 .log(
