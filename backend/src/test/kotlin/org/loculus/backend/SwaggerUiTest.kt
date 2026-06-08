@@ -51,23 +51,92 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
     }
 
     @Test
-    fun `query API docs expose guided path parameter choices`() {
+    fun `query API docs expose organism-specific path parameter and body choices`() {
         val result = mockMvc.perform(get("/api-docs"))
             .andExpect(status().isOk)
             .andReturn()
 
         val json = ObjectMapper().registerKotlinModule().readTree(result.response.contentAsString)
-        val operation = json.get("paths").get("/query/{organism}/{versionGroup}/metadata").get("post")
+        val paths = json.get("paths")
+        val metadataOperation = paths.get("/query/dummyOrganism/{versionGroup}/metadata").get("post")
 
-        assertEquals("Query metadata", operation.get("summary").asText())
-        assertEquals(listOf("Query"), operation.get("tags").map { it.asText() })
+        assertTrue(!paths.has("/query/{organism}/{versionGroup}/metadata"))
+        assertEquals("Query metadata", metadataOperation.get("summary").asText())
+        assertEquals(listOf("Query: dummyOrganism"), metadataOperation.get("tags").map { it.asText() })
         assertEquals(
             listOf("current", "allVersions"),
-            findParameter(operation, "versionGroup").get("schema").get("enum").map { it.asText() },
+            findParameter(metadataOperation, "versionGroup").get("schema").get("enum").map { it.asText() },
         )
-        assertTrue(findParameter(operation, "organism").get("schema").has("enum"))
+        assertTrue(metadataOperation.get("parameters").none { it.get("name").asText() == "organism" })
+        assertEquals(
+            listOf(
+                "date",
+                "dateSubmitted",
+                "region",
+                "country",
+                "division",
+                "host",
+                "age",
+                "sex",
+                "pangoLineage",
+                "qc",
+                "booleanColumn",
+                "insdcAccessionFull",
+                "other_db_accession",
+            ),
+            fieldEnum(metadataOperation),
+        )
+        assertEquals(
+            listOf(
+                "date",
+                "dateSubmitted",
+                "region",
+                "specialOtherField",
+                "country",
+                "division",
+                "host",
+                "age",
+                "sex",
+                "pangoLineage",
+                "qc",
+            ),
+            fieldEnum(paths.get("/query/otherOrganism/{versionGroup}/metadata").get("post")),
+        )
+
+        assertEquals(
+            listOf("notOnlySegment", "secondSegment"),
+            findParameter(
+                paths.get("/query/otherOrganism/{versionGroup}/sequences/{segment}").get("post"),
+                "segment",
+            ).get("schema").get("enum").map { it.asText() },
+        )
+        assertEquals(
+            listOf("someLongGene", "someShortGene"),
+            findParameter(
+                paths.get("/query/dummyOrganism/{versionGroup}/translations/{geneName}").get("post"),
+                "geneName",
+            ).get("schema").get("enum").map { it.asText() },
+        )
+        assertEquals(
+            listOf("notOnlySegment", "secondSegment"),
+            findParameter(
+                paths.get("/query/otherOrganism/{versionGroup}/sequencesAligned/{referenceName}").get("post"),
+                "referenceName",
+            ).get("schema").get("enum").map { it.asText() },
+        )
+        assertTrue(!paths.has("/query/dummyOrganismWithoutConsensusSequences/{versionGroup}/translations/{geneName}"))
     }
 
     private fun findParameter(operation: JsonNode, name: String) =
         operation.get("parameters").first { it.get("name").asText() == name }
+
+    private fun fieldEnum(operation: JsonNode) = operation.get("requestBody")
+        .get("content")
+        .get("application/json")
+        .get("schema")
+        .get("properties")
+        .get("fields")
+        .get("items")
+        .get("enum")
+        .map { it.asText() }
 }
