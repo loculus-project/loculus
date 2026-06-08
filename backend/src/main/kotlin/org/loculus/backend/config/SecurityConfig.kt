@@ -88,6 +88,7 @@ class SecurityConfig {
                 "/api-docs**",
                 "/api-docs/**",
                 "/swagger-ui/**",
+                "/scalar-api-reference",
             ).permitAll()
             auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()

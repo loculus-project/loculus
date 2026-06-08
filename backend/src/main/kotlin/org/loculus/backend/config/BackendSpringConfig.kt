@@ -175,7 +175,7 @@ class BackendSpringConfig {
                 return@OperationCustomizer operation
             }
 
-            val endpointDocs = QUERY_ENDPOINT_DOCS[handlerMethod.method.name]
+            val endpointDocs = queryEndpointDocs(handlerMethod.method.name)
             operation.tags = listOf("Query")
             operation.summary = endpointDocs?.summary ?: operation.summary
             operation.description = endpointDocs?.description ?: operation.description
@@ -205,6 +205,9 @@ class BackendSpringConfig {
 
     private companion object {
         data class QueryEndpointDocs(val summary: String, val description: String)
+
+        fun queryEndpointDocs(methodName: String) =
+            QUERY_ENDPOINT_DOCS[methodName] ?: methodName.removeSuffix("Get").let { QUERY_ENDPOINT_DOCS[it] }
 
         val QUERY_ENDPOINT_DOCS = mapOf(
             "metadata" to QueryEndpointDocs(
@@ -266,66 +269,6 @@ class BackendSpringConfig {
             "translationsAggregatedMutations" to QueryEndpointDocs(
                 "Aggregate amino acid mutations",
                 "Return aggregated amino acid mutations for one gene.",
-            ),
-            "metadataGet" to QueryEndpointDocs(
-                "Download metadata",
-                "Download metadata rows for sequence entries visible to the authenticated user.",
-            ),
-            "aggregatedGet" to QueryEndpointDocs(
-                "Download aggregated metadata",
-                "Download aggregated metadata counts for visible sequence entries.",
-            ),
-            "sequencesGet" to QueryEndpointDocs(
-                "Download unaligned nucleotide sequences",
-                "Download unaligned nucleotide sequences for visible sequence entries.",
-            ),
-            "sequencesForSegmentGet" to QueryEndpointDocs(
-                "Download unaligned nucleotide sequences by segment",
-                "Download unaligned nucleotide sequences for one segment.",
-            ),
-            "sequencesAlignedGet" to QueryEndpointDocs(
-                "Download aligned nucleotide sequences",
-                "Download aligned nucleotide sequences for visible sequence entries.",
-            ),
-            "sequencesAlignedForSegmentGet" to QueryEndpointDocs(
-                "Download aligned nucleotide sequences by reference",
-                "Download aligned nucleotide sequences for one reference.",
-            ),
-            "sequencesAlignedMutationsGet" to QueryEndpointDocs(
-                "Download nucleotide mutations",
-                "Download nucleotide mutation records for visible sequence entries.",
-            ),
-            "sequencesAlignedInsertionsGet" to QueryEndpointDocs(
-                "Download nucleotide insertions",
-                "Download nucleotide insertion records for visible sequence entries.",
-            ),
-            "sequencesAlignedAggregatedMutationsGet" to QueryEndpointDocs(
-                "Download aggregated nucleotide mutations",
-                "Download aggregated nucleotide mutations for visible sequence entries.",
-            ),
-            "sequencesAlignedForSegmentMutationsGet" to QueryEndpointDocs(
-                "Download nucleotide mutations by reference",
-                "Download nucleotide mutation records for one reference.",
-            ),
-            "sequencesAlignedForSegmentAggregatedMutationsGet" to QueryEndpointDocs(
-                "Download aggregated nucleotide mutations by reference",
-                "Download aggregated nucleotide mutations for one reference.",
-            ),
-            "translationsGet" to QueryEndpointDocs(
-                "Download aligned amino acid sequences",
-                "Download aligned amino acid sequences for one gene.",
-            ),
-            "translationsMutationsGet" to QueryEndpointDocs(
-                "Download amino acid mutations",
-                "Download amino acid mutation records for visible sequence entries.",
-            ),
-            "translationsInsertionsGet" to QueryEndpointDocs(
-                "Download amino acid insertions",
-                "Download amino acid insertion records for visible sequence entries.",
-            ),
-            "translationsAggregatedMutationsGet" to QueryEndpointDocs(
-                "Download aggregated amino acid mutations",
-                "Download aggregated amino acid mutations for one gene.",
             ),
         )
     }

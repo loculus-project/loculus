@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -26,6 +27,15 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
             .andExpect(status().isOk)
             .andExpect(content().contentType("text/html"))
             .andExpect(content().string(containsString("Swagger UI")))
+    }
+
+    @Test
+    fun `Scalar API reference endpoint is reachable`() {
+        mockMvc.perform(get("/scalar-api-reference"))
+            .andExpect(status().isOk)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+            .andExpect(content().string(containsString("Scalar.createApiReference")))
+            .andExpect(content().string(containsString("url: '/api-docs'")))
     }
 
     @Test
@@ -71,6 +81,8 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
 
         assertTrue(!paths.has("/query/{organism}/{versionGroup}/metadata"))
         assertEquals("Query metadata", metadataOperation.get("summary").asText())
+        assertEquals(metadataOperation.get("summary").asText(), metadataGetOperation.get("summary").asText())
+        assertEquals(metadataOperation.get("description").asText(), metadataGetOperation.get("description").asText())
         assertEquals(listOf("Query: dummyOrganism"), metadataOperation.get("tags").map { it.asText() })
         assertTrue(tagNames.contains("Query: dummyOrganism"))
         assertTrue(!tagNames.contains("Query"))

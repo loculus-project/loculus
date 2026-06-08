@@ -59,9 +59,14 @@ const BUTTON_CLASS =
             <div class='mb-4'>
                 Please note that Loculus is under continuous development and the endpoints are subject to change.
             </div>
-            <a class={BUTTON_CLASS} href={clientConfig.backendUrl + '/swagger-ui/index.html'}>
-                View backend API documentation
-            </a>
+            <div class='flex flex-wrap gap-3'>
+                <a class={BUTTON_CLASS} href={clientConfig.backendUrl + '/swagger-ui/index.html'}>
+                    View backend API documentation (Swagger)
+                </a>
+                <a class={BUTTON_CLASS} href={clientConfig.backendUrl + '/scalar-api-reference'}>
+                    View backend API documentation (Scalar)
+                </a>
+            </div>
             <div class='mt-8'>
                 <span class='font-medium'>URL of backend server:</span>
                 <code>{clientConfig.backendUrl}</code>
