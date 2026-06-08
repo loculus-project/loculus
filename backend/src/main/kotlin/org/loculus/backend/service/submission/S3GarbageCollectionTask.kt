@@ -31,19 +31,19 @@ class S3GarbageCollectionTask(
      * Runs once daily (with an initial delay of 15 minutes) and deletes S3 objects older than
      * `loculus.s3.orphan-file-max-age-days` that are not referenced in unprocessed_data or processed_data
      */
-    @Scheduled(initialDelay = 10, fixedDelay = 60 * 24, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(initialDelay = 15, fixedDelay = 60 * 24, timeUnit = TimeUnit.MINUTES)
     fun task() {
         val threshold = dateProvider.getCurrentInstant()
             .minus(maxOrphanAge, DateTimeUnit.DAY, DateProvider.timeZone)
             .toLocalDateTime(DateProvider.timeZone)
         val orphans = filesDatabaseService.getOrphanedFileIds(threshold)
-        var deleteFailures: Int = 0
+        var deleteFailures = 0
         orphans.forEach { fileId: UUID ->
             try {
                 s3Service.deleteFile(fileId)
                 filesDatabaseService.deleteFileEntry(fileId)
             } catch (e: Exception) {
-                log.warn("Failed to delete file entry for $fileId", e)
+                log.warn("Failed to delete $fileId", e)
                 deleteFailures++
             }
         }
@@ -55,7 +55,8 @@ class S3GarbageCollectionTask(
             auditLogger
                 .log(
                     "CLEANUP",
-                    "Deleted ${orphans.size} orphans that were not referenced by a submission after $maxOrphanAge days",
+                    "Deleted ${orphans.size - deleteFailures} orphans that were not referenced by a" +
+                            "submission after $maxOrphanAge days",
                 )
 
             if (deleteFailures > 0) {
