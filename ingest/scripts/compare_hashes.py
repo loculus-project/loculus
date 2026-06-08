@@ -27,7 +27,13 @@ class Config:
     nucleotide_sequences: list[str]
     group_name: str
     batch_chunk_size: int
+    backend_url: str
+    keycloak_token_url: str
+    keycloak_client_id: str
+    username: str
+    password: str
     slack_hook: str = ""
+    backend_request_timeout_seconds: int = 600
 
 
 InsdcAccession = str  # one per segment
