@@ -80,6 +80,10 @@ test.describe('Download Original Data', () => {
             expect(header).toContain('id');
             expect(header).toContain('accession');
 
+            expect(metadataContent).toContain('Switzerland');
+            expect(metadataContent).toContain('2021-01-15');
+            expect(metadataContent).toContain('Test Institute');
+
             const idIndex = header.indexOf('id');
             const accessionIndex = header.indexOf('accession');
 

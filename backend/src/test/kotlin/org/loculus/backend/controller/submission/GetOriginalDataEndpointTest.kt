@@ -183,7 +183,7 @@ class GetOriginalDataEndpointTest(
     }
 
     @Test
-    fun `GIVEN data exists THEN FASTA headers match metadata ids`() {
+    fun `GIVEN single-segmented data exists THEN FASTA headers match metadata ids`() {
         val submissionResult = convenienceClient.submitDefaultFiles()
         val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
             groupId = submissionResult.groupId,
