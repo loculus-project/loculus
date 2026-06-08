@@ -67,10 +67,13 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
         val mutationGetOperation = paths.get(
             "/query/dummyOrganism/{versionGroup}/sequencesAligned/mutations",
         ).get("get")
+        val tagNames = json.get("tags").map { it.get("name").asText() }
 
         assertTrue(!paths.has("/query/{organism}/{versionGroup}/metadata"))
         assertEquals("Query metadata", metadataOperation.get("summary").asText())
         assertEquals(listOf("Query: dummyOrganism"), metadataOperation.get("tags").map { it.asText() })
+        assertTrue(tagNames.contains("Query: dummyOrganism"))
+        assertTrue(!tagNames.contains("Query"))
         assertTrue(
             json.get("tags").last().get("name").asText() == "lapis-proxy-controller",
         )

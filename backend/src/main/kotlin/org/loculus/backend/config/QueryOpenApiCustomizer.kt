@@ -14,6 +14,7 @@ import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.parameters.QueryParameter
 import io.swagger.v3.oas.models.parameters.RequestBody
+import io.swagger.v3.oas.models.tags.Tag
 import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -42,6 +43,7 @@ class QueryOpenApiCustomizer {
                 }
             }
         }
+        updateTags(openApi)
     }
 
     private fun customizePathItem(
@@ -433,6 +435,24 @@ class QueryOpenApiCustomizer {
     private fun compressionFormats() = listOf("gzip", "zstd")
 
     private fun clonePathItem(pathItem: PathItem): PathItem = Json.mapper().convertValue(pathItem, PathItem::class.java)
+
+    private fun updateTags(openApi: io.swagger.v3.oas.models.OpenAPI) {
+        val operationTagNames = openApi.paths.orEmpty().values
+            .flatMap { it.readOperations() }
+            .flatMap { it.tags.orEmpty() }
+            .distinct()
+        val tagsByName = linkedMapOf<String, Tag>()
+        openApi.tags.orEmpty()
+            .filter { it.name in operationTagNames }
+            .forEach { tag -> tagsByName[tag.name] = tag }
+        operationTagNames.forEach { tagName -> tagsByName.putIfAbsent(tagName, Tag().name(tagName)) }
+        tagsByName[LAPIS_PROXY_CONTROLLER_TAG] = tagsByName[LAPIS_PROXY_CONTROLLER_TAG]
+            ?: Tag().name(LAPIS_PROXY_CONTROLLER_TAG)
+        tagsByName[LAPIS_PROXY_CONTROLLER_TAG]?.description(
+            "This is temporary and used for calls that have not yet switched to using the new query API.",
+        )
+        openApi.tags = orderOpenApiTags(tagsByName.values)
+    }
 }
 
 private enum class QueryEndpointKind {

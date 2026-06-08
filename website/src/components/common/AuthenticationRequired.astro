@@ -1,0 +1,21 @@
+---
+import NeedToLogin from './NeedToLogin.astro';
+
+interface Props {
+    includeTestAccountsNote?: boolean;
+    message?: string;
+}
+
+const { includeTestAccountsNote = false, message } = Astro.props;
+
+const defaultMessage =
+    'Authentication required. Sequences are only available after authentication and only to members of the submitting groups.';
+const testAccountsNote =
+    'For testing, log in as testuser, insdc_ingest_user, or superuser; superusers see all sequences.';
+---
+
+<NeedToLogin
+    message={[message ?? defaultMessage, includeTestAccountsNote ? testAccountsNote : undefined]
+        .filter(Boolean)
+        .join(' ')}
+/>

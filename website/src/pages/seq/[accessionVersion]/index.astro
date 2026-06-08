@@ -5,6 +5,7 @@ import RevocationEntryDataTable from '../../../components/SequenceDetailsPage/Re
 import { SequenceDataUI } from '../../../components/SequenceDetailsPage/SequenceDataUI.tsx';
 import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.tsx';
 import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
+import AuthenticationRequired from '../../../components/common/AuthenticationRequired.astro';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import { getSchema, getRuntimeConfig, getReferenceGenomes } from '../../../config';
 import { getWebsiteConfig } from '../../../config';
@@ -101,6 +102,6 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                 );
             },
             () => <ErrorBox title='Entry not found'>No data found for accession version {accessionVersion}</ErrorBox>,
-        ) ?? <ErrorBox title='Authentication required'>Please log in to view sequence data.</ErrorBox>
+        ) ?? <AuthenticationRequired />
     }
 </BaseLayout>

@@ -1,5 +1,6 @@
 ---
 import { getVersionsData } from './getVersionsData';
+import AuthenticationRequired from '../../../components/common/AuthenticationRequired.astro';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { routes } from '../../../routes/routes';
@@ -25,7 +26,7 @@ const versionsData = accessToken === undefined ? undefined : await getVersionsDa
     <ul class='p-3'>
         {
             accessToken === undefined ? (
-                <ErrorBox title='Authentication required'>Please log in to view sequence data.</ErrorBox>
+                <AuthenticationRequired />
             ) : (
                 versionsData!.versionListResult.match(
                     (list) => {

@@ -1,7 +1,7 @@
 ---
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../components/SearchPage/SearchFullUI';
-import NeedToLogin from '../../../components/common/NeedToLogin.astro';
+import AuthenticationRequired from '../../../components/common/AuthenticationRequired.astro';
 import {
     dataUseTermsAreEnabled,
     getContactConfig,
@@ -65,7 +65,7 @@ const contactConfig = getContactConfig(websiteConfig);
     {
         accessToken === undefined ? (
             <div class='max-w-6xl mx-auto px-8'>
-                <NeedToLogin message='Authentication required. Sequences are only available after authentication and only to members of the submitting groups.' />
+                <AuthenticationRequired />
             </div>
         ) : (
             <SearchFullUI

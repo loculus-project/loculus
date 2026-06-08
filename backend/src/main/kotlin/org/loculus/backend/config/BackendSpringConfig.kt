@@ -60,6 +60,10 @@ const val DEBUG_MODE_ON_VALUE = "true"
 const val ENABLE_SEQSETS_TRUE_VALUE = "true"
 const val LAPIS_PROXY_CONTROLLER_TAG = "lapis-proxy-controller"
 
+fun orderOpenApiTags(tags: Collection<Tag>) = tags
+    .filter { it.name.isNotBlank() }
+    .sortedWith(compareBy<Tag> { it.name == LAPIS_PROXY_CONTROLLER_TAG }.thenBy { it.name })
+
 private val logger = mu.KotlinLogging.logger {}
 
 @Configuration
@@ -147,20 +151,21 @@ class BackendSpringConfig {
     @Bean
     @Order(Ordered.LOWEST_PRECEDENCE)
     fun lapisProxyTagCustomizer() = OpenApiCustomizer { openApi ->
-        val tagsByName = linkedMapOf<String, Tag>()
-        openApi.tags.orEmpty().forEach { tag -> tagsByName[tag.name] = tag }
-        openApi.paths.orEmpty().values
+        val operationTagNames = openApi.paths.orEmpty().values
             .flatMap { it.readOperations() }
             .flatMap { it.tags.orEmpty() }
             .distinct()
-            .forEach { tagName -> tagsByName.putIfAbsent(tagName, Tag().name(tagName)) }
+        val tagsByName = linkedMapOf<String, Tag>()
+        openApi.tags.orEmpty()
+            .filter { it.name in operationTagNames }
+            .forEach { tag -> tagsByName[tag.name] = tag }
+        operationTagNames.forEach { tagName -> tagsByName.putIfAbsent(tagName, Tag().name(tagName)) }
         tagsByName[LAPIS_PROXY_CONTROLLER_TAG] = tagsByName[LAPIS_PROXY_CONTROLLER_TAG]
             ?: Tag().name(LAPIS_PROXY_CONTROLLER_TAG)
         tagsByName[LAPIS_PROXY_CONTROLLER_TAG]?.description(
             "This is temporary and used for calls that have not yet switched to using the new query API.",
         )
-        openApi.tags = tagsByName.values
-            .sortedWith(compareBy<Tag> { it.name == LAPIS_PROXY_CONTROLLER_TAG }.thenBy { it.name })
+        openApi.tags = orderOpenApiTags(tagsByName.values)
     }
 
     @Bean

@@ -3,7 +3,7 @@ import Faq from '../components/IndexPage/FAQ.mdx';
 import OrganismCard from '../components/IndexPage/OrganismCard.astro';
 import WelcomeMessage from '../components/IndexPage/WelcomeMessage.astro';
 import { getOrganismStatisticsMap } from '../components/IndexPage/getOrganismStatistics';
-import NeedToLogin from '../components/common/NeedToLogin.astro';
+import AuthenticationRequired from '../components/common/AuthenticationRequired.astro';
 import { getConfiguredOrganisms, getWebsiteConfig } from '../config';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getAccessToken } from '../utils/getAccessToken';
@@ -30,7 +30,10 @@ const organismStatisticsMap =
 
         {
             accessToken === undefined && (
-                <NeedToLogin message='This instance is private. Sequences are only available after authentication and only to members of the submitting groups. For testing, log in as testuser, insdc_ingest_user, or superuser; superusers see all sequences.' />
+                <AuthenticationRequired
+                    message='This instance is private. Sequences are only available after authentication and only to members of the submitting groups.'
+                    includeTestAccountsNote
+                />
             )
         }
 
