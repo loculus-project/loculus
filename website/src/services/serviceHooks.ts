@@ -1,6 +1,6 @@
 import { Zodios } from '@zodios/core';
 import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
-import { isAxiosError } from 'axios';
+import axios, { isAxiosError } from 'axios';
 
 import { backendApi } from './backendApi.ts';
 import { lapisApi } from './lapisApi.ts';
@@ -27,10 +27,18 @@ export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
 }
 
-export function lapisClientHooks(lapisUrl: string, queryCurrentUrl?: string) {
+export function lapisClientHooks(lapisUrl: string, queryCurrentUrl?: string, accessToken?: string) {
     const proxyZodios = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
     const queryZodios = queryCurrentUrl
-        ? new ZodiosHooks('lapis-query', new Zodios(queryCurrentUrl, queryApi, { transform: false }))
+        ? new ZodiosHooks(
+              'lapis-query',
+              new Zodios(queryCurrentUrl, queryApi, {
+                  transform: false,
+                  axiosInstance: axios.create({
+                      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+                  }),
+              }),
+          )
         : null;
     return {
         // useDetails and useAggregated use the structured QueryController endpoint when available

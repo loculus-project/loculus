@@ -156,7 +156,7 @@ export const InnerSearchFullUI = ({
         schema.richFastaHeaderFields,
     );
 
-    const hooks = lapisClientHooks(lapisUrl, queryCurrentUrl);
+    const hooks = lapisClientHooks(lapisUrl, queryCurrentUrl, accessToken);
     const aggregatedHook = hooks.useAggregated();
     const detailsHook = hooks.useDetails();
 

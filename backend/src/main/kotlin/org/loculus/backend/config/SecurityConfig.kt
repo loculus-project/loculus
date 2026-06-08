@@ -61,7 +61,6 @@ class SecurityConfig {
         "/files/get/**",
         "/groups/*",
         "/*/lapis/**",
-        "/query/**",
     )
 
     private val headEndpointsThatArePublic = arrayOf(
@@ -93,7 +92,6 @@ class SecurityConfig {
             ).permitAll()
             auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.POST, "/*/lapis/**").permitAll()
-            auth.requestMatchers(HttpMethod.POST, "/query/**").permitAll()
             auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
             auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
