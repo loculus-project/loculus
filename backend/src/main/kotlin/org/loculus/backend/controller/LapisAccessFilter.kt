@@ -12,6 +12,8 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
+private const val GROUP_ID_FIELD = "groupId"
+
 @Component
 class LapisAccessFilter(
     private val objectMapper: ObjectMapper,
@@ -73,8 +75,9 @@ class LapisAccessFilter(
     private fun visibilityQueryFor(authenticatedUser: AuthenticatedUser): String? {
         if (authenticatedUser.isSuperUser) return null
 
-        val groupClauses = groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser).map { "groupId=$it" }
-        return groupClauses.ifEmpty { listOf("groupId=-1") }.joinToString(" or ")
+        val groupClauses = groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser)
+            .map { "$GROUP_ID_FIELD=$it" }
+        return groupClauses.ifEmpty { listOf("$GROUP_ID_FIELD=-1") }.joinToString(" or ")
     }
 
     private fun combineAdvancedQueries(existingQuery: String?, visibilityQuery: String) = listOfNotNull(

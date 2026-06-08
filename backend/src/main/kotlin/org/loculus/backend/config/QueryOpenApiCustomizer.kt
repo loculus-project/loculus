@@ -14,7 +14,6 @@ import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.parameters.QueryParameter
 import io.swagger.v3.oas.models.parameters.RequestBody
-import io.swagger.v3.oas.models.tags.Tag
 import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -43,7 +42,7 @@ class QueryOpenApiCustomizer {
                 }
             }
         }
-        updateTags(openApi)
+        updateLapisProxyOpenApiTags(openApi)
     }
 
     private fun customizePathItem(
@@ -198,14 +197,12 @@ class QueryOpenApiCustomizer {
             )
         }
 
-        if (kind.supportsPostDataFormat()) {
-            schema.addProperty(
-                "dataFormat",
-                StringSchema()
-                    ._enum(kind.postDataFormats())
-                    .description("Response format for this endpoint."),
-            )
-        }
+        schema.addProperty(
+            "dataFormat",
+            StringSchema()
+                ._enum(kind.dataFormats())
+                .description("Response format for this endpoint."),
+        )
 
         if (kind.supportsFastaHeaderTemplate()) {
             schema.addProperty(
@@ -223,9 +220,6 @@ class QueryOpenApiCustomizer {
     }
 
     private fun getQueryParameters(kind: QueryEndpointKind, instanceConfig: InstanceConfig): List<Parameter> {
-        if (!kind.supportsGetParameters()) {
-            return emptyList()
-        }
         val fieldNames = metadataFieldNames(instanceConfig)
         val parameters = mutableListOf(
             queryParameter("downloadAsFile", BooleanSchema(), "Set to true to download the response as a file."),
@@ -255,15 +249,13 @@ class QueryOpenApiCustomizer {
                 ),
             )
         }
-        if (kind.supportsGetDataFormat()) {
-            parameters.add(
-                queryParameter(
-                    "dataFormat",
-                    StringSchema()._enum(kind.getDataFormats()),
-                    "Response format for this endpoint.",
-                ),
-            )
-        }
+        parameters.add(
+            queryParameter(
+                "dataFormat",
+                StringSchema()._enum(kind.dataFormats()),
+                "Response format for this endpoint.",
+            ),
+        )
         if (kind.supportsFastaHeaderTemplate()) {
             parameters.add(
                 queryParameter(
@@ -435,24 +427,6 @@ class QueryOpenApiCustomizer {
     private fun compressionFormats() = listOf("gzip", "zstd")
 
     private fun clonePathItem(pathItem: PathItem): PathItem = Json.mapper().convertValue(pathItem, PathItem::class.java)
-
-    private fun updateTags(openApi: io.swagger.v3.oas.models.OpenAPI) {
-        val operationTagNames = openApi.paths.orEmpty().values
-            .flatMap { it.readOperations() }
-            .flatMap { it.tags.orEmpty() }
-            .distinct()
-        val tagsByName = linkedMapOf<String, Tag>()
-        openApi.tags.orEmpty()
-            .filter { it.name in operationTagNames }
-            .forEach { tag -> tagsByName[tag.name] = tag }
-        operationTagNames.forEach { tagName -> tagsByName.putIfAbsent(tagName, Tag().name(tagName)) }
-        tagsByName[LAPIS_PROXY_CONTROLLER_TAG] = tagsByName[LAPIS_PROXY_CONTROLLER_TAG]
-            ?: Tag().name(LAPIS_PROXY_CONTROLLER_TAG)
-        tagsByName[LAPIS_PROXY_CONTROLLER_TAG]?.description(
-            "This is temporary and used for calls that have not yet switched to using the new query API.",
-        )
-        openApi.tags = orderOpenApiTags(tagsByName.values)
-    }
 }
 
 private enum class QueryEndpointKind {
@@ -469,27 +443,16 @@ private enum class QueryEndpointKind {
     AMINO_ACID_INSERTIONS,
     ;
 
-    fun supportsPostDataFormat() = true
-
     fun supportsFields() = this == METADATA ||
         this == AGGREGATED ||
         this == NUCLEOTIDE_MUTATIONS ||
         this == AMINO_ACID_MUTATIONS
 
-    fun supportsGetParameters() = true
-
-    fun supportsGetDataFormat() = true
-
     fun supportsFastaHeaderTemplate() = isSequenceEndpoint()
 
     fun supportsMinProportion() = this == NUCLEOTIDE_MUTATIONS || this == AMINO_ACID_MUTATIONS
 
-    fun postDataFormats() = when {
-        isSequenceEndpoint() -> listOf("FASTA", "JSON", "NDJSON")
-        else -> listOf("JSON", "CSV", "CSV-WITHOUT-HEADERS", "TSV", "TSV-ESCAPED")
-    }
-
-    fun getDataFormats() = when {
+    fun dataFormats() = when {
         isSequenceEndpoint() -> listOf("FASTA", "JSON", "NDJSON")
         else -> listOf("JSON", "CSV", "CSV-WITHOUT-HEADERS", "TSV", "TSV-ESCAPED")
     }

@@ -1,6 +1,6 @@
 # Building Block View
 
-- `QueryController`: backend surface for website-facing sequence queries and Swagger documentation.
+- `QueryController`: backend surface for website-facing sequence queries and API documentation.
 - `LapisAccessFilter`: derives demonstration access filters from the authenticated user.
 - `LapisProxyService`: forwards filtered requests to the configured LAPIS instance.
 - Website query clients: call `/query` for metadata, aggregation, sequence, mutation, insertion, and download data.

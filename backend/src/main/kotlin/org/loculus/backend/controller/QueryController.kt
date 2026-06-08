@@ -42,6 +42,23 @@ class QueryController(
     private fun getInstanceConfig(organism: String) = backendConfig.organisms[organism]
         ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown organism: $organism")
 
+    private object LapisSamplePath {
+        const val DETAILS = "/sample/details"
+        const val AGGREGATED = "/sample/aggregated"
+        const val UNALIGNED_NUCLEOTIDE_SEQUENCES = "/sample/unalignedNucleotideSequences"
+        const val ALIGNED_NUCLEOTIDE_SEQUENCES = "/sample/alignedNucleotideSequences"
+        const val NUCLEOTIDE_MUTATIONS = "/sample/nucleotideMutations"
+        const val NUCLEOTIDE_INSERTIONS = "/sample/nucleotideInsertions"
+        const val AMINO_ACID_MUTATIONS = "/sample/aminoAcidMutations"
+        const val AMINO_ACID_INSERTIONS = "/sample/aminoAcidInsertions"
+
+        fun unalignedNucleotideSequences(segment: String) = "$UNALIGNED_NUCLEOTIDE_SEQUENCES/$segment"
+
+        fun alignedNucleotideSequences(referenceName: String) = "$ALIGNED_NUCLEOTIDE_SEQUENCES/$referenceName"
+
+        fun alignedAminoAcidSequences(geneName: String) = "/sample/alignedAminoAcidSequences/$geneName"
+    }
+
     private fun post(
         organism: String,
         versionGroup: String,
@@ -85,7 +102,7 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/details", body, authenticatedUser, accept)
+    ) = post(organism, versionGroup, LapisSamplePath.DETAILS, body, authenticatedUser, accept)
 
     @PostMapping("/{versionGroup}/aggregated")
     fun aggregated(
@@ -94,7 +111,7 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/aggregated", body, authenticatedUser, accept)
+    ) = post(organism, versionGroup, LapisSamplePath.AGGREGATED, body, authenticatedUser, accept)
 
     @PostMapping("/{versionGroup}/sequences")
     fun sequences(
@@ -103,7 +120,7 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/unalignedNucleotideSequences", body, authenticatedUser, accept)
+    ) = post(organism, versionGroup, LapisSamplePath.UNALIGNED_NUCLEOTIDE_SEQUENCES, body, authenticatedUser, accept)
 
     @PostMapping("/{versionGroup}/sequences/{segment}")
     fun sequencesForSegment(
@@ -113,7 +130,14 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/unalignedNucleotideSequences/$segment", body, authenticatedUser, accept)
+    ) = post(
+        organism,
+        versionGroup,
+        LapisSamplePath.unalignedNucleotideSequences(segment),
+        body,
+        authenticatedUser,
+        accept,
+    )
 
     @PostMapping("/{versionGroup}/sequencesAligned")
     fun sequencesAligned(
@@ -122,7 +146,7 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/alignedNucleotideSequences", body, authenticatedUser, accept)
+    ) = post(organism, versionGroup, LapisSamplePath.ALIGNED_NUCLEOTIDE_SEQUENCES, body, authenticatedUser, accept)
 
     @PostMapping("/{versionGroup}/sequencesAligned/mutations")
     fun sequencesAlignedMutations(
@@ -131,7 +155,7 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/nucleotideMutations", body, authenticatedUser, accept)
+    ) = post(organism, versionGroup, LapisSamplePath.NUCLEOTIDE_MUTATIONS, body, authenticatedUser, accept)
 
     @PostMapping("/{versionGroup}/sequencesAligned/insertions")
     fun sequencesAlignedInsertions(
@@ -140,7 +164,7 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/nucleotideInsertions", body, authenticatedUser, accept)
+    ) = post(organism, versionGroup, LapisSamplePath.NUCLEOTIDE_INSERTIONS, body, authenticatedUser, accept)
 
     @PostMapping("/{versionGroup}/sequencesAligned/aggregatedMutations")
     fun sequencesAlignedAggregatedMutations(
@@ -149,7 +173,7 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/nucleotideMutations", body, authenticatedUser, accept)
+    ) = post(organism, versionGroup, LapisSamplePath.NUCLEOTIDE_MUTATIONS, body, authenticatedUser, accept)
 
     @PostMapping("/{versionGroup}/sequencesAligned/{referenceName}")
     fun sequencesAlignedForSegment(
@@ -162,7 +186,7 @@ class QueryController(
     ) = post(
         organism,
         versionGroup,
-        "/sample/alignedNucleotideSequences/$referenceName",
+        LapisSamplePath.alignedNucleotideSequences(referenceName),
         body,
         authenticatedUser,
         accept,
@@ -176,7 +200,7 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/nucleotideMutations", body, authenticatedUser, accept)
+    ) = post(organism, versionGroup, LapisSamplePath.NUCLEOTIDE_MUTATIONS, body, authenticatedUser, accept)
 
     @PostMapping("/{versionGroup}/sequencesAligned/{referenceName}/aggregatedMutations")
     fun sequencesAlignedForSegmentAggregatedMutations(
@@ -186,7 +210,7 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/nucleotideMutations", body, authenticatedUser, accept)
+    ) = post(organism, versionGroup, LapisSamplePath.NUCLEOTIDE_MUTATIONS, body, authenticatedUser, accept)
 
     @PostMapping("/{versionGroup}/translations/{geneName}")
     fun translations(
@@ -196,7 +220,14 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/alignedAminoAcidSequences/$geneName", body, authenticatedUser, accept)
+    ) = post(
+        organism,
+        versionGroup,
+        LapisSamplePath.alignedAminoAcidSequences(geneName),
+        body,
+        authenticatedUser,
+        accept,
+    )
 
     @PostMapping("/{versionGroup}/translations/mutations")
     fun translationsMutations(
@@ -205,7 +236,7 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/aminoAcidMutations", body, authenticatedUser, accept)
+    ) = post(organism, versionGroup, LapisSamplePath.AMINO_ACID_MUTATIONS, body, authenticatedUser, accept)
 
     @PostMapping("/{versionGroup}/translations/insertions")
     fun translationsInsertions(
@@ -214,7 +245,7 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/aminoAcidInsertions", body, authenticatedUser, accept)
+    ) = post(organism, versionGroup, LapisSamplePath.AMINO_ACID_INSERTIONS, body, authenticatedUser, accept)
 
     @PostMapping("/{versionGroup}/translations/{geneName}/mutations")
     fun translationsMutations(
@@ -224,7 +255,7 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/aminoAcidMutations", body, authenticatedUser, accept)
+    ) = post(organism, versionGroup, LapisSamplePath.AMINO_ACID_MUTATIONS, body, authenticatedUser, accept)
 
     @PostMapping("/{versionGroup}/translations/{geneName}/aggregatedMutations")
     fun translationsAggregatedMutations(
@@ -234,7 +265,7 @@ class QueryController(
         @RequestBody(required = false) body: JsonNode?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = post(organism, versionGroup, "/sample/aminoAcidMutations", body, authenticatedUser, accept)
+    ) = post(organism, versionGroup, LapisSamplePath.AMINO_ACID_MUTATIONS, body, authenticatedUser, accept)
 
     @GetMapping("/{versionGroup}/metadata")
     fun metadataGet(
@@ -243,7 +274,7 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/details", request, authenticatedUser, accept)
+    ) = get(organism, versionGroup, LapisSamplePath.DETAILS, request, authenticatedUser, accept)
 
     @GetMapping("/{versionGroup}/aggregated")
     fun aggregatedGet(
@@ -252,7 +283,7 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/aggregated", request, authenticatedUser, accept)
+    ) = get(organism, versionGroup, LapisSamplePath.AGGREGATED, request, authenticatedUser, accept)
 
     @GetMapping("/{versionGroup}/sequences")
     fun sequencesGet(
@@ -261,7 +292,7 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/unalignedNucleotideSequences", request, authenticatedUser, accept)
+    ) = get(organism, versionGroup, LapisSamplePath.UNALIGNED_NUCLEOTIDE_SEQUENCES, request, authenticatedUser, accept)
 
     @GetMapping("/{versionGroup}/sequences/{segment}")
     fun sequencesForSegmentGet(
@@ -271,7 +302,14 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/unalignedNucleotideSequences/$segment", request, authenticatedUser, accept)
+    ) = get(
+        organism,
+        versionGroup,
+        LapisSamplePath.unalignedNucleotideSequences(segment),
+        request,
+        authenticatedUser,
+        accept,
+    )
 
     @GetMapping("/{versionGroup}/sequencesAligned")
     fun sequencesAlignedGet(
@@ -280,7 +318,7 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/alignedNucleotideSequences", request, authenticatedUser, accept)
+    ) = get(organism, versionGroup, LapisSamplePath.ALIGNED_NUCLEOTIDE_SEQUENCES, request, authenticatedUser, accept)
 
     @GetMapping("/{versionGroup}/sequencesAligned/mutations")
     fun sequencesAlignedMutationsGet(
@@ -289,7 +327,7 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/nucleotideMutations", request, authenticatedUser, accept)
+    ) = get(organism, versionGroup, LapisSamplePath.NUCLEOTIDE_MUTATIONS, request, authenticatedUser, accept)
 
     @GetMapping("/{versionGroup}/sequencesAligned/insertions")
     fun sequencesAlignedInsertionsGet(
@@ -298,7 +336,7 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/nucleotideInsertions", request, authenticatedUser, accept)
+    ) = get(organism, versionGroup, LapisSamplePath.NUCLEOTIDE_INSERTIONS, request, authenticatedUser, accept)
 
     @GetMapping("/{versionGroup}/sequencesAligned/aggregatedMutations")
     fun sequencesAlignedAggregatedMutationsGet(
@@ -307,7 +345,7 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/nucleotideMutations", request, authenticatedUser, accept)
+    ) = get(organism, versionGroup, LapisSamplePath.NUCLEOTIDE_MUTATIONS, request, authenticatedUser, accept)
 
     @GetMapping("/{versionGroup}/sequencesAligned/{referenceName}")
     fun sequencesAlignedForSegmentGet(
@@ -320,7 +358,7 @@ class QueryController(
     ) = get(
         organism,
         versionGroup,
-        "/sample/alignedNucleotideSequences/$referenceName",
+        LapisSamplePath.alignedNucleotideSequences(referenceName),
         request,
         authenticatedUser,
         accept,
@@ -334,7 +372,7 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/nucleotideMutations", request, authenticatedUser, accept)
+    ) = get(organism, versionGroup, LapisSamplePath.NUCLEOTIDE_MUTATIONS, request, authenticatedUser, accept)
 
     @GetMapping("/{versionGroup}/sequencesAligned/{referenceName}/aggregatedMutations")
     fun sequencesAlignedForSegmentAggregatedMutationsGet(
@@ -344,7 +382,7 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/nucleotideMutations", request, authenticatedUser, accept)
+    ) = get(organism, versionGroup, LapisSamplePath.NUCLEOTIDE_MUTATIONS, request, authenticatedUser, accept)
 
     @GetMapping("/{versionGroup}/translations/{geneName}")
     fun translationsGet(
@@ -354,7 +392,14 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/alignedAminoAcidSequences/$geneName", request, authenticatedUser, accept)
+    ) = get(
+        organism,
+        versionGroup,
+        LapisSamplePath.alignedAminoAcidSequences(geneName),
+        request,
+        authenticatedUser,
+        accept,
+    )
 
     @GetMapping("/{versionGroup}/translations/mutations")
     fun translationsMutationsGet(
@@ -363,7 +408,7 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/aminoAcidMutations", request, authenticatedUser, accept)
+    ) = get(organism, versionGroup, LapisSamplePath.AMINO_ACID_MUTATIONS, request, authenticatedUser, accept)
 
     @GetMapping("/{versionGroup}/translations/insertions")
     fun translationsInsertionsGet(
@@ -372,7 +417,7 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/aminoAcidInsertions", request, authenticatedUser, accept)
+    ) = get(organism, versionGroup, LapisSamplePath.AMINO_ACID_INSERTIONS, request, authenticatedUser, accept)
 
     @GetMapping("/{versionGroup}/translations/{geneName}/mutations")
     fun translationsMutationsGet(
@@ -382,7 +427,7 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/aminoAcidMutations", request, authenticatedUser, accept)
+    ) = get(organism, versionGroup, LapisSamplePath.AMINO_ACID_MUTATIONS, request, authenticatedUser, accept)
 
     @GetMapping("/{versionGroup}/translations/{geneName}/aggregatedMutations")
     fun translationsAggregatedMutationsGet(
@@ -392,5 +437,5 @@ class QueryController(
         request: HttpServletRequest,
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
-    ) = get(organism, versionGroup, "/sample/aminoAcidMutations", request, authenticatedUser, accept)
+    ) = get(organism, versionGroup, LapisSamplePath.AMINO_ACID_MUTATIONS, request, authenticatedUser, accept)
 }

@@ -3,6 +3,7 @@ package org.loculus.backend.config
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.headers.Header
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
@@ -60,7 +61,26 @@ const val DEBUG_MODE_ON_VALUE = "true"
 const val ENABLE_SEQSETS_TRUE_VALUE = "true"
 const val LAPIS_PROXY_CONTROLLER_TAG = "lapis-proxy-controller"
 
-fun orderOpenApiTags(tags: Collection<Tag>) = tags
+private const val LAPIS_PROXY_CONTROLLER_DESCRIPTION =
+    "This is temporary and used for calls that have not yet switched to using the new query API."
+
+fun updateLapisProxyOpenApiTags(openApi: OpenAPI) {
+    val operationTagNames = openApi.paths.orEmpty().values
+        .flatMap { it.readOperations() }
+        .flatMap { it.tags.orEmpty() }
+        .distinct()
+    val tagsByName = linkedMapOf<String, Tag>()
+    openApi.tags.orEmpty()
+        .filter { it.name in operationTagNames }
+        .forEach { tag -> tagsByName[tag.name] = tag }
+    operationTagNames.forEach { tagName -> tagsByName.putIfAbsent(tagName, Tag().name(tagName)) }
+    tagsByName[LAPIS_PROXY_CONTROLLER_TAG] = tagsByName[LAPIS_PROXY_CONTROLLER_TAG]
+        ?: Tag().name(LAPIS_PROXY_CONTROLLER_TAG)
+    tagsByName[LAPIS_PROXY_CONTROLLER_TAG]?.description(LAPIS_PROXY_CONTROLLER_DESCRIPTION)
+    openApi.tags = orderOpenApiTags(tagsByName.values)
+}
+
+private fun orderOpenApiTags(tags: Collection<Tag>) = tags
     .filter { it.name.isNotBlank() }
     .sortedWith(compareBy<Tag> { it.name == LAPIS_PROXY_CONTROLLER_TAG }.thenBy { it.name })
 
@@ -150,23 +170,7 @@ class BackendSpringConfig {
 
     @Bean
     @Order(Ordered.LOWEST_PRECEDENCE)
-    fun lapisProxyTagCustomizer() = OpenApiCustomizer { openApi ->
-        val operationTagNames = openApi.paths.orEmpty().values
-            .flatMap { it.readOperations() }
-            .flatMap { it.tags.orEmpty() }
-            .distinct()
-        val tagsByName = linkedMapOf<String, Tag>()
-        openApi.tags.orEmpty()
-            .filter { it.name in operationTagNames }
-            .forEach { tag -> tagsByName[tag.name] = tag }
-        operationTagNames.forEach { tagName -> tagsByName.putIfAbsent(tagName, Tag().name(tagName)) }
-        tagsByName[LAPIS_PROXY_CONTROLLER_TAG] = tagsByName[LAPIS_PROXY_CONTROLLER_TAG]
-            ?: Tag().name(LAPIS_PROXY_CONTROLLER_TAG)
-        tagsByName[LAPIS_PROXY_CONTROLLER_TAG]?.description(
-            "This is temporary and used for calls that have not yet switched to using the new query API.",
-        )
-        openApi.tags = orderOpenApiTags(tagsByName.values)
-    }
+    fun lapisProxyTagCustomizer() = OpenApiCustomizer { openApi -> updateLapisProxyOpenApiTags(openApi) }
 
     @Bean
     fun queryControllerOpenApiCustomizer(backendConfig: BackendConfig) =
