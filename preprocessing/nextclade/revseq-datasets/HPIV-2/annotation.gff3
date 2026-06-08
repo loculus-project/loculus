@@ -1,0 +1,14 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region NC_003443.1 1 15646
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=2560525
+NC_003443.1	RefSeq	region	1	15646	.	+	.	ID=NC_003443.1:1..15646;Dbxref=taxon:2560525;gbkey=Src;genome=genomic;mol_type=genomic RNA;old-name=Human parainfluenza virus 2
+NC_003443.1	RefSeq	CDS	157	1785	.	+	0	Name=NP;gene=NP;gbkey=CDS;locus_tag=HPIV2gp1;protein_id=NP_598401.1;ID=cds-NP_598401.1;product=nucleocapsid protein;Dbxref=UniProtKB/Swiss-Prot:P21737,GenBank:NP_598401.1,GeneID:935191
+NC_003443.1	RefSeq	CDS	1993	2481	.	+	0	Name=P;gene=V;gbkey=CDS;locus_tag=HPIV2gp2;product=P protein;exception=RNA editing;protein_id=NP_599019.1;ID=cds-NP_599019.1;Dbxref=GenBank:NP_599019.1,GeneID:935190
+NC_003443.1	RefSeq	CDS	2480	3178	.	+	0	Name=P;gene=V;gbkey=CDS;locus_tag=HPIV2gp2;product=P protein;exception=RNA editing;protein_id=NP_599019.1;ID=cds-NP_599019.1;Dbxref=GenBank:NP_599019.1,GeneID:935190
+NC_003443.1	RefSeq	CDS	1993	2670	.	+	0	Name=PP;gene=V;gbkey=CDS;locus_tag=HPIV2gp2;protein_id=NP_598402.1;ID=cds-NP_598402.1;product=phospho-protein;Dbxref=UniProtKB/Swiss-Prot:P23057,GenBank:NP_598402.1,GeneID:935190
+NC_003443.1	RefSeq	CDS	3479	4612	.	+	0	Name=M;gene=M;gbkey=CDS;locus_tag=HPIV2gp3;protein_id=NP_598403.1;product=matrix protein;ID=cds-NP_598403.1;Dbxref=UniProtKB/Swiss-Prot:P24266,GenBank:NP_598403.1,GeneID:935187
+NC_003443.1	RefSeq	CDS	4789	6444	.	+	0	Name=F;gene=F;gbkey=CDS;locus_tag=HPIV2gp4;protein_id=NP_598404.1;product=fusion protein;ID=cds-NP_598404.1;Dbxref=UniProtKB/Swiss-Prot:P26629,GenBank:NP_598404.1,GeneID:935186
+NC_003443.1	RefSeq	CDS	6817	8532	.	+	0	Name=HN;gene=HN;gbkey=CDS;locus_tag=HPIV2gp5;protein_id=NP_598405.1;ID=cds-NP_598405.1;product=hemagglutinin-neuraminidase;Dbxref=UniProtKB/Swiss-Prot:P25466,GenBank:NP_598405.1,GeneID:935188
+NC_003443.1	RefSeq	CDS	8793	15581	.	+	0	Name=L;gene=L;gbkey=CDS;locus_tag=HPIV2gp6;protein_id=NP_598406.1;product=Large protein;ID=cds-NP_598406.1;Dbxref=UniProtKB/Swiss-Prot:P26676,GenBank:NP_598406.1,GeneID:935189

@@ -1,0 +1,16 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region NC_006577.2 1 29926
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=290028
+NC_006577.2	RefSeq	region	1	29926	.	+	.	ID=NC_006577.2:1..29926;Dbxref=taxon:290028;gb-acronym=HCoV-HKU1;gbkey=Src;genome=genomic;genotype=A;isolate=HKU1;isolation-source=patient with pneumonia;mol_type=genomic RNA;nat-host=Homo sapiens
+NC_006577.2	RefSeq	CDS	206	13600	.	+	0	Name=pp1ab;gbkey=CDS;gene=ORF1ab;locus_tag=HCHV1gp1;protein_id=YP_173236.1;ID=cds-YP_173236.1;exception=ribosomal slippage;product=ORF1ab polyprotein;Dbxref=GenBank:YP_173236.1,GeneID:3200429;Note=ORF1ab polyprotein is cleaved to yield the RNA-dependent RNA polymerase and other nonstructural proteins
+NC_006577.2	RefSeq	CDS	13600	21753	.	+	0	Name=pp1ab;gbkey=CDS;gene=ORF1ab;locus_tag=HCHV1gp1;protein_id=YP_173236.1;ID=cds-YP_173236.1;exception=ribosomal slippage;product=ORF1ab polyprotein;Dbxref=GenBank:YP_173236.1,GeneID:3200429;Note=ORF1ab polyprotein is cleaved to yield the RNA-dependent RNA polymerase and other nonstructural proteins
+NC_006577.2	RefSeq	CDS	206	13621	.	+	0	Name=ORF1ab;gbkey=CDS;gene=ORF1ab;locus_tag=HCHV1gp1;protein_id=YP_009944268.1;product=ORF1a polyprotein;ID=cds-YP_009944268.1;Dbxref=GenBank:YP_009944268.1,GeneID:3200429;Note=ORF1ab polyprotein is cleaved to yield nonstructural proteins
+NC_006577.2	RefSeq	CDS	21773	22933	.	+	0	Name=HE;gene=HE;gbkey=CDS;locus_tag=HCHV1gp2;protein_id=YP_173237.1;ID=cds-YP_173237.1;Dbxref=GenBank:YP_173237.1,GeneID:3200425;product=hemagglutinin-esterase glycoprotein
+NC_006577.2	RefSeq	CDS	22942	27012	.	+	0	Name=S;gene=S;gbkey=CDS;locus_tag=HCHV1gp3;protein_id=YP_173238.1;ID=cds-YP_173238.1;product=spike glycoprotein;Dbxref=GenBank:YP_173238.1,GeneID:3200426
+NC_006577.2	RefSeq	CDS	27051	27380	.	+	0	Name=orf4;gbkey=CDS;gene=orf4;locus_tag=HCHV1gp4;protein_id=YP_173239.1;ID=cds-YP_173239.1;product=non-structural protein;Dbxref=GenBank:YP_173239.1,GeneID:3200427
+NC_006577.2	RefSeq	CDS	27373	27621	.	+	0	Name=E;gene=E;gbkey=CDS;locus_tag=HCHV1gp5;protein_id=YP_173240.1;ID=cds-YP_173240.1;product=envelope protein;Dbxref=GenBank:YP_173240.1,GeneID:3200430
+NC_006577.2	RefSeq	CDS	27633	28304	.	+	0	Name=M;gene=M;gbkey=CDS;locus_tag=HCHV1gp6;protein_id=YP_173241.1;ID=cds-YP_173241.1;product=membrane glycoprotein;Dbxref=GenBank:YP_173241.1,GeneID:3200428
+NC_006577.2	RefSeq	CDS	28320	29645	.	+	0	Name=N;gene=N;gbkey=CDS;locus_tag=HCHV1gp7;protein_id=YP_173242.1;ID=cds-YP_173242.1;product=nucleocapsid phosphoprotein;Dbxref=GenBank:YP_173242.1,GeneID:3200423
+NC_006577.2	RefSeq	CDS	28342	28959	.	+	0	Name=N2;gene=N2;gbkey=CDS;locus_tag=HCHV1gp8;protein_id=YP_173243.1;ID=cds-YP_173243.1;product=nucleocapsid phosphoprotein 2;Dbxref=GenBank:YP_173243.1,GeneID:3200424

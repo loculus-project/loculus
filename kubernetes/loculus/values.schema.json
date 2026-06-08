@@ -778,6 +778,12 @@
                                 "type": "string",
                                 "description": "Optional. Server from which to download the nextclade dataset to use to align the sequence. If not specified, use the global nextclade_dataset_server."
                               },
+                              "nextclade_dataset_path": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "string",
+                                "description": "Optional. Local path to a bundled Nextclade dataset directory to use instead of downloading a named dataset."
+                              },
                               "accepted_dataset_matches": {
                                 "groups": ["nextcladeSegment"],
                                 "docsIncludePrefix": false,
@@ -1594,6 +1600,97 @@
       "description": "An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type)",
       "patternProperties": {
         "^[a-z0-9-]+$": { "$ref": "#/definitions/organism" }
+      }
+    },
+    "overview": {
+      "groups": ["organism-conf"],
+      "type": "object",
+      "description": "Optional cross-organism metadata-only LAPIS/SILO instance for an overview search page.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to create a cross-organism Overview LAPIS/SILO instance and website page."
+        },
+        "key": {
+          "type": "string",
+          "default": "overview",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "The LAPIS path key and website config key for the Overview instance."
+        },
+        "displayName": {
+          "type": "string",
+          "default": "Overview",
+          "description": "The display name shown in the website navigation."
+        },
+        "schema": {
+          "$ref": "#/definitions/organism/properties/schema"
+        },
+        "referenceGenomes": {
+          "$ref": "#/definitions/organism/properties/referenceGenomes"
+        },
+        "cladeFieldCandidates": {
+          "type": "object",
+          "description": "For each organism key, ordered metadata fields used to derive the generic Overview clade value.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "revseqSeed": {
+      "groups": ["services"],
+      "type": "object",
+      "description": "Optional ReVSeq preview bootstrap job that submits and releases the bundled consensus test dataset.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "image": {
+          "type": "string",
+          "default": "python:3.12-slim"
+        },
+        "imagePullPolicy": {
+          "type": "string",
+          "default": "IfNotPresent"
+        },
+        "rawBaseUrl": {
+          "type": "string",
+          "default": "https://raw.githubusercontent.com/loculus-project/loculus"
+        },
+        "rawBranch": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string",
+          "default": "testuser"
+        },
+        "password": {
+          "type": "string",
+          "default": "testuser"
+        },
+        "groupName": {
+          "type": "string",
+          "default": "ReVSeq preview data"
+        },
+        "pollSeconds": {
+          "type": "integer",
+          "default": 1800
+        },
+        "activeDeadlineSeconds": {
+          "type": "integer",
+          "default": 2400
+        },
+        "backoffLimit": {
+          "type": "integer",
+          "default": 2
+        }
       }
     },
     "defaultOrganismConfig": {

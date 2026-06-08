@@ -1,0 +1,290 @@
+groupKey	groupType	sequenceCount	sampleAccessions	sampleAliasCores	sampleAliases	runAccessions	associatedOrganisms	enaScientificNames	referenceAccessions	segments	sequenceAccessions
+m2-2MHu4K	single consensus record	1	SAMEA120641497	m2-2MHu4K	revseq_sample_m2-2MHu4K_20251128141131255071	ERR15974072	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373719
+m2-2NXwCk	single consensus record	1	SAMEA120641901	m2-2NXwCk	revseq_sample_m2-2NXwCk_20251128143554975846	ERR15974193	HPIV-2	Human orthorubulavirus 2	NC_003443	genome	OZ373469
+m2-2YwKxe	single consensus record	1	SAMEA120641401	m2-2YwKxe	revseq_sample_m2-2YwKxe_20251128134907973099	ERR15973976	Bocaparvovirus primate1	Bocaparvovirus primate1	NC_007455	genome	OZ373110
+m2-2kH55m	single consensus record	1	SAMEA120641501	m2-2kH55m	revseq_sample_m2-2kH55m_20251128141231396974	ERR15974078	HMPV	human metapneumovirus	NC_039199	genome	OZ373714
+m2-32supx	single consensus record	1	SAMEA120641366	m2-32supx	revseq_sample_m2-32supx_20251128133846399038	ERR15973941	Coronavirus OC43	Human coronavirus OC43	AY391777	genome	OZ373105
+m2-33eCP4	single consensus record	1	SAMEA120641398	m2-33eCP4	revseq_sample_m2-33eCP4_20251128134807828098	ERR15973973	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373046
+m2-34KSAo	single consensus record	1	SAMEA120641613	m2-34KSAo	revseq_sample_m2-34KSAo_20251128142934033633	ERR15974168	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373387
+m2-36z874	single consensus record	1	SAMEA120641379	m2-36z874	revseq_sample_m2-36z874_20251128134226949442	ERR15973954	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373293
+m2-37cQGL	single consensus record	1	SAMEA120642053	m2-37cQGL	revseq_sample_m2-37cQGL_20251128144736680628	ERR15974257	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373101
+m2-38nVTV	single consensus record	1	SAMEA120641929	m2-38nVTV	revseq_sample_m2-38nVTV_20251128143935508447	ERR15974220	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373100
+m2-39xr8K	single consensus record	1	SAMEA120641594	m2-39xr8K	revseq_sample_m2-39xr8K_20251128142433288377	ERR15974149	HMPV	human metapneumovirus	NC_039199	genome	OZ373691
+m2-3CuPYs	single consensus record	1	SAMEA120641608	m2-3CuPYs	revseq_sample_m2-3CuPYs_20251128142753791901	ERR15974159	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373716
+m2-3Fa9rz	single consensus record	1	SAMEA120641374	m2-3Fa9rz	revseq_sample_m2-3Fa9rz_20251128134106742434	ERR15973950	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373057
+m2-3Ft7q9	single consensus record	1	SAMEA120641928	m2-3Ft7q9	revseq_sample_m2-3Ft7q9_20251128143915460101	ERR15974219	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373104
+m2-3G3Doj	single consensus record	1	SAMEA120642243	m2-3G3Doj	revseq_sample_m2-3G3Doj_20251128145658080335	ERR15974447	WU Polyomavirus	WU Polyomavirus	NC_009539	genome	OZ373722
+m2-3H2Wig	single consensus record	1	SAMEA120641368	m2-3H2Wig	revseq_sample_m2-3H2Wig_20251128133906448725	ERR15973942	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373070
+m2-3KZQzJ	single consensus record	1	SAMEA120641936	m2-3KZQzJ	revseq_sample_m2-3KZQzJ_20251128144155841714	ERR15974238	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373500
+m2-3MV28K	single consensus record	1	SAMEA120641371	m2-3MV28K	revseq_sample_m2-3MV28K_20251128134006593219	ERR15973946	HMPV	human metapneumovirus	NC_039199	genome	OZ373059
+m2-3SXzSV	single consensus record	1	SAMEA120641931	m2-3SXzSV	revseq_sample_m2-3SXzSV_20251128144015605379	ERR15974223	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373637
+m2-3TMBNi	single consensus record	1	SAMEA120641391	m2-3TMBNi	revseq_sample_m2-3TMBNi_20251128134607519354	ERR15973967	Rhinovirus A89	rhinovirus A89	NC_001617	genome	OZ373031
+m2-3UqUSN	single consensus record	1	SAMEA120641924	m2-3UqUSN	revseq_sample_m2-3UqUSN_20251128143815314784	ERR15974216	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373520
+m2-3Vw5ij	single consensus record	1	SAMEA120642257	m2-3Vw5ij	revseq_sample_m2-3Vw5ij_20251128150058656934	ERR15974461	RSV-B	Human Respiratory syncytial virus 9320	AY353550	genome	OZ373382
+m2-3aogRq	single consensus record	1	SAMEA120641399	m2-3aogRq	revseq_sample_m2-3aogRq_20251128134827876296	ERR15973974	Rhinovirus A89	rhinovirus A89	NC_001617	genome	OZ373084
+m2-3d2qwx	single consensus record	1	SAMEA120641363	m2-3d2qwx	revseq_sample_m2-3d2qwx_20251128133746251998	ERR15973938	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373064
+m2-3eGjGj	single consensus record	1	SAMEA120642260	m2-3eGjGj	revseq_sample_m2-3eGjGj_20251128150158817444	ERR15974464	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373482
+m2-3fGJE8	single consensus record	1	SAMEA120641393	m2-3fGJE8	revseq_sample_m2-3fGJE8_20251128134647629990	ERR15973969	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373060
+m2-3fLBSP	single consensus record	1	SAMEA120641404	m2-3fLBSP	revseq_sample_m2-3fLBSP_20251128135008116805	ERR15973979	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373056
+m2-3oZJ5x	single consensus record	1	SAMEA120841694	m2-3oZJ5x	revseq_sample_m2-3oZJ5x_20251219103917117074	ERR16047144	Bocaparvovirus primate1	Bocaparvovirus primate1	NC_007455	genome	OZ470146
+m2-3qdHwU	single consensus record	1	SAMEA120642051	m2-3qdHwU	revseq_sample_m2-3qdHwU_20251128144716630510	ERR15974256	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373085
+m2-3wTS9S	single consensus record	1	SAMEA120641395	m2-3wTS9S	revseq_sample_m2-3wTS9S_20251128134727727354	ERR15973971	Human mastadenovirus C	Human mastadenovirus C	NC_001405	genome	OZ373290
+m2-3xWWe7	single consensus record	1	SAMEA120641370	m2-3xWWe7	revseq_sample_m2-3xWWe7_20251128133946545982	ERR15973944	Human mastadenovirus C	Human mastadenovirus C	NC_001405	genome	OZ373091
+m2-3zPstM	single consensus record	1	SAMEA120641354	m2-3zPstM	revseq_sample_m2-3zPstM_20251128133525882488	ERR15973927	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373699
+m2-43Vmvj	single consensus record	1	SAMEA120841693	m2-43Vmvj	revseq_sample_m2-43Vmvj_20251219103917162544	ERR16047142	RSV-B	Human Respiratory syncytial virus 9320	AY353550	genome	OZ470155
+m2-468ARL	single consensus record	1	SAMEA120641360	m2-468ARL	revseq_sample_m2-468ARL_20251128133706152104	ERR15973935	Human mastadenovirus C	Human mastadenovirus C	NC_001405	genome	OZ373066
+m2-48cAtM	single consensus record	1	SAMEA120642246	m2-48cAtM	revseq_sample_m2-48cAtM_20251128145738173736	ERR15974449	Bocaparvovirus primate1	Bocaparvovirus primate1	NC_007455	genome	OZ373690
+m2-49m5VA	single consensus record	1	SAMEA120641386	m2-49m5VA	revseq_sample_m2-49m5VA_20251128134447309862	ERR15973962	RSV-B	Human Respiratory syncytial virus 9320	AY353550	genome	OZ373050
+m2-4Die3B	single consensus record	1	SAMEA120641389	m2-4Die3B	revseq_sample_m2-4Die3B_20251128134527416802	ERR15973964	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373044
+m2-4H6FKQ	single consensus record	1	SAMEA120642308	m2-4H6FKQ	revseq_sample_m2-4H6FKQ_20251128151200288289	ERR15974521	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373128
+m2-4HbGG2	single consensus record	1	SAMEA120641359	m2-4HbGG2	revseq_sample_m2-4HbGG2_20251128133646103724	ERR15973932	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373107
+m2-4JSa55	single consensus record	1	SAMEA120641405	m2-4JSa55	revseq_sample_m2-4JSa55_20251128135028165090	ERR15973980	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373079
+m2-4Lx8Lv	single consensus record	1	SAMEA120641364	m2-4Lx8Lv	revseq_sample_m2-4Lx8Lv_20251128133806301801	ERR15973939	KI polyomavirus Stockholm 60	KI polyomavirus Stockholm 60	NC_009238	genome	OZ373041
+m2-4PF58Q	single consensus record	1	SAMEA120641380	m2-4PF58Q	revseq_sample_m2-4PF58Q_20251128134247000180	ERR15973955	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373032
+m2-4SRYNi	single consensus record	1	SAMEA120642255	m2-4SRYNi	revseq_sample_m2-4SRYNi_20251128150018556427	ERR15974459	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373515
+m2-4SWHMc	single consensus record	1	SAMEA120641390	m2-4SWHMc	revseq_sample_m2-4SWHMc_20251128134547469798	ERR15973965	Coronavirus OC43	Human coronavirus OC43	AY391777	genome	OZ373054
+m2-4W9wb5	single consensus record	1	SAMEA120641357	m2-4W9wb5	revseq_sample_m2-4W9wb5_20251128133606003984	ERR15973929	HPIV-4a	Human parainfluenza virus 4a	NC_021928	genome	OZ373071
+m2-4i2tZF	single consensus record	1	SAMEA120641383	m2-4i2tZF	revseq_sample_m2-4i2tZF_20251128134347145547	ERR15973959	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373090
+m2-4kXick	single consensus record	1	SAMEA120641930	m2-4kXick	revseq_sample_m2-4kXick_20251128143955558544	ERR15974221	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373354
+m2-53qCwY	single consensus record	1	SAMEA120641626	m2-53qCwY	revseq_sample_m2-53qCwY_20251128143034179814	ERR15974171	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373441
+m2-5YkKkJ	single consensus record	1	SAMEA120642057	m2-5YkKkJ	revseq_sample_m2-5YkKkJ_20251128144856877397	ERR15974261	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373664
+m2-5at3hA	single consensus record	1	SAMEA120642245	m2-5at3hA	revseq_sample_m2-5at3hA_20251128145718127035	ERR15974448	RSV-B	Human Respiratory syncytial virus 9320	AY353550	genome	OZ373509
+m2-5pS65p	single consensus record	1	SAMEA120641435	m2-5pS65p	revseq_sample_m2-5pS65p_20251128135929507951	ERR15974012	Coronavirus OC43	Human coronavirus OC43	AY391777	genome	OZ373033
+m2-5xXjjp	single consensus record	1	SAMEA120642293	m2-5xXjjp	revseq_sample_m2-5xXjjp_20251128151120194654	ERR15974495	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373361
+m2-6qaV6z	single consensus record	1	SAMEA120641463	m2-6qaV6z	revseq_sample_m2-6qaV6z_20251128140750721080	ERR15974038	HMPV	human metapneumovirus	NC_039199	genome	OZ373721
+m2-7oH73S	single consensus record	1	SAMEA120641458	m2-7oH73S	revseq_sample_m2-7oH73S_20251128140610476793	ERR15974032	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373408
+m2-7xxDyW	single consensus record	1	SAMEA120642054	m2-7xxDyW	revseq_sample_m2-7xxDyW_20251128144816778811	ERR15974258	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373165
+m2-844sRF	single consensus record	1	SAMEA120641491	m2-844sRF	revseq_sample_m2-844sRF_20251128140930962704	ERR15974065	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373732
+m2-8ERNNJ	single consensus record	1	SAMEA120641392	m2-8ERNNJ	revseq_sample_m2-8ERNNJ_20251128134627581321	ERR15973968	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373055
+m2-8JqGbD	single consensus record	1	SAMEA120641446	m2-8JqGbD	revseq_sample_m2-8JqGbD_20251128140249993036	ERR15974022	Rhinovirus A89	rhinovirus A89	NC_001617	genome	OZ373428
+m2-9KEquH	single consensus record	1	SAMEA120641921	m2-9KEquH	revseq_sample_m2-9KEquH_20251128143715171682	ERR15974213	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373670
+m2-9jS4Ro	single consensus record	1	SAMEA120641369	m2-9jS4Ro	revseq_sample_m2-9jS4Ro_20251128133926498632	ERR15973943	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373098
+m2-9qnCXK	single consensus record	1	SAMEA120642219	m2-9qnCXK	revseq_sample_m2-9qnCXK_20251128144936976149	ERR15974423	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373642
+m2-ABxNA9	single consensus record	1	SAMEA120641599	m2-ABxNA9	revseq_sample_m2-ABxNA9_20251128142613549896	ERR15974154	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373511
+m2-AXsNSL	single consensus record	1	SAMEA120642232	m2-AXsNSL	revseq_sample_m2-AXsNSL_20251128145337589021	ERR15974436	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373292
+m2-AnXy9n	single consensus record	1	SAMEA120641441	m2-AnXy9n	revseq_sample_m2-AnXy9n_20251128140109755484	ERR15974017	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373734
+m2-AqTpPL	single consensus record	1	SAMEA120642267	m2-AqTpPL	revseq_sample_m2-AqTpPL_20251128150339059436	ERR15974469	Coronavirus 229E	Human coronavirus 229E	NC_002645	genome	OZ373357
+m2-BF2ufp	single consensus record	1	SAMEA120641932	m2-BF2ufp	revseq_sample_m2-BF2ufp_20251128144035652279	ERR15974224	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373370
+m2-BJn2VZ	single consensus record	1	SAMEA120641933	m2-BJn2VZ	revseq_sample_m2-BJn2VZ_20251128144055698970	ERR15974235	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373390
+m2-BP3DjK	single consensus record	1	SAMEA120641582	m2-BP3DjK	revseq_sample_m2-BP3DjK_20251128142112745514	ERR15974138	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373516
+m2-BP5QSp	single consensus record	1	SAMEA120641424	m2-BP5QSp	revseq_sample_m2-BP5QSp_20251128135609003377	ERR15974001	HMPV	human metapneumovirus	NC_039199	genome	OZ373498
+m2-BYjiah	single consensus record	1	SAMEA120641509	m2-BYjiah	revseq_sample_m2-BYjiah_20251128141431689770	ERR15974089	Coronavirus OC43	Human coronavirus OC43	AY391777	genome	OZ373338
+m2-BdNxPR	single consensus record	1	SAMEA120642259	m2-BdNxPR	revseq_sample_m2-BdNxPR_20251128150138770305	ERR15974463	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373730
+m2-BvdErP	single consensus record	1	SAMEA120641614	m2-BvdErP	revseq_sample_m2-BvdErP_20251128142954080986	ERR15974169	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373424
+m2-CcozBt	single consensus record	1	SAMEA120642291	m2-CcozBt	revseq_sample_m2-CcozBt_20251128151040100202	ERR15974492	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373167
+m2-CgiSAY	single consensus record	1	SAMEA120641511	m2-CgiSAY	revseq_sample_m2-CgiSAY_20251128141451739400	ERR15974090	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373343
+m2-DBKZHX	single consensus record	1	SAMEA120641460	m2-DBKZHX	revseq_sample_m2-DBKZHX_20251128140650573556	ERR15974034	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373712
+m2-DhoSq8	single consensus record	1	SAMEA120642221	m2-DhoSq8	revseq_sample_m2-DhoSq8_20251128145017075656	ERR15974425	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373065
+m2-Di2qm7	single consensus record	1	SAMEA120641455	m2-Di2qm7	revseq_sample_m2-Di2qm7_20251128140530380976	ERR15974030	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373717
+m2-Dq37e8	single consensus record	1	SAMEA120841686	m2-Dq37e8	revseq_sample_m2-Dq37e8_20251219103917893479	ERR16047132	HPIV-1	Human respirovirus 1	NC_003461	genome	OZ470121
+m2-DxMevL	single consensus record	1	SAMEA120642294	m2-DxMevL	revseq_sample_m2-DxMevL_20251128151140241206	ERR15974496	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373130
+m2-E6qgW7	single consensus record	1	SAMEA120641385	m2-E6qgW7	revseq_sample_m2-E6qgW7_20251128134427261589	ERR15973961	Coronavirus HKU1	Human coronavirus HKU1	NC_006577	genome	OZ373099
+m2-ED6Fyo	single consensus record	1	SAMEA120641631	m2-ED6Fyo	revseq_sample_m2-ED6Fyo_20251128143214423585	ERR15974177	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373427
+m2-EJ7fEz	single consensus record	1	SAMEA120841690	m2-EJ7fEz	revseq_sample_m2-EJ7fEz_20251219103917307554	ERR16047137	Coronavirus OC43	Human coronavirus OC43	AY391777	genome	OZ470125
+m2-ENT3qs	single consensus record	1	SAMEA120641544	m2-ENT3qs	revseq_sample_m2-ENT3qs_20251128141812290335	ERR15974101	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373718
+m2-EYQGUT	single consensus record	1	SAMEA120641585	m2-EYQGUT	revseq_sample_m2-EYQGUT_20251128142212910590	ERR15974141	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373581
+m2-F34WtX	single consensus record	1	SAMEA120642271	m2-F34WtX	revseq_sample_m2-F34WtX_20251128150439226497	ERR15974473	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373465
+m2-FAvEvi	single consensus record	1	SAMEA120642276	m2-FAvEvi	revseq_sample_m2-FAvEvi_20251128150559424835	ERR15974477	Coronavirus HKU1	Human coronavirus HKU1	NC_006577	genome	OZ373380
+m2-FcN3wC	single consensus record	1	SAMEA120641451	m2-FcN3wC	revseq_sample_m2-FcN3wC_20251128140410187157	ERR15974026	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373529
+m2-G4bQxE	single consensus record	1	SAMEA120641940	m2-G4bQxE	revseq_sample_m2-G4bQxE_20251128144255990580	ERR15974241	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373495
+m2-G68KXW	single consensus record	1	SAMEA120642237	m2-G68KXW	revseq_sample_m2-G68KXW_20251128145457793028	ERR15974440	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373102
+m2-G86emu	single consensus record	1	SAMEA120641436	m2-G86emu	revseq_sample_m2-G86emu_20251128135949555698	ERR15974013	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373446
+m2-G8vc2N	single consensus record	1	SAMEA120641426	m2-G8vc2N	revseq_sample_m2-G8vc2N_20251128135649100977	ERR15974003	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373477
+m2-GRjNzo	multiple consensus records	2	SAMEA120641625;SAMEA120841687	m2-GRjNzo	revseq_sample_m2-GRjNzo_20251128143014130165;revseq_sample_m2-GRjNzo_20251219103917846101	ERR15974170;ERR16047133	Human parechovirus type 1	Human parechovirus type 1 PicoBank/HPeV1/a	FM242866	genome	OZ373362;OZ470147
+m2-GbMzJy	single consensus record	1	SAMEA120642279	m2-GbMzJy	revseq_sample_m2-GbMzJy_20251128150659570312	ERR15974481	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373432
+m2-GmB4Bf	single consensus record	1	SAMEA120642277	m2-GmB4Bf	revseq_sample_m2-GmB4Bf_20251128150619472554	ERR15974478	Enterovirus C109	Enterovirus C109	GQ865517	genome	OZ373524
+m2-GpvELC	single consensus record	1	SAMEA120641413	m2-GpvELC	revseq_sample_m2-GpvELC_20251128135248507689	ERR15973989	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373036
+m2-HAAUgG	single consensus record	1	SAMEA120641415	m2-HAAUgG	revseq_sample_m2-HAAUgG_20251128135328604836	ERR15973991	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373047
+m2-HUBpy4	single consensus record	1	SAMEA120642290	m2-HUBpy4	revseq_sample_m2-HUBpy4_20251128151020052247	ERR15974491	Coronavirus NL63	Human coronavirus NL63	NC_005831	genome	OZ373502
+m2-HXGr8V	single consensus record	1	SAMEA120641402	m2-HXGr8V	revseq_sample_m2-HXGr8V_20251128134928020294	ERR15973977	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373287
+m2-HXHQAT	single consensus record	1	SAMEA120841697	m2-HXHQAT	revseq_sample_m2-HXHQAT_20251219103916966071	ERR16047150	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ470143
+m2-HkLtpW	single consensus record	1	SAMEA120642273	m2-HkLtpW	revseq_sample_m2-HkLtpW_20251128150519325546	ERR15974475	HMPV	human metapneumovirus	NC_039199	genome	OZ373341
+m2-Ho9wQu	single consensus record	1	SAMEA120641604	m2-Ho9wQu	revseq_sample_m2-Ho9wQu_20251128142653645601	ERR15974156	HMPV	human metapneumovirus	NC_039199	genome	OZ373706
+m2-HsBVJN	single consensus record	1	SAMEA120641522	m2-HsBVJN	revseq_sample_m2-HsBVJN_20251128141652058901	ERR15974097	Coronavirus 229E	Human coronavirus 229E	NC_002645	genome	OZ373519
+m2-JBeRmh	single consensus record	1	SAMEA120641593	m2-JBeRmh	revseq_sample_m2-JBeRmh_20251128142413238783	ERR15974148	Rhinovirus A89	rhinovirus A89	NC_001617	genome	OZ373364
+m2-JiBCDX	single consensus record	1	SAMEA120641494	m2-JiBCDX	revseq_sample_m2-JiBCDX_20251128141031113344	ERR15974069	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373542
+m2-JqBYLh	single consensus record	1	SAMEA120641519	m2-JqBYLh	revseq_sample_m2-JqBYLh_20251128141611955777	ERR15974095	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373533
+m2-KaJ5Pe	single consensus record	1	SAMEA120642268	m2-KaJ5Pe	revseq_sample_m2-KaJ5Pe_20251128150359109038	ERR15974470	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373521
+m2-Ki8Aa3	single consensus record	1	SAMEA120642262	m2-Ki8Aa3	revseq_sample_m2-Ki8Aa3_20251128150218865345	ERR15974465	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373708
+m2-Kouapg	single consensus record	1	SAMEA120641577	m2-Kouapg	revseq_sample_m2-Kouapg_20251128141952547023	ERR15974134	Coronavirus OC43	Human coronavirus OC43	AY391777	genome	OZ373527
+m2-Kr6366	single consensus record	1	SAMEA120641521	m2-Kr6366	revseq_sample_m2-Kr6366_20251128141632008264	ERR15974096	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373725
+m2-KtHTz8	single consensus record	1	SAMEA120641420	m2-KtHTz8	revseq_sample_m2-KtHTz8_20251128135448801212	ERR15973997	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373042
+m2-KvvZnz	single consensus record	1	SAMEA120642289	m2-KvvZnz	revseq_sample_m2-KvvZnz_20251128150959999918	ERR15974490	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373517
+m2-Kyii3a	single consensus record	1	SAMEA120641538	m2-Kyii3a	revseq_sample_m2-Kyii3a_20251128141732166878	ERR15974099	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373673
+m2-L3ukKo	single consensus record	1	SAMEA120641920	m2-L3ukKo	revseq_sample_m2-L3ukKo_20251128143655122858	ERR15974211	HPIV-1	Human respirovirus 1	NC_003461	genome	OZ373352
+m2-LMD6ho	single consensus record	1	SAMEA120641523	m2-LMD6ho	revseq_sample_m2-LMD6ho_20251128141712106896	ERR15974098	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373525
+m2-LTGmFn	single consensus record	1	SAMEA120642284	m2-LTGmFn	revseq_sample_m2-LTGmFn_20251128150839809981	ERR15974486	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373437
+m2-LX4eJE	single consensus record	1	SAMEA120641495	m2-LX4eJE	revseq_sample_m2-LX4eJE_20251128141051160918	ERR15974070	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373385
+m2-Lq3fms	single consensus record	1	SAMEA120641423	m2-Lq3fms	revseq_sample_m2-Lq3fms_20251128135548952229	ERR15974000	RSV-B	Human Respiratory syncytial virus 9320	AY353550	genome	OZ373043
+m2-M5iqYC	single consensus record	1	SAMEA120641421	m2-M5iqYC	revseq_sample_m2-M5iqYC_20251128135508852999	ERR15973998	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373034
+m2-MM8MkA	single consensus record	1	SAMEA120641502	m2-MM8MkA	revseq_sample_m2-MM8MkA_20251128141251447296	ERR15974079	HMPV	human metapneumovirus	NC_039199	genome	OZ373470
+m2-MQhF9c	single consensus record	1	SAMEA120641440	m2-MQhF9c	revseq_sample_m2-MQhF9c_20251128140049706655	ERR15974016	HMPV	human metapneumovirus	NC_039199	genome	OZ373711
+m2-MT4r8p	single consensus record	1	SAMEA120641381	m2-MT4r8p	revseq_sample_m2-MT4r8p_20251128134307049220	ERR15973957	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373037
+m2-MUZ8Cb	single consensus record	1	SAMEA120641596	m2-MUZ8Cb	revseq_sample_m2-MUZ8Cb_20251128142513396829	ERR15974151	Coronavirus 229E	Human coronavirus 229E	NC_002645	genome	OZ373550
+m2-Mj6hgu	single consensus record	1	SAMEA120641938	m2-Mj6hgu	revseq_sample_m2-Mj6hgu_20251128144215888850	ERR15974239	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373168
+m2-MjqpEV	single consensus record	1	SAMEA120641542	m2-MjqpEV	revseq_sample_m2-MjqpEV_20251128141752225477	ERR15974100	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373672
+m2-Mp25Fk	single consensus record	1	SAMEA120641503	m2-Mp25Fk	revseq_sample_m2-Mp25Fk_20251128141311493728	ERR15974081	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373375
+m2-MvvBk9	single consensus record	1	SAMEA120642227	m2-MvvBk9	revseq_sample_m2-MvvBk9_20251128145157324432	ERR15974430	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373289
+m2-ND22rx	single consensus record	1	SAMEA120641452	m2-ND22rx	revseq_sample_m2-ND22rx_20251128140430234497	ERR15974027	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373336
+m2-NDEjHn	single consensus record	1	SAMEA120842006	m2-NDEjHn	revseq_sample_m2-NDEjHn_20251219120839157030	ERR16048081	Human mastadenovirus C	Human mastadenovirus C	NC_001405	genome	OZ470131
+m2-NaDTTs	single consensus record	1	SAMEA120641597	m2-NaDTTs	revseq_sample_m2-NaDTTs_20251128142533444442	ERR15974152	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373545
+m2-NdSZao	single consensus record	1	SAMEA120642224	m2-NdSZao	revseq_sample_m2-NdSZao_20251128145057181125	ERR15974427	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373163
+m2-NmHGDa	single consensus record	1	SAMEA120841698	m2-NmHGDa	revseq_sample_m2-NmHGDa_20251219103916912233	ERR16047151	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ470139
+m2-NqUrMx	single consensus record	1	SAMEA120641492	m2-NqUrMx	revseq_sample_m2-NqUrMx_20251128140951012330	ERR15974067	HPIV-2	Human orthorubulavirus 2	NC_003443	genome	OZ373288
+m2-P9mWJr	single consensus record	1	SAMEA120642266	m2-P9mWJr	revseq_sample_m2-P9mWJr_20251128150319011499	ERR15974468	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373448
+m2-PQ5aTg	single consensus record	1	SAMEA120641579	m2-PQ5aTg	revseq_sample_m2-PQ5aTg_20251128142032645438	ERR15974136	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373450
+m2-PVBn6f	single consensus record	1	SAMEA120641504	m2-PVBn6f	revseq_sample_m2-PVBn6f_20251128141331543738	ERR15974084	HMPV	human metapneumovirus	NC_039199	genome	OZ373333
+m2-PVnipc	single consensus record	1	SAMEA120642292	m2-PVnipc	revseq_sample_m2-PVnipc_20251128151100146600	ERR15974494	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373049
+m2-Q8Ba9A	single consensus record	1	SAMEA120641416	m2-Q8Ba9A	revseq_sample_m2-Q8Ba9A_20251128135348653421	ERR15973993	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373700
+m2-QEotEA	single consensus record	1	SAMEA120642055	m2-QEotEA	revseq_sample_m2-QEotEA_20251128144756731952	ERR15974259	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373074
+m2-QGowTB	single consensus record	1	SAMEA120642042	m2-QGowTB	revseq_sample_m2-QGowTB_20251128144436228106	ERR15974247	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373504
+m2-QPbjvy	single consensus record	1	SAMEA120641454	m2-QPbjvy	revseq_sample_m2-QPbjvy_20251128140510331906	ERR15974029	Coronavirus HKU1	Human coronavirus HKU1	NC_006577	genome	OZ373544
+m2-QRRsiL	single consensus record	1	SAMEA120642250	m2-QRRsiL	revseq_sample_m2-QRRsiL_20251128145858363271	ERR15974454	Coronavirus OC43	Human coronavirus OC43	AY391777	genome	OZ373689
+m2-QTwV7a	single consensus record	1	SAMEA120642236	m2-QTwV7a	revseq_sample_m2-QTwV7a_20251128145437740421	ERR15974439	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373296
+m2-Qf8cLC	single consensus record	1	SAMEA120642280	m2-Qf8cLC	revseq_sample_m2-Qf8cLC_20251128150719619427	ERR15974482	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373439
+m2-QtXNo7	single consensus record	1	SAMEA120642044	m2-QtXNo7	revseq_sample_m2-QtXNo7_20251128144456279694	ERR15974248	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373492
+m2-RCdbJH	single consensus record	1	SAMEA120641444	m2-RCdbJH	revseq_sample_m2-RCdbJH_20251128140209897657	ERR15974020	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373536
+m2-RVmPKr	single consensus record	1	SAMEA120641450	m2-RVmPKr	revseq_sample_m2-RVmPKr_20251128140350138777	ERR15974025	RSV-B	Human Respiratory syncytial virus 9320	AY353550	genome	OZ373534
+m2-RgZWrD	single consensus record	1	SAMEA120641575	m2-RgZWrD	revseq_sample_m2-RgZWrD_20251128141912441368	ERR15974132	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373030
+m2-STGkhE	single consensus record	1	SAMEA120642286	m2-STGkhE	revseq_sample_m2-STGkhE_20251128150859857057	ERR15974487	HMPV	human metapneumovirus	NC_039199	genome	OZ373499
+m2-SccDgj	single consensus record	1	SAMEA120641903	m2-SccDgj	revseq_sample_m2-SccDgj_20251128143615027792	ERR15974194	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373703
+m2-SrvHnQ	single consensus record	1	SAMEA120641465	m2-SrvHnQ	revseq_sample_m2-SrvHnQ_20251128140830816232	ERR15974040	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373723
+m2-T5VXtD	single consensus record	1	SAMEA120642256	m2-T5VXtD	revseq_sample_m2-T5VXtD_20251128150038607922	ERR15974460	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373512
+m2-TUofv5	single consensus record	1	SAMEA120641573	m2-TUofv5	revseq_sample_m2-TUofv5_20251128141832340820	ERR15974130	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373526
+m2-TcfHz7	single consensus record	1	SAMEA120641898	m2-TcfHz7	revseq_sample_m2-TcfHz7_20251128143454825411	ERR15974190	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373365
+m2-ToGSRe	single consensus record	1	SAMEA120641607	m2-ToGSRe	revseq_sample_m2-ToGSRe_20251128142733742610	ERR15974158	HMPV	human metapneumovirus	NC_039199	genome	OZ373409
+m2-TzR6v7	single consensus record	1	SAMEA120642045	m2-TzR6v7	revseq_sample_m2-TzR6v7_20251128144516338402	ERR15974249	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373543
+m2-U2wv8C	multi-segment genome	8	SAMEA120641500	m2-U2wv8C	revseq_sample_m2-U2wv8C_20251128141211350776	ERR15974077	Influenza A H1N1	Influenza A virus (A/Michigan/45/2015(H1N1))	KU509700.1;KU509701.1;KU509702.1;KU509703.1;KU509704.1;KU509705.1;KU509706.1;KU509707.1	HA;M;NA;NP;NS;PA;PB1;PB2	OZ373400;OZ373401;OZ373402;OZ373403;OZ373404;OZ373405;OZ373406;OZ373407
+m2-UZk6rp	single consensus record	1	SAMEA120642248	m2-UZk6rp	revseq_sample_m2-UZk6rp_20251128145818268907	ERR15974452	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373376
+m2-Uph9U3	single consensus record	1	SAMEA120641574	m2-Uph9U3	revseq_sample_m2-Uph9U3_20251128141852393484	ERR15974131	Coronavirus NL63	Human coronavirus NL63	NC_005831	genome	OZ373528
+m2-V87KNw	single consensus record	1	SAMEA120642239	m2-V87KNw	revseq_sample_m2-V87KNw_20251128145537888577	ERR15974442	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373089
+m2-V8dKQC	single consensus record	1	SAMEA120641507	m2-V8dKQC	revseq_sample_m2-V8dKQC_20251128141351591223	ERR15974087	HMPV	human metapneumovirus	NC_039199	genome	OZ373337
+m2-V9rHyG	single consensus record	1	SAMEA120642058	m2-V9rHyG	revseq_sample_m2-V9rHyG_20251128144916928239	ERR15974262	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373411
+m2-VAEUJ5	single consensus record	1	SAMEA120642258	m2-VAEUJ5	revseq_sample_m2-VAEUJ5_20251128150118718209	ERR15974462	Rhinovirus A89	rhinovirus A89	NC_001617	genome	OZ373727
+m2-VduGeq	single consensus record	1	SAMEA120642240	m2-VduGeq	revseq_sample_m2-VduGeq_20251128145557935680	ERR15974443	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373640
+m2-VnXdYZ	single consensus record	1	SAMEA120641591	m2-VnXdYZ	revseq_sample_m2-VnXdYZ_20251128142353183543	ERR15974147	Human mastadenovirus C	Human mastadenovirus C	NC_001405	genome	OZ373339
+m2-W4ZnHe	single consensus record	1	SAMEA120641517	m2-W4ZnHe	revseq_sample_m2-W4ZnHe_20251128141551904172	ERR15974093	HMPV	human metapneumovirus	NC_039199	genome	OZ373360
+m2-WpJqxj	single consensus record	1	SAMEA120642288	m2-WpJqxj	revseq_sample_m2-WpJqxj_20251128150939952512	ERR15974489	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373514
+m2-WydUVb	single consensus record	1	SAMEA120641490	m2-WydUVb	revseq_sample_m2-WydUVb_20251128140910915330	ERR15974064	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373701
+m2-X3sxhS	single consensus record	1	SAMEA120641384	m2-X3sxhS	revseq_sample_m2-X3sxhS_20251128134407192818	ERR15973960	RSV-B	Human Respiratory syncytial virus 9320	AY353550	genome	OZ373129
+m2-X4aXWG	single consensus record	1	SAMEA120641636	m2-X4aXWG	revseq_sample_m2-X4aXWG_20251128143334617727	ERR15974182	HMPV	human metapneumovirus	NC_039199	genome	OZ373678
+m2-XHdiUs	single consensus record	1	SAMEA122376974	m2-XHdiUs	revseq_sample_m2-XHdiUs_20260504172518223986	ERR17174041	Coronavirus OC43	Human coronavirus OC43	AY391777	genome	OZ470120
+m2-XP6vJf	single consensus record	1	SAMEA120642056	m2-XP6vJf	revseq_sample_m2-XP6vJf_20251128144836826670	ERR15974260	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373106
+m2-XisgNp	single consensus record	1	SAMEA120641378	m2-XisgNp	revseq_sample_m2-XisgNp_20251128134206894655	ERR15973953	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373507
+m2-Xx7sqD	single consensus record	1	SAMEA120641400	m2-Xx7sqD	revseq_sample_m2-Xx7sqD_20251128134847924587	ERR15973975	Rhinovirus B14	rhinovirus B14	NC_001490	genome	OZ373081
+m2-Y4rZ7q	single consensus record	1	SAMEA120841689	m2-Y4rZ7q	revseq_sample_m2-Y4rZ7q_20251219103917353824	ERR16047136	Coronavirus OC43	Human respirovirus 3	AY391777	genome	OZ470134
+m2-YAdfpF	single consensus record	1	SAMEA120641365	m2-YAdfpF	revseq_sample_m2-YAdfpF_20251128133826350601	ERR15973940	Bocaparvovirus primate1	Bocaparvovirus primate1	NC_007455	genome	OZ373068
+m2-YB7Zxj	single consensus record	1	SAMEA120641466	m2-YB7Zxj	revseq_sample_m2-YB7Zxj_20251128140850865159	ERR15974041	Coronavirus OC43	Human coronavirus OC43	AY391777	genome	OZ373726
+m2-YRBBfu	single consensus record	1	SAMEA120642049	m2-YRBBfu	revseq_sample_m2-YRBBfu_20251128144636530097	ERR15974253	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373535
+m2-Yg94Uo	single consensus record	1	SAMEA120642287	m2-Yg94Uo	revseq_sample_m2-Yg94Uo_20251128150919905385	ERR15974488	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373505
+m2-YztDkU	single consensus record	1	SAMEA120641922	m2-YztDkU	revseq_sample_m2-YztDkU_20251128143735217181	ERR15974214	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373667
+m2-ZNTJLD	single consensus record	1	SAMEA120641462	m2-ZNTJLD	revseq_sample_m2-ZNTJLD_20251128140730671627	ERR15974037	HMPV	human metapneumovirus	NC_039199	genome	OZ373393
+m2-ZNzLxp	single consensus record	1	SAMEA120642050	m2-ZNzLxp	revseq_sample_m2-ZNzLxp_20251128144656578400	ERR15974255	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373638
+m2-Zu3u7N	single consensus record	1	SAMEA120641372	m2-Zu3u7N	revseq_sample_m2-Zu3u7N_20251128134026640907	ERR15973948	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373092
+m2-aEURHb	single consensus record	1	SAMEA120641603	m2-aEURHb	revseq_sample_m2-aEURHb_20251128142633597857	ERR15974155	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373540
+m2-aWAj59	single consensus record	1	SAMEA120641376	m2-aWAj59	revseq_sample_m2-aWAj59_20251128134146842868	ERR15973952	Human mastadenovirus C	Human mastadenovirus C	NC_001405	genome	OZ373063
+m2-afGSAT	single consensus record	1	SAMEA120642283	m2-afGSAT	revseq_sample_m2-afGSAT_20251128150819762930	ERR15974485	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373697
+m2-ahT4kF	single consensus record	1	SAMEA120641428	m2-ahT4kF	revseq_sample_m2-ahT4kF_20251128135709156255	ERR15974005	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373496
+m2-amRv2M	single consensus record	1	SAMEA120641609	m2-amRv2M	revseq_sample_m2-amRv2M_20251128142813844335	ERR15974161	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373709
+m2-ar4p3m	single consensus record	1	SAMEA120641578	m2-ar4p3m	revseq_sample_m2-ar4p3m_20251128142012595408	ERR15974135	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373508
+m2-bkrZsY	single consensus record	1	SAMEA120641934	m2-bkrZsY	revseq_sample_m2-bkrZsY_20251128144115745224	ERR15974236	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373353
+m2-boLTAg	single consensus record	1	SAMEA120641453	m2-boLTAg	revseq_sample_m2-boLTAg_20251128140450282839	ERR15974028	Human mastadenovirus C	Human mastadenovirus C	NC_001405	genome	OZ373710
+m2-c4imMZ	single consensus record	1	SAMEA120641438	m2-c4imMZ	revseq_sample_m2-c4imMZ_20251128140009603854	ERR15974014	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373510
+m2-cGQaRk	single consensus record	1	SAMEA120641935	m2-cGQaRk	revseq_sample_m2-cGQaRk_20251128144135791828	ERR15974237	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373067
+m2-cWAMxe	single consensus record	1	SAMEA120642263	m2-cWAMxe	revseq_sample_m2-cWAMxe_20251128150238914393	ERR15974466	Coronavirus OC43	Human coronavirus OC43	AY391777	genome	OZ373431
+m2-cyCNuA	single consensus record	1	SAMEA120642272	m2-cyCNuA	revseq_sample_m2-cyCNuA_20251128150459275163	ERR15974474	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373040
+m2-dC5QX8	single consensus record	1	SAMEA120642238	m2-dC5QX8	revseq_sample_m2-dC5QX8_20251128145517842070	ERR15974441	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373295
+m2-dLeBHd	single consensus record	1	SAMEA120641493	m2-dLeBHd	revseq_sample_m2-dLeBHd_20251128141011061816	ERR15974068	Coronavirus 229E	Human coronavirus 229E	NC_002645	genome	OZ373386
+m2-dgZP3L	single consensus record	1	SAMEA120641418	m2-dgZP3L	revseq_sample_m2-dgZP3L_20251128135408703169	ERR15973995	Coronavirus HKU1	Human coronavirus HKU1	NC_006577	genome	OZ373501
+m2-e3Nkuo	single consensus record	1	SAMEA120641632	m2-e3Nkuo	revseq_sample_m2-e3Nkuo_20251128143234470888	ERR15974178	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373347
+m2-e3y7tj	single consensus record	1	SAMEA120641409	m2-e3y7tj	revseq_sample_m2-e3y7tj_20251128135128312874	ERR15973984	Coronavirus OC43	Human coronavirus OC43	AY391777	genome	OZ373080
+m2-eyf48e	single consensus record	1	SAMEA120642220	m2-eyf48e	revseq_sample_m2-eyf48e_20251128144957027892	ERR15974424	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373547
+m2-f6biAx	single consensus record	1	SAMEA120641449	m2-f6biAx	revseq_sample_m2-f6biAx_20251128140330090474	ERR15974024	KI polyomavirus Stockholm 60	KI polyomavirus Stockholm 60	NC_009238	genome	OZ373715
+m2-fChozQ	single consensus record	1	SAMEA120641926	m2-fChozQ	revseq_sample_m2-fChozQ_20251128143855409799	ERR15974218	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373523
+m2-fngLcf	single consensus record	1	SAMEA120642242	m2-fngLcf	revseq_sample_m2-fngLcf_20251128145638033181	ERR15974446	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373641
+m2-gEpiDa	single consensus record	1	SAMEA120641587	m2-gEpiDa	revseq_sample_m2-gEpiDa_20251128142253019363	ERR15974143	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373340
+m2-gJTbaX	single consensus record	1	SAMEA120642265	m2-gJTbaX	revseq_sample_m2-gJTbaX_20251128150258960859	ERR15974467	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373344
+m2-gYFizT	single consensus record	1	SAMEA120641362	m2-gYFizT	revseq_sample_m2-gYFizT_20251128133726202111	ERR15973937	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373103
+m2-gnDemF	single consensus record	1	SAMEA120841696	m2-gnDemF	revseq_sample_m2-gnDemF_20251219103917020095	ERR16047148	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ470153
+m2-gvJsdn	single consensus record	1	SAMEA120641586	m2-gvJsdn	revseq_sample_m2-gvJsdn_20251128142232959213	ERR15974142	HMPV	human metapneumovirus	NC_039199	genome	OZ373443
+m2-gxCe5X	single consensus record	1	SAMEA120641576	m2-gxCe5X	revseq_sample_m2-gxCe5X_20251128141932496255	ERR15974133	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373419
+m2-gxDNRv	single consensus record	1	SAMEA120642229	m2-gxDNRv	revseq_sample_m2-gxDNRv_20251128145237422401	ERR15974432	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373072
+m2-gyQtpZ	single consensus record	1	SAMEA120641941	m2-gyQtpZ	revseq_sample_m2-gyQtpZ_20251128144316037913	ERR15974243	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373410
+m2-gycK6z	single consensus record	1	SAMEA120642222	m2-gycK6z	revseq_sample_m2-gycK6z_20251128145037123316	ERR15974426	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373164
+m2-h54gk9	single consensus record	1	SAMEA120641899	m2-h54gk9	revseq_sample_m2-h54gk9_20251128143514873699	ERR15974191	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373468
+m2-hHKDyB	single consensus record	1	SAMEA120641431	m2-hHKDyB	revseq_sample_m2-hHKDyB_20251128135809314674	ERR15974008	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373537
+m2-hU5TjU	single consensus record	1	SAMEA120641373	m2-hU5TjU	revseq_sample_m2-hU5TjU_20251128134046688523	ERR15973949	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373028
+m2-hXgLde	single consensus record	1	SAMEA120641396	m2-hXgLde	revseq_sample_m2-hXgLde_20251128134747774837	ERR15973972	Human mastadenovirus C	Human mastadenovirus C	NC_001405	genome	OZ373416
+m2-hjq9oe	single consensus record	1	SAMEA120641419	m2-hjq9oe	revseq_sample_m2-hjq9oe_20251128135428753490	ERR15973996	RSV-B	Human Respiratory syncytial virus 9320	AY353550	genome	OZ373166
+m2-i5wLSU	single consensus record	1	SAMEA120642226	m2-i5wLSU	revseq_sample_m2-i5wLSU_20251128145137274563	ERR15974429	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373480
+m2-i7rgAJ	single consensus record	1	SAMEA120641682	m2-i7rgAJ	revseq_sample_m2-i7rgAJ_20251128143434772950	ERR15974185	Rhinovirus A89	rhinovirus A89	NC_001617	genome	OZ373369
+m2-iZ7TLc	single consensus record	1	SAMEA120641498	m2-iZ7TLc	revseq_sample_m2-iZ7TLc_20251128141151303684	ERR15974073	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373675
+m2-jCKGBv	single consensus record	1	SAMEA120641595	m2-jCKGBv	revseq_sample_m2-jCKGBv_20251128142453344859	ERR15974150	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373688
+m2-jM3n9w	single consensus record	1	SAMEA120641606	m2-jM3n9w	revseq_sample_m2-jM3n9w_20251128142713694169	ERR15974157	HMPV	human metapneumovirus	NC_039199	genome	OZ373476
+m2-jQNpYD	single consensus record	1	SAMEA120641407	m2-jQNpYD	revseq_sample_m2-jQNpYD_20251128135108263179	ERR15973982	Coronavirus HKU1	Human coronavirus HKU1	NC_006577	genome	OZ373096
+m2-jwkH9W	single consensus record	1	SAMEA120641461	m2-jwkH9W	revseq_sample_m2-jwkH9W_20251128140710622136	ERR15974036	HMPV	human metapneumovirus	NC_039199	genome	OZ373705
+m2-k9vgiw	single consensus record	1	SAMEA120642274	m2-k9vgiw	revseq_sample_m2-k9vgiw_20251128150539376057	ERR15974476	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373418
+m2-kLPe6f	single consensus record	1	SAMEA120641633	m2-kLPe6f	revseq_sample_m2-kLPe6f_20251128143254520060	ERR15974179	HMPV	human metapneumovirus	NC_039199	genome	OZ373440
+m2-m5XiUJ	single consensus record	1	SAMEA120641496	m2-m5XiUJ	revseq_sample_m2-m5XiUJ_20251128141111208264	ERR15974071	Coronavirus NL63	Human coronavirus NL63	NC_005831	genome	OZ373704
+m2-mGefQv	single consensus record	1	SAMEA120641942	m2-mGefQv	revseq_sample_m2-mGefQv_20251128144336085169	ERR15974244	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373666
+m2-mVqwfv	single consensus record	1	SAMEA120642247	m2-mVqwfv	revseq_sample_m2-mVqwfv_20251128145758222318	ERR15974450	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373728
+m2-mkGmpe	single consensus record	1	SAMEA120642230	m2-mkGmpe	revseq_sample_m2-mkGmpe_20251128145257489630	ERR15974434	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373294
+m2-mzGTDC	single consensus record	1	SAMEA120641590	m2-mzGTDC	revseq_sample_m2-mzGTDC_20251128142333131152	ERR15974146	Human mastadenovirus C	Human mastadenovirus C	NC_001405	genome	OZ373384
+m2-mzMRtV	single consensus record	1	SAMEA120842008	m2-mzMRtV	revseq_sample_m2-mzMRtV_20251219120839068815	ERR16048084	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ470128
+m2-n45rMk	single consensus record	1	SAMEA120641925	m2-n45rMk	revseq_sample_m2-n45rMk_20251128143835361982	ERR15974217	Rhinovirus A89	rhinovirus A89	NC_001617	genome	OZ373522
+m2-n4CyR5	single consensus record	1	SAMEA120641923	m2-n4CyR5	revseq_sample_m2-n4CyR5_20251128143755267657	ERR15974215	HMPV	human metapneumovirus	NC_039199	genome	OZ373541
+m2-nHuJXs	single consensus record	1	SAMEA120641639	m2-nHuJXs	revseq_sample_m2-nHuJXs_20251128143414717891	ERR15974184	Coronavirus NL63	Human coronavirus NL63	NC_005831	genome	OZ373342
+m2-nf9ieP	single consensus record	1	SAMEA120641442	m2-nf9ieP	revseq_sample_m2-nf9ieP_20251128140129802682	ERR15974018	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373479
+m2-nmHdMk	single consensus record	1	SAMEA120642231	m2-nmHdMk	revseq_sample_m2-nmHdMk_20251128145317540309	ERR15974435	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373082
+m2-npCqtD	single consensus record	1	SAMEA120641943	m2-npCqtD	revseq_sample_m2-npCqtD_20251128144356132723	ERR15974245	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373493
+m2-oD3bo4	single consensus record	1	SAMEA120641635	m2-oD3bo4	revseq_sample_m2-oD3bo4_20251128143314568236	ERR15974181	WU Polyomavirus	WU Polyomavirus	NC_009539	genome	OZ373366
+m2-oDzvGR	single consensus record	1	SAMEA120641919	m2-oDzvGR	revseq_sample_m2-oDzvGR_20251128143635075226	ERR15974210	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373720
+m2-oUT7WT	single consensus record	1	SAMEA120642228	m2-oUT7WT	revseq_sample_m2-oUT7WT_20251128145217374445	ERR15974431	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373069
+m2-oUUEge	single consensus record	1	SAMEA120641900	m2-oUUEge	revseq_sample_m2-oUUEge_20251128143534923581	ERR15974192	HMPV	human metapneumovirus	NC_039199	genome	OZ373513
+m2-oxY6PQ	single consensus record	1	SAMEA120642234	m2-oxY6PQ	revseq_sample_m2-oxY6PQ_20251128145357642098	ERR15974437	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373058
+m2-ozGf4E	single consensus record	1	SAMEA120641512	m2-ozGf4E	revseq_sample_m2-ozGf4E_20251128141511792263	ERR15974091	HMPV	human metapneumovirus	NC_039199	genome	OZ373679
+m2-ozKj7w	single consensus record	1	SAMEA120642041	m2-ozKj7w	revseq_sample_m2-ozKj7w_20251128144416180363	ERR15974246	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373494
+m2-pCrZWV	single consensus record	1	SAMEA120641628	m2-pCrZWV	revseq_sample_m2-pCrZWV_20251128143114276603	ERR15974174	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373388
+m2-pDAji8	single consensus record	1	SAMEA120642235	m2-pDAji8	revseq_sample_m2-pDAji8_20251128145417691788	ERR15974438	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373356
+m2-pdN7uy	single consensus record	1	SAMEA120641464	m2-pdN7uy	revseq_sample_m2-pdN7uy_20251128140810768428	ERR15974039	RSV-B	Human Respiratory syncytial virus 9320	AY353550	genome	OZ373724
+m2-pzbDPq	single consensus record	1	SAMEA120642282	m2-pzbDPq	revseq_sample_m2-pzbDPq_20251128150759714036	ERR15974484	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373506
+m2-q4bsMd	single consensus record	1	SAMEA120642269	m2-q4bsMd	revseq_sample_m2-q4bsMd_20251128150419167212	ERR15974472	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373109
+m2-q8yvBm	single consensus record	1	SAMEA120641610	m2-q8yvBm	revseq_sample_m2-q8yvBm_20251128142833890762	ERR15974162	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373346
+m2-qFQ9kJ	single consensus record	1	SAMEA120641580	m2-qFQ9kJ	revseq_sample_m2-qFQ9kJ_20251128142052694835	ERR15974137	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373677
+m2-rhiSHJ	single consensus record	1	SAMEA120641425	m2-rhiSHJ	revseq_sample_m2-rhiSHJ_20251128135629051186	ERR15974002	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373438
+m2-s96RDD	single consensus record	1	SAMEA120642225	m2-s96RDD	revseq_sample_m2-s96RDD_20251128145117228529	ERR15974428	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373471
+m2-sJs93G	single consensus record	1	SAMEA120641414	m2-sJs93G	revseq_sample_m2-sJs93G_20251128135308554350	ERR15973990	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373078
+m2-sSV2Bt	single consensus record	1	SAMEA120641629	m2-sSV2Bt	revseq_sample_m2-sSV2Bt_20251128143134326163	ERR15974175	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373538
+m2-sVxWai	single consensus record	1	SAMEA120641430	m2-sVxWai	revseq_sample_m2-sVxWai_20251128135749266872	ERR15974007	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373436
+m2-sZ4qK3	single consensus record	1	SAMEA120641445	m2-sZ4qK3	revseq_sample_m2-sZ4qK3_20251128140229945546	ERR15974021	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373731
+m2-t9UZtV	single consensus record	1	SAMEA120641410	m2-t9UZtV	revseq_sample_m2-t9UZtV_20251128135148359883	ERR15973985	RSV-B	Human Respiratory syncytial virus 9320	AY353550	genome	OZ373093
+m2-tDscqy	multi-segment genome	8	SAMEA120641432	m2-tDscqy	revseq_sample_m2-tDscqy_20251128135829361499	ERR15974009	Influenza A H1N1	Influenza A virus (A/Michigan/45/2015(H1N1))	KU509700.1;KU509701.1;KU509702.1;KU509703.1;KU509704.1;KU509705.1;KU509706.1;KU509707.1	HA;M;NA;NP;NS;PA;PB1;PB2	OZ373680;OZ373681;OZ373682;OZ373683;OZ373684;OZ373685;OZ373686;OZ373687
+m2-tDuWkr	single consensus record	1	SAMEA120641638	m2-tDuWkr	revseq_sample_m2-tDuWkr_20251128143354668449	ERR15974183	HMPV	human metapneumovirus	NC_039199	genome	OZ373371
+m2-tUrV5z	single consensus record	1	SAMEA120642251	m2-tUrV5z	revseq_sample_m2-tUrV5z_20251128145918411976	ERR15974455	RSV-B	Human Respiratory syncytial virus 9320	AY353550	genome	OZ373518
+m2-u89dBs	single consensus record	1	SAMEA120841695	m2-u89dBs	revseq_sample_m2-u89dBs_20251219103917070079	ERR16047147	Human mastadenovirus C	Human mastadenovirus C	NC_001405	genome	OZ470132
+m2-uBCY5S	single consensus record	1	SAMEA120642046	m2-uBCY5S	revseq_sample_m2-uBCY5S_20251128144536384657	ERR15974250	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373491
+m2-ujTsiu	single consensus record	1	SAMEA120641598	m2-ujTsiu	revseq_sample_m2-ujTsiu_20251128142553498310	ERR15974153	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373414
+m2-v3KDUF	single consensus record	1	SAMEA120642252	m2-v3KDUF	revseq_sample_m2-v3KDUF_20251128145938461470	ERR15974456	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373674
+m2-v72khW	single consensus record	1	SAMEA120641630	m2-v72khW	revseq_sample_m2-v72khW_20251128143154375422	ERR15974176	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373497
+m2-w9v3Qv	single consensus record	1	SAMEA120841691	m2-w9v3Qv	revseq_sample_m2-w9v3Qv_20251219103917258563	ERR16047139	WU Polyomavirus	WU Polyomavirus	NC_009539	genome	OZ470137
+m2-wF4k2T	single consensus record	1	SAMEA120641508	m2-wF4k2T	revseq_sample_m2-wF4k2T_20251128141411640506	ERR15974088	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373381
+m2-wM9MFc	single consensus record	1	SAMEA120642241	m2-wM9MFc	revseq_sample_m2-wM9MFc_20251128145617983479	ERR15974445	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373378
+m2-weJAnw	single consensus record	1	SAMEA120641612	m2-weJAnw	revseq_sample_m2-weJAnw_20251128142913986582	ERR15974164	Rhinovirus A89	rhinovirus A89	NC_001617	genome	OZ373698
+m2-wfEdma	single consensus record	1	SAMEA120842007	m2-wfEdma	revseq_sample_m2-wfEdma_20251219120839112771	ERR16048083	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ470127
+m2-wgoGjP	single consensus record	1	SAMEA120641584	m2-wgoGjP	revseq_sample_m2-wgoGjP_20251128142152858123	ERR15974140	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373676
+m2-xMNGcb	single consensus record	1	SAMEA120641411	m2-xMNGcb	revseq_sample_m2-xMNGcb_20251128135208410142	ERR15973987	HMPV	human metapneumovirus	NC_039199	genome	OZ373087
+m2-xPAa2d	single consensus record	1	SAMEA120642253	m2-xPAa2d	revseq_sample_m2-xPAa2d_20251128145958509001	ERR15974457	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373729
+m2-xvyMxE	single consensus record	1	SAMEA120641939	m2-xvyMxE	revseq_sample_m2-xvyMxE_20251128144235940077	ERR15974240	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373503
+m2-xwByzt	single consensus record	1	SAMEA120641588	m2-xwByzt	revseq_sample_m2-xwByzt_20251128142313078827	ERR15974145	HMPV	human metapneumovirus	NC_039199	genome	OZ373351
+m2-y58Q75	single consensus record	1	SAMEA120641611	m2-y58Q75	revseq_sample_m2-y58Q75_20251128142853938324	ERR15974163	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373372
+m2-y9sf9q	single consensus record	1	SAMEA120642047	m2-y9sf9q	revseq_sample_m2-y9sf9q_20251128144556433120	ERR15974251	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373539
+m2-yEmM7C	single consensus record	1	SAMEA120641583	m2-yEmM7C	revseq_sample_m2-yEmM7C_20251128142132807183	ERR15974139	Human adenovirus B1	Human adenovirus B1	NC_011203	genome	OZ373733
+m2-yLHwrL	single consensus record	1	SAMEA120641439	m2-yLHwrL	revseq_sample_m2-yLHwrL_20251128140029656696	ERR15974015	Human mastadenovirus C	Human mastadenovirus C	NC_001405	genome	OZ373449
+m2-yQUmMG	single consensus record	1	SAMEA120642048	m2-yQUmMG	revseq_sample_m2-yQUmMG_20251128144616482255	ERR15974252	SARS-CoV-2	Severe acute respiratory syndrome coronavirus 2	MN908947.3	genome	OZ373639
+m2-yR5Hef	single consensus record	1	SAMEA120641513	m2-yR5Hef	revseq_sample_m2-yR5Hef_20251128141531847383	ERR15974092	HMPV	human metapneumovirus	NC_039199	genome	OZ373383
+m2-yebiMQ	single consensus record	1	SAMEA120642278	m2-yebiMQ	revseq_sample_m2-yebiMQ_20251128150639521558	ERR15974479	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373707
+m2-zG7RFd	single consensus record	1	SAMEA120641382	m2-zG7RFd	revseq_sample_m2-zG7RFd_20251128134327098702	ERR15973958	HPIV-4a	Human parainfluenza virus 4a	NC_021928	genome	OZ373291
+m2-zGrf4n	single consensus record	1	SAMEA120642249	m2-zGrf4n	revseq_sample_m2-zGrf4n_20251128145838314755	ERR15974453	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ373345
+m2-zhhg9e	single consensus record	1	SAMEA120641627	m2-zhhg9e	revseq_sample_m2-zhhg9e_20251128143054227659	ERR15974172	HPIV-3	Human respirovirus 3	NC_001796	genome	OZ373423
+m2-zhrVRY	single consensus record	1	SAMEA120642281	m2-zhrVRY	revseq_sample_m2-zhrVRY_20251128150739666319	ERR15974483	Coronavirus HKU1	Human coronavirus HKU1	NC_006577	genome	OZ373702
+m2-zwqknf	single consensus record	1	SAMEA120841692	m2-zwqknf	revseq_sample_m2-zwqknf_20251219103917208749	ERR16047140	RSV-A	Human respiratory syncytial virus A	NC_001803	genome	OZ470151

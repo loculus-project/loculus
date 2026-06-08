@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess  # noqa: S404
 import sys
 from collections import defaultdict
@@ -17,7 +18,7 @@ from Bio import SeqIO
 
 from loculus_preprocessing.sequence_checks import error_on_excess_sequences
 
-from .config import Config, NextcladeSequenceAndDataset, SequenceName
+from .config import AlignmentRequirement, Config, NextcladeSequenceAndDataset, SequenceName
 from .datatypes import (
     AccessionVersion,
     Alert,
@@ -765,13 +766,34 @@ def assign_segment_for_alignment(
                     unprocessed, config=config, dataset_dir=dataset_dir
                 )
     batch.alerts = {
-        id: Alert(
-            errors=[*batch.alerts[id].errors, *error] if error else batch.alerts[id].errors,
-            warnings=batch.alerts[id].warnings,
-        )
+        id: alignment_requirement_alerts(config, batch, id, error)
         for id, error in errors.items()
     }
     return batch
+
+
+def alignment_requirement_alerts(
+    config: Config,
+    batch: SequenceAssignmentBatch,
+    accession_version: AccessionVersion,
+    excess_sequence_errors: list[ProcessingAnnotation],
+) -> Alert:
+    assignment_alert = batch.alerts[accession_version]
+    if (
+        config.multi_datasets
+        and config.alignment_requirement == AlignmentRequirement.ANY
+        and batch.unalignedNucleotideSequences[accession_version]
+    ):
+        return Alert(
+            errors=excess_sequence_errors,
+            warnings=[*assignment_alert.warnings, *assignment_alert.errors],
+        )
+    return Alert(
+        errors=[*assignment_alert.errors, *excess_sequence_errors]
+        if excess_sequence_errors
+        else assignment_alert.errors,
+        warnings=assignment_alert.warnings,
+    )
 
 
 def enrich_with_nextclade(  # noqa: PLR0914
@@ -789,6 +811,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
             alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]
             aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]
             sequenceNameToFastaId: dict[SegmentName, str]
+            files: dict[str, list[FileIdAndName]] | None
     )` object.
     """
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {
@@ -802,6 +825,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
         for entry in unprocessed
     }
 
+    input_files = {entry.accessionVersion: entry.data.files for entry in unprocessed}
     batch = assign_segment_for_alignment(unprocessed, config=config, dataset_dir=dataset_dir)
     unaligned_nucleotide_sequences = batch.unalignedNucleotideSequences
     segment_assignment_map = batch.sequenceNameToFastaId
@@ -900,6 +924,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
             alignedAminoAcidSequences=aligned_aminoacid_sequences[id],
             aminoAcidInsertions=amino_acid_insertions[id],
             sequenceNameToFastaId=segment_assignment_map[id],
+            files=input_files[id],
             errors=alerts[id].errors,
             warnings=alerts[id].warnings,
         )
@@ -909,6 +934,23 @@ def enrich_with_nextclade(  # noqa: PLR0914
 
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
     for sequence_and_dataset in config.nextclade_sequence_and_datasets:
+        output_dir = f"{dataset_dir}/{sequence_and_dataset.name}"
+        if sequence_and_dataset.nextclade_dataset_path:
+            source_dir = Path(sequence_and_dataset.nextclade_dataset_path)
+            if not source_dir.is_dir():
+                msg = f"Configured Nextclade dataset path does not exist: {source_dir}"
+                raise RuntimeError(msg)
+            logger.info("Copying bundled Nextclade dataset: %s", source_dir)
+            shutil.copytree(source_dir, output_dir, dirs_exist_ok=True)
+            continue
+
+        if not sequence_and_dataset.nextclade_dataset_name:
+            msg = (
+                "Each aligned reference must configure either nextclade_dataset_name "
+                "or nextclade_dataset_path"
+            )
+            raise RuntimeError(msg)
+
         dataset_download_command = [
             arg
             for arg in [
@@ -919,7 +961,7 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
                 f"--server={
                     sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server
                 }",
-                f"--output-dir={dataset_dir}/{sequence_and_dataset.name}",
+                f"--output-dir={output_dir}",
                 f"--tag={sequence_and_dataset.nextclade_dataset_tag}"
                 if sequence_and_dataset.nextclade_dataset_tag
                 else "",

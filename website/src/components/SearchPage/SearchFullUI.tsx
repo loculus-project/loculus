@@ -60,6 +60,8 @@ export interface InnerSearchFullUIProps {
     contactConfig?: ContactConfig;
     groupId?: number;
     isReleasedPage: boolean;
+    enableSequencePreview?: boolean;
+    showRecentSequencesBanner?: boolean;
 }
 
 const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
@@ -91,6 +93,8 @@ export const InnerSearchFullUI = ({
     contactConfig,
     groupId,
     isReleasedPage,
+    enableSequencePreview = true,
+    showRecentSequencesBanner = true,
 }: InnerSearchFullUIProps) => {
     hiddenFieldValues ??= {};
 
@@ -243,7 +247,7 @@ export const InnerSearchFullUI = ({
         }
     }, [aggregatedHook.data?.data, oldCount]);
 
-    const showMutationSearch = schema.submissionDataTypes.consensusSequences;
+    const showMutationSearch = schema.submissionDataTypes.consensusSequences && enableSequencePreview;
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -256,19 +260,21 @@ export const InnerSearchFullUI = ({
                 selectedReferenceNames={referenceSelection?.selectedReferences}
                 referenceGenomesInfo={referenceGenomesInfo}
             />
-            <SeqPreviewModal
-                key={previewedSeqId ?? 'seq-modal'}
-                seqId={previewedSeqId ?? ''}
-                accessToken={accessToken}
-                isOpen={Boolean(previewedSeqId)}
-                onClose={() => setPreviewedSeqId(null)}
-                referenceGenomesInfo={referenceGenomesInfo}
-                myGroups={myGroups}
-                isHalfScreen={previewHalfScreen}
-                setIsHalfScreen={setPreviewHalfScreen}
-                setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
-                sequenceFlaggingConfig={sequenceFlaggingConfig}
-            />
+            {enableSequencePreview && (
+                <SeqPreviewModal
+                    key={previewedSeqId ?? 'seq-modal'}
+                    seqId={previewedSeqId ?? ''}
+                    accessToken={accessToken}
+                    isOpen={Boolean(previewedSeqId)}
+                    onClose={() => setPreviewedSeqId(null)}
+                    referenceGenomesInfo={referenceGenomesInfo}
+                    myGroups={myGroups}
+                    isHalfScreen={previewHalfScreen}
+                    setIsHalfScreen={setPreviewHalfScreen}
+                    setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
+                    sequenceFlaggingConfig={sequenceFlaggingConfig}
+                />
+            )}
             <div className='md:w-[18rem]'>
                 <SearchForm
                     organism={organism}
@@ -289,7 +295,7 @@ export const InnerSearchFullUI = ({
                 className='flex-1 min-w-0'
                 style={{ paddingBottom: Boolean(previewedSeqId) && previewHalfScreen ? '50vh' : '0' }}
             >
-                <RecentSequencesBanner organism={organism} />
+                {showRecentSequencesBanner && <RecentSequencesBanner organism={organism} />}
 
                 {(detailsHook.isError || aggregatedHook.isError) &&
                     // @ts-expect-error because response is not expected on error, but does exist
@@ -428,6 +434,7 @@ export const InnerSearchFullUI = ({
                         setOrderByField={setOrderByField}
                         setOrderDirection={setOrderDirection}
                         columnsToShow={columnsToShow}
+                        enableSequencePreview={enableSequencePreview}
                     />
 
                     <div className='mt-4 flex justify-center'>

@@ -57,6 +57,10 @@
 {{- $key := $item.key }}
     "{{ $key }}": "{{ if not $.Values.disableWebsite }}http://{{ template "loculus.lapisServiceName" $key }}:8080{{ else -}}http://{{ $.Values.localHost }}:8080/{{ $key }}{{ end }}"
   {{ end }}
+  {{- if and $.Values.overview $.Values.overview.enabled }}
+{{- $key := $.Values.overview.key }}
+    "{{ $key }}": "{{ if not $.Values.disableWebsite }}http://{{ template "loculus.lapisServiceName" $key }}:8080{{ else -}}http://{{ $.Values.localHost }}:8080/{{ $key }}{{ end }}"
+  {{- end }}
 {{ end }}
 
 {{/* generates external LAPIS urls from { config, host } */}}
@@ -67,6 +71,9 @@
 "{{ $key -}}": "{{ $lapisUrlTemplate | replace "%organism%" $key }}"
 {{- end }}
 {{ end }}
+{{- if and .config.overview .config.overview.enabled }}
+"{{ .config.overview.key -}}": "{{ $lapisUrlTemplate | replace "%organism%" .config.overview.key }}"
+{{- end }}
 {{ end }}
 
 {{/* generates the LAPIS service name for a given organism key */}}

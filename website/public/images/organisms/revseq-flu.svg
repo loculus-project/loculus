@@ -1,0 +1,19 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Influenza particle illustration">
+  <rect width="640" height="420" fill="#f8fafc"/>
+  <ellipse cx="320" cy="210" rx="172" ry="112" fill="#dcfce7" stroke="#166534" stroke-width="18"/>
+  <g stroke="#15803d" stroke-linecap="round" stroke-width="16">
+    <path d="M164 158 98 126"/>
+    <path d="M164 262 98 294"/>
+    <path d="M476 158 542 126"/>
+    <path d="M476 262 542 294"/>
+    <path d="M252 107 220 54"/>
+    <path d="M388 107 420 54"/>
+    <path d="M252 313 220 366"/>
+    <path d="M388 313 420 366"/>
+  </g>
+  <g fill="none" stroke="#22c55e" stroke-linecap="round" stroke-width="14">
+    <path d="M235 188c44-42 90 42 134 0"/>
+    <path d="M235 232c44-42 90 42 134 0"/>
+  </g>
+</svg>

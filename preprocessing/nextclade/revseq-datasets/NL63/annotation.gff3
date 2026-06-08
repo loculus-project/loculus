@@ -1,0 +1,14 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region NC_005831.2 1 27553
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=277944
+NC_005831.2	RefSeq	region	1	27553	.	+	.	ID=NC_005831.2:1..27553;Dbxref=taxon:277944;gb-acronym=HCoV-NL63;gbkey=Src;genome=genomic;mol_type=genomic RNA;strain=Amsterdam I
+NC_005831.2	RefSeq	CDS	287	12439	.	+	0	Name=pp1ab;gbkey=CDS;gene=ORF1ab;locus_tag=HCNV63gp1;protein_id=YP_003766.2;ID=cds-YP_003766.2;exception=ribosomal slippage;product=ORF1ab polyprotein;Dbxref=GenBank:YP_003766.2,GeneID:2943501;Note=translated via -1 ribosomal frameshift%3B ORF1ab polyprotein is cleaved to yield the RNA-dependent RNA polymerase and other nonstructural proteins
+NC_005831.2	RefSeq	CDS	12439	20475	.	+	0	Name=pp1ab;gbkey=CDS;gene=ORF1ab;locus_tag=HCNV63gp1;protein_id=YP_003766.2;ID=cds-YP_003766.2;exception=ribosomal slippage;product=ORF1ab polyprotein;Dbxref=GenBank:YP_003766.2,GeneID:2943501;Note=translated via -1 ribosomal frameshift%3B ORF1ab polyprotein is cleaved to yield the RNA-dependent RNA polymerase and other nonstructural proteins
+NC_005831.2	RefSeq	CDS	287	12469	.	+	0	Name=ORF1ab;gbkey=CDS;gene=ORF1ab;locus_tag=HCNV63gp1;protein_id=YP_010229075.1;product=ORF1a polyprotein;ID=cds-YP_010229075.1;Dbxref=GenBank:YP_010229075.1,GeneID:2943501
+NC_005831.2	RefSeq	CDS	20472	24542	.	+	0	Name=Spike;gbkey=CDS;locus_tag=HCNV63gp2;protein_id=YP_003767.1;product=spike protein;ID=cds-YP_003767.1;Dbxref=GenBank:YP_003767.1,GeneID:2943499
+NC_005831.2	RefSeq	CDS	24542	25219	.	+	0	Name=p3;gbkey=CDS;locus_tag=HCNV63gp3;product=protein 3;protein_id=YP_003768.1;ID=cds-YP_003768.1;Dbxref=GenBank:YP_003768.1,GeneID:2943500
+NC_005831.2	RefSeq	CDS	25200	25433	.	+	0	Name=E;gene=E;gbkey=CDS;locus_tag=HCNV63gp4;protein_id=YP_003769.1;ID=cds-YP_003769.1;product=envelope protein;Note=small membrane protein;Dbxref=GenBank:YP_003769.1,GeneID:2943502
+NC_005831.2	RefSeq	CDS	25442	26122	.	+	0	Name=M;gene=M;gbkey=CDS;locus_tag=HCNV63gp5;protein_id=YP_003770.1;ID=cds-YP_003770.1;product=membrane protein;Dbxref=GenBank:YP_003770.1,GeneID:2943503
+NC_005831.2	RefSeq	CDS	26133	27266	.	+	0	Name=N;gene=N;gbkey=CDS;locus_tag=HCNV63gp6;protein_id=YP_003771.1;ID=cds-YP_003771.1;product=nucleocapsid protein;Dbxref=GenBank:YP_003771.1,GeneID:2943504

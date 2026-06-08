@@ -203,7 +203,7 @@ def add_nextclade_metadata(
             result = None if raw is None else str(raw)
             return process_labeled_mutations(result, spec.args)
         case _:
-            return InputData(datum=str(raw))
+            return InputData(datum=None if raw is None else str(raw))
 
 
 def add_assigned_reference(
@@ -302,6 +302,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
                 alignedAminoAcidSequences=aligned_aminoacid_sequences,
                 aminoAcidInsertions=amino_acid_insertions,
                 sequenceNameToFastaId=sequenceNameToFastaId,
+                files=unprocessed.files,
             ),
             errors=errors,
             warnings=warnings,
@@ -540,6 +541,7 @@ def process_single(
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
             sequenceNameToFastaId=unprocessed.sequenceNameToFastaId,
+            files=unprocessed.files,
         ),
         errors=list(
             set(
@@ -660,8 +662,10 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             file_id = upload_info.fileId
             url = upload_info.url
             upload_embl_file_to_presigned_url(file_content, url)
+            existing_files = submission_data.processed_entry.data.files or {}
             submission_data.processed_entry.data.files = {
-                "annotations": [FileIdAndName(fileId=file_id, name=file_name)]
+                **existing_files,
+                "annotations": [FileIdAndName(fileId=file_id, name=file_name)],
             }
         except Exception as e:
             logger.error("Error creating or uploading EMBL file: %s", e)

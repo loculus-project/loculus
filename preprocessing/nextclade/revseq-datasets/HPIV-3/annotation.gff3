@@ -1,0 +1,15 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region NC_001796.2 1 15462
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=11216
+NC_001796.2	RefSeq	region	1	15462	.	+	.	ID=NC_001796.2:1..15462;Dbxref=taxon:11216;gbkey=Src;genome=genomic;mol_type=viral cRNA;old-name=Human parainfluenza virus 3
+NC_001796.2	RefSeq	CDS	111	1658	.	+	0	Name=N;gbkey=CDS;locus_tag=HPIV3gp1;protein_id=NP_067148.1;ID=cds-NP_067148.1;product=nucleocapsid protein;Dbxref=GenBank:NP_067148.1,GeneID:911955
+NC_001796.2	RefSeq	CDS	1784	3595	.	+	0	Name=P;gbkey=CDS;locus_tag=HPIV3gp2;protein_id=NP_067149.1;product=phosphoprotein;ID=cds-NP_067149.1;Dbxref=GenBank:NP_067149.1,GeneID:911956
+NC_001796.2	RefSeq	CDS	1784	2509	.	+	0	Name=D;gbkey=CDS;locus_tag=HPIV3gp3;product=D protein;exception=RNA editing;protein_id=NP_599250.1;ID=cds-NP_599250.1;Dbxref=GenBank:NP_599250.1,GeneID:911958
+NC_001796.2	RefSeq	CDS	2508	2903	.	+	0	Name=D;gbkey=CDS;locus_tag=HPIV3gp3;product=D protein;exception=RNA editing;protein_id=NP_599250.1;ID=cds-NP_599250.1;Dbxref=GenBank:NP_599250.1,GeneID:911958
+NC_001796.2	RefSeq	CDS	1794	2393	.	+	0	Name=C;gbkey=CDS;locus_tag=HPIV3gp4;product=C protein;protein_id=NP_599251.1;ID=cds-NP_599251.1;Dbxref=GenBank:NP_599251.1,GeneID:911959
+NC_001796.2	RefSeq	CDS	3753	4814	.	+	0	Name=M;gbkey=CDS;locus_tag=HPIV3gp5;protein_id=NP_067150.1;product=matrix potein;ID=cds-NP_067150.1;Dbxref=GenBank:NP_067150.1,GeneID:911954
+NC_001796.2	RefSeq	CDS	5072	6691	.	+	0	Name=F;gbkey=CDS;locus_tag=HPIV3gp6;protein_id=NP_067151.1;product=fusion protein;ID=cds-NP_067151.1;Dbxref=GenBank:NP_067151.1,GeneID:911957
+NC_001796.2	RefSeq	CDS	6806	8530	.	+	0	Name=HN;gbkey=CDS;locus_tag=HPIV3gp7;protein_id=NP_067152.1;ID=cds-NP_067152.1;product=hemagglutinin-neuraminidase;Dbxref=GenBank:NP_067152.1,GeneID:911961
+NC_001796.2	RefSeq	CDS	8646	15347	.	+	0	Name=L;gbkey=CDS;locus_tag=HPIV3gp8;protein_id=NP_067153.2;product=large protein;ID=cds-NP_067153.2;Dbxref=GenBank:NP_067153.2,GeneID:911960

@@ -519,6 +519,23 @@ test_case_definitions = [
         expected_errors=[],
     ),
     Case(
+        name="none_string_float",
+        input_metadata={
+            "submissionId": "none_string_float",
+            "percentage_float": "None",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+        },
+        accession_id="150",
+        expected_metadata={
+            "percentage_float": None,
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_150.1/2022-11-01",
+        },
+        expected_errors=[],
+    ),
+    Case(
         name="infinity_float",
         input_metadata={
             "submissionId": "infinity_float",

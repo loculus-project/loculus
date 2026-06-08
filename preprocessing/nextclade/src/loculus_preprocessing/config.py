@@ -63,6 +63,7 @@ class Reference(BaseModel):
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str | None = None
+    nextclade_dataset_path: str | None = None
     accepted_dataset_matches: list[str] = Field(default_factory=list)
     genes: list[str] = Field(default_factory=list)
     nextclade_additional_args: list[str] = Field(default_factory=list)
@@ -80,6 +81,7 @@ class NextcladeSequenceAndDataset(BaseModel):
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str | None = None
+    nextclade_dataset_path: str | None = None
     # Names of diamond or nextclade sort entries that are acceptable matches for this dataset
     accepted_dataset_matches: list[str] = Field(default_factory=list)
     gene_suffix: str | None = None
@@ -131,7 +133,8 @@ class Config(BaseModel):
             self.alignment_requirement = AlignmentRequirement.NONE
         for segment in self.segments:
             if not segment.references or not any(
-                ds.nextclade_dataset_name for ds in segment.references
+                ds.nextclade_dataset_name or ds.nextclade_dataset_path
+                for ds in segment.references
             ):
                 self.alignment_requirement = AlignmentRequirement.NONE
 

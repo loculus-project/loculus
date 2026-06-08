@@ -337,10 +337,35 @@ organisms:
           {{- end }}
       {{- end }}
       {{- end }}
-      {{- end }}
+  {{- end }}
     referenceGenomes:
       {{ $instance.referenceGenomes | toYaml | nindent 6 }}
   {{- end }}
+{{- if and $.Values.overview $.Values.overview.enabled }}
+{{- $overviewSchema := $.Values.overview.schema | include "loculus.patchMetadataSchema" | fromYaml }}
+{{- $overviewReferenceGenomes := $.Values.overview.referenceGenomes | default (list) }}
+overview:
+  key: {{ $.Values.overview.key | quote }}
+  displayName: {{ $.Values.overview.displayName | quote }}
+  schema:
+    organismName: {{ quote $overviewSchema.organismName }}
+    loadSequencesAutomatically: {{ $overviewSchema.loadSequencesAutomatically | default false }}
+    {{- include "loculus.submissionDataTypes" $overviewSchema | nindent 4 }}
+    primaryKey: accessionVersion
+    inputFields:
+      {{ $overviewSchema.inputFields | default list | toYaml | nindent 6 }}
+    metadata:
+      {{- $args := dict "metadata" (concat $commonMetadata ($overviewSchema.metadata | default list)) "referenceGenomes" $overviewReferenceGenomes }}
+      {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
+      {{ $metadata.fields | toYaml | nindent 6 }}
+    {{- omit ($overviewSchema.website | default dict) "multiFieldSearches" | toYaml | nindent 4 }}
+    {{- if $overviewSchema.website.multiFieldSearches }}
+    multiFieldSearches:
+      {{ $overviewSchema.website.multiFieldSearches | toYaml | nindent 6 }}
+    {{- end }}
+  referenceGenomes:
+    {{ $overviewReferenceGenomes | toYaml | nindent 4 }}
+{{- end }}
 {{- end }}
 
 {{- define "loculus.standardWebsiteMetadata" }}

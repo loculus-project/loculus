@@ -1,0 +1,21 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Coronavirus particle illustration">
+  <rect width="640" height="420" fill="#f7fafc"/>
+  <g fill="none" stroke="#5b21b6" stroke-linecap="round" stroke-width="18">
+    <path d="M320 86v54"/>
+    <path d="M320 280v54"/>
+    <path d="M126 210h54"/>
+    <path d="M460 210h54"/>
+    <path d="m183 73 38 38"/>
+    <path d="m419 309 38 38"/>
+    <path d="m457 73-38 38"/>
+    <path d="m221 309-38 38"/>
+  </g>
+  <circle cx="320" cy="210" r="126" fill="#ede9fe" stroke="#4c1d95" stroke-width="18"/>
+  <g fill="#7c3aed">
+    <circle cx="274" cy="175" r="16"/>
+    <circle cx="344" cy="157" r="14"/>
+    <circle cx="378" cy="227" r="18"/>
+    <circle cx="293" cy="252" r="15"/>
+  </g>
+</svg>

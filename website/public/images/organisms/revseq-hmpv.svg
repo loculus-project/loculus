@@ -1,0 +1,16 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Metapneumovirus particle illustration">
+  <rect width="640" height="420" fill="#f8fafc"/>
+  <circle cx="320" cy="210" r="134" fill="#e0f2fe" stroke="#075985" stroke-width="18"/>
+  <g stroke="#0284c7" stroke-linecap="round" stroke-width="16">
+    <path d="M320 54v42"/>
+    <path d="M320 324v42"/>
+    <path d="M164 210h-42"/>
+    <path d="M518 210h-42"/>
+    <path d="m210 100 30 30"/>
+    <path d="m430 290 30 30"/>
+    <path d="m430 100-30 30"/>
+    <path d="m210 320 30-30"/>
+  </g>
+  <path d="M248 238c36-78 108-78 144 0" fill="none" stroke="#0ea5e9" stroke-linecap="round" stroke-width="18"/>
+</svg>

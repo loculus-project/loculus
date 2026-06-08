@@ -1,0 +1,17 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="SARS-CoV-2 particle illustration">
+  <rect width="640" height="420" fill="#f8fafc"/>
+  <g stroke="#be123c" stroke-linecap="round" stroke-width="18">
+    <path d="M320 78v52"/>
+    <path d="M320 290v52"/>
+    <path d="M188 210h-52"/>
+    <path d="M504 210h-52"/>
+    <path d="m218 108 36 36"/>
+    <path d="m386 276 36 36"/>
+    <path d="m422 108-36 36"/>
+    <path d="m254 276-36 36"/>
+  </g>
+  <circle cx="320" cy="210" r="116" fill="#ffe4e6" stroke="#9f1239" stroke-width="18"/>
+  <path d="M256 210c32-54 96-54 128 0-32 54-96 54-128 0Z" fill="#fecdd3"/>
+  <circle cx="320" cy="210" r="22" fill="#e11d48"/>
+</svg>

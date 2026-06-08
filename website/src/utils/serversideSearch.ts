@@ -12,6 +12,7 @@ import { getSegmentAndGeneInfo } from './sequenceTypeHelpers.ts';
 import { FieldFilterSet } from '../components/SearchPage/DownloadDialog/SequenceFilters';
 import type { TableSequenceData } from '../components/SearchPage/Table';
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
+import { getLapisUrl, getRuntimeConfig } from '../config.ts';
 import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
 import type { FieldValues, Schema } from '../types/config';
@@ -62,7 +63,7 @@ export const performLapisSearchQueries = async (
         )
         .map((field) => field.name);
 
-    const client = LapisClient.createForOrganism(organism);
+    const client = LapisClient.create(getLapisUrl(getRuntimeConfig().serverSide, organism), schema);
 
     const [detailsResult, aggregatedResult] = await Promise.all([
         // @ts-expect-error because OrderBy typing does not accept this for unknown reasons

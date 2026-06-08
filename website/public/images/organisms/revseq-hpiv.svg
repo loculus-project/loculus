@@ -1,0 +1,15 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Parainfluenza particle illustration">
+  <rect width="640" height="420" fill="#f8fafc"/>
+  <path d="M180 220c0-88 58-150 140-150s140 62 140 150-58 130-140 130-140-42-140-130Z" fill="#ffedd5" stroke="#9a3412" stroke-width="18"/>
+  <g stroke="#ea580c" stroke-linecap="round" stroke-width="16">
+    <path d="M320 70V36"/>
+    <path d="M214 120 180 88"/>
+    <path d="M426 120 460 88"/>
+    <path d="M180 228h-42"/>
+    <path d="M460 228h42"/>
+    <path d="M240 332 216 374"/>
+    <path d="M400 332 424 374"/>
+  </g>
+  <path d="M250 184c40-30 100 30 140 0M250 236c40-30 100 30 140 0" fill="none" stroke="#f97316" stroke-linecap="round" stroke-width="16"/>
+</svg>
