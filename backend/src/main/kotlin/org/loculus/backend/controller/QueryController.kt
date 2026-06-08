@@ -245,6 +245,15 @@ class QueryController(
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
     ) = get(organism, versionGroup, "/sample/details", request, authenticatedUser, accept)
 
+    @GetMapping("/{versionGroup}/aggregated")
+    fun aggregatedGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        request: HttpServletRequest,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/aggregated", request, authenticatedUser, accept)
+
     @GetMapping("/{versionGroup}/sequences")
     fun sequencesGet(
         @PathVariable organism: String,
@@ -273,6 +282,33 @@ class QueryController(
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
     ) = get(organism, versionGroup, "/sample/alignedNucleotideSequences", request, authenticatedUser, accept)
 
+    @GetMapping("/{versionGroup}/sequencesAligned/mutations")
+    fun sequencesAlignedMutationsGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        request: HttpServletRequest,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/nucleotideMutations", request, authenticatedUser, accept)
+
+    @GetMapping("/{versionGroup}/sequencesAligned/insertions")
+    fun sequencesAlignedInsertionsGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        request: HttpServletRequest,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/nucleotideInsertions", request, authenticatedUser, accept)
+
+    @GetMapping("/{versionGroup}/sequencesAligned/aggregatedMutations")
+    fun sequencesAlignedAggregatedMutationsGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        request: HttpServletRequest,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/nucleotideMutations", request, authenticatedUser, accept)
+
     @GetMapping("/{versionGroup}/sequencesAligned/{referenceName}")
     fun sequencesAlignedForSegmentGet(
         @PathVariable organism: String,
@@ -290,6 +326,26 @@ class QueryController(
         accept,
     )
 
+    @GetMapping("/{versionGroup}/sequencesAligned/{referenceName}/mutations")
+    fun sequencesAlignedForSegmentMutationsGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        @PathVariable referenceName: String,
+        request: HttpServletRequest,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/nucleotideMutations", request, authenticatedUser, accept)
+
+    @GetMapping("/{versionGroup}/sequencesAligned/{referenceName}/aggregatedMutations")
+    fun sequencesAlignedForSegmentAggregatedMutationsGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        @PathVariable referenceName: String,
+        request: HttpServletRequest,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/nucleotideMutations", request, authenticatedUser, accept)
+
     @GetMapping("/{versionGroup}/translations/{geneName}")
     fun translationsGet(
         @PathVariable organism: String,
@@ -299,4 +355,42 @@ class QueryController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
     ) = get(organism, versionGroup, "/sample/alignedAminoAcidSequences/$geneName", request, authenticatedUser, accept)
+
+    @GetMapping("/{versionGroup}/translations/mutations")
+    fun translationsMutationsGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        request: HttpServletRequest,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/aminoAcidMutations", request, authenticatedUser, accept)
+
+    @GetMapping("/{versionGroup}/translations/insertions")
+    fun translationsInsertionsGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        request: HttpServletRequest,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/aminoAcidInsertions", request, authenticatedUser, accept)
+
+    @GetMapping("/{versionGroup}/translations/{geneName}/mutations")
+    fun translationsMutationsGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        @PathVariable geneName: String,
+        request: HttpServletRequest,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/aminoAcidMutations", request, authenticatedUser, accept)
+
+    @GetMapping("/{versionGroup}/translations/{geneName}/aggregatedMutations")
+    fun translationsAggregatedMutationsGet(
+        @PathVariable organism: String,
+        @PathVariable versionGroup: String,
+        @PathVariable geneName: String,
+        request: HttpServletRequest,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestHeader(HttpHeaders.ACCEPT, required = false) accept: String?,
+    ) = get(organism, versionGroup, "/sample/aminoAcidMutations", request, authenticatedUser, accept)
 }

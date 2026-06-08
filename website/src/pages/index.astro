@@ -13,11 +13,15 @@ import '../styles/mdcontainer.css';
 
 const numberDaysAgoStatistics = 30;
 const accessToken = getAccessToken(Astro.locals.session);
-const organismStatisticsMap = await getOrganismStatisticsMap(
-    getConfiguredOrganisms().map((organism) => organism.key),
-    numberDaysAgoStatistics,
-    accessToken,
-);
+const configuredOrganisms = getConfiguredOrganisms();
+const organismStatisticsMap =
+    accessToken === undefined
+        ? new Map()
+        : await getOrganismStatisticsMap(
+              configuredOrganisms.map((organism) => organism.key),
+              numberDaysAgoStatistics,
+              accessToken,
+          );
 ---
 
 <BaseLayout title='Home'>
@@ -30,23 +34,27 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
             )
         }
 
-        <div class='flex justify-center'>
-            <div
-                class=`flex flex-wrap justify-center gap-x-5  gap-y-4 ${getConfiguredOrganisms().length ===5 ? "max-w-4xl" : ""}`
-            >
-                {
-                    getConfiguredOrganisms().map(({ key, displayName, image }) => (
-                        <OrganismCard
-                            key={key}
-                            image={image}
-                            displayName={displayName}
-                            organismStatistics={organismStatisticsMap.get(key)!}
-                            numberDaysAgoStatistics={numberDaysAgoStatistics}
-                        />
-                    ))
-                }
-            </div>
-        </div>
+        {
+            accessToken !== undefined && (
+                <div class='flex justify-center'>
+                    <div
+                        class={`flex flex-wrap justify-center gap-x-5  gap-y-4 ${
+                            configuredOrganisms.length === 5 ? 'max-w-4xl' : ''
+                        }`}
+                    >
+                        {configuredOrganisms.map(({ key, displayName, image }) => (
+                            <OrganismCard
+                                key={key}
+                                image={image}
+                                displayName={displayName}
+                                organismStatistics={organismStatisticsMap.get(key)!}
+                                numberDaysAgoStatistics={numberDaysAgoStatistics}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )
+        }
         <div class='mdContainer'>
             <Faq />
         </div>

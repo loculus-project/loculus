@@ -6,6 +6,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.models.headers.Header
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
+import io.swagger.v3.oas.models.tags.Tag
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
 import org.jetbrains.exposed.sql.Database
@@ -18,6 +19,7 @@ import org.loculus.backend.controller.QueryController
 import org.loculus.backend.log.REQUEST_ID_HEADER_DESCRIPTION
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
 import org.loculus.backend.utils.DateProvider
+import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
@@ -27,6 +29,8 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.CommonsRequestLoggingFilter
@@ -54,6 +58,7 @@ object BackendSpringProperty {
 
 const val DEBUG_MODE_ON_VALUE = "true"
 const val ENABLE_SEQSETS_TRUE_VALUE = "true"
+const val LAPIS_PROXY_CONTROLLER_TAG = "lapis-proxy-controller"
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -119,7 +124,6 @@ class BackendSpringConfig {
                 HeaderParameter().apply {
                     name = LoculusCustomHeaders.REQUEST_ID
                     required = false
-                    example = "1747481c-816c-4b60-af20-a61717a35067"
                     description = REQUEST_ID_HEADER_DESCRIPTION
                     schema = StringSchema()
                 },
@@ -132,13 +136,31 @@ class BackendSpringConfig {
                     Header().apply {
                         description = REQUEST_ID_HEADER_DESCRIPTION
                         required = false
-                        example = "1747481c-816c-4b60-af20-a61717a35067"
                         schema = StringSchema()
                     },
                 )
             }
         }
         operation
+    }
+
+    @Bean
+    @Order(Ordered.LOWEST_PRECEDENCE)
+    fun lapisProxyTagCustomizer() = OpenApiCustomizer { openApi ->
+        val tagsByName = linkedMapOf<String, Tag>()
+        openApi.tags.orEmpty().forEach { tag -> tagsByName[tag.name] = tag }
+        openApi.paths.orEmpty().values
+            .flatMap { it.readOperations() }
+            .flatMap { it.tags.orEmpty() }
+            .distinct()
+            .forEach { tagName -> tagsByName.putIfAbsent(tagName, Tag().name(tagName)) }
+        tagsByName[LAPIS_PROXY_CONTROLLER_TAG] = tagsByName[LAPIS_PROXY_CONTROLLER_TAG]
+            ?: Tag().name(LAPIS_PROXY_CONTROLLER_TAG)
+        tagsByName[LAPIS_PROXY_CONTROLLER_TAG]?.description(
+            "This is temporary and used for calls that have not yet switched to using the new query API.",
+        )
+        openApi.tags = tagsByName.values
+            .sortedWith(compareBy<Tag> { it.name == LAPIS_PROXY_CONTROLLER_TAG }.thenBy { it.name })
     }
 
     @Bean
@@ -244,6 +266,10 @@ class BackendSpringConfig {
                 "Download metadata",
                 "Download metadata rows for sequence entries visible to the authenticated user.",
             ),
+            "aggregatedGet" to QueryEndpointDocs(
+                "Download aggregated metadata",
+                "Download aggregated metadata counts for visible sequence entries.",
+            ),
             "sequencesGet" to QueryEndpointDocs(
                 "Download unaligned nucleotide sequences",
                 "Download unaligned nucleotide sequences for visible sequence entries.",
@@ -260,9 +286,41 @@ class BackendSpringConfig {
                 "Download aligned nucleotide sequences by reference",
                 "Download aligned nucleotide sequences for one reference.",
             ),
+            "sequencesAlignedMutationsGet" to QueryEndpointDocs(
+                "Download nucleotide mutations",
+                "Download nucleotide mutation records for visible sequence entries.",
+            ),
+            "sequencesAlignedInsertionsGet" to QueryEndpointDocs(
+                "Download nucleotide insertions",
+                "Download nucleotide insertion records for visible sequence entries.",
+            ),
+            "sequencesAlignedAggregatedMutationsGet" to QueryEndpointDocs(
+                "Download aggregated nucleotide mutations",
+                "Download aggregated nucleotide mutations for visible sequence entries.",
+            ),
+            "sequencesAlignedForSegmentMutationsGet" to QueryEndpointDocs(
+                "Download nucleotide mutations by reference",
+                "Download nucleotide mutation records for one reference.",
+            ),
+            "sequencesAlignedForSegmentAggregatedMutationsGet" to QueryEndpointDocs(
+                "Download aggregated nucleotide mutations by reference",
+                "Download aggregated nucleotide mutations for one reference.",
+            ),
             "translationsGet" to QueryEndpointDocs(
                 "Download aligned amino acid sequences",
                 "Download aligned amino acid sequences for one gene.",
+            ),
+            "translationsMutationsGet" to QueryEndpointDocs(
+                "Download amino acid mutations",
+                "Download amino acid mutation records for visible sequence entries.",
+            ),
+            "translationsInsertionsGet" to QueryEndpointDocs(
+                "Download amino acid insertions",
+                "Download amino acid insertion records for visible sequence entries.",
+            ),
+            "translationsAggregatedMutationsGet" to QueryEndpointDocs(
+                "Download aggregated amino acid mutations",
+                "Download aggregated amino acid mutations for one gene.",
             ),
         )
     }

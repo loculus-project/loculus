@@ -60,13 +60,29 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
         val paths = json.get("paths")
         val metadataOperation = paths.get("/query/dummyOrganism/{versionGroup}/metadata").get("post")
         val metadataGetOperation = paths.get("/query/dummyOrganism/{versionGroup}/metadata").get("get")
+        val aggregatedGetOperation = paths.get("/query/dummyOrganism/{versionGroup}/aggregated").get("get")
         val sequenceOperation = paths.get("/query/dummyOrganism/{versionGroup}/sequences").get("post")
         val sequenceGetOperation = paths.get("/query/dummyOrganism/{versionGroup}/sequences").get("get")
         val mutationOperation = paths.get("/query/dummyOrganism/{versionGroup}/sequencesAligned/mutations").get("post")
+        val mutationGetOperation = paths.get(
+            "/query/dummyOrganism/{versionGroup}/sequencesAligned/mutations",
+        ).get("get")
 
         assertTrue(!paths.has("/query/{organism}/{versionGroup}/metadata"))
         assertEquals("Query metadata", metadataOperation.get("summary").asText())
         assertEquals(listOf("Query: dummyOrganism"), metadataOperation.get("tags").map { it.asText() })
+        assertTrue(
+            json.get("tags").last().get("name").asText() == "lapis-proxy-controller",
+        )
+        assertEquals(
+            "This is temporary and used for calls that have not yet switched to using the new query API.",
+            json.get("tags").last().get("description").asText(),
+        )
+        assertTrue(
+            metadataOperation.get("parameters")
+                .filter { it.get("name").asText() == "x-request-id" }
+                .all { !it.has("example") },
+        )
         assertEquals(
             listOf("current", "allVersions"),
             findParameter(metadataOperation, "versionGroup").get("schema").get("enum").map { it.asText() },
@@ -132,7 +148,19 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
                 sequenceGetOperation,
             ).containsAll(listOf("compression", "fastaHeaderTemplate", "orderBy", "country", "dateFrom")),
         )
+        assertTrue(!queryParameterNames(sequenceGetOperation).contains("fields"))
         assertTrue(!queryParameterNames(sequenceGetOperation).contains("segments"))
+        assertEquals(
+            listOf("JSON", "CSV", "CSV-WITHOUT-HEADERS", "TSV", "TSV-ESCAPED"),
+            queryParameterEnum(aggregatedGetOperation, "dataFormat"),
+        )
+        assertTrue(queryParameterNames(aggregatedGetOperation).containsAll(listOf("fields", "country", "dateFrom")))
+        assertEquals(
+            listOf("JSON", "CSV", "CSV-WITHOUT-HEADERS", "TSV", "TSV-ESCAPED"),
+            queryParameterEnum(mutationGetOperation, "dataFormat"),
+        )
+        assertTrue(queryParameterNames(mutationGetOperation).containsAll(listOf("minProportion", "fields", "country")))
+        assertTrue(!queryParameterNames(mutationGetOperation).contains("fastaHeaderTemplate"))
         assertEquals(
             listOf(
                 "date",

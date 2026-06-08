@@ -1,9 +1,11 @@
 package org.loculus.backend.controller
 
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.LAPIS_PROXY_CONTROLLER_TAG
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PathVariable
@@ -14,6 +16,10 @@ import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 
 @RestController
+@Tag(
+    name = LAPIS_PROXY_CONTROLLER_TAG,
+    description = "This is temporary and used for calls that have not yet switched to using the new query API.",
+)
 class LapisProxyController(
     private val backendConfig: BackendConfig,
     private val lapisProxyService: LapisProxyService,

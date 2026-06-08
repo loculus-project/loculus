@@ -17,12 +17,15 @@ import io.swagger.v3.oas.models.parameters.RequestBody
 import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import io.swagger.v3.oas.models.media.Schema as OpenApiSchema
 
 @Configuration
 class QueryOpenApiCustomizer {
 
     @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     fun organismSpecificQueryOpenApiCustomizer(backendConfig: BackendConfig) = OpenApiCustomizer { openApi ->
         val genericQueryPaths = openApi.paths
             .filterKeys { it.startsWith("/query/{organism}/") }
@@ -233,15 +236,23 @@ class QueryOpenApiCustomizer {
             queryParameter("limit", IntegerSchema(), "Maximum number of rows to return."),
             queryParameter("offset", IntegerSchema(), "Number of rows to skip."),
             queryParameter("orderBy", StringSchema(), "Fields to order by, for example date or date:descending."),
-            queryParameter(
-                "fields",
-                arrayOfStrings(fieldNames),
-                "Metadata fields to return. Repeat the parameter or pass comma-separated values.",
-            ),
             queryParameter("advancedQuery", StringSchema(), "LAPIS advanced query expression."),
+            queryParameter("nucleotideMutations", arrayOfStrings(), "Nucleotide mutation filters."),
+            queryParameter("aminoAcidMutations", arrayOfStrings(), "Amino acid mutation filters."),
+            queryParameter("nucleotideInsertions", arrayOfStrings(), "Nucleotide insertion filters."),
+            queryParameter("aminoAcidInsertions", arrayOfStrings(), "Amino acid insertion filters."),
         )
         parameters.addAll(metadataFilterQueryParameters(instanceConfig))
 
+        if (kind.supportsFields()) {
+            parameters.add(
+                queryParameter(
+                    "fields",
+                    arrayOfStrings(fieldNames),
+                    "Metadata fields to return. Repeat the parameter or pass comma-separated values.",
+                ),
+            )
+        }
         if (kind.supportsGetDataFormat()) {
             parameters.add(
                 queryParameter(
@@ -259,6 +270,9 @@ class QueryOpenApiCustomizer {
                     "Template for FASTA headers, e.g. {accessionVersion}.",
                 ),
             )
+        }
+        if (kind.supportsMinProportion()) {
+            parameters.add(queryParameter("minProportion", NumberSchema(), "Minimum mutation proportion to return."))
         }
 
         return parameters
@@ -364,6 +378,9 @@ class QueryOpenApiCustomizer {
     private fun arrayOfStrings(values: List<String>) = ArraySchema()
         .items(StringSchema()._enum(values))
 
+    private fun arrayOfStrings() = ArraySchema()
+        .items(StringSchema())
+
     private fun orderBySchema(fieldNames: List<String>) = ObjectSchema()
         .addProperty("field", StringSchema()._enum(fieldNames))
         .addProperty("type", StringSchema()._enum(listOf("ascending", "descending")))
@@ -439,9 +456,9 @@ private enum class QueryEndpointKind {
         this == NUCLEOTIDE_MUTATIONS ||
         this == AMINO_ACID_MUTATIONS
 
-    fun supportsGetParameters() = this == METADATA || isSequenceEndpoint()
+    fun supportsGetParameters() = true
 
-    fun supportsGetDataFormat() = this == METADATA || isSequenceEndpoint()
+    fun supportsGetDataFormat() = true
 
     fun supportsFastaHeaderTemplate() = isSequenceEndpoint()
 
@@ -453,9 +470,8 @@ private enum class QueryEndpointKind {
     }
 
     fun getDataFormats() = when {
-        this == METADATA -> listOf("JSON", "CSV", "CSV-WITHOUT-HEADERS", "TSV", "TSV-ESCAPED")
         isSequenceEndpoint() -> listOf("FASTA", "JSON", "NDJSON")
-        else -> emptyList()
+        else -> listOf("JSON", "CSV", "CSV-WITHOUT-HEADERS", "TSV", "TSV-ESCAPED")
     }
 
     fun postExample(fieldNames: List<String>) = when {

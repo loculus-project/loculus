@@ -14,9 +14,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 private const val ORGANISM = DEFAULT_ORGANISM
 
@@ -37,6 +40,7 @@ class QueryControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val object
     @BeforeEach
     fun setUp() {
         every { lapisProxyService.proxyPost(any(), any(), any(), any()) } returns okResponse
+        every { lapisProxyService.proxyGet(any(), any(), any(), any()) } returns okResponse
         every { groupManagementDatabaseService.getGroupIdsOfUser(any()) } returns listOf(42)
     }
 
@@ -212,6 +216,38 @@ class QueryControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val object
     }
 
     @Test
+    fun `aggregated GET routes to sample aggregated`() {
+        mockMvc.perform(
+            get("/query/$ORGANISM/current/aggregated?fields=country")
+                .withAuth(),
+        ).andExpect(status().isOk)
+
+        verify { lapisProxyService.proxyGet(any(), eq("/sample/aggregated"), any(), any()) }
+    }
+
+    @Test
+    fun `GET query injects versionStatus and group visibility`() {
+        every { groupManagementDatabaseService.getGroupIdsOfUser(any()) } returns listOf(10, 20)
+        val querySlot = slot<String>()
+        every { lapisProxyService.proxyGet(any(), any(), capture(querySlot), any()) } returns okResponse
+
+        mockMvc.perform(
+            get("/query/$ORGANISM/current/aggregated?fields=country&advancedQuery=country=Germany")
+                .withAuth(),
+        ).andExpect(status().isOk)
+
+        val forwarded = URLDecoder.decode(querySlot.captured, StandardCharsets.UTF_8)
+        assert(forwarded.contains("versionStatus=LATEST_VERSION")) {
+            "Expected versionStatus in forwarded query, got: $forwarded"
+        }
+        assert(
+            forwarded.contains("advancedQuery=((country=Germany)) and (groupId=10 or groupId=20)"),
+        ) {
+            "Expected combined advancedQuery in forwarded query, got: $forwarded"
+        }
+    }
+
+    @Test
     fun `sequencesAligned mutations routes to nucleotideMutations (literal wins over variable)`() {
         mockMvc.perform(
             post("/query/$ORGANISM/current/sequencesAligned/mutations")
@@ -221,6 +257,16 @@ class QueryControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val object
         ).andExpect(status().isOk)
 
         verify { lapisProxyService.proxyPost(any(), eq("/sample/nucleotideMutations"), any(), any()) }
+    }
+
+    @Test
+    fun `sequencesAligned mutations GET routes to nucleotideMutations`() {
+        mockMvc.perform(
+            get("/query/$ORGANISM/current/sequencesAligned/mutations")
+                .withAuth(),
+        ).andExpect(status().isOk)
+
+        verify { lapisProxyService.proxyGet(any(), eq("/sample/nucleotideMutations"), any(), any()) }
     }
 
     @Test

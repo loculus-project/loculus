@@ -1,6 +1,7 @@
 ---
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../components/SearchPage/SearchFullUI';
+import NeedToLogin from '../../../components/common/NeedToLogin.astro';
 import {
     dataUseTermsAreEnabled,
     getContactConfig,
@@ -61,22 +62,30 @@ const contactConfig = getContactConfig(websiteConfig);
 ---
 
 <BaseLayout title={`${cleanedOrganism.displayName} - Browse`} fullWidth withoutMargin>
-    <SearchFullUI
-        client:load
-        clientConfig={clientConfig}
-        organism={cleanedOrganism.key}
-        schema={schema}
-        myGroups={myGroups}
-        accessToken={accessToken}
-        referenceGenomesInfo={referenceGenomesInfo}
-        hiddenFieldValues={hiddenFieldValues}
-        initialData={data}
-        initialCount={totalCount}
-        initialQueryDict={initialQueryDict}
-        dataUseTermsEnabled={dataUseTermsAreEnabled()}
-        dataUseTermsAgreementHTML={getDataUseTermsAgreementHTML()}
-        sequenceFlaggingConfig={sequenceFlaggingConfig}
-        linkOuts={schema.linkOuts}
-        contactConfig={contactConfig}
-    />
+    {
+        accessToken === undefined ? (
+            <div class='max-w-6xl mx-auto px-8'>
+                <NeedToLogin message='Authentication required. Sequences are only available after authentication and only to members of the submitting groups.' />
+            </div>
+        ) : (
+            <SearchFullUI
+                client:load
+                clientConfig={clientConfig}
+                organism={cleanedOrganism.key}
+                schema={schema}
+                myGroups={myGroups}
+                accessToken={accessToken}
+                referenceGenomesInfo={referenceGenomesInfo}
+                hiddenFieldValues={hiddenFieldValues}
+                initialData={data}
+                initialCount={totalCount}
+                initialQueryDict={initialQueryDict}
+                dataUseTermsEnabled={dataUseTermsAreEnabled()}
+                dataUseTermsAgreementHTML={getDataUseTermsAgreementHTML()}
+                sequenceFlaggingConfig={sequenceFlaggingConfig}
+                linkOuts={schema.linkOuts}
+                contactConfig={contactConfig}
+            />
+        )
+    }
 </BaseLayout>
