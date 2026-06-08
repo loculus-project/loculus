@@ -447,7 +447,12 @@ def get_sequence_status(config: Config):
     return result
 
 
-def get_submitted(config: Config, output: str | None, fields: list[str] | None = None, accessionVersionsFilter: list[str] | None = None):
+def get_submitted(
+    config: Config,
+    output: str | None,
+    fields: list[str] | None = None,
+    accessionVersionsFilter: list[str] | None = None,
+):
     """Get previously submitted sequences as ndjson
     This way we can avoid submitting the same sequences again
     Adds status to the output (as this is not returned by get-unprocessed-metadata)
@@ -468,6 +473,8 @@ def get_submitted(config: Config, output: str | None, fields: list[str] | None =
         logger.info("Getting previously submitted sequences")
 
         response = make_request(HTTPMethod.GET, url, config, params=params)
+        logger.info(f"Params: {params}")
+        logger.info(f"Response: {response}")
         expected_record_count = int(response.headers["x-total-records"])
 
         entries: list[dict[str, Any]] = []
