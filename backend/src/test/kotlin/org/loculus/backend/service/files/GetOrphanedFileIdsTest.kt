@@ -5,9 +5,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.`is`
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
@@ -32,15 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID
 
 /**
- * Tests for the raw SQL in [FilesDatabaseService.getOrphanedFileIds].
- *
- * This is where all the correctness risk of the garbage collection lives, so the cases are
- * exercised directly against the database without involving S3. The `threshold` is passed
- * explicitly, which lets us isolate the *reference* logic (these tests use a far-back threshold
- * so every file is age-eligible) from the *age gate* (tested separately).
- *
- * The pipeline-version-upgrade task is effectively disabled via a huge check interval so it can't
- * concurrently bump the current pipeline version or delete preprocessed rows mid-test.
+ * Testing of orphan file detection logic in [FilesDatabaseService.getOrphanedFileIds].
  */
 @EndpointTest(
     properties = [
@@ -62,61 +52,6 @@ class GetOrphanedFileIdsTest(
     }
 
     @Test
-    fun `GIVEN a file only referenced in original_data THEN it is orphaned, but unprocessed_data is protected`() {
-        // A user edited a submission, replacing `editedAway` with `currentFile`.
-        // After the edit, only `unprocessed_data` is updated, so `editedAway` lingers in
-        // `original_data` (which the query intentionally ignores) and should be reclaimed.
-        val editedAway = UUID.randomUUID()
-        val currentFile = UUID.randomUUID()
-        listOf(editedAway, currentFile).forEach { insertFile(it, requestedAt = daysAgo(10)) }
-        insertSequenceEntry(
-            accession = "A1",
-            version = 1,
-            original = filesReferencing(editedAway),
-            unprocessed = filesReferencing(currentFile),
-        )
-
-        val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
-
-        assertThat(orphans, containsInAnyOrder(editedAway))
-    }
-
-    @Test
-    fun `GIVEN processed_data files THEN only those from a pipeline version older than current are orphaned`() {
-        setCurrentPipelineVersion(DEFAULT_ORGANISM, 2)
-        val fileFromOldVersion = UUID.randomUUID() // pipeline v1 (< current) -> orphaned
-        val fileFromCurrentVersion = UUID.randomUUID() // pipeline v2 (== current) -> protected
-        val fileFromNewerVersion = UUID.randomUUID() // pipeline v3 (> current, rollout) -> protected
-        listOf(fileFromOldVersion, fileFromCurrentVersion, fileFromNewerVersion)
-            .forEach { insertFile(it, requestedAt = daysAgo(10)) }
-
-        // The sequence entry itself references no files, so only the processed_data references matter.
-        insertSequenceEntry(accession = "A1", version = 1, original = null, unprocessed = filesReferencing(null))
-        insertPreprocessed(
-            accession = "A1",
-            version = 1,
-            pipelineVersion = 1,
-            processed = processedReferencing(fileFromOldVersion),
-        )
-        insertPreprocessed(
-            accession = "A1",
-            version = 1,
-            pipelineVersion = 2,
-            processed = processedReferencing(fileFromCurrentVersion),
-        )
-        insertPreprocessed(
-            accession = "A1",
-            version = 1,
-            pipelineVersion = 3,
-            processed = processedReferencing(fileFromNewerVersion),
-        )
-
-        val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
-
-        assertThat(orphans, containsInAnyOrder(fileFromOldVersion))
-    }
-
-    @Test
     fun `GIVEN unreferenced files THEN only those whose upload was requested before the threshold are orphaned`() {
         val old = UUID.randomUUID()
         val recent = UUID.randomUUID()
@@ -125,22 +60,82 @@ class GetOrphanedFileIdsTest(
 
         val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
 
-        assertThat(orphans, containsInAnyOrder(old))
+        assertThat(orphans, `is`(setOf(old)))
     }
 
     @Test
-    fun `GIVEN a file referenced by an old, superseded version THEN it is still protected`() {
+    fun `GIVEN a file only referenced in original_data THEN it is orphaned, but unprocessed_data is protected`() {
+        // Simulate a case where a user edited a submission, replacing `editedAway` with `currentFile`.
+        val editedAway = UUID.randomUUID()
+        val currentFile = UUID.randomUUID()
+        listOf(editedAway, currentFile).forEach { insertFile(it, requestedAt = daysAgo(10)) }
+        insertSequenceEntry(
+            accession = "A",
+            version = 2,
+            original = makeUnprocessedData(editedAway),
+            unprocessed = makeUnprocessedData(currentFile),
+        )
+
+        val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
+
+        assertThat(orphans, `is`(setOf(editedAway)))
+    }
+
+    @Test
+    fun `GIVEN processed_data files THEN only those from a pipeline version older than current are orphaned`() {
+        transaction {
+            CurrentProcessingPipelineTable.update(
+                { CurrentProcessingPipelineTable.organismColumn eq DEFAULT_ORGANISM }
+            ) {
+                it[versionColumn] = 2
+            }
+        }
+
+        val fileFromOldPipeline = UUID.randomUUID() // pipeline version 1 (< current) -> orphaned
+        val fileFromCurrentPipeline = UUID.randomUUID() // pipeline version 2 (current) -> protected
+        val fileFromNewerPipeline = UUID.randomUUID() // pipeline version 3 (> current) -> protected
+        listOf(fileFromOldPipeline, fileFromCurrentPipeline, fileFromNewerPipeline)
+            .forEach { insertFile(it, requestedAt = daysAgo(10)) }
+
+        // The sequence entry itself references no files, so only the processed_data references matter.
+        insertSequenceEntry(accession = "A", version = 1, original = null, unprocessed = makeUnprocessedData(null))
+        insertPreprocessedData(
+            accession = "A",
+            version = 1,
+            pipelineVersion = 1,
+            processed = makeProcessedData(fileFromOldPipeline),
+        )
+        insertPreprocessedData(
+            accession = "A",
+            version = 1,
+            pipelineVersion = 2,
+            processed = makeProcessedData(fileFromCurrentPipeline),
+        )
+        insertPreprocessedData(
+            accession = "A",
+            version = 1,
+            pipelineVersion = 3,
+            processed = makeProcessedData(fileFromNewerPipeline),
+        )
+
+        val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
+
+        assertThat(orphans, `is`(setOf(fileFromOldPipeline)))
+    }
+
+    @Test
+    fun `GIVEN a file referenced only by old version THEN it is still protected`() {
         // Branch 1 of the query has no version filter: a file referenced by ANY version's
         // unprocessed_data must survive, even if that version is no longer the latest.
         val fileInOldVersion = UUID.randomUUID()
         insertFile(fileInOldVersion, requestedAt = daysAgo(10))
         insertSequenceEntry(
-            accession = "A1",
+            accession = "A",
             version = 1,
             original = null,
-            unprocessed = filesReferencing(fileInOldVersion),
+            unprocessed = makeUnprocessedData(fileInOldVersion),
         )
-        insertSequenceEntry(accession = "A1", version = 2, original = null, unprocessed = filesReferencing(null))
+        insertSequenceEntry(accession = "A", version = 2, original = null, unprocessed = makeUnprocessedData(null))
 
         val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
 
@@ -180,7 +175,7 @@ class GetOrphanedFileIdsTest(
         }
     }
 
-    private fun insertPreprocessed(
+    private fun insertPreprocessedData(
         accession: String,
         version: Long,
         pipelineVersion: Long,
@@ -196,25 +191,19 @@ class GetOrphanedFileIdsTest(
         }
     }
 
-    private fun setCurrentPipelineVersion(organism: String, version: Long) = transaction {
-        CurrentProcessingPipelineTable.update({ CurrentProcessingPipelineTable.organismColumn eq organism }) {
-            it[versionColumn] = version
-        }
-    }
-
-    private fun filesReferencing(fileId: UUID?): OriginalData<CompressedSequence> = OriginalData(
+    private fun makeUnprocessedData(fileId: UUID?): OriginalData<CompressedSequence> = OriginalData(
         metadata = emptyMap(),
         unalignedNucleotideSequences = emptyMap(),
-        files = fileId?.let { mapOf("rawReads" to listOf(FileIdAndName(it, "raw.txt"))) },
+        files = fileId?.let { mapOf("rawReads" to listOf(FileIdAndName(it, "raw.fastq"))) },
     )
 
-    private fun processedReferencing(fileId: UUID): ProcessedData<CompressedSequence> = ProcessedData(
+    private fun makeProcessedData(fileId: UUID): ProcessedData<CompressedSequence> = ProcessedData(
         metadata = emptyMap(),
         unalignedNucleotideSequences = emptyMap(),
         alignedNucleotideSequences = emptyMap(),
         nucleotideInsertions = emptyMap(),
         alignedAminoAcidSequences = emptyMap(),
         aminoAcidInsertions = emptyMap(),
-        files = mapOf("processedOutput" to listOf(FileIdAndName(fileId, "out.txt"))),
+        files = mapOf("processedOutput" to listOf(FileIdAndName(fileId, "aligned.bam"))),
     )
 }
