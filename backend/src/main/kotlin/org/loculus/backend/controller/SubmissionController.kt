@@ -532,6 +532,9 @@ open class SubmissionController(
                             body.accessionsFilter,
                         ).toList()
 
+                        // metadataIds: the unique metadata ids in the same order as the original submission ids.
+                        // uniqueFastaIdsByEntry: per entry (in the same order), a map from the original FASTA id to
+                        // the unique FASTA id used in the download.
                         val metadataIds = makeUniqueIds(data.map { it.submissionId })
                         val uniqueFastaIdsByEntry =
                             GetOriginalDataHelpers.uniqueFastaIdsByEntry(data, isMultiSegmented)

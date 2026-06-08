@@ -16,8 +16,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
-import java.io.ByteArrayInputStream
-import java.util.zip.ZipInputStream
 
 @EndpointTest
 class OriginalDataRevisionWorkflowTest(
@@ -43,7 +41,7 @@ class OriginalDataRevisionWorkflowTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, sequencesFasta) = extractZipContents(zipContent)
+        val (metadataTsv, sequencesFasta) = extractOriginalDataZipContents(zipContent)
 
         val metadataLines = metadataTsv.lines().filter { it.isNotBlank() }
         val headers = metadataLines[0].split("\t")
@@ -116,7 +114,7 @@ class OriginalDataRevisionWorkflowTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, sequencesFasta) = extractZipContents(zipContent)
+        val (metadataTsv, sequencesFasta) = extractOriginalDataZipContents(zipContent)
 
         val metadataLines = metadataTsv.lines().filter { it.isNotBlank() }
         assertThat(metadataLines.size, `is`(2))
@@ -183,24 +181,5 @@ class OriginalDataRevisionWorkflowTest(
         }
 
         return resultLines.joinToString("\n")
-    }
-
-    private fun extractZipContents(zipContent: ByteArray): Pair<String, String> {
-        var metadataTsv = ""
-        var sequencesFasta = ""
-
-        ZipInputStream(ByteArrayInputStream(zipContent)).use { zis ->
-            var entry = zis.nextEntry
-            while (entry != null) {
-                val content = zis.readBytes().decodeToString()
-                when (entry.name) {
-                    "metadata.tsv" -> metadataTsv = content
-                    "sequences.fasta" -> sequencesFasta = content
-                }
-                entry = zis.nextEntry
-            }
-        }
-
-        return Pair(metadataTsv, sequencesFasta)
     }
 }

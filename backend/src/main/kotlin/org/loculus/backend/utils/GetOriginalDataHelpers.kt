@@ -12,7 +12,7 @@ import kotlin.collections.iterator
 import kotlin.collections.orEmpty
 
 /**
- * In the Map, each entry is a segment.
+ * Map from original FastaId to unique FastaId for each segment in an entry.
  */
 data class UniqueFastaIdsForEntry(val uniqueFastaIdByOriginalFastaId: Map<FastaId, FastaId>) {
     fun joinedUniqueFastaIds(separator: String): String = uniqueFastaIdByOriginalFastaId.values.joinToString(separator)

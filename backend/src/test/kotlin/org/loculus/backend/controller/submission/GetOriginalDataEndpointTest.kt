@@ -74,7 +74,7 @@ class GetOriginalDataEndpointTest(
         val fileNames = getZipFileNames(zipContent)
         assertThat(fileNames, containsInAnyOrder("metadata.tsv", "sequences.fasta"))
 
-        val (metadataTsv, sequencesFasta) = extractZipContents(zipContent)
+        val (metadataTsv, sequencesFasta) = extractOriginalDataZipContents(zipContent)
 
         assertThat(metadataTsv, containsString("id\taccession"))
         val metadataLines = metadataTsv.lines().filter { it.isNotBlank() }
@@ -105,7 +105,7 @@ class GetOriginalDataEndpointTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, sequencesFasta) = extractZipContents(zipContent)
+        val (metadataTsv, sequencesFasta) = extractOriginalDataZipContents(zipContent)
 
         assertThat(metadataTsv, containsString("id\taccession"))
         val metadataLines = metadataTsv.lines().filter { it.isNotBlank() }
@@ -148,7 +148,7 @@ class GetOriginalDataEndpointTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, _) = extractZipContents(zipContent)
+        val (metadataTsv, _) = extractOriginalDataZipContents(zipContent)
 
         assertThat(metadataTsv, containsString("authors"))
         assertThat(metadataTsv, containsString("Corrected Author"))
@@ -169,7 +169,7 @@ class GetOriginalDataEndpointTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, _) = extractZipContents(zipContent)
+        val (metadataTsv, _) = extractOriginalDataZipContents(zipContent)
 
         val lines = metadataTsv.lines().filter { it.isNotBlank() }
         val header = lines[0].split("\t")
@@ -197,7 +197,7 @@ class GetOriginalDataEndpointTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, sequencesFasta) = extractZipContents(zipContent)
+        val (metadataTsv, sequencesFasta) = extractOriginalDataZipContents(zipContent)
 
         val metadataIds = metadataTsv.lines()
             .filter { it.isNotBlank() }
@@ -232,7 +232,7 @@ class GetOriginalDataEndpointTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, sequencesFasta) = extractZipContents(zipContent)
+        val (metadataTsv, sequencesFasta) = extractOriginalDataZipContents(zipContent)
 
         val metadataIds = metadataTsv.lines()
             .filter { it.isNotBlank() }
@@ -268,7 +268,7 @@ class GetOriginalDataEndpointTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, _) = extractZipContents(zipContent)
+        val (metadataTsv, _) = extractOriginalDataZipContents(zipContent)
 
         val metadataLines = metadataTsv.lines().filter { it.isNotBlank() }
         assertThat(metadataLines, hasSize(3))
@@ -293,7 +293,7 @@ class GetOriginalDataEndpointTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, sequencesFasta) = extractZipContents(zipContent)
+        val (metadataTsv, sequencesFasta) = extractOriginalDataZipContents(zipContent)
 
         val metadataLines = metadataTsv.lines().filter { it.isNotBlank() }
         assertThat(metadataLines, hasSize(1))
@@ -336,7 +336,7 @@ class GetOriginalDataEndpointTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, _) = extractZipContents(zipContent)
+        val (metadataTsv, _) = extractOriginalDataZipContents(zipContent)
 
         val metadataLines = metadataTsv.lines().filter { it.isNotBlank() }
         assertThat(metadataLines, hasSize(1))
@@ -361,7 +361,7 @@ class GetOriginalDataEndpointTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, _) = extractZipContents(zipContent)
+        val (metadataTsv, _) = extractOriginalDataZipContents(zipContent)
 
         val lines = metadataTsv.lines().filter { it.isNotBlank() }
         val header = lines[0].split("\t")
@@ -390,7 +390,7 @@ class GetOriginalDataEndpointTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, _) = extractZipContents(zipContent)
+        val (metadataTsv, _) = extractOriginalDataZipContents(zipContent)
 
         val lines = metadataTsv.lines().filter { it.isNotBlank() }
         val header = lines[0].split("\t")
@@ -421,7 +421,7 @@ class GetOriginalDataEndpointTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (_, sequencesFasta) = extractZipContents(zipContent)
+        val (_, sequencesFasta) = extractOriginalDataZipContents(zipContent)
 
         val fastaHeaders = sequencesFasta.lines().filter { it.startsWith(">") }
         val matchingHeaders = fastaHeaders.filter { it.contains("${SubmitFiles.DefaultFiles.submissionIds[0]}_") }
@@ -447,7 +447,7 @@ class GetOriginalDataEndpointTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, sequencesFasta) = extractZipContents(zipContent)
+        val (metadataTsv, sequencesFasta) = extractOriginalDataZipContents(zipContent)
 
         val lines = metadataTsv.lines().filter { it.isNotBlank() }
         val header = lines[0].split("\t")
@@ -463,25 +463,6 @@ class GetOriginalDataEndpointTest(
             .toSet()
 
         assertThat(fastaHeaderIds, `is`(allFastaIdsFromMetadata))
-    }
-
-    private fun extractZipContents(zipContent: ByteArray): Pair<String, String> {
-        var metadataTsv = ""
-        var sequencesFasta = ""
-
-        ZipInputStream(ByteArrayInputStream(zipContent)).use { zis ->
-            var entry = zis.nextEntry
-            while (entry != null) {
-                val content = zis.readBytes().decodeToString()
-                when (entry.name) {
-                    "metadata.tsv" -> metadataTsv = content
-                    "sequences.fasta" -> sequencesFasta = content
-                }
-                entry = zis.nextEntry
-            }
-        }
-
-        return Pair(metadataTsv, sequencesFasta)
     }
 
     private fun submitAndApproveSingleSegmentSequences(submissionIds: List<String>, groupId: Int) {
