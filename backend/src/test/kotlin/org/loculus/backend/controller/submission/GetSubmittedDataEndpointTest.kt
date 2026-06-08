@@ -121,12 +121,12 @@ class GetSubmittedDataEndpointTest(
 
         transaction {
             val unprocessedData = SequenceEntriesTable
-                .select(SequenceEntriesTable.submissionDataColumn)
+                .select(SequenceEntriesTable.submittedDataColumn)
                 .where {
                     (SequenceEntriesTable.accessionColumn eq correctedAccession.accession) and
                         (SequenceEntriesTable.versionColumn eq correctedAccession.version)
                 }
-                .single()[SequenceEntriesTable.submissionDataColumn]!!
+                .single()[SequenceEntriesTable.submittedDataColumn]!!
 
             SequenceEntriesTable.update(
                 where = {
@@ -134,7 +134,7 @@ class GetSubmittedDataEndpointTest(
                         (SequenceEntriesTable.versionColumn eq correctedAccession.version)
                 },
             ) {
-                it[submissionDataColumn] = unprocessedData.copy(
+                it[submittedDataColumn] = unprocessedData.copy(
                     metadata = unprocessedData.metadata + ("authors" to "Corrected Author"),
                 )
             }

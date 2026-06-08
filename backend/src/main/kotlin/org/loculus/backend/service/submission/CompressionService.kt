@@ -28,7 +28,7 @@ class CompressionService(
     private val backendConfig: BackendConfig,
 ) {
 
-    fun compressOriginalSequence(sequenceData: GeneticSequence, organism: Organism) = compress(
+    fun compressSubmittedSequence(sequenceData: GeneticSequence, organism: Organism) = compress(
         sequenceData,
         compressionDictService.getDictForUnalignedSequence(organism),
     )
@@ -78,7 +78,7 @@ class CompressionService(
                 .unalignedNucleotideSequences.mapValues { (_, sequenceData) ->
                     when (sequenceData) {
                         null -> null
-                        else -> compressOriginalSequence(sequenceData, organism)
+                        else -> compressSubmittedSequence(sequenceData, organism)
                     }
                 },
             submittedData.files,

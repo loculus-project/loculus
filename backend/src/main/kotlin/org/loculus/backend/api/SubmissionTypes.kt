@@ -195,7 +195,7 @@ data class ProcessedData<SequenceType>(
     val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
     @Schema(
         example = """{"segment1": "fastaHeader1", "segment2": "fastaHeader2"}""",
-        description = "The key is the segment name, the value is the fastaHeader of the original Data",
+        description = "The key is the segment name, the value is the fastaHeader of the originally submitted data",
     )
     val sequenceNameToFastaId: Map<SegmentName, String> = emptyMap(),
     @Schema(

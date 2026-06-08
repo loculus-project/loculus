@@ -172,7 +172,7 @@ class SubmissionDatabaseService(
             .select(
                 table.accessionColumn,
                 table.versionColumn,
-                table.submissionDataColumn,
+                table.submittedDataColumn,
                 table.submissionIdColumn,
                 table.submitterColumn,
                 table.groupIdColumn,
@@ -197,13 +197,13 @@ class SubmissionDatabaseService(
             .chunked(streamBatchSize)
             .map { chunk ->
                 val chunkOfUnprocessedData = chunk.map {
-                    val unprocessedData = compressionService.decompressSequencesInSubmittedData(
-                        it[table.submissionDataColumn]!!,
+                    val submittedData = compressionService.decompressSequencesInSubmittedData(
+                        it[table.submittedDataColumn]!!,
                     )
-                    val unprocessedDataWithFileUrls = SubmittedContentWithFileUrls(
-                        unprocessedData.metadata,
-                        unprocessedData.unalignedNucleotideSequences,
-                        unprocessedData.files?.let {
+                    val submittedDataWithFileUrls = SubmittedContentWithFileUrls(
+                        submittedData.metadata,
+                        submittedData.unalignedNucleotideSequences,
+                        submittedData.files?.let {
                             it.mapValues {
                                 it.value.map { f ->
                                     val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId)
@@ -215,7 +215,7 @@ class SubmissionDatabaseService(
                     UnprocessedData(
                         accession = it[table.accessionColumn],
                         version = it[table.versionColumn],
-                        data = unprocessedDataWithFileUrls,
+                        data = submittedDataWithFileUrls,
                         submissionId = it[table.submissionIdColumn],
                         submitter = it[table.submitterColumn],
                         groupId = it[table.groupIdColumn],
@@ -968,7 +968,7 @@ class SubmissionDatabaseService(
             SubmittedData(metadata = metadata, unalignedNucleotideSequences = emptyMap()),
             organism,
         )
-        val submissionDataParam = QueryParameter(submissionData, SequenceEntriesTable.submissionDataColumn.columnType)
+        val submissionDataParam = QueryParameter(submissionData, SequenceEntriesTable.submittedDataColumn.columnType)
 
         SequenceEntriesTable.insert(
             SequenceEntriesTable.select(
@@ -998,8 +998,8 @@ class SubmissionDatabaseService(
                 SequenceEntriesTable.submittedAtTimestampColumn,
                 SequenceEntriesTable.isRevocationColumn,
                 SequenceEntriesTable.organismColumn,
-                SequenceEntriesTable.originalDataColumn,
-                SequenceEntriesTable.submissionDataColumn,
+                SequenceEntriesTable.archiveOfSubmittedDataColumn,
+                SequenceEntriesTable.submittedDataColumn,
             ),
         )
 
@@ -1138,7 +1138,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesTable.accessionVersionIsIn(listOf(editedSequenceEntryData))
             },
         ) {
-            it[submissionDataColumn] = compressionService
+            it[submittedDataColumn] = compressionService
                 .compressSequencesInSubmittedData(editedSequenceEntryData.data, organism)
         }
 
@@ -1175,7 +1175,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.groupIdColumn,
             SequenceEntriesView.statusColumn,
             SequenceEntriesView.processedDataColumn,
-            SequenceEntriesView.submissionDataColumn,
+            SequenceEntriesView.submittedDataColumn,
             SequenceEntriesView.errorsColumn,
             SequenceEntriesView.warningsColumn,
             SequenceEntriesView.isRevocationColumn,
@@ -1200,7 +1200,7 @@ class SubmissionDatabaseService(
                 organism,
             ),
             submittedData = compressionService.decompressSequencesInSubmittedData(
-                selectedSequenceEntry[SequenceEntriesView.submissionDataColumn]!!,
+                selectedSequenceEntry[SequenceEntriesView.submittedDataColumn]!!,
             ),
             errors = selectedSequenceEntry[SequenceEntriesView.errorsColumn],
             warnings = selectedSequenceEntry[SequenceEntriesView.warningsColumn],
@@ -1277,7 +1277,7 @@ class SubmissionDatabaseService(
         fields: List<String>?,
         accessionVersionsFilter: List<AccessionVersion>?,
     ): Sequence<AccessionVersionSubmittedMetadata> {
-        val submittedMetadata = SequenceEntriesView.submissionDataColumn
+        val submittedMetadata = SequenceEntriesView.submittedDataColumn
             // It's actually <Map<String, String>?> but exposed does not support nullable types here
             .extract<Map<String, String>>("metadata")
             .alias("submitted_metadata")
@@ -1361,14 +1361,14 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submissionIdColumn,
-                SequenceEntriesTable.submissionDataColumn,
+                SequenceEntriesTable.submittedDataColumn,
             )
             .where(submittedDataDownloadConditions(organism, groupId, accessionsFilter))
             .orderBy(SequenceEntriesView.accessionColumn to SortOrder.ASC)
             .fetchSize(streamBatchSize)
             .asSequence()
             .map {
-                val compressedSubmittedData = it[SequenceEntriesTable.submissionDataColumn]!!
+                val compressedSubmittedData = it[SequenceEntriesTable.submittedDataColumn]!!
                 val decompressedSubmittedData = compressionService.decompressSequencesInSubmittedData(
                     compressedSubmittedData,
                 )

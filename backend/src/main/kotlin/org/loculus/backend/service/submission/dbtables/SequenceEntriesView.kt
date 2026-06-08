@@ -24,8 +24,8 @@ import org.loculus.backend.service.jacksonSerializableJsonb
 const val SEQUENCE_ENTRIES_VIEW_NAME = "sequence_entries_view"
 
 object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
-    val submissionDataColumn = jacksonSerializableJsonb<SubmittedData<CompressedSequence>>(
-        "submission_data",
+    val submittedDataColumn = jacksonSerializableJsonb<SubmittedData<CompressedSequence>>(
+        "submitted_data",
     ).nullable()
     val processedDataColumn =
         jacksonSerializableJsonb<ProcessedData<CompressedSequence>>("processed_data").nullable()

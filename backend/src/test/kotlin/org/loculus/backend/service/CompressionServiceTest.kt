@@ -22,7 +22,7 @@ class CompressionServiceTest {
     )
 
     @Test
-    fun `Round trip compress and decompress sequences in original data`() {
+    fun `Round trip compress and decompress sequences in submitted data`() {
         val organism = Organism(DEFAULT_ORGANISM)
 
         every { backendConfigMock.zstdCompressionLevel } returns 10

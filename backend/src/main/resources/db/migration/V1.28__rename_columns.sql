@@ -1,8 +1,8 @@
--- The original_submission_data column is immutable (the raw submission),
--- while submission_data is the data that gets sent to preprocessing as part of the unprocessed_data contract
+-- The archive_of_submitted_data column is immutable (the raw submission),
+-- while submitted_data is the data that gets sent to preprocessing as part of the unprocessed_data contract
 
-ALTER TABLE sequence_entries RENAME COLUMN unprocessed_data TO submission_data;
-ALTER TABLE sequence_entries RENAME COLUMN original_data TO original_submission_data;
+ALTER TABLE sequence_entries RENAME COLUMN unprocessed_data TO submitted_data;
+ALTER TABLE sequence_entries RENAME COLUMN original_data TO archive_of_submitted_data;
 
 -- Recreate the view with new column names.
 DROP VIEW IF EXISTS sequence_entries_view CASCADE;
@@ -19,14 +19,14 @@ SELECT
     se.submitted_at,
     se.released_at,
     se.is_revocation,
-    se.submission_data,
+    se.submitted_data,
     sepd.started_processing_at,
     sepd.finished_processing_at,
     sepd.processed_data,
     CASE
         WHEN se.is_revocation THEN
             jsonb_build_object(
-                'metadata', COALESCE(se.submission_data -> 'metadata', '{}'::jsonb),
+                'metadata', COALESCE(se.submitted_data -> 'metadata', '{}'::jsonb),
                 'unalignedNucleotideSequences', '{}'::jsonb,
                 'alignedNucleotideSequences', '{}'::jsonb,
                 'nucleotideInsertions', '{}'::jsonb,

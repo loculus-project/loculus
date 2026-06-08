@@ -17,11 +17,11 @@ import org.loculus.backend.service.jacksonSerializableJsonb
 const val SEQUENCE_ENTRIES_TABLE_NAME = "sequence_entries"
 
 object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
-    val originalDataColumn = jacksonSerializableJsonb<SubmittedData<CompressedSequence>>(
-        "original_submission_data",
+    val archiveOfSubmittedDataColumn = jacksonSerializableJsonb<SubmittedData<CompressedSequence>>(
+        "archive_of_submitted_data",
     ).nullable()
-    val submissionDataColumn = jacksonSerializableJsonb<SubmittedData<CompressedSequence>>(
-        "submission_data",
+    val submittedDataColumn = jacksonSerializableJsonb<SubmittedData<CompressedSequence>>(
+        "submitted_data",
     ).nullable()
 
     val accessionColumn = varchar("accession", 255)

@@ -176,13 +176,13 @@ This affects all organisms, not just multi-pathogen organisms!
     "submissionId": "key1",
     "accession": "PP_0EYHTR4",
     "version": 1,
-    "original_submission_data": {
+    "archive_of_submitted_data": {
         "metadata": {...},
         "unalignedNucleotideSequences": {
             "key1": "ACTG"
         }
     }, // immutable, for administrator use only
-    "submission_data": {
+    "submitted_data": {
         "metadata": {...},
         "unalignedNucleotideSequences": {
             "key1": "ACTG"
@@ -198,14 +198,14 @@ Multiple segments:
     "submissionId": "key1",
     "accession": "PP_0EYHTR4",
     "version": 1,
-    "original_submission_data": {
+    "archive_of_submitted_data": {
         "metadata": {...},
         "unalignedNucleotideSequences": {
             "key1_myFirstSegment": "ACTG",
             "key1_mySecondSegment": "GTCA"
         }
     },
-    "submission_data": {
+    "submitted_data": {
         "metadata": {...},
         "unalignedNucleotideSequences": {
             "key1_myFirstSegment": "ACTG",

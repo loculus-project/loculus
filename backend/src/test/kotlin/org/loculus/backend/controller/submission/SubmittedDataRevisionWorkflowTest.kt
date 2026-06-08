@@ -25,7 +25,7 @@ class SubmittedDataRevisionWorkflowTest(
 ) {
 
     @Test
-    fun `GIVEN released sequences WHEN downloading and modifying original data THEN can submit revision`() {
+    fun `GIVEN released sequences WHEN downloading and modifying submitted data THEN can submit revision`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
         val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(groupId = groupId)
 
