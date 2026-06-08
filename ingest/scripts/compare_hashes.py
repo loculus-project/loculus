@@ -112,7 +112,7 @@ def calculate_metadata_diff(
             f"version {previous_entry.latest_version} to calculate metadata diff"
         )
         return {}
-    previous_metadata = previous_metadata_list[0]
+    previous_metadata = previous_metadata_list[0].get("unprocessedMetadata", {})
 
     diff = {}
 
