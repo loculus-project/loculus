@@ -32,6 +32,7 @@ import java.util.UUID
  */
 @EndpointTest(
     properties = [
+        // set to high value to prevent tests from triggering pipeline version upgrade task
         "${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}=999999",
     ],
 )
