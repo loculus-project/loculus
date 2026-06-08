@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 private val log = mu.KotlinLogging.logger {}
@@ -36,7 +37,7 @@ class S3GarbageCollectionTask(
             .minus(maxOrphanAge, DateTimeUnit.DAY, DateProvider.timeZone)
             .toLocalDateTime(DateProvider.timeZone)
         val orphans = filesDatabaseService.getOrphanedFileIds(threshold)
-        orphans.forEach { fileId ->
+        orphans.forEach { fileId: UUID ->
             s3Service.deleteFile(fileId)
             filesDatabaseService.deleteFileEntry(fileId)
         }

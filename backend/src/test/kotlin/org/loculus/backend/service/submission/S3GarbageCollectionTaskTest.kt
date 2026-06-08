@@ -2,9 +2,6 @@ package org.loculus.backend.service.submission
 
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.verify
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.minus
-import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.jetbrains.exposed.sql.insert
@@ -21,8 +18,9 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.service.files.FilesDatabaseService
-import org.loculus.backend.service.files.FilesTable
 import org.loculus.backend.service.files.S3Service
+import org.loculus.backend.service.daysAgo
+import org.loculus.backend.service.insertFile
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID
@@ -68,7 +66,7 @@ class S3GarbageCollectionTaskTest(
     fun `GIVEN an orphan and a referenced file WHEN the task runs THEN only the orphan is deleted from S3 and the DB`() {
         val orphan = UUID.randomUUID()
         val referenced = UUID.randomUUID()
-        listOf(orphan, referenced).forEach { insertFile(it) }
+        listOf(orphan, referenced).forEach { insertFile(it, groupId, daysAgo(1)) }
 
         // `referenced` is referenced by a submission's unprocessed_data, so it must be protected.
         transaction {
@@ -96,20 +94,5 @@ class S3GarbageCollectionTaskTest(
             filesDatabaseService.getNonExistentFileIds(setOf(orphan, referenced)),
             containsInAnyOrder(orphan),
         )
-    }
-
-    private fun insertFile(id: UUID) {
-        val oneDayAgo = dateProvider.getCurrentInstant()
-            .minus(1, DateTimeUnit.DAY, DateProvider.timeZone)
-            .toLocalDateTime(DateProvider.timeZone)
-        transaction {
-            FilesTable.insert {
-                it[idColumn] = id
-                it[uploadRequestedAtColumn] = oneDayAgo
-                it[uploaderColumn] = "testuser"
-                it[groupIdColumn] = groupId
-                it[multipartCompleted] = true
-            }
-        }
     }
 }
