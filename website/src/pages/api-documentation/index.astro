@@ -1,22 +1,12 @@
 ---
 import { authenticationApiDocsUrl } from './authenticationApiDocsUrl';
-import { dataUseTermsAreEnabled, getLapisUrl, getRuntimeConfig, getWebsiteConfig } from '../../config';
+import { dataUseTermsAreEnabled, getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes.ts';
 import { getAuthBaseUrl } from '../../utils/getAuthUrl';
 
 const clientConfig = getRuntimeConfig().public;
 const keycloakUrl = getAuthBaseUrl();
-
-const websiteConfig = getWebsiteConfig();
-
-const organismKeys = Object.keys(websiteConfig.organisms);
-
-const organismToDisplayName = Object.fromEntries(
-    organismKeys.map((organism) => {
-        return [organism, websiteConfig.organisms[organism].schema.organismName];
-    }),
-);
 
 const BUTTON_CLASS =
     'inline-block px-6 py-3 bg-primary-400 text-white font-semibold rounded-lg shadow-md hover:bg-primary-500 hover:no-underline';
@@ -75,37 +65,6 @@ const BUTTON_CLASS =
             <div class='mt-8'>
                 <span class='font-medium'>URL of backend server:</span>
                 <code>{clientConfig.backendUrl}</code>
-            </div>
-        </div>
-
-        <div class='mb-10'>
-            <h2 class='text-xl font-semibold text-primary-400 mb-4'>LAPIS query engines</h2>
-            <div class='flex flex-wrap gap-x-2 gap-y-4'>
-                {
-                    organismKeys.map((organism) => {
-                        const url = getLapisUrl(clientConfig, organism);
-                        return (
-                            <a class={BUTTON_CLASS} href={url + '/swagger-ui/index.html'}>
-                                {organismToDisplayName[organism]} LAPIS API documentation
-                            </a>
-                        );
-                    })
-                }
-            </div>
-            <div class='mt-8'>
-                <span class='font-medium'>URLs of LAPIS query engines:</span>
-                <ul class='list-disc ml-6'>
-                    {
-                        organismKeys.map((organism) => {
-                            const url = getLapisUrl(clientConfig, organism);
-                            return (
-                                <li>
-                                    {organismToDisplayName[organism]}: <code>{url}</code>
-                                </li>
-                            );
-                        })
-                    }
-                </ul>
             </div>
         </div>
 

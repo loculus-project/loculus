@@ -118,13 +118,19 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
         assertTrue(
             queryParameterNames(metadataGetOperation).containsAll(listOf("compression", "downloadAsFile", "orderBy")),
         )
+        assertTrue(
+            queryParameterNames(
+                metadataGetOperation,
+            ).containsAll(listOf("country", "country.regex", "dateFrom", "dateTo", "date.isNull")),
+        )
+        assertTrue(queryParameterNames(metadataGetOperation).none { it == "Accept" })
         assertTrue(!queryParameterNames(metadataGetOperation).contains("fastaHeaderTemplate"))
 
         assertEquals(listOf("FASTA", "JSON", "NDJSON"), queryParameterEnum(sequenceGetOperation, "dataFormat"))
         assertTrue(
             queryParameterNames(
                 sequenceGetOperation,
-            ).containsAll(listOf("compression", "fastaHeaderTemplate", "orderBy")),
+            ).containsAll(listOf("compression", "fastaHeaderTemplate", "orderBy", "country", "dateFrom")),
         )
         assertTrue(!queryParameterNames(sequenceGetOperation).contains("segments"))
         assertEquals(
@@ -142,6 +148,11 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
                 "qc",
             ),
             fieldEnum(paths.get("/query/otherOrganism/{versionGroup}/metadata").get("post")),
+        )
+        assertTrue(
+            queryParameterNames(
+                paths.get("/query/otherOrganism/{versionGroup}/metadata").get("get"),
+            ).contains("specialOtherField"),
         )
 
         assertEquals(

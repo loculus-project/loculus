@@ -240,6 +240,7 @@ class QueryOpenApiCustomizer {
             ),
             queryParameter("advancedQuery", StringSchema(), "LAPIS advanced query expression."),
         )
+        parameters.addAll(metadataFilterQueryParameters(instanceConfig))
 
         if (kind.supportsGetDataFormat()) {
             parameters.add(
@@ -269,7 +270,7 @@ class QueryOpenApiCustomizer {
         organism: String,
         instanceConfig: InstanceConfig,
     ) = operation.parameters
-        ?.filterNot { it.name == "organism" }
+        ?.filterNot { it.name == "organism" || it.name == "Accept" }
         ?.onEach { parameter ->
             when (parameter.name) {
                 "versionGroup" -> {
@@ -318,6 +319,47 @@ class QueryOpenApiCustomizer {
         this.description = description
         this.schema = schema
     }
+
+    private fun metadataFilterQueryParameters(instanceConfig: InstanceConfig) =
+        metadataFields(instanceConfig).flatMap { metadata ->
+            val parameters = mutableListOf(
+                queryParameter(metadata.name, metadataFilterSchema(metadata), "Filter by ${metadata.name}."),
+                queryParameter(
+                    "${metadata.name}.isNull",
+                    BooleanSchema(),
+                    "Filter by nullness of ${metadata.name}.",
+                ),
+            )
+            when (metadata.type) {
+                MetadataType.STRING, MetadataType.AUTHORS -> parameters.add(
+                    queryParameter(
+                        "${metadata.name}.regex",
+                        StringSchema(),
+                        "Regex filter for ${metadata.name}.",
+                    ),
+                )
+
+                MetadataType.INTEGER, MetadataType.FLOAT, MetadataType.NUMBER, MetadataType.DATE -> {
+                    parameters.add(
+                        queryParameter(
+                            "${metadata.name}From",
+                            metadataFilterSchema(metadata),
+                            "Lower bound filter for ${metadata.name}.",
+                        ),
+                    )
+                    parameters.add(
+                        queryParameter(
+                            "${metadata.name}To",
+                            metadataFilterSchema(metadata),
+                            "Upper bound filter for ${metadata.name}.",
+                        ),
+                    )
+                }
+
+                MetadataType.BOOLEAN -> Unit
+            }
+            parameters
+        }
 
     private fun arrayOfStrings(values: List<String>) = ArraySchema()
         .items(StringSchema()._enum(values))
