@@ -70,6 +70,13 @@ export function getWebsiteConfig(): WebsiteConfig {
     return _config;
 }
 
+export function getContactConfig(websiteConfig: WebsiteConfig) {
+    return {
+        gitHubIssuesUrl: websiteConfig.gitHubIssuesUrl,
+        issuesEmail: websiteConfig.issuesEmail,
+    };
+}
+
 /**
  * If sequence flagging is configured, returns a report URL to create a GitHub issue for the given
  * organism and accession version.
@@ -114,12 +121,18 @@ export type Organism = {
     image?: string;
 };
 
+export function configuredOrganismsFromConfig(config: WebsiteConfig): Organism[] {
+    return Object.entries(config.organisms)
+        .map(([key, instance]) => ({
+            key,
+            displayName: instance.schema.organismName,
+            image: instance.schema.image,
+        }))
+        .sort((a, b) => a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }));
+}
+
 export function getConfiguredOrganisms() {
-    return Object.entries(getWebsiteConfig().organisms).map(([key, instance]) => ({
-        key,
-        displayName: instance.schema.organismName,
-        image: instance.schema.image,
-    }));
+    return configuredOrganismsFromConfig(getWebsiteConfig());
 }
 
 function getConfig(organism: string): InstanceConfig {
@@ -167,43 +180,11 @@ function getAccessionInputField(): InputField {
 }
 
 export function getSubmissionIdInputFields(schema: Schema): InputField[] {
-    const maxSequencesPerEntry = schema.submissionDataTypes.maxSequencesPerEntry ?? Infinity;
+    const idField = schema.inputFields.find((f) => f.name === SUBMISSION_ID_INPUT_FIELD);
+    if (!idField) throw new Error(`Missing required '${SUBMISSION_ID_INPUT_FIELD}' input field in schema`);
+    const fastaIdsField = schema.inputFields.find((f) => f.name === FASTA_IDS_FIELD);
 
-    if (maxSequencesPerEntry == 1) {
-        return [
-            {
-                name: SUBMISSION_ID_INPUT_FIELD,
-                displayName: 'ID',
-                definition: 'FASTA ID',
-                guidance:
-                    "Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence.",
-                example: 'GJP123',
-                noEdit: true,
-                required: true,
-            },
-        ];
-    }
-    return [
-        {
-            name: SUBMISSION_ID_INPUT_FIELD,
-            displayName: 'ID',
-            definition: 'METADATA ID',
-            guidance:
-                'Your sample identifier. If FASTA IDS column is provided, this sample ID will be used to associate the metadata with the sequence.',
-            example: 'GJP123',
-            noEdit: true,
-            required: true,
-        },
-        {
-            name: FASTA_IDS_FIELD,
-            displayName: 'FASTA IDS',
-            definition: 'FASTA IDS',
-            guidance: 'Space-separated list of FASTA IDS of each sequence to be associated with this metadata entry.',
-            example: 'GJP123 GJP124',
-            noEdit: true,
-            desired: true,
-        },
-    ];
+    return fastaIdsField ? [idField, fastaIdsField] : [idField];
 }
 
 export function getGroupedInputFields(
@@ -213,11 +194,13 @@ export function getGroupedInputFields(
 ): Map<string, InputField[]> {
     const schema = getConfig(organism).schema;
     const submissionIdInputFields = getSubmissionIdInputFields(schema);
+    const submissionIdFieldNames = new Set(submissionIdInputFields.map((f) => f.name));
+    const nonIdInputFields = schema.inputFields.filter((f) => !submissionIdFieldNames.has(f.name));
 
     const allFields = [
         ...submissionIdInputFields,
         ...(action === 'submit' ? [] : [getAccessionInputField()]),
-        ...schema.inputFields,
+        ...nonIdInputFields,
     ];
     const requiredFields = allFields.filter((meta) => meta.required);
     const desiredFields = allFields.filter((meta) => meta.desired);
@@ -231,7 +214,7 @@ export function getGroupedInputFields(
             .flatMap((fields) => fields.map((f) => f.name))
             .some((name) => name === fieldName);
 
-    schema.inputFields.forEach((field) => {
+    nonIdInputFields.forEach((field) => {
         const metadataEntry = schema.metadata.find((meta) => meta.name === field.name);
         const header = metadataEntry?.header ?? 'Uncategorized';
 
@@ -274,11 +257,15 @@ export function dataUseTermsAreEnabled() {
     return getWebsiteConfig().enableDataUseTerms;
 }
 
-function readTypedConfigFile<T>(fileName: string, schema: z.ZodType<T>) {
+export function getDataUseTermsAgreementHTML() {
+    return getWebsiteConfig().dataUseTermsAgreementHTML;
+}
+
+function readTypedConfigFile<Schema extends z.ZodTypeAny>(fileName: string, schema: Schema): z.infer<Schema> {
     const configFilePath = path.join(getConfigDir(), fileName);
     const json = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));
     try {
-        return schema.parse(json);
+        return schema.parse(json) as z.infer<Schema>;
     } catch (e) {
         const zodError = e as ZodError;
         throw new Error(`Type error reading ${configFilePath}: ${zodError.message}`);

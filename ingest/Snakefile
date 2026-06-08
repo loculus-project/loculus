@@ -35,12 +35,21 @@ LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 NCBI_GATEWAY_URL = config.get("ncbi_gateway_url")
 MIRROR_BUCKET = config.get("mirror_bucket", "")
-APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
 FILTER = config.get("metadata_filter", None)
-GROUPS_OVERRIDE_JSON = config.get(
-    "grouping_override", None
-)  # JSON map from group to segments' insdcAccessionFull
+CALCULATE_GROUPS_OVERRIDE_JSON = config.get(
+    "calculate_groups_override_json", False
+)  # Calculate the groups override JSON based on assembly report data.
+GROUPING_OVERRIDE_URL = config.get("grouping_override_url", False)
+GROUPS_OVERRIDE_JSON = CALCULATE_GROUPS_OVERRIDE_JSON or GROUPING_OVERRIDE_URL
+DOWNLOADED_GROUPS_JSON = (
+    "results/downloaded_groups.json"
+    if CALCULATE_GROUPS_OVERRIDE_JSON
+    else "results/groups.json"
+)
+CALCULATED_GROUPS_JSON = (
+    "results/calculated_groups.json" if GROUPING_OVERRIDE_URL else "results/groups.json"
+)
 
 
 if SEGMENTED:
@@ -96,12 +105,11 @@ def prepped_metadata():
 
 
 rule all:
-    params:
-        config=lambda wildcards: str(config),
     input:
         "results/submitted",
         "results/revised",
-        "results/approved",
+    params:
+        config=lambda wildcards: str(config),
 
 
 rule clean:
@@ -135,9 +143,9 @@ rule fetch_inflate_ncbi_dataset_package:
                 --filename {params.compressed_package_zip} \
                 {params.api_key} \
                 {params.gateway} \
-            && {params.unzip} \
-                -o {params.compressed_package_zip} \
-                -d results
+                && {params.unzip} \
+                    -o {params.compressed_package_zip} \
+                    -d results
         fi
         """
 
@@ -155,7 +163,7 @@ rule format_ncbi_dataset_report:
             --config-file {input.config} \
             --input {input.dataset_report} \
             --output {output.ncbi_dataset_tsv}
-        echo "Processed metadata file lines: $(wc -l < {output.ncbi_dataset_tsv})"
+        echo "Processed metadata file lines: $(wc -l <{output.ncbi_dataset_tsv})"
         echo "Hash of output: $(md5sum {output.ncbi_dataset_tsv})"
         echo "Hash of sorted output: $(md5sum <(sort {output.ncbi_dataset_tsv}))"
         """
@@ -170,7 +178,7 @@ rule format_ncbi_dataset_sequences:
         """
         seqkit seq -w0 -i \
             {input.dataset_sequences} \
-            > {output.ncbi_dataset_sequences}
+            >{output.ncbi_dataset_sequences}
         echo "Stats of NCBI dataset sequences: $(seqkit stats {output.ncbi_dataset_sequences})"
         echo "seqkit hash of NCBI dataset sequences: $(seqkit sum -a -s {output.ncbi_dataset_sequences})"
         echo "Plain hash of NCBI dataset sequences: $(md5sum {output.ncbi_dataset_sequences})"
@@ -190,9 +198,9 @@ if CHECK_ENA_DEPOSITION:
         shell:
             """
             python {input.script} \
-            --output-insdc-accessions {output.exclude_insdc_accessions} \
-            --log-level {params.log_level} \
-            --config-file {input.config} \
+                --output-insdc-accessions {output.exclude_insdc_accessions} \
+                --log-level {params.log_level} \
+                --config-file {input.config}
             """
 
     rule filter_out_loculus_depositions:
@@ -208,11 +216,11 @@ if CHECK_ENA_DEPOSITION:
         shell:
             """
             python {input.script} \
-            --input-metadata-tsv {input.ncbi_dataset_tsv} \
-            --exclude-insdc-accessions {input.exclude_insdc_accessions} \
-            --log-level {params.log_level} \
-            --config-file {input.config} \
-            --output-metadata-tsv {output.metadata_tsv} \
+                --input-metadata-tsv {input.ncbi_dataset_tsv} \
+                --exclude-insdc-accessions {input.exclude_insdc_accessions} \
+                --log-level {params.log_level} \
+                --config-file {input.config} \
+                --output-metadata-tsv {output.metadata_tsv}
             """
 
 
@@ -252,7 +260,7 @@ if SEGMENTED and segment_detection_method == SegmentDetectionMethod.ALIGN:
                 {input.sequences} \
                 --output-tsv {output.results} \
                 --server {params.dataset_server} \
-                --dataset-name {params.dataset_name} \
+                --dataset-name {params.dataset_name}
             """
 
     rule process_alignments:
@@ -273,10 +281,10 @@ if SEGMENTED and segment_detection_method == SegmentDetectionMethod.ALIGN:
             ),
         shell:
             """
-        python {input.script} \
-            {params.segment_paths} \
-            --output {output.merged}
-        """
+            python {input.script} \
+                {params.segment_paths} \
+                --output {output.merged}
+            """
 
 
 if APPLY_MINIMIZER:
@@ -304,8 +312,8 @@ if APPLY_MINIMIZER:
         shell:
             """
             nextclade sort -m {input.minimizer} \
-            -r {output.results}  {input.sequences} \
-            --max-score-gap 0.3 --min-score 0.05 --min-hits 2  --all-matches
+                -r {output.results} {input.sequences} \
+                --max-score-gap 0.3 --min-score 0.05 --min-hits 2 --all-matches
             """
 
     rule parse_sort:
@@ -320,10 +328,10 @@ if APPLY_MINIMIZER:
         shell:
             """
             python {input.script} \
-            --config-file {input.config} \
-            --sort-results {input.sorted} \
-            --output {output.merged} \
-            --log-level {params.log_level} \
+                --config-file {input.config} \
+                --sort-results {input.sorted} \
+                --output {output.merged} \
+                --log-level {params.log_level}
             """
 
 
@@ -338,12 +346,12 @@ rule prepare_metadata:
         ),
         sequence_hashes="results/sequence_hashes.ndjson",
         config="results/config.yaml",
+        # else is just a dummy
         segments=(
             "results/nextclade_merged.tsv"
             if (SEGMENTED or APPLY_MINIMIZER)
             else "results/config.yaml"
         ),
-        # else is just a dummy
     output:
         metadata="results/metadata_post_prepare.ndjson",
     params:
@@ -361,21 +369,119 @@ rule prepare_metadata:
             --sequence-hashes-file {input.sequence_hashes} \
             {params.segments} \
             --output {output.metadata} \
-            --log-level {params.log_level} \
+            --log-level {params.log_level}
         """
 
 
-if GROUPS_OVERRIDE_JSON:
+if GROUPING_OVERRIDE_URL:
 
     rule download_groups:
         output:
-            results="results/groups.json",
+            results=DOWNLOADED_GROUPS_JSON,
         params:
-            grouping=config.get("grouping_override"),
+            grouping=GROUPING_OVERRIDE_URL,
         shell:
             """
             curl -L -o {output.results} {params.grouping}
             """
+
+
+if CALCULATE_GROUPS_OVERRIDE_JSON:
+
+    rule download_ignore_list:
+        output:
+            ignore_list="results/grouping_ignore_list.txt",
+        params:
+            grouping_ignore_list_url=config.get("grouping_ignore_list_url", ""),
+        shell:
+            """
+            if [[ -n "{params.grouping_ignore_list_url}" ]]; then
+                curl -L -o {output.ignore_list} {params.grouping_ignore_list_url}
+            else
+                touch {output.ignore_list}
+            fi
+            """
+
+    rule fetch_inflate_assemblies:
+        output:
+            marker="results/{source}_assembly/.fetch_inflate_complete",
+        params:
+            taxon_id=TAXON_ID,
+            api_key=f"--api-key {NCBI_API_KEY}" if NCBI_API_KEY else "",
+            gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
+            use_mirror=bool(MIRROR_BUCKET),
+            mirror_url=lambda wc: f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}-assembly-{wc.source}.tar.zst",
+            unzip=unzip,
+            compressed_package_tzst="results/{source}_assembly.tar.zst",
+            compressed_package_zip="results/{source}_assembly.zip",
+            package=directory("results/{source}_assembly"),
+        shell:
+            """
+            if [[ "{params.use_mirror}" == "True" ]]; then
+                curl {params.mirror_url} -o {params.compressed_package_tzst} \
+                    && mkdir -p {params.package} \
+                    && tar xf {params.compressed_package_tzst} -C {params.package}
+            else
+                datasets download genome taxon {params.taxon_id} \
+                    --assembly-source {wildcards.source} \
+                    --no-progressbar --dehydrated \
+                    --filename {params.compressed_package_zip} \
+                    {params.api_key} \
+                    {params.gateway} \
+                    && {params.unzip} \
+                        -o {params.compressed_package_zip} \
+                        -d {params.package} \
+                    && datasets rehydrate \
+                        --directory {params.package} \
+                        --no-progressbar
+            fi
+            touch {output.marker}
+            """
+
+    rule get_assembly_groups:
+        input:
+            script="scripts/calculate_assembly_groups.py",
+            fetch_genbank="results/genbank_assembly/.fetch_inflate_complete",
+            fetch_refseq="results/refseq_assembly/.fetch_inflate_complete",
+            ignore_list="results/grouping_ignore_list.txt",
+            config_file="results/config.yaml",
+        output:
+            groups_json=CALCULATED_GROUPS_JSON,
+        params:
+            genbank_dir="results/genbank_assembly/ncbi_dataset/data",
+            refseq_dir="results/refseq_assembly/ncbi_dataset/data",
+        shell:
+            """
+            python {input.script} \
+                --dataset-dir {params.genbank_dir} \
+                --dataset-dir {params.refseq_dir} \
+                --output-file {output.groups_json} \
+                --ignore-list {input.ignore_list} \
+                --config-file {input.config_file}
+            """
+
+
+if GROUPING_OVERRIDE_URL and CALCULATE_GROUPS_OVERRIDE_JSON:
+
+    rule merge_groups:
+        input:
+            script="scripts/merge_group_overrides.py",
+            downloaded=DOWNLOADED_GROUPS_JSON,
+            calculated=CALCULATED_GROUPS_JSON,
+            config="results/config.yaml",
+        output:
+            groups_json="results/groups.json",
+        shell:
+            """
+            python {input.script} \
+                --groups {input.calculated} \
+                --groups {input.downloaded} \
+                --config-file {input.config} \
+                --output-file {output.groups_json}
+            """
+
+
+if GROUPS_OVERRIDE_JSON:
 
     rule override_group_segments:
         """Group segments based on JSON map"""
@@ -454,8 +560,8 @@ rule heuristic_group_segments:
             --output-seq {output.sequences} \
             --log-level {params.log_level}
         if [ "{params.GROUPS_OVERRIDE_JSON}" = "true" ]; then
-            cat {input.metadata_grouped} >> {output.metadata}
-            cat {input.sequences_grouped} >> {output.sequences}
+            cat {input.metadata_grouped} >>{output.metadata}
+            cat {input.sequences_grouped} >>{output.sequences}
         fi
         """
 
@@ -488,12 +594,12 @@ if FILTER:
         shell:
             """
             python {input.script} \
-            --input-seq {input.sequences} \
-            --output-seq {output.sequences} \
-            --input-metadata {input.metadata} \
-            --output-metadata {output.metadata} \
-            --log-level {params.log_level} \
-            --config-file {input.config} \
+                --input-seq {input.sequences} \
+                --output-seq {output.sequences} \
+                --input-metadata {input.metadata} \
+                --output-metadata {output.metadata} \
+                --log-level {params.log_level} \
+                --config-file {input.config}
             """
 
 
@@ -563,7 +669,7 @@ rule compare_hashes:
             --output-blocked {output.blocked} \
             --sampled-out-file {output.sampled_out} \
             --log-level {params.log_level} \
-            --subsample-fraction {params.subsample_fraction} \
+            --subsample-fraction {params.subsample_fraction}
         """
 
 
@@ -605,7 +711,7 @@ rule prepare_files:
             --metadata-submit-prior-to-revoke-path {output.metadata_revoke} \
             --sequences-submit-path {output.sequences_submit} \
             --sequences-revise-path {output.sequences_revise} \
-            --sequences-submit-prior-to-revoke-path {output.sequences_revoke} \
+            --sequences-submit-prior-to-revoke-path {output.sequences_revoke}
         """
 
 
@@ -617,7 +723,7 @@ rule sort_fasta:
         sorted="results/{basename}_sorted.fasta",
     shell:
         """
-        seqkit sort -N --two-pass {input.sequences} | seqkit seq -w 0 > {output.sorted}
+        seqkit sort -N --two-pass {input.sequences} | seqkit seq -w 0 >{output.sorted}
         """
 
 
@@ -629,11 +735,11 @@ rule sort_metadata:
         sorted="results/{basename}_sorted.tsv",
     shell:
         """
-        columnNumber=$(awk -F'\\t' '{{for(i=1;i<=NF;i++) if($i=="id") print i}}' {input.metadata});
+        columnNumber=$(awk -F'\\t' '{{for(i=1;i<=NF;i++) if($i=="id") print i}}' {input.metadata})
         if [ ${{columnNumber}} ]; then
-        (head -n 1 {input.metadata} && tail -n +2 {input.metadata} | sort -t$'\t' -k${{columnNumber}},${{columnNumber}}) > {output.sorted}
+            (head -n 1 {input.metadata} && tail -n +2 {input.metadata} | sort -t$'\t' -k${{columnNumber}},${{columnNumber}}) >{output.sorted}
         else
-        cat {input.metadata} > {output.sorted}
+            cat {input.metadata} >{output.sorted}
         fi
         """
 
@@ -706,23 +812,4 @@ rule regroup_and_revoke:
                 --config-file {input.config} \
                 --log-level {params.log_level}
         fi
-        """
-
-
-rule approve:
-    input:
-        script="scripts/call_loculus.py",
-        config="results/config.yaml",
-    output:
-        approved=touch("results/approved"),
-    params:
-        log_level=LOG_LEVEL,
-        approve_timeout_min=APPROVE_TIMEOUT_MIN,
-    shell:
-        """
-        python {input.script} \
-            --mode approve \
-            --config-file {input.config} \
-            --log-level {params.log_level} \
-            --approve-timeout {params.approve_timeout_min}
         """

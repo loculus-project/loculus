@@ -1,7 +1,10 @@
+from loculus_preprocessing.config import Config
+
 from .datatypes import (
     AnnotationSourceType,
     NucleotideSequence,
     ProcessingAnnotation,
+    ProcessingAnnotationAlignment,
     SegmentName,
 )
 
@@ -48,3 +51,25 @@ def errors_if_non_iupac(
                     )
                 )
     return errors
+
+
+def error_on_excess_sequences(
+    num_sequences: int,
+    config: Config,
+) -> list[ProcessingAnnotation]:
+    """Check if the number of sequences exceeds the configured maximum per entry."""
+    if (
+        config.max_sequences_per_entry is not None
+        and num_sequences > config.max_sequences_per_entry
+    ):
+        return [
+            ProcessingAnnotation.from_single(
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                message=(
+                    f"Entry has {num_sequences} sequences but the maximum allowed "
+                    f"number of sequences per entry is {config.max_sequences_per_entry}."
+                ),
+            )
+        ]
+    return []

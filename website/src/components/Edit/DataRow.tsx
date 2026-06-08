@@ -1,9 +1,9 @@
-import { sentenceCase } from 'change-case';
 import { type FC } from 'react';
 
 import { InputField as InputFieldComponent, type Row } from './InputField.tsx';
 import type { InputField } from '../../types/config.ts';
 import { InputFieldTooltip } from '../Submission/InputFieldTooltip.tsx';
+import { HoverTooltip } from '../common/HoverTooltip.tsx';
 import WarningAmberIcon from '~icons/ic/baseline-warning-amber';
 import DangerousTwoToneIcon from '~icons/ic/twotone-dangerous';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
@@ -21,7 +21,7 @@ export const EditableDataRow: FC<EditableRowProps> = ({ inputField, row, onChang
         (value) => value !== undefined,
     );
 
-    const label = inputField.displayName ?? sentenceCase(inputField.name);
+    const label = inputField.displayName ?? inputField.name;
 
     // split label to attach icon later on to prevent the icon wrapping alone
     // (https://www.codemzy.com/blog/prevent-icon-wrap-javascript)
@@ -39,10 +39,12 @@ export const EditableDataRow: FC<EditableRowProps> = ({ inputField, row, onChang
                             {lastWord}
                             {hasDescription && (
                                 <>
-                                    <MaterialSymbolsInfoOutline
-                                        className='inline-block h-4 w-4 text-gray-500 shrink-0 ml-1 mb-0.5'
+                                    <span
+                                        className='inline-block shrink-0 ml-1 mb-0.5'
                                         data-tooltip-id={'field-tooltip' + row.key}
-                                    />
+                                    >
+                                        <MaterialSymbolsInfoOutline className='h-4 w-4 text-gray-500' />
+                                    </span>
                                     <InputFieldTooltip
                                         id={'field-tooltip' + row.key}
                                         field={inputField}
@@ -96,17 +98,14 @@ const ErrorAndWarningIcons: FC<ErrorAndWarningIconsProps> = ({ row }) => {
     return (
         <>
             {row.errors.length > 0 ? (
-                <div className='tooltip tooltip-error whitespace-pre-line text-error' data-tip={row.errors.join('\n')}>
+                <HoverTooltip content={row.errors.join('\n')} variant='error' className='text-error'>
                     <DangerousTwoToneIcon />
-                </div>
+                </HoverTooltip>
             ) : null}
             {row.warnings.length > 0 ? (
-                <div
-                    className='tooltip tooltip-warning whitespace-pre-line text-warning'
-                    data-tip={row.warnings.join('\n')}
-                >
+                <HoverTooltip content={row.warnings.join('\n')} variant='warning' className='text-warning'>
                     <WarningAmberIcon />
-                </div>
+                </HoverTooltip>
             ) : null}
         </>
     );

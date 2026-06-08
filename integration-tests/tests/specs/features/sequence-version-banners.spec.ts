@@ -58,8 +58,7 @@ test.describe('Sequence version banners', () => {
 
         // Release both sequences
         await reviewPage.waitForZeroProcessing();
-        await reviewPage.releaseValidSequences();
-        await page.getByRole('link', { name: 'released sequences' }).click();
+        await reviewPage.releaseAndGoToReleasedSequences();
 
         // Wait for sequences to appear in search
         while (!(await page.getByText('Search returned 2 sequences').isVisible())) {
@@ -93,20 +92,22 @@ test.describe('Sequence version banners', () => {
         await search.select('Collection country', 'Germany');
 
         // Get the accession of the sequence to revoke
+        await search.expectSequenceCount(1);
         const toRevokeLink = page.getByRole('link', { name: /LOC_[A-Z0-9]+\.1/ });
         const toRevokeId = await toRevokeLink.textContent();
         const toRevokeAccession = toRevokeId.split('.')[0];
 
-        // Click on the sequence and revoke it
+        // Click on the sequence and revoke it (auto-approves on confirmation)
         await page.getByRole('cell', { name: 'Germany' }).click();
         await page.getByRole('button', { name: 'Revoke this sequence' }).click();
         await page.getByRole('button', { name: 'Confirm' }).click();
+        await expect(page.getByText('Sequence revoked successfully.')).toBeVisible();
 
-        // Release the revision and revocation
+        // Release the revision (the revocation is already approved automatically)
         const reviewPage2 = new ReviewPage(page);
+        await reviewPage2.navigateToReviewPage();
         await reviewPage2.waitForZeroProcessing();
-        await reviewPage2.releaseValidSequences();
-        await page.getByRole('link', { name: 'released sequences' }).click();
+        await reviewPage2.releaseAndGoToReleasedSequences();
 
         // Wait for the revised sequence to appear (with new date)
         while (!(await page.getByRole('cell', { name: '2023-06-15' }).isVisible())) {
@@ -163,8 +164,7 @@ test.describe('Sequence version banners', () => {
 
         // Release the sequence
         await reviewPage.waitForZeroProcessing();
-        await reviewPage.releaseValidSequences();
-        await page.getByRole('link', { name: 'released sequences' }).click();
+        await reviewPage.releaseAndGoToReleasedSequences();
 
         // Wait for sequence to appear
         while (!(await page.getByRole('link', { name: /LOC_/ }).isVisible())) {
@@ -192,8 +192,7 @@ test.describe('Sequence version banners', () => {
         // Release the revision
         const reviewPage2 = new ReviewPage(page);
         await reviewPage2.waitForZeroProcessing();
-        await reviewPage2.releaseValidSequences();
-        await page.getByRole('link', { name: 'released sequences' }).click();
+        await reviewPage2.releaseAndGoToReleasedSequences();
 
         // Wait for revised sequence
         while (!(await page.getByRole('cell', { name: '2023-09-20' }).isVisible())) {

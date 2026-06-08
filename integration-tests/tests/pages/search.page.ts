@@ -1,7 +1,6 @@
 import { type Locator, type Page, expect } from '@playwright/test';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 import { EditPage } from './edit.page';
-import { ReviewPage } from './review.page';
 
 function makeAccessionVersion({
     accession,
@@ -105,6 +104,28 @@ export class SearchPage {
         await this.page.keyboard.press('Escape');
     }
 
+    async enterSegmentedMutation(mutation: string, segment: string) {
+        const outer = this.page.locator('details', {
+            has: this.page.locator('summary', { hasText: 'Sequence Filters' }),
+        });
+        const innerS = outer.locator('details', {
+            has: this.page.locator('summary', { hasText: new RegExp(`^${segment}$`) }),
+        });
+        await innerS.locator('summary', { hasText: new RegExp(`^${segment}$`) }).click();
+        await expect(innerS).toHaveAttribute('open', '');
+        await expect(innerS.getByText('Mutations', { exact: true })).toBeVisible();
+        const locator = 'input#mutField' + (segment ? `_${segment}` : '');
+        const input = innerS.locator(locator);
+        await expect(input).toBeVisible();
+        await expect(input).toBeEditable();
+        await input.click();
+        await input.fill(mutation);
+        const optionRegex = new RegExp(`^${mutation}(\\([0-9,]+\\))?$`);
+        const matchingOption = innerS.getByRole('option', { name: optionRegex }).first();
+        await matchingOption.click({ timeout: 2000 });
+        await this.page.keyboard.press('Escape');
+    }
+
     async enterAccessions(accessions: string) {
         // Target the main accession textbox (avoid header/nav widgets)
         const accessionField = this.page.getByRole('textbox', {
@@ -150,12 +171,12 @@ export class SearchPage {
         await revokeButton.click();
 
         await expect(
-            this.page.getByText('Are you sure you want to create a revocation for this sequence?'),
+            this.page.getByText('Are you sure you want to revoke this sequence?'),
         ).toBeVisible();
         await this.page.getByPlaceholder('Enter reason for revocation').fill(revocationReason);
         await this.page.getByRole('button', { name: 'Confirm' }).click();
 
-        return new ReviewPage(this.page);
+        await expect(this.page.getByText('Sequence revoked successfully.')).toBeVisible();
     }
 
     async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string> {

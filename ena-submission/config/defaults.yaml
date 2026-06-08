@@ -3,6 +3,7 @@ ena_reports_service_url: will-be-overwritten
 ena_submission_url: will-be-overwritten
 suppressed_list_url: will-be-overwritten
 test: true
+random_alias: false
 username: external_metadata_updater
 password: external_metadata_updater
 keycloak_client_id: backend-client
@@ -76,6 +77,7 @@ metadata_mapping:
     default: "not provided"
   'collecting institution':
     loculus_fields: [sequencedByOrganization, authorAffiliations]
+    function: deduplicate
     default: "not provided"
   'receipt date':
     loculus_fields: [sampleReceivedDate]
@@ -110,5 +112,10 @@ db_password: unsecure
 db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"
 retry_threshold_min: 240
 slack_retry_threshold_min: 720
+slack_retry_substrings:
+  - "Submit service authentication error."
+  - "Invalid submission account user name or password. Please try enclosing your password in single quotes."
+  - "FTP service authentication error."
+  - "does not exist in ENA"
 submitting_time_threshold_min: 15
 waiting_threshold_hours: 48

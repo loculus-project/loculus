@@ -314,7 +314,8 @@ open class SubmissionController(
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
-            RELEASED_DATA_RELATED_TABLES,
+            tableNames = RELEASED_DATA_RELATED_TABLES,
+            organism = organism,
         )
         if (ifNoneMatch == lastDatabaseWriteETag) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
@@ -397,11 +398,11 @@ open class SubmissionController(
         size,
     )
 
-    @Operation(description = "Retrieve original metadata of submitted accession versions.")
+    @Operation(description = "Retrieve unprocessed metadata of submitted accession versions.")
     @ResponseStatus(HttpStatus.OK)
     @ApiResponse(
         responseCode = "200",
-        description = GET_ORIGINAL_METADATA_RESPONSE_DESCRIPTION,
+        description = GET_UNPROCESSED_METADATA_RESPONSE_DESCRIPTION,
         headers = [
             Header(
                 name = X_TOTAL_RECORDS,
@@ -410,8 +411,8 @@ open class SubmissionController(
             ),
         ],
     )
-    @GetMapping("/get-original-metadata", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getOriginalMetadata(
+    @GetMapping("/get-unprocessed-metadata", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getUnprocessedMetadata(
         @PathVariable @Valid organism: Organism,
         @Parameter(
             description = "The metadata fields that should be returned. If not provided, all fields are returned.",
@@ -431,7 +432,7 @@ open class SubmissionController(
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
         }
 
-        val totalRecords = submissionDatabaseService.countOriginalMetadata(
+        val totalRecords = submissionDatabaseService.countUnprocessedMetadata(
             authenticatedUser,
             organism,
             groupIdsFilter?.takeIf { it.isNotEmpty() },
@@ -444,8 +445,8 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression, endpoint = "get-original-metadata", organism = organism) {
-            submissionDatabaseService.streamOriginalMetadata(
+        val streamBody = streamTransactioned(compression, endpoint = "get-unprocessed-metadata", organism = organism) {
+            submissionDatabaseService.streamUnprocessedMetadata(
                 authenticatedUser,
                 organism,
                 groupIdsFilter?.takeIf { it.isNotEmpty() },

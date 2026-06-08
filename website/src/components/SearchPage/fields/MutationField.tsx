@@ -8,31 +8,31 @@ import {
     parseMutationString,
     serializeMutationQueries,
 } from '../../../utils/mutation.ts';
-import type { SegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
+import type { SingleSegmentAndGeneInfo } from '../../../utils/sequenceTypeHelpers.ts';
 import { Button } from '../../common/Button';
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '../../common/headlessui/Combobox';
 import DisplaySearchDocs from '../DisplaySearchDocs';
 
 interface MutationFieldProps {
-    suborganismSegmentAndGeneInfo: SegmentAndGeneInfo;
+    singleSegmentAndGeneInfo: SingleSegmentAndGeneInfo;
     value: string;
     onChange: (mutationFilter: string) => void;
 }
 
-export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGeneInfo, value, onChange }) => {
+export const MutationField: FC<MutationFieldProps> = ({ singleSegmentAndGeneInfo, value, onChange }) => {
     const [options, setOptions] = useState<MutationQuery[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [hasFocus, setHasFocus] = useState(false);
 
     const selectedOptions = useMemo(
-        () => parseMutationsString(value, suborganismSegmentAndGeneInfo),
-        [value, suborganismSegmentAndGeneInfo],
+        () => parseMutationsString(value, singleSegmentAndGeneInfo),
+        [value, singleSegmentAndGeneInfo],
     );
 
     const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
         const newValue = event.target.value;
         setInputValue(newValue);
-        const mutQuery = parseMutationString(newValue, suborganismSegmentAndGeneInfo);
+        const mutQuery = parseMutationString(newValue, singleSegmentAndGeneInfo);
         const newOptions = mutQuery ? [mutQuery] : [];
         setOptions(newOptions);
     };
@@ -56,6 +56,10 @@ export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGen
         onChange(serializeMutationQueries(newSelectedOptions));
     };
 
+    const domId = singleSegmentAndGeneInfo.useLapisMultiSegmentedEndpoint
+        ? 'mutField_' + singleSegmentAndGeneInfo.nucleotideSegmentInfo.name
+        : 'mutField';
+
     return (
         <div className='flex relative mb-2 flex-row w-full'>
             <Combobox value={selectedOptions} onChange={handleOptionClick}>
@@ -64,9 +68,8 @@ export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGen
                         label='Mutations'
                         isFocused={hasFocus}
                         hasContent={selectedOptions.length > 0 || inputValue !== ''}
-                        borderClassName={hasFocus ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'}
-                        className='shadow-sm'
-                        htmlFor='mutField'
+                        className='shadow-xs '
+                        htmlFor={domId}
                     >
                         {selectedOptions.length > 0 && (
                             <div className='flex flex-wrap gap-1 p-1 pt-3'>
@@ -86,7 +89,7 @@ export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGen
                                                 event.stopPropagation();
                                                 handleTagDelete(index);
                                             }}
-                                            className='ml-1 focus:outline-none'
+                                            className='ml-1 focus:outline-hidden'
                                         >
                                             &times;
                                         </Button>
@@ -102,13 +105,13 @@ export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGen
                                 onChange={handleInputChange}
                                 displayValue={(option: MutationQuery) => option.text}
                                 value={inputValue}
-                                id='mutField'
-                                className={`block w-full text-sm text-gray-900 bg-transparent focus:outline-none focus:ring-0 border-0 ${
+                                id={domId}
+                                className={`block w-full text-sm text-gray-900 bg-transparent focus:outline-hidden focus:ring-0 border-0 ${
                                     selectedOptions.length === 0 ? 'px-2.5 pb-1.5 pt-3' : 'px-3 pb-1.5 pt-1'
                                 }`}
                             />
                             <div className='absolute top-1/2 -translate-y-1/2 right-1'>
-                                <DisplaySearchDocs />
+                                <DisplaySearchDocs geneInfos={singleSegmentAndGeneInfo.geneInfos} />
                             </div>
                         </div>
                     </FloatingLabelContainer>
@@ -120,7 +123,7 @@ export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGen
                     >
                         <ComboboxOptions
                             modal={false}
-                            className='absolute w-full z-20 py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm'
+                            className='absolute w-full z-20 py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black/5 focus:outline-hidden sm:text-sm'
                         >
                             {options.map((option, index) => (
                                 <ComboboxOption

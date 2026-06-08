@@ -12,7 +12,7 @@ The form submits a single individual sequence entry, to submit multiple sequence
 1. Log into your account, and then click 'Submit' in the top-right corner of the website.
 2. Select the organism that you'd like to submit sequences for.
 3. Click the 'Submit' button.
-4. Click on 'Submit single sequence'.
+4. Click on 'Submit individual sequence entry using a form'.
 5. Enter the metadata information about your sequence, as well as the unaligned nucleotide sequence(s).
 6. If Terms of Use are enabled for your Loculus instance: Select the Terms of Use that you would like for your data.
 7. Select 'Submit sequences' at the bottom of the page.

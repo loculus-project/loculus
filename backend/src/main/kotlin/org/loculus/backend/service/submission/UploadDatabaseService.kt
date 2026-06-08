@@ -208,6 +208,7 @@ class UploadDatabaseService(
                 submitter,
                 group_id,
                 submitted_at,
+                unprocessed_data,
                 original_data
             )
             SELECT
@@ -217,13 +218,9 @@ class UploadDatabaseService(
                 m.submission_id,
                 m.submitter,
                 m.group_id,
-                m.uploaded_at,
-                jsonb_build_object(
-                    'metadata', m.metadata,
-                    'files',    m.files,
-                    'unalignedNucleotideSequences',
-                    COALESCE(x.seq_map, '{}'::jsonb)
-                )
+                m.uploaded_at,                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                built.data,
+                built.data                                                                                                                                                                                                                                                                                                                                                                                                                                                            
             FROM metadata_upload_aux_table AS m
             LEFT JOIN LATERAL (
                 SELECT jsonb_object_agg(s.fasta_id, s.compressed_sequence_data::jsonb) AS seq_map
@@ -231,6 +228,13 @@ class UploadDatabaseService(
                 WHERE s.upload_id = m.upload_id
                 AND s.fasta_id = ANY (COALESCE(m.fasta_ids, ARRAY[]::text[]))
             ) AS x ON TRUE
+            CROSS JOIN LATERAL (
+                SELECT jsonb_build_object(
+                    'metadata', m.metadata,
+                    'files',    m.files,
+                    'unalignedNucleotideSequences', COALESCE(x.seq_map, '{}'::jsonb)
+                ) AS data
+            ) AS built
             WHERE m.upload_id = ?
             RETURNING accession, version, submission_id;
         """.trimIndent()

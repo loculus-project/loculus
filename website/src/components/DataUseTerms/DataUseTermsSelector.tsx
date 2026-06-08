@@ -46,7 +46,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
     };
 
     const [selectedOption, setSelectedOptionInternal] = useState<DataUseTermsOption | null>(initialDataUseTermsOption);
-    const [selectedDate, setSelectedDateInternal] = useState<DateTime>(maxRestrictedUntil);
+    const [selectedDate, setSelectedDateInternal] = useState(maxRestrictedUntil);
 
     const setSelectedOption = (newOption: DataUseTermsOption) => {
         setSelectedOptionInternal(newOption);
@@ -149,7 +149,10 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     <span className='py-4 text-sm ml-8'>
                         Data use will be restricted until <b>{selectedDate.toFormat('yyyy-MM-dd')}</b>.{' '}
                         {calendarUseModal && (
-                            <Button className='border rounded px-2 py-1' onClick={() => setDateChangeModalOpen(true)}>
+                            <Button
+                                className='border rounded-sm px-2 py-1'
+                                onClick={() => setDateChangeModalOpen(true)}
+                            >
                                 Change date
                             </Button>
                         )}

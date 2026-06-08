@@ -1,5 +1,6 @@
 ---
-import '../styles/base.scss';
+import '../styles/base.css';
+import '../styles/custom-colors.css';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 
@@ -19,9 +20,13 @@ const {
     bannerMessage: configBannerMessage,
     additionalHeadHTML,
     gitHubMainUrl,
+    readOnlyMode,
 } = websiteConfig;
 const remoteBannerMessage = await getRemoteBannerMessage();
-const bannerMessage = remoteBannerMessage ?? configBannerMessage;
+const readOnlyBannerMessage = readOnlyMode
+    ? 'This instance is in read-only mode. Submissions and login are disabled.'
+    : undefined;
+const bannerMessage = remoteBannerMessage ?? configBannerMessage ?? readOnlyBannerMessage;
 
 interface Props {
     title: string;
@@ -98,13 +103,12 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                     currentOrganismObject={currentOrganismObject}
                     currentPath={currentPath}
                 />
-
-                <slot name='banner' />
             </header>
+            <slot name='banner' />
 
             <div
                 class:list={[
-                    'flex-grow',
+                    'grow',
                     'mt-3',
                     'mb-5',
                     fullWidth ? (withoutMargin ? 'px-4' : 'mx-8') : 'max-w-7xl mx-auto w-full px-8',

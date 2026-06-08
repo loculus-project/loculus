@@ -15,8 +15,19 @@ export type BaseType = SequenceType['type'];
 export type SegmentInfo = {
     /** the segment name as it is called in LAPIS */
     lapisName: string;
-    /** the segment name as it should be displayed in the UI */
+    /** the segment name */
     name: string;
+    /** optional, the segment name as it should be displayed in the UI */
+    displayName?: string;
+};
+
+export type SegmentLapisNames = {
+    /** the segment name as it is called in LAPIS */
+    lapisNames: string[];
+    /** the segment name */
+    name: string;
+    /** optional, the segment name as it should be displayed in the UI */
+    displayName?: string;
 };
 
 export type GeneInfo = {
@@ -24,10 +35,18 @@ export type GeneInfo = {
     lapisName: string;
     /** the gene name as it should be displayed in the UI */
     name: string;
+    segmentName?: string;
 };
 
 export type SegmentAndGeneInfo = {
     nucleotideSegmentInfos: SegmentInfo[];
+    geneInfos: GeneInfo[];
+    useLapisMultiSegmentedEndpoint?: boolean;
+    multiSegmented?: boolean;
+};
+
+export type SingleSegmentAndGeneInfo = {
+    nucleotideSegmentInfo: SegmentInfo;
     geneInfos: GeneInfo[];
     useLapisMultiSegmentedEndpoint?: boolean;
     multiSegmented?: boolean;
@@ -81,6 +100,7 @@ export function getGeneLapisName(geneName: string, referenceName: string, isMult
 
 export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGenomesInfo {
     const genomes: SegmentReferenceGenomes = {};
+    const segmentDisplayNames: Record<SegmentName, string> = {};
 
     const isMultiSegmented = (values?.length ?? 0) > 1;
     let useLapisMultiSegmentedEndpoint = isMultiSegmented;
@@ -90,6 +110,7 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
         const isMultiReferenced = segmentData.references.length > 1;
 
         genomes[segmentName] ??= {};
+        if (segmentData.displayName) segmentDisplayNames[segmentName] = segmentData.displayName;
 
         if (isMultiReferenced) {
             useLapisMultiSegmentedEndpoint = true;
@@ -105,6 +126,7 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
                           lapisName: getGeneLapisName(gene.name, ref.name, isMultiReferenced),
                       }))
                     : [],
+                displayName: ref.displayName,
             };
         }
     }
@@ -113,10 +135,23 @@ export function toReferenceGenomes(values: ReferenceGenomesSchema): ReferenceGen
         segmentReferenceGenomes: genomes,
         isMultiSegmented,
         useLapisMultiSegmentedEndpoint,
+        segmentDisplayNames,
     };
 }
 
 export const getSegmentNames = (genomes: ReferenceGenomesInfo) => Object.keys(genomes.segmentReferenceGenomes);
+
+export function mapLapisNameToSegmentName(info: ReferenceGenomesInfo): Record<string, string> {
+    const result: Record<string, string> = {};
+
+    for (const [segment, referenceGenomeMap] of Object.entries(info.segmentReferenceGenomes)) {
+        for (const genomeInfo of Object.values(referenceGenomeMap)) {
+            result[genomeInfo.lapisName] = segment;
+        }
+    }
+
+    return result;
+}
 
 /**
  * Get segment and gene info where each segment can have its own reference.
@@ -135,21 +170,84 @@ export function getSegmentAndGeneInfo(
         const isSingleReference = Object.keys(segmentData).length === 1;
         const selectedRef = selectedReferences?.[segmentName] ?? null;
 
+        const displayName = referenceGenomesInfo.segmentDisplayNames[segmentName];
         if (isSingleReference) {
-            nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentName });
-            geneInfos.push(...segmentData[Object.keys(segmentData)[0]].genes);
+            nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentName, displayName });
+            geneInfos.push(...segmentData[Object.keys(segmentData)[0]].genes.map((gene) => ({ ...gene, segmentName })));
             continue;
         }
         if (!selectedRef || !(selectedRef in segmentData)) {
             continue;
         }
-        nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentData[selectedRef].lapisName });
-        geneInfos.push(...segmentData[selectedRef].genes);
+        nucleotideSegmentInfos.push({ name: segmentName, lapisName: segmentData[selectedRef].lapisName, displayName });
+        geneInfos.push(...segmentData[selectedRef].genes.map((gene) => ({ ...gene, segmentName })));
     }
 
     return {
         nucleotideSegmentInfos,
         geneInfos,
+        useLapisMultiSegmentedEndpoint: referenceGenomesInfo.useLapisMultiSegmentedEndpoint,
+        multiSegmented: referenceGenomesInfo.isMultiSegmented,
+    };
+}
+
+/**
+ * Get all lapis names for a specific segment, if a reference is selected filter the lapis names.
+ * @param referenceGenomesInfo - The reference genome lightweight schema
+ * @param selectedReferences - Map of segment names to selected references
+ * @returns Array of SegmentLapisNames with all segments and their LAPIS names
+ */
+export function getSegmentLapisNames(
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    selectedReferences?: SegmentReferenceSelections,
+): SegmentLapisNames[] {
+    const nucleotideSegmentInfos: SegmentLapisNames[] = [];
+
+    for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
+        const isSingleReference = Object.keys(segmentData).length === 1;
+        const displayName = referenceGenomesInfo.segmentDisplayNames[segmentName];
+        if (isSingleReference) {
+            nucleotideSegmentInfos.push({ name: segmentName, lapisNames: [segmentName], displayName });
+            continue;
+        }
+
+        const selectedRef = selectedReferences?.[segmentName] ?? null;
+        if (!selectedRef || !(selectedRef in segmentData)) {
+            nucleotideSegmentInfos.push({
+                name: segmentName,
+                lapisNames: Object.values(segmentData).map((info) => info.lapisName),
+                displayName,
+            });
+            continue;
+        }
+        nucleotideSegmentInfos.push({
+            name: segmentName,
+            lapisNames: [segmentData[selectedRef].lapisName],
+            displayName,
+        });
+    }
+
+    return nucleotideSegmentInfos;
+}
+
+export function getSingleSegmentAndGeneInfo(
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    segment: string,
+    selectedReferences?: SegmentReferenceSelections,
+): SingleSegmentAndGeneInfo | null {
+    const segmentData = referenceGenomesInfo.segmentReferenceGenomes[segment];
+    const displayName = referenceGenomesInfo.segmentDisplayNames[segment];
+
+    const refs = Object.keys(segmentData);
+    const selectedRef = refs.length === 1 ? refs[0] : selectedReferences?.[segment];
+
+    if (!selectedRef || !(selectedRef in segmentData)) return null;
+
+    const refData = segmentData[selectedRef];
+
+    return {
+        nucleotideSegmentInfo: { name: segment, lapisName: refData.lapisName, displayName },
+        geneInfos: refData.genes.map((gene) => ({ ...gene, segmentName: segment })),
         useLapisMultiSegmentedEndpoint: referenceGenomesInfo.useLapisMultiSegmentedEndpoint,
         multiSegmented: referenceGenomesInfo.isMultiSegmented,
     };
@@ -177,6 +275,17 @@ export function getInsdcAccessionsFromSegmentReferences(
     return references;
 }
 
+export function getReferenceDisplayNameMap(
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    segmentName: string,
+): Map<string, string> {
+    return new Map(
+        Object.entries(referenceGenomesInfo.segmentReferenceGenomes[segmentName]).map(
+            ([ref, refData]) => [ref, refData.displayName ?? ref] as const,
+        ),
+    );
+}
+
 /**
  * @param referenceGenomesInfo - The reference genome lightweight schema
  * @returns Returns a map from LAPIS names to displayNames (segment or gene names).
@@ -186,7 +295,12 @@ export function lapisNameToDisplayName(referenceGenomesInfo: ReferenceGenomesInf
     const map = new Map<string, string | undefined>();
     for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
         for (const refData of Object.values(segmentData)) {
-            map.set(refData.lapisName, referenceGenomesInfo.isMultiSegmented ? segmentName : undefined);
+            map.set(
+                refData.lapisName,
+                referenceGenomesInfo.isMultiSegmented
+                    ? (referenceGenomesInfo.segmentDisplayNames[segmentName] ?? segmentName)
+                    : undefined,
+            );
             for (const gene of refData.genes) {
                 map.set(gene.lapisName, gene.name);
             }
@@ -201,14 +315,28 @@ export function segmentsWithMultipleReferences(referenceGenomesInfo: ReferenceGe
     );
 }
 
-export function stillRequiresReferenceNameSelection(
+export function allReferencesSelected(
     referenceGenomesInfo: ReferenceGenomesInfo,
     selectedReferenceNames?: SegmentReferenceSelections,
-) {
+): boolean {
     if (selectedReferenceNames === undefined) {
-        return false;
+        return true;
     }
-    return segmentsWithMultipleReferences(referenceGenomesInfo).some(
-        (segment) => selectedReferenceNames[segment] === null,
+    return segmentsWithMultipleReferences(referenceGenomesInfo).every(
+        (segment) => selectedReferenceNames[segment] !== null,
     );
+}
+
+export function segmentReferenceSelected(
+    segmentName: SegmentName,
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    selectedReferenceNames?: SegmentReferenceSelections,
+): boolean {
+    if (!segmentsWithMultipleReferences(referenceGenomesInfo).includes(segmentName)) {
+        return true;
+    }
+    if (selectedReferenceNames === undefined) {
+        return true;
+    }
+    return selectedReferenceNames[segmentName] !== null;
 }

@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 import requests
+from requests import codes
 
-from .config import ImporterConfig
+from .config import HierarchicalServiceUrl, ImporterConfig, MetadataField
 from .paths import ImporterPaths
 
 logger = logging.getLogger(__name__)
@@ -23,19 +25,73 @@ def update_lineage_definitions(
     if not pipeline_version:
         # required for dummy organisms
         logger.info("No pipeline version found; writing empty lineage definitions")
-        _write_text(paths.lineage_definition_file, "{}\n")
+        for lineage in config.lineage_definitions:
+            _write_text(paths.input_dir / f"{lineage}.yaml", "{}\n")
         return
 
-    lineage_url: str | None = config.lineage_definitions.get(int(pipeline_version))
-    if not lineage_url:
-        msg = f"No lineage definition URL configured for pipeline version {pipeline_version}"
-        raise RuntimeError(msg)
+    for lineage, item in config.lineage_definitions.items():
+        lineage_url: str | None = item.get(int(pipeline_version))
+        if not lineage_url:
+            msg = (
+                f"No lineage definition URL configured for pipeline version {pipeline_version} "
+                f"and lineage system '{lineage}'"
+            )
+            raise RuntimeError(msg)
 
-    logger.info("Downloading lineage definitions for pipeline version %s", pipeline_version)
-    try:
-        _download_lineage_file(lineage_url, paths.lineage_definition_file)
+        logger.info("Downloading lineage definitions for pipeline version %s", pipeline_version)
+        try:
+            _download_lineage_file(lineage_url, paths.input_dir / f"{lineage}.yaml")
+        except requests.RequestException as exc:
+            msg = f"Failed to download lineage definitions: {exc}"
+            raise RuntimeError(msg) from exc
+
+
+def update_hierarchical_filters(
+    metadata_values: dict[MetadataField, set[str]],
+    old_metadata_values: dict[MetadataField, set[str]],
+    config: ImporterConfig,
+    paths: ImporterPaths,
+) -> None:
+    """Dispatch each configured filter to the hierarchical filter handler.
+
+    Skips filters whose observed values have not changed since the last run.
+    """
+    if not config.hierarchical_filters:
+        return
+    for field, url in config.hierarchical_filters.items():
+        new_values = metadata_values.get(field, set())
+        if old_metadata_values.get(field) == new_values:
+            logger.info("No change in values for hierarchical filter '%s'; skipping update", field)
+            continue
+        fetch_updated_hierarchy(field, new_values, url, paths)
+
+
+def fetch_updated_hierarchy(
+    file_base: MetadataField,
+    values: set[str],
+    service_url: HierarchicalServiceUrl,
+    paths: ImporterPaths,
+) -> None:
+    destination = paths.input_dir / f"{file_base}.yaml"
+    if not values:
+        logger.info("No values for filter '%s'; writing empty file", file_base)
+        _write_text(destination, "{}\n")
+        return
+
+    url = f"{service_url.rstrip('/')}/silo-lineage"
+    logger.info("Fetching %s hierarchy over %d values", file_base, len(values))
+    sorted_values = sorted(values)
+    try:  # noqa: PLW0717
+        response = _post_silo_lineage(url, sorted_values)
+        if response.status_code == codes.request_entity_too_large:
+            logger.warning(
+                "Unpruned %s lineage exceeds size threshold; retrying with prune=true", file_base
+            )
+            response = _post_silo_lineage(url, sorted_values, prune=True)
+        response.raise_for_status()
+        _write_text(destination, response.text)
     except requests.RequestException as exc:
-        msg = f"Failed to download lineage definitions: {exc}"
+        msg = f"Failed to fetch lineage from {url}: {exc}"
         raise RuntimeError(msg) from exc
 
 
@@ -43,6 +99,16 @@ def _download_lineage_file(url: str, destination: Path) -> None:
     response = requests.get(url, timeout=60)
     response.raise_for_status()
     _write_text(destination, response.text)
+
+
+def _post_silo_lineage(url: str, values: list[str], prune: bool = False) -> requests.Response:
+    """The service providing hierarchical filter lineage files is expected to
+    expose a POST /silo-lineage endpoint that takes a {values: [<values>]}
+    request body and a ?prune=<boolean> query param
+    """
+    params = {"prune": "true"} if prune else None
+    payload: dict[str, Any] = {"values": values}
+    return requests.post(url, json=payload, params=params, timeout=60)
 
 
 def _write_text(path: Path, content: str) -> None:

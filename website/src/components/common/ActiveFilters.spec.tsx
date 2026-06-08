@@ -2,8 +2,12 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ActiveFilters } from './ActiveFilters';
+import { MOCK_REFERENCE_GENOMES_INFO } from '../../types/referenceGenomes.spec';
 import { MetadataFilterSchema } from '../../utils/search';
+import type { SegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers';
 import { FieldFilterSet, SequenceEntrySelection } from '../SearchPage/DownloadDialog/SequenceFilters';
+
+const mockSegmentAndGeneInfo: SegmentAndGeneInfo = { nucleotideSegmentInfos: [], geneInfos: [] };
 
 describe('ActiveFilters', () => {
     describe('with LAPIS filters', () => {
@@ -20,10 +24,8 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: 'value1', mutations: 'A123T,G234C,gene:A345T' },
                             {},
-                            {
-                                nucleotideSegmentInfos: [{ lapisName: 'main', name: 'main' }],
-                                geneInfos: [{ lapisName: 'gene', name: 'gene' }],
-                            },
+                            mockSegmentAndGeneInfo,
+                            MOCK_REFERENCE_GENOMES_INFO,
                         )
                     }
                 />,
@@ -41,7 +43,8 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: null },
                             {},
-                            { nucleotideSegmentInfos: [], geneInfos: [] },
+                            mockSegmentAndGeneInfo,
+                            MOCK_REFERENCE_GENOMES_INFO,
                         )
                     }
                 />,
@@ -64,7 +67,8 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: 'value1' },
                             {},
-                            { nucleotideSegmentInfos: [], geneInfos: [] },
+                            mockSegmentAndGeneInfo,
+                            MOCK_REFERENCE_GENOMES_INFO,
                         )
                     }
                     removeFilter={mockRemoveFilter}
@@ -87,7 +91,8 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([{ name: 'releaseTimestamp', type: 'timestamp' }]),
                             { releaseTimestamp: '1742288104' },
                             {},
-                            { nucleotideSegmentInfos: [], geneInfos: [] },
+                            mockSegmentAndGeneInfo,
+                            MOCK_REFERENCE_GENOMES_INFO,
                         )
                     }
                 />,
@@ -107,7 +112,8 @@ describe('ActiveFilters', () => {
                             ]),
                             { authorAffiliations: 'foo' },
                             {},
-                            { nucleotideSegmentInfos: [], geneInfos: [] },
+                            mockSegmentAndGeneInfo,
+                            MOCK_REFERENCE_GENOMES_INFO,
                         )
                     }
                 />,

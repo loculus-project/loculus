@@ -19,16 +19,17 @@ import MdiChevronUpDown from '~icons/mdi/chevron-up-down';
 import MdiTick from '~icons/mdi/tick';
 
 const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
-    <TextField
-        ref={ref}
-        fieldValue={props.value}
-        onChange={props.onChange}
-        onFocus={props.onFocus}
-        disabled={props.disabled}
-        autoComplete='off'
-        placeholder={props.placeholder ?? ''}
-        label={props.placeholder ?? ''}
-    />
+    <div className='[&_input]:pr-16'>
+        <TextField
+            ref={ref}
+            fieldValue={props.value}
+            onChange={props.onChange}
+            onFocus={props.onFocus}
+            disabled={props.disabled}
+            autoComplete='off'
+            label={props.placeholder ?? ''}
+        />
+    </div>
 ));
 
 const logger = getClientLogger('SingleChoiceAutoCompleteField');
@@ -38,6 +39,7 @@ type SingleChoiceAutoCompleteFieldProps = {
     optionsProvider: OptionsProvider;
     setSomeFieldValues: SetSomeFieldValues;
     fieldValue?: string | number | null;
+    fieldDisplayNameMap?: Map<string, string>;
     maxDisplayedOptions?: number;
 };
 
@@ -46,6 +48,7 @@ export const SingleChoiceAutoCompleteField = ({
     optionsProvider,
     setSomeFieldValues,
     fieldValue,
+    fieldDisplayNameMap,
     maxDisplayedOptions = 1000,
 }: SingleChoiceAutoCompleteFieldProps) => {
     const [query, setQuery] = useState('');
@@ -55,20 +58,33 @@ export const SingleChoiceAutoCompleteField = ({
 
     useEffect(() => {
         if (error) {
-            void logger.error(`Error while loading autocomplete options: ${error.message} - ${error.stack}`);
+            void logger.error(error);
         }
     }, [error]);
+
+    const valueToLabel = useMemo(() => new Map(options.map((o) => [o.value, o.option])), [options]);
 
     const filteredOptions = useMemo(() => {
         const allMatchedOptions =
             query === ''
                 ? options
                 : options.filter((option) => option.option.toLowerCase().includes(query.toLowerCase()));
-        return allMatchedOptions.slice(0, maxDisplayedOptions);
-    }, [options, query, maxDisplayedOptions]);
+        // Sort options by display name if displayNameMap is provided, otherwise by option value
+        const displayedOptions = allMatchedOptions.sort((a, b) =>
+            (fieldDisplayNameMap?.get(a.option) ?? a.option).localeCompare(
+                fieldDisplayNameMap?.get(b.option) ?? b.option,
+                'en',
+                {
+                    numeric: true,
+                    sensitivity: 'base',
+                },
+            ),
+        );
+        return displayedOptions.slice(0, maxDisplayedOptions);
+    }, [options, query, maxDisplayedOptions, fieldDisplayNameMap]);
 
-    const handleChange = (value: string | null) => {
-        const finalValue = value === NULL_QUERY_VALUE ? null : (value ?? '');
+    const handleChange = (value: string | number | null) => {
+        const finalValue = value === NULL_QUERY_VALUE ? null : (value?.toString() ?? '');
         setSomeFieldValues([field.name, finalValue]);
     };
 
@@ -87,7 +103,8 @@ export const SingleChoiceAutoCompleteField = ({
                                 if (value === null || value === NULL_QUERY_VALUE) {
                                     return '(blank)';
                                 }
-                                return String(value);
+                                const stringValue = String(value);
+                                return valueToLabel.get(stringValue) ?? stringValue;
                             }}
                             onChange={(event) => setQuery(event.target.value)}
                             onFocus={load}
@@ -96,7 +113,7 @@ export const SingleChoiceAutoCompleteField = ({
                         />
                         {((fieldValue !== '' && fieldValue !== undefined) || query !== '') && (
                             <Button
-                                className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
+                                className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-xs'
                                 onClick={handleClear}
                                 aria-label={`Clear ${field.displayName ?? field.name}`}
                                 type='button'
@@ -111,7 +128,7 @@ export const SingleChoiceAutoCompleteField = ({
 
                     <ComboboxOptions
                         modal={false}
-                        className='absolute z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm min-h-32'
+                        className='absolute z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black/5 focus:outline-hidden sm:text-sm min-h-32'
                     >
                         {isOptionListPending ? (
                             <div className='px-4 py-2 text-gray-500'>Loading...</div>
@@ -137,13 +154,11 @@ export const SingleChoiceAutoCompleteField = ({
                                                             option.option === '(blank)' ? 'italic' : ''
                                                         }`}
                                                     >
-                                                        {option.option}
+                                                        {fieldDisplayNameMap?.get(option.option) ?? option.option}
                                                     </span>
-                                                    {option.count !== undefined && (
-                                                        <span className='inline-block ml-1'>
-                                                            ({formatNumberWithDefaultLocale(option.count)})
-                                                        </span>
-                                                    )}
+                                                    <span className='inline-block ml-1'>
+                                                        ({formatNumberWithDefaultLocale(option.count)})
+                                                    </span>
                                                     {selected && (
                                                         <span
                                                             className={`absolute inset-y-0 left-0 flex items-center pl-3 ${

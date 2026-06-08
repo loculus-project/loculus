@@ -83,7 +83,7 @@ export const GroupForm: FC<GroupFormProps> = ({
     onSubmit,
     getGroups,
 }) => {
-    const [currentGroup, setCurrentGroup] = useState<NewGroup>(PLACEHOLDER_NEWGROUP);
+    const [currentGroup, setCurrentGroup] = useState(PLACEHOLDER_NEWGROUP);
     const [existingGroups, setExistingGroups] = useState<Group[]>([]);
     const [isExistingGroupModalOpen, setIsExistingGroupModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,7 +163,7 @@ export const GroupForm: FC<GroupFormProps> = ({
                     </div>
 
                     <div className='flex justify-end py-8 gap-4 '>
-                        <Button type='submit' className='btn btn-primary px-4 py-2 loculusColor text-white rounded'>
+                        <Button type='submit' variant='primary' className='px-4 py-2 rounded-sm'>
                             {buttonText}
                         </Button>
                     </div>

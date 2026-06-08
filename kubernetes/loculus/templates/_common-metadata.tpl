@@ -9,17 +9,23 @@ See https://github.com/loculus-project/loculus/pull/3141 for an example */}}
 {{- define "loculus.commonMetadata" }}
 fields:
   - name: accessionVersion
+    displayName: Accession version
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
     includeInDownloadsByDefault: true
+    definition: {{ printf "The %s `accession` and `version`, uniquely identifying the specific version of the sequence record (e.g. `%s000001.1`)." $.Values.name $.Values.accessionPrefix | quote }}
   - name: accession
+    displayName: Accession
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
+    definition: {{ printf "A unique identifier assigned to the sequence record by %s (e.g. `%s000001`)." $.Values.name $.Values.accessionPrefix | quote }}
   - name: version
+    displayName: Version
     type: int
     hideOnSequenceDetailsPage: true
+    definition: "The version number of the sequence record, incremented each time the sequence is revised."
   - name: submissionId
     displayName: Submission ID
     type: string
@@ -27,18 +33,22 @@ fields:
     orderOnDetailsPage: 5000
     enableSubstringSearch: true
     includeInDownloadsByDefault: true
+    definition: "The sample identifier provided by the submitter."
   - name: isRevocation
     displayName: Is revocation
     type: boolean
     autocomplete: true
     hideOnSequenceDetailsPage: true
+    definition: "Indicator of whether the sequence record is revoked."
   - name: submitter
+    displayName: Submitter
     type: string
     generateIndex: true
     autocomplete: true
     hideOnSequenceDetailsPage: true
     header: Submission details
     orderOnDetailsPage: 5010
+    definition: {{ printf "Name of the %s user who submitted the sequence record." $.Values.name | quote }}
   - name: groupName
     type: string
     generateIndex: true
@@ -47,16 +57,17 @@ fields:
     displayName: Submitting group
     includeInDownloadsByDefault: true
     orderOnDetailsPage: 5020
+    definition: "Name of the group that submitted the sequence record."
     customDisplay:
       type: submittingGroup
       displayGroup: group
   - name: groupId
-    displayName: Group ID
     type: int
     autocomplete: true
     header: Submission details
     displayName: Submitting group (numeric ID)
     orderOnDetailsPage: 5030
+    definition: "Numeric ID of the group that submitted the sequence record."
     customDisplay:
       type: submittingGroup
       displayGroup: group
@@ -65,6 +76,7 @@ fields:
     displayName: Date submitted
     header: Submission details
     orderOnDetailsPage: 5040
+    definition: {{ printf "Date and time on which the sequence record was submitted to %s." $.Values.name | quote }}
   - name: submittedDate
     type: string
     hideOnSequenceDetailsPage: true
@@ -72,12 +84,14 @@ fields:
     autocomplete: true
     displayName: Date submitted (exact)
     orderOnDetailsPage: 5050
+    definition: {{ printf "Date on which the sequence record was submitted to %s." $.Values.name | quote }}
   - name: releasedAtTimestamp
     type: timestamp
     displayName: Date released
     header: Submission details
     columnWidth: 100
     orderOnDetailsPage: 5060
+    definition: {{ printf "Date and time on which the sequence record was released on %s." $.Values.name | quote }}
   - name: releasedDate
     type: string
     hideOnSequenceDetailsPage: true
@@ -86,6 +100,7 @@ fields:
     displayName: Date released (exact)
     columnWidth: 100
     orderOnDetailsPage: 5070
+    definition: {{ printf "Date on which the sequence record was released on %s." $.Values.name | quote }}
   {{- if $.Values.dataUseTerms.enabled }}
   - name: dataUseTerms
     type: string
@@ -94,22 +109,26 @@ fields:
     displayName: Data use terms
     initiallyVisible: true
     includeInDownloadsByDefault: true
+    definition: "The terms under which the sequence record may be used; either `OPEN` or `RESTRICTED`."
     customDisplay:
       type: dataUseTerms
     header: Data use terms
     orderOnDetailsPage: 610
+    orderInSearchDisplay: 10
   - name: dataUseTermsRestrictedUntil
     type: date
     displayName: Data use terms restricted until
     hideOnSequenceDetailsPage: true
     header: Data use terms
     orderOnDetailsPage: 620
+    definition: "The date until which the sequence record is restricted use."
   - name: dataBecameOpenAt
     type: date
     displayName: Date data became open
     hideOnSequenceDetailsPage: true
     header: Data use terms
     orderOnDetailsPage: 625
+    definition: "The date on which the sequence record transitioned from restricted to open access."
   {{- if $.Values.dataUseTerms.urls }}
   - name: dataUseTermsUrl
     displayName: Data use terms URL
@@ -117,6 +136,7 @@ fields:
     notSearchable: true
     header: Data use terms
     includeInDownloadsByDefault: true
+    definition: "Link to the full text of the data use terms applicable to the sequence record."
     customDisplay:
       type: link
       url: "__value__"
@@ -128,15 +148,19 @@ fields:
     type: string
     autocomplete: true
     hideOnSequenceDetailsPage: true
+    definition: "Indicates whether this is the latest version of the sequence record (`LATEST_VERSION`), an earlier version (`REVISED`), or has been revoked (`REVOKED`)."
   - name: versionComment
     type: string
     displayName: Version comment
     header: Submission details
     orderOnDetailsPage: 5000
+    definition: "Reason for revising sequences, or other general comments concerning a specific version."
   - name: pipelineVersion
+    displayName: Pipeline version
     type: int
     notSearchable: true
     hideOnSequenceDetailsPage: true
+    definition: "The version of the processing pipeline used to process the sequence record."
 {{- end}}
 
 {{/* Patches schema by adding to it and overwriting overlapping fields by the value in metadataAdd*/}}
@@ -170,6 +194,12 @@ sequenceFlagging: {{ $.Values.sequenceFlagging | toYaml | nindent 6 }}
 {{ if $.Values.gitHubMainUrl }}
 gitHubMainUrl: {{ quote $.Values.gitHubMainUrl }}
 {{ end }}
+{{ if $.Values.gitHubIssuesUrl }}
+gitHubIssuesUrl: {{ quote $.Values.gitHubIssuesUrl }}
+{{ end }}
+{{ if $.Values.issuesEmail }}
+issuesEmail: {{ quote $.Values.issuesEmail }}
+{{ end }}
 {{ if $.Values.bannerMessageURL }}
 bannerMessageURL: {{ quote $.Values.bannerMessageURL }}
 {{ end }}
@@ -197,12 +227,20 @@ additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}
 enableLoginNavigationItem: {{ $.Values.website.websiteConfig.enableLoginNavigationItem }}
 enableSubmissionNavigationItem: {{ $.Values.website.websiteConfig.enableSubmissionNavigationItem }}
 enableSubmissionPages: {{ $.Values.website.websiteConfig.enableSubmissionPages }}
+readOnlyMode: {{ $.Values.readOnlyMode | default false }}
 enableSeqSets: {{ $.Values.seqSets.enabled }}
 {{- if $.Values.seqSets.fieldsToDisplay }}
 seqSetsFieldsToDisplay: {{ $.Values.seqSets.fieldsToDisplay | toJson }}
 {{- end }}
+{{- if $.Values.seqSets.graphs }}
+seqSetsGraphs: {{ $.Values.seqSets.graphs | toJson }}
+{{- end }}
 enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
+{{ if $.Values.dataUseTerms.agreementHTML }}
+dataUseTermsAgreementHTML: {{ quote $.Values.dataUseTerms.agreementHTML }}
+{{- end }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
+dateFieldForGroupGraph: {{ if $.Values.dateFieldForGroupGraph }}{{ quote $.Values.dateFieldForGroupGraph }}{{ else }}null{{ end }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
   {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
@@ -219,6 +257,12 @@ organisms:
           url: {{ quote $linkOut.url }}
           {{- if $linkOut.maxNumberOfRecommendedEntries }}
           maxNumberOfRecommendedEntries: {{ $linkOut.maxNumberOfRecommendedEntries }}
+          {{- end }}
+          {{- if $linkOut.onlyForReferences }}
+          onlyForReferences: {{ $linkOut.onlyForReferences | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $linkOut.category }}
+          category: {{ quote $linkOut.category }}
           {{- end }}
         {{- end }}
       {{- end }}
@@ -238,8 +282,8 @@ organisms:
       inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
         - name: versionComment
           displayName: Version comment
-          definition: "Reason for revising sequences or other general comments concerning a specific version"
-          example: "Fixed an issue in previous version where low-coverage nucleotides were erroneously filled with reference sequence"
+          definition: "Reason for revising sequences or other general comments concerning a specific version."
+          example: "Fixed an issue in previous version where low-coverage nucleotides were erroneously filled with reference sequence."
           desired: true
       {{ if .files }}
       files: {{ .files | toYaml | nindent 8 }}
@@ -251,6 +295,9 @@ organisms:
         {{ if .files }}
         {{- range .files }}
         - name: {{ .name }}
+          {{- if .displayName }}
+          displayName: {{ .displayName }}
+          {{- end }}
           type: string
           header: "Files"
           noInput: true
@@ -262,7 +309,34 @@ organisms:
       metadataTemplate:
         {{ .metadataTemplate | toYaml | nindent 8}}
       {{ end }}
-      {{ .website | toYaml | nindent 6 }}
+      {{ omit .website "multiFieldSearches" | toYaml | nindent 6 }}
+      {{- if .website.multiFieldSearches }}
+      {{- $perSegmentFields := dict }}
+      {{- range (concat $commonMetadata .metadata) }}
+      {{- if .perSegment }}{{- $_ := set $perSegmentFields .name true }}{{- end }}
+      {{- end }}
+      {{- $segments := (include "loculus.getNucleotideSegmentNames" $instance.referenceGenomes | fromYaml).segments }}
+      {{- $isSegmented := gt (len $segments) 1 }}
+      multiFieldSearches:
+      {{- range .website.multiFieldSearches }}
+        - name: {{ .name }}
+          displayName: {{ .displayName }}
+          {{- if hasKey . "orderInSearchDisplay" }}
+          orderInSearchDisplay: {{ .orderInSearchDisplay }}
+          {{- end }}
+          fields:
+          {{- range .fields }}
+          {{- if and $isSegmented (hasKey $perSegmentFields .) }}
+          {{- $field := . }}
+          {{- range $segments }}
+            - {{ printf "%s_%s" $field . }}
+          {{- end }}
+          {{- else }}
+            - {{ . }}
+          {{- end }}
+          {{- end }}
+      {{- end }}
+      {{- end }}
       {{- end }}
     referenceGenomes:
       {{ $instance.referenceGenomes | toYaml | nindent 6 }}
@@ -271,6 +345,9 @@ organisms:
 
 {{- define "loculus.standardWebsiteMetadata" }}
 - type: {{ .type | default "string" | quote }}
+  {{- if .definition }}
+  definition: {{ .definition | quote }}
+  {{- end }}
   {{- if .autocomplete }}
   autocomplete: {{ .autocomplete }}
   {{- end }}
@@ -295,6 +372,12 @@ organisms:
   {{- if .lineageSystem }}
   lineageSearch: true
   {{- end }}
+  {{- if .hierarchicalFilter }}
+  hierarchicalSearch: true
+  {{- end }}
+  {{- if and .hierarchicalFilter .hierarchicalSearchLabel }}
+  hierarchicalSearchLabel: {{ .hierarchicalSearchLabel }}
+  {{- end }}
   {{- if .hideOnSequenceDetailsPage }}
   hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
   {{- end }}
@@ -306,6 +389,9 @@ organisms:
   {{- end }}
   {{- if .orderOnDetailsPage }}
   orderOnDetailsPage: {{ .orderOnDetailsPage }}
+  {{- end }}
+  {{- if .orderInSearchDisplay }}
+  orderInSearchDisplay: {{ .orderInSearchDisplay }}
   {{- end }}
   {{- if .includeInDownloadsByDefault }}
   includeInDownloadsByDefault: {{ .includeInDownloadsByDefault }}
@@ -329,15 +415,29 @@ organisms:
     {{- if .customDisplay.displayGroup }}
     displayGroup: {{ quote .customDisplay.displayGroup }}
     {{- end }}
+    {{- if .customDisplay.label }}
+    label: {{ quote .customDisplay.label }}
+    {{- end }}
     {{- if .customDisplay.html }}
     html: {{ .customDisplay.html }}
     {{- end }}
+  {{- end }}
+  {{- if .isSequenceFilter }}
+  isSequenceFilter: {{ .isSequenceFilter }}
+  {{- end }}
+  {{- if .relatesToSegment }}
+  relatesToSegment: {{ .relatesToSegment }}
+  {{- end }}
+  {{- if .percentage }}
+  percentage: {{ .percentage }}
   {{- end }}
 {{- end }}
 
 {{/* Generate website metadata from passed metadata array */}}
 {{- define "loculus.generateWebsiteMetadata" }}
-{{- $rawUniqueSegments := (include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml).segments }}
+{{- $segmentsData := include "loculus.getNucleotideSegmentNames" .referenceGenomes | fromYaml -}}
+{{- $rawUniqueSegments := $segmentsData.segments | default (list) -}}
+{{- $displayNameMap := $segmentsData.displayNames | default (dict) -}}
 {{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
 fields:
@@ -345,16 +445,29 @@ fields:
 {{- if and $isSegmented .perSegment }}
 {{- $currentItem := . }}
 {{- range $segment := $rawUniqueSegments }}
+{{- $segmentDisplayName := default $segment (get $displayNameMap $segment) -}}
 {{- with $currentItem }}
 {{ include "loculus.standardWebsiteMetadata" . }}
   name: {{ printf "%s_%s" .name $segment | quote }}
   {{- if .displayName }}
-  displayName: {{ printf "%s %s" .displayName $segment | quote }}
+  displayName: {{ printf "%s %s" .displayName $segmentDisplayName | quote }}
   {{- end }}
   {{- if (default false .oneHeader)}}
   header: {{ (default "Other" .header) | quote }}
   {{- else }}
-  header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
+  header: {{ printf "%s %s" (default "Other" .header) $segmentDisplayName | quote }}
+  {{- end }}
+  relatesToSegment: {{ $segment }}
+  {{- if .isSequenceFilter }}
+  isSequenceFilter: true
+  {{- end }}
+  {{- if and .customDisplay .customDisplay.displayGroup }}
+  customDisplay:
+    type: {{ quote .customDisplay.type }}
+    displayGroup: {{ printf "%s_%s" .customDisplay.displayGroup $segment | quote }}
+    {{- if .customDisplay.label }}
+    label: {{ printf "%s %s" .customDisplay.label $segmentDisplayName | quote }}
+    {{- end }}
   {{- end }}
 {{- end }}
 {{- end }}
@@ -374,6 +487,7 @@ fields:
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 zstdCompressionLevel: {{ $.Values.zstdCompressionLevel }}
 pipelineVersionUpgradeCheckIntervalSeconds: {{ $.Values.pipelineVersionUpgradeCheckIntervalSeconds }}
+readOnlyMode: {{ $.Values.readOnlyMode | default false }}
 name: {{ quote $.Values.name }}
 dataUseTerms:
   {{$.Values.dataUseTerms | toYaml | nindent 2}}

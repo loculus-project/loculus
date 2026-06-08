@@ -163,7 +163,7 @@ class AccessionPreconditionValidator(
                     "Accession versions have errors: " +
                         sequenceEntriesWithErrors.map {
                             "${it[SequenceEntriesView.accessionColumn]}.${it[SequenceEntriesView.versionColumn]}"
-                        }.joinToString { ", " },
+                        }.joinToString(", "),
                 )
             }
             return this

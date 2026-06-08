@@ -62,7 +62,7 @@ jobs:
       - name: Get runner IP
         run: curl -4 ifconfig.me
       - name: Collect Workflow Telemetry
-        uses: catchpoint/workflow-telemetry-action@v2
+        uses: ycfreeman/workflow-telemetry-action@cad169ff11f718319d5468b0a67a238db000ef3f
       - name: Checkout repository
         uses: actions/checkout@v6
       - name: Install k3d
@@ -71,7 +71,7 @@ jobs:
             curl https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | DEBUG=true bash && break || sleep $((i * 2))
           done
           k3d version
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           version: v3.18.3
       - name: Create k3d cluster
@@ -118,13 +118,13 @@ jobs:
           TEST_SUITE: ${{ matrix.browser == 'cli' && 'cli' || 'browser' }}
         run: |
           set -o pipefail
-          cd integration-tests && npx playwright test --workers=4 --reporter=list,html 2>&1 | tee output.txt
+          cd integration-tests && npx playwright test --workers=2 --reporter=list,html 2>&1 | tee output.txt
           EXIT_CODE=$?
           echo '```' >> $GITHUB_STEP_SUMMARY
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           exit $EXIT_CODE
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report-${{ matrix.browser }}
@@ -140,7 +140,7 @@ jobs:
           kubectl describe pods -l app=loculus | tee pod_descriptions/describe_pods.txt
       - name: Upload pod descriptions
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: pod-descriptions-${{ matrix.browser }}
           path: pod_descriptions/
@@ -152,7 +152,7 @@ jobs:
         run: ./.github/scripts/collect_kubernetes_logs.sh
       - name: Upload Kubernetes logs
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: kubernetes-logs-${{ matrix.browser }}
           path: kubernetes_logs/

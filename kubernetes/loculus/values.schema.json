@@ -134,6 +134,21 @@
           "type": "boolean",
           "description": "If true, the field is initially visible in the UI."
         },
+        "isSequenceFilter": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "If true, this field will appear under 'Sequence Filters' on the search page instead of 'Metadata Filters'. Defaults to false."
+        },
+        "relatesToSegment": {
+          "groups": ["metadata"],
+          "type": "string",
+          "description": "Which segment this metadata field relates to. Can be set to any of the segment names defined for the organism."
+        },
+        "percentage": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "If true, the field value (expected to be between 0 and 1) is displayed as a percentage in the search filter and on the details page."
+        },
         "hideOnSequenceDetailsPage": {
           "groups": ["metadata"],
           "type": "boolean",
@@ -142,7 +157,12 @@
         "orderOnDetailsPage": {
           "groups": ["metadata"],
           "type": "number",
-          "description": "Determines the order on the sequence details page."
+          "description": "Determines the order on the sequence details page. Lower numbers come first. Missing values are treated as infinity, and fields will be ordered in the same order as they are defined in the config after all fields with an order value."
+        },
+        "orderInSearchDisplay": {
+          "groups": ["metadata"],
+          "type": "number",
+          "description": "Determines the order in the search bar. Lower numbers come first. Fallback value is `order` (if defined) or infinity (if not defined)."
         },
         "hideInSearchResultsTable": {
           "groups": ["metadata"],
@@ -176,6 +196,11 @@
             "url": {
               "groups": ["metadata"],
               "type": "string"
+            },
+            "label": {
+              "groups": ["metadata"],
+              "type": "string",
+              "description": "Label to display for grouped fields on the sequence details page. Overrides the field's displayName when fields are grouped via displayGroup."
             }
           }
         },
@@ -207,6 +232,16 @@
           "groups": ["metadata"],
           "type": "string",
           "description": "Use this on string fields that contain lineages, if you want to enable searches that can include sublineages. The value needs to be a lineage system that is defined under the `lineageSystemDefinitions` key."
+        },
+        "hierarchicalFilter": {
+          "groups": ["metadata"],
+          "type": "string",
+          "description": "Use this on string fields whose values form a hierarchy resolved at SILO import time. The value should be an URL to the lineage file."
+        },
+        "hierarchicalSearchLabel": {
+          "groups": ["metadata"],
+          "type": "string",
+          "description": "CheckBox label for hierarchical search - only applies when using hierarchicalFilter."
         }
       },
       "required": ["name"],
@@ -263,6 +298,24 @@
               "type": { "enum": ["string", "authors"] }
             },
             "errorMessage": "When lineageSystem is set, type must be 'string' or 'authors'"
+          }
+        },
+        {
+          "if": {
+            "properties": { "hierarchicalFilter": { "type": "string" } },
+            "required": ["hierarchicalFilter"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "authors"] }
+            },
+            "errorMessage": "When hierarchicalFilter is set, type must be 'string' or 'authors'"
+          }
+        },
+        {
+          "not": {
+            "description": "lineageSystem and hierarchicalFilter cannot both be set",
+            "required": ["lineageSystem", "hierarchicalFilter"]
           }
         },
         {
@@ -364,6 +417,11 @@
                             "groups": ["schema"],
                             "type": "string",
                             "description": "The name of the file category, e.g. 'raw_reads'."
+                          },
+                          "displayName": {
+                            "groups": ["schema"],
+                            "type": "string",
+                            "description": "The display name of the file category, e.g. 'Raw reads'."
                           }
                         },
                         "additionalProperties": false
@@ -387,7 +445,12 @@
                   "name": {
                     "groups": ["schema"],
                     "type": "string",
-                    "description": "TODO"
+                    "description": "The name of the output files array, e.g. 'annotations'."
+                  },
+                  "displayName": {
+                    "groups": ["schema"],
+                    "type": "string",
+                    "description": "The display name of the output files array, e.g. 'Annotations'."
                   },
                   "multipleFiles": {
                     "groups": ["schema"],
@@ -422,7 +485,8 @@
               }
             },
             "extraInputFields": {
-              "type": "array"
+              "type": "array",
+              "description": "Additional input fields for the submission form. If you add a field with name 'id' or 'fastaIds', it will overwrite the default 'id' or 'fastaIds' field. Note that the 'fastaIds' field is only automatically added if the organism has maxSequencesPerEntry > 1."
             },
             "nucleotideSequences": {
               "groups": ["schema"],
@@ -462,6 +526,15 @@
                   "maxNumberOfRecommendedEntries": {
                     "type": "integer",
                     "description": "Optional maximum number of recommended entries for the tool beyond which a warning will be shown.'"
+                  },
+                  "onlyForReferences": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" },
+                    "description": "Optional filter: maps segment name to reference name. When specified, this linkOut is only shown in the tool dropdown when the user has selected a matching reference (or no reference) for each listed segment. Use this to avoid showing reference-specific Nextclade datasets for the wrong reference in multi-reference organisms. Example: {main: CV-A16} or {M: MH396653}."
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Optional grouping category for the tool dropdown. LinkOuts with the same category are grouped under a labelled section. LinkOuts without a category appear at the top without a header. Can be set to segment names (e.g. 'L', 'M', 'S') or any label (e.g. 'Geographic visualisation', 'Sequence analysis')."
                   }
                 },
                 "required": ["name", "url"]
@@ -518,6 +591,37 @@
                   "groups": ["schema"],
                   "type": "string",
                   "description": "Must be set to use the sub-organism feature. This metadata field is used to determine which suborganism a sequence entry belongs to. N.B. the suborganism feature is incomplete and not ready for production use."
+                },
+                "multiFieldSearches": {
+                  "groups": ["schema"],
+                  "type": "array",
+                  "description": "Define multi-field searches that allow full-text searching across multiple metadata fields of type string.",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["name", "displayName", "fields"],
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "The technical name of the search field."
+                      },
+                      "displayName": {
+                        "type": "string",
+                        "description": "The display name of the search field."
+                      },
+                      "orderInSearchDisplay": {
+                        "type": "number",
+                        "description": "Optional display order in the search form. Lower values appear earlier."
+                      },
+                      "fields": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "List of metadata field names to search across when this multi-field search is used. The fields must all be string fields."
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -580,6 +684,19 @@
                 },
                 "description": "Array of Strings. Arguments passed to the preprocessing pipeline."
               },
+              "taxonomyServiceArgs": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "object",
+                "description": "Settings to configure the taxonomy service host and port",
+                "properties": {
+                  "taxonomy_service_url": {
+                    "groups": ["preprocessing"],
+                    "type": "string",
+                    "description": "Host and port where the taxonomy service runs"
+                  }
+                }
+              },
               "configFile": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
@@ -597,7 +714,7 @@
                     "docsIncludePrefix": false,
                     "type": "string",
                     "enum": ["ALL", "ANY"],
-                    "description": "If multi-segmented viruses should require ALL segments (that the user provides) align or ANY segment aligns"
+                    "description": "Applies only to multi-segmented organisms. Determines whether ALL or ANY segments that are submitted must align. In the case ANY it must still be possible to assign the segment."
                   },
                   "segment_classification_method": {
                     "groups": ["nextcladePipelineConfigFile"],
@@ -672,6 +789,12 @@
                                 "docsIncludePrefix": false,
                                 "type": "array",
                                 "description": "Array of strings. The names of the genes to be extracted from the sequence alignment results (should correspond to gene names in the nextclade dataset)."
+                              },
+                              "nextclade_additional_args": {
+                                "groups": ["nextcladeSegment"],
+                                "docsIncludePrefix": false,
+                                "type": "array",
+                                "description": "Array of strings. Additional arguments to pass to nextclade when aligning this segment."
                               }
                             }
                           }
@@ -765,26 +888,38 @@
                       "type": "string",
                       "description": "Required if method is minimizer"
                     },
+                    "minimizer_parser_separator": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Literal string separator used in the minimizer index dataset names (default: '_'). Avoid regex metacharacters."
+                    },
                     "backend_request_timeout_seconds": {
                       "groups": ["ingestPipelineConfigFile"],
                       "docsIncludePrefix": false,
                       "type": "integer",
                       "description": "Timeout in seconds for requests to the backend server for data to process"
-                    },
-                    "time_between_approve_requests_seconds": {
-                      "groups": ["ingestPipelineConfigFile"],
-                      "docsIncludePrefix": false,
-                      "type": "integer",
-                      "description": "Time in seconds to wait between approve requests"
                     }
                   },
                   "required": ["method"]
                 },
-                "grouping_override": {
+                "grouping_override_url": {
                   "groups": ["ingest"],
                   "docsIncludePrefix": false,
                   "type": "string",
-                  "description": "If multi-segmented organism, segment grouping overrides"
+                  "description": "If multi-segmented organism, URL to JSON where segment grouping overrides are defined"
+                },
+                "calculate_groups_override_json": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "boolean",
+                  "description": "If multi-segmented organism, whether to calculate segment grouping overrides from assembly report data."
+                },
+                "grouping_ignore_list_url": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "string",
+                  "description": "If multi-segmented organism and calculate_groups_override_json is true, URL to text file with a list of accessions which should have their GCA segment grouping ignored"
                 },
                 "metadata_filter": {
                   "groups": ["ingest"],
@@ -817,6 +952,12 @@
                 "type": "string",
                 "description": "Name of the segment (e.g., 'S', 'M', 'L', or 'main' for single-segmented organisms)"
               },
+              "displayName": {
+                "groups": ["referenceGenomes"],
+                "docsIncludePrefix": false,
+                "type": "string",
+                "description": "Display name of the segment used on the website (e.g., 'S', 'M', 'L', or 'main' for single-segmented organisms)"
+              },
               "references": {
                 "type": "array",
                 "description": "Array of reference genomes for this segment",
@@ -830,6 +971,12 @@
                       "docsIncludePrefix": false,
                       "type": "string",
                       "description": "Name of the reference genome"
+                    },
+                    "displayName": {
+                      "groups": ["nucleotide-sequence"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Display name of the reference genome used on the website (e.g., 'h1n1pdm/California/07/2009')"
                     },
                     "sequence": {
                       "groups": ["nucleotide-sequence"],
@@ -965,6 +1112,13 @@
       "type": "string",
       "default": "LOC_",
       "description": "Prefix used for accession numbers"
+    },
+    "dateFieldForGroupGraph": {
+      "groups": ["general"],
+      "group": "general",
+      "type": ["string", "null"],
+      "default": null,
+      "description": "The metadata field used to plot cumulative submissions over time on the group page (typically 'earliestReleaseDate' or another date field). Set to null to disable the chart. If the specified field does not exist for an organism, the chart will show no data for that organism."
     },
     "zstdCompressionLevel": {
       "groups": ["general"],
@@ -1120,6 +1274,34 @@
             },
             "required": ["field", "displayName"]
           }
+        },
+        "graphs": {
+          "groups": ["general"],
+          "type": "array",
+          "description": "Graphs to display in the SeqSets statistics section",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name for the graph"
+              },
+              "displayName": {
+                "type": "string",
+                "description": "The display name for the graph"
+              },
+              "type": {
+                "type": "string",
+                "description": "The type of data the graph is displaying (date, category)"
+              },
+              "fields": {
+                "type": "array",
+                "description": "The metadata field to graph. Usually a single field, but multiple fields can be provided in cases where a metadata field is named differently across different organisms. If multiple fields are provided, the first match found in each organism is used."
+              }
+            },
+            "required": ["name", "displayName", "type", "fields"]
+          }
         }
       }
     },
@@ -1128,6 +1310,16 @@
       "type": "string",
       "default": "https://github.com/loculus-project/loculus",
       "description": "The link that the GitHub icon in the footer points to"
+    },
+    "gitHubIssuesUrl": {
+      "groups": ["general"],
+      "type": "string",
+      "description": "Link to GitHub repository where users can submit issues"
+    },
+    "issuesEmail": {
+      "groups": ["general"],
+      "type": "string",
+      "description": "Email address that users can submit issues to"
     },
     "sequenceFlagging": {
       "type": "object",
@@ -1384,6 +1576,18 @@
       "default": false,
       "description": "If true, disables ENA (European Nucleotide Archive) submission service."
     },
+    "disableTaxonomyService": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables the taxonomy service deployment."
+    },
+    "readOnlyMode": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, the instance runs in read-only mode: the backend rejects write requests (POST/PUT/DELETE/PATCH) with 503 Service Unavailable, and the website hides login/submission entry points and shows a read-only banner."
+    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",
@@ -1430,6 +1634,13 @@
       "default": true,
       "description": "TODO"
     },
+    "traefikVersion": {
+      "groups": ["general"],
+      "type": "integer",
+      "enum": [2, 3],
+      "default": 2,
+      "description": "Traefik major version for CRD API group. Use 2 for traefik.containo.us/v1alpha1 (Traefik v2) or 3 for traefik.io/v1alpha1 (Traefik v3)."
+    },
     "ingestLimitSeconds": {
       "type": "integer",
       "default": 1800,
@@ -1459,6 +1670,11 @@
           },
           "required": ["open", "restricted"],
           "additionalProperties": false
+        },
+        "agreementHTML": {
+          "groups": ["general"],
+          "type": "string",
+          "description": "Custom HTML for the data use terms agreement checkbox label shown in the download dialog. Can contain links and other HTML elements."
         }
       },
       "required": ["enabled", "urls"],
@@ -1600,6 +1816,19 @@
         }
       }
     },
+    "taxonomyService": {
+      "type": "object",
+      "properties": {
+        "dbVersion": {
+          "type": "string",
+          "description": "Version identifier for the NCBI taxonomy database to download (e.g. ncbi_taxonomy_2026-03-23)"
+        },
+        "taxonomyDbPath": {
+          "type": "string",
+          "description": "Path where the taxonomy SQLite database is mounted inside the container"
+        }
+      }
+    },
     "images": {
       "groups": ["general"],
       "type": "object",
@@ -1701,7 +1930,7 @@
         "keycloak": { "$ref": "#/definitions/resourceSpec" },
         "silo": { "$ref": "#/definitions/resourceSpec" },
         "lapis": { "$ref": "#/definitions/resourceSpec" },
-        "silo-preprocessing": { "$ref": "#/definitions/resourceSpec" },
+        "silo-importer": { "$ref": "#/definitions/resourceSpec" },
         "backend": { "$ref": "#/definitions/resourceSpec" },
         "preprocessing": { "$ref": "#/definitions/resourceSpec" },
         "organismSpecific": {
@@ -1719,7 +1948,7 @@
                 "keycloak": { "$ref": "#/definitions/resourceSpec" },
                 "silo": { "$ref": "#/definitions/resourceSpec" },
                 "lapis": { "$ref": "#/definitions/resourceSpec" },
-                "silo-preprocessing": { "$ref": "#/definitions/resourceSpec" },
+                "silo-importer": { "$ref": "#/definitions/resourceSpec" },
                 "backend": { "$ref": "#/definitions/resourceSpec" },
                 "preprocessing": { "$ref": "#/definitions/resourceSpec" }
               },
@@ -1768,9 +1997,9 @@
       "type": ["string", "integer"],
       "description": "TODO - this is required/set by ArgoCD"
     },
-    "podPriorityClassName": {
-      "type": "string",
-      "description": "TODO - found in PPX production.yaml"
+    "podPriorityValue": {
+      "type": "integer",
+      "description": "If set, the chart creates a PriorityClass named after the release namespace with this value, and assigns it to all loculus pods. Higher values mean higher scheduling priority; can be negative for lower-than-default priority. If unset, no PriorityClass is created and pods run at the cluster default priority."
     },
     "testconfig": {
       "description": "TODO"

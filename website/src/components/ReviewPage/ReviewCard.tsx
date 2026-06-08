@@ -23,6 +23,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { Button } from '../common/Button';
+import { Spinner } from '../common/Spinner';
 import BiTrash from '~icons/bi/trash';
 import ClarityNoteEditLine from '~icons/clarity/note-edit-line';
 import Note from '~icons/fluent/note-24-filled';
@@ -70,7 +71,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     return (
         <div className='px-3 py-2 relative transition-all duration-500'>
             <div className='flex'>
-                <div className='flex flex-grow flex-wrap '>
+                <div className='flex grow flex-wrap '>
                     <StatusIcon
                         status={sequenceEntryStatus.status}
                         dataUseTerms={sequenceEntryStatus.dataUseTerms}
@@ -291,7 +292,7 @@ const Errors: FC<ErrorsProps> = ({ errors, accession, metadataDisplayNames }) =>
                         .map((field) => metadataDisplayNames.get(field.name) ?? field.name)
                         .join(', ');
                     return (
-                        <div key={uniqueKey} className='flex flex-shrink-0'>
+                        <div key={uniqueKey} className='flex shrink-0'>
                             <p
                                 className='text-red-600'
                                 data-tooltip-id={'error-tooltip-' + accession + '-' + uniqueKey}
@@ -393,7 +394,7 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
         return (
             <div className='p-2 flex flex-col justify-between'>
                 <div data-tooltip-id={'inProcessing-tooltip-' + accession} key={'inProcessing-tooltip-' + accession}>
-                    <span className='loading loading-spinner loading-sm' />
+                    <Spinner size='sm' />
                 </div>
                 <CustomTooltip id={'inProcessing-tooltip-' + accession} content='In processing' />
                 <DataUseTermsIcon dataUseTerms={dataUseTerms} accession={accession} />
@@ -460,10 +461,10 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
     return (
         <div className={`flex flex-col m-2 `}>
             <span className={keyStyle ?? 'text-gray-500 uppercase text-xs'}>{keyName}</span>
-            <span className={`text-base ${extraStyle}`}>
+            <span className={`text-base ${extraStyle ?? ''}`}>
                 <span
                     ref={textRef}
-                    className={`${textColor} ${disableTruncate ? '' : 'truncate max-w-xs inline-block'}`}
+                    className={`${textColor} ${disableTruncate ? '' : 'truncate max-w-xs inline-block align-middle'}`}
                     data-tooltip-id={showTooltip ? textTooltipId : undefined}
                 >
                     {value}

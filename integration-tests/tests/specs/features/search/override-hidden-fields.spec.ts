@@ -40,8 +40,7 @@ test('Override hidden fields', async ({ page, groupId }) => {
     );
 
     await reviewPage.waitForZeroProcessing();
-    await reviewPage.releaseValidSequences();
-    await page.getByRole('link', { name: 'released sequences' }).click();
+    await reviewPage.releaseAndGoToReleasedSequences();
 
     while (!(await page.getByText('Search returned 2 sequences').isVisible())) {
         await page.reload();
@@ -78,11 +77,13 @@ test('Override hidden fields', async ({ page, groupId }) => {
     await page.getByRole('cell', { name: 'Uganda' }).click();
     await page.getByRole('button', { name: 'Revoke this sequence' }).click();
     await page.getByRole('button', { name: 'Confirm' }).click();
+    await expect(page.getByText('Sequence revoked successfully.')).toBeVisible();
 
+    // The revocation is auto-approved; only the revision still needs to be released
     reviewPage = new ReviewPage(page);
+    await reviewPage.navigateToReviewPage();
     await reviewPage.waitForZeroProcessing();
-    await reviewPage.releaseValidSequences();
-    await page.getByRole('link', { name: 'released sequences' }).click();
+    await reviewPage.releaseAndGoToReleasedSequences();
     while (!(await page.getByRole('cell', { name: '2012-12-13' }).isVisible())) {
         await page.reload();
         await page.waitForTimeout(2000);

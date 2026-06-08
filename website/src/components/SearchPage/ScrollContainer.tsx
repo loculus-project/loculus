@@ -5,20 +5,15 @@ interface ScrollContainerProps {
     children: ReactNode;
 }
 
-interface TrackStyle {
-    left: number;
-    width: number;
-}
-
 const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
-    const [scrollLeft, setScrollLeft] = useState<number>(0);
-    const [maxScroll, setMaxScroll] = useState<number>(0);
-    const [handleWidth, setHandleWidth] = useState<number>(0);
-    const [dragging, setDragging] = useState<boolean>(false);
-    const [startX, setStartX] = useState<number>(0);
-    const [startScrollLeft, setStartScrollLeft] = useState<number>(0);
-    const [trackStyle, setTrackStyle] = useState<TrackStyle>({ left: 0, width: 0 });
+    const [scrollLeft, setScrollLeft] = useState(0);
+    const [maxScroll, setMaxScroll] = useState(0);
+    const [handleWidth, setHandleWidth] = useState(0);
+    const [dragging, setDragging] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [startScrollLeft, setStartScrollLeft] = useState(0);
+    const [trackStyle, setTrackStyle] = useState({ left: 0, width: 0 });
 
     const updatePositions = () => {
         if (scrollRef.current) {

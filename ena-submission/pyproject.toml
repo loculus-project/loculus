@@ -12,7 +12,7 @@ test = [
     "types-pytz",
     "types-xmltodict",
     "types-requests",
-    "types-PyYAML",
+    "types-pyyaml",
 ]
 
 [build-system]

@@ -1,27 +1,39 @@
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import { AuthorDetails } from './AuthorDetails.tsx';
 import { ExportSeqSet } from './ExportSeqSet';
 import { SeqSetForm } from './SeqSetForm';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import type { SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
+import type { AuthorProfile, SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { BaseDialog } from '../common/BaseDialog.tsx';
 import { Button } from '../common/Button';
 import Modal from '../common/Modal';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDelete from '~icons/mdi/delete';
 import MdiDownload from '~icons/mdi/download';
+import MdiInformationOutline from '~icons/mdi/information-outline';
 import MdiPencil from '~icons/mdi/pencil';
 
 const logger = getClientLogger('SeqSetItemActions');
+
+const CreatorDetailEntry: FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
+    <div className='flex flex-row py-1.5'>
+        <div className='mr-8 w-[120px] text-gray-500'>{label}</div>
+        <div>{value}</div>
+    </div>
+);
 
 type SeqSetItemActionsProps = {
     clientConfig: ClientConfig;
     accessToken: string;
     seqSet: SeqSet;
+    seqSetAuthor?: AuthorProfile;
     seqSetRecords: SeqSetRecord[];
     isAdminView?: boolean;
     databaseName: string;
@@ -31,12 +43,19 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     clientConfig,
     accessToken,
     seqSet,
+    seqSetAuthor,
     seqSetRecords,
     isAdminView = false,
     databaseName,
 }) => {
+    const seqSetAccessionVersion = getAccessionVersionString({
+        accession: seqSet.seqSetId,
+        version: seqSet.seqSetVersion,
+    });
+
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
+    const [creatorInfoVisible, setCreatorInfoVisible] = useState(false);
 
     const { mutate: deleteSeqSet } = useDeleteSeqSetAction(
         clientConfig,
@@ -50,17 +69,39 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
         deleteSeqSet(undefined);
     };
 
+    const formatDate = (date?: string) => {
+        if (date === undefined) {
+            return 'N/A';
+        }
+        return new Date(date).toISOString().split('T')[0];
+    };
+
+    const createdByValue = seqSetAuthor ? (
+        <AuthorDetails displayFullDetails={false} firstName={seqSetAuthor.firstName} lastName={seqSetAuthor.lastName} />
+    ) : (
+        'Unknown'
+    );
+
     return (
-        <div className='flex flex-col items-left'>
-            <h1 className='text-2xl font-semibold pb-4'>{seqSet.name}</h1>
-            <div className='flex-row items-center justify-between w-full'>
+        <div className='flex justify-between flex-wrap'>
+            <div className='flex flex-row pb-6'>
+                <h1 className='title'> {seqSetAccessionVersion}</h1>
+            </div>
+            <div className='inline-block ml-auto'>
                 <div className='flex justify-start items-center pb-8 gap-2'>
                     <Button
                         className='outlineButton flex items-center gap-2'
                         onClick={() => setExportModalVisible(true)}
                     >
                         <MdiDownload className='w-4 h-4' />
-                        Export / Cite
+                        <span className='hidden sm:block'>Export / Cite</span>
+                    </Button>
+                    <Button
+                        className='outlineButton flex items-center gap-2'
+                        onClick={() => setCreatorInfoVisible(true)}
+                    >
+                        <MdiInformationOutline className='w-4 h-4' />
+                        <span className='hidden sm:block'>More details</span>
                     </Button>
                     {isAdminView ? (
                         <Button
@@ -68,7 +109,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                             onClick={() => setEditModalVisible(true)}
                         >
                             <MdiPencil className='w-4 h-4' />
-                            Edit
+                            <span className='hidden sm:block'>Edit</span>
                         </Button>
                     ) : null}
                     {isAdminView && (seqSet.seqSetDOI === null || seqSet.seqSetDOI === undefined) ? (
@@ -82,7 +123,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                             }
                         >
                             <MdiDelete className='w-4 h-4' />
-                            Delete
+                            <span className='hidden sm:block'>Delete</span>
                         </Button>
                     ) : null}
                 </div>
@@ -98,6 +139,19 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
             <Modal isModalVisible={exportModalVisible} setModalVisible={setExportModalVisible}>
                 <ExportSeqSet seqSet={seqSet} seqSetRecords={seqSetRecords} databaseName={databaseName} />
             </Modal>
+            <BaseDialog
+                title='Creator details'
+                isOpen={creatorInfoVisible}
+                onClose={() => setCreatorInfoVisible(false)}
+                fullWidth={false}
+            >
+                <p className='mb-4 text-sm text-gray-500'>
+                    The creator is the person who assembled this SeqSet on Loculus. They are not necessarily the
+                    originator of the underlying sequence data.
+                </p>
+                <CreatorDetailEntry label='Created by' value={createdByValue} />
+                <CreatorDetailEntry label='Created date' value={formatDate(seqSet.createdAt)} />
+            </BaseDialog>
         </div>
     );
 };

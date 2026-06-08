@@ -16,6 +16,7 @@ import re
 import uuid
 from dataclasses import asdict
 from datetime import datetime, timedelta
+from itertools import chain, repeat
 from typing import Any, Final
 from unittest.mock import Mock, patch
 
@@ -43,27 +44,24 @@ from ena_deposition.create_project import (
     project_table_handle_errors,
 )
 from ena_deposition.create_project import (
-    submission_table_start as create_project_submission_table_start,
-)
-from ena_deposition.create_project import (
-    submission_table_update as create_project_submission_table_update,
+    sync_state_with_submission_table as create_project_sync_state_with_submission_table,
 )
 from ena_deposition.create_sample import (
     sample_table_create,
     sample_table_handle_errors,
 )
 from ena_deposition.create_sample import (
-    submission_table_start as create_sample_submission_table_start,
-)
-from ena_deposition.create_sample import (
-    submission_table_update as create_sample_submission_table_update,
+    sync_state_with_submission_table as create_sample_sync_state_with_submission_table,
 )
 from ena_deposition.loculus_models import Group
 from ena_deposition.notifications import SlackConfig
 from ena_deposition.submission_db_helper import (
+    AssemblyTableEntry,
+    ProjectTableEntry,
+    SampleTableEntry,
     Status,
     StatusAll,
-    TableName,
+    SubmissionTableEntry,
     add_to_assembly_table,
     add_to_project_table,
     add_to_sample_table,
@@ -77,7 +75,7 @@ from ena_deposition.trigger_submission_to_ena import upload_sequences
 from ena_deposition.upload_external_metadata_to_loculus import (
     get_external_metadata_and_send_to_loculus,
 )
-from psycopg2.pool import SimpleConnectionPool
+from sqlalchemy import Engine
 
 CONFIG_FILE = "./test/test_config.yaml"
 INPUT_FILE = "./test/approved_ena_submission_list_test.json"
@@ -89,48 +87,48 @@ TEST_GROUP: Final = Group._create_example_for_tests()
 
 
 def assert_biosample_accession(
-    rows: list[dict[str, Any]], biosample_accession: str, full_accession: str
+    rows: list[SampleTableEntry], biosample_accession: str, full_accession: str
 ) -> None:
     assert len(rows) == 1, f"Sample for {full_accession} not found in sample table."
     if biosample_accession:
-        assert rows[0]["result"].get("biosample_accession") == biosample_accession, (
+        assert rows[0].result, f"No result for sample {full_accession} in sample table."
+        assert rows[0].result.get("biosample_accession") == biosample_accession, (
             "Incorrect biosample accession in sample table."
         )
 
 
 def assert_bioproject_accession(
-    rows: list[dict[str, Any]], bioproject_accession: str, group_id: str, full_accession: str
+    rows: list[ProjectTableEntry], bioproject_accession: str, group_id: str, full_accession: str
 ) -> None:
     assert len(rows) == 1, f"Project {group_id} for {full_accession} not found in project table."
     if bioproject_accession:
-        assert rows[0]["result"].get("bioproject_accession") == bioproject_accession, (
+        assert rows[0].result, f"No result for project {group_id} in project table."
+        assert rows[0].result.get("bioproject_accession") == bioproject_accession, (
             "Incorrect bioproject accession in project table."
         )
 
 
-def delete_all_records(db_config: SimpleConnectionPool) -> None:
+def delete_all_records(db_engine: Engine) -> None:
     logger.debug("Deleting all records from all deposition tables except flyway")
-    for table_name in [
-        TableName.SUBMISSION_TABLE,
-        TableName.PROJECT_TABLE,
-        TableName.SAMPLE_TABLE,
-        TableName.ASSEMBLY_TABLE,
+    for model_class in [
+        SubmissionTableEntry,
+        ProjectTableEntry,
+        SampleTableEntry,
+        AssemblyTableEntry,
     ]:
-        delete_records_in_db(db_config, table_name, {})
+        delete_records_in_db(db_engine, model_class, {})
 
 
-def check_sequences_uploaded(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
-) -> None:
+def check_sequences_uploaded(db_engine: Engine, sequences_to_upload: dict[str, Any]) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         assert in_submission_table(
-            db_config, {"accession": accession, "version": version, "status_all": "READY_TO_SUBMIT"}
+            db_engine, {"accession": accession, "version": version, "status_all": "READY_TO_SUBMIT"}
         ), f"Sequence {accession}.{version} not found in submission table."
 
 
 def check_project_submission_started(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession, data in sequences_to_upload.items():
         group_id = data["metadata"]["groupId"]
@@ -138,8 +136,8 @@ def check_project_submission_started(
         assert (
             len(
                 find_conditions_in_db(
-                    db_config,
-                    TableName.PROJECT_TABLE,
+                    db_engine,
+                    ProjectTableEntry,
                     conditions={"group_id": group_id, "organism": organism, "status": "READY"},
                 )
             )
@@ -147,16 +145,14 @@ def check_project_submission_started(
         ), f"Project {group_id} for {full_accession} not found in project table."
 
 
-def check_sample_submission_started(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
-) -> None:
+def check_sample_submission_started(db_engine: Engine, sequences_to_upload: dict[str, Any]) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         assert (
             len(
                 find_conditions_in_db(
-                    db_config,
-                    TableName.SAMPLE_TABLE,
+                    db_engine,
+                    SampleTableEntry,
                     conditions={"accession": accession, "version": version, "status": "READY"},
                 )
             )
@@ -165,91 +161,92 @@ def check_sample_submission_started(
 
 
 def check_sample_submission_submitted(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession, data in sequences_to_upload.items():
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
-            db_config,
-            TableName.SAMPLE_TABLE,
+            db_engine,
+            SampleTableEntry,
             conditions={"accession": accession, "version": version, "status": "SUBMITTED"},
         )
         assert_biosample_accession(rows, data["metadata"]["biosampleAccession"], full_accession)
         assert in_submission_table(
-            db_config,
+            db_engine,
             {"accession": accession, "version": version, "status_all": StatusAll.SUBMITTED_SAMPLE},
         ), f"Sequence {accession}.{version} not in state SUBMITTED_SAMPLE submission table."
 
 
 def check_sample_submission_has_errors(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession, data in sequences_to_upload.items():
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
-            db_config,
-            TableName.SAMPLE_TABLE,
+            db_engine,
+            SampleTableEntry,
             conditions={"accession": accession, "version": version, "status": "HAS_ERRORS"},
         )
         assert_biosample_accession(rows, data["metadata"]["biosampleAccession"], full_accession)
 
 
 def check_assembly_submission_waiting(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
-            db_config,
-            TableName.ASSEMBLY_TABLE,
+            db_engine,
+            AssemblyTableEntry,
             conditions={"accession": accession, "version": version, "status": "WAITING"},
         )
         assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
-        assert "erz_accession" in rows[0]["result"], "Incorrect assembly result in assembly table."
-        assert "segment_order" in rows[0]["result"], "Incorrect assembly result in assembly table."
+        assert rows[0].result, f"No result for assembly {full_accession} in assembly table."
+        assert "erz_accession" in rows[0].result, "Incorrect assembly result in assembly table."
+        assert "segment_order" in rows[0].result, "Incorrect assembly result in assembly table."
 
 
 def check_assembly_submission_has_errors(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
-            db_config,
-            TableName.ASSEMBLY_TABLE,
+            db_engine,
+            AssemblyTableEntry,
             conditions={"accession": accession, "version": version, "status": "HAS_ERRORS"},
         )
         assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
 
 
 def check_assembly_submission_started(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
-            db_config,
-            TableName.ASSEMBLY_TABLE,
+            db_engine,
+            AssemblyTableEntry,
             conditions={"accession": accession, "version": version, "status": "READY"},
         )
         assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
 
 
 def check_assembly_submission_submitted(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
-            db_config,
-            TableName.ASSEMBLY_TABLE,
+            db_engine,
+            AssemblyTableEntry,
             conditions={"accession": accession, "version": version, "status": "SUBMITTED"},
         )
         assert len(rows) == 1, (
             f"Assembly for {full_accession} not in state 'SUBMITTED' in assembly table."
         )
         assert in_submission_table(
-            db_config,
+            db_engine,
             {
                 "accession": accession,
                 "version": version,
@@ -259,13 +256,13 @@ def check_assembly_submission_submitted(
 
 
 def check_assembly_submission_with_nuc_without_gca(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
-            db_config,
-            TableName.ASSEMBLY_TABLE,
+            db_engine,
+            AssemblyTableEntry,
             conditions={
                 "accession": accession,
                 "version": version,
@@ -275,18 +272,17 @@ def check_assembly_submission_with_nuc_without_gca(
         assert len(rows) == 1, (
             f"Assembly for {full_accession} not in state 'WAITING' in assembly table."
         )
-        assert rows[0]["result"].get("insdc_accession_full_L") is not None
-        assert rows[0]["result"].get("insdc_accession_full_M") is None
-        assert rows[0]["result"].get("gca_accession") is None
+        assert rows[0].result, f"No result for assembly {full_accession} in assembly table."
+        assert rows[0].result.get("insdc_accession_full_L") is not None
+        assert rows[0].result.get("insdc_accession_full_M") is None
+        assert rows[0].result.get("gca_accession") is None
 
 
-def check_sent_to_loculus(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
-) -> None:
+def check_sent_to_loculus(db_engine: Engine, sequences_to_upload: dict[str, Any]) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
         assert in_submission_table(
-            db_config,
+            db_engine,
             {
                 "accession": accession,
                 "version": version,
@@ -296,35 +292,35 @@ def check_sent_to_loculus(
 
 
 def check_project_submission_submitted(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession, data in sequences_to_upload.items():
         accession, version = full_accession.split(".")
         group_id = data["metadata"]["groupId"]
         organism = data["organism"]
         rows = find_conditions_in_db(
-            db_config,
-            TableName.PROJECT_TABLE,
+            db_engine,
+            ProjectTableEntry,
             conditions={"group_id": group_id, "organism": organism, "status": "SUBMITTED"},
         )
         assert_bioproject_accession(
             rows, data["metadata"]["bioprojectAccession"], group_id, full_accession
         )
         assert in_submission_table(
-            db_config,
+            db_engine,
             {"accession": accession, "version": version, "status_all": StatusAll.SUBMITTED_PROJECT},
         ), f"Sequence {accession}.{version} not in state SUBMITTED_PROJECT submission table."
 
 
 def check_project_submission_has_errors(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession, data in sequences_to_upload.items():
         group_id = data["metadata"]["groupId"]
         organism = data["organism"]
         rows = find_conditions_in_db(
-            db_config,
-            TableName.PROJECT_TABLE,
+            db_engine,
+            ProjectTableEntry,
             conditions={"group_id": group_id, "organism": organism, "status": "HAS_ERRORS"},
         )
         assert_bioproject_accession(
@@ -333,7 +329,7 @@ def check_project_submission_has_errors(
 
 
 def set_db_to_known_erz_accession(
-    db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any], single_segment: bool
+    db_engine: Engine, sequences_to_upload: dict[str, Any], single_segment: bool
 ) -> None:
     """
     Sets erz-accession to known previous values that have received accession
@@ -350,82 +346,72 @@ def set_db_to_known_erz_accession(
             segment_order = ["L"] if single_segment else ["L", "M"]
             erz_accession = "ERZ24985816" if single_segment else "ERZ24784470"
             update_db_where_conditions(
-                db_config,
-                TableName.ASSEMBLY_TABLE,
+                db_engine,
+                AssemblyTableEntry,
                 {"accession": accession, "version": version},
-                {
-                    "result": json.dumps(
-                        {"erz_accession": erz_accession, "segment_order": segment_order}
-                    )
-                },
+                {"result": {"erz_accession": erz_accession, "segment_order": segment_order}},
             )
         if organism == "west-nile":
             update_db_where_conditions(
-                db_config,
-                TableName.ASSEMBLY_TABLE,
+                db_engine,
+                AssemblyTableEntry,
                 {"accession": accession, "version": version},
-                {"result": json.dumps({"erz_accession": "ERZ24908522", "segment_order": ["main"]})},
+                {"result": {"erz_accession": "ERZ24908522", "segment_order": ["main"]}},
             )
 
 
 def _test_successful_assembly_submission(
-    db_config: SimpleConnectionPool,
+    db_engine: Engine,
     config: Config,
     sequences_to_upload: dict[str, Any],
     single_segment: bool = False,
 ) -> None:
-    create_assembly_submission_table_start(db_config, config)
-    check_assembly_submission_started(db_config, sequences_to_upload)
+    create_assembly_submission_table_start(db_engine, config)
+    check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
-
-    # IMPORTANT: set test=true below or this script may submit sequences to ENA prod
-    assembly_table_create(db_config, config, test=config.test)
-    check_assembly_submission_waiting(db_config, sequences_to_upload)
+    assembly_table_create(db_engine, config)
+    check_assembly_submission_waiting(db_engine, sequences_to_upload)
 
     # Hack: ENA never processed on dev, so we set erz_accession to known public accessions
     # So we can test the rest of the pipeline
-    set_db_to_known_erz_accession(db_config, sequences_to_upload, single_segment=single_segment)
-    assembly_table_update(db_config, config, time_threshold=0)
-    create_assembly_submission_table_update(db_config)
+    set_db_to_known_erz_accession(db_engine, sequences_to_upload, single_segment=single_segment)
+    assembly_table_update(db_engine, config, time_threshold=0)
+    create_assembly_submission_table_update(db_engine)
     if single_segment:
-        check_assembly_submission_with_nuc_without_gca(db_config, sequences_to_upload)
+        check_assembly_submission_with_nuc_without_gca(db_engine, sequences_to_upload)
     else:
-        check_assembly_submission_submitted(db_config, sequences_to_upload)
+        check_assembly_submission_submitted(db_engine, sequences_to_upload)
 
 
 def _test_successful_assembly_submission_no_wait(
-    db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
-    create_assembly_submission_table_start(db_config, config)
-    check_assembly_submission_started(db_config, sequences_to_upload)
+    create_assembly_submission_table_start(db_engine, config)
+    check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
-
-    # IMPORTANT: set test=true below or this script may submit sequences to ENA prod
-    assembly_table_create(db_config, config, test=config.test)
-    create_assembly_submission_table_update(db_config)
-    check_assembly_submission_submitted(db_config, sequences_to_upload)
+    assembly_table_create(db_engine, config)
+    create_assembly_submission_table_update(db_engine)
+    check_assembly_submission_submitted(db_engine, sequences_to_upload)
 
 
 def _test_assembly_submission_errored(
-    db_config: SimpleConnectionPool,
+    db_engine: Engine,
     config: Config,
     slack_config: SlackConfig,
     sequences_to_upload: dict[str, Any],
     mock_notify: Mock,
 ) -> None:
-    create_assembly_submission_table_start(db_config, config)
-    check_assembly_submission_started(db_config, sequences_to_upload)
+    create_assembly_submission_table_start(db_engine, config)
+    check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
-
-    # IMPORTANT: set test=true below or this script may submit sequences to ENA prod
-    assembly_table_create(db_config, config, test=config.test)
-    check_assembly_submission_has_errors(db_config, sequences_to_upload)
+    assembly_table_create(db_engine, config)
+    check_assembly_submission_has_errors(db_engine, sequences_to_upload)
 
     assembly_table_handle_errors(
-        db_config,
+        db_engine,
         config,
         slack_config,
         last_retry_time=datetime.now(tz=pytz.utc),
@@ -438,25 +424,25 @@ def _test_assembly_submission_errored(
 
 
 def _test_successful_sample_submission(
-    db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
-    create_sample_submission_table_start(db_config, config=config)
-    check_sample_submission_started(db_config, sequences_to_upload)
+    create_sample_sync_state_with_submission_table(db_engine)
+    check_sample_submission_started(db_engine, sequences_to_upload)
 
-    sample_table_create(db_config, config, test=config.test)
-    create_sample_submission_table_update(db_config)
-    check_sample_submission_submitted(db_config, sequences_to_upload)
+    sample_table_create(db_engine, config)
+    create_sample_sync_state_with_submission_table(db_engine)
+    check_sample_submission_submitted(db_engine, sequences_to_upload)
 
 
 def _test_successful_project_submission(
-    db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
-    create_project_submission_table_start(db_config, config)
-    check_project_submission_started(db_config, sequences_to_upload)
+    create_project_sync_state_with_submission_table(db_engine)
+    check_project_submission_started(db_engine, sequences_to_upload)
 
-    project_table_create(db_config, config, test=config.test)
-    create_project_submission_table_update(db_config)
-    check_project_submission_submitted(db_config, sequences_to_upload)
+    project_table_create(db_engine, config)
+    create_project_sync_state_with_submission_table(db_engine)
+    check_project_submission_submitted(db_engine, sequences_to_upload)
 
 
 def get_sequences() -> dict[str, Any]:
@@ -493,7 +479,7 @@ def mock_requests_post() -> Mock:
 
 
 def multi_segment_submission(
-    db_config: SimpleConnectionPool,
+    db_engine: Engine,
     config: Config,
     mock_get_group_info: Mock,
     mock_submit_external_metadata: Mock,
@@ -510,16 +496,16 @@ def multi_segment_submission(
         # Set segment M to None so we have only one segment in the assembly
         sequences_to_upload["LOC_0001TLY.1"]["unalignedNucleotideSequences"]["M"] = None
 
-    get_external_metadata_and_send_to_loculus(db_config, config)
+    get_external_metadata_and_send_to_loculus(db_engine, config)
     mock_submit_external_metadata.assert_not_called()
 
-    upload_sequences(db_config, sequences_to_upload)
-    check_sequences_uploaded(db_config, sequences_to_upload)
-    get_external_metadata_and_send_to_loculus(db_config, config)
+    upload_sequences(db_engine, sequences_to_upload)
+    check_sequences_uploaded(db_engine, sequences_to_upload)
+    get_external_metadata_and_send_to_loculus(db_engine, config)
     mock_submit_external_metadata.assert_not_called()
 
-    _test_successful_project_submission(db_config, config, sequences_to_upload)
-    get_external_metadata_and_send_to_loculus(db_config, config)
+    _test_successful_project_submission(db_engine, config, sequences_to_upload)
+    get_external_metadata_and_send_to_loculus(db_engine, config)
     args = mock_submit_external_metadata.call_args_list
 
     assert len(args) == 1
@@ -529,8 +515,8 @@ def multi_segment_submission(
     assert set(payload["externalMetadata"]) == {"bioprojectAccession"}
     assert payload["externalMetadata"]["bioprojectAccession"].startswith("PRJEB")
 
-    _test_successful_sample_submission(db_config, config, sequences_to_upload)
-    get_external_metadata_and_send_to_loculus(db_config, config)
+    _test_successful_sample_submission(db_engine, config, sequences_to_upload)
+    get_external_metadata_and_send_to_loculus(db_engine, config)
     args = mock_submit_external_metadata.call_args_list
     assert len(args) == 2  # noqa: PLR2004
     payload = args[1][0][0]  # first positional argument of second call
@@ -540,11 +526,11 @@ def multi_segment_submission(
     assert payload["externalMetadata"]["bioprojectAccession"].startswith("PRJEB")
     assert payload["externalMetadata"]["biosampleAccession"].startswith("SAMEA")
 
-    _test_successful_assembly_submission(db_config, config, sequences_to_upload, single_segment)
-    get_external_metadata_and_send_to_loculus(db_config, config)
+    _test_successful_assembly_submission(db_engine, config, sequences_to_upload, single_segment)
+    get_external_metadata_and_send_to_loculus(db_engine, config)
     if not single_segment:
         # Only complete in case of multi-segment submission
-        check_sent_to_loculus(db_config, sequences_to_upload)
+        check_sent_to_loculus(db_engine, sequences_to_upload)
     args = mock_submit_external_metadata.call_args_list
     assert len(args) == 3  # noqa: PLR2004
     payload = args[2][0][0]  # first positional argument of third call
@@ -586,10 +572,10 @@ class TestSubmission:
     def setup_method(self) -> None:
         self.config: Config = get_config(CONFIG_FILE)
         self.config.submitting_time_threshold_min = 0
-        self.db_config = db_init(
+        self.db_engine = db_init(
             self.config.db_password, self.config.db_username, self.config.db_url
         )
-        delete_all_records(self.db_config)
+        delete_all_records(self.db_engine)
         # for testing set last_notification_sent to 1 day ago
         self.slack_config = SlackConfig(
             slack_hook=self.config.slack_hook or "",
@@ -603,6 +589,9 @@ class TestSubmission:
             f"ENA submission URL is {self.config.ena_submission_url} instead of https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/"
         )
         assert self.config.test, "Test mode is not enabled."
+        assert self.config.random_alias, (
+            "Random alias is not enabled, this will cause conflicts in ENA dev if tests are run simultaneously."  # noqa: E501
+        )
 
 
 class TestFirstPublicUpdate(TestSubmission):
@@ -612,7 +601,6 @@ class TestFirstPublicUpdate(TestSubmission):
         "base_entry": {
             "group_id": 1,
             "organism": "test_organism",
-            "project_id": 0,
             "status": Status.SUBMITTED,
         },
         "add_function": add_to_project_table,
@@ -697,7 +685,7 @@ class TestFirstPublicUpdate(TestSubmission):
 
         # Insert into the database
         add_function = test_data["add_function"]
-        entity_id = add_function(self.db_config, entry)
+        entity_id = add_function(self.db_engine, entry)
         if entity_id is None:
             msg = f"Failed to add {entity_type.value} entry to the database."
             raise ValueError(msg)
@@ -710,51 +698,49 @@ class TestFirstPublicUpdate(TestSubmission):
             # Single key (like project_id)
             conditions = {"project_id": entity_id}
         else:
-            conditions = asdict(entry.primary_key)
+            conditions = asdict(entry.pkey)
 
         # Run visibility check with invalid accessions
         check_and_update_visibility_for_column(
-            self.config, self.db_config, entity_type, column_name
+            self.config, self.db_engine, entity_type, column_name
         )
 
         # Check that visibility column is None
-        rows: list[dict] = find_conditions_in_db(
-            self.db_config,
-            config.table_name,
+        rows = find_conditions_in_db(
+            self.db_engine,
+            config.entry_class,
             conditions=conditions,
         )
         logger.debug(f"Rows found after invalid check: {rows}")
         assert len(rows) == 1, f"{entity_type.value} not found in table."
 
-        entry_after_invalid = config.entry_class(**rows[0])
-        visibility_value = getattr(entry_after_invalid, column_name)
+        visibility_value = getattr(rows[0], column_name)
         assert visibility_value is None, (
             f"{column_name} should be None for non-existing accessions. Got: {visibility_value}"
         )
 
         # Update the entry to have valid accessions
         update_db_where_conditions(
-            self.db_config,
-            config.table_name,
+            self.db_engine,
+            config.entry_class,
             conditions=conditions,
-            update_values={"result": json.dumps(test_data["valid_result"])},
+            update_values={"result": test_data["valid_result"]},
         )
 
         # Run the visibility check again with valid accessions
         check_and_update_visibility_for_column(
-            self.config, self.db_config, entity_type, column_name
+            self.config, self.db_engine, entity_type, column_name
         )
 
         # Check that visibility column is now updated
         rows = find_conditions_in_db(
-            self.db_config,
-            config.table_name,
+            self.db_engine,
+            config.entry_class,
             conditions=conditions,
         )
         assert len(rows) == 1, f"{entity_type.value} not found in table after update."
 
-        entry_after_valid = config.entry_class(**rows[0])
-        visibility_value = getattr(entry_after_valid, column_name)
+        visibility_value = getattr(rows[0], column_name)
         assert visibility_value is not None, (
             f"{column_name} should be updated to current timestamp for valid accessions. "
             f"Got: {visibility_value}"
@@ -771,7 +757,7 @@ class TestSimpleSubmission(TestSubmission):
         Test the full ENA submission pipeline with accurate data - this should succeed
         """
         multi_segment_submission(
-            self.db_config, self.config, mock_get_group_info, mock_submit_external_metadata
+            self.db_engine, self.config, mock_get_group_info, mock_submit_external_metadata
         )
 
 
@@ -782,7 +768,7 @@ class TestSingleSegmentOfMultiSegmentOrganismWithoutGCA(TestSubmission):
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     def test_submit(self, mock_get_group_info: Mock, mock_submit_external_metadata: Mock) -> None:
         multi_segment_submission(
-            self.db_config,
+            self.db_engine,
             self.config,
             mock_get_group_info,
             mock_submit_external_metadata,
@@ -807,41 +793,43 @@ class TestKnownBioproject(TestSubmission):
             entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
 
         # upload sequences
-        upload_sequences(self.db_config, sequences_to_upload)
-        check_sequences_uploaded(self.db_config, sequences_to_upload)
+        upload_sequences(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
-        create_project_submission_table_start(self.db_config, self.config)
-        check_project_submission_submitted(self.db_config, sequences_to_upload)
-        _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
-        _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
         # send to loculus
-        get_external_metadata_and_send_to_loculus(self.db_config, self.config)
-        check_sent_to_loculus(self.db_config, sequences_to_upload)
+        get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
+        check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
 class TestIncorrectBioprojectPassed(TestSubmission):
     @patch("ena_deposition.notifications.notify", autospec=True)
-    def test_submit(self, mock_notify: Mock) -> None:
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    def test_submit(self, mock_get_group_info: Mock, mock_notify: Mock) -> None:
         """
         Test submitting sequences with an incorrect bioproject - this should fail
         """
         # get data
+        mock_get_group_info.return_value = TEST_GROUP
         mock_notify.return_value = None
         sequences_to_upload = get_sequences()
         for entry in sequences_to_upload.values():  # set to invalid bioproject
             entry["metadata"]["bioprojectAccession"] = "INVALID_ACCESSION"
 
         # upload sequences
-        upload_sequences(self.db_config, sequences_to_upload)
-        check_sequences_uploaded(self.db_config, sequences_to_upload)
+        upload_sequences(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # check project submission fails and sends notification
-        create_project_submission_table_start(self.db_config, self.config)
-        check_project_submission_has_errors(self.db_config, sequences_to_upload)
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
+        check_project_submission_has_errors(self.db_engine, sequences_to_upload)
         project_table_handle_errors(
-            self.db_config,
+            self.db_engine,
             self.config,
             self.slack_config,
             last_retry_time=datetime.now(tz=pytz.utc),
@@ -851,6 +839,33 @@ class TestIncorrectBioprojectPassed(TestSubmission):
             "in status HAS_ERRORS or SUBMITTING for over 0m"
         )
         mock_notify.assert_called_once_with(self.slack_config, msg)
+
+        project_table_handle_errors(
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=5),
+        )
+
+        # Confirm DB entry is reset to READY to retry submission
+        check_project_submission_started(self.db_engine, sequences_to_upload)
+
+        # Confirm DB entry is still in error state after retrying submission
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
+        check_project_submission_has_errors(self.db_engine, sequences_to_upload)
+
+        # Confirm retries dont change state
+        project_table_handle_errors(
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=10),
+        )
+        check_project_submission_started(self.db_engine, sequences_to_upload)
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
+        check_project_submission_has_errors(self.db_engine, sequences_to_upload)
 
 
 class TestKnownBioprojectAndBioSample(TestSubmission):
@@ -871,31 +886,143 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
             entry["metadata"]["biosampleAccession"] = "SAMN11077987"
 
         # upload
-        upload_sequences(self.db_config, sequences_to_upload)
-        check_sequences_uploaded(self.db_config, sequences_to_upload)
+        upload_sequences(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
-        create_project_submission_table_start(self.db_config, self.config)
-        check_project_submission_submitted(self.db_config, sequences_to_upload)
-        create_sample_submission_table_start(self.db_config, config=self.config)
-        check_sample_submission_submitted(self.db_config, sequences_to_upload)
-        _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
         # send to loculus
-        get_external_metadata_and_send_to_loculus(self.db_config, self.config)
-        check_sent_to_loculus(self.db_config, sequences_to_upload)
+        get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
+        check_sent_to_loculus(self.db_engine, sequences_to_upload)
+
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    @patch("ena_deposition.create_project.accession_exists", autospec=True)
+    @patch("ena_deposition.notifications.notify", autospec=True)
+    def test_bioproject_retry(
+        self,
+        mock_notify: Mock,
+        mock_accession_exists: Mock,
+        mock_get_group_info: Mock,
+        mock_submit_external_metadata: Mock,
+    ) -> None:
+        """
+        Test submitting sequences with accurate data and known bioproject and biosample
+        Force accession_exists test to fail on first attempt to simulate ENA
+        not processing submission in time, then retrying and succeeding
+        """
+        # get data
+        mock_get_group_info.return_value = TEST_GROUP
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        mock_accession_exists.side_effect = chain([False], repeat(True))
+        mock_notify.return_value = None
+
+        sequences_to_upload = get_sequences()
+        for entry in sequences_to_upload.values():  # set to public bioproject and biosample
+            entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
+            entry["metadata"]["biosampleAccession"] = "SAMN11077987"
+
+        # upload
+        upload_sequences(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
+
+        # check project submission fails
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
+        check_project_submission_has_errors(self.db_engine, sequences_to_upload)
+
+        # Confirm DB entry is reset to READY to retry submission
+        project_table_handle_errors(
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=5),
+        )
+        check_project_submission_started(self.db_engine, sequences_to_upload)
+
+        # submit
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
+
+        # send to loculus
+        get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
+        check_sent_to_loculus(self.db_engine, sequences_to_upload)
+
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    @patch("ena_deposition.create_sample.accession_exists", autospec=True)
+    @patch("ena_deposition.notifications.notify", autospec=True)
+    def test_biosample_retry(
+        self,
+        mock_notify: Mock,
+        mock_accession_exists: Mock,
+        mock_get_group_info: Mock,
+        mock_submit_external_metadata: Mock,
+    ) -> None:
+        """
+        Test submitting sequences with accurate data and known bioproject and biosample
+        Force accession_exists test to fail on first biosample query to simulate ENA
+        not processing submission in time, then retrying and succeeding
+        """
+        # get data
+        mock_get_group_info.return_value = TEST_GROUP
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        mock_accession_exists.side_effect = chain([False], repeat(True))
+        mock_notify.return_value = None
+
+        sequences_to_upload = get_sequences()
+        for entry in sequences_to_upload.values():  # set to public bioproject and biosample
+            entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
+            entry["metadata"]["biosampleAccession"] = "SAMN11077987"
+
+        # upload
+        upload_sequences(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
+
+        # submit
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
+
+        # check sample submission fails and sends notification
+        create_sample_sync_state_with_submission_table(self.db_engine)
+        sample_table_create(self.db_engine, self.config)
+        check_sample_submission_has_errors(self.db_engine, sequences_to_upload)
+        sample_table_handle_errors(
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=5),
+        )
+        msg = (
+            f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in sample_table "
+            "in status HAS_ERRORS or SUBMITTING for over 0m"
+        )
+        mock_notify.assert_called_once_with(self.slack_config, msg)
+
+        # Confirm DB entry is reset to READY to retry submission
+        check_sample_submission_started(self.db_engine, sequences_to_upload)
+        create_sample_sync_state_with_submission_table(self.db_engine)
+        sample_table_create(self.db_engine, self.config)
+        create_sample_sync_state_with_submission_table(self.db_engine)
+        check_sample_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
+
+        # send to loculus
+        get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
+        check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
 class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
-    @patch(
-        "ena_deposition.ena_submission_helper.update_with_retry",
-        autospec=True,
-    )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     @patch("ena_deposition.notifications.notify", autospec=True)
-    def test_submit(
-        self, mock_notify: Mock, mock_get_group_info: Mock, mock_update_with_retry: Mock
-    ) -> None:
+    def test_submit(self, mock_notify: Mock, mock_get_group_info: Mock) -> None:
         """
         Test submitting sequences with known public bioproject and invalid biosample
         """
@@ -908,18 +1035,18 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
             entry["metadata"]["biosampleAccession"] = "INVALID_ACCESSION"
 
         # upload
-        upload_sequences(self.db_config, sequences_to_upload)
-        check_sequences_uploaded(self.db_config, sequences_to_upload)
+        upload_sequences(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit project
-        create_project_submission_table_start(self.db_config, self.config)
-        check_project_submission_submitted(self.db_config, sequences_to_upload)
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
 
         # check sample submission fails and sends notification
-        create_sample_submission_table_start(self.db_config, config=self.config)
-        check_sample_submission_has_errors(self.db_config, sequences_to_upload)
+        create_sample_sync_state_with_submission_table(self.db_engine)
+        sample_table_create(self.db_engine, self.config)
+        check_sample_submission_has_errors(self.db_engine, sequences_to_upload)
         sample_table_handle_errors(
-            self.db_config,
+            self.db_engine,
             self.config,
             self.slack_config,
             last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=5),
@@ -929,7 +1056,26 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
             "in status HAS_ERRORS or SUBMITTING for over 0m"
         )
         mock_notify.assert_called_once_with(self.slack_config, msg)
-        mock_update_with_retry.assert_called_once()
+
+        # Confirm DB entry is reset to READY to retry submission
+        check_sample_submission_started(self.db_engine, sequences_to_upload)
+
+        # Confirm DB entry is still in error state after retrying submission
+        create_project_sync_state_with_submission_table(self.db_engine)
+        sample_table_create(self.db_engine, self.config)
+        check_sample_submission_has_errors(self.db_engine, sequences_to_upload)
+
+        # Confirm retries dont change state
+        sample_table_handle_errors(
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=10),
+        )
+        check_sample_submission_started(self.db_engine, sequences_to_upload)
+        create_project_sync_state_with_submission_table(self.db_engine)
+        sample_table_create(self.db_engine, self.config)
+        check_sample_submission_has_errors(self.db_engine, sequences_to_upload)
 
 
 class TestRevisionAssemblyModificationTests(TestSubmission):
@@ -940,7 +1086,7 @@ class TestRevisionAssemblyModificationTests(TestSubmission):
     def test_revise(self, mock_get_group_info: Mock, mock_submit_external_metadata: Mock) -> None:
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
         multi_segment_submission(
-            self.db_config, self.config, mock_get_group_info, mock_submit_external_metadata
+            self.db_engine, self.config, mock_get_group_info, mock_submit_external_metadata
         )
 
         # get data
@@ -949,18 +1095,19 @@ class TestRevisionAssemblyModificationTests(TestSubmission):
         sequences_to_upload = get_revisions()
 
         # upload sequences
-        upload_sequences(self.db_config, sequences_to_upload)
-        check_sequences_uploaded(self.db_config, sequences_to_upload)
+        upload_sequences(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
-        create_project_submission_table_start(self.db_config, self.config)
-        check_project_submission_submitted(self.db_config, sequences_to_upload)
-        _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
-        _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
+        check_project_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
         # send to loculus
-        get_external_metadata_and_send_to_loculus(self.db_config, self.config)
-        check_sent_to_loculus(self.db_config, sequences_to_upload)
+        get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
+        check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
 class TestRevisionNoAssemblyModificationTests(TestSubmission):
@@ -971,7 +1118,7 @@ class TestRevisionNoAssemblyModificationTests(TestSubmission):
     def test_revise(self, mock_get_group_info: Mock, mock_submit_external_metadata: Mock) -> None:
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
         multi_segment_submission(
-            self.db_config, self.config, mock_get_group_info, mock_submit_external_metadata
+            self.db_engine, self.config, mock_get_group_info, mock_submit_external_metadata
         )
 
         # get data
@@ -980,20 +1127,21 @@ class TestRevisionNoAssemblyModificationTests(TestSubmission):
         sequences_to_upload = get_revisions(modify_assembly=False)
 
         # upload sequences
-        upload_sequences(self.db_config, sequences_to_upload)
-        check_sequences_uploaded(self.db_config, sequences_to_upload)
+        upload_sequences(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
-        create_project_submission_table_start(self.db_config, self.config)
-        check_project_submission_submitted(self.db_config, sequences_to_upload)
-        _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
+        check_project_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
         _test_successful_assembly_submission_no_wait(
-            self.db_config, self.config, sequences_to_upload
+            self.db_engine, self.config, sequences_to_upload
         )
 
         # send to loculus
-        get_external_metadata_and_send_to_loculus(self.db_config, self.config)
-        check_sent_to_loculus(self.db_config, sequences_to_upload)
+        get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
+        check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
 class TestRevisionWithManifestChangeTests(TestSubmission):
@@ -1010,7 +1158,7 @@ class TestRevisionWithManifestChangeTests(TestSubmission):
     ) -> None:
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
         multi_segment_submission(
-            self.db_config, self.config, mock_get_group_info, mock_submit_external_metadata
+            self.db_engine, self.config, mock_get_group_info, mock_submit_external_metadata
         )
         # get data
         mock_get_group_info.return_value = TEST_GROUP
@@ -1018,17 +1166,17 @@ class TestRevisionWithManifestChangeTests(TestSubmission):
         sequences_to_upload = get_revisions(modify_manifest=True)
 
         # upload sequences
-        upload_sequences(self.db_config, sequences_to_upload)
-        check_sequences_uploaded(self.db_config, sequences_to_upload)
+        upload_sequences(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
-        create_project_submission_table_start(self.db_config, self.config)
-        check_project_submission_submitted(self.db_config, sequences_to_upload)
-        _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
+        create_project_sync_state_with_submission_table(self.db_engine)
+        check_project_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
 
         # check notified cannot submit assembly
         _test_assembly_submission_errored(
-            self.db_config, self.config, self.slack_config, sequences_to_upload, mock_notify
+            self.db_engine, self.config, self.slack_config, sequences_to_upload, mock_notify
         )
 
 

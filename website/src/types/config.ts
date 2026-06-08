@@ -4,6 +4,8 @@ import { mutationProportionCount, orderDirection } from './lapis.ts';
 import { referenceGenomesSchema } from './referencesGenomes.ts';
 
 export const FASTA_IDS_SEPARATOR = ' ';
+export const DEFAULT_NUC_MUTATION_DETAILS_HEADER = 'Nucleotide mutations';
+export const DEFAULT_AA_MUTATION_DETAILS_HEADER = 'Amino acid substitutions';
 
 // These metadata types need to be kept in sync with the backend config class `MetadataType` in Config.kt
 export const metadataPossibleTypes = z.enum([
@@ -28,6 +30,11 @@ export const segmentedMutations = z.object({
     mutations: z.array(mutationBadgeData),
 });
 
+export const segmentedMutationStrings = z.object({
+    segment: z.string(),
+    mutations: z.array(z.string()),
+});
+
 export const linkMenuItem = z.object({
     name: z.string(),
     url: z.string(),
@@ -37,8 +44,10 @@ export const customDisplay = z.object({
     type: z.string(),
     url: z.string().optional(),
     html: z.string().optional(),
-    value: z.array(segmentedMutations).optional(),
+    badge: z.array(segmentedMutations).optional(),
+    list: z.array(segmentedMutationStrings).optional(),
     displayGroup: z.string().optional(),
+    label: z.string().optional(),
     linkMenuItems: z.array(linkMenuItem).optional(),
 });
 
@@ -59,6 +68,7 @@ export const metadata = z.object({
     name: z.string(),
     displayName: z.string().optional(),
     type: metadataPossibleTypes,
+    definition: z.string().optional(),
     autocomplete: z.boolean().optional(),
     notSearchable: z.boolean().optional(),
     hideInSearchResultsTable: z.boolean().optional(),
@@ -70,11 +80,17 @@ export const metadata = z.object({
     rangeOverlapSearch: rangeOverlapSearch.optional(),
     substringSearch: z.boolean().optional(),
     lineageSearch: z.boolean().optional(),
+    hierarchicalSearch: z.boolean().optional(),
+    hierarchicalSearchLabel: z.string().optional(),
     columnWidth: z.number().optional(),
     order: z.number().optional(),
     orderOnDetailsPage: z.number().optional(),
+    orderInSearchDisplay: z.number().optional(),
     includeInDownloadsByDefault: z.boolean().optional(),
     onlyForReference: z.string().optional(),
+    isSequenceFilter: z.boolean().optional(),
+    relatesToSegment: z.string().optional(),
+    percentage: z.boolean().optional(),
 });
 
 export const inputFieldOption = z.object({
@@ -101,6 +117,7 @@ export type Metadata = z.infer<typeof metadata>;
 export type MetadataType = z.infer<typeof metadataPossibleTypes>;
 export type MutationBadgeData = z.infer<typeof mutationBadgeData>;
 export type SegmentedMutations = z.infer<typeof segmentedMutations>;
+export type SegmentedMutationStrings = z.infer<typeof segmentedMutationStrings>;
 
 export type MetadataFilter = Metadata & {
     fieldGroup?: string;
@@ -119,18 +136,45 @@ export type GroupedMetadataFilter = {
     notSearchable?: boolean;
     initiallyVisible?: boolean;
     header?: string;
+    isSequenceFilter?: Metadata['isSequenceFilter'];
+    relatesToSegment?: Metadata['relatesToSegment'];
+    order?: number;
+    orderInSearchDisplay?: number;
 };
 
 export const linkOut = z.object({
     name: z.string(),
     url: z.string(),
     maxNumberOfRecommendedEntries: z.number().int().positive().optional(),
+    /**
+     * Optional filter: maps segment name to reference name. When specified, this linkOut is only
+     * shown in the tool dropdown when the user has selected a matching reference (or no reference)
+     * for each specified segment.
+     */
+    onlyForReferences: z.record(z.string(), z.string()).optional(),
+    /**
+     * Optional grouping category for the tool dropdown. LinkOuts with the same category are
+     * grouped under a labelled section. LinkOuts without a category appear at the top without
+     * a header. Can be set to segment names (e.g. "L", "M", "S") or any label
+     * (e.g. "Geographic visualisation", "Sequence analysis").
+     */
+    category: z.string().optional(),
 });
 
 export type LinkOut = z.infer<typeof linkOut>;
 
+export const multiFieldSearch = z.object({
+    name: z.string(),
+    displayName: z.string(),
+    fields: z.array(z.string()),
+    orderInSearchDisplay: z.number().optional(),
+});
+
+export type MultiFieldSearch = z.infer<typeof multiFieldSearch>;
+
 export const fileCategory = z.object({
     name: z.string(),
+    displayName: z.string().optional(),
 });
 
 export type FileCategory = z.infer<typeof fileCategory>;
@@ -164,6 +208,7 @@ export const schema = z.object({
     richFastaHeaderFields: z.array(z.string()).optional(),
     linkOuts: z.array(linkOut).optional(),
     referenceIdentifierField: z.string().optional(),
+    multiFieldSearches: z.array(multiFieldSearch).optional(),
 });
 export type Schema = z.infer<typeof schema>;
 
@@ -195,6 +240,15 @@ const fieldToDisplay = z.object({
     displayName: z.string(),
 });
 
+const seqSetGraphTypes = z.enum(['date', 'category']);
+export const seqSetGraph = z.object({
+    name: z.string(),
+    displayName: z.string(),
+    type: seqSetGraphTypes,
+    fields: z.array(z.string()),
+});
+export type SeqSetGraph = z.infer<typeof seqSetGraph>;
+
 export const websiteConfig = z.object({
     accessionPrefix: z.string(),
     organisms: z.record(instanceConfig),
@@ -208,21 +262,32 @@ export const websiteConfig = z.object({
     additionalHeadHTML: z.string().optional(),
     gitHubEditLink: z.string().optional(),
     gitHubMainUrl: z.string().optional(),
+    gitHubIssuesUrl: z.string().optional(),
+    issuesEmail: z.string().optional(),
     enableSeqSets: z.boolean(),
     seqSetsFieldsToDisplay: z.array(fieldToDisplay).optional(),
+    seqSetsGraphs: z.array(seqSetGraph).optional(),
     enableLoginNavigationItem: z.boolean(),
     enableSubmissionNavigationItem: z.boolean(),
     enableSubmissionPages: z.boolean(),
     enableDataUseTerms: z.boolean(),
+    readOnlyMode: z.boolean().default(false),
+    dataUseTermsAgreementHTML: z.string().optional(),
     sequenceFlagging: sequenceFlaggingConfig.optional(),
+    dateFieldForGroupGraph: z.string().nullable(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
+
+export const contactConfig = z.object({
+    gitHubIssuesUrl: z.string().optional(),
+    issuesEmail: z.string().optional(),
+});
+export type ContactConfig = z.infer<typeof contactConfig>;
 
 export type FieldValue = string | null | (string | null)[];
 export type FieldValueUpdate = [string, FieldValue];
 
 export type FieldValues = {
-    mutation?: string;
     accession?: string;
 } & Record<string, FieldValue>;
 export type SetSomeFieldValues = (...fieldValuesToSet: FieldValueUpdate[]) => void;

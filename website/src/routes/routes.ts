@@ -10,7 +10,7 @@ export type ContinueSubmissionIntent = {
     organism: string;
 };
 
-export const approxMaxAcceptableUrlLength = 1900;
+export const approxMaxAcceptableUrlLength = 7400;
 
 export const routes = {
     apiDocumentationPage: () => '/api-documentation',
@@ -62,8 +62,8 @@ export const routes = {
         const seqSetPagePath = `/seqsets`;
         return username === undefined ? seqSetPagePath : seqSetPagePath + `?user=${username}`;
     },
-    seqSetPage: (seqSetId: string, seqSetVersion: string) => {
-        return `/seqsets/${seqSetId}.${seqSetVersion}`;
+    seqSetPage: (seqSetAccessionVersion: AccessionVersion | string) => {
+        return `/seqsets/${getAccessionVersionString(seqSetAccessionVersion)}`;
     },
     logout: () => '/logout',
     datauseTermsPage: () => '/about/terms-of-use/data-use-terms',

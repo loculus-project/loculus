@@ -193,6 +193,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     public async getMultiSegmentSequenceFasta(
         accessionVersion: string,
         segmentNames: string[],
+        referenceNameMap?: Record<string, string>,
     ): Promise<Result<string, ProblemDetail>> {
         const segments = await this.getUnalignedSequencesMultiSegment(accessionVersion, segmentNames);
         return segments.map((segmentFastas) =>
@@ -203,7 +204,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
                         return '';
                     }
                     const withSegmentSuffix = {
-                        name: `${parsed[0].name}_${segmentNames[i]}`,
+                        name: `${parsed[0].name}_${referenceNameMap?.[segmentNames[i]] ?? segmentNames[i]}`,
                         sequence: parsed[0].sequence,
                     };
                     return fastaEntryToString([withSegmentSuffix]);

@@ -7,16 +7,17 @@ import { DownloadForm, type DownloadFormState } from './DownloadForm.tsx';
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { getDefaultSelectedFields } from './FieldSelector/FieldSelectorModal.tsx';
 import type { SequenceFilter } from './SequenceFilters.tsx';
-import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
 import { MetadataVisibility } from '../../../utils/search.ts';
 import {
     getSegmentAndGeneInfo,
+    getSegmentLapisNames,
     segmentsWithMultipleReferences,
     type GeneInfo,
     type SegmentInfo,
+    type SegmentLapisNames,
     type SegmentReferenceSelections,
 } from '../../../utils/sequenceTypeHelpers.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
@@ -28,6 +29,7 @@ type DownloadDialogProps = {
     referenceGenomesInfo: ReferenceGenomesInfo;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
+    dataUseTermsAgreementHTML?: string;
     schema: Schema;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
     selectedReferenceNames?: SegmentReferenceSelections;
@@ -40,6 +42,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     referenceGenomesInfo,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
+    dataUseTermsAgreementHTML,
     schema,
     richFastaHeaderFields,
     selectedReferenceNames,
@@ -50,34 +53,48 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const { nucleotideSegmentInfos, geneInfos } = useMemo(
+    const segmentAndGeneInfo = useMemo(
         () => getSegmentAndGeneInfo(referenceGenomesInfo, selectedReferenceNames),
         [referenceGenomesInfo, selectedReferenceNames],
     );
     const useMultiSegmentEndpoint = referenceGenomesInfo.useLapisMultiSegmentedEndpoint;
+    const segmentLapisNames = useMemo(
+        () => getSegmentLapisNames(referenceGenomesInfo, selectedReferenceNames),
+        [referenceGenomesInfo, selectedReferenceNames],
+    );
 
-    const [downloadFormState, setDownloadFormState] = useState<DownloadFormState>(
-        getDefaultDownloadFormState(nucleotideSegmentInfos, geneInfos),
+    const [downloadFormState, setDownloadFormState] = useState(
+        getDefaultDownloadFormState(
+            segmentAndGeneInfo.nucleotideSegmentInfos,
+            segmentAndGeneInfo.geneInfos,
+            segmentLapisNames,
+        ),
     );
     useEffect(() => {
-        setDownloadFormState(getDefaultDownloadFormState(nucleotideSegmentInfos, geneInfos));
-    }, [nucleotideSegmentInfos, geneInfos]);
+        setDownloadFormState(
+            getDefaultDownloadFormState(
+                segmentAndGeneInfo.nucleotideSegmentInfos,
+                segmentAndGeneInfo.geneInfos,
+                segmentLapisNames,
+            ),
+        );
+    }, [segmentAndGeneInfo.nucleotideSegmentInfos, segmentAndGeneInfo.geneInfos, segmentLapisNames]);
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
-    const [selectedFields, setSelectedFields] = useState<Set<string>>(getDefaultSelectedFields(schema.metadata)); // This is here so that the state is persisted across closing and reopening the dialog
+    const [selectedFields, setSelectedFields] = useState(getDefaultSelectedFields(schema.metadata)); // This is here so that the state is persisted across closing and reopening the dialog
 
     const downloadFieldVisibilities = useMemo(() => {
         return new Map(
             schema.metadata.map((field) => [
                 field.name,
-                new MetadataVisibility(selectedFields.has(field.name), field.onlyForReference),
+                new MetadataVisibility(selectedFields.has(field.name), field.onlyForReference, field.relatesToSegment),
             ]),
         );
     }, [selectedFields, schema]);
 
     const downloadOption = getDownloadOption({
         downloadFormState,
-        nucleotideSegmentInfos,
-        geneInfos,
+        nucleotideSegmentInfos: segmentAndGeneInfo.nucleotideSegmentInfos,
+        geneInfos: segmentAndGeneInfo.geneInfos,
         useMultiSegmentEndpoint,
         getVisibleFields: () => [
             ...Array.from(downloadFieldVisibilities.entries())
@@ -121,22 +138,17 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                                 <input
                                     type='checkbox'
                                     name='data-use-terms-agreement'
-                                    className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-600'
+                                    className='mr-3 ml-1 h-5 w-5 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-600'
                                     checked={agreedToDataUseTerms}
                                     onChange={() => setAgreedToDataUseTerms(!agreedToDataUseTerms)}
                                 />
-                                <span className='text-sm'>
-                                    I agree to the{' '}
-                                    <a
-                                        href={routes.datauseTermsPage()}
-                                        className='underline'
-                                        target='_blank'
-                                        rel='noopener noreferrer'
-                                    >
-                                        data use terms
-                                    </a>
-                                    .
-                                </span>
+                                <span
+                                    className='text-sm dataAgreement'
+                                    dangerouslySetInnerHTML={{
+                                        // eslint-disable-next-line @typescript-eslint/naming-convention
+                                        __html: dataUseTermsAgreementHTML ?? 'I agree to the data use terms.',
+                                    }}
+                                />
                             </label>
                         </div>
                     )}
@@ -153,12 +165,16 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     );
 };
 
-function getDefaultDownloadFormState(nucleotideSegmentInfos: SegmentInfo[], geneInfos: GeneInfo[]): DownloadFormState {
+function getDefaultDownloadFormState(
+    nucleotideSegmentInfos: SegmentInfo[],
+    geneInfos: GeneInfo[],
+    segmentLapisNames: SegmentLapisNames[],
+): DownloadFormState {
     return {
         includeRestricted: false,
         dataType: 'metadata',
         compression: undefined,
-        unalignedNucleotideSequence: nucleotideSegmentInfos[0]?.lapisName ?? '',
+        unalignedNucleotideSequence: segmentLapisNames[0] ?? { name: '', lapisNames: [] },
         alignedNucleotideSequence: nucleotideSegmentInfos[0]?.lapisName ?? '',
         alignedAminoAcidSequence: geneInfos[0]?.lapisName ?? '',
         includeRichFastaHeaders: false,
@@ -190,11 +206,14 @@ function getDownloadOption({
             case 'unalignedNucleotideSequences':
                 return {
                     type: downloadFormState.dataType,
-                    segment: useMultiSegmentEndpoint ? downloadFormState.unalignedNucleotideSequence : undefined,
-                    richFastaHeaders:
-                        defaultFastaHeaderTemplate !== undefined
-                            ? { include: true, fastaHeaderOverride: defaultFastaHeaderTemplate }
-                            : { include: downloadFormState.includeRichFastaHeaders },
+                    segmentLapisNames: useMultiSegmentEndpoint
+                        ? downloadFormState.unalignedNucleotideSequence
+                        : undefined,
+                    richFastaHeaders: downloadFormState.includeRichFastaHeaders
+                        ? { include: true }
+                        : defaultFastaHeaderTemplate !== undefined
+                          ? { include: true, fastaHeaderOverride: defaultFastaHeaderTemplate }
+                          : { include: false },
                 };
             case 'alignedNucleotideSequences':
                 return {

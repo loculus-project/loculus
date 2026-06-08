@@ -18,7 +18,7 @@ import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import type { LinkOut } from '../../types/config.ts';
+import type { LinkOut, ContactConfig } from '../../types/config.ts';
 import { type FieldValues, type Schema, type SequenceFlaggingConfig } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
@@ -29,10 +29,12 @@ import {
     getFieldVisibilitiesFromQuery,
     MetadataFilterSchema,
 } from '../../utils/search.ts';
-import { getSegmentAndGeneInfo, stillRequiresReferenceNameSelection } from '../../utils/sequenceTypeHelpers.ts';
+import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
+import ErrorContactMessage from '../common/ErrorContactMessage.tsx';
+import { Spinner } from '../common/Spinner';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -47,8 +49,10 @@ export interface InnerSearchFullUIProps {
     initialQueryDict: QueryState;
     showEditDataUseTermsControls?: boolean;
     dataUseTermsEnabled?: boolean;
+    dataUseTermsAgreementHTML?: string;
     sequenceFlaggingConfig?: SequenceFlaggingConfig;
     linkOuts?: LinkOut[];
+    contactConfig?: ContactConfig;
 }
 
 const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
@@ -74,13 +78,19 @@ export const InnerSearchFullUI = ({
     initialQueryDict,
     showEditDataUseTermsControls = false,
     dataUseTermsEnabled = true,
+    dataUseTermsAgreementHTML,
     sequenceFlaggingConfig,
     linkOuts,
+    contactConfig,
 }: InnerSearchFullUIProps) => {
     hiddenFieldValues ??= {};
 
     const metadataSchema = schema.metadata;
-    const filterSchema = useMemo(() => new MetadataFilterSchema(metadataSchema), [metadataSchema]);
+    const multiFieldSearches = schema.multiFieldSearches;
+    const filterSchema = useMemo(
+        () => new MetadataFilterSchema(metadataSchema, multiFieldSearches),
+        [metadataSchema, multiFieldSearches],
+    );
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
@@ -128,8 +138,8 @@ export const InnerSearchFullUI = ({
      * and the initial `state` (URL search params).
      */
     const fieldValues = useMemo(() => {
-        return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
-    }, [state, hiddenFieldValues, filterSchema]);
+        return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues, referenceGenomesInfo);
+    }, [state, hiddenFieldValues, filterSchema, referenceGenomesInfo]);
 
     useEffect(() => {
         if (showEditDataUseTermsControls && dataUseTermsEnabled) {
@@ -149,19 +159,19 @@ export const InnerSearchFullUI = ({
     const aggregatedHook = hooks.useAggregated();
     const detailsHook = hooks.useDetails();
 
-    const [selectedSeqs, setSelectedSeqs] = useState<Set<string>>(new Set());
+    const [selectedSeqs, setSelectedSeqs] = useState(new Set<string>());
     const sequencesSelected = selectedSeqs.size > 0;
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
+    const segmentAndGeneInfo = useMemo(
+        () => getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
+        [referenceGenomesInfo, referenceSelection?.selectedReferences],
+    );
+
     const tableFilter = useMemo(
         () =>
-            new FieldFilterSet(
-                filterSchema,
-                fieldValues,
-                hiddenFieldValues,
-                getSegmentAndGeneInfo(referenceGenomesInfo, referenceSelection?.selectedReferences),
-            ),
-        [fieldValues, hiddenFieldValues, referenceGenomesInfo, referenceSelection?.selectedReferences, filterSchema],
+            new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, segmentAndGeneInfo, referenceGenomesInfo),
+        [fieldValues, hiddenFieldValues, referenceGenomesInfo, filterSchema],
     );
 
     /**
@@ -215,9 +225,7 @@ export const InnerSearchFullUI = ({
         }
     }, [aggregatedHook.data?.data, oldCount]);
 
-    const showMutationSearch =
-        schema.submissionDataTypes.consensusSequences &&
-        !stillRequiresReferenceNameSelection(referenceGenomesInfo, referenceSelection?.selectedReferences);
+    const showMutationSearch = schema.submissionDataTypes.consensusSequences;
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -287,11 +295,13 @@ export const InnerSearchFullUI = ({
                 {(detailsHook.isPaused || aggregatedHook.isPaused) &&
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
                         <ErrorBox title='Connection problem'>
-                            The browser thinks you are offline. This will affect site usage, and many features may not
-                            work. If you are actually online, please try using a different browser. If the problem
-                            persists, feel free to create an issue in{' '}
-                            <a href='https://github.com/pathoplexus/pathoplexus/issues'>our Github repo</a> or email us
-                            at <a href='mailto:bug@pathoplexus.org'>bug@pathoplexus.org</a>.
+                            <div className='space-y-2 mt-2'>
+                                <p>
+                                    The browser thinks you are offline. This will affect site usage, and many features
+                                    may not work. If you are actually online, please try using a different browser.
+                                </p>
+                                <ErrorContactMessage {...contactConfig} />
+                            </div>
                         </ErrorBox>
                     )}
 
@@ -318,7 +328,9 @@ export const InnerSearchFullUI = ({
                             aggregatedHook.isPending ||
                             !firstClientSideLoadOfCountCompleted ||
                             !firstClientSideLoadOfDataCompleted ? (
-                                <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
+                                <span className='ml-3 appearSlowly inline-block'>
+                                    <Spinner size='xs' />
+                                </span>
                             ) : null}
                         </div>
                         <div className='flex'>
@@ -351,6 +363,7 @@ export const InnerSearchFullUI = ({
                                 referenceGenomesInfo={referenceGenomesInfo}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
+                                dataUseTermsAgreementHTML={dataUseTermsAgreementHTML}
                                 schema={schema}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
                                 selectedReferenceNames={referenceSelection?.selectedReferences}
@@ -363,6 +376,8 @@ export const InnerSearchFullUI = ({
                                     sequenceCount={linkOutSequenceCount}
                                     linkOuts={linkOuts}
                                     dataUseTermsEnabled={dataUseTermsEnabled}
+                                    referenceGenomesInfo={referenceGenomesInfo}
+                                    referenceSelection={referenceSelection}
                                 />
                             )}
                         </div>
@@ -370,21 +385,15 @@ export const InnerSearchFullUI = ({
 
                     <Table
                         schema={schema}
-                        data={
-                            detailsHook.data?.data !== undefined
-                                ? (detailsHook.data.data as TableSequenceData[])
-                                : (oldData ?? initialData)
-                        }
+                        data={detailsHook.data?.data ?? oldData ?? initialData}
                         selectedSeqs={selectedSeqs}
                         setSelectedSeqs={setSelectedSeqs}
                         setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
                         previewedSeqId={previewedSeqId}
-                        orderBy={
-                            {
-                                field: orderByField,
-                                type: orderDirection,
-                            } as OrderBy
-                        }
+                        orderBy={{
+                            field: orderByField,
+                            type: orderDirection,
+                        }}
                         setOrderByField={setOrderByField}
                         setOrderDirection={setOrderDirection}
                         columnsToShow={columnsToShow}

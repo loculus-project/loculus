@@ -25,12 +25,15 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button';
+import { Checkbox } from '../common/Checkbox';
+import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 export type UploadAction = 'submit' | 'revise';
 
 type DataUploadFormProps = {
     accessToken: string;
+    instanceName: string;
     organism: string;
     clientConfig: ClientConfig;
     action: UploadAction;
@@ -47,6 +50,7 @@ const logger = getClientLogger('DataUploadForm');
 
 const InnerDataUploadForm = ({
     accessToken,
+    instanceName,
     organism,
     clientConfig,
     action,
@@ -64,7 +68,7 @@ const InnerDataUploadForm = ({
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
-    const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
+    const [restrictedUntil, setRestrictedUntil] = useState(dateTimeInMonths(6));
 
     const [agreedToINSDCUploadTerms, setAgreedToINSDCUploadTerms] = useState(false);
 
@@ -189,6 +193,7 @@ const InnerDataUploadForm = ({
                 {action === 'submit' && dataUseTermsEnabled && (
                     <>
                         <DataUseTerms
+                            instanceName={instanceName}
                             dataUseTermsType={dataUseTermsType}
                             setDataUseTermsType={setDataUseTermsType}
                             restrictedUntil={restrictedUntil}
@@ -200,6 +205,7 @@ const InnerDataUploadForm = ({
                 {dataUseTermsEnabled && (
                     <>
                         <Acknowledgement
+                            instanceName={instanceName}
                             confirmedNoPII={confirmedNoPII}
                             setConfirmedNoPII={setConfirmedNoPII}
                             agreedToINSDCUploadTerms={agreedToINSDCUploadTerms}
@@ -212,12 +218,12 @@ const InnerDataUploadForm = ({
                     <Button
                         name='submit'
                         type='submit'
-                        className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
+                        className='rounded-md py-2 text-sm font-semibold shadow-xs focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
                         onClick={(e) => void handleSubmit(e)}
                         alsoDisabledIf={isPending}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
-                            <span className='loading loading-spinner loading-sm' />
+                            <Spinner size='sm' />
                         </div>
                         <span className='flex-1 text-center mx-8'>Submit sequences</span>
                     </Button>
@@ -266,7 +272,7 @@ const InputModeTabs = ({
                 } hover:text-primary-600`}
                 href={inputModeUrl('form')}
             >
-                Submit single sequence
+                Submit individual sequence entry using a form
             </a>
         </div>
     );
@@ -303,7 +309,7 @@ export const ExtraFilesUpload = ({
                 {fileCategories.map((fileCategory) => (
                     <FolderUploadComponent
                         key={fileCategory.name}
-                        fileCategory={fileCategory.name}
+                        fileCategory={fileCategory}
                         inputMode={inputMode}
                         accessToken={accessToken}
                         clientConfig={clientConfig}
@@ -318,11 +324,13 @@ export const ExtraFilesUpload = ({
 };
 
 const DataUseTerms = ({
+    instanceName,
     dataUseTermsType,
     setDataUseTermsType,
     restrictedUntil,
     setRestrictedUntil,
 }: {
+    instanceName: string;
     dataUseTermsType: DataUseTermsOption;
     setDataUseTermsType: (dataUseTermsType: DataUseTermsOption) => void;
     restrictedUntil: DateTime;
@@ -353,10 +361,12 @@ const DataUseTerms = ({
                         />
                     </div>
                     {dataUseTermsType === openDataUseTermsOption ? (
-                        <p className='text-sm'>Your data will be available on Pathoplexus under the open use terms.</p>
+                        <p className='text-sm'>
+                            Your data will be available on {instanceName} under the open use terms.
+                        </p>
                     ) : (
                         <p className='text-sm'>
-                            Your data will be available on Pathoplexus, under the restricted use terms until{' '}
+                            Your data will be available on {instanceName}, under the restricted use terms until{' '}
                             {restrictedUntil.toFormat('yyyy-MM-dd')} and under the open use terms after that date.
                         </p>
                     )}
@@ -367,11 +377,13 @@ const DataUseTerms = ({
 };
 
 const Acknowledgement = ({
+    instanceName,
     confirmedNoPII,
     setConfirmedNoPII,
     agreedToINSDCUploadTerms,
     setAgreedToINSDCUploadTerms,
 }: {
+    instanceName: string;
     confirmedNoPII: boolean;
     setConfirmedNoPII: Dispatch<SetStateAction<boolean>>;
     agreedToINSDCUploadTerms: boolean;
@@ -386,7 +398,7 @@ const Acknowledgement = ({
             <div className='gap-x-6 gap-y-8 col-span-2'>
                 <div>
                     <p className='block text-sm'>
-                        Your data will be available on Pathoplexus, under the selected data use terms. Data with open
+                        Your data will be available on {instanceName}, under the selected data use terms. Data with open
                         data use terms will additionally be made publicly available through the{' '}
                         <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
                             INSDC
@@ -395,33 +407,34 @@ const Acknowledgement = ({
                     </p>
                     <div className='mt-2 py-5'>
                         <label className='flex items-center'>
-                            <input
-                                type='checkbox'
+                            <Checkbox
+                                size='sm'
                                 name='confirmation-no-pii'
-                                className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-600'
+                                className='mr-3 ml-1'
                                 checked={confirmedNoPII}
                                 onChange={() => setConfirmedNoPII(!confirmedNoPII)}
                             />
                             <div>
                                 <p className='text-xs pl-4 text-gray-500'>
-                                    I confirm that the data submitted is not sensitive or human-identifiable
+                                    I confirm that the data submitted is not sensitive or human-identifiable.
                                 </p>
                             </div>
                         </label>
                     </div>
                     <div className='mb-4 py-3'>
                         <label className='flex items-center'>
-                            <input
-                                type='checkbox'
+                            <Checkbox
+                                size='sm'
                                 name='confirmation-INSDC-upload-terms'
-                                className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-600'
+                                className='mr-3 ml-1'
                                 checked={agreedToINSDCUploadTerms}
                                 onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
                             />
                             <div>
                                 <p className='text-xs pl-4 text-gray-500'>
                                     I confirm I have not and will not submit this data independently to INSDC, to avoid
-                                    data duplication. I agree to Loculus handling the submission of this data to INSDC.{' '}
+                                    data duplication. I agree to {instanceName} handling the submission of this data to
+                                    INSDC.{' '}
                                     <a
                                         href='/docs/concepts/insdc-submission'
                                         className='text-primary-600 hover:underline'

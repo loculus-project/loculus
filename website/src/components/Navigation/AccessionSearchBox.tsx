@@ -5,13 +5,20 @@ import { Button } from '../common/Button';
 import SearchIcon from '~icons/material-symbols/search';
 
 interface Props {
+    accessionPrefix: string;
     className?: string;
     onSubmitSuccess?: () => void;
     defaultOpen?: boolean;
     fullWidth?: boolean;
 }
 
-export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defaultOpen, fullWidth }) => {
+export const AccessionSearchBox: FC<Props> = ({
+    accessionPrefix,
+    className,
+    onSubmitSuccess,
+    defaultOpen,
+    fullWidth,
+}) => {
     const [value, setValue] = useState('');
     const [open, setOpen] = useState(!!defaultOpen);
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -28,6 +35,12 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
         return /^[A-Za-z0-9._-]+$/.test(input);
     }
 
+    // Evaluate if the accession is a seqSet
+    function isSeqSetAccession(accession: string): boolean {
+        const seqSetPrefix = `${accessionPrefix}SS_`;
+        return accession.startsWith(seqSetPrefix);
+    }
+
     const onSubmit = (e: FormEvent) => {
         e.preventDefault();
         const v = value.trim();
@@ -42,7 +55,9 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
         }
         setError(null);
         onSubmitSuccess?.();
-        window.location.href = routes.sequenceEntryDetailsPage(v);
+
+        if (isSeqSetAccession(v)) window.location.href = routes.seqSetPage(v);
+        else window.location.href = routes.sequenceEntryDetailsPage(v);
     };
 
     return (
@@ -80,8 +95,10 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
                     }}
                     placeholder='Search by accession'
                     className={
-                        `input input-bordered input-md text-sm placeholder:text-gray-500 text-gray-900 ` +
-                        `bg-white focus:border-primary focus:outline-none transition-all duration-200 ease-out ml-2 ` +
+                        `rounded border border-base-content/20 bg-white text-sm h-10 px-3 ` +
+                        `focus:outline-none focus:border-base-content/40 focus:ring-1 focus:ring-base-content/20 ` +
+                        `placeholder:text-gray-500 text-gray-900 ` +
+                        `bg-white focus:border-primary focus:outline-hidden transition-all duration-200 ease-out ml-2 ` +
                         (open
                             ? `px-3 ${fullWidth ? 'w-full' : 'w-36 lg:w-48'} opacity-100`
                             : 'px-0 w-0 opacity-0 pointer-events-none')

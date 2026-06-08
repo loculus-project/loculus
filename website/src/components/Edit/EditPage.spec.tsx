@@ -75,21 +75,21 @@ describe('EditPage', () => {
         renderEditPage({ allowSubmissionOfConsensusSequences: false });
 
         expect(screen.getByText(/Original data/i)).toBeInTheDocument();
-        expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
+        expectTextInSequenceData.unprocessedMetadata(defaultReviewData.originalData.metadata);
     });
 
     test('should show original data', () => {
         renderEditPage();
 
         expect(screen.getByText(/Original data/i)).toBeInTheDocument();
-        expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
+        expectTextInSequenceData.unprocessedMetadata(defaultReviewData.originalData.metadata);
     });
 
     test('should show error and warning tooltips', () => {
         renderEditPage();
 
-        expect(document.querySelector('.tooltip[data-tip="errorMessage"]')).toBeTruthy();
-        expect(document.querySelector('.tooltip[data-tip="warningMessage"]')).toBeTruthy();
+        expect(document.querySelector('[data-tooltip-content="errorMessage"]')).toBeTruthy();
+        expect(document.querySelector('[data-tooltip-content="warningMessage"]')).toBeTruthy();
     });
 
     test('should edit, show errors and undo input', async () => {
@@ -103,19 +103,19 @@ describe('EditPage', () => {
         const someTextToAdd = '_addedText';
         await userEvent.type(screen.getByDisplayValue(editableEntry), someTextToAdd);
 
-        expectTextInSequenceData.originalMetadata({
+        expectTextInSequenceData.unprocessedMetadata({
             [metadataKey]: editableEntry + someTextToAdd,
         });
-        const undoButton = document.querySelector(`.tooltip[data-tip="Revert to: ${editableEntry}"]`);
+        const undoButton = document.querySelector(`[data-tooltip-content="Revert to: ${editableEntry}"]`);
         expect(undoButton).not.toBeNull();
 
         await userEvent.click(undoButton!);
-        expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
+        expectTextInSequenceData.unprocessedMetadata(defaultReviewData.originalData.metadata);
     });
 });
 
 const expectTextInSequenceData = {
-    originalMetadata: (metadata: UnprocessedMetadataRecord): void =>
+    unprocessedMetadata: (metadata: UnprocessedMetadataRecord): void =>
         Object.entries(metadata).forEach(([key, value]) => {
             const label = document.querySelector(`label[for="${key}"]`);
             expect(label).toBeTruthy();

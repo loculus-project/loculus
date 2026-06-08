@@ -14,7 +14,7 @@ class SiloRunner:
 
     def run_preprocessing(self, timeout_seconds: int) -> None:
         logger.info("Starting SILO preprocessing")
-        try:
+        try:  # noqa: PLW0717
             result = subprocess.run(  # noqa: S603
                 [str(self._silo_binary), "preprocessing"],
                 env={"SILO_PREPROCESSING_CONFIG": str(self._preprocessing_config)},
@@ -25,6 +25,7 @@ class SiloRunner:
             )
             if result.returncode != 0:
                 logger.error("SILO preprocessing stderr: %s", result.stderr)
+                logger.error("SILO preprocessing stdout: %s", result.stdout)
                 msg = f"SILO preprocessing failed with exit code {result.returncode}"
                 raise RuntimeError(msg)
             logger.info("SILO preprocessing completed successfully")

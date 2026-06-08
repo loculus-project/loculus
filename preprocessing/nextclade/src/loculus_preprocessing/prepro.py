@@ -5,8 +5,6 @@ from collections.abc import Sequence
 from tempfile import TemporaryDirectory
 from typing import Any
 
-import dpath
-
 from .backend import (
     download_diamond_db,
     download_minimizer,
@@ -15,7 +13,13 @@ from .backend import (
     submit_processed_sequences,
     upload_embl_file_to_presigned_url,
 )
-from .config import AlignmentRequirement, Config, ProcessingSpec, SequenceName
+from .config import (
+    METADATA_DEPENDENCY_PREFIX,
+    AlignmentRequirement,
+    Config,
+    ProcessingSpec,
+    SequenceName,
+)
 from .datatypes import (
     AccessionVersion,
     AminoAcidInsertion,
@@ -50,11 +54,14 @@ from .nextclade import (
 )
 from .processing_functions import (
     ProcessingFunctions,
+    null_per_backend,
     process_frameshifts,
+    process_labeled_mutations,
+    process_mutations_from_clade_founder,
     process_phenotype_values,
     process_stop_codons,
 )
-from .sequence_checks import errors_if_non_iupac
+from .sequence_checks import error_on_excess_sequences, errors_if_non_iupac
 
 logger = logging.getLogger(__name__)
 
@@ -65,16 +72,6 @@ def accession_from_str(id_str: AccessionVersion) -> str:
 
 def version_from_str(id_str: AccessionVersion) -> int:
     return int(id_str.split(".")[1])
-
-
-def null_per_backend(x: Any) -> bool:
-    match x:
-        case None:
-            return True
-        case "":
-            return True
-        case _:
-            return False
 
 
 class MultipleSequencesPerSegmentError(Exception):
@@ -128,6 +125,24 @@ def get_dataset_name(
     return lapis_names[0]
 
 
+def truncate_after_wildcard(path: str, separator: str = ".") -> str:
+    parts = path.split(separator)
+    if "*" in parts:
+        return separator.join(parts[: parts.index("*")])
+    return path
+
+
+def get_nested_metadata(metadata: dict[str, Any], path: str, separator: str = ".") -> Any | None:
+    value: Any = metadata
+    for part in path.split(separator):
+        if not isinstance(value, dict):
+            return None
+        value = value.get(part)
+        if value is None:
+            return None
+    return value
+
+
 def add_nextclade_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
@@ -163,12 +178,10 @@ def add_nextclade_metadata(
     ):
         return InputData(datum=None)
 
-    raw: str | None = dpath.get(
+    raw: Any | None = get_nested_metadata(
         unprocessed.nextcladeMetadata[sequence_name],
-        nextclade_path,
-        separator=".",
-        default=None,
-    )  # type: ignore[assignment]
+        truncate_after_wildcard(nextclade_path),
+    )
 
     match nextclade_path:
         case "frameShifts":
@@ -180,6 +193,15 @@ def add_nextclade_metadata(
         case "phenotypeValues":
             result = None if raw is None else str(raw)
             return process_phenotype_values(result, spec.args)
+        case "cladeFounderInfo.aaMutations.*.privateSubstitutions":
+            result = None if raw is None else str(raw)
+            return process_mutations_from_clade_founder(result, spec.args)
+        case "cladeNodeAttrFounderInfo.outbreak.aaMutations.*.privateSubstitutions":
+            result = None if raw is None else str(raw)
+            return process_mutations_from_clade_founder(result, spec.args)
+        case "privateAaMutations.*.labeledSubstitutions.substitution":
+            result = None if raw is None else str(raw)
+            return process_labeled_mutations(result, spec.args)
         case _:
             return InputData(datum=str(raw))
 
@@ -189,13 +211,13 @@ def add_assigned_reference(
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
 ) -> InputData:
-    if not unprocessed.nextcladeMetadata:
+    if not unprocessed.unalignedNucleotideSequences:
         return InputData(datum=None)
     segment = spec.args.get("segment", "main") if spec.args else "main"
     if not isinstance(segment, str):
         msg = f"add_assigned_reference: segment must be str, got {type(segment)}"
         raise TypeError(msg)
-    name = get_dataset_name(segment, unprocessed.nextcladeMetadata, config)
+    name = get_dataset_name(segment, unprocessed.unalignedNucleotideSequences, config)
     if not name:
         return InputData(datum=None)
     reference = config.get_dataset_by_name(name).reference_name
@@ -236,7 +258,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     args = dict(spec.args) if spec.args else {}
     args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
     args["submittedAt"] = submitted_at
-    args["accession_version"] = accession_version
+    args["ACCESSION_VERSION"] = accession_version
 
     try:
         processing_result = ProcessingFunctions.call_function(
@@ -307,7 +329,8 @@ def get_output_metadata(
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
-    for output_field, spec in config.processing_spec.items():
+    for output_field in config.processing_order:
+        spec = config.processing_spec[output_field]
         input_data: InputMetadata = {}
         input_fields: list[str] = []
         if output_field == "length":
@@ -342,12 +365,25 @@ def get_output_metadata(
             continue
 
         for arg_name, input_path in spec.inputs.items():
+            get_from_processed = False
+            if input_path.startswith(METADATA_DEPENDENCY_PREFIX):
+                resolved_path = input_path.replace(METADATA_DEPENDENCY_PREFIX, "", 1)
+                get_from_processed = True
+            else:
+                resolved_path = input_path
+
             if isinstance(unprocessed, UnprocessedAfterNextclade):
-                input_metadata = add_input_metadata(spec, unprocessed, input_path, config=config)
-                input_data[arg_name] = input_metadata.datum
-                errors.extend(input_metadata.errors)
-                warnings.extend(input_metadata.warnings)
-                input_fields.append(input_path)
+                if get_from_processed:
+                    input_data[arg_name] = output_metadata.get(resolved_path)  # type: ignore
+                else:
+                    input_metadata = add_input_metadata(
+                        spec, unprocessed, resolved_path, config=config
+                    )
+                    input_data[arg_name] = input_metadata.datum
+                    errors.extend(input_metadata.errors)
+                    warnings.extend(input_metadata.warnings)
+
+                input_fields.append(resolved_path)
                 group_id = (
                     int(unprocessed.inputMetadata["group_id"])
                     if unprocessed.inputMetadata["group_id"]
@@ -355,8 +391,12 @@ def get_output_metadata(
                 )
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
-                input_data[arg_name] = unprocessed.metadata.get(input_path)
-                input_fields.append(input_path)
+                input_data[arg_name] = (
+                    output_metadata.get(resolved_path)  # type: ignore
+                    if get_from_processed
+                    else unprocessed.metadata.get(resolved_path)
+                )
+                input_fields.append(resolved_path)
                 group_id = unprocessed.group_id
                 submitted_at = unprocessed.submittedAt
 
@@ -379,12 +419,16 @@ def get_output_metadata(
             and spec.required
             and group_id != config.insdc_ingest_group_id
         ):
+            message = f"Metadata field `{output_field}` is required."
+            additional_inputs = [i for i in input_fields if i != output_field]
+            if additional_inputs:
+                message += f" Please provide input metadata field(s): {', '.join(f'`{field}`' for field in additional_inputs)}"
             errors.append(
                 ProcessingAnnotation.from_fields(
                     spec.inputs.values(),
                     [output_field],
                     AnnotationSourceType.METADATA,
-                    message=f"Metadata field {output_field} is required.",
+                    message=message,
                 )
             )
     logger.debug(f"Processed {accession_version}: {output_metadata}")
@@ -471,6 +515,11 @@ def process_single(
     """Process a single sequence per config"""
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
+    max_seq_errors = error_on_excess_sequences(
+        len(unprocessed.unalignedNucleotideSequences),
+        config,
+    )
+
     alignment_errors, alignment_warnings = alignment_errors_warnings(
         unprocessed,
         config,
@@ -492,7 +541,15 @@ def process_single(
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
             sequenceNameToFastaId=unprocessed.sequenceNameToFastaId,
         ),
-        errors=list(set(unprocessed.errors + iupac_errors + alignment_errors + metadata_errors)),
+        errors=list(
+            set(
+                unprocessed.errors
+                + iupac_errors
+                + max_seq_errors
+                + alignment_errors
+                + metadata_errors
+            )
+        ),
         warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
     )
 

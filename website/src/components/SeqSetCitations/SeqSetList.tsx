@@ -22,6 +22,7 @@ const SeqSetListHead = (props: SeqSetListHeadProps) => {
     interface HeadCell {
         id: keyof SeqSet;
         label: string;
+        hideOnSmall?: boolean;
     }
 
     const headCells: readonly HeadCell[] = [
@@ -40,6 +41,7 @@ const SeqSetListHead = (props: SeqSetListHeadProps) => {
         {
             id: 'seqSetDOI',
             label: 'DOI',
+            hideOnSmall: true,
         },
     ];
 
@@ -53,7 +55,7 @@ const SeqSetListHead = (props: SeqSetListHeadProps) => {
                 {headCells.map((headCell, index) => (
                     <th
                         key={headCell.id}
-                        className={`px-2 py-5 text-xs w-1/12 font-medium tracking-wider uppercase ${index === 0 ? 'pl-6' : 'last:pr-6 text-left'}`}
+                        className={`px-2 py-5 text-xs w-1/12 font-medium tracking-wider uppercase ${index === 0 ? 'pl-6' : 'last:pr-6 text-left'} ${headCell.hideOnSmall ? 'hidden sm:table-cell' : ''}`}
                     >
                         <span
                             className={`cursor-pointer ${orderBy === headCell.id ? 'active' : ''}`}
@@ -95,7 +97,7 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
     };
 
     const handleClick = (_: MouseEvent<unknown>, seqSetId: string, seqSetVersion: string) => {
-        window.location.href = routes.seqSetPage(seqSetId, seqSetVersion);
+        window.location.href = routes.seqSetPage(`${seqSetId}.${seqSetVersion}`);
     };
 
     const handleChangePage = (_: unknown, newPage: number) => {
@@ -176,7 +178,7 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
                                 </td>
                                 <td className='px-2 py-2 text-primary-900 last:pr-6'>{truncateCell(row.name)}</td>
                                 <td className='px-2 py-2 text-primary-900 last:pr-6'>{row.seqSetVersion}</td>
-                                <td className='px-2 py-2 text-primary-900 last:pr-6'>
+                                <td className='px-2 py-2 text-primary-900 last:pr-6 hidden sm:table-cell'>
                                     {row.seqSetDOI !== undefined ? truncateCell(row.seqSetDOI) : 'N/A'}
                                 </td>
                             </tr>

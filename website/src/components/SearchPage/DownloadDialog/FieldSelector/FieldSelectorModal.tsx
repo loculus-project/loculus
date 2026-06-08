@@ -48,6 +48,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         name: field.name,
         displayName: field.displayName,
         header: field.header,
+        order: field.order,
         displayState: getDisplayState(
             field,
             referenceGenomesInfo,

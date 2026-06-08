@@ -7,17 +7,29 @@ type BoxWithTabsTabBarProps = {
 };
 
 export const BoxWithTabsTabBar: FC<BoxWithTabsTabBarProps> = ({ children }) => (
-    <div className='tabs -mb-px tabs-lifted flex flex-wrap'>{children}</div>
+    <div role='tablist' className='-mb-px flex flex-wrap'>
+        {children}
+    </div>
 );
 
 type BoxWithTabsTabProps = {
     isActive: boolean;
     label: string;
     onClick?: () => void;
+    className?: string;
 };
 
-export const BoxWithTabsTab: FC<BoxWithTabsTabProps> = ({ isActive, label, onClick }) => (
-    <Button className={`tab ${isActive ? 'tab-active font-semibold' : ''}`} onClick={onClick}>
+const tabBase = 'relative h-10 px-3 text-sm border rounded-t-lg';
+const tabInactive = 'border-transparent text-base-content/50 hover:text-base-content';
+const tabActive = 'z-10 font-semibold text-base-content bg-white border-base-300 border-b-white';
+
+export const BoxWithTabsTab: FC<BoxWithTabsTabProps> = ({ isActive, label, onClick, className }) => (
+    <Button
+        role='tab'
+        aria-selected={isActive}
+        className={`${tabBase} ${isActive ? tabActive : tabInactive} ${className ?? ''}`.trimEnd()}
+        onClick={onClick}
+    >
         {label}
     </Button>
 );

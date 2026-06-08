@@ -38,6 +38,14 @@ const getSeqSetEndpoint = makeEndpoint({
     errors: [notAuthorizedError],
 });
 
+const getSeqSetVersionsEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/get-seqset?seqSetId=:seqSetId',
+    alias: 'getSeqSetVersions',
+    response: seqSets,
+    errors: [notAuthorizedError],
+});
+
 const getSeqSetRecordsEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-seqset-records?seqSetId=:seqSetId&version=:version',
@@ -167,6 +175,7 @@ export const seqSetCitationApi = makeApi([
     getUserCitedByEndpoint,
     getSeqSetCitedByEndpoint,
     getSeqSetEndpoint,
+    getSeqSetVersionsEndpoint,
     getSeqSetRecordsEndpoint,
     validateSeqSetRecords,
     createSeqSetEndpoint,

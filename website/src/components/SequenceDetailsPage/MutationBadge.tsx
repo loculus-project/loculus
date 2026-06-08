@@ -1,6 +1,7 @@
 import { type FC, type ReactElement, useMemo, useState } from 'react';
 
-import type { MutationBadgeData, SegmentedMutations } from '../../types/config';
+import { PlainValueDisplay } from './PlainValueDisplay';
+import type { MutationBadgeData, SegmentedMutations, SegmentedMutationStrings } from '../../types/config';
 import { Button } from '../common/Button';
 
 export type SubProps = {
@@ -8,10 +9,6 @@ export type SubProps = {
     mutationTo: string;
     mutationFrom: string;
     sequenceName: string | null;
-};
-
-export type Props = {
-    values: MutationBadgeData[];
 };
 
 export const SubBadge: FC<SubProps> = ({ position, mutationTo, mutationFrom, sequenceName }) => {
@@ -76,13 +73,23 @@ export function getColor(code: string): string {
 
 const MAX_INITIAL_NUMBER_BADGES = 20;
 
-export const SubstitutionsContainers = ({ values }: { values: SegmentedMutations[] }) => {
+export const SubstitutionsContainers = ({
+    values,
+    segmentDisplayNameMap,
+}: {
+    values: SegmentedMutations[];
+    segmentDisplayNameMap?: Record<string, string>;
+}) => {
     return values.map(({ segment, mutations }) => (
         <div key={segment}>
-            <h2 className='py-1 my-1 font-semibold border-b'>{segment}</h2>
+            <h2 className='py-1 my-1 font-semibold border-b'>{segmentDisplayNameMap?.[segment] ?? segment}</h2>
             <SubstitutionsContainer values={mutations} />
         </div>
     ));
+};
+
+export type Props = {
+    values: MutationBadgeData[];
 };
 
 export const SubstitutionsContainer: FC<Props> = ({ values }) => {
@@ -92,14 +99,13 @@ export const SubstitutionsContainer: FC<Props> = ({ values }) => {
         let alwaysVisible: ReactElement[] = [];
         let initiallyHidden: ReactElement[] = [];
         const elements = values.map(({ mutationFrom, mutationTo, position, sequenceName }, index) => (
-            <span key={index}>
-                <SubBadge
-                    sequenceName={sequenceName}
-                    mutationFrom={mutationFrom}
-                    position={position}
-                    mutationTo={mutationTo}
-                />{' '}
-            </span>
+            <SubBadge
+                key={index}
+                sequenceName={sequenceName}
+                mutationFrom={mutationFrom}
+                position={position}
+                mutationTo={mutationTo}
+            />
         ));
         if (elements.length <= MAX_INITIAL_NUMBER_BADGES) {
             alwaysVisible = elements;
@@ -111,7 +117,7 @@ export const SubstitutionsContainer: FC<Props> = ({ values }) => {
     }, [values]);
 
     return (
-        <div>
+        <ul className='list-none p-0 m-0 flex flex-wrap gap-1'>
             {alwaysVisible}
             {initiallyHidden.length > 0 &&
                 (showMore ? (
@@ -131,6 +137,21 @@ export const SubstitutionsContainer: FC<Props> = ({ values }) => {
                         Show more
                     </Button>
                 ))}
-        </div>
+        </ul>
     );
+};
+
+export const MutationStringContainers = ({
+    values,
+    segmentDisplayNameMap,
+}: {
+    values: SegmentedMutationStrings[];
+    segmentDisplayNameMap?: Record<string, string>;
+}) => {
+    return values.map(({ segment, mutations }) => (
+        <div key={segment}>
+            <h2 className='py-1 my-1 font-semibold border-b'>{segmentDisplayNameMap?.[segment] ?? segment}</h2>
+            <PlainValueDisplay value={mutations.flat().join(', ')} />
+        </div>
+    ));
 };

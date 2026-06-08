@@ -57,7 +57,7 @@ def make_request(
     files: dict[str, Any] | None = None,
     json_body: dict[str, Any] | None = None,
     data: str | None = None,
-    auth: bool = True
+    auth: bool = True,
 ) -> requests.Response:
     """Generic request function to handle repetitive tasks like fetching JWT and setting headers."""
     if headers is None:

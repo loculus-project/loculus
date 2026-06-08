@@ -8,6 +8,7 @@ jobs:
     strategy:
       matrix:
         taxon_id:
+          - 10244    # Mpox
           - 11053    # Dengue type 1
           - 11060    # Dengue type 2
           - 11069    # Dengue type 3
@@ -37,6 +38,7 @@ jobs:
           - 277944   # Coronavirus NL63
           - 290028   # Coronavirus HKU1
           - 3050294  # Chickenpox virus
+          - 1980442  # Orthohantavirus
       fail-fast: false
     uses: ./.github/workflows/datasets-mirror.yml
     secrets: inherit

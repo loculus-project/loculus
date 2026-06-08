@@ -109,6 +109,8 @@ class Config(BaseModel):
     ingest_pipeline_submission_group: int
     ena_checklist: str | None = None
     set_alias_suffix: str | None = None  # Add to test revisions in dev
+    # Add timestamp and entropy to test sample aliases in integration tests to avoid name clashes
+    random_alias: bool = False
 
     ena_http_timeout_seconds: int = 60
     ena_public_search_timeout_seconds: int = 120
@@ -123,6 +125,7 @@ class Config(BaseModel):
     log_level: str = "DEBUG"
 
     retry_threshold_min: int = 240
+    slack_retry_substrings: list[str] = field(default_factory=list)
     slack_retry_threshold_min: int = 720
     submitting_time_threshold_min: int = 15
     waiting_threshold_hours: int = 48

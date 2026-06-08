@@ -34,7 +34,7 @@ export function getSequenceRelatedItems(organism: string | undefined) {
         icon: SearchIcon,
     };
 
-    if (!getWebsiteConfig().enableSubmissionNavigationItem) {
+    if (!getWebsiteConfig().enableSubmissionNavigationItem || getWebsiteConfig().readOnlyMode) {
         return [browseItem];
     }
 
@@ -61,7 +61,7 @@ function getSeqSetsItems() {
 }
 
 function getAccountItems(isLoggedIn: boolean, loginUrl: string) {
-    if (!getWebsiteConfig().enableLoginNavigationItem) {
+    if (!getWebsiteConfig().enableLoginNavigationItem || getWebsiteConfig().readOnlyMode) {
         return [];
     }
 

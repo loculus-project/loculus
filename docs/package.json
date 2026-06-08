@@ -13,17 +13,17 @@
         "format": "prettier --ignore-path \"../.gitignore\" --ignore-path .gitignore --write \"./**/*.{ts,tsx,json,astro,md,mdx,mjs,cjs}\""
     },
     "dependencies": {
-        "@astrojs/check": "^0.9.6",
-        "@astrojs/starlight": "^0.37.6",
-        "@astrojs/starlight-tailwind": "^3.0.1",
-        "@astrojs/tailwind": "^6.0.2",
-        "astro": "^5.17.1",
-        "prettier": "^3.8.1",
+        "@astrojs/check": "^0.9.9",
+        "@astrojs/starlight": "^0.39.3",
+        "@astrojs/starlight-tailwind": "^5.0.0",
+        "@tailwindcss/vite": "^4.3.0",
+        "astro": "^6.4.4",
+        "prettier": "^3.8.3",
         "prettier-plugin-astro": "^0.14.1",
-        "prettier-plugin-tailwindcss": "^0.7.2",
+        "prettier-plugin-tailwindcss": "^0.8.0",
         "sharp": "^0.34.5",
-        "tailwindcss": "^3.4.16",
-        "typescript": "^5.9.3"
+        "tailwindcss": "^4.3.0",
+        "typescript": "^6.0.3"
     },
     "devDependencies": {
         "@types/json-schema": "^7.0.15"

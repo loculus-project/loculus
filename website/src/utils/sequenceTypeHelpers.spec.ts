@@ -7,7 +7,7 @@ import {
     getInsdcAccessionsFromSegmentReferences,
     lapisNameToDisplayName,
     segmentsWithMultipleReferences,
-    stillRequiresReferenceNameSelection,
+    allReferencesSelected,
 } from './sequenceTypeHelpers';
 import {
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
@@ -24,8 +24,8 @@ describe('getSegmentAndGeneInfo', () => {
         expect(out).toEqual({
             nucleotideSegmentInfos: [{ name: 'main', lapisName: 'main' }],
             geneInfos: [
-                { lapisName: 'gene1', name: 'gene1' },
-                { lapisName: 'gene2', name: 'gene2' },
+                { lapisName: 'gene1', name: 'gene1', segmentName: 'main' },
+                { lapisName: 'gene2', name: 'gene2', segmentName: 'main' },
             ],
             useLapisMultiSegmentedEndpoint: false,
             multiSegmented: false,
@@ -43,8 +43,8 @@ describe('getSegmentAndGeneInfo', () => {
         ]);
 
         expect(out.geneInfos).toEqual([
-            { lapisName: 'gene1', name: 'gene1' },
-            { lapisName: 'gene2', name: 'gene2' },
+            { lapisName: 'gene1', name: 'gene1', segmentName: 'S' },
+            { lapisName: 'gene2', name: 'gene2', segmentName: 'L' },
         ]);
 
         expect(out.useLapisMultiSegmentedEndpoint).toBe(true);
@@ -58,8 +58,8 @@ describe('getSegmentAndGeneInfo', () => {
 
         expect(out.nucleotideSegmentInfos).toEqual([{ name: 'main', lapisName: 'ref2' }]);
         expect(out.geneInfos).toEqual([
-            { lapisName: 'gene1-ref2', name: 'gene1' },
-            { lapisName: 'gene2-ref2', name: 'gene2' },
+            { lapisName: 'gene1-ref2', name: 'gene1', segmentName: 'main' },
+            { lapisName: 'gene2-ref2', name: 'gene2', segmentName: 'main' },
         ]);
         expect(out.useLapisMultiSegmentedEndpoint).toBe(true);
         expect(out.multiSegmented).toBe(false);
@@ -168,22 +168,18 @@ describe('segmentsWithMultipleReferences', () => {
     });
 });
 
-describe('stillRequiresReferenceNameSelection', () => {
+describe('allReferencesSelected', () => {
     it('false when there are no multi-reference segments', () => {
-        expect(stillRequiresReferenceNameSelection(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { main: null })).toBe(false);
+        expect(allReferencesSelected(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, { main: null })).toBe(true);
 
-        expect(stillRequiresReferenceNameSelection(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { S: null, L: null })).toBe(
-            false,
-        );
+        expect(allReferencesSelected(MULTI_SEG_SINGLE_REF_REFERENCEGENOMES, { S: null, L: null })).toBe(true);
     });
 
     it('true when a multi-reference segment has null selection', () => {
-        expect(stillRequiresReferenceNameSelection(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: null })).toBe(true);
+        expect(allReferencesSelected(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: null })).toBe(false);
     });
 
     it('false when all multi-reference segments have a selection', () => {
-        expect(stillRequiresReferenceNameSelection(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: 'ref1' })).toBe(
-            false,
-        );
+        expect(allReferencesSelected(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: 'ref1' })).toBe(true);
     });
 });

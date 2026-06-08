@@ -14,6 +14,7 @@ import { type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
+import { Button } from '../common/Button';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
 import MdiEye from '~icons/mdi/eye';
 
@@ -30,6 +31,7 @@ interface Props {
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     referenceGenomesInfo: ReferenceGenomesInfo;
     isRevocation?: boolean;
+    onRevokeSuccess?: () => void;
 }
 
 export const SequenceDataUI: FC<Props> = ({
@@ -45,6 +47,7 @@ export const SequenceDataUI: FC<Props> = ({
     sequenceFlaggingConfig,
     referenceGenomesInfo,
     isRevocation,
+    onRevokeSuccess,
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
 
@@ -93,31 +96,35 @@ export const SequenceDataUI: FC<Props> = ({
                             Only visible to group members
                         </div>
 
-                        {isRestricted && (
-                            <EditDataUseTermsButton
-                                clientConfig={clientConfig}
-                                accessToken={accessToken}
-                                accessionVersion={[accessionVersion.split('.')[0]]}
-                                dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
-                            />
-                        )}
+                        <div className='flex flex-wrap gap-3'>
+                            {isRestricted && (
+                                <EditDataUseTermsButton
+                                    clientConfig={clientConfig}
+                                    accessToken={accessToken}
+                                    accessionVersion={[accessionVersion.split('.')[0]]}
+                                    dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
+                                />
+                            )}
 
-                        <a
-                            href={routes.editPage(organism, {
-                                accession: accessionVersion.split('.')[0],
-                                version: parseInt(accessionVersion.split('.')[1], 10),
-                            })}
-                            className='btn btn-sm mr-3'
-                        >
-                            Revise this sequence
-                        </a>
-                        <RevokeButton
-                            organism={organism}
-                            clientConfig={clientConfig}
-                            accessionVersion={accessionVersion.split('.')[0]}
-                            accessToken={accessToken}
-                            groupId={groupId}
-                        />
+                            <Button
+                                as='a'
+                                size='sm'
+                                href={routes.editPage(organism, {
+                                    accession: accessionVersion.split('.')[0],
+                                    version: parseInt(accessionVersion.split('.')[1], 10),
+                                })}
+                            >
+                                Revise this sequence
+                            </Button>
+                            <RevokeButton
+                                organism={organism}
+                                clientConfig={clientConfig}
+                                accessionVersion={accessionVersion.split('.')[0]}
+                                accessToken={accessToken}
+                                groupId={groupId}
+                                onRevokeSuccess={onRevokeSuccess}
+                            />
+                        </div>
                     </div>
                 </>
             )}
@@ -126,9 +133,9 @@ export const SequenceDataUI: FC<Props> = ({
                     <hr className='my-4' />
                     <div className='my-8'>
                         <h2 className='text-xl font-bold mb-3'>Report an issue with this sequence or metadata</h2>
-                        <a href={reportUrl} className='btn btn-sm'>
+                        <Button as='a' size='sm' href={reportUrl}>
                             Create GitHub issue
-                        </a>
+                        </Button>
                     </div>
                 </>
             )}

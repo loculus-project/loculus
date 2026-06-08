@@ -50,9 +50,9 @@ export const testConfig = {
 // See https://github.com/tailwindlabs/headlessui/issues/3268
 vi.stubGlobal('ResizeObserver', ResizeObserver);
 
-export const metadataKey = 'originalMetadataField';
+export const metadataKey = 'unprocessedMetadataField';
 export const metadataDisplayName = 'Original metadata field';
-export const editableEntry = 'originalMetaDataValue';
+export const editableEntry = 'originalUnprocessedMetadataValue';
 export const originalUnalignedNucleotideSequenceValue = 'originalUnalignedNucleotideSequencesValue';
 export const originalFastaHeader = 'originalFastaHeader';
 export const unalignedProcessedSequenceName = 'unalignedProcessedSequenceName';

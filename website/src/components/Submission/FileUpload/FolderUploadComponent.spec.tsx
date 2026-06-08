@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ok } from 'neverthrow';
-import type { Result } from 'neverthrow';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { FolderUploadComponent } from './FolderUploadComponent';
@@ -35,7 +34,10 @@ const mockSetFileMapping = vi.fn();
 const mockOnError = vi.fn();
 
 const defaultProps = {
-    fileCategory: 'extraFiles',
+    fileCategory: {
+        name: 'extraFiles',
+        displayName: 'Extra Files',
+    },
     inputMode: 'bulk' as const,
     accessToken: 'test-token',
     clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {} },
@@ -54,7 +56,7 @@ describe('FolderUploadComponent', () => {
 
     it('renders upload folder button', () => {
         render(<FolderUploadComponent {...defaultProps} />);
-        expect(screen.getByText('Upload folder')).toBeInTheDocument();
+        expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument();
         expect(screen.getByTestId('folder-up-icon')).toBeInTheDocument();
     });
 
@@ -76,7 +78,7 @@ describe('FolderUploadComponent', () => {
         mockRequestMultipartUpload.mockReturnValue(
             ok([{ fileId: 'file-1', urls: ['http://test.com/url1', 'http://test.com/url2'] }]),
         );
-        mockCompleteMultipartUpload.mockReturnValue(new Promise(() => {}) as unknown as Result<void, never>);
+        mockCompleteMultipartUpload.mockReturnValue(new Promise(() => {}));
 
         let uploadCount = 0;
         vi.mocked(multipartUpload.uploadPart).mockImplementation(async () => {

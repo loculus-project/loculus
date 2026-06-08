@@ -2,8 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { type FC, useMemo } from 'react';
 
+import { versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSetRecord, SeqSetRecordType } from '../../types/seqSetCitation';
+import { Spinner } from '../common/Spinner';
 
 type RecordMetadata = {
     accession: string;
@@ -24,6 +26,24 @@ type SeqSetRecordsTableWithMetadataProps = {
     organismDisplayNames?: Record<string, string>;
 };
 
+async function queryLapisDetails(
+    lapisUrl: string,
+    filter: Record<string, unknown>,
+    fields: string[],
+): Promise<Record<string, unknown>[]> {
+    try {
+        const response = await axios.post(`${lapisUrl}/sample/details`, {
+            ...filter,
+            fields,
+            dataFormat: 'json',
+        });
+        const responseData = response.data as { data?: Record<string, unknown>[] } | undefined;
+        return responseData?.data ?? [];
+    } catch (_error) {
+        return [];
+    }
+}
+
 const fetchRecordsMetadata = async (
     records: SeqSetRecord[],
     clientConfig: ClientConfig,
@@ -35,6 +55,10 @@ const fetchRecordsMetadata = async (
         return new Map();
     }
 
+    // Split accessions into versioned (contain '.') and bare (no '.')
+    const versionedAccessions = accessions.filter((acc) => acc.includes('.'));
+    const bareAccessions = accessions.filter((acc) => !acc.includes('.'));
+
     // Extract just the field names for the API request
     const fields = fieldsToDisplay.map((f) => f.field);
 
@@ -45,49 +69,63 @@ const fetchRecordsMetadata = async (
         Object.entries(clientConfig.lapisUrls).filter(([organism]) => !organism.includes('organism')),
     );
 
+    const metadataMap = new Map<string, RecordMetadata>();
+
     // Query all LAPIS instances in parallel
     const lapisPromises = Object.entries(lapisUrlsWithoutDummies).map(async ([organism, lapisUrl]) => {
-        try {
-            const detailsResponse = await axios.post(`${lapisUrl}/sample/details`, {
-                accessionVersion: accessions,
-                fields: ['accessionVersion', ...fields],
-                dataFormat: 'json',
-            });
+        const queries: Promise<{ data: Record<string, unknown>[]; keyField: string }>[] = [];
 
-            // Add organism to each record
-            const responseData = detailsResponse.data as { data?: Record<string, unknown>[] } | undefined;
-            const data = responseData?.data ?? [];
-            return data.map((record) => ({
-                ...record,
-                organism,
-            }));
-        } catch (_error) {
-            return [];
+        // Query versioned accessions by accessionVersion
+        if (versionedAccessions.length > 0) {
+            queries.push(
+                queryLapisDetails(lapisUrl, { accessionVersion: versionedAccessions }, [
+                    'accessionVersion',
+                    ...fields,
+                ]).then((data) => ({ data, keyField: 'accessionVersion' })),
+            );
+        }
+
+        // Query bare accessions by accession, filtering for the latest version
+        if (bareAccessions.length > 0) {
+            queries.push(
+                queryLapisDetails(
+                    lapisUrl,
+                    { accession: bareAccessions, versionStatus: versionStatuses.latestVersion },
+                    ['accession', ...fields],
+                ).then((data) => ({ data, keyField: 'accession' })),
+            );
+        }
+
+        const results = await Promise.all(queries);
+        for (const { data, keyField } of results) {
+            for (const record of data) {
+                const key = String(record[keyField]);
+                const metadata: RecordMetadata = {
+                    accession: key,
+                    organism,
+                };
+                for (const field of fields) {
+                    metadata[field] = record[field];
+                }
+                metadataMap.set(key, metadata);
+            }
         }
     });
 
-    const allResults = await Promise.all(lapisPromises);
-    const combinedData = allResults.flat();
-
-    // Create a map for easy lookup
-    const metadataMap = new Map<string, RecordMetadata>();
-    combinedData.forEach((record) => {
-        const recordData = record as Record<string, unknown>;
-        const metadata: RecordMetadata = {
-            accession: String(recordData.accessionVersion),
-            organism: String(recordData.organism),
-        };
-
-        // Copy all requested fields
-        fields.forEach((field) => {
-            metadata[field] = recordData[field];
-        });
-
-        metadataMap.set(String(recordData.accessionVersion), metadata);
-    });
+    await Promise.all(lapisPromises);
 
     return metadataMap;
 };
+
+const SeqSetRecordsTableHeader: FC<{ title: string }> = ({ title }) => (
+    <th className='px-2 py-2 text-xs font-medium tracking-wider text-gray-500 uppercase text-left'>{title}</th>
+);
+
+const SeqSetRecordsTableCell: FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+    <td className='px-2 py-2 text-sm text-primary-900 truncate max-w-0' title={title}>
+        {children}
+    </td>
+);
 
 export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataProps> = ({
     seqSetRecords,
@@ -123,20 +161,18 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
     }, [seqSetRecords, sortByKey]);
 
     return (
-        <table className='table-fixed w-full'>
+        <table className='table-fixed w-full text-left border-collapse'>
             <thead>
-                <tr>
-                    <th className='text-left font-medium w-1/6'>Accession</th>
-                    <th className='text-left font-medium w-1/4'>Organism</th>
-                    <th className='text-left font-medium w-1/6'>Context</th>
+                <tr className='border-b border-gray-400'>
+                    <SeqSetRecordsTableHeader title='Accession' />
+                    <SeqSetRecordsTableHeader title='Organism' />
+                    <SeqSetRecordsTableHeader title='Context' />
                     {fieldsToDisplay.map((fieldConfig) => (
-                        <th key={fieldConfig.field} className='text-left font-medium'>
-                            {fieldConfig.displayName}
-                        </th>
+                        <SeqSetRecordsTableHeader key={fieldConfig.field} title={fieldConfig.displayName} />
                     ))}
                 </tr>
             </thead>
-            <tbody>
+            <tbody className='bg-white'>
                 {sortedSeqRecords.map((seqSetRecord, index) => {
                     const metadata = metadataMap?.get(seqSetRecord.accession);
                     const handleRowClick = () => {
@@ -145,14 +181,13 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                     return (
                         <tr
                             key={`accessionData-${index}`}
-                            className='hover:bg-primary-100 border-gray-100 cursor-pointer'
+                            className='hover:bg-primary-100 border-b border-gray-200 cursor-pointer'
                             onClick={handleRowClick}
                         >
-                            <td className='text-left pr-4 truncate max-w-0' title={seqSetRecord.accession}>
+                            <SeqSetRecordsTableCell title={seqSetRecord.accession}>
                                 {seqSetRecord.accession}
-                            </td>
-                            <td
-                                className='text-left pr-4 truncate max-w-0'
+                            </SeqSetRecordsTableCell>
+                            <SeqSetRecordsTableCell
                                 title={
                                     metadata?.organism
                                         ? (organismDisplayNames[metadata.organism] ?? metadata.organism)
@@ -160,32 +195,31 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                                 }
                             >
                                 {isLoading ? (
-                                    <span className='loading loading-spinner loading-xs'></span>
+                                    <Spinner size='xs' />
                                 ) : metadata?.organism ? (
                                     (organismDisplayNames[metadata.organism] ?? metadata.organism)
                                 ) : (
                                     'N/A'
                                 )}
-                            </td>
-                            <td className='text-left pr-4 truncate max-w-0'>
+                            </SeqSetRecordsTableCell>
+                            <SeqSetRecordsTableCell title={seqSetRecord.isFocal ? 'Focal' : 'Background'}>
                                 {seqSetRecord.isFocal ? 'Focal' : 'Background'}
-                            </td>
+                            </SeqSetRecordsTableCell>
                             {fieldsToDisplay.map((fieldConfig) => (
-                                <td
+                                <SeqSetRecordsTableCell
                                     key={fieldConfig.field}
-                                    className='text-left pr-4 truncate max-w-0'
                                     title={
                                         // eslint-disable-next-line @typescript-eslint/no-base-to-string
                                         String(metadata?.[fieldConfig.field] ?? '')
                                     }
                                 >
                                     {isLoading ? (
-                                        <span className='loading loading-spinner loading-xs'></span>
+                                        <Spinner size='xs' />
                                     ) : (
                                         // eslint-disable-next-line @typescript-eslint/no-base-to-string
                                         String(metadata?.[fieldConfig.field] ?? '')
                                     )}
-                                </td>
+                                </SeqSetRecordsTableCell>
                             ))}
                         </tr>
                     );

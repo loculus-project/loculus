@@ -14,11 +14,26 @@ seqSets:
       displayName: "Collection Date"
     - field: "authors"
       displayName: "Authors"
+  graphs:
+    - name: sampleCollectionDates
+      displayName: Sample collection dates
+      type: date
+      fields: [sampleCollectionDate, date]
+    - name: sampleCollectionCountries
+      displayName: Sample collection countries
+      type: category
+      fields: [geoLocCountry, country]
+    - name: dataUseTerms
+      displayName: Data use terms
+      type: category
+      fields: [dataUseTerms]
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
+disableTaxonomyService: false
+readOnlyMode: false
 website:
   websiteConfig:
     enableLoginNavigationItem: true
@@ -32,6 +47,7 @@ ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
+dateFieldForGroupGraph: null
 zstdCompressionLevel: 10
 pipelineVersionUpgradeCheckIntervalSeconds: 10
 dataUseTerms:
@@ -72,6 +88,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     richFastaHeaderFields: ["displayName"]
     files:
       - name: annotations
+        displayName: Annotations
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
@@ -100,9 +117,15 @@ defaultOrganismConfig: &defaultOrganismConfig
     # ingest: Which NCBI field to map to this field (optional)
     ## Preprocessing related
     # preprocessing: Preprocessing function to run on the field (optional: defaults to identity function on input field with same name)
+    # preprocessing.inputs: inputs needed to compute the field using the processing function.
+    #                       Inputs that are prefixed with 'processed.' represent dependencies on processed metadata fields, e.g., adding
+    #                       'processed.sampleCollectionDate' will input the sampleCollectionDate that has been processed by the 'parse_date_into_range' function
     metadata:
       - name: sampleCollectionDate
         displayName: Collection date
+        definition: "The date on which the sample was collected."
+        guidance: "Please format the date as `YYYY-MM-DD`. If day is unknown, use `YYYY-MM` (e.g., `2020-03`). If both day and month are unknown, use `YYYY` (e.g., `2020`). If only a range is known please supply the range in ISO format `date_lower/date_upper` where `date_lower` and `date_upper` are in the format `YYYY-MM-DD`, `YYYY-MM` or `YYYY`. Please provide at least a year."
+        example: "2020-03-15"
         header: Sample details
         ingest: ncbiCollectionDate
         order: 10
@@ -123,8 +146,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: date
         initiallyVisible: true
         hideInSearchResultsTable: true
+        hideOnSequenceDetailsPage: true
         header: Sample details
-        orderOnDetailsPage: 220
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -142,8 +165,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: date
         initiallyVisible: true
         hideInSearchResultsTable: true
+        hideOnSequenceDetailsPage: true
         header: Sample details
-        orderOnDetailsPage: 240
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -157,17 +180,20 @@ defaultOrganismConfig: &defaultOrganismConfig
           bound: upper
         noInput: true
       - name: displayName
+        displayName: Display name
+        definition: A human-readable label for the sequence record, with the format `{geoLocCountry}/{accessionVersion}/{sampleCollectionDate}`.
         preprocessing:
           function: concatenate
           inputs:
             geoLocCountry: geoLocCountry
-            sampleCollectionDate: sampleCollectionDate
+            sampleCollectionDate: processed.sampleCollectionDate
           args:
-            order: [geoLocCountry, accession_version, sampleCollectionDate]
-            type: [string, string, string]
+            order: [geoLocCountry, ACCESSION_VERSION, sampleCollectionDate]
+            type: [string, ACCESSION_VERSION, dateRangeString]
         noInput: true
       - name: ncbiReleaseDate
         displayName: NCBI release date
+        definition: Date the viral nucleotide accession was first released on the INSDC.
         type: date
         header: "INSDC"
         orderOnDetailsPage: 1000
@@ -179,6 +205,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         columnWidth: 100
       - name: earliestReleaseDate
         displayName: Earliest release date
+        definition: The earliest release date for the accession, across all versions in both Loculus and the INSDC.
         header: Sample details
         type: date
         rangeSearch: true
@@ -188,6 +215,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: ncbiUpdateDate
         type: date
         displayName: NCBI update date
+        definition: Date the viral nucleotide accession was last updated on the INSDC.
         header: "INSDC"
         orderOnDetailsPage: 1020
         preprocessing:
@@ -200,22 +228,33 @@ defaultOrganismConfig: &defaultOrganismConfig
         columnWidth: 100
       - name: geoLocLatitude
         displayName: Latitude
+        definition: Geo-coordinate latitude in decimal degree (WGS84) format.
         header: Sample details
         type: float
         orderOnDetailsPage: 420
         guidance: Geo-coordinate latitude in decimal degree (WGS84) format, i.e. values in range -90 to 90, where positive values are north of the Equator.
+        example: -34.603722
       - name: geoLocLongitude
         displayName: Longitude
+        definition: Geo-coordinate longitude in decimal degree (WGS84) format.
         header: Sample details
         type: float
         orderOnDetailsPage: 440
         guidance: Geo-coordinate longitude in decimal degree (WGS84) format, i.e. values in range -180 to 180, where positive values are east of the Prime Meridian.
+        example: -58.381592
       - name: geoLocCountry
         displayName: Collection country
+        definition: "The country from which the sample was collected."
+        guidance: "Please choose a country or ocean/sea from the list of options defined by INSDC standards."
+        example: "Canada"
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
         includeInDownloadsByDefault: true
+        customDisplay:
+          type: geoLocation
+          displayGroup: geoLocation
+          label: Sampling location
         header: Sample details
         order: 20
         orderOnDetailsPage: 400
@@ -531,23 +570,37 @@ defaultOrganismConfig: &defaultOrganismConfig
             input: geoLocCountry
       - name: geoLocAdmin1
         displayName: Collection subdivision level 1
+        definition: "A local administrative region from which the sample was collected (ex: Province, State, Canton)."
+        example: "Ontario"
         desired: true
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
+        customDisplay:
+          type: geoLocation
+          displayGroup: geoLocation
+          label: Sampling location
         header: Sample details
         order: 30
         orderOnDetailsPage: 460
         ingest: division
       - name: geoLocAdmin2
         displayName: Collection subdivision level 2
+        definition: "A local administrative region from which the sample was collected (ex: county or municipality)."
+        example: "City of Toronto"
         desired: true
         generateIndex: true
         autocomplete: true
+        customDisplay:
+          type: geoLocation
+          displayGroup: geoLocation
+          label: Sampling location
         header: Sample details
         orderOnDetailsPage: 480
       - name: geoLocCity
         displayName: Collection city
+        definition: "The city from which the sample was collected."
+        example: "Toronto"
         desired: true
         generateIndex: true
         autocomplete: true
@@ -563,6 +616,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 520
       - name: specimenCollectorSampleId
         displayName: Isolate name
+        definition: "A de-identified ID for the sample the sequence was obtained from."
+        example: "Isolate 1"
         desired: true
         header: Sample details
         ingest: ncbiIsolateName
@@ -570,6 +625,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 600
       - name: authors
         displayName: Authors
+        definition: "List of authors who should be listed on the sample."
+        guidance: "Authors should be separated by semi-colons. Each author's name should be in the format `last name, first name;`. Last name(s) is mandatory, only ASCII alphabetical characters A-Z are allowed."
+        example: "Smith, Anna; Perez, Tom J.; Xu,;"
         type: authors
         header: Authors
         desired: true
@@ -585,6 +643,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         columnWidth: 140
       - name: authorAffiliations
         displayName: Author affiliations
+        definition: "List of author affiliations."
+        guidance: "If multiple affiliations exist, create a semi-colon separated list in the same order as authors with one entry per author."
+        example: "EVE Group, MPI Department, Swiss TPH, Basel, Switzerland; Anderson Group, IEB Department, School of Biology, University of Edinburgh, Edinburgh, Scotland"
         desired: true
         enableSubstringSearch: true
         header: Authors
@@ -593,18 +654,23 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 820
       - name: ncbiSubmitterCountry
         displayName: NCBI submitter country
+        definition: The country representing the submitter's affilation.
         generateIndex: true
         autocomplete: true
         hideOnSequenceDetailsPage: true
         noInput: true
         header: "INSDC"
       - name: insdcAccessionBase
+        displayName: INSDC accession base
+        definition: The base accession assigned by the INSDC (GenBank/ENA/DDBJ) for this sequence, without the version number.
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
         perSegment: true
         oneHeader: true
       - name: insdcVersion
+        displayName: INSDC version
+        definition: The version number of the INSDC record, incremented each time the sequence record is updated.
         type: int
         header: "INSDC"
         hideOnSequenceDetailsPage: true
@@ -613,6 +679,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         oneHeader: true
       - name: insdcAccessionFull
         displayName: INSDC accession
+        definition: The full versioned INSDC accession (base accession plus version number), searchable across GenBank, ENA, and DDBJ.
         customDisplay:
           type: linkWithMenu
           linkMenuItems:
@@ -629,6 +696,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         oneHeader: true
       - name: bioprojectAccession
+        displayName: BioProject accession
         customDisplay:
           type: linkWithMenu
           linkMenuItems:
@@ -642,10 +710,11 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 1060
         ingest: bioprojects
         guidance: "Only add this field if you want your sequences to be linked to an existing public bioproject in the INSDC. If you do not have a bioproject, leave this field blank - we will create a bioproject for you on submission of your consensus sequence."
-        definition: "Accession of public bioproject in the INSDC your consensus sequences should be uploaded tp"
+        definition: "Accession of public bioproject in the INSDC your consensus sequences should be uploaded to."
         example: "PRJNA123456"
       - name: gcaAccession
         displayName: GCA accession
+        definition: The GenBank genome assembly accession number for the sequence.
         customDisplay:
           type: link
           url: "https://www.ebi.ac.uk/ena/browser/view/__value__"
@@ -654,6 +723,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         oneHeader: true
       - name: biosampleAccession
+        displayName: BioSample accession
         customDisplay:
           type: linkWithMenu
           linkMenuItems:
@@ -666,18 +736,20 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         orderOnDetailsPage: 1080
         guidance: "Only add this field if you have already submitted the raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences. If you add this field we will not create a new biosample for you and assume you have submitted all required metadata in the linked biosample."
-        definition: "Accession of corresponding public biosample of the raw reads in the INSDC"
+        definition: "Accession of corresponding public biosample of the raw reads in the INSDC."
         example: "SAMN12345678"
         oneHeader: true
       - name: cultureId
         displayName: Culture ID
+        definition: "An ID useful to linking to a culture."
+        example: "Plate7-1124"
         desired: true
         header: Sample details
         orderOnDetailsPage: 620
       - name: sampleReceivedDate
         ontology_id: GENEPIO:0001177
         definition: The date on which the sample was received by the laboratory.
-        guidance: Alternative if "sampleCollectionDate" is not available. Record the date the sample was received by the laboratory. Required granularity includes year, month and day. Before sharing this data, ensure this date is not considered identifiable information. If this date is considered identifiable, it is acceptable to add "jitter" to the received date by adding or subtracting calendar days. Do not change the received date in your original records. Alternatively, collection_date may be used as a substitute in the data you share. The date should be provided in ISO 8601 standard format "YYYY-MM-DD".
+        guidance: Alternative if `sampleCollectionDate` is not available. Record the date the sample was received by the laboratory. Required granularity includes year, month and day. Before sharing this data, ensure this date is not considered identifiable information. If this date is considered identifiable, it is acceptable to add "jitter" to the received date by adding or subtracting calendar days. Do not change the received date in your original records. Alternatively, `collection_date` may be used as a substitute in the data you share. The date should be provided in ISO 8601 standard format `YYYY-MM-DD`.
         example: '2020-03-20'
         displayName: Sample received date
         desired: true
@@ -690,12 +762,15 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
       - name: sampleType
         displayName: Sample type
+        definition: "Method of sampling."
+        example: "Nasopharyngeal Swabs"
         header: Sampling
         orderOnDetailsPage: 1200
       - name: purposeOfSampling
+        displayName: Purpose of sampling
         ontology_id: GENEPIO:0001198
         definition: The reason that the sample was collected.
-        guidance: Select a value from the pick list in the template
+        guidance: Select a value from the pick list in the template.
         example: Diagnostic testing
         header: Sampling
         orderOnDetailsPage: 1220
@@ -840,7 +915,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: hostDisease
         ontology_id: GENEPIO:0001391
         definition: The name of the disease experienced by the host.
-        guidance: "This field is only required if the Pathogen.cl package was selected. If the host was sick, provide the name of the disease.The standardized term can be sourced from this look-up service: https://www.ebi.ac.uk/ols/ontologies/doid If the disease is not known, put “missing”."
+        guidance: "This field is only required if the Pathogen.cl package was selected. If the host was sick, provide the name of the disease. The standardized term can be sourced from this look-up service: https://www.ebi.ac.uk/ols/ontologies/doid. If the disease is not known, put “missing”."
         example: mastitis, gastroenteritis
         displayName: Host disease
         header: Host
@@ -939,7 +1014,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: sequencingDate
         ontology_id: GENEPIO:0001447
         definition: The date the sample was sequenced.
-        guidance: Provide the sequencing date in ISO 8601 standard format "YYYY-MM-DD".
+        guidance: Provide the sequencing date in ISO 8601 standard format `YYYY-MM-DD`.
         example: "2021-04-26"
         displayName: Sequencing date
         type: date
@@ -978,7 +1053,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: sequencingProtocol
         ontology_id: GENEPIO:0001454
         definition: The protocol used to generate the sequence.
-        guidance: 'Provide a free text description of the methods and materials used to generate the sequence. Suggested text, fill in information where indicated.: "Viral sequencing was performed following a tiling amplicon strategy using the <fill in> primer scheme. Sequencing was performed using a <fill in> sequencing instrument. Libraries were prepared using <fill in> library kit. "'
+        guidance: 'Provide a free text description of the methods and materials used to generate the sequence. Suggested text, fill in information where indicated: "Viral sequencing was performed following a tiling amplicon strategy using the <fill in> primer scheme. Sequencing was performed using a <fill in> sequencing instrument. Libraries were prepared using <fill in> library kit. "'
         example: Genomes were generated through amplicon sequencing of 1200 bp amplicons with Freed schema primers. Libraries were created using Illumina DNA Prep kits, and sequence data was produced using Miseq Micro v2 (500 cycles) sequencing kits.
         displayName: Sequencing protocol
         header: Sequencing
@@ -1069,7 +1144,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: breadthOfCoverage
         ontology_id: GENEPIO:0001475
         definition: The threshold used as a cut-off for the depth of coverage.
-        guidance: Provide the threshold fold coverage (as a number)
+        guidance: Provide the threshold fold coverage (as a number).
         example: "100"
         displayName: Breadth of coverage
         type: int
@@ -1117,89 +1192,160 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 2500
       - name: diagnosticMeasurementMethod
         displayName: Diagnostic measurement method
+        definition: "Type of diagnostic test performed."
+        example: "RT-PCR test"
         header: Diagnostics
         orderOnDetailsPage: 2520
       - name: diagnosticTargetPresence
         displayName: Diagnostic target presence
+        definition: "Boolean value, if the diagnostic target was present."
+        example: "True"
         header: Diagnostics
         orderOnDetailsPage: 2540
       - name: diagnosticTargetGeneName
         displayName: Gene name
+        definition: "Name of the gene targeted by the diagnostic RT-PCR test."
+        example: "E gene (orf4)"
         header: Diagnostics
         orderOnDetailsPage: 2560
       - name: diagnosticMeasurementValue
         displayName: Diagnostic measurement value
+        definition: "Value of the diagnostic test. Ex: The Ct value result from a diagnostic SARS-CoV-2 RT-PCR test."
+        example: "39"
         header: Diagnostics
         orderOnDetailsPage: 2580
       - name: diagnosticMeasurementUnit
         displayName: Diagnostic measurement unit
+        definition: "Unit of the diagnostic measurement value."
+        example: "Cycle threshold (CT)"
         orderOnDetailsPage: 2600
         header: Diagnostics
       - name: length
         type: int
         header: "Alignment and QC metrics"
+        isSequenceFilter: true
         noInput: true
         rangeSearch: true
         initiallyVisible: true
         perSegment: true
         displayName: Length
+        definition: The length of the sequence.
         orderOnDetailsPage: 2700
-      - name: hostNameScientific
-        generateIndex: true
-        autocomplete: true
-        header: "Host"
-        ingest: ncbiHostName
-        desired: true
-        orderOnDetailsPage: 1560
-      - name: hostNameCommon
-        generateIndex: true
-        autocomplete: true
-        header: "Host"
-        ingest: ncbiHostCommonName
-        orderOnDetailsPage: 1580
-      - name: hostTaxonId
-        type: int
-        autocomplete: true
         customDisplay:
-          type: link
-          url: "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=info&id=__value__"
+          type: lengthCompleteness
+          displayGroup: lengthCompleteness
+          label: Length
+      - &hostTaxonIdConfig
+        name: hostTaxonId
+        type: string
+        autocomplete: true
+        displayName: "Host species"
+        definition: "Taxon ID for the host."
+        customDisplay:
+          type: hostSpecies
+          displayGroup: hostSpecies
+          label: Host
         header: "Host"
         ingest: ncbiHostTaxId
-        desired: true
+        noInput: true
         orderOnDetailsPage: 1540
+        preprocessing:
+          function: resolve_host_taxon_id
+          inputs:
+            host: host
+            hostNameScientific: hostNameScientific
+            hostTaxonId: hostTaxonId
+          args:
+            taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
+      - name: hostNameScientific
+        displayName: Host name - scientific
+        definition: "The scientific name of the host from which the sample was collected."
+        generateIndex: true
+        autocomplete: true
+        customDisplay:
+          type: hostSpecies
+          displayGroup: hostSpecies
+          label: Host
+        header: "Host"
+        ingest: ncbiHostName
+        noInput: true
+        orderOnDetailsPage: 1560
+        preprocessing:
+          function: scientific_name_from_id
+          inputs:
+            hostTaxonId: processed.hostTaxonId
+            hostNameScientific: hostNameScientific
+          args:
+            taxonomy_service_url: *taxonomy_service_url
+      - name: hostNameCommon
+        displayName: Host name - common
+        definition: "The common name of the host from which the sample was collected."
+        generateIndex: true
+        autocomplete: true
+        customDisplay:
+          type: hostSpecies
+          displayGroup: hostSpecies
+          label: Host
+        header: "Host"
+        ingest: ncbiHostCommonName
+        noInput: true
+        orderOnDetailsPage: 1580
+        preprocessing:
+          function: common_name_from_id
+          inputs:
+            hostTaxonId: processed.hostTaxonId
+          args:
+            taxonomy_service_url: *taxonomy_service_url
       - name: isLabHost
+        displayName: Is lab host
+        definition: "If a laboratory host (e.g. cultured cell line) was used to propagate the sample."
+        example: "True"
         type: boolean
         autocomplete: true
         header: "Host"
         ingest: ncbiIsLabHost
         orderOnDetailsPage: 1920
       - name: cellLine
+        displayName: Cell line
+        definition: "Population of cells derived from a single cell or group of cells, which are cultured in the laboratory under controlled conditions."
         generateIndex: true
         orderOnDetailsPage: 1940
         autocomplete: true
         header: "Host"
       - name: passageNumber
+        displayName: Passage number
+        definition: "The number of times a cell culture has been subcultured or transferred from one vessel to another."
+        example: "12"
         type: int
         header: "Host"
         orderOnDetailsPage: 1960
       - name: passageMethod
+        displayName: Passage method
+        definition: "The techniques used to subculture cells."
+        example: "Enzymatic Detachment"
         generateIndex: true
         autocomplete: true
         header: "Host"
         orderOnDetailsPage: 1980
       - name: ncbiSourceDb
+        displayName: NCBI source DB
+        definition: Indicates if the source of the viral nucleotide record is from a GenBank submitter or from NCBI-derived curation (RefSeq).
         generateIndex: true
         autocomplete: true
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
       - name: ncbiVirusName
+        displayName: NCBI Virus name
+        definition: Scientific name for the organism from the NCBI Taxonomy.
         generateIndex: true
         autocomplete: true
         hideOnSequenceDetailsPage: true
         noInput: true
         header: "INSDC"
       - name: ncbiVirusTaxId
+        displayName: NCBI Virus tax ID
+        definition: Identifier for the organism from the NCBI Taxonomy.
         type: int
         autocomplete: true
         customDisplay:
@@ -1210,6 +1356,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
       - name: insdcRawReadsAccession
         displayName: Raw reads accession
+        definition: "Accession of corresponding raw reads in the INSDC, e.g. SRR27477368."
+        guidance: "Only add this field if you have already submitted raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences."
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
@@ -1218,26 +1366,31 @@ defaultOrganismConfig: &defaultOrganismConfig
         ingest: ncbiSraAccessions
       - name: totalSnps
         type: int
+        isSequenceFilter: true
         header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
         displayName: Total SNPs
+        definition: "Total count of nucleotide substitutions."
         orderOnDetailsPage: 2720
         preprocessing:
           inputs: {input: nextclade.totalSubstitutions}
       - name: totalInsertedNucs
         type: int
+        isSequenceFilter: true
         header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
         displayName: Total inserted nucs
+        definition: "Total count of inserted nucleotide positions."
         orderOnDetailsPage: 2740
         preprocessing:
           inputs: {input: nextclade.totalInsertions}
       - name: totalDeletedNucs
         type: int
+        isSequenceFilter: true
         header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
@@ -1246,69 +1399,87 @@ defaultOrganismConfig: &defaultOrganismConfig
         preprocessing:
           inputs: {input: nextclade.totalDeletions}
         displayName: Total deleted nucs
+        definition: "Total count of deleted nucleotide positions."
       - name: totalAmbiguousNucs
         type: int
+        isSequenceFilter: true
         header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
         displayName: Total ambiguous nucs
+        definition: "Total count of ambiguous nucleotides (not A, C, G, T, or N)."
         orderOnDetailsPage: 2780
         preprocessing:
           inputs: {input: "nextclade.totalNonACGTNs"}
       - name: totalUnknownNucs
         orderOnDetailsPage: 2800
         type: int
+        isSequenceFilter: true
         header: "Alignment and QC metrics"
         noInput: true
         rangeSearch: true
         perSegment: true
         displayName: Total unknown nucs
+        definition: "Total count of missing (N) nucleotides."
         preprocessing:
           inputs: {input: nextclade.totalMissing}
       - name: totalFrameShifts
+        isSequenceFilter: true
         type: int
         rangeSearch: true
         header: "Alignment and QC metrics"
         noInput: true
         perSegment: true
         displayName: Total frame shifts
+        definition: "Total count of detected frame shifts."
         orderOnDetailsPage: 2820
         preprocessing:
           inputs: {input: nextclade.totalFrameShifts}
       - name: frameShifts
+        isSequenceFilter: true
         header: "Alignment and QC metrics"
         noInput: true
         perSegment: true
         displayName: Frame shifts
+        definition: "Frame-shifting insertions or deletions detected in CDS regions."
         orderOnDetailsPage: 2840
         preprocessing:
           inputs: {input: nextclade.frameShifts}
       - name: totalStopCodons
+        isSequenceFilter: true
         perSegment: true
         displayName: Total stop codons
+        definition: "Number of penalized premature stop codons."
         type: int
         header: "Alignment and QC metrics"
         noInput: true
         preprocessing:
           inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
       - name: stopCodons
+        isSequenceFilter: true
         perSegment: true
         displayName: Stop codons
+        definition: "Premature stop codons not in the ignored list (penalized)."
         header: "Alignment and QC metrics"
         noInput: true
         preprocessing:
           inputs: {input: nextclade.qc.stopCodons.stopCodons}
       - name: completeness
+        isSequenceFilter: true
         type: float
         header: "Alignment and QC metrics"
         noInput: true
         perSegment: true
         displayName: Completeness
+        definition: "Fraction of reference positions covered by the sequence (0.0 to 1.0)."
         rangeSearch: true
+        percentage: true
         orderOnDetailsPage: 2860
         customDisplay:
-          type: percentage
+          type: lengthCompleteness
+          displayGroup: lengthCompleteness
+          label: Length
         preprocessing:
           inputs: {input: nextclade.coverage}
     website: &website
@@ -1322,14 +1493,49 @@ defaultOrganismConfig: &defaultOrganismConfig
         - length
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
-    extraInputFields: []
+      multiFieldSearches:
+        - name: identifier
+          displayName: Sample Identifier
+          orderInSearchDisplay: -10000
+          fields:
+            - accessionVersion
+            - submissionId
+            - insdcAccessionFull
+            - bioprojectAccession
+            - gcaAccession
+            - biosampleAccession
+            - insdcRawReadsAccession
+        - name: contributor
+          displayName: Contributor
+          orderInSearchDisplay: -9999
+          fields:
+            - authors
+            - authorAffiliations
+            - sequencedByOrganization
+            - sequencedByContactName
+            - submitter
+            - groupName
+    extraInputFields:
+      - &hostConfig
+        name: host
+        type: string
+        displayName: "Host"
+        definition: "NCBI taxon ID or scientific name that uniquely identifies the host from which the sample was collected."
+        guidance: "You can provide either the scientific name of the organism (e.g., `Aedes aegypti`) or its NCBI taxon ID (e.g., `7159`) in this field. We will validate your input and use it to populate the `host common name` and `host scientific name` fields. When uploading data from a pooled sample, we recommend using a higher-level taxon that includes all host organisms in the sample pool. For example, you can use `Culicidae` when uploading data for a pooled mosquito sample (in addition to setting the `specimenProcessing` field to `Samples pooled`, see [OBI:0600016])."
+        example: "Aedes aegypti"
+        hideInSearchResultsTable: true
+        hideOnSequenceDetailsPage: true
+        desired: true
+        position: last
   preprocessing:
     - &preprocessing
       version: 1
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
         - "prepro"
-      replicas: 2
+      replicas: 1
+      taxonomyServiceArgs: &preprocessingTaxonomyServiceArgs
+        taxonomy_service_url: *taxonomy_service_url
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         batch_size: 100
@@ -1337,8 +1543,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         segments:
           - name: main
             references:
-            - name: singleReference
-              genes: []
+              - name: singleReference
+                genes: []
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
@@ -1349,6 +1555,16 @@ defaultOrganisms:
       <<: *schema
       organismName: "Ebola Sudan"
       image: "/images/organisms/ebolasudan_small.jpg"
+      extraInputFields:
+        - <<: *hostConfig
+        - name: id
+          displayName: ID
+          definition: "Unique identifier for your Ebola Sudan sample."
+          guidance: "Use the sample ID assigned by your sequencing lab."
+          example: "EBOV-SD-2024-001"
+          required: true
+          noEdit: true
+          position: first
       linkOuts:
         - name: "Nextclade"
           maxNumberOfRecommendedEntries: 5
@@ -1361,9 +1577,9 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - name: singleReference
-                nextclade_dataset_name: nextstrain/ebola/sudan
-                genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+                - name: singleReference
+                  nextclade_dataset_name: nextstrain/ebola/sudan
+                  genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
           taxon_id: 186540
           scientific_name: "Sudan ebolavirus"
@@ -1414,8 +1630,40 @@ defaultOrganisms:
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/wnv/all-lineages&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output"
         - name: "Country map"
           url: "https://mapoplexus.genomium.org/?url={{[metadata+accessionVersion,accession,version,geoLocAdmin1,geoLocAdmin2,geoLocCity,geoLocCountry,geoLocSite,hostNameCommon,hostNameScientific,authors,sampleCollectionDate]}}"
+      extraInputFields:
+        - <<: *hostConfig
+          desired: false
+          required: true
       metadataAdd:
+        - name: displayName
+          displayName: Display name
+          definition: A human-readable label for the sequence record, with the format `{geoLocCountry}/{identifier}/{sampleCollectionDate}`. The identifier is provided from `specimenCollectorSampleId` if set, otherwise `submissionId`. For sequences ingested from the INSDC, the identifier is taken directly as the provided field, assuming it contains no slashes or spaces, otherwise the `accessionVersion` is used. For other sequences, if the provided field has a display-name format itself (four or three items, separated by slashes), then the identifier is extracted as the second to last item within this. If the identifier cannot be extracted (due to invalid format of the provided field), the `accessionVersion` is used. Missing `geoLocCountry`/`sampleCollectionDate` default to `unknown`.
+          noInput: true
+          preprocessing:
+            function: build_display_name
+            inputs:
+              geoLocCountry: geoLocCountry
+              sampleCollectionDateRangeLower: processed.sampleCollectionDateRangeLower
+              specimenCollectorSampleId: specimenCollectorSampleId
+              submissionId: submissionId
+            args:
+              order: [geoLocCountry, IDENTIFIER, sampleCollectionDateRangeLower]
+              type: [string, IDENTIFIER, string]
+              # regex pattern constraints:
+              # - Cannot start with a slash
+              # - Four or three fields, separated by exactly two or three slashes
+              # - Last field is a date in format YYYY, YYYY-MM, or YYYY-MM-DD
+              # - Identifier is the second to last field (extracted through named capture group)
+              regex_pattern: '^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$'
+        - <<: *hostTaxonIdConfig
+          required: true
+          hierarchicalFilter: *taxonomy_service_url
+          hierarchicalSearchLabel: "include subtaxa"
+          initiallyVisible: true
         - name: lineage
+          displayName: Lineage
+          definition: "Assigned clade label from the nearest reference tree node."
+          isSequenceFilter: true
           header: "Lineage"
           noInput: true
           generateIndex: true
@@ -1424,6 +1672,35 @@ defaultOrganisms:
           includeInDownloadsByDefault: true
           preprocessing:
             inputs: {input: nextclade.clade}
+        - name: mutations_from_founder
+          header: "Alignment and QC metrics"
+          displayName: "Amino Acid Mutations from founder clade"
+          definition: "Private amino acid mutations in this sequence relative to the founder of its assigned clade."
+          customDisplay:
+            type: generatedBadge
+          noInput: true
+          generateIndex: false
+          autocomplete: false
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          preprocessing:
+            inputs: {input: "nextclade.cladeFounderInfo.aaMutations.*.privateSubstitutions"}
+        - name: variant
+          isSequenceFilter: true
+          perSegment: true
+          header: "Alignment and QC metrics"
+          displayName: "Variant"
+          definition: "Indicates whether the sequence is sufficiently divergent from its closest reference to be classified as a distinct variant, based on whether the number of private nucleotide substitutions exceeds a threshold relative to sequence length."
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          preprocessing:
+            function: is_variant
+            args:
+              mu: 0.002
+            inputs: {numMutations: "nextclade.privateNucMutations.totalPrivateSubstitutions", length: processed.length}
       website:
         <<: *website
         tableColumns:
@@ -1445,9 +1722,10 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - name: singleReference
-                nextclade_dataset_name: nextstrain/wnv/all-lineages
-                genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
+                - name: singleReference
+                  nextclade_dataset_name: nextstrain/wnv/all-lineages
+                  genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
+                  nextclade_additional_args: ["--allowed-mismatches", "8", "--min-seed-cover", "0.01"]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
           taxon_id: 11082
           scientific_name: "West Nile virus"
@@ -1494,23 +1772,26 @@ defaultOrganisms:
   dummy-organism:
     schema:
       submissionDataTypes: *defaultSubmissionDataTypes
-      image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
+      image: "/images/organisms/mpox_small.jpg"
       organismName: "Test Dummy Organism"
       metadataTemplate:
         - country
         - date
       metadata: &dummyMetadata
         - name: date
+          displayName: Date
           type: date
           initiallyVisible: true
           header: "Collection Details"
         - name: region
+          displayName: Region
           type: string
           initiallyVisible: true
           generateIndex: true
           autocomplete: true
           header: "Collection Details"
         - name: country
+          displayName: Country
           initiallyVisible: true
           type: string
           generateIndex: true
@@ -1522,27 +1803,32 @@ defaultOrganisms:
             - name: Colombia
           header: "Collection Details"
         - name: division
+          displayName: Division
           initiallyVisible: true
           type: string
           generateIndex: true
           autocomplete: true
           header: "Collection Details"
         - name: host
+          displayName: Host
           initiallyVisible: true
           type: string
           autocomplete: true
           header: "Collection Details"
         - name: lineage
+          displayName: Lineage
+          isSequenceFilter: true
           initiallyVisible: false
           notSearchable: true
         - name: pangoLineage
+          isSequenceFilter: true
           initiallyVisible: true
           displayName: "Pango lineage"
           autocomplete: true
           required: true
           type: string
           lineageSystem: pangoLineage
-          options: 
+          options:
             - name: A
             - name: A.1
             - name: A.1.1
@@ -1605,7 +1891,7 @@ defaultOrganisms:
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
   dummy-organism-with-files:
     schema:
-      image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
+      image: "/images/organisms/hmpv.jpg"
       organismName: "Test organism (with files)"
       submissionDataTypes:
         consensusSequences: false
@@ -1613,8 +1899,10 @@ defaultOrganisms:
           enabled: true
           categories:
             - name: raw_reads
+              displayName: Raw reads
       files:
         - name: raw_reads
+          displayName: Raw reads
       metadata: *dummyMetadata
       website:
         tableColumns:
@@ -1634,10 +1922,11 @@ defaultOrganisms:
     enabled: true
     schema:
       submissionDataTypes: *defaultSubmissionDataTypes
-      image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
+      image: "/images/organisms/rsv.jpg"
       organismName: "Test organism (without alignment)"
       metadata:
         - name: date
+          displayName: Date
           type: date
           initiallyVisible: true
           header: "Collection Details"
@@ -1647,13 +1936,14 @@ defaultOrganisms:
             inputs:
               date: date
         - name: lineage
+          isSequenceFilter: true
           initiallyVisible: true
           displayName: "Lineage"
           autocomplete: true
           required: true
           type: string
           lineageSystem: alternativeLineage
-          options: 
+          options:
             - name: A
             - name: A.1
             - name: A.1.1
@@ -1669,24 +1959,28 @@ defaultOrganisms:
             inputs:
               input: lineage
         - name: region
+          displayName: Region
           type: string
           initiallyVisible: true
           generateIndex: true
           autocomplete: true
           header: "Collection Details"
         - name: country
+          displayName: Country
           initiallyVisible: true
           type: string
           generateIndex: true
           autocomplete: true
           header: "Collection Details"
         - name: division
+          displayName: Division
           initiallyVisible: true
           type: string
           generateIndex: true
           autocomplete: true
           header: "Collection Details"
         - name: host
+          displayName: Host
           initiallyVisible: true
           type: string
           autocomplete: true
@@ -1709,8 +2003,8 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - name: singleReference
-                genes: []
+                - name: singleReference
+                  genes: []
     referenceGenomes:
       - name: main
         references:
@@ -1734,13 +2028,22 @@ defaultOrganisms:
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/S"
       metadataAdd:
         - name: hostNameScientific
+          displayName: Host name - scientific
+          definition: "The scientific name of the host from which the sample was collected."
           generateIndex: true
           autocomplete: true
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
+            label: Host
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
         - name: lineage
+          isSequenceFilter: true
+          relatesToSegment: S
           displayName: "Segment S Lineage"
+          definition: "Assigned clade label from the nearest reference tree node."
           header: "Lineage"
           noInput: true
           generateIndex: true
@@ -1749,8 +2052,6 @@ defaultOrganisms:
           includeInDownloadsByDefault: true
           lineageSystem: cchfS
           preprocessing:
-            args: 
-              segment: S
             inputs: {input: nextclade.clade}
       website:
         <<: *website
@@ -1779,23 +2080,24 @@ defaultOrganisms:
           segments:
             - name: L
               references:
-              - nextclade_dataset_name: community/pathoplexus/cchfv/L
-                name: singleReference
-                genes: [RdRp]
+                - nextclade_dataset_name: community/pathoplexus/cchfv/L
+                  name: singleReference
+                  genes: [RdRp]
             - name: M
               references:
-              - nextclade_dataset_name: community/pathoplexus/cchfv/M
-                name: singleReference
-                genes: [GPC]
+                - nextclade_dataset_name: community/pathoplexus/cchfv/M
+                  name: singleReference
+                  genes: [GPC]
             - name: S
               references:
-              - nextclade_dataset_name: community/pathoplexus/cchfv/S
-                name: singleReference
-                genes: [NP]
+                - nextclade_dataset_name: community/pathoplexus/cchfv/S
+                  name: singleReference
+                  genes: [NP]
     ingest:
       <<: *ingest
       configFile:
         taxon_id: 3052518
+        grouping_override_url: "https://pathoplexus.github.io/curation_data/grouping_override/cchf/curated_group_02-03-2026.json"
         segment_identification:
           method: "align"
           nextclade_dataset_name: community/pathoplexus/cchfv
@@ -1839,27 +2141,123 @@ defaultOrganisms:
         maxSequencesPerEntry: 3
       organismName: "CCHF (Multi-Ref)"
       image: "/images/organisms/cchf_small.jpg"
-      linkOuts: #TODO: refactor for multi-seg, multi-ref
+      linkOuts:
         - name: "Nextclade (L)"
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/L"
-        - name: "Nextclade (M)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/M"
-        - name: "Nextclade (S)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/S"
+          onlyForReferences:
+            L: singleReference
+          category: "L"
+        - name: "Nextclade (M MH396653)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=cchfv/M-MH396653&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
+          onlyForReferences:
+            M: MH396653
+          category: "M"
+        - name: "Nextclade (M OR047158)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=cchfv/M-OR047158&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
+          onlyForReferences:
+            M: OR047158
+          category: "M"
+        - name: "Nextclade (S 1and6)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=cchfv/S-1and6&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
+          onlyForReferences:
+            S: 1and6
+          category: "S"
+        - name: "Nextclade (S 2to5)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=cchfv/S-2to5&dataset-server=https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
+          onlyForReferences:
+            S: 2to5
+          category: "S"
       metadataAdd:
         - name: hostNameScientific
+          displayName: Host name - scientific
+          definition: "The scientific name of the host from which the sample was collected."
           generateIndex: true
           autocomplete: true
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
+            label: Host
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
+        - name: variant_L
+          isSequenceFilter: true
+          header: "Clade & Lineage"
+          oneHeader: true
+          displayName: "Variant L"
+          definition: "Indicates whether the segment is sufficiently divergent from its closest reference to be classified as a distinct variant, based on whether the number of nucleotide substitutions exceeds a threshold relative to segment length."
+          relatesToSegment: L
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          customDisplay:
+            type: variantReference
+            displayGroup: reference_L
+            label: Closest reference L
+          preprocessing:
+            function: is_variant
+            args:
+              mu: 0.004
+            inputs: {numMutations: "nextclade.totalSubstitutions", length: processed.length_L}
+        - name: variant_M
+          isSequenceFilter: true
+          header: "Clade & Lineage"
+          oneHeader: true
+          displayName: "Variant M"
+          definition: "Indicates whether the segment is sufficiently divergent from its closest reference to be classified as a distinct variant, based on whether the number of nucleotide substitutions exceeds a threshold relative to segment length."
+          relatesToSegment: M
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          customDisplay:
+            type: variantReference
+            displayGroup: reference_M
+            label: Closest reference M
+          preprocessing:
+            function: is_variant
+            args:
+              mu: 0.008
+            inputs: {numMutations: "nextclade.totalSubstitutions", length: processed.length_M}
+        - name: variant_S
+          isSequenceFilter: true
+          header: "Clade & Lineage"
+          oneHeader: true
+          displayName: "Variant S"
+          definition: "Indicates whether the segment is sufficiently divergent from its closest reference to be classified as a distinct variant, based on whether the number of nucleotide substitutions exceeds a threshold relative to segment length."
+          relatesToSegment: S
+          type: boolean
+          noInput: true
+          autocomplete: true
+          initiallyVisible: false
+          includeInDownloadsByDefault: false
+          customDisplay:
+            type: variantReference
+            displayGroup: reference_S
+            label: Closest reference S
+          preprocessing:
+            function: is_variant
+            args:
+              mu: 0.004
+            # custom nextclade dataset does not have private mutations, so using total substitutions as a proxy for distance from reference
+            inputs: {numMutations: "nextclade.totalSubstitutions", length: processed.length_S}
         - name: reference
-          displayName: Reference
+          oneHeader: true
+          header: "Clade & Lineage"
+          isSequenceFilter: true
+          displayName: Closest reference
+          definition: "The reference genome this sequence was most closely assigned to according to Nextclade."
+          customDisplay:
+            type: variantReference
+            displayGroup: reference
+            label: Closest reference
           noInput: true
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
-          hideOnSequenceDetailsPage: true
           perSegment: true
           preprocessing:
             inputs: {input: ASSIGNED_REFERENCE}
@@ -1887,37 +2285,38 @@ defaultOrganisms:
           taxon_id: 3052518
           scientific_name: "Orthonairovirus haemorrhagiae"
           molecule_type: "genomic RNA"
+          alignment_requirement: ANY
           log_level: DEBUG
           nextclade_dataset_server: "https://raw.githubusercontent.com/genspectrum/nextclade-datasets/cchf-multi/data"
           segments:
             - name: L
               references:
-              - nextclade_dataset_name: cchfv/L
-                name: singleReference
-                genes: [RdRp]
+                - nextclade_dataset_name: cchfv/L
+                  name: singleReference
+                  genes: [RdRp]
             - name: M
               references:
-              - nextclade_dataset_name: cchfv/M-MH396653
-                name: MH396653
-                genes: [GPC]
-              - nextclade_dataset_name: cchfv/M-OR047158
-                name: OR047158
-                genes: [GPC]
+                - nextclade_dataset_name: cchfv/M-MH396653
+                  name: MH396653
+                  genes: [GPC]
+                - nextclade_dataset_name: cchfv/M-OR047158
+                  name: OR047158
+                  genes: [GPC]
             - name: S
               references:
-              - nextclade_dataset_name: cchfv/S-1and6
-                name: 1and6
-                genes: [NP]
-              - nextclade_dataset_name: cchfv/S-2to5
-                name: 2to5
-                genes: [NP]
+                - nextclade_dataset_name: cchfv/S-1and6
+                  name: 1and6
+                  genes: [NP]
+                - nextclade_dataset_name: cchfv/S-2to5
+                  name: 2to5
+                  genes: [NP]
     ingest:
       <<: *ingest
       configFile:
         taxon_id: 3052518
         segment_identification:
           method: "align"
-          nextclade_dataset_name: community/pathoplexus/cchfv  #TODO: allow multiple ref in ingest grouping algo
+          nextclade_dataset_name: community/pathoplexus/cchfv #TODO: allow multiple ref in ingest grouping algo
     enaDeposition:
       singleReference:
         configFile:
@@ -1926,6 +2325,7 @@ defaultOrganisms:
           molecule_type: "genomic RNA"
     referenceGenomes:
       - name: L
+        displayName: L segment
         references:
           - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
@@ -1934,28 +2334,34 @@ defaultOrganisms:
               - name: RdRp
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
       - name: M
+        displayName: M segment
         references:
           - name: MH396653
+            displayName: "M (MH396653.1)"
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/MH396653/reference.fasta]]"
             insdcAccessionFull: MH396653.1
             genes:
               - name: GPC
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/MH396653/GPC.fasta]]"
           - name: OR047158
+            displayName: "M (OR047158.1)"
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/OR047158/reference.fasta]]"
             insdcAccessionFull: OR047158.1
             genes:
               - name: GPC
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/M/OR047158/GPC.fasta]]"
       - name: S
+        displayName: S segment
         references:
           - name: 1and6
+            displayName: "S11 (MK299338.1)"
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/reference.fasta]]"
             insdcAccessionFull: MK299338.1
             genes:
               - name: NP
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/MK299338/NP.fasta]]"
           - name: 2to5
+            displayName: "S1 (OL774851.1)"
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/OL774851/reference.fasta]]"
             insdcAccessionFull: OL774851.1
             genes:
@@ -1970,17 +2376,28 @@ defaultOrganisms:
       image: "/images/organisms/enterovirus.jpg"
       linkOuts:
         - name: "Nextclade (CV-A16)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A16+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a16&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:main+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a16&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
+          onlyForReferences:
+            main: CV-A16
         - name: "Nextclade (CV-A10)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A10+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a10&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:main+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a10&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
+          onlyForReferences:
+            main: CV-A10
         - name: "Nextclade (EV-A71)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-A71+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-a71&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:main+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-a71&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output"
+          onlyForReferences:
+            main: EV-A71
         - name: "Nextclade (EV-D68)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-D68+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-d68"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:main+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-d68"
+          onlyForReferences:
+            main: EV-D68
       metadataAdd:
         - &evMetadataAdd
           name: clade_cv_a16
+          isSequenceFilter: true
+          relatesToSegment: main
           displayName: Clade CV-A16
+          definition: "The clade assigned by Nextclade, only populated for sequences of genotype CV-A16."
           onlyForReference: CV-A16
           header: "Clade"
           noInput: true
@@ -1989,35 +2406,38 @@ defaultOrganisms:
           initiallyVisible: true
           includeInDownloadsByDefault: true
           preprocessing:
-            args:
-              reference: CV-A16
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_cv_a10
+          isSequenceFilter: true
+          relatesToSegment: main
           displayName: Clade CV-A10
+          definition: "The clade assigned by Nextclade, only populated for sequences of genotype CV-A10."
           onlyForReference: CV-A10
           preprocessing:
-            args:
-              reference: CV-A10
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_ev_a71
+          isSequenceFilter: true
+          relatesToSegment: main
           displayName: Clade EV-A71
+          definition: "The clade assigned by Nextclade, only populated for sequences of genotype EV-A71."
           onlyForReference: EV-A71
           preprocessing:
-            args:
-              reference: EV-A71
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_ev_d68
+          isSequenceFilter: true
+          relatesToSegment: main
           displayName: Clade EV-D68
+          definition: "The clade assigned by Nextclade, only populated for sequences of genotype EV-D68."
           onlyForReference: EV-D68
           preprocessing:
-            args:
-              reference: EV-D68
             inputs: {input: nextclade.clade}
         - name: genotype
+          isSequenceFilter: true
           displayName: Genotype
+          definition: "The genotype of this sequence, determined by which Nextclade reference dataset the sequence was assigned to during processing."
           header: "Genotype"
           noInput: true
           generateIndex: true
@@ -2050,23 +2470,23 @@ defaultOrganisms:
           segments:
             - name: main
               references:
-              - name: CV-A16
-                nextclade_dataset_name: enpen/enterovirus/cv-a16
-                accepted_dataset_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
-                genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-              - name: CV-A10
-                nextclade_dataset_name: enpen/enterovirus/cv-a10
-                accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
-                genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-              - name: EV-A71
-                nextclade_dataset_name: enpen/enterovirus/ev-a71
-                accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71"]
-                genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-              - name: EV-D68
-                accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68"]
-                genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-                nextclade_dataset_name: enpen/enterovirus/ev-d68
-                nextclade_dataset_server: https://data.clades.nextstrain.org/v3
+                - name: CV-A16
+                  nextclade_dataset_name: enpen/enterovirus/cv-a16
+                  accepted_dataset_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
+                  genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+                - name: CV-A10
+                  nextclade_dataset_name: enpen/enterovirus/cv-a10
+                  accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
+                  genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+                - name: EV-A71
+                  nextclade_dataset_name: enpen/enterovirus/ev-a71
+                  accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71"]
+                  genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+                - name: EV-D68
+                  accepted_dataset_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68"]
+                  genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+                  nextclade_dataset_name: enpen/enterovirus/ev-d68
+                  nextclade_dataset_server: https://data.clades.nextstrain.org/v3
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output
     ingest:
       <<: *ingest
@@ -2214,16 +2634,12 @@ bannerMessage: "This is a demonstration environment. It may contain non-accurate
 welcomeMessageHTML: null
 additionalHeadHTML: ""
 images:
-  lapisSilo:
-    repository: "ghcr.io/genspectrum/lapis-silo"
-    tag: "0.9.3@sha256:7e3a9a2221e265b56bc280054705f44637fcba7bea812d9bd8de62c923ebe742"
-    pullPolicy: Always
   loculusSilo:
     repository: "ghcr.io/loculus-project/loculus-silo"
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "v0.6.3@sha256:07ece2d811ed14bcb706db832fa3071af662350b6dab8371748ef73fe6e8f628"
+    tag: "v0.8.0@sha256:4da71d94aceb36b7ea5963aa2e7b0566567c6423fe7fdd39448e69aebda2a8bb"
     pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"
@@ -2301,15 +2717,19 @@ runDevelopmentMainDatabase: true
 runDevelopmentS3: true
 developmentDatabasePersistence: false
 enforceHTTPS: true
+traefikVersion: 2
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
-enaDeposition: 
+enaDeposition:
   submitToEnaProduction: false
   enaDbName: Loculus
   enaUniqueSuffix: Loculus
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
+taxonomyService:
+  dbVersion: "ncbi_taxonomy_2026-05-01"
+  taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
 subdomainSeparator: "-"
 replicas:
   website: 1
@@ -2317,6 +2737,8 @@ replicas:
   lapis: 1
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
 gitHubMainUrl: https://github.com/loculus-project/loculus
+gitHubIssuesUrl: https://github.com/loculus-project/loculus/issues
+issuesEmail: noreply@loculus.org
 resources:
   website:
     requests:
@@ -2328,6 +2750,12 @@ resources:
     requests:
       memory: "100Mi"
       cpu: "10m"
+    limits:
+      memory: "1Gi"
+  taxonomy-service:
+    requests:
+      memory: "200Mi"
+      cpu: "20m"
     limits:
       memory: "1Gi"
   ena-submission:
@@ -2367,7 +2795,7 @@ resources:
       cpu: "100m"
     limits:
       memory: "5Gi"
-  silo-preprocessing:
+  silo-importer:
     requests:
       memory: "20Mi"
       cpu: "20m"

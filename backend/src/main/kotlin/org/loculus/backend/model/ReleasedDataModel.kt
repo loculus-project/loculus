@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import mu.KotlinLogging
+import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.or
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileCategoryFilesMap
@@ -48,10 +50,8 @@ val RELEASED_DATA_RELATED_TABLES: List<String> =
         CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
         EXTERNAL_METADATA_TABLE_NAME,
         GROUPS_TABLE_NAME,
-        METADATA_UPLOAD_AUX_TABLE_NAME,
         SEQUENCE_ENTRIES_TABLE_NAME,
         SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME,
-        SEQUENCE_UPLOAD_AUX_TABLE_NAME,
         DATA_USE_TERMS_TABLE_NAME,
     )
 
@@ -90,11 +90,32 @@ open class ReleasedDataModel(
             }
     }
 
+    /**
+     * Returns the ETag for the last relevant database write, as the most recent
+     * `last_time_updated` in the update tracker.
+     *
+     * When [organism] and/or [pipelineVersion] are given, the lookup is scoped to
+     * the rows that affect that organism's released data at that pipeline version:
+     * table-wide writes (tagged with NULL organism / pipeline_version) are always
+     * included, plus the organism- and pipeline-specific preprocessed-data rows.
+     * This means preprocessing of one organism (or of a not-yet-current pipeline
+     * version) no longer invalidates the ETag of other organisms.
+     */
     @Transactional(readOnly = true)
-    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null): String {
-        val query = UpdateTrackerTable.select(UpdateTrackerTable.lastTimeUpdatedDbColumn).apply {
-            tableNames?.let {
-                where { UpdateTrackerTable.tableNameColumn inList it }
+    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null, organism: Organism? = null): String {
+        val pipelineVersion = organism?.let {
+            submissionDatabaseService.getCurrentProcessingPipelineVersion(it)
+        }
+        val query = UpdateTrackerTable.select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
+        tableNames?.let { query.andWhere { UpdateTrackerTable.tableNameColumn inList it } }
+        organism?.let { o ->
+            query.andWhere {
+                UpdateTrackerTable.organismColumn.isNull() or (UpdateTrackerTable.organismColumn eq o.name)
+            }
+        }
+        pipelineVersion?.let { v ->
+            query.andWhere {
+                UpdateTrackerTable.pipelineVersionColumn.isNull() or (UpdateTrackerTable.pipelineVersionColumn eq v)
             }
         }
 
@@ -162,14 +183,6 @@ open class ReleasedDataModel(
                         "dataUseTerms" to TextNode(currentDataUseTerms.type.name),
                         "dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil,
                         "dataBecameOpenAt" to dataBecameOpenAt,
-                    )
-                },
-            ) +
-            conditionalMetadata(
-                rawProcessedData.isRevocation,
-                {
-                    mapOf(
-                        "versionComment" to TextNode(rawProcessedData.versionComment),
                     )
                 },
             ) +

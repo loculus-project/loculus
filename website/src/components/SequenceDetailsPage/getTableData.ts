@@ -1,10 +1,17 @@
-import { sentenceCase } from 'change-case';
 import { err, ok, Result } from 'neverthrow';
 
 import type { TableDataEntry } from './types.js';
 import { type LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { Metadata, MutationBadgeData, Schema, SegmentedMutations } from '../../types/config.ts';
+import {
+    DEFAULT_AA_MUTATION_DETAILS_HEADER,
+    DEFAULT_NUC_MUTATION_DETAILS_HEADER,
+    type Metadata,
+    type MutationBadgeData,
+    type Schema,
+    type SegmentedMutationStrings,
+    type SegmentedMutations,
+} from '../../types/config.ts';
 import {
     type Details,
     type DetailsResponse,
@@ -122,50 +129,66 @@ function mutationDetails(
             label: 'Substitutions',
             name: 'nucleotideSubstitutions',
             value: '',
-            header: 'Nucleotide mutations',
+            header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
             customDisplay: {
                 type: 'badge',
-                value: substitutionsMap(nucleotideMutations, referenceGenomesInfo),
+                badge: substitutionsMap(nucleotideMutations, referenceGenomesInfo, true),
             },
             type: { kind: 'mutation' },
         },
         {
             label: 'Deletions',
             name: 'nucleotideDeletions',
-            value: deletionsToCommaSeparatedString(nucleotideMutations, referenceGenomesInfo),
-            header: 'Nucleotide mutations',
+            value: '',
+            header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
+            customDisplay: {
+                type: 'list',
+                list: deletionsMap(nucleotideMutations, referenceGenomesInfo, true),
+            },
             type: { kind: 'mutation' },
         },
         {
             label: 'Insertions',
             name: 'nucleotideInsertions',
-            value: insertionsToCommaSeparatedString(nucleotideInsertions, referenceGenomesInfo),
-            header: 'Nucleotide mutations',
+            value: '',
+            header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
+            customDisplay: {
+                type: 'list',
+                list: insertionsMap(nucleotideInsertions, referenceGenomesInfo, true),
+            },
             type: { kind: 'mutation' },
         },
         {
             label: 'Substitutions',
             name: 'aminoAcidSubstitutions',
             value: '',
-            header: 'Amino acid mutations',
+            header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
             customDisplay: {
                 type: 'badge',
-                value: substitutionsMap(aminoAcidMutations, referenceGenomesInfo),
+                badge: substitutionsMap(aminoAcidMutations, referenceGenomesInfo),
             },
             type: { kind: 'mutation' },
         },
         {
             label: 'Deletions',
             name: 'aminoAcidDeletions',
-            value: deletionsToCommaSeparatedString(aminoAcidMutations, referenceGenomesInfo),
-            header: 'Amino acid mutations',
+            value: '',
+            header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
+            customDisplay: {
+                type: 'list',
+                list: deletionsMap(aminoAcidMutations, referenceGenomesInfo),
+            },
             type: { kind: 'mutation' },
         },
         {
             label: 'Insertions',
             name: 'aminoAcidInsertions',
-            value: insertionsToCommaSeparatedString(aminoAcidInsertions, referenceGenomesInfo),
-            header: 'Amino acid mutations',
+            value: '',
+            header: DEFAULT_AA_MUTATION_DETAILS_HEADER,
+            customDisplay: {
+                type: 'list',
+                list: insertionsMap(aminoAcidInsertions, referenceGenomesInfo),
+            },
             type: { kind: 'mutation' },
         },
     ];
@@ -193,7 +216,7 @@ function toTableData(
         .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
         .filter((metadata) => details[metadata.name] !== null && metadata.name in details)
         .map((metadata) => ({
-            label: metadata.displayName ?? sentenceCase(metadata.name),
+            label: metadata.displayName ?? metadata.name,
             name: metadata.name,
             customDisplay: metadata.customDisplay,
             value: mapValueToDisplayedValue(details[metadata.name], metadata),
@@ -231,6 +254,7 @@ function mapValueToDisplayedValue(value: undefined | null | string | number | bo
 export function substitutionsMap(
     mutationData: MutationProportionCount[],
     referenceGenomesInfo: ReferenceGenomesInfo,
+    nucleotide: boolean = false,
 ): SegmentedMutations[] {
     const result: SegmentedMutations[] = [];
     const substitutionData = mutationData.filter((m) => m.mutationTo !== '-');
@@ -247,7 +271,8 @@ export function substitutionsMap(
         }
         segmentMutationsMap
             .get(sequenceKey)!
-            .push({ sequenceName: sequenceDisplayName, mutationFrom, position, mutationTo });
+            // Do not show the segment name in the nucleotide mutation badges
+            .push({ sequenceName: nucleotide ? null : sequenceDisplayName, mutationFrom, position, mutationTo });
     }
     for (const [segment, mutations] of segmentMutationsMap.entries()) {
         result.push({ segment, mutations });
@@ -256,10 +281,11 @@ export function substitutionsMap(
     return result;
 }
 
-function deletionsToCommaSeparatedString(
+function deletionsMap(
     mutationData: MutationProportionCount[],
     referenceGenomesInfo: ReferenceGenomesInfo,
-) {
+    nucleotide: boolean = false,
+): SegmentedMutationStrings[] {
     const segmentPositions = new Map<string | null, number[]>();
     const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomesInfo);
     mutationData
@@ -272,6 +298,9 @@ function deletionsToCommaSeparatedString(
             }
             segmentPositions.get(segment)!.push(position);
         });
+    if (segmentPositions.size === 0) {
+        return [];
+    }
     const segmentRanges = [...segmentPositions.entries()].map(([segment, positions]) => {
         const sortedPositions = positions.sort((a, b) => a - b);
         const ranges = [];
@@ -303,22 +332,44 @@ function deletionsToCommaSeparatedString(
             return 1;
         }
     });
-    return segmentRanges
-        .map(({ segment, ranges }) => ranges.map((range) => `${segment !== null ? segment + ':' : ''}${range}`))
-        .flat()
-        .join(', ');
+    return segmentRanges.map(({ segment, ranges }) => ({
+        segment: segment ?? '',
+        mutations: ranges.map((range) => `${!nucleotide && segment !== null ? segment + ':' : ''}${range}`),
+    }));
 }
 
-function insertionsToCommaSeparatedString(insertionData: InsertionCount[], referenceGenomesInfo: ReferenceGenomesInfo) {
+function insertionsMap(
+    insertionData: InsertionCount[],
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    nucleotide: boolean = false,
+): SegmentedMutationStrings[] {
+    const result: SegmentedMutationStrings[] = [];
+    const insertions = new Map<string, string[]>();
     const lapisNameToDisplayNameMap = lapisNameToDisplayName(referenceGenomesInfo);
-    return insertionData
-        .map((insertion) => {
-            const sequenceDisplayName = insertion.sequenceName
-                ? lapisNameToDisplayNameMap.get(insertion.sequenceName)
-                : null;
+    const segmentInsertionsMap = insertionData.map((insertion) => {
+        const sequenceDisplayName = insertion.sequenceName
+            ? lapisNameToDisplayNameMap.get(insertion.sequenceName)
+            : null;
 
-            const sequenceNamePart = sequenceDisplayName ? sequenceDisplayName + ':' : '';
-            return `ins_${sequenceNamePart}${insertion.position}:${insertion.insertedSymbols}`;
-        })
-        .join(', ');
+        const sequenceNamePart = !nucleotide && sequenceDisplayName ? sequenceDisplayName + ':' : '';
+        return {
+            segment: sequenceDisplayName ?? '',
+            insertion: `ins_${sequenceNamePart}${insertion.position}:${insertion.insertedSymbols}`,
+        };
+    });
+    if (segmentInsertionsMap.length === 0) {
+        return [];
+    }
+    for (const { segment, insertion } of segmentInsertionsMap) {
+        if (!insertions.has(segment)) {
+            insertions.set(segment, []);
+        }
+        insertions.get(segment)!.push(insertion);
+    }
+
+    for (const [segment, mutations] of insertions.entries()) {
+        result.push({ segment, mutations });
+    }
+
+    return result;
 }
