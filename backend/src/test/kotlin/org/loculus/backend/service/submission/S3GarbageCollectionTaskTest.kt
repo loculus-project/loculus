@@ -3,10 +3,9 @@ package org.loculus.backend.service.submission
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.verify
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.containsInAnyOrder
+import org.hamcrest.Matchers.`is`
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.OriginalData
@@ -25,18 +24,6 @@ import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID
 
-/**
- * Tests the orchestration of [S3GarbageCollectionTask]: which files get deleted from S3 and from
- * the files table. S3 itself is mocked here (the interesting behaviour is *selection*, not the
- * actual S3 I/O), which also lets us inject faults later if we want to test error handling.
- *
- * `orphan-file-max-age-days=0` makes the threshold "now", so any file whose upload was requested
- * in the past is age-eligible; the referenced file is protected by the reference check regardless.
- *
- * Assertions are written to be robust against the task's own @Scheduled trigger possibly firing in
- * the background: deletion of the orphan is verified as "at least once", protection of the
- * referenced file as "never", and the final DB state is checked (which is idempotent under reruns).
- */
 @EndpointTest(
     properties = [
         "${BackendSpringProperty.S3_ENABLED}=true",
@@ -52,18 +39,12 @@ class S3GarbageCollectionTaskTest(
     @MockkBean(relaxed = true)
     lateinit var s3Service: S3Service
 
-    private var groupId = 0
-
-    @BeforeEach
-    fun createGroup() {
-        groupId = groupManagementClient
-            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
-            .andGetGroupId()
-    }
-
     @Suppress("ktlint:standard:max-line-length")
     @Test
     fun `GIVEN an orphan and a referenced file WHEN the task runs THEN only the orphan is deleted from S3 and the DB`() {
+        val groupId = groupManagementClient
+            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andGetGroupId()
         val orphan = UUID.randomUUID()
         val referenced = UUID.randomUUID()
         listOf(orphan, referenced).forEach { insertFile(it, groupId, daysAgo(1)) }
@@ -81,7 +62,7 @@ class S3GarbageCollectionTaskTest(
                 it[unprocessedDataColumn] = OriginalData(
                     metadata = emptyMap(),
                     unalignedNucleotideSequences = emptyMap(),
-                    files = mapOf("rawReads" to listOf(FileIdAndName(referenced, "raw.txt"))),
+                    files = mapOf("rawReads" to listOf(FileIdAndName(referenced, "raw.fastq"))),
                 )
             }
         }
@@ -92,7 +73,7 @@ class S3GarbageCollectionTaskTest(
         verify(exactly = 0) { s3Service.deleteFile(referenced) }
         assertThat(
             filesDatabaseService.getNonExistentFileIds(setOf(orphan, referenced)),
-            containsInAnyOrder(orphan),
+            `is`(setOf(orphan)),
         )
     }
 }
