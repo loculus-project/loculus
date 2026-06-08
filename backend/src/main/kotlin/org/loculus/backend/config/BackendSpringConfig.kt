@@ -14,6 +14,7 @@ import org.jetbrains.exposed.sql.Slf4jSqlDebugLogger
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.controller.LoculusCustomHeaders
+import org.loculus.backend.controller.QueryController
 import org.loculus.backend.log.REQUEST_ID_HEADER_DESCRIPTION
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
 import org.loculus.backend.utils.DateProvider
@@ -138,6 +139,132 @@ class BackendSpringConfig {
             }
         }
         operation
+    }
+
+    @Bean
+    fun queryControllerOpenApiCustomizer(backendConfig: BackendConfig) =
+        OperationCustomizer { operation, handlerMethod ->
+            if (handlerMethod.beanType != QueryController::class.java) {
+                return@OperationCustomizer operation
+            }
+
+            val endpointDocs = QUERY_ENDPOINT_DOCS[handlerMethod.method.name]
+            operation.tags = listOf("Query")
+            operation.summary = endpointDocs?.summary ?: operation.summary
+            operation.description = endpointDocs?.description ?: operation.description
+            operation.parameters?.forEach { parameter ->
+                when (parameter.name) {
+                    "organism" -> {
+                        parameter.description = "Organism key configured for this instance."
+                        parameter.example = backendConfig.organisms.keys.firstOrNull()
+                        parameter.schema = StringSchema()._enum(backendConfig.organisms.keys.toList())
+                    }
+
+                    "versionGroup" -> {
+                        parameter.description = "Use current for latest versions or allVersions for version history."
+                        parameter.example = "current"
+                        parameter.schema = StringSchema()._enum(listOf("current", "allVersions"))
+                    }
+
+                    "segment" -> parameter.description = "Sequence segment name as configured in LAPIS."
+
+                    "referenceName" -> parameter.description = "Nucleotide reference name as configured in LAPIS."
+
+                    "geneName" -> parameter.description = "Gene name as configured in LAPIS."
+                }
+            }
+            operation
+        }
+
+    private companion object {
+        data class QueryEndpointDocs(val summary: String, val description: String)
+
+        val QUERY_ENDPOINT_DOCS = mapOf(
+            "metadata" to QueryEndpointDocs(
+                "Query metadata",
+                "Return metadata rows for sequence entries visible to the authenticated user.",
+            ),
+            "aggregated" to QueryEndpointDocs(
+                "Aggregate metadata",
+                "Return aggregated metadata counts for sequence entries visible to the authenticated user.",
+            ),
+            "sequences" to QueryEndpointDocs(
+                "Query unaligned nucleotide sequences",
+                "Return unaligned nucleotide sequences for visible sequence entries.",
+            ),
+            "sequencesForSegment" to QueryEndpointDocs(
+                "Query unaligned nucleotide sequences by segment",
+                "Return unaligned nucleotide sequences for one segment of visible sequence entries.",
+            ),
+            "sequencesAligned" to QueryEndpointDocs(
+                "Query aligned nucleotide sequences",
+                "Return aligned nucleotide sequences for visible sequence entries.",
+            ),
+            "sequencesAlignedMutations" to QueryEndpointDocs(
+                "Query nucleotide mutations",
+                "Return nucleotide mutation records for visible sequence entries.",
+            ),
+            "sequencesAlignedInsertions" to QueryEndpointDocs(
+                "Query nucleotide insertions",
+                "Return nucleotide insertion records for visible sequence entries.",
+            ),
+            "sequencesAlignedAggregatedMutations" to QueryEndpointDocs(
+                "Aggregate nucleotide mutations",
+                "Return aggregated nucleotide mutations for visible sequence entries.",
+            ),
+            "sequencesAlignedForSegment" to QueryEndpointDocs(
+                "Query aligned nucleotide sequences by reference",
+                "Return aligned nucleotide sequences for one reference of visible sequence entries.",
+            ),
+            "sequencesAlignedForSegmentMutations" to QueryEndpointDocs(
+                "Query nucleotide mutations by reference",
+                "Return nucleotide mutation records for one reference.",
+            ),
+            "sequencesAlignedForSegmentAggregatedMutations" to QueryEndpointDocs(
+                "Aggregate nucleotide mutations by reference",
+                "Return aggregated nucleotide mutations for one reference.",
+            ),
+            "translations" to QueryEndpointDocs(
+                "Query aligned amino acid sequences",
+                "Return aligned amino acid sequences for one gene.",
+            ),
+            "translationsMutations" to QueryEndpointDocs(
+                "Query amino acid mutations",
+                "Return amino acid mutation records for visible sequence entries.",
+            ),
+            "translationsInsertions" to QueryEndpointDocs(
+                "Query amino acid insertions",
+                "Return amino acid insertion records for visible sequence entries.",
+            ),
+            "translationsAggregatedMutations" to QueryEndpointDocs(
+                "Aggregate amino acid mutations",
+                "Return aggregated amino acid mutations for one gene.",
+            ),
+            "metadataGet" to QueryEndpointDocs(
+                "Download metadata",
+                "Download metadata rows for sequence entries visible to the authenticated user.",
+            ),
+            "sequencesGet" to QueryEndpointDocs(
+                "Download unaligned nucleotide sequences",
+                "Download unaligned nucleotide sequences for visible sequence entries.",
+            ),
+            "sequencesForSegmentGet" to QueryEndpointDocs(
+                "Download unaligned nucleotide sequences by segment",
+                "Download unaligned nucleotide sequences for one segment.",
+            ),
+            "sequencesAlignedGet" to QueryEndpointDocs(
+                "Download aligned nucleotide sequences",
+                "Download aligned nucleotide sequences for visible sequence entries.",
+            ),
+            "sequencesAlignedForSegmentGet" to QueryEndpointDocs(
+                "Download aligned nucleotide sequences by reference",
+                "Download aligned nucleotide sequences for one reference.",
+            ),
+            "translationsGet" to QueryEndpointDocs(
+                "Download aligned amino acid sequences",
+                "Download aligned amino acid sequences for one gene.",
+            ),
+        )
     }
 }
 

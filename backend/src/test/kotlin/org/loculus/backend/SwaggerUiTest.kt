@@ -1,9 +1,11 @@
 package org.loculus.backend
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.hamcrest.core.StringContains.containsString
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -47,4 +49,25 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
         assertTrue(yaml.has("openapi"))
         assertTrue(yaml.get("paths").has("/{organism}/submit"))
     }
+
+    @Test
+    fun `query API docs expose guided path parameter choices`() {
+        val result = mockMvc.perform(get("/api-docs"))
+            .andExpect(status().isOk)
+            .andReturn()
+
+        val json = ObjectMapper().registerKotlinModule().readTree(result.response.contentAsString)
+        val operation = json.get("paths").get("/query/{organism}/{versionGroup}/metadata").get("post")
+
+        assertEquals("Query metadata", operation.get("summary").asText())
+        assertEquals(listOf("Query"), operation.get("tags").map { it.asText() })
+        assertEquals(
+            listOf("current", "allVersions"),
+            findParameter(operation, "versionGroup").get("schema").get("enum").map { it.asText() },
+        )
+        assertTrue(findParameter(operation, "organism").get("schema").has("enum"))
+    }
+
+    private fun findParameter(operation: JsonNode, name: String) =
+        operation.get("parameters").first { it.get("name").asText() == name }
 }
