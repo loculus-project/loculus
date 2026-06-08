@@ -79,6 +79,7 @@ defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     submissionDataTypes: &defaultSubmissionDataTypes
       consensusSequences: true
+      alignedNucleotideSequences: true
       maxSequencesPerEntry: 1
     loadSequencesAutomatically: true
     earliestReleaseDate:
@@ -1923,7 +1924,9 @@ defaultOrganisms:
   not-aligned-organism:
     enabled: false
     schema:
-      submissionDataTypes: *defaultSubmissionDataTypes
+      submissionDataTypes:
+        <<: *defaultSubmissionDataTypes
+        alignedNucleotideSequences: false
       image: "/images/organisms/rsv.jpg"
       organismName: "Test organism (without alignment)"
       metadata:

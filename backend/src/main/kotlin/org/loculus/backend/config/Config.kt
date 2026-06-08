@@ -59,6 +59,7 @@ data class Schema(
 
 data class SubmissionDataTypes(
     val consensusSequences: Boolean = true,
+    val alignedNucleotideSequences: Boolean = true,
     val maxSequencesPerEntry: Int? = null, // null means unlimited sequences per entry
     // Allowed file categories for submission files
     val files: FilesSubmissionDataType = FilesSubmissionDataType(false, emptyList()),

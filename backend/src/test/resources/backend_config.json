@@ -130,6 +130,9 @@
             "schema": {
                 "organismName": "Test",
                 "allowSubmissionOfConsensusSequences": true,
+                "submissionDataTypes": {
+                    "alignedNucleotideSequences": false
+                },
                 "metadata": [
                     {
                         "name": "date",

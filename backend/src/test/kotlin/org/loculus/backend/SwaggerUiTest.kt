@@ -59,6 +59,10 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
         val json = ObjectMapper().registerKotlinModule().readTree(result.response.contentAsString)
         val paths = json.get("paths")
         val metadataOperation = paths.get("/query/dummyOrganism/{versionGroup}/metadata").get("post")
+        val metadataGetOperation = paths.get("/query/dummyOrganism/{versionGroup}/metadata").get("get")
+        val sequenceOperation = paths.get("/query/dummyOrganism/{versionGroup}/sequences").get("post")
+        val sequenceGetOperation = paths.get("/query/dummyOrganism/{versionGroup}/sequences").get("get")
+        val mutationOperation = paths.get("/query/dummyOrganism/{versionGroup}/sequencesAligned/mutations").get("post")
 
         assertTrue(!paths.has("/query/{organism}/{versionGroup}/metadata"))
         assertEquals("Query metadata", metadataOperation.get("summary").asText())
@@ -86,6 +90,43 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
             ),
             fieldEnum(metadataOperation),
         )
+        assertTrue(bodyProperties(metadataOperation).has("advancedQuery"))
+        assertTrue(bodyProperties(metadataOperation).has("orderBy"))
+        assertTrue(bodyProperties(metadataOperation).has("date"))
+        assertEquals(
+            listOf("JSON", "CSV", "CSV-WITHOUT-HEADERS", "TSV", "TSV-ESCAPED"),
+            bodyPropertyEnum(metadataOperation, "dataFormat"),
+        )
+        assertEquals(listOf("FASTA", "JSON", "NDJSON"), bodyPropertyEnum(sequenceOperation, "dataFormat"))
+        assertTrue(bodyProperties(sequenceOperation).has("fastaHeaderTemplate"))
+        assertTrue(bodyProperties(sequenceOperation).has("compression"))
+        assertTrue(bodyProperties(mutationOperation).has("minProportion"))
+        assertEquals(
+            listOf("JSON", "CSV", "CSV-WITHOUT-HEADERS", "TSV", "TSV-ESCAPED"),
+            bodyPropertyEnum(mutationOperation, "dataFormat"),
+        )
+        assertTrue(bodyProperties(metadataOperation).has("dateFrom"))
+        assertTrue(bodyProperties(metadataOperation).has("dateTo"))
+        assertTrue(bodyProperties(metadataOperation).has("date.isNull"))
+        assertTrue(bodyProperties(metadataOperation).has("region.regex"))
+        assertTrue(bodyProperties(metadataOperation).has("nucleotideMutations"))
+
+        assertEquals(
+            listOf("JSON", "CSV", "CSV-WITHOUT-HEADERS", "TSV", "TSV-ESCAPED"),
+            queryParameterEnum(metadataGetOperation, "dataFormat"),
+        )
+        assertTrue(
+            queryParameterNames(metadataGetOperation).containsAll(listOf("compression", "downloadAsFile", "orderBy")),
+        )
+        assertTrue(!queryParameterNames(metadataGetOperation).contains("fastaHeaderTemplate"))
+
+        assertEquals(listOf("FASTA", "JSON", "NDJSON"), queryParameterEnum(sequenceGetOperation, "dataFormat"))
+        assertTrue(
+            queryParameterNames(
+                sequenceGetOperation,
+            ).containsAll(listOf("compression", "fastaHeaderTemplate", "orderBy")),
+        )
+        assertTrue(!queryParameterNames(sequenceGetOperation).contains("segments"))
         assertEquals(
             listOf(
                 "date",
@@ -118,12 +159,14 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
             ).get("schema").get("enum").map { it.asText() },
         )
         assertEquals(
-            listOf("notOnlySegment", "secondSegment"),
+            listOf("main"),
             findParameter(
-                paths.get("/query/otherOrganism/{versionGroup}/sequencesAligned/{referenceName}").get("post"),
+                paths.get("/query/dummyOrganism/{versionGroup}/sequencesAligned/{referenceName}").get("post"),
                 "referenceName",
             ).get("schema").get("enum").map { it.asText() },
         )
+        assertTrue(paths.has("/query/otherOrganism/{versionGroup}/sequences/{segment}"))
+        assertTrue(!paths.has("/query/otherOrganism/{versionGroup}/sequencesAligned/{referenceName}"))
         assertTrue(!paths.has("/query/dummyOrganismWithoutConsensusSequences/{versionGroup}/translations/{geneName}"))
     }
 
@@ -139,4 +182,18 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
         .get("items")
         .get("enum")
         .map { it.asText() }
+
+    private fun bodyProperties(operation: JsonNode) = operation.get("requestBody")
+        .get("content")
+        .get("application/json")
+        .get("schema")
+        .get("properties")
+
+    private fun bodyPropertyEnum(operation: JsonNode, property: String) =
+        bodyProperties(operation).get(property).get("enum").map { it.asText() }
+
+    private fun queryParameterNames(operation: JsonNode) = operation.get("parameters").map { it.get("name").asText() }
+
+    private fun queryParameterEnum(operation: JsonNode, name: String) =
+        findParameter(operation, name).get("schema").get("enum").map { it.asText() }
 }
