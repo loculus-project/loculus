@@ -1621,7 +1621,7 @@ defaultOrganisms:
               - name: L
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
   west-nile:
-    enabled: false
+    enabled: true
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
@@ -1892,7 +1892,7 @@ defaultOrganisms:
               - name: S
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
   dummy-organism-with-files:
-    enabled: false
+    enabled: true
     schema:
       image: "/images/organisms/hmpv.jpg"
       organismName: "Test organism (with files)"
@@ -1922,7 +1922,7 @@ defaultOrganisms:
           - "--disableConsensusSequences"
     referenceGenomes: []
   not-aligned-organism:
-    enabled: false
+    enabled: true
     schema:
       submissionDataTypes:
         <<: *defaultSubmissionDataTypes
@@ -2138,7 +2138,7 @@ defaultOrganisms:
               - name: NP
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
   cchf-multi-ref:
-    enabled: false
+    enabled: true
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
@@ -2375,7 +2375,7 @@ defaultOrganisms:
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/S/OL774851/NP.fasta]]"
   enteroviruses:
     <<: *defaultOrganismConfig
-    enabled: false
+    enabled: true
     schema:
       <<: *schema
       organismName: "Enterovirus"
