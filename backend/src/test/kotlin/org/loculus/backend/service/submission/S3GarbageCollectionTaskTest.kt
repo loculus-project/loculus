@@ -17,9 +17,9 @@ import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.service.daysAgo
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
-import org.loculus.backend.service.daysAgo
 import org.loculus.backend.service.insertFile
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
