@@ -136,6 +136,7 @@ function addOptionsLookup(
             listsSheet.getCell(optionIndex + 2, columnIndex + 1).value = option.name;
         });
     });
+    // Empty-string password: protection is cosmetic (guard against accidental edits), not a security boundary.
     void listsSheet.protect('', { selectLockedCells: false, selectUnlockedCells: false });
 
     // `dataValidations.add` exists at runtime but is missing from ExcelJS' type definitions. Using it
