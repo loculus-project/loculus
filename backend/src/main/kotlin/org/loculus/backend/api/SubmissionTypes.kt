@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
+import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.service.files.FileId
@@ -26,7 +27,32 @@ interface AccessionVersionInterface {
 }
 
 data class AccessionVersion(override val accession: Accession, override val version: Version) :
-    AccessionVersionInterface
+    AccessionVersionInterface {
+    companion object {
+        fun fromString(value: String): AccessionVersion {
+            val accession = value.substringBeforeLast('.', missingDelimiterValue = "")
+            val versionString = value.substringAfterLast('.', missingDelimiterValue = "")
+
+            if (accession.isEmpty() || versionString.isEmpty() || '.' in accession) {
+                throw UnprocessableEntityException(
+                    "Invalid accession version format '$value', expected 'accession.version'",
+                )
+            }
+
+            val version = versionString.toLongOrNull()
+                ?: throw UnprocessableEntityException(
+                    "Invalid version in accession version '$value', expected a number",
+                )
+            if (version < 1) {
+                throw UnprocessableEntityException(
+                    "Invalid version in accession version '$value', version must be at least 1",
+                )
+            }
+
+            return AccessionVersion(accession, version)
+        }
+    }
+}
 
 data class SubmissionIdMapping(
     override val accession: Accession,
@@ -287,7 +313,7 @@ data class EditedSequenceEntryData(
 data class UnprocessedData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
-    val data: OriginalDataWithFileUrls<GeneticSequence>,
+    val data: UnprocessedDataContentWithFileUrls<GeneticSequence>,
     @Schema(description = "The submission id that was used in the upload to link metadata and sequences")
     val submissionId: String,
     @Schema(description = "The username of the submitter")
@@ -298,7 +324,7 @@ data class UnprocessedData(
     val submittedAt: Long,
 ) : AccessionVersionInterface
 
-data class OriginalDataInternal<SequenceType, FilesType>(
+data class UnprocessedDataContentInternal<SequenceType, FilesType>(
     @Schema(
         example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\"}",
         description = "Key value pairs of metadata, as submitted in the metadata file",
@@ -316,9 +342,10 @@ data class OriginalDataInternal<SequenceType, FilesType>(
     val files: Map<String, List<FilesType>>? = null,
 )
 
-typealias OriginalData<SequenceType> = OriginalDataInternal<SequenceType, FileIdAndName>
-typealias OriginalDataWithFileUrls<SequenceType> =
-    OriginalDataInternal<SequenceType, FileIdAndNameAndReadUrl>
+typealias UnprocessedDataContent<SequenceType> = UnprocessedDataContentInternal<SequenceType, FileIdAndName>
+typealias OriginalData<SequenceType> = UnprocessedDataContent<SequenceType>
+typealias UnprocessedDataContentWithFileUrls<SequenceType> =
+    UnprocessedDataContentInternal<SequenceType, FileIdAndNameAndReadUrl>
 
 data class AccessionVersionUnprocessedMetadata(
     override val accession: Accession,
@@ -326,6 +353,24 @@ data class AccessionVersionUnprocessedMetadata(
     val submitter: String,
     val isRevocation: Boolean,
     val unprocessedMetadata: Map<String, String?>?,
+) : AccessionVersionInterface
+
+data class GetOriginalDataRequest(
+    @Schema(
+        description = "The group ID to download data for.",
+    )
+    val groupId: Int,
+    @Schema(
+        description = "Filter by specific accessions. If not provided, all accessions for the group are returned.",
+    )
+    val accessionsFilter: List<Accession>? = null,
+)
+
+data class UnprocessedDataDownloadEntry(
+    override val accession: Accession,
+    override val version: Version,
+    val submissionId: String,
+    val unprocessedData: UnprocessedDataContent<GeneticSequence>,
 ) : AccessionVersionInterface
 
 enum class Status {

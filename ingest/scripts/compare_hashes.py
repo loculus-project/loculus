@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import logging
 from collections import defaultdict
@@ -9,6 +10,7 @@ import click
 import orjsonl
 import requests
 import yaml
+from loculus_client import Config, get_submitted
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -17,14 +19,6 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
 )
-
-
-@dataclass
-class Config:
-    organism: str
-    segmented: str
-    nucleotide_sequences: list[str]
-    slack_hook: str = ""
 
 
 InsdcAccession = str  # one per segment
@@ -86,16 +80,46 @@ def sample_out_hashed_records(
     return not keep
 
 
+def calculate_metadata_diff(
+    config: Config, new_metadata: dict[str, Any], previous_entry: LatestLoculusVersion
+) -> dict[str, Any]:
+    previous_metadata_list = get_submitted(
+        config,
+        None,
+        fields=None,
+        accessionVersionsFilter=[
+            f"{previous_entry.loculus_accession}.{previous_entry.latest_version}"
+        ],
+    )
+    if not previous_metadata_list or len(previous_metadata_list) != 1:
+        logger.warning(
+            f"Could not retrieve previous metadata for {previous_entry.loculus_accession} "
+            f"version {previous_entry.latest_version} to calculate metadata diff"
+        )
+        return {}
+    previous_metadata = previous_metadata_list[0].get("unprocessedMetadata", {})
+
+    return {
+        key: {
+            "old": previous_metadata.get(key),
+            "new": new_metadata.get(key),
+        }
+        for key in new_metadata.keys() | previous_metadata.keys()
+        if new_metadata.get(key) != previous_metadata.get(key)
+    }
+
+
 def process_hashes(
     ingested_insdc_accession: InsdcAccession,
     metadata_id: SubmissionId,
-    newly_ingested_hash: float | None,
+    new_metadata: dict[str, Any],
     submitted: dict[InsdcAccession, LatestLoculusVersion],
     update_manager: SequenceUpdateManager,
 ):
     """
     Decide if metadata_id should be submitted, revised, or noop
     """
+    newly_ingested_hash: float | None = new_metadata.get("hash")
 
     if ingested_insdc_accession not in submitted:
         update_manager.submit.append(metadata_id)
@@ -114,12 +138,15 @@ def process_hashes(
         return update_manager
 
     if previously_submitted_entry.curated:
+        metadata_diff = calculate_metadata_diff(
+            update_manager.config, new_metadata, previously_submitted_entry
+        )
         # Sequence has been curated before - special case
         notification = (
             f"Ingest: Sequence {corresponding_loculus_accession} with INSDC "
             f"accession {ingested_insdc_accession} has been curated before "
             f"- do not know how to proceed. New hash: {newly_ingested_hash}, "
-            f"old hash: {previously_submitted_entry.hash}."
+            f"old hash: {previously_submitted_entry.hash}. Metadata diff: {metadata_diff}"
         )
         logger.warning(notification)
         notify(update_manager.config, notification)
@@ -301,9 +328,7 @@ def main(
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
-        relevant_config = {
-            key: full_config[key] for key in Config.__annotations__ if key in full_config
-        }
+        relevant_config = {f.name: full_config.get(f.name, []) for f in dataclasses.fields(Config)}
         config = Config(**relevant_config)
 
     insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
@@ -328,7 +353,6 @@ def main(
     for field in orjsonl.stream(metadata):
         metadata_id: SubmissionId = field["id"]
         record: dict[str, Any] = field["metadata"]
-        ingested_hash: float | None = record.get("hash")
         if not config.segmented:
             insdc_accession_base = record["insdcAccessionBase"]
             if not insdc_accession_base:
@@ -337,9 +361,7 @@ def main(
             if sample_out_hashed_records(insdc_accession_base, subsample_fraction):
                 update_manager.sampled_out.append(insdc_accession_base)
                 continue
-            process_hashes(
-                insdc_accession_base, metadata_id, ingested_hash, submitted, update_manager
-            )
+            process_hashes(insdc_accession_base, metadata_id, record, submitted, update_manager)
             current_ingested_accessions.add(insdc_accession_base)
             continue
 
@@ -366,7 +388,7 @@ def main(
         ):
             # grouping is the same, can just look at first segment in group
             accession = insdc_accession_base_list[0]
-            process_hashes(accession, metadata_id, ingested_hash, submitted, update_manager)
+            process_hashes(accession, metadata_id, record, submitted, update_manager)
             continue
         # old group is subset of new group, new group has new segments
         old_submitted = [
@@ -381,7 +403,7 @@ def main(
         ):
             # has a new segment, must be revised
             accession = old_submitted[0]
-            process_hashes(accession, metadata_id, ingested_hash, submitted, update_manager)
+            process_hashes(accession, metadata_id, record, submitted, update_manager)
             continue
         old_accessions: dict[LoculusAccession, JointInsdcAccession] = {
             submitted[a].loculus_accession: submitted[a].jointAccession

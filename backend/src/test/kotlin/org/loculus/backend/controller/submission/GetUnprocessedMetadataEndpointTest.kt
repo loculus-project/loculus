@@ -190,6 +190,29 @@ class GetUnprocessedMetadataEndpointTest(
             .andExpect(status().isOk)
     }
 
+    @Test
+    fun `WHEN I filter by accessionVersions THEN should return only those entries`() {
+        val entries = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        val target = entries.first()
+        val accessionVersion = target.displayAccessionVersion()
+
+        val response = submissionControllerClient.getUnprocessedMetadata(
+            accessionVersionsFilter = listOf(accessionVersion),
+        )
+        response.andExpect(status().isOk)
+            .andExpect(header().string("x-total-records", `is`("1")))
+        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionUnprocessedMetadata>()
+        assertThat(responseBody, hasSize(1))
+        assertThat(responseBody[0].displayAccessionVersion(), `is`(accessionVersion))
+    }
+
+    @Test
+    fun `WHEN I filter by accessionVersions with invalid format THEN returns 422`() {
+        submissionControllerClient.getUnprocessedMetadata(
+            accessionVersionsFilter = listOf("not-a-valid-accession-version"),
+        ).andExpect(status().isUnprocessableEntity)
+    }
+
     // Regression test for https://github.com/loculus-project/loculus/issues/4036
     @Test
     fun `GIVEN revoked sequences exist THEN endpoint does not throw exception`() {
