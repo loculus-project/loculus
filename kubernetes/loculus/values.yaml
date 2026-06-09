@@ -2647,6 +2647,9 @@ images:
   backend:
     repository: "ghcr.io/loculus-project/backend"
     pullPolicy: Always
+  integrationTests:
+    repository: "ghcr.io/loculus-project/integration-tests"
+    pullPolicy: Always
 silo:
   apiThreadsForHttpConnections: 16
 secrets:
@@ -2716,6 +2719,13 @@ runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 runDevelopmentS3: true
 developmentDatabasePersistence: false
+# Dev-only: seed the deployment with SeqSet-citation test data (see
+# templates/seed-test-data-job.yaml). Off by default; enabled in values_e2e_and_dev.yaml.
+seedTestData:
+  enabled: false
+  superUser:
+    username: superuser
+    password: superuser
 enforceHTTPS: true
 traefikVersion: 2
 registrationTermsMessage: >

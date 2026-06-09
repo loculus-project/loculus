@@ -1838,7 +1838,29 @@
         "lapisSilo": { "$ref": "#/definitions/imageSpec" },
         "loculusSilo": { "$ref": "#/definitions/imageSpec" },
         "website": { "$ref": "#/definitions/imageSpec" },
-        "backend": { "$ref": "#/definitions/imageSpec" }
+        "backend": { "$ref": "#/definitions/imageSpec" },
+        "integrationTests": { "$ref": "#/definitions/imageSpec" }
+      },
+      "additionalProperties": false
+    },
+    "seedTestData": {
+      "type": "object",
+      "description": "Dev-only seeding of SeqSet-citation test data via a Helm-hook Job (see templates/seed-test-data-job.yaml).",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether to run the test-data seeder Job. Should only be enabled on dev/E2E deployments.",
+          "default": false
+        },
+        "superUser": {
+          "type": "object",
+          "description": "Credentials of the super user the seeder logs in as (must have the super_user role).",
+          "properties": {
+            "username": { "type": "string", "default": "superuser" },
+            "password": { "type": "string", "default": "superuser" }
+          },
+          "additionalProperties": false
+        }
       },
       "additionalProperties": false
     },

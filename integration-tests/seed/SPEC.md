@@ -69,120 +69,92 @@ the SeqSet version. The link is by `(seqset_id, seqset_version)`, so **no minted
 > realm role. Recommend logging in as the existing dev superuser (`superuser`/`superuser`, created
 > when `createTestAccounts: true`) for that one call, while the submit/seqset steps use the seed user.
 
-## Component shape
+## Component shape (as implemented)
 
-A Kubernetes **Job** (not a long-running Deployment) gated on a new dev-only value. Built from the
-`integration-tests/` image (Playwright + node_modules already present) with a non-test entrypoint.
+The seeder is a **Playwright project** (`seed`) running a single setup file, packaged in a new
+`integration-tests` image and run in-cluster by a Helm-hook **Job**. No bespoke Node entrypoint and
+no DB access — it drives the existing page objects and calls the new citation endpoint over HTTP.
 
 ```
 integration-tests/
-  seed/
-    SPEC.md            <- this file
-    seed.ts            <- standalone entrypoint (launches chromium, composes page objects, then pg insert)
-  Dockerfile           <- (new or extended) builds an image usable as both test-runner and seeder
+  seed/SPEC.md                 <- this file
+  tests/seed.setup.ts          <- the seed setup (reuses page objects; the whole flow)
+  playwright.config.ts         <- adds the RUN_SEED-gated `seed` project
+  package.json                 <- `npm run seed` => RUN_SEED=true playwright test --project=seed
+  Dockerfile                   <- mcr.microsoft.com/playwright image; CMD ["npm","run","seed"]
+kubernetes/loculus/templates/seed-test-data-job.yaml   <- Helm-hook Job, gated on seedTestData.enabled
 ```
 
-`seed.ts` outline (all calls are existing page-object methods unless noted):
+`tests/seed.setup.ts` runs everything **as the dev super user** (`superuser`/`superuser`), which can
+submit, create SeqSets, and add curated citations — so a single login covers all four steps:
 
-```ts
-const browser = await chromium.launch({ headless: true });
-const page = await browser.newPage({ baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL });
+1. `AuthPage.login('superuser', …)`; `GroupPage.getOrCreateGroup(seedGroup)`.
+2. Idempotency: `SeqSetPage.gotoList()`; if a `Seed SeqSet` cell exists, `setup.skip()`.
+3. `BulkSubmissionPage` → `uploadMetadataFile` (submissionId/date/country/pangoLineage) +
+   `uploadSequencesFile` → `submitAndWaitForProcessingDone` → `releaseAndGoToReleasedSequences`.
+4. Collect released `LOC_…` accessions from the group's released page (poll-with-reload).
+5. `SeqSetPage.createSeqSet({focal, background})`; read `seqSetId`/`version` from the
+   `/seqsets/<id>.<version>` URL.
+6. Read the `access_token` cookie from the logged-in context and `POST /create-curated-citation`
+   (super-user token) via a backend `APIRequestContext`.
 
-// idempotency: bail if the seed user already exists (login succeeds)
-if (await new AuthPage(page).login(SEED_USER, SEED_PW)) { log('already seeded'); process.exit(0); }
+No page-object changes were required — `createSeqSet`'s result is recovered from the detail URL, and
+accessions are read with the same `LOC_` regex the seqset test uses.
 
-await new AuthPage(page).createAccount(seedAccount);
-const groupId = await new GroupPage(page).createGroup(buildTestGroup('seed-group'));
+### Gating it so normal runs never seed
 
-const accessions: string[] = [];
-for (const s of SEED_SEQUENCES) {                       // ~3 sequences
-  const review = await submissionPage.completeSubmission(
-    { ...s, groupId: String(groupId) }, s.sequenceData); // dummy-organism form
-  await review.waitForAllProcessed();                    // dummy pipeline runs in-cluster
-  await review.releaseAndGoToReleasedSequences();
-  accessions.push(await readAccession(page));            // small helper (parse released table/URL)
-}
+The `seed` project is only added to `playwright.config.ts` when `RUN_SEED=true`. `seed.setup.ts` ends
+in `.setup.ts`, so no other project's `testMatch` picks it up. Default `npm test` therefore never runs it.
 
-const { seqSetId, seqSetVersion } =                      // createSeqSet returns id+version (parse from URL)
-  await new SeqSetPage(page).createSeqSet({
-    name: 'Seed SeqSet', description: 'Auto-seeded for dev',
-    focalAccessions: [accessions[0]], backgroundAccessions: accessions.slice(1),
-  });
+## Kubernetes wiring (as implemented)
 
-// citation: call the superuser-only endpoint with a super-user token
-const superUserToken = await getToken('superuser', 'superuser'); // keycloak password grant
-await page.request.post(`${BACKEND_URL}/create-curated-citation`, {
-  headers: { authorization: `Bearer ${superUserToken}` },
-  data: {
-    seqSetId, seqSetVersion,
-    source: {
-      sourceDOI: '10.0000/seed-citation-1', title: 'Seed reference publication',
-      year: 2024, contributors: [{ givenName: 'Ada', surname: 'Lovelace' }],
-    },
-  },
-});
-await browser.close();
-```
+`kubernetes/loculus/templates/seed-test-data-job.yaml`:
 
-Two small additions to the page-object layer are needed (both trivial, reusable by future tests):
-- `SeqSetPage.createSeqSet` should return `{ seqSetId, seqSetVersion }` (parse from the post-create URL).
-- a `readAccession(page)` helper to pull the accession of a just-released sequence.
-
-## Kubernetes wiring
-
-New template `kubernetes/loculus/templates/seed-test-data-job.yaml`:
-
-- `kind: Job`, gated: `{{- if .Values.seedTestData.enabled }}` (whole file).
-- Image: `ghcr.io/loculus-project/integration-tests:{{ $dockerTag }}` (new image built in CI from
-  `integration-tests/Dockerfile`), `command: ["node", "seed/seed.js"]`.
-- Env:
-  - `PLAYWRIGHT_TEST_BASE_URL: http://loculus-website-service:3000` (verified service name,
-    `templates/website-service.yaml`).
-  - `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` from the `database` secret (same refs as backend).
-- **Ordering / readiness:** website + backend + dummy-preprocessing must be up before it runs.
-  Two viable mechanisms (pick one):
-  1. **ArgoCD PostSync hook** (mirror `templates/ingest.yaml:127` `loculus-ingest-trigger`):
-     `argocd.argoproj.io/hook: PostSync`, `backoffLimit`, `ttlSecondsAfterFinished: 600`.
-     Cleanest fit with how this repo already bootstraps post-deploy work.
-  2. Plain Job + an init-container that curls `…/website` and `…/backend` health until ready.
-  > **Recommendation:** PostSync hook (option 1) — consistent with `ingest-trigger`.
-- `backoffLimit: 1`, `ttlSecondsAfterFinished: 600`, `restartPolicy: Never`.
+- `kind: Job`, whole file gated on `{{- if .Values.seedTestData.enabled }}`.
+- **Helm hooks** `post-install,post-upgrade` with `hook-delete-policy: before-hook-creation`, so it
+  re-runs on each deploy and is recreated cleanly (avoids the immutable-Job problem on `helm upgrade`).
+  Plain Helm (deploy.py/k3d) runs it as a post-deploy hook; Argo CD honours Helm hooks too — so this
+  one mechanism covers both, no separate Argo annotations needed.
+- **Readiness:** an init container (`curlimages/curl`) loops until the website and backend respond,
+  so the seeder doesn't start before services are up.
+- Image `{{ .Values.images.integrationTests.repository }}:{{ tag|default dockerTag }}`, built in CI
+  from `integration-tests/Dockerfile`; `command: ["npm","run","seed"]`.
+- Env: `PLAYWRIGHT_TEST_BASE_URL=http://loculus-website-service:3000`,
+  `PLAYWRIGHT_TEST_BACKEND_URL=http://loculus-backend-service:8079`,
+  `SEED_SUPER_USER` / `SEED_SUPER_USER_PASSWORD` from `seedTestData.superUser`. No DB secret.
+- `activeDeadlineSeconds: 900`, `backoffLimit: 1`, `ttlSecondsAfterFinished: 86400`, `restartPolicy: Never`.
 
 ### Values
 
-`kubernetes/loculus/values.yaml` (default OFF, production-safe):
-```yaml
-seedTestData:
-  enabled: false
-  user: { username: seed_user, password: seed_user }
-  organism: dummy-organism
-  sequenceCount: 3
-```
-`kubernetes/loculus/values_e2e_and_dev.yaml` (turn ON for dev/E2E):
-```yaml
-seedTestData:
-  enabled: true
-```
-Add the `seedTestData` object to `values.schema.json`, then:
-`npx prettier@3.6.2 --write kubernetes/loculus/values.schema.json` and
-`helm lint kubernetes/loculus -f kubernetes/loculus/values.yaml` (per `kubernetes/AGENTS.md`).
+- `values.yaml` — adds `images.integrationTests` and a default-OFF `seedTestData` block
+  (`enabled: false`, `superUser: {username: superuser, password: superuser}`).
+- `values_e2e_and_dev.yaml` — `seedTestData.enabled: true`.
+- `values.schema.json` — registers `images.integrationTests` (required: `images` has
+  `additionalProperties: false`) and the `seedTestData` object.
+
+Validated with `helm lint` (prod + dev values), `helm template` (Job renders only when enabled),
+`prettier` on the schema, and `tsc`/`prettier`/`eslint` on the new TS.
 
 ## Idempotency & safety
 
-- Re-running on an already-seeded cluster is a no-op (seed user login check up front).
-- `enabled: false` by default → never runs in production. The CURATED-citation SQL and the
-  `database` secret mount only exist on dev because the whole template is gated.
-- Uses the dummy organism only, so no real pathogen data or real DOIs/CrossRef calls.
+- Re-running on an already-seeded cluster is a no-op (the `Seed SeqSet` existence check `setup.skip()`s).
+- `enabled: false` by default → the whole template is gated, so it never renders in production.
+- Uses the dummy organism only — no real pathogen data, no real DOIs/CrossRef calls.
 
 ## Decisions
 
-1. **Citation mechanism — DECIDED: new superuser-only `POST /create-curated-citation` endpoint**
-   (implemented in this branch). Seed job calls it with a super-user token; no DB secret needed.
-2. **Submission driver — DECIDED: Playwright UI**, reusing the integration-test page objects.
+1. **Citation mechanism — new superuser-only `POST /create-curated-citation` endpoint** (implemented
+   in this branch). Seeder calls it with the super-user token; no DB secret.
+2. **Submission driver — Playwright UI**, reusing the integration-test page objects.
+3. **Run identity — the dev super user** for all steps (one login; can submit + seqset + cite).
+4. **Trigger — Helm hooks** (post-install/upgrade), which work under both plain Helm and Argo CD.
+5. **Image — extend the integration-tests image** with a `seed` Playwright project (RUN_SEED-gated).
 
-## Open questions for reviewer
+## Validating on a live cluster (not yet done)
 
-1. **Trigger:** ArgoCD PostSync hook (recommended) vs. readiness-gated plain Job.
-2. **Image:** extend the existing `integration-tests` image with a `seed/` entrypoint
-   (recommended) vs. a separate slimmer image.
-```
+The flow is type-checked and the chart renders, but it has not been run end-to-end against a cluster.
+Two assumptions to confirm there (both have a clear fallback):
+- The dummy-organism **bulk** submission accepts `submissionId/date/country/pangoLineage`. If a field
+  is rejected, adjust `METADATA_HEADERS`/`SUBMISSIONS` in `seed.setup.ts`.
+- The website stores the Keycloak access token in an **`access_token` cookie** usable as a backend
+  Bearer token. If not, swap the citation step to a Keycloak password-grant (needs a keycloak URL env).

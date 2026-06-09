@@ -1,0 +1,65 @@
+{{- if .Values.seedTestData.enabled }}
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{/*
+Dev-only test-data seeder. Runs the integration-tests Playwright "seed" project
+against the in-cluster website to submit dummy-organism sequences, build a SeqSet
+and add a curated citation. Gated behind seedTestData.enabled (off by default; on in
+values_e2e_and_dev.yaml). Implemented as a Helm post-install/post-upgrade hook so it
+re-runs on each deploy and is recreated cleanly; Argo CD honours these hooks too.
+*/}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: loculus-seed-test-data
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  activeDeadlineSeconds: 900
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: loculus-seed-test-data
+    spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      restartPolicy: Never
+      initContainers:
+        # Wait until the website and backend respond before seeding.
+        - name: wait-for-services
+          image: curlimages/curl:8.11.1
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              for url in "$WEBSITE_URL" "$BACKEND_URL/actuator/health"; do
+                echo "Waiting for $url ..."
+                until curl -s --max-time 5 "$url" >/dev/null; do sleep 5; done
+                echo "$url is reachable"
+              done
+          env:
+            - name: WEBSITE_URL
+              value: "http://loculus-website-service:3000"
+            - name: BACKEND_URL
+              value: "http://loculus-backend-service:8079"
+      containers:
+        - name: seed
+          image: "{{ $.Values.images.integrationTests.repository }}:{{ $.Values.images.integrationTests.tag | default $dockerTag }}"
+          imagePullPolicy: "{{ $.Values.images.integrationTests.pullPolicy | default $.Values.imagePullPolicy }}"
+          command: ["npm", "run", "seed"]
+          env:
+            - name: PLAYWRIGHT_TEST_BASE_URL
+              value: "http://loculus-website-service:3000"
+            - name: PLAYWRIGHT_TEST_BACKEND_URL
+              value: "http://loculus-backend-service:8079"
+            - name: SEED_SUPER_USER
+              value: "{{ $.Values.seedTestData.superUser.username }}"
+            - name: SEED_SUPER_USER_PASSWORD
+              value: "{{ $.Values.seedTestData.superUser.password }}"
+            - name: CI
+              value: "true"
+{{- end }}
