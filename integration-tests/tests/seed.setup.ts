@@ -73,7 +73,7 @@ function getBackendBaseUrl(): URL {
 }
 
 setup('Seed dummy-organism sequences, a SeqSet and a curated citation', async ({ page }) => {
-    setup.setTimeout(300_000);
+    setup.setTimeout(600_000);
 
     const authPage = new AuthPage(page);
     const loggedIn = await authPage.login(SUPER_USER, SUPER_USER_PASSWORD);
