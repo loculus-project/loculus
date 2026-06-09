@@ -15,6 +15,7 @@ import org.loculus.backend.api.SeqSetCitationSource
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
+import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.service.crossref.CrossRefCitedByResult
 import org.loculus.backend.service.crossref.CrossRefService
 import org.loculus.backend.service.seqsetcitations.SeqSetCrossRefCitationsTask
@@ -248,6 +249,47 @@ class CitationEndpointsTest(
             .andExpect(jsonPath("\$[0].source.sourceDOI").value(citationSource.source.sourceDOI))
     }
 
+    @Test
+    fun `WHEN super user adds a curated citation THEN it is returned by get seqSet citations`() {
+        val seqSetResult = client.createSeqSet().andExpect(status().isOk).andReturn()
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+        val seqSetVersion = JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
+
+        client.createCuratedCitation(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.source.sourceDOI").value("10.5678/curated-paper"))
+
+        client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.length()").value(1))
+            .andExpect(jsonPath("\$[0].source.sourceDOI").value("10.5678/curated-paper"))
+            .andExpect(jsonPath("\$[0].source.title").value("A curated citation"))
+            .andExpect(jsonPath("\$[0].source.year").value(2024))
+            .andExpect(jsonPath("\$[0].source.contributors[0].givenName").value("Jane"))
+            .andExpect(jsonPath("\$[0].source.contributors[0].surname").value("Doe"))
+    }
+
+    @Test
+    fun `WHEN non-super user adds a curated citation THEN returns forbidden`() {
+        val seqSetResult = client.createSeqSet().andExpect(status().isOk).andReturn()
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+        val seqSetVersion = JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
+
+        client.createCuratedCitation(seqSetId = seqSetId, seqSetVersion = seqSetVersion, jwt = jwtForDefaultUser)
+            .andExpect(status().isForbidden)
+
+        client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$").isEmpty)
+    }
+
+    @Test
+    fun `WHEN super user adds a curated citation to non-existing seqSet THEN returns not found`() {
+        client.createCuratedCitation(seqSetId = "does-not-exist", seqSetVersion = 1)
+            .andExpect(status().isNotFound)
+    }
+
     companion object {
         data class Scenario(
             val testFunction: (String?, SeqSetCitationsControllerClient) -> ResultActions,
@@ -257,6 +299,7 @@ class CitationEndpointsTest(
         @JvmStatic
         fun authorizationTestCases(): List<Scenario> = listOf(
             Scenario({ jwt, client -> client.getUserCitedBySeqSet(jwt = jwt) }, false),
+            Scenario({ jwt, client -> client.createCuratedCitation(jwt = jwt) }, true),
         )
     }
 }

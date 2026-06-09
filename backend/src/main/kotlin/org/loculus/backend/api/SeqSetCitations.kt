@@ -97,6 +97,16 @@ data class SeqSetCitationSource(val source: CitationSource, val seqSetDOIs: Set<
 @Schema(description = "A citation of a SeqSet.")
 data class SeqSetCitation(val source: CitationSource)
 
+@Schema(description = "A curated citation to be added to a SeqSet version.")
+data class SubmittedCuratedCitation(
+    @Schema(description = "The id of the SeqSet to add the citation to.")
+    val seqSetId: String,
+    @Schema(description = "The version of the SeqSet to add the citation to.")
+    val seqSetVersion: Long,
+    @Schema(description = "The publication or other source that cites the SeqSet.")
+    val source: CitationSource,
+)
+
 data class ResponseSeqSet(val seqSetId: String, val seqSetVersion: Long)
 
 data class CitedBy(

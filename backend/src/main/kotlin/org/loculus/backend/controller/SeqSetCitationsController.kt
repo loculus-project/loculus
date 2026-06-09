@@ -8,6 +8,7 @@ import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
 import org.loculus.backend.api.SeqSetCitation
 import org.loculus.backend.api.SeqSetRecord
+import org.loculus.backend.api.SubmittedCuratedCitation
 import org.loculus.backend.api.SubmittedSeqSet
 import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.api.SubmittedSeqSetUpdate
@@ -108,6 +109,13 @@ class SeqSetCitationsController(
     @GetMapping("/get-seqset-citations")
     fun getSeqSetCitations(@RequestParam seqSetId: String, @RequestParam version: Long): List<SeqSetCitation> =
         seqSetCitationsService.getSeqSetCitations(seqSetId, version)
+
+    @Operation(description = "Add a curated citation to a SeqSet version. Restricted to super users.")
+    @PostMapping("/create-curated-citation")
+    fun createCuratedCitation(
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestBody body: SubmittedCuratedCitation,
+    ): SeqSetCitation = seqSetCitationsService.createCuratedCitation(authenticatedUser, body)
 
     @Operation(description = "Get an author")
     @GetMapping("/get-author")
