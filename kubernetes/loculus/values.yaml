@@ -1055,9 +1055,9 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             input: sequencingInstrument
         options:
-        # ena-webin-cli -context reads -fields
-        # ena-webin-cli=9.0.3
-        # Last checked: 09.06.2026
+          # ena-webin-cli -context reads -fields
+          # ena-webin-cli=9.0.3
+          # Last checked: 09.06.2026
           - name: "HiSeq X Five"
           - name: "HiSeq X Ten"
           - name: "Illumina Genome Analyzer"
@@ -1155,9 +1155,9 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             input: sequencingLibrarySelection
         options:
-        # ena-webin-cli -context reads -fields
-        # ena-webin-cli=9.0.3
-        # Last checked: 09.06.2026
+          # ena-webin-cli -context reads -fields
+          # ena-webin-cli=9.0.3
+          # Last checked: 09.06.2026
           - name: "RANDOM"
           - name: "PCR"
           - name: "RANDOM PCR"
@@ -1203,9 +1203,9 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs:
             input: sequencingAssayType
         options:
-        # ena-webin-cli -context reads -fields
-        # ena-webin-cli=9.0.3
-        # Last checked: 09.06.2026
+          # ena-webin-cli -context reads -fields
+          # ena-webin-cli=9.0.3
+          # Last checked: 09.06.2026
           - name: "WGS"
           - name: "WGA"
           - name: "WXS"
