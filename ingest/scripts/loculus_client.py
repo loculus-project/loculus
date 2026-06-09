@@ -28,6 +28,7 @@ class ApproveConfig:
     username: str
     password: str
     backend_request_timeout_seconds: int = 600
+    slack_hook: str = ""
 
 
 @dataclass(kw_only=True)
@@ -451,7 +452,7 @@ def get_submitted(
     config: Config,
     output: str | None,
     fields: list[str] | None = None,
-    accessionVersionsFilter: list[str] | None = None,
+    accessionVersionsFilter: list[str] | None = None,  # noqa: N803
 ):
     """Get previously submitted sequences as ndjson
     This way we can avoid submitting the same sequences again

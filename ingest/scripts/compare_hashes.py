@@ -21,11 +21,6 @@ logging.basicConfig(
 )
 
 
-@dataclass
-class CompareHashesConfig(Config):
-    slack_hook: str = ""
-
-
 InsdcAccession = str  # one per segment
 JointInsdcAccession = str  # for single segmented this is equal to the InsdcAccession,
 # for multi-segmented it is a concatenation of the base INSDC accessions all segments with their segment
@@ -49,7 +44,7 @@ class SequenceUpdateManager:
     # i.e. loculus accessions (to be revoked) and their corresponding old joint insdc accessions
     sampled_out: list[JointInsdcAccession]
     hashes: list[float]
-    config: CompareHashesConfig
+    config: Config
 
 
 @dataclass
@@ -62,7 +57,7 @@ class LatestLoculusVersion:
     jointAccession: JointInsdcAccession  # noqa: N815
 
 
-def notify(config: CompareHashesConfig, text: str):
+def notify(config: Config, text: str):
     """Send slack notification with text"""
     if config.slack_hook:
         try:
@@ -86,7 +81,7 @@ def sample_out_hashed_records(
 
 
 def calculate_metadata_diff(
-    config: CompareHashesConfig, new_metadata: dict[str, Any], previous_entry: LatestLoculusVersion
+    config: Config, new_metadata: dict[str, Any], previous_entry: LatestLoculusVersion
 ) -> dict[str, Any]:
     previous_metadata_list = get_submitted(
         config,
@@ -244,7 +239,7 @@ def get_loculus_accession_to_latest_version_map(
 
 
 def construct_submitted_dict(
-    old_hashes: str, insdc_keys: list[str], config: CompareHashesConfig
+    old_hashes: str, insdc_keys: list[str], config: Config
 ) -> dict[InsdcAccession, LatestLoculusVersion]:
     # Get the latest version for each loculus accession
     loculus_accession_to_latest_version_map: dict[LoculusAccession, dict[str, Any]] = (
@@ -348,13 +343,8 @@ def main(
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
-        relevant_config = {
-            key: full_config[key]
-            for key in CompareHashesConfig.__annotations__
-            if key in full_config
-        }
-        relevant_config = {f.name: full_config.get(f.name, []) for f in dataclasses.fields(CompareHashesConfig)}
-        config = CompareHashesConfig(**relevant_config)
+        relevant_config = {f.name: full_config.get(f.name, []) for f in dataclasses.fields(Config)}
+        config = Config(**relevant_config)
 
     insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
 
