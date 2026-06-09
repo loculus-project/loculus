@@ -33,6 +33,7 @@ class S3GarbageCollectionTask(
      */
     @Scheduled(initialDelay = 90, fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
     fun task() {
+        log.info { "Running S3 garbage collection" }
         val threshold = dateProvider.getCurrentInstant()
             .minus(maxOrphanAge, DateTimeUnit.DAY, DateProvider.timeZone)
             .toLocalDateTime(DateProvider.timeZone)
