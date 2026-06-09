@@ -123,7 +123,7 @@ describe('submission template API route', () => {
         expect(listsSheet.getCell('B2').value).toBe('Homo sapiens');
     });
 
-    test('only option columns get an advisory, header-driven dropdown looking up _lists', async () => {
+    test('only option columns get a strict, header-driven dropdown looking up _lists', async () => {
         // Asserted against the raw written XML: ExcelJS' own re-read expands a range `sqref` into
         // per-cell entries, which makes the compact per-column rules unreadable.
         const response = await callGet('test-organism', { fileType: 'xlsx' });
@@ -139,9 +139,9 @@ describe('submission template API route', () => {
         expect(validationBlock).toContain('sqref="D2:D100000"');
         expect(validationBlock).not.toContain('sqref="A2');
         expect(validationBlock).not.toContain('sqref="E2');
-        // Advisory, not strict: a warning the user can dismiss, rather than a hard rejection.
-        expect(validationBlock).toContain('errorStyle="warning"');
-        expect(validationBlock).not.toContain('errorStyle="stop"');
+        // Strict: off-list values on a controlled-vocabulary column are rejected.
+        expect(validationBlock).toContain('errorStyle="stop"');
+        expect(validationBlock).not.toContain('errorStyle="warning"');
         // Header-driven: each validation looks up its own column header (C$1 / D$1) in `_lists`,
         // so the dropdown follows the field if the column is renamed or moved.
         expect(validationBlock).toContain('MATCH(C$1');

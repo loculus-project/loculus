@@ -82,8 +82,8 @@ function createTsvTemplate(organism: string, action: UploadAction): ArrayBuffer 
  * validation is header-driven: its source formula reads that column's own header cell and looks it
  * up in `_lists`, so the dropdown follows the field even if the user renames or reorders the column.
  * Free-text columns deliberately get no validation so they accept any value — a `list` validation
- * cannot express "allow anything", so applying a header-driven rule to them would warn on every
- * entry (the lookup errors). Limiting it to option columns keeps free-text columns silent.
+ * cannot express "allow anything", so applying a (strict) header-driven rule to them would reject
+ * every entry (the lookup errors). Limiting it to option columns keeps free-text columns unrestricted.
  */
 async function createXlsxTemplate(organism: string, action: UploadAction): Promise<ArrayBuffer> {
     const fields = getOrderedTemplateInputFields(organism, action);
@@ -157,12 +157,12 @@ function addOptionsLookup(
             type: 'list',
             allowBlank: true,
             formulae: [source],
-            // Advisory, not strict: the dropdown offers the controlled vocabulary, but a value typed
-            // outside the list only warns ("Yes" keeps it) rather than being rejected.
+            // Strict: a value outside the controlled vocabulary is rejected. Only columns with a
+            // controlled vocabulary get a validation, so free-text columns are unaffected.
             showErrorMessage: true,
-            errorStyle: 'warning',
-            errorTitle: 'Value not in the suggested list',
-            error: `"${field.name}" has a suggested list of values. You can pick one from the dropdown, or keep what you typed.`,
+            errorStyle: 'stop',
+            errorTitle: 'Invalid value',
+            error: `"${field.name}" must be one of the values in the dropdown list.`,
         });
     });
 }
