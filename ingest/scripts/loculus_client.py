@@ -473,8 +473,6 @@ def get_submitted(
         logger.info("Getting previously submitted sequences")
 
         response = make_request(HTTPMethod.GET, url, config, params=params)
-        logger.info(f"Params: {params}")
-        logger.info(f"Response: {response}")
         expected_record_count = int(response.headers["x-total-records"])
 
         entries: list[dict[str, Any]] = []
