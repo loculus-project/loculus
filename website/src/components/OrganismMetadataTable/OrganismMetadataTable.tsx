@@ -319,10 +319,7 @@ const AllowedValuesList: FC<AllowedValuesListProps> = ({ options }) => {
     const isClient = useClientFlag();
 
     const filtered = useMemo(
-        () =>
-            query === ''
-                ? options
-                : options.filter((o) => o.name.toLowerCase().includes(query.toLowerCase())),
+        () => (query === '' ? options : options.filter((o) => o.name.toLowerCase().includes(query.toLowerCase()))),
         [options, query],
     );
 
