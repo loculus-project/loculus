@@ -437,13 +437,7 @@ open class SubmissionController(
         }
 
         val parsedAccessionVersions = accessionVersionsFilter?.takeIf { it.isNotEmpty() }?.map {
-            val lastDot = it.lastIndexOf('.')
-            if (lastDot <= 0 || lastDot == it.length - 1) {
-                throw BadRequestException("Invalid accession version format '$it', expected 'accession.version'")
-            }
-            val version = it.substring(lastDot + 1).toLongOrNull()
-                ?: throw BadRequestException("Invalid version in accession version '$it', expected a number")
-            AccessionVersion(it.substring(0, lastDot), version)
+            AccessionVersion.fromString(it)
         }
 
         val totalRecords = submissionDatabaseService.countUnprocessedMetadata(

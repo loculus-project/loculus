@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
+import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.service.files.FileId
@@ -26,7 +27,27 @@ interface AccessionVersionInterface {
 }
 
 data class AccessionVersion(override val accession: Accession, override val version: Version) :
-    AccessionVersionInterface
+    AccessionVersionInterface {
+    companion object {
+        fun fromString(value: String): AccessionVersion {
+            val accession = value.substringBeforeLast('.', missingDelimiterValue = "")
+            val versionString = value.substringAfterLast('.', missingDelimiterValue = "")
+
+            if (accession.isEmpty() || versionString.isEmpty() || '.' in accession) {
+                throw UnprocessableEntityException(
+                    "Invalid accession version format '$value', expected 'accession.version'",
+                )
+            }
+
+            val version = versionString.toLongOrNull()
+                ?: throw UnprocessableEntityException(
+                    "Invalid version in accession version '$value', expected a number",
+                )
+
+            return AccessionVersion(accession, version)
+        }
+    }
+}
 
 data class SubmissionIdMapping(
     override val accession: Accession,
