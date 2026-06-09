@@ -647,25 +647,25 @@ def process_all(
 
 
 def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> None:
-    for submitted_data in processed:
-        accession = submitted_data.processed_entry.accession
-        version = submitted_data.processed_entry.version
+    for submission_data in processed:
+        accession = submission_data.processed_entry.accession
+        version = submission_data.processed_entry.version
         try:
-            if submitted_data.group_id is None:
+            if submission_data.group_id is None:
                 msg = "Group ID is required for EMBL file upload"
                 raise ValueError(msg)
-            file_content = create_flatfile(config, submitted_data)
+            file_content = create_flatfile(config, submission_data)
             file_name = f"{accession}.{version}.embl"
-            upload_info = request_upload(submitted_data.group_id, 1, config)[0]
+            upload_info = request_upload(submission_data.group_id, 1, config)[0]
             file_id = upload_info.fileId
             url = upload_info.url
             upload_embl_file_to_presigned_url(file_content, url)
-            submitted_data.processed_entry.data.files = {
+            submission_data.processed_entry.data.files = {
                 "annotations": [FileIdAndName(fileId=file_id, name=file_name)]
             }
         except Exception as e:
             logger.error("Error creating or uploading EMBL file: %s", e)
-            submitted_data.processed_entry.errors.append(
+            submission_data.processed_entry.errors.append(
                 ProcessingAnnotation(
                     unprocessedFields=[
                         AnnotationSource(name="embl_upload", type=AnnotationSourceType.METADATA)
@@ -723,7 +723,7 @@ def run(config: Config) -> None:  # noqa: C901
                 upload_flatfiles(processed, config)
 
             try:
-                processed_entries = [submitted_data.processed_entry for submitted_data in processed]
+                processed_entries = [submission_data.processed_entry for submission_data in processed]
                 submit_processed_sequences(processed_entries, dataset_dir, config)
             except RuntimeError as e:
                 logger.exception("Submitting processed data failed. Traceback : %s", e)

@@ -232,13 +232,13 @@ def get_seq_features(  # noqa: PLR0914
 
 
 def create_flatfile(  # noqa: PLR0914
-    config: Config, submitted_data: SubmissionData
+    config: Config, submission_data: SubmissionData
 ) -> str:
-    metadata = submitted_data.processed_entry.data.metadata
-    unaligned_nuc_seq = submitted_data.processed_entry.data.unalignedNucleotideSequences
-    annotation_object = submitted_data.annotations
-    accession = submitted_data.processed_entry.accession
-    version = submitted_data.processed_entry.version
+    metadata = submission_data.processed_entry.data.metadata
+    unaligned_nuc_seq = submission_data.processed_entry.data.unalignedNucleotideSequences
+    annotation_object = submission_data.annotations
+    accession = submission_data.processed_entry.accession
+    version = submission_data.processed_entry.version
 
     collection_date = metadata.get(config.embl.collection_date_property, "Unknown")
     authors = get_authors(str(metadata.get(config.embl.authors_property) or ""))
