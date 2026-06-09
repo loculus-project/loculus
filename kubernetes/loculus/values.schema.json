@@ -1225,7 +1225,7 @@
             "DOIPrefix": {
               "groups": ["general"],
               "type": "string",
-              "description": "The DOI prefix for SeqSets"
+              "description": "The DOI prefix for SeqSets. More information on DOI prefixes and content registration can be found here: https://www.crossref.org/services/content-registration/"
             },
             "endpoint": {
               "groups": ["general"],
