@@ -99,29 +99,14 @@ def calculate_metadata_diff(
         return {}
     previous_metadata = previous_metadata_list[0].get("unprocessedMetadata", {})
 
-    diff = {}
-
-    new_keys = set(new_metadata.keys())
-    old_keys = set(previous_metadata.keys())
-
-    for key in new_keys | old_keys:
-        key_in_new = key in new_metadata
-        key_in_old = key in previous_metadata
-
-        if not key_in_new:
-            diff[key] = {"new": None, "old": previous_metadata[key]}
-
-        elif not key_in_old:
-            diff[key] = {"new": new_metadata[key], "old": None}
-
-        else:
-            new_value = new_metadata[key]
-            old_value = previous_metadata[key]
-
-            if new_value != old_value:
-                diff[key] = {"new": new_value, "old": old_value}
-
-    return diff
+    return {
+        key: {
+            "old": previous_metadata.get(key),
+            "new": new_metadata.get(key),
+        }
+        for key in new_metadata.keys() | previous_metadata.keys()
+        if new_metadata.get(key) != previous_metadata.get(key)
+    }
 
 
 def process_hashes(
