@@ -1058,6 +1058,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           # ena-webin-cli -context reads -fields
           # ena-webin-cli=9.0.3
           # Last checked: 09.06.2026
+          # Fields listed in INSTRUMENT
           - name: "HiSeq X Five"
           - name: "HiSeq X Ten"
           - name: "Illumina Genome Analyzer"
@@ -1132,6 +1133,22 @@ defaultOrganismConfig: &defaultOrganismConfig
           - name: "Tapestri"
           - name: "unspecified"
           - name: "AVITI 24"
+          # Fields listed in PLATFORM
+          - name: "ILLUMINA"
+          - name: "PACBIO_SMRT"
+          - name: "OXFORD_NANOPORE"
+          - name: "BGISEQ"
+          - name: "LS454"
+          - name: "ION_TORRENT"
+          - name: "CAPILLARY"
+          - name: "DNBSEQ"
+          - name: "ELEMENT"
+          - name: "ULTIMA"
+          - name: "VELA_DIAGNOSTICS"
+          - name: "GENAPSYS"
+          - name: "GENEMIND"
+          - name: "TAPESTRI"
+          - name: "AVITI"
       - name: sequencingProtocol
         ontology_id: GENEPIO:0001454
         definition: The protocol used to generate the sequence.
@@ -1158,6 +1175,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           # ena-webin-cli -context reads -fields
           # ena-webin-cli=9.0.3
           # Last checked: 09.06.2026
+          # Fields listed in LIBRARY_SELECTION
           - name: "RANDOM"
           - name: "PCR"
           - name: "RANDOM PCR"
@@ -1206,6 +1224,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           # ena-webin-cli -context reads -fields
           # ena-webin-cli=9.0.3
           # Last checked: 09.06.2026
+          # Fields listed in LIBRARY_STRATEGY
           - name: "WGS"
           - name: "WGA"
           - name: "WXS"
