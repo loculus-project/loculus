@@ -22,7 +22,7 @@ const COMPRESSION_EXTENSIONS = ['zst', 'gz', 'zip', 'xz'];
 // Sheets that the downloadable XLSX template adds alongside the `Data` sheet (see
 // `pages/[organism]/submission/template/index.ts`). Kept in sync manually rather than imported, to
 // avoid pulling the server-only template endpoint (and its dependencies) into the client bundle.
-const TEMPLATE_REFERENCE_SHEET_NAMES = new Set(['Config', '_lists']);
+const TEMPLATE_REFERENCE_SHEET_NAMES = new Set(['Guidance', '_lists']);
 
 export const METADATA_FILE_KIND: FileKind<ProcessedFile> = {
     type: 'metadata',

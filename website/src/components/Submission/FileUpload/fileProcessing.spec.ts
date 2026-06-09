@@ -96,8 +96,8 @@ describe('fileProcessing', () => {
         expect(processedFile.fastaHeader()).toBe('fooid description');
     });
 
-    test('template reference sheets (Config, _lists) do not trigger a multi-sheet warning', async () => {
-        const file = await buildWorkbookFile(['Config', '_lists']);
+    test('template reference sheets (Guidance, _lists) do not trigger a multi-sheet warning', async () => {
+        const file = await buildWorkbookFile(['Guidance', '_lists']);
         const processingResult = await METADATA_FILE_KIND.processRawFile(file);
 
         expect(processingResult.isOk()).toBe(true);
@@ -105,7 +105,7 @@ describe('fileProcessing', () => {
     });
 
     test('an unexpected extra sheet still triggers a multi-sheet warning', async () => {
-        const file = await buildWorkbookFile(['Config', 'My other data']);
+        const file = await buildWorkbookFile(['Guidance', 'My other data']);
         const processingResult = await METADATA_FILE_KIND.processRawFile(file);
 
         expect(processingResult.isOk()).toBe(true);

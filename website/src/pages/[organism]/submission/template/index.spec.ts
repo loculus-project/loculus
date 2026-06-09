@@ -3,7 +3,7 @@ import ExcelJS from 'exceljs';
 import JSZip from 'jszip';
 import { describe, expect, test, vi } from 'vitest';
 
-import { CONFIG_SHEET_NAME, DATA_SHEET_NAME, GET, LISTS_SHEET_NAME } from './index';
+import { GUIDANCE_SHEET_NAME, DATA_SHEET_NAME, GET, LISTS_SHEET_NAME } from './index';
 import type { TemplateInputField } from '../../../../config';
 
 const submissionDetailFields: TemplateInputField[] = [{ name: 'submissionId', required: true, isTemplateField: true }];
@@ -87,7 +87,7 @@ describe('submission template API route', () => {
         expect(text).toBe('submissionId\tdate\n');
     });
 
-    test('XLSX template has Data, Config and hidden _lists sheets, with Data first', async () => {
+    test('XLSX template has Data, Guidance and hidden _lists sheets, with Data first', async () => {
         const response = await callGet('test-organism', { fileType: 'xlsx' });
         expect(response.headers.get('Content-Type')).toBe(
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -96,7 +96,7 @@ describe('submission template API route', () => {
         const workbook = await loadWorkbook(response);
         const sheetNames = workbook.worksheets.map((sheet) => sheet.name);
         expect(sheetNames[0]).toBe(DATA_SHEET_NAME);
-        expect(sheetNames).toContain(CONFIG_SHEET_NAME);
+        expect(sheetNames).toContain(GUIDANCE_SHEET_NAME);
         expect(sheetNames).toContain(LISTS_SHEET_NAME);
 
         expect(workbook.getWorksheet(LISTS_SHEET_NAME)!.state).toBe('hidden');
@@ -163,38 +163,47 @@ describe('submission template API route', () => {
         expect(dataSheet.getColumn(4).width).toBeLessThanOrEqual(45);
     });
 
-    test('Config sheet lists every field with enabled/required flags and allowed values', async () => {
+    test('Guidance sheet lists every field with description columns and allowed values', async () => {
         const response = await callGet('test-organism', { fileType: 'xlsx' });
         const workbook = await loadWorkbook(response);
-        const configSheet = workbook.getWorksheet(CONFIG_SHEET_NAME)!;
+        const guidanceSheet = workbook.getWorksheet(GUIDANCE_SHEET_NAME)!;
 
-        expect((configSheet.getRow(1).values as unknown[]).slice(1)).toEqual([
+        expect((guidanceSheet.getRow(1).values as unknown[]).slice(1)).toEqual([
             'Field name',
             'Display name',
-            'Enabled by default',
             'Required',
+            'Definition',
+            'Guidance',
+            'Example',
             'Allowed values',
         ]);
 
-        // country: enabled by default, optional, with allowed values
-        const countryRow = configSheet.getRow(4).values as unknown[];
-        expect(countryRow.slice(1)).toEqual(['country', 'Country', 'Yes', 'No', 'Germany, France']);
+        // country: optional, carries its definition + example, with allowed values
+        const countryRow = guidanceSheet.getRow(4).values as unknown[];
+        expect(countryRow.slice(1)).toEqual([
+            'country',
+            'Country',
+            'No',
+            'Country where the sample was collected',
+            '',
+            'Germany',
+            'Germany, France',
+        ]);
 
-        // host: opt-in (not a template field), free text label only when no options
-        const hostRow = configSheet.getRow(5).values as unknown[];
-        expect(hostRow.slice(1, 4)).toEqual(['host', 'Host', 'No']);
-
-        const notesRow = configSheet.getRow(6).values as unknown[];
-        expect(notesRow[5]).toBe('free text');
+        // notes: no description, free text label only when no options
+        const notesRow = guidanceSheet.getRow(6).values as unknown[];
+        expect(notesRow.slice(1)).toEqual(['notes', 'Notes', 'No', '', '', '', 'free text']);
     });
 
-    test('Data sheet freezes the header row and adds an auto-filter', async () => {
+    test('Data sheet freezes the header row and is not in filter mode', async () => {
         const response = await callGet('test-organism', { fileType: 'xlsx' });
         const workbook = await loadWorkbook(response);
         const dataSheet = workbook.getWorksheet(DATA_SHEET_NAME)!;
 
         expect(dataSheet.views[0]).toMatchObject({ state: 'frozen', ySplit: 1 });
-        expect(dataSheet.autoFilter).toBeTruthy();
+        // No auto-filter: its dropdown arrows clutter the header and confuse with the validation
+        // dropdowns.
+        expect(dataSheet.autoFilter).toBeFalsy();
     });
 
     test('headers are colour-coded by tier and carry hover notes', async () => {
@@ -222,16 +231,16 @@ describe('submission template API route', () => {
         expect(dataSheet.getColumn(2).numFmt).toBe('yyyy-mm-dd'); // date is column B
     });
 
-    test('Config sheet includes a colour legend', async () => {
+    test('Guidance sheet includes a colour legend', async () => {
         const response = await callGet('test-organism', { fileType: 'xlsx' });
         const workbook = await loadWorkbook(response);
-        const configSheet = workbook.getWorksheet(CONFIG_SHEET_NAME)!;
+        const guidanceSheet = workbook.getWorksheet(GUIDANCE_SHEET_NAME)!;
 
         const cellTexts: string[] = [];
-        configSheet.eachRow((row) => row.eachCell((cell) => cellTexts.push(cell.text)));
+        guidanceSheet.eachRow((row) => row.eachCell((cell) => cellTexts.push(cell.text)));
         expect(cellTexts).toContain('Colour key');
         expect(cellTexts).toContain('Required field');
-        expect(cellTexts).toContain('Included in the template by default');
+        expect(cellTexts).toContain('Priority fields');
     });
 
     test('revision template filename includes "revision"', async () => {

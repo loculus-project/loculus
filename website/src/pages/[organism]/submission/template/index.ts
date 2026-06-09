@@ -14,11 +14,11 @@ const CONTENT_TYPES = new Map<TemplateFileType, string>([
 
 /**
  * Sheet names of the XLSX template. `Data` MUST be added to the workbook first, because the upload
- * parser only reads the first sheet. `Config` and `_lists` are recognised as reference sheets by
+ * parser only reads the first sheet. `Guidance` and `_lists` are recognised as reference sheets by
  * the upload parser, which therefore does not warn about them (see `fileProcessing.ts`).
  */
 export const DATA_SHEET_NAME = 'Data';
-export const CONFIG_SHEET_NAME = 'Config';
+export const GUIDANCE_SHEET_NAME = 'Guidance';
 export const LISTS_SHEET_NAME = '_lists';
 
 /**
@@ -76,7 +76,7 @@ function createTsvTemplate(organism: string, action: UploadAction): ArrayBuffer 
  *    round-trips through upload), ordered template fields first, then the remaining opt-in fields.
  *  - `_lists` (hidden): one column per field that has a controlled vocabulary; the column header is
  *    the field name and the values below are its allowed options. This is the dropdown source.
- *  - `Config` (read-only): a human-readable reference of every available field.
+ *  - `Guidance` (read-only): a human-readable reference of every available field.
  *
  * Only columns whose field has a controlled vocabulary get a dropdown validation. Each such
  * validation is header-driven: its source formula reads that column's own header cell and looks it
@@ -93,7 +93,6 @@ async function createXlsxTemplate(organism: string, action: UploadAction): Promi
     const dataSheet = workbook.addWorksheet(DATA_SHEET_NAME);
     dataSheet.addRow(fields.map((field) => field.name));
     dataSheet.views = [{ state: 'frozen', ySplit: 1 }]; // keep the header row visible while scrolling
-    dataSheet.autoFilter = `A1:${columnLetter(fields.length)}1`;
 
     const headerRow = dataSheet.getRow(1);
     fields.forEach((field, index) => {
@@ -113,7 +112,7 @@ async function createXlsxTemplate(organism: string, action: UploadAction): Promi
         addOptionsLookup(workbook, dataSheet, fields, optionFields);
     }
 
-    addConfigSheet(workbook, fields);
+    addGuidanceSheet(workbook, fields);
 
     const buffer = await workbook.xlsx.writeBuffer();
     return buffer;
@@ -182,7 +181,7 @@ interface WorksheetDataValidations {
 type FieldTier = 'required' | 'default' | 'optional';
 const FIELD_TIERS: Record<FieldTier, { argb: string; label: string }> = {
     required: { argb: 'FFFCE4D6', label: 'Required field' },
-    default: { argb: 'FFDDEBF7', label: 'Included in the template by default' },
+    default: { argb: 'FFDDEBF7', label: 'Priority fields' },
     optional: { argb: 'FFF2F2F2', label: 'Optional — opt in by filling the column' },
 };
 
@@ -210,44 +209,53 @@ function headerNoteFor(field: TemplateInputField): string {
     return lines.join('\n');
 }
 
-/** Adds the read-only `Config` reference sheet listing every available field, plus a colour legend. */
-function addConfigSheet(workbook: ExcelJS.Workbook, fields: TemplateInputField[]): void {
-    const configSheet = workbook.addWorksheet(CONFIG_SHEET_NAME);
-    configSheet.views = [{ state: 'frozen', ySplit: 1 }];
-    const headerRow = configSheet.addRow([
+/** Adds the read-only `Guidance` reference sheet listing every available field, plus a colour legend. */
+function addGuidanceSheet(workbook: ExcelJS.Workbook, fields: TemplateInputField[]): void {
+    const guidanceSheet = workbook.addWorksheet(GUIDANCE_SHEET_NAME);
+    guidanceSheet.views = [{ state: 'frozen', ySplit: 1 }];
+    const headerRow = guidanceSheet.addRow([
         'Field name',
         'Display name',
-        'Enabled by default',
         'Required',
+        'Definition',
+        'Guidance',
+        'Example',
         'Allowed values',
     ]);
     headerRow.font = { bold: true };
     headerRow.eachCell((cell) => {
         cell.fill = solidFill('FFD9D9D9');
     });
-    [28, 28, 18, 12, 60].forEach((width, index) => {
-        configSheet.getColumn(index + 1).width = width;
+    [28, 24, 10, 55, 55, 22, 55].forEach((width, index) => {
+        const column = guidanceSheet.getColumn(index + 1);
+        column.width = width;
+        // Wrap the long free-text columns (definition, guidance, allowed values) so they stay readable.
+        if (index === 3 || index === 4 || index === 6) {
+            column.alignment = { wrapText: true, vertical: 'top' };
+        }
     });
     fields.forEach((field) => {
-        const row = configSheet.addRow([
+        const row = guidanceSheet.addRow([
             field.name,
             field.displayName ?? '',
-            field.isTemplateField ? 'Yes' : 'No',
             field.required === true ? 'Yes' : 'No',
+            field.definition ?? '',
+            field.guidance ?? '',
+            field.example !== undefined ? String(field.example) : '',
             (field.options ?? []).map((option) => option.name).join(', ') || 'free text',
         ]);
         row.getCell(1).fill = tierFill(field); // mirror the Data header colour
     });
 
     // Colour legend.
-    configSheet.addRow([]);
-    configSheet.addRow(['Colour key']).getCell(1).font = { bold: true };
+    guidanceSheet.addRow([]);
+    guidanceSheet.addRow(['Colour key']).getCell(1).font = { bold: true };
     (Object.keys(FIELD_TIERS) as FieldTier[]).forEach((tier) => {
-        const row = configSheet.addRow(['', FIELD_TIERS[tier].label]);
+        const row = guidanceSheet.addRow(['', FIELD_TIERS[tier].label]);
         row.getCell(1).fill = solidFill(FIELD_TIERS[tier].argb);
     });
 
-    void configSheet.protect('', { selectLockedCells: true, selectUnlockedCells: true });
+    void guidanceSheet.protect('', { selectLockedCells: true, selectUnlockedCells: true });
 }
 
 /** Converts a 1-based column index to its Excel column letters (1 -> A, 27 -> AA). */
