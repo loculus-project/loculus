@@ -723,7 +723,9 @@ def run(config: Config) -> None:  # noqa: C901
                 upload_flatfiles(processed, config)
 
             try:
-                processed_entries = [submission_data.processed_entry for submission_data in processed]
+                processed_entries = [
+                    submission_data.processed_entry for submission_data in processed
+                ]
                 submit_processed_sequences(processed_entries, dataset_dir, config)
             except RuntimeError as e:
                 logger.exception("Submitting processed data failed. Traceback : %s", e)
