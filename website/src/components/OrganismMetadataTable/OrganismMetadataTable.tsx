@@ -1,9 +1,9 @@
 import { type FC, useEffect, useMemo, useState } from 'react';
 
 import type { OrganismMetadata } from './OrganismMetadataTableSelector.tsx';
+import useClientFlag from '../../hooks/isClient.ts';
 import { routes } from '../../routes/routes.ts';
 import type { InputField, InputFieldOption, Metadata } from '../../types/config.ts';
-import useClientFlag from '../../hooks/isClient.ts';
 import { getUrl } from '../../utils/getUrl.ts';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
 import { Button } from '../common/Button.tsx';
@@ -318,11 +318,11 @@ const AllowedValuesList: FC<AllowedValuesListProps> = ({ options }) => {
     const [query, setQuery] = useState('');
     const isClient = useClientFlag();
 
-    const filtered =
-        query === '' ? options : options.filter((o) => o.name.toLowerCase().includes(query.toLowerCase()));
+    const filtered = query === '' ? options : options.filter((o) => o.name.toLowerCase().includes(query.toLowerCase()));
 
     return (
         <div className='flex flex-col gap-1'>
+            <span className='text-sm font-medium text-primary-600'>Search available options</span>
             <input
                 type='text'
                 placeholder={`Search ${options.length} values…`}
@@ -371,20 +371,18 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                                       <FieldNameCell header={props.header} field={field} fieldType={FieldType.INPUT} />
                                   </td>
                                   <td className='border border-gray-300 px-4 py-2'>
-                                      {field.options && field.options.length > 0 ? (
-                                          <div className='flex flex-col gap-1'>
-                                              <span className='font-mono text-xs text-primary-700'>enum</span>
-                                              <AllowedValuesList options={field.options} />
-                                          </div>
-                                      ) : (
-                                          field.type
-                                      )}
+                                      {field.options && field.options.length > 0 ? <span>enum</span> : field.type}
                                   </td>
                                   <td className='border border-gray-300 px-4 py-2'>
                                       <FormattedText
                                           text={[field.definition, field.guidance].filter(Boolean).join(' ')}
                                           formatLinks
                                       />
+                                      {field.options && field.options.length > 0 && (
+                                          <div className='mt-2'>
+                                              <AllowedValuesList options={field.options} />
+                                          </div>
+                                      )}
                                   </td>
                                   <td className='border border-gray-300 px-4 py-2'>{field.example ?? ''}</td>
                               </tr>
