@@ -7,6 +7,7 @@ import { ACCESSION_FIELD, FASTA_IDS_FIELD, SUBMISSION_ID_INPUT_FIELD } from './s
 import {
     type InputField,
     type InstanceConfig,
+    type MetadataType,
     type Schema,
     type SequenceFlaggingConfig,
     type WebsiteConfig,
@@ -168,10 +169,11 @@ export function getMetadataTemplateFields(
 
 /**
  * An {@link InputField} as it should appear in the downloadable submission template, tagged with
- * whether it is one of the fields enabled by default (a "template field"). Default-enabled fields
- * are ordered before the remaining, opt-in fields.
+ * whether it is one of the fields enabled by default (a "template field") and with the field's
+ * metadata `type` (used e.g. to format date columns). Default-enabled fields are ordered before the
+ * remaining, opt-in fields.
  */
-export type TemplateInputField = InputField & { isTemplateField: boolean };
+export type TemplateInputField = InputField & { isTemplateField: boolean; metadataType?: MetadataType };
 
 /**
  * Returns every submittable input field for the template download, in column order:
@@ -197,10 +199,17 @@ export function getOrderedTemplateInputFields(organism: string, action: 'submit'
         .filter((field): field is InputField => field !== undefined);
     const restFields = nonDetailFields.filter((field) => !templateFieldNameSet.has(field.name));
 
+    const metadataTypeByName = new Map(schema.metadata.map((entry) => [entry.name, entry.type] as const));
+    const decorate = (field: InputField, isTemplateField: boolean): TemplateInputField => ({
+        ...field,
+        isTemplateField,
+        metadataType: metadataTypeByName.get(field.name),
+    });
+
     return [
-        ...detailFields.map((field) => ({ ...field, isTemplateField: true })),
-        ...templateFields.map((field) => ({ ...field, isTemplateField: true })),
-        ...restFields.map((field) => ({ ...field, isTemplateField: false })),
+        ...detailFields.map((field) => decorate(field, true)),
+        ...templateFields.map((field) => decorate(field, true)),
+        ...restFields.map((field) => decorate(field, false)),
     ];
 }
 

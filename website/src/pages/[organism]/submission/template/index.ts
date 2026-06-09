@@ -92,9 +92,19 @@ async function createXlsxTemplate(organism: string, action: UploadAction): Promi
     // --- Data sheet (must be added first) ---
     const dataSheet = workbook.addWorksheet(DATA_SHEET_NAME);
     dataSheet.addRow(fields.map((field) => field.name));
-    dataSheet.getRow(1).font = { bold: true };
+    dataSheet.views = [{ state: 'frozen', ySplit: 1 }]; // keep the header row visible while scrolling
+    dataSheet.autoFilter = `A1:${columnLetter(fields.length)}1`;
+
+    const headerRow = dataSheet.getRow(1);
     fields.forEach((field, index) => {
         dataSheet.getColumn(index + 1).width = columnWidthFor(field);
+        if (field.metadataType === 'date') {
+            dataSheet.getColumn(index + 1).numFmt = 'yyyy-mm-dd';
+        }
+        const headerCell = headerRow.getCell(index + 1);
+        headerCell.font = { bold: true };
+        headerCell.fill = tierFill(field); // colour-code required / default / opt-in
+        headerCell.note = headerNoteFor(field); // hover help: definition, example, guidance
     });
 
     const optionFields = fields.filter((field) => (field.options?.length ?? 0) > 0);
@@ -168,23 +178,75 @@ interface WorksheetDataValidations {
     add(sqref: string, validation: ExcelJS.DataValidation): void;
 }
 
-/** Adds the read-only `Config` reference sheet listing every available field. */
+/** Visual tiers used to colour-code field headers (and explained by the legend on `Config`). */
+type FieldTier = 'required' | 'default' | 'optional';
+const FIELD_TIERS: Record<FieldTier, { argb: string; label: string }> = {
+    required: { argb: 'FFFCE4D6', label: 'Required field' },
+    default: { argb: 'FFDDEBF7', label: 'Included in the template by default' },
+    optional: { argb: 'FFF2F2F2', label: 'Optional — opt in by filling the column' },
+};
+
+function fieldTier(field: TemplateInputField): FieldTier {
+    if (field.required === true) return 'required';
+    return field.isTemplateField ? 'default' : 'optional';
+}
+
+function solidFill(argb: string): ExcelJS.Fill {
+    return { type: 'pattern', pattern: 'solid', fgColor: { argb } };
+}
+
+function tierFill(field: TemplateInputField): ExcelJS.Fill {
+    return solidFill(FIELD_TIERS[fieldTier(field)].argb);
+}
+
+/** Hover help for a Data header: display name, definition, guidance, an example, and the field tier. */
+function headerNoteFor(field: TemplateInputField): string {
+    const lines: string[] = [];
+    if (field.displayName !== undefined && field.displayName !== field.name) lines.push(field.displayName);
+    if (field.definition !== undefined) lines.push(field.definition);
+    if (field.guidance !== undefined) lines.push(field.guidance);
+    if (field.example !== undefined && field.example !== '') lines.push(`Example: ${field.example}`);
+    lines.push(FIELD_TIERS[fieldTier(field)].label);
+    return lines.join('\n');
+}
+
+/** Adds the read-only `Config` reference sheet listing every available field, plus a colour legend. */
 function addConfigSheet(workbook: ExcelJS.Workbook, fields: TemplateInputField[]): void {
     const configSheet = workbook.addWorksheet(CONFIG_SHEET_NAME);
-    configSheet.addRow(['Field name', 'Display name', 'Enabled by default', 'Required', 'Allowed values']);
-    configSheet.getRow(1).font = { bold: true };
+    configSheet.views = [{ state: 'frozen', ySplit: 1 }];
+    const headerRow = configSheet.addRow([
+        'Field name',
+        'Display name',
+        'Enabled by default',
+        'Required',
+        'Allowed values',
+    ]);
+    headerRow.font = { bold: true };
+    headerRow.eachCell((cell) => {
+        cell.fill = solidFill('FFD9D9D9');
+    });
     [28, 28, 18, 12, 60].forEach((width, index) => {
         configSheet.getColumn(index + 1).width = width;
     });
     fields.forEach((field) => {
-        configSheet.addRow([
+        const row = configSheet.addRow([
             field.name,
             field.displayName ?? '',
             field.isTemplateField ? 'Yes' : 'No',
             field.required === true ? 'Yes' : 'No',
             (field.options ?? []).map((option) => option.name).join(', ') || 'free text',
         ]);
+        row.getCell(1).fill = tierFill(field); // mirror the Data header colour
     });
+
+    // Colour legend.
+    configSheet.addRow([]);
+    configSheet.addRow(['Colour key']).getCell(1).font = { bold: true };
+    (Object.keys(FIELD_TIERS) as FieldTier[]).forEach((tier) => {
+        const row = configSheet.addRow(['', FIELD_TIERS[tier].label]);
+        row.getCell(1).fill = solidFill(FIELD_TIERS[tier].argb);
+    });
+
     void configSheet.protect('', { selectLockedCells: true, selectUnlockedCells: true });
 }
 

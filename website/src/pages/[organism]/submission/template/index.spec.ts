@@ -9,11 +9,13 @@ import type { TemplateInputField } from '../../../../config';
 const submissionDetailFields: TemplateInputField[] = [{ name: 'submissionId', required: true, isTemplateField: true }];
 
 const templateFields: TemplateInputField[] = [
-    { name: 'date', displayName: 'Collection date', required: true, isTemplateField: true },
+    { name: 'date', displayName: 'Collection date', required: true, isTemplateField: true, metadataType: 'date' },
     {
         name: 'country',
         displayName: 'Country',
         isTemplateField: true,
+        definition: 'Country where the sample was collected',
+        example: 'Germany',
         options: [{ name: 'Germany' }, { name: 'France' }],
     },
 ];
@@ -184,6 +186,52 @@ describe('submission template API route', () => {
 
         const notesRow = configSheet.getRow(6).values as unknown[];
         expect(notesRow[5]).toBe('free text');
+    });
+
+    test('Data sheet freezes the header row and adds an auto-filter', async () => {
+        const response = await callGet('test-organism', { fileType: 'xlsx' });
+        const workbook = await loadWorkbook(response);
+        const dataSheet = workbook.getWorksheet(DATA_SHEET_NAME)!;
+
+        expect(dataSheet.views[0]).toMatchObject({ state: 'frozen', ySplit: 1 });
+        expect(dataSheet.autoFilter).toBeTruthy();
+    });
+
+    test('headers are colour-coded by tier and carry hover notes', async () => {
+        const response = await callGet('test-organism', { fileType: 'xlsx' });
+        const workbook = await loadWorkbook(response);
+        const header = workbook.getWorksheet(DATA_SHEET_NAME)!.getRow(1);
+
+        // date (required) -> required tier; country (default template) -> default tier;
+        // notes (opt-in) -> optional tier.
+        const fillArgb = (column: number) => (header.getCell(column).fill as ExcelJS.FillPattern).fgColor?.argb;
+        expect(fillArgb(2)).toBe('FFFCE4D6'); // date, required
+        expect(fillArgb(3)).toBe('FFDDEBF7'); // country, default
+        expect(fillArgb(5)).toBe('FFF2F2F2'); // notes, optional
+
+        // The country header note surfaces its definition and example.
+        const note = JSON.stringify(header.getCell(3).note);
+        expect(note).toContain('Country where the sample was collected');
+        expect(note).toContain('Example: Germany');
+    });
+
+    test('date columns are formatted as yyyy-mm-dd', async () => {
+        const response = await callGet('test-organism', { fileType: 'xlsx' });
+        const workbook = await loadWorkbook(response);
+        const dataSheet = workbook.getWorksheet(DATA_SHEET_NAME)!;
+        expect(dataSheet.getColumn(2).numFmt).toBe('yyyy-mm-dd'); // date is column B
+    });
+
+    test('Config sheet includes a colour legend', async () => {
+        const response = await callGet('test-organism', { fileType: 'xlsx' });
+        const workbook = await loadWorkbook(response);
+        const configSheet = workbook.getWorksheet(CONFIG_SHEET_NAME)!;
+
+        const cellTexts: string[] = [];
+        configSheet.eachRow((row) => row.eachCell((cell) => cellTexts.push(cell.text)));
+        expect(cellTexts).toContain('Colour key');
+        expect(cellTexts).toContain('Required field');
+        expect(cellTexts).toContain('Included in the template by default');
     });
 
     test('revision template filename includes "revision"', async () => {
