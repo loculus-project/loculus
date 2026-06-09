@@ -4,11 +4,11 @@ import java.io.ByteArrayInputStream
 import java.util.zip.ZipInputStream
 
 /**
- * Extracts the metadata.tsv and sequences.fasta contents from a downloaded original-data zip.
+ * Extracts the metadata.tsv and sequences.fasta contents from a downloaded submitted-data zip.
  *
  * @return a pair of (metadata.tsv content, sequences.fasta content)
  */
-fun extractOriginalDataZipContents(zipContent: ByteArray): Pair<String, String> {
+fun extractSubmittedDataZipContents(zipContent: ByteArray): Pair<String, String> {
     var metadataTsv = ""
     var sequencesFasta = ""
 

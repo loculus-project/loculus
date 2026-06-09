@@ -41,7 +41,7 @@ class SubmittedDataRevisionWorkflowTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, sequencesFasta) = extractOriginalDataZipContents(zipContent)
+        val (metadataTsv, sequencesFasta) = extractSubmittedDataZipContents(zipContent)
 
         val metadataLines = metadataTsv.lines().filter { it.isNotBlank() }
         val headers = metadataLines[0].split("\t")
@@ -114,7 +114,7 @@ class SubmittedDataRevisionWorkflowTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, sequencesFasta) = extractOriginalDataZipContents(zipContent)
+        val (metadataTsv, sequencesFasta) = extractSubmittedDataZipContents(zipContent)
 
         val metadataLines = metadataTsv.lines().filter { it.isNotBlank() }
         assertThat(metadataLines.size, `is`(2))

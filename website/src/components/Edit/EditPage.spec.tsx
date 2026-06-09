@@ -12,7 +12,7 @@ import {
     testAccessToken,
     testOrganism,
 } from '../../../vitest.setup.ts';
-import { type UnprocessedMetadataRecord } from '../../types/backend.ts';
+import { type SubmittedMetadataRecord } from '../../types/backend.ts';
 import type { InputField } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
@@ -115,7 +115,7 @@ describe('EditPage', () => {
 });
 
 const expectTextInSequenceData = {
-    unprocessedMetadata: (metadata: UnprocessedMetadataRecord): void =>
+    unprocessedMetadata: (metadata: SubmittedMetadataRecord): void =>
         Object.entries(metadata).forEach(([key, value]) => {
             const label = document.querySelector(`label[for="${key}"]`);
             expect(label).toBeTruthy();
