@@ -318,7 +318,13 @@ const AllowedValuesList: FC<AllowedValuesListProps> = ({ options }) => {
     const [query, setQuery] = useState('');
     const isClient = useClientFlag();
 
-    const filtered = query === '' ? options : options.filter((o) => o.name.toLowerCase().includes(query.toLowerCase()));
+    const filtered = useMemo(
+        () =>
+            query === ''
+                ? options
+                : options.filter((o) => o.name.toLowerCase().includes(query.toLowerCase())),
+        [options, query],
+    );
 
     return (
         <div className='flex flex-col gap-1'>
