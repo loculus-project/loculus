@@ -5,6 +5,7 @@ import JSZip from 'jszip';
 import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
 
+import { DATA_SHEET_NAME, TEMPLATE_REFERENCE_SHEET_NAMES } from '../../../utils/metadataTemplateSheets';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
 
@@ -18,13 +19,6 @@ export type FileKind<F extends ProcessedFile> = {
 };
 
 const COMPRESSION_EXTENSIONS = ['zst', 'gz', 'zip', 'xz'];
-
-// Names of the sheets in the downloadable XLSX template (see
-// `pages/[organism]/submission/template/index.ts`). Kept in sync manually rather than imported, to
-// avoid pulling the server-only template endpoint (and its dependencies) into the client bundle.
-// `Data` is the sheet to parse; the others are reference/lookup sheets that should be ignored.
-const TEMPLATE_DATA_SHEET_NAME = 'Data';
-const TEMPLATE_REFERENCE_SHEET_NAMES = new Set(['Guidance', '_lists']);
 
 export const METADATA_FILE_KIND: FileKind<ProcessedFile> = {
     type: 'metadata',
@@ -251,9 +245,7 @@ export class ExcelFile implements ProcessedFile {
         // Parse the `Data` sheet by name when present, so reordering the template's sheets (e.g.
         // dragging `Guidance` to the front) does not cause the reference sheet to be read as
         // metadata. Fall back to the first sheet for arbitrary, non-template workbooks.
-        const dataSheetName = workbook.SheetNames.includes(TEMPLATE_DATA_SHEET_NAME)
-            ? TEMPLATE_DATA_SHEET_NAME
-            : workbook.SheetNames[0];
+        const dataSheetName = workbook.SheetNames.includes(DATA_SHEET_NAME) ? DATA_SHEET_NAME : workbook.SheetNames[0];
         let sheet = workbook.Sheets[dataSheetName];
 
         // convert to JSON and back due to date formatting not working well otherwise

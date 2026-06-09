@@ -4,6 +4,7 @@ import ExcelJS from 'exceljs';
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import type { UploadAction } from '../../../../components/Submission/DataUploadForm.tsx';
 import { getMetadataTemplateFields, getOrderedTemplateInputFields, type TemplateInputField } from '../../../../config';
+import { DATA_SHEET_NAME, GUIDANCE_SHEET_NAME, LISTS_SHEET_NAME } from '../../../../utils/metadataTemplateSheets';
 
 export type TemplateFileType = 'tsv' | 'xlsx';
 const VALID_FILE_TYPES = ['tsv', 'xlsx'];
@@ -11,15 +12,6 @@ const CONTENT_TYPES = new Map<TemplateFileType, string>([
     ['tsv', 'text/tab-separated-values'],
     ['xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
 ]);
-
-/**
- * Sheet names of the XLSX template. The upload parser selects the `Data` sheet by name (see
- * `fileProcessing.ts`); `Guidance` and `_lists` are recognised as reference sheets and ignored on
- * upload.
- */
-export const DATA_SHEET_NAME = 'Data';
-export const GUIDANCE_SHEET_NAME = 'Guidance';
-export const LISTS_SHEET_NAME = '_lists';
 
 /**
  * The dropdown validation is applied to data rows 2..MAX_DATA_ROWS. We deliberately do not use

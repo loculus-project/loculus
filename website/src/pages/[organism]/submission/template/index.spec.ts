@@ -3,8 +3,9 @@ import ExcelJS from 'exceljs';
 import JSZip from 'jszip';
 import { describe, expect, test, vi } from 'vitest';
 
-import { GUIDANCE_SHEET_NAME, DATA_SHEET_NAME, GET, LISTS_SHEET_NAME } from './index';
+import { GET } from './index';
 import type { TemplateInputField } from '../../../../config';
+import { DATA_SHEET_NAME, GUIDANCE_SHEET_NAME, LISTS_SHEET_NAME } from '../../../../utils/metadataTemplateSheets';
 
 const submissionDetailFields: TemplateInputField[] = [{ name: 'submissionId', required: true, isTemplateField: true }];
 
