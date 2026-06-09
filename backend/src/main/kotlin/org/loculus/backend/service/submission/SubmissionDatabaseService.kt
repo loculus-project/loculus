@@ -964,11 +964,11 @@ class SubmissionDatabaseService(
         }
 
         val metadata = versionComment?.let { mapOf("versionComment" to it) } ?: emptyMap()
-        val submissionData = compressionService.compressSequencesInSubmittedData(
+        val submittedData = compressionService.compressSequencesInSubmittedData(
             SubmittedData(metadata = metadata, unalignedNucleotideSequences = emptyMap()),
             organism,
         )
-        val submissionDataParam = QueryParameter(submissionData, SequenceEntriesTable.submittedDataColumn.columnType)
+        val submittedDataParam = QueryParameter(submittedData, SequenceEntriesTable.submittedDataColumn.columnType)
 
         SequenceEntriesTable.insert(
             SequenceEntriesTable.select(
@@ -980,8 +980,8 @@ class SubmissionDatabaseService(
                 dateTimeParam(dateProvider.getCurrentDateTime()),
                 booleanParam(true),
                 SequenceEntriesTable.organismColumn,
-                submissionDataParam,
-                submissionDataParam,
+                submittedDataParam,
+                submittedDataParam,
             ).where {
                 (
                     SequenceEntriesTable.accessionColumn inList
