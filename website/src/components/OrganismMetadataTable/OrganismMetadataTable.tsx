@@ -328,10 +328,13 @@ const AllowedValuesList: FC<AllowedValuesListProps> = ({ options }) => {
 
     return (
         <div className='flex flex-col gap-1'>
-            <span className='text-sm font-medium text-primary-600'>Search available options</span>
+            <label htmlFor='allowed-values-search' className='text-sm font-medium text-primary-600'>
+                Search available options
+            </label>
             <input
+                id='allowed-values-search'
                 type='text'
-                placeholder={`Search ${options.length} values…`}
+                ${options.length} values…`}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 disabled={!isClient}
