@@ -14,6 +14,8 @@ import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.QueryParameter
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Transaction
@@ -54,7 +56,6 @@ import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
-import org.loculus.backend.api.OriginalDataWithFileUrls
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.PreprocessingStatus.PROCESSED
 import org.loculus.backend.api.ProcessedData
@@ -69,6 +70,8 @@ import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.api.UnprocessedDataContentWithFileUrls
+import org.loculus.backend.api.UnprocessedDataDownloadEntry
 import org.loculus.backend.api.fileIds
 import org.loculus.backend.api.getFileId
 import org.loculus.backend.auth.AuthenticatedUser
@@ -194,13 +197,13 @@ class SubmissionDatabaseService(
             .chunked(streamBatchSize)
             .map { chunk ->
                 val chunkOfUnprocessedData = chunk.map {
-                    val originalData = compressionService.decompressSequencesInOriginalData(
+                    val unprocessedData = compressionService.decompressSequencesInOriginalData(
                         it[table.unprocessedDataColumn]!!,
                     )
-                    val originalDataWithFileUrls = OriginalDataWithFileUrls(
-                        originalData.metadata,
-                        originalData.unalignedNucleotideSequences,
-                        originalData.files?.let {
+                    val unprocessedDataWithFileUrls = UnprocessedDataContentWithFileUrls(
+                        unprocessedData.metadata,
+                        unprocessedData.unalignedNucleotideSequences,
+                        unprocessedData.files?.let {
                             it.mapValues {
                                 it.value.map { f ->
                                     val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId)
@@ -212,7 +215,7 @@ class SubmissionDatabaseService(
                     UnprocessedData(
                         accession = it[table.accessionColumn],
                         version = it[table.versionColumn],
-                        data = originalDataWithFileUrls,
+                        data = unprocessedDataWithFileUrls,
                         submissionId = it[table.submissionIdColumn],
                         submitter = it[table.submitterColumn],
                         groupId = it[table.groupIdColumn],
@@ -1300,6 +1303,70 @@ class SubmissionDatabaseService(
                     it[SequenceEntriesView.submitterColumn],
                     it[SequenceEntriesView.isRevocationColumn],
                     selectedMetadata,
+                )
+            }
+    }
+
+    private fun originalDataDownloadConditions(
+        organism: Organism,
+        groupId: Int,
+        accessionsFilter: List<String>?,
+    ): Op<Boolean> {
+        val accessionsCondition = if (!accessionsFilter.isNullOrEmpty()) {
+            SequenceEntriesView.accessionColumn inList accessionsFilter
+        } else {
+            Op.TRUE
+        }
+
+        return SequenceEntriesView.organismIs(organism) and
+            (SequenceEntriesView.groupIdColumn eq groupId) and
+            SequenceEntriesView.statusIs(APPROVED_FOR_RELEASE) and
+            SequenceEntriesView.isMaxVersion and
+            (SequenceEntriesView.isRevocationColumn eq false) and
+            accessionsCondition
+    }
+
+    fun countOriginalDataDownloadEntries(organism: Organism, groupId: Int, accessionsFilter: List<String>?): Long =
+        SequenceEntriesView
+            .select(SequenceEntriesView.accessionColumn)
+            .where(originalDataDownloadConditions(organism, groupId, accessionsFilter))
+            .count()
+
+    fun streamUnprocessedDataForOriginalDataDownload(
+        organism: Organism,
+        groupId: Int,
+        accessionsFilter: List<String>?,
+    ): Sequence<UnprocessedDataDownloadEntry> {
+        val unprocessedDataQuery = SequenceEntriesView.join(
+            SequenceEntriesTable,
+            JoinType.INNER,
+            additionalConstraint = {
+                (SequenceEntriesView.accessionColumn eq SequenceEntriesTable.accessionColumn) and
+                    (SequenceEntriesView.versionColumn eq SequenceEntriesTable.versionColumn)
+            },
+        )
+
+        return unprocessedDataQuery
+            .select(
+                SequenceEntriesView.accessionColumn,
+                SequenceEntriesView.versionColumn,
+                SequenceEntriesView.submissionIdColumn,
+                SequenceEntriesTable.unprocessedDataColumn,
+            )
+            .where(originalDataDownloadConditions(organism, groupId, accessionsFilter))
+            .orderBy(SequenceEntriesView.accessionColumn to SortOrder.ASC)
+            .fetchSize(streamBatchSize)
+            .asSequence()
+            .map {
+                val compressedUnprocessedData = it[SequenceEntriesTable.unprocessedDataColumn]!!
+                val decompressedUnprocessedData = compressionService.decompressSequencesInOriginalData(
+                    compressedUnprocessedData,
+                )
+                UnprocessedDataDownloadEntry(
+                    it[SequenceEntriesView.accessionColumn],
+                    it[SequenceEntriesView.versionColumn],
+                    it[SequenceEntriesView.submissionIdColumn],
+                    decompressedUnprocessedData,
                 )
             }
     }

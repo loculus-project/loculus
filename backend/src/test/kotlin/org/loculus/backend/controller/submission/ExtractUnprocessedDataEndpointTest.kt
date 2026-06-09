@@ -19,10 +19,10 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.OriginalData
-import org.loculus.backend.api.OriginalDataWithFileUrls
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.api.UnprocessedDataContentWithFileUrls
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
@@ -246,7 +246,7 @@ class ExtractUnprocessedDataEndpointTest(
             everyItem(
                 hasProperty(
                     "data",
-                    hasProperty<OriginalDataWithFileUrls<GeneticSequence>>(
+                    hasProperty<UnprocessedDataContentWithFileUrls<GeneticSequence>>(
                         "files",
                         hasEntry<String, List<FileIdAndNameAndReadUrl>>(
                             `is`("myFileCategory"),
