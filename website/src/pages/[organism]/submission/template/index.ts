@@ -13,9 +13,9 @@ const CONTENT_TYPES = new Map<TemplateFileType, string>([
 ]);
 
 /**
- * Sheet names of the XLSX template. `Data` is added to the workbook first so the file opens on it,
- * but the upload parser selects it by name (see `fileProcessing.ts`), so the order is not
- * load-bearing. `Guidance` and `_lists` are recognised as reference sheets and ignored on upload.
+ * Sheet names of the XLSX template. The upload parser selects the `Data` sheet by name (see
+ * `fileProcessing.ts`); `Guidance` and `_lists` are recognised as reference sheets and ignored on
+ * upload.
  */
 export const DATA_SHEET_NAME = 'Data';
 export const GUIDANCE_SHEET_NAME = 'Guidance';
@@ -89,7 +89,7 @@ async function createXlsxTemplate(organism: string, action: UploadAction): Promi
     const fields = getOrderedTemplateInputFields(organism, action);
     const workbook = new ExcelJS.Workbook();
 
-    // --- Data sheet (added first so the workbook opens on it; parser finds it by name) ---
+    // --- Data sheet ---
     const dataSheet = workbook.addWorksheet(DATA_SHEET_NAME);
     dataSheet.addRow(fields.map((field) => field.name));
     dataSheet.views = [{ state: 'frozen', ySplit: 1 }]; // keep the header row visible while scrolling
