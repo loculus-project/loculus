@@ -18,8 +18,7 @@ args=$(printf "%s " \
   "--loculus.s3.bucket.bucket=loculus-preview-private" \
   "--loculus.s3.bucket.endpoint=http://localhost:8084" \
   "--loculus.s3.bucket.accessKey=dummyAccessKey" \
-  "--loculus.s3.bucket.secretKey=dummySecretKey" \
-  "$@"
+  "--loculus.s3.bucket.secretKey=dummySecretKey"
 )
 
 ./gradlew bootRun --args="$args"
