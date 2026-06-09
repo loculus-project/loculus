@@ -28,7 +28,6 @@ class ApproveConfig:
     username: str
     password: str
     backend_request_timeout_seconds: int = 600
-    slack_hook: str = ""
 
 
 @dataclass(kw_only=True)
@@ -37,6 +36,7 @@ class Config(ApproveConfig):
     nucleotide_sequences: list[str]
     segmented: bool
     batch_chunk_size: int
+    slack_hook: str = ""
 
 
 def backend_url(config: ApproveConfig) -> str:
