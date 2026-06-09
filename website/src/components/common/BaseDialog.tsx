@@ -20,7 +20,7 @@ export const BaseDialog: React.FC<BaseDialogProps> = ({
     fullWidth = true,
     className,
 }) => {
-    const fullWidthClasses = fullWidth ? 'w-full w-max-5xl' : '';
+    const fullWidthClasses = fullWidth ? 'w-full' : '';
     return (
         <Dialog open={isOpen} onClose={onClose} className='relative z-40'>
             <div className='fixed inset-0 bg-black/25' />
