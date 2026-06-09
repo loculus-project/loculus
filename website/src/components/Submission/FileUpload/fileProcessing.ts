@@ -19,9 +19,11 @@ export type FileKind<F extends ProcessedFile> = {
 
 const COMPRESSION_EXTENSIONS = ['zst', 'gz', 'zip', 'xz'];
 
-// Sheets that the downloadable XLSX template adds alongside the `Data` sheet (see
+// Names of the sheets in the downloadable XLSX template (see
 // `pages/[organism]/submission/template/index.ts`). Kept in sync manually rather than imported, to
 // avoid pulling the server-only template endpoint (and its dependencies) into the client bundle.
+// `Data` is the sheet to parse; the others are reference/lookup sheets that should be ignored.
+const TEMPLATE_DATA_SHEET_NAME = 'Data';
 const TEMPLATE_REFERENCE_SHEET_NAMES = new Set(['Guidance', '_lists']);
 
 export const METADATA_FILE_KIND: FileKind<ProcessedFile> = {
@@ -246,8 +248,13 @@ export class ExcelFile implements ProcessedFile {
             cellDates: true,
         });
 
-        const firstSheetName = workbook.SheetNames[0];
-        let sheet = workbook.Sheets[firstSheetName];
+        // Parse the `Data` sheet by name when present, so reordering the template's sheets (e.g.
+        // dragging `Guidance` to the front) does not cause the reference sheet to be read as
+        // metadata. Fall back to the first sheet for arbitrary, non-template workbooks.
+        const dataSheetName = workbook.SheetNames.includes(TEMPLATE_DATA_SHEET_NAME)
+            ? TEMPLATE_DATA_SHEET_NAME
+            : workbook.SheetNames[0];
+        let sheet = workbook.Sheets[dataSheetName];
 
         // convert to JSON and back due to date formatting not working well otherwise
         const json = XLSX.utils.sheet_to_json(sheet);
@@ -263,21 +270,21 @@ export class ExcelFile implements ProcessedFile {
         });
         const rowCount = tsvContent.split('\n').length - 1;
         if (rowCount <= 0) {
-            throw new Error(`Sheet ${firstSheetName} is empty.`);
+            throw new Error(`Sheet ${dataSheetName} is empty.`);
         }
 
         const tsvBlob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
         // filename needs to end in 'tsv' for the uploaded file
         const tsvFile = new File([tsvBlob], 'converted.tsv', { type: 'text/tab-separated-values' });
         this.tsvFile = tsvFile;
-        // Sheets that the downloadable template adds for reference/lookup purposes are expected and
-        // should not trigger the "you have unprocessed sheets" warning.
-        const unexpectedSheets = workbook.SheetNames.slice(1).filter(
-            (sheetName) => !TEMPLATE_REFERENCE_SHEET_NAMES.has(sheetName),
+        // Any sheet other than the parsed one and the template's reference/lookup sheets is
+        // unexpected and should trigger the "you have unprocessed sheets" warning.
+        const unexpectedSheets = workbook.SheetNames.filter(
+            (sheetName) => sheetName !== dataSheetName && !TEMPLATE_REFERENCE_SHEET_NAMES.has(sheetName),
         );
         if (unexpectedSheets.length > 0) {
             this.processingWarnings.push(
-                `The file contains ${workbook.SheetNames.length} sheets, only the first sheet (${firstSheetName}; ${rowCount} rows) was processed.`,
+                `The file contains ${workbook.SheetNames.length} sheets, only the '${dataSheetName}' sheet (${rowCount} rows) was processed.`,
             );
         }
     }

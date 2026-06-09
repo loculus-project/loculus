@@ -111,4 +111,24 @@ describe('fileProcessing', () => {
         expect(processingResult.isOk()).toBe(true);
         expect(processingResult._unsafeUnwrap().warnings()).toHaveLength(1);
     });
+
+    test('parses the Data sheet by name even when it is not the first sheet', async () => {
+        // Reference sheet dragged in front of Data — the Data sheet must still be the one parsed.
+        const workbook = new ExcelJS.Workbook();
+        workbook.addWorksheet('Guidance').addRow(['Field name', 'Display name']);
+        const data = workbook.addWorksheet('Data');
+        data.addRow(['submissionId', 'country']);
+        data.addRow(['sample1', 'Germany']);
+        const buffer = await workbook.xlsx.writeBuffer();
+        const file = new File([buffer], 'template.xlsx');
+
+        const processingResult = await METADATA_FILE_KIND.processRawFile(file);
+        expect(processingResult.isOk()).toBe(true);
+        const processedFile = processingResult._unsafeUnwrap();
+
+        expect(processedFile.warnings()).toHaveLength(0);
+        const text = await processedFile.text();
+        expect(text.split('\n')[0]).toContain('submissionId'); // parsed Data...
+        expect(text).not.toContain('Field name'); // ...not the Guidance reference sheet
+    });
 });
