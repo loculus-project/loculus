@@ -20,7 +20,7 @@ logging.basicConfig(
 )
 
 
-@dataclass(kw_only=True)
+@dataclass
 class CompareHashesConfig(Config):
     slack_hook: str = ""
 
