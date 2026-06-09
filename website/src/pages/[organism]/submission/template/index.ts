@@ -167,10 +167,9 @@ function addOptionsLookup(
     });
 }
 
-/** A roomy-but-bounded Data column width that fits the field name and its longest dropdown option. */
+/** A roomy-but-bounded Data column width that fits the field name (not its dropdown options). */
 function columnWidthFor(field: TemplateInputField): number {
-    const longestOption = (field.options ?? []).reduce((max, option) => Math.max(max, option.name.length), 0);
-    return Math.min(45, Math.max(16, field.name.length + 2, longestOption + 2));
+    return Math.min(45, Math.max(16, field.name.length + 2));
 }
 
 interface WorksheetDataValidations {

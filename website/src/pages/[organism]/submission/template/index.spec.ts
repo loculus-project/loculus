@@ -149,18 +149,20 @@ describe('submission template API route', () => {
         expect(validationBlock).toContain(LISTS_SHEET_NAME);
     });
 
-    test('Data columns are widened to fit field names and their options', async () => {
+    test('Data columns are sized to the field name, bounded and not widened by options', async () => {
         const response = await callGet('test-organism', { fileType: 'xlsx' });
         const workbook = await loadWorkbook(response);
         const dataSheet = workbook.getWorksheet(DATA_SHEET_NAME)!;
 
-        // Every column is at least the minimum width...
+        // Every column is between the minimum and maximum width...
         for (let column = 1; column <= 5; column++) {
-            expect(dataSheet.getColumn(column).width).toBeGreaterThanOrEqual(16);
+            const width = dataSheet.getColumn(column).width!;
+            expect(width).toBeGreaterThanOrEqual(16);
+            expect(width).toBeLessThanOrEqual(45);
         }
-        // ...and the `host` column (col D) widens to fit "Homo sapiens" (12) -> 14 < 16, stays at 16,
-        // while a longer option would push it wider. Sanity-check it is a finite, bounded number.
-        expect(dataSheet.getColumn(4).width).toBeLessThanOrEqual(45);
+        // ...and short-named option fields stay at the minimum rather than widening to fit a long
+        // option value (e.g. country -> "Germany"/"France" does not stretch column C).
+        expect(dataSheet.getColumn(3).width).toBe(16);
     });
 
     test('Guidance sheet lists every field with description columns and allowed values', async () => {
