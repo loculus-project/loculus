@@ -121,21 +121,43 @@ describe('submission template API route', () => {
         expect(listsSheet.getCell('B2').value).toBe('Homo sapiens');
     });
 
-    test('Data grid carries a single header-driven list validation pointing at _lists', async () => {
+    test('only option columns get an advisory dropdown, each pointing at its _lists range', async () => {
         // Asserted against the raw written XML: ExcelJS' own re-read expands a range `sqref` into
-        // per-cell entries, so it cannot tell us the validation was written as one compact rule.
+        // per-cell entries, which makes the compact per-column rules unreadable.
         const response = await callGet('test-organism', { fileType: 'xlsx' });
         const zip = await JSZip.loadAsync(await response.arrayBuffer());
         // `Data` is the first sheet, so it is sheet1.xml.
         const sheetXml = await zip.file('xl/worksheets/sheet1.xml')!.async('string');
 
         const validationBlock = /<dataValidations[\s\S]*?<\/dataValidations>/.exec(sheetXml)?.[0] ?? '';
-        expect(validationBlock).toContain('count="1"');
-        expect(validationBlock).toContain('type="list"');
-        // 5 columns (submissionId, date, country, host, notes) -> A..E.
-        expect(validationBlock).toContain('sqref="A2:E100000"');
-        expect(validationBlock).toContain('MATCH(A$1');
-        expect(validationBlock).toContain(LISTS_SHEET_NAME);
+        // Only the two option fields (country -> col C, host -> col D) are validated; the free-text
+        // columns (submissionId/A, date/B, notes/E) get no validation so they accept any value.
+        expect(validationBlock).toContain('count="2"');
+        expect(validationBlock).toContain('sqref="C2:C100000"');
+        expect(validationBlock).toContain('sqref="D2:D100000"');
+        expect(validationBlock).not.toContain('sqref="A2');
+        expect(validationBlock).not.toContain('sqref="E2');
+        // Advisory, not strict: a warning the user can dismiss, rather than a hard rejection.
+        expect(validationBlock).toContain('errorStyle="warning"');
+        expect(validationBlock).not.toContain('errorStyle="stop"');
+        // Each dropdown points directly at the field's column of options in `_lists`
+        // (the single quotes around the sheet name are XML-escaped to &apos;).
+        expect(validationBlock).toContain(`${LISTS_SHEET_NAME}&apos;!$A$2:$A$3`);
+        expect(validationBlock).toContain(`${LISTS_SHEET_NAME}&apos;!$B$2:$B$3`);
+    });
+
+    test('Data columns are widened to fit field names and their options', async () => {
+        const response = await callGet('test-organism', { fileType: 'xlsx' });
+        const workbook = await loadWorkbook(response);
+        const dataSheet = workbook.getWorksheet(DATA_SHEET_NAME)!;
+
+        // Every column is at least the minimum width...
+        for (let column = 1; column <= 5; column++) {
+            expect(dataSheet.getColumn(column).width).toBeGreaterThanOrEqual(16);
+        }
+        // ...and the `host` column (col D) widens to fit "Homo sapiens" (12) -> 14 < 16, stays at 16,
+        // while a longer option would push it wider. Sanity-check it is a finite, bounded number.
+        expect(dataSheet.getColumn(4).width).toBeLessThanOrEqual(45);
     });
 
     test('Config sheet lists every field with enabled/required flags and allowed values', async () => {

@@ -75,13 +75,14 @@ function createTsvTemplate(organism: string, action: UploadAction): ArrayBuffer 
  *  - `Data`: the sheet submitters fill in. Columns are the machine field names (so the file
  *    round-trips through upload), ordered template fields first, then the remaining opt-in fields.
  *  - `_lists` (hidden): one column per field that has a controlled vocabulary; the column header is
- *    the field name and the values below are its allowed options. This is the lookup source.
+ *    the field name and the values below are its allowed options. This is the dropdown source.
  *  - `Config` (read-only): a human-readable reference of every available field.
  *
- * Each `Data` cell carries a single, header-driven dropdown validation: the formula reads the cell's
- * own column header and looks it up in `_lists`, so the dropdown follows a column even if the user
- * reorders or renames it. Columns whose header is not in `_lists` (free-text fields) are left
- * unconstrained because the lookup yields an error, which Excel treats permissively.
+ * Only columns whose field has a controlled vocabulary get a dropdown validation, each pointing
+ * directly at that field's column in `_lists`. Free-text columns deliberately get no validation so
+ * they accept any value — a `list` validation cannot express "allow anything", so a single grid-wide
+ * rule would reject free text. Excel relocates a validation with its column when the user inserts or
+ * moves columns, so the dropdowns stay attached to the right field.
  */
 async function createXlsxTemplate(organism: string, action: UploadAction): Promise<ArrayBuffer> {
     const fields = getOrderedTemplateInputFields(organism, action);
@@ -91,6 +92,9 @@ async function createXlsxTemplate(organism: string, action: UploadAction): Promi
     const dataSheet = workbook.addWorksheet(DATA_SHEET_NAME);
     dataSheet.addRow(fields.map((field) => field.name));
     dataSheet.getRow(1).font = { bold: true };
+    fields.forEach((field, index) => {
+        dataSheet.getColumn(index + 1).width = columnWidthFor(field);
+    });
 
     const optionFields = fields.filter((field) => (field.options?.length ?? 0) > 0);
 
@@ -105,8 +109,8 @@ async function createXlsxTemplate(organism: string, action: UploadAction): Promi
 }
 
 /**
- * Adds the hidden `_lists` lookup sheet and the whole-grid, header-driven dropdown validation on the
- * Data sheet.
+ * Adds the hidden `_lists` lookup sheet and a dropdown validation for each field that has options,
+ * pointing at that field's column of allowed values in `_lists`.
  */
 function addOptionsLookup(
     workbook: ExcelJS.Workbook,
@@ -123,27 +127,33 @@ function addOptionsLookup(
     });
     void listsSheet.protect('', { selectLockedCells: false, selectUnlockedCells: false });
 
-    // The relative `A$1` resolves to each column's own header cell, so a single rule covers the whole
-    // grid: look the header up in the `_lists` header row and return that field's column of options.
-    const sheet = `'${LISTS_SHEET_NAME}'`;
-    const matchColumn = `MATCH(A$1,${sheet}!$1:$1,0)-1`;
-    const formula =
-        `OFFSET(${sheet}!$A$1,1,${matchColumn},` +
-        `COUNTA(OFFSET(${sheet}!$A$1,1,${matchColumn},${MAX_DATA_ROWS},1)),1)`;
-    const range = `A2:${columnLetter(fields.length)}${MAX_DATA_ROWS}`;
     // `dataValidations.add` exists at runtime but is missing from ExcelJS' type definitions. Using it
-    // (rather than per-cell `cell.dataValidation`) writes one compact range rule instead of
-    // materialising a validation object for every cell in the grid.
+    // (rather than per-cell `cell.dataValidation`) writes one compact range rule per option field
+    // instead of materialising a validation object for every cell.
     const dataValidations = (dataSheet as unknown as { dataValidations: WorksheetDataValidations }).dataValidations;
-    dataValidations.add(range, {
-        type: 'list',
-        allowBlank: true,
-        formulae: [formula],
-        showErrorMessage: true,
-        errorStyle: 'stop',
-        errorTitle: 'Invalid value',
-        error: 'Please choose a value from the dropdown list for this field.',
+    optionFields.forEach((field, listsIndex) => {
+        const dataColumn = columnLetter(fields.indexOf(field) + 1);
+        const listsColumn = columnLetter(listsIndex + 1);
+        const lastOptionRow = field.options!.length + 1; // row 1 is the header
+        const source = `'${LISTS_SHEET_NAME}'!$${listsColumn}$2:$${listsColumn}$${lastOptionRow}`;
+        dataValidations.add(`${dataColumn}2:${dataColumn}${MAX_DATA_ROWS}`, {
+            type: 'list',
+            allowBlank: true,
+            formulae: [source],
+            // Advisory, not strict: the dropdown offers the controlled vocabulary, but a value typed
+            // outside the list only warns ("Yes" keeps it) rather than being rejected.
+            showErrorMessage: true,
+            errorStyle: 'warning',
+            errorTitle: 'Value not in the suggested list',
+            error: `"${field.name}" has a suggested list of values. You can pick one from the dropdown, or keep what you typed.`,
+        });
     });
+}
+
+/** A roomy-but-bounded Data column width that fits the field name and its longest dropdown option. */
+function columnWidthFor(field: TemplateInputField): number {
+    const longestOption = (field.options ?? []).reduce((max, option) => Math.max(max, option.name.length), 0);
+    return Math.min(45, Math.max(16, field.name.length + 2, longestOption + 2));
 }
 
 interface WorksheetDataValidations {
@@ -155,6 +165,9 @@ function addConfigSheet(workbook: ExcelJS.Workbook, fields: TemplateInputField[]
     const configSheet = workbook.addWorksheet(CONFIG_SHEET_NAME);
     configSheet.addRow(['Field name', 'Display name', 'Enabled by default', 'Required', 'Allowed values']);
     configSheet.getRow(1).font = { bold: true };
+    [28, 28, 18, 12, 60].forEach((width, index) => {
+        configSheet.getColumn(index + 1).width = width;
+    });
     fields.forEach((field) => {
         configSheet.addRow([
             field.name,
