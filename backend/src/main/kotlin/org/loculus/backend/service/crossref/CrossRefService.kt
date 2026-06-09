@@ -119,7 +119,14 @@ class CrossRefService(private val properties: CrossRefServiceProperties, private
                     return@mapNotNull null
                 }
 
-            val title = citationElement.selectFirst("title")?.text()?.takeIf { it.isNotBlank() }
+            // The element holding the cited work's title varies by citation type:
+            // - article_title is used by journal_cite
+            // - volume_title is used by book_cite, conf_cite, report_cite and standard_cite
+            // - title is used by database_cite, dissertation_cite and postedcontent_cite
+            // These are mutually exclusive within a given cite element.
+            // See: https://data.crossref.org/reports/help/schema_doc/crossref_query_output2.0/query_output2.0.html
+            val title = citationElement.selectFirst("article_title, volume_title, title")
+                ?.text()?.takeIf { it.isNotBlank() }
                 ?: run {
                     validationErrors.add(
                         CrossRefValidationError(

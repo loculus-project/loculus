@@ -31,29 +31,38 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
     """.trimIndent()
 
     @Test
-    fun `parseCrossRefCitedByXML returns citations from valid XML`() {
+    fun `parseCrossRefCitedByXML returns citations from valid XML across different citation types`() {
         val xml = """
             <crossref_result>
                 <forward_link doi="10.1234/seqset-1">
                     <journal_cite>
-                        <doi>10.5678/paper-1</doi>
-                        <title>A citing paper</title>
-                        <year>2024</year>
+                        <journal_title>Journal of Citations</journal_title>
+                        <article_title>A citing journal article</article_title>
                         <contributors>
                             <contributor><given_name>Jane</given_name><surname>Doe</surname></contributor>
                             <contributor><given_name>John</given_name><surname>Smith</surname></contributor>
                         </contributors>
+                        <year>2024</year>
+                        <doi>10.5678/journal-paper</doi>
                     </journal_cite>
                 </forward_link>
                 <forward_link doi="10.1234/seqset-2">
-                    <journal_cite>
-                        <doi>10.5678/paper-2</doi>
-                        <title>Another citing paper</title>
-                        <year>2023</year>
+                    <book_cite>
+                        <series_title>A book series</series_title>
+                        <volume_title>A citing book</volume_title>
                         <contributors>
                             <contributor><given_name>Alice</given_name><surname>Jones</surname></contributor>
                         </contributors>
-                    </journal_cite>
+                        <year>2023</year>
+                        <doi>10.5678/book-chapter</doi>
+                    </book_cite>
+                </forward_link>
+                <forward_link doi="10.1234/seqset-3">
+                    <postedcontent_cite>
+                        <title>A citing preprint</title>
+                        <year>2022</year>
+                        <doi>10.5678/preprint</doi>
+                    </postedcontent_cite>
                 </forward_link>
             </crossref_result>
         """.trimIndent()
@@ -64,8 +73,8 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
             listOf(
                 SeqSetCitationSource(
                     CitationSource(
-                        sourceDOI = "10.5678/paper-1",
-                        title = "A citing paper",
+                        sourceDOI = "10.5678/journal-paper",
+                        title = "A citing journal article",
                         year = 2024,
                         contributors = listOf(
                             CitationContributor(givenName = "Jane", surname = "Doe"),
@@ -76,14 +85,23 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                 ),
                 SeqSetCitationSource(
                     CitationSource(
-                        sourceDOI = "10.5678/paper-2",
-                        title = "Another citing paper",
+                        sourceDOI = "10.5678/book-chapter",
+                        title = "A citing book",
                         year = 2023,
                         contributors = listOf(
                             CitationContributor(givenName = "Alice", surname = "Jones"),
                         ),
                     ),
                     seqSetDOIs = setOf("10.1234/seqset-2"),
+                ),
+                SeqSetCitationSource(
+                    CitationSource(
+                        sourceDOI = "10.5678/preprint",
+                        title = "A citing preprint",
+                        year = 2022,
+                        contributors = emptyList(),
+                    ),
+                    seqSetDOIs = setOf("10.1234/seqset-3"),
                 ),
             ),
             result.sources,
@@ -132,9 +150,9 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
           <crossref_result>
               <forward_link doi="10.1234/seqset-1">
                   <journal_cite>
-                      <doi>10.5678/paper-1</doi>
-                      <title>A citing paper</title>
+                      <article_title>A citing paper</article_title>
                       <year>2024</year>
+                      <doi>10.5678/paper-1</doi>
                   </journal_cite>
               </forward_link>
           </crossref_result>
@@ -163,28 +181,28 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
           <crossref_result>
               <forward_link doi="10.1234/seqset-1">
                   <journal_cite>
-                      <doi>10.5678/paper-1</doi>
-                      <title>A valid citing paper</title>
+                      <article_title>A valid citing paper</article_title>
                       <year>2024</year>
+                      <doi>10.5678/paper-1</doi>
                   </journal_cite>
               </forward_link>
               <forward_link doi="10.1234/seqset-2">
                   <journal_cite>
-                      <title>Another paper</title>
+                      <article_title>Another paper</article_title>
                       <year>2023</year>
                   </journal_cite>
               </forward_link>
               <forward_link doi="10.1234/seqset-3">
                   <journal_cite>
-                      <doi>10.5678/paper-3</doi>
                       <year>2022</year>
+                      <doi>10.5678/paper-3</doi>
                   </journal_cite>
               </forward_link>
               <forward_link doi="10.1234/seqset-4">
                   <journal_cite>
-                      <doi>10.5678/paper-4</doi>
-                      <title>Another valid paper</title>
+                      <article_title>Another valid paper</article_title>
                       <year>2021</year>
+                      <doi>10.5678/paper-4</doi>
                   </journal_cite>
               </forward_link>
           </crossref_result>
@@ -229,14 +247,14 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
           <crossref_result>
               <forward_link doi="10.1234/seqset-1">
                   <journal_cite>
-                      <doi>10.5678/paper-1</doi>
-                      <title>A citing paper</title>
-                      <year>2024</year>
+                      <article_title>A citing paper</article_title>
                       <contributors>
                           <contributor><given_name>Jane</given_name><surname>Doe</surname></contributor>
                           <contributor></contributor>
                           <contributor><surname>Solo</surname></contributor>
                       </contributors>
+                      <year>2024</year>
+                      <doi>10.5678/paper-1</doi>
                   </journal_cite>
               </forward_link>
           </crossref_result>
@@ -304,7 +322,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                   <crossref_result>
                       <forward_link doi="10.1234/seqset-1">
                           <journal_cite>
-                              <title>A citing paper</title>
+                              <article_title>A citing paper</article_title>
                               <year>2024</year>
                           </journal_cite>
                       </forward_link>
@@ -318,8 +336,8 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                   <crossref_result>
                       <forward_link doi="10.1234/seqset-1">
                           <journal_cite>
-                              <doi>10.5678/paper-1</doi>
                               <year>2024</year>
+                              <doi>10.5678/paper-1</doi>
                           </journal_cite>
                       </forward_link>
                   </crossref_result>
@@ -332,9 +350,9 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                   <crossref_result>
                       <forward_link doi="10.1234/seqset-1">
                           <journal_cite>
-                              <doi>10.5678/paper-1</doi>
-                              <title>   </title>
+                              <article_title>  </article_title>
                               <year>2024</year>
+                              <doi>10.5678/paper-1</doi>
                           </journal_cite>
                       </forward_link>
                   </crossref_result>
@@ -347,8 +365,8 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                   <crossref_result>
                       <forward_link doi="10.1234/seqset-1">
                           <journal_cite>
+                              <article_title>A citing paper</article_title>
                               <doi>10.5678/paper-1</doi>
-                              <title>A citing paper</title>
                           </journal_cite>
                       </forward_link>
                   </crossref_result>
@@ -361,9 +379,9 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                   <crossref_result>
                       <forward_link doi="10.1234/seqset-1">
                           <journal_cite>
-                              <doi>10.5678/paper-1</doi>
-                              <title>A citing paper</title>
+                              <article_title>A citing paper</article_title>
                               <year>not-a-year</year>
+                              <doi>10.5678/paper-1</doi>
                           </journal_cite>
                       </forward_link>
                   </crossref_result>
