@@ -78,11 +78,12 @@ function createTsvTemplate(organism: string, action: UploadAction): ArrayBuffer 
  *    the field name and the values below are its allowed options. This is the dropdown source.
  *  - `Config` (read-only): a human-readable reference of every available field.
  *
- * Only columns whose field has a controlled vocabulary get a dropdown validation, each pointing
- * directly at that field's column in `_lists`. Free-text columns deliberately get no validation so
- * they accept any value — a `list` validation cannot express "allow anything", so a single grid-wide
- * rule would reject free text. Excel relocates a validation with its column when the user inserts or
- * moves columns, so the dropdowns stay attached to the right field.
+ * Only columns whose field has a controlled vocabulary get a dropdown validation. Each such
+ * validation is header-driven: its source formula reads that column's own header cell and looks it
+ * up in `_lists`, so the dropdown follows the field even if the user renames or reorders the column.
+ * Free-text columns deliberately get no validation so they accept any value — a `list` validation
+ * cannot express "allow anything", so applying a header-driven rule to them would warn on every
+ * entry (the lookup errors). Limiting it to option columns keeps free-text columns silent.
  */
 async function createXlsxTemplate(organism: string, action: UploadAction): Promise<ArrayBuffer> {
     const fields = getOrderedTemplateInputFields(organism, action);
@@ -109,8 +110,9 @@ async function createXlsxTemplate(organism: string, action: UploadAction): Promi
 }
 
 /**
- * Adds the hidden `_lists` lookup sheet and a dropdown validation for each field that has options,
- * pointing at that field's column of allowed values in `_lists`.
+ * Adds the hidden `_lists` lookup sheet and a header-driven dropdown validation for each field that
+ * has options. The validation reads its column's own header and resolves that field's option list in
+ * `_lists`, so the dropdown follows the field when the column is renamed or moved.
  */
 function addOptionsLookup(
     workbook: ExcelJS.Workbook,
@@ -131,11 +133,17 @@ function addOptionsLookup(
     // (rather than per-cell `cell.dataValidation`) writes one compact range rule per option field
     // instead of materialising a validation object for every cell.
     const dataValidations = (dataSheet as unknown as { dataValidations: WorksheetDataValidations }).dataValidations;
-    optionFields.forEach((field, listsIndex) => {
+    const sheet = `'${LISTS_SHEET_NAME}'`;
+    optionFields.forEach((field) => {
         const dataColumn = columnLetter(fields.indexOf(field) + 1);
-        const listsColumn = columnLetter(listsIndex + 1);
-        const lastOptionRow = field.options!.length + 1; // row 1 is the header
-        const source = `'${LISTS_SHEET_NAME}'!$${listsColumn}$2:$${listsColumn}$${lastOptionRow}`;
+        // Reference to this column's own header cell. It is column-relative to the validation range,
+        // so Excel keeps it pointing at the header even after the column is moved.
+        const headerCell = `${dataColumn}$1`;
+        // Find the field's column in `_lists` by matching the header text, then return its options.
+        const matchOffset = `MATCH(${headerCell},${sheet}!$1:$1,0)-1`;
+        const source =
+            `OFFSET(${sheet}!$A$1,1,${matchOffset},` +
+            `COUNTA(OFFSET(${sheet}!$A$1,1,${matchOffset},${MAX_DATA_ROWS},1)),1)`;
         dataValidations.add(`${dataColumn}2:${dataColumn}${MAX_DATA_ROWS}`, {
             type: 'list',
             allowBlank: true,
