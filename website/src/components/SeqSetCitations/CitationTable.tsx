@@ -27,7 +27,9 @@ const CitationRow: FC<CitationRowProps> = ({ citation }) => {
                     </a>
                     <div className='text-sm text-gray-500'>
                         {citation.source.contributors
-                            .map((contributor) => `${contributor.givenName} ${contributor.surname}`)
+                            .map((contributor) =>
+                                [contributor.givenName, contributor.surname].filter((name) => name).join(' '),
+                            )
                             .join(', ')}
                     </div>
                 </div>
