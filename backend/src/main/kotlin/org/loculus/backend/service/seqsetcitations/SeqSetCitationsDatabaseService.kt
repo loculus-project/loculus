@@ -494,8 +494,8 @@ class SeqSetCitationsDatabaseService(
         return citedBy
     }
 
-    fun getSeqSetCitedByPublication(seqSetId: String, version: Long): List<SeqSetCitation> {
-        log.info { "Get seqSet cited by publication for seqSetId $seqSetId, version $version" }
+    fun getSeqSetCitations(seqSetId: String, version: Long): List<SeqSetCitation> {
+        log.info { "Get seqSet citations for seqSetId $seqSetId, version $version" }
 
         val seqSet = (
             SeqSetsTable

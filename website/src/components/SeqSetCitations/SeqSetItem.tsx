@@ -80,7 +80,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         isLoading: isSeqSetCitationsLoading,
         error: seqSetCitationsError,
         data: seqSetCitations,
-    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitedBy({
+    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitations({
         params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion },
     });
 

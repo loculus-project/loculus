@@ -99,13 +99,13 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN calling get seqSet cited by publication of non-existing seqSet THEN returns not found`() {
-        client.getSeqSetCitedByPublication()
+    fun `WHEN calling get seqSet citations of non-existing seqSet THEN returns not found`() {
+        client.getSeqSetCitations()
             .andExpect(status().isNotFound)
     }
 
     @Test
-    fun `WHEN calling get seqSet cited by publication for seqSet without crossref citations THEN returns empty list`() {
+    fun `WHEN calling get seqSet citations for seqSet without crossref citations THEN returns empty list`() {
         val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -122,7 +122,7 @@ class CitationEndpointsTest(
             CrossRefCitedByResult(emptyList(), emptyList())
         seqSetCrossRefCitationsTask.task()
 
-        client.getSeqSetCitedByPublication(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
+        client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$").isArray)
@@ -133,7 +133,7 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN calling get seqSet cited by publication for seqSet with crossref citations THEN returns citations`() {
+    fun `WHEN calling get seqSet citations for seqSet with crossref citations THEN returns citations`() {
         val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -162,7 +162,7 @@ class CitationEndpointsTest(
             CrossRefCitedByResult(listOf(seqSetCitationSource), emptyList())
         seqSetCrossRefCitationsTask.task()
 
-        client.getSeqSetCitedByPublication(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
+        client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$").isArray)
@@ -224,7 +224,7 @@ class CitationEndpointsTest(
             CrossRefCitedByResult(listOf(citationSource), emptyList())
         seqSetCrossRefCitationsTask.task()
 
-        client.getSeqSetCitedByPublication(seqSetId = seqSetIdA, seqSetVersion = seqSetVersionA)
+        client.getSeqSetCitations(seqSetId = seqSetIdA, seqSetVersion = seqSetVersionA)
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.length()").value(1))
             .andExpect(jsonPath("\$[0].source.sourceDOI").value(citationSource.source.sourceDOI))
@@ -237,12 +237,12 @@ class CitationEndpointsTest(
             )
         seqSetCrossRefCitationsTask.task()
 
-        client.getSeqSetCitedByPublication(seqSetId = seqSetIdA, seqSetVersion = seqSetVersionA)
+        client.getSeqSetCitations(seqSetId = seqSetIdA, seqSetVersion = seqSetVersionA)
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.length()").value(1))
             .andExpect(jsonPath("\$[0].source.sourceDOI").value(citationSource.source.sourceDOI))
 
-        client.getSeqSetCitedByPublication(seqSetId = seqSetIdB, seqSetVersion = seqSetVersionB)
+        client.getSeqSetCitations(seqSetId = seqSetIdB, seqSetVersion = seqSetVersionB)
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.length()").value(1))
             .andExpect(jsonPath("\$[0].source.sourceDOI").value(citationSource.source.sourceDOI))
