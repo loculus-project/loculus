@@ -1060,11 +1060,110 @@ defaultOrganismConfig: &defaultOrganismConfig
         ontology_id: GENEPIO:0001452
         definition: The model of the sequencing instrument used.
         guidance: Select the sequencing instrument from the pick list.
-        example: Oxford Nanopore MinION [GENEPIO:0100142]
+        example: MinION
         displayName: Sequencing instrument
         header: Sequencing
         desired: true
         orderOnDetailsPage: 2080
+        preprocessing:
+          function: process_options
+          inputs:
+            input: sequencingInstrument
+        options:
+          # ena-webin-cli -context reads -fields
+          # ena-webin-cli=9.0.3
+          # Last checked: 09.06.2026
+          # Fields listed in INSTRUMENT
+          - name: "HiSeq X Five"
+          - name: "HiSeq X Ten"
+          - name: "Illumina Genome Analyzer"
+          - name: "Illumina Genome Analyzer II"
+          - name: "Illumina Genome Analyzer IIx"
+          - name: "Illumina HiScanSQ"
+          - name: "Illumina HiSeq 1000"
+          - name: "Illumina HiSeq 1500"
+          - name: "Illumina HiSeq 2000"
+          - name: "Illumina HiSeq 2500"
+          - name: "Illumina HiSeq 3000"
+          - name: "Illumina HiSeq 4000"
+          - name: "Illumina HiSeq X"
+          - name: "Illumina iSeq 100"
+          - name: "Illumina MiSeq"
+          - name: "Illumina MiniSeq"
+          - name: "Illumina NovaSeq 6000"
+          - name: "Illumina NovaSeq X"
+          - name: "Illumina NovaSeq X Plus"
+          - name: "NextSeq 500"
+          - name: "NextSeq 550"
+          - name: "NextSeq 1000"
+          - name: "NextSeq 2000"
+          - name: "MinION"
+          - name: "GridION"
+          - name: "PromethION"
+          - name: "Onso"
+          - name: "PacBio RS"
+          - name: "PacBio RS II"
+          - name: "Revio"
+          - name: "Sequel"
+          - name: "Sequel II"
+          - name: "Sequel IIe"
+          - name: "BGISEQ-50"
+          - name: "BGISEQ-500"
+          - name: "MGISEQ-2000RS"
+          - name: "454 GS"
+          - name: "454 GS 20"
+          - name: "454 GS FLX"
+          - name: "454 GS FLX+"
+          - name: "454 GS FLX Titanium"
+          - name: "454 GS Junior"
+          - name: "Ion Torrent Genexus"
+          - name: "Ion Torrent PGM"
+          - name: "Ion Torrent Proton"
+          - name: "Ion Torrent S5"
+          - name: "Ion Torrent S5 XL"
+          - name: "Ion GeneStudio S5"
+          - name: "Ion GeneStudio S5 Plus"
+          - name: "Ion GeneStudio S5 Prime"
+          - name: "AB 3730xL Genetic Analyzer"
+          - name: "AB 3730 Genetic Analyzer"
+          - name: "AB 3500xL Genetic Analyzer"
+          - name: "AB 3500 Genetic Analyzer"
+          - name: "AB 3130xL Genetic Analyzer"
+          - name: "AB 3130 Genetic Analyzer"
+          - name: "AB 310 Genetic Analyzer"
+          - name: "DNBSEQ-T7"
+          - name: "DNBSEQ-G400"
+          - name: "DNBSEQ-G50"
+          - name: "DNBSEQ-G400 FAST"
+          - name: "DNBSEQ-T10x4RS"
+          - name: "Element AVITI"
+          - name: "UG 100"
+          - name: "Sentosa SQ301"
+          - name: "GENIUS"
+          - name: "Genapsys Sequencer"
+          - name: "GS111"
+          - name: "GenoCare 1600"
+          - name: "GenoLab M"
+          - name: "FASTASeq 300"
+          - name: "Tapestri"
+          - name: "unspecified"
+          - name: "AVITI 24"
+          # Fields listed in PLATFORM
+          - name: "ILLUMINA"
+          - name: "PACBIO_SMRT"
+          - name: "OXFORD_NANOPORE"
+          - name: "BGISEQ"
+          - name: "LS454"
+          - name: "ION_TORRENT"
+          - name: "CAPILLARY"
+          - name: "DNBSEQ"
+          - name: "ELEMENT"
+          - name: "ULTIMA"
+          - name: "VELA_DIAGNOSTICS"
+          - name: "GENAPSYS"
+          - name: "GENEMIND"
+          - name: "TAPESTRI"
+          - name: "AVITI"
       - name: sequencingProtocol
         ontology_id: GENEPIO:0001454
         definition: The protocol used to generate the sequence.
@@ -1074,14 +1173,113 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sequencing
         desired: true
         orderOnDetailsPage: 2100
-      - name: sequencingAssayType
-        ontology_id: GENEPIO:0100997
-        definition: The overarching sequencing methodology that was used to determine the sequence of a biomaterial.
-        guidance: 'Example Guidance: Provide the name of the DNA or RNA sequencing technology used in your study. If unsure refer to the protocol documentation, or provide a null value.'
-        example: whole genome sequencing assay [OBI:0002117]
-        displayName: Sequencing assay type
+      - name: sequencingLibrarySelection
+        definition: The method used to select or enrich the source material.
+        guidance: 'Example Guidance: Provide the name of the DNA or RNA sequencing library selection technology used in your study. If unsure refer to the protocol documentation, or provide a null value.'
+        desired: true
+        example: PCR
+        displayName: Sequencing library selection
         header: Sequencing
         orderOnDetailsPage: 2120
+        preprocessing:
+          function: process_options
+          inputs:
+            input: sequencingLibrarySelection
+        options:
+          # ena-webin-cli -context reads -fields
+          # ena-webin-cli=9.0.3
+          # Last checked: 09.06.2026
+          # Fields listed in LIBRARY_SELECTION
+          - name: "RANDOM"
+          - name: "PCR"
+          - name: "RANDOM PCR"
+          - name: "RT-PCR"
+          - name: "HMPR"
+          - name: "MF"
+          - name: "repeat fractionation"
+          - name: "size fractionation"
+          - name: "MSLL"
+          - name: "cDNA"
+          - name: "cDNA_randomPriming"
+          - name: "cDNA_oligo_dT"
+          - name: "PolyA"
+          - name: "Oligo-dT"
+          - name: "Inverse rRNA"
+          - name: "Inverse rRNA selection"
+          - name: "ChIP"
+          - name: "ChIP-Seq"
+          - name: "MNase"
+          - name: "DNase"
+          - name: "Hybrid Selection"
+          - name: "Reduced Representation"
+          - name: "Restriction Digest"
+          - name: "5-methylcytidine antibody"
+          - name: "MBD2 protein methyl-CpG binding domain"
+          - name: "CAGE"
+          - name: "RACE"
+          - name: "MDA"
+          - name: "padlock probes capture method"
+          - name: "other"
+          - name: "unspecified"
+      - name: sequencingAssayType
+        ontology_id: GENEPIO:0100997
+        definition: The overarching sequencing technique that was used to determine the sequence of a biomaterial, also called library strategy in the INSDC.
+        guidance: 'Example Guidance: Provide the name of the DNA or RNA sequencing technology used in your study. If unsure refer to the protocol documentation, or provide a null value.'
+        desired: true
+        example: WGS
+        displayName: Sequencing assay type
+        header: Sequencing
+        orderOnDetailsPage: 2130
+        preprocessing:
+          function: process_options
+          inputs:
+            input: sequencingAssayType
+        options:
+          # ena-webin-cli -context reads -fields
+          # ena-webin-cli=9.0.3
+          # Last checked: 09.06.2026
+          # Fields listed in LIBRARY_STRATEGY
+          - name: "WGS"
+          - name: "WGA"
+          - name: "WXS"
+          - name: "RNA-Seq"
+          - name: "ssRNA-seq"
+          - name: "snRNA-seq"
+          - name: "miRNA-Seq"
+          - name: "ncRNA-Seq"
+          - name: "FL-cDNA"
+          - name: "EST"
+          - name: "Hi-C"
+          - name: "ATAC-seq"
+          - name: "WCS"
+          - name: "RAD-Seq"
+          - name: "CLONE"
+          - name: "POOLCLONE"
+          - name: "AMPLICON"
+          - name: "CLONEEND"
+          - name: "FINISHING"
+          - name: "ChIP-Seq"
+          - name: "MNase-Seq"
+          - name: "DNase-Hypersensitivity"
+          - name: "Bisulfite-Seq"
+          - name: "CTS"
+          - name: "MRE-Seq"
+          - name: "MeDIP-Seq"
+          - name: "MBD-Seq"
+          - name: "Tn-Seq"
+          - name: "VALIDATION"
+          - name: "FAIRE-seq"
+          - name: "SELEX"
+          - name: "RIP-Seq"
+          - name: "ChIA-PET"
+          - name: "Synthetic-Long-Read"
+          - name: "Targeted-Capture"
+          - name: "Tethered Chromatin Conformation Capture"
+          - name: "NOMe-seq"
+          - name: "ChM-Seq"
+          - name: "GBS"
+          - name: "Ribo-seq"
+          - name: "OTHER"
       - name: sequencedByOrganization
         ontology_id: GENEPIO:0100416
         definition: The name of the agency, organization or institution responsible for sequencing the isolate's genome.
