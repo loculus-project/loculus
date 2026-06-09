@@ -2,7 +2,8 @@ import { type FC, useEffect, useMemo, useState } from 'react';
 
 import type { OrganismMetadata } from './OrganismMetadataTableSelector.tsx';
 import { routes } from '../../routes/routes.ts';
-import type { InputField, Metadata } from '../../types/config.ts';
+import type { InputField, InputFieldOption, Metadata } from '../../types/config.ts';
+import useClientFlag from '../../hooks/isClient.ts';
 import { getUrl } from '../../utils/getUrl.ts';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
 import { Button } from '../common/Button.tsx';
@@ -309,6 +310,47 @@ const FieldNameCell: FC<{ header: string; field: TypedInputField | Metadata; fie
     );
 };
 
+type AllowedValuesListProps = {
+    options: InputFieldOption[];
+};
+
+const AllowedValuesList: FC<AllowedValuesListProps> = ({ options }) => {
+    const [query, setQuery] = useState('');
+    const isClient = useClientFlag();
+
+    const filtered =
+        query === '' ? options : options.filter((o) => o.name.toLowerCase().includes(query.toLowerCase()));
+
+    return (
+        <div className='flex flex-col gap-1'>
+            <input
+                type='text'
+                placeholder={`Search ${options.length} values…`}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                disabled={!isClient}
+                className='w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100'
+            />
+            <ul className='max-h-40 overflow-y-auto border border-gray-200 rounded text-sm'>
+                {filtered.length === 0 ? (
+                    <li className='px-2 py-1 text-gray-400 italic'>No matches</li>
+                ) : (
+                    filtered.map((o) => (
+                        <li key={o.name} className='px-2 py-1 even:bg-gray-50'>
+                            {o.name}
+                        </li>
+                    ))
+                )}
+            </ul>
+            {query !== '' && (
+                <span className='text-xs text-gray-400'>
+                    {filtered.length} of {options.length}
+                </span>
+            )}
+        </div>
+    );
+};
+
 const MetadataTable: FC<MetadataTableProps> = (props) => {
     return (
         <table className='table-auto border-collapse border border-gray-200 w-full'>
@@ -328,7 +370,16 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                                   <td className='border border-gray-300 px-4 py-2'>
                                       <FieldNameCell header={props.header} field={field} fieldType={FieldType.INPUT} />
                                   </td>
-                                  <td className='border border-gray-300 px-4 py-2'>{field.type}</td>
+                                  <td className='border border-gray-300 px-4 py-2'>
+                                      {field.options && field.options.length > 0 ? (
+                                          <div className='flex flex-col gap-1'>
+                                              <span className='font-mono text-xs text-primary-700'>enum</span>
+                                              <AllowedValuesList options={field.options} />
+                                          </div>
+                                      ) : (
+                                          field.type
+                                      )}
+                                  </td>
                                   <td className='border border-gray-300 px-4 py-2'>
                                       <FormattedText
                                           text={[field.definition, field.guidance].filter(Boolean).join(' ')}
