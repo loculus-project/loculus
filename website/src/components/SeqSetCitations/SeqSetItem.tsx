@@ -6,7 +6,6 @@ import { toast } from 'react-toastify';
 import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
-import { mainTailwindColor } from '../../../colors.json';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
@@ -14,8 +13,10 @@ import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
+import { getThemeColor } from '../../utils/getThemeColor';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
+import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDotsGrid from '~icons/mdi/dots-grid';
 import MdiViewGrid from '~icons/mdi/view-grid';
@@ -79,7 +80,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         isLoading: isSeqSetCitationsLoading,
         error: seqSetCitationsError,
         data: seqSetCitations,
-    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitedBy({
+    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitations({
         params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion },
     });
 
@@ -164,8 +165,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         return seqSetRecords.slice((page - 1) * sequencesPerPage, page * sequencesPerPage);
     };
 
-    // Colour used for the plots, derived from colors.json
-    const barPlotColor = mainTailwindColor[500];
+    const barPlotColor = getThemeColor('--color-primary-500', '#6b84c6');
 
     return (
         <div className='flex flex-col'>
@@ -185,7 +185,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                         label='Total citations'
                         value={
                             isSeqSetCitationsLoading ? (
-                                <span className='loading loading-spinner loading-xs'></span>
+                                <Spinner size='xs' />
                             ) : seqSetCitationsError ? (
                                 <span>Failed to load citations.</span>
                             ) : (

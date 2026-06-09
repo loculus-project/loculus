@@ -7,6 +7,7 @@ import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 import { type SequenceType } from '../../../utils/sequenceTypeHelpers.ts';
 import { FixedLengthTextViewer } from '../../common/FixedLengthTextViewer.tsx';
+import { Spinner } from '../../common/Spinner';
 
 const LINE_LENGTH = 100;
 
@@ -41,7 +42,7 @@ export const SequencesViewer: FC<Props> = ({
     }
 
     if (isLoading || data === undefined) {
-        return <span className='loading loading-spinner loading-lg' />;
+        return <Spinner size='lg' />;
     }
 
     if (data === null) {

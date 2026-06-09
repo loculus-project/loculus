@@ -106,10 +106,10 @@ class SeqSetCitationsController(
             submissionDatabaseService.getApprovedUserAccessionVersions(authenticatedUser),
         )
 
-    @Operation(description = "Get SeqSet citations from publications")
-    @GetMapping("/get-seqset-cited-by-publication")
-    fun getSeqSetCitedByPublication(@RequestParam seqSetId: String, @RequestParam version: Long): List<SeqSetCitation> =
-        seqSetCitationsService.getSeqSetCitedByPublication(seqSetId, version)
+    @Operation(description = "Get citations for a SeqSet from publications or other sources")
+    @GetMapping("/get-seqset-citations")
+    fun getSeqSetCitations(@RequestParam seqSetId: String, @RequestParam version: Long): List<SeqSetCitation> =
+        seqSetCitationsService.getSeqSetCitations(seqSetId, version)
 
     @Operation(description = "Get sequence citations from publications")
     @GetMapping("/get-sequence-cited-by-publication")

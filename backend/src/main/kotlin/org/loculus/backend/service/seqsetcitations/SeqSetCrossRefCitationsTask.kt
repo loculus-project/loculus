@@ -37,7 +37,11 @@ class SeqSetCrossRefCitationsTask(
 ) {
     /**
      * Runs every six hours, with an initial delay of one minute.
-     * Adds citation sources from CrossRef, and connects to SeqSets via their DOI.
+     *
+     * The task checks that the CrossRef service is active and a DOI prefix is configured for the Loculus instance.
+     * If configured, it retrieves all CrossRef forward links (citations) which begin with the instance's DOI prefix.
+     * These forward links are then merged into unique citation sources, each with a set of the SeqSet DOIs they cite.
+     * The citation sources are then inserted or updated in the database, and connected to SeqSets through their DOIs.
      */
     @Scheduled(
         initialDelay = 1,

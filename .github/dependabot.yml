@@ -4,6 +4,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: "dtolnay/rust-toolchain"
+        # See https://github.com/loculus-project/loculus/pull/6516#issuecomment-4564199837
   - package-ecosystem: npm
     directory: website/
     schedule:
@@ -15,8 +18,6 @@ updates:
       versions: [ ">=5.0.0" ]
     - dependency-name: "@mui/material"
     - dependency-name: "change-case"
-    # see https://github.com/loculus-project/loculus/issues/4020
-    - dependency-name: "flowbite-react"
     - dependency-name: "@types/node"
       versions: [">=23"] # Increase when we update node version in .nvmrc
     groups:

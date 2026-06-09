@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
@@ -39,4 +40,21 @@ test('submit a single sequence, all in one method', async ({ page, groupId }) =>
         },
     );
     await page.waitForURL('**/review');
+});
+
+test('field description tooltip appears on hover', async ({ page, groupId }) => {
+    void groupId;
+    const submissionPage = new SingleSequenceSubmissionPage(page);
+    await submissionPage.navigateToSubmissionPage();
+
+    // sampleCollectionDate has a definition and guidance in the config, so the info icon should be present
+    const infoIcon = page.locator('[data-tooltip-id="field-tooltipsampleCollectionDate"]');
+    await expect(infoIcon).toBeVisible();
+
+    await infoIcon.hover();
+
+    // The tooltip should become visible after the hover delay
+    const tooltip = page.locator('#field-tooltipsampleCollectionDate');
+    await expect(tooltip).toBeVisible({ timeout: 2000 });
+    await expect(tooltip).toContainText('sampleCollectionDate');
 });

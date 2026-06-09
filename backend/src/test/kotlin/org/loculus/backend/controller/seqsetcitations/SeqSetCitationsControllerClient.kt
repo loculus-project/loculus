@@ -119,11 +119,11 @@ class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
             .withAuth(jwt),
     )
 
-    fun getSeqSetCitedByPublication(
+    fun getSeqSetCitations(
         seqSetId: String = MOCK_SEQSET_ID,
         seqSetVersion: Long = MOCK_SEQSET_VERSION,
     ): ResultActions = mockMvc.perform(
-        get("/get-seqset-cited-by-publication")
+        get("/get-seqset-citations")
             .param("seqSetId", seqSetId)
             .param("version", seqSetVersion.toString()),
     )

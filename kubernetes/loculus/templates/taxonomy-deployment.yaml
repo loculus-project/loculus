@@ -16,7 +16,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: {{ now | quote }}
+        valuesHash: {{ .Values | toJson | sha256sum | quote }}
       labels:
         app: loculus
         component: loculus-taxonomy-service

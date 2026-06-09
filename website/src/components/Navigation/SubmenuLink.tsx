@@ -8,7 +8,7 @@ interface SubmenuLinkProps {
 }
 
 export const SubmenuLink: React.FC<SubmenuLinkProps> = ({ href, isActive, children, className = '' }) => {
-    const baseClasses = 'flex items-center gap-1.5 px-2.5 py-1 rounded text-sm transition-colors font-medium';
+    const baseClasses = 'flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-sm transition-colors font-medium';
     const stateClasses = isActive ? 'bg-primary-100 text-gray-800' : 'text-gray-700 hover:bg-gray-100';
 
     return (

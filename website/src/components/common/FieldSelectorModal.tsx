@@ -146,7 +146,8 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                 <div className='mt-6 flex justify-end'>
                     <Button
                         type='button'
-                        className='btn loculusColor text-white -py-1'
+                        variant='primary'
+                        className='-py-1'
                         onClick={onClose}
                         data-testid='field-selector-close-button'
                     >
@@ -176,7 +177,7 @@ const FieldSelectorModalField: FC<FieldSelectorModalFieldProps> = ({ field, hand
             <input
                 type='checkbox'
                 id={`field-${field.name}`}
-                className={`h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 ${
+                className={`h-4 w-4 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-600 ${
                     disableCheckbox ? 'opacity-60 cursor-not-allowed' : ''
                 }`}
                 checked={isCheckboxChecked(field)}

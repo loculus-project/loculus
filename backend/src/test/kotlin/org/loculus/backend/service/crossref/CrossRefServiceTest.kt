@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.SpringBootTestWithoutDatabase
 import org.loculus.backend.api.CitationContributor
 import org.loculus.backend.api.CitationSource
@@ -29,29 +31,38 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
     """.trimIndent()
 
     @Test
-    fun `parseCrossRefCitedByXML returns citations from valid XML`() {
+    fun `parseCrossRefCitedByXML returns citations from valid XML across different citation types`() {
         val xml = """
             <crossref_result>
                 <forward_link doi="10.1234/seqset-1">
                     <journal_cite>
-                        <doi>10.5678/paper-1</doi>
-                        <title>A citing paper</title>
-                        <year>2024</year>
+                        <journal_title>Journal of Citations</journal_title>
+                        <article_title>A citing journal article</article_title>
                         <contributors>
                             <contributor><given_name>Jane</given_name><surname>Doe</surname></contributor>
                             <contributor><given_name>John</given_name><surname>Smith</surname></contributor>
                         </contributors>
+                        <year>2024</year>
+                        <doi>10.5678/journal-paper</doi>
                     </journal_cite>
                 </forward_link>
                 <forward_link doi="10.1234/seqset-2">
-                    <journal_cite>
-                        <doi>10.5678/paper-2</doi>
-                        <title>Another citing paper</title>
-                        <year>2023</year>
+                    <book_cite>
+                        <series_title>A book series</series_title>
+                        <volume_title>A citing book</volume_title>
                         <contributors>
                             <contributor><given_name>Alice</given_name><surname>Jones</surname></contributor>
                         </contributors>
-                    </journal_cite>
+                        <year>2023</year>
+                        <doi>10.5678/book-chapter</doi>
+                    </book_cite>
+                </forward_link>
+                <forward_link doi="10.1234/seqset-3">
+                    <postedcontent_cite>
+                        <title>A citing preprint</title>
+                        <year>2022</year>
+                        <doi>10.5678/preprint</doi>
+                    </postedcontent_cite>
                 </forward_link>
             </crossref_result>
         """.trimIndent()
@@ -62,8 +73,8 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
             listOf(
                 SeqSetCitationSource(
                     CitationSource(
-                        sourceDOI = "10.5678/paper-1",
-                        title = "A citing paper",
+                        sourceDOI = "10.5678/journal-paper",
+                        title = "A citing journal article",
                         year = 2024,
                         contributors = listOf(
                             CitationContributor(givenName = "Jane", surname = "Doe"),
@@ -74,14 +85,23 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
                 ),
                 SeqSetCitationSource(
                     CitationSource(
-                        sourceDOI = "10.5678/paper-2",
-                        title = "Another citing paper",
+                        sourceDOI = "10.5678/book-chapter",
+                        title = "A citing book",
                         year = 2023,
                         contributors = listOf(
                             CitationContributor(givenName = "Alice", surname = "Jones"),
                         ),
                     ),
                     seqSetDOIs = setOf("10.1234/seqset-2"),
+                ),
+                SeqSetCitationSource(
+                    CitationSource(
+                        sourceDOI = "10.5678/preprint",
+                        title = "A citing preprint",
+                        year = 2022,
+                        contributors = emptyList(),
+                    ),
+                    seqSetDOIs = setOf("10.1234/seqset-3"),
                 ),
             ),
             result.sources,
@@ -97,55 +117,13 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         assertTrue(result.validationErrors.isEmpty())
     }
 
-    @Test
-    fun `parseCrossRefCitedByXML records validation error when forward_link is missing the seqSet DOI attribute`() {
-        val xml = """
-          <crossref_result>
-              <forward_link>
-                  <journal_cite>
-                      <doi>10.5678/paper-1</doi>
-                  </journal_cite>
-              </forward_link>
-          </crossref_result>
-        """.trimIndent()
-
-        val result = crossRefService.parseCrossRefCitedByXML(xml)
+    @ParameterizedTest(name = "parseCrossRefCitedByXML records validation error: {0}")
+    @MethodSource("crossRefValidationErrorCases")
+    fun `parseCrossRefCitedByXML records validation error for invalid XML`(case: CrossRefValidationErrorCase) {
+        val result = crossRefService.parseCrossRefCitedByXML(case.xml)
         assertTrue(result.sources.isEmpty())
         assertEquals(1, result.validationErrors.size)
-        assertTrue(result.validationErrors[0].reason.contains("missing seqset doi", ignoreCase = true))
-    }
-
-    @Test
-    fun `parseCrossRefCitedByXML records validation error when forward_link has no citation element`() {
-        val xml = """
-          <crossref_result>
-              <forward_link doi="10.1234/seqset-1"/>
-          </crossref_result>
-        """.trimIndent()
-
-        val result = crossRefService.parseCrossRefCitedByXML(xml)
-        assertTrue(result.sources.isEmpty())
-        assertEquals(1, result.validationErrors.size)
-        assertTrue(result.validationErrors[0].reason.contains("no citation element", ignoreCase = true))
-    }
-
-    @Test
-    fun `parseCrossRefCitedByXML records validation error when citation source has no DOI`() {
-        val xml = """
-          <crossref_result>
-              <forward_link doi="10.1234/seqset-1">
-                  <journal_cite>
-                      <title>A citing paper</title>
-                      <year>2024</year>
-                  </journal_cite>
-              </forward_link>
-          </crossref_result>
-        """.trimIndent()
-
-        val result = crossRefService.parseCrossRefCitedByXML(xml)
-        assertTrue(result.sources.isEmpty())
-        assertEquals(1, result.validationErrors.size)
-        assertTrue(result.validationErrors[0].reason.contains("source missing doi", ignoreCase = true))
+        assertTrue(result.validationErrors[0].reason.contains(case.expectedReasonContains, ignoreCase = true))
     }
 
     @Test
@@ -172,9 +150,9 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
           <crossref_result>
               <forward_link doi="10.1234/seqset-1">
                   <journal_cite>
-                      <doi>10.5678/paper-1</doi>
-                      <title>A citing paper</title>
+                      <article_title>A citing paper</article_title>
                       <year>2024</year>
+                      <doi>10.5678/paper-1</doi>
                   </journal_cite>
               </forward_link>
           </crossref_result>
@@ -198,111 +176,33 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
     }
 
     @Test
-    fun `parseCrossRefCitedByXML records validation error when citation source title is missing`() {
-        val xml = """
-          <crossref_result>
-              <forward_link doi="10.1234/seqset-1">
-                  <journal_cite>
-                      <doi>10.5678/paper-1</doi>
-                      <year>2024</year>
-                  </journal_cite>
-              </forward_link>
-          </crossref_result>
-        """.trimIndent()
-
-        val result = crossRefService.parseCrossRefCitedByXML(xml)
-        assertTrue(result.sources.isEmpty())
-        assertEquals(1, result.validationErrors.size)
-        assertTrue(result.validationErrors[0].reason.contains("missing title", ignoreCase = true))
-    }
-
-    @Test
-    fun `parseCrossRefCitedByXML records validation error when citation source title is blank`() {
-        val xml = """
-          <crossref_result>
-              <forward_link doi="10.1234/seqset-1">
-                  <journal_cite>
-                      <doi>10.5678/paper-1</doi>
-                      <title>   </title>
-                      <year>2024</year>
-                  </journal_cite>
-              </forward_link>
-          </crossref_result>
-        """.trimIndent()
-
-        val result = crossRefService.parseCrossRefCitedByXML(xml)
-        assertTrue(result.sources.isEmpty())
-        assertEquals(1, result.validationErrors.size)
-        assertTrue(result.validationErrors[0].reason.contains("missing title", ignoreCase = true))
-    }
-
-    @Test
-    fun `parseCrossRefCitedByXML records validation error when citation source year is missing`() {
-        val xml = """
-          <crossref_result>
-              <forward_link doi="10.1234/seqset-1">
-                  <journal_cite>
-                      <doi>10.5678/paper-1</doi>
-                      <title>A citing paper</title>
-                  </journal_cite>
-              </forward_link>
-          </crossref_result>
-        """.trimIndent()
-
-        val result = crossRefService.parseCrossRefCitedByXML(xml)
-        assertTrue(result.sources.isEmpty())
-        assertEquals(1, result.validationErrors.size)
-        assertTrue(result.validationErrors[0].reason.contains("missing or non-numeric year", ignoreCase = true))
-    }
-
-    @Test
-    fun `parseCrossRefCitedByXML records validation error when citation source year is non-numeric`() {
-        val xml = """
-          <crossref_result>
-              <forward_link doi="10.1234/seqset-1">
-                  <journal_cite>
-                      <doi>10.5678/paper-1</doi>
-                      <title>A citing paper</title>
-                      <year>not-a-year</year>
-                  </journal_cite>
-              </forward_link>
-          </crossref_result>
-        """.trimIndent()
-
-        val result = crossRefService.parseCrossRefCitedByXML(xml)
-        assertTrue(result.sources.isEmpty())
-        assertEquals(1, result.validationErrors.size)
-        assertTrue(result.validationErrors[0].reason.contains("missing or non-numeric year", ignoreCase = true))
-    }
-
-    @Test
     fun `parseCrossRefCitedByXML returns valid sources and records errors for invalid ones in a mixed batch`() {
         val xml = """
           <crossref_result>
               <forward_link doi="10.1234/seqset-1">
                   <journal_cite>
-                      <doi>10.5678/paper-1</doi>
-                      <title>A valid citing paper</title>
+                      <article_title>A valid citing paper</article_title>
                       <year>2024</year>
+                      <doi>10.5678/paper-1</doi>
                   </journal_cite>
               </forward_link>
               <forward_link doi="10.1234/seqset-2">
                   <journal_cite>
-                      <title>Another paper</title>
+                      <article_title>Another paper</article_title>
                       <year>2023</year>
                   </journal_cite>
               </forward_link>
               <forward_link doi="10.1234/seqset-3">
                   <journal_cite>
-                      <doi>10.5678/paper-3</doi>
                       <year>2022</year>
+                      <doi>10.5678/paper-3</doi>
                   </journal_cite>
               </forward_link>
               <forward_link doi="10.1234/seqset-4">
                   <journal_cite>
-                      <doi>10.5678/paper-4</doi>
-                      <title>Another valid paper</title>
+                      <article_title>Another valid paper</article_title>
                       <year>2021</year>
+                      <doi>10.5678/paper-4</doi>
                   </journal_cite>
               </forward_link>
           </crossref_result>
@@ -347,14 +247,14 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
           <crossref_result>
               <forward_link doi="10.1234/seqset-1">
                   <journal_cite>
-                      <doi>10.5678/paper-1</doi>
-                      <title>A citing paper</title>
-                      <year>2024</year>
+                      <article_title>A citing paper</article_title>
                       <contributors>
                           <contributor><given_name>Jane</given_name><surname>Doe</surname></contributor>
                           <contributor></contributor>
                           <contributor><surname>Solo</surname></contributor>
                       </contributors>
+                      <year>2024</year>
+                      <doi>10.5678/paper-1</doi>
                   </journal_cite>
               </forward_link>
           </crossref_result>
@@ -383,5 +283,111 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
         )
 
         assertEquals(crossRefXML, crossRefXMLReference)
+    }
+
+    companion object {
+        data class CrossRefValidationErrorCase(
+            val description: String,
+            val xml: String,
+            val expectedReasonContains: String,
+        )
+
+        @JvmStatic
+        fun crossRefValidationErrorCases(): List<CrossRefValidationErrorCase> = listOf(
+            CrossRefValidationErrorCase(
+                description = "forward_link missing seqSet DOI attribute",
+                xml = """
+                  <crossref_result>
+                      <forward_link>
+                          <journal_cite>
+                              <doi>10.5678/paper-1</doi>
+                          </journal_cite>
+                      </forward_link>
+                  </crossref_result>
+                """.trimIndent(),
+                expectedReasonContains = "missing seqset doi",
+            ),
+            CrossRefValidationErrorCase(
+                description = "forward_link has no citation element",
+                xml = """
+                  <crossref_result>
+                      <forward_link doi="10.1234/seqset-1"/>
+                  </crossref_result>
+                """.trimIndent(),
+                expectedReasonContains = "no citation element",
+            ),
+            CrossRefValidationErrorCase(
+                description = "citation source has no DOI",
+                xml = """
+                  <crossref_result>
+                      <forward_link doi="10.1234/seqset-1">
+                          <journal_cite>
+                              <article_title>A citing paper</article_title>
+                              <year>2024</year>
+                          </journal_cite>
+                      </forward_link>
+                  </crossref_result>
+                """.trimIndent(),
+                expectedReasonContains = "source missing doi",
+            ),
+            CrossRefValidationErrorCase(
+                description = "citation source title is missing",
+                xml = """
+                  <crossref_result>
+                      <forward_link doi="10.1234/seqset-1">
+                          <journal_cite>
+                              <year>2024</year>
+                              <doi>10.5678/paper-1</doi>
+                          </journal_cite>
+                      </forward_link>
+                  </crossref_result>
+                """.trimIndent(),
+                expectedReasonContains = "missing title",
+            ),
+            CrossRefValidationErrorCase(
+                description = "citation source title is blank",
+                xml = """
+                  <crossref_result>
+                      <forward_link doi="10.1234/seqset-1">
+                          <journal_cite>
+                              <article_title>  </article_title>
+                              <year>2024</year>
+                              <doi>10.5678/paper-1</doi>
+                          </journal_cite>
+                      </forward_link>
+                  </crossref_result>
+                """.trimIndent(),
+                expectedReasonContains = "missing title",
+            ),
+            CrossRefValidationErrorCase(
+                description = "citation source year is missing",
+                xml = """
+                  <crossref_result>
+                      <forward_link doi="10.1234/seqset-1">
+                          <journal_cite>
+                              <article_title>A citing paper</article_title>
+                              <doi>10.5678/paper-1</doi>
+                          </journal_cite>
+                      </forward_link>
+                  </crossref_result>
+                """.trimIndent(),
+                expectedReasonContains = "missing or non-numeric year",
+            ),
+            CrossRefValidationErrorCase(
+                description = "citation source year is non-numeric",
+                xml = """
+                  <crossref_result>
+                      <forward_link doi="10.1234/seqset-1">
+                          <journal_cite>
+                              <article_title>A citing paper</article_title>
+                              <year>not-a-year</year>
+                              <doi>10.5678/paper-1</doi>
+                          </journal_cite>
+                      </forward_link>
+                  </crossref_result>
+                """.trimIndent(),
+                expectedReasonContains = "missing or non-numeric year",
+            ),
+        )
     }
 }

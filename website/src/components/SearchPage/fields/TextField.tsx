@@ -1,4 +1,4 @@
-import { FloatingLabel, getTheme } from 'flowbite-react';
+import { FloatingLabel, floatingLabelTheme } from 'flowbite-react';
 import {
     useId,
     forwardRef,
@@ -25,9 +25,8 @@ interface TextFieldProps {
     type?: string;
 }
 
-const helperTextClasses = getTheme().floatingLabel.helperText.default;
-const inputClasses = getTheme().floatingLabel.input.default.outlined.md;
-const labelClasses = getTheme().floatingLabel.label.default.outlined.md;
+const inputClasses = floatingLabelTheme.input.default.outlined.md;
+const labelClasses = floatingLabelTheme.label.default.outlined.md;
 
 export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldProps>(function (props, ref) {
     const { label, disabled, onChange, autoComplete, fieldValue, className, onFocus, multiline, onBlur } = props;
@@ -77,7 +76,6 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     };
 
     const standardProps = {
-        id,
         onChange: handleChange,
         autoComplete,
         disabled,
@@ -129,20 +127,17 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             <div className='[&_label]:pointer-events-none my-1.5'>
                 <FloatingLabel
                     theme={{
-                        helperText: {
-                            default: `${helperTextClasses} my-1`,
-                        },
                         input: {
                             default: {
                                 outlined: {
-                                    md: `${inputClasses} hover:border-gray-400 transition-colors`,
+                                    md: `${inputClasses} focus:border-primary-600! hover:border-gray-400 transition-colors`,
                                 },
                             },
                         },
                         label: {
                             default: {
                                 outlined: {
-                                    md: `${labelClasses} !bg-white dark:!bg-gray-900 peer-placeholder-shown:!bg-transparent peer-focus:!bg-white peer-focus:dark:!bg-gray-900`,
+                                    md: `${labelClasses} peer-focus:text-primary-600! bg-white! dark:bg-gray-900! peer-placeholder-shown:bg-transparent! peer-focus:bg-white! dark:peer-focus:bg-gray-900!`,
                                 },
                             },
                         },
@@ -162,6 +157,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
 
     const textareaProps = {
         ...standardProps,
+        id,
         ref: refTextArea,
         onFocus: onFocusHTMLArea,
         onBlur: onBlurHTMLArea,
@@ -174,14 +170,14 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             <textarea
                 {...textareaProps}
                 rows={hasFocus || (fieldValue !== undefined && fieldValue.toString().split('\n').length > 1) ? 4 : 1}
-                className={`rounded-md block px-2.5 pb-2 pt-4 w-full text-sm text-gray-900 bg-transparent border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer hover:border-gray-400 transition-colors ${className}`}
+                className={`rounded-md block px-2.5 pb-2 pt-4 w-full text-sm text-gray-900 bg-transparent border border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-primary-500 focus:outline-hidden focus:ring-0 focus:border-primary-600 peer hover:border-gray-400 transition-colors ${className}`}
             ></textarea>
 
             <label
                 htmlFor={id}
                 className={`absolute text-sm text-gray-500 dark:text-gray-400 pointer-events-none ${
                     isTransitionEnabled ? 'duration-300' : ''
-                } transform -translate-y-3 scale-75 top-1 z-10 origin-[0] !bg-white dark:!bg-gray-900 px-2 peer-focus:px-2 peer-focus:!bg-white peer-focus:dark:!bg-gray-900 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:!bg-transparent peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-3 start-1 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto`}
+                } transform -translate-y-3 scale-75 top-1 z-10 origin-left bg-white! dark:bg-gray-900! px-2 peer-focus:px-2 peer-focus:bg-white! dark:peer-focus:bg-gray-900! peer-focus:text-primary-600 dark:peer-focus:text-primary-500 peer-placeholder-shown:bg-transparent! peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-3 inset-s-1 peer-focus:rtl:translate-x-1/4 peer-focus:rtl:left-auto`}
             >
                 {label}
             </label>

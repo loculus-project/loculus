@@ -63,7 +63,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
         isLoading: isSeqSetCitationsLoading,
         error: seqSetCitationsError,
         data: seqSetCitations,
-    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitedBy({
+    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitations({
         params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion },
     });
 
@@ -177,7 +177,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 fullWidth={false}
                 className='min-h-[60vh]'
             >
-                <div className='min-w-[48rem]'></div>
+                <div className='min-w-3xl'></div>
                 <CitationTable
                     isLoading={isSeqSetCitationsLoading}
                     error={seqSetCitationsError}

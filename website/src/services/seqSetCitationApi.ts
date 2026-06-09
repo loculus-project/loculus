@@ -29,10 +29,10 @@ const getUserCitedByEndpoint = makeEndpoint({
     errors: [notAuthorizedError],
 });
 
-const getSeqSetCitedByEndpoint = makeEndpoint({
+const getSeqSetCitationsEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-seqset-cited-by-publication?seqSetId=:seqSetId&version=:version',
-    alias: 'getSeqSetCitedBy',
+    path: '/get-seqset-citations?seqSetId=:seqSetId&version=:version',
+    alias: 'getSeqSetCitations',
     response: seqSetCitations,
     errors: [notAuthorizedError],
 });
@@ -188,7 +188,7 @@ const getAuthorEndpoint = makeEndpoint({
 export const seqSetCitationApi = makeApi([
     getSeqSetsOfUserEndpoint,
     getUserCitedByEndpoint,
-    getSeqSetCitedByEndpoint,
+    getSeqSetCitationsEndpoint,
     getSequenceCitedByEndpoint,
     getSeqSetEndpoint,
     getSeqSetVersionsEndpoint,
