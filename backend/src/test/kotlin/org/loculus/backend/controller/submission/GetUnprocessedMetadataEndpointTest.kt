@@ -207,10 +207,10 @@ class GetUnprocessedMetadataEndpointTest(
     }
 
     @Test
-    fun `WHEN I filter by accessionVersions with invalid format THEN returns 400`() {
+    fun `WHEN I filter by accessionVersions with invalid format THEN returns 422`() {
         submissionControllerClient.getUnprocessedMetadata(
             accessionVersionsFilter = listOf("not-a-valid-accession-version"),
-        ).andExpect(status().isBadRequest)
+        ).andExpect(status().isUnprocessableEntity)
     }
 
     // Regression test for https://github.com/loculus-project/loculus/issues/4036
