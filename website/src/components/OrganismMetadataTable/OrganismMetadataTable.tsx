@@ -334,7 +334,7 @@ const AllowedValuesList: FC<AllowedValuesListProps> = ({ options }) => {
             <input
                 id='allowed-values-search'
                 type='text'
-                ${options.length} values…`}
+                placeholder={`Search ${options.length} values…`}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 disabled={!isClient}
