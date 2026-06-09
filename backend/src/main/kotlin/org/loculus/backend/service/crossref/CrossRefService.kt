@@ -168,6 +168,9 @@ class CrossRefService(private val properties: CrossRefServiceProperties, private
 
         // End date is the current date at time of request
         val endDate = dateProvider.getCurrentDate()
+
+        // Retrieves citation matches (forward links) for a DOI prefix using the Crossref Cited-by service
+        // https://www.crossref.org/documentation/cited-by/retrieve-citations/#00270
         val connection = URI(
             properties.endpoint +
                 "/servlet/getForwardLinks?usr=${properties.username}&pwd=${properties.password}&doi=$doiPrefix&endDate=$endDate&include_postedcontent=true",
