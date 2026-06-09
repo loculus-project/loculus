@@ -58,6 +58,21 @@ const DataTableComponent: React.FC<Props> = ({
     const mutationSections = dataTableData.table.filter(
         ({ header }) => header === DEFAULT_NUC_MUTATION_DETAILS_HEADER || header === DEFAULT_AA_MUTATION_DETAILS_HEADER,
     );
+
+    const calcLabelColWidth = (sections: typeof generalSections) => {
+        const maxLen = sections
+            .flatMap(({ rows }) => rows)
+            .filter((row) => row.type.kind === 'metadata')
+            .reduce((max, row) => Math.max(max, row.label.length), 0);
+        return maxLen > 0 ? `min(${maxLen}ch, 50%)` : 'max-content';
+    };
+    const generalLabelColWidth = calcLabelColWidth(generalSections);
+    const alignmentMaxLen = alignmentSections
+        .flatMap(({ rows }) => rows)
+        .filter((row) => row.type.kind === 'metadata')
+        .reduce((max, row) => Math.max(max, row.label.length), 0);
+    const alignmentLabelColWidth = alignmentMaxLen > 0 ? `min(${alignmentMaxLen}ch, 60%)` : 'max-content';
+
     return (
         <div>
             {dataTableData.topmatter.sequenceDisplayName !== undefined && (
@@ -88,7 +103,10 @@ const DataTableComponent: React.FC<Props> = ({
                             <div className='flex flex-row'>
                                 <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
                             </div>
-                            <div className='mt-4'>
+                            <div
+                                className='mt-4 grid text-sm items-start'
+                                style={{ gridTemplateColumns: `${generalLabelColWidth} 1fr`, rowGap: '0.25rem' }}
+                            >
                                 {rows.map((entry: TableDataEntry, index: number) => (
                                     <DataTableEntry
                                         key={index}
@@ -123,7 +141,10 @@ const DataTableComponent: React.FC<Props> = ({
                     {alignmentSections.map(({ header, rows }) => (
                         <div key={header} className='p-4 pl-0'>
                             <div className='flex flex-row'></div>
-                            <div className='mt-4'>
+                            <div
+                                className='mt-4 grid text-sm items-start'
+                                style={{ gridTemplateColumns: `${alignmentLabelColWidth} 1fr`, rowGap: '0.25rem' }}
+                            >
                                 {rows.map((entry: TableDataEntry, index: number) => (
                                     <DataTableEntry
                                         key={index}
