@@ -1,5 +1,5 @@
 ---
-import '../styles/mdcontainer.scss';
+import '../styles/mdcontainer.css';
 import BaseLayout from './BaseLayout.astro';
 import DocsMenu from '../components/Navigation/DocsMenu';
 import DocsSearch from '../components/Navigation/DocsSearch';
@@ -34,7 +34,7 @@ const editUrl = `${gitHubEditLink}${fileLocation}`;
                             href={editUrl}
                             target='_blank'
                             rel='noopener noreferrer'
-                            class='!text-gray-500 hover:!text-gray-800 !no-underline'
+                            class='text-gray-500! hover:text-gray-800! no-underline!'
                         >
                             <MdiGithub className='inline-block w-4 h-4 mr-1' />
                             Edit this page

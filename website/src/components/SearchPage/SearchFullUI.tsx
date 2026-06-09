@@ -1,8 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '../common/Button';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
+import {
+    DownloadOriginalDataButton,
+    MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES,
+} from './DownloadDialog/DownloadOriginalDataButton.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
 import { LinkOutMenu } from './DownloadDialog/LinkOutMenu.tsx';
 import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
@@ -15,6 +19,7 @@ import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
 import { useSearchPageState } from './useSearchPageState.ts';
 import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import { getLapisUrl } from '../../config.ts';
+import { fetchDetailsFromLapis } from '../../services/lapisClientSideApi.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
@@ -34,6 +39,7 @@ import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 import ErrorContactMessage from '../common/ErrorContactMessage.tsx';
+import { Spinner } from '../common/Spinner';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -52,6 +58,8 @@ export interface InnerSearchFullUIProps {
     sequenceFlaggingConfig?: SequenceFlaggingConfig;
     linkOuts?: LinkOut[];
     contactConfig?: ContactConfig;
+    groupId?: number;
+    isReleasedPage: boolean;
 }
 
 const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
@@ -81,6 +89,8 @@ export const InnerSearchFullUI = ({
     sequenceFlaggingConfig,
     linkOuts,
     contactConfig,
+    groupId,
+    isReleasedPage,
 }: InnerSearchFullUIProps) => {
     hiddenFieldValues ??= {};
 
@@ -205,6 +215,15 @@ export const InnerSearchFullUI = ({
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
     const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
 
+    const fetchAccessions = useCallback(async (): Promise<string[]> => {
+        const response = await fetchDetailsFromLapis(lapisUrl, {
+            ...lapisSearchParameters,
+            fields: [schema.primaryKey],
+            limit: MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES + 1,
+        });
+        return response.data.map((item) => String(item[schema.primaryKey]));
+    }, [lapisUrl, lapisSearchParameters, schema.primaryKey]);
+
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
     const [firstClientSideLoadOfDataCompleted, setFirstClientSideLoadOfDataCompleted] = useState(false);
@@ -327,7 +346,9 @@ export const InnerSearchFullUI = ({
                             aggregatedHook.isPending ||
                             !firstClientSideLoadOfCountCompleted ||
                             !firstClientSideLoadOfDataCompleted ? (
-                                <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
+                                <span className='ml-3 appearSlowly inline-block'>
+                                    <Spinner size='xs' />
+                                </span>
                             ) : null}
                         </div>
                         <div className='flex'>
@@ -366,6 +387,19 @@ export const InnerSearchFullUI = ({
                                 selectedReferenceNames={referenceSelection?.selectedReferences}
                                 referenceIdentifierField={schema.referenceIdentifierField}
                             />
+                            {isReleasedPage && accessToken !== undefined && groupId !== undefined && (
+                                <div className='ml-2'>
+                                    <DownloadOriginalDataButton
+                                        sequenceFilter={downloadFilter}
+                                        backendUrl={clientConfig.backendUrl}
+                                        accessToken={accessToken}
+                                        organism={organism}
+                                        groupId={groupId}
+                                        totalSequences={totalSequences}
+                                        fetchAccessions={fetchAccessions}
+                                    />
+                                </div>
+                            )}
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu
                                     downloadUrlGenerator={downloadUrlGenerator}

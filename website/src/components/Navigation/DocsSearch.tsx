@@ -85,7 +85,7 @@ const DocsSearch: FC = () => {
         <div ref={searchRef} className='mb-4 relative'>
             <div className='relative'>
                 <div className='flex items-center bg-primary-50 border border-primary-200 rounded-md px-3 py-2 focus-within:border-primary-400'>
-                    <SearchIcon className='w-4 h-4 text-primary-600 flex-shrink-0' aria-hidden='true' />
+                    <SearchIcon className='w-4 h-4 text-primary-600 shrink-0' aria-hidden='true' />
                     <DisabledUntilHydrated>
                         <input
                             ref={inputRef}
@@ -97,7 +97,7 @@ const DocsSearch: FC = () => {
                                 setIsOpen(true);
                             }}
                             onFocus={() => setIsOpen(true)}
-                            className='flex-1 ml-2 bg-transparent border-none text-sm text-gray-700 placeholder-primary-500 focus:outline-none focus:ring-0 disabled:cursor-not-allowed'
+                            className='flex-1 ml-2 bg-transparent border-none text-sm text-gray-700 placeholder-primary-500 focus:outline-hidden focus:ring-0 disabled:cursor-not-allowed'
                             aria-label='Search documentation'
                         />
                     </DisabledUntilHydrated>

@@ -31,7 +31,7 @@ export const SequencesDialog: FC<SequencesDialogProps> = ({ isOpen, onClose, dat
     }
 
     return (
-        <div className='fixed inset-0 flex items-center justify-center z-50 overflow-auto bg-black bg-opacity-30'>
+        <div className='fixed inset-0 flex items-center justify-center z-50 overflow-auto bg-black/30'>
             <div className='bg-white rounded-lg p-6 max-w-6xl mx-3 w-full max-h-[90vh] flex flex-col'>
                 <div className='flex justify-between items-center mb-4'>
                     <h2 className='text-xl font-semibold'>Processed sequences</h2>
@@ -40,7 +40,7 @@ export const SequencesDialog: FC<SequencesDialogProps> = ({ isOpen, onClose, dat
                     </Button>
                 </div>
 
-                <div className='flex-grow overflow-hidden flex flex-col'>
+                <div className='grow overflow-hidden flex flex-col'>
                     <BoxWithTabsTabBar>
                         {processedSequences.map(({ label }, i) => (
                             <BoxWithTabsTab

@@ -1,5 +1,6 @@
 ---
-import '../styles/base.scss';
+import '../styles/base.css';
+import '../styles/custom-colors.css';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 
@@ -107,7 +108,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
 
             <div
                 class:list={[
-                    'flex-grow',
+                    'grow',
                     'mt-3',
                     'mb-5',
                     fullWidth ? (withoutMargin ? 'px-4' : 'mx-8') : 'max-w-7xl mx-auto w-full px-8',

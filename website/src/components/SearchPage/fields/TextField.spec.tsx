@@ -35,18 +35,18 @@ describe('TextField', () => {
         render(<TextField label='Test Field' />);
 
         const label = screen.getByText('Test Field');
-        expect(label).toHaveClass('peer-placeholder-shown:!bg-transparent');
-        expect(label).toHaveClass('!bg-white');
-        expect(label).toHaveClass('peer-focus:!bg-white');
+        expect(label).toHaveClass('peer-placeholder-shown:bg-transparent!');
+        expect(label).toHaveClass('bg-white!');
+        expect(label).toHaveClass('peer-focus:bg-white!');
     });
 
     it('applies transparent background only in placeholder state for multiline labels', () => {
         render(<TextField label='Test Field' multiline={true} />);
 
         const label = screen.getByText('Test Field');
-        expect(label).toHaveClass('peer-placeholder-shown:!bg-transparent');
-        expect(label).toHaveClass('!bg-white');
-        expect(label).toHaveClass('peer-focus:!bg-white');
+        expect(label).toHaveClass('peer-placeholder-shown:bg-transparent!');
+        expect(label).toHaveClass('bg-white!');
+        expect(label).toHaveClass('peer-focus:bg-white!');
     });
 
     it('strips newlines on paste in single-line input', () => {

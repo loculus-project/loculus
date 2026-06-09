@@ -774,14 +774,8 @@ def assembly_table_handle_errors(
             entries_with_errors,
             db_engine,
             model_class=AssemblyTableEntry,
-            retry_threshold_min=config.retry_threshold_min,
+            config=config,
             last_retry=last_retry_time,
-            error_substrings=(
-                "Submit service authentication error. Invalid submission account user "
-                "name or password. Please try enclosing your password in single quotes. "
-                "The submission has failed because of a user error.",
-                "does not exist in ENA",
-            ),
         )
         # TODO: Query ENA to check if assembly has in fact been created
         # If created update assembly_table
