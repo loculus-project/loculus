@@ -193,19 +193,16 @@ class CitationEndpointsTest(
 
     @Test
     fun `WHEN multiple crossref citation runs link the same citation source THEN all citations are recorded`() {
-        val seqSetAResult = client.createSeqSet().andExpect(status().isOk).andReturn()
-        val seqSetIdA = JsonPath.read<String>(seqSetAResult.response.contentAsString, "$.seqSetId")
-        val seqSetVersionA =
-            JsonPath.read<Int>(seqSetAResult.response.contentAsString, "$.seqSetVersion").toLong()
-        client.createSeqSetDOI(seqSetId = seqSetIdA, seqSetVersion = seqSetVersionA).andExpect(status().isOk)
-        val seqSetDOIA = "${MOCK_DOI_PREFIX}/$seqSetIdA.$seqSetVersionA"
+        fun createSeqSetWithDOI(): Triple<String, Long, String> {
+            val result = client.createSeqSet().andExpect(status().isOk).andReturn()
+            val seqSetId = JsonPath.read<String>(result.response.contentAsString, "$.seqSetId")
+            val seqSetVersion = JsonPath.read<Int>(result.response.contentAsString, "$.seqSetVersion").toLong()
+            client.createSeqSetDOI(seqSetId, seqSetVersion).andExpect(status().isOk)
+            return Triple(seqSetId, seqSetVersion, "${MOCK_DOI_PREFIX}/$seqSetId.$seqSetVersion")
+        }
 
-        val seqSetBResult = client.createSeqSet().andExpect(status().isOk).andReturn()
-        val seqSetIdB = JsonPath.read<String>(seqSetBResult.response.contentAsString, "$.seqSetId")
-        val seqSetVersionB =
-            JsonPath.read<Int>(seqSetBResult.response.contentAsString, "$.seqSetVersion").toLong()
-        client.createSeqSetDOI(seqSetId = seqSetIdB, seqSetVersion = seqSetVersionB).andExpect(status().isOk)
-        val seqSetDOIB = "${MOCK_DOI_PREFIX}/$seqSetIdB.$seqSetVersionB"
+        val (seqSetIdA, seqSetVersionA, seqSetDOIA) = createSeqSetWithDOI()
+        val (seqSetIdB, seqSetVersionB, seqSetDOIB) = createSeqSetWithDOI()
 
         every { crossRefService.isActive } returns true
 
