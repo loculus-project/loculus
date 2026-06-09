@@ -434,6 +434,10 @@ open class SubmissionController(
             description = "The metadata fields that should be returned. If not provided, all fields are returned.",
         ) @RequestParam(required = false) fields: List<String>?,
         @Parameter(
+            description = "Filter by accession versions in 'accession.version' format. " +
+                "If not provided, all accession versions are considered.",
+        ) @RequestParam(required = false) accessionVersionsFilter: List<String>?,
+        @Parameter(
             description = "Filter by group ids. If not provided, all groups are considered.",
         ) @RequestParam(required = false) groupIdsFilter: List<Int>?,
         @Parameter(
@@ -448,11 +452,16 @@ open class SubmissionController(
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
         }
 
+        val parsedAccessionVersions = accessionVersionsFilter?.takeIf { it.isNotEmpty() }?.map {
+            AccessionVersion.fromString(it)
+        }
+
         val totalRecords = submissionDatabaseService.countUnprocessedMetadata(
             authenticatedUser,
             organism,
             groupIdsFilter?.takeIf { it.isNotEmpty() },
             statusesFilter?.takeIf { it.isNotEmpty() },
+            parsedAccessionVersions,
         )
         headers.add(X_TOTAL_RECORDS, totalRecords.toString())
         // TODO(https://github.com/loculus-project/loculus/issues/2778)
@@ -468,6 +477,7 @@ open class SubmissionController(
                 groupIdsFilter?.takeIf { it.isNotEmpty() },
                 statusesFilter?.takeIf { it.isNotEmpty() },
                 fields?.takeIf { it.isNotEmpty() },
+                parsedAccessionVersions,
             )
         }
 

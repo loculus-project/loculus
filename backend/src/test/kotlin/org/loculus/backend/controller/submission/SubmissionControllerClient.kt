@@ -307,6 +307,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         jwt: String? = jwtForDefaultUser,
         groupIdsFilter: List<Int>? = null,
         statusesFilter: List<Status>? = null,
+        accessionVersionsFilter: List<String>? = null,
         fields: List<String>? = null,
         compression: String? = null,
     ): ResultActions = mockMvc.perform(
@@ -320,6 +321,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             }
             .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
             .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
+            .param("accessionVersionsFilter", accessionVersionsFilter?.joinToString(","))
             .param("fields", fields?.joinToString(",")),
     )
 
