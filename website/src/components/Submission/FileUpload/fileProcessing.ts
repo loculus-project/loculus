@@ -19,6 +19,11 @@ export type FileKind<F extends ProcessedFile> = {
 
 const COMPRESSION_EXTENSIONS = ['zst', 'gz', 'zip', 'xz'];
 
+// Sheets that the downloadable XLSX template adds alongside the `Data` sheet (see
+// `pages/[organism]/submission/template/index.ts`). Kept in sync manually rather than imported, to
+// avoid pulling the server-only template endpoint (and its dependencies) into the client bundle.
+const TEMPLATE_REFERENCE_SHEET_NAMES = new Set(['Config', '_lists']);
+
 export const METADATA_FILE_KIND: FileKind<ProcessedFile> = {
     type: 'metadata',
     icon: MaterialSymbolsLightDataTableOutline,
@@ -265,7 +270,12 @@ export class ExcelFile implements ProcessedFile {
         // filename needs to end in 'tsv' for the uploaded file
         const tsvFile = new File([tsvBlob], 'converted.tsv', { type: 'text/tab-separated-values' });
         this.tsvFile = tsvFile;
-        if (workbook.SheetNames.length > 1) {
+        // Sheets that the downloadable template adds for reference/lookup purposes are expected and
+        // should not trigger the "you have unprocessed sheets" warning.
+        const unexpectedSheets = workbook.SheetNames.slice(1).filter(
+            (sheetName) => !TEMPLATE_REFERENCE_SHEET_NAMES.has(sheetName),
+        );
+        if (unexpectedSheets.length > 0) {
             this.processingWarnings.push(
                 `The file contains ${workbook.SheetNames.length} sheets, only the first sheet (${firstSheetName}; ${rowCount} rows) was processed.`,
             );

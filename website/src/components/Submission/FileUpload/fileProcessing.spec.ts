@@ -1,9 +1,22 @@
 import { fail } from 'assert';
 import { promises as fs } from 'fs';
 
+import ExcelJS from 'exceljs';
 import { describe, expect, test } from 'vitest';
 
 import { METADATA_FILE_KIND, PLAIN_SEGMENT_KIND } from './fileProcessing';
+
+async function buildWorkbookFile(extraSheetNames: string[]): Promise<File> {
+    const workbook = new ExcelJS.Workbook();
+    const dataSheet = workbook.addWorksheet('Data');
+    dataSheet.addRow(['submissionId', 'country']);
+    dataSheet.addRow(['sample1', 'Germany']);
+    for (const sheetName of extraSheetNames) {
+        workbook.addWorksheet(sheetName).addRow(['ignored']);
+    }
+    const buffer = await workbook.xlsx.writeBuffer();
+    return new File([buffer], 'template.xlsx');
+}
 
 async function loadTestFile(fileName: string): Promise<File> {
     const path = `${import.meta.dirname}/test_files/${fileName}`;
@@ -81,5 +94,21 @@ describe('fileProcessing', () => {
         const processedText = await processedFile.text();
         expect(processedText).toBe('ACTGACTGACTG');
         expect(processedFile.fastaHeader()).toBe('fooid description');
+    });
+
+    test('template reference sheets (Config, _lists) do not trigger a multi-sheet warning', async () => {
+        const file = await buildWorkbookFile(['Config', '_lists']);
+        const processingResult = await METADATA_FILE_KIND.processRawFile(file);
+
+        expect(processingResult.isOk()).toBe(true);
+        expect(processingResult._unsafeUnwrap().warnings()).toHaveLength(0);
+    });
+
+    test('an unexpected extra sheet still triggers a multi-sheet warning', async () => {
+        const file = await buildWorkbookFile(['Config', 'My other data']);
+        const processingResult = await METADATA_FILE_KIND.processRawFile(file);
+
+        expect(processingResult.isOk()).toBe(true);
+        expect(processingResult._unsafeUnwrap().warnings()).toHaveLength(1);
     });
 });

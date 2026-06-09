@@ -166,6 +166,44 @@ export function getMetadataTemplateFields(
     return fieldsToDisplaynames;
 }
 
+/**
+ * An {@link InputField} as it should appear in the downloadable submission template, tagged with
+ * whether it is one of the fields enabled by default (a "template field"). Default-enabled fields
+ * are ordered before the remaining, opt-in fields.
+ */
+export type TemplateInputField = InputField & { isTemplateField: boolean };
+
+/**
+ * Returns every submittable input field for the template download, in column order:
+ * submission-detail fields first, then the default-enabled "template" fields
+ * (`schema.metadataTemplate`, or all input fields if unset), then the remaining opt-in fields.
+ * Fields enabled by default are tagged with `isTemplateField: true`.
+ */
+export function getOrderedTemplateInputFields(organism: string, action: 'submit' | 'revise'): TemplateInputField[] {
+    const schema = getConfig(organism).schema;
+
+    const submissionIdInputFields = getSubmissionIdInputFields(schema);
+    const accessionFields = action === 'revise' ? [getAccessionInputField()] : [];
+    const detailFields = [...accessionFields, ...submissionIdInputFields];
+
+    const detailFieldNames = new Set(detailFields.map((field) => field.name));
+    const nonDetailFields = schema.inputFields.filter((field) => !detailFieldNames.has(field.name));
+    const fieldsByName = new Map(nonDetailFields.map((field) => [field.name, field]));
+
+    const templateFieldNames = schema.metadataTemplate ?? nonDetailFields.map((field) => field.name);
+    const templateFieldNameSet = new Set(templateFieldNames);
+    const templateFields = templateFieldNames
+        .map((name) => fieldsByName.get(name))
+        .filter((field): field is InputField => field !== undefined);
+    const restFields = nonDetailFields.filter((field) => !templateFieldNameSet.has(field.name));
+
+    return [
+        ...detailFields.map((field) => ({ ...field, isTemplateField: true })),
+        ...templateFields.map((field) => ({ ...field, isTemplateField: true })),
+        ...restFields.map((field) => ({ ...field, isTemplateField: false })),
+    ];
+}
+
 function getAccessionInputField(): InputField {
     const accessionPrefix = getWebsiteConfig().accessionPrefix;
     const instanceName = getWebsiteConfig().name;
