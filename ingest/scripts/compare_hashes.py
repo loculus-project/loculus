@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import logging
 from collections import defaultdict
@@ -352,6 +353,7 @@ def main(
             for key in CompareHashesConfig.__annotations__
             if key in full_config
         }
+        relevant_config = {f.name: full_config.get(f.name, []) for f in dataclasses.fields(CompareHashesConfig)}
         config = CompareHashesConfig(**relevant_config)
 
     insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
