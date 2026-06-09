@@ -9,7 +9,7 @@ import click
 import orjsonl
 import requests
 import yaml
-from loculus_client import get_submitted
+from loculus_client import Config, get_submitted
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -20,20 +20,9 @@ logging.basicConfig(
 )
 
 
-@dataclass
-class Config:
-    organism: str
-    segmented: bool
-    nucleotide_sequences: list[str]
-    group_name: str
-    batch_chunk_size: int
-    backend_url: str
-    keycloak_token_url: str
-    keycloak_client_id: str
-    username: str
-    password: str
+@dataclass(kw_only=True)
+class CompareHashesConfig(Config):
     slack_hook: str = ""
-    backend_request_timeout_seconds: int = 600
 
 
 InsdcAccession = str  # one per segment
@@ -59,7 +48,7 @@ class SequenceUpdateManager:
     # i.e. loculus accessions (to be revoked) and their corresponding old joint insdc accessions
     sampled_out: list[JointInsdcAccession]
     hashes: list[float]
-    config: Config
+    config: CompareHashesConfig
 
 
 @dataclass
@@ -72,7 +61,7 @@ class LatestLoculusVersion:
     jointAccession: JointInsdcAccession  # noqa: N815
 
 
-def notify(config: Config, text: str):
+def notify(config: CompareHashesConfig, text: str):
     """Send slack notification with text"""
     if config.slack_hook:
         try:
@@ -96,10 +85,10 @@ def sample_out_hashed_records(
 
 
 def calculate_metadata_diff(
-    config: Config, new_metadata: dict[str, Any], previous_entry: LatestLoculusVersion
+    config: CompareHashesConfig, new_metadata: dict[str, Any], previous_entry: LatestLoculusVersion
 ) -> dict[str, Any]:
     previous_metadata_list = get_submitted(
-        config,  # type: ignore
+        config,
         None,
         fields=None,
         accessionVersionsFilter=[
@@ -254,7 +243,7 @@ def get_loculus_accession_to_latest_version_map(
 
 
 def construct_submitted_dict(
-    old_hashes: str, insdc_keys: list[str], config: Config
+    old_hashes: str, insdc_keys: list[str], config: CompareHashesConfig
 ) -> dict[InsdcAccession, LatestLoculusVersion]:
     # Get the latest version for each loculus accession
     loculus_accession_to_latest_version_map: dict[LoculusAccession, dict[str, Any]] = (
@@ -359,9 +348,11 @@ def main(
     with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
         relevant_config = {
-            key: full_config[key] for key in Config.__annotations__ if key in full_config
+            key: full_config[key]
+            for key in CompareHashesConfig.__annotations__
+            if key in full_config
         }
-        config = Config(**relevant_config)
+        config = CompareHashesConfig(**relevant_config)
 
     insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
 
