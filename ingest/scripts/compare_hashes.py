@@ -124,11 +124,9 @@ def calculate_metadata_diff(
         key_in_old = key in previous_metadata
 
         if not key_in_new:
-            print(f"Key only exists in previous metadata: {key}")
             diff[key] = {"new": None, "old": previous_metadata[key]}
 
         elif not key_in_old:
-            print(f"Key only exists in new metadata: {key}")
             diff[key] = {"new": new_metadata[key], "old": None}
 
         else:

@@ -495,11 +495,11 @@ def get_submitted(
         )
         sleep(60)
 
-    statuses: dict[str, dict[int, str]] = get_sequence_status(config)
-    logger.info(f"Got info on {len(statuses.keys())} previously submitted sequences/accessions")
-
     if not output:
         return entries
+
+    statuses: dict[str, dict[int, str]] = get_sequence_status(config)
+    logger.info(f"Got info on {len(statuses.keys())} previously submitted sequences/accessions")
 
     for entry in entries:
         status = statuses.get(entry["accession"], {}).get(entry["version"], "UNKNOWN")
