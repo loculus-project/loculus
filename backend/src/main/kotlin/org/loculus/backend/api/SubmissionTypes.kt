@@ -43,6 +43,11 @@ data class AccessionVersion(override val accession: Accession, override val vers
                 ?: throw UnprocessableEntityException(
                     "Invalid version in accession version '$value', expected a number",
                 )
+            if (version < 1) {
+                throw UnprocessableEntityException(
+                    "Invalid version in accession version '$value', version must be at least 1",
+                )
+            }
 
             return AccessionVersion(accession, version)
         }
