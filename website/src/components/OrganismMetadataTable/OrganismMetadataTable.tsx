@@ -389,7 +389,10 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                                       />
                                       {field.options && field.options.length > 0 && (
                                           <div className='mt-2'>
-                                              <AllowedValuesList options={field.options} />
+                                              <AllowedValuesList
+                                                  options={field.options}
+                                                  aria-label={`Allowed values for ${field.name}`}
+                                              />
                                           </div>
                                       )}
                                   </td>
