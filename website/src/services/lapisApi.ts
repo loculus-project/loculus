@@ -40,7 +40,7 @@ const organismParam = makeParameters([
 
 const detailsEndpoint = makeEndpoint({
     method: 'post',
-    path: v1('/details'),
+    path: v1('/metadata'),
     alias: 'details',
     parameters: [
         ...organismParam,
