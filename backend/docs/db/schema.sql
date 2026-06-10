@@ -402,6 +402,44 @@ CREATE TABLE public.metadata_upload_aux_table (
 ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
 
 --
+-- Name: seqset_citation_source; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.seqset_citation_source (
+    citation_source_id bigint NOT NULL,
+    source_doi text NOT NULL,
+    origin text NOT NULL,
+    title text NOT NULL,
+    year integer NOT NULL,
+    contributors jsonb NOT NULL,
+    CONSTRAINT seqset_citation_source_origin_check CHECK ((origin = ANY (ARRAY['CROSSREF'::text, 'CURATED'::text])))
+);
+
+
+ALTER TABLE public.seqset_citation_source OWNER TO postgres;
+
+--
+-- Name: seqset_citation_source_citation_source_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.seqset_citation_source_citation_source_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.seqset_citation_source_citation_source_id_seq OWNER TO postgres;
+
+--
+-- Name: seqset_citation_source_citation_source_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.seqset_citation_source_citation_source_id_seq OWNED BY public.seqset_citation_source.citation_source_id;
+
+
+--
 -- Name: seqset_id_sequence; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -449,6 +487,19 @@ ALTER SEQUENCE public.seqset_records_seqset_record_id_seq OWNER TO postgres;
 
 ALTER SEQUENCE public.seqset_records_seqset_record_id_seq OWNED BY public.seqset_records.seqset_record_id;
 
+
+--
+-- Name: seqset_to_citation_source; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.seqset_to_citation_source (
+    citation_source_id bigint NOT NULL,
+    seqset_id text NOT NULL,
+    seqset_version bigint NOT NULL
+);
+
+
+ALTER TABLE public.seqset_to_citation_source OWNER TO postgres;
 
 --
 -- Name: seqset_to_records; Type: TABLE; Schema: public; Owner: postgres
@@ -674,6 +725,13 @@ ALTER TABLE ONLY public.groups_table ALTER COLUMN group_id SET DEFAULT nextval('
 
 
 --
+-- Name: seqset_citation_source citation_source_id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_citation_source ALTER COLUMN citation_source_id SET DEFAULT nextval('public.seqset_citation_source_citation_source_id_seq'::regclass);
+
+
+--
 -- Name: seqset_records seqset_record_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -775,11 +833,35 @@ ALTER TABLE ONLY public.metadata_upload_aux_table
 
 
 --
+-- Name: seqset_citation_source seqset_citation_source_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_citation_source
+    ADD CONSTRAINT seqset_citation_source_pkey PRIMARY KEY (citation_source_id);
+
+
+--
+-- Name: seqset_citation_source seqset_citation_source_source_doi_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_citation_source
+    ADD CONSTRAINT seqset_citation_source_source_doi_key UNIQUE (source_doi);
+
+
+--
 -- Name: seqset_records seqset_records_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.seqset_records
     ADD CONSTRAINT seqset_records_pkey PRIMARY KEY (seqset_record_id);
+
+
+--
+-- Name: seqset_to_citation_source seqset_to_citation_source_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_to_citation_source
+    ADD CONSTRAINT seqset_to_citation_source_pkey PRIMARY KEY (citation_source_id, seqset_id, seqset_version);
 
 
 --
@@ -1027,6 +1109,22 @@ CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.sequence_entrie
 
 ALTER TABLE ONLY public.files
     ADD CONSTRAINT files_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.groups_table(group_id);
+
+
+--
+-- Name: seqset_to_citation_source foreign_key_citation_source; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_to_citation_source
+    ADD CONSTRAINT foreign_key_citation_source FOREIGN KEY (citation_source_id) REFERENCES public.seqset_citation_source(citation_source_id) ON DELETE CASCADE;
+
+
+--
+-- Name: seqset_to_citation_source foreign_key_seqset; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_to_citation_source
+    ADD CONSTRAINT foreign_key_seqset FOREIGN KEY (seqset_id, seqset_version) REFERENCES public.seqsets(seqset_id, seqset_version) ON DELETE CASCADE;
 
 
 --
