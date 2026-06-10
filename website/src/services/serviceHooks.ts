@@ -103,23 +103,29 @@ function selectSequenceHook(
     isMultiSegmented: boolean,
 ) {
     if (isUnalignedSequence(sequenceType)) {
-        return isMultiSegmented
-            ? hooks.useUnalignedNucleotideSequencesMultiSegment(request, {
-                  params: { segment: sequenceType.name.lapisName },
-                  queries: { organism },
-                  ...LAPIS_RETRY_OPTIONS,
-              })
-            : hooks.useUnalignedNucleotideSequences(request, { queries: { organism } }, { ...LAPIS_RETRY_OPTIONS });
+        return hooks.useUnalignedNucleotideSequences(
+            request,
+            {
+                queries: {
+                    organism,
+                    ...(isMultiSegmented ? { reference: sequenceType.name.lapisName } : {}),
+                },
+            },
+            { ...LAPIS_RETRY_OPTIONS },
+        );
     }
 
     if (isAlignedSequence(sequenceType)) {
-        return isMultiSegmented
-            ? hooks.useAlignedNucleotideSequencesMultiSegment(request, {
-                  params: { segment: sequenceType.name.lapisName },
-                  queries: { organism },
-                  ...LAPIS_RETRY_OPTIONS,
-              })
-            : hooks.useAlignedNucleotideSequences(request, { queries: { organism } }, { ...LAPIS_RETRY_OPTIONS });
+        return hooks.useAlignedNucleotideSequences(
+            request,
+            {
+                queries: {
+                    organism,
+                    ...(isMultiSegmented ? { reference: sequenceType.name.lapisName } : {}),
+                },
+            },
+            { ...LAPIS_RETRY_OPTIONS },
+        );
     }
 
     return hooks.useAlignedAminoAcidSequences(request, {

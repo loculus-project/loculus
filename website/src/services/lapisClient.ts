@@ -214,12 +214,12 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         const results = await Promise.all(
             segmentNames.map((segment) =>
                 this.call(
-                    'unalignedNucleotideSequencesMultiSegment',
+                    'unalignedNucleotideSequences',
                     {
                         [this.schema.primaryKey]: accessionVersion,
                         dataFormat: 'FASTA',
                     },
-                    { params: { segment }, queries: { organism: this.organism } },
+                    { queries: { organism: this.organism, reference: segment } },
                 ),
             ),
         );
@@ -263,11 +263,14 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
             dataFormat?: 'fasta' | 'json' | 'ndjson';
         },
     ) {
-        const baseUrl = `${this.url}/v1/unalignedSequences`;
-        const url = segment === undefined ? baseUrl : `${baseUrl}/${segment}`;
+        const url = `${this.url}/v1/unalignedSequences`;
+        const params: Record<string, string> = { organism: this.organism };
+        if (segment !== undefined) {
+            params.reference = segment;
+        }
         return axios.post<Readable>(url, request, {
             responseType: 'stream',
-            params: { organism: this.organism },
+            params,
         });
     }
 

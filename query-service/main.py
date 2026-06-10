@@ -17,10 +17,8 @@ Routes (under /v1/):
     GET|POST  /v1/aaMutations                   ?organism=
     GET|POST  /v1/insertions                    ?organism=
     GET|POST  /v1/aaInsertions                  ?organism=
-    GET|POST  /v1/alignedSequences              ?organism=
-    GET|POST  /v1/alignedSequences/{segment}    ?organism=
-    GET|POST  /v1/unalignedSequences            ?organism=
-    GET|POST  /v1/unalignedSequences/{segment}  ?organism=
+    GET|POST  /v1/alignedSequences              ?organism= [&reference=<segment>]
+    GET|POST  /v1/unalignedSequences            ?organism= [&reference=<segment>]
     GET|POST  /v1/aaSequences/{proteinName}     ?organism=
     GET       /v1/info                          ?organism=
     GET       /v1/lineageDefinition             ?organism=&column=
@@ -76,6 +74,13 @@ ORGANISMS: list[str] = [
     for o in os.environ.get("ORGANISMS", "").split(",")
     if o.strip()
 ]
+# Comma-separated segment names for multi-segment organisms (e.g. "L,M,S").
+# When set, the Swagger UI renders a dropdown for the `reference` param.
+REFERENCE_NAMES: list[str] = [
+    r.strip()
+    for r in os.environ.get("REFERENCE_NAMES", "").split(",")
+    if r.strip()
+]
 
 ORGANISM_RE = re.compile(r"^[a-z][a-z0-9-]*$")
 
@@ -122,6 +127,11 @@ _organism_schema: dict = (
     {"type": "string", "enum": ORGANISMS}
     if ORGANISMS
     else {"type": "string", "example": "cchf"}
+)
+_reference_schema: dict = (
+    {"type": "string", "enum": REFERENCE_NAMES}
+    if REFERENCE_NAMES
+    else {"type": "string"}
 )
 
 _COMMON_CONTROL_PARAMS: list[dict] = [
@@ -182,8 +192,11 @@ _COMMON_CONTROL_PARAMS: list[dict] = [
         "name": "reference",
         "in": "query",
         "required": False,
-        "description": "Reference sequence name (relevant for multi-segment organisms).",
-        "schema": {"type": "string"},
+        "description": (
+            "Segment name for multi-segment organisms (e.g. `L`, `M`, `S`). "
+            "Omit for single-segment organisms."
+        ),
+        "schema": _reference_schema,
     },
 ]
 
@@ -662,7 +675,8 @@ async def aa_insertions(request: Request) -> Response:
 
 _ALIGNED_SEQ_DESC = (
     "Stream aligned nucleotide sequences (FASTA or NDJSON) matching the given filters. "
-    "For multi-segment organisms use `/v1/alignedSequences/{segment}`. "
+    "For multi-segment organisms set `reference` to the segment name (e.g. `L`, `S`); "
+    "omit it for single-segment organisms. "
     "Any query parameter not listed here is treated as a metadata-column filter."
 )
 
@@ -670,48 +684,31 @@ _ALIGNED_SEQ_DESC = (
 @app.get(
     "/v1/alignedSequences",
     tags=["Sequences"],
-    summary="Aligned nucleotide sequences (default segment)",
+    summary="Aligned nucleotide sequences",
     description=_ALIGNED_SEQ_DESC,
     openapi_extra={"parameters": _SEQUENCE_FORMAT_PARAMS},
 )
 @app.post(
     "/v1/alignedSequences",
     tags=["Sequences"],
-    summary="Aligned nucleotide sequences (default segment)",
+    summary="Aligned nucleotide sequences",
     description=_ALIGNED_SEQ_DESC,
     openapi_extra={"requestBody": _POST_REQUEST_BODY},
 )
 async def aligned_sequences(request: Request) -> Response:
-    return await _handle(request, "/sample/alignedNucleotideSequences")
-
-
-_ALIGNED_SEQ_SEG_DESC = (
-    "Stream aligned nucleotide sequences for a specific segment of a multi-segment organism. "
-    "Any query parameter not listed here is treated as a metadata-column filter."
-)
-
-
-@app.get(
-    "/v1/alignedSequences/{segment}",
-    tags=["Sequences"],
-    summary="Aligned nucleotide sequences (named segment)",
-    description=_ALIGNED_SEQ_SEG_DESC,
-    openapi_extra={"parameters": _SEQUENCE_FORMAT_PARAMS},
-)
-@app.post(
-    "/v1/alignedSequences/{segment}",
-    tags=["Sequences"],
-    summary="Aligned nucleotide sequences (named segment)",
-    description=_ALIGNED_SEQ_SEG_DESC,
-    openapi_extra={"requestBody": _POST_REQUEST_BODY},
-)
-async def aligned_sequences_segment(segment: str, request: Request) -> Response:
-    return await _handle(request, f"/sample/alignedNucleotideSequences/{segment}")
+    reference = request.query_params.get("reference")
+    lapis_path = (
+        f"/sample/alignedNucleotideSequences/{reference}"
+        if reference
+        else "/sample/alignedNucleotideSequences"
+    )
+    return await _handle(request, lapis_path)
 
 
 _UNALIGNED_SEQ_DESC = (
     "Stream unaligned nucleotide sequences (FASTA or NDJSON) matching the given filters. "
-    "For multi-segment organisms use `/v1/unalignedSequences/{segment}`. "
+    "For multi-segment organisms set `reference` to the segment name (e.g. `L`, `S`); "
+    "omit it for single-segment organisms. "
     "Any query parameter not listed here is treated as a metadata-column filter."
 )
 
@@ -719,43 +716,25 @@ _UNALIGNED_SEQ_DESC = (
 @app.get(
     "/v1/unalignedSequences",
     tags=["Sequences"],
-    summary="Unaligned nucleotide sequences (default segment)",
+    summary="Unaligned nucleotide sequences",
     description=_UNALIGNED_SEQ_DESC,
     openapi_extra={"parameters": _SEQUENCE_FORMAT_PARAMS},
 )
 @app.post(
     "/v1/unalignedSequences",
     tags=["Sequences"],
-    summary="Unaligned nucleotide sequences (default segment)",
+    summary="Unaligned nucleotide sequences",
     description=_UNALIGNED_SEQ_DESC,
     openapi_extra={"requestBody": _POST_REQUEST_BODY},
 )
 async def unaligned_sequences(request: Request) -> Response:
-    return await _handle(request, "/sample/unalignedNucleotideSequences")
-
-
-_UNALIGNED_SEQ_SEG_DESC = (
-    "Stream unaligned nucleotide sequences for a specific segment of a multi-segment organism. "
-    "Any query parameter not listed here is treated as a metadata-column filter."
-)
-
-
-@app.get(
-    "/v1/unalignedSequences/{segment}",
-    tags=["Sequences"],
-    summary="Unaligned nucleotide sequences (named segment)",
-    description=_UNALIGNED_SEQ_SEG_DESC,
-    openapi_extra={"parameters": _SEQUENCE_FORMAT_PARAMS},
-)
-@app.post(
-    "/v1/unalignedSequences/{segment}",
-    tags=["Sequences"],
-    summary="Unaligned nucleotide sequences (named segment)",
-    description=_UNALIGNED_SEQ_SEG_DESC,
-    openapi_extra={"requestBody": _POST_REQUEST_BODY},
-)
-async def unaligned_sequences_segment(segment: str, request: Request) -> Response:
-    return await _handle(request, f"/sample/unalignedNucleotideSequences/{segment}")
+    reference = request.query_params.get("reference")
+    lapis_path = (
+        f"/sample/unalignedNucleotideSequences/{reference}"
+        if reference
+        else "/sample/unalignedNucleotideSequences"
+    )
+    return await _handle(request, lapis_path)
 
 
 _AA_SEQ_DESC = (

@@ -128,10 +128,8 @@ const aminoAcidInsertionsEndpoint = makeEndpoint({
     response: insertionsResponse,
 });
 
-// Sequences: aligned vs unaligned are distinct verbs (Zodios requires each
-// endpoint definition to have a unique path), and the segment / protein
-// selector lives in the URL path. The single-segment / single-protein cases
-// drop the trailing path segment.
+// Sequences: segment selection is done via ?reference=<segment> query param.
+// Omit reference for single-segment organisms; set it for multi-segment ones.
 const alignedNucleotideSequencesEndpoint = makeEndpoint({
     method: 'post',
     path: v1('/alignedSequences'),
@@ -140,21 +138,10 @@ const alignedNucleotideSequencesEndpoint = makeEndpoint({
     parameters: [
         ...organismParam,
         {
-            name: 'request',
-            type: 'Body',
-            schema: sequenceRequest,
+            name: 'reference',
+            type: 'Query',
+            schema: z.string().optional(),
         },
-    ],
-    response: z.string(),
-});
-
-const alignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
-    method: 'post',
-    path: v1('/alignedSequences/:segment'),
-    alias: 'alignedNucleotideSequencesMultiSegment',
-    immutable: true,
-    parameters: [
-        ...organismParam,
         {
             name: 'request',
             type: 'Body',
@@ -172,21 +159,10 @@ const unalignedNucleotideSequencesEndpoint = makeEndpoint({
     parameters: [
         ...organismParam,
         {
-            name: 'request',
-            type: 'Body',
-            schema: sequenceRequest,
+            name: 'reference',
+            type: 'Query',
+            schema: z.string().optional(),
         },
-    ],
-    response: z.string(),
-});
-
-const unalignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
-    method: 'post',
-    path: v1('/unalignedSequences/:segment'),
-    alias: 'unalignedNucleotideSequencesMultiSegment',
-    immutable: true,
-    parameters: [
-        ...organismParam,
         {
             name: 'request',
             type: 'Body',
@@ -236,9 +212,7 @@ export const lapisApi = makeApi([
     nucleotideInsertionsEndpoint,
     aminoAcidInsertionsEndpoint,
     alignedNucleotideSequencesEndpoint,
-    alignedNucleotideSequencesMultiSegmentEndpoint,
     unalignedNucleotideSequencesEndpoint,
-    unalignedNucleotideSequencesMultiSegmentEndpoint,
     alignedAminoAcidSequencesEndpoint,
     lineageDefinitionEndpoint,
 ]);

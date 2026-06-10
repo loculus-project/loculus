@@ -169,19 +169,18 @@ export class DownloadUrlGenerator {
     }
 
     private downloadEndpoint(dataType: DownloadDataType): { path: string; routingParams: Record<string, string> } {
-        const segmentSuffix = (segment?: string) => (segment !== undefined ? `/${segment}` : '');
         switch (dataType.type) {
             case 'metadata':
                 return { path: '/v1/metadata', routingParams: {} };
             case 'unalignedNucleotideSequences':
                 return {
-                    path: `/v1/unalignedSequences${segmentSuffix(dataType.segment)}`,
-                    routingParams: {},
+                    path: '/v1/unalignedSequences',
+                    routingParams: dataType.segment !== undefined ? { reference: dataType.segment } : {},
                 };
             case 'alignedNucleotideSequences':
                 return {
-                    path: `/v1/alignedSequences${segmentSuffix(dataType.segment)}`,
-                    routingParams: {},
+                    path: '/v1/alignedSequences',
+                    routingParams: dataType.segment !== undefined ? { reference: dataType.segment } : {},
                 };
             case 'alignedAminoAcidSequences':
                 return {

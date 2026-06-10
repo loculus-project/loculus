@@ -35,6 +35,8 @@ spec:
               value: "INFO"
             - name: ORGANISMS
               value: "{{- $first := true -}}{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms -}}{{- if $first -}}{{- $first = false -}}{{- else -}},{{ end -}}{{ $item.key }}{{- end -}}"
+            - name: REFERENCE_NAMES
+              value: "{{- $allRefs := list -}}{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms -}}{{- range $ref := index $item.contents "referenceGenomes" -}}{{- if ne $ref.name "main" -}}{{- $allRefs = append $allRefs $ref.name -}}{{- end -}}{{- end -}}{{- end -}}{{- join "," ($allRefs | sortAlpha | uniq) -}}"
           startupProbe:
             httpGet:
               path: /healthz
