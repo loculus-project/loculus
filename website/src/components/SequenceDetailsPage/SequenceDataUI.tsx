@@ -7,6 +7,7 @@ import { getDataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { getGitHubReportUrl } from '../../config.ts';
 import { routes } from '../../routes/routes';
+import { seqSetCitationClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
@@ -14,8 +15,10 @@ import { type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
+import CitationList from '../SeqSetCitations/CitationList.tsx';
 import { Button } from '../common/Button';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
+import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiEye from '~icons/mdi/eye';
 
 interface Props {
@@ -34,7 +37,7 @@ interface Props {
     onRevokeSuccess?: () => void;
 }
 
-export const SequenceDataUI: FC<Props> = ({
+export const InnerSequenceDataUI: FC<Props> = ({
     tableData,
     organism,
     segmentReferences,
@@ -65,6 +68,14 @@ export const SequenceDataUI: FC<Props> = ({
 
     const reportUrl = getGitHubReportUrl(sequenceFlaggingConfig, organism, accessionVersion);
 
+    const {
+        isLoading: isSequenceCitationsLoading,
+        error: sequenceCitationsError,
+        data: sequenceCitations,
+    } = seqSetCitationClientHooks(clientConfig).useGetSequenceCitations({
+        params: { accession: accessionVersion.split('.')[0], version: accessionVersion.split('.')[1] },
+    });
+
     return (
         <>
             {isRestricted && <RestrictedUseWarning />}
@@ -74,6 +85,25 @@ export const SequenceDataUI: FC<Props> = ({
                 dataUseTermsHistory={dataUseTermsHistory}
                 referenceGenomesInfo={referenceGenomesInfo}
             />
+            {sequenceCitations && sequenceCitations.length > 0 && (
+                <>
+                    <hr className='my-8 border-t-2 border-gray-200' />
+                    <div className='p-4 pl-0'>
+                        <div className='flex flex-row'>
+                            <h1 className='py-2 text-lg font-semibold border-b mr-2'>Citations</h1>
+                        </div>
+                        <div className='mt-4'>
+                            <CitationList
+                                isLoading={isSequenceCitationsLoading}
+                                error={sequenceCitationsError}
+                                citations={sequenceCitations}
+                                limit={5}
+                                modalTitle='Sequence Citations'
+                            />
+                        </div>
+                    </div>
+                </>
+            )}
             {schema.submissionDataTypes.consensusSequences && !isRevocation && (
                 <div className='mt-10'>
                     <SequencesContainer
@@ -142,3 +172,5 @@ export const SequenceDataUI: FC<Props> = ({
         </>
     );
 };
+
+export const SequenceDataUI = withQueryProvider(InnerSequenceDataUI);

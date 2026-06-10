@@ -7,9 +7,7 @@ import { type Group } from '../../types/backend';
 import type { SequenceFlaggingConfig } from '../../types/config.ts';
 import { type DetailsJson, detailsJsonSchema } from '../../types/detailsJson.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes';
-import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { getSegmentNames } from '../../utils/sequenceTypeHelpers.ts';
-import { SequenceCitations } from '../SequenceDetailsPage/SequenceCitations.tsx';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu';
 import SequencesBanner from '../SequenceDetailsPage/SequencesBanner.tsx';
@@ -26,7 +24,6 @@ const BUTTONCLASS =
     'inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-900 border border-transparent rounded-md hover:bg-blue-200 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500';
 
 interface SeqPreviewModalProps {
-    clientConfig: ClientConfig;
     seqId: string;
     accessToken?: string;
     isOpen: boolean;
@@ -42,7 +39,6 @@ interface SeqPreviewModalProps {
 const logger = getClientLogger('SeqPreviewModal');
 
 export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
-    clientConfig,
     seqId,
     accessToken,
     isOpen,
@@ -118,7 +114,6 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                         setPreviewedSeqId={setPreviewedSeqId}
                     />
                 )}
-                <SequenceCitations clientConfig={clientConfig} accessionVersion={seqId} />
                 <Button
                     type='button'
                     className={BUTTONCLASS}

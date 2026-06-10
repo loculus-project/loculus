@@ -1,7 +1,5 @@
 ---
-import { SequenceCitations } from './SequenceCitations';
 import { SequenceEntryHistoryMenu } from './SequenceEntryHistoryMenu';
-import { getRuntimeConfig } from '../../config';
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
 import IcBaselineDownload from '~icons/ic/baseline-download';
@@ -14,7 +12,6 @@ interface Props {
     showFastaDownloadButton: boolean;
 }
 
-const clientConfig = getRuntimeConfig().public;
 const { sequenceEntryHistory, accessionVersion, showDownload, showFastaDownloadButton } = Astro.props;
 ---
 
@@ -32,7 +29,6 @@ const { sequenceEntryHistory, accessionVersion, showDownload, showFastaDownloadB
                 />
             )
         }
-        <SequenceCitations client:load clientConfig={clientConfig} accessionVersion={accessionVersion} />
         {
             showDownload && (
                 <div class='inline-block relative group'>
