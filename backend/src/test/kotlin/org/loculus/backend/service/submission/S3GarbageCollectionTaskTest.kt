@@ -8,7 +8,7 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.OriginalData
+import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -59,7 +59,7 @@ class S3GarbageCollectionTaskTest(
                 it[submitterColumn] = "testuser"
                 it[groupIdColumn] = groupId
                 it[submittedAtTimestampColumn] = dateProvider.getCurrentDateTime()
-                it[unprocessedDataColumn] = OriginalData(
+                it[submittedDataColumn] = SubmittedData(
                     metadata = emptyMap(),
                     unalignedNucleotideSequences = emptyMap(),
                     files = mapOf("rawReads" to listOf(FileIdAndName(referenced, "raw.fastq"))),
