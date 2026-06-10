@@ -22,7 +22,7 @@ const SequenceCitationsInner: FC<SequenceCitationsProps> = ({ clientConfig, acce
         isLoading: isSequenceCitationsLoading,
         error: sequenceCitationsError,
         data: sequenceCitations,
-    } = seqSetCitationClientHooks(clientConfig).useGetSequenceCitedBy({
+    } = seqSetCitationClientHooks(clientConfig).useGetSequenceCitations({
         params: { accession: accession, version: version?.toString() ?? '' },
     });
 

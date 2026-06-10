@@ -525,9 +525,9 @@ class SeqSetCitationsDatabaseService(
             }
     }
 
-    fun getSequenceCitedByPublication(accession: String, version: Long): List<SequenceCitation> {
+    fun getSequenceCitations(accession: String, version: Long): List<SequenceCitation> {
         val accessionVersion = AccessionVersion(accession, version)
-        log.info { "Get sequence cited by publication for accession ${accessionVersion.displayAccessionVersion()}" }
+        log.info { "Get sequence citations for accession ${accessionVersion.displayAccessionVersion()}" }
         val accessions = setOf(accessionVersion.accession, accessionVersion.displayAccessionVersion())
 
         return SeqSetCitationSourceTable.innerJoin(

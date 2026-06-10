@@ -192,7 +192,7 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN get sequence cited by publication for sequence in cited seqSet THEN returns citations`() {
+    fun `WHEN get sequence citations for sequence in cited seqSet THEN returns citations`() {
         val seqSetResult = client.createSeqSet().andExpect(status().isOk).andReturn()
         val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
         val seqSetVersion =
@@ -214,7 +214,7 @@ class CitationEndpointsTest(
             CrossRefCitedByResult(listOf(seqSetCitationSource), emptyList())
         seqSetCrossRefCitationsTask.task()
 
-        client.getSequenceCitedByPublication(accession = MOCK_SEQ_ACCESSION, version = MOCK_SEQ_VERSION)
+        client.getSequenceCitations(accession = MOCK_SEQ_ACCESSION, version = MOCK_SEQ_VERSION)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$").isArray)

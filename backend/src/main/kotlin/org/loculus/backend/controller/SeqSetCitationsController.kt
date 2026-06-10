@@ -112,11 +112,11 @@ class SeqSetCitationsController(
         seqSetCitationsService.getSeqSetCitations(seqSetId, version)
 
     @Operation(description = "Get sequence citations from publications")
-    @GetMapping("/get-sequence-cited-by-publication")
-    fun getSequenceCitedByPublication(
+    @GetMapping("/get-sequence-citations")
+    fun getSequenceCitations(
         @RequestParam accession: String,
         @RequestParam version: Long,
-    ): List<SequenceCitation> = seqSetCitationsService.getSequenceCitedByPublication(accession, version)
+    ): List<SequenceCitation> = seqSetCitationsService.getSequenceCitations(accession, version)
 
     @Operation(description = "Get an author")
     @GetMapping("/get-author")
