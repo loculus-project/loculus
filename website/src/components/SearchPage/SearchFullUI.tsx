@@ -257,7 +257,6 @@ export const InnerSearchFullUI = ({
                 referenceGenomesInfo={referenceGenomesInfo}
             />
             <SeqPreviewModal
-                clientConfig={clientConfig}
                 key={previewedSeqId ?? 'seq-modal'}
                 seqId={previewedSeqId ?? ''}
                 accessToken={accessToken}
