@@ -118,13 +118,19 @@ VERSION_OVERRIDE_KEYS = frozenset({"accessionVersion", "version", "versionStatus
 
 VALID_INCLUDES = frozenset({"revoked", "older-versions", "all"})
 
+_organism_schema: dict = (
+    {"type": "string", "enum": ORGANISMS}
+    if ORGANISMS
+    else {"type": "string", "example": "cchf"}
+)
+
 _COMMON_CONTROL_PARAMS: list[dict] = [
     {
         "name": "organism",
         "in": "query",
         "required": True,
         "description": "Organism identifier (e.g. `cchf`, `mpox`).",
-        "schema": {"type": "string", "example": "cchf"},
+        "schema": _organism_schema,
     },
     {
         "name": "fields",
@@ -257,28 +263,6 @@ app = FastAPI(
     ),
 )
 
-
-if ORGANISMS:
-    _orig_openapi = app.openapi
-
-    def _patched_openapi() -> dict:
-        if app.openapi_schema:
-            return app.openapi_schema
-        schema = _orig_openapi()
-        for path_item in schema.get("paths", {}).values():
-            for op in path_item.values():
-                if not isinstance(op, dict):
-                    continue
-                for param in op.get("parameters", []):
-                    if param.get("name") == "organism":
-                        param["schema"] = {
-                            "type": "string",
-                            "enum": ORGANISMS,
-                        }
-        app.openapi_schema = schema
-        return schema
-
-    app.openapi = _patched_openapi  # type: ignore[method-assign]
 
 
 @app.on_event("startup")
