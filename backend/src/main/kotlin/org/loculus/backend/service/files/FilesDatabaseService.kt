@@ -70,13 +70,13 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
     fun getOrphanedFileIds(threshold: LocalDateTime): Set<FileId> {
         val sql = """           
             -- check for files for which an upload was requested > threshold days ago
-            -- but are not referenced by a submission. For this, check the unprocessed_data
-            -- and processed_data jsonb objects, but not original_data
+            -- but are not referenced by a submission. For this, check the submitted_data
+            -- and processed_data jsonb objects, but not archive_of_submitted_data
             WITH referenced AS (
               -- fetch ids for files uploaded by users and referenced in submissions
               SELECT (fil->>'fileId')::uuid AS file_id              
               FROM sequence_entries,
-                 LATERAL jsonb_each(COALESCE(NULLIF(unprocessed_data->'files', 'null'::jsonb),'{}'::jsonb)) AS cat(k,v),
+                 LATERAL jsonb_each(COALESCE(NULLIF(submitted_data->'files', 'null'::jsonb),'{}'::jsonb)) AS cat(k,v),
                  LATERAL jsonb_array_elements(cat.v) AS fil
               UNION
               -- fetch ids for files produced by preprocessing.

@@ -8,7 +8,7 @@ import org.jetbrains.exposed.sql.update
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.OriginalData
+import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
@@ -63,7 +63,7 @@ class GetOrphanedFileIdsTest(
     }
 
     @Test
-    fun `GIVEN a file only referenced in original_data THEN it is orphaned, but unprocessed_data is protected`() {
+    fun `GIVEN a file only referenced in archive_of_submitted_data THEN it is orphaned, but submitted_data is protected`() {
         // Simulate a case where a user edited a submission, replacing `editedAway` with `currentFile`.
         val editedAway = UUID.randomUUID()
         val currentFile = UUID.randomUUID()
@@ -71,8 +71,8 @@ class GetOrphanedFileIdsTest(
         insertSequenceEntry(
             accession = "A",
             version = 2,
-            original = makeUnprocessedData(editedAway),
-            unprocessed = makeUnprocessedData(currentFile),
+            archive = makeUnprocessedData(editedAway),
+            submitted = makeUnprocessedData(currentFile),
         )
 
         val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
@@ -97,7 +97,7 @@ class GetOrphanedFileIdsTest(
             .forEach { insertFile(it, groupId, daysAgo(10)) }
 
         // The sequence entry itself references no files, so only the processed_data references matter.
-        insertSequenceEntry(accession = "A", version = 1, original = null, unprocessed = makeUnprocessedData(null))
+        insertSequenceEntry(accession = "A", version = 1, archive = null, submitted = makeUnprocessedData(null))
         insertPreprocessedData(
             accession = "A",
             version = 1,
@@ -124,17 +124,15 @@ class GetOrphanedFileIdsTest(
 
     @Test
     fun `GIVEN a file referenced only by old version THEN it is still protected`() {
-        // Branch 1 of the query has no version filter: a file referenced by ANY version's
-        // unprocessed_data must survive, even if that version is no longer the latest.
         val fileInOldVersion = UUID.randomUUID()
         insertFile(fileInOldVersion, groupId, daysAgo(10))
         insertSequenceEntry(
             accession = "A",
             version = 1,
-            original = null,
-            unprocessed = makeUnprocessedData(fileInOldVersion),
+            archive = null,
+            submitted = makeUnprocessedData(fileInOldVersion),
         )
-        insertSequenceEntry(accession = "A", version = 2, original = null, unprocessed = makeUnprocessedData(null))
+        insertSequenceEntry(accession = "A", version = 2, archive = null, submitted = makeUnprocessedData(null))
 
         val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
 
@@ -144,8 +142,8 @@ class GetOrphanedFileIdsTest(
     private fun insertSequenceEntry(
         accession: String,
         version: Long,
-        original: OriginalData<CompressedSequence>?,
-        unprocessed: OriginalData<CompressedSequence>?,
+        archive: SubmittedData<CompressedSequence>?,
+        submitted: SubmittedData<CompressedSequence>?,
     ) = transaction {
         SequenceEntriesTable.insert {
             it[accessionColumn] = accession
@@ -155,8 +153,8 @@ class GetOrphanedFileIdsTest(
             it[submitterColumn] = "testuser"
             it[groupIdColumn] = groupId
             it[submittedAtTimestampColumn] = dateProvider.getCurrentDateTime()
-            it[originalDataColumn] = original
-            it[unprocessedDataColumn] = unprocessed
+            it[archiveOfSubmittedDataColumn] = archive
+            it[submittedDataColumn] = submitted
         }
     }
 
@@ -176,7 +174,7 @@ class GetOrphanedFileIdsTest(
         }
     }
 
-    private fun makeUnprocessedData(fileId: UUID?): OriginalData<CompressedSequence> = OriginalData(
+    private fun makeUnprocessedData(fileId: UUID?): SubmittedData<CompressedSequence> = SubmittedData(
         metadata = emptyMap(),
         unalignedNucleotideSequences = emptyMap(),
         files = fileId?.let { mapOf("rawReads" to listOf(FileIdAndName(it, "raw.fastq"))) },
