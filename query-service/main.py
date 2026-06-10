@@ -423,50 +423,56 @@ async def organisms() -> dict[str, Any]:
     return ORGANISM_CONFIG
 
 
-@app.get("/openapi.json", include_in_schema=False)
-async def openapi_spec(organism: str = "") -> JSONResponse:
-    """Serve the OpenAPI spec, optionally filtered to a single organism's segments/references."""
+def _build_organism_spec(organism: str) -> dict[str, Any]:
+    """Return the OpenAPI spec filtered to a single organism's segments/references."""
     spec = copy.deepcopy(app.openapi())
 
-    if organism and organism in ORGANISM_CONFIG:
-        cfg = ORGANISM_CONFIG[organism]
-        segs = cfg.get("segments", [])
-        multi_segment = len(segs) > 1
-        has_multi_ref = any(len(s.get("references", [])) > 1 for s in segs)
+    if not (organism and organism in ORGANISM_CONFIG):
+        return spec
 
-        seg_enum = [s["name"] for s in segs] if multi_segment else []
-        ref_enum = sorted({
-            ref
-            for s in segs
-            for ref in s.get("references", [])
-            if len(s.get("references", [])) > 1
-        })
+    cfg = ORGANISM_CONFIG[organism]
+    segs = cfg.get("segments", [])
+    multi_segment = len(segs) > 1
+    has_multi_ref = any(len(s.get("references", [])) > 1 for s in segs)
 
-        sequence_paths = {"/v1/alignedSequences", "/v1/unalignedSequences"}
-        for path, path_item in spec.get("paths", {}).items():
-            if path not in sequence_paths:
+    seg_enum = [s["name"] for s in segs] if multi_segment else []
+    ref_enum = sorted({
+        ref
+        for s in segs
+        for ref in s.get("references", [])
+        if len(s.get("references", [])) > 1
+    })
+
+    sequence_paths = {"/v1/alignedSequences", "/v1/unalignedSequences"}
+    for path, path_item in spec.get("paths", {}).items():
+        if path not in sequence_paths:
+            continue
+        for method_item in path_item.values():
+            if not isinstance(method_item, dict):
                 continue
-            for method_item in path_item.values():
-                if not isinstance(method_item, dict):
-                    continue
-                new_params = []
-                for p in method_item.get("parameters", []):
-                    name = p.get("name")
-                    if name == "segment":
-                        if multi_segment:
-                            p = {**p, "schema": {"type": "string", "enum": seg_enum}}
-                            new_params.append(p)
-                        # omit segment param when organism is single-segment
-                    elif name == "reference":
-                        if has_multi_ref:
-                            p = {**p, "schema": {"type": "string", "enum": ref_enum}}
-                            new_params.append(p)
-                        # omit reference param when no segment has multiple references
-                    else:
+            new_params = []
+            for p in method_item.get("parameters", []):
+                name = p.get("name")
+                if name == "segment":
+                    if multi_segment:
+                        p = {**p, "schema": {"type": "string", "enum": seg_enum}}
                         new_params.append(p)
-                method_item["parameters"] = new_params
+                    # omit when single-segment organism
+                elif name == "reference":
+                    if has_multi_ref:
+                        p = {**p, "schema": {"type": "string", "enum": ref_enum}}
+                        new_params.append(p)
+                    # omit when no segment has multiple references
+                else:
+                    new_params.append(p)
+            method_item["parameters"] = new_params
 
-    return JSONResponse(spec)
+    return spec
+
+
+@app.get("/openapi.json", include_in_schema=False)
+async def openapi_spec(organism: str = "") -> JSONResponse:
+    return JSONResponse(_build_organism_spec(organism))
 
 
 _SWAGGER_HTML = """<!DOCTYPE html>
@@ -487,58 +493,40 @@ _SWAGGER_HTML = """<!DOCTYPE html>
       padding: 4px 8px; font-size: 14px; border-radius: 4px;
       border: 1px solid #555; background: #2d2d2d; color: #fff; cursor: pointer;
     }}
-    .org-bar .loading {{ color: #aaa; font-size: 13px; display: none; }}
   </style>
 </head>
 <body>
 <div class="org-bar">
   <label for="org-select">Filter by organism:</label>
-  <select id="org-select">
+  <select id="org-select" onchange="window.location.href='/docs'+(this.value?'?organism='+encodeURIComponent(this.value):'')">
     <option value="">All organisms</option>
     {organism_options}
   </select>
-  <span class="loading" id="loading-indicator">Loading…</span>
 </div>
 <div id="swagger-ui"></div>
 <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
 <script>
-  var orgSelect = document.getElementById('org-select');
-  var loadingIndicator = document.getElementById('loading-indicator');
-
-  async function load(organism) {{
-    var url = '/openapi.json' + (organism ? '?organism=' + encodeURIComponent(organism) : '');
-    loadingIndicator.style.display = 'inline';
-    try {{
-      var r = await fetch(url, {{ cache: 'no-store' }});
-      var spec = await r.json();
-      document.getElementById('swagger-ui').innerHTML = '';
-      SwaggerUIBundle({{
-        spec: spec,
-        dom_id: '#swagger-ui',
-        presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
-        layout: 'BaseLayout',
-      }});
-    }} catch (e) {{
-      document.getElementById('swagger-ui').innerHTML =
-        '<p style="padding:20px;color:red;font-family:sans-serif">Failed to load API spec: ' + e + '</p>';
-    }} finally {{
-      loadingIndicator.style.display = 'none';
-    }}
-  }}
-
-  orgSelect.addEventListener('change', function() {{ load(this.value); }});
-  load('');
+  SwaggerUIBundle({{
+    spec: {spec_json},
+    dom_id: '#swagger-ui',
+    presets: [SwaggerUIBundle.presets.apis],
+    layout: 'BaseLayout',
+  }});
 </script>
 </body>
 </html>"""
 
 
 @app.get("/docs", include_in_schema=False)
-async def swagger_ui() -> HTMLResponse:
+async def swagger_ui(organism: str = "") -> HTMLResponse:
+    spec = _build_organism_spec(organism)
+    # Escape </script> sequences that would break HTML parsing
+    spec_json = json.dumps(spec).replace("</", "<\\/")
     options = "\n    ".join(
-        f'<option value="{o}">{o}</option>' for o in ORGANISMS
+        f'<option value="{o}"{" selected" if o == organism else ""}>{o}</option>'
+        for o in ORGANISMS
     )
-    return HTMLResponse(_SWAGGER_HTML.format(organism_options=options))
+    return HTMLResponse(_SWAGGER_HTML.format(organism_options=options, spec_json=spec_json))
 
 
 # ---------------------------------------------------------------------------
