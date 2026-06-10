@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import kotlin.math.max
 
 private val log = mu.KotlinLogging.logger {}
 
@@ -33,11 +34,16 @@ class S3GarbageCollectionTask(
      */
     @Scheduled(initialDelay = 90, fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
     fun task() {
-        log.info { "Running S3 garbage collection" }
+        log.info { "Running S3 garbage collection task" }
+
+        // `maxOrphanAge` must be at least 1 or files produced by preprocessing will be
+        // garbage collected mid-run before they're attached to sequence entries
+        val maxOrphanAge = max(maxOrphanAge, 1)
         val threshold = dateProvider.getCurrentInstant()
             .minus(maxOrphanAge, DateTimeUnit.DAY, DateProvider.timeZone)
             .toLocalDateTime(DateProvider.timeZone)
         val orphans = filesDatabaseService.getOrphanedFileIds(threshold)
+
         var deleteFailures = 0
         orphans.forEach { fileId: UUID ->
             try {
@@ -51,21 +57,23 @@ class S3GarbageCollectionTask(
 
         if (orphans.isNotEmpty()) {
             log.info {
-                "Deleted ${orphans.size - deleteFailures} orphans that were not referenced by a submission after " +
-                    "$maxOrphanAge days"
+                "S3 garbage collection task deleted ${orphans.size - deleteFailures} orphan(s) not referenced by a " +
+                    "submission after $maxOrphanAge days"
             }
             auditLogger
                 .log(
                     "CLEANUP",
-                    "Deleted ${orphans.size - deleteFailures} orphans that were not referenced by a " +
-                        "submission after $maxOrphanAge days",
+                    "S3 garbage collection task deleted ${orphans.size - deleteFailures} orphan(s) " +
+                        "not referenced by a submission after $maxOrphanAge days",
                 )
 
             if (deleteFailures > 0) {
                 log.warn {
-                    "Unsuccessfully attempted to delete $deleteFailures orphan files"
+                    "S3 garbage collection task unsuccessfully attempted to delete $deleteFailures orphan file(s)"
                 }
             }
+        } else {
+            log.info { "S3 garbage collection task identified no orphan files on S3" }
         }
     }
 }
