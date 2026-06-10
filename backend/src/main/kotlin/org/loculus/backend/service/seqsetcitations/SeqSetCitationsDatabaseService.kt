@@ -557,20 +557,7 @@ class SeqSetCitationsDatabaseService(
         }
         val accessionsWithVersions = mutableListOf<AccessionVersion>()
         for (record in seqSetRecords.filter { it.accession.contains('.') }) {
-            val parts = record.accession.split('.')
-            if (parts.size != 2) {
-                throw UnprocessableEntityException(
-                    "Invalid accession format '${record.accession}': expected format 'ACCESSION.VERSION'",
-                )
-            }
-            val versionString = parts[1]
-            val version = versionString.toLongOrNull()
-            if (version == null) {
-                throw UnprocessableEntityException(
-                    "Invalid version in accession '${record.accession}': '$versionString' is not a valid integer",
-                )
-            }
-            accessionsWithVersions.add(AccessionVersion(parts[0], version))
+            accessionsWithVersions.add(AccessionVersion.fromString(record.accession))
         }
 
         for (chunk in accessionsWithVersions.chunked(1000)) {

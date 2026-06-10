@@ -18,21 +18,21 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
 
 @EndpointTest
-class OriginalDataRevisionWorkflowTest(
+class SubmittedDataRevisionWorkflowTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
 ) {
 
     @Test
-    fun `GIVEN released sequences WHEN downloading and modifying original data THEN can submit revision`() {
+    fun `GIVEN released sequences WHEN downloading and modifying submitted data THEN can submit revision`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
         val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(groupId = groupId)
 
         assertThat(accessionVersions, hasSize(greaterThan(0)))
         val firstAccession = accessionVersions[0].accession
 
-        val response = submissionControllerClient.getOriginalData(groupId = groupId)
+        val response = submissionControllerClient.getSubmittedData(groupId = groupId)
             .andExpect(status().isOk)
             .andExpect(content().contentType("application/zip"))
             .andReturn()
@@ -41,7 +41,7 @@ class OriginalDataRevisionWorkflowTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, sequencesFasta) = extractOriginalDataZipContents(zipContent)
+        val (metadataTsv, sequencesFasta) = extractSubmittedDataZipContents(zipContent)
 
         val metadataLines = metadataTsv.lines().filter { it.isNotBlank() }
         val headers = metadataLines[0].split("\t")
@@ -103,7 +103,7 @@ class OriginalDataRevisionWorkflowTest(
 
         val selectedAccession = accessionVersions[0].accession
 
-        val response = submissionControllerClient.getOriginalData(
+        val response = submissionControllerClient.getSubmittedData(
             groupId = groupId,
             accessionsFilter = listOf(selectedAccession),
         )
@@ -114,7 +114,7 @@ class OriginalDataRevisionWorkflowTest(
         await().until { response.isCommitted }
 
         val zipContent = response.contentAsByteArray
-        val (metadataTsv, sequencesFasta) = extractOriginalDataZipContents(zipContent)
+        val (metadataTsv, sequencesFasta) = extractSubmittedDataZipContents(zipContent)
 
         val metadataLines = metadataTsv.lines().filter { it.isNotBlank() }
         assertThat(metadataLines.size, `is`(2))

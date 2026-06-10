@@ -87,7 +87,7 @@ state, if the pipeline submits invalid data or if the name of external metadata 
 """
 
 const val GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION = """
-Get original data for a single accession version for subsequent editing and edit/revision.
+Get originally submitted data for a single accession version for subsequent editing and edit/revision.
 """
 
 const val GET_SEQUENCES_DESCRIPTION = """

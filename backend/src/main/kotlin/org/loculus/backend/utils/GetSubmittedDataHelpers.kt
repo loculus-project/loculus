@@ -1,6 +1,6 @@
 package org.loculus.backend.utils
 
-import org.loculus.backend.api.UnprocessedDataDownloadEntry
+import org.loculus.backend.api.SubmittedDataDownloadEntry
 import org.loculus.backend.model.ACCESSION_HEADER
 import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR
@@ -20,10 +20,10 @@ data class UniqueFastaIdsForEntry(val uniqueFastaIdByOriginalFastaId: Map<FastaI
     fun getUniqueFastaId(originalFastaId: FastaId): FastaId = uniqueFastaIdByOriginalFastaId.getValue(originalFastaId)
 }
 
-object GetOriginalDataHelpers {
+object GetSubmittedDataHelpers {
 
     fun uniqueFastaIdsByEntry(
-        data: List<UnprocessedDataDownloadEntry>,
+        data: List<SubmittedDataDownloadEntry>,
         isMultiSegmented: Boolean,
     ): List<UniqueFastaIdsForEntry> {
         if (!isMultiSegmented) {
@@ -31,7 +31,7 @@ object GetOriginalDataHelpers {
         }
 
         val originalFastaIds = data.flatMapIndexed { entryIndex, entry ->
-            entry.unprocessedData.unalignedNucleotideSequences.keys.map { entryIndex to it }
+            entry.submittedData.unalignedNucleotideSequences.keys.map { entryIndex to it }
         }
         val fastaIdsByEntryIndex = originalFastaIds
             .zip(makeUniqueIds(originalFastaIds.map { it.second }))
@@ -42,13 +42,13 @@ object GetOriginalDataHelpers {
     }
 
     fun writeMetadataTsv(
-        data: List<UnprocessedDataDownloadEntry>,
+        data: List<SubmittedDataDownloadEntry>,
         metadataIds: List<String>,
         fastaIdsByEntry: List<UniqueFastaIdsForEntry>,
         outputStream: java.io.OutputStream,
         isMultiSegmented: Boolean,
     ) {
-        val metadataKeys = data.flatMapTo(mutableSetOf()) { it.unprocessedData.metadata.keys }.sorted()
+        val metadataKeys = data.flatMapTo(mutableSetOf()) { it.submittedData.metadata.keys }.sorted()
         val headers = if (isMultiSegmented) {
             listOf(METADATA_ID_HEADER, ACCESSION_HEADER, FASTA_IDS_HEADER) + metadataKeys
         } else {
@@ -57,7 +57,7 @@ object GetOriginalDataHelpers {
 
         TsvWriter(outputStream, headers).use { writer ->
             for ((index, entry) in data.withIndex()) {
-                val metadataValues = metadataKeys.map { entry.unprocessedData.metadata[it] ?: "" }
+                val metadataValues = metadataKeys.map { entry.submittedData.metadata[it] ?: "" }
                 val row = if (isMultiSegmented) {
                     val fastaIds = fastaIdsByEntry[index].joinedUniqueFastaIds(FASTA_IDS_SEPARATOR)
                     listOf(metadataIds[index], entry.accession, fastaIds) + metadataValues
@@ -70,7 +70,7 @@ object GetOriginalDataHelpers {
     }
 
     fun writeSequencesFasta(
-        data: List<UnprocessedDataDownloadEntry>,
+        data: List<SubmittedDataDownloadEntry>,
         metadataIds: List<String>,
         fastaIdsByEntry: List<UniqueFastaIdsForEntry>,
         outputStream: java.io.OutputStream,
@@ -78,7 +78,7 @@ object GetOriginalDataHelpers {
     ) {
         FastaWriter(outputStream).use { writer ->
             for ((index, entry) in data.withIndex()) {
-                for ((originalFastaId, sequence) in entry.unprocessedData.unalignedNucleotideSequences) {
+                for ((originalFastaId, sequence) in entry.submittedData.unalignedNucleotideSequences) {
                     if (sequence != null) {
                         val header = if (isMultiSegmented) {
                             fastaIdsByEntry[index].getUniqueFastaId(originalFastaId)

@@ -106,7 +106,15 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output,
 
     if mode == "get-submitted":
         logger.info("Getting submitted sequences")
-        get_submitted(config, output)
+        if config.segmented:
+            insdc_key = [
+                "insdcAccessionBase" + "_" + segment for segment in config.nucleotide_sequences
+            ]
+        else:
+            insdc_key = ["insdcAccessionBase"]
+
+        fields = ["hash", *insdc_key]
+        get_submitted(config, output, fields)
 
 
 if __name__ == "__main__":
