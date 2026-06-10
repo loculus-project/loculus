@@ -487,6 +487,7 @@ _SWAGGER_HTML = """<!DOCTYPE html>
       padding: 4px 8px; font-size: 14px; border-radius: 4px;
       border: 1px solid #555; background: #2d2d2d; color: #fff; cursor: pointer;
     }}
+    .org-bar .loading {{ color: #aaa; font-size: 13px; display: none; }}
   </style>
 </head>
 <body>
@@ -496,25 +497,36 @@ _SWAGGER_HTML = """<!DOCTYPE html>
     <option value="">All organisms</option>
     {organism_options}
   </select>
+  <span class="loading" id="loading-indicator">Loading…</span>
 </div>
 <div id="swagger-ui"></div>
 <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
 <script>
-  function load(organism) {{
+  var orgSelect = document.getElementById('org-select');
+  var loadingIndicator = document.getElementById('loading-indicator');
+
+  async function load(organism) {{
     var url = '/openapi.json' + (organism ? '?organism=' + encodeURIComponent(organism) : '');
-    document.getElementById('swagger-ui').innerHTML = '';
-    SwaggerUIBundle({{
-      url: url,
-      dom_id: '#swagger-ui',
-      presets: [SwaggerUIBundle.presets.apis],
-      layout: 'BaseLayout',
-      deepLinking: true,
-      persistAuthorization: true,
-    }});
+    loadingIndicator.style.display = 'inline';
+    try {{
+      var r = await fetch(url, {{ cache: 'no-store' }});
+      var spec = await r.json();
+      document.getElementById('swagger-ui').innerHTML = '';
+      SwaggerUIBundle({{
+        spec: spec,
+        dom_id: '#swagger-ui',
+        presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+        layout: 'BaseLayout',
+      }});
+    }} catch (e) {{
+      document.getElementById('swagger-ui').innerHTML =
+        '<p style="padding:20px;color:red;font-family:sans-serif">Failed to load API spec: ' + e + '</p>';
+    }} finally {{
+      loadingIndicator.style.display = 'none';
+    }}
   }}
-  document.getElementById('org-select').addEventListener('change', function() {{
-    load(this.value);
-  }});
+
+  orgSelect.addEventListener('change', function() {{ load(this.value); }});
   load('');
 </script>
 </body>
