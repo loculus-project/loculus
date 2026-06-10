@@ -34,8 +34,8 @@ const CitationRow: FC<CitationRowProps> = ({ citation }) => {
                             .join(', ')}
                     </div>
                     {'seqSets' in citation && citation.seqSets.length > 0 && (
-                        <span>
-                            Via SeqSet{citation.seqSets.length > 1 ? 's' : ''}:
+                        <span className='text-sm'>
+                            From SeqSet{citation.seqSets.length > 1 ? 's' : ''}:
                             {citation.seqSets.map((seqSet) => (
                                 <span key={seqSet.seqSetAccession} className='mx-1'>
                                     <a className='text-primary-600' href={routes.seqSetPage(seqSet.seqSetAccession)}>
