@@ -163,16 +163,8 @@ _ALL_REFERENCE_NAMES: list[str] = sorted({
     if len(seg.get("references", [])) > 1 and ref != "singleReference"
 })
 
-_segment_schema: dict = (
-    {"type": "string", "enum": _ALL_SEGMENT_NAMES}
-    if _ALL_SEGMENT_NAMES
-    else {"type": "string"}
-)
-_reference_schema: dict = (
-    {"type": "string", "enum": _ALL_REFERENCE_NAMES}
-    if _ALL_REFERENCE_NAMES
-    else {"type": "string"}
-)
+_segment_schema: dict = {"type": "string"}
+_reference_schema: dict = {"type": "string"}
 
 _COMMON_CONTROL_PARAMS: list[dict] = [
     {
@@ -445,23 +437,23 @@ def _build_organism_spec(organism: str) -> dict[str, Any]:
 
     sequence_paths = {"/v1/alignedSequences", "/v1/unalignedSequences"}
     for path, path_item in spec.get("paths", {}).items():
-        if path not in sequence_paths:
-            continue
+        is_seq = path in sequence_paths
         for method_item in path_item.values():
             if not isinstance(method_item, dict):
                 continue
             new_params = []
             for p in method_item.get("parameters", []):
                 name = p.get("name")
-                if name == "segment":
+                if name == "organism":
+                    # Lock to the selected organism so every form is pre-filled.
+                    new_params.append({**p, "schema": {"type": "string", "enum": [organism]}})
+                elif is_seq and name == "segment":
                     if multi_segment:
-                        p = {**p, "schema": {"type": "string", "enum": seg_enum}}
-                        new_params.append(p)
-                    # omit when single-segment organism
-                elif name == "reference":
+                        new_params.append({**p, "schema": {"type": "string", "enum": seg_enum}})
+                    # omit for single-segment organisms
+                elif is_seq and name == "reference":
                     if has_multi_ref:
-                        p = {**p, "schema": {"type": "string", "enum": ref_enum}}
-                        new_params.append(p)
+                        new_params.append({**p, "schema": {"type": "string", "enum": ref_enum}})
                     # omit when no segment has multiple references
                 else:
                     new_params.append(p)
