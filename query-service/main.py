@@ -493,7 +493,7 @@ async def _handle(request: Request, lapis_path: str) -> Response:
 
 @app.get(
     "/v1/info",
-    tags=["Metadata"],
+    tags=["Metadata Schema"],
     summary="Metadata field definitions",
     description=(
         "Returns all metadata fields configured for the organism, with their LAPIS type. "
@@ -784,7 +784,7 @@ async def aa_sequences(protein_name: str, request: Request) -> Response:
 
 @app.get(
     "/v1/lineageDefinition",
-    tags=["Metadata"],
+    tags=["Metadata Schema"],
     summary="Lineage definition",
     description="Returns the lineage hierarchy definition for a given metadata column.",
     openapi_extra={
