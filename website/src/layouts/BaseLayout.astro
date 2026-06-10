@@ -21,6 +21,7 @@ const {
     additionalHeadHTML,
     gitHubMainUrl,
     readOnlyMode,
+    openGraph,
 } = websiteConfig;
 const remoteBannerMessage = await getRemoteBannerMessage();
 const readOnlyBannerMessage = readOnlyMode
@@ -30,18 +31,24 @@ const bannerMessage = remoteBannerMessage ?? configBannerMessage ?? readOnlyBann
 
 interface Props {
     title: string;
+    description?: string;
     implicitOrganism?: string;
     fullWidth?: boolean;
     withoutMargin?: boolean;
     activeTopNavigationItem?: string;
 }
 
-const { title, implicitOrganism, fullWidth, withoutMargin = false, activeTopNavigationItem } = Astro.props;
+const { title, description, implicitOrganism, fullWidth, withoutMargin = false, activeTopNavigationItem } = Astro.props;
 
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
 const implicitOrganismObject = implicitOrganism ? knownOrganisms.find((o) => o.key === implicitOrganism) : undefined;
 const currentOrganismObject = implicitOrganismObject || organism;
 const currentOrganism = currentOrganismObject?.key;
+
+const rawSocialCardImage = currentOrganismObject?.image ?? openGraph?.image;
+const socialCardImage = rawSocialCardImage ? new URL(rawSocialCardImage, Astro.url).toString() : undefined;
+const socialCardDescription = description ?? openGraph?.description;
+const twitterCard = openGraph?.twitterCard ?? (socialCardImage ? 'summary_large_image' : 'summary');
 
 const currentPath = Astro.url.pathname;
 
@@ -57,10 +64,17 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
         <link rel='preload' as='image' href='/favicon.svg' />
         <meta name='viewport' content='width=device-width' />
         <meta name='generator' content={Astro.generator} />
+        <meta property='og:type' content='website' />
         <meta property='og:url' content={Astro.url} />
         <meta property='og:title' content={websiteName + ' | ' + title} />
+        {socialCardDescription && <meta property='og:description' content={socialCardDescription} />}
+        {socialCardImage && <meta property='og:image' content={socialCardImage} />}
+        <meta name='twitter:card' content={twitterCard} />
         <meta property='twitter:url' content={Astro.url} />
         <meta property='twitter:title' content={websiteName + ' | ' + title} />
+        {socialCardDescription && <meta property='twitter:description' content={socialCardDescription} />}
+        {socialCardImage && <meta property='twitter:image' content={socialCardImage} />}
+        {socialCardDescription && <meta name='description' content={socialCardDescription} />}
         <title>{title} | {websiteName}</title>
         <Fragment set:html={additionalHeadHTML} />
     </head>

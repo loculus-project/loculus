@@ -1196,6 +1196,27 @@
       "type": "string",
       "description": "Additional HTML to inject into the <head> of pages"
     },
+    "openGraph": {
+      "groups": ["general"],
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Default Open Graph / social card metadata. Used when no per-organism image is configured (organism-specific images are taken from each organism's `schema.image`).",
+      "properties": {
+        "image": {
+          "type": "string",
+          "description": "Default Open Graph image. Relative paths are resolved against the page URL."
+        },
+        "description": {
+          "type": "string",
+          "description": "Default Open Graph / meta description for pages."
+        },
+        "twitterCard": {
+          "type": "string",
+          "enum": ["summary", "summary_large_image", "player", "app"],
+          "description": "Value for `<meta name=\"twitter:card\">`. When unset, defaults to `summary_large_image` if a card image is configured (per-organism or site-wide), otherwise `summary`."
+        }
+      }
+    },
     "createTestAccounts": {
       "groups": ["general"],
       "type": "boolean",
