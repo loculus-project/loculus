@@ -33,7 +33,7 @@ async function queryLapisDetails(
 ): Promise<Record<string, unknown>[]> {
     try {
         const response = await axios.post(
-            `${queryServiceUrl}/v1/details`,
+            `${queryServiceUrl}/v1/metadata`,
             {
                 ...filter,
                 fields,

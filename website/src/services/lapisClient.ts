@@ -275,7 +275,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         [key: string]: string | number | null | string[] | undefined;
         fields?: string[];
     }): Promise<Result<DetailsResponse, ProblemDetail>> {
-        return this.request('/v1/details', 'post', { ...request, dataFormat: 'json' }, detailsResponse);
+        return this.request('/v1/metadata', 'post', { ...request, dataFormat: 'json' }, detailsResponse);
     }
 
     private async request<T>(
@@ -301,7 +301,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
                 title: 'bad response',
                 status: 0,
                 detail: `Failed to parse query-service response: ${responseDataResult.error.toString()}`,
-                instance: '/v1/details',
+                instance: '/v1/metadata',
             });
         } catch (e) {
             const axiosError = e as AxiosError;

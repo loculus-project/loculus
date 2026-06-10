@@ -172,7 +172,7 @@ export class DownloadUrlGenerator {
         const segmentSuffix = (segment?: string) => (segment !== undefined ? `/${segment}` : '');
         switch (dataType.type) {
             case 'metadata':
-                return { path: '/v1/details', routingParams: {} };
+                return { path: '/v1/metadata', routingParams: {} };
             case 'unalignedNucleotideSequences':
                 return {
                     path: `/v1/unalignedSequences${segmentSuffix(dataType.segment)}`,

@@ -61,7 +61,7 @@ class LapisClient:
 
         try:
             response = self.client.get(
-                "/v1/details", params=self._params_with_organism(organism, params)
+                "/v1/metadata", params=self._params_with_organism(organism, params)
             )
             self._log_request(response)
             response.raise_for_status()

@@ -12,7 +12,7 @@ the API surface so we can:
 Routes (under /v1/):
 
     GET|POST  /v1/aggregated                    ?organism=
-    GET|POST  /v1/details                       ?organism=
+    GET|POST  /v1/metadata                       ?organism=
     GET|POST  /v1/mutations                     ?organism=
     GET|POST  /v1/aaMutations                   ?organism=
     GET|POST  /v1/insertions                    ?organism=
@@ -521,16 +521,16 @@ _DETAILS_DESC = (
 
 
 @app.get(
-    "/v1/details",
+    "/v1/metadata",
     tags=["Data queries"],
-    summary="Sequence metadata details",
+    summary="Sequence metadata",
     description=_DETAILS_DESC,
     openapi_extra={"parameters": _COMMON_CONTROL_PARAMS},
 )
 @app.post(
-    "/v1/details",
+    "/v1/metadata",
     tags=["Data queries"],
-    summary="Sequence metadata details",
+    summary="Sequence metadata",
     description=_DETAILS_DESC,
     openapi_extra={"requestBody": _POST_REQUEST_BODY},
 )

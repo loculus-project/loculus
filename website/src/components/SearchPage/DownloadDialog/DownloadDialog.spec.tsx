@@ -168,7 +168,7 @@ describe('DownloadDialog', () => {
         await checkAgreement();
 
         let { path, query } = parseDownloadHref();
-        expectRouteInPathMatches(path, `/v1/details`);
+        expectRouteInPathMatches(path, `/v1/metadata`);
         expect(query).toMatch(
             /organism=ebola&downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
@@ -197,7 +197,7 @@ describe('DownloadDialog', () => {
         await checkAgreement();
 
         let { path, query } = parseDownloadHref();
-        expectRouteInPathMatches(path, `/v1/details`);
+        expectRouteInPathMatches(path, `/v1/metadata`);
         expect(query).toMatch(
             /organism=ebola&downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
@@ -253,7 +253,7 @@ describe('DownloadDialog', () => {
         await checkAgreement();
 
         const { path } = parseDownloadHref();
-        expectRouteInPathMatches(path, `/v1/details`);
+        expectRouteInPathMatches(path, `/v1/metadata`);
 
         expect(screen.queryByLabelText(rawNucleotideSequencesLabel)).not.toBeInTheDocument();
         expect(screen.getByLabelText(gzipCompressionLabel)).toBeInTheDocument();
@@ -289,7 +289,7 @@ describe('DownloadDialog', () => {
         const copiedText = clipboardMock.mock.calls[0][0];
 
         const expectedPrefix =
-            'https://lapis/v1/details?organism=ebola&downloadAsFile=true&downloadFileBasename=ebola_metadata_';
+            'https://lapis/v1/metadata?organism=ebola&downloadAsFile=true&downloadFileBasename=ebola_metadata_';
         expectStringStartsWith(copiedText, expectedPrefix);
 
         const expectedSuffix = '&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype';
@@ -315,7 +315,7 @@ describe('DownloadDialog', () => {
         await checkAgreement();
 
         const { path, query } = parseDownloadHref();
-        expectRouteInPathMatches(path, `/v1/details`);
+        expectRouteInPathMatches(path, `/v1/metadata`);
         expect(query).toMatch(/field2=/);
         expect(query).not.toMatch(/field1=/);
     });

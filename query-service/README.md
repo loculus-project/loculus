@@ -7,7 +7,7 @@ talking to LAPIS directly.
 
 ```
 GET|POST  /v1/aggregated         ?organism=
-GET|POST  /v1/details            ?organism=
+GET|POST  /v1/metadata           ?organism=
 GET|POST  /v1/mutations          ?organism=                # nucleotide
 GET|POST  /v1/aaMutations        ?organism=                # amino acid
 GET|POST  /v1/insertions         ?organism=                # nucleotide
