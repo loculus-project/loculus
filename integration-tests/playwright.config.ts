@@ -88,7 +88,16 @@ const config = {
 
 const testSuite = process.env.TEST_SUITE || 'all';
 
-if (testSuite === 'cli') {
+if (process.env.RUN_SEED === 'true') {
+    // Dev-only data seeding: run nothing but the seed setup (see tests/seed.setup.ts).
+    config.projects = [
+        {
+            name: 'seed',
+            use: { ...devices['Desktop Chrome'] },
+            testMatch: /seed\.setup\.ts/,
+        },
+    ];
+} else if (testSuite === 'cli') {
     // Run only CLI tests
     config.projects = config.projects.filter((p) => p.name === 'cli-tests');
 } else if (browser) {

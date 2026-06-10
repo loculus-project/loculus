@@ -1,0 +1,77 @@
+{{- if .Values.seedTestData.enabled }}
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- $websiteUrl := include "loculus.websiteUrl" . }}
+{{- $backendUrl := include "loculus.backendUrl" . }}
+{{- $keycloakUrl := include "loculus.keycloakUrl" . }}
+{{/*
+Dev-only test-data seeder. Runs the integration-tests Playwright "seed" project
+against the deployment to submit dummy-organism sequences, build a SeqSet and add
+a curated citation. Gated behind seedTestData.enabled (off by default; on in
+values_e2e_and_dev.yaml and values_preview_server.yaml). Implemented as a Helm
+post-install/post-upgrade hook so it re-runs on each deploy and is recreated
+cleanly; Argo CD honours these hooks too.
+
+It drives the real login flow, so it must use the public website/backend/keycloak
+URLs (the OIDC redirect goes to the public Keycloak host) rather than in-cluster
+service DNS.
+*/}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: loculus-seed-test-data
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  activeDeadlineSeconds: 1800
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: loculus-seed-test-data
+    spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      restartPolicy: Never
+      initContainers:
+        # Wait until the website, backend and keycloak realm are ready before seeding.
+        - name: wait-for-services
+          image: curlimages/curl:8.11.1
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              echo "Waiting for website $WEBSITE_URL ..."
+              until curl -sk --max-time 5 "$WEBSITE_URL" >/dev/null; do sleep 5; done
+              echo "Waiting for backend $BACKEND_URL/actuator/health ..."
+              until curl -sk --max-time 5 "$BACKEND_URL/actuator/health" >/dev/null; do sleep 5; done
+              echo "Waiting for keycloak realm $KEYCLOAK_URL/realms/loculus ..."
+              until curl -fsk --max-time 5 "$KEYCLOAK_URL/realms/loculus" >/dev/null; do sleep 5; done
+              echo "All services reachable"
+          env:
+            - name: WEBSITE_URL
+              value: {{ $websiteUrl | quote }}
+            - name: BACKEND_URL
+              value: {{ $backendUrl | quote }}
+            - name: KEYCLOAK_URL
+              value: {{ $keycloakUrl | quote }}
+      containers:
+        - name: seed
+          image: "{{ $.Values.images.integrationTests.repository }}:{{ $.Values.images.integrationTests.tag | default $dockerTag }}"
+          imagePullPolicy: "{{ $.Values.images.integrationTests.pullPolicy | default $.Values.imagePullPolicy }}"
+          command: ["npm", "run", "seed"]
+          env:
+            - name: PLAYWRIGHT_TEST_BASE_URL
+              value: {{ $websiteUrl | quote }}
+            - name: PLAYWRIGHT_TEST_BACKEND_URL
+              value: {{ $backendUrl | quote }}
+            - name: SEED_SUPER_USER
+              value: "{{ $.Values.seedTestData.superUser.username }}"
+            - name: SEED_SUPER_USER_PASSWORD
+              value: "{{ $.Values.seedTestData.superUser.password }}"
+            - name: CI
+              value: "true"
+{{- end }}

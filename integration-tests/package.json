@@ -5,7 +5,8 @@
     "scripts": {
         "format": "eslint --cache --fix && prettier --write \"**/*.{ts,js,mjs,json}\"",
         "format:check": "eslint --cache && prettier --check \"**/*.{ts,js,mjs,json}\"",
-        "test": "npx playwright test"
+        "test": "npx playwright test",
+        "seed": "RUN_SEED=true npx playwright test --project=seed --reporter=list"
     },
     "devDependencies": {
         "@eslint/js": "^9.39.2",

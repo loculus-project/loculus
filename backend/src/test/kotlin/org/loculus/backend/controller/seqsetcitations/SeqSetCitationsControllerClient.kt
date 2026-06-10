@@ -1,6 +1,7 @@
 package org.loculus.backend.controller.seqsetcitations
 
 import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.withAuth
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
@@ -111,6 +112,33 @@ class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
         post("/create-seqset-doi")
             .param("seqSetId", seqSetId)
             .param("version", seqSetVersion.toString())
+            .withAuth(jwt),
+    )
+
+    fun createCuratedCitation(
+        seqSetId: String = MOCK_SEQSET_ID,
+        seqSetVersion: Long = MOCK_SEQSET_VERSION,
+        sourceDOI: String = "10.5678/curated-paper",
+        title: String = "A curated citation",
+        year: Int = 2024,
+        givenName: String = "Jane",
+        surname: String = "Doe",
+        jwt: String? = jwtForSuperUser,
+    ): ResultActions = mockMvc.perform(
+        post("/create-curated-citation")
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(
+                """{
+                    "seqSetId": "$seqSetId",
+                    "seqSetVersion": $seqSetVersion,
+                    "source": {
+                        "sourceDOI": "$sourceDOI",
+                        "title": "$title",
+                        "year": $year,
+                        "contributors": [{ "givenName": "$givenName", "surname": "$surname" }]
+                    }
+                }""",
+            )
             .withAuth(jwt),
     )
 

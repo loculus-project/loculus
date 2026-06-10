@@ -32,9 +32,11 @@ import org.loculus.backend.api.SeqSetCitationSource
 import org.loculus.backend.api.SeqSetCitationsConstants
 import org.loculus.backend.api.SeqSetRecord
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
+import org.loculus.backend.api.SubmittedCuratedCitation
 import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.crossref.CrossRefService
@@ -425,6 +427,54 @@ class SeqSetCitationsDatabaseService(
 
         // Return upserted citation sources
         return CitationSourcesUpdateResult(matchedSources.mapTo(mutableSetOf()) { it.source.sourceDOI })
+    }
+
+    fun createCuratedCitation(
+        authenticatedUser: AuthenticatedUser,
+        citation: SubmittedCuratedCitation,
+    ): SeqSetCitation {
+        log.info {
+            "Create curated citation for seqSetId ${citation.seqSetId}, version ${citation.seqSetVersion}"
+        }
+
+        if (!authenticatedUser.isSuperUser) {
+            throw ForbiddenException("Only super users may add curated citations.")
+        }
+
+        SeqSetsTable
+            .select(SeqSetsTable.seqSetId, SeqSetsTable.seqSetVersion)
+            .where {
+                (SeqSetsTable.seqSetId eq citation.seqSetId) and
+                    (SeqSetsTable.seqSetVersion eq citation.seqSetVersion)
+            }
+            .singleOrNull()
+            ?: throw NotFoundException(
+                "SeqSet ${citation.seqSetId}, version ${citation.seqSetVersion} does not exist",
+            )
+
+        // Reuse an existing citation source with the same DOI (e.g. already discovered via CrossRef),
+        // otherwise create a new curated one.
+        val citationSourceId = SeqSetCitationSourceTable
+            .select(SeqSetCitationSourceTable.citationSourceId)
+            .where { SeqSetCitationSourceTable.sourceDOI eq citation.source.sourceDOI }
+            .singleOrNull()
+            ?.get(SeqSetCitationSourceTable.citationSourceId)
+            ?: SeqSetCitationSourceTable.insert {
+                it[sourceDOI] = citation.source.sourceDOI
+                it[origin] = CitationOrigin.CURATED
+                it[title] = citation.source.title
+                it[year] = citation.source.year
+                it[contributors] = citation.source.contributors
+            }[SeqSetCitationSourceTable.citationSourceId]
+
+        // Link to the SeqSet version, ignoring if the link already exists.
+        SeqSetToCitationSourceTable.batchInsert(listOf(citationSourceId), ignore = true) {
+            this[SeqSetToCitationSourceTable.citationSourceId] = it
+            this[SeqSetToCitationSourceTable.seqSetId] = citation.seqSetId
+            this[SeqSetToCitationSourceTable.seqSetVersion] = citation.seqSetVersion
+        }
+
+        return SeqSetCitation(citation.source)
     }
 
     fun getUserCitedBySeqSet(accessionVersions: List<AccessionVersion>): CitedBy {
