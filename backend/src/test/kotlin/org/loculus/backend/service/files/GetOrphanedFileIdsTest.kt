@@ -8,8 +8,8 @@ import org.jetbrains.exposed.sql.update
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -62,6 +62,7 @@ class GetOrphanedFileIdsTest(
         assertThat(orphans, `is`(setOf(old)))
     }
 
+    @Suppress("ktlint:standard:max-line-length")
     @Test
     fun `GIVEN a file only referenced in archive_of_submitted_data THEN it is orphaned, but submitted_data is protected`() {
         // Simulate a case where a user edited a submission, replacing `editedAway` with `currentFile`.
