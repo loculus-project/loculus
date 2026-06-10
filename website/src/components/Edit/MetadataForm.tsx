@@ -35,7 +35,7 @@ export class EditableMetadata {
 
     static fromInitialData(initialData: SequenceEntryToEdit): EditableMetadata {
         return new EditableMetadata(
-            Object.entries(initialData.originalData.metadata).map(([key, value]) => ({
+            Object.entries(initialData.submittedData.metadata).map(([key, value]) => ({
                 key,
                 value,
                 initialValue: value,

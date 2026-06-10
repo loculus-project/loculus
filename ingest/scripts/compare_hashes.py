@@ -97,7 +97,7 @@ def calculate_metadata_diff(
             f"version {previous_entry.latest_version} to calculate metadata diff"
         )
         return {}
-    previous_metadata = previous_metadata_list[0].get("unprocessedMetadata", {})
+    previous_metadata = previous_metadata_list[0].get("submittedMetadata", {})
 
     return {
         key: {
@@ -182,7 +182,7 @@ def get_loculus_accession_to_latest_version_map(
     "version":1,
     "submitter":"insdc_ingest_user",
     "isRevocation":false,
-    "unprocessedMetadata":
+    "submittedMetadata":
         {"hash":"6349c57c56efaca1fbfcabf4d377535b",
         "insdcAccessionBase_L":"",
         "insdcAccessionBase_M":"",
@@ -234,17 +234,17 @@ def construct_submitted_dict(
     # Create a map from INSDC accession to latest loculus accession
     insdc_to_loculus_accession_map: dict[InsdcAccession, LatestLoculusVersion] = {}
     for loculus_accession, entry in loculus_accession_to_latest_version_map.items():
-        unprocessed_metadata: dict[str, Any] = entry["unprocessedMetadata"]
-        hash_value = unprocessed_metadata.get("hash")
+        submitted_metadata: dict[str, Any] = entry["submittedMetadata"]
+        hash_value = submitted_metadata.get("hash")
 
         if config.segmented:
             insdc_accessions = [
-                unprocessed_metadata[key] for key in insdc_keys if unprocessed_metadata[key]
+                submitted_metadata[key] for key in insdc_keys if submitted_metadata[key]
             ]
-            joint_accession = get_joint_insdc_accession(unprocessed_metadata, insdc_keys, config)
+            joint_accession = get_joint_insdc_accession(submitted_metadata, insdc_keys, config)
         else:
-            insdc_accessions = [unprocessed_metadata.get("insdcAccessionBase", "")]
-            joint_accession = unprocessed_metadata.get("insdcAccessionBase", "")
+            insdc_accessions = [submitted_metadata.get("insdcAccessionBase", "")]
+            joint_accession = submitted_metadata.get("insdcAccessionBase", "")
 
         status = "REVOKED" if entry["isRevocation"] else entry["status"]
 
