@@ -25,6 +25,7 @@ metadata:
     loculus-ingest-runner: "true"
 spec:
   {{- include "possiblePriorityClassName" . | nindent 2 }}
+  {{- include "loculus.podScheduling" . | nindent 2 }}
   serviceAccountName: loculus-ingest-lock
   restartPolicy: Never
   initContainers:

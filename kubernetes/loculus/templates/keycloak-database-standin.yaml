@@ -23,6 +23,7 @@ spec:
         app: loculus
         component: keycloak-database
     spec:
+      {{- include "loculus.podScheduling" . | nindent 6 }}
       containers:
         - name: loculus-keycloak-database
           image: postgres:15.12

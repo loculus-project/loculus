@@ -22,6 +22,7 @@ spec:
         component: website
     spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
+      {{- include "loculus.podScheduling" . | nindent 6 }}
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
       containers:
