@@ -71,6 +71,7 @@ spec:
             - "--loculus.pipeline-version-upgrade-check.interval-seconds={{- .Values.pipelineVersionUpgradeCheckIntervalSeconds | default 10 }}"
             - "--loculus.s3.enabled=$(S3_ENABLED)"
             {{- if $.Values.s3.enabled }}
+            - "--loculus.s3.max-orphan-age-days=$(S3_MAX_ORPHAN_AGE_DAYS)"
             - "--loculus.s3.bucket.endpoint=$(S3_BUCKET_ENDPOINT)"
             - "--loculus.s3.bucket.internal-endpoint=$(S3_BUCKET_INTERNAL_ENDPOINT)"
             - "--loculus.s3.bucket.region=$(S3_BUCKET_REGION)"
@@ -131,6 +132,8 @@ spec:
             - name: S3_ENABLED
               value: {{$.Values.s3.enabled | quote }}
             {{- if $.Values.s3.enabled }}
+            - name: S3_MAX_ORPHAN_AGE_DAYS
+              value: {{$.Values.s3.maxOrphanAgeDays | quote }}
             - name: S3_BUCKET_ENDPOINT
               value: {{ include "loculus.s3Url" . | quote }}
             - name: S3_BUCKET_INTERNAL_ENDPOINT

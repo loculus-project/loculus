@@ -30,7 +30,7 @@ class S3GarbageCollectionTask(
 
     /**
      * Runs once daily (with an initial delay of 15 minutes) and deletes S3 objects older than
-     * `loculus.s3.orphan-file-max-age-days` that are not referenced in unprocessed_data or processed_data
+     * `loculus.s3.max-orphan-age-days` that are not referenced in unprocessed_data or processed_data
      */
     @Scheduled(initialDelay = 15, fixedDelay = 60 * 24, timeUnit = TimeUnit.MINUTES)
     fun task() {

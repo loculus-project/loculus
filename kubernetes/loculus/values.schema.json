@@ -1704,6 +1704,12 @@
           "default": false,
           "description": "Whether to enable S3. S3 is needed for the file sharing feature."
         },
+        "maxOrphanAgeDays": {
+          "groups": ["s3"],
+          "type": "integer",
+          "default": 7,
+          "description": "Files uploaded to S3 but never attached to a sequence entry are garbage-collected after this many days."
+        },
         "bucket": {
           "type": "object",
           "properties": {

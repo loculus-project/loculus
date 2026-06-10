@@ -43,7 +43,7 @@ object BackendSpringProperty {
     const val ENABLE_SEQSETS = "loculus.enable-seqsets"
 
     const val S3_ENABLED = "loculus.s3.enabled"
-    const val S3_MAX_ORPHAN_AGE_DAYS = "loculus.s3.orphan-file-max-age-days"
+    const val S3_MAX_ORPHAN_AGE_DAYS = "loculus.s3.max-orphan-age-days"
     const val S3_BUCKET_ENDPOINT = "loculus.s3.bucket.endpoint"
     const val S3_BUCKET_INTERNAL_ENDPOINT = "loculus.s3.bucket.internal-endpoint"
     const val S3_BUCKET_BUCKET = "loculus.s3.bucket.bucket"
