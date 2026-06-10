@@ -520,7 +520,16 @@ async def _handle(request: Request, lapis_path: str) -> Response:
     },
 )
 async def info(request: Request) -> Response:
-    return await _handle(request, "/sample/databaseConfig")
+    organism = _validate_organism(request.query_params.get("organism"))
+    # Skip version-default injection — databaseConfig is a schema endpoint, not a data query.
+    return await _forward(
+        method="GET",
+        organism=organism,
+        lapis_path="/sample/databaseConfig",
+        request_headers=dict(request.headers),
+        forward_params={k: v for k, v in request.query_params.items() if k != "organism"},
+        forward_body=None,
+    )
 
 
 _AGGREGATED_DESC = (
