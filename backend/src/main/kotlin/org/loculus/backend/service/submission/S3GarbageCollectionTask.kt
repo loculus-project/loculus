@@ -34,11 +34,11 @@ class S3GarbageCollectionTask(
      */
     @Scheduled(initialDelay = 90, fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
     fun task() {
-        log.info { "Running S3 garbage collection task" }
-
         // `maxOrphanAge` must be at least 1 or files produced by preprocessing will be
-        // garbage collected mid-run before they're attached to sequence entries
+        // garbage collected before they're attached to sequence entries
         val maxOrphanAge = max(maxOrphanAge, 1)
+        log.info { "Running S3 garbage collection task to clean up orphan files at least $maxOrphanAge days old" }
+
         val threshold = dateProvider.getCurrentInstant()
             .minus(maxOrphanAge, DateTimeUnit.DAY, DateProvider.timeZone)
             .toLocalDateTime(DateProvider.timeZone)

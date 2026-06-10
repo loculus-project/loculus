@@ -27,7 +27,7 @@ import java.util.UUID
 @EndpointTest(
     properties = [
         "${BackendSpringProperty.S3_ENABLED}=true",
-        "${BackendSpringProperty.S3_MAX_ORPHAN_AGE_DAYS}=0",
+        "${BackendSpringProperty.S3_MAX_ORPHAN_AGE_DAYS}=1",
     ],
 )
 class S3GarbageCollectionTaskTest(
@@ -47,7 +47,7 @@ class S3GarbageCollectionTaskTest(
             .andGetGroupId()
         val orphan = UUID.randomUUID()
         val referenced = UUID.randomUUID()
-        listOf(orphan, referenced).forEach { insertFile(it, groupId, daysAgo(1)) }
+        listOf(orphan, referenced).forEach { insertFile(it, groupId, daysAgo(2)) }
 
         // `referenced` is referenced by a submission's unprocessed_data, so it must be protected.
         transaction {
