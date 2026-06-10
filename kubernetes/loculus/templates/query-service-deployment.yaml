@@ -33,6 +33,8 @@ spec:
               value: "http://loculus-lapis-service-{organism}:8080"
             - name: LOG_LEVEL
               value: "INFO"
+            - name: ORGANISMS
+              value: "{{- $first := true -}}{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms -}}{{- if $first -}}{{- $first = false -}}{{- else -}},{{ end -}}{{ $item.key }}{{- end -}}"
           startupProbe:
             httpGet:
               path: /healthz

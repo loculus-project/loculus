@@ -69,6 +69,13 @@ LAPIS_SERVICE_TEMPLATE = os.environ.get(
     "LAPIS_SERVICE_TEMPLATE", "http://loculus-lapis-service-{organism}:8080"
 )
 UPSTREAM_TIMEOUT_SECONDS = float(os.environ.get("UPSTREAM_TIMEOUT_SECONDS", "60"))
+# Comma-separated list of valid organism keys (e.g. "cchf,mpox").
+# When set, the Swagger UI renders a dropdown instead of a free-text field.
+ORGANISMS: list[str] = [
+    o.strip()
+    for o in os.environ.get("ORGANISMS", "").split(",")
+    if o.strip()
+]
 
 ORGANISM_RE = re.compile(r"^[a-z][a-z0-9-]*$")
 
@@ -249,6 +256,29 @@ app = FastAPI(
         "**metadata-column filter** and forwarded to LAPIS verbatim."
     ),
 )
+
+
+if ORGANISMS:
+    _orig_openapi = app.openapi
+
+    def _patched_openapi() -> dict:
+        if app.openapi_schema:
+            return app.openapi_schema
+        schema = _orig_openapi()
+        for path_item in schema.get("paths", {}).values():
+            for op in path_item.values():
+                if not isinstance(op, dict):
+                    continue
+                for param in op.get("parameters", []):
+                    if param.get("name") == "organism":
+                        param["schema"] = {
+                            "type": "string",
+                            "enum": ORGANISMS,
+                        }
+        app.openapi_schema = schema
+        return schema
+
+    app.openapi = _patched_openapi  # type: ignore[method-assign]
 
 
 @app.on_event("startup")
@@ -480,14 +510,17 @@ async def _handle(request: Request, lapis_path: str) -> Response:
 @app.get(
     "/v1/info",
     tags=["Metadata"],
-    summary="Database and schema info",
-    description="Returns LAPIS database/schema metadata (field names, value counts, etc.).",
+    summary="Metadata field definitions",
+    description=(
+        "Returns all metadata fields configured for the organism, with their LAPIS type. "
+        "Proxies to LAPIS `/sample/databaseConfig`."
+    ),
     openapi_extra={
         "parameters": [p for p in _COMMON_CONTROL_PARAMS if p["name"] in {"organism", "reference"}]
     },
 )
 async def info(request: Request) -> Response:
-    return await _handle(request, "/sample/info")
+    return await _handle(request, "/sample/databaseConfig")
 
 
 _AGGREGATED_DESC = (

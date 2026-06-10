@@ -87,18 +87,6 @@ const BUTTON_CLASS =
                 <span class='font-medium'>URL of the query service:</span>
                 <code>{clientConfig.queryServiceUrl}</code>
             </div>
-            <div class='mt-4'>
-                Pass <code>?organism=&lt;key&gt;</code> on every request. Available organism keys:
-                <ul class='list-disc ml-6'>
-                    {
-                        clientConfig.organisms.map((organism) => (
-                            <li>
-                                {organismToDisplayName[organism]}: <code>{organism}</code>
-                            </li>
-                        ))
-                    }
-                </ul>
-            </div>
         </div>
 
         <div>
