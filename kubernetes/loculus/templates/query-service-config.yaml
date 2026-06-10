@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-query-service-config
+data:
+  organisms.json: |
+    {{- $orgMap := dict -}}
+    {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms -}}
+      {{- $segments := list -}}
+      {{- range $seg := (index $item.contents "referenceGenomes" | default list) -}}
+        {{- $refs := list -}}
+        {{- range $ref := ($seg.references | default list) -}}
+          {{- $refs = append $refs $ref.name -}}
+        {{- end -}}
+        {{- $segments = append $segments (dict "name" $seg.name "references" $refs) -}}
+      {{- end -}}
+      {{- $_ := set $orgMap $item.key (dict "segments" $segments) -}}
+    {{- end }}
+    {{ $orgMap | toJson }}

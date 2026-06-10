@@ -17,15 +17,22 @@ Routes (under /v1/):
     GET|POST  /v1/aaMutations                   ?organism=
     GET|POST  /v1/insertions                    ?organism=
     GET|POST  /v1/aaInsertions                  ?organism=
-    GET|POST  /v1/alignedSequences              ?organism= [&reference=<segment>]
-    GET|POST  /v1/unalignedSequences            ?organism= [&reference=<segment>]
+    GET|POST  /v1/alignedSequences              ?organism= [&segment=<name>] [&reference=<name>]
+    GET|POST  /v1/unalignedSequences            ?organism= [&segment=<name>] [&reference=<name>]
     GET|POST  /v1/aaSequences/{proteinName}     ?organism=
     GET       /v1/info                          ?organism=
     GET       /v1/lineageDefinition             ?organism=&column=
+    GET       /v1/organisms                     (returns organism→segment/reference config)
 
 Reserved control params:
     organism, format, download, fields, limit, offset, include,
-    reference
+    segment, reference
+
+Segment/reference routing logic (mirrors preprocessing set_sequence_name):
+    single-segment, single-reference   → no path suffix
+    multi-segment,  single-reference   → /{segment}
+    single-segment, multi-reference    → /{reference}
+    multi-segment,  multi-reference    → /{segment}-{reference}
 
 Anything else is a metadata-column filter and is forwarded to LAPIS
 verbatim.
@@ -46,6 +53,7 @@ LAPIS's own POST body so existing flat bodies migrate without rewriting.
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import os
@@ -55,7 +63,8 @@ from typing import Any
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.responses import StreamingResponse
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 
 logging.basicConfig(
     level=os.environ.get("LOG_LEVEL", "INFO"),
@@ -67,19 +76,26 @@ LAPIS_SERVICE_TEMPLATE = os.environ.get(
     "LAPIS_SERVICE_TEMPLATE", "http://loculus-lapis-service-{organism}:8080"
 )
 UPSTREAM_TIMEOUT_SECONDS = float(os.environ.get("UPSTREAM_TIMEOUT_SECONDS", "60"))
-# Comma-separated list of valid organism keys (e.g. "cchf,mpox").
-# When set, the Swagger UI renders a dropdown instead of a free-text field.
-ORGANISMS: list[str] = [
-    o.strip()
-    for o in os.environ.get("ORGANISMS", "").split(",")
-    if o.strip()
-]
-# Comma-separated segment names for multi-segment organisms (e.g. "L,M,S").
-# When set, the Swagger UI renders a dropdown for the `reference` param.
-REFERENCE_NAMES: list[str] = [
-    r.strip()
-    for r in os.environ.get("REFERENCE_NAMES", "").split(",")
-    if r.strip()
+
+# ---------------------------------------------------------------------------
+# Organism config — loaded from a JSON file mounted via Kubernetes ConfigMap.
+# Shape: { "<organism-key>": { "segments": [{ "name": str, "references": [str] }] } }
+# Fallback: ORGANISMS / REFERENCE_NAMES env vars (kept for local development).
+# ---------------------------------------------------------------------------
+ORGANISM_CONFIG_FILE = os.environ.get("ORGANISM_CONFIG_FILE", "")
+ORGANISM_CONFIG: dict[str, Any] = {}
+
+if ORGANISM_CONFIG_FILE:
+    try:
+        with open(ORGANISM_CONFIG_FILE) as _f:
+            ORGANISM_CONFIG = json.load(_f)
+        logger.info("Loaded organism config from %s (%d organisms)", ORGANISM_CONFIG_FILE, len(ORGANISM_CONFIG))
+    except (OSError, json.JSONDecodeError) as _exc:
+        logger.warning("Could not load organism config %r: %s", ORGANISM_CONFIG_FILE, _exc)
+
+# Derived organism list — used for the Swagger UI enum and organism validation.
+ORGANISMS: list[str] = list(ORGANISM_CONFIG.keys()) or [
+    o.strip() for o in os.environ.get("ORGANISMS", "").split(",") if o.strip()
 ]
 
 ORGANISM_RE = re.compile(r"^[a-z][a-z0-9-]*$")
@@ -110,6 +126,7 @@ CONTROL_PARAMS = frozenset(
         "limit",
         "offset",
         "include",
+        "segment",
         "reference",
     }
 )
@@ -128,9 +145,32 @@ _organism_schema: dict = (
     if ORGANISMS
     else {"type": "string", "example": "cchf"}
 )
+
+# All segment names that appear in multi-segment organisms (excluding "main").
+_ALL_SEGMENT_NAMES: list[str] = sorted({
+    seg["name"]
+    for cfg in ORGANISM_CONFIG.values()
+    for seg in cfg.get("segments", [])
+    if len(cfg.get("segments", [])) > 1 and seg["name"] != "main"
+})
+
+# All reference names that appear in segments with multiple references (excluding "singleReference").
+_ALL_REFERENCE_NAMES: list[str] = sorted({
+    ref
+    for cfg in ORGANISM_CONFIG.values()
+    for seg in cfg.get("segments", [])
+    for ref in seg.get("references", [])
+    if len(seg.get("references", [])) > 1 and ref != "singleReference"
+})
+
+_segment_schema: dict = (
+    {"type": "string", "enum": _ALL_SEGMENT_NAMES}
+    if _ALL_SEGMENT_NAMES
+    else {"type": "string"}
+)
 _reference_schema: dict = (
-    {"type": "string", "enum": REFERENCE_NAMES}
-    if REFERENCE_NAMES
+    {"type": "string", "enum": _ALL_REFERENCE_NAMES}
+    if _ALL_REFERENCE_NAMES
     else {"type": "string"}
 )
 
@@ -188,13 +228,27 @@ _COMMON_CONTROL_PARAMS: list[dict] = [
         ),
         "schema": {"type": "string", "enum": ["revoked", "older-versions", "all"]},
     },
+]
+
+# Sequence endpoints additionally accept `segment` and `reference` for routing.
+_SEQUENCE_ROUTING_PARAMS: list[dict] = [
+    {
+        "name": "segment",
+        "in": "query",
+        "required": False,
+        "description": (
+            "For multi-segment organisms: the segment to retrieve (e.g. `L`, `M`, `S`). "
+            "Omit for single-segment organisms."
+        ),
+        "schema": _segment_schema,
+    },
     {
         "name": "reference",
         "in": "query",
         "required": False,
         "description": (
-            "Segment name for multi-segment organisms (e.g. `L`, `M`, `S`). "
-            "Omit for single-segment organisms."
+            "For organisms with multiple references per segment: the reference to align to. "
+            "Omit when each segment has only one reference."
         ),
         "schema": _reference_schema,
     },
@@ -207,7 +261,7 @@ _SEQUENCE_FORMAT_PARAMS: list[dict] = [
         "schema": {"type": "string", "enum": ["json", "ndjson", "fasta"]},
     }
     for p in _COMMON_CONTROL_PARAMS
-]
+] + _SEQUENCE_ROUTING_PARAMS
 
 _POST_BODY_SCHEMA: dict = {
     "type": "object",
@@ -240,7 +294,8 @@ _POST_BODY_SCHEMA: dict = {
                 },
             ],
         },
-        "reference": {"type": "string"},
+        "segment": {"type": "string", "description": "Segment name for multi-segment organisms."},
+        "reference": {"type": "string", "description": "Reference name for multi-reference organisms."},
     },
 }
 
@@ -274,8 +329,74 @@ app = FastAPI(
         "Any query parameter not listed in a route's documented parameters is treated as a "
         "**metadata-column filter** and forwarded to LAPIS verbatim."
     ),
+    # Disable auto-generated docs so we can serve a custom Swagger UI with
+    # organism-aware segment/reference dropdowns.
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
+
+
+def _parse_bool(value: Any, *, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() in ("1", "true", "yes")
+    return default
+
+
+def _resolve_sequence_name(
+    organism: str,
+    segment: str | None,
+    reference: str | None,
+) -> str | None:
+    """Resolve the LAPIS sequence path component from organism config.
+
+    Falls back to using `segment` or `reference` directly when the organism
+    is not in the config (e.g. local dev without a config file).
+    """
+    if organism in ORGANISM_CONFIG:
+        return get_lapis_sequence_name(ORGANISM_CONFIG[organism], segment, reference)
+    # Fallback: use whichever of segment/reference was provided
+    return segment or reference
+
+
+def get_lapis_sequence_name(
+    cfg: dict[str, Any],
+    segment: str | None,
+    reference: str | None,
+) -> str | None:
+    """Return the LAPIS segment path component for a nucleotide sequence request.
+
+    Mirrors the Helm mergeReferenceGenomes template logic:
+      (single-ref, any)    → segment name (or None for single-segment)
+      (multi-ref, 1-seg)   → reference name
+      (multi-ref, multi-seg) → "{segment}-{reference}"
+    """
+    segments = cfg.get("segments", [])
+    single_segment = len(segments) == 1
+
+    if single_segment:
+        seg = segments[0]
+        single_reference = len(seg.get("references", [])) == 1
+        if single_reference:
+            return None  # single segment, single reference: no LAPIS path suffix
+        return reference  # single segment, multi-reference: use reference name
+    else:
+        seg_name = segment or (segments[0]["name"] if segments else None)
+        if seg_name is None:
+            return None
+        seg = next((s for s in segments if s["name"] == seg_name), None)
+        if seg is None:
+            return seg_name
+        single_reference = len(seg.get("references", [])) == 1
+        if single_reference:
+            return seg_name  # multi-segment, single reference: use segment name
+        ref_name = reference or (seg["references"][0] if seg.get("references") else None)
+        if ref_name is None:
+            return seg_name
+        return f"{seg_name}-{ref_name}"  # multi-segment, multi-reference
 
 
 @app.on_event("startup")
@@ -294,6 +415,118 @@ async def _close_client() -> None:
 @app.get("/healthz", include_in_schema=False)
 async def healthz() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/v1/organisms", include_in_schema=False)
+async def organisms() -> dict[str, Any]:
+    """Return the organism→segments/references config (used by the custom Swagger UI)."""
+    return ORGANISM_CONFIG
+
+
+@app.get("/openapi.json", include_in_schema=False)
+async def openapi_spec(organism: str = "") -> JSONResponse:
+    """Serve the OpenAPI spec, optionally filtered to a single organism's segments/references."""
+    spec = copy.deepcopy(app.openapi())
+
+    if organism and organism in ORGANISM_CONFIG:
+        cfg = ORGANISM_CONFIG[organism]
+        segs = cfg.get("segments", [])
+        multi_segment = len(segs) > 1
+        has_multi_ref = any(len(s.get("references", [])) > 1 for s in segs)
+
+        seg_enum = [s["name"] for s in segs] if multi_segment else []
+        ref_enum = sorted({
+            ref
+            for s in segs
+            for ref in s.get("references", [])
+            if len(s.get("references", [])) > 1
+        })
+
+        sequence_paths = {"/v1/alignedSequences", "/v1/unalignedSequences"}
+        for path, path_item in spec.get("paths", {}).items():
+            if path not in sequence_paths:
+                continue
+            for method_item in path_item.values():
+                if not isinstance(method_item, dict):
+                    continue
+                new_params = []
+                for p in method_item.get("parameters", []):
+                    name = p.get("name")
+                    if name == "segment":
+                        if multi_segment:
+                            p = {**p, "schema": {"type": "string", "enum": seg_enum}}
+                            new_params.append(p)
+                        # omit segment param when organism is single-segment
+                    elif name == "reference":
+                        if has_multi_ref:
+                            p = {**p, "schema": {"type": "string", "enum": ref_enum}}
+                            new_params.append(p)
+                        # omit reference param when no segment has multiple references
+                    else:
+                        new_params.append(p)
+                method_item["parameters"] = new_params
+
+    return JSONResponse(spec)
+
+
+_SWAGGER_HTML = """<!DOCTYPE html>
+<html>
+<head>
+  <title>Loculus query-service API</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+  <style>
+    body {{ margin: 0; }}
+    .org-bar {{
+      background: #1b1b1b; padding: 10px 20px;
+      display: flex; align-items: center; gap: 12px; font-family: sans-serif;
+    }}
+    .org-bar label {{ color: #fff; font-size: 14px; }}
+    .org-bar select {{
+      padding: 4px 8px; font-size: 14px; border-radius: 4px;
+      border: 1px solid #555; background: #2d2d2d; color: #fff; cursor: pointer;
+    }}
+  </style>
+</head>
+<body>
+<div class="org-bar">
+  <label for="org-select">Filter by organism:</label>
+  <select id="org-select">
+    <option value="">All organisms</option>
+    {organism_options}
+  </select>
+</div>
+<div id="swagger-ui"></div>
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+<script>
+  function load(organism) {{
+    var url = '/openapi.json' + (organism ? '?organism=' + encodeURIComponent(organism) : '');
+    document.getElementById('swagger-ui').innerHTML = '';
+    SwaggerUIBundle({{
+      url: url,
+      dom_id: '#swagger-ui',
+      presets: [SwaggerUIBundle.presets.apis],
+      layout: 'BaseLayout',
+      deepLinking: true,
+      persistAuthorization: true,
+    }});
+  }}
+  document.getElementById('org-select').addEventListener('change', function() {{
+    load(this.value);
+  }});
+  load('');
+</script>
+</body>
+</html>"""
+
+
+@app.get("/docs", include_in_schema=False)
+async def swagger_ui() -> HTMLResponse:
+    options = "\n    ".join(
+        f'<option value="{o}">{o}</option>' for o in ORGANISMS
+    )
+    return HTMLResponse(_SWAGGER_HTML.format(organism_options=options))
 
 
 # ---------------------------------------------------------------------------
@@ -675,8 +908,9 @@ async def aa_insertions(request: Request) -> Response:
 
 _ALIGNED_SEQ_DESC = (
     "Stream aligned nucleotide sequences (FASTA or NDJSON) matching the given filters. "
-    "For multi-segment organisms set `reference` to the segment name (e.g. `L`, `S`); "
-    "omit it for single-segment organisms. "
+    "For multi-segment organisms set `segment` to the desired segment (e.g. `L`, `S`). "
+    "For organisms with multiple references per segment, also set `reference`. "
+    "Omit both for single-segment single-reference organisms. "
     "Any query parameter not listed here is treated as a metadata-column filter."
 )
 
@@ -696,10 +930,13 @@ _ALIGNED_SEQ_DESC = (
     openapi_extra={"requestBody": _POST_REQUEST_BODY},
 )
 async def aligned_sequences(request: Request) -> Response:
+    segment = request.query_params.get("segment")
     reference = request.query_params.get("reference")
+    organism = request.query_params.get("organism") or ""
+    lapis_name = _resolve_sequence_name(organism, segment, reference)
     lapis_path = (
-        f"/sample/alignedNucleotideSequences/{reference}"
-        if reference
+        f"/sample/alignedNucleotideSequences/{lapis_name}"
+        if lapis_name
         else "/sample/alignedNucleotideSequences"
     )
     return await _handle(request, lapis_path)
@@ -707,8 +944,9 @@ async def aligned_sequences(request: Request) -> Response:
 
 _UNALIGNED_SEQ_DESC = (
     "Stream unaligned nucleotide sequences (FASTA or NDJSON) matching the given filters. "
-    "For multi-segment organisms set `reference` to the segment name (e.g. `L`, `S`); "
-    "omit it for single-segment organisms. "
+    "For multi-segment organisms set `segment` to the desired segment (e.g. `L`, `S`). "
+    "For organisms with multiple references per segment, also set `reference`. "
+    "Omit both for single-segment single-reference organisms. "
     "Any query parameter not listed here is treated as a metadata-column filter."
 )
 
@@ -728,10 +966,13 @@ _UNALIGNED_SEQ_DESC = (
     openapi_extra={"requestBody": _POST_REQUEST_BODY},
 )
 async def unaligned_sequences(request: Request) -> Response:
+    segment = request.query_params.get("segment")
     reference = request.query_params.get("reference")
+    organism = request.query_params.get("organism") or ""
+    lapis_name = _resolve_sequence_name(organism, segment, reference)
     lapis_path = (
-        f"/sample/unalignedNucleotideSequences/{reference}"
-        if reference
+        f"/sample/unalignedNucleotideSequences/{lapis_name}"
+        if lapis_name
         else "/sample/unalignedNucleotideSequences"
     )
     return await _handle(request, lapis_path)

@@ -175,12 +175,12 @@ export class DownloadUrlGenerator {
             case 'unalignedNucleotideSequences':
                 return {
                     path: '/v1/unalignedSequences',
-                    routingParams: dataType.segment !== undefined ? { reference: dataType.segment } : {},
+                    routingParams: dataType.segment !== undefined ? { segment: dataType.segment } : {},
                 };
             case 'alignedNucleotideSequences':
                 return {
                     path: '/v1/alignedSequences',
-                    routingParams: dataType.segment !== undefined ? { reference: dataType.segment } : {},
+                    routingParams: dataType.segment !== undefined ? { segment: dataType.segment } : {},
                 };
             case 'alignedAminoAcidSequences':
                 return {

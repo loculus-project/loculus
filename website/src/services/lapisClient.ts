@@ -219,7 +219,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
                         [this.schema.primaryKey]: accessionVersion,
                         dataFormat: 'FASTA',
                     },
-                    { queries: { organism: this.organism, reference: segment } },
+                    { queries: { organism: this.organism, segment } },
                 ),
             ),
         );
@@ -266,7 +266,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         const url = `${this.url}/v1/unalignedSequences`;
         const params: Record<string, string> = { organism: this.organism };
         if (segment !== undefined) {
-            params.reference = segment;
+            params.segment = segment;
         }
         return axios.post<Readable>(url, request, {
             responseType: 'stream',

@@ -108,7 +108,7 @@ function selectSequenceHook(
             {
                 queries: {
                     organism,
-                    ...(isMultiSegmented ? { reference: sequenceType.name.lapisName } : {}),
+                    ...(isMultiSegmented ? { segment: sequenceType.name.lapisName } : {}),
                 },
             },
             { ...LAPIS_RETRY_OPTIONS },
@@ -121,7 +121,7 @@ function selectSequenceHook(
             {
                 queries: {
                     organism,
-                    ...(isMultiSegmented ? { reference: sequenceType.name.lapisName } : {}),
+                    ...(isMultiSegmented ? { segment: sequenceType.name.lapisName } : {}),
                 },
             },
             { ...LAPIS_RETRY_OPTIONS },

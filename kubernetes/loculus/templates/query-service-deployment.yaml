@@ -33,10 +33,12 @@ spec:
               value: "http://loculus-lapis-service-{organism}:8080"
             - name: LOG_LEVEL
               value: "INFO"
-            - name: ORGANISMS
-              value: "{{- $first := true -}}{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms -}}{{- if $first -}}{{- $first = false -}}{{- else -}},{{ end -}}{{ $item.key }}{{- end -}}"
-            - name: REFERENCE_NAMES
-              value: "{{- $allRefs := list -}}{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms -}}{{- range $ref := index $item.contents "referenceGenomes" -}}{{- if ne $ref.name "main" -}}{{- $allRefs = append $allRefs $ref.name -}}{{- end -}}{{- end -}}{{- end -}}{{- join "," ($allRefs | sortAlpha | uniq) -}}"
+            - name: ORGANISM_CONFIG_FILE
+              value: "/config/organisms.json"
+          volumeMounts:
+            - name: organism-config
+              mountPath: /config
+              readOnly: true
           startupProbe:
             httpGet:
               path: /healthz
@@ -57,3 +59,7 @@ spec:
             periodSeconds: 10
             failureThreshold: 3
             timeoutSeconds: 5
+      volumes:
+        - name: organism-config
+          configMap:
+            name: loculus-query-service-config
