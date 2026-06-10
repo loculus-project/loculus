@@ -111,7 +111,144 @@ VERSION_OVERRIDE_KEYS = frozenset({"accessionVersion", "version", "versionStatus
 
 VALID_INCLUDES = frozenset({"revoked", "older-versions", "all"})
 
-app = FastAPI(title="Loculus query-service", docs_url=None, redoc_url=None)
+_COMMON_CONTROL_PARAMS: list[dict] = [
+    {
+        "name": "organism",
+        "in": "query",
+        "required": True,
+        "description": "Organism identifier (e.g. `cchf`, `mpox`).",
+        "schema": {"type": "string", "example": "cchf"},
+    },
+    {
+        "name": "fields",
+        "in": "query",
+        "required": False,
+        "description": "Comma-separated metadata columns to include in the response.",
+        "schema": {"type": "string", "example": "accessionVersion,country,date"},
+    },
+    {
+        "name": "limit",
+        "in": "query",
+        "required": False,
+        "description": "Maximum number of records to return.",
+        "schema": {"type": "integer", "example": 100},
+    },
+    {
+        "name": "offset",
+        "in": "query",
+        "required": False,
+        "description": "Number of records to skip (pagination).",
+        "schema": {"type": "integer", "example": 0},
+    },
+    {
+        "name": "format",
+        "in": "query",
+        "required": False,
+        "description": "Response format. Maps to LAPIS `dataFormat`.",
+        "schema": {"type": "string", "enum": ["json", "ndjson", "tsv", "csv"]},
+    },
+    {
+        "name": "download",
+        "in": "query",
+        "required": False,
+        "description": "Set to `true` to add a `Content-Disposition: attachment` header.",
+        "schema": {"type": "boolean"},
+    },
+    {
+        "name": "include",
+        "in": "query",
+        "required": False,
+        "description": (
+            "Override implicit version defaults (`versionStatus=LATEST_VERSION`, "
+            "`isRevocation=false`). Repeatable. "
+            "Valid values: `revoked`, `older-versions`, `all`."
+        ),
+        "schema": {"type": "string", "enum": ["revoked", "older-versions", "all"]},
+    },
+    {
+        "name": "reference",
+        "in": "query",
+        "required": False,
+        "description": "Reference sequence name (relevant for multi-segment organisms).",
+        "schema": {"type": "string"},
+    },
+]
+
+_SEQUENCE_FORMAT_PARAMS: list[dict] = [
+    p if p["name"] != "format"
+    else {
+        **p,
+        "schema": {"type": "string", "enum": ["json", "ndjson", "fasta"]},
+    }
+    for p in _COMMON_CONTROL_PARAMS
+]
+
+_POST_BODY_SCHEMA: dict = {
+    "type": "object",
+    "required": ["organism"],
+    "additionalProperties": {
+        "description": (
+            "Any additional key is treated as a metadata-column filter and forwarded to LAPIS."
+        ),
+    },
+    "properties": {
+        "organism": {"type": "string", "example": "cchf"},
+        "fields": {
+            "description": "Metadata columns to return. String (comma-separated) or array.",
+            "oneOf": [
+                {"type": "string", "example": "accessionVersion,country"},
+                {"type": "array", "items": {"type": "string"}, "example": ["accessionVersion", "country"]},
+            ],
+        },
+        "limit": {"type": "integer", "example": 100},
+        "offset": {"type": "integer", "example": 0},
+        "format": {"type": "string", "enum": ["json", "ndjson", "tsv", "csv"]},
+        "download": {"type": "boolean"},
+        "include": {
+            "description": "Override implicit version defaults. String or array.",
+            "oneOf": [
+                {"type": "string", "enum": ["revoked", "older-versions", "all"]},
+                {
+                    "type": "array",
+                    "items": {"type": "string", "enum": ["revoked", "older-versions", "all"]},
+                },
+            ],
+        },
+        "reference": {"type": "string"},
+    },
+}
+
+_POST_REQUEST_BODY: dict = {
+    "content": {
+        "application/json": {
+            "schema": _POST_BODY_SCHEMA,
+            "example": {
+                "organism": "cchf",
+                "country": "Switzerland",
+                "fields": ["country", "date"],
+                "limit": 1000,
+            },
+        },
+        "application/x-www-form-urlencoded": {
+            "schema": {"type": "object", "additionalProperties": {"type": "string"}},
+            "description": "Form-encoded variant (same keys as the JSON body).",
+        },
+    }
+}
+
+app = FastAPI(
+    title="Loculus query-service",
+    version="1",
+    description=(
+        "Proxy between website/CLI and organism-specific LAPIS instances.\n\n"
+        "**Implicit defaults** applied to every query unless overridden:\n"
+        "- `versionStatus = LATEST_VERSION`\n"
+        "- `isRevocation = false`\n\n"
+        "Override with `include=revoked`, `include=older-versions`, or `include=all`.\n\n"
+        "Any query parameter not listed in a route's documented parameters is treated as a "
+        "**metadata-column filter** and forwarded to LAPIS verbatim."
+    ),
+)
 
 
 @app.on_event("startup")
@@ -340,67 +477,305 @@ async def _handle(request: Request, lapis_path: str) -> Response:
     )
 
 
-@app.api_route("/v1/info", methods=["GET"])
+@app.get(
+    "/v1/info",
+    tags=["Metadata"],
+    summary="Database and schema info",
+    description="Returns LAPIS database/schema metadata (field names, value counts, etc.).",
+    openapi_extra={
+        "parameters": [p for p in _COMMON_CONTROL_PARAMS if p["name"] in {"organism", "reference"}]
+    },
+)
 async def info(request: Request) -> Response:
     return await _handle(request, "/sample/info")
 
 
-@app.api_route("/v1/aggregated", methods=["GET", "POST"])
+_AGGREGATED_DESC = (
+    "Count sequences matching the given filters, grouped by requested fields. "
+    "Any query parameter not listed here is treated as a metadata-column filter."
+)
+
+
+@app.get(
+    "/v1/aggregated",
+    tags=["Data queries"],
+    summary="Aggregated counts",
+    description=_AGGREGATED_DESC,
+    openapi_extra={"parameters": _COMMON_CONTROL_PARAMS},
+)
+@app.post(
+    "/v1/aggregated",
+    tags=["Data queries"],
+    summary="Aggregated counts",
+    description=_AGGREGATED_DESC,
+    openapi_extra={"requestBody": _POST_REQUEST_BODY},
+)
 async def aggregated(request: Request) -> Response:
     return await _handle(request, "/sample/aggregated")
 
 
-@app.api_route("/v1/details", methods=["GET", "POST"])
+_DETAILS_DESC = (
+    "Return per-sequence metadata records matching the given filters. "
+    "Any query parameter not listed here is treated as a metadata-column filter."
+)
+
+
+@app.get(
+    "/v1/details",
+    tags=["Data queries"],
+    summary="Sequence metadata details",
+    description=_DETAILS_DESC,
+    openapi_extra={"parameters": _COMMON_CONTROL_PARAMS},
+)
+@app.post(
+    "/v1/details",
+    tags=["Data queries"],
+    summary="Sequence metadata details",
+    description=_DETAILS_DESC,
+    openapi_extra={"requestBody": _POST_REQUEST_BODY},
+)
 async def details(request: Request) -> Response:
     return await _handle(request, "/sample/details")
 
 
-@app.api_route("/v1/mutations", methods=["GET", "POST"])
+_MUTATIONS_DESC = (
+    "Return nucleotide mutation frequencies for sequences matching the given filters. "
+    "Any query parameter not listed here is treated as a metadata-column filter."
+)
+
+
+@app.get(
+    "/v1/mutations",
+    tags=["Mutations & insertions"],
+    summary="Nucleotide mutations",
+    description=_MUTATIONS_DESC,
+    openapi_extra={"parameters": _COMMON_CONTROL_PARAMS},
+)
+@app.post(
+    "/v1/mutations",
+    tags=["Mutations & insertions"],
+    summary="Nucleotide mutations",
+    description=_MUTATIONS_DESC,
+    openapi_extra={"requestBody": _POST_REQUEST_BODY},
+)
 async def mutations(request: Request) -> Response:
     return await _handle(request, "/sample/nucleotideMutations")
 
 
-@app.api_route("/v1/aaMutations", methods=["GET", "POST"])
+_AA_MUTATIONS_DESC = (
+    "Return amino-acid mutation frequencies for sequences matching the given filters. "
+    "Any query parameter not listed here is treated as a metadata-column filter."
+)
+
+
+@app.get(
+    "/v1/aaMutations",
+    tags=["Mutations & insertions"],
+    summary="Amino-acid mutations",
+    description=_AA_MUTATIONS_DESC,
+    openapi_extra={"parameters": _COMMON_CONTROL_PARAMS},
+)
+@app.post(
+    "/v1/aaMutations",
+    tags=["Mutations & insertions"],
+    summary="Amino-acid mutations",
+    description=_AA_MUTATIONS_DESC,
+    openapi_extra={"requestBody": _POST_REQUEST_BODY},
+)
 async def aa_mutations(request: Request) -> Response:
     return await _handle(request, "/sample/aminoAcidMutations")
 
 
-@app.api_route("/v1/insertions", methods=["GET", "POST"])
+_INSERTIONS_DESC = (
+    "Return nucleotide insertion frequencies for sequences matching the given filters. "
+    "Any query parameter not listed here is treated as a metadata-column filter."
+)
+
+
+@app.get(
+    "/v1/insertions",
+    tags=["Mutations & insertions"],
+    summary="Nucleotide insertions",
+    description=_INSERTIONS_DESC,
+    openapi_extra={"parameters": _COMMON_CONTROL_PARAMS},
+)
+@app.post(
+    "/v1/insertions",
+    tags=["Mutations & insertions"],
+    summary="Nucleotide insertions",
+    description=_INSERTIONS_DESC,
+    openapi_extra={"requestBody": _POST_REQUEST_BODY},
+)
 async def insertions(request: Request) -> Response:
     return await _handle(request, "/sample/nucleotideInsertions")
 
 
-@app.api_route("/v1/aaInsertions", methods=["GET", "POST"])
+_AA_INSERTIONS_DESC = (
+    "Return amino-acid insertion frequencies for sequences matching the given filters. "
+    "Any query parameter not listed here is treated as a metadata-column filter."
+)
+
+
+@app.get(
+    "/v1/aaInsertions",
+    tags=["Mutations & insertions"],
+    summary="Amino-acid insertions",
+    description=_AA_INSERTIONS_DESC,
+    openapi_extra={"parameters": _COMMON_CONTROL_PARAMS},
+)
+@app.post(
+    "/v1/aaInsertions",
+    tags=["Mutations & insertions"],
+    summary="Amino-acid insertions",
+    description=_AA_INSERTIONS_DESC,
+    openapi_extra={"requestBody": _POST_REQUEST_BODY},
+)
 async def aa_insertions(request: Request) -> Response:
     return await _handle(request, "/sample/aminoAcidInsertions")
 
 
-@app.api_route("/v1/alignedSequences", methods=["GET", "POST"])
+_ALIGNED_SEQ_DESC = (
+    "Stream aligned nucleotide sequences (FASTA or NDJSON) matching the given filters. "
+    "For multi-segment organisms use `/v1/alignedSequences/{segment}`. "
+    "Any query parameter not listed here is treated as a metadata-column filter."
+)
+
+
+@app.get(
+    "/v1/alignedSequences",
+    tags=["Sequences"],
+    summary="Aligned nucleotide sequences (default segment)",
+    description=_ALIGNED_SEQ_DESC,
+    openapi_extra={"parameters": _SEQUENCE_FORMAT_PARAMS},
+)
+@app.post(
+    "/v1/alignedSequences",
+    tags=["Sequences"],
+    summary="Aligned nucleotide sequences (default segment)",
+    description=_ALIGNED_SEQ_DESC,
+    openapi_extra={"requestBody": _POST_REQUEST_BODY},
+)
 async def aligned_sequences(request: Request) -> Response:
     return await _handle(request, "/sample/alignedNucleotideSequences")
 
 
-@app.api_route("/v1/alignedSequences/{segment}", methods=["GET", "POST"])
+_ALIGNED_SEQ_SEG_DESC = (
+    "Stream aligned nucleotide sequences for a specific segment of a multi-segment organism. "
+    "Any query parameter not listed here is treated as a metadata-column filter."
+)
+
+
+@app.get(
+    "/v1/alignedSequences/{segment}",
+    tags=["Sequences"],
+    summary="Aligned nucleotide sequences (named segment)",
+    description=_ALIGNED_SEQ_SEG_DESC,
+    openapi_extra={"parameters": _SEQUENCE_FORMAT_PARAMS},
+)
+@app.post(
+    "/v1/alignedSequences/{segment}",
+    tags=["Sequences"],
+    summary="Aligned nucleotide sequences (named segment)",
+    description=_ALIGNED_SEQ_SEG_DESC,
+    openapi_extra={"requestBody": _POST_REQUEST_BODY},
+)
 async def aligned_sequences_segment(segment: str, request: Request) -> Response:
     return await _handle(request, f"/sample/alignedNucleotideSequences/{segment}")
 
 
-@app.api_route("/v1/unalignedSequences", methods=["GET", "POST"])
+_UNALIGNED_SEQ_DESC = (
+    "Stream unaligned nucleotide sequences (FASTA or NDJSON) matching the given filters. "
+    "For multi-segment organisms use `/v1/unalignedSequences/{segment}`. "
+    "Any query parameter not listed here is treated as a metadata-column filter."
+)
+
+
+@app.get(
+    "/v1/unalignedSequences",
+    tags=["Sequences"],
+    summary="Unaligned nucleotide sequences (default segment)",
+    description=_UNALIGNED_SEQ_DESC,
+    openapi_extra={"parameters": _SEQUENCE_FORMAT_PARAMS},
+)
+@app.post(
+    "/v1/unalignedSequences",
+    tags=["Sequences"],
+    summary="Unaligned nucleotide sequences (default segment)",
+    description=_UNALIGNED_SEQ_DESC,
+    openapi_extra={"requestBody": _POST_REQUEST_BODY},
+)
 async def unaligned_sequences(request: Request) -> Response:
     return await _handle(request, "/sample/unalignedNucleotideSequences")
 
 
-@app.api_route("/v1/unalignedSequences/{segment}", methods=["GET", "POST"])
+_UNALIGNED_SEQ_SEG_DESC = (
+    "Stream unaligned nucleotide sequences for a specific segment of a multi-segment organism. "
+    "Any query parameter not listed here is treated as a metadata-column filter."
+)
+
+
+@app.get(
+    "/v1/unalignedSequences/{segment}",
+    tags=["Sequences"],
+    summary="Unaligned nucleotide sequences (named segment)",
+    description=_UNALIGNED_SEQ_SEG_DESC,
+    openapi_extra={"parameters": _SEQUENCE_FORMAT_PARAMS},
+)
+@app.post(
+    "/v1/unalignedSequences/{segment}",
+    tags=["Sequences"],
+    summary="Unaligned nucleotide sequences (named segment)",
+    description=_UNALIGNED_SEQ_SEG_DESC,
+    openapi_extra={"requestBody": _POST_REQUEST_BODY},
+)
 async def unaligned_sequences_segment(segment: str, request: Request) -> Response:
     return await _handle(request, f"/sample/unalignedNucleotideSequences/{segment}")
 
 
-@app.api_route("/v1/aaSequences/{protein_name}", methods=["GET", "POST"])
+_AA_SEQ_DESC = (
+    "Stream aligned amino-acid sequences for a named protein. "
+    "Any query parameter not listed here is treated as a metadata-column filter."
+)
+
+
+@app.get(
+    "/v1/aaSequences/{protein_name}",
+    tags=["Sequences"],
+    summary="Aligned amino-acid sequences",
+    description=_AA_SEQ_DESC,
+    openapi_extra={"parameters": _SEQUENCE_FORMAT_PARAMS},
+)
+@app.post(
+    "/v1/aaSequences/{protein_name}",
+    tags=["Sequences"],
+    summary="Aligned amino-acid sequences",
+    description=_AA_SEQ_DESC,
+    openapi_extra={"requestBody": _POST_REQUEST_BODY},
+)
 async def aa_sequences(protein_name: str, request: Request) -> Response:
     return await _handle(request, f"/sample/alignedAminoAcidSequences/{protein_name}")
 
 
-@app.api_route("/v1/lineageDefinition", methods=["GET"])
+@app.get(
+    "/v1/lineageDefinition",
+    tags=["Metadata"],
+    summary="Lineage definition",
+    description="Returns the lineage hierarchy definition for a given metadata column.",
+    openapi_extra={
+        "parameters": [
+            p for p in _COMMON_CONTROL_PARAMS
+            if p["name"] in {"organism", "reference"}
+        ] + [
+            {
+                "name": "column",
+                "in": "query",
+                "required": True,
+                "description": "Metadata column that holds lineage values.",
+                "schema": {"type": "string", "example": "lineage"},
+            }
+        ]
+    },
+)
 async def lineage_definition(request: Request) -> Response:
     column = request.query_params.get("column")
     if not column:
