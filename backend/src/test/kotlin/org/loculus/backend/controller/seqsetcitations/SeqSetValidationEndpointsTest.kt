@@ -68,7 +68,7 @@ class SeqSetValidationEndpointsTest(
                 jsonPath(
                     "\$.detail",
                     containsString(
-                        "Invalid version in accession 'ABCD.EF'",
+                        "Invalid version in accession version 'ABCD.EF', expected a number",
                     ),
                 ),
             )

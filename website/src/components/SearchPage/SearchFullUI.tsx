@@ -4,9 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '../common/Button';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import {
-    DownloadOriginalDataButton,
-    MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES,
-} from './DownloadDialog/DownloadOriginalDataButton.tsx';
+    DownloadSubmittedDataButton,
+    MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES,
+} from './DownloadDialog/DownloadSubmittedDataButton.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
 import { LinkOutMenu } from './DownloadDialog/LinkOutMenu.tsx';
 import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
@@ -219,7 +219,7 @@ export const InnerSearchFullUI = ({
         const response = await fetchDetailsFromLapis(lapisUrl, {
             ...lapisSearchParameters,
             fields: [schema.primaryKey],
-            limit: MAX_ORIGINAL_DATA_DOWNLOAD_ENTRIES + 1,
+            limit: MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES + 1,
         });
         return response.data.map((item) => String(item[schema.primaryKey]));
     }, [lapisUrl, lapisSearchParameters, schema.primaryKey]);
@@ -390,7 +390,7 @@ export const InnerSearchFullUI = ({
                             />
                             {isReleasedPage && accessToken !== undefined && groupId !== undefined && (
                                 <div className='ml-2'>
-                                    <DownloadOriginalDataButton
+                                    <DownloadSubmittedDataButton
                                         sequenceFilter={downloadFilter}
                                         backendUrl={clientConfig.backendUrl}
                                         accessToken={accessToken}
