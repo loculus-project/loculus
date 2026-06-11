@@ -202,7 +202,7 @@ export function getOrderedTemplateInputFields(organism: string, action: 'submit'
     const orderedRequiredFields = requiredInternalFields.map((field) => decorate(field, true));
 
     // Without an explicit template, every input field is enabled by default.
-    if (schema.metadataTemplate === undefined || schema.metadataTemplate === null) {
+    if (schema.metadataTemplate === undefined) {
         return [...orderedRequiredFields, ...nonInternalInputFields.map((field) => decorate(field, true))];
     }
 
