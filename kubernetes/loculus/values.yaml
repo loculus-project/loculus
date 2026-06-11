@@ -1259,8 +1259,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: resolve_host_taxon_id
           inputs:
             host: host
-            hostNameScientific: hostNameScientific
-            hostTaxonId: hostTaxonId
           args:
             taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
       - name: hostNameScientific
@@ -1280,7 +1278,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: scientific_name_from_id
           inputs:
             hostTaxonId: processed.hostTaxonId
-            hostNameScientific: hostNameScientific
           args:
             taxonomy_service_url: *taxonomy_service_url
       - name: hostNameCommon
@@ -2033,18 +2030,6 @@ defaultOrganisms:
         - name: "Nextclade (S)"
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/S"
       metadataAdd:
-        - name: hostNameScientific
-          displayName: Host name - scientific
-          definition: "The scientific name of the host from which the sample was collected."
-          generateIndex: true
-          autocomplete: true
-          customDisplay:
-            type: hostSpecies
-            displayGroup: hostSpecies
-            label: Host
-          header: "Host"
-          ingest: ncbiHostName
-          initiallyVisible: true
         - name: lineage
           isSequenceFilter: true
           relatesToSegment: S
@@ -2174,18 +2159,6 @@ defaultOrganisms:
             S: 2to5
           category: "S"
       metadataAdd:
-        - name: hostNameScientific
-          displayName: Host name - scientific
-          definition: "The scientific name of the host from which the sample was collected."
-          generateIndex: true
-          autocomplete: true
-          customDisplay:
-            type: hostSpecies
-            displayGroup: hostSpecies
-            label: Host
-          header: "Host"
-          ingest: ncbiHostName
-          initiallyVisible: true
         - name: variant_L
           isSequenceFilter: true
           header: "Clade & Lineage"

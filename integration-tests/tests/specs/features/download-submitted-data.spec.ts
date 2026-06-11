@@ -12,8 +12,8 @@ import os from 'os';
 const TEST_ORGANISM = 'ebola-sudan';
 const SEARCH_INDEXING_TIMEOUT = 60000;
 
-test.describe('Download Original Data', () => {
-    test('can download original data for all sequences on released sequences page', async ({
+test.describe('Download Submitted Data', () => {
+    test('can download submitted data for all sequences on released sequences page', async ({
         page,
         groupId,
     }) => {
@@ -48,7 +48,7 @@ test.describe('Download Original Data', () => {
         expect(accessionVersions).toHaveLength(2);
 
         const downloadPromise = page.waitForEvent('download');
-        await page.getByRole('button', { name: /Download original data/ }).click();
+        await page.getByRole('button', { name: /Download originally submitted data/ }).click();
         const download = await downloadPromise;
 
         const downloadPath = await download.path();
@@ -113,7 +113,7 @@ test.describe('Download Original Data', () => {
         }
     });
 
-    test('can download original data for selected sequences only', async ({ page, groupId }) => {
+    test('can download submitted data for selected sequences only', async ({ page, groupId }) => {
         test.setTimeout(200_000);
 
         const submissionPage = new SingleSequenceSubmissionPage(page);
@@ -147,11 +147,11 @@ test.describe('Download Original Data', () => {
         }
 
         await expect(
-            page.getByRole('button', { name: /Download original data \(2 selected\)/ }),
+            page.getByRole('button', { name: /Download originally submitted data \(2 selected\)/ }),
         ).toBeVisible();
 
         const downloadPromise = page.waitForEvent('download');
-        await page.getByRole('button', { name: /Download original data/ }).click();
+        await page.getByRole('button', { name: /Download originally submitted data/ }).click();
         const download = await downloadPromise;
 
         const downloadPath = await download.path();

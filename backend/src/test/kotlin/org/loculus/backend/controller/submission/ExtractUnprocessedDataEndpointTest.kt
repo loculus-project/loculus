@@ -18,11 +18,11 @@ import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.RECEIVED
+import org.loculus.backend.api.SubmittedContentWithFileUrls
+import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.api.UnprocessedDataContentWithFileUrls
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
@@ -130,7 +130,7 @@ class ExtractUnprocessedDataEndpointTest(
                 allOf(
                     hasProperty<UnprocessedData>("accession", `is`(accessionVersions[0].accession)),
                     hasProperty("version", `is`(1L)),
-                    hasProperty("data", `is`(defaultOriginalData)),
+                    hasProperty("data", `is`(defaultSubmittedData)),
                     hasProperty("submissionId", matchesRegex("custom[0-9]")),
                     hasProperty("submitter", `is`(DEFAULT_USER_NAME)),
                     hasProperty("groupId", `is`(submissionResult.groupId)),
@@ -219,7 +219,10 @@ class ExtractUnprocessedDataEndpointTest(
                     hasProperty(
                         "data",
                         allOf(
-                            hasProperty<OriginalData<GeneticSequence>>("metadata", `is`(defaultOriginalData.metadata)),
+                            hasProperty<SubmittedData<GeneticSequence>>(
+                                "metadata",
+                                `is`(defaultSubmittedData.metadata),
+                            ),
                             hasProperty("unalignedNucleotideSequences", `is`(anEmptyMap<String, GeneticSequence>())),
                         ),
                     ),
@@ -246,7 +249,7 @@ class ExtractUnprocessedDataEndpointTest(
             everyItem(
                 hasProperty(
                     "data",
-                    hasProperty<UnprocessedDataContentWithFileUrls<GeneticSequence>>(
+                    hasProperty<SubmittedContentWithFileUrls<GeneticSequence>>(
                         "files",
                         hasEntry<String, List<FileIdAndNameAndReadUrl>>(
                             `is`("myFileCategory"),

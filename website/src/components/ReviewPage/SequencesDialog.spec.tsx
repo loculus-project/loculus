@@ -70,7 +70,7 @@ const dataToView = (sequence1: string, sequence2: string, gene1: string, gene2: 
         accession: 'test',
         version: 0,
         groupId: 0,
-        originalData: {
+        submittedData: {
             metadata: {},
             unalignedNucleotideSequences: {},
             files: null,
