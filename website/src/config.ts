@@ -7,6 +7,7 @@ import { ACCESSION_FIELD, FASTA_IDS_FIELD, SUBMISSION_ID_INPUT_FIELD } from './s
 import {
     type InputField,
     type InstanceConfig,
+    type MetadataType,
     type Schema,
     type SequenceFlaggingConfig,
     type WebsiteConfig,
@@ -164,6 +165,60 @@ export function getMetadataTemplateFields(
         allFields.map((field) => [field, schema.metadata.find((metadata) => metadata.name === field)?.displayName]),
     );
     return fieldsToDisplaynames;
+}
+
+/**
+ * An {@link InputField} as it should appear in the downloadable submission template, tagged with
+ * whether it is one of the fields enabled by default (a "template field") and with the field's
+ * metadata `type` (used e.g. to format date columns). Default-enabled fields are ordered before the
+ * remaining, opt-in fields.
+ */
+export type TemplateInputField = InputField & { isTemplateField: boolean; metadataType?: MetadataType };
+
+/**
+ * Returns every submittable input field for the template download, in column order:
+ * submission-detail fields first, then the default-enabled "template" fields
+ * (`schema.metadataTemplate`, or all input fields if unset), then the remaining opt-in fields.
+ * Fields enabled by default are tagged with `isTemplateField: true`.
+ */
+export function getOrderedTemplateInputFields(organism: string, action: 'submit' | 'revise'): TemplateInputField[] {
+    const schema = getConfig(organism).schema;
+
+    const submissionIdInputFields = getSubmissionIdInputFields(schema);
+    const accessionFields = action === 'revise' ? [getAccessionInputField()] : [];
+    const requiredInternalFields = [...accessionFields, ...submissionIdInputFields];
+
+    const requiredInternalFieldNames = new Set(requiredInternalFields.map((field) => field.name));
+    const nonInternalInputFields = schema.inputFields.filter((field) => !requiredInternalFieldNames.has(field.name));
+
+    const metadataTypeByName = new Map(schema.metadata.map((entry) => [entry.name, entry.type] as const));
+    const decorate = (field: InputField, isTemplateField: boolean): TemplateInputField => ({
+        ...field,
+        isTemplateField,
+        metadataType: metadataTypeByName.get(field.name),
+    });
+
+    // Required internal fields (submissionId/fastaIds, plus accession on revise) always lead the columns.
+    const orderedRequiredFields = requiredInternalFields.map((field) => decorate(field, true));
+
+    // Without an explicit template, every input field is enabled by default.
+    if (schema.metadataTemplate === undefined) {
+        return [...orderedRequiredFields, ...nonInternalInputFields.map((field) => decorate(field, true))];
+    }
+
+    // With a template, the listed fields are enabled (in template order) and the rest become opt-in.
+    const fieldsByName = new Map(nonInternalInputFields.map((field) => [field.name, field]));
+    const templateFieldNameSet = new Set(schema.metadataTemplate);
+    const templateFields = schema.metadataTemplate
+        .map((name) => fieldsByName.get(name))
+        .filter((field): field is InputField => field !== undefined);
+    const restFields = nonInternalInputFields.filter((field) => !templateFieldNameSet.has(field.name));
+
+    return [
+        ...orderedRequiredFields,
+        ...templateFields.map((field) => decorate(field, true)),
+        ...restFields.map((field) => decorate(field, false)),
+    ];
 }
 
 function getAccessionInputField(): InputField {
