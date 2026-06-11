@@ -63,6 +63,7 @@ fileSharing:
   outputFileUrlType: backend
 s3:
   enabled: true
+  gcDryRun: true # have garbage collection log instead of actually delete files
   maxOrphanAgeDays: 7
   bucket:
     region: us-east-1
