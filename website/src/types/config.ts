@@ -218,6 +218,12 @@ export const instanceConfig = z.object({
 });
 export type InstanceConfig = z.infer<typeof instanceConfig>;
 
+export const overviewConfig = instanceConfig.extend({
+    key: z.string(),
+    displayName: z.string(),
+});
+export type OverviewConfig = z.infer<typeof overviewConfig>;
+
 const logoConfig = z.object({
     url: z.string(),
     width: z.number(),
@@ -252,6 +258,7 @@ export type SeqSetGraph = z.infer<typeof seqSetGraph>;
 export const websiteConfig = z.object({
     accessionPrefix: z.string(),
     organisms: z.record(instanceConfig),
+    overview: overviewConfig.optional(),
     name: z.string(),
     logo: logoConfig,
     bannerMessage: z.string().optional(),

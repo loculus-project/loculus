@@ -1,0 +1,16 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region AY391777.1 1 30738
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=31631
+AY391777.1	Genbank	region	1	30738	.	+	.	ID=AY391777.1:1..30738;Dbxref=taxon:31631,ATCC:VR-759;gb-acronym=HCoV-OC43;gbkey=Src;isolate=OC43;mol_type=genomic RNA;note=prototype strain;strain=ATCC VR-759
+AY391777.1	Genbank	CDS	211	13332	.	+	0	Name=Rpp;gbkey=CDS;protein_id=AAR01012.1;ID=cds-AAR01012.1;Dbxref=NCBI_GP:AAR01012.1;exception=ribosomal slippage;product=replicase polyprotein;Note=translated via a -1 ribosomal frameshift%3B ORF 1a/1b
+AY391777.1	Genbank	CDS	13332	21497	.	+	0	Name=Rpp;gbkey=CDS;protein_id=AAR01012.1;ID=cds-AAR01012.1;Dbxref=NCBI_GP:AAR01012.1;exception=ribosomal slippage;product=replicase polyprotein;Note=translated via a -1 ribosomal frameshift%3B ORF 1a/1b
+AY391777.1	Genbank	CDS	21507	22343	.	+	0	Name=NS2a;gbkey=CDS;gene=NS2a;protein_id=AAR01013.1;product=NS2a protein;ID=cds-AAR01013.1;Dbxref=NCBI_GP:AAR01013.1
+AY391777.1	Genbank	CDS	22355	23629	.	+	0	Name=HE;gene=HE;gbkey=CDS;product=HE protein;protein_id=AAR01014.1;ID=cds-AAR01014.1;Dbxref=NCBI_GP:AAR01014.1
+AY391777.1	Genbank	CDS	23644	27729	.	+	0	Name=S;gene=S;gbkey=CDS;product=S protein;protein_id=AAR01015.1;ID=cds-AAR01015.1;Dbxref=NCBI_GP:AAR01015.1
+AY391777.1	Genbank	CDS	27817	28146	.	+	0	Name=NS2;gbkey=CDS;gene=NS2;protein_id=AAR01016.1;product=NS2 protein;ID=cds-AAR01016.1;Dbxref=NCBI_GP:AAR01016.1
+AY391777.1	Genbank	CDS	28133	28387	.	+	0	Name=NS3;gbkey=CDS;gene=NS3;protein_id=AAR01017.1;product=NS3 protein;ID=cds-AAR01017.1;Dbxref=NCBI_GP:AAR01017.1;Note=envelope protein%3B small membrane protein
+AY391777.1	Genbank	CDS	28402	29094	.	+	0	Name=M;gene=M;gbkey=CDS;product=M protein;protein_id=AAR01018.1;ID=cds-AAR01018.1;Dbxref=NCBI_GP:AAR01018.1
+AY391777.1	Genbank	CDS	29104	30450	.	+	0	Name=N;gene=N;gbkey=CDS;product=N protein;protein_id=AAR01019.1;ID=cds-AAR01019.1;Dbxref=NCBI_GP:AAR01019.1
+AY391777.1	Genbank	CDS	29441	29788	.	+	0	Name=N2;gene=N2;gbkey=CDS;product=N2 protein;protein_id=AAR01020.1;ID=cds-AAR01020.1;Dbxref=NCBI_GP:AAR01020.1

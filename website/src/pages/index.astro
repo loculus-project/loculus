@@ -1,31 +1,157 @@
 ---
-import Faq from '../components/IndexPage/FAQ.mdx';
 import OrganismCard from '../components/IndexPage/OrganismCard.astro';
-import WelcomeMessage from '../components/IndexPage/WelcomeMessage.astro';
 import { getOrganismStatisticsMap } from '../components/IndexPage/getOrganismStatistics';
-import { getConfiguredOrganisms, getWebsiteConfig } from '../config';
+import {
+    getConfiguredOrganisms,
+    getLapisUrl,
+    getOverviewConfig,
+    getOverviewSchema,
+    getRuntimeConfig,
+    overviewIsEnabled,
+} from '../config';
 import BaseLayout from '../layouts/BaseLayout.astro';
-const websiteConfig = getWebsiteConfig();
-const { name: websiteName, welcomeMessageHTML } = websiteConfig;
 import '../styles/mdcontainer.css';
+import { routes } from '../routes/routes';
+import { LapisClient } from '../services/lapisClient';
+import { IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../settings';
+import type { DetailsResponse, LapisBaseRequest } from '../types/lapis';
+import { versionStatuses } from '../types/lapis';
 
+type LandingStats = {
+    totalSequences?: number;
+    firstCollectionDate?: string;
+    lastCollectionDate?: string;
+};
+
+const DASHBOARD_URL = 'https://revseq.charlynebuerki.com/';
+const LAPIS_TIMEOUT_MS = 1200;
+const COLLECTION_DATE_FIELD = 'sampleCollectionDate';
 const numberDaysAgoStatistics = 30;
+const organisms = getConfiguredOrganisms();
+const organismCardContainerClass = `flex flex-wrap justify-center gap-x-5 gap-y-4 ${
+    organisms.length === 5 ? 'max-w-4xl' : ''
+}`;
+
 const organismStatisticsMap = await getOrganismStatisticsMap(
-    getConfiguredOrganisms().map((organism) => organism.key),
+    organisms.map((organism) => organism.key),
     numberDaysAgoStatistics,
 );
+
+const withTimeout = <T,>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
+    const timeout = new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms));
+    return Promise.race([promise, timeout]);
+};
+
+const hiddenFieldValues = {
+    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
+    [IS_REVOCATION_FIELD]: 'false',
+};
+
+const getBoundaryCollectionDate = async (
+    client: LapisClient,
+    direction: 'ascending' | 'descending',
+): Promise<string | undefined> =>
+    (
+        await client.call('details', {
+            ...hiddenFieldValues,
+            [`${COLLECTION_DATE_FIELD}From`]: '0001-01-01',
+            fields: [COLLECTION_DATE_FIELD],
+            limit: 1,
+            orderBy: [{ field: COLLECTION_DATE_FIELD, type: direction }],
+        } as unknown as LapisBaseRequest)
+    )
+        .map((response: DetailsResponse) => response.data[0]?.[COLLECTION_DATE_FIELD]?.toString())
+        .unwrapOr(undefined);
+
+const getLandingStats = async (): Promise<LandingStats> => {
+    if (!overviewIsEnabled()) {
+        return {};
+    }
+
+    const overview = getOverviewConfig();
+    const client = LapisClient.create(getLapisUrl(getRuntimeConfig().serverSide, overview.key), getOverviewSchema());
+
+    const [totalSequences, firstCollectionDate, lastCollectionDate] = await Promise.all([
+        (
+            await client.call('aggregated', {
+                ...hiddenFieldValues,
+            })
+        )
+            .map((response) => response.data[0]?.count)
+            .unwrapOr(undefined),
+        getBoundaryCollectionDate(client, 'ascending'),
+        getBoundaryCollectionDate(client, 'descending'),
+    ]);
+
+    return {
+        totalSequences,
+        firstCollectionDate,
+        lastCollectionDate,
+    };
+};
+
+const formatInteger = (value: number | undefined): string =>
+    value === undefined ? 'Unavailable' : value.toLocaleString('en');
+
+const formatMonthYear = (value: string | undefined): string => {
+    if (value === undefined || value.trim() === '') {
+        return 'Unavailable';
+    }
+
+    const [year, month] = value.split('-');
+    if (year === undefined || !/^\d{4}$/.test(year)) {
+        return value;
+    }
+    if (month === undefined) {
+        return year;
+    }
+
+    const monthNumber = Number.parseInt(month, 10);
+    if (Number.isNaN(monthNumber) || monthNumber < 1 || monthNumber > 12) {
+        return year;
+    }
+
+    return new Date(Date.UTC(Number.parseInt(year, 10), monthNumber - 1, 1)).toLocaleDateString('en', {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC',
+    });
+};
+
+const stats = await withTimeout(getLandingStats(), LAPIS_TIMEOUT_MS, {});
+const collectionRange =
+    stats.firstCollectionDate === undefined && stats.lastCollectionDate === undefined
+        ? 'Unavailable'
+        : `${formatMonthYear(stats.firstCollectionDate)} to ${formatMonthYear(stats.lastCollectionDate)}`;
 ---
 
 <BaseLayout title='Home'>
-    <div class='max-w-6xl mx-auto'>
-        <WelcomeMessage websiteName={websiteName} welcomeMessageHTML={welcomeMessageHTML} />
+    <div class='max-w-6xl mx-auto px-4'>
+        <section class='revseq-summary' aria-labelledby='revseq-title'>
+            <div class='summary-heading'>
+                <h1 id='revseq-title'>ReVSeq</h1>
+                <div class='summary-links'>
+                    <a href={routes.overviewPage()}>Overview</a>
+                    <a href={DASHBOARD_URL} target='_blank' rel='noreferrer'>Dashboard</a>
+                </div>
+            </div>
+
+            <dl class='summary-metrics'>
+                <div>
+                    <dt>Sequences</dt>
+                    <dd>{formatInteger(stats.totalSequences)}</dd>
+                </div>
+                <div class='date-range'>
+                    <dt>Collection dates</dt>
+                    <dd>{collectionRange}</dd>
+                </div>
+            </dl>
+        </section>
 
         <div class='flex justify-center'>
-            <div
-                class=`flex flex-wrap justify-center gap-x-5  gap-y-4 ${getConfiguredOrganisms().length ===5 ? "max-w-4xl" : ""}`
-            >
+            <div class={organismCardContainerClass}>
                 {
-                    getConfiguredOrganisms().map(({ key, displayName, image }) => (
+                    organisms.map(({ key, displayName, image }) => (
                         <OrganismCard
                             key={key}
                             image={image}
@@ -37,8 +163,104 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
                 }
             </div>
         </div>
-        <div class='mdContainer'>
-            <Faq />
-        </div>
     </div>
 </BaseLayout>
+
+<style>
+    .revseq-summary {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+        gap: 1rem;
+        align-items: stretch;
+        border: 1px solid #d9e0e8;
+        border-radius: 8px;
+        margin: 2rem auto 1.75rem;
+        padding: 1rem;
+        background: #fff;
+    }
+
+    .summary-heading {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+
+    h1 {
+        margin: 0;
+        color: #111827;
+        font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+        font-size: 2.6rem;
+        font-weight: 800;
+        letter-spacing: 0;
+        line-height: 1;
+    }
+
+    .summary-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .summary-links a {
+        display: inline-flex;
+        min-height: 2.25rem;
+        align-items: center;
+        border: 1px solid #b9c4d4;
+        border-radius: 6px;
+        padding: 0.35rem 0.75rem;
+        color: #12355b;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .summary-links a:first-child {
+        border-color: #12355b;
+        background: #12355b;
+        color: #fff;
+    }
+
+    .summary-metrics {
+        display: grid;
+        grid-template-columns: minmax(8rem, 1fr) minmax(13rem, 1.4fr);
+        gap: 0.75rem;
+        margin: 0;
+    }
+
+    .summary-metrics div {
+        min-width: 0;
+        border: 1px solid #e4e9ef;
+        border-radius: 6px;
+        background: #f8fafc;
+        padding: 0.75rem;
+    }
+
+    .summary-metrics dt {
+        color: #64748b;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .summary-metrics dd {
+        margin: 0.25rem 0 0;
+        color: #0f172a;
+        font-size: 1.45rem;
+        font-weight: 800;
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+    }
+
+    .summary-metrics .date-range dd {
+        font-size: 1rem;
+        line-height: 1.3;
+    }
+
+    @media (max-width: 860px) {
+        .revseq-summary,
+        .summary-metrics {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

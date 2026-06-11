@@ -39,3 +39,28 @@ data:
   reference_genomes.json: |
     {{ include "loculus.mergeReferenceGenomes" $organismContent.referenceGenomes | fromYaml | toJson }}
 {{- end }}
+{{- if and .Values.overview .Values.overview.enabled }}
+{{- $overviewReferenceGenomes := .Values.overview.referenceGenomes | default (list) }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lapis-silo-database-config-{{ .Values.overview.key }}
+data:
+  {{- $args := dict
+    "schema" (.Values.overview.schema | include "loculus.patchMetadataSchema" | fromYaml)
+    "commonMetadata" $commonMetadata
+    "referenceGenomes" $overviewReferenceGenomes
+  }}
+  database_config.yaml: |
+    {{ include "loculus.siloDatabaseConfig" $args | nindent 4 }}
+
+  preprocessing_config.yaml: |
+    inputDirectory: /preprocessing/input
+    outputDirectory: /preprocessing/output
+    ndjsonInputFilename: data.ndjson.zst
+    referenceGenomeFilename: reference_genomes.json
+
+  reference_genomes.json: |
+    {{ include "loculus.mergeReferenceGenomes" $overviewReferenceGenomes | fromYaml | toJson }}
+{{- end }}

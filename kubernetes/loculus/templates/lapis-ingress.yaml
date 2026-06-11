@@ -6,6 +6,9 @@
 {{- range $_, $item := $enabledOrganismsList -}}
   {{- $organismKeys = append $organismKeys $item.key -}}
 {{- end -}}
+{{- if and $.Values.overview $.Values.overview.enabled -}}
+  {{- $organismKeys = append $organismKeys $.Values.overview.key -}}
+{{- end -}}
 apiVersion: {{ $traefikApiVersion }}
 kind: Middleware
 metadata:

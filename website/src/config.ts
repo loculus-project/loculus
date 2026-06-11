@@ -7,6 +7,7 @@ import { ACCESSION_FIELD, FASTA_IDS_FIELD, SUBMISSION_ID_INPUT_FIELD } from './s
 import {
     type InputField,
     type InstanceConfig,
+    type OverviewConfig,
     type Schema,
     type SequenceFlaggingConfig,
     type WebsiteConfig,
@@ -135,6 +136,18 @@ export function getConfiguredOrganisms() {
     return configuredOrganismsFromConfig(getWebsiteConfig());
 }
 
+export function overviewIsEnabled(): boolean {
+    return getWebsiteConfig().overview !== undefined;
+}
+
+export function getOverviewConfig(): OverviewConfig {
+    const overview = getWebsiteConfig().overview;
+    if (overview === undefined) {
+        throw new Error('No overview configuration found');
+    }
+    return overview;
+}
+
 function getConfig(organism: string): InstanceConfig {
     const websiteConfig = getWebsiteConfig();
     if (!(organism in websiteConfig.organisms)) {
@@ -149,6 +162,10 @@ export function outputFilesEnabled(organism: string): boolean {
 
 export function getSchema(organism: string): Schema {
     return getConfig(organism).schema;
+}
+
+export function getOverviewSchema(): Schema {
+    return getOverviewConfig().schema;
 }
 
 export function getMetadataTemplateFields(
@@ -247,6 +264,10 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
 
 export function getReferenceGenomes(organism: string): ReferenceGenomesInfo {
     return toReferenceGenomes(getConfig(organism).referenceGenomes);
+}
+
+export function getOverviewReferenceGenomes(): ReferenceGenomesInfo {
+    return toReferenceGenomes(getOverviewConfig().referenceGenomes);
 }
 
 export function seqSetsAreEnabled() {

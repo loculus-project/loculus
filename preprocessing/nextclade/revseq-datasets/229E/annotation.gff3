@@ -1,0 +1,15 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region NC_002645.1 1 27317
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=11137
+NC_002645.1	RefSeq	region	1	27317	.	+	.	ID=NC_002645.1:1..27317;Dbxref=taxon:11137;clone=inf-1;gbkey=Src;genome=genomic;mol_type=genomic RNA
+NC_002645.1	RefSeq	CDS	293	12520	.	+	0	Name=pp1ab;gbkey=CDS;locus_tag=HCoV229Egp1;protein_id=NP_073549.1;ID=cds-NP_073549.1;product=replicase polyprotein 1ab;Dbxref=GenBank:NP_073549.1,GeneID:918764
+NC_002645.1	RefSeq	CDS	12520	20568	.	+	0	Name=pp1ab;gbkey=CDS;locus_tag=HCoV229Egp1;protein_id=NP_073549.1;ID=cds-NP_073549.1;product=replicase polyprotein 1ab;Dbxref=GenBank:NP_073549.1,GeneID:918764
+NC_002645.1	RefSeq	CDS	293	12550	.	+	0	Name=pp1a;gbkey=CDS;locus_tag=HCoV229Egp1;protein_id=NP_073550.1;ID=cds-NP_073550.1;product=replicase polyprotein 1a;Dbxref=GenBank:NP_073550.1,GeneID:918764
+NC_002645.1	RefSeq	CDS	20570	24091	.	+	0	Name=S;gene=S;gbkey=CDS;locus_tag=HCoV229Egp2;protein_id=NP_073551.1;ID=cds-NP_073551.1;product=surface glycoprotein;Dbxref=GenBank:NP_073551.1,GeneID:918758
+NC_002645.1	RefSeq	CDS	24091	24492	.	+	0	Name=4a;gene=4a;gbkey=CDS;product=4a protein;locus_tag=HCoV229Egp3;protein_id=NP_073552.1;ID=cds-NP_073552.1;Dbxref=GenBank:NP_073552.1,GeneID:918759
+NC_002645.1	RefSeq	CDS	24482	24748	.	+	0	Name=4b;gene=4b;gbkey=CDS;product=4b protein;locus_tag=HCoV229Egp4;protein_id=NP_073553.1;ID=cds-NP_073553.1;Dbxref=GenBank:NP_073553.1,GeneID:918760
+NC_002645.1	RefSeq	CDS	24750	24983	.	+	0	Name=E;gene=E;gbkey=CDS;locus_tag=HCoV229Egp5;protein_id=NP_073554.1;ID=cds-NP_073554.1;product=envelope protein;Note=structural protein%3B E protein;Dbxref=GenBank:NP_073554.1,GeneID:918761
+NC_002645.1	RefSeq	CDS	24995	25672	.	+	0	Name=M;gene=M;gbkey=CDS;locus_tag=HCoV229Egp6;protein_id=NP_073555.1;ID=cds-NP_073555.1;product=membrane protein;Dbxref=GenBank:NP_073555.1,GeneID:918762
+NC_002645.1	RefSeq	CDS	25686	26855	.	+	0	Name=N;gene=N;gbkey=CDS;locus_tag=HCoV229Egp7;protein_id=NP_073556.1;ID=cds-NP_073556.1;product=nucleocapsid protein;Dbxref=GenBank:NP_073556.1,GeneID:918763

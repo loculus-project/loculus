@@ -1,0 +1,53 @@
+{ "schemaVersion": "3.0.0",
+  "files": {
+    "reference": "reference.fasta",
+    "pathogenJson": "pathogen.json",
+    "genomeAnnotation": "annotation.gff3"
+
+  },
+  "attributes": {
+    "name": "Parainfluenza 2",
+    "reference name": "Parainfluenza 2, complete sequence",
+    "reference accession": "NC_003443.1"
+  },
+  "alignmentParams": {
+    "minSeedCover": 0.1
+
+  },
+  "qc": {
+    "schemaVersion": "1.2.0",
+    "missingData": {
+      "enabled": true,
+      "missingDataThreshold": 3000,
+      "scoreBias": 500,
+      "scoreWeight": 50
+    },
+    "snpClusters": {
+      "enabled": true,
+      "windowSize": 100,
+      "clusterCutOff": 8,
+      "scoreWeight": 50
+    },
+    "mixedSites": {
+      "enabled": true,
+      "mixedSitesThreshold": 15,
+      "scoreWeight": 50
+    },
+    "frameShifts": {
+      "enabled": true,
+      "scoreWeight": 20
+    },
+    "stopCodons": {
+      "enabled": true,
+      "scoreWeight": 50
+    },
+    "privateMutations": {
+        "enabled": true,
+        "typical": 8,
+        "cutoff": 100,
+        "weightLabeledSubstitutions": 4,
+        "weightReversionSubstitutions": 6,
+        "weightUnlabeledSubstitutions": 1
+    }
+  }
+}

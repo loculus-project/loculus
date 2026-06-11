@@ -48,6 +48,7 @@ type TableProps = {
     setOrderByField: (field: string) => void;
     setOrderDirection: (direction: OrderDirection) => void;
     columnsToShow: string[];
+    enableSequencePreview?: boolean;
 };
 
 const getColumnWidthStyle = (columnWidth: number | undefined) =>
@@ -100,6 +101,7 @@ export const Table: FC<TableProps> = ({
     setOrderByField,
     setOrderDirection,
     columnsToShow,
+    enableSequencePreview = true,
 }) => {
     const primaryKey = schema.primaryKey;
 
@@ -166,9 +168,11 @@ export const Table: FC<TableProps> = ({
         if (e.button === 0) {
             const screenWidth = window.screen.width;
 
-            if (!e.ctrlKey && !e.metaKey && screenWidth > 1024 && !detectMob()) {
+            if (enableSequencePreview && !e.ctrlKey && !e.metaKey && screenWidth > 1024 && !detectMob()) {
                 e.preventDefault();
                 setPreviewedSeqId(seqId);
+            } else if (!e.ctrlKey && !e.metaKey) {
+                window.location.href = routes.sequenceEntryDetailsPage(seqId);
             } else {
                 window.open(routes.sequenceEntryDetailsPage(seqId));
             }
@@ -296,8 +300,12 @@ export const Table: FC<TableProps> = ({
                                         <a
                                             href={routes.sequenceEntryDetailsPage(row[primaryKey] as string)}
                                             className='text-primary-900 hover:text-primary-800 hover:no-underline'
-                                            onClick={(e) => e.preventDefault()}
-                                            onAuxClick={(e) => e.preventDefault()}
+                                            onClick={(e) => {
+                                                if (enableSequencePreview) e.preventDefault();
+                                            }}
+                                            onAuxClick={(e) => {
+                                                if (enableSequencePreview) e.preventDefault();
+                                            }}
                                         >
                                             {row[primaryKey]}
                                         </a>

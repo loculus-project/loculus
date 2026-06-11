@@ -727,6 +727,8 @@ class ProcessingFunctions:
 
         formats_to_messages = {
             "%Y-%m-%d": None,
+            "%d-%b-%Y": None,
+            "%b-%Y": "Day is missing. Assuming the 1st.",
             "%Y-%m": "Day is missing. Assuming the 1st.",
             "%Y": "Month and day are missing. Assuming January 1st.",
         }
@@ -738,9 +740,9 @@ class ProcessingFunctions:
             try:
                 parsed_date = datetime.strptime(date_str, format).replace(tzinfo=pytz.utc)
                 match format:
-                    case "%Y-%m-%d":
+                    case "%Y-%m-%d" | "%d-%b-%Y":
                         datum = parsed_date.strftime("%Y-%m-%d")
-                    case "%Y-%m":
+                    case "%Y-%m" | "%b-%Y":
                         datum = f"{parsed_date.strftime('%Y-%m')}-01"
                     case "%Y":
                         datum = f"{parsed_date.strftime('%Y')}-01-01"
@@ -1268,6 +1270,12 @@ class ProcessingFunctions:
         errors: list[ProcessingAnnotation] = []
         output_datum: ProcessedMetadataValue
         if args and "type" in args:
+            if (
+                args["type"] in {"int", "float"}
+                and isinstance(input_datum, str)
+                and input_datum.strip().lower() in {"none", "null"}
+            ):
+                return ProcessingResult(datum=None, warnings=[], errors=[])
             match args["type"]:
                 case "int":
                     try:
@@ -1303,6 +1311,10 @@ class ProcessingFunctions:
                                 input_datum, output_field, input_fields, "boolean"
                             )
                         )
+                case "date":
+                    return ProcessingFunctions.parse_and_assert_past_date(
+                        {"date": input_datum}, output_field, input_fields, args
+                    )
                 case _:
                     if isinstance(input_datum, str):
                         output_datum = input_datum.strip()

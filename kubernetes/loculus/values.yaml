@@ -43,6 +43,37 @@ siloImport:
   siloTimeoutSeconds: 3600
   hardRefreshIntervalSeconds: 3600
   pollIntervalSeconds: 30
+overview:
+  enabled: false
+  key: overview
+  displayName: Overview
+  referenceGenomes: []
+  cladeFieldCandidates: {}
+  schema:
+    organismName: Overview
+    submissionDataTypes:
+      consensusSequences: false
+      files:
+        enabled: false
+        categories: []
+    metadata: []
+    website:
+      tableColumns:
+        - organism
+        - accessionVersion
+      defaultOrderBy: releasedAtTimestamp
+      defaultOrder: descending
+revseqSeed:
+  enabled: false
+  image: python:3.12-slim
+  imagePullPolicy: IfNotPresent
+  rawBaseUrl: https://raw.githubusercontent.com/loculus-project/loculus
+  username: testuser
+  password: testuser
+  groupName: ReVSeq preview data
+  pollSeconds: 1800
+  activeDeadlineSeconds: 2400
+  backoffLimit: 2
 ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600

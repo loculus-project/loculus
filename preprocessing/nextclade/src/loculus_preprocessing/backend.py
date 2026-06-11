@@ -17,6 +17,7 @@ import requests
 
 from .config import Config
 from .datatypes import (
+    FileIdAndName,
     FileUploadInfo,
     ProcessedEntry,
     UnprocessedData,
@@ -102,6 +103,16 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
             if unaligned_nucleotide_sequences
             else {},
+            files={
+                category: [
+                    FileIdAndName(fileId=file["fileId"], name=file["name"])
+                    for file in submitted_files
+                ]
+                for category, submitted_files in (
+                    json_object["data"].get("files") or {}
+                ).items()
+            }
+            or None,
         )
         entry = UnprocessedEntry(
             accessionVersion=f"{json_object['accession']}.{json_object['version']}",

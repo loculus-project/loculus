@@ -1,0 +1,59 @@
+{{- if .Values.revseqSeed.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-revseq-seed-script
+data:
+  seed.py: |
+{{ .Files.Get "files/revseq-seed-preview.py" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: loculus-revseq-seed
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: {{ .Values.revseqSeed.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.revseqSeed.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: revseq-seed
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: revseq-seed
+          image: {{ .Values.revseqSeed.image }}
+          imagePullPolicy: {{ .Values.revseqSeed.imagePullPolicy }}
+          args:
+            - python
+            - /seed/seed.py
+            - --backend-url
+            - http://loculus-backend-service:8079
+            - --keycloak-token-url
+            - http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token
+            - --raw-base-url
+            - {{ .Values.revseqSeed.rawBaseUrl | quote }}
+            - --raw-branch
+            - {{ .Values.revseqSeed.rawBranch | default .Values.branch | quote }}
+            - --username
+            - {{ .Values.revseqSeed.username | quote }}
+            - --password
+            - {{ .Values.revseqSeed.password | quote }}
+            - --group-name
+            - {{ .Values.revseqSeed.groupName | quote }}
+            - --poll-seconds
+            - {{ .Values.revseqSeed.pollSeconds | quote }}
+          volumeMounts:
+            - name: seed-script
+              mountPath: /seed/seed.py
+              subPath: seed.py
+      volumes:
+        - name: seed-script
+          configMap:
+            name: loculus-revseq-seed-script
+{{- end }}

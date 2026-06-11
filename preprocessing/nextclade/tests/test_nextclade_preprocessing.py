@@ -25,13 +25,19 @@ from loculus_preprocessing.config import (
     get_processing_order,
 )
 from loculus_preprocessing.datatypes import (
+    Alert,
     AnnotationSourceType,
+    FileIdAndName,
+    ProcessingAnnotation,
+    ProcessingAnnotationAlignment,
     SegmentClassificationMethod,
+    SequenceAssignmentBatch,
     SubmissionData,
     UnprocessedData,
     UnprocessedEntry,
 )
 from loculus_preprocessing.embl import create_flatfile, reformat_authors_from_loculus_to_embl_style
+from loculus_preprocessing.nextclade import alignment_requirement_alerts
 from loculus_preprocessing.prepro import get_nested_metadata, process_all
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
@@ -48,6 +54,7 @@ MULTI_SEGMENT_CONFIG_UNALIGNED = "tests/multi_segment_config_unaligned.yaml"
 MULTI_REFERENCE_CONFIG = "tests/multi_reference_config.yaml"
 MULTI_SEGMENT_MULTI_REFERENCE_CONFIG = "tests/multi_segment_multi_reference.yaml"
 EMBL_METADATA = "tests/embl_required_metadata.yaml"
+NO_ALIGNMENT_CONFIG = "tests/no_alignment_config.yaml"
 
 EBOLA_SUDAN_DATASET = "tests/ebola-dataset/ebola-sudan"
 EBOLA_ZAIRE_DATASET = "tests/ebola-dataset/ebola-zaire"
@@ -76,6 +83,44 @@ def test_get_nested_metadata_uses_simple_dot_paths():
     ]
     assert get_nested_metadata(metadata, "qc.missing.total") is None
     assert get_nested_metadata(metadata, "coverage.value") is None
+
+
+def test_alignment_requirement_any_demotes_partial_assignment_errors_to_warnings():
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.alignment_requirement = AlignmentRequirement.ANY
+    accession_version = "LOC_1.1"
+    assignment_error = ProcessingAnnotation.from_single(
+        ProcessingAnnotationAlignment,
+        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+        message="Sequence failed segment assignment",
+    )
+    batch = SequenceAssignmentBatch()
+    batch.unalignedNucleotideSequences[accession_version] = {"seg1": "ACGT"}
+    batch.alerts[accession_version] = Alert(errors=[assignment_error])
+
+    alert = alignment_requirement_alerts(config, batch, accession_version, [])
+
+    assert alert.errors == []
+    assert alert.warnings == [assignment_error]
+
+
+def test_alignment_requirement_any_keeps_assignment_errors_when_no_sequence_matches():
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.alignment_requirement = AlignmentRequirement.ANY
+    accession_version = "LOC_1.1"
+    assignment_error = ProcessingAnnotation.from_single(
+        ProcessingAnnotationAlignment,
+        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+        message="Sequence failed segment assignment",
+    )
+    batch = SequenceAssignmentBatch()
+    batch.unalignedNucleotideSequences[accession_version] = {}
+    batch.alerts[accession_version] = Alert(errors=[assignment_error])
+
+    alert = alignment_requirement_alerts(config, batch, accession_version, [])
+
+    assert alert.errors == [assignment_error]
+    assert alert.warnings == []
 
     metadata_with_zero = {"qc": {"score": 0}}
     assert get_nested_metadata(metadata_with_zero, "qc.score") == 0
@@ -207,7 +252,7 @@ single_segment_case_definitions = [
             "totalSnps": 1,
             "totalDeletedNucs": 0,
             "length": len(consensus_sequence("single")),
-            "nonExistentField": "None",
+            "nonExistentField": None,
             "variant": True,
         },
         expected_errors=[],
@@ -235,7 +280,7 @@ single_segment_case_definitions = [
             "totalSnps": 0,
             "totalDeletedNucs": 0,
             "length": len(sequence_with_insertion("single")),
-            "nonExistentField": "None",
+            "nonExistentField": None,
             "variant": False,
         },
         expected_errors=[],
@@ -263,7 +308,7 @@ single_segment_case_definitions = [
             "totalSnps": 0,
             "totalDeletedNucs": 3,
             "length": len(consensus_sequence("single")) - 3,
-            "nonExistentField": "None",
+            "nonExistentField": None,
             "variant": False,
         },
         expected_errors=[],
@@ -941,8 +986,7 @@ multi_segment_case_definitions_any_requirement_align_classification = [
             "totalDeletedNucs_ebola-zaire": 0,
             "length_ebola-zaire": len(consensus_sequence("ebola-zaire")),
         },
-        expected_warnings=[],
-        expected_errors=build_processing_annotations(
+        expected_warnings=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence with fasta id fastaHeader1 does not match any reference for "
@@ -951,6 +995,7 @@ multi_segment_case_definitions_any_requirement_align_classification = [
                 )
             ]
         ),
+        expected_errors=[],
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
@@ -1316,6 +1361,30 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
         e for e in good_result.processed_entry.errors if "maximum allowed" in e.message
     ]
     assert len(good_max_errors) == 0
+
+
+def test_submitted_files_are_preserved_in_processed_data() -> None:
+    config = get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
+    config.processing_spec = {}
+    config.processing_order = ()
+    sequence_entry_data = UnprocessedEntry(
+        accessionVersion="LOC_01.1",
+        data=UnprocessedData(
+            group_id=2,
+            submitter="test_submitter",
+            submissionId="test_submission_id",
+            submittedAt=ts_from_ymd(2021, 12, 15),
+            metadata={},
+            unalignedNucleotideSequences={"main": "ACGT"},
+            files={"cram": [FileIdAndName(fileId="file-1", name="sample.cram")]},
+        ),
+    )
+
+    result = process_all([sequence_entry_data], "unused", config)
+
+    assert result[0].processed_entry.data.files == {
+        "cram": [FileIdAndName(fileId="file-1", name="sample.cram")]
+    }
 
 
 def test_preprocessing_without_metadata() -> None:

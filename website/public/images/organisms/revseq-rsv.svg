@@ -1,0 +1,13 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="RSV filament illustration">
+  <rect width="640" height="420" fill="#f8fafc"/>
+  <path d="M116 238c88-118 194 110 298-8 42-48 78-74 120-48" fill="none" stroke="#0f766e" stroke-linecap="round" stroke-width="46"/>
+  <path d="M116 238c88-118 194 110 298-8 42-48 78-74 120-48" fill="none" stroke="#ccfbf1" stroke-linecap="round" stroke-width="24"/>
+  <g stroke="#14b8a6" stroke-linecap="round" stroke-width="14">
+    <path d="M152 196v-48"/>
+    <path d="M232 222v-48"/>
+    <path d="M318 262v48"/>
+    <path d="M408 218v-48"/>
+    <path d="M500 178v-48"/>
+  </g>
+</svg>

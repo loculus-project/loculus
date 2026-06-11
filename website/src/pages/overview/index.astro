@@ -1,0 +1,66 @@
+---
+import { SearchFullUI } from '../../components/SearchPage/SearchFullUI';
+import {
+    getContactConfig,
+    getOverviewConfig,
+    getOverviewReferenceGenomes,
+    getOverviewSchema,
+    getRuntimeConfig,
+    getWebsiteConfig,
+    overviewIsEnabled,
+} from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings';
+import { versionStatuses } from '../../types/lapis';
+import { parseUrlSearchParams } from '../../utils/parseUrlSearchParams';
+import { performLapisSearchQueries } from '../../utils/serversideSearch';
+
+if (!overviewIsEnabled()) {
+    return {
+        statusCode: 404,
+        body: 'Overview not found',
+    };
+}
+
+const hiddenFieldValues = {
+    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
+    [IS_REVOCATION_FIELD]: 'false',
+};
+
+const overview = getOverviewConfig();
+const clientConfig = getRuntimeConfig().public;
+const schema = getOverviewSchema();
+const referenceGenomesInfo = getOverviewReferenceGenomes();
+const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
+const { data, totalCount } = await performLapisSearchQueries(
+    initialQueryDict,
+    schema,
+    referenceGenomesInfo,
+    hiddenFieldValues,
+    overview.key,
+);
+
+const websiteConfig = getWebsiteConfig();
+const contactConfig = getContactConfig(websiteConfig);
+---
+
+<BaseLayout title={`${overview.displayName} - Browse`} fullWidth withoutMargin>
+    <SearchFullUI
+        client:load
+        clientConfig={clientConfig}
+        organism={overview.key}
+        schema={schema}
+        myGroups={[]}
+        accessToken={undefined}
+        referenceGenomesInfo={referenceGenomesInfo}
+        hiddenFieldValues={hiddenFieldValues}
+        initialData={data}
+        initialCount={totalCount}
+        initialQueryDict={initialQueryDict}
+        dataUseTermsEnabled={false}
+        contactConfig={contactConfig}
+        isReleasedPage={false}
+        enableSequencePreview={false}
+        showRecentSequencesBanner={false}
+    />
+</BaseLayout>

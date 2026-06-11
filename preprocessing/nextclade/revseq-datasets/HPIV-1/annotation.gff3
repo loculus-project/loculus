@@ -1,0 +1,16 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region NC_003461.1 1 15600
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=12730
+NC_003461.1	RefSeq	region	1	15600	.	+	.	ID=NC_003461.1:1..15600;Dbxref=taxon:12730;gbkey=Src;genome=genomic;mol_type=genomic RNA;old-name=Human parainfluenza virus 1;strain=Washington 1964
+NC_003461.1	RefSeq	CDS	120	1694	.	+	0	Name=N;gene=N;gbkey=CDS;locus_tag=Hpv1gp01;protein_id=NP_604433.1;product=nucleoprotein;ID=cds-NP_604433.1;Dbxref=GenBank:NP_604433.1,GeneID:935258
+NC_003461.1	RefSeq	CDS	1844	3550	.	+	0	Name=P;gene=P;gbkey=CDS;locus_tag=Hpv1gp02;protein_id=NP_604435.1;product=phosphoprotein;ID=cds-NP_604435.1;Dbxref=GenBank:NP_604435.1,GeneID:935260
+NC_003461.1	RefSeq	CDS	1809	2468	.	+	0	Name=Cp;gene=C';gbkey=CDS;locus_tag=Hpv1gp03;product=C' protein;protein_id=NP_604434.1;ID=cds-NP_604434.1;transl_except=(pos:1809..1811%2Caa:Met);Dbxref=GenBank:NP_604434.1,GeneID:935259
+NC_003461.1	RefSeq	CDS	1854	2468	.	+	0	Name=C;gene=C;gbkey=CDS;locus_tag=Hpv1gp04;product=C protein;protein_id=NP_604436.1;ID=cds-NP_604436.1;Dbxref=GenBank:NP_604436.1,GeneID:935261
+NC_003461.1	RefSeq	CDS	1923	2468	.	+	0	Name=Y1;gene=Y1;gbkey=CDS;locus_tag=Hpv1gp05;product=Y1 protein;protein_id=NP_604437.1;ID=cds-NP_604437.1;Dbxref=GenBank:NP_604437.1,GeneID:935262;Note=expressed via a ribosomal shunting mechanism
+NC_003461.1	RefSeq	CDS	1941	2468	.	+	0	Name=Y2;gene=Y2;gbkey=CDS;locus_tag=Hpv1gp06;protein_id=NP_604438.1;ID=cds-NP_604438.1;product=putative Y2 protein;transl_except=(pos:1941..1943%2Caa:Met);Dbxref=GenBank:NP_604438.1,GeneID:935263;Note=expressed via a ribosomal shunting mechanism
+NC_003461.1	RefSeq	CDS	3669	4715	.	+	0	Name=M;gene=M;gbkey=CDS;locus_tag=Hpv1gp07;protein_id=NP_604439.1;product=matrix protein;ID=cds-NP_604439.1;Dbxref=GenBank:NP_604439.1,GeneID:935264
+NC_003461.1	RefSeq	CDS	5088	6755	.	+	0	Name=F;gene=F;gbkey=CDS;locus_tag=Hpv1gp08;protein_id=NP_604440.1;product=F glycoprotein;ID=cds-NP_604440.1;Dbxref=GenBank:NP_604440.1,GeneID:935265
+NC_003461.1	RefSeq	CDS	6903	8630	.	+	0	Name=HN;gene=HN;gbkey=CDS;locus_tag=Hpv1gp09;protein_id=NP_604441.1;ID=cds-NP_604441.1;product=HN glycoprotein;Note=major antigenic determinant;Dbxref=GenBank:NP_604441.1,GeneID:935266
+NC_003461.1	RefSeq	CDS	8772	15443	.	+	0	Name=L;gene=L;gbkey=CDS;locus_tag=Hpv1gp10;protein_id=NP_604442.1;ID=cds-NP_604442.1;product=L polymerase protein;Dbxref=GenBank:NP_604442.1,GeneID:935267

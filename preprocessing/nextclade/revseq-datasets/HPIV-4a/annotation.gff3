@@ -1,0 +1,12 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region NC_021928.1 1 17052
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=11224
+NC_021928.1	RefSeq	region	1	17052	.	+	.	ID=NC_021928.1:1..17052;Dbxref=taxon:11224;collected-by=Fumio Nishikawa;country=Japan;gbkey=Src;genome=genomic;identified-by=Fumio Nishikawa;mol_type=genomic RNA;strain=M-25
+NC_021928.1	RefSeq	CDS	101	1756	.	+	0	Name=NP;gene=NP;gbkey=CDS;locus_tag=N696_gp3;protein_id=YP_008378659.1;ID=cds-YP_008378659.1;product=nucleocapsid protein;Dbxref=GenBank:YP_008378659.1,GeneID:16488737
+NC_021928.1	RefSeq	CDS	2041	2730	.	+	0	Name=V;gene=V;gbkey=CDS;locus_tag=N696_gp1;protein_id=YP_008378661.1;ID=cds-YP_008378661.1;product=non-structural protein V;Dbxref=GenBank:YP_008378661.1,GeneID:16488735
+NC_021928.1	RefSeq	CDS	3531	4679	.	+	0	Name=M;gene=M;gbkey=CDS;locus_tag=N696_gp4;product=matrix protein;protein_id=YP_008378662.1;ID=cds-YP_008378662.1;Dbxref=GenBank:YP_008378662.1,GeneID:16488736
+NC_021928.1	RefSeq	CDS	5174	6805	.	+	0	Name=F;gene=F;gbkey=CDS;locus_tag=N696_gp5;product=fusion protein;protein_id=YP_008378663.1;ID=cds-YP_008378663.1;Dbxref=GenBank:YP_008378663.1,GeneID:16488733
+NC_021928.1	RefSeq	CDS	7522	9246	.	+	0	Name=HN;gene=HN;gbkey=CDS;locus_tag=N696_gp6;protein_id=YP_008378664.1;ID=cds-YP_008378664.1;product=hemagglutinin-neuraminidase;Dbxref=GenBank:YP_008378664.1,GeneID:16488731
+NC_021928.1	RefSeq	CDS	9986	16825	.	+	0	Name=L;gene=L;gbkey=CDS;locus_tag=N696_gp7;product=large protein;protein_id=YP_008378665.1;ID=cds-YP_008378665.1;Dbxref=GenBank:YP_008378665.1,GeneID:16488732
