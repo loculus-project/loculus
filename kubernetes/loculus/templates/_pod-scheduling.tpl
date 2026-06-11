@@ -3,16 +3,16 @@ Pod scheduling configuration (nodeSelector, tolerations, affinity).
 Allows pods to be scheduled on specific node pools with custom taints.
 */}}
 {{- define "loculus.podScheduling" -}}
-{{- if .Values.nodeSelector }}
+{{- if .Values.podScheduling.nodeSelector }}
 nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 2 }}
+{{ toYaml .Values.podScheduling.nodeSelector | indent 2 }}
 {{- end }}
-{{- if .Values.tolerations }}
+{{- if .Values.podScheduling.tolerations }}
 tolerations:
-{{ toYaml .Values.tolerations | indent 2 }}
+{{ toYaml .Values.podScheduling.tolerations | indent 2 }}
 {{- end }}
-{{- if .Values.affinity }}
+{{- if .Values.podScheduling.affinity }}
 affinity:
-{{ toYaml .Values.affinity | indent 2 }}
+{{ toYaml .Values.podScheduling.affinity | indent 2 }}
 {{- end }}
 {{- end -}}

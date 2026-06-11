@@ -1,10 +1,11 @@
 environment: server
 imagePullPolicy: Always
 
-# Pod scheduling: nodeSelector, tolerations, and affinity for pod placement
-nodeSelector: {}
-tolerations: []
-affinity: {}
+# Pod scheduling: nodeSelector, tolerations, affinity, and priority class for pod placement
+podScheduling:
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
 
 localHost: localhost
 robotsNoindexHeader: false
