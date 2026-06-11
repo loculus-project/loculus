@@ -26,6 +26,7 @@ class S3GarbageCollectionTask(
     private val dateProvider: DateProvider,
     private val auditLogger: AuditLogger,
     @Value("\${${BackendSpringProperty.S3_MAX_ORPHAN_AGE_DAYS}}") private val maxOrphanAge: Int,
+    @Value("\${${BackendSpringProperty.S3_GC_DRY_RUN}}") private val dryRun: Boolean,
 ) {
 
     /**
@@ -34,15 +35,23 @@ class S3GarbageCollectionTask(
      */
     @Scheduled(initialDelay = 15, fixedDelay = 60 * 24, timeUnit = TimeUnit.MINUTES)
     fun task() {
-        // `maxOrphanAge` must be at least 1 or files produced by preprocessing will be
+        // `maxOrphanAge` must be at least 1 or files produced by preprocessing may be
         // garbage collected before they're attached to sequence entries
         val maxOrphanAge = max(maxOrphanAge, 1)
-        log.info { "Running S3 garbage collection task to clean up orphan files at least $maxOrphanAge days old" }
+        log.info {
+            "Running S3 garbage collection task to clean up orphan files at least $maxOrphanAge " +
+                "days old (dry run = $dryRun)"
+        }
 
         val threshold = dateProvider.getCurrentInstant()
             .minus(maxOrphanAge, DateTimeUnit.DAY, DateProvider.timeZone)
             .toLocalDateTime(DateProvider.timeZone)
         val orphans = filesDatabaseService.getOrphanedFileIds(threshold)
+
+        if (dryRun) {
+            log.info { "S3 garbage collection task would have deleted ${orphans.size} files: $orphans" }
+            return
+        }
 
         var deleteFailures = 0
         orphans.forEach { fileId: UUID ->

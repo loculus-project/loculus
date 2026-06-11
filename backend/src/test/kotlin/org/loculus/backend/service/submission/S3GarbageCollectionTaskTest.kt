@@ -16,6 +16,7 @@ import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.daysAgo
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
@@ -27,6 +28,7 @@ import java.util.UUID
 @EndpointTest(
     properties = [
         "${BackendSpringProperty.S3_ENABLED}=true",
+        "${BackendSpringProperty.S3_GC_DRY_RUN}=true",
         "${BackendSpringProperty.S3_MAX_ORPHAN_AGE_DAYS}=1",
     ],
 )
@@ -35,9 +37,24 @@ class S3GarbageCollectionTaskTest(
     @Autowired val filesDatabaseService: FilesDatabaseService,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
     @Autowired val dateProvider: DateProvider,
+    @Autowired val auditLogger: AuditLogger,
 ) {
     @MockkBean(relaxed = true)
     lateinit var s3Service: S3Service
+
+    @Test
+    fun `GIVEN dry run is enabled WHEN the task runs THEN the orphan is not deleted from S3 or the DB`() {
+        val groupId = groupManagementClient
+            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andGetGroupId()
+        val orphan = UUID.randomUUID()
+        insertFile(orphan, groupId, daysAgo(2))
+
+        s3GarbageCollectionTask.task()
+
+        verify(exactly = 0) { s3Service.deleteFile(any()) }
+        assertThat(filesDatabaseService.getNonExistentFileIds(setOf(orphan)), `is`(emptySet()))
+    }
 
     @Suppress("ktlint:standard:max-line-length")
     @Test
@@ -67,7 +84,15 @@ class S3GarbageCollectionTaskTest(
             }
         }
 
-        s3GarbageCollectionTask.task()
+        val deleteTask = S3GarbageCollectionTask(
+            filesDatabaseService,
+            s3Service,
+            dateProvider,
+            auditLogger,
+            maxOrphanAge = 1,
+            dryRun = false,
+        )
+        deleteTask.task()
 
         verify { s3Service.deleteFile(orphan) }
         verify(exactly = 0) { s3Service.deleteFile(referenced) }
