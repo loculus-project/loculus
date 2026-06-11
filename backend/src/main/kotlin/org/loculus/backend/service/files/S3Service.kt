@@ -271,6 +271,11 @@ fun <T> s3ErrorMapping(block: () -> T): T {
                     "by part number.",
             )
 
+            "NoSuchKey" -> UnprocessableEntityException(
+                "NoSuchKey: The referenced file does not exist in storage. Uploaded files that are not " +
+                    "referenced by a submission for too long are cleaned up automatically.",
+            )
+
             else -> RuntimeException("Unexpected S3 error: ${e.awsErrorDetails().errorCode()}")
         }
     }
