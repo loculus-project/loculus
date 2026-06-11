@@ -64,15 +64,18 @@ function createTsvTemplate(organism: string, action: UploadAction): ArrayBuffer 
 
 /**
  * Builds a workbook with three sheets:
- *  - `Data`: the sheet submitters fill in. Columns are the machine field names (so the file
- *    round-trips through upload), ordered template fields first, then the remaining opt-in fields.
- *  - `_lists` (hidden): one column per field that has a controlled vocabulary; the column header is
- *    the field name and the values below are its allowed options. This is the dropdown source.
- *  - `Guidance` (read-only): a human-readable reference of every available field.
+ *  - {@link DATA_SHEET_NAME}: the sheet submitters fill in. Columns are the machine field names (so
+ *    the file round-trips through upload), ordered template fields first, then the remaining opt-in
+ *    fields.
+ *  - {@link LISTS_SHEET_NAME} (hidden): one column per field that has a controlled vocabulary; the
+ *    column header is the field name and the values below are its allowed options. This is the
+ *    dropdown source.
+ *  - {@link GUIDANCE_SHEET_NAME} (read-only): a human-readable reference of every available field.
  *
  * Only columns whose field has a controlled vocabulary get a dropdown validation. Each such
  * validation is header-driven: its source formula reads that column's own header cell and looks it
- * up in `_lists`, so the dropdown follows the field even if the user renames or reorders the column.
+ * up in {@link LISTS_SHEET_NAME}, so the dropdown follows the field even if the user renames or
+ * reorders the column.
  * Free-text columns deliberately get no validation so they accept any value — a `list` validation
  * cannot express "allow anything", so applying a (strict) header-driven rule to them would reject
  * every entry (the lookup errors). Limiting it to option columns keeps free-text columns unrestricted.
@@ -169,7 +172,7 @@ interface WorksheetDataValidations {
     add(sqref: string, validation: ExcelJS.DataValidation): void;
 }
 
-/** Visual tiers used to colour-code field headers (and explained by the legend on `Config`). */
+/** Visual tiers used to colour-code field headers (and explained by the legend on {@link GUIDANCE_SHEET_NAME}). */
 type FieldTier = 'required' | 'default' | 'optional';
 const FIELD_TIERS: Record<FieldTier, { argb: string; label: string }> = {
     required: { argb: 'FFFCE4D6', label: 'Required field' },

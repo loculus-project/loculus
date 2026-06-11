@@ -186,18 +186,10 @@ export function getOrderedTemplateInputFields(organism: string, action: 'submit'
 
     const submissionIdInputFields = getSubmissionIdInputFields(schema);
     const accessionFields = action === 'revise' ? [getAccessionInputField()] : [];
-    const detailFields = [...accessionFields, ...submissionIdInputFields];
+    const requiredInternalFields = [...accessionFields, ...submissionIdInputFields];
 
-    const detailFieldNames = new Set(detailFields.map((field) => field.name));
-    const nonDetailFields = schema.inputFields.filter((field) => !detailFieldNames.has(field.name));
-    const fieldsByName = new Map(nonDetailFields.map((field) => [field.name, field]));
-
-    const templateFieldNames = schema.metadataTemplate ?? nonDetailFields.map((field) => field.name);
-    const templateFieldNameSet = new Set(templateFieldNames);
-    const templateFields = templateFieldNames
-        .map((name) => fieldsByName.get(name))
-        .filter((field): field is InputField => field !== undefined);
-    const restFields = nonDetailFields.filter((field) => !templateFieldNameSet.has(field.name));
+    const requiredInternalFieldNames = new Set(requiredInternalFields.map((field) => field.name));
+    const nonInternalInputFields = schema.inputFields.filter((field) => !requiredInternalFieldNames.has(field.name));
 
     const metadataTypeByName = new Map(schema.metadata.map((entry) => [entry.name, entry.type] as const));
     const decorate = (field: InputField, isTemplateField: boolean): TemplateInputField => ({
@@ -206,8 +198,24 @@ export function getOrderedTemplateInputFields(organism: string, action: 'submit'
         metadataType: metadataTypeByName.get(field.name),
     });
 
+    // Required internal fields (submissionId/fastaIds, plus accession on revise) always lead the columns.
+    const orderedRequiredFields = requiredInternalFields.map((field) => decorate(field, true));
+
+    // Without an explicit template, every input field is enabled by default.
+    if (schema.metadataTemplate === undefined || schema.metadataTemplate === null) {
+        return [...orderedRequiredFields, ...nonInternalInputFields.map((field) => decorate(field, true))];
+    }
+
+    // With a template, the listed fields are enabled (in template order) and the rest become opt-in.
+    const fieldsByName = new Map(nonInternalInputFields.map((field) => [field.name, field]));
+    const templateFieldNameSet = new Set(schema.metadataTemplate);
+    const templateFields = schema.metadataTemplate
+        .map((name) => fieldsByName.get(name))
+        .filter((field): field is InputField => field !== undefined);
+    const restFields = nonInternalInputFields.filter((field) => !templateFieldNameSet.has(field.name));
+
     return [
-        ...detailFields.map((field) => decorate(field, true)),
+        ...orderedRequiredFields,
         ...templateFields.map((field) => decorate(field, true)),
         ...restFields.map((field) => decorate(field, false)),
     ];
