@@ -82,7 +82,7 @@ class GetOrphanedFileIdsTest(
     }
 
     @Test
-    fun `GIVEN processed_data files THEN only those from a pipeline version older than current are orphaned`() {
+    fun `GIVEN multiple pipeline versions THEN files from all pipeline versions are protected`() {
         transaction {
             CurrentProcessingPipelineTable.update(
                 { CurrentProcessingPipelineTable.organismColumn eq DEFAULT_ORGANISM },
@@ -120,7 +120,7 @@ class GetOrphanedFileIdsTest(
 
         val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
 
-        assertThat(orphans, `is`(setOf(fileFromOldPipeline)))
+        assertThat(orphans, `is`(emptySet()))
     }
 
     @Test
