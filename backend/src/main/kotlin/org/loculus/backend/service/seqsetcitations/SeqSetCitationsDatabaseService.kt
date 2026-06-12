@@ -549,6 +549,10 @@ class SeqSetCitationsDatabaseService(
             SeqSetsTable,
         ).innerJoin(SeqSetToRecordsTable).innerJoin(SeqSetRecordsTable).selectAll()
             .where { accessionQuery }
+            .orderBy(
+                SeqSetCitationSourceTable.year to SortOrder.DESC,
+                SeqSetCitationSourceTable.citationSourceId to SortOrder.DESC,
+            )
             .groupBy { it[SeqSetCitationSourceTable.citationSourceId] }
             .map { (_, rows) ->
                 val first = rows.first()
