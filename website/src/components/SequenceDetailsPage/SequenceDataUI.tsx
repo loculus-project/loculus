@@ -17,7 +17,6 @@ import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import { Button } from '../common/Button';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
-import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiEye from '~icons/mdi/eye';
 
 interface Props {
@@ -37,7 +36,7 @@ interface Props {
     onRevokeSuccess?: () => void;
 }
 
-export const InnerSequenceDataUI: FC<Props> = ({
+export const SequenceDataUI: FC<Props> = ({
     tableData,
     organism,
     segmentReferences,
@@ -147,5 +146,3 @@ export const InnerSequenceDataUI: FC<Props> = ({
         </>
     );
 };
-
-export const SequenceDataUI = withQueryProvider(InnerSequenceDataUI);
