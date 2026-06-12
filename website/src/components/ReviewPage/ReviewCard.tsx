@@ -161,7 +161,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
 
     return (
         <div className='flex mb-auto pt-3.5 items-center'>
-            <div className='flex space-x-4'>
+            <div className='flex gap-x-4'>
                 {filesEnabled && viewFiles && (
                     <>
                         <Button
