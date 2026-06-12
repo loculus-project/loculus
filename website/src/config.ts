@@ -293,11 +293,13 @@ export function getRuntimeConfig(): RuntimeConfig {
     return _runtimeConfig;
 }
 
-export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): string {
-    if (!(organism in serviceConfig.lapisUrls)) {
-        throw new Error(`No lapis url configured for organism ${organism}`);
-    }
-    return serviceConfig.lapisUrls[organism];
+/**
+ * Base URL of the query-service (e.g. `http://loculus-query-service:8080`
+ * server-side, or the public lapis hostname client-side). Append `/v1/<verb>`
+ * and pass `organism` as a query param to make a call.
+ */
+export function getQueryServiceUrl(serviceConfig: ServiceUrls): string {
+    return serviceConfig.queryServiceUrl;
 }
 
 export function getReferenceGenomes(organism: string): ReferenceGenomesInfo {

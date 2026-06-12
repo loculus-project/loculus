@@ -11,18 +11,16 @@ import {
     getWebsiteConfig,
 } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { VERSION_STATUS_FIELD, IS_REVOCATION_FIELD } from '../../../settings';
-import { versionStatuses } from '../../../types/lapis';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getMyGroups } from '../../../utils/getMyGroups';
 import { parseUrlSearchParams } from '../../../utils/parseUrlSearchParams';
 import { performLapisSearchQueries } from '../../../utils/serversideSearch';
 
-// These values are defaults that we already set
-const hiddenFieldValues = {
-    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
-    [IS_REVOCATION_FIELD]: 'false',
-};
+// versionStatus=LATEST_VERSION and isRevocation=false used to be wired into
+// every search request as "hidden field defaults"; the query-service now
+// applies them centrally, so the website only sends them when the user
+// explicitly asks otherwise (the "Include older versions and revocations"
+// toggle in SearchFullUI sets `?include=all`).
 
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 
@@ -47,7 +45,6 @@ const { data, totalCount } = await performLapisSearchQueries(
     initialQueryDict,
     schema,
     referenceGenomesInfo,
-    hiddenFieldValues,
     cleanedOrganism.key,
 );
 
@@ -65,7 +62,6 @@ const contactConfig = getContactConfig(websiteConfig);
         myGroups={myGroups}
         accessToken={accessToken}
         referenceGenomesInfo={referenceGenomesInfo}
-        hiddenFieldValues={hiddenFieldValues}
         initialData={data}
         initialCount={totalCount}
         initialQueryDict={initialQueryDict}

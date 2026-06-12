@@ -99,6 +99,13 @@ jobs:
           max_attempts: 200
           retry_wait_seconds: 5
           command: docker manifest inspect ghcr.io/loculus-project/website:commit-${{ steps.get_sha.outputs.sha }}
+      - name: Wait for Query Service Docker Image
+        uses: lewagon/wait-on-check-action@v1.7.0
+        with:
+          ref: ${{ github.sha }}
+          check-name: Query service docker image build
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 2
       # End of wait block
       - name: Checkout External Repository
         uses: actions/checkout@v6

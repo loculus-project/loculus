@@ -23,6 +23,7 @@ import { Button } from '../common/Button';
 
 interface EditDataUseTermsModalProps {
     lapisUrl: string;
+    organism: string;
     clientConfig: ClientConfig;
     accessToken?: string;
     sequenceFilter: SequenceFilter;
@@ -93,6 +94,7 @@ type DataState = LoadingState | ErrorState | LoadedState;
 
 export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
     lapisUrl,
+    organism,
     clientConfig,
     accessToken,
     sequenceFilter,
@@ -101,7 +103,7 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const detailsHook = lapisClientHooks(lapisUrl).useDetails();
+    const detailsHook = lapisClientHooks(lapisUrl, organism).useDetails();
 
     useEffect(() => {
         detailsHook.mutate({

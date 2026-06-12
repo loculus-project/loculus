@@ -81,6 +81,7 @@ describe('HierarchicalField - lineage mode', () => {
                 fieldValue='initialValue'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
                 mode='lineage'
             />,
@@ -100,6 +101,7 @@ describe('HierarchicalField - lineage mode', () => {
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
                 mode='lineage'
             />,
@@ -119,6 +121,7 @@ describe('HierarchicalField - lineage mode', () => {
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
                 mode='lineage'
             />,
@@ -141,6 +144,7 @@ describe('HierarchicalField - lineage mode', () => {
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
                 mode='lineage'
             />,
@@ -166,6 +170,7 @@ describe('HierarchicalField - lineage mode', () => {
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
                 mode='lineage'
             />,
@@ -192,6 +197,7 @@ describe('HierarchicalField - lineage mode', () => {
                 fieldValue='value*'
                 setSomeFieldValues={setSomeFieldValues}
                 lapisUrl={lapisUrl}
+                organism={'testOrganism'}
                 lapisSearchParameters={lapisSearchParameters}
                 mode='lineage'
             />,
@@ -216,6 +222,7 @@ describe('HierarchicalField - lineage mode', () => {
                         fieldValue={value}
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
+                        organism={'testOrganism'}
                         lapisSearchParameters={lapisSearchParameters}
                         mode='lineage'
                     />

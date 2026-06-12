@@ -2,7 +2,7 @@ import { noCase } from 'change-case';
 import { type FC } from 'react';
 
 import { SequenceActionButtons } from './SequenceActionButtons.tsx';
-import { getLapisUrl } from '../../../config.ts';
+import { getQueryServiceUrl } from '../../../config.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 import { type SequenceType } from '../../../utils/sequenceTypeHelpers.ts';
@@ -26,7 +26,7 @@ export const SequencesViewer: FC<Props> = ({
     sequenceType,
     useLapisMultiSegmentedEndpoint,
 }) => {
-    const { data, error, isLoading } = lapisClientHooks(getLapisUrl(clientConfig, organism)).useGetSequence(
+    const { data, error, isLoading } = lapisClientHooks(getQueryServiceUrl(clientConfig), organism).useGetSequence(
         accessionVersion,
         sequenceType,
         useLapisMultiSegmentedEndpoint,

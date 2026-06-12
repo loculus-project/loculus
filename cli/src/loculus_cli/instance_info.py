@@ -77,25 +77,35 @@ class InstanceInfo:
 
         return organism_data["schema"]
 
-    def get_lapis_urls(self) -> dict[str, str]:
-        """Get LAPIS URLs for all organisms."""
+    def get_query_service_url(self) -> str:
+        """Get the base URL of the Loculus query-service.
+
+        The CLI talks to the query-service v1 API. `organism` is passed
+        as a query parameter on each request, so the URL itself is not
+        per-organism.
+        """
         hosts = self.get_hosts()
-        if "lapis" not in hosts:
-            raise RuntimeError("LAPIS URLs not found in instance info")
-        lapis_hosts = hosts["lapis"]
-        if not isinstance(lapis_hosts, dict):
-            raise RuntimeError("LAPIS hosts must be a dictionary")
-        return lapis_hosts
+        if "queryService" not in hosts:
+            raise RuntimeError("queryService URL not found in instance info")
+        url = hosts["queryService"]
+        if not isinstance(url, str):
+            raise RuntimeError("queryService host must be a string")
+        return url
 
     def get_lapis_url(self, organism: str) -> str:
-        """Get LAPIS URL for specific organism."""
-        lapis_urls = self.get_lapis_urls()
-        if organism not in lapis_urls:
-            available = ", ".join(lapis_urls.keys())
+        """Backwards-compatible accessor; returns the query-service base URL.
+
+        The organism is now passed at call time, but several callers in the
+        CLI still expect a function that takes an organism. Validate that
+        the organism exists, then return the (organism-agnostic) base URL.
+        """
+        organisms = self.get_organisms()
+        if organism not in organisms:
+            available = ", ".join(organisms)
             raise ValueError(
-                f"LAPIS not available for organism '{organism}'. Available: {available}"
+                f"Organism '{organism}' is not available. Available: {available}"
             )
-        return lapis_urls[organism]
+        return self.get_query_service_url()
 
     def get_version_info(self) -> dict[str, str]:
         """Get version information."""
