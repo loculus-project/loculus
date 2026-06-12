@@ -39,7 +39,14 @@ const getSeqSetCitationsEndpoint = makeEndpoint({
 
 const getSequenceCitationsEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-sequence-citations?accession=:accession&version=:version',
+    path: '/get-sequence-citations?accession=:accession',
+    parameters: [
+        {
+            name: 'version',
+            type: 'Query',
+            schema: z.number().optional(),
+        },
+    ],
     alias: 'getSequenceCitations',
     response: sequenceCitations,
     errors: [notAuthorizedError],

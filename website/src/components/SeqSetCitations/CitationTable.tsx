@@ -13,42 +13,49 @@ interface CitationRowProps {
     citation: SeqSetCitation | SequenceCitation;
 }
 
+export const CitationDetails: FC<{
+    citation: SeqSetCitation | SequenceCitation;
+    titleClassName?: string;
+    showYear?: boolean;
+}> = ({ citation, titleClassName = 'text-primary-700', showYear = false }) => {
+    return (
+        <div className='flex flex-col gap-2'>
+            <a
+                className={titleClassName}
+                href={`https://doi.org/${citation.source.sourceDOI}`}
+                target='_blank'
+                rel='noopener noreferrer'
+            >
+                {citation.source.title}
+                {showYear && ` (${citation.source.year})`}
+            </a>
+            <div className='text-sm text-gray-500'>
+                {citation.source.contributors
+                    .map((contributor) => [contributor.givenName, contributor.surname].filter((name) => name).join(' '))
+                    .join(', ')}
+            </div>
+            {'seqSets' in citation && citation.seqSets.length > 0 && (
+                <span className='text-sm'>
+                    From SeqSet{citation.seqSets.length > 1 ? 's' : ''}:
+                    {citation.seqSets.map((seqSet) => (
+                        <span key={seqSet.seqSetAccession} className='mx-1'>
+                            <a className='text-primary-700' href={routes.seqSetPage(seqSet.seqSetAccession)}>
+                                {seqSet.seqSetAccession}
+                            </a>
+                            <span className='text-gray-500 text-sm ml-1'>(references {seqSet.sequenceAccession})</span>
+                        </span>
+                    ))}
+                </span>
+            )}
+        </div>
+    );
+};
+
 const CitationRow: FC<CitationRowProps> = ({ citation }) => {
     return (
         <tr className='border-b border-gray-200'>
             <td className='p-4'>
-                <div className='flex flex-col gap-2'>
-                    <a
-                        className='text-primary-700'
-                        href={`https://doi.org/${citation.source.sourceDOI}`}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                    >
-                        {citation.source.title}
-                    </a>
-                    <div className='text-sm text-gray-500'>
-                        {citation.source.contributors
-                            .map((contributor) =>
-                                [contributor.givenName, contributor.surname].filter((name) => name).join(' '),
-                            )
-                            .join(', ')}
-                    </div>
-                    {'seqSets' in citation && citation.seqSets.length > 0 && (
-                        <span className='text-sm'>
-                            From SeqSet{citation.seqSets.length > 1 ? 's' : ''}:
-                            {citation.seqSets.map((seqSet) => (
-                                <span key={seqSet.seqSetAccession} className='mx-1'>
-                                    <a className='text-primary-600' href={routes.seqSetPage(seqSet.seqSetAccession)}>
-                                        {seqSet.seqSetAccession}
-                                    </a>
-                                    <span className='text-gray-500 text-sm ml-1'>
-                                        (references {seqSet.sequenceAccession})
-                                    </span>
-                                </span>
-                            ))}
-                        </span>
-                    )}
-                </div>
+                <CitationDetails citation={citation} />
             </td>
             <td className='p-4 align-top text-nowrap'>{citation.source.year}</td>
         </tr>

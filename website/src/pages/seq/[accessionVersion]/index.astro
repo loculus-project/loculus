@@ -9,14 +9,19 @@ import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import { getSchema, getRuntimeConfig, getReferenceGenomes } from '../../../config';
 import { getWebsiteConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { SeqSetCitationClient } from '../../../services/seqSetCitationClient';
 import { type Group } from '../../../types/backend';
+import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getMyGroups } from '../../../utils/getMyGroups';
 import { getSegmentNames } from '../../../utils/sequenceTypeHelpers';
 
 const accessionVersion = Astro.params.accessionVersion!;
+const { accession } = parseAccessionVersionFromString(accessionVersion);
+const sequenceCitationsPromise = SeqSetCitationClient.create().call('getSequenceCitations', { params: { accession } });
 
 const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
+const sequenceCitations = (await sequenceCitationsPromise).unwrapOr(undefined);
 
 if (
     sequenceDetailsTableData.isOk() &&
@@ -93,6 +98,7 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                                     myGroups={myGroups}
                                     accessToken={accessToken}
                                     sequenceFlaggingConfig={showDownloadAndReport ? sequenceFlaggingConfig : undefined}
+                                    sequenceCitations={sequenceCitations}
                                     client:load
                                 />
                             ))}
