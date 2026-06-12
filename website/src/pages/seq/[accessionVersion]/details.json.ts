@@ -15,7 +15,7 @@ export const GET: APIRoute = async (req) => {
     const { accessionVersion } = params;
     const { accession } = parseAccessionVersionFromString(accessionVersion);
     const sequenceCitationsPromise = SeqSetCitationClient.create().call('getSequenceCitations', {
-        params: { accession },
+        params: { accession }, // Display citations across all accession versions
     });
     const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
     const sequenceCitations = (await sequenceCitationsPromise).unwrapOr(undefined);
