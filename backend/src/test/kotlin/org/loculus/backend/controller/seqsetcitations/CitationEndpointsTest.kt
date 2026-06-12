@@ -304,14 +304,14 @@ class CitationEndpointsTest(
 
         @JvmStatic
         fun sequenceCitationVersionCases(): List<SequenceCitationVersionCase> {
-            // Create a cited seqSet for each accession variant: an unversioned record, two versions, and a sibling
-            // accession that shares the prefix but must not match.
-            val citationsMap = mapOf(
-                MOCK_SEQ_ACCESSION to "10.5678/unversioned",
-                "$MOCK_SEQ_ACCESSION.1" to "10.5678/version-1",
-                "$MOCK_SEQ_ACCESSION.2" to "10.5678/version-2",
-                "$MOCK_SEQ_ACCESSION-sibling.1" to "10.5678/sibling",
+            // Map of test accessions to citation source DOIs
+            val testAccessions = listOf(
+                MOCK_SEQ_ACCESSION,
+                "$MOCK_SEQ_ACCESSION.1",
+                "$MOCK_SEQ_ACCESSION.2",
+                "$MOCK_SEQ_ACCESSION-other.1",
             )
+            val citationsMap = testAccessions.associateWith { "10.5678/paper-citing-$it" }
 
             return listOf(
                 SequenceCitationVersionCase(
@@ -319,14 +319,18 @@ class CitationEndpointsTest(
                     citationsMap = citationsMap,
                     accession = MOCK_SEQ_ACCESSION,
                     version = 1L,
-                    expectedCitingSourceDOIs = listOf("10.5678/version-1"),
+                    expectedCitingSourceDOIs = listOf("10.5678/paper-citing-${MOCK_SEQ_ACCESSION}.1"),
                 ),
                 SequenceCitationVersionCase(
                     description = "accession only THEN returns citations for all accession versions + unversioned",
                     citationsMap = citationsMap,
                     accession = MOCK_SEQ_ACCESSION,
                     version = null,
-                    expectedCitingSourceDOIs = listOf("10.5678/unversioned", "10.5678/version-1", "10.5678/version-2"),
+                    expectedCitingSourceDOIs = listOf(
+                        "10.5678/paper-citing-${MOCK_SEQ_ACCESSION}",
+                        "10.5678/paper-citing-${MOCK_SEQ_ACCESSION}.1",
+                        "10.5678/paper-citing-${MOCK_SEQ_ACCESSION}.2",
+                    ),
                 ),
             )
         }
