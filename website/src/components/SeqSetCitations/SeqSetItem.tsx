@@ -211,7 +211,8 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                 title='Statistics'
                 headerContent={
                     <Button
-                        className='mt-1 outlineButton flex items-center gap-2'
+                        variant='outline'
+                        className='mt-1 flex items-center gap-2'
                         onClick={() => setWideGraphs((prev) => !prev)}
                     >
                         {wideGraphs ? <MdiViewGrid /> : <MdiDotsGrid />}

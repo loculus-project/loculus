@@ -100,21 +100,24 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
             <div className='inline-block ml-auto'>
                 <div className='flex justify-start items-center pb-8 gap-2'>
                     <Button
-                        className='outlineButton flex items-center gap-2'
+                        variant='outline'
+                        className='flex items-center gap-2'
                         onClick={() => setExportModalVisible(true)}
                     >
                         <MdiDownload className='w-4 h-4' />
                         <span className='hidden sm:block'>Export / Cite</span>
                     </Button>
                     <Button
-                        className='outlineButton flex items-center gap-2'
+                        variant='outline'
+                        className='flex items-center gap-2'
                         onClick={() => setCreatorInfoVisible(true)}
                     >
                         <MdiInformationOutline className='w-4 h-4' />
                         <span className='hidden sm:block'>More details</span>
                     </Button>
                     <Button
-                        className='outlineButton flex items-center gap-2'
+                        variant='outline'
+                        className='flex items-center gap-2'
                         onClick={() => setCitationsModalVisible(true)}
                     >
                         <MdiViewListOutline className='w-4 h-4' />
@@ -122,7 +125,8 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                     </Button>
                     {isAdminView ? (
                         <Button
-                            className='outlineButton flex items-center gap-2'
+                            variant='outline'
+                            className='flex items-center gap-2'
                             onClick={() => setEditModalVisible(true)}
                         >
                             <MdiPencil className='w-4 h-4' />
@@ -131,7 +135,8 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                     ) : null}
                     {isAdminView && (seqSet.seqSetDOI === null || seqSet.seqSetDOI === undefined) ? (
                         <Button
-                            className='outlineButton flex items-center gap-2'
+                            variant='outline'
+                            className='flex items-center gap-2'
                             onClick={() =>
                                 displayConfirmationDialog({
                                     dialogText: `Are you sure you want to delete this seqSet version?`,
