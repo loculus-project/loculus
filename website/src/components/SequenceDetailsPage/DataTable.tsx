@@ -84,7 +84,7 @@ const DataTableComponent: React.FC<Props> = ({
                 </div>
             )}
 
-            {(generalSections.length > 0 || hasSequenceCitations) && (
+            {generalSections.length > 0 && (
                 <div
                     className='grid gap-x-6'
                     style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 32rem), 1fr))' }}
@@ -106,22 +106,28 @@ const DataTableComponent: React.FC<Props> = ({
                             </div>
                         </div>
                     ))}
-                    {hasSequenceCitations && (
-                        <div key='citations' className='p-4 pl-0'>
-                            <div className='flex flex-row'>
-                                <h1 className='py-2 text-lg font-semibold border-b mr-2'>Citations</h1>
-                            </div>
-                            <div className='mt-4'>
-                                <CitationList
-                                    isLoading={false}
-                                    error={null}
-                                    citations={sequenceCitations}
-                                    limit={5}
-                                    modalTitle='Sequence Citations'
-                                />
-                            </div>
+                </div>
+            )}
+
+            {hasSequenceCitations && <hr className='my-8 border-t-2 border-gray-200' />}
+
+            {hasSequenceCitations && (
+                <div
+                    className='grid gap-x-6'
+                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 32rem), 1fr))' }}
+                >
+                    <div className='p-4 pl-0'>
+                        <div className='flex flex-row'>
+                            <h1 className='py-2 text-lg font-semibold border-b mr-2'>Cited in</h1>
                         </div>
-                    )}
+                        <div className='mt-4'>
+                            <CitationList
+                                citations={sequenceCitations}
+                                maxDisplayedCitations={3}
+                                modalTitle='Sequence Citations'
+                            />
+                        </div>
+                    </div>
                 </div>
             )}
 

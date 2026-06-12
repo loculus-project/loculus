@@ -6,16 +6,14 @@ import { BaseDialog } from '../common/BaseDialog';
 import { Button } from '../common/Button';
 
 interface CitationListProps {
-    isLoading: boolean;
-    error: Error | null;
     citations: SeqSetCitation[] | SequenceCitation[];
-    limit: number;
+    maxDisplayedCitations?: number;
     modalTitle?: string;
 }
 
-const CitationList: FC<CitationListProps> = ({ isLoading, error, citations, limit, modalTitle }) => {
+const CitationList: FC<CitationListProps> = ({ citations, maxDisplayedCitations, modalTitle }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const displayViewAll = citations.length > limit;
+    const displayCitationsModalButton = maxDisplayedCitations !== undefined && citations.length > maxDisplayedCitations;
 
     return (
         <div className='space-y-2'>
@@ -26,28 +24,23 @@ const CitationList: FC<CitationListProps> = ({ isLoading, error, citations, limi
                 fullWidth={false}
                 className='min-h-[60vh]'
             >
-                <CitationTable isLoading={isLoading} error={error} citations={citations} />
+                <CitationTable isLoading={false} error={null} citations={citations} />
             </BaseDialog>
-            {isLoading ? (
-                <div className='flex justify-center py-8'>
-                    <span className='loading loading-spinner'></span>
-                </div>
-            ) : error ? (
-                <div className='py-8 text-center'>
-                    <span>Failed to load citations.</span>
-                </div>
-            ) : citations.length > 0 ? (
-                <div className='space-y-4'>
+            {citations.length > 0 ? (
+                <div className='space-y-2'>
                     <ul className='space-y-4'>
-                        {citations.slice(0, limit).map((citation: SeqSetCitation | SequenceCitation) => (
+                        {(maxDisplayedCitations !== undefined
+                            ? citations.slice(0, maxDisplayedCitations)
+                            : citations
+                        ).map((citation: SeqSetCitation | SequenceCitation) => (
                             <li key={citation.source.sourceDOI}>
-                                <CitationDetails citation={citation} titleClassName='text-sm underline' showYear />
+                                <CitationDetails citation={citation} className='text-sm' displayYear />
                             </li>
                         ))}
                     </ul>
-                    {displayViewAll && (
+                    {displayCitationsModalButton && (
                         <Button className='text-sm hover:underline' onClick={() => setIsOpen(true)}>
-                            View all citations ({citations.length})…
+                            View all citations ({citations.length})...
                         </Button>
                     )}
                 </div>
