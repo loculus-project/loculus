@@ -99,6 +99,7 @@ data class SeqSetCitation(val source: CitationSource)
 
 data class SeqSetCitingSequence(val seqSetAccession: String, val sequenceAccession: String)
 
+@Schema(description = "A citation of a sequence.")
 data class SequenceCitation(val source: CitationSource, val seqSets: List<SeqSetCitingSequence>)
 
 data class ResponseSeqSet(val seqSetId: String, val seqSetVersion: Long)

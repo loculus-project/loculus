@@ -7,8 +7,12 @@ import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.LikePattern
+import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
@@ -17,6 +21,7 @@ import org.jetbrains.exposed.sql.batchUpsert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.max
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import org.keycloak.representations.idm.UserRepresentation
@@ -525,17 +530,25 @@ class SeqSetCitationsDatabaseService(
             }
     }
 
-    fun getSequenceCitations(accession: String, version: Long): List<SequenceCitation> {
-        val accessionVersion = AccessionVersion(accession, version)
-        log.info { "Get sequence citations for accession ${accessionVersion.displayAccessionVersion()}" }
-        val accessions = setOf(accessionVersion.accession, accessionVersion.displayAccessionVersion())
+    fun getSequenceCitations(accession: String, version: Long?): List<SequenceCitation> {
+        log.info { "Get sequence citations for accession $accession, version $version" }
+
+        // If a version is provided, return citations pinned to that exact accession and version
+        // Otherwise, return all citations for the accession, regardless of version, including unversioned
+        val accessionQuery: Op<Boolean> = if (version != null) {
+            val accessionVersion = AccessionVersion(accession, version)
+            SeqSetRecordsTable.accession eq accessionVersion.displayAccessionVersion()
+        } else {
+            (SeqSetRecordsTable.accession eq accession) or
+                (SeqSetRecordsTable.accession like (LikePattern.ofLiteral("$accession.") + LikePattern("%")))
+        }
 
         return SeqSetCitationSourceTable.innerJoin(
             SeqSetToCitationSourceTable,
         ).innerJoin(
             SeqSetsTable,
         ).innerJoin(SeqSetToRecordsTable).innerJoin(SeqSetRecordsTable).selectAll()
-            .where { SeqSetRecordsTable.accession inList accessions }
+            .where { accessionQuery }
             .groupBy { it[SeqSetCitationSourceTable.citationSourceId] }
             .map { (_, rows) ->
                 val first = rows.first()
