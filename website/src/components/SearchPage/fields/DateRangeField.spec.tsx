@@ -101,7 +101,7 @@ describe('DateRangeField', () => {
         }
     });
 
-    it('derives switches mode correctly', async () => {
+    it('does not write to query params on mount', () => {
         render(
             <DateRangeField
                 field={field}
@@ -110,11 +110,19 @@ describe('DateRangeField', () => {
             />,
         );
 
-        expect(setSomeFieldValues).toHaveBeenCalledWith(
-            ['collectionDateRangeLowerFrom', '2024-01-01'],
-            ['collectionDateRangeUpperTo', '2024-12-31'],
-            ['collectionDateRangeUpperFrom', null],
-            ['collectionDateRangeLowerTo', null],
+        // Rendering must not push values back into the query state — only real user interaction
+        // (typing a date or toggling strictness) should. This avoids the feedback loop that made
+        // the date inputs bounce between two values while typing.
+        expect(setSomeFieldValues).not.toHaveBeenCalled();
+    });
+
+    it('derives switches mode correctly', async () => {
+        render(
+            <DateRangeField
+                field={field}
+                fieldValues={{ collectionDateRangeLowerFrom: '2024-01-01', collectionDateRangeUpperTo: '2024-12-31' }}
+                setSomeFieldValues={setSomeFieldValues}
+            />,
         );
 
         const strictCheckbox = screen.getByRole('checkbox');
@@ -131,13 +139,34 @@ describe('DateRangeField', () => {
     });
 
     it('updates query params if user types in new dates', async () => {
-        render(
-            <DateRangeField
-                field={field}
-                fieldValues={{ collectionDateRangeLowerFrom: '2024-01-01', collectionDateRangeUpperTo: '2024-12-31' }}
-                setSomeFieldValues={setSomeFieldValues}
-            />,
-        );
+        const lastValues: { current: FieldValues } = { current: {} };
+
+        function Wrapper() {
+            const [values, _setValues] = useState<FieldValues>({
+                collectionDateRangeLowerFrom: '2024-01-01',
+                collectionDateRangeUpperTo: '2024-12-31',
+            });
+            lastValues.current = values;
+
+            const setValues: SetSomeFieldValues = useCallback((...fieldValuesToSet) => {
+                _setValues((state) => {
+                    const newState = { ...state };
+                    fieldValuesToSet.forEach(([k, v]) => {
+                        // mirror the production behaviour of useSearchPageState: null/'' deletes
+                        if (v === null || v === '') {
+                            delete newState[k];
+                        } else {
+                            newState[k] = v;
+                        }
+                    });
+                    return newState;
+                });
+            }, []);
+
+            return <DateRangeField field={field} fieldValues={values} setSomeFieldValues={setValues} />;
+        }
+
+        render(<Wrapper />);
 
         const fromInput = screen.getByText('From').closest('div')?.querySelector('input');
         const toInput = screen.getByText('To').closest('div')?.querySelector('input');
@@ -150,12 +179,11 @@ describe('DateRangeField', () => {
         await userEvent.type(toInput!, '{backspace}');
         await userEvent.type(toInput!, '20141013');
 
-        expect(setSomeFieldValues).toHaveBeenLastCalledWith(
-            ['collectionDateRangeLowerFrom', '1987-04-23'],
-            ['collectionDateRangeUpperTo', '2014-10-13'],
-            ['collectionDateRangeUpperFrom', null],
-            ['collectionDateRangeLowerTo', null],
-        );
+        // The edits to both fields are retained — neither value bounces back to its previous value.
+        expect(lastValues.current).toEqual({
+            collectionDateRangeLowerFrom: '1987-04-23',
+            collectionDateRangeUpperTo: '2014-10-13',
+        });
     });
 
     it('does not snap back to strict when user toggles without having entered dates', async () => {
