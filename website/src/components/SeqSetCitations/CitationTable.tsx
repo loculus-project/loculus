@@ -37,10 +37,11 @@ export const CitationDetails: FC<{
             {'seqSets' in citation && citation.seqSets.length > 0 && (
                 <span className='text-sm text-gray-500'>
                     From SeqSet{citation.seqSets.length > 1 ? 's' : ''}:
-                    {citation.seqSets.map((seqSet) => (
+                    {citation.seqSets.map((seqSet, i) => (
                         <span key={seqSet.seqSetAccession} className='mx-1'>
                             <a href={routes.seqSetPage(seqSet.seqSetAccession)}>{seqSet.seqSetAccession}</a>
                             <span className='text-gray-500 text-sm ml-1'>(references {seqSet.sequenceAccession})</span>
+                            {i < citation.seqSets.length - 1 && <span>,</span>}
                         </span>
                     ))}
                 </span>
