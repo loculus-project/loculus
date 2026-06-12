@@ -1151,6 +1151,40 @@
       "default": "Always",
       "description": "Global image pull policy applied to all deployments. Can be overridden per-image in the images section for some images. Always: always pull the image. IfNotPresent: pull if not present locally. Never: never pull, use local image only."
     },
+    "podScheduling": {
+      "groups": ["general"],
+      "type": "object",
+      "description": "Pod scheduling configuration for fine-grained control over pod placement on nodes",
+      "default": {},
+      "additionalProperties": false,
+      "properties": {
+        "nodeSelector": {
+          "type": "object",
+          "description": "Kubernetes nodeSelector for scheduling pods on specific nodes. Labels must match node labels. Example: { 'workload-type': 'loculuspool' }",
+          "default": {},
+          "additionalProperties": { "type": "string" }
+        },
+        "tolerations": {
+          "type": "array",
+          "description": "Kubernetes tolerations for pods to tolerate node taints. Allows pods to be scheduled on nodes with specific taints. Example: [{ key: 'workload-type', operator: 'Equal', value: 'loculuspool', effect: 'NoSchedule' }]",
+          "default": [],
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "affinity": {
+          "type": "object",
+          "description": "Kubernetes affinity rules for advanced pod scheduling (nodeAffinity, podAffinity, podAntiAffinity). Allows fine-grained control over pod placement.",
+          "default": {},
+          "additionalProperties": true
+        },
+        "podPriorityValue": {
+          "type": "integer",
+          "description": "If set, the chart creates a PriorityClass named after the release namespace with this value, and assigns it to all loculus pods. Higher values mean higher scheduling priority; can be negative for lower-than-default priority. If unset, no PriorityClass is created and pods run at the cluster default priority."
+        }
+      }
+    },
     "localHost": {
       "groups": ["general"],
       "type": "string",
@@ -1996,10 +2030,6 @@
     "shortbranch": {
       "type": ["string", "integer"],
       "description": "TODO - this is required/set by ArgoCD"
-    },
-    "podPriorityValue": {
-      "type": "integer",
-      "description": "If set, the chart creates a PriorityClass named after the release namespace with this value, and assigns it to all loculus pods. Higher values mean higher scheduling priority; can be negative for lower-than-default priority. If unset, no PriorityClass is created and pods run at the cluster default priority."
     },
     "testconfig": {
       "description": "TODO"

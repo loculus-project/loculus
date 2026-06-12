@@ -22,6 +22,7 @@ spec:
         app: loculus
         component: docs
     spec:
+      {{- include "loculus.podScheduling" . | nindent 6 }}
       containers:
         - name: docs
           image: "ghcr.io/loculus-project/docs:{{ $dockerTag }}"

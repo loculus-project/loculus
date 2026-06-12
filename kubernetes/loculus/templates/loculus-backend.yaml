@@ -22,6 +22,7 @@ spec:
         component: backend
     spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
+      {{- include "loculus.podScheduling" . | nindent 6 }}
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
       containers:
