@@ -4,6 +4,7 @@ import com.jayway.jsonpath.JsonPath
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import org.hamcrest.CoreMatchers.containsString
+import org.hamcrest.Matchers.containsInAnyOrder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -191,40 +192,39 @@ class CitationEndpointsTest(
             )
     }
 
-    @Test
-    fun `WHEN get sequence citations for sequence in cited seqSet THEN returns citations`() {
-        val seqSetResult = client.createSeqSet().andExpect(status().isOk).andReturn()
-        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
-        val seqSetVersion =
-            JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
-        client.createSeqSetDOI(seqSetId = seqSetId, seqSetVersion = seqSetVersion).andExpect(status().isOk)
-        val seqSetDOI = "${MOCK_DOI_PREFIX}/$seqSetId.$seqSetVersion"
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("sequenceCitationVersionCases")
+    fun `WHEN getting sequence citations`(case: SequenceCitationVersionCase) {
+        val citations = case.citationsMap.map { (accession, citingSourceDOI) ->
+            val seqSetRecords = """[{ "accession": "$accession", "type": "loculus" }]"""
+            val result = client.createSeqSet(seqSetRecords = seqSetRecords).andExpect(status().isOk).andReturn()
+            val seqSetId = JsonPath.read<String>(result.response.contentAsString, "$.seqSetId")
+            val seqSetVersion = JsonPath.read<Int>(result.response.contentAsString, "$.seqSetVersion").toLong()
+            client.createSeqSetDOI(seqSetId = seqSetId, seqSetVersion = seqSetVersion).andExpect(status().isOk)
+            SeqSetCitationSource(
+                CitationSource(
+                    sourceDOI = citingSourceDOI,
+                    title = "A paper citing $accession",
+                    year = 2024,
+                    contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
+                ),
+                seqSetDOIs = setOf("$MOCK_DOI_PREFIX/$seqSetId.$seqSetVersion"),
+            )
+        }
 
-        val seqSetCitationSource = SeqSetCitationSource(
-            CitationSource(
-                sourceDOI = "10.5678/citing-paper",
-                title = "A paper citing the seqSet",
-                year = 2024,
-                contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
-            ),
-            seqSetDOIs = setOf(seqSetDOI),
-        )
         every { crossRefService.isActive } returns true
         every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
-            CrossRefCitedByResult(listOf(seqSetCitationSource), emptyList())
+            CrossRefCitedByResult(citations, emptyList())
         seqSetCrossRefCitationsTask.task()
 
-        client.getSequenceCitations(accession = MOCK_SEQ_ACCESSION, version = MOCK_SEQ_VERSION)
+        client.getSequenceCitations(accession = case.accession, version = case.version)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$").isArray)
-            .andExpect(jsonPath("\$.length()").value(1))
-            .andExpect(jsonPath("\$[0].source.sourceDOI").value(seqSetCitationSource.source.sourceDOI))
-            .andExpect(jsonPath("\$[0].source.title").value(seqSetCitationSource.source.title))
-            .andExpect(jsonPath("\$[0].source.year").value(seqSetCitationSource.source.year))
-            .andExpect(jsonPath("\$[0].seqSets.length()").value(1))
-            .andExpect(jsonPath("\$[0].seqSets[0].seqSetAccession").value("$seqSetId.$seqSetVersion"))
-            .andExpect(jsonPath("\$[0].seqSets[0].sequenceAccession").value(MOCK_ACCESSION_VERSION))
+            .andExpect(jsonPath("\$.length()").value(case.expectedCitingSourceDOIs.size))
+            .andExpect(
+                jsonPath("\$[*].source.sourceDOI", containsInAnyOrder(*case.expectedCitingSourceDOIs.toTypedArray())),
+            )
     }
 
     @Test
@@ -287,9 +287,48 @@ class CitationEndpointsTest(
             val isModifying: Boolean,
         )
 
+        data class SequenceCitationVersionCase(
+            val description: String,
+            val citationsMap: Map<String, String>,
+            val accession: String,
+            val version: Long?,
+            val expectedCitingSourceDOIs: List<String>,
+        ) {
+            override fun toString() = description
+        }
+
         @JvmStatic
         fun authorizationTestCases(): List<Scenario> = listOf(
             Scenario({ jwt, client -> client.getUserCitedBySeqSet(jwt = jwt) }, false),
         )
+
+        @JvmStatic
+        fun sequenceCitationVersionCases(): List<SequenceCitationVersionCase> {
+            // Create a cited seqSet for each accession variant: an unversioned record, two versions, and a sibling
+            // accession that shares the prefix but must not match.
+            val citationsMap = mapOf(
+                MOCK_SEQ_ACCESSION to "10.5678/unversioned",
+                "$MOCK_SEQ_ACCESSION.1" to "10.5678/version-1",
+                "$MOCK_SEQ_ACCESSION.2" to "10.5678/version-2",
+                "$MOCK_SEQ_ACCESSION-sibling.1" to "10.5678/sibling",
+            )
+
+            return listOf(
+                SequenceCitationVersionCase(
+                    description = "accession and version THEN returns citations for the exact accession version",
+                    citationsMap = citationsMap,
+                    accession = MOCK_SEQ_ACCESSION,
+                    version = 1L,
+                    expectedCitingSourceDOIs = listOf("10.5678/version-1"),
+                ),
+                SequenceCitationVersionCase(
+                    description = "accession only THEN returns citations for all accession versions + unversioned",
+                    citationsMap = citationsMap,
+                    accession = MOCK_SEQ_ACCESSION,
+                    version = null,
+                    expectedCitingSourceDOIs = listOf("10.5678/unversioned", "10.5678/version-1", "10.5678/version-2"),
+                ),
+            )
+        }
     }
 }

@@ -290,7 +290,9 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
             val description: String,
             val xml: String,
             val expectedReasonContains: String,
-        )
+        ) {
+            override fun toString() = description
+        }
 
         @JvmStatic
         fun crossRefValidationErrorCases(): List<CrossRefValidationErrorCase> = listOf(

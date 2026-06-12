@@ -132,7 +132,7 @@ class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
         mockMvc.perform(
             get("/get-sequence-citations")
                 .param("accession", accession)
-                .param("version", version.toString()),
+                .apply { version?.let { param("version", it.toString()) } },
         )
 
     fun getAuthor(username: String): ResultActions = mockMvc.perform(
