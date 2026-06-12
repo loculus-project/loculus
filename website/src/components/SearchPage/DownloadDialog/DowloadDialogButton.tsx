@@ -27,7 +27,7 @@ export const DownloadDialogButton: FC<DownloadDialogButtonProps> = ({ onClick, s
         buttonWidthClass = 'w-60'; // this width is fine for up to two digit numbers
     }
     return (
-        <Button className={buttonWidthClass + ' outlineButton'} onClick={onClick}>
+        <Button variant='outline' className={buttonWidthClass} onClick={onClick}>
             {buttonText}
         </Button>
     );

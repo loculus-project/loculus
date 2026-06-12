@@ -9,7 +9,7 @@ interface ButtonClassOptions {
 }
 
 const base =
-    'inline-flex items-center justify-center gap-1.5 font-semibold rounded border transition-colors duration-200 ' +
+    'inline-flex items-center justify-center gap-1.5 font-semibold rounded-md border transition-colors duration-200 ' +
     'disabled:pointer-events-none disabled:bg-base-content/10 disabled:text-base-content/20 disabled:border-transparent';
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -28,7 +28,7 @@ const variantClasses: Record<ButtonVariant, string> = {
     neutral: 'bg-base-200 text-base-content border-base-300 hover:bg-base-300',
     primary: 'bg-[var(--color-main)] text-white border-transparent hover:bg-primary-700',
     ghost: 'bg-transparent border-transparent hover:bg-base-200',
-    outline: 'bg-transparent border-base-content text-base-content hover:bg-base-content hover:text-base-100',
+    outline: 'bg-white border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white',
     unstyled: '',
 };
 
