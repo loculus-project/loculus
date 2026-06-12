@@ -611,6 +611,11 @@ CREATE VIEW public.sequence_entries_view AS
     se.submitted_data,
     sepd.started_processing_at,
     sepd.finished_processing_at,
+        CASE
+            WHEN aem.has_ena_updater THEN 'DEPOSITED'::text
+            WHEN (se.group_id = 1) THEN 'INGESTED'::text
+            ELSE 'READY'::text
+        END AS ena_deposition_status,
     sepd.processed_data,
         CASE
             WHEN se.is_revocation THEN jsonb_build_object('metadata', COALESCE((se.submitted_data -> 'metadata'::text), '{}'::jsonb), 'unalignedNucleotideSequences', '{}'::jsonb, 'alignedNucleotideSequences', '{}'::jsonb, 'nucleotideInsertions', '{}'::jsonb, 'alignedAminoAcidSequences', '{}'::jsonb, 'aminoAcidInsertions', '{}'::jsonb, 'files', 'null'::jsonb)
@@ -641,7 +646,8 @@ CREATE VIEW public.sequence_entries_view AS
      LEFT JOIN public.sequence_entries_preprocessed_data sepd ON (((se.accession = sepd.accession) AND (se.version = sepd.version) AND (sepd.pipeline_version = cpp.version))))
      LEFT JOIN ( SELECT em.accession,
             em.version,
-            public.jsonb_merge_agg(em.external_metadata) AS external_metadata
+            public.jsonb_merge_agg(em.external_metadata) AS external_metadata,
+            bool_or((em.external_metadata_updater = 'ena'::text)) AS has_ena_updater
            FROM public.external_metadata em
           GROUP BY em.accession, em.version) aem ON (((aem.accession = se.accession) AND (aem.version = se.version))));
 
