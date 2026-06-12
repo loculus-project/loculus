@@ -4,6 +4,7 @@
     "backendUrl": "http://dummy-backend.com",
     "organisms": {
         "dummyOrganism": {
+            "lapisUrl": "http://localhost:8080",
             "referenceGenome": {
                 "nucleotideSequences": [
                     {
@@ -103,6 +104,7 @@
             }
         },
         "otherOrganism": {
+            "lapisUrl": "http://localhost:8080",
             "referenceGenome": {
                 "nucleotideSequences": [
                     {
@@ -128,6 +130,9 @@
             "schema": {
                 "organismName": "Test",
                 "allowSubmissionOfConsensusSequences": true,
+                "submissionDataTypes": {
+                    "alignedNucleotideSequences": false
+                },
                 "metadata": [
                     {
                         "name": "date",
@@ -187,6 +192,7 @@
             }
         },
         "dummyOrganismWithoutConsensusSequences": {
+            "lapisUrl": "http://localhost:8080",
             "referenceGenome": {
                 "nucleotideSequences": [],
                 "genes": []

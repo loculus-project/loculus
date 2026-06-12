@@ -45,6 +45,7 @@ class EmptyProcessedDataProviderTest {
                             ReferenceSequence(SECOND_AMINO_ACID_SEQUENCE, "the sequence"),
                         ),
                     ),
+                    lapisUrl = "http://localhost:8080",
                 ),
             ),
             dataUseTerms = DataUseTerms(true, null),

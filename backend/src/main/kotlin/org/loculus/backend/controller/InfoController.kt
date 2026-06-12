@@ -26,6 +26,28 @@ class InfoController(@Value("\${${BackendSpringProperty.DEBUG_MODE}}") private v
         <body>
             <h1>Welcome to the $PROJECT_NAME Backend</h1>
             <a href="${request.requestURL}swagger-ui/index.html">Visit our swagger-ui</a>
+            <a href="${request.requestURL}scalar-api-reference">Visit our Scalar API reference</a>
+        </body>
+        </html>
+    """.trimIndent()
+
+    @RequestMapping("/scalar-api-reference", produces = [MediaType.TEXT_HTML_VALUE])
+    fun scalarApiReference() = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>$PROJECT_NAME Scalar API Reference</title>
+        </head>
+        <body>
+            <div id="app"></div>
+            <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+            <script>
+                Scalar.createApiReference('#app', {
+                    url: '/api-docs'
+                })
+            </script>
         </body>
         </html>
     """.trimIndent()
@@ -39,6 +61,6 @@ class InfoController(@Value("\${${BackendSpringProperty.DEBUG_MODE}}") private v
 data class Info(
     val name: String = "$PROJECT_NAME backend",
     val status: String = "Healthy",
-    val documentation: String = "visit /swagger-ui/index.html",
+    val documentation: String = "visit /swagger-ui/index.html or /scalar-api-reference",
     val isInDebugMode: Boolean,
 )

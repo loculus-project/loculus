@@ -17,19 +17,29 @@ describe('LapisClient', () => {
             inputFields: [],
             submissionDataTypes: { consensusSequences: false },
         };
-        const client = LapisClient.create('http://lapis.example', schema);
+        const client = LapisClient.create(
+            'http://lapis.example',
+            'http://backend.example/query/organism/current',
+            'http://backend.example/query/organism/allVersions',
+            schema,
+        );
         const spy = vi
-            .spyOn(client, 'call')
+            .spyOn(client as unknown as { requestFull: LapisClient['getSequenceInsertions'] }, 'requestFull')
             .mockResolvedValue(ok({ data: [], info: { dataVersion: '' } } as InsertionsResponse));
 
         await client.getSequenceInsertions('LOC_123', 'nucleotide');
 
-        expect(spy).toHaveBeenCalledWith('nucleotideInsertions', {
-            [schema.primaryKey]: 'LOC_123',
-            orderBy: [
-                { field: 'sequenceName', type: 'ascending' },
-                { field: 'position', type: 'ascending' },
-            ],
-        });
+        expect(spy).toHaveBeenCalledWith(
+            'http://backend.example/query/organism/allVersions/sequencesAligned/insertions',
+            'post',
+            {
+                [schema.primaryKey]: 'LOC_123',
+                orderBy: [
+                    { field: 'sequenceName', type: 'ascending' },
+                    { field: 'position', type: 'ascending' },
+                ],
+            },
+            expect.anything(),
+        );
     });
 });

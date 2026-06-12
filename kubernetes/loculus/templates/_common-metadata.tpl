@@ -502,6 +502,7 @@ organisms:
 {{- $key := $item.key }}
 {{- $instance := $item.contents }}
   {{ $key }}:
+    lapisUrl: "{{ if $.Values.disableBackend }}http://{{ $.Values.localHost }}:8080/{{ $key }}{{ else }}http://{{ template "loculus.lapisServiceName" $key }}:8080{{ end }}"
     schema:
       {{- with $instance.schema }}
       organismName: {{ quote .organismName }}
@@ -615,18 +616,8 @@ fields:
 {{- end}}
 
 {{- define "loculus.publicRuntimeConfig" }}
-{{- $publicRuntimeConfig := $.Values.public }}
-{{- $lapisUrlTemplate := "" }}
-{{- if $publicRuntimeConfig.lapisUrlTemplate }}
-  {{- $lapisUrlTemplate = $publicRuntimeConfig.lapisUrlTemplate }}
-{{- else if eq $.Values.environment "server" }}
-  {{- $lapisUrlTemplate = printf "https://lapis%s%s/%s" $.Values.subdomainSeparator $.Values.host "%organism%" }}
-{{- else }}
-  {{- $lapisUrlTemplate = printf "http://%s:8080/%%organism%%" $.Values.localHost }}
-{{- end }}
-{{- $externalLapisUrlConfig := dict "lapisUrlTemplate" $lapisUrlTemplate "config" $.Values }}
-            "backendUrl": "{{ include "loculus.backendUrl" . }}",
-            "lapisUrls": {{- include "loculus.generateExternalLapisUrls" $externalLapisUrlConfig | fromYaml | toJson }},
+{{- $backendUrl := include "loculus.backendUrl" . }}
+            "backendUrl": "{{ $backendUrl }}",
             "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}"
 {{- end }}
 

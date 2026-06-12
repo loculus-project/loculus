@@ -3,40 +3,61 @@ import Faq from '../components/IndexPage/FAQ.mdx';
 import OrganismCard from '../components/IndexPage/OrganismCard.astro';
 import WelcomeMessage from '../components/IndexPage/WelcomeMessage.astro';
 import { getOrganismStatisticsMap } from '../components/IndexPage/getOrganismStatistics';
+import AuthenticationRequired from '../components/common/AuthenticationRequired.astro';
 import { getConfiguredOrganisms, getWebsiteConfig } from '../config';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getAccessToken } from '../utils/getAccessToken';
 const websiteConfig = getWebsiteConfig();
 const { name: websiteName, welcomeMessageHTML } = websiteConfig;
 import '../styles/mdcontainer.css';
 
 const numberDaysAgoStatistics = 30;
-const organismStatisticsMap = await getOrganismStatisticsMap(
-    getConfiguredOrganisms().map((organism) => organism.key),
-    numberDaysAgoStatistics,
-);
+const accessToken = getAccessToken(Astro.locals.session);
+const configuredOrganisms = getConfiguredOrganisms();
+const organismStatisticsMap =
+    accessToken === undefined
+        ? new Map()
+        : await getOrganismStatisticsMap(
+              configuredOrganisms.map((organism) => organism.key),
+              numberDaysAgoStatistics,
+              accessToken,
+          );
 ---
 
 <BaseLayout title='Home'>
     <div class='max-w-6xl mx-auto'>
         <WelcomeMessage websiteName={websiteName} welcomeMessageHTML={welcomeMessageHTML} />
 
-        <div class='flex justify-center'>
-            <div
-                class=`flex flex-wrap justify-center gap-x-5  gap-y-4 ${getConfiguredOrganisms().length ===5 ? "max-w-4xl" : ""}`
-            >
-                {
-                    getConfiguredOrganisms().map(({ key, displayName, image }) => (
-                        <OrganismCard
-                            key={key}
-                            image={image}
-                            displayName={displayName}
-                            organismStatistics={organismStatisticsMap.get(key)!}
-                            numberDaysAgoStatistics={numberDaysAgoStatistics}
-                        />
-                    ))
-                }
-            </div>
-        </div>
+        {
+            accessToken === undefined && (
+                <AuthenticationRequired
+                    message='This instance is private. Sequences are only available after authentication and only to members of the submitting groups.'
+                    includeTestAccountsNote
+                />
+            )
+        }
+
+        {
+            accessToken !== undefined && (
+                <div class='flex justify-center'>
+                    <div
+                        class={`flex flex-wrap justify-center gap-x-5  gap-y-4 ${
+                            configuredOrganisms.length === 5 ? 'max-w-4xl' : ''
+                        }`}
+                    >
+                        {configuredOrganisms.map(({ key, displayName, image }) => (
+                            <OrganismCard
+                                key={key}
+                                image={image}
+                                displayName={displayName}
+                                organismStatistics={organismStatisticsMap.get(key)!}
+                                numberDaysAgoStatistics={numberDaysAgoStatistics}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )
+        }
         <div class='mdContainer'>
             <Faq />
         </div>

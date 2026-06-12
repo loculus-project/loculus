@@ -5,7 +5,7 @@ import { getConfiguredOrganisms, getSchema } from '../../config.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
 import { ACCESSION_FIELD, ACCESSION_VERSION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import { versionStatuses } from '../../types/lapis.ts';
+import { type LapisBaseRequest, versionStatuses } from '../../types/lapis.ts';
 
 type AggregateValue = string | number | boolean | null | undefined;
 export type AggregateRow = { value: AggregateValue; count: number };
@@ -13,9 +13,9 @@ export type AggregateRow = { value: AggregateValue; count: number };
 const getAggregate = async (
     client: LapisClient,
     field: string,
-    params: Record<string, string[] | string>,
+    params: LapisBaseRequest,
 ): Promise<Result<AggregateRow[], ProblemDetail>> => {
-    const result = await client.call('aggregated', params);
+    const result = await client.getAllVersionsAggregated(params);
     return result.map(({ data }) =>
         data.map((item) => ({
             value: item[field],
@@ -30,6 +30,7 @@ const getAggregate = async (
 export const getSeqSetStatistics = async (
     accessions: string[],
     fieldOptions: string[],
+    accessToken: string,
 ): Promise<Result<AggregateRow[], ProblemDetail>> => {
     if (accessions.length === 0) {
         return ok([]);
@@ -42,7 +43,7 @@ export const getSeqSetStatistics = async (
     const organisms = getConfiguredOrganisms();
     const aggregateResponses = await Promise.all(
         organisms.flatMap((organism) => {
-            const client = LapisClient.createForOrganism(organism.key);
+            const client = LapisClient.createForOrganism(organism.key, accessToken);
             const schema = getSchema(organism.key);
 
             // Find the first field option that exists in the schema metadata, and skip if none are found

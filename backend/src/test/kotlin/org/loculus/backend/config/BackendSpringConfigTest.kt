@@ -67,6 +67,7 @@ fun backendConfig(metadataList: List<Metadata>, earliestReleaseDate: EarliestRel
         DEFAULT_ORGANISM to InstanceConfig(
             schema = Schema(DEFAULT_ORGANISM, metadataList, earliestReleaseDate = earliestReleaseDate),
             referenceGenome = ReferenceGenome(emptyList(), emptyList()),
+            lapisUrl = "http://localhost:8080",
         ),
     ),
     accessionPrefix = "FOO_",

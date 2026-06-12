@@ -390,6 +390,12 @@
                   "default": true,
                   "description": "If false, the submission form will not allow submission of consensus sequences (i.e. the sequences file must be omitted). All consensus sequence related parts on the website will be hidden."
                 },
+                "alignedNucleotideSequences": {
+                  "groups": ["schema"],
+                  "type": "boolean",
+                  "default": true,
+                  "description": "If false, aligned nucleotide sequence query endpoints are not documented for this organism."
+                },
                 "maxSequencesPerEntry": {
                   "groups": ["schema"],
                   "type": ["integer", "null"],

@@ -81,6 +81,7 @@ export const SequenceDataUI: FC<Props> = ({
                         segmentReferences={segmentReferences}
                         accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
+                        accessToken={accessToken}
                         referenceGenomesInfo={referenceGenomesInfo}
                         loadSequencesAutomatically={loadSequencesAutomatically}
                     />

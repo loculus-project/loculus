@@ -16,6 +16,8 @@ export type Option = {
 type GenericOptionsProvider = {
     type: 'generic';
     lapisUrl: string;
+    queryCurrentUrl?: string;
+    accessToken?: string;
     lapisSearchParameters: LapisSearchParameters;
     fieldName: string;
 };
@@ -24,6 +26,8 @@ type GenericOptionsProvider = {
 type LineageOptionsProvider = {
     type: 'lineage';
     lapisUrl: string;
+    queryCurrentUrl?: string;
+    accessToken?: string;
     lapisSearchParameters: LapisSearchParameters;
     fieldName: string;
     includeSublineages: boolean;
@@ -50,6 +54,8 @@ export type AutocompleteOptionsHook = () => {
 
 const createGenericOptionsHook = (
     lapisUrl: string,
+    queryCurrentUrl: string | undefined,
+    accessToken: string | undefined,
     fieldName: string,
     lapisSearchParameters: LapisSearchParameters,
 ): AutocompleteOptionsHook => {
@@ -65,7 +71,11 @@ const createGenericOptionsHook = (
     const lapisParams = { fields: [fieldName], ...otherFields };
 
     return function hook() {
-        const { data, isPending, error, mutate } = lapisClientHooks(lapisUrl).useAggregated();
+        const { data, isPending, error, mutate } = lapisClientHooks(
+            lapisUrl,
+            queryCurrentUrl,
+            accessToken,
+        ).useAggregated();
 
         const options: Option[] = (data?.data ?? [])
             .filter(
@@ -164,6 +174,8 @@ function aggregateCounts(
 
 const createLineageOptionsHook = (
     lapisUrl: string,
+    queryCurrentUrl: string | undefined,
+    accessToken: string | undefined,
     fieldName: string,
     lapisSearchParameters: LapisSearchParameters,
     includeSublineages: boolean,
@@ -187,7 +199,7 @@ const createLineageOptionsHook = (
             isPending: aggregatedEndpointIsPending,
             error: aggregatedEndpointError,
             mutate,
-        } = lapisClientHooks(lapisUrl).useAggregated();
+        } = lapisClientHooks(lapisUrl, queryCurrentUrl, accessToken).useAggregated();
 
         const {
             data: lineageDefinition,
@@ -260,6 +272,8 @@ export const createOptionsProviderHook = (optionsProvider: OptionsProvider): Aut
             return useCallback(
                 createGenericOptionsHook(
                     optionsProvider.lapisUrl,
+                    optionsProvider.queryCurrentUrl,
+                    optionsProvider.accessToken,
                     optionsProvider.fieldName,
                     optionsProvider.lapisSearchParameters,
                 ),
@@ -270,6 +284,8 @@ export const createOptionsProviderHook = (optionsProvider: OptionsProvider): Aut
             return useCallback(
                 createLineageOptionsHook(
                     optionsProvider.lapisUrl,
+                    optionsProvider.queryCurrentUrl,
+                    optionsProvider.accessToken,
                     optionsProvider.fieldName,
                     optionsProvider.lapisSearchParameters,
                     optionsProvider.includeSublineages,

@@ -1,13 +1,15 @@
 import { Zodios } from '@zodios/core';
 import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
-import { isAxiosError } from 'axios';
+import axios, { isAxiosError } from 'axios';
 
 import { backendApi } from './backendApi.ts';
 import { lapisApi } from './lapisApi.ts';
+import { queryApi } from './queryApi.ts';
 import { seqSetCitationApi } from './seqSetCitationApi.ts';
 import { problemDetail } from '../types/backend.ts';
 import type { SequenceRequest } from '../types/lapis.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
+import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
 import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../utils/sequenceTypeHelpers.ts';
 
@@ -22,20 +24,51 @@ const LAPIS_RETRY_OPTIONS = {
     retryDelay: (attemptIndex: number) => Math.min(250 * 2 ** attemptIndex, 30000),
 };
 
+type SequenceHooks = Pick<
+    ZodiosHooksInstance<typeof lapisApi>,
+    | 'useUnalignedNucleotideSequences'
+    | 'useUnalignedNucleotideSequencesMultiSegment'
+    | 'useAlignedNucleotideSequences'
+    | 'useAlignedNucleotideSequencesMultiSegment'
+    | 'useAlignedAminoAcidSequences'
+>;
+
 export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
 }
 
-export function lapisClientHooks(lapisUrl: string) {
-    const zodiosHooks = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
+export function lapisClientHooks(lapisUrl: string, queryCurrentUrl?: string, accessToken?: string) {
+    const authenticatedAxios = axios.create({
+        headers: createAuthorizationHeader(accessToken) ?? {},
+    });
+    const proxyZodios = new ZodiosHooks(
+        'lapis',
+        new Zodios(lapisUrl, lapisApi, { transform: false, axiosInstance: authenticatedAxios }),
+    );
+    const queryZodios = queryCurrentUrl
+        ? new ZodiosHooks(
+              'lapis-query',
+              new Zodios(queryCurrentUrl, queryApi, {
+                  transform: false,
+                  axiosInstance: authenticatedAxios,
+              }),
+          )
+        : null;
     return {
-        // All POST hooks must include retry options manually to enable retries
-        useAggregated: () => zodiosHooks.useAggregated({}, { ...LAPIS_RETRY_OPTIONS }),
-        useDetails: () => zodiosHooks.useDetails({}, { ...LAPIS_RETRY_OPTIONS }),
-        useLineageDefinition: zodiosHooks.useLineageDefinition,
+        // useDetails and useAggregated use the structured QueryController endpoint when available
+        useAggregated: () =>
+            queryZodios
+                ? queryZodios.useAggregated({}, { ...LAPIS_RETRY_OPTIONS })
+                : proxyZodios.useAggregated({}, { ...LAPIS_RETRY_OPTIONS }),
+        useDetails: () =>
+            queryZodios
+                ? queryZodios.useDetails({}, { ...LAPIS_RETRY_OPTIONS })
+                : proxyZodios.useDetails({}, { ...LAPIS_RETRY_OPTIONS }),
+        // lineageDefinition stays at the raw LAPIS proxy; it is reference metadata, not sequence data.
+        useLineageDefinition: proxyZodios.useLineageDefinition.bind(proxyZodios),
         useGetSequence(accessionVersion: string, sequenceType: SequenceType, useLapisMultiSegmentedEndpoint: boolean) {
             return getSequenceHook(
-                zodiosHooks,
+                (queryZodios ?? proxyZodios) as SequenceHooks,
                 {
                     accessionVersion,
                     dataFormat: 'FASTA',
@@ -48,7 +81,7 @@ export function lapisClientHooks(lapisUrl: string) {
 }
 
 function getSequenceHook(
-    hooks: ZodiosHooksInstance<typeof lapisApi>,
+    hooks: SequenceHooks,
     request: SequenceRequest, // these are request PARAMETERS, not requests
     sequenceType: SequenceType,
     isMultiSegmented: boolean,
@@ -87,7 +120,7 @@ function getSequenceHook(
 }
 
 function selectSequenceHook(
-    hooks: ZodiosHooksInstance<typeof lapisApi>,
+    hooks: SequenceHooks,
     request: SequenceRequest,
     sequenceType: SequenceType,
     isMultiSegmented: boolean,

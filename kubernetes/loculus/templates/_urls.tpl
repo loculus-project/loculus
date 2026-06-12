@@ -59,6 +59,20 @@
   {{ end }}
 {{ end }}
 
+{{/* generates internal LAPIS urls routed through the backend proxy */}}
+{{ define "loculus.generateInternalLapisUrlsViaBackend" }}
+{{- $internalBackendUrl := "" }}
+{{- if $.Values.disableBackend }}
+  {{- $internalBackendUrl = printf "http://%s:8079" $.Values.localHost }}
+{{- else }}
+  {{- $internalBackendUrl = "http://loculus-backend-service:8079" }}
+{{- end }}
+  {{ range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $key := $item.key }}
+    "{{ $key }}": "{{ $internalBackendUrl }}/{{ $key }}/lapis"
+  {{ end }}
+{{ end }}
+
 {{/* generates external LAPIS urls from { config, host } */}}
 {{ define "loculus.generateExternalLapisUrls"}}
 {{ $lapisUrlTemplate := .lapisUrlTemplate }}

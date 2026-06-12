@@ -46,7 +46,7 @@ enum class FileUrlType {
     override fun toString(): String = lowerCase(name)
 }
 
-data class InstanceConfig(val schema: Schema, val referenceGenome: ReferenceGenome)
+data class InstanceConfig(val schema: Schema, val referenceGenome: ReferenceGenome, val lapisUrl: String)
 
 data class Schema(
     val organismName: String,
@@ -59,6 +59,7 @@ data class Schema(
 
 data class SubmissionDataTypes(
     val consensusSequences: Boolean = true,
+    val alignedNucleotideSequences: Boolean = true,
     val maxSequencesPerEntry: Int? = null, // null means unlimited sequences per entry
     // Allowed file categories for submission files
     val files: FilesSubmissionDataType = FilesSubmissionDataType(false, emptyList()),

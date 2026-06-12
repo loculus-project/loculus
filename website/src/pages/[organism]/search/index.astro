@@ -1,6 +1,7 @@
 ---
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../components/SearchPage/SearchFullUI';
+import AuthenticationRequired from '../../../components/common/AuthenticationRequired.astro';
 import {
     dataUseTermsAreEnabled,
     getContactConfig,
@@ -43,13 +44,17 @@ const referenceGenomesInfo = getReferenceGenomes(cleanedOrganism.key);
 
 // Build initialQueryDict with support for multi-value parameters
 const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
-const { data, totalCount } = await performLapisSearchQueries(
-    initialQueryDict,
-    schema,
-    referenceGenomesInfo,
-    hiddenFieldValues,
-    cleanedOrganism.key,
-);
+const { data, totalCount } =
+    accessToken === undefined
+        ? { data: [], totalCount: 0 }
+        : await performLapisSearchQueries(
+              initialQueryDict,
+              schema,
+              referenceGenomesInfo,
+              hiddenFieldValues,
+              cleanedOrganism.key,
+              accessToken,
+          );
 
 const websiteConfig = getWebsiteConfig();
 const sequenceFlaggingConfig = websiteConfig.sequenceFlagging;
@@ -57,23 +62,31 @@ const contactConfig = getContactConfig(websiteConfig);
 ---
 
 <BaseLayout title={`${cleanedOrganism.displayName} - Browse`} fullWidth withoutMargin>
-    <SearchFullUI
-        client:load
-        clientConfig={clientConfig}
-        organism={cleanedOrganism.key}
-        schema={schema}
-        myGroups={myGroups}
-        accessToken={accessToken}
-        referenceGenomesInfo={referenceGenomesInfo}
-        hiddenFieldValues={hiddenFieldValues}
-        initialData={data}
-        initialCount={totalCount}
-        initialQueryDict={initialQueryDict}
-        dataUseTermsEnabled={dataUseTermsAreEnabled()}
-        dataUseTermsAgreementHTML={getDataUseTermsAgreementHTML()}
-        sequenceFlaggingConfig={sequenceFlaggingConfig}
-        linkOuts={schema.linkOuts}
-        contactConfig={contactConfig}
-        isReleasedPage={false}
-    />
+    {
+        accessToken === undefined ? (
+            <div class='max-w-6xl mx-auto px-8'>
+                <AuthenticationRequired />
+            </div>
+        ) : (
+            <SearchFullUI
+                client:load
+                clientConfig={clientConfig}
+                organism={cleanedOrganism.key}
+                schema={schema}
+                myGroups={myGroups}
+                accessToken={accessToken}
+                referenceGenomesInfo={referenceGenomesInfo}
+                hiddenFieldValues={hiddenFieldValues}
+                initialData={data}
+                initialCount={totalCount}
+                initialQueryDict={initialQueryDict}
+                dataUseTermsEnabled={dataUseTermsAreEnabled()}
+                dataUseTermsAgreementHTML={getDataUseTermsAgreementHTML()}
+                sequenceFlaggingConfig={sequenceFlaggingConfig}
+                linkOuts={schema.linkOuts}
+                contactConfig={contactConfig}
+                isReleasedPage={false}
+            />
+        )
+    }
 </BaseLayout>
