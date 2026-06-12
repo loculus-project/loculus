@@ -540,7 +540,7 @@ class SeqSetCitationsDatabaseService(
             SeqSetRecordsTable.accession eq accessionVersion.displayAccessionVersion()
         } else {
             (SeqSetRecordsTable.accession eq accession) or
-                (SeqSetRecordsTable.accession like (LikePattern.ofLiteral("$accession.") + LikePattern("%")))
+                (SeqSetRecordsTable.accession like (LikePattern.ofLiteral("$accession.") + "%"))
         }
 
         return SeqSetCitationSourceTable.innerJoin(
