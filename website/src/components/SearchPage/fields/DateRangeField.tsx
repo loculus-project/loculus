@@ -49,11 +49,8 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
         isStrictMode(lowerFromDefined, lowerToDefined, upperFromDefined, upperToDefined),
     );
 
-    // Keep strictMode in sync when the underlying fieldValues change from outside the component
-    // (e.g. URL navigation or the active-filter pills). We only re-derive when at least one bound
-    // is actually defined: when the user toggles strictness without having entered any dates we
-    // clear all four fields, which would otherwise feed back into isStrictMode and collapse
-    // strictMode back to its default `true` — making the checkbox appear stuck on.
+    // Only re-derive strictMode when at least one bound is defined, otherwise toggling strictness
+    // with no dates entered would feed back into isStrictMode and snap the checkbox back to `true`.
     useEffect(() => {
         if (lowerFromDefined || lowerToDefined || upperFromDefined || upperToDefined) {
             setStrictMode(isStrictMode(lowerFromDefined, lowerToDefined, upperFromDefined, upperToDefined));
@@ -63,13 +60,9 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
     const lowerField = strictMode ? lowerFromField : upperFromField;
     const upperField = strictMode ? upperToField : lowerToField;
 
-    // Extract single values from fieldValues (date ranges should never be arrays).
-    // The displayed values are derived directly from `fieldValues` — the single source of truth —
-    // rather than mirrored into local state. Keeping a local copy that is continuously written back
-    // and forth with `fieldValues` caused a race: while typing, `fieldValues` lags one round-trip
-    // behind (each keystroke goes through setSomeFieldValues -> URL state -> re-derived fieldValues),
-    // so a stale `fieldValues` could overwrite a freshly typed value, making the field bounce
-    // between two values.
+    // Derive displayed values directly from `fieldValues` (the single source of truth) instead of
+    // mirroring into local state — a local copy synced both ways with the lagging `fieldValues`
+    // would let a stale value overwrite a freshly typed one, making the field bounce while typing.
     const getFieldValue = (fieldName: string): string => {
         return validateSingleValue(fieldValues[fieldName], fieldName);
     };
@@ -77,9 +70,8 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
     const lowerValue = getFieldValue(lowerField.name);
     const upperValue = getFieldValue(upperField.name);
 
-    // Write the lower/upper values into the underlying fields for the given mode, clearing the
-    // fields that belong to the other mode. This only runs in response to real user interaction
-    // (typing a date or toggling strictness), never from an effect, so there is no feedback loop.
+    // Write into the underlying fields for the given mode, clearing the other mode's fields. Only
+    // called from user interaction, never an effect, so there is no feedback loop.
     const commit = (strict: boolean, newLowerValue: string, newUpperValue: string) => {
         if (strict) {
             setSomeFieldValues(
@@ -141,9 +133,7 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                 }}
                 fieldValue={lowerValue}
                 setSomeFieldValues={([_, value]) => {
-                    // DateField passes a single tuple [fieldName, value]
-                    const validatedValue = validateSingleValue(value, `${field.name}-from`);
-                    commit(strictMode, validatedValue, upperValue);
+                    commit(strictMode, validateSingleValue(value, `${field.name}-from`), upperValue);
                 }}
             />
             <DateField
@@ -154,9 +144,7 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                 }}
                 fieldValue={upperValue}
                 setSomeFieldValues={([_, value]) => {
-                    // DateField passes a single tuple [fieldName, value]
-                    const validatedValue = validateSingleValue(value, `${field.name}-to`);
-                    commit(strictMode, lowerValue, validatedValue);
+                    commit(strictMode, lowerValue, validateSingleValue(value, `${field.name}-to`));
                 }}
             />
         </div>

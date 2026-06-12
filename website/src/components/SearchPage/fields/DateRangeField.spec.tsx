@@ -110,9 +110,8 @@ describe('DateRangeField', () => {
             />,
         );
 
-        // Rendering must not push values back into the query state — only real user interaction
-        // (typing a date or toggling strictness) should. This avoids the feedback loop that made
-        // the date inputs bounce between two values while typing.
+        // Rendering must not push values back into query state — avoids the feedback loop that
+        // made the inputs bounce between two values while typing.
         expect(setSomeFieldValues).not.toHaveBeenCalled();
     });
 
