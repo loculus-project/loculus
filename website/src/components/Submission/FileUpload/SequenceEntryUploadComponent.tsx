@@ -82,12 +82,12 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                         metadata format
                     </a>{' '}
                     including a list of all supported metadata. You can download a{' '}
+                    <a href={routes.metadataTemplate(organism, action, 'xlsx')} className='text-primary-700 opacity-90'>
+                        XLSX template
+                    </a>
+                    {' (recommended) or a minimal '}
                     <a href={routes.metadataTemplate(organism, action, 'tsv')} className='text-primary-700 opacity-90'>
                         TSV
-                    </a>
-                    {' or '}
-                    <a href={routes.metadataTemplate(organism, action, 'xlsx')} className='text-primary-700 opacity-90'>
-                        XLSX
                     </a>{' '}
                     template with column headings for the metadata file.
                 </p>
