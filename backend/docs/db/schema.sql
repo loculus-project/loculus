@@ -936,6 +936,13 @@ CREATE INDEX data_use_terms_table_accession_idx ON public.data_use_terms_table U
 
 
 --
+-- Name: files_upload_requested_at_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX files_upload_requested_at_idx ON public.files USING btree (upload_requested_at);
+
+
+--
 -- Name: flyway_schema_history_s_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
