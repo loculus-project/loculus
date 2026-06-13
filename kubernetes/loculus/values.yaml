@@ -87,6 +87,11 @@ defaultOrganismConfig: &defaultOrganismConfig
     submissionDataTypes: &defaultSubmissionDataTypes
       consensusSequences: true
       maxSequencesPerEntry: 1
+      files:
+        enabled: true
+        categories:
+          - name: raw_reads
+            displayName: Raw reads
     loadSequencesAutomatically: true
     earliestReleaseDate:
       enabled: true
@@ -1893,35 +1898,6 @@ defaultOrganisms:
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF9b.fasta]]"
               - name: S
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
-  dummy-organism-with-files:
-    schema:
-      image: "/images/organisms/hmpv.jpg"
-      organismName: "Test organism (with files)"
-      submissionDataTypes:
-        consensusSequences: false
-        files:
-          enabled: true
-          categories:
-            - name: raw_reads
-              displayName: Raw reads
-      files:
-        - name: raw_reads
-          displayName: Raw reads
-      metadata: *dummyMetadata
-      website:
-        tableColumns:
-          - country
-          - division
-          - date
-        defaultOrder: descending
-        defaultOrderBy: date
-    preprocessing:
-      - version: 1
-        image: ghcr.io/loculus-project/preprocessing-dummy
-        args:
-          - "--watch"
-          - "--disableConsensusSequences"
-    referenceGenomes: []
   not-aligned-organism:
     enabled: true
     schema:
