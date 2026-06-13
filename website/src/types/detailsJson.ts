@@ -4,6 +4,7 @@ import { dataUseTermsHistoryEntry } from './backend.ts';
 import { schema } from './config.ts';
 import { parsedSequenceEntryHistoryEntrySchema } from './lapis.ts';
 import { serviceUrls } from './runtimeConfig.ts';
+import { sequenceCitations } from './seqSetCitation.ts';
 import { tableDataEntrySchema } from '../components/SequenceDetailsPage/types.ts';
 
 export const detailsJsonSchema = z.object({
@@ -17,6 +18,7 @@ export const detailsJsonSchema = z.object({
     segmentReferences: z.record(z.string(), z.string().nullable()).optional(),
     isRevocation: z.boolean(),
     sequenceEntryHistory: z.array(parsedSequenceEntryHistoryEntrySchema),
+    sequenceCitations: sequenceCitations.optional(),
 });
 
 export type DetailsJson = z.infer<typeof detailsJsonSchema>;

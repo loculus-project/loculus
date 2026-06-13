@@ -2,7 +2,14 @@ import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
 import { authorizationHeader, notAuthorizedError } from './commonApiTypes.ts';
-import { authorProfile, seqSets, seqSetRecords, citedByResult, seqSetCitations } from '../types/seqSetCitation.ts';
+import {
+    authorProfile,
+    seqSets,
+    seqSetRecords,
+    citedByResult,
+    seqSetCitations,
+    sequenceCitations,
+} from '../types/seqSetCitation.ts';
 
 const getSeqSetsOfUserEndpoint = makeEndpoint({
     method: 'get',
@@ -27,6 +34,21 @@ const getSeqSetCitationsEndpoint = makeEndpoint({
     path: '/get-seqset-citations?seqSetId=:seqSetId&version=:version',
     alias: 'getSeqSetCitations',
     response: seqSetCitations,
+    errors: [notAuthorizedError],
+});
+
+const getSequenceCitationsEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/get-sequence-citations?accession=:accession',
+    parameters: [
+        {
+            name: 'version',
+            type: 'Query',
+            schema: z.number().optional(),
+        },
+    ],
+    alias: 'getSequenceCitations',
+    response: sequenceCitations,
     errors: [notAuthorizedError],
 });
 
@@ -174,6 +196,7 @@ export const seqSetCitationApi = makeApi([
     getSeqSetsOfUserEndpoint,
     getUserCitedByEndpoint,
     getSeqSetCitationsEndpoint,
+    getSequenceCitationsEndpoint,
     getSeqSetEndpoint,
     getSeqSetVersionsEndpoint,
     getSeqSetRecordsEndpoint,

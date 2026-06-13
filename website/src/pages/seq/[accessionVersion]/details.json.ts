@@ -4,14 +4,21 @@ import { findOrganismAndData } from './findOrganismAndData';
 import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
 import { getRuntimeConfig, getSchema } from '../../../config';
 import { getInstanceLogger } from '../../../logger.ts';
+import { SeqSetCitationClient } from '../../../services/seqSetCitationClient.ts';
 import type { DetailsJson } from '../../../types/detailsJson';
+import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
 
 const logger = getInstanceLogger('details.json');
 
 export const GET: APIRoute = async (req) => {
     const params = req.params as { accessionVersion: string; accessToken?: string };
     const { accessionVersion } = params;
+    const { accession } = parseAccessionVersionFromString(accessionVersion);
+    const sequenceCitationsPromise = SeqSetCitationClient.create().call('getSequenceCitations', {
+        params: { accession }, // Display citations across all accession versions
+    });
     const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
+    const sequenceCitations = (await sequenceCitationsPromise).unwrapOr(undefined);
 
     if (sequenceDetailsTableData.isErr()) {
         logger.warn(
@@ -44,6 +51,7 @@ export const GET: APIRoute = async (req) => {
         segmentReferences: result.segmentReferences,
         isRevocation: result.isRevocation,
         sequenceEntryHistory: result.sequenceEntryHistory,
+        sequenceCitations,
     };
 
     return new Response(JSON.stringify(detailsDataUIProps), {
