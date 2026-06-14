@@ -1748,6 +1748,51 @@
       },
       "additionalProperties": false
     },
+    "ingress": {
+      "groups": ["general"],
+      "type": "object",
+      "description": "Configure ingress hostnames independently from public URLs. By default, ingress hostnames are automatically constructed from .host and .subdomainSeparator. Set hosts to override the hostname used in the Ingress rules, e.g. when routing through a gateway/reverse proxy with different external hostnames than the internal ones.",
+      "additionalProperties": false,
+      "properties": {
+        "hosts": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Override hostnames for each service's Ingress rule. Leave empty to use the default computed hostname.",
+          "properties": {
+            "website": {
+              "type": "string",
+              "default": "",
+              "description": "Override hostname for the website Ingress. Defaults to .Values.host."
+            },
+            "backend": {
+              "type": "string",
+              "default": "",
+              "description": "Override hostname for the backend Ingress. Defaults to backend<subdomainSeparator><host>."
+            },
+            "keycloak": {
+              "type": "string",
+              "default": "",
+              "description": "Override hostname for the keycloak Ingress. Defaults to authentication<subdomainSeparator><host>."
+            },
+            "lapis": {
+              "type": "string",
+              "default": "",
+              "description": "Override hostname for the LAPIS Ingress. Defaults to lapis<subdomainSeparator><host>."
+            },
+            "minio": {
+              "type": "string",
+              "default": "",
+              "description": "Override hostname for the MinIO Ingress. Defaults to s3<subdomainSeparator><host>."
+            },
+            "docs": {
+              "type": "string",
+              "default": "",
+              "description": "Override hostname for the docs Ingress. Defaults to docs<subdomainSeparator><host>."
+            }
+          }
+        }
+      }
+    },
     "subdomainSeparator": {
       "type": "string",
       "default": "-"

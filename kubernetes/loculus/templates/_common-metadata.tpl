@@ -619,6 +619,8 @@ fields:
 {{- $lapisUrlTemplate := "" }}
 {{- if $publicRuntimeConfig.lapisUrlTemplate }}
   {{- $lapisUrlTemplate = $publicRuntimeConfig.lapisUrlTemplate }}
+{{- else if $.Values.ingress.hosts.lapis }}
+  {{- $lapisUrlTemplate = printf "https://%s/%%organism%%" $.Values.ingress.hosts.lapis }}
 {{- else if eq $.Values.environment "server" }}
   {{- $lapisUrlTemplate = printf "https://lapis%s%s/%s" $.Values.subdomainSeparator $.Values.host "%organism%" }}
 {{- else }}
