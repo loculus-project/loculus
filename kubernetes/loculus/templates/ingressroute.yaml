@@ -47,9 +47,10 @@ spec:
     permanent: true
 ---
 {{- if eq $.Values.environment "server" }}
-{{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
-{{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
-{{- $minioHost := (printf "s3%s%s" $.Values.subdomainSeparator $.Values.host) }}
+{{- $websiteHost := $.Values.ingress.hosts.website | default $.Values.host }}
+{{- $backendHost := $.Values.ingress.hosts.backend | default (printf "backend%s%s" .Values.subdomainSeparator .Values.host) }}
+{{- $keycloakHost := $.Values.ingress.hosts.keycloak | default (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
+{{- $minioHost := $.Values.ingress.hosts.minio | default (printf "s3%s%s" $.Values.subdomainSeparator $.Values.host) }}
 {{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- if $.Values.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
@@ -76,7 +77,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForWebsite }}"
 spec:
   rules:
-    - host: "{{ .Values.host }}"
+    - host: "{{ $websiteHost }}"
       http:
         paths:
           - path: /
@@ -86,7 +87,7 @@ spec:
                 name: loculus-website-service
                 port:
                   number: 3000
-    - host: "www.{{ .Values.host }}"
+    - host: "www.{{ $websiteHost }}"
       http:
         paths:
           - path: /
@@ -98,8 +99,8 @@ spec:
                   number: 3000
   tls:
   - hosts:
-    - "{{ .Values.host }}"
-    - "www.{{ .Values.host }}"
+    - "{{ $websiteHost }}"
+    - "www.{{ $websiteHost }}"
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

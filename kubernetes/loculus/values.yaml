@@ -2707,9 +2707,36 @@ enaDeposition:
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
 rawReadsProcessingService:
   raw_reads_processing_service_url: http://loculus-raw-reads-processing:5000
-subdomainSeparator: "-"
-enableServiceMonitor: false
+# Configure ingress hostnames independently from public URLs.
+# By default, ingress hostnames are automatically constructed from .host and .subdomainSeparator
+# (e.g. backend.myhost.com, authentication.myhost.com, lapis.myhost.com).
+# Set these to override the hostname used in the Ingress rules, e.g. when routing
+# through a gateway/reverse proxy with different external hostnames than the internal ones.
+# The public.*Url values in the app runtime config will remain independent of these.
+# Example:
+# ingress:
+#   hosts:
+#     website: "loculus.x.y.com"
+#     backend: "api.loculus.x.y.com"
+#     keycloak: "auth.loculus.x.y.com"
+#     lapis: "pathogen-api.loculus.x.y.com"
+#     minio: "s3.loculus.x.y.com"
+#     docs: "docs.loculus.x.y.com"
+ingress:
+  hosts:
+    website: ""
+    backend: ""
+    keycloak: ""
+    lapis: ""
+    minio: ""
+    docs: ""
 
+public:
+  backendUrl: ""
+  lapisUrlTemplate: ""
+
+subdomainSeparator: "."
+enableServiceMonitor: false
 replicas:
   website: 1
   backend: 1

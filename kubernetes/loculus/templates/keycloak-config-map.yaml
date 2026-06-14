@@ -1,4 +1,4 @@
-{{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
+{{- $keycloakHost := $.Values.ingress.hosts.keycloak | default (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -257,8 +257,8 @@ data:
           "publicClient": true,
           "directAccessGrantsEnabled": true,
           "redirectUris": [
-            "https://{{$.Values.host}}/*",
-            "http://{{$.Values.host}}/*",
+            "https://{{ $.Values.ingress.hosts.website | default $.Values.host }}/*",
+            "http://{{ $.Values.ingress.hosts.website | default $.Values.host }}/*",
             "http://localhost:3000/*"
           ]
         },

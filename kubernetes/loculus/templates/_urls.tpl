@@ -2,6 +2,8 @@
 {{- $publicRuntimeConfig := $.Values.public }}
   {{- if $publicRuntimeConfig.backendUrl }}
     {{- $publicRuntimeConfig.backendUrl -}}
+  {{- else if $.Values.ingress.hosts.backend -}}
+    {{- printf "https://%s" $.Values.ingress.hosts.backend -}}
   {{- else if eq $.Values.environment "server" -}}
     {{- (printf "https://backend%s%s" $.Values.subdomainSeparator $.Values.host) -}}
   {{- else -}}
@@ -13,6 +15,8 @@
 {{- $publicRuntimeConfig := $.Values.public }}
   {{- if $publicRuntimeConfig.websiteUrl }}
     {{- $publicRuntimeConfig.websiteUrl -}}
+  {{- else if $.Values.ingress.hosts.website -}}
+    {{- printf "https://%s" $.Values.ingress.hosts.website -}}
   {{- else if eq $.Values.environment "server" -}}
     {{- (printf "https://%s" $.Values.host) -}}
   {{- else -}}
@@ -22,7 +26,9 @@
 
 {{- define "loculus.s3Url" -}}
   {{- if $.Values.runDevelopmentS3 }}
-    {{- if eq $.Values.environment "server" -}}
+    {{- if $.Values.ingress.hosts.minio -}}
+        {{- printf "https://%s" $.Values.ingress.hosts.minio -}}
+    {{- else if eq $.Values.environment "server" -}}
         {{- (printf "https://s3%s%s" $.Values.subdomainSeparator $.Values.host) -}}
     {{- else -}}
         {{- printf "http://%s:8084" $.Values.localHost -}}
@@ -44,6 +50,8 @@
 {{- $publicRuntimeConfig := $.Values.public }}
   {{- if $publicRuntimeConfig.keycloakUrl }}
     {{- $publicRuntimeConfig.keycloakUrl -}}
+  {{- else if $.Values.ingress.hosts.keycloak -}}
+    {{- printf "https://%s" $.Values.ingress.hosts.keycloak -}}
   {{- else if eq $.Values.environment "server" -}}
     {{- (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) -}}
   {{- else -}}
