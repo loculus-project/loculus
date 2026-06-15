@@ -112,7 +112,7 @@ class FilesController(
             "`fileMapping` in the /submit endpoint. " +
             "Note: the presigned URL includes an `If-None-Match: *` condition to prevent accidental " +
             "overwrites. If the file ID has already been uploaded to, S3 will return HTTP 412 " +
-            "(Precondition Failed) — this means the file already exists and cannot be overwritten.",
+            "(Precondition Failed) - this means the file already exists and cannot be overwritten.",
     )
     @ApiResponse(responseCode = "200", description = "Successfully generated pre-signed upload URLs")
     @ApiResponse(responseCode = "400", description = "Invalid request parameters")
