@@ -1,28 +1,26 @@
 package org.loculus.backend.service.files
 
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.config.BackendSpringProperty
-import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
-import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.service.daysAgo
-import org.loculus.backend.service.insertFile
 import org.loculus.backend.service.submission.CompressedSequence
 import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable
 import org.loculus.backend.service.submission.SequenceEntriesTable
-import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID
@@ -45,17 +43,15 @@ class GetOrphanedFileIdsTest(
 
     @BeforeEach
     fun createGroup() {
-        groupId = groupManagementClient
-            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
-            .andGetGroupId()
+        groupId = groupManagementClient.createNewGroup().andGetGroupId()
     }
 
     @Test
     fun `GIVEN unreferenced files THEN only those whose upload was requested before the threshold are orphaned`() {
         val old = UUID.randomUUID()
         val recent = UUID.randomUUID()
-        insertFile(old, groupId, daysAgo(10))
-        insertFile(recent, groupId, daysAgo(1))
+        insertFile(old, daysAgo(10))
+        insertFile(recent, daysAgo(1))
 
         val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
 
@@ -68,7 +64,7 @@ class GetOrphanedFileIdsTest(
         // Simulate a case where a user edited a submission, replacing `editedAway` with `currentFile`.
         val editedAway = UUID.randomUUID()
         val currentFile = UUID.randomUUID()
-        listOf(editedAway, currentFile).forEach { insertFile(it, groupId, daysAgo(10)) }
+        listOf(editedAway, currentFile).forEach { insertFile(it, daysAgo(10)) }
         insertSequenceEntry(
             accession = "A",
             version = 2,
@@ -83,19 +79,11 @@ class GetOrphanedFileIdsTest(
 
     @Test
     fun `GIVEN multiple pipeline versions THEN files from all pipeline versions are protected`() {
-        transaction {
-            CurrentProcessingPipelineTable.update(
-                { CurrentProcessingPipelineTable.organismColumn eq DEFAULT_ORGANISM },
-            ) {
-                it[versionColumn] = 2
-            }
-        }
-
-        val fileFromOldPipeline = UUID.randomUUID() // pipeline version 1 (< current) -> orphaned
-        val fileFromCurrentPipeline = UUID.randomUUID() // pipeline version 2 (current) -> protected
-        val fileFromNewerPipeline = UUID.randomUUID() // pipeline version 3 (> current) -> protected
+        val fileFromOldPipeline = UUID.randomUUID()
+        val fileFromCurrentPipeline = UUID.randomUUID()
+        val fileFromNewerPipeline = UUID.randomUUID()
         listOf(fileFromOldPipeline, fileFromCurrentPipeline, fileFromNewerPipeline)
-            .forEach { insertFile(it, groupId, daysAgo(10)) }
+            .forEach { insertFile(it, daysAgo(10)) }
 
         // The sequence entry itself references no files, so only the processed_data references matter.
         insertSequenceEntry(accession = "A", version = 1, archive = null, submitted = makeUnprocessedData(null))
@@ -126,7 +114,7 @@ class GetOrphanedFileIdsTest(
     @Test
     fun `GIVEN a file referenced only by old version THEN it is still protected`() {
         val fileInOldVersion = UUID.randomUUID()
-        insertFile(fileInOldVersion, groupId, daysAgo(10))
+        insertFile(fileInOldVersion, daysAgo(10))
         insertSequenceEntry(
             accession = "A",
             version = 1,
@@ -137,8 +125,21 @@ class GetOrphanedFileIdsTest(
 
         val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
 
-        assertThat(orphans.isEmpty(), `is`(true))
+        assertThat(orphans, `is`(emptySet()))
     }
+
+    private fun insertFile(id: UUID, requestedAt: LocalDateTime) = transaction {
+        FilesTable.insert {
+            it[idColumn] = id
+            it[uploadRequestedAtColumn] = requestedAt
+            it[uploaderColumn] = "testuser"
+            it[groupIdColumn] = groupId
+        }
+    }
+
+    private fun daysAgo(days: Long): LocalDateTime = dateProvider.getCurrentInstant()
+        .minus(days, DateTimeUnit.DAY, DateProvider.timeZone)
+        .toLocalDateTime(DateProvider.timeZone)
 
     private fun insertSequenceEntry(
         accession: String,

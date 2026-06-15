@@ -1,104 +1,76 @@
 package org.loculus.backend.service.submission
 
-import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
+import io.mockk.mockk
 import io.mockk.verify
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.`is`
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.transactions.transaction
+import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.SubmittedData
-import org.loculus.backend.config.BackendSpringProperty
-import org.loculus.backend.controller.DEFAULT_GROUP
-import org.loculus.backend.controller.DEFAULT_ORGANISM
-import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
-import org.loculus.backend.controller.groupmanagement.andGetGroupId
-import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.log.AuditLogger
-import org.loculus.backend.service.daysAgo
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
-import org.loculus.backend.service.insertFile
 import org.loculus.backend.utils.DateProvider
-import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID
+import kotlin.time.Instant
 
-@EndpointTest(
-    properties = [
-        "${BackendSpringProperty.S3_ENABLED}=true",
-        "${BackendSpringProperty.S3_GC_DRY_RUN}=true",
-        "${BackendSpringProperty.S3_MAX_ORPHAN_AGE_DAYS}=1",
-    ],
-)
-class S3GarbageCollectionTaskTest(
-    @Autowired val s3GarbageCollectionTask: S3GarbageCollectionTask,
-    @Autowired val filesDatabaseService: FilesDatabaseService,
-    @Autowired val groupManagementClient: GroupManagementControllerClient,
-    @Autowired val dateProvider: DateProvider,
-    @Autowired val auditLogger: AuditLogger,
-) {
-    @MockkBean(relaxed = true)
-    lateinit var s3Service: S3Service
+class S3GarbageCollectionTaskTest {
+    private val filesDatabaseService = mockk<FilesDatabaseService>(relaxed = true)
+    private val s3Service = mockk<S3Service>(relaxed = true)
+    private val dateProvider = mockk<DateProvider>()
+    private val auditLogger = mockk<AuditLogger>(relaxed = true)
 
     @Test
-    fun `GIVEN dry run is enabled WHEN the task runs THEN the orphan is not deleted from S3 or the DB`() {
-        val groupId = groupManagementClient
-            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
-            .andGetGroupId()
+    fun `GIVEN dry run is enabled THEN finds files at least one day old without deleting them`() {
         val orphan = UUID.randomUUID()
-        insertFile(orphan, groupId, daysAgo(2))
+        givenOrphans(orphan)
 
-        s3GarbageCollectionTask.task()
+        task(maxOrphanAge = 0, dryRun = true).task()
 
+        verify { filesDatabaseService.getOrphanedFileIds(LocalDateTime.parse("2026-06-14T12:00:00")) }
         verify(exactly = 0) { s3Service.deleteFile(any()) }
-        assertThat(filesDatabaseService.getNonExistentFileIds(setOf(orphan)), `is`(emptySet()))
+        verify(exactly = 0) { filesDatabaseService.deleteFileEntry(any()) }
+        verify(exactly = 0) { auditLogger.log(any(), any()) }
     }
 
-    @Suppress("ktlint:standard:max-line-length")
     @Test
-    fun `GIVEN an orphan and a referenced file WHEN the task runs THEN only the orphan is deleted from S3 and the DB`() {
-        val groupId = groupManagementClient
-            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
-            .andGetGroupId()
-        val orphan = UUID.randomUUID()
-        val referenced = UUID.randomUUID()
-        listOf(orphan, referenced).forEach { insertFile(it, groupId, daysAgo(2)) }
+    fun `GIVEN orphans THEN deletes them from S3 and the database`() {
+        val orphans = setOf(UUID.randomUUID(), UUID.randomUUID())
+        givenOrphans(*orphans.toTypedArray())
 
-        // `referenced` is referenced by a submission's unprocessed_data, so it must be protected.
-        transaction {
-            SequenceEntriesTable.insert {
-                it[accessionColumn] = "A1"
-                it[versionColumn] = 1
-                it[organismColumn] = DEFAULT_ORGANISM
-                it[submissionIdColumn] = "submission-A1"
-                it[submitterColumn] = "testuser"
-                it[groupIdColumn] = groupId
-                it[submittedAtTimestampColumn] = dateProvider.getCurrentDateTime()
-                it[submittedDataColumn] = SubmittedData(
-                    metadata = emptyMap(),
-                    unalignedNucleotideSequences = emptyMap(),
-                    files = mapOf("rawReads" to listOf(FileIdAndName(referenced, "raw.fastq"))),
-                )
-            }
+        task().task()
+
+        orphans.forEach {
+            verify { s3Service.deleteFile(it) }
+            verify { filesDatabaseService.deleteFileEntry(it) }
         }
-
-        val deleteTask = S3GarbageCollectionTask(
-            filesDatabaseService,
-            s3Service,
-            dateProvider,
-            auditLogger,
-            maxOrphanAge = 1,
-            dryRun = false,
-        )
-        deleteTask.task()
-
-        verify { s3Service.deleteFile(orphan) }
-        verify(exactly = 0) { s3Service.deleteFile(referenced) }
-        assertThat(
-            filesDatabaseService.getNonExistentFileIds(setOf(orphan, referenced)),
-            `is`(setOf(orphan)),
-        )
+        verify { auditLogger.log("CLEANUP", match { it.contains("deleted 2 orphan(s)") }) }
     }
+
+    @Test
+    fun `GIVEN deleting one orphan fails THEN continues deleting the others`() {
+        val failed = UUID.randomUUID()
+        val deleted = UUID.randomUUID()
+        givenOrphans(failed, deleted)
+        every { s3Service.deleteFile(failed) } throws RuntimeException("S3 unavailable")
+
+        task().task()
+
+        verify(exactly = 0) { filesDatabaseService.deleteFileEntry(failed) }
+        verify { s3Service.deleteFile(deleted) }
+        verify { filesDatabaseService.deleteFileEntry(deleted) }
+        verify { auditLogger.log("CLEANUP", match { it.contains("deleted 1 orphan(s)") }) }
+    }
+
+    private fun givenOrphans(vararg orphans: UUID) {
+        every { dateProvider.getCurrentInstant() } returns Instant.parse("2026-06-15T12:00:00Z")
+        every { filesDatabaseService.getOrphanedFileIds(any()) } returns orphans.toSet()
+    }
+
+    private fun task(maxOrphanAge: Int = 1, dryRun: Boolean = false) = S3GarbageCollectionTask(
+        filesDatabaseService,
+        s3Service,
+        dateProvider,
+        auditLogger,
+        maxOrphanAge,
+        dryRun,
+    )
 }
