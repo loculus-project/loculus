@@ -34,6 +34,7 @@ spec:
         component: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      {{- include "loculus.podScheduling" $ | nindent 6 }}
       containers:
         - name: preprocessing-{{ $organism }}
           image: {{ $processingConfig.image}}:{{ $thisDockerTag }}
