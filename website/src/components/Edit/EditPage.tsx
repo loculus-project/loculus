@@ -59,7 +59,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
     const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(() =>
-        extraFilesEnabled && dataToEdit.submittedData.files
+        isCreatingRevision && extraFilesEnabled && dataToEdit.submittedData.files
             ? { [dataToEdit.submissionId]: dataToEdit.submittedData.files }
             : undefined,
     );

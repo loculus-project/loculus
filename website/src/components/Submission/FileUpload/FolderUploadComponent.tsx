@@ -108,7 +108,8 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         const previousUploadFiles: Record<SubmissionId, PreviousUpload[]> = {};
 
         Object.entries(fileMapping).forEach(([submissionId, categories]) => {
-            previousUploadFiles[submissionId] = categories[fileCategory.name].map((file) => ({
+            const fileCategoryFiles = categories[fileCategory.name] ?? [];
+            previousUploadFiles[submissionId] = fileCategoryFiles.map((file) => ({
                 type: 'previousUpload',
                 fileId: file.fileId,
                 name: file.name,
@@ -411,7 +412,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                                       <FileListItem file={file} />
                                   </div>
                                   <Button
-                                      onClick={() => handleDiscardFile('dummySubmissionId', file)}
+                                      onClick={() => handleDiscardFile(Object.keys(fileUploadState.files)[0], file)}
                                       data-testid={`discard_${fileCategory.name}_${file.name}`}
                                       className='text-xs whitespace-nowrap text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50 ml-2'
                                   >
