@@ -42,6 +42,7 @@ const defaultProps = {
     accessToken: 'test-token',
     clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {} },
     groupId: 1,
+    fileMapping: undefined,
     setFileMapping: mockSetFileMapping,
     onError: mockOnError,
 };

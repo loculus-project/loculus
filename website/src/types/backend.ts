@@ -172,24 +172,11 @@ export const submissionIdMapping = accessionVersion.merge(
 );
 export type SubmissionIdMapping = z.infer<typeof submissionIdMapping>;
 
-const filesByCategory = z.record(
-    z.array(
-        z.object({
-            fileId: z.string(),
-            name: z.string(),
-        }),
-    ),
-);
-
-export const filesBySubmissionId = z.record(filesByCategory);
-export type FilesBySubmissionId = z.infer<typeof filesBySubmissionId>;
-
 export const editedSequenceEntryData = accessionVersion.merge(
     z.object({
         data: z.object({
             metadata: submittedMetadataRecord,
             unalignedNucleotideSequences: z.record(z.string()),
-            files: filesByCategory.nullable(),
         }),
     }),
 );
@@ -215,6 +202,18 @@ export const unprocessedData = accessionVersion.merge(
     }),
 );
 export type UnprocessedData = z.infer<typeof unprocessedData>;
+
+const filesByCategory = z.record(
+    z.array(
+        z.object({
+            fileId: z.string(),
+            name: z.string(),
+        }),
+    ),
+);
+
+export const filesBySubmissionId = z.record(filesByCategory);
+export type FilesBySubmissionId = z.infer<typeof filesBySubmissionId>;
 
 export const sequenceEntryToEdit = accessionVersion.merge(
     z.object({
