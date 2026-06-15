@@ -1,4 +1,4 @@
-{{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (eq (int $.Values.traefikVersion) 3) -}}
+{{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (eq (int $.Values.networking.traefikVersion) 3) -}}
 apiVersion: {{ $traefikApiVersion }}
 kind: Middleware
 metadata:
@@ -47,12 +47,12 @@ spec:
     permanent: true
 ---
 {{- if eq $.Values.environment "server" }}
-{{- $websiteHost := $.Values.ingress.hosts.website | default $.Values.host }}
-{{- $backendHost := $.Values.ingress.hosts.backend | default (printf "backend%s%s" .Values.subdomainSeparator .Values.host) }}
-{{- $keycloakHost := $.Values.ingress.hosts.keycloak | default (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
-{{- $minioHost := $.Values.ingress.hosts.minio | default (printf "s3%s%s" $.Values.subdomainSeparator $.Values.host) }}
+{{- $websiteHost := $.Values.networking.ingressHosts.website | default $.Values.host }}
+{{- $backendHost := $.Values.networking.ingressHosts.backend | default (printf "backend%s%s" .Values.networking.subdomainSeparator .Values.host) }}
+{{- $keycloakHost := $.Values.networking.ingressHosts.keycloak | default (printf "authentication%s%s" $.Values.networking.subdomainSeparator $.Values.host) }}
+{{- $minioHost := $.Values.networking.ingressHosts.minio | default (printf "s3%s%s" $.Values.networking.subdomainSeparator $.Values.host) }}
 {{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
-{{- if $.Values.enforceHTTPS }}
+{{- if $.Values.networking.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
 {{ if $.Values.robotsNoindexHeader }}

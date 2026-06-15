@@ -1,22 +1,22 @@
 {{- define "loculus.backendUrl" -}}
-{{- $publicRuntimeConfig := $.Values.public }}
+{{- $publicRuntimeConfig := $.Values.networking.publicHosts }}
   {{- if $publicRuntimeConfig.backendUrl }}
     {{- $publicRuntimeConfig.backendUrl -}}
-  {{- else if $.Values.ingress.hosts.backend -}}
-    {{- printf "https://%s" $.Values.ingress.hosts.backend -}}
+  {{- else if $.Values.networking.ingressHosts.backend -}}
+    {{- printf "https://%s" $.Values.networking.ingressHosts.backend -}}
   {{- else if eq $.Values.environment "server" -}}
-    {{- (printf "https://backend%s%s" $.Values.subdomainSeparator $.Values.host) -}}
+    {{- (printf "https://backend%s%s" $.Values.networking.subdomainSeparator $.Values.host) -}}
   {{- else -}}
     {{- printf "http://%s:8079" $.Values.localHost -}}
   {{- end -}}
 {{- end -}}
 
 {{- define "loculus.websiteUrl" -}}
-{{- $publicRuntimeConfig := $.Values.public }}
+{{- $publicRuntimeConfig := $.Values.networking.publicHosts }}
   {{- if $publicRuntimeConfig.websiteUrl }}
     {{- $publicRuntimeConfig.websiteUrl -}}
-  {{- else if $.Values.ingress.hosts.website -}}
-    {{- printf "https://%s" $.Values.ingress.hosts.website -}}
+  {{- else if $.Values.networking.ingressHosts.website -}}
+    {{- printf "https://%s" $.Values.networking.ingressHosts.website -}}
   {{- else if eq $.Values.environment "server" -}}
     {{- (printf "https://%s" $.Values.host) -}}
   {{- else -}}
@@ -26,10 +26,10 @@
 
 {{- define "loculus.s3Url" -}}
   {{- if $.Values.runDevelopmentS3 }}
-    {{- if $.Values.ingress.hosts.minio -}}
-        {{- printf "https://%s" $.Values.ingress.hosts.minio -}}
+    {{- if $.Values.networking.ingressHosts.minio -}}
+        {{- printf "https://%s" $.Values.networking.ingressHosts.minio -}}
     {{- else if eq $.Values.environment "server" -}}
-        {{- (printf "https://s3%s%s" $.Values.subdomainSeparator $.Values.host) -}}
+        {{- (printf "https://s3%s%s" $.Values.networking.subdomainSeparator $.Values.host) -}}
     {{- else -}}
         {{- printf "http://%s:8084" $.Values.localHost -}}
     {{- end -}}
@@ -47,13 +47,13 @@
 {{- end -}}
 
 {{- define "loculus.keycloakUrl" -}}
-{{- $publicRuntimeConfig := $.Values.public }}
+{{- $publicRuntimeConfig := $.Values.networking.publicHosts }}
   {{- if $publicRuntimeConfig.keycloakUrl }}
     {{- $publicRuntimeConfig.keycloakUrl -}}
-  {{- else if $.Values.ingress.hosts.keycloak -}}
-    {{- printf "https://%s" $.Values.ingress.hosts.keycloak -}}
+  {{- else if $.Values.networking.ingressHosts.keycloak -}}
+    {{- printf "https://%s" $.Values.networking.ingressHosts.keycloak -}}
   {{- else if eq $.Values.environment "server" -}}
-    {{- (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) -}}
+    {{- (printf "https://authentication%s%s" $.Values.networking.subdomainSeparator $.Values.host) -}}
   {{- else -}}
     {{- printf "http://%s:8083" $.Values.localHost -}}
   {{- end -}}

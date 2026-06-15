@@ -1386,32 +1386,100 @@
       "required": ["github"],
       "additionalProperties": false
     },
-    "public": {
-      "group": ["website"],
+    "networking": {
+      "groups": ["general"],
       "type": "object",
-      "description": "TODO",
+      "description": "Network configuration: public-facing URLs and ingress hostnames. publicHosts sets the URLs advertised by applications (for redirects, callbacks, etc.). ingressHosts sets the hostnames used in Ingress rules (for cluster routing).",
+      "additionalProperties": false,
       "properties": {
-        "properties": {
-          "backendUrl": {
-            "groups": ["website"],
-            "type": "string",
-            "description": "Overwrite the URL where the Loculus backend is publicly available."
-          },
-          "websiteUrl": {
-            "groups": ["website"],
-            "type": "string",
-            "description": "Overwrite the URL where the website is publicly available."
-          },
-          "keycloakUrl": {
-            "groups": ["website"],
-            "type": "string",
-            "description": "Overwrite the URL where Keycloak is publicly available."
-          },
-          "lapisUrlTemplate": {
-            "groups": ["website"],
-            "type": "string",
-            "description": "Overwrite the URLs where the LAPIS instances are publicly available. Must contain `%organism%` as a placeholder."
+        "publicHosts": {
+          "groups": ["general"],
+          "type": "object",
+          "description": "Public URLs advertised by the application for redirects and callbacks. Overrides the default computed URLs. If not set, the URLs fall back to the computed defaults from .Values.host and .Values.subdomainSeparator, or from ingressHosts if those are set.",
+          "additionalProperties": false,
+          "properties": {
+            "backendUrl": {
+              "groups": ["general"],
+              "type": "string",
+              "default": "",
+              "description": "Override the URL where the Loculus backend is publicly available. Example: https://api.loculus.x.y.com"
+            },
+            "websiteUrl": {
+              "groups": ["general"],
+              "type": "string",
+              "default": "",
+              "description": "Override the URL where the website is publicly available. Example: https://loculus.x.y.com"
+            },
+            "keycloakUrl": {
+              "groups": ["general"],
+              "type": "string",
+              "default": "",
+              "description": "Override the URL where Keycloak is publicly available. Example: https://auth.loculus.x.y.com"
+            },
+            "lapisUrlTemplate": {
+              "groups": ["general"],
+              "type": "string",
+              "default": "",
+              "description": "Override the URL template for LAPIS instances. Must contain `%organism%` as a placeholder. Example: https://pathogen-api.loculus.x.y.com/%organism%"
+            }
           }
+        },
+        "ingressHosts": {
+          "groups": ["general"],
+          "type": "object",
+          "description": "Override hostnames for each service's Ingress rule. Leave empty to use the default computed hostname from .Values.host and .Values.networking.subdomainSeparator.",
+          "additionalProperties": false,
+          "properties": {
+            "website": {
+              "type": "string",
+              "default": "",
+              "description": "Override hostname for the website Ingress. Defaults to .Values.host."
+            },
+            "backend": {
+              "type": "string",
+              "default": "",
+              "description": "Override hostname for the backend Ingress. Defaults to backend<subdomainSeparator><host>."
+            },
+            "keycloak": {
+              "type": "string",
+              "default": "",
+              "description": "Override hostname for the keycloak Ingress. Defaults to authentication<subdomainSeparator><host>."
+            },
+            "lapis": {
+              "type": "string",
+              "default": "",
+              "description": "Override hostname for the LAPIS Ingress. Defaults to lapis<subdomainSeparator><host>."
+            },
+            "minio": {
+              "type": "string",
+              "default": "",
+              "description": "Override hostname for the MinIO Ingress. Defaults to s3<subdomainSeparator><host>."
+            },
+            "docs": {
+              "type": "string",
+              "default": "",
+              "description": "Override hostname for the docs Ingress. Defaults to docs<subdomainSeparator><host>."
+            }
+          }
+        },
+        "subdomainSeparator": {
+          "groups": ["general"],
+          "type": "string",
+          "default": "-",
+          "description": "Separator inserted between the subdomain prefix and the host when constructing default ingress hostnames. Used with .Values.host to form hostnames like backend<separator>myhost.com. Common values are '-' (for backend-myhost.com) or '.' (for backend.myhost.com)."
+        },
+        "enforceHTTPS": {
+          "groups": ["general"],
+          "type": "boolean",
+          "default": true,
+          "description": "If true, adds a redirect middleware that redirects HTTP to HTTPS on all ingresses."
+        },
+        "traefikVersion": {
+          "groups": ["general"],
+          "type": "integer",
+          "enum": [2, 3],
+          "default": 2,
+          "description": "Traefik major version for CRD API group. Use 2 for traefik.containo.us/v1alpha1 (Traefik v2) or 3 for traefik.io/v1alpha1 (Traefik v3)."
         }
       }
     },
@@ -1453,7 +1521,7 @@
             "public": {
               "groups": ["website"],
               "type": "object",
-              "description": "Settings for the `public` section of the `runtime_config.json`",
+              "description": "Settings for the `public` section of the `runtime_config.json`. This mirrors networking.publicHosts at runtime and is populated automatically.",
               "properties": {}
             }
           }
@@ -1663,18 +1731,6 @@
         }
       }
     },
-    "enforceHTTPS": {
-      "type": "boolean",
-      "default": true,
-      "description": "TODO"
-    },
-    "traefikVersion": {
-      "groups": ["general"],
-      "type": "integer",
-      "enum": [2, 3],
-      "default": 2,
-      "description": "Traefik major version for CRD API group. Use 2 for traefik.containo.us/v1alpha1 (Traefik v2) or 3 for traefik.io/v1alpha1 (Traefik v3)."
-    },
     "ingestLimitSeconds": {
       "type": "integer",
       "default": 1800,
@@ -1781,55 +1837,6 @@
         }
       },
       "additionalProperties": false
-    },
-    "ingress": {
-      "groups": ["general"],
-      "type": "object",
-      "description": "Configure ingress hostnames independently from public URLs. By default, ingress hostnames are automatically constructed from .host and .subdomainSeparator. Set hosts to override the hostname used in the Ingress rules, e.g. when routing through a gateway/reverse proxy with different external hostnames than the internal ones.",
-      "additionalProperties": false,
-      "properties": {
-        "hosts": {
-          "type": "object",
-          "additionalProperties": false,
-          "description": "Override hostnames for each service's Ingress rule. Leave empty to use the default computed hostname.",
-          "properties": {
-            "website": {
-              "type": "string",
-              "default": "",
-              "description": "Override hostname for the website Ingress. Defaults to .Values.host."
-            },
-            "backend": {
-              "type": "string",
-              "default": "",
-              "description": "Override hostname for the backend Ingress. Defaults to backend<subdomainSeparator><host>."
-            },
-            "keycloak": {
-              "type": "string",
-              "default": "",
-              "description": "Override hostname for the keycloak Ingress. Defaults to authentication<subdomainSeparator><host>."
-            },
-            "lapis": {
-              "type": "string",
-              "default": "",
-              "description": "Override hostname for the LAPIS Ingress. Defaults to lapis<subdomainSeparator><host>."
-            },
-            "minio": {
-              "type": "string",
-              "default": "",
-              "description": "Override hostname for the MinIO Ingress. Defaults to s3<subdomainSeparator><host>."
-            },
-            "docs": {
-              "type": "string",
-              "default": "",
-              "description": "Override hostname for the docs Ingress. Defaults to docs<subdomainSeparator><host>."
-            }
-          }
-        }
-      }
-    },
-    "subdomainSeparator": {
-      "type": "string",
-      "default": "-"
     },
     "getSubmissionListLimitSeconds": {
       "type": "integer",
