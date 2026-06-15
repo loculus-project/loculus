@@ -20,6 +20,8 @@ updates:
     - dependency-name: "change-case"
     - dependency-name: "@types/node"
       versions: [">=23"] # Increase when we update node version in .nvmrc
+    - dependency-name: "zod"
+      versions: [">=4.0.0"] #https://github.com/loculus-project/loculus/issues/3295
     groups:
       minor:
         update-types:
