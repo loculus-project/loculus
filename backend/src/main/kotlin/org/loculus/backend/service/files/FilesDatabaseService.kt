@@ -1,7 +1,9 @@
 package org.loculus.backend.service.files
 
 import kotlinx.datetime.LocalDateTime
+import org.jetbrains.exposed.sql.IColumnType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
@@ -12,6 +14,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.chunkedForDatabase
+import org.loculus.backend.utils.processInDatabaseSafeChunks
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
@@ -66,14 +69,23 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         chunk.filterNot { it in existingIds }
     }, 1).toSet()
 
-    fun getOrphanedFileIds(threshold: LocalDateTime): Set<FileId> {
-        val sql = """           
-            -- check for files for which an upload was requested > threshold days ago
-            -- but are not referenced by a submission. For this, check the submitted_data
+    fun getOrphanedFileIds(threshold: LocalDateTime): Set<FileId> = queryUnreferencedFiles(
+        extraCondition = "AND f.upload_requested_at < ?",
+        params = listOf<Pair<IColumnType<*>, Any?>>(KotlinLocalDateTimeColumnType() to threshold),
+    )
+
+    fun getMarkedOrphanedFileIds(): Set<FileId> = queryUnreferencedFiles(
+        extraCondition = "AND f.marked_for_deletion_at IS NOT NULL",
+        params = emptyList(),
+    )
+
+    private fun queryUnreferencedFiles(extraCondition: String, params: List<Pair<IColumnType<*>, Any?>>): Set<FileId> {
+        val sql = """
+            -- check for files not referenced by a submission. For this, check the submitted_data
             -- and processed_data jsonb objects (but not archive_of_submitted_data)
             WITH referenced AS (
               -- fetch ids for files uploaded by users and referenced in submissions
-              SELECT (fil->>'fileId')::uuid AS file_id              
+              SELECT (fil->>'fileId')::uuid AS file_id
               FROM sequence_entries,
                  LATERAL jsonb_each(COALESCE(NULLIF(submitted_data->'files', 'null'::jsonb),'{}'::jsonb)) AS cat(k,v),
                  LATERAL jsonb_array_elements(cat.v) AS fil
@@ -91,12 +103,12 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             SELECT f.id FROM files f
               LEFT JOIN referenced r ON r.file_id = f.id
               WHERE r.file_id IS NULL
-                  AND f.upload_requested_at < ?;
+                  $extraCondition;
         """.trimIndent()
         return transaction {
             exec(
                 sql,
-                listOf(KotlinLocalDateTimeColumnType() to threshold),
+                params,
                 explicitStatementType = StatementType.SELECT,
             ) { rs ->
                 buildSet<FileId> {
@@ -107,6 +119,23 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             } ?: emptySet()
         }
     }
+
+    fun markFilesForDeletion(fileIds: Set<FileId>) {
+        if (fileIds.isEmpty()) return
+        val now = dateProvider.getCurrentDateTime()
+        fileIds.processInDatabaseSafeChunks { chunk ->
+            FilesTable.update({ FilesTable.idColumn inList chunk }) {
+                it[markedForDeletionAtColumn] = now
+            }
+        }
+    }
+
+    fun getMarkedForDeletionFileIds(fileIds: Set<FileId>): Set<FileId> = fileIds.chunkedForDatabase({ chunk ->
+        FilesTable
+            .select(FilesTable.idColumn)
+            .where { FilesTable.idColumn inList chunk and FilesTable.markedForDeletionAtColumn.isNotNull() }
+            .map { it[FilesTable.idColumn] }
+    }, 1).toSet()
 
     /**
      * Return the subset of file IDs for which the file size hasn't been checked yet or
