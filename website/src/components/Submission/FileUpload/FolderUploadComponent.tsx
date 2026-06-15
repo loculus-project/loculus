@@ -31,7 +31,7 @@ type AwaitingUrlState = {
     >;
 };
 
-type SingleFileUpload = Pending | Uploaded | Error;
+type SingleFileUpload = Pending | Uploaded | PreviousUpload | Error;
 
 type UploadInProgressState = {
     type: 'uploadInProgress';
@@ -40,12 +40,12 @@ type UploadInProgressState = {
 
 type UploadCompleted = {
     type: 'uploadCompleted';
-    files: Record<SubmissionId, Uploaded[]>;
+    files: Record<SubmissionId, (Uploaded | PreviousUpload)[]>;
 };
 
 type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
 
-type UploadStatus = 'pending' | 'uploaded' | 'error';
+type UploadStatus = 'pending' | 'uploaded' | 'previousUpload' | 'error';
 
 type Pending = {
     type: 'pending';
@@ -66,6 +66,12 @@ type Uploaded = {
     fileId: string;
     name: string;
     size: number;
+};
+
+type PreviousUpload = {
+    type: 'previousUpload';
+    fileId: string;
+    name: string;
 };
 
 type Error = {
@@ -99,18 +105,16 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     const isClient = useClientFlag();
     const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
         if (fileMapping === undefined) return undefined;
-
-        const preExistingFiles: Record<SubmissionId, Uploaded[]> = {};
+        const previousUploadFiles: Record<SubmissionId, PreviousUpload[]> = {};
 
         Object.entries(fileMapping).forEach(([submissionId, categories]) => {
-            preExistingFiles[submissionId] = categories[fileCategory.name].map((file) => ({
-                type: 'uploaded',
+            previousUploadFiles[submissionId] = categories[fileCategory.name].map((file) => ({
+                type: 'previousUpload',
                 fileId: file.fileId,
                 name: file.name,
-                size: 0,
             }));
         });
-        return { type: 'uploadCompleted', files: preExistingFiles };
+        return { type: 'uploadCompleted', files: previousUploadFiles };
     });
     const [isDragging, setIsDragging] = useState(false);
 
@@ -450,7 +454,11 @@ const FileListItem: FC<FileListeItemProps> = ({ file }) => {
             <LucideFile className='h-4 w-4 text-gray-500 ml-1 mr-1' />
             <div className='flex-1 min-w-0 flex items-center'>
                 <span className='text-xs text-gray-700 truncate max-w-[140px]'>{file.name}</span>
-                <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>({formatFileSize(file.size)})</span>
+                {file.type === 'previousUpload' ? (
+                    <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>(previous upload)</span>
+                ) : (
+                    <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>({formatFileSize(file.size)})</span>
+                )}
                 {showProgress && <span className='text-xs text-blue-500 ml-2'>{percentage}%</span>}
             </div>
             {/* Status icon */}
@@ -474,6 +482,7 @@ const getStatusIcon = (status: UploadStatus) => {
     switch (status) {
         case 'pending':
             return <LucideLoader className='animate-spin h-3 w-3 text-blue-500' />;
+        case 'previousUpload':
         case 'uploaded':
             return <span className='text-green-500 text-xs'>✓</span>;
         case 'error':
