@@ -42,6 +42,9 @@ object BackendSpringProperty {
     const val DEBUG_MODE = "loculus.debug-mode"
     const val ENABLE_SEQSETS = "loculus.enable-seqsets"
 
+    const val ORPHANED_FILE_CLEANUP_AFTER_SECONDS = "loculus.cleanup.orphaned-files.delete-after-seconds"
+    const val ORPHANED_FILE_CLEANUP_RUN_EVERY_SECONDS = "loculus.cleanup.orphaned-files.run-every-seconds"
+
     const val S3_ENABLED = "loculus.s3.enabled"
     const val S3_BUCKET_ENDPOINT = "loculus.s3.bucket.endpoint"
     const val S3_BUCKET_INTERNAL_ENDPOINT = "loculus.s3.bucket.internal-endpoint"
