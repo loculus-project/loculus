@@ -2708,42 +2708,9 @@ enaDeposition:
 taxonomyService:
   dbVersion: "ncbi_taxonomy_2026-05-01"
   taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
-# Configure networking: public-facing URLs (what apps advertise) and ingress hostnames
-# (what the Kubernetes Ingress routes on) independently.
-# By default, ingress hostnames are automatically constructed from .host and .subdomainSeparator
-# (e.g. backend.myhost.com, authentication.myhost.com, lapis.myhost.com).
-# The publicHosts values set the URLs advertised by applications (for redirects, callbacks, etc.).
-# The ingressHosts values set the hostnames used in Ingress rules (for cluster routing).
-# Set ingressHosts to override the hostname used in the Ingress rules, e.g. when routing
-# through a gateway/reverse proxy with different external hostnames than the internal ones.
-# Example:
-# networking:
-#   publicHosts:
-#     websiteUrl: "https://loculus.x.y.com"
-#     backendUrl: "https://api.loculus.x.y.com"
-#     keycloakUrl: "https://auth.loculus.x.y.com"
-#     lapisUrlTemplate: "https://pathogen-api.loculus.x.y.com/%organism%"
-#   ingressHosts:
-#     website: "loculus.x.y.com"
-#     backend: "api.loculus.x.y.com"
-#     keycloak: "auth.loculus.x.y.com"
-#     lapis: "pathogen-api.loculus.x.y.com"
-#     minio: "s3.loculus.x.y.com"
-#     docs: "docs.loculus.x.y.com"
+
 networking:
-  publicHosts:
-    backendUrl: ""
-    websiteUrl: ""
-    keycloakUrl: "auth.loculus.org"
-    lapisUrlTemplate: ""
-  ingressHosts:
-    website: ""
-    backend: "backend-main.loculus.org"
-    keycloak: ""
-    lapis: ""
-    minio: ""
-    docs: ""
-  subdomainSeparator: "."
+  subdomainSeparator: "-"
   enforceHTTPS: true
   traefikVersion: 2
 
