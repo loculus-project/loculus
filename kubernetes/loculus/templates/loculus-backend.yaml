@@ -74,7 +74,7 @@ spec:
             {{- if $.Values.s3.enabled }}
             - "--loculus.s3.gc-dry-run=$(S3_GC_DRY_RUN)"
             - "--loculus.s3.orphan-retention-period-minutes=$(S3_ORPHAN_RETENTION_PERIOD_MINUTES)"
-            - "--loculus.s3.gc-frequency=$(S3_GC_FREQUENCY)"
+            - "--loculus.s3.gc-frequency-minutes=$(S3_GC_FREQUENCY_MINUTES)"
             - "--loculus.s3.bucket.endpoint=$(S3_BUCKET_ENDPOINT)"
             - "--loculus.s3.bucket.internal-endpoint=$(S3_BUCKET_INTERNAL_ENDPOINT)"
             - "--loculus.s3.bucket.region=$(S3_BUCKET_REGION)"
@@ -137,8 +137,8 @@ spec:
             {{- if $.Values.s3.enabled }}
             - name: S3_GC_DRY_RUN
               value: {{$.Values.s3.gcDryRun | quote }}
-            - name: S3_GC_FREQUENCY
-              value: {{$.Values.s3.gcFrequency | quote }}
+            - name: S3_GC_FREQUENCY_MINUTES
+              value: {{$.Values.s3.gcFrequencyMinutes | quote }}
             - name: S3_ORPHAN_RETENTION_PERIOD_MINUTES
               value: {{$.Values.s3.orphanRetentionPeriodMinutes | quote }}
             - name: S3_BUCKET_ENDPOINT

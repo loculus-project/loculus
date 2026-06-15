@@ -1751,7 +1751,7 @@
           "default": false,
           "description": "Whether the S3 garbage collection task in the backend should delete orphan files (if true) or just output a log with orphan files (if false)."
         },
-        "gcFrequency": {
+        "gcFrequencyMinutes": {
           "groups": ["s3"],
           "type": "integer",
           "default": 1440,

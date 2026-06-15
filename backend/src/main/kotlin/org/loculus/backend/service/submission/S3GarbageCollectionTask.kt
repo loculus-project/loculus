@@ -40,7 +40,7 @@ class S3GarbageCollectionTask(
      */
     @Scheduled(
         initialDelayString = "15",
-        fixedDelayString = "\${${BackendSpringProperty.S3_GC_FREQUENCY}:1440}",
+        fixedDelayString = "\${${BackendSpringProperty.S3_GC_FREQUENCY_MINUTES}:1440}",
         timeUnit = TimeUnit.MINUTES,
     )
     fun task() {
