@@ -64,7 +64,7 @@ fileSharing:
 s3:
   enabled: true
   gcDryRun: true # have garbage collection log instead of actually delete files
-  gcFrequency: 60*24 # frequency of garbage collection polling in minutes
+  gcFrequency: 1440 # frequency of garbage collection polling in minutes
   orphanRetentionPeriodMinutes: 7
   bucket:
     region: us-east-1
