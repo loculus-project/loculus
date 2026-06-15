@@ -22,6 +22,8 @@ updates:
         versions: [">=23"] # Increase when we update node version in .nvmrc
       - dependency-name: "zod"
         versions: [">=4.0.0"] #https://github.com/loculus-project/loculus/issues/3295
+      - dependency-name: "react"
+        versions: [">=19.0.0"] #https://github.com/loculus-project/loculus/issues/3452
     groups:
       minor:
         update-types:
