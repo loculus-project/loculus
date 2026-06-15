@@ -9,6 +9,7 @@ import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -18,8 +19,15 @@ import kotlin.math.max
 
 private val log = mu.KotlinLogging.logger {}
 
+enum class S3GarbageCollectionMode {
+    OFF,
+    DRY_RUN,
+    ON,
+}
+
 @Component
 @ConditionalOnProperty("loculus.s3.enabled", havingValue = "true")
+@ConditionalOnExpression("'${'$'}{${BackendSpringProperty.S3_GC_MODE}}' != 'OFF'")
 class S3GarbageCollectionTask(
     private val filesDatabaseService: FilesDatabaseService,
     private val s3Service: S3Service,
@@ -27,7 +35,7 @@ class S3GarbageCollectionTask(
     private val auditLogger: AuditLogger,
     @Value("\${${BackendSpringProperty.S3_ORPHAN_RETENTION_PERIOD_MINUTES}}")
     private val orphanRetentionPeriodMinutes: Int,
-    @Value("\${${BackendSpringProperty.S3_GC_DRY_RUN}}") private val dryRun: Boolean,
+    @Value("\${${BackendSpringProperty.S3_GC_MODE}}") private val mode: S3GarbageCollectionMode,
 ) {
 
     /**
@@ -40,12 +48,16 @@ class S3GarbageCollectionTask(
         timeUnit = TimeUnit.MINUTES,
     )
     fun task() {
+        if (mode == S3GarbageCollectionMode.OFF) {
+            return
+        }
+
         // The retention period must be at least 1 minute or files produced by preprocessing may be
         // garbage collected before they're attached to sequence entries
         val retentionPeriodMinutes = max(orphanRetentionPeriodMinutes, 1)
         log.info {
             "Running S3 garbage collection task to clean up orphan files at least $retentionPeriodMinutes " +
-                "minutes old (dry run = $dryRun)"
+                "minutes old (mode = $mode)"
         }
 
         val threshold = dateProvider.getCurrentInstant()
@@ -53,7 +65,7 @@ class S3GarbageCollectionTask(
             .toLocalDateTime(DateProvider.timeZone)
         val orphans = filesDatabaseService.getOrphanedFileIds(threshold)
 
-        if (dryRun) {
+        if (mode == S3GarbageCollectionMode.DRY_RUN) {
             log.info { "S3 garbage collection task would have deleted ${orphans.size} files: $orphans" }
             return
         }

@@ -43,7 +43,7 @@ object BackendSpringProperty {
     const val ENABLE_SEQSETS = "loculus.enable-seqsets"
 
     const val S3_ENABLED = "loculus.s3.enabled"
-    const val S3_GC_DRY_RUN = "loculus.s3.gc-dry-run"
+    const val S3_GC_MODE = "loculus.s3.gc-mode"
     const val S3_GC_INITIAL_DELAY_MINUTES = "loculus.s3.gc-initial-delay-minutes"
     const val S3_GC_POLLING_INTERVAL_MINUTES = "loculus.s3.gc-polling-interval-minutes"
     const val S3_ORPHAN_RETENTION_PERIOD_MINUTES = "loculus.s3.orphan-retention-period-minutes"

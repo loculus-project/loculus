@@ -1704,11 +1704,12 @@
           "default": false,
           "description": "Whether to enable S3. S3 is needed for the file sharing feature."
         },
-        "gcDryRun": {
+        "gcMode": {
           "groups": ["s3"],
-          "type": "boolean",
-          "default": true,
-          "description": "Whether the S3 garbage collection task in the backend should delete orphan files or just output a log with orphan files."
+          "type": "string",
+          "enum": ["OFF", "DRY_RUN", "ON"],
+          "default": "DRY_RUN",
+          "description": "Whether S3 garbage collection is disabled, only logs orphan files, or deletes orphan files."
         },
         "gcInitialDelayMinutes": {
           "groups": ["s3"],
