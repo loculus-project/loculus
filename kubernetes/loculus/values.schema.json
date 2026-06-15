@@ -1710,11 +1710,23 @@
           "default": true,
           "description": "Whether the S3 garbage collection task in the backend should delete orphan files or just output a log with orphan files."
         },
-        "maxOrphanAgeDays": {
+        "gcInitialDelayMinutes": {
           "groups": ["s3"],
           "type": "integer",
-          "default": 7,
-          "description": "Files uploaded to S3 but never attached to a sequence entry are garbage-collected after this many days."
+          "default": 15,
+          "description": "How many minutes the backend waits after startup before first running S3 garbage collection."
+        },
+        "gcPollingIntervalMinutes": {
+          "groups": ["s3"],
+          "type": "integer",
+          "default": 1440,
+          "description": "How many minutes the backend waits between S3 garbage collection runs."
+        },
+        "orphanRetentionPeriodMinutes": {
+          "groups": ["s3"],
+          "type": "integer",
+          "default": 10080,
+          "description": "Files uploaded to S3 but never attached to a sequence entry are garbage-collected after this many minutes."
         },
         "bucket": {
           "type": "object",

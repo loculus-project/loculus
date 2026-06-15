@@ -19,13 +19,13 @@ class S3GarbageCollectionTaskTest {
     private val auditLogger = mockk<AuditLogger>(relaxed = true)
 
     @Test
-    fun `GIVEN dry run is enabled THEN finds files at least one day old without deleting them`() {
+    fun `GIVEN dry run is enabled THEN finds files at least one minute old without deleting them`() {
         val orphan = UUID.randomUUID()
         givenOrphans(orphan)
 
-        task(maxOrphanAge = 0, dryRun = true).task()
+        task(orphanRetentionPeriodMinutes = 0, dryRun = true).task()
 
-        verify { filesDatabaseService.getOrphanedFileIds(LocalDateTime.parse("2026-06-14T12:00:00")) }
+        verify { filesDatabaseService.getOrphanedFileIds(LocalDateTime.parse("2026-06-15T11:59:00")) }
         verify(exactly = 0) { s3Service.deleteFile(any()) }
         verify(exactly = 0) { filesDatabaseService.deleteFileEntry(any()) }
         verify(exactly = 0) { auditLogger.log(any(), any()) }
@@ -65,12 +65,12 @@ class S3GarbageCollectionTaskTest {
         every { filesDatabaseService.getOrphanedFileIds(any()) } returns orphans.toSet()
     }
 
-    private fun task(maxOrphanAge: Int = 1, dryRun: Boolean = false) = S3GarbageCollectionTask(
+    private fun task(orphanRetentionPeriodMinutes: Int = 1, dryRun: Boolean = false) = S3GarbageCollectionTask(
         filesDatabaseService,
         s3Service,
         dateProvider,
         auditLogger,
-        maxOrphanAge,
+        orphanRetentionPeriodMinutes,
         dryRun,
     )
 }

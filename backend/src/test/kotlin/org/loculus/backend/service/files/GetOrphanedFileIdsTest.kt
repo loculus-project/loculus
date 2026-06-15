@@ -6,6 +6,9 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
@@ -109,6 +112,14 @@ class GetOrphanedFileIdsTest(
         val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
 
         assertThat(orphans, `is`(emptySet()))
+
+        transaction {
+            SequenceEntriesPreprocessedDataTable.deleteWhere {
+                (accessionColumn eq "A") and (versionColumn eq 1) and (pipelineVersionColumn eq 1)
+            }
+        }
+
+        assertThat(filesDatabaseService.getOrphanedFileIds(daysAgo(5)), `is`(setOf(fileFromOldPipeline)))
     }
 
     @Test
