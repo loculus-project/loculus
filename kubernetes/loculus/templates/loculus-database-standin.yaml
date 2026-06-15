@@ -21,6 +21,7 @@ spec:
         app: loculus
         component: database
     spec:
+      {{- include "loculus.podScheduling" . | nindent 6 }}
       containers:
       - name: database
         image: postgres:15.12

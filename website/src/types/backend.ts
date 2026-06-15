@@ -44,8 +44,8 @@ const processingAnnotation = z.object({
 });
 export type ProcessingAnnotation = z.infer<typeof processingAnnotation>;
 
-const unprocessedMetadataRecord = z.record(z.string());
-export type UnprocessedMetadataRecord = z.infer<typeof unprocessedMetadataRecord>;
+const submittedMetadataRecord = z.record(z.string());
+export type SubmittedMetadataRecord = z.infer<typeof submittedMetadataRecord>;
 
 export const metadataField = z.union([z.string(), z.number(), z.date(), z.null(), z.boolean()]);
 export type MetadataField = z.infer<typeof metadataField>;
@@ -187,7 +187,7 @@ export type FilesBySubmissionId = z.infer<typeof filesBySubmissionId>;
 export const editedSequenceEntryData = accessionVersion.merge(
     z.object({
         data: z.object({
-            metadata: unprocessedMetadataRecord,
+            metadata: submittedMetadataRecord,
             unalignedNucleotideSequences: z.record(z.string()),
             files: filesByCategory.nullable(),
         }),
@@ -205,7 +205,7 @@ export type RevocationRequest = z.infer<typeof revocationRequest>;
 export const unprocessedData = accessionVersion.merge(
     z.object({
         data: z.object({
-            metadata: unprocessedMetadataRecord,
+            metadata: submittedMetadataRecord,
             unalignedNucleotideSequences: z.record(z.string()),
         }),
         submissionId: z.string(),
@@ -223,8 +223,8 @@ export const sequenceEntryToEdit = accessionVersion.merge(
         submissionId: z.string(),
         errors: z.array(processingAnnotation).nullable(),
         warnings: z.array(processingAnnotation).nullable(),
-        originalData: z.object({
-            metadata: unprocessedMetadataRecord,
+        submittedData: z.object({
+            metadata: submittedMetadataRecord,
             unalignedNucleotideSequences: z.record(z.string()),
             files: filesByCategory.nullable(),
         }),

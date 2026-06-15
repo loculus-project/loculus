@@ -1,6 +1,5 @@
 ---
 import { SubmenuLink } from './SubmenuLink.tsx';
-import { mainTailwindColor } from '../../../colors.json';
 import type { Organism } from '../../config';
 import { extraSequenceRelatedTopNavigationItems } from '../../routes/extraTopNavigationItems';
 import { getSequenceRelatedItems } from '../../routes/navigationItems';
@@ -13,7 +12,6 @@ interface Props {
 }
 
 const { currentOrganism, currentOrganismObject, currentPath } = Astro.props;
-const primaryColor = mainTailwindColor[400];
 
 // Get the navigation items for this organism
 const sequenceRelatedItems = getSequenceRelatedItems(currentOrganism);
@@ -32,11 +30,10 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
                         {/* eslint-disable-next-line no-restricted-syntax -- Server-rendered Astro component, wired via vanilla script, no React hydration needed */}
                         <button
                             type='button'
-                            class='inline-flex items-center justify-center w-5 h-5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors self-end mb-px mr-2 ml-2'
+                            class='inline-flex items-center justify-center w-5 h-5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-sm transition-colors self-end mb-px mr-2 ml-2'
                             title='Switch organism'
                             aria-label='Switch organism'
                             data-organism-switch-button
-                            data-primary-color={primaryColor}
                         >
                             <FaExchangeAlt className='w-2.5 h-2.5 ' />
                         </button>
@@ -61,7 +58,7 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
                     </label>
                     <select
                         id={selectId}
-                        class='w-full rounded border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-sm text-gray-800 shadow-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200'
+                        class='w-full rounded-sm border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-sm text-gray-800 shadow-xs focus:border-primary-400 focus:outline-hidden focus:ring-2 focus:ring-primary-200'
                         onchange='if (this.value) window.location.href = this.value;'
                     >
                         {navigationItems.map(({ text, path }) => {
@@ -99,8 +96,7 @@ const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'o
             const from = icon.getBoundingClientRect();
             const to = menuButton.getBoundingClientRect();
 
-            // Read the primary color from the data attribute (set from colors.json in frontmatter)
-            const primaryColor = btn.dataset.primaryColor ?? '#88a1d2';
+            const primaryColor = 'var(--color-primary-400)';
 
             const flyingIcon = icon.cloneNode(true) as SVGElement;
             const wrapper = document.createElement('div');

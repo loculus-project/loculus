@@ -8,6 +8,7 @@ interface SeqSetPlotProps {
     data: AggregateRow[];
     description?: string;
     barColor?: string;
+    dateFormat?: string;
 }
 
 interface CategoryPlotProps extends SeqSetPlotProps {
@@ -98,11 +99,11 @@ export const groupRemainingPoints = (data: AggregateRow[], cutoff: number): Aggr
     return otherCount > 0 ? [...topData, { value: `Others (${otherData.length})`, count: otherCount }] : topData;
 };
 
-export const DatePlot: React.FC<SeqSetPlotProps> = ({ data, description, barColor }) => {
-    const dateFormat = getDateFormatFromData(data);
-    const groupedData = groupByDateFormat(data, dateFormat);
+export const DatePlot: React.FC<SeqSetPlotProps> = ({ data, description, barColor, dateFormat }) => {
+    const format = dateFormat ?? getDateFormatFromData(data);
+    const groupedData = groupByDateFormat(data, format);
     const { graphData, emptyCount } = getGraphData(groupedData, barColor);
-    const graphTimeProperties = getGraphTimeProperties(dateFormat);
+    const graphTimeProperties = getGraphTimeProperties(format);
 
     return (
         <BarPlot

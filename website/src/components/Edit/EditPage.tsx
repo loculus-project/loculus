@@ -17,6 +17,7 @@ import { getAccessionVersionString } from '../../utils/extractAccessionVersion.t
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
 import { Button } from '../common/Button';
+import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type EditPageProps = {
@@ -182,7 +183,7 @@ const InnerEditPage: FC<EditPageProps> = ({
             )}
             <div className='flex items-center gap-4 mt-4'>
                 <Button
-                    className='btn normal-case'
+                    variant='neutral'
                     onClick={() =>
                         displayConfirmationDialog({
                             dialogText: 'Do you really want to submit?',
@@ -191,7 +192,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     }
                     disabled={isPending}
                 >
-                    {isPending && <span className='loading loading-spinner loading-sm mr-2' />}
+                    {isPending && <Spinner size='sm' className='mr-2' />}
                     Submit
                 </Button>
             </div>

@@ -14,7 +14,7 @@ class SiloRunner:
 
     def run_preprocessing(self, timeout_seconds: int) -> None:
         logger.info("Starting SILO preprocessing")
-        try:
+        try:  # noqa: PLW0717
             result = subprocess.run(  # noqa: S603
                 [str(self._silo_binary), "preprocessing"],
                 env={"SILO_PREPROCESSING_CONFIG": str(self._preprocessing_config)},

@@ -12,7 +12,7 @@ import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.AccessionVersionUnprocessedMetadata
+import org.loculus.backend.api.AccessionVersionSubmittedMetadata
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.auth.AuthenticatedUser
@@ -36,7 +36,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class GetUnprocessedMetadataEndpointTest(
+class GetSubmittedMetadataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
@@ -45,14 +45,14 @@ class GetUnprocessedMetadataEndpointTest(
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse {
-            submissionControllerClient.getUnprocessedMetadata(jwt = it)
+            submissionControllerClient.getSubmittedMetadata(jwt = it)
         }
     }
 
     @Test
     fun `GIVEN no sequence entries in database THEN returns empty response`() {
-        val response = submissionControllerClient.getUnprocessedMetadata()
-        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionUnprocessedMetadata>()
+        val response = submissionControllerClient.getSubmittedMetadata()
+        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionSubmittedMetadata>()
 
         response.andExpect(status().isOk)
             .andExpect(header().string("x-total-records", `is`("0")))
@@ -62,9 +62,9 @@ class GetUnprocessedMetadataEndpointTest(
     @Test
     fun `GIVEN data exists THEN returns correct number of entries`() {
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        val response = submissionControllerClient.getUnprocessedMetadata()
+        val response = submissionControllerClient.getSubmittedMetadata()
 
-        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionUnprocessedMetadata>()
+        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionSubmittedMetadata>()
 
         response.andExpect(status().isOk)
             .andExpect(header().string("x-total-records", `is`(DefaultFiles.NUMBER_OF_SEQUENCES.toString())))
@@ -74,13 +74,13 @@ class GetUnprocessedMetadataEndpointTest(
     @Test
     fun `GIVEN no specified fields THEN returns all fields`() {
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        val response = submissionControllerClient.getUnprocessedMetadata()
+        val response = submissionControllerClient.getSubmittedMetadata()
 
-        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionUnprocessedMetadata>()
+        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionSubmittedMetadata>()
         val entry = responseBody[0]
 
         assertThat(entry.submitter, `is`(DEFAULT_USER_NAME))
-        assertThat(entry.unprocessedMetadata, `is`(defaultOriginalData.metadata))
+        assertThat(entry.submittedMetadata, `is`(defaultSubmittedData.metadata))
     }
 
     @Test
@@ -88,12 +88,12 @@ class GetUnprocessedMetadataEndpointTest(
         val fields = listOf("region", "country")
 
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        val response = submissionControllerClient.getUnprocessedMetadata(fields = fields)
+        val response = submissionControllerClient.getSubmittedMetadata(fields = fields)
 
-        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionUnprocessedMetadata>()
+        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionSubmittedMetadata>()
         val entry = responseBody[0]
 
-        assertThat(entry.unprocessedMetadata, `is`(fields.associateWith { defaultOriginalData.metadata[it] }))
+        assertThat(entry.submittedMetadata, `is`(fields.associateWith { defaultSubmittedData.metadata[it] }))
     }
 
     @Test
@@ -101,18 +101,18 @@ class GetUnprocessedMetadataEndpointTest(
         val field = "doesNotExist"
 
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        val response = submissionControllerClient.getUnprocessedMetadata(fields = listOf(field))
+        val response = submissionControllerClient.getSubmittedMetadata(fields = listOf(field))
 
-        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionUnprocessedMetadata>()
+        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionSubmittedMetadata>()
         val entry = responseBody[0]
 
-        assertThat(entry.unprocessedMetadata, `is`(mapOf(field to null)))
+        assertThat(entry.submittedMetadata, `is`(mapOf(field to null)))
     }
 
     @Test
     fun `WHEN I request zstd compressed data THEN should return zstd compressed data`() {
         val entries = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        val response = submissionControllerClient.getUnprocessedMetadata(compression = "zstd")
+        val response = submissionControllerClient.getSubmittedMetadata(compression = "zstd")
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
             .andExpect(header().string(HttpHeaders.CONTENT_ENCODING, "zstd"))
@@ -130,10 +130,10 @@ class GetUnprocessedMetadataEndpointTest(
 
         val data = decompressedContent.lines()
             .filter { it.isNotBlank() }
-            .map { jacksonObjectMapper.readValue<AccessionVersionUnprocessedMetadata>(it) }
+            .map { jacksonObjectMapper.readValue<AccessionVersionSubmittedMetadata>(it) }
 
         assertThat(data, hasSize(entries.size))
-        assertThat(data[0].unprocessedMetadata, `is`(not(emptyMap())))
+        assertThat(data[0].submittedMetadata, `is`(not(emptyMap())))
     }
 
     @Test
@@ -151,14 +151,14 @@ class GetUnprocessedMetadataEndpointTest(
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(organism = OTHER_ORGANISM, groupId = g1)
         convenienceClient.prepareDefaultSequenceEntriesToInProcessing(organism = OTHER_ORGANISM, groupId = g0)
 
-        val response = submissionControllerClient.getUnprocessedMetadata(
+        val response = submissionControllerClient.getSubmittedMetadata(
             organism = OTHER_ORGANISM,
             groupIdsFilter = listOf(g0),
             statusesFilter = listOf(Status.APPROVED_FOR_RELEASE),
         )
         response.andExpect(status().isOk)
             .andExpect(header().string("x-total-records", `is`(expectedAccessionVersions.count().toString())))
-        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionUnprocessedMetadata>()
+        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionSubmittedMetadata>()
 
         assertThat(responseBody, hasSize(expected.size))
         val responseAccessionVersions = responseBody.map { it.displayAccessionVersion() }.toSet()
@@ -181,22 +181,45 @@ class GetUnprocessedMetadataEndpointTest(
             null,
         )
 
-        submissionControllerClient.getUnprocessedMetadata()
+        submissionControllerClient.getSubmittedMetadata()
             .andExpect(status().isOk)
 
         uploadDatabaseService.deleteUploadData(uploadId)
 
-        submissionControllerClient.getUnprocessedMetadata()
+        submissionControllerClient.getSubmittedMetadata()
             .andExpect(status().isOk)
+    }
+
+    @Test
+    fun `WHEN I filter by accessionVersions THEN should return only those entries`() {
+        val entries = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        val target = entries.first()
+        val accessionVersion = target.displayAccessionVersion()
+
+        val response = submissionControllerClient.getSubmittedMetadata(
+            accessionVersionsFilter = listOf(accessionVersion),
+        )
+        response.andExpect(status().isOk)
+            .andExpect(header().string("x-total-records", `is`("1")))
+        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionSubmittedMetadata>()
+        assertThat(responseBody, hasSize(1))
+        assertThat(responseBody[0].displayAccessionVersion(), `is`(accessionVersion))
+    }
+
+    @Test
+    fun `WHEN I filter by accessionVersions with invalid format THEN returns 422`() {
+        submissionControllerClient.getSubmittedMetadata(
+            accessionVersionsFilter = listOf("not-a-valid-accession-version"),
+        ).andExpect(status().isUnprocessableEntity)
     }
 
     // Regression test for https://github.com/loculus-project/loculus/issues/4036
     @Test
     fun `GIVEN revoked sequences exist THEN endpoint does not throw exception`() {
         convenienceClient.prepareRevokedSequenceEntries()
-        val response = submissionControllerClient.getUnprocessedMetadata()
+        val response = submissionControllerClient.getSubmittedMetadata()
         response.andExpect(status().isOk)
-        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionUnprocessedMetadata>()
+        val responseBody = response.expectNdjsonAndGetContent<AccessionVersionSubmittedMetadata>()
         assertThat(responseBody, hasSize(greaterThan(DefaultFiles.NUMBER_OF_SEQUENCES)))
     }
 }

@@ -18,12 +18,13 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: {{ now | quote }}
+        valuesHash: {{ .Values | toJson | sha256sum | quote }}
       labels:
         app: loculus
         component: loculus-autoapprove-deployment
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      {{- include "loculus.podScheduling" $ | nindent 6 }}
       containers:
         - name: autoapprove
           image: ghcr.io/loculus-project/ingest:{{ $dockerTag }}

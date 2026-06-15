@@ -1,0 +1,216 @@
+@import 'tailwindcss';
+@import 'flowbite-react/plugin/tailwindcss';
+@source '../../.flowbite-react/class-list.json';
+/*
+ * Explicitly source the website source tree. Tailwind v4's automatic content
+ * detection skips files matched by `.gitignore`. In this repo those files are
+ * tracked, so detection works either way -- but in downstream overlays such as
+ * Pathoplexus the website source is synced in and listed in `.gitignore`, which
+ * makes automatic detection skip it and silently drops ~half the utility
+ * classes. An explicit `@source` glob bypasses the gitignore filter, so styling
+ * is correct in both setups. (A bare `@source '../'` does NOT help -- a
+ * directory source still re-applies the gitignore filter; the glob is required.)
+ */
+@source '../**/*.{astro,html,js,jsx,ts,tsx,vue,svelte,md,mdx}';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@plugin '@tailwindcss/forms' {
+    strategy: 'base';
+}
+
+/*
+ * Brand color palette. Edit `--color-primary-*` to re-skin the instance: these
+ * generate the `*-primary-NNN` utilities (e.g. `bg-primary-600`) and feed
+ * `--color-main` and the semantic `--color-primary`, so they drive Tailwind
+ * utilities and runtime reads via `getThemeColor()`.
+ */
+@theme {
+    --color-primary-50: #f3f6fb;
+    --color-primary-100: #e4e9f5;
+    --color-primary-200: #cfdaee;
+    --color-primary-300: #aec1e2;
+    --color-primary-400: #88a1d2;
+    --color-primary-500: #6b84c6;
+    --color-primary-600: #586bb8;
+    --color-primary-700: #4d5ba8;
+    --color-primary-800: #3e467e;
+    --color-primary-900: #3a416e;
+    --color-primary-950: #272b44;
+    --color-primary-1500: #25396e;
+    --color-main: var(--color-primary-600);
+    --color-logoSecondary: var(--color-primary-600);
+
+    --color-primary: var(--color-primary-400);
+    --color-primary-content: oklch(93% 0.034 272.788);
+    --color-secondary: #f000b8;
+    --color-secondary-content: oklch(94% 0.028 342.258);
+    --color-accent: #1dcdbc;
+    --color-accent-content: oklch(38% 0.063 188.416);
+    --color-neutral: oklch(14% 0.005 285.823);
+    --color-neutral-content: oklch(92% 0.004 286.32);
+    --color-base-100: #ffffff;
+    --color-base-200: oklch(98% 0 0);
+    --color-base-300: oklch(95% 0 0);
+    --color-base-content: oklch(21% 0.006 285.885);
+    --color-info: #9ab9bd;
+    --color-info-content: oklch(29% 0.066 243.157);
+    --color-success: #36d399;
+    --color-success-content: oklch(37% 0.077 168.94);
+    --color-warning: #fbbd23;
+    --color-warning-content: oklch(41% 0.112 45.904);
+    --color-error: #f87272;
+    --color-error-content: oklch(27% 0.105 12.094);
+}
+
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+
+    button:not(:disabled),
+    [role='button']:not(:disabled) {
+        cursor: pointer;
+    }
+
+    dialog {
+        margin: auto;
+    }
+}
+
+a {
+    &:hover {
+        @apply underline decoration-primary-700;
+    }
+}
+
+@layer components {
+    .checkbox-outline:checked {
+        background-color: #fff;
+        background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='%23374151' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+    }
+}
+
+.dataAgreement a {
+    @apply underline;
+}
+
+.fillColor {
+    background-color: var(--color-main);
+}
+
+.fancytitle {
+    background: linear-gradient(to right, var(--color-main) 15%, var(--color-logoSecondary) 50%, var(--color-main) 90%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-decoration: red;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.title {
+    color: var(--color-main);
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.subtitle {
+    color: var(--color-main);
+    font-size: 18px;
+    font-weight: 400;
+}
+
+@layer utilities {
+    .outlineButton {
+        @apply normal-case py-2 rounded-md font-semibold px-4 text-sm border-primary-600 border text-primary-600 bg-white
+    hover:bg-primary-600 hover:text-white;
+    }
+
+    .outlineButtonDropdownItem {
+        @apply text-primary-600 hover:text-primary-600 hover:bg-gray-100;
+    }
+}
+
+.loculusColor {
+    background: var(--color-main);
+    &:hover {
+        background: var(--color-primary-700);
+    }
+}
+
+.offCanvasTransform {
+    @apply transform transition-transform duration-300 ease-in-out z-40;
+}
+
+.customTable {
+    display: table;
+    border: none;
+}
+
+.customTable table,
+.customTable tr,
+.customTable td {
+    border: none;
+    padding: 5px 0;
+}
+
+.react-confirm-alert-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: react-confirm-alert-fadeIn 0.5s 0.2s forwards;
+}
+
+.message {
+    background-color: var(--color-primary-50);
+    padding: 2rem;
+    gap: 1rem;
+    align-content: flex-start;
+    border-radius: 1rem;
+    display: flex;
+}
+
+* {
+    @apply break-words;
+    word-break: break-word;
+}
+
+.rs-input {
+    background: transparent; /* overwrites the datepicker search element background which is otherwise white */
+}
+
+.rs-picker input {
+    text-transform: lowercase;
+}
+
+.appearSlowly {
+    animation: appearAnim 0s 1s forwards;
+    opacity: 0;
+}
+
+@keyframes appearAnim {
+    to {
+        opacity: 1;
+    }
+}
+
+.hide-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* Hide scrollbars for Chrome, Safari, and Opera */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}

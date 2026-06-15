@@ -27,6 +27,7 @@ import { getAccessionVersionString } from '../../utils/extractAccessionVersion.t
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { getLastApprovalTimeKey } from '../SearchPage/RecentSequencesBanner.tsx';
 import { Button } from '../common/Button';
+import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import BiTrash from '~icons/bi/trash';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
@@ -189,9 +190,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     const controlPanel = (
         <div className='flex flex-col' data-testid='review-page-control-panel'>
             <div className='text-gray-600 mr-3'>
-                {unprocessedCount > 0 && (
-                    <span className='loading loading-spinner loading-sm mr-2 relative top-1'> </span>
-                )}
+                {unprocessedCount > 0 && <Spinner size='sm' className='mr-2' />}
                 {processedCount} of {total} sequences processed
             </div>
             <div className='border border-slate-200 p-3 mt-3 flex items-start'>

@@ -345,7 +345,7 @@ def project_table_handle_errors(
             entries_with_errors,
             db_engine,
             model_class=ProjectTableEntry,
-            retry_threshold_min=config.retry_threshold_min,
+            config=config,
             last_retry=last_retry_time,
         )
         # TODO: Query ENA to check if project has in fact been created

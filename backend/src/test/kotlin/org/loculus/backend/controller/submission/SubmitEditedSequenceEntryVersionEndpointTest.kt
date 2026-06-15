@@ -9,8 +9,8 @@ import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -88,18 +88,18 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .map { it.accession }
             .first()
 
-        val entryBeforeEdit = convenienceClient.getUnprocessedMetadata()
+        val entryBeforeEdit = convenienceClient.getSubmittedMetadata()
             .find { it.accession == firstAccession && it.version == 1L }!!
-        assertThat(entryBeforeEdit.unprocessedMetadata, `is`(not(anEmptyMap())))
+        assertThat(entryBeforeEdit.submittedMetadata, `is`(not(anEmptyMap())))
 
         val editedData = generateEditedData(firstAccession)
 
         client.submitEditedSequenceEntryVersion(editedData)
             .andExpect(status().isNoContent)
 
-        val entryAfterEdit = convenienceClient.getUnprocessedMetadata()
+        val entryAfterEdit = convenienceClient.getSubmittedMetadata()
             .find { it.accession == firstAccession && it.version == 1L }!!
-        assertThat(entryAfterEdit.unprocessedMetadata, `is`(anEmptyMap()))
+        assertThat(entryAfterEdit.submittedMetadata, `is`(anEmptyMap()))
     }
 
     @Test
@@ -213,7 +213,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         val editedData = EditedSequenceEntryData(
             accession = accessions.first(),
             version = 1,
-            data = OriginalData(
+            data = SubmittedData(
                 metadata = emptyMap(),
                 unalignedNucleotideSequences = emptyMap(),
                 files = mapOf(
@@ -240,7 +240,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         val editedData = EditedSequenceEntryData(
             accession = accessions.first(),
             version = 1,
-            data = OriginalData(
+            data = SubmittedData(
                 metadata = emptyMap(),
                 unalignedNucleotideSequences = emptyMap(),
                 files = mapOf(
@@ -270,7 +270,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         val editedData = EditedSequenceEntryData(
             accession = accessions.first(),
             version = 1,
-            data = OriginalData(
+            data = SubmittedData(
                 metadata = emptyMap(),
                 unalignedNucleotideSequences = emptyMap(),
                 files = mapOf(
@@ -304,7 +304,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         val editedData = EditedSequenceEntryData(
             accession = accessions.first(),
             version = 1,
-            data = OriginalData(
+            data = SubmittedData(
                 metadata = emptyMap(),
                 unalignedNucleotideSequences = emptyMap(),
                 files = mapOf(
@@ -326,6 +326,6 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     private fun generateEditedData(accession: String, version: Long = 1) = EditedSequenceEntryData(
         accession = accession,
         version = version,
-        data = emptyOriginalData,
+        data = emptySubmittedData,
     )
 }

@@ -5,6 +5,7 @@ import JSZip from 'jszip';
 import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
 
+import { DATA_SHEET_NAME, TEMPLATE_REFERENCE_SHEET_NAMES } from '../../../utils/metadataTemplateSheets';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
 
@@ -241,8 +242,11 @@ export class ExcelFile implements ProcessedFile {
             cellDates: true,
         });
 
-        const firstSheetName = workbook.SheetNames[0];
-        let sheet = workbook.Sheets[firstSheetName];
+        // Parse the `Data` sheet by name when present, so reordering the template's sheets (e.g.
+        // dragging `Guidance` to the front) does not cause the reference sheet to be read as
+        // metadata. Fall back to the first sheet for arbitrary, non-template workbooks.
+        const dataSheetName = workbook.SheetNames.includes(DATA_SHEET_NAME) ? DATA_SHEET_NAME : workbook.SheetNames[0];
+        let sheet = workbook.Sheets[dataSheetName];
 
         // convert to JSON and back due to date formatting not working well otherwise
         const json = XLSX.utils.sheet_to_json(sheet);
@@ -258,16 +262,21 @@ export class ExcelFile implements ProcessedFile {
         });
         const rowCount = tsvContent.split('\n').length - 1;
         if (rowCount <= 0) {
-            throw new Error(`Sheet ${firstSheetName} is empty.`);
+            throw new Error(`Sheet ${dataSheetName} is empty.`);
         }
 
         const tsvBlob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
         // filename needs to end in 'tsv' for the uploaded file
         const tsvFile = new File([tsvBlob], 'converted.tsv', { type: 'text/tab-separated-values' });
         this.tsvFile = tsvFile;
-        if (workbook.SheetNames.length > 1) {
+        // Any sheet other than the parsed one and the template's reference/lookup sheets is
+        // unexpected and should trigger the "you have unprocessed sheets" warning.
+        const unexpectedSheets = workbook.SheetNames.filter(
+            (sheetName) => sheetName !== dataSheetName && !TEMPLATE_REFERENCE_SHEET_NAMES.has(sheetName),
+        );
+        if (unexpectedSheets.length > 0) {
             this.processingWarnings.push(
-                `The file contains ${workbook.SheetNames.length} sheets, only the first sheet (${firstSheetName}; ${rowCount} rows) was processed.`,
+                `The file contains ${workbook.SheetNames.length} sheets, only the '${dataSheetName}' sheet (${rowCount} rows) was processed.`,
             );
         }
     }

@@ -18,11 +18,12 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: {{ now | quote }}
+        valuesHash: {{ .Values | toJson | sha256sum | quote }}
       labels:
         app: loculus
         component: keycloak-database
     spec:
+      {{- include "loculus.podScheduling" . | nindent 6 }}
       containers:
         - name: loculus-keycloak-database
           image: postgres:15.12

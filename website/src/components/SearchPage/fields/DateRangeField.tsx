@@ -4,6 +4,7 @@ import { DateField } from './DateField';
 import type { FieldValues, GroupedMetadataFilter, SetSomeFieldValues } from '../../../types/config';
 import { CustomTooltip } from '../../../utils/CustomTooltip';
 import { validateSingleValue } from '../../../utils/extractFieldValue';
+import { Checkbox } from '../../common/Checkbox';
 
 export type DateRangeFieldProps = {
     field: GroupedMetadataFilter;
@@ -60,14 +61,17 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
     const [upperValue, setUpperValue] = useState(getFieldValue(upperField.name));
 
     useEffect(() => {
-        setStrictMode(
-            isStrictMode(
-                lowerFromField.name in fieldValues,
-                lowerToField.name in fieldValues,
-                upperFromField.name in fieldValues,
-                upperToField.name in fieldValues,
-            ),
-        );
+        const lowerFromDefined = lowerFromField.name in fieldValues;
+        const lowerToDefined = lowerToField.name in fieldValues;
+        const upperFromDefined = upperFromField.name in fieldValues;
+        const upperToDefined = upperToField.name in fieldValues;
+        // Only re-derive strictMode from fieldValues when at least one bound is actually defined.
+        // When the user toggles strictness without having entered any dates the other effect
+        // below clears all four fields, which would otherwise feed back into isStrictMode and
+        // collapse strictMode back to its default `true` — making the checkbox appear stuck on.
+        if (lowerFromDefined || lowerToDefined || upperFromDefined || upperToDefined) {
+            setStrictMode(isStrictMode(lowerFromDefined, lowerToDefined, upperFromDefined, upperToDefined));
+        }
         setLowerValue(validateSingleValue(fieldValues[lowerField.name], lowerField.name));
         setUpperValue(validateSingleValue(fieldValues[upperField.name], upperField.name));
     }, [field, fieldValues]);
@@ -119,9 +123,10 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                 </CustomTooltip>
                 <label data-tooltip-id={'strict-tooltip' + field.name}>
                     <span className='text-gray-400 text-sm mr-2'>strict</span>
-                    <input
-                        type='checkbox'
-                        className='checkbox checkbox-sm text-3xl [--chkbg:white] [--chkfg:theme(colors.gray.700)] checked:border-gray-300'
+                    <Checkbox
+                        size='sm'
+                        outline
+                        className='checked:border-gray-300'
                         checked={strictMode}
                         onChange={(event) => setStrictMode(event.target.checked)}
                     />

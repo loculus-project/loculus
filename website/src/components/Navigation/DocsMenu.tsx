@@ -139,7 +139,7 @@ const DocsMenu: FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
                     <div className='flex items-center justify-between sm:block'>
                         <div className='text-2xl font-bold text-primary-800 mb-3'>{title}</div>
                         <div className='sm:hidden'>
-                            <DisclosureButton className='text-gray-700 hover:text-primary-700 focus:outline-none'>
+                            <DisclosureButton className='text-gray-700 hover:text-primary-700 focus:outline-hidden'>
                                 {open ? (
                                     <XIcon className='w-6 h-6' aria-hidden='true' />
                                 ) : (
