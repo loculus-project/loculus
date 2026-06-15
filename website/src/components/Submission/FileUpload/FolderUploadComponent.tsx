@@ -318,6 +318,19 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         }
     };
 
+    const handleDiscardFile = (submissionId: string, file: SingleFileUpload) => {
+        setFileUploadState((state) => {
+            if (state?.type === 'uploadCompleted') {
+                const remaining = state.files[submissionId].filter((f) => f.name !== file.name);
+                if (remaining.length === 0) return undefined;
+                return produce(state, (draft) => {
+                    draft.files[submissionId] = remaining;
+                });
+            }
+            return state;
+        });
+    };
+
     return fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
         <div
             className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
@@ -389,7 +402,18 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     <h3 className='text-sm font-medium'>Files</h3>
                     {inputMode === 'form'
                         ? Object.values(fileUploadState.files)[0].map((file) => (
-                              <FileListItem key={file.name} file={file} />
+                              <div key={file.name} className='flex items-center mb-2'>
+                                  <div className='flex-1 min-w-0'>
+                                      <FileListItem file={file} />
+                                  </div>
+                                  <Button
+                                      onClick={() => handleDiscardFile('dummySubmissionId', file)}
+                                      data-testid={`discard_${fileCategory.name}_${file.name}`}
+                                      className='text-xs whitespace-nowrap text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50 ml-2'
+                                  >
+                                      Discard file
+                                  </Button>
+                              </div>
                           ))
                         : Object.entries(fileUploadState.files).flatMap(([submissionId, files]) => [
                               <h4 key={submissionId} className='text-xs font-medium py-2'>
@@ -406,7 +430,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 data-testid={`discard_${fileCategory.name}`}
                 className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
             >
-                Discard files
+                Discard all files
             </Button>
         </div>
     );

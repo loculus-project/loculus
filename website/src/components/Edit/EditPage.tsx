@@ -52,16 +52,15 @@ const InnerEditPage: FC<EditPageProps> = ({
     groupedInputFields,
     submissionDataTypes,
 }) => {
-    const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
-    const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
-
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.fromInitialData(dataToEdit));
     const [editableSequences, setEditableSequences] = useState(
         EditableSequences.fromInitialData(dataToEdit, submissionDataTypes.maxSequencesPerEntry),
     );
+    const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
+    const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
     const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(() =>
-        extraFilesEnabled && dataToEdit.originalData.files
-            ? { [dataToEdit.submissionId]: dataToEdit.originalData.files }
+        extraFilesEnabled && dataToEdit.submittedData.files
+            ? { [dataToEdit.submissionId]: dataToEdit.submittedData.files }
             : undefined,
     );
 
