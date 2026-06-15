@@ -10,7 +10,7 @@ test.describe('Review page functionality', () => {
         const reviewPage = new ReviewPage(page);
         await reviewPage.navigateToReviewPage();
         await expect(
-            page.getByRole('heading', { name: 'Review current submissions' }),
+            page.getByRole('heading', { name: 'Approve pending submissions' }),
         ).toBeVisible();
     });
 

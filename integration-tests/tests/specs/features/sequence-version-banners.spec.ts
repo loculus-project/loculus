@@ -83,7 +83,7 @@ test.describe('Sequence version banners', () => {
         await page.getByLabel('Collection date').fill('2023-06-15');
         await page.getByRole('button', { name: 'Submit' }).click();
         await page.getByRole('button', { name: 'Confirm' }).click();
-        await expect(page.getByText('Review current submissions')).toBeVisible();
+        await expect(page.getByText('Approve pending submissions')).toBeVisible();
 
         // Find and revoke the Germany sequence
         await search.ebolaSudan();
