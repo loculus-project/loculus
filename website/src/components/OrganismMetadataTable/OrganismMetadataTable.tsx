@@ -164,8 +164,8 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
                 {activeTab === FieldType.INPUT && (
                     <div className='mt-4'>
                         <div className='mb-4'>
-                            You can download all input metadata fields (with their descriptions and examples) here:{' '}
-                            <a href={routes.metadataOverview(organism.key)} className='text-primary-700 opacity-90'>
+                            You can download a submission template with an overview of input metadata fields (with their descriptions and examples) here:{' '}
+                            <a href={routes.metadataTemplate(organism.key, "submit", 'xlsx')} className='text-primary-700 opacity-90'>
                                 {`${organism.displayName.replaceAll(' ', '_')}_metadata_overview.tsv`}
                             </a>
                         </div>
