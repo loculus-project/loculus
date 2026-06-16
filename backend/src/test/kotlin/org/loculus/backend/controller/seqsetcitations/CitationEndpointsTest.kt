@@ -50,7 +50,10 @@ class CitationEndpointsTest(
         } returns listOf(AccessionVersion(MOCK_SEQ_ACCESSION, MOCK_SEQ_VERSION))
         every { accessionPreconditionValidator.validate(any()) } returns Unit
         every { crossRefService.doiPrefix } returns MOCK_DOI_PREFIX
-        every { crossRefService.isActive } returns false
+        every { crossRefService.isActive } returns true
+        every { crossRefService.isWriteEnabled } returns true
+        every { crossRefService.generateCrossRefXML(any()) } returns "<doi_batch/>"
+        every { crossRefService.postCrossRefXML(any()) } returns "Crossref API response"
     }
 
     @ParameterizedTest
@@ -117,7 +120,6 @@ class CitationEndpointsTest(
         val seqSetVersion = JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
 
         // Simulate running the crossref citations task
-        every { crossRefService.isActive } returns true
         every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
             CrossRefCitedByResult(emptyList(), emptyList())
         seqSetCrossRefCitationsTask.task()
@@ -157,7 +159,6 @@ class CitationEndpointsTest(
             ),
             seqSetDOIs = setOf(seqSetDOI),
         )
-        every { crossRefService.isActive } returns true
         every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
             CrossRefCitedByResult(listOf(seqSetCitationSource), emptyList())
         seqSetCrossRefCitationsTask.task()
@@ -203,8 +204,6 @@ class CitationEndpointsTest(
 
         val (seqSetIdA, seqSetVersionA, seqSetDOIA) = createSeqSetWithDOI()
         val (seqSetIdB, seqSetVersionB, seqSetDOIB) = createSeqSetWithDOI()
-
-        every { crossRefService.isActive } returns true
 
         val citationSource = SeqSetCitationSource(
             CitationSource(
