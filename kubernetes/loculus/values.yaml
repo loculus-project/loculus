@@ -54,7 +54,7 @@ ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
-dateFieldForGroupGraph: null
+dateFieldForGroupGraph: date # TEMP(pr-6696): force-enabled to capture preview screenshots — REVERT before merge
 zstdCompressionLevel: 10
 pipelineVersionUpgradeCheckIntervalSeconds: 10
 dataUseTerms:
