@@ -55,14 +55,14 @@ data class CrossRefCitedByResult(
 
 @Service
 class CrossRefService(private val properties: CrossRefServiceProperties, private val dateProvider: DateProvider) {
-    val isActive = properties.endpoint != null &&
-        properties.username != null &&
-        properties.password != null &&
-        properties.doiPrefix != null &&
-        properties.databaseName != null &&
-        properties.email != null &&
-        properties.organization != null &&
-        properties.hostUrl != null
+    val isActive = !properties.endpoint.isNullOrBlank() &&
+        !properties.username.isNullOrBlank() != null &&
+        !properties.password.isNullOrBlank() &&
+        !properties.doiPrefix.isNullOrBlank() &&
+        !properties.databaseName.isNullOrBlank() &&
+        !properties.email.isNullOrBlank() &&
+        !properties.organization.isNullOrBlank() &&
+        !properties.hostUrl.isNullOrBlank()
     val isWriteEnabled = properties.writeEnabled == true
     val doiPrefix: String? = properties.doiPrefix
     val dateTimeFormatterMM: DateTimeFormatter = DateTimeFormatter.ofPattern("MM")
