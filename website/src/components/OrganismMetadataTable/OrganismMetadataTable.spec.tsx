@@ -7,9 +7,12 @@ import { AllowedValuesList } from './OrganismMetadataTable';
 const options = [{ name: 'Germany' }, { name: 'France' }, { name: 'United States' }];
 
 describe('AllowedValuesList', () => {
+    let writeText: ReturnType<typeof vi.fn>;
+
     beforeEach(() => {
+        writeText = vi.fn().mockResolvedValue(undefined);
         Object.defineProperty(navigator, 'clipboard', {
-            value: { writeText: vi.fn().mockResolvedValue(undefined) },
+            value: { writeText },
             configurable: true,
         });
     });
@@ -46,21 +49,21 @@ describe('AllowedValuesList', () => {
     it('copies all options to clipboard when no query is active', async () => {
         render(<AllowedValuesList options={options} />);
         await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
-        expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Germany\nFrance\nUnited States');
+        expect(writeText).toHaveBeenCalledWith('Germany\nFrance\nUnited States');
     });
 
     it('copies only the filtered options when a query is active', async () => {
         render(<AllowedValuesList options={options} />);
         await userEvent.type(screen.getByRole('textbox'), 'ger');
         await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
-        expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Germany');
+        expect(writeText).toHaveBeenCalledWith('Germany');
     });
 
     it('copies filtered options after trimming whitespace from query', async () => {
         render(<AllowedValuesList options={options} />);
         await userEvent.type(screen.getByRole('textbox'), '  France  ');
         await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
-        expect(navigator.clipboard.writeText).toHaveBeenCalledWith('France');
+        expect(writeText).toHaveBeenCalledWith('France');
     });
 
     it('shows "Copied!" feedback after clicking copy', async () => {
