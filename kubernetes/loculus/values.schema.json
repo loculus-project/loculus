@@ -1757,6 +1757,12 @@
           "default": 1440,
           "description": "Files uploaded to S3 but never attached to a sequence entry are garbage-collected after this many minutes."
         },
+        "garbageCollectionInitialDelayMinutes": {
+          "groups": ["s3"],
+          "type": "integer",
+          "default": 15,
+          "description": "How many minutes it takes before the first garbage collection task runs after the backend starts."
+        },
         "bucket": {
           "type": "object",
           "properties": {

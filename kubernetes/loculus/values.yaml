@@ -65,6 +65,7 @@ s3:
   enabled: true
   garbageCollectionEnabled: false # have garbage collection log instead of actually delete files
   garbageCollectionGracePeriodMinutes: 1440
+  garbageCollectionInitialDelayMinutes: 15
   bucket:
     region: us-east-1
     bucket: loculus-preview-private
