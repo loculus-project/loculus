@@ -108,7 +108,7 @@ class SeqSetCitationsDatabaseService(
         }
 
         return ResponseSeqSet(
-            insertedSet[SeqSetsTable.seqSetId].toString(),
+            insertedSet[SeqSetsTable.seqSetId],
             insertedSet[SeqSetsTable.seqSetVersion],
         )
     }
@@ -187,7 +187,7 @@ class SeqSetCitationsDatabaseService(
         }
 
         return ResponseSeqSet(
-            insertedSet[SeqSetsTable.seqSetId].toString(),
+            insertedSet[SeqSetsTable.seqSetId],
             insertedSet[SeqSetsTable.seqSetVersion],
         )
     }
@@ -481,10 +481,10 @@ class SeqSetCitationsDatabaseService(
             mutableListOf(),
         )
 
-        val uniqueSeqSetIds = latestSeqSetWithUserAccession.map { it.seqSetId.toString() }.toSet()
+        val uniqueSeqSetIds = latestSeqSetWithUserAccession.map { it.seqSetId }.toSet()
         for (seqSetId in uniqueSeqSetIds) {
             val year = latestSeqSetWithUserAccession
-                .first { it.seqSetId.toString() == seqSetId }
+                .first { it.seqSetId == seqSetId }
                 .createdAt.toLocalDateTime().year.toLong()
             if (citedBy.years.contains(year)) {
                 val index = citedBy.years.indexOf(year)
