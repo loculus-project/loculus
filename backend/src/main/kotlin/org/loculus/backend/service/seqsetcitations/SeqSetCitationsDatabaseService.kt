@@ -35,6 +35,7 @@ import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.crossref.CrossRefService
@@ -342,6 +343,14 @@ class SeqSetCitationsDatabaseService(
         val username = authenticatedUser.username
         log.info { "Create DOI for seqSet $seqSetId, version $version, user $username" }
 
+        if (!crossRefService.isActive) {
+            throw ForbiddenException("The crossref service is not active, so creating DOIs is forbidden.")
+        }
+
+        if (!crossRefService.isWriteEnabled) {
+            throw ForbiddenException("The crossref service is not write-enabled, so creating DOIs is forbidden.")
+        }
+
         validateCreateSeqSetDOI(username, seqSetId, version)
 
         val doiPrefix = crossRefService.doiPrefix ?: "no-prefix-configured"
@@ -359,18 +368,16 @@ class SeqSetCitationsDatabaseService(
             it[SeqSetsTable.seqSetDOI] = seqSetDOI
         }
 
-        if (crossRefService.isActive) {
-            val crossRefXml = crossRefService.generateCrossRefXML(
-                DoiEntry(
-                    LocalDate.now(),
-                    "SeqSet: ${seqSet[0].name}",
-                    seqSetDOI,
-                    "/seqsets/$seqSetId.$version",
-                    null,
-                ),
-            )
-            crossRefService.postCrossRefXML(crossRefXml)
-        }
+        val crossRefXml = crossRefService.generateCrossRefXML(
+            DoiEntry(
+                LocalDate.now(),
+                "SeqSet: ${seqSet[0].name}",
+                seqSetDOI,
+                "/seqsets/$seqSetId.$version",
+                null,
+            ),
+        )
+        crossRefService.postCrossRefXML(crossRefXml)
 
         return ResponseSeqSet(
             seqSetId,
