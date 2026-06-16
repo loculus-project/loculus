@@ -1291,7 +1291,7 @@
               "groups": ["general"],
               "type": "boolean",
               "default": false,
-              "description": "Whether to enable Crossref write functionality, such as generating DOIs."
+              "description": "Enable/disable Crossref write functionality, such as generating DOIs"
             }
           }
         },
