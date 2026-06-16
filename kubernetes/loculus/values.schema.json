@@ -1286,6 +1286,12 @@
               "groups": ["general"],
               "type": "string",
               "description": "The host URL for CrossRef callbacks"
+            },
+            "writeEnabled": {
+              "groups": ["general"],
+              "type": "boolean",
+              "default": false,
+              "description": "Whether to enable Crossref write functionality, such as generating DOIs."
             }
           }
         },

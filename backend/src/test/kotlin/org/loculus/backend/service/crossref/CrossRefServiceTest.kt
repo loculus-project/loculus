@@ -1,6 +1,7 @@
 package org.loculus.backend.service.crossref
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -268,6 +269,18 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
             ),
             result.sources[0].source.contributors,
         )
+    }
+
+    @Test
+    fun `postCrossRefXML throws when write is not enabled`() {
+        // crossref.write-enabled is false in the test configuration, so posting must be rejected
+        // before any request is made to CrossRef.
+        assertFalse(crossRefService.isWriteEnabled)
+
+        val ex = assertThrows<RuntimeException> {
+            crossRefService.postCrossRefXML(crossRefXMLReference)
+        }
+        assertTrue(ex.message!!.contains("read-only", ignoreCase = true))
     }
 
     @Test
