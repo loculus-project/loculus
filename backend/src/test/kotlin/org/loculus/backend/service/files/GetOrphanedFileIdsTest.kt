@@ -91,9 +91,9 @@ class GetOrphanedFileIdsTest(
             }
         }
 
-        val fileFromOldPipeline = UUID.randomUUID() // pipeline version 1 (< current) -> orphaned
-        val fileFromCurrentPipeline = UUID.randomUUID() // pipeline version 2 (current) -> protected
-        val fileFromNewerPipeline = UUID.randomUUID() // pipeline version 3 (> current) -> protected
+        val fileFromOldPipeline = UUID.randomUUID() // pipeline version 1 (< current)
+        val fileFromCurrentPipeline = UUID.randomUUID() // pipeline version 2 (current)
+        val fileFromNewerPipeline = UUID.randomUUID() // pipeline version 3 (> current)
         listOf(fileFromOldPipeline, fileFromCurrentPipeline, fileFromNewerPipeline)
             .forEach { insertFile(it, groupId, daysAgo(10)) }
 
