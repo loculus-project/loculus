@@ -225,9 +225,7 @@ const InnerDataUploadForm = ({
                         <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
                             <Spinner size='sm' />
                         </div>
-                        <span className='flex-1 text-center mx-8'>
-                            {action === 'submit' ? 'Upload and proceed to Approval' : 'Submit sequences'}
-                        </span>
+                        <span className='flex-1 text-center mx-8'>Upload and proceed to Approval</span>
                     </Button>
                 </div>
             </div>
