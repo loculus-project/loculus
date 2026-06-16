@@ -30,7 +30,7 @@ test.describe('Sequence N trimming functionality', () => {
         const reviewPage = await submissionPage.submitSequence();
 
         await expect(
-            page.getByRole('heading', { name: 'Approve pending submissions' }),
+            page.getByRole('heading', { name: 'Review pending submissions' }),
         ).toBeVisible();
 
         await reviewPage.waitForZeroProcessing();

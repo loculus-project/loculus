@@ -15,7 +15,7 @@ const metadataDisplayNames: Map<string, string> = getMetadataDisplayNames(organi
 const referenceGenomesInfo = getReferenceGenomes(organism);
 ---
 
-<SubmissionPageWrapper title='Approve pending submissions' groupsResult={groupsResult}>
+<SubmissionPageWrapper title='Review pending submissions' groupsResult={groupsResult}>
     {
         groupsResult.match(
             ({ currentGroup: group }) => (
