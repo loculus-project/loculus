@@ -18,8 +18,6 @@ seqSets:
     email: "email@dummy"
     organization: "dummy"
     hostUrl: "dummy"
-    username: "dummy"
-    password: "dummy"
   fieldsToDisplay:
     - field: "geoLocCountry"
       displayName: "Country"
