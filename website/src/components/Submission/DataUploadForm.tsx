@@ -226,7 +226,7 @@ const InnerDataUploadForm = ({
                             <Spinner size='sm' />
                         </div>
                         <span className='flex-1 text-center mx-8'>
-                            {action === 'submit' ? 'Upload (and proceed to Approval)' : 'Submit sequences'}
+                            {action === 'submit' ? 'Upload and proceed to Approval' : 'Submit sequences'}
                         </span>
                     </Button>
                 </div>

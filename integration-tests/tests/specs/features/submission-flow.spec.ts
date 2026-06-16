@@ -35,7 +35,7 @@ test.describe('Submission flow', () => {
         await page.getByLabel('I confirm that the data').check();
         await page.getByLabel('I confirm I have not and will').check();
 
-        await page.getByRole('button', { name: 'Upload (and proceed to Approval)' }).click();
+        await page.getByRole('button', { name: 'Upload and proceed to Approval' }).click();
         await page.getByRole('button', { name: 'Continue under Open terms' }).click();
 
         await expect(
