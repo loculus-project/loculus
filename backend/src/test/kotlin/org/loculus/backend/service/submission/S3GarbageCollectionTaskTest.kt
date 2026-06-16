@@ -28,8 +28,8 @@ import java.util.UUID
 @EndpointTest(
     properties = [
         "${BackendSpringProperty.S3_ENABLED}=true",
-        "${BackendSpringProperty.S3_GC_DRY_RUN}=true",
-        "${BackendSpringProperty.S3_MAX_ORPHAN_AGE_DAYS}=1",
+        "${BackendSpringProperty.S3_GC_ENABLED}=false",
+        "${BackendSpringProperty.S3_GC_GRACE_PERIOD_MINUTES}=1",
     ],
 )
 class S3GarbageCollectionTaskTest(
@@ -89,8 +89,8 @@ class S3GarbageCollectionTaskTest(
             s3Service,
             dateProvider,
             auditLogger,
-            maxOrphanAge = 1,
-            dryRun = false,
+            gracePeriod = 1,
+            deleteOrphans = true,
         )
         deleteTask.task()
 

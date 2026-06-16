@@ -25,30 +25,30 @@ class S3GarbageCollectionTask(
     private val s3Service: S3Service,
     private val dateProvider: DateProvider,
     private val auditLogger: AuditLogger,
-    @Value("\${${BackendSpringProperty.S3_MAX_ORPHAN_AGE_DAYS}}") private val maxOrphanAge: Int,
-    @Value("\${${BackendSpringProperty.S3_GC_DRY_RUN}}") private val dryRun: Boolean,
+    @Value("\${${BackendSpringProperty.S3_GC_GRACE_PERIOD_MINUTES}}") private val gracePeriod: Int,
+    @Value("\${${BackendSpringProperty.S3_GC_ENABLED}}") private val deleteOrphans: Boolean,
 ) {
 
     /**
-     * Runs once daily (with an initial delay of 15 minutes) and deletes S3 objects older than
-     * `loculus.s3.max-orphan-age-days` that are not referenced in submitted_data or processed_data
+     * Deletes S3 objects older than `loculus.s3.gc-grace-period-minutes` that are
+     * not referenced in submitted_data or processed_data
      */
     @Scheduled(initialDelay = 15, fixedDelay = 60 * 24, timeUnit = TimeUnit.MINUTES)
     fun task() {
-        // `maxOrphanAge` must be at least 1 or files produced by preprocessing may be
+        // `gracePeriod` must be at least 1 or files produced by preprocessing may be
         // garbage collected before they're attached to sequence entries
-        val maxOrphanAge = max(maxOrphanAge, 1)
+        val gracePeriod = max(gracePeriod, 1)
         log.info {
-            "Running S3 garbage collection task to clean up orphan files at least $maxOrphanAge " +
-                "days old (dry run = $dryRun)"
+            "Running S3 garbage collection task to clean up orphan files at least $gracePeriod " +
+                "minutes old (garbageCollectionEnabled = $deleteOrphans)"
         }
 
         val threshold = dateProvider.getCurrentInstant()
-            .minus(maxOrphanAge, DateTimeUnit.DAY, DateProvider.timeZone)
+            .minus(gracePeriod, DateTimeUnit.MINUTE, DateProvider.timeZone)
             .toLocalDateTime(DateProvider.timeZone)
         val orphans = filesDatabaseService.getOrphanedFileIds(threshold)
 
-        if (dryRun) {
+        if (!deleteOrphans) {
             log.info { "S3 garbage collection task would have deleted ${orphans.size} files: $orphans" }
             return
         }
@@ -67,13 +67,13 @@ class S3GarbageCollectionTask(
         if (orphans.isNotEmpty()) {
             log.info {
                 "S3 garbage collection task deleted ${orphans.size - deleteFailures} orphan(s) not referenced by a " +
-                    "submission after $maxOrphanAge days"
+                    "submission after $gracePeriod minutes"
             }
             auditLogger
                 .log(
                     "CLEANUP",
                     "S3 garbage collection task deleted ${orphans.size - deleteFailures} orphan(s) " +
-                        "not referenced by a submission after $maxOrphanAge days",
+                        "not referenced by a submission after $gracePeriod minutes",
                 )
 
             if (deleteFailures > 0) {
