@@ -5,14 +5,14 @@ channels:
   - nodefaults
 dependencies:
   # Core Python dependencies
-  - python=3.12.9 # Pinned to 3.12.x series, check for patch updates within 3.12
+  - python=3.14.6 # Pinned to 3.12.x series, check for patch updates within 3.12
   # Extra dependencies
   - biopython=1.87
   - click=8.4.1
   - curl=8.20.0
   - ijson=3.5.0
   - jsonlines=4.0.0
-  - ncbi-datasets-cli=18.29.1
+  - ncbi-datasets-cli=18.30.1
   - nextclade=3.21.2
   - orjsonl=1.0.0
   - pandas=2.3.3
@@ -22,6 +22,6 @@ dependencies:
   - requests=2.34.2
   - seqkit=2.13.0
   - snakefmt=2.0.1
-  - snakemake=9.22.0
+  - snakemake=9.23.0
   - unzip=6.0
   - pytest=9.0.3
