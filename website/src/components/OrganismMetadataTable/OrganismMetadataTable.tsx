@@ -170,7 +170,7 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
                                 href={routes.metadataTemplate(organism.key, 'submit', 'xlsx')}
                                 className='text-primary-700 opacity-90'
                             >
-                                {`${organism.displayName.replaceAll(' ', '_')}_metadata_overview.tsv`}
+                                {`${organism.displayName.replaceAll(' ', '_')}_metadata_template.xlsx`}
                             </a>
                         </div>
                         <MetadataSearchBar
