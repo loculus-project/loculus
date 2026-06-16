@@ -13,7 +13,13 @@ seqSets:
   enabled: true
   crossRef:
     DOIPrefix: "placeholder"
-    endpoint: "https://test.crossref.org"
+    endpoint: "dummy"
+    databaseName: "dummy"
+    email: "email@dummy"
+    organization: "dummy"
+    hostUrl: "dummy"
+    username: "dummy"
+    password: "dummy"
   fieldsToDisplay:
     - field: "geoLocCountry"
       displayName: "Country"
