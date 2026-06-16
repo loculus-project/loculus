@@ -8,8 +8,9 @@ const options = [{ name: 'Germany' }, { name: 'France' }, { name: 'United States
 
 describe('AllowedValuesList', () => {
     beforeEach(() => {
-        Object.assign(navigator, {
-            clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+        Object.defineProperty(navigator, 'clipboard', {
+            value: { writeText: vi.fn().mockResolvedValue(undefined) },
+            configurable: true,
         });
     });
 
