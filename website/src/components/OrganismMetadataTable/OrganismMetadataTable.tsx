@@ -358,7 +358,7 @@ export const AllowedValuesList: FC<AllowedValuesListProps> = ({ options }) => {
                     onClick={() => void handleCopy()}
                     disabled={!isClient}
                     title={`Copy ${filtered.length} value${filtered.length === 1 ? '' : 's'} to clipboard`}
-                    className='text-xs px-2 py-1 border border-gray-300 rounded text-gray-600 hover:text-primary-600 hover:border-primary-500'
+                    className='text-xs px-2 py-1 border border-gray-300 rounded text-gray-600 hover:text-primary-600 hover:border-primary-500 whitespace-nowrap'
                 >
                     {copied ? 'Copied!' : 'Copy'}
                 </Button>
