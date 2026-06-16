@@ -99,11 +99,11 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
                 listOf(KotlinLocalDateTimeColumnType() to threshold),
                 explicitStatementType = StatementType.SELECT,
             ) { rs ->
-                val ids = mutableSetOf<FileId>()
-                while (rs.next()) {
-                    ids += rs.getObject("id", UUID::class.java)
+                buildSet<FileId> {
+                    while (rs.next()) {
+                        add(rs.getObject("id", UUID::class.java))
+                    }
                 }
-                ids
             } ?: emptySet()
         }
     }
