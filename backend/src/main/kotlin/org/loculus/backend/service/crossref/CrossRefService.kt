@@ -56,7 +56,7 @@ data class CrossRefCitedByResult(
 @Service
 class CrossRefService(private val properties: CrossRefServiceProperties, private val dateProvider: DateProvider) {
     val isActive = !properties.endpoint.isNullOrBlank() &&
-        !properties.username.isNullOrBlank() != null &&
+        !properties.username.isNullOrBlank() &&
         !properties.password.isNullOrBlank() &&
         !properties.doiPrefix.isNullOrBlank() &&
         !properties.databaseName.isNullOrBlank() &&
