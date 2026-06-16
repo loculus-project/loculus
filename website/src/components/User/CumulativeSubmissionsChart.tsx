@@ -1,20 +1,31 @@
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-} from 'chart.js';
+import { Chart as ChartJS, TimeScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import 'chartjs-adapter-date-fns';
 import { type FC, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 
 import type { Organism } from '../../config.ts';
 import { Spinner } from '../common/Spinner';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(TimeScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+
+// Padding applied to the x-axis when every submission falls on a single date,
+// so the lone point isn't rendered on a zero-width time axis.
+const SINGLE_POINT_PADDING_MS = 15 * 24 * 60 * 60 * 1000;
+
+// Parse a metadata date string ('2024', '2024-03' or '2024-03-15') into a
+// local-midnight timestamp. Local (rather than UTC) avoids the rendered date
+// shifting by a day in negative-offset timezones. Returns null if unparseable.
+function parseDateToLocalTs(dateStr: string): number | null {
+    const parts = dateStr.split('-');
+    const year = Number(parts[0]);
+    const month = parts.length > 1 ? Number(parts[1]) - 1 : 0;
+    const day = parts.length > 2 ? Number(parts[2]) : 1;
+    if (!Number.isInteger(year) || Number.isNaN(month) || Number.isNaN(day)) {
+        return null;
+    }
+    const timestamp = new Date(year, month, day).getTime();
+    return Number.isNaN(timestamp) ? null : timestamp;
+}
 
 export type TimeSeriesDataPoint = {
     date: string;
@@ -37,46 +48,55 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
     organisms,
     isLoading,
 }) => {
-    const chartData = useMemo(() => {
-        const allDates = new Set<string>();
-        for (const organism of organisms) {
-            const data = timeSeriesData[organism.key] ?? [];
-            for (const point of data) {
-                allDates.add(point.date);
+    const { chartData, xBounds } = useMemo(() => {
+        const datasets = organisms
+            .map((organism, index) => {
+                const data = [...(timeSeriesData[organism.key] ?? [])].sort((a, b) => a.date.localeCompare(b.date));
+
+                let cumulative = 0;
+                const points: { x: number; y: number }[] = [];
+                for (const point of data) {
+                    const timestamp = parseDateToLocalTs(point.date);
+                    if (timestamp === null) {
+                        continue;
+                    }
+                    cumulative += point.count;
+                    points.push({ x: timestamp, y: cumulative });
+                }
+
+                return {
+                    label: organism.displayName,
+                    data: points,
+                    borderColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
+                    backgroundColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
+                    borderWidth: 1.5,
+                    // Cumulative counts only change on dates with submissions, so a
+                    // step ('before') line is more faithful than linear interpolation:
+                    // the total stays flat and jumps up exactly on each release date.
+                    stepped: 'before' as const,
+                    fill: false,
+                    // Show a marker on every data point so individual submission dates
+                    // are visible — in particular a group with a single submission
+                    // would otherwise render an invisible zero-length line.
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                };
+            })
+            .filter((ds) => ds.data.length > 0 && ds.data[ds.data.length - 1].y > 0);
+
+        // Determine x-axis bounds. When all submissions share a single date the
+        // time axis would otherwise collapse to zero width, so pad either side.
+        const allTimestamps = datasets.flatMap((ds) => ds.data.map((p) => p.x));
+        let bounds: { min: number; max: number } | undefined;
+        if (allTimestamps.length > 0) {
+            const min = Math.min(...allTimestamps);
+            const max = Math.max(...allTimestamps);
+            if (min === max) {
+                bounds = { min: min - SINGLE_POINT_PADDING_MS, max: max + SINGLE_POINT_PADDING_MS };
             }
         }
-        const sortedDates = Array.from(allDates).sort();
 
-        if (sortedDates.length === 0) {
-            return { labels: [], datasets: [] };
-        }
-
-        const datasets = organisms.map((organism, index) => {
-            const data = timeSeriesData[organism.key] ?? [];
-            const dateToCount = new Map(data.map((d) => [d.date, d.count]));
-
-            let cumulative = 0;
-            const cumulativeData = sortedDates.map((date) => {
-                cumulative += dateToCount.get(date) ?? 0;
-                return cumulative;
-            });
-
-            return {
-                label: organism.displayName,
-                data: cumulativeData,
-                borderColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
-                backgroundColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
-                borderWidth: 1.5,
-                tension: 0.1,
-                fill: false,
-                pointRadius: 0,
-            };
-        });
-
-        return {
-            labels: sortedDates,
-            datasets: datasets.filter((ds) => ds.data[ds.data.length - 1] > 0),
-        };
+        return { chartData: { datasets }, xBounds: bounds };
     }, [timeSeriesData, organisms]);
 
     if (isLoading) {
@@ -108,6 +128,12 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
                     },
                     scales: {
                         x: {
+                            type: 'time',
+                            min: xBounds?.min,
+                            max: xBounds?.max,
+                            time: {
+                                tooltipFormat: 'yyyy-MM-dd',
+                            },
                             title: {
                                 display: true,
                                 text: 'Release date',
