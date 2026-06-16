@@ -126,6 +126,36 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
     }
 
     @Test
+    fun `WHEN calling create seqSet DOI while write is disabled THEN returns forbidden`() {
+        every { crossRefService.isWriteEnabled } returns false
+
+        val seqSetResult = client.createSeqSet()
+            .andExpect(status().isOk)
+            .andReturn()
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+
+        client.createSeqSetDOI(seqSetId)
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("\$.detail", containsString("not write-enabled")))
+    }
+
+    @Test
+    fun `WHEN calling create seqSet DOI while crossref is inactive THEN returns forbidden`() {
+        every { crossRefService.isActive } returns false
+
+        val seqSetResult = client.createSeqSet()
+            .andExpect(status().isOk)
+            .andReturn()
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+
+        client.createSeqSetDOI(seqSetId)
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("\$.detail", containsString("not active")))
+    }
+
+    @Test
     fun `WHEN calling update seqSet THEN returns updated seqSet`() {
         val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
