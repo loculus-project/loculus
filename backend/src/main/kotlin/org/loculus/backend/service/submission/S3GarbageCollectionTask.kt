@@ -33,7 +33,11 @@ class S3GarbageCollectionTask(
      * Deletes S3 objects older than `loculus.s3.gc-grace-period-minutes` that are
      * not referenced in submitted_data or processed_data
      */
-    @Scheduled(initialDelay = 15, fixedDelay = 60 * 24, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(
+        initialDelayString = "\${${BackendSpringProperty.S3_GC_INITIAL_DELAY_MINUTES}}",
+        fixedDelay = 60 * 24,
+        timeUnit = TimeUnit.MINUTES,
+    )
     fun task() {
         // `gracePeriod` must be at least 1 or files produced by preprocessing may be
         // garbage collected before they're attached to sequence entries
