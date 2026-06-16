@@ -318,29 +318,51 @@ type AllowedValuesListProps = {
     options: InputFieldOption[];
 };
 
-const AllowedValuesList: FC<AllowedValuesListProps> = ({ options }) => {
+export const AllowedValuesList: FC<AllowedValuesListProps> = ({ options }) => {
     const [query, setQuery] = useState('');
+    const [copied, setCopied] = useState(false);
     const isClient = useClientFlag();
 
+    const trimmedQuery = query.trim();
+
     const filtered = useMemo(
-        () => (query === '' ? options : options.filter((o) => o.name.toLowerCase().includes(query.toLowerCase()))),
-        [options, query],
+        () =>
+            trimmedQuery === ''
+                ? options
+                : options.filter((o) => o.name.toLowerCase().includes(trimmedQuery.toLowerCase())),
+        [options, trimmedQuery],
     );
+
+    const handleCopy = async () => {
+        await navigator.clipboard.writeText(filtered.map((o) => o.name).join('\n'));
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     return (
         <div className='flex flex-col gap-1'>
             <label htmlFor='allowed-values-search' className='text-sm font-medium text-primary-600'>
                 Search available options
             </label>
-            <input
-                id='allowed-values-search'
-                type='text'
-                placeholder={`Search ${options.length} values…`}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                disabled={!isClient}
-                className='w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100'
-            />
+            <div className='flex gap-2'>
+                <input
+                    id='allowed-values-search'
+                    type='text'
+                    placeholder={`Search ${options.length} values…`}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    disabled={!isClient}
+                    className='flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100'
+                />
+                <Button
+                    onClick={handleCopy}
+                    disabled={!isClient}
+                    title={`Copy ${filtered.length} value${filtered.length === 1 ? '' : 's'} to clipboard`}
+                    className='text-xs px-2 py-1 border border-gray-300 rounded text-gray-600 hover:text-primary-600 hover:border-primary-500'
+                >
+                    {copied ? 'Copied!' : 'Copy'}
+                </Button>
+            </div>
             <ul className='max-h-40 overflow-y-auto border border-gray-200 rounded text-sm'>
                 {filtered.length === 0 ? (
                     <li className='px-2 py-1 text-gray-400 italic'>No matches</li>
@@ -352,7 +374,7 @@ const AllowedValuesList: FC<AllowedValuesListProps> = ({ options }) => {
                     ))
                 )}
             </ul>
-            {query !== '' && (
+            {trimmedQuery !== '' && (
                 <span className='text-xs text-gray-400'>
                     {filtered.length} of {options.length}
                 </span>
