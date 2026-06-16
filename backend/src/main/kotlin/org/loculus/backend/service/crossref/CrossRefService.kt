@@ -35,6 +35,7 @@ data class CrossRefServiceProperties(
     val email: String?,
     val organization: String?,
     val hostUrl: String?,
+    val writeEnabled: Boolean?,
 )
 
 data class DoiEntry(
@@ -54,14 +55,15 @@ data class CrossRefCitedByResult(
 
 @Service
 class CrossRefService(private val properties: CrossRefServiceProperties, private val dateProvider: DateProvider) {
-    val isActive = properties.endpoint != null &&
-        properties.username != null &&
-        properties.password != null &&
-        properties.doiPrefix != null &&
-        properties.databaseName != null &&
-        properties.email != null &&
-        properties.organization != null &&
-        properties.hostUrl != null
+    val isActive = !properties.endpoint.isNullOrBlank() &&
+        !properties.username.isNullOrBlank() &&
+        !properties.password.isNullOrBlank() &&
+        !properties.doiPrefix.isNullOrBlank() &&
+        !properties.databaseName.isNullOrBlank() &&
+        !properties.email.isNullOrBlank() &&
+        !properties.organization.isNullOrBlank() &&
+        !properties.hostUrl.isNullOrBlank()
+    val isWriteEnabled = properties.writeEnabled == true
     val doiPrefix: String? = properties.doiPrefix
     val dateTimeFormatterMM: DateTimeFormatter = DateTimeFormatter.ofPattern("MM")
     val dateTimeFormatterdd: DateTimeFormatter = DateTimeFormatter.ofPattern("dd")
@@ -70,6 +72,12 @@ class CrossRefService(private val properties: CrossRefServiceProperties, private
     private fun checkIsActive() {
         if (!isActive) {
             throw RuntimeException("The CrossRefService is not active as it has not been configured.")
+        }
+    }
+
+    private fun checkIsWriteEnabled() {
+        if (!isWriteEnabled) {
+            throw RuntimeException("The CrossRefService is read-only so this action is not permitted.")
         }
     }
 
@@ -280,6 +288,7 @@ class CrossRefService(private val properties: CrossRefServiceProperties, private
 
     fun postCrossRefXML(XML: String): String {
         checkIsActive()
+        checkIsWriteEnabled()
 
         // This is needed per their API specification
         val formData = mapOf(
