@@ -56,13 +56,9 @@ const InnerEditPage: FC<EditPageProps> = ({
     const [editableSequences, setEditableSequences] = useState(
         EditableSequences.fromInitialData(dataToEdit, submissionDataTypes.maxSequencesPerEntry),
     );
+    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
-    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(() =>
-        isCreatingRevision && extraFilesEnabled && dataToEdit.submittedData.files
-            ? { [dataToEdit.submissionId]: dataToEdit.submittedData.files }
-            : undefined,
-    );
 
     const { mutate: submitRevision, isPending: isRevisionPending } = useSubmitRevision(
         organism,
@@ -170,7 +166,11 @@ const InnerEditPage: FC<EditPageProps> = ({
                         inputMode='form'
                         groupId={dataToEdit.groupId}
                         fileCategories={submissionDataTypes.files?.categories ?? []}
-                        fileMapping={fileMapping}
+                        defaultFileMapping={
+                            dataToEdit.submittedData.files
+                                ? { [dataToEdit.submissionId]: dataToEdit.submittedData.files }
+                                : undefined
+                        }
                         setFileMapping={setFileMapping}
                         onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
                     />

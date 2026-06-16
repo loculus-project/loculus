@@ -87,7 +87,7 @@ type FolderUploadComponentProps = {
     accessToken: string;
     clientConfig: ClientConfig;
     groupId: number;
-    fileMapping: FilesBySubmissionId | undefined;
+    defaultFileMapping?: FilesBySubmissionId;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
     onError: (message: string) => void;
 };
@@ -98,16 +98,16 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     accessToken,
     clientConfig,
     groupId,
-    fileMapping,
+    defaultFileMapping,
     setFileMapping,
     onError,
 }) => {
     const isClient = useClientFlag();
     const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
-        if (fileMapping === undefined) return undefined;
+        if (defaultFileMapping === undefined) return undefined;
         const previousUploadFiles: Record<SubmissionId, PreviousUpload[]> = {};
 
-        Object.entries(fileMapping).forEach(([submissionId, categories]) => {
+        Object.entries(defaultFileMapping).forEach(([submissionId, categories]) => {
             const fileCategoryFiles = categories[fileCategory.name] ?? [];
             previousUploadFiles[submissionId] = fileCategoryFiles.map((file) => ({
                 type: 'previousUpload',
@@ -200,9 +200,16 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     }
                 } else {
                     return produce(currentMapping ?? {}, (draft) => {
-                        draft.dummySubmissionId = {
-                            [fileCategory.name]: [],
-                        };
+                        const submissionIds = Object.keys(draft);
+                        if (submissionIds.length === 0) {
+                            draft.dummySubmissionId = {
+                                [fileCategory.name]: [],
+                            };
+                        } else {
+                            submissionIds.forEach((submissionId) => {
+                                draft[submissionId][fileCategory.name] = [];
+                            });
+                        }
                     });
                 }
             });

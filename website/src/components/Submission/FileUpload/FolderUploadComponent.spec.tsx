@@ -42,7 +42,6 @@ const defaultProps = {
     accessToken: 'test-token',
     clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {} },
     groupId: 1,
-    fileMapping: undefined,
     setFileMapping: mockSetFileMapping,
     onError: mockOnError,
 };
@@ -179,6 +178,60 @@ describe('FolderUploadComponent', () => {
         await waitFor(() => {
             expect(screen.getByText('test.txt')).toBeInTheDocument();
             expect(screen.queryByText('.DS_Store')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('previous uploads', () => {
+        // Note: previous uploads are keyed by the real submission id (not the 'dummySubmissionId'
+        // used for freshly selected form files), so these tests also guard the discard key lookup.
+        const submissionId = 'SUBMISSION_ID_123';
+        const formPropsWithPreviousUploads = {
+            ...defaultProps,
+            inputMode: 'form' as const,
+            defaultFileMapping: {
+                [submissionId]: {
+                    extraFiles: [
+                        { fileId: 'file-1', name: 'previous-a.txt' },
+                        { fileId: 'file-2', name: 'previous-b.txt' },
+                    ],
+                },
+            },
+        };
+
+        it('renders previously uploaded files with a "previous upload" label', () => {
+            render(<FolderUploadComponent {...formPropsWithPreviousUploads} />);
+
+            expect(screen.getByText('previous-a.txt')).toBeInTheDocument();
+            expect(screen.getByText('previous-b.txt')).toBeInTheDocument();
+            expect(screen.getAllByText('(previous upload)')).toHaveLength(2);
+        });
+
+        it('discards an individual previous upload while keeping the others', async () => {
+            render(<FolderUploadComponent {...formPropsWithPreviousUploads} />);
+
+            await userEvent.click(screen.getByTestId('discard_extraFiles_previous-a.txt'));
+
+            await waitFor(() => expect(screen.queryByText('previous-a.txt')).not.toBeInTheDocument());
+            expect(screen.getByText('previous-b.txt')).toBeInTheDocument();
+        });
+
+        it('reverts to the upload prompt after discarding the last previous upload', async () => {
+            const singleFileProps = {
+                ...formPropsWithPreviousUploads,
+                defaultFileMapping: {
+                    [submissionId]: {
+                        extraFiles: [{ fileId: 'file-1', name: 'previous-a.txt' }],
+                    },
+                },
+            };
+            render(<FolderUploadComponent {...singleFileProps} />);
+
+            await userEvent.click(screen.getByTestId('discard_extraFiles_previous-a.txt'));
+
+            await waitFor(() =>
+                expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument(),
+            );
+            expect(screen.queryByText('previous-a.txt')).not.toBeInTheDocument();
         });
     });
 });
