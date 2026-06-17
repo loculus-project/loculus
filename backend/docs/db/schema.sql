@@ -667,8 +667,8 @@ ALTER TABLE public.sequence_upload_aux_table OWNER TO postgres;
 
 CREATE TABLE public.shedlock (
     name character varying(64) NOT NULL,
-    lock_until timestamp without time zone NOT NULL,
-    locked_at timestamp without time zone NOT NULL,
+    lock_until timestamp with time zone NOT NULL,
+    locked_at timestamp with time zone NOT NULL,
     locked_by character varying(255) NOT NULL
 );
 
