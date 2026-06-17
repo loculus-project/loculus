@@ -1194,6 +1194,7 @@
     "host": {
       "groups": ["general"],
       "type": "string",
+      "default": "loculus.example.org",
       "description": "Hostname where Loculus will be accessible"
     },
     "bannerMessage": {
