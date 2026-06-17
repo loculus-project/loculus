@@ -42,7 +42,7 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
         return (
             <a
                 ref={ref as Ref<HTMLAnchorElement>}
-                className={resolveClassName({ variant, size, circle, className: className })}
+                className={resolveClassName({ variant, size, circle, className })}
                 {...rest}
             />
         );
