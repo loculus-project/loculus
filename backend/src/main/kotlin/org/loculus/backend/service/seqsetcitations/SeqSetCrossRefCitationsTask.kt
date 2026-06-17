@@ -38,6 +38,8 @@ internal fun mergeCitationSources(citationSources: List<SeqSetCitationSource>): 
 class SeqSetCrossRefCitationsTask(
     private val crossRefService: CrossRefService,
     private val seqSetCitationsDatabaseService: SeqSetCitationsDatabaseService,
+    private val taskLockService: TaskLockService,
+    @Value("\${${BackendSpringProperty.SEQSET_CITATIONS_RUN_EVERY_MINUTES}}") private val runEveryMinutes: Long,
 ) {
     /**
      * Runs every six hours, with an initial delay of one minute.
@@ -58,6 +60,13 @@ class SeqSetCrossRefCitationsTask(
         timeUnit = TimeUnit.MINUTES,
     )
     fun task() {
+        if (!taskLockService.acquireLock(
+                "seq-set-cross-ref-citations",
+                TimeUnit.MINUTES.toSeconds(runEveryMinutes),
+            )
+        ) {
+            return
+        }
         log.info { "Updating SeqSet CrossRef citations..." }
         if (!crossRefService.isActive) {
             log.info { "CrossRef service is not active, skipping SeqSet citation update." }

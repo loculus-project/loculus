@@ -14,6 +14,7 @@ import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.CitationContributor
 import org.loculus.backend.api.CitationSource
 import org.loculus.backend.api.SeqSetCitationSource
+import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
@@ -30,7 +31,9 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@EndpointTest
+@EndpointTest(
+    properties = ["${BackendSpringProperty.SEQSET_CITATIONS_RUN_EVERY_MINUTES}=1"],
+)
 class CitationEndpointsTest(
     @Autowired private val client: SeqSetCitationsControllerClient,
     @Autowired private val seqSetCrossRefCitationsTask: SeqSetCrossRefCitationsTask,

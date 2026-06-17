@@ -19,6 +19,7 @@ const val CLEAN_UP_AUX_TABLE_TASK_NAME = "clean-up-aux-table"
 @Component
 class CleanUpAuxTableTask(
     private val uploadDatabaseService: UploadDatabaseService,
+    private val taskLockService: TaskLockService,
     private val dateProvider: DateProvider,
     private val auditLogger: AuditLogger,
 ) {
@@ -38,6 +39,7 @@ class CleanUpAuxTableTask(
         timeUnit = TimeUnit.HOURS,
     )
     fun task() {
+        if (!taskLockService.acquireLock("clean-up-aux-table", TimeUnit.HOURS.toSeconds(1))) return
         val hourCutoff = 24L
         val now = dateProvider.getCurrentInstant()
         val thresholdInstant = now.minus(
