@@ -48,6 +48,11 @@ dependencies {
     implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14"
     implementation "org.flywaydb:flyway-database-postgresql" // Version managed by Spring Boot to ensure compatibility
+
+    // ShedLock ensures scheduled tasks run on only one backend replica at a time (distributed lock held in Postgres)
+    implementation "net.javacrumbs.shedlock:shedlock-spring:7.7.0"
+    implementation "net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.7.0"
+
     implementation platform("org.jetbrains.exposed:exposed-bom:0.61.0")
     implementation "org.jetbrains.exposed:exposed-spring-boot-starter"
     implementation "org.jetbrains.exposed:exposed-jdbc"

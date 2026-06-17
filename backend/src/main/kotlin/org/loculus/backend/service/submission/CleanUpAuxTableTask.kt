@@ -3,6 +3,7 @@ package org.loculus.backend.service.maintenance
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
@@ -22,6 +23,7 @@ class CleanUpAuxTableTask(
      * Runs every hour and deletes auxTable entries older than 24 hours.
      */
     @Scheduled(fixedDelay = 1, timeUnit = java.util.concurrent.TimeUnit.HOURS)
+    @SchedulerLock(name = "cleanUpAuxTable", lockAtMostFor = "PT15M")
     fun task() {
         val hourCutoff = 24L
         val now = dateProvider.getCurrentInstant()

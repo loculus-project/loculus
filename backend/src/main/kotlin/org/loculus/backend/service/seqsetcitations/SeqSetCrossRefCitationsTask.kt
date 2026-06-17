@@ -1,5 +1,6 @@
 package org.loculus.backend.service.seqsetcitations
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.loculus.backend.api.SeqSetCitationSource
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
@@ -48,6 +49,7 @@ class SeqSetCrossRefCitationsTask(
         fixedDelay = 360,
         timeUnit = java.util.concurrent.TimeUnit.MINUTES,
     )
+    @SchedulerLock(name = "seqSetCrossRefCitations", lockAtMostFor = "PT1H")
     fun task() {
         log.info { "Updating SeqSet CrossRef citations..." }
 

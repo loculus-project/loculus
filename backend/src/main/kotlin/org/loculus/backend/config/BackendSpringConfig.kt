@@ -6,6 +6,9 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.models.headers.Header
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
+import net.javacrumbs.shedlock.core.LockProvider
+import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
 import org.jetbrains.exposed.sql.Database
@@ -26,6 +29,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.CommonsRequestLoggingFilter
@@ -58,12 +62,28 @@ private val logger = mu.KotlinLogging.logger {}
 
 @Configuration
 @EnableScheduling
+// Ensures scheduled tasks run on only one replica at a time. `defaultLockAtMostFor` is a safety
+// net: if a replica dies while holding a lock, the lock is released after this duration so another
+// replica can take over. Individual tasks override it via `@SchedulerLock(lockAtMostForString = ...)`.
+@EnableSchedulerLock(defaultLockAtMostFor = "PT30M")
 @ImportAutoConfiguration(
     value = [ExposedAutoConfiguration::class],
     exclude = [DataSourceTransactionManagerAutoConfiguration::class],
 )
 @ConfigurationPropertiesScan("org.loculus.backend")
 class BackendSpringConfig {
+
+    /**
+     * Backs ShedLock with the existing Postgres datasource. `usingDbTime()` makes ShedLock use the
+     * database clock for lock timing, which avoids problems caused by clock drift between replicas.
+     */
+    @Bean
+    fun lockProvider(dataSource: DataSource): LockProvider = JdbcTemplateLockProvider(
+        JdbcTemplateLockProvider.Configuration.builder()
+            .withJdbcTemplate(JdbcTemplate(dataSource))
+            .usingDbTime()
+            .build(),
+    )
 
     @Bean
     fun logFilter(): CommonsRequestLoggingFilter {

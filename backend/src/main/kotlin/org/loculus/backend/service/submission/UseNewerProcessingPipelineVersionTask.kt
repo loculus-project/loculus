@@ -1,5 +1,6 @@
 package org.loculus.backend.service.submission
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.loculus.backend.config.BackendSpringProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -18,6 +19,7 @@ class UseNewerProcessingPipelineVersionTask(private val submissionDatabaseServic
         fixedDelayString = "\${${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}}",
         timeUnit = TimeUnit.SECONDS,
     )
+    @SchedulerLock(name = "useNewerProcessingPipelineVersion", lockAtMostFor = "PT10M")
     fun task() {
         log.info { "Checking for newer preprocessing pipeline versions" }
         val newVersions = submissionDatabaseService.useNewerProcessingPipelineIfPossible()

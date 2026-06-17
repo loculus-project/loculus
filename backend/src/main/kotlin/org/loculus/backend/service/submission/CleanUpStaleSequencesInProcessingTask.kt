@@ -1,5 +1,6 @@
 package org.loculus.backend.service.submission
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.loculus.backend.config.BackendSpringProperty
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
@@ -14,6 +15,7 @@ class CleanUpStaleSequencesInProcessingTask(
     @Value("\${${BackendSpringProperty.STALE_AFTER_SECONDS}}") private val timeToStaleInSeconds: Long,
 ) {
     @Scheduled(fixedRateString = "\${${BackendSpringProperty.CLEAN_UP_RUN_EVERY_SECONDS}}", timeUnit = TimeUnit.SECONDS)
+    @SchedulerLock(name = "cleanUpStaleSequencesInProcessing", lockAtMostFor = "PT5M")
     fun task() {
         log.info { "Cleaning up stale sequences in processing, timeToStaleInSeconds: $timeToStaleInSeconds" }
         submissionDatabaseService.cleanUpStaleSequencesInProcessing(timeToStaleInSeconds)
