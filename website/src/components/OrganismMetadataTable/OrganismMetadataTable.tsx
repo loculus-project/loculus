@@ -345,25 +345,15 @@ export const AllowedValuesList: FC<AllowedValuesListProps> = ({ options, fieldNa
             <label htmlFor={`allowed-values-search-${fieldName}`} className='text-sm font-medium text-primary-600'>
                 Search available options
             </label>
-            <div className='flex gap-2'>
-                <input
-                    id={`allowed-values-search-${fieldName}`}
-                    type='text'
-                    placeholder={`Search ${options.length} values…`}
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    disabled={!isClient}
-                    className='flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100'
-                />
-                <Button
-                    onClick={() => void handleCopy()}
-                    disabled={!isClient}
-                    title={`Copy ${filtered.length} value${filtered.length === 1 ? '' : 's'} to clipboard`}
-                    className='text-xs px-2 py-1 border border-gray-300 rounded text-gray-600 hover:text-primary-600 hover:border-primary-500 whitespace-nowrap'
-                >
-                    {copied ? 'Copied!' : 'Copy'}
-                </Button>
-            </div>
+            <input
+                id={`allowed-values-search-${fieldName}`}
+                type='text'
+                placeholder={`Search ${options.length} values…`}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                disabled={!isClient}
+                className='border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100'
+            />
             <ul className='max-h-40 overflow-y-auto border border-gray-200 rounded text-sm'>
                 {filtered.length === 0 ? (
                     <li className='px-2 py-1 text-gray-400 italic'>No matches</li>
@@ -375,11 +365,21 @@ export const AllowedValuesList: FC<AllowedValuesListProps> = ({ options, fieldNa
                     ))
                 )}
             </ul>
-            {trimmedQuery !== '' && (
-                <span className='text-xs text-gray-400'>
-                    {filtered.length} of {options.length}
-                </span>
-            )}
+            <div className='flex items-center gap-2'>
+                {trimmedQuery !== '' && (
+                    <span className='text-xs text-gray-400'>
+                        {filtered.length} of {options.length}
+                    </span>
+                )}
+                <Button
+                    onClick={() => void handleCopy()}
+                    disabled={!isClient}
+                    title={`Copy ${filtered.length} value${filtered.length === 1 ? '' : 's'} to clipboard`}
+                    className='text-xs px-2 py-1 border border-gray-300 rounded text-gray-600 hover:text-primary-600 hover:border-primary-500 whitespace-nowrap'
+                >
+                    {copied ? 'Copied!' : 'Copy'}
+                </Button>
+            </div>
         </div>
     );
 };
