@@ -26,7 +26,7 @@ class S3GarbageCollectionTask(
     private val dateProvider: DateProvider,
     private val auditLogger: AuditLogger,
     @Value("\${${BackendSpringProperty.S3_ORPHAN_RETENTION_PERIOD_MINUTES}}") private val orphanRetentionPeriod: Int,
-    @Value("\${${BackendSpringProperty.S3_GC_ENABLED}:true}") private val dryRun: Boolean = true,
+    @Value("\${${BackendSpringProperty.S3_GC_ENABLED}:false}") private val enabled: Boolean = false,
 ) {
 
     /**
@@ -48,7 +48,7 @@ class S3GarbageCollectionTask(
         // before they're attached to sequence entries
         log.info {
             "Running S3 garbage collection task to clean up orphan files at least $orphanRetentionPeriod " +
-                "minutes old (dry run = $dryRun)"
+                "minutes old (enabled = $enabled)"
         }
 
         val threshold = dateProvider.getCurrentInstant()
@@ -57,7 +57,7 @@ class S3GarbageCollectionTask(
 
         // Phase 2: delete files that were marked in a previous run and are still unreferenced
         val markedOrphans = filesDatabaseService.getMarkedOrphanedFileIds()
-        if (dryRun) {
+        if (enabled) {
             log.info {
                 "S3 garbage collection task would have deleted ${markedOrphans.size} marked orphan(s): $markedOrphans"
             }
@@ -67,7 +67,7 @@ class S3GarbageCollectionTask(
 
         // Phase 1: mark newly discovered orphans so they are rejected from submissions until the next run
         val newOrphans = filesDatabaseService.getOrphanedFileIds(threshold)
-        if (dryRun) {
+        if (enabled) {
             log.info {
                 "S3 garbage collection task would have marked ${newOrphans.size} new orphan(s) for deletion: $newOrphans"
             }

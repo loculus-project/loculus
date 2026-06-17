@@ -133,7 +133,7 @@ class S3GarbageCollectionTaskTest(
         dateProvider,
         auditLogger,
         orphanRetentionPeriod = 1,
-        dryRun = false,
+        enabled = true,
     )
 
     private fun insertSequenceEntry(accession: String, version: Long, fileId: UUID) = transaction {
