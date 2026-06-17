@@ -148,6 +148,11 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
                                 text: 'Cumulative submissions',
                             },
                             beginAtZero: true,
+                            // Cumulative submission counts are whole numbers, so
+                            // never label the y-axis with fractional values.
+                            ticks: {
+                                precision: 0,
+                            },
                         },
                     },
                 }}
