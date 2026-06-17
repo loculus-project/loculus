@@ -85,6 +85,16 @@ jobs:
             --for-e2e \
             --enablePreprocessing \
             --use-localhost-ip
+      - name: Map ingress hosts to localhost
+        # Firefox ignores Chromium's --host-resolver-rules launch flag, so the
+        # *.loculus.test ingress hosts (Authelia, registration-service, backend,
+        # LAPIS, ...) must resolve via /etc/hosts for the firefox e2e matrix.
+        run: |
+          hosts=$(kubectl get ingress -A \
+            -o jsonpath='{range .items[*].spec.rules[*]}{.host}{"\n"}{end}' \
+            | sed 's/:.*//' | sort -u | tr '\n' ' ')
+          echo "Mapping to 127.0.0.1: $hosts"
+          echo "127.0.0.1 $hosts" | sudo tee -a /etc/hosts
       - uses: actions/setup-node@v6
         with:
           node-version-file: ./integration-tests/.nvmrc
