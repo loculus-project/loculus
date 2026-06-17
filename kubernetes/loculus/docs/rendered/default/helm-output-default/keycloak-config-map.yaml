@@ -1,0 +1,248 @@
+# Source: loculus/templates/keycloak-config-map.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-config
+data:
+  keycloak-config.json: |
+      {
+        "realm": "loculus",
+        "enabled": true,
+        "verifyEmail": false,
+        "resetPasswordAllowed": true,
+        "registrationAllowed": true,
+        "accessTokenLifespan": 36000,
+        "ssoSessionIdleTimeout": 36000,
+        "actionTokenGeneratedByUserLifespan": 1800,
+        "users": [
+          {
+            "username": "insdc_ingest_user",
+            "enabled": true,
+            "email": "insdc_ingest_user@void.o",
+            "emailVerified": true,
+            "firstName": "INSDC Ingest",
+            "lastName": "User",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[insdcIngestUserPassword]]"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "preprocessing_pipeline",
+            "enabled": true,
+            "email": "preprocessing_pipeline@void.o",
+            "emailVerified": true,
+            "firstName": "Dummy",
+            "lastName": "Preprocessing",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[preprocessingPipelinePassword]]"
+              }
+            ],
+            "realmRoles": [
+              "preprocessing_pipeline",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "external_metadata_updater",
+            "enabled": true,
+            "email": "external_metadata_updater@void.o",
+            "emailVerified": true,
+            "firstName": "Dummy",
+            "lastName": "INSDC",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[externalMetadataUpdaterPassword]]"
+              }
+            ],
+            "realmRoles": [
+              "external_metadata_updater",
+              "get_released_data",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "backend",
+            "enabled": true,
+            "email": "nothing@void.o",
+            "emailVerified": true,
+            "firstName": "Backend",
+            "lastName": "Technical-User",
+            "attributes": {
+              "university": "University of Test"
+            },
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[backendUserPassword]]"
+              }
+            ],
+            "clientRoles": {
+              "realm-management": [
+                "view-users"
+              ],
+              "account": [
+                "manage-account"
+              ]
+            }
+          }
+        ],
+        "roles": {
+          "realm": [
+            {
+              "name": "user",
+              "description": "User privileges"
+            },
+            {
+              "name": "admin",
+              "description": "Administrator privileges"
+            },
+            {
+              "name": "preprocessing_pipeline",
+              "description": "Preprocessing pipeline privileges"
+            },
+            {
+              "name": "external_metadata_updater",
+              "description": "External Submitter privileges"
+            },
+            {
+              "name": "get_released_data",
+              "description": "Privileges for getting released data"
+            },
+            {
+              "name": "super_user",
+              "description": "Privileges for curators to modify sequence entries of any user"
+            }
+          ]
+        },
+        "clients": [
+          {
+            "clientId": "backend-client",
+            "enabled": true,
+            "publicClient": true,
+            "directAccessGrantsEnabled": true,
+            "redirectUris": [
+              "https:///*",
+              "http:///*",
+              "http://localhost:3000/*"
+            ]
+          },
+          {
+            "clientId": "account-console2",
+            "name": "${client_account-console}",
+            "description": "",
+            "rootUrl": "${authBaseUrl}",
+            "adminUrl": "",
+            "baseUrl": "/realms/loculus/account/",
+            "surrogateAuthRequired": false,
+            "enabled": true,
+            "alwaysDisplayInConsole": false,
+            "clientAuthenticatorType": "client-secret",
+            "redirectUris": [
+              "/realms/loculus/account/*"
+            ],
+            "webOrigins": [
+              "+"
+            ],
+            "notBefore": 0,
+            "bearerOnly": false,
+            "consentRequired": false,
+            "standardFlowEnabled": true,
+            "implicitFlowEnabled": false,
+            "directAccessGrantsEnabled": false,
+            "serviceAccountsEnabled": false,
+            "publicClient": true,
+            "frontchannelLogout": false,
+            "protocol": "openid-connect",
+            "attributes": {
+              "oidc.ciba.grant.enabled": "false",
+              "backchannel.logout.session.required": "true",
+              "post.logout.redirect.uris": "+",
+              "oauth2.device.authorization.grant.enabled": "false",
+              "display.on.consent.screen": "false",
+              "pkce.code.challenge.method": "S256",
+              "backchannel.logout.revoke.offline.tokens": "false"
+            },
+            "authenticationFlowBindingOverrides": {},
+            "fullScopeAllowed": false,
+            "nodeReRegistrationTimeout": 0,
+            "protocolMappers": [
+              {
+                "name": "audience resolve",
+                "protocol": "openid-connect",
+                "protocolMapper": "oidc-audience-resolve-mapper",
+                "consentRequired": false,
+                "config": {}
+              }
+            ],
+            "defaultClientScopes": [
+              "web-origins",
+              "acr",
+              "profile",
+              "roles",
+              "email"
+            ],
+            "optionalClientScopes": [
+              "address",
+              "phone",
+              "offline_access",
+              "microprofile-jwt"
+            ]
+          }
+        ],
+        "attributes": {
+          "frontendUrl": "https://authentication-%!s(<nil>)",
+          "userProfileEnabled": "true"
+        },
+        "components": {
+          "org.keycloak.userprofile.UserProfileProvider": [
+            {
+              "providerId": "declarative-user-profile",
+              "subComponents": {},
+              "config": {
+                "kc.user.profile.config": [
+                  "{\"attributes\":[{\"name\":\"username\",\"displayName\":\"${username}\",\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{},\"up-username-not-idn-homograph\":{}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"email\",\"displayName\":\"${email}\",\"validations\":{\"email\":{},\"length\":{\"max\":255}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"firstName\",\"displayName\":\"${firstName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"lastName\",\"displayName\":\"${lastName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"university\",\"displayName\":\"University / Organisation\",\"validations\":{},\"annotations\":{},\"required\":{\"roles\":[\"admin\",\"user\"]},\"permissions\":{\"view\":[],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"orcid\",\"displayName\":\"\",\"permissions\":{\"edit\":[\"admin\"],\"view\":[\"admin\",\"user\"]},\"annotations\":{},\"validations\":{}}],\"groups\":[]}"
+                ]
+              }
+            }
+          ]
+        },
+        "loginTheme": "loculus",
+        "emailTheme": "loculus",
+        "identityProviders": [],
+        "identityProviderMappers": []
+      }
+---

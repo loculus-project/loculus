@@ -57,8 +57,17 @@
 
 {{- define "loculus.configVolume" -}}
 - name: {{ .name }}
+{{- if .configmaps }}
+  projected:
+    sources:
+      {{- range .configmaps }}
+      - configMap:
+          name: {{ . }}
+      {{- end }}
+{{- else }}
   configMap:
     name: {{ if .configmap }}{{ .configmap }}{{ else }}{{ .name }}{{ end }}
+{{- end }}
 - name: {{ .name }}-processed
   emptyDir: {}
 {{- end }}
