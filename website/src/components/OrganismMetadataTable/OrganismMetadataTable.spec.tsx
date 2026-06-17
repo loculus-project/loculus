@@ -18,28 +18,28 @@ describe('AllowedValuesList', () => {
     });
 
     it('shows all options when query is empty', () => {
-        render(<AllowedValuesList options={options} />);
+        render(<AllowedValuesList options={options} fieldName='country' />);
         expect(screen.getByText('Germany')).toBeInTheDocument();
         expect(screen.getByText('France')).toBeInTheDocument();
         expect(screen.getByText('United States')).toBeInTheDocument();
     });
 
     it('filters options by query', async () => {
-        render(<AllowedValuesList options={options} />);
+        render(<AllowedValuesList options={options} fieldName='country' />);
         await userEvent.type(screen.getByRole('textbox'), 'ger');
         expect(screen.getByText('Germany')).toBeInTheDocument();
         expect(screen.queryByText('France')).not.toBeInTheDocument();
     });
 
     it('trims leading and trailing whitespace from query', async () => {
-        render(<AllowedValuesList options={options} />);
+        render(<AllowedValuesList options={options} fieldName='country' />);
         await userEvent.type(screen.getByRole('textbox'), '  Germany  ');
         expect(screen.getByText('Germany')).toBeInTheDocument();
         expect(screen.queryByText('France')).not.toBeInTheDocument();
     });
 
     it('shows all options when query is only whitespace', async () => {
-        render(<AllowedValuesList options={options} />);
+        render(<AllowedValuesList options={options} fieldName='country' />);
         await userEvent.type(screen.getByRole('textbox'), '   ');
         expect(screen.getByText('Germany')).toBeInTheDocument();
         expect(screen.getByText('France')).toBeInTheDocument();
@@ -47,28 +47,28 @@ describe('AllowedValuesList', () => {
     });
 
     it('copies all options to clipboard when no query is active', async () => {
-        render(<AllowedValuesList options={options} />);
-        await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
+        render(<AllowedValuesList options={options} fieldName='country' />);
+        await userEvent.click(screen.getByRole('button', { name: 'Copy values' }));
         expect(writeText).toHaveBeenCalledWith('Germany\nFrance\nUnited States');
     });
 
     it('copies only the filtered options when a query is active', async () => {
-        render(<AllowedValuesList options={options} />);
+        render(<AllowedValuesList options={options} fieldName='country' />);
         await userEvent.type(screen.getByRole('textbox'), 'ger');
-        await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Copy values' }));
         expect(writeText).toHaveBeenCalledWith('Germany');
     });
 
     it('copies filtered options after trimming whitespace from query', async () => {
-        render(<AllowedValuesList options={options} />);
+        render(<AllowedValuesList options={options} fieldName='country' />);
         await userEvent.type(screen.getByRole('textbox'), '  France  ');
-        await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Copy values' }));
         expect(writeText).toHaveBeenCalledWith('France');
     });
 
     it('shows "Copied!" feedback after clicking copy', async () => {
-        render(<AllowedValuesList options={options} />);
-        await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
+        render(<AllowedValuesList options={options} fieldName='country' />);
+        await userEvent.click(screen.getByRole('button', { name: 'Copy values' }));
         expect(screen.getByRole('button', { name: 'Copied!' })).toBeInTheDocument();
     });
 });
