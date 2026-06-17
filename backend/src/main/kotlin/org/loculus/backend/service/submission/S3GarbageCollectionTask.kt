@@ -26,7 +26,7 @@ class S3GarbageCollectionTask(
     private val dateProvider: DateProvider,
     private val auditLogger: AuditLogger,
     @Value("\${${BackendSpringProperty.S3_ORPHAN_RETENTION_PERIOD_MINUTES}}") private val orphanRetentionPeriod: Int,
-    @Value("\${${BackendSpringProperty.S3_GC_DRY_RUN}:true}") private val dryRun: Boolean = true,
+    @Value("\${${BackendSpringProperty.S3_GC_ENABLED}:true}") private val dryRun: Boolean = true,
 ) {
 
     /**
