@@ -211,9 +211,9 @@ const ButtonBar: FC<ButtonBarProps> = ({
                     id={'approve-tooltip' + sequenceEntryStatus.accession}
                     content={
                         approvable
-                            ? 'Release this sequence entry'
+                            ? 'Approve this sequence entry'
                             : sequenceEntryStatus.processingResult === errorsProcessingResult
-                              ? 'You need to fix the errors before releasing this sequence entry'
+                              ? 'You need to fix the errors before approving this sequence entry'
                               : 'Still awaiting preprocessing'
                     }
                 />
@@ -301,7 +301,7 @@ const Errors: FC<ErrorsProps> = ({ errors, accession, metadataDisplayNames }) =>
                             </p>
                             <CustomTooltip
                                 id={'error-tooltip-' + accession + '-' + uniqueKey}
-                                content='You must fix this error before releasing this sequence entry'
+                                content='You must fix this error before approving this sequence entry'
                             />
                         </div>
                     );

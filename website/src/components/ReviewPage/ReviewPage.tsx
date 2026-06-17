@@ -321,8 +321,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                     className='border rounded-md p-1 bg-primary-600 text-white px-2'
                     onClick={() =>
                         displayConfirmationDialog({
-                            dialogText: 'Are you sure you want to release all valid sequences?',
-                            confirmButtonText: 'Release',
+                            dialogText: 'Are you sure you want to approve all valid sequences?',
+                            confirmButtonText: 'Approve',
                             onConfirmation: () => {
                                 hooks.approveProcessedData({
                                     groupIdsFilter: [group.groupId],
@@ -335,7 +335,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                     }
                 >
                     <WpfPaperPlane className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
-                    Release {validCount} valid sequence
+                    Approve {validCount} valid sequence
                     {validCount > 1 ? 's' : ''}
                 </Button>
             )}
