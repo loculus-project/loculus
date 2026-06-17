@@ -6,15 +6,25 @@ import JwksRsa from 'jwks-rsa';
 import { err, ok, ResultAsync } from 'neverthrow';
 import { type BaseClient, type TokenSet } from 'openid-client';
 
+import { createSessionId, deleteSession, getSessionTokens, putSessionTokens } from './sessionStore.ts';
 import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 import { getAutheliaForwardedHeaders, OidcClientManager } from '../utils/OidcClientManager.ts';
 import { decodeState, getAuthUrl } from '../utils/getAuthUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
+// Opaque browser-session cookie. It holds only a random session id; the actual
+// OIDC tokens live server-side in the session store and never reach the client.
+export const SESSION_COOKIE = 'loculus_session';
+
+// Legacy cookies from the previous JWT-in-cookie scheme. We no longer set these,
+// but we clear them so users carrying them from a prior deploy don't keep stale
+// tokens in their browser.
 export const ACCESS_TOKEN_COOKIE = 'access_token';
 export const OIDC_ACCESS_TOKEN_COOKIE = 'oidc_access_token';
 export const REFRESH_TOKEN_COOKIE = 'refresh_token';
+
+const LEGACY_TOKEN_COOKIES = [ACCESS_TOKEN_COOKIE, OIDC_ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE];
 
 enum TokenVerificationError {
     EXPIRED,
@@ -24,18 +34,18 @@ enum TokenVerificationError {
 
 const logger = getInstanceLogger('LoginMiddleware');
 
-async function getValidTokenAndUserInfoFromCookie(context: APIContext, client: BaseClient) {
-    logger.debug(`Trying to get token and user info from cookie`);
-    const token = await getTokenFromCookie(context, client);
+async function getValidTokenAndUserInfoFromSession(context: APIContext, client: BaseClient) {
+    logger.debug(`Trying to get token and user info from session`);
+    const token = await getTokenFromSession(context, client);
     if (token !== undefined) {
         const userInfo = await getUserInfo(token, client);
 
         if (userInfo.isErr()) {
-            logger.debug(`Cookie token found but could not get user info`);
-            deleteCookie(context);
+            logger.debug(`Session token found but could not get user info`);
+            clearSession(context);
             return undefined;
         }
-        logger.debug(`Token and valid user info found in cookie`);
+        logger.debug(`Token and valid user info found in session`);
         return {
             token,
             userInfo,
@@ -75,7 +85,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         if (enforceLogin) {
             return context.redirect('/503?service=readonly');
         }
-        deleteCookie(context);
+        clearSession(context);
         context.locals.session = { isLoggedIn: false };
         return next();
     }
@@ -83,17 +93,17 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     const client = await OidcClientManager.getClient();
     if (client !== undefined) {
         // Only run this when OIDC client up
-        const cookieResult = await getValidTokenAndUserInfoFromCookie(context, client);
-        token = cookieResult?.token;
-        userInfo = cookieResult?.userInfo;
+        const sessionResult = await getValidTokenAndUserInfoFromSession(context, client);
+        token = sessionResult?.token;
+        userInfo = sessionResult?.userInfo;
         if (token === undefined) {
             const paramResult = await getValidTokenAndUserInfoFromParams(context, client);
             token = paramResult?.token;
             userInfo = paramResult?.userInfo;
 
             if (token !== undefined) {
-                logger.debug(`Token found in params, setting cookie`);
-                const cookieHeaders = setCookie(context, token);
+                logger.debug(`Token found in params, establishing session`);
+                const cookieHeaders = establishSession(context, token);
                 // OIDC roundtrip lands on /auth/callback; the original
                 // destination is encoded in `state`. Fall back to the same
                 // URL with code/state stripped (covers any legacy flow).
@@ -132,8 +142,8 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
             isLoggedIn: false,
         };
         logger.debug(`Error getting user info: ${userInfo.error}`);
-        logger.debug(`Clearing auth cookies.`);
-        deleteCookie(context);
+        logger.debug(`Clearing session.`);
+        clearSession(context);
         return next();
     }
 
@@ -151,24 +161,23 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     return next();
 });
 
-async function getTokenFromCookie(context: APIContext, client: BaseClient) {
-    const accessToken = context.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
-    const oidcAccessToken = context.cookies.get(OIDC_ACCESS_TOKEN_COOKIE)?.value;
-    const refreshToken = context.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
+async function getTokenFromSession(context: APIContext, client: BaseClient) {
+    const sessionId = context.cookies.get(SESSION_COOKIE)?.value;
+    const tokenCookie = getSessionTokens(sessionId);
 
-    if (accessToken === undefined || refreshToken === undefined) {
+    if (tokenCookie === undefined) {
         return undefined;
     }
-    const tokenCookie = {
-        accessToken,
-        oidcAccessToken,
-        refreshToken,
-    };
 
-    const verifiedTokenResult = await verifyToken(accessToken, client);
+    const verifiedTokenResult = await verifyToken(tokenCookie.accessToken, client);
     if (verifiedTokenResult.isErr() && verifiedTokenResult.error.type === TokenVerificationError.EXPIRED) {
         logger.debug(`Token expired, trying to refresh`);
-        return refreshTokenViaOidc(tokenCookie, client);
+        const refreshed = await refreshTokenViaOidc(tokenCookie, client);
+        if (refreshed !== undefined && sessionId !== undefined) {
+            // Persist the rotated tokens server-side; the opaque cookie is unchanged.
+            putSessionTokens(sessionId, refreshed);
+        }
+        return refreshed;
     }
     if (verifiedTokenResult.isErr()) {
         logger.info(`Error verifying token: ${verifiedTokenResult.error.message}`);
@@ -268,7 +277,7 @@ async function getTokenFromParams(context: APIContext, client: BaseClient): Prom
     return undefined;
 }
 
-function getTokenCookieOptions(): SerializeOptions {
+function getSessionCookieOptions(): SerializeOptions {
     const runtimeConfig = getRuntimeConfig();
     return {
         httpOnly: true,
@@ -278,39 +287,50 @@ function getTokenCookieOptions(): SerializeOptions {
     };
 }
 
-function setCookie(context: APIContext, token: TokenCookie): string[] {
-    const cookieOptions = getTokenCookieOptions();
-    logger.debug(`Setting token cookie`);
-    context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, cookieOptions);
-    if (token.oidcAccessToken !== undefined) {
-        context.cookies.set(OIDC_ACCESS_TOKEN_COOKIE, token.oidcAccessToken, cookieOptions);
-    }
-    context.cookies.set(REFRESH_TOKEN_COOKIE, token.refreshToken, cookieOptions);
-    const cookieHeaders = [
-        serialize(ACCESS_TOKEN_COOKIE, token.accessToken, cookieOptions),
-        token.oidcAccessToken === undefined
-            ? undefined
-            : serialize(OIDC_ACCESS_TOKEN_COOKIE, token.oidcAccessToken, cookieOptions),
-        serialize(REFRESH_TOKEN_COOKIE, token.refreshToken, cookieOptions),
-    ];
-    return cookieHeaders.filter((it): it is string => it !== undefined);
+/**
+ * Creates a server-side session for the freshly obtained tokens and returns the
+ * Set-Cookie headers: the opaque session id plus deletions for any legacy
+ * JWT-in-cookie values the browser might still be carrying.
+ */
+function establishSession(context: APIContext, token: TokenCookie): string[] {
+    const sessionId = createSessionId();
+    putSessionTokens(sessionId, token);
+
+    const cookieOptions = getSessionCookieOptions();
+    logger.debug(`Setting session cookie`);
+    context.cookies.set(SESSION_COOKIE, sessionId, cookieOptions);
+
+    return [serialize(SESSION_COOKIE, sessionId, cookieOptions), ...clearLegacyCookieHeaders(context)];
 }
 
-function deleteCookie(context: APIContext): string[] {
-    logger.debug(`Deleting token cookie`);
-    try {
-        context.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/' });
-        context.cookies.delete(OIDC_ACCESS_TOKEN_COOKIE, { path: '/' });
-        context.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/' });
-    } catch {
-        logger.info(`Error deleting cookie`);
-    }
+/**
+ * Drops the server-side session and clears the opaque session cookie (and any
+ * legacy token cookies). Returns the corresponding Set-Cookie headers for
+ * callers that build their own Response.
+ */
+function clearSession(context: APIContext): string[] {
+    logger.debug(`Clearing session`);
+    deleteSession(context.cookies.get(SESSION_COOKIE)?.value);
+
     const deleteOptions: SerializeOptions = { path: '/', maxAge: 0 };
-    return [
-        serialize(ACCESS_TOKEN_COOKIE, '', deleteOptions),
-        serialize(OIDC_ACCESS_TOKEN_COOKIE, '', deleteOptions),
-        serialize(REFRESH_TOKEN_COOKIE, '', deleteOptions),
-    ];
+    try {
+        context.cookies.delete(SESSION_COOKIE, { path: '/' });
+    } catch {
+        logger.info(`Error deleting session cookie`);
+    }
+    return [serialize(SESSION_COOKIE, '', deleteOptions), ...clearLegacyCookieHeaders(context)];
+}
+
+function clearLegacyCookieHeaders(context: APIContext): string[] {
+    const deleteOptions: SerializeOptions = { path: '/', maxAge: 0 };
+    return LEGACY_TOKEN_COOKIES.map((name) => {
+        try {
+            context.cookies.delete(name, { path: '/' });
+        } catch {
+            logger.info(`Error deleting legacy cookie ${name}`);
+        }
+        return serialize(name, '', deleteOptions);
+    });
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Basic_concepts#guard
@@ -332,7 +352,7 @@ const redirectToAuth = async (context: APIContext) => {
     logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
     const authUrl = await getAuthUrl(redirectUrl);
 
-    const cookieHeaders = deleteCookie(context);
+    const cookieHeaders = clearSession(context);
     return createRedirectWithModifiableHeaders(authUrl, cookieHeaders);
 };
 

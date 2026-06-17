@@ -318,10 +318,21 @@ export class CliPage {
                 });
             }
 
-            const cookies = await page.context().cookies(this.baseUrl);
-            const accessToken = cookies.find((cookie) => cookie.name === 'access_token')?.value;
+            // Browser sessions now keep their tokens server-side, so we ask the
+            // website (via the same browser session) for the backend access
+            // token instead of reading it from a cookie. The endpoint is only
+            // enabled in insecure/dev deployments (e2e), which is where this
+            // browser-backed CLI bootstrap runs.
+            const tokenUrl = new URL('/api/cli-bootstrap-token', this.baseUrl);
+            const tokenResponse = await page.request.get(tokenUrl.toString());
+            if (!tokenResponse.ok()) {
+                throw new Error(
+                    `Browser login did not yield a session token: HTTP ${tokenResponse.status()}`,
+                );
+            }
+            const { accessToken } = (await tokenResponse.json()) as { accessToken?: string };
             if (!accessToken) {
-                throw new Error('Browser login did not produce an access_token cookie');
+                throw new Error('Session token endpoint returned no access token');
             }
             const tokenUsername = this.usernameFromToken(accessToken);
             if (tokenUsername !== username) {

@@ -3,7 +3,7 @@ import { expect } from '@playwright/test';
 import { test } from '../../fixtures/auth.fixture';
 import { AuthPage } from '../../pages/auth.page';
 
-const AUTH_COOKIE_NAMES = ['access_token', 'refresh_token'];
+const AUTH_COOKIE_NAMES = ['loculus_session', 'access_token', 'refresh_token'];
 
 test.describe('Logout Flow', () => {
     let authPage: AuthPage;

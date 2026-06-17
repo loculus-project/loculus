@@ -1,9 +1,19 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../middleware/authMiddleware';
+import {
+    ACCESS_TOKEN_COOKIE,
+    OIDC_ACCESS_TOKEN_COOKIE,
+    REFRESH_TOKEN_COOKIE,
+    SESSION_COOKIE,
+} from '../middleware/authMiddleware';
+import { deleteSession } from '../middleware/sessionStore';
 
-Astro.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/' });
-Astro.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/' });
+// Drop the server-side session, then clear the opaque session cookie (and any
+// legacy JWT-in-cookie values a returning user might still carry).
+deleteSession(Astro.cookies.get(SESSION_COOKIE)?.value);
+for (const name of [SESSION_COOKIE, ACCESS_TOKEN_COOKIE, OIDC_ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE]) {
+    Astro.cookies.delete(name, { path: '/' });
+}
 ---
 
 <BaseLayout title='Logout' activeTopNavigationItem='account'>
