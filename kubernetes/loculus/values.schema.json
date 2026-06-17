@@ -1395,7 +1395,7 @@
         "publicHosts": {
           "groups": ["general"],
           "type": "object",
-          "description": "Public URLs advertised by the application for redirects and callbacks. Overrides the default computed URLs. If not set, the URLs fall back to the computed defaults from .Values.host and .Values.subdomainSeparator, or from ingressHosts if those are set.",
+          "description": "Public URLs advertised by the application for redirects and callbacks. Overrides the default computed URLs. If not set, the URLs fall back to the computed defaults from .Values.host and .Values.networking.subdomainSeparator, or from ingressHosts if those are set.",
           "additionalProperties": false,
           "properties": {
             "backendUrl": {
