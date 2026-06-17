@@ -30,11 +30,11 @@ import Note from '~icons/fluent/note-24-filled';
 import QuestionMark from '~icons/fluent/tag-question-mark-24-filled';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
+import FormkitSubmit from '~icons/formkit/submit';
 import EmptyCircle from '~icons/grommet-icons/empty-circle';
 import Files from '~icons/lucide/files';
 import RiDna from '~icons/mdi/dna';
 import TickOutline from '~icons/mdi/tick-outline';
-import FormkitSubmit from '~icons/formkit/submit';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;

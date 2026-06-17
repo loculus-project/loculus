@@ -30,9 +30,9 @@ import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import BiTrash from '~icons/bi/trash';
+import FormkitSubmit from '~icons/formkit/submit';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import LucideFilter from '~icons/lucide/filter';
-import FormkitSubmit from '~icons/formkit/submit';
 
 const menuItemClassName = `group flex rounded-md items-center w-full px-2 py-2 text-sm
 hover:bg-primary-500 bg-primary-600 text-white text-left mb-1`;
