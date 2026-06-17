@@ -39,7 +39,7 @@ class S3GarbageCollectionTask(
      * - Phase 2: delete files that were already marked in a previous run and are still unreferenced
      */
     @Scheduled(
-        initialDelayString = "15",
+        initialDelayString = "\${${BackendSpringProperty.S3_GC_INITIAL_DELAY_MINUTES}:15}",
         fixedDelayString = "\${${BackendSpringProperty.S3_GC_FREQUENCY_MINUTES}:1440}",
         timeUnit = TimeUnit.MINUTES,
     )

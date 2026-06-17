@@ -137,6 +137,8 @@ spec:
             {{- if $.Values.s3.enabled }}
             - name: S3_GC_ENABLED
               value: {{$.Values.s3.gcEnabled | quote }}
+            - name: S3_GC_INITIAL_DELAY_MINUTES
+              value: {{$.Values.s3.gcInitialDelayMinutes | quote }}
             - name: S3_GC_FREQUENCY_MINUTES
               value: {{$.Values.s3.gcFrequencyMinutes | quote }}
             - name: S3_ORPHAN_RETENTION_PERIOD_MINUTES
