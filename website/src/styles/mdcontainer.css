@@ -14,7 +14,6 @@
 .mdContainer {
     @apply text-gray-800;
     line-height: 1.6;
-    text-rendering: optimizeLegibility;
 }
 
 /*
