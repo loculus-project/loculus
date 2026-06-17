@@ -41,6 +41,7 @@ object BackendSpringProperty {
     const val STREAM_BATCH_SIZE = "loculus.stream.batch-size"
     const val DEBUG_MODE = "loculus.debug-mode"
     const val ENABLE_SEQSETS = "loculus.enable-seqsets"
+    const val SEQSET_CITATIONS_RUN_EVERY_MINUTES = "loculus.seqset-citations.run-every-minutes"
 
     const val S3_ENABLED = "loculus.s3.enabled"
     const val S3_BUCKET_ENDPOINT = "loculus.s3.bucket.endpoint"
