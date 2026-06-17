@@ -23,7 +23,7 @@ export class ReviewPage {
     private sequencesDialogCloseButton = () =>
         this.sequencesDialog().getByRole('button', { name: '✕' });
     public sequenceViewerContent = () => this.page.getByTestId('fixed-length-text-viewer');
-    private sequenceTabs = () => this.page.locator('.tab');
+    private sequenceTabs = () => this.page.getByRole('tab');
 
     public readonly approveAllButton = () =>
         this.page.getByRole('button', { name: 'Release', exact: false });

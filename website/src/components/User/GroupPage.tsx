@@ -15,6 +15,8 @@ import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.js';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { Button } from '../common/Button';
+import { DropdownMenu, DropdownMenuItem } from '../common/DropdownMenu';
+import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import DashiconsGroups from '~icons/dashicons/groups';
 import DashiconsPlus from '~icons/dashicons/plus';
@@ -116,7 +118,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     </p>
                     <a
                         href={continueSubmissionCta.href}
-                        className='inline-block mt-3 px-4 py-2 loculusColor text-white rounded'
+                        className='inline-block mt-3 px-4 py-2 loculusColor text-white rounded-sm'
                     >
                         Open submission portal
                     </a>
@@ -125,51 +127,50 @@ const InnerGroupPage: FC<GroupPageProps> = ({
 
             {userHasEditPrivileges ? (
                 <div className='flex items-center'>
-                    <h1 className='flex flex-row gap-4 title flex-grow'>
+                    <h1 className='flex flex-row gap-4 title grow'>
                         <label className='mt-1.5'>
                             <DashiconsGroups />
                         </label>
-                        <div className='dropdown dropdown-hover hidden sm:flex relative'>
-                            <label tabIndex={0} className='py-1 block cursor-pointer title'>
-                                {groupName}
-                                <span className='text-primary'>
-                                    <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4 ' />
-                                </span>
-                            </label>
-                            <ul
-                                tabIndex={0}
-                                className='dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-btn absolute top-full -left-4 min-w-60'
-                            >
-                                {userGroups.map(
-                                    (group) =>
-                                        group.groupId !== prefetchedGroupDetails.group.groupId && (
-                                            <li key={group.groupId}>
-                                                <a href={routes.groupOverviewPage(group.groupId)}>
-                                                    <DashiconsGroups className='w-6 h-6 inline-block mr-2' />
-                                                    {group.groupName}
-                                                </a>
-                                            </li>
-                                        ),
-                                )}
-                                <li>
-                                    <a href={routes.createGroup()}>
-                                        <DashiconsPlus className='w-6 h-6 inline-block mr-2' />
-                                        Create a new group...
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
+                        <DropdownMenu
+                            className='hidden sm:flex'
+                            panelClassName='top-full -left-4 min-w-60'
+                            trigger={
+                                <label tabIndex={0} className='py-1 block cursor-pointer title'>
+                                    {groupName}
+                                    <span className='text-primary'>
+                                        <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4 ' />
+                                    </span>
+                                </label>
+                            }
+                        >
+                            {userGroups.map(
+                                (group) =>
+                                    group.groupId !== prefetchedGroupDetails.group.groupId && (
+                                        <DropdownMenuItem
+                                            key={group.groupId}
+                                            href={routes.groupOverviewPage(group.groupId)}
+                                        >
+                                            <DashiconsGroups className='w-6 h-6 inline-block' />
+                                            {group.groupName}
+                                        </DropdownMenuItem>
+                                    ),
+                            )}
+                            <DropdownMenuItem href={routes.createGroup()}>
+                                <DashiconsPlus className='w-6 h-6 inline-block' />
+                                Create a new group...
+                            </DropdownMenuItem>
+                        </DropdownMenu>
                     </h1>
                     {userIsGroupMember && (
                         <>
                             <a
                                 href={routes.editGroupPage(groupId)}
-                                className='object-right p-2 loculusColor text-white rounded px-4 mr-2'
+                                className='object-right p-2 loculusColor text-white rounded-sm px-4 mr-2'
                             >
                                 Edit group
                             </a>
                             <Button
-                                className='object-right p-2 loculusColor text-white rounded px-4'
+                                className='object-right p-2 loculusColor text-white rounded-sm px-4'
                                 onClick={() => {
                                     const isLastMember = (groupDetails.data?.users?.length ?? 0) <= 1;
                                     const lastMemberWarning =
@@ -191,7 +192,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     )}
                 </div>
             ) : (
-                <h1 className='flex flex-col title flex-grow'>
+                <h1 className='flex flex-col title grow'>
                     <label className='block title'>Group: {groupName}</label>
                 </h1>
             )}
@@ -234,7 +235,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         {organisms.map((organism) => (
                             <TableRow key={organism.key} label={organism.displayName} noWrapChildren>
                                 {sequenceCountsLoading ? (
-                                    <span className='loading loading-spinner loading-xs'></span>
+                                    <Spinner size='xs' />
                                 ) : (
                                     <a
                                         href={`${routes.searchPage(organism.key)}?${GROUP_ID_FIELD}=${groupId}`}
@@ -270,10 +271,10 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 value={newUserName}
                                 onChange={(e) => setNewUserName(e.target.value.trim())}
                                 placeholder='Enter new user name'
-                                className='p-2 border border-gray-300 rounded mr-2'
+                                className='p-2 border border-gray-300 rounded-sm mr-2'
                                 required
                             />
-                            <Button type='submit' className='px-4 py-2 loculusColor text-white rounded'>
+                            <Button type='submit' className='px-4 py-2 loculusColor text-white rounded-sm'>
                                 Add user
                             </Button>
                         </div>
@@ -281,7 +282,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     <div className='flex-1 overflow-y-auto'>
                         <ul>
                             {groupDetails.data?.users?.map((user) => (
-                                <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
+                                <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded-sm'>
                                     <span className='text-lg'>{user.name}</span>
                                     {user.name !== username && (
                                         <Button
@@ -293,7 +294,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                                     },
                                                 });
                                             }}
-                                            className='px-2 py-1 loculusColor text-white rounded'
+                                            className='px-2 py-1 loculusColor text-white rounded-sm'
                                             title='Remove user from group'
                                             aria-label={`Remove User ${user.name}`}
                                         >

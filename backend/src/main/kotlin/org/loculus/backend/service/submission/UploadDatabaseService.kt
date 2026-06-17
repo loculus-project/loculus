@@ -147,7 +147,7 @@ class UploadDatabaseService(
                 SequenceUploadAuxTable.batchInsert(batch) {
                     this[fastaIdColumn] = it.fastaId
                     this[sequenceUploadIdColumn] = uploadId
-                    this[compressedSequenceDataColumn] = compressor.compressOriginalSequence(
+                    this[compressedSequenceDataColumn] = compressor.compressSubmittedSequence(
                         it.sequence,
                         submittedOrganism,
                     )
@@ -208,8 +208,8 @@ class UploadDatabaseService(
                 submitter,
                 group_id,
                 submitted_at,
-                unprocessed_data,
-                original_data
+                submitted_data,
+                archive_of_submitted_data
             )
             SELECT
                 m.accession,

@@ -24,10 +24,10 @@ export const DownloadDialogButton: FC<DownloadDialogButtonProps> = ({ onClick, s
         const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
         const entries = sequenceCount === 1 ? 'entry' : 'entries';
         buttonText = `Download ${formattedCount} selected ${entries}`;
-        buttonWidthClass = 'w-[15rem]'; // this width is fine for up to two digit numbers
+        buttonWidthClass = 'w-60'; // this width is fine for up to two digit numbers
     }
     return (
-        <Button className={buttonWidthClass + ' outlineButton'} onClick={onClick}>
+        <Button variant='outline' className={buttonWidthClass} onClick={onClick}>
             {buttonText}
         </Button>
     );

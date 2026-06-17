@@ -69,7 +69,7 @@ export class EditableSequences {
     static fromInitialData(initialData: SequenceEntryToEdit, maxSequencesPerEntry?: number): EditableSequences {
         const maxNumberRows = maxSequencesPerEntry ?? Infinity;
         const fastaHeaderMap = EditableSequences.invertRecordMulti(initialData.processedData.sequenceNameToFastaId);
-        const existingDataRows = Object.entries(initialData.originalData.unalignedNucleotideSequences).map(
+        const existingDataRows = Object.entries(initialData.submittedData.unalignedNucleotideSequences).map(
             ([key, value]) => {
                 const mapped = (fastaHeaderMap[key] ?? []).join(', ') || '';
                 const label = !mapped

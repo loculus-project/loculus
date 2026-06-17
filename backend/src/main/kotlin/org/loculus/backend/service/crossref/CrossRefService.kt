@@ -2,11 +2,17 @@ package org.loculus.backend.service.crossref
 
 import mu.KotlinLogging
 import org.jsoup.Jsoup
+import org.jsoup.parser.Parser
+import org.loculus.backend.api.CitationContributor
+import org.loculus.backend.api.CitationSource
+import org.loculus.backend.api.SeqSetCitationSource
+import org.loculus.backend.utils.DateProvider
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Service
 import java.io.DataOutputStream
+import java.io.IOException
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import java.net.HttpURLConnection
@@ -29,6 +35,7 @@ data class CrossRefServiceProperties(
     val email: String?,
     val organization: String?,
     val hostUrl: String?,
+    val writeEnabled: Boolean?,
 )
 
 data class DoiEntry(
@@ -39,23 +46,170 @@ data class DoiEntry(
     val doiBatchId: String?,
 )
 
+data class CrossRefValidationError(val reason: String)
+
+data class CrossRefCitedByResult(
+    val sources: List<SeqSetCitationSource>,
+    val validationErrors: List<CrossRefValidationError>,
+)
+
 @Service
-class CrossRefService(final val properties: CrossRefServiceProperties) {
-    val isActive = properties.endpoint != null &&
-        properties.username != null &&
-        properties.password != null &&
-        properties.doiPrefix != null &&
-        properties.databaseName != null &&
-        properties.email != null &&
-        properties.organization != null &&
-        properties.hostUrl != null
-    val dateTimeFormatterMM = DateTimeFormatter.ofPattern("MM")
-    val dateTimeFormatterdd = DateTimeFormatter.ofPattern("dd")
-    val dateTimeFormatteryyyy = DateTimeFormatter.ofPattern("yyyy")
+class CrossRefService(private val properties: CrossRefServiceProperties, private val dateProvider: DateProvider) {
+    val isActive = !properties.endpoint.isNullOrBlank() &&
+        !properties.username.isNullOrBlank() &&
+        !properties.password.isNullOrBlank() &&
+        !properties.doiPrefix.isNullOrBlank() &&
+        !properties.databaseName.isNullOrBlank() &&
+        !properties.email.isNullOrBlank() &&
+        !properties.organization.isNullOrBlank() &&
+        !properties.hostUrl.isNullOrBlank()
+    val isWriteEnabled = properties.writeEnabled == true
+    val doiPrefix: String? = properties.doiPrefix
+    val dateTimeFormatterMM: DateTimeFormatter = DateTimeFormatter.ofPattern("MM")
+    val dateTimeFormatterdd: DateTimeFormatter = DateTimeFormatter.ofPattern("dd")
+    val dateTimeFormatteryyyy: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy")
 
     private fun checkIsActive() {
         if (!isActive) {
             throw RuntimeException("The CrossRefService is not active as it has not been configured.")
+        }
+    }
+
+    private fun checkIsWriteEnabled() {
+        if (!isWriteEnabled) {
+            throw RuntimeException("The CrossRefService is read-only so this action is not permitted.")
+        }
+    }
+
+    fun parseCrossRefCitedByXML(citedByXML: String): CrossRefCitedByResult {
+        val parser = Parser.xmlParser().setTrackErrors(1)
+        val doc = Jsoup.parse(citedByXML, "", parser)
+
+        if (parser.errors.isNotEmpty()) {
+            throw IllegalStateException("Invalid XML: ${parser.errors}")
+        }
+
+        val crossRefResult = doc.children().firstOrNull()
+        if (crossRefResult?.tagName() != "crossref_result") {
+            throw IllegalStateException("Invalid CrossRef root element: ${crossRefResult?.tagName()}")
+        }
+
+        val validationErrors = mutableListOf<CrossRefValidationError>()
+        val sources = crossRefResult.select("forward_link").mapNotNull { forwardLink ->
+            // If any validation error is encountered for a forward link, we skip immediately to the next one
+            val seqSetDOI = forwardLink.attr("doi").takeIf { it.isNotBlank() }
+                ?: run {
+                    validationErrors.add(
+                        CrossRefValidationError(
+                            "CrossRef forward_link missing SeqSet DOI: $forwardLink",
+                        ),
+                    )
+                    return@mapNotNull null
+                }
+
+            val citationElement = forwardLink.children().firstOrNull()
+                ?: run {
+                    validationErrors.add(
+                        CrossRefValidationError(
+                            "CrossRef forward_link has no citation element under SeqSet $seqSetDOI: $forwardLink",
+                        ),
+                    )
+                    return@mapNotNull null
+                }
+
+            val sourceDOI = citationElement.selectFirst("doi")?.text()?.takeIf { it.isNotBlank() }
+                ?: run {
+                    validationErrors.add(
+                        CrossRefValidationError(
+                            "CrossRef citation source missing DOI for SeqSet $seqSetDOI: $citationElement",
+                        ),
+                    )
+                    return@mapNotNull null
+                }
+
+            // The element holding the cited work's title varies by citation type:
+            // - article_title is used by journal_cite
+            // - volume_title is used by book_cite, conf_cite, report_cite and standard_cite
+            // - title is used by database_cite, dissertation_cite and postedcontent_cite
+            // These are mutually exclusive within a given cite element.
+            // See: https://data.crossref.org/reports/help/schema_doc/crossref_query_output2.0/query_output2.0.html
+            val title = citationElement.selectFirst("article_title, volume_title, title")
+                ?.text()?.takeIf { it.isNotBlank() }
+                ?: run {
+                    validationErrors.add(
+                        CrossRefValidationError(
+                            "CrossRef citation source missing title for SeqSet $seqSetDOI: $citationElement",
+                        ),
+                    )
+                    return@mapNotNull null
+                }
+
+            val year = citationElement.selectFirst("year")?.text()?.toIntOrNull()
+                ?: run {
+                    validationErrors.add(
+                        CrossRefValidationError(
+                            "CrossRef citation source missing or non-numeric year for SeqSet $seqSetDOI: $citationElement",
+                        ),
+                    )
+                    return@mapNotNull null
+                }
+
+            val contributors = citationElement.select("contributor").mapNotNull { c ->
+                val givenName = c.selectFirst("given_name")?.text().orEmpty()
+                val surname = c.selectFirst("surname")?.text().orEmpty()
+                if (givenName.isEmpty() && surname.isEmpty()) {
+                    null
+                } else {
+                    CitationContributor(givenName, surname)
+                }
+            }
+
+            SeqSetCitationSource(
+                source = CitationSource(
+                    sourceDOI = sourceDOI,
+                    title = title,
+                    year = year,
+                    contributors = contributors,
+                ),
+                seqSetDOIs = setOf(seqSetDOI),
+            )
+        }
+
+        return CrossRefCitedByResult(sources, validationErrors)
+    }
+
+    fun getCrossRefCitedBy(doiPrefix: String): CrossRefCitedByResult {
+        checkIsActive()
+
+        // End date is the current date at time of request
+        val endDate = dateProvider.getCurrentDate()
+
+        // Retrieves citation matches (forward links) for a DOI prefix using the Crossref Cited-by service
+        // https://www.crossref.org/documentation/cited-by/retrieve-citations/#00270
+        val connection = URI(
+            properties.endpoint +
+                "/servlet/getForwardLinks?usr=${properties.username}&pwd=${properties.password}&doi=$doiPrefix&endDate=$endDate&include_postedcontent=true",
+        ).toURL().openConnection() as HttpURLConnection
+        connection.connectTimeout = 10_000
+        connection.readTimeout = 30_000
+        connection.requestMethod = "GET"
+
+        val response = try {
+            val responseCode = connection.responseCode
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                throw RuntimeException("CrossRef citedBy request returned $responseCode")
+            }
+            connection.inputStream.use { String(it.readAllBytes()) }
+        } catch (e: IOException) {
+            throw RuntimeException("CrossRef citedBy request failed for DOI $doiPrefix", e)
+        } finally {
+            connection.disconnect()
+        }
+
+        return try {
+            parseCrossRefCitedByXML(response)
+        } catch (e: Exception) {
+            throw RuntimeException("Failed to parse CrossRef citedBy response for DOI $doiPrefix", e)
         }
     }
 
@@ -134,6 +288,7 @@ class CrossRefService(final val properties: CrossRefServiceProperties) {
 
     fun postCrossRefXML(XML: String): String {
         checkIsActive()
+        checkIsWriteEnabled()
 
         // This is needed per their API specification
         val formData = mapOf(

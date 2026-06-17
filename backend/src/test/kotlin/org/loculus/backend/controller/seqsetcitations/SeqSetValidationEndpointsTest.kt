@@ -24,12 +24,16 @@ class SeqSetValidationEndpointsTest(
     @Autowired private val submissionConvenienceClient: SubmissionConvenienceClient,
 ) {
 
-    @MockkBean(relaxed = true)
+    @MockkBean
     lateinit var crossRefService: CrossRefService
 
     @BeforeEach
     fun setup() {
-        every { crossRefService.postCrossRefXML(any()) } returns "SUCCESS"
+        every { crossRefService.doiPrefix } returns MOCK_DOI_PREFIX
+        every { crossRefService.isActive } returns true
+        every { crossRefService.isWriteEnabled } returns true
+        every { crossRefService.generateCrossRefXML(any()) } returns "<doi_batch/>"
+        every { crossRefService.postCrossRefXML(any()) } returns "Crossref API response"
     }
 
     @Test
@@ -67,7 +71,7 @@ class SeqSetValidationEndpointsTest(
                 jsonPath(
                     "\$.detail",
                     containsString(
-                        "Invalid version in accession 'ABCD.EF'",
+                        "Invalid version in accession version 'ABCD.EF', expected a number",
                     ),
                 ),
             )

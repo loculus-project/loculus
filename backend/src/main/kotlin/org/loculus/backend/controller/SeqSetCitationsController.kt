@@ -6,6 +6,7 @@ import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
+import org.loculus.backend.api.SeqSetCitation
 import org.loculus.backend.api.SeqSetRecord
 import org.loculus.backend.api.SubmittedSeqSet
 import org.loculus.backend.api.SubmittedSeqSetRecord
@@ -103,10 +104,10 @@ class SeqSetCitationsController(
             submissionDatabaseService.getApprovedUserAccessionVersions(authenticatedUser),
         )
 
-    @Operation(description = "Get count of SeqSet cited by publications")
-    @GetMapping("/get-seqset-cited-by-publication")
-    fun getSeqSetCitedByPublication(@RequestParam seqSetId: String, @RequestParam version: Long): CitedBy =
-        seqSetCitationsService.getSeqSetCitedByPublication(seqSetId, version)
+    @Operation(description = "Get citations for a SeqSet from publications or other sources")
+    @GetMapping("/get-seqset-citations")
+    fun getSeqSetCitations(@RequestParam seqSetId: String, @RequestParam version: Long): List<SeqSetCitation> =
+        seqSetCitationsService.getSeqSetCitations(seqSetId, version)
 
     @Operation(description = "Get an author")
     @GetMapping("/get-author")

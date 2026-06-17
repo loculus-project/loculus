@@ -9,7 +9,7 @@ import { SegmentFilter } from './SegmentFilter.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
-import { LineageField } from './fields/LineageField.tsx';
+import { HierarchicalField } from './fields/HierarchicalField.tsx';
 import { MultiChoiceAutoCompleteField } from './fields/MultiChoiceAutoCompleteField';
 import { MultiFieldSearchField } from './fields/MultiFieldSearchField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
@@ -291,7 +291,7 @@ export const SearchForm = ({
     return (
         <QueryClientProvider client={queryClient}>
             <div className='text-right -mb-10 md:hidden'>
-                <Button onClick={toggleMobileOpen} className='btn btn-xs bg-primary-600 text-white'>
+                <Button onClick={toggleMobileOpen} size='xs' variant='primary'>
                     Modify search query
                 </Button>
             </div>
@@ -469,14 +469,15 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 />
             );
         default:
-            if (field.lineageSearch) {
+            if (field.lineageSearch || field.hierarchicalSearch) {
                 return (
-                    <LineageField
+                    <HierarchicalField
                         field={field}
                         fieldValue={(fieldValues[field.name] ?? '') as string}
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
                         lapisSearchParameters={lapisSearchParameters}
+                        mode={field.lineageSearch ? 'lineage' : 'default'}
                     />
                 );
             }
@@ -563,7 +564,7 @@ const AdvancedOptionsModal = ({
                 ))}
             </div>
             <div className='mt-6 flex justify-end'>
-                <Button type='button' className='btn loculusColor text-white -py-1' onClick={onClose}>
+                <Button type='button' variant='primary' onClick={onClose}>
                     Close
                 </Button>
             </div>

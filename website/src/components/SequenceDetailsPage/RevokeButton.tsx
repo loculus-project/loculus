@@ -2,12 +2,13 @@ import { type FC, useState } from 'react';
 import { confirmAlert } from 'react-confirm-alert';
 import { toast } from 'react-toastify';
 
-import { routes } from '../../routes/routes';
 import { backendClientHooks } from '../../services/serviceHooks';
+import { approveAllDataScope } from '../../types/backend';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
 import { Button } from '../common/Button';
+import { ModalBox } from '../common/ModalBox';
 import { withQueryProvider } from '../common/withQueryProvider';
 
 type RevokeSequenceEntryProps = {
@@ -16,7 +17,10 @@ type RevokeSequenceEntryProps = {
     clientConfig: ClientConfig;
     accessionVersion: string;
     groupId: number;
+    onRevokeSuccess?: () => void;
 };
+
+const REVOCATION_TOAST_ID = 'revocation-toast';
 
 const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
     organism,
@@ -24,35 +28,76 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
     clientConfig,
     accessionVersion,
     groupId,
+    onRevokeSuccess,
 }) => {
     const hooks = backendClientHooks(clientConfig);
-    const useRevokeSequenceEntries = hooks.useRevokeSequences(
+
+    const useApproveProcessedData = hooks.useApproveProcessedData(
         {
             headers: createAuthorizationHeader(accessToken),
             params: { organism },
         },
         {
             onSuccess: () => {
-                document.location = routes.userSequenceReviewPage(organism, groupId);
+                toast.update(REVOCATION_TOAST_ID, {
+                    render: 'Sequence revoked successfully. This may take several minutes to become visible on the website.',
+                    type: 'success',
+                    isLoading: false,
+                    autoClose: 4000,
+                });
+                onRevokeSuccess?.();
             },
-            onError: (error) =>
-                toast.error(getRevokeSequenceEntryErrorMessage(error), {
-                    position: 'top-center',
+            onError: (error) => {
+                toast.update(REVOCATION_TOAST_ID, {
+                    render: getApproveRevocationErrorMessage(error),
+                    type: 'error',
+                    isLoading: false,
                     autoClose: false,
-                }),
+                });
+            },
+        },
+    );
+
+    const useRevokeSequenceEntries = hooks.useRevokeSequences(
+        {
+            headers: createAuthorizationHeader(accessToken),
+            params: { organism },
+        },
+        {
+            onSuccess: (data) => {
+                useApproveProcessedData.mutate({
+                    accessionVersionsFilter: data.map(({ accession, version }) => ({ accession, version })),
+                    groupIdsFilter: [groupId],
+                    scope: approveAllDataScope.value,
+                });
+            },
+            onError: (error) => {
+                toast.update(REVOCATION_TOAST_ID, {
+                    render: getRevokeSequenceEntryErrorMessage(error),
+                    type: 'error',
+                    isLoading: false,
+                    autoClose: false,
+                });
+            },
         },
     );
 
     const handleRevokeSequenceEntry = (inputValue: string) => {
+        toast.loading('Revoking sequence...', {
+            toastId: REVOCATION_TOAST_ID,
+            position: 'top-center',
+        });
         useRevokeSequenceEntries.mutate({ accessions: [accessionVersion], versionComment: inputValue });
     };
 
     return (
         <Button
-            className='btn btn-sm bg-red-400'
+            size='sm'
+            variant='unstyled'
+            className='bg-red-400'
             onClick={() =>
                 displayRevocationDialog({
-                    dialogText: 'Are you sure you want to create a revocation for this sequence?',
+                    dialogText: 'Are you sure you want to revoke this sequence?',
                     onConfirmation: handleRevokeSequenceEntry,
                 })
             }
@@ -70,7 +115,6 @@ interface DisplayRevocationProps {
 export const displayRevocationDialog = ({ dialogText, onConfirmation }: DisplayRevocationProps) => {
     confirmAlert({
         closeOnClickOutside: false,
-
         customUI: ({ onClose }) => (
             <RevocationDialog
                 dialogText={dialogText}
@@ -94,13 +138,13 @@ export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConf
     const [inputValue, setInputValue] = useState('');
 
     return (
-        <div className='modal-box'>
+        <ModalBox>
             <form method='dialog'>
-                <Button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2' onClick={onClose}>
+                <Button size='sm' circle variant='ghost' className='absolute right-2 top-2' onClick={onClose}>
                     ✕
                 </Button>
             </form>
-            <h3 className='font-bold text-lg'>{dialogText}</h3>
+            <h3 className='font-bold text-lg pr-8'>{dialogText}</h3>
             <input
                 type='text'
                 value={inputValue}
@@ -110,13 +154,13 @@ export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConf
             />
             <div className='flex justify-end gap-4 mt-4'>
                 <form method='dialog'>
-                    <Button className='btn loculusColor text-white hover:bg-primary-700' onClick={onClose}>
+                    <Button variant='primary' onClick={onClose}>
                         Cancel
                     </Button>
                 </form>
                 <form method='dialog'>
                     <Button
-                        className='btn loculusColor text-white hover:bg-primary-700'
+                        variant='primary'
                         onClick={(e) => {
                             e.preventDefault();
                             onConfirmation(inputValue);
@@ -126,7 +170,7 @@ export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConf
                     </Button>
                 </form>
             </div>
-        </div>
+        </ModalBox>
     );
 };
 
@@ -134,4 +178,8 @@ export const RevokeButton = withQueryProvider(InnerRevokeButton);
 
 function getRevokeSequenceEntryErrorMessage(error: unknown) {
     return 'Failed to revoke sequence entry: ' + stringifyMaybeAxiosError(error);
+}
+
+function getApproveRevocationErrorMessage(error: unknown) {
+    return 'Failed to approve revocation: ' + stringifyMaybeAxiosError(error);
 }

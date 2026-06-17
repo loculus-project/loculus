@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from typing import Final
 
 import click
+from prepare_metadata import resolve_host_information
 import orjsonl
 import yaml
 
@@ -38,10 +39,15 @@ def sort_authors(authors: str) -> str:
     return "; ".join(sorted([author.strip() for author in authors.split(";")]))
 
 
-def values_with_sorted_authors(values: dict[str, str]) -> dict[str, str]:
+def values_with_sorted_authors_fallback_date(
+    values: dict[str, str], rename: dict[str, str]
+) -> dict[str, str]:
     """Sort authors values and return modified values"""
     values_copy = values.copy()
     values_copy["authors"] = sort_authors(values_copy["authors"])
+    values_copy[rename["ncbiCollectionDate"]] = (
+        values_copy[rename["ncbiCollectionDate"]] or values_copy["ncbiReleaseDate"]
+    )
     return values_copy
 
 
@@ -61,10 +67,13 @@ class Config:
     insdc_segment_specific_fields: list[str]  # Fields that can vary between segments in a group
     nucleotide_sequences: list[str]
     segmented: bool
+    rename: dict[str, str]  # Mapping from old field names to new field names
 
 
 # id is actually NCBI accession
-INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS: Final = {"segment", "id"}
+# ncbiReleaseDate is segment-specific but as it is used as bound for earliestReleaseDate
+# we need ingest to return only one ncbiReleaseDate per group
+INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS: Final = {"segment", "id", "ncbiReleaseDate"}
 
 
 @click.command()
@@ -140,7 +149,7 @@ def main(
     for accession, values in segment_metadata.items():
         # Author order sometimes varies among segments from same isolate
         # Example: JX999734.1 (L) and JX999735.1 (M)
-        modified_values = values_with_sorted_authors(values)
+        modified_values = values_with_sorted_authors_fallback_date(values, config.rename)
         group_key = str(
             tuple((field, value) for field in shared_fields if (value := modified_values[field]))
         )
@@ -243,6 +252,8 @@ def main(
 
         row["id"] = joint_key
         row["fastaIds"] = segments_list_str
+        dates = [segment_metadata[group[s]].get("ncbiReleaseDate") for s in group]
+        row["ncbiReleaseDate"] = min((d for d in dates if d), default=None)
 
         # Hash of all metadata fields should be the same if
         # 1. field is not in keys_to_keep and
@@ -256,6 +267,8 @@ def main(
         row["hash"] = hashlib.md5(
             json.dumps(filtered_record, sort_keys=True).encode(), usedforsecurity=False
         ).hexdigest()
+
+        row = resolve_host_information(row)
 
         orjsonl.append(output_metadata, {"id": joint_key, "metadata": row})
         count += 1

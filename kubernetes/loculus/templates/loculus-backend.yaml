@@ -16,12 +16,13 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: {{ now | quote }}
+        valuesHash: {{ .Values | toJson | sha256sum | quote }}
       labels:
         app: loculus
         component: backend
     spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
+      {{- include "loculus.podScheduling" . | nindent 6 }}
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
       containers:
@@ -57,6 +58,7 @@ spec:
             - "--crossref.email=$(CROSSREF_EMAIL)"
             - "--crossref.organization=$(CROSSREF_ORGANIZATION)"
             - "--crossref.host-url=$(CROSSREF_HOST_URL)"
+            - "--crossref.write-enabled=$(CROSSREF_WRITE_ENABLED)"
             {{- end }}
             - "--loculus.ldap.host={{ .Values.auth.ldap.host }}"
             - "--loculus.ldap.port={{ .Values.auth.ldap.port }}"
@@ -111,6 +113,8 @@ spec:
               value: {{$.Values.seqSets.crossRef.organization | quote }}
             - name: CROSSREF_HOST_URL
               value: {{$.Values.seqSets.crossRef.hostUrl | quote }}
+            - name: CROSSREF_WRITE_ENABLED
+              value: {{$.Values.seqSets.crossRef.writeEnabled | quote }}
            {{- end }}
             - name: LDAP_BIND_PASSWORD
               valueFrom:

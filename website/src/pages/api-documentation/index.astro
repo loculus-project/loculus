@@ -19,7 +19,7 @@ const organismToDisplayName = Object.fromEntries(
 );
 
 const BUTTON_CLASS =
-    'inline-block px-6 py-3 bg-primary-400 text-white font-semibold rounded-lg shadow-md hover:bg-primary-500  mr-2 hover:no-underline';
+    'inline-block px-6 py-3 bg-primary-400 text-white font-semibold rounded-lg shadow-md hover:bg-primary-500 hover:no-underline';
 ---
 
 <BaseLayout title='API documentation'>
@@ -80,7 +80,7 @@ const BUTTON_CLASS =
 
         <div class='mb-10'>
             <h2 class='text-xl font-semibold text-primary-400 mb-4'>LAPIS query engines</h2>
-            <div class='space-y-4'>
+            <div class='flex flex-wrap gap-x-2 gap-y-4'>
                 {
                     Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
                         <a class={BUTTON_CLASS} href={url + '/swagger-ui/index.html'}>

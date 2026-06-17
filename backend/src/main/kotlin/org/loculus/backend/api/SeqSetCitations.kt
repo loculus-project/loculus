@@ -3,7 +3,6 @@ package org.loculus.backend.api
 import io.swagger.v3.oas.annotations.media.Schema
 import org.loculus.backend.utils.Accession
 import java.sql.Timestamp
-import java.util.*
 
 data class SubmittedSeqSetRecord(
     @Schema(
@@ -56,6 +55,47 @@ data class SeqSet(
     )
     val seqSetDOI: String?,
 )
+
+@Schema(description = "Contributor to a citation source.")
+data class CitationContributor(
+    @Schema(example = "Jane")
+    val givenName: String,
+    @Schema(example = "Doe")
+    val surname: String,
+)
+
+enum class CitationOrigin {
+    CROSSREF,
+    CURATED,
+}
+
+@Schema(description = "A publication or other content which cites one or more SeqSets.")
+data class CitationSource(
+    @Schema(
+        description = "The DOI of the citation source.",
+        example = "10.1234/5678",
+    )
+    val sourceDOI: String,
+    @Schema(
+        description = "The title of the citation source.",
+        example = "Publication that references a SeqSet",
+    )
+    val title: String,
+    @Schema(
+        description = "The year the citation source was released.",
+        example = "2026",
+    )
+    val year: Int,
+    @Schema(
+        description = "List of contributors to the citation source.",
+    )
+    val contributors: List<CitationContributor>,
+)
+
+data class SeqSetCitationSource(val source: CitationSource, val seqSetDOIs: Set<String> = emptySet())
+
+@Schema(description = "A citation of a SeqSet.")
+data class SeqSetCitation(val source: CitationSource)
 
 data class ResponseSeqSet(val seqSetId: String, val seqSetVersion: Long)
 

@@ -137,11 +137,11 @@ describe('DownloadDialog', () => {
         await renderDialog();
 
         const downloadButton = screen.getByRole('link', { name: 'Download' });
-        expect(downloadButton).toHaveClass('btn-disabled');
+        expect(downloadButton).toHaveAttribute('aria-disabled', 'true');
         expect(getDownloadHref()).not.toMatch(new RegExp(`^${defaultLapisUrl}`));
 
         await checkAgreement();
-        expect(downloadButton).not.toHaveClass('btn-disabled');
+        expect(downloadButton).not.toHaveAttribute('aria-disabled');
         expect(getDownloadHref()).toMatch(new RegExp(`^${defaultLapisUrl}`));
     });
 
@@ -330,7 +330,7 @@ describe('DownloadDialog', () => {
             await renderDialog({ dataUseTermsEnabled: false });
 
             const downloadButton = screen.getByRole('link', { name: 'Download' });
-            expect(downloadButton).not.toHaveClass('btn-disabled');
+            expect(downloadButton).not.toHaveAttribute('aria-disabled');
         });
 
         test('checkbox not in the document', async () => {

@@ -172,8 +172,8 @@ class PostSiloLineageTest(unittest.TestCase):
         response = self._post([9605, 9606])
 
         lineage = yaml.safe_load(response.text)
-        assert lineage["9605"]["aliases"] == ["Taxon 9605: Homo; humans"]
-        assert lineage["9606"]["aliases"] == ["Taxon 9606: Homo sapiens"]
+        assert lineage["9605"]["aliases"] == ["Homo; humans [Taxon 9605]"]
+        assert lineage["9606"]["aliases"] == ["Homo sapiens [Taxon 9606]"]
 
     def test_empty_tax_ids_returns_empty_lineage(self):
         response = self._post([])

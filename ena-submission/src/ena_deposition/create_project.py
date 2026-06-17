@@ -144,7 +144,7 @@ def update_with_existing_bioproject(
 def sync_state_with_submission_table(db_engine: Engine):
     """
     1. Find all entries in submission_table in state READY_TO_SUBMIT
-    2. If (exists an entry in the project_table for (group_id, organism)):
+    2. If (exists entry/entries in the project_table for (group_id, organism)):
     a.      If (exists "bioproject" in "metadata") filter to that entry
     b.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_PROJECT
     3. Else create corresponding entry in project_table in state READY
@@ -158,20 +158,23 @@ def sync_state_with_submission_table(db_engine: Engine):
     for row in ready_to_submit:
         group_key = {"group_id": row.group_id, "organism": row.organism}
         seq_key = asdict(row.pkey)
-        bioproject = row.seq_metadata.get("bioprojectAccession")
+        submitter_provided_bioproject: str | None = row.seq_metadata.get("bioprojectAccession")
 
-        # Check if there exists an entry in the project table for (group_id, organism)
-        corresponding_project = find_conditions_in_db(
+        # Check if there exist entries in the project table for (group_id, organism)
+        existing_corresponding_projects = find_conditions_in_db(
             db_engine, ProjectTableEntry, conditions=group_key
         )
 
         # Use custom bioprojectAccession if it exists
-        if bioproject:
+        if submitter_provided_bioproject:
             corresponding_project = [
                 project
-                for project in corresponding_project
-                if project.result and project.result.get("bioproject_accession") == bioproject
+                for project in existing_corresponding_projects
+                if project.result
+                and project.result.get("bioproject_accession") == submitter_provided_bioproject
             ]
+        else:
+            corresponding_project = existing_corresponding_projects
 
         if len(corresponding_project) == 1 and corresponding_project[0].status == str(
             Status.SUBMITTED
@@ -207,7 +210,9 @@ def sync_state_with_submission_table(db_engine: Engine):
             ProjectTableEntry(
                 group_id=row.group_id,
                 organism=row.organism,
-                result={"bioproject_accession": bioproject} if bioproject else None,
+                result={"bioproject_accession": submitter_provided_bioproject}
+                if submitter_provided_bioproject
+                else None,
             ),
         )
         if not project_id:
@@ -340,7 +345,7 @@ def project_table_handle_errors(
             entries_with_errors,
             db_engine,
             model_class=ProjectTableEntry,
-            retry_threshold_min=config.retry_threshold_min,
+            config=config,
             last_retry=last_retry_time,
         )
         # TODO: Query ENA to check if project has in fact been created

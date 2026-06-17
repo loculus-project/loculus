@@ -53,17 +53,17 @@ dependencies {
     implementation "org.jetbrains.exposed:exposed-jdbc"
     implementation "org.jetbrains.exposed:exposed-json"
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime"
-    implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.7.1-0.6.x-compat"
+    implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.8.0-0.6.x-compat"
     implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.springframework.boot:spring-boot-starter-data-ldap"
-    implementation("io.minio:minio:9.0.0")
-    implementation("software.amazon.awssdk:s3:2.44.2")
+    implementation("io.minio:minio:9.0.1")
+    implementation("software.amazon.awssdk:s3:2.45.1")
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
 
     implementation 'org.apache.commons:commons-compress'
-    implementation 'com.github.luben:zstd-jni:1.5.7-8'
+    implementation 'com.github.luben:zstd-jni:1.5.7-9'
     implementation 'org.tukaani:xz:1.12'
 
     implementation("org.redundent:kotlin-xml-builder:1.9.3")

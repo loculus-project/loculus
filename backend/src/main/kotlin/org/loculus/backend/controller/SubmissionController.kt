@@ -25,6 +25,7 @@ import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.GetSequenceResponse
+import org.loculus.backend.api.GetSubmittedDataRequest
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.ProcessingResult
@@ -41,6 +42,10 @@ import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
 import org.loculus.backend.log.ORGANISM_MDC_KEY
 import org.loculus.backend.log.REQUEST_ID_MDC_KEY
 import org.loculus.backend.log.RequestIdContext
+import org.loculus.backend.model.ACCESSION_HEADER
+import org.loculus.backend.model.FASTA_IDS_HEADER
+import org.loculus.backend.model.FASTA_IDS_SEPARATOR
+import org.loculus.backend.model.METADATA_ID_HEADER
 import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
@@ -49,7 +54,12 @@ import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidato
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
+import org.loculus.backend.utils.FastaEntry
+import org.loculus.backend.utils.FastaWriter
+import org.loculus.backend.utils.GetSubmittedDataHelpers
 import org.loculus.backend.utils.IteratorStreamer
+import org.loculus.backend.utils.TsvWriter
+import org.loculus.backend.utils.makeUniqueIds
 import org.slf4j.MDC
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -69,10 +79,16 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 private val log = KotlinLogging.logger { }
+private val SUBMITTED_DATA_DOWNLOAD_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
+
+const val MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES = 500
 
 @RestController
 @RequestMapping("/{organism}")
@@ -314,7 +330,8 @@ open class SubmissionController(
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
-            RELEASED_DATA_RELATED_TABLES,
+            tableNames = RELEASED_DATA_RELATED_TABLES,
+            organism = organism,
         )
         if (ifNoneMatch == lastDatabaseWriteETag) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
@@ -410,12 +427,16 @@ open class SubmissionController(
             ),
         ],
     )
-    @GetMapping("/get-unprocessed-metadata", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getUnprocessedMetadata(
+    @GetMapping("/get-submitted-metadata", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getSubmittedMetadata(
         @PathVariable @Valid organism: Organism,
         @Parameter(
             description = "The metadata fields that should be returned. If not provided, all fields are returned.",
         ) @RequestParam(required = false) fields: List<String>?,
+        @Parameter(
+            description = "Filter by accession versions in 'accession.version' format. " +
+                "If not provided, all accession versions are considered.",
+        ) @RequestParam(required = false) accessionVersionsFilter: List<String>?,
         @Parameter(
             description = "Filter by group ids. If not provided, all groups are considered.",
         ) @RequestParam(required = false) groupIdsFilter: List<Int>?,
@@ -431,11 +452,16 @@ open class SubmissionController(
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
         }
 
-        val totalRecords = submissionDatabaseService.countUnprocessedMetadata(
+        val parsedAccessionVersions = accessionVersionsFilter?.takeIf { it.isNotEmpty() }?.map {
+            AccessionVersion.fromString(it)
+        }
+
+        val totalRecords = submissionDatabaseService.countSubmittedMetadata(
             authenticatedUser,
             organism,
             groupIdsFilter?.takeIf { it.isNotEmpty() },
             statusesFilter?.takeIf { it.isNotEmpty() },
+            parsedAccessionVersions,
         )
         headers.add(X_TOTAL_RECORDS, totalRecords.toString())
         // TODO(https://github.com/loculus-project/loculus/issues/2778)
@@ -444,17 +470,127 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression, endpoint = "get-unprocessed-metadata", organism = organism) {
-            submissionDatabaseService.streamUnprocessedMetadata(
+        val streamBody = streamTransactioned(compression, endpoint = "get-submitted-metadata", organism = organism) {
+            submissionDatabaseService.streamSubmittedMetadata(
                 authenticatedUser,
                 organism,
                 groupIdsFilter?.takeIf { it.isNotEmpty() },
                 statusesFilter?.takeIf { it.isNotEmpty() },
                 fields?.takeIf { it.isNotEmpty() },
+                parsedAccessionVersions,
             )
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
+    }
+
+    @Operation(
+        description = "Download submitted data (metadata and sequences) as a zip file, suitable for revisions. " +
+            "It is limited to $MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES entries.",
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @PostMapping(
+        "/get-submitted-data",
+        consumes = [MediaType.APPLICATION_JSON_VALUE],
+        produces = ["application/zip"],
+    )
+    fun getSubmittedData(
+        @PathVariable @Valid organism: Organism,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestBody body: GetSubmittedDataRequest,
+    ): ResponseEntity<StreamingResponseBody> {
+        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(body.groupId, authenticatedUser)
+
+        val entryCount = transaction {
+            submissionDatabaseService.countSubmittedDataDownloadEntries(
+                organism,
+                body.groupId,
+                body.accessionsFilter,
+            )
+        }
+
+        if (entryCount > MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES) {
+            throw UnprocessableEntityException(
+                "Download is limited to $MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES entries. " +
+                    "Requested download would include $entryCount entries. " +
+                    "Please filter fewer sequences.",
+            )
+        }
+
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.parseMediaType("application/zip")
+        headers.set(
+            HttpHeaders.CONTENT_DISPOSITION,
+            "attachment; filename=\"${submittedDataDownloadFilename(organism)}\"",
+        )
+
+        val instanceConfig = backendConfig.getInstanceConfig(organism)
+        val hasConsensusSequences = instanceConfig.schema.submissionDataTypes.consensusSequences
+        val isMultiSegmented = instanceConfig.referenceGenome.nucleotideSequences.size > 1
+
+        val streamBody = StreamingResponseBody { responseBodyStream ->
+            val startTime = System.currentTimeMillis()
+            MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
+            MDC.put(ORGANISM_MDC_KEY, organism.name)
+
+            try {
+                java.util.zip.ZipOutputStream(responseBodyStream).use { zipOut ->
+                    transaction {
+                        val data = submissionDatabaseService.streamSubmittedDataDownload(
+                            organism,
+                            body.groupId,
+                            body.accessionsFilter,
+                        ).toList()
+
+                        // metadataIds: the unique metadata ids in the same order as the original submission ids.
+                        // uniqueFastaIdsByEntry: per entry (in the same order), a map from the original FASTA id to
+                        // the unique FASTA id used in the download.
+                        val metadataIds = makeUniqueIds(data.map { it.submissionId })
+                        val uniqueFastaIdsByEntry =
+                            GetSubmittedDataHelpers.uniqueFastaIdsByEntry(data, isMultiSegmented)
+
+                        zipOut.putNextEntry(java.util.zip.ZipEntry("metadata.tsv"))
+                        GetSubmittedDataHelpers.writeMetadataTsv(
+                            data,
+                            metadataIds,
+                            uniqueFastaIdsByEntry,
+                            zipOut,
+                            isMultiSegmented,
+                        )
+                        zipOut.closeEntry()
+
+                        if (hasConsensusSequences) {
+                            zipOut.putNextEntry(java.util.zip.ZipEntry("sequences.fasta"))
+                            GetSubmittedDataHelpers.writeSequencesFasta(
+                                data,
+                                metadataIds,
+                                uniqueFastaIdsByEntry,
+                                zipOut,
+                                isMultiSegmented,
+                            )
+                            zipOut.closeEntry()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                val duration = System.currentTimeMillis() - startTime
+                log.error(e) { "[get-submitted-data] Error after ${duration}ms: $e" }
+                throw e
+            } finally {
+                MDC.remove(REQUEST_ID_MDC_KEY)
+                MDC.remove(ORGANISM_MDC_KEY)
+            }
+
+            val duration = System.currentTimeMillis() - startTime
+            log.info { "[get-submitted-data] Completed in ${duration}ms" }
+        }
+
+        return ResponseEntity(streamBody, headers, HttpStatus.OK)
+    }
+
+    private fun submittedDataDownloadFilename(organism: Organism): String {
+        val timestamp = OffsetDateTime.now(ZoneOffset.UTC).format(SUBMITTED_DATA_DOWNLOAD_TIMESTAMP_FORMAT)
+        return "${organism.name}_submitted_data_$timestamp.zip"
     }
 
     @Operation(description = APPROVE_PROCESSED_DATA_DESCRIPTION)
