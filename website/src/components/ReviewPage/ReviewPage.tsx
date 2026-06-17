@@ -32,7 +32,7 @@ import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import BiTrash from '~icons/bi/trash';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import LucideFilter from '~icons/lucide/filter';
-import WpfPaperPlane from '~icons/wpf/paper-plane';
+import FormkitSubmit from '~icons/formkit/submit';
 
 const menuItemClassName = `group flex rounded-md items-center w-full px-2 py-2 text-sm
 hover:bg-primary-500 bg-primary-600 text-white text-left mb-1`;
@@ -334,7 +334,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                         })
                     }
                 >
-                    <WpfPaperPlane className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
+                    <FormkitSubmit className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
                     Approve {validCount} valid sequence
                     {validCount > 1 ? 's' : ''}
                 </Button>

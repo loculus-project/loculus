@@ -34,7 +34,7 @@ import EmptyCircle from '~icons/grommet-icons/empty-circle';
 import Files from '~icons/lucide/files';
 import RiDna from '~icons/mdi/dna';
 import TickOutline from '~icons/mdi/tick-outline';
-import WpfPaperPlane from '~icons/wpf/paper-plane';
+import FormkitSubmit from '~icons/formkit/submit';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
@@ -205,7 +205,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                     key={'approve-button-' + sequenceEntryStatus.accession}
                     disabled={!approvable}
                 >
-                    <WpfPaperPlane />
+                    <FormkitSubmit />
                 </Button>
                 <CustomTooltip
                     id={'approve-tooltip' + sequenceEntryStatus.accession}
