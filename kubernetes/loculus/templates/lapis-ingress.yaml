@@ -1,4 +1,5 @@
-{{- $lapisHost := $.Values.networking.ingressHosts.lapis | default (printf "lapis%s%s" .Values.networking.subdomainSeparator .Values.host) }}
+{{- $ingressHosts := $.Values.networking.ingressHosts | default dict }}
+{{- $lapisHost := $ingressHosts.lapis | default (printf "lapis%s%s" .Values.networking.subdomainSeparator (.Values.host | default "")) }}
 {{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (eq (int $.Values.networking.traefikVersion) 3) -}}
 {{- $enabledOrganismsResult := (include "loculus.enabledOrganisms" . | fromJson) }}
 {{- $enabledOrganismsList := $enabledOrganismsResult.organisms }}
