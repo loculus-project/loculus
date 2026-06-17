@@ -316,9 +316,10 @@ const FieldNameCell: FC<{ header: string; field: TypedInputField | Metadata; fie
 
 type AllowedValuesListProps = {
     options: InputFieldOption[];
+    fieldName: string;
 };
 
-export const AllowedValuesList: FC<AllowedValuesListProps> = ({ options }) => {
+export const AllowedValuesList: FC<AllowedValuesListProps> = ({ options, fieldName }) => {
     const [query, setQuery] = useState('');
     const [copied, setCopied] = useState(false);
     const isClient = useClientFlag();
@@ -341,12 +342,12 @@ export const AllowedValuesList: FC<AllowedValuesListProps> = ({ options }) => {
 
     return (
         <div className='flex flex-col gap-1'>
-            <label htmlFor='allowed-values-search' className='text-sm font-medium text-primary-600'>
+            <label htmlFor={`allowed-values-search-${fieldName}`} className='text-sm font-medium text-primary-600'>
                 Search available options
             </label>
             <div className='flex gap-2'>
                 <input
-                    id='allowed-values-search'
+                    id={`allowed-values-search-${fieldName}`}
                     type='text'
                     placeholder={`Search ${options.length} values…`}
                     value={query}
@@ -414,6 +415,7 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                                           <div className='mt-2'>
                                               <AllowedValuesList
                                                   options={field.options}
+                                                  fieldName={field.name}
                                                   aria-label={`Allowed values for ${field.name}`}
                                               />
                                           </div>
