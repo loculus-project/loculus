@@ -174,6 +174,8 @@ pip install -e .
 
 ## Testing
 
+Its good practice to put your ENA credentials into a `.env` file in this folder (our `.gitignore` covers `.env` files).
+
 > [!WARNING]
 > When testing always submit to ENA's test/dev instance. This means for XML post requests (i.e. for project and sample creation), sending them to `https://wwwdev.ebi.ac.uk/ena` and for webin-cli requests (i.e. assembly creation) adding the `-test` flag. This is done automatically when the `submit_to_ena_prod` is set to False (which is the default). Do not change this flag locally unless you know what you are doing.
 > Using our ENA test account does **not** affect which ENA instance you submit to, if you use our test account and submit to ENA production you will have officially submitted samples to ENA.
