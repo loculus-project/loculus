@@ -8,6 +8,7 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Organism
+import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
@@ -20,7 +21,11 @@ import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@EndpointTest
+@EndpointTest(
+    properties = [
+        "${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}=1",
+    ],
+)
 class UseNewerProcessingPipelineVersionTaskTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,
@@ -45,11 +50,13 @@ class UseNewerProcessingPipelineVersionTaskTest(
         useNewerProcessingPipelineVersionTask.task()
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(1L))
 
+        Thread.sleep(1_000) // 1 second
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)
         convenienceClient.submitProcessedData(processedDataWithError, pipelineVersion = 2)
         useNewerProcessingPipelineVersionTask.task()
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(1L))
 
+        Thread.sleep(1_000) // 1 second
         convenienceClient.extractUnprocessedData(pipelineVersion = 3)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 3)
         useNewerProcessingPipelineVersionTask.task()
@@ -144,6 +151,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 1)
         useNewerProcessingPipelineVersionTask.task()
 
+        Thread.sleep(1_000) // 1 second
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
         useNewerProcessingPipelineVersionTask.task()
@@ -154,6 +162,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
             assertThat(getExistingPipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
         }
 
+        Thread.sleep(1_000) // 1 second
         convenienceClient.extractUnprocessedData(pipelineVersion = 3)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 3)
         useNewerProcessingPipelineVersionTask.task()

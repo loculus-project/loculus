@@ -245,7 +245,8 @@ private fun clearDatabaseStatement(): String = """
             seqset_records,
             seqset_to_records,
             audit_log,
-            table_update_tracker
+            table_update_tracker,
+            task_lock
             cascade;
         alter sequence $ACCESSION_SEQUENCE_NAME restart with 1;
         alter sequence groups_table_group_id_seq restart with 1;

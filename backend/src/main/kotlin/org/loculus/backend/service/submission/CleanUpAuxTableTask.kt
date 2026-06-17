@@ -4,16 +4,19 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import org.loculus.backend.log.AuditLogger
+import org.loculus.backend.service.scheduler.TaskLockService
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.util.concurrent.TimeUnit
 
 private val log = mu.KotlinLogging.logger {}
 
 @Component
 class CleanUpAuxTableTask(
     private val uploadDatabaseService: UploadDatabaseService,
+    private val taskLockService: TaskLockService,
     private val dateProvider: DateProvider,
     private val auditLogger: AuditLogger,
 ) {
@@ -23,6 +26,7 @@ class CleanUpAuxTableTask(
      */
     @Scheduled(fixedDelay = 1, timeUnit = java.util.concurrent.TimeUnit.HOURS)
     fun task() {
+        if (!taskLockService.acquireLock("clean-up-aux-table", TimeUnit.HOURS.toSeconds(1))) return
         val hourCutoff = 24L
         val now = dateProvider.getCurrentInstant()
         val thresholdInstant = now.minus(

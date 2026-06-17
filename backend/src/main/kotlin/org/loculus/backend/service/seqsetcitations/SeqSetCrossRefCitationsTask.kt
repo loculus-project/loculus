@@ -4,9 +4,12 @@ import org.loculus.backend.api.SeqSetCitationSource
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
 import org.loculus.backend.service.crossref.CrossRefService
+import org.loculus.backend.service.scheduler.TaskLockService
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.util.concurrent.TimeUnit
 
 private val log = mu.KotlinLogging.logger {}
 
@@ -34,6 +37,8 @@ internal fun mergeCitationSources(citationSources: List<SeqSetCitationSource>): 
 class SeqSetCrossRefCitationsTask(
     private val crossRefService: CrossRefService,
     private val seqSetCitationsDatabaseService: SeqSetCitationsDatabaseService,
+    private val taskLockService: TaskLockService,
+    @Value("\${${BackendSpringProperty.SEQSET_CITATIONS_RUN_EVERY_MINUTES}}") private val runEveryMinutes: Long,
 ) {
     /**
      * Runs every six hours, with an initial delay of one minute.
@@ -45,10 +50,17 @@ class SeqSetCrossRefCitationsTask(
      */
     @Scheduled(
         initialDelay = 1,
-        fixedDelay = 360,
+        fixedRateString = "\${${BackendSpringProperty.SEQSET_CITATIONS_RUN_EVERY_MINUTES}}",
         timeUnit = java.util.concurrent.TimeUnit.MINUTES,
     )
     fun task() {
+        if (!taskLockService.acquireLock(
+                "seq-set-cross-ref-citations",
+                TimeUnit.MINUTES.toSeconds(runEveryMinutes),
+            )
+        ) {
+            return
+        }
         log.info { "Updating SeqSet CrossRef citations..." }
 
         if (!crossRefService.isActive) {
