@@ -8,7 +8,6 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Organism
-import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
@@ -22,11 +21,7 @@ import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@EndpointTest(
-    properties = [
-        "${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}=1",
-    ],
-)
+@EndpointTest
 class UseNewerProcessingPipelineVersionTaskTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,

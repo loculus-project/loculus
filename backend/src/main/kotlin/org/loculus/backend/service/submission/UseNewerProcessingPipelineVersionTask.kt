@@ -11,13 +11,7 @@ private val log = mu.KotlinLogging.logger {}
 const val USE_NEWER_PROCESSING_PIPELINE_VERSION_TASK_NAME = "use-newer-processing-pipeline-version"
 
 @Component
-class UseNewerProcessingPipelineVersionTask(
-    private val submissionDatabaseService: SubmissionDatabaseService,
-    private val taskLockService: TaskLockService,
-    @Value(
-        "\${${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}}",
-    ) private val lockIntervalSeconds: Long,
-) {
+class UseNewerProcessingPipelineVersionTask(private val submissionDatabaseService: SubmissionDatabaseService) {
 
     // Initial delay to avoid hammering the database on backend startup
     @Scheduled(
@@ -32,7 +26,6 @@ class UseNewerProcessingPipelineVersionTask(
         intervalString = "\${${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}}",
     )
     fun task() {
-        if (!taskLockService.acquireLock("use-newer-processing-pipeline-version", lockIntervalSeconds)) return
         log.info { "Checking for newer preprocessing pipeline versions" }
         val newVersions = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
 
