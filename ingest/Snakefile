@@ -50,6 +50,7 @@ DOWNLOADED_GROUPS_JSON = (
 CALCULATED_GROUPS_JSON = (
     "results/calculated_groups.json" if GROUPING_OVERRIDE_URL else "results/groups.json"
 )
+NO_REVISION_HASHES_URL = config.get("no_revision_hashes_url", False)
 
 
 if SEGMENTED:
@@ -519,6 +520,20 @@ if GROUPS_OVERRIDE_JSON:
             """
 
 
+if NO_REVISION_HASHES_URL:
+
+    rule download_no_revision_hashes:
+        """Download the tsv file of hashes that should not trigger a revision"""
+        output:
+            results="results/no_revision_hashes.tsv",
+        params:
+            url=NO_REVISION_HASHES_URL,
+        shell:
+            """
+            curl --fail --silent --show-error --retry 3 -L -o {output.results} {params.url}
+            """
+
+
 rule heuristic_group_segments:
     """Group segments based on heuristic, join with previous groups if available"""
     input:
@@ -646,6 +661,7 @@ rule compare_hashes:
         config="results/config.yaml",
         old_hashes="results/previous_submissions.ndjson",
         metadata=prepped_metadata(),
+        **({"no_revision_hashes": "results/no_revision_hashes.tsv"} if NO_REVISION_HASHES_URL else {}),
     output:
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
@@ -656,11 +672,13 @@ rule compare_hashes:
     params:
         log_level=LOG_LEVEL,
         subsample_fraction=config.get("subsample_fraction", 1.0),
+        no_revision_hashes="--no-revision-hashes results/no_revision_hashes.tsv" if NO_REVISION_HASHES_URL else "",
     shell:
         """
         python {input.script} \
             --config-file {input.config} \
             --old-hashes {input.old_hashes} \
+            {params.no_revision_hashes} \
             --metadata {input.metadata} \
             --to-submit {output.to_submit} \
             --to-revise {output.to_revise} \
