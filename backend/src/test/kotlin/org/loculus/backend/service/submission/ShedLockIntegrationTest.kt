@@ -2,11 +2,13 @@ package org.loculus.backend.service.submission
 
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.greaterThan
 import org.junit.jupiter.api.Test
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.EndpointTest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
+import java.sql.Timestamp
 
 @EndpointTest(
     properties = [
@@ -28,5 +30,33 @@ class ShedLockIntegrationTest(
             "cleanUpStaleSequencesInProcessing",
         )
         assertThat(count, `is`(1))
+    }
+
+    @Test
+    fun `WHEN task completes the lock is released and task can run again`() {
+        cleanUpStaleSequencesInProcessingTask.task()
+
+        val firstLockedAt = jdbcTemplate.queryForObject(
+            "SELECT locked_at FROM shedlock WHERE name = ?",
+            Timestamp::class.java,
+            "cleanUpStaleSequencesInProcessing",
+        )!!
+
+        // Ensure DB clock advances before the second acquisition
+        Thread.sleep(10)
+
+        cleanUpStaleSequencesInProcessingTask.task()
+
+        val secondLockedAt = jdbcTemplate.queryForObject(
+            "SELECT locked_at FROM shedlock WHERE name = ?",
+            Timestamp::class.java,
+            "cleanUpStaleSequencesInProcessing",
+        )!!
+
+        assertThat(
+            "second run should have re-acquired the lock (locked_at should advance)",
+            secondLockedAt,
+            greaterThan(firstLockedAt),
+        )
     }
 }
