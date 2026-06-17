@@ -109,7 +109,8 @@ export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> =
         <div className='relative'>
             <div className='group relative inline-block'>
                 <Button
-                    className={`w-[18rem] outlineButton ${exceedsLimit ? 'opacity-50 cursor-not-allowed hover:bg-white hover:text-primary-600' : ''}`}
+                    variant='outline'
+                    className={`w-[18rem] ${exceedsLimit ? 'opacity-50 cursor-not-allowed hover:bg-white hover:text-primary-600' : ''}`}
                     onClick={() => void handleDownload()}
                     disabled={isDisabled}
                 >
