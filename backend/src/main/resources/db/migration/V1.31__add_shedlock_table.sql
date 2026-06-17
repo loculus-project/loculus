@@ -4,8 +4,8 @@
 -- Schema as required by net.javacrumbs.shedlock:shedlock-provider-jdbc-template.
 CREATE TABLE shedlock (
     name VARCHAR(64) NOT NULL,
-    lock_until TIMESTAMP NOT NULL,
-    locked_at TIMESTAMP NOT NULL,
+    lock_until TIMESTAMP WITH TIME ZONE NOT NULL,
+    locked_at TIMESTAMP WITH TIME ZONE NOT NULL,
     locked_by VARCHAR(255) NOT NULL,
     PRIMARY KEY (name)
 );
