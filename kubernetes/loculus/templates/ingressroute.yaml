@@ -47,7 +47,12 @@ spec:
     permanent: true
 ---
 {{- if eq $.Values.environment "server" }}
-{{- $websiteHost := $.Values.networking.ingressHosts.website | default $.Values.host }}
+{{- $websiteHostOverride := $.Values.networking.ingressHosts.website }}
+{{- $websiteHost := $websiteHostOverride | default $.Values.host }}
+{{- $wwwHost := "" }}
+{{- if and (not $websiteHostOverride) (not (hasPrefix "www." $websiteHost)) }}
+  {{- $wwwHost = printf "www.%s" $websiteHost }}
+{{- end }}
 {{- $backendHost := $.Values.networking.ingressHosts.backend | default (printf "backend%s%s" .Values.networking.subdomainSeparator .Values.host) }}
 {{- $keycloakHost := $.Values.networking.ingressHosts.keycloak | default (printf "authentication%s%s" $.Values.networking.subdomainSeparator $.Values.host) }}
 {{- $minioHost := $.Values.networking.ingressHosts.minio | default (printf "s3%s%s" $.Values.networking.subdomainSeparator $.Values.host) }}
@@ -87,7 +92,8 @@ spec:
                 name: loculus-website-service
                 port:
                   number: 3000
-    - host: "www.{{ $websiteHost }}"
+    {{- if $wwwHost }}
+    - host: "{{ $wwwHost }}"
       http:
         paths:
           - path: /
@@ -97,10 +103,13 @@ spec:
                 name: loculus-website-service
                 port:
                   number: 3000
+    {{- end }}
   tls:
   - hosts:
     - "{{ $websiteHost }}"
-    - "www.{{ $websiteHost }}"
+    {{- if $wwwHost }}
+    - "{{ $wwwHost }}"
+    {{- end }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
