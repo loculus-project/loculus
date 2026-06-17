@@ -39,10 +39,15 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
 
     if (props.as === 'a') {
         const { as: _as, variant, size, circle, className, ...rest } = props;
+        // Disable underline on hover for anchor buttons unless the user explicitly added it to the className.
+        // ! is required because the global a:hover underline rule is unlayered and would otherwise win over this utility.
+        const anchorClassName = className?.includes('underline')
+            ? className
+            : [className, 'hover:no-underline!'].filter(Boolean).join(' ') || undefined;
         return (
             <a
                 ref={ref as Ref<HTMLAnchorElement>}
-                className={resolveClassName({ variant, size, circle, className })}
+                className={resolveClassName({ variant, size, circle, className: anchorClassName })}
                 {...rest}
             />
         );
