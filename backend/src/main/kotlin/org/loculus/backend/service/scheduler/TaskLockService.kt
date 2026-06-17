@@ -20,8 +20,7 @@ class TaskLockService {
                 VALUES (?, NOW())
                 ON CONFLICT (task_name) DO UPDATE
                 SET started_at = NOW()
-                WHERE task_lock.started_at IS NULL
-                   OR task_lock.started_at + (? * interval '1 second') <= NOW()
+                WHERE task_lock.started_at + (? * interval '1 second') <= NOW()
                 RETURNING task_name
             )
             SELECT COUNT(*) FROM lock_attempt
