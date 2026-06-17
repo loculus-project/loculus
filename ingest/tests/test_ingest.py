@@ -118,22 +118,37 @@ def run_snakemake(rule, touch=False):
     subprocess.run(cmd, check=True)
 
 
-def test_snakemake():
+def read_hash_for_submission(ndjson_path, submission_id):
+    """Return the freshly-ingested hash (hash B) for a submission id in a metadata ndjson."""
+    for record in orjsonl.stream(str(ndjson_path)):
+        if record["id"] == submission_id:
+            return record["metadata"]["hash"]
+    raise AssertionError(f"{submission_id} not found in {ndjson_path}")
+
+
+def prepare_compare_hashes_inputs(input_config_dir: str):
     """
-    Test function to run the Snakemake workflow and verify output.
+    Set up a fresh workspace and run the pipeline up to (but not including) compare_hashes.
+
+    Produces the inputs compare_hashes consumes (results/config.yaml,
+    results/previous_submissions.ndjson, results/metadata_post_group.ndjson). The two
+    compare_hashes tests share this identical setup; each calls it so they stay independent.
     """
     delete_directory(OUTPUT_DIR)
-    destination_directory = OUTPUT_DIR
-    source_directory = TEST_DATA_DIR / "test_data_cchf"
-    copy_files(source_directory, destination_directory)
-    destination_directory = CONFIG_DIR
-    source_directory = TEST_DATA_DIR / "config_cchf"
-    copy_files(source_directory, destination_directory)
+    copy_files(TEST_DATA_DIR / "test_data_cchf", OUTPUT_DIR)
+    copy_files(TEST_DATA_DIR / input_config_dir, CONFIG_DIR)
     run_snakemake("fetch_inflate_ncbi_dataset_package", touch=True)
     run_snakemake("format_ncbi_dataset_sequences", touch=True)  # Ignore sequences for now
     run_snakemake("get_loculus_depositions", touch=True)  # Do not call_loculus
     run_snakemake("heuristic_group_segments")
     run_snakemake("get_previous_submissions", touch=True)  # Do not call_loculus
+
+
+def test_snakemake():
+    """
+    Test function to run the Snakemake workflow and verify output.
+    """
+    prepare_compare_hashes_inputs("config_cchf")
     run_snakemake("compare_hashes")
     run_snakemake("prepare_files")
 
@@ -161,6 +176,42 @@ def test_snakemake():
             expected_file,
             output_file,
         ), f"{output_file} does not match {expected_file}."
+
+
+def test_no_revision_hashes_prevents_revision():
+    """
+    A submission ingested in a previous round (hash A) that re-ingests this round with a
+    changed metadata field (hash B) would normally be revised. If hash B is listed in
+    no_revision_hashes.tsv, compare_hashes must treat it as a noop (unchanged) instead.
+
+    Reuses the CCHF fixtures: KX096703.1.S -> LOC_0000VXA is in to_revise.json in the
+    baseline test because previous_submissions.ndjson records it with the placeholder
+    hash "different_hash", while this round computes a real md5 (hash B).
+    """
+    target_submission = "KX096703.1.S"
+    target_accession = "KX096703"  # INSDC accession base = the TSV key
+    target_loculus = "LOC_0000VXA"
+
+    prepare_compare_hashes_inputs("config_cchf_mute_revision")
+
+    # Drop the no-revision list into results/. The download rule has no inputs and its
+    # output now exists, so Snakemake treats it as satisfied and never runs it (no network).
+    hash_b = read_hash_for_submission(OUTPUT_DIR / "metadata_post_group.ndjson", target_submission)
+    pd.DataFrame([{"accession": target_accession, "hash_digest": hash_b}]).to_csv(
+        OUTPUT_DIR / "no_revision_hashes.tsv", sep="\t", index=False
+    )
+
+    run_snakemake("compare_hashes")
+
+    to_revise = json.loads((OUTPUT_DIR / "to_revise.json").read_text(encoding="utf-8"))
+    unchanged = json.loads((OUTPUT_DIR / "unchanged.json").read_text(encoding="utf-8"))
+
+    assert target_submission not in to_revise, (
+        f"{target_submission} should not be revised when hash B is in no_revision_hashes.tsv"
+    )
+    assert unchanged.get(target_submission) == target_loculus, (
+        f"{target_submission} should be recorded as unchanged -> {target_loculus}"
+    )
 
 
 if __name__ == "__main__":
