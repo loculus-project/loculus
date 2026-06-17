@@ -662,6 +662,20 @@ CREATE TABLE public.sequence_upload_aux_table (
 ALTER TABLE public.sequence_upload_aux_table OWNER TO postgres;
 
 --
+-- Name: shedlock; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.shedlock (
+    name character varying(64) NOT NULL,
+    lock_until timestamp without time zone NOT NULL,
+    locked_at timestamp without time zone NOT NULL,
+    locked_by character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.shedlock OWNER TO postgres;
+
+--
 -- Name: table_update_tracker; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -902,6 +916,14 @@ ALTER TABLE ONLY public.sequence_entries_preprocessed_data
 
 ALTER TABLE ONLY public.sequence_upload_aux_table
     ADD CONSTRAINT sequence_upload_aux_table_pkey PRIMARY KEY (upload_id, fasta_id);
+
+
+--
+-- Name: shedlock shedlock_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.shedlock
+    ADD CONSTRAINT shedlock_pkey PRIMARY KEY (name);
 
 
 --
