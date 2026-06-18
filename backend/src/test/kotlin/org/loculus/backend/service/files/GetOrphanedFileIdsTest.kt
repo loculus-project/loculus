@@ -92,6 +92,7 @@ class GetOrphanedFileIdsTest(
         assertThat(filesDatabaseService.getOrphanedFileIds(daysAgo(5)), `is`(emptySet()))
     }
 
+    @Suppress("ktlint:standard:max-line-length")
     @Test
     fun `GIVEN a file only in preprocessed data of a pipeline version cleaned up after upgrade THEN it becomes orphaned`() {
         val fileInOldPipelineVersion = UUID.randomUUID()
