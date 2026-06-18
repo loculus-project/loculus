@@ -56,7 +56,7 @@ class S3GarbageCollectionTask(
             .toLocalDateTime(DateProvider.timeZone)
 
         // Phase 2: delete files that were marked in a previous run and are still unreferenced
-        val markedOrphans = filesDatabaseService.getMarkedOrphanedFileIds()
+        val markedOrphans = filesDatabaseService.getMarkedOrphanedFileIds(threshold)
         if (!enabled) {
             log.info {
                 "S3 garbage collection task would have deleted ${markedOrphans.size} marked orphan(s): $markedOrphans"
