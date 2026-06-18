@@ -435,9 +435,7 @@ def main(
         ):
             # has a new segment, must be revised
             accession = old_submitted[0]
-            process_hashes(
-                accession, metadata_id, record, submitted, muted_hashes_dict, update_manager
-            )
+            process_hashes(accession, metadata_id, record, submitted, update_manager)
             continue
         old_accessions: dict[LoculusAccession, JointInsdcAccession] = {
             submitted[a].loculus_accession: submitted[a].jointAccession
