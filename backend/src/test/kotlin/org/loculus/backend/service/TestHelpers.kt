@@ -18,6 +18,7 @@ fun insertFile(id: UUID, groupId: Int, requestedAt: LocalDateTime, uploader: Str
         it[uploaderColumn] = uploader
         it[groupIdColumn] = groupId
         it[multipartCompleted] = true
+        it[sizeColumn] = 1L
     }
 }
 

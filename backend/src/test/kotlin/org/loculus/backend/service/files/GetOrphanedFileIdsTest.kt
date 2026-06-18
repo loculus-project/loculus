@@ -2,28 +2,21 @@ package org.loculus.backend.service.files
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
-import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.controller.submission.PreparedProcessedData
+import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.service.daysAgo
 import org.loculus.backend.service.insertFile
-import org.loculus.backend.service.submission.CompressedSequence
-import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable
-import org.loculus.backend.service.submission.SequenceEntriesTable
-import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
-import org.loculus.backend.utils.DateProvider
+import org.loculus.backend.service.submission.UseNewerProcessingPipelineVersionTask
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID
 
@@ -34,12 +27,14 @@ import java.util.UUID
     properties = [
         // set to high value to prevent tests from triggering pipeline version upgrade task
         "${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}=999999",
+        "${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG",
     ],
 )
 class GetOrphanedFileIdsTest(
     @Autowired val filesDatabaseService: FilesDatabaseService,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
-    @Autowired val dateProvider: DateProvider,
+    @Autowired val convenienceClient: SubmissionConvenienceClient,
+    @Autowired val useNewerProcessingPipelineVersionTask: UseNewerProcessingPipelineVersionTask,
 ) {
     private var groupId = 0
 
@@ -64,111 +59,74 @@ class GetOrphanedFileIdsTest(
 
     @Test
     fun `GIVEN multiple pipeline versions THEN files from all pipeline versions are protected`() {
-        transaction {
-            CurrentProcessingPipelineTable.update(
-                { CurrentProcessingPipelineTable.organismColumn eq DEFAULT_ORGANISM },
-            ) {
-                it[versionColumn] = 2
-            }
-        }
-
-        val fileFromOldPipeline = UUID.randomUUID() // pipeline version 1 (< current)
-        val fileFromCurrentPipeline = UUID.randomUUID() // pipeline version 2 (current)
-        val fileFromNewerPipeline = UUID.randomUUID() // pipeline version 3 (> current)
+        val fileFromOldPipeline = UUID.randomUUID()
+        val fileFromCurrentPipeline = UUID.randomUUID()
+        val fileFromNewerPipeline = UUID.randomUUID()
         listOf(fileFromOldPipeline, fileFromCurrentPipeline, fileFromNewerPipeline)
             .forEach { insertFile(it, groupId, daysAgo(10)) }
 
+        val submissions = convenienceClient.submitDefaultFiles(groupId = groupId).submissionIdMappings
+        val targetAccession = submissions.first().accession
+
+        fun processedDataAtPipeline(file: UUID) = submissions.map { av ->
+            if (av.accession == targetAccession) {
+                PreparedProcessedData.withFiles(
+                    av.accession,
+                    mapOf("myFileCategory" to listOf(FileIdAndName(file, "output.txt"))),
+                )
+            } else {
+                PreparedProcessedData.successfullyProcessed(av.accession)
+            }
+        }
+
         // The sequence entry itself references no files, so only the processed_data references matter.
-        insertSequenceEntry(accession = "A", version = 1, archive = null, submitted = makeUnprocessedData(null))
-        insertPreprocessedData(
-            accession = "A",
-            version = 1,
-            pipelineVersion = 1,
-            processed = makeProcessedData(fileFromOldPipeline),
-        )
-        insertPreprocessedData(
-            accession = "A",
-            version = 1,
-            pipelineVersion = 2,
-            processed = makeProcessedData(fileFromCurrentPipeline),
-        )
-        insertPreprocessedData(
-            accession = "A",
-            version = 1,
-            pipelineVersion = 3,
-            processed = makeProcessedData(fileFromNewerPipeline),
-        )
+        convenienceClient.extractUnprocessedData(pipelineVersion = 1)
+        convenienceClient.submitProcessedData(processedDataAtPipeline(fileFromOldPipeline), pipelineVersion = 1)
 
-        val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
+        convenienceClient.extractUnprocessedData(pipelineVersion = 2)
+        convenienceClient.submitProcessedData(processedDataAtPipeline(fileFromCurrentPipeline), pipelineVersion = 2)
 
-        assertThat(orphans, `is`(emptySet()))
+        convenienceClient.extractUnprocessedData(pipelineVersion = 3)
+        convenienceClient.submitProcessedData(processedDataAtPipeline(fileFromNewerPipeline), pipelineVersion = 3)
+
+        assertThat(filesDatabaseService.getOrphanedFileIds(daysAgo(5)), `is`(emptySet()))
     }
 
     @Test
-    fun `GIVEN a file referenced only by old version THEN it is still protected`() {
-        val fileInOldVersion = UUID.randomUUID()
-        insertFile(fileInOldVersion, groupId, daysAgo(10))
-        insertSequenceEntry(
-            accession = "A",
-            version = 1,
-            archive = null,
-            submitted = makeUnprocessedData(fileInOldVersion),
-        )
-        insertSequenceEntry(accession = "A", version = 2, archive = null, submitted = makeUnprocessedData(null))
+    fun `GIVEN a file only in preprocessed data of a pipeline version cleaned up after upgrade THEN it becomes orphaned`() {
+        val fileInOldPipelineVersion = UUID.randomUUID()
+        insertFile(fileInOldPipelineVersion, groupId, daysAgo(10))
 
-        val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
+        val submissions = convenienceClient.submitDefaultFiles(groupId = groupId).submissionIdMappings
+        val targetAccession = submissions.first().accession
 
-        assertThat(orphans.isEmpty(), `is`(true))
-    }
-
-    private fun insertSequenceEntry(
-        accession: String,
-        version: Long,
-        archive: SubmittedData<CompressedSequence>?,
-        submitted: SubmittedData<CompressedSequence>?,
-    ) = transaction {
-        SequenceEntriesTable.insert {
-            it[accessionColumn] = accession
-            it[versionColumn] = version
-            it[organismColumn] = DEFAULT_ORGANISM
-            it[submissionIdColumn] = "submission-$accession-$version"
-            it[submitterColumn] = "testuser"
-            it[groupIdColumn] = groupId
-            it[submittedAtTimestampColumn] = dateProvider.getCurrentDateTime()
-            it[archiveOfSubmittedDataColumn] = archive
-            it[submittedDataColumn] = submitted
+        fun processedData(includeFile: Boolean) = submissions.map { av ->
+            if (av.accession == targetAccession && includeFile) {
+                PreparedProcessedData.withFiles(
+                    av.accession,
+                    mapOf("myFileCategory" to listOf(FileIdAndName(fileInOldPipelineVersion, "output.txt"))),
+                )
+            } else {
+                PreparedProcessedData.successfullyProcessed(av.accession)
+            }
         }
+
+        // v1: file is referenced in processed data
+        convenienceClient.extractUnprocessedData(pipelineVersion = 1)
+        convenienceClient.submitProcessedData(processedData(includeFile = true), pipelineVersion = 1)
+
+        // v2 and v3: no file reference — all-good results trigger the upgrade task to advance to v3,
+        // which causes v1 preprocessed data (the only reference to the file) to be cleaned up
+        convenienceClient.extractUnprocessedData(pipelineVersion = 2)
+        convenienceClient.submitProcessedData(processedData(includeFile = false), pipelineVersion = 2)
+        convenienceClient.extractUnprocessedData(pipelineVersion = 3)
+        convenienceClient.submitProcessedData(processedData(includeFile = false), pipelineVersion = 3)
+
+        assertThat(filesDatabaseService.getOrphanedFileIds(daysAgo(5)), `is`(emptySet()))
+
+        // Upgrades to v3, deletes v1 preprocessed data (keeps v2 as the one retained older version)
+        useNewerProcessingPipelineVersionTask.task()
+
+        assertThat(filesDatabaseService.getOrphanedFileIds(daysAgo(5)), `is`(setOf(fileInOldPipelineVersion)))
     }
-
-    private fun insertPreprocessedData(
-        accession: String,
-        version: Long,
-        pipelineVersion: Long,
-        processed: ProcessedData<CompressedSequence>,
-    ) = transaction {
-        SequenceEntriesPreprocessedDataTable.insert {
-            it[accessionColumn] = accession
-            it[versionColumn] = version
-            it[pipelineVersionColumn] = pipelineVersion
-            it[processedDataColumn] = processed
-            it[processingStatusColumn] = "PROCESSED"
-            it[startedProcessingAtColumn] = dateProvider.getCurrentDateTime()
-        }
-    }
-
-    private fun makeUnprocessedData(fileId: UUID?): SubmittedData<CompressedSequence> = SubmittedData(
-        metadata = emptyMap(),
-        unalignedNucleotideSequences = emptyMap(),
-        files = fileId?.let { mapOf("rawReads" to listOf(FileIdAndName(it, "raw.fastq"))) },
-    )
-
-    private fun makeProcessedData(fileId: UUID): ProcessedData<CompressedSequence> = ProcessedData(
-        metadata = emptyMap(),
-        unalignedNucleotideSequences = emptyMap(),
-        alignedNucleotideSequences = emptyMap(),
-        nucleotideInsertions = emptyMap(),
-        alignedAminoAcidSequences = emptyMap(),
-        aminoAcidInsertions = emptyMap(),
-        files = mapOf("processedOutput" to listOf(FileIdAndName(fileId, "aligned.bam"))),
-    )
 }
