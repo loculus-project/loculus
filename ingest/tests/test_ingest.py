@@ -51,7 +51,7 @@ def compare_json_files(file1, file2):
     return json1 == json2
 
 
-def compare_ndjson_files(file1, file2):
+def compare_ndjson_files(file1, file2):  # noqa: C901
     def create_dict_from_ndjson(file):
         records = {}
         for record in orjsonl.stream(file):
@@ -115,7 +115,7 @@ def run_snakemake(rule, touch=False):
     ]
     if touch:
         cmd.append("--touch")
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, check=True)  # noqa: S603
 
 
 def read_record_by_id(ndjson_path, submission_id):
@@ -126,10 +126,11 @@ def read_record_by_id(ndjson_path, submission_id):
     for record in orjsonl.stream(str(ndjson_path)):
         if record["id"] == submission_id:
             return record
-    raise AssertionError(f"{submission_id} not found in {ndjson_path}")
+    msg = f"{submission_id} not found in {ndjson_path}"
+    raise AssertionError(msg)
 
 
-def prepare_compare_hashes_inputs(input_config_dir: str):
+def prepare_compare_hashes_inputs(muted_hashes=False):
     """
     Set up a fresh workspace and run the first steps of the ingest pipeline.
 
@@ -138,7 +139,10 @@ def prepare_compare_hashes_inputs(input_config_dir: str):
     """
     delete_directory(OUTPUT_DIR)
     copy_files(TEST_DATA_DIR / "test_data_cchf", OUTPUT_DIR)
-    copy_files(TEST_DATA_DIR / input_config_dir, CONFIG_DIR)
+    copy_files(TEST_DATA_DIR / "config_cchf", CONFIG_DIR)
+    if muted_hashes:
+        with open(CONFIG_DIR / "config.yaml", "a", encoding="utf-8") as f:
+            f.write('\nmuted_hashes_url: "http://example.invalid/ignored.tsv"\n')
     run_snakemake("fetch_inflate_ncbi_dataset_package", touch=True)
     run_snakemake("format_ncbi_dataset_sequences", touch=True)  # Ignore sequences for now
     run_snakemake("get_loculus_depositions", touch=True)  # Do not call_loculus
@@ -150,7 +154,7 @@ def test_snakemake():
     """
     Test function to run the Snakemake workflow and verify output.
     """
-    prepare_compare_hashes_inputs("config_cchf")
+    prepare_compare_hashes_inputs()
     run_snakemake("compare_hashes")
     run_snakemake("prepare_files")
 
@@ -187,7 +191,7 @@ def test_muted_hashes_prevents_revision():
     target_loculus = "LOC_0000VXA"
     target_submission = "KX096703.1.S"
 
-    prepare_compare_hashes_inputs("config_cchf_muted")
+    prepare_compare_hashes_inputs(muted_hashes=True)
 
     # Get the hash value for KX096703.1.S, then create a tsv to mute it
     record = read_record_by_id(OUTPUT_DIR / "metadata_post_group.ndjson", target_submission)
