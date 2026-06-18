@@ -19,7 +19,13 @@ class UseNewerProcessingPipelineVersionTask(private val submissionDatabaseServic
         fixedDelayString = "\${${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}}",
         timeUnit = TimeUnit.SECONDS,
     )
-    @SchedulerLock(name = "useNewerProcessingPipelineVersion", lockAtMostFor = "PT1M")
+    @SchedulerLock(
+        name = "useNewerProcessingPipelineVersion",
+        // `lockAtLeastFor` enforces the effective check interval across replicas (default matches the
+        // standard check interval); the lock is held this long even though the scheduler polls.
+        lockAtLeastFor = "\${loculus.locks.useNewerProcessingPipelineVersion.atLeast:PT10S}",
+        lockAtMostFor = "PT1M",
+    )
     fun task() {
         log.info { "Checking for newer preprocessing pipeline versions" }
         val newVersions = submissionDatabaseService.useNewerProcessingPipelineIfPossible()

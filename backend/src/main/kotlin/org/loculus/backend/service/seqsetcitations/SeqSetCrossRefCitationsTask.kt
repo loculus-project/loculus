@@ -37,7 +37,7 @@ class SeqSetCrossRefCitationsTask(
     private val seqSetCitationsDatabaseService: SeqSetCitationsDatabaseService,
 ) {
     /**
-     * Runs every six hours, with an initial delay of one minute.
+     * Runs at most once every six hours (enforced by the ShedLock `lockAtLeastFor`), with an initial delay of one minute.
      *
      * The task checks that the CrossRef service is active and a DOI prefix is configured for the Loculus instance.
      * If configured, it retrieves all CrossRef forward links (citations) which begin with the instance's DOI prefix.
@@ -46,10 +46,16 @@ class SeqSetCrossRefCitationsTask(
      */
     @Scheduled(
         initialDelay = 1,
-        fixedDelay = 360,
+        fixedDelay = 5,
         timeUnit = java.util.concurrent.TimeUnit.MINUTES,
     )
-    @SchedulerLock(name = "seqSetCrossRefCitations", lockAtMostFor = "PT1H")
+    // The scheduler polls every 5 minutes, but `lockAtLeastFor` holds the lock for the full interval so
+    // the CrossRef service is queried at most once per interval, regardless of how many replicas run.
+    @SchedulerLock(
+        name = "seqSetCrossRefCitations",
+        lockAtLeastFor = "\${loculus.locks.seqSetCrossRefCitations.atLeast:PT6H}",
+        lockAtMostFor = "PT6H",
+    )
     fun task() {
         log.info { "Updating SeqSet CrossRef citations..." }
 

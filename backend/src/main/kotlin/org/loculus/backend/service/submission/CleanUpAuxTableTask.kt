@@ -20,10 +20,20 @@ class CleanUpAuxTableTask(
 ) {
 
     /**
-     * Runs every hour and deletes auxTable entries older than 24 hours.
+     * Deletes auxTable entries older than 24 hours.
+     *
+     * The scheduler polls frequently (every 5 minutes), but `lockAtLeastFor` keeps the ShedLock lock
+     * held for at least the configured interval, so across replicas the task effectively runs once
+     * per `lockAtLeastFor` regardless of replica count. `lockAtMostFor` is deliberately larger than
+     * `lockAtLeastFor` so an unusually long run keeps the lock (no parallel run) while still releasing
+     * within bounds if a replica dies mid-task.
      */
-    @Scheduled(fixedDelay = 1, timeUnit = java.util.concurrent.TimeUnit.HOURS)
-    @SchedulerLock(name = "cleanUpAuxTable", lockAtMostFor = "PT15M")
+    @Scheduled(fixedDelay = 5, timeUnit = java.util.concurrent.TimeUnit.MINUTES)
+    @SchedulerLock(
+        name = "cleanUpAuxTable",
+        lockAtLeastFor = "\${loculus.locks.cleanUpAuxTable.atLeast:PT1H}",
+        lockAtMostFor = "PT6H",
+    )
     fun task() {
         val hourCutoff = 24L
         val now = dateProvider.getCurrentInstant()

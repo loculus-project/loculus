@@ -15,7 +15,13 @@ class CleanUpStaleSequencesInProcessingTask(
     @Value("\${${BackendSpringProperty.STALE_AFTER_SECONDS}}") private val timeToStaleInSeconds: Long,
 ) {
     @Scheduled(fixedRateString = "\${${BackendSpringProperty.CLEAN_UP_RUN_EVERY_SECONDS}}", timeUnit = TimeUnit.SECONDS)
-    @SchedulerLock(name = "cleanUpStaleSequencesInProcessing", lockAtMostFor = "PT5M")
+    @SchedulerLock(
+        name = "cleanUpStaleSequencesInProcessing",
+        // `lockAtLeastFor` enforces the effective run interval across replicas (default matches the
+        // standard run-every interval); the lock is held this long even though the scheduler polls.
+        lockAtLeastFor = "\${loculus.locks.cleanUpStaleSequencesInProcessing.atLeast:PT1M}",
+        lockAtMostFor = "PT5M",
+    )
     fun task() {
         log.info { "Cleaning up stale sequences in processing, timeToStaleInSeconds: $timeToStaleInSeconds" }
         submissionDatabaseService.cleanUpStaleSequencesInProcessing(timeToStaleInSeconds)
