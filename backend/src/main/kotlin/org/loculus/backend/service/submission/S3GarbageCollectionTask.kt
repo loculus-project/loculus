@@ -67,17 +67,12 @@ class S3GarbageCollectionTask(
 
         // Phase 1: mark newly discovered orphans so they are rejected from submissions until the next run
         val newOrphans = filesDatabaseService.getOrphanedFileIds(threshold)
-        if (!enabled) {
-            log.info {
-                "S3 garbage collection task would have marked ${newOrphans.size} new orphan(s) for deletion: $newOrphans"
-            }
+
+        if (newOrphans.isNotEmpty()) {
+            filesDatabaseService.markFilesForDeletion(newOrphans)
+            log.info { "S3 garbage collection task marked ${newOrphans.size} orphan(s) for deletion" }
         } else {
-            if (newOrphans.isNotEmpty()) {
-                filesDatabaseService.markFilesForDeletion(newOrphans)
-                log.info { "S3 garbage collection task marked ${newOrphans.size} orphan(s) for deletion" }
-            } else {
-                log.info { "S3 garbage collection task identified no new orphan files" }
-            }
+            log.info { "S3 garbage collection task identified no new orphan files" }
         }
     }
 
