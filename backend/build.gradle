@@ -55,7 +55,7 @@ dependencies {
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.8.0-0.6.x-compat"
     implementation "org.hibernate.validator:hibernate-validator"
-    implementation "org.keycloak:keycloak-admin-client:26.0.9"
+    implementation "org.springframework.boot:spring-boot-starter-data-ldap"
     implementation("io.minio:minio:9.0.1")
     implementation("software.amazon.awssdk:s3:2.45.1")
 
@@ -82,6 +82,7 @@ dependencies {
     testImplementation "org.testcontainers:testcontainers-minio:2.0.5"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.junit.platform:junit-platform-launcher"
+    testImplementation "org.apache.httpcomponents:httpclient:4.5.14"
     ktlint("com.pinterest.ktlint:ktlint-cli:1.8.0") {
         attributes {
             attribute(Bundling.BUNDLING_ATTRIBUTE, getObjects().named(Bundling, Bundling.EXTERNAL))

@@ -51,20 +51,11 @@ updates:
       patch:
         update-types:
           - "patch"
-  - package-ecosystem: npm
-    directory: keycloak/keycloakify
-    schedule:
-      interval: monthly
-    groups:
-      minorAndPatch:
-        update-types:
-          - "minor"
-          - "patch"
   - package-ecosystem: docker
     directories:
       - website
       - backend
-      - keycloak/keycloakify
+      - registration-service
       - preprocessing/nextclade
       - preprocessing/dummy
       - ingest

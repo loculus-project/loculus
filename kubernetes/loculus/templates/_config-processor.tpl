@@ -42,16 +42,41 @@
         secretKeyRef:
           name: service-accounts
           key: backendUserPassword
-    - name: LOCULUSSUB_backendKeycloakClientSecret
+    - name: LOCULUSSUB_lldapAdminPassword
       valueFrom:
         secretKeyRef:
-          name: backend-keycloak-client-secret
-          key: backendKeycloakClientSecret
-    - name: LOCULUSSUB_orcidSecret
+          name: lldap-secrets
+          key: adminPassword
+    - name: LOCULUSSUB_autheliaSessionSecret
       valueFrom:
         secretKeyRef:
-          name: orcid
-          key: orcidSecret
+          name: authelia-secrets
+          key: sessionSecret
+    - name: LOCULUSSUB_autheliaStorageEncryptionKey
+      valueFrom:
+        secretKeyRef:
+          name: authelia-secrets
+          key: storageEncryptionKey
+    - name: LOCULUSSUB_autheliaJwtSecret
+      valueFrom:
+        secretKeyRef:
+          name: authelia-secrets
+          key: jwtSecret
+    - name: LOCULUSSUB_autheliaOidcHmacSecret
+      valueFrom:
+        secretKeyRef:
+          name: authelia-secrets
+          key: oidcHmacSecret
+    - name: LOCULUSSUB_backendClientSecret
+      valueFrom:
+        secretKeyRef:
+          name: authelia-secrets
+          key: backendClientSecretHash
+    - name: LOCULUSSUB_backendClientSecretPlain
+      valueFrom:
+        secretKeyRef:
+          name: authelia-secrets
+          key: backendClientSecretPlain
 {{- end }}
 
 

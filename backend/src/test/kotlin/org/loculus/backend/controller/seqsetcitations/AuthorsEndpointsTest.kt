@@ -3,9 +3,9 @@ package org.loculus.backend.controller.seqsetcitations
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import org.junit.jupiter.api.Test
-import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.service.KeycloakAdapter
+import org.loculus.backend.service.LoculusUser
+import org.loculus.backend.service.UserDirectory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -16,11 +16,11 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 class AuthorsEndpointsTest(@Autowired private val client: SeqSetCitationsControllerClient) {
 
     @MockkBean
-    lateinit var keycloakAdapter: KeycloakAdapter
+    lateinit var userDirectory: UserDirectory
 
     @Test
     fun `WHEN calling get author profile of non-existing user THEN returns not found`() {
-        every { keycloakAdapter.getUsersWithName(any()) } returns listOf()
+        every { userDirectory.getUsersWithName(any()) } returns listOf()
         client.getAuthor(username = MOCK_USERNAME)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
@@ -29,13 +29,14 @@ class AuthorsEndpointsTest(@Autowired private val client: SeqSetCitationsControl
 
     @Test
     fun `WHEN calling get author profile of existing user THEN returns author profile`() {
-        val mockUser = UserRepresentation()
-        mockUser.setUsername(MOCK_USERNAME)
-        mockUser.setEmail(MOCK_USER_EMAIL)
-        mockUser.setFirstName(MOCK_USER_FIRST_NAME)
-        mockUser.setLastName(MOCK_USER_LAST_NAME)
-        mockUser.setAttributes(mapOf("university" to listOf(MOCK_USER_UNIVERSITY)))
-        every { keycloakAdapter.getUsersWithName(any()) } returns listOf(mockUser)
+        val mockUser = LoculusUser(
+            username = MOCK_USERNAME,
+            email = MOCK_USER_EMAIL,
+            firstName = MOCK_USER_FIRST_NAME,
+            lastName = MOCK_USER_LAST_NAME,
+            organization = MOCK_USER_UNIVERSITY,
+        )
+        every { userDirectory.getUsersWithName(any()) } returns listOf(mockUser)
 
         val emailDomain = MOCK_USER_EMAIL.split("@").last()
         client.getAuthor(username = MOCK_USERNAME)

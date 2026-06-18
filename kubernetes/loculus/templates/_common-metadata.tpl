@@ -205,8 +205,8 @@ bannerMessageURL: {{ quote $.Values.bannerMessageURL }}
 {{ end }}
 {{ if $.Values.bannerMessage }}
 bannerMessage: {{ quote $.Values.bannerMessage }}
-{{ else if or $.Values.runDevelopmentMainDatabase $.Values.runDevelopmentKeycloakDatabase }}
-bannerMessage: "Warning: Development or Keycloak main database is enabled. Development environment only."
+{{ else if $.Values.runDevelopmentMainDatabase }}
+bannerMessage: "Warning: Development main database is enabled. Development environment only."
 {{ end }}
 {{ if $.Values.submissionBannerMessageURL }}
 submissionBannerMessageURL: {{ quote $.Values.submissionBannerMessageURL }}
@@ -627,7 +627,8 @@ fields:
 {{- $externalLapisUrlConfig := dict "lapisUrlTemplate" $lapisUrlTemplate "config" $.Values }}
             "backendUrl": "{{ include "loculus.backendUrl" . }}",
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" $externalLapisUrlConfig | fromYaml | toJson }},
-            "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}"
+            "autheliaUrl":  "{{ include "loculus.autheliaUrl" . }}",
+            "registrationUrl":  "{{ include "loculus.registrationUrl" . }}"
 {{- end }}
 
 

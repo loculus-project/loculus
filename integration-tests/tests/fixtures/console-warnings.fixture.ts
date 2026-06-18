@@ -11,6 +11,8 @@ export const test = base.extend({
                     'Form submission canceled because the form is not connected',
                     'ERR_INCOMPLETE_CHUNKED_ENCODING',
                     "Response to preflight request doesn't pass access control check", // LAPIS sometimes hangs up preflight requests for unknown reasons
+                    'Failed to load resource: the server responded with a status of 401', // Authelia returns 401 on a probe login attempt before tryLoginOrRegister falls back to registration
+                    'AxiosError: Request failed with status code 401', // Same 401 surfaced from Authelia's SPA axios wrapper
                     'has been externalized for browser compatibility.',
                 ];
 

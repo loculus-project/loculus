@@ -1,0 +1,69 @@
+{{- if .Values.auth.bundledLdap.enabled }}
+{{- /* Build the lists; secret placeholders ([[xxx]]) are substituted later
+       by loculus.configProcessor. lldap's own /app/bootstrap.sh script
+       reads one JSON file per user / group from /bootstrap/user-configs and
+       /bootstrap/group-configs, then calls /app/lldap_set_password to set
+       passwords via OPAQUE — which is the only supported path. */}}
+{{- $users := list }}
+{{- if .Values.createTestAccounts }}
+  {{- range $_, $browser := list "firefox" "webkit" "chromium" }}
+    {{- range $i, $_ := until 20 }}
+      {{- $users = append $users (dict
+        "id" (printf "testuser_%d_%s" $i $browser)
+        "email" (printf "testuser_%d_%s@void.o" $i $browser)
+        "firstName" (printf "%d_%s" $i $browser)
+        "lastName" "TestUser"
+        "displayName" (printf "%d_%s TestUser" $i $browser)
+        "password" (printf "testuser_%d_%s" $i $browser)
+        "groups" (list "user")) }}
+    {{- end }}
+  {{- end }}
+  {{- $users = append $users (dict
+    "id" "testuser" "email" "testuser@void.o"
+    "firstName" "Test" "lastName" "User" "displayName" "Test User"
+    "password" "testuser" "groups" (list "user")) }}
+  {{- $users = append $users (dict
+    "id" "superuser" "email" "superuser@void.o"
+    "firstName" "Dummy" "lastName" "SuperUser" "displayName" "Dummy SuperUser"
+    "password" "superuser" "groups" (list "super_user" "user")) }}
+  {{- $users = append $users (dict
+    "id" "playwright-readonly-setup-user"
+    "email" "playwright-readonly-setup-user@example.com"
+    "firstName" "Playwright" "lastName" "Setup"
+    "displayName" "Playwright Setup"
+    "password" "a-very-secure-password-for-testing"
+    "groups" (list "user")) }}
+{{- end }}
+{{- $users = append $users (dict
+  "id" "insdc_ingest_user" "email" "insdc_ingest_user@void.o"
+  "firstName" "INSDC Ingest" "lastName" "User" "displayName" "INSDC Ingest User"
+  "password" "[[insdcIngestUserPassword]]" "groups" (list "user")) }}
+{{- $users = append $users (dict
+  "id" "preprocessing_pipeline" "email" "preprocessing_pipeline@void.o"
+  "firstName" "Dummy" "lastName" "Preprocessing" "displayName" "Dummy Preprocessing"
+  "password" "[[preprocessingPipelinePassword]]" "groups" (list "preprocessing_pipeline")) }}
+{{- $users = append $users (dict
+  "id" "external_metadata_updater" "email" "external_metadata_updater@void.o"
+  "firstName" "Dummy" "lastName" "INSDC" "displayName" "Dummy INSDC"
+  "password" "[[externalMetadataUpdaterPassword]]"
+  "groups" (list "external_metadata_updater" "get_released_data")) }}
+{{- $users = append $users (dict
+  "id" "backend" "email" "nothing@void.o"
+  "firstName" "Backend" "lastName" "Technical-User" "displayName" "Backend Technical-User"
+  "password" "[[backendUserPassword]]" "groups" (list "user")) }}
+{{- $groups := list "user" "admin" "preprocessing_pipeline" "external_metadata_updater" "get_released_data" "super_user" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lldap-bootstrap
+data:
+{{- range $g := $groups }}
+  group-{{ $g }}.json: |-
+    {"name": "{{ $g }}"}
+{{- end }}
+{{- range $u := $users }}
+  user-{{ $u.id }}.json: |-
+{{ $u | toJson | indent 4 }}
+{{- end }}
+{{- end }}

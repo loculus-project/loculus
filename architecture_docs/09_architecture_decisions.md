@@ -77,3 +77,21 @@ Some relevant discussions:
 #### Decision
 
 We implemented the building blocks as described in this documentation.
+
+## Authentication: Authelia + lldap (2026)
+
+The original Keycloak deployment was replaced with Authelia for OIDC and lldap
+as the user directory. Rationale:
+
+- Lighter footprint (Authelia and lldap together are smaller than Keycloak
+  alone) and a simpler operational model for self-hosted installations.
+- LDAP backend is pluggable: bundled lldap for self-hosted, or operators can
+  point Authelia at an existing enterprise LDAP/AD by setting
+  `auth.bundledLdap.enabled=false` and configuring `auth.ldap.*`.
+- Self-registration moves into a small dedicated `registration-service` that
+  writes new users into lldap via its GraphQL admin API; in BYO-LDAP mode this
+  service is not deployed and registration is managed out-of-band.
+- ORCID social login is dropped; can be added later in the registration
+  service.
+- CLI authentication moves from ROPC (unsupported in Authelia) to the OIDC
+  device-code flow.

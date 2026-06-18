@@ -2609,6 +2609,23 @@ auth:
   verifyEmail: false
   resetPasswordAllowed: true
   registrationAllowed: true
+  relaxOidcTokenRateLimit: false
+  # Bundled LDAP mode: deploys lldap + a registration service.
+  # When false, configure auth.ldap below to point at your existing LDAP and
+  # disable the registration UI.
+  bundledLdap:
+    enabled: true
+  ldap:
+    # Defaults below assume bundled mode. Override for BYO LDAP.
+    host: loculus-lldap-service
+    port: 3890
+    baseDn: dc=loculus,dc=org
+    userBaseDn: ou=people,dc=loculus,dc=org
+    groupBaseDn: ou=groups,dc=loculus,dc=org
+    userFilter: "(&(uid={input})(objectClass=person))"
+    bindDn: "uid=admin,ou=people,dc=loculus,dc=org"
+    # bindPassword comes from the lldap-secrets/adminPassword key in
+    # bundled mode; override secret name+key for BYO mode.
 insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
 welcomeMessageHTML: null
@@ -2627,6 +2644,9 @@ images:
   backend:
     repository: "ghcr.io/loculus-project/backend"
     pullPolicy: Always
+  registrationService:
+    repository: "ghcr.io/loculus-project/registration-service"
+    pullPolicy: Always
 silo:
   apiThreadsForHttpConnections: 16
 secrets:
@@ -2634,24 +2654,60 @@ secrets:
     type: raw
     data:
       secretKey: not_configured
-  backend-keycloak-client-secret:
-    type: autogen
+  lldap-secrets:
+    type: raw
     data:
-      backendKeycloakClientSecret: ""
+      adminPassword: "lldap-admin-password"
+      jwtSecret: "loculus-lldap-jwt-secret-please-rotate-me"
+      keySeed: "loculus-lldap-key-seed-please-rotate-me"
+  authelia-secrets:
+    type: raw
+    data:
+      sessionSecret: "loculus-authelia-session-secret-please-rotate-me-please-rotate"
+      storageEncryptionKey: "loculus-authelia-storage-encryption-key-please-rotate-me-pls-rot"
+      jwtSecret: "loculus-authelia-jwt-secret-please-rotate-me-please-rotate-me!!"
+      oidcHmacSecret: "loculus-authelia-oidc-hmac-secret-please-rotate-me-please-rotate"
+      # The website's OIDC client secret is confidential because dev/CI uses
+      # http:// redirect URIs (Authelia forbids http on public clients).
+      # Plaintext + matching PBKDF2-SHA512 PHC hash live here so the website
+      # (which sends plaintext to /oauth2/token) and Authelia (which
+      # verifies against the hash) stay in sync. Rotate in production.
+      backendClientSecretPlain: "loculus-dev-client-secret"
+      backendClientSecretHash: "$pbkdf2-sha512$310000$hrjXuM5amwGWiA9lY.NC/A$bVLRb740tHQANA1ozr6HOwgVtSJE/qw4tkPwQ7eV5vltV5rcgv2R.P/LNm4FR95acZK9qmkJMKn9sy5DIun6JQ"
+      oidcIssuerPrivateKey: |
+        -----BEGIN RSA PRIVATE KEY-----
+        MIIEowIBAAKCAQEApLkfmwhUv9fjisakHUrt6qzOfGXmwwTsdFRKqJ3I5505WWHH
+        5MHHZyZkwkNQNTm13T6B3ZAm5xe1xCpTL4YJ9fKFIaqTlmuB6v4kEisxtt/U1+Pc
+        03GMlsiYNg8JfP+9ruV9YRaNJMQjI5zmVRp/BjErP/hs+Ir4mfqlzvZC/ZMvR4qa
+        T+UODzhp4EXy1pKVSoeVndHrx5bgENWkDfoymxMP/jYg5ALirme1SUOUdkBkgca8
+        TcnFs03Sc4F+sDPz7pwVJDLvNDhItnPLPyO0poX3xaOdne6ctL5Dx81n7GeVyMLy
+        w0IjR/cg4h9RbRB7JN/kl27QFxLyXNN0cE0gXwIDAQABAoIBAGkLSRVzlaAVi5yX
+        Glc3zksGUlNQJH2fKS7yBf5LSLAzOjw+t9uwm3mzKTQc+wxGNizVzLk/UR+zpg1n
+        tE6tGrMGKlIS1jVpb5ss4FHZy8VELhZS0CLi2XXai/6FTlaxPARJgtAkMnQMxB/U
+        0anZ0MFhH6SWxt8kuG5xQcWek4/ig2c46J8BgkdB/Dq/SmqipYt+PAy68pgLL8Tl
+        eKTHOkUZfq/hWQzgBAK1IQQHLerjzg/ehNM4hFpqhB6nEEugKZa9crc1D1VKKosz
+        UXeoQNj0aGvmRdY6kbZ746tUMSiTrP2FirDAFbfkwxzd/zWHB2yAgJE9m/k9ZSy2
+        Yk65WcECgYEA1wZE80gAgAtsStcOdBadQaSdvGuwM4MnRDJxhplo6oZpJyFeFIyT
+        jLZjZp/g1jRdOM3fm7HVtyrbPzGIeK4UescYLk6Bp4WGWq7D1w7xarsgdZmMCw8H
+        mxEfHfEYR+xftGINeBGD9wFOQNlNzzlyopPkNHfkqft3nAzrnwZtIyECgYEAxBz1
+        aQrCOeIt7Ea2f6zb3Lv8F74nI4ku2Ipirz0uoyuBwj1TST7MS8cd3tEHPexRHcaI
+        Z9foLRGUDCLH7B/Hips2S72zWNsgNojTDfn50kt1xOm7J1XtYiH3mRl7TdmxV9Q6
+        cVCCWvOwFB8I3qfWyDhvNo896qY0X09KJYolU38CgYA9GfP36cryl8xjC+94f4Ca
+        SavlAfjk+mzrDSaDaA6PLjitPOceEcBP6PggDmh2lhSzcpULCiK/1PbOY0XzfQwm
+        w3KUngxrzR6boDPYZc+mU5xqroJEFjZEEz5zZLJQpdOgT4iiSN/mDcHt3ZIlw55W
+        oo3jdvpMbz/S4T0HSG004QKBgAw63hcR47DmaQS+GC14IzHtyzfT1O8DZBd+8c6J
+        2zmzweDSIDqGHwluvm8hy/jRnvFjayhGr6T33qqvFJamGLSNH2KzztZwu96Kw9aw
+        SyMRL6P7C3/VfPtMsPssOqNNOyEGDCr64VY4sjdfBBeWke9kjZLydeMHQGbdM/uJ
+        VPCTAoGBAI/6DYTcO+AIiLVGFobjD86ZthkrGLjePqFSFv38sTktKhBVKmDxM/PY
+        KpYO8YI8HMgrDu8J0VJWI2kYmUBm4i1obAIwMSTj5fSll15sSmpM5oYG4z4Pmgl5
+        wB9NDbRW/EV7Uurot9acKlyl985j5T+THxi5ALkcfCdg0/9cnHq7
+        -----END RSA PRIVATE KEY-----
   database:
     type: raw
     data:
       url: "jdbc:postgresql://loculus-database-service/loculus"
       username: "postgres"
       password: "password"
-  keycloak-database:
-    type: raw
-    data:
-      addr: "loculus-keycloak-database-service"
-      database: "keycloak"
-      username: "postgres"
-      password: "unsecure"
-      port: "5432"
   crossref:
     type: raw
     data:
@@ -2664,14 +2720,6 @@ secrets:
       preprocessingPipelinePassword: ""
       externalMetadataUpdaterPassword: ""
       backendUserPassword: ""
-  keycloak-admin:
-    type: raw
-    data:
-      initialAdminPassword: "admin"
-  orcid:
-    type: raw
-    data:
-      orcidSecret: "dummy"
   ingest-ncbi:
     type: raw
     data:
@@ -2692,12 +2740,12 @@ secrets:
     data:
       accessKey: "dummyAccessKey"
       secretKey: "dummySecretKey"
-runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 runDevelopmentS3: true
 developmentDatabasePersistence: false
 enforceHTTPS: true
 traefikVersion: 2
+ingressClassName: traefik
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
@@ -2757,12 +2805,24 @@ resources:
     limits:
       cpu: "1"
       memory: "10Gi"
-  keycloak:
+  authelia:
     requests:
-      memory: "700Mi"
-      cpu: "40m"
+      memory: "100Mi"
+      cpu: "20m"
     limits:
-      memory: "3Gi"
+      memory: "512Mi"
+  lldap:
+    requests:
+      memory: "50Mi"
+      cpu: "10m"
+    limits:
+      memory: "256Mi"
+  registration-service:
+    requests:
+      memory: "100Mi"
+      cpu: "20m"
+    limits:
+      memory: "512Mi"
   silo:
     requests:
       memory: "200Mi"

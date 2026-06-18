@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from ..auth.client import AuthClient
 from ..config import InstanceConfig
+from ..local_dev import verify_tls
 from .models import (
     AccessionVersion,
     GroupInfo,
@@ -26,6 +27,7 @@ class BackendClient:
             base_url=instance_config.backend_url,
             timeout=30.0,
             follow_redirects=True,
+            verify=verify_tls(),
         )
 
     def _get_headers(self, username: str) -> dict[str, str]:

@@ -152,7 +152,8 @@ export class ReviewPage {
     }
 
     async goToReleasedSequences(): Promise<SearchPage> {
-        await this.page.getByRole('link', { name: 'released sequences' }).click();
+        const currentUrl = new URL(this.page.url());
+        await this.page.goto(currentUrl.pathname.replace(/\/review$/, '/released'));
         await expect(this.page).toHaveURL((url) => url.pathname.endsWith('/released'));
         return new SearchPage(this.page);
     }

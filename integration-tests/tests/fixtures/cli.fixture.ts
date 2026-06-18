@@ -4,10 +4,10 @@ import { TestCliPage } from '../pages/CliPage';
 export const cliTest = test.extend<{
     cliPage: TestCliPage;
 }>({
-    cliPage: async ({ groupName, groupId, testAccount }, use) => {
+    cliPage: async ({ page, groupName, groupId, testAccount }, use) => {
         // Create CLI page - it will authenticate using the created user credentials
         // and have access to the created group
-        const cliPage = new TestCliPage();
+        const cliPage = new TestCliPage(page);
 
         // Store test info for CLI tests to use
         cliPage.testGroupName = groupName;

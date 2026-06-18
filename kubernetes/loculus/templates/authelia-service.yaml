@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-authelia-service
+spec:
+  {{- template "loculus.serviceType" . }}
+  selector:
+    app: loculus
+    component: authelia
+  ports:
+    - port: 9091
+      targetPort: 9091
+      {{- if ne $.Values.environment "server" }}
+      nodePort: 30091
+      {{- end }}
+      protocol: TCP
+      name: http

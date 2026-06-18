@@ -60,15 +60,19 @@ spec:
             - "--crossref.host-url=$(CROSSREF_HOST_URL)"
             - "--crossref.write-enabled=$(CROSSREF_WRITE_ENABLED)"
             {{- end }}
-            - "--keycloak.password=$(BACKEND_KEYCLOAK_PASSWORD)"
-            - "--keycloak.realm=loculus"
-            - "--keycloak.client=backend-client"
-            - "--keycloak.url=http://loculus-keycloak-service:8083"
-            - "--keycloak.user=backend"
+            - "--loculus.ldap.host={{ .Values.auth.ldap.host }}"
+            - "--loculus.ldap.port={{ .Values.auth.ldap.port }}"
+            - "--loculus.ldap.base-dn={{ .Values.auth.ldap.baseDn }}"
+            - "--loculus.ldap.user-base-dn={{ .Values.auth.ldap.userBaseDn }}"
+            - "--loculus.ldap.group-base-dn={{ .Values.auth.ldap.groupBaseDn }}"
+            - "--loculus.ldap.user-filter={{ .Values.auth.ldap.userFilter }}"
+            - "--loculus.ldap.bind-dn={{ .Values.auth.ldap.bindDn }}"
+            - "--loculus.ldap.bind-password=$(LDAP_BIND_PASSWORD)"
             - "--spring.datasource.password=$(DB_PASSWORD)"
             - "--spring.datasource.url=$(DB_URL)"
             - "--spring.datasource.username=$(DB_USERNAME)"
-            - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
+            - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-authelia-service:9091/jwks.json"
+            - "--spring.security.oauth2.resourceserver.jwt.issuer-uri={{ include "loculus.autheliaUrl" . }}"
             - "--loculus.cleanup.task.reset-stale-in-processing-after-seconds={{- .Values.preprocessingTimeout | default 120 }}"
             - "--loculus.pipeline-version-upgrade-check.interval-seconds={{- .Values.pipelineVersionUpgradeCheckIntervalSeconds | default 10 }}"
             - "--loculus.s3.enabled=$(S3_ENABLED)"
@@ -112,7 +116,27 @@ spec:
             - name: CROSSREF_WRITE_ENABLED
               value: {{$.Values.seqSets.crossRef.writeEnabled | quote }}
            {{- end }}
-            - name: BACKEND_KEYCLOAK_PASSWORD
+            - name: LDAP_BIND_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: lldap-secrets
+                  key: adminPassword
+            - name: LOCULUS_SERVICE_TOKENS_PREPROCESSING_PIPELINE
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            - name: LOCULUS_SERVICE_TOKENS_EXTERNAL_METADATA_UPDATER
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: externalMetadataUpdaterPassword
+            - name: LOCULUS_SERVICE_TOKENS_INSDC_INGEST_USER
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: insdcIngestUserPassword
+            - name: LOCULUS_SERVICE_TOKENS_BACKEND
               valueFrom:
                 secretKeyRef:
                   name: service-accounts

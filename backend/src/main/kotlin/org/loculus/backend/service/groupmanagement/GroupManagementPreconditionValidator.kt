@@ -5,12 +5,12 @@ import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.NotFoundException
-import org.loculus.backend.service.KeycloakAdapter
+import org.loculus.backend.service.UserDirectory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
-class GroupManagementPreconditionValidator(private val keycloakAdapter: KeycloakAdapter) {
+class GroupManagementPreconditionValidator(private val userDirectory: UserDirectory) {
     @Transactional(readOnly = true)
     fun validateGroupExists(groupId: Int) {
         validateGroupsExist(listOf(groupId))
@@ -69,7 +69,7 @@ class GroupManagementPreconditionValidator(private val keycloakAdapter: Keycloak
     }
 
     fun validateThatUserExists(username: String) {
-        val users = keycloakAdapter.getUsersWithName(username)
+        val users = userDirectory.getUsersWithName(username)
         when {
             users.isEmpty() -> throw NotFoundException("User $username does not exist.")
             users.size > 1 -> throw IllegalStateException("Multiple users with name $username exist.")

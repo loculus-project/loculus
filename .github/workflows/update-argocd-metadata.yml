@@ -71,11 +71,11 @@ jobs:
           check-name: Build ingest Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
-      - name: Wait for Keycloakify Docker Image
+      - name: Wait for Registration Service Docker Image
         uses: lewagon/wait-on-check-action@v1.8.0
         with:
           ref: ${{ github.sha }}
-          check-name: Build keycloakify Docker Image
+          check-name: Registration service docker image build
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for ENA Submission Docker Image

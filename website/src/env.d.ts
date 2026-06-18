@@ -3,6 +3,7 @@
 
 type TokenCookie = {
     accessToken: string;
+    oidcAccessToken?: string;
     refreshToken: string;
 };
 

@@ -8,7 +8,7 @@ import { getRuntimeConfig, seqSetsAreEnabled } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
 import { getAccessToken } from '../../utils/getAccessToken';
-import { getUrlForKeycloakAccountPage } from '../../utils/getAuthUrl.ts';
+import { getUrlForAccountPage } from '../../utils/getAuthUrl.ts';
 
 if (!seqSetsAreEnabled()) {
     return Astro.rewrite('/404');
@@ -23,7 +23,7 @@ const seqSetClient = SeqSetCitationClient.create();
 
 const seqSetsResponse = await seqSetClient.getSeqSetsOfUser(accessToken);
 const authorResponse = await seqSetClient.getAuthor(username);
-const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-info';
+const editAccountUrl = getUrlForAccountPage() + '/#/personal-info';
 ---
 
 <BaseLayout title='SeqSets' data-testid='seqSets-list-container' activeTopNavigationItem='seqsets'>

@@ -46,11 +46,15 @@ spec:
     replacement: "https://$1"
     permanent: true
 ---
-{{- if eq $.Values.environment "server" }}
-{{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
-{{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
-{{- $minioHost := (printf "s3%s%s" $.Values.subdomainSeparator $.Values.host) }}
+{{- /* Ingress rules require bare hostnames (no port). */}}
+{{- $hostBare := index (splitList ":" (default "" $.Values.host)) 0 }}
+{{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator $hostBare }}
+{{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $hostBare) }}
+{{- $minioHost := (printf "s3%s%s" $.Values.subdomainSeparator $hostBare) }}
+{{- $registerHost := (printf "register%s%s" $.Values.subdomainSeparator $hostBare) }}
 {{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
+{{- $middlewareListForKeycloak := $middlewareList }}
+{{- if eq $.Values.environment "server" }}
 {{- if $.Values.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
@@ -59,7 +63,6 @@ spec:
 {{ end }}
 
 {{ $middlewareListForWebsite := $middlewareList }}
-{{ $middlewareListForKeycloak := $middlewareList }}
 
 {{ if $.Values.secrets.basicauth }}
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
@@ -75,8 +78,11 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForWebsite }}"
 spec:
+  {{- if $.Values.ingressClassName }}
+  ingressClassName: "{{ $.Values.ingressClassName }}"
+  {{- end }}
   rules:
-    - host: "{{ .Values.host }}"
+    - host: "{{ $hostBare }}"
       http:
         paths:
           - path: /
@@ -86,7 +92,7 @@ spec:
                 name: loculus-website-service
                 port:
                   number: 3000
-    - host: "www.{{ .Values.host }}"
+    - host: "www.{{ $hostBare }}"
       http:
         paths:
           - path: /
@@ -98,8 +104,8 @@ spec:
                   number: 3000
   tls:
   - hosts:
-    - "{{ .Values.host }}"
-    - "www.{{ .Values.host }}"
+    - "{{ $hostBare }}"
+    - "www.{{ $hostBare }}"
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -108,6 +114,9 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
 spec:
+  {{- if $.Values.ingressClassName }}
+  ingressClassName: "{{ $.Values.ingressClassName }}"
+  {{- end }}
   rules:
     - host: "{{ $backendHost }}"
       http:
@@ -122,14 +131,19 @@ spec:
   tls:
   - hosts:
     - "{{ $backendHost }}"
+{{- end }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: loculus-keycloak-ingress
+  name: loculus-authelia-ingress
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForKeycloak }}"
+    traefik.ingress.kubernetes.io/router.priority: "1000"
 spec:
+  {{- if $.Values.ingressClassName }}
+  ingressClassName: "{{ $.Values.ingressClassName }}"
+  {{- end }}
   rules:
     - host: "{{ $keycloakHost }}"
       http:
@@ -138,12 +152,58 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: loculus-keycloak-service
+                name: loculus-authelia-service
                 port:
-                  number: 8083
+                  number: 9091
   tls:
   - hosts:
     - "{{ $keycloakHost }}"
+---
+apiVersion: {{ $traefikApiVersion }}
+kind: IngressRoute
+metadata:
+  name: loculus-authelia-ingressroute
+spec:
+  routes:
+    - match: Host(`{{ $keycloakHost }}`)
+      kind: Rule
+      priority: 1000
+      middlewares:
+        - name: compression-middleware
+        {{- if $.Values.secrets.basicauth }}
+        - name: basic-auth
+        {{- end }}
+      services:
+        - name: loculus-authelia-service
+          port: 9091
+  tls: {}
+{{- if .Values.auth.bundledLdap.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: loculus-registration-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
+spec:
+  {{- if $.Values.ingressClassName }}
+  ingressClassName: "{{ $.Values.ingressClassName }}"
+  {{- end }}
+  rules:
+    - host: "{{ $registerHost }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loculus-registration-service
+                port:
+                  number: 8090
+  tls:
+    - hosts:
+        - "{{ $registerHost }}"
+{{- end }}
 ---
 {{- if and .Values.s3.enabled .Values.runDevelopmentS3 }}
 apiVersion: networking.k8s.io/v1
@@ -153,6 +213,9 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
 spec:
+  {{- if $.Values.ingressClassName }}
+  ingressClassName: "{{ $.Values.ingressClassName }}"
+  {{- end }}
   rules:
     - host: "{{ $minioHost }}"
       http:
@@ -167,5 +230,4 @@ spec:
   tls:
     - hosts:
         - "{{ $minioHost }}"
-{{- end }}
 {{- end }}

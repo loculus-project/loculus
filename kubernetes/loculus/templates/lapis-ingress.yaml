@@ -30,6 +30,9 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd,{{- $first := true }}{{- range $key := $organismKeys }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
 spec:
+  {{- if $.Values.ingressClassName }}
+  ingressClassName: "{{ $.Values.ingressClassName }}"
+  {{- end }}
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
     http:
@@ -87,6 +90,9 @@ metadata:
     # High priority to ensure this rule is evaluated first
     traefik.ingress.kubernetes.io/router.priority: "500"
 spec:
+  {{- if $.Values.ingressClassName }}
+  ingressClassName: "{{ $.Values.ingressClassName }}"
+  {{- end }}
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
     http:

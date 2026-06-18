@@ -1531,6 +1531,12 @@
           "default": true,
           "description": "If true, allows users to register new accounts in Keycloak."
         },
+        "relaxOidcTokenRateLimit": {
+          "groups": ["auth"],
+          "type": "boolean",
+          "default": false,
+          "description": "If true, raises Authelia's OIDC token endpoint rate limits for local e2e/dev auth flows."
+        },
         "identityProviders": {
           "type": "object",
           "additionalProperties": false,
@@ -1546,6 +1552,32 @@
                 }
               }
             }
+          }
+        },
+        "bundledLdap": {
+          "groups": ["auth"],
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "If true, deploys lldap and the registration service in-cluster."
+            }
+          }
+        },
+        "ldap": {
+          "groups": ["auth"],
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "host": { "type": "string" },
+            "port": { "type": "integer" },
+            "baseDn": { "type": "string" },
+            "userBaseDn": { "type": "string" },
+            "groupBaseDn": { "type": "string" },
+            "userFilter": { "type": "string" },
+            "bindDn": { "type": "string" }
           }
         }
       }
@@ -1567,12 +1599,6 @@
       "type": "boolean",
       "default": true,
       "description": "If true, runs a development database within the cluster."
-    },
-    "runDevelopmentKeycloakDatabase": {
-      "groups": ["db"],
-      "type": "boolean",
-      "default": true,
-      "description": "If true, runs a development Keycloak database within the cluster."
     },
     "developmentDatabasePersistence": {
       "groups": ["db"],
@@ -1680,6 +1706,12 @@
       "enum": [2, 3],
       "default": 2,
       "description": "Traefik major version for CRD API group. Use 2 for traefik.containo.us/v1alpha1 (Traefik v2) or 3 for traefik.io/v1alpha1 (Traefik v3)."
+    },
+    "ingressClassName": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "traefik",
+      "description": "Ingress class name used for Kubernetes Ingress resources."
     },
     "ingestLimitSeconds": {
       "type": "integer",
@@ -1878,7 +1910,8 @@
         "lapisSilo": { "$ref": "#/definitions/imageSpec" },
         "loculusSilo": { "$ref": "#/definitions/imageSpec" },
         "website": { "$ref": "#/definitions/imageSpec" },
-        "backend": { "$ref": "#/definitions/imageSpec" }
+        "backend": { "$ref": "#/definitions/imageSpec" },
+        "registrationService": { "$ref": "#/definitions/imageSpec" }
       },
       "additionalProperties": false
     },
@@ -1967,7 +2000,9 @@
         "ena-submission": { "$ref": "#/definitions/resourceSpec" },
         "ena-submission-list-cronjob": { "$ref": "#/definitions/resourceSpec" },
         "ingest": { "$ref": "#/definitions/resourceSpec" },
-        "keycloak": { "$ref": "#/definitions/resourceSpec" },
+        "authelia": { "$ref": "#/definitions/resourceSpec" },
+        "lldap": { "$ref": "#/definitions/resourceSpec" },
+        "registration-service": { "$ref": "#/definitions/resourceSpec" },
         "silo": { "$ref": "#/definitions/resourceSpec" },
         "lapis": { "$ref": "#/definitions/resourceSpec" },
         "silo-importer": { "$ref": "#/definitions/resourceSpec" },
@@ -1985,7 +2020,9 @@
                   "$ref": "#/definitions/resourceSpec"
                 },
                 "ingest": { "$ref": "#/definitions/resourceSpec" },
-                "keycloak": { "$ref": "#/definitions/resourceSpec" },
+                "authelia": { "$ref": "#/definitions/resourceSpec" },
+                "lldap": { "$ref": "#/definitions/resourceSpec" },
+                "registration-service": { "$ref": "#/definitions/resourceSpec" },
                 "silo": { "$ref": "#/definitions/resourceSpec" },
                 "lapis": { "$ref": "#/definitions/resourceSpec" },
                 "silo-importer": { "$ref": "#/definitions/resourceSpec" },

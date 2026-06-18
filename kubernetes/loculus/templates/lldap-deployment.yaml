@@ -1,0 +1,135 @@
+{{- if .Values.auth.bundledLdap.enabled }}
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-lldap
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: loculus
+      component: lldap
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: lldap
+    spec:
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
+      initContainers:
+{{- include "loculus.configProcessor" (dict "name" "lldap-bootstrap" "dockerTag" $dockerTag "imagePullPolicy" .Values.imagePullPolicy) | nindent 8 }}
+      containers:
+        - name: lldap
+          image: "lldap/lldap:v0.6.1"
+          {{- include "loculus.resources" (list "lldap" $.Values) | nindent 10 }}
+          env:
+            - name: LLDAP_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: lldap-secrets
+                  key: jwtSecret
+            - name: LLDAP_KEY_SEED
+              valueFrom:
+                secretKeyRef:
+                  name: lldap-secrets
+                  key: keySeed
+            - name: LLDAP_LDAP_USER_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: lldap-secrets
+                  key: adminPassword
+            - name: LLDAP_LDAP_BASE_DN
+              value: "dc=loculus,dc=org"
+            - name: LLDAP_LDAP_USER_DN
+              value: "admin"
+            - name: LLDAP_LDAP_USER_EMAIL
+              value: "admin@loculus.org"
+            - name: LLDAP_HTTP_URL
+              value: "http://loculus-lldap-service:17170"
+            - name: LLDAP_HTTP_HOST
+              value: "0.0.0.0"
+            # Bootstrap script env (consumed by /app/bootstrap.sh)
+            - name: LLDAP_URL
+              value: "http://127.0.0.1:17170"
+            - name: LLDAP_ADMIN_USERNAME
+              value: "admin"
+            - name: LLDAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: lldap-secrets
+                  key: adminPassword
+            - name: USER_CONFIGS_DIR
+              value: "/bootstrap"
+            - name: GROUP_CONFIGS_DIR
+              value: "/bootstrap"
+          ports:
+            - name: ldap
+              containerPort: 3890
+            - name: http
+              containerPort: 17170
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: lldap-bootstrap-processed
+              mountPath: /bootstrap-input
+              readOnly: true
+            - name: bootstrap-work
+              mountPath: /bootstrap
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 17170
+            failureThreshold: 30
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 17170
+            periodSeconds: 30
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - "/bin/sh"
+                  - "-c"
+                  - |
+                    set -e
+                    # Wait for lldap to be ready then run the official
+                    # bootstrap script which handles OPAQUE password setting.
+                    for i in $(seq 1 60); do
+                      if wget -qO- http://127.0.0.1:17170/health >/dev/null 2>&1; then
+                        break
+                      fi
+                      sleep 2
+                    done
+                    # Filter processed user/group json files into the right shape
+                    # for /app/bootstrap.sh.
+                    rm -rf /bootstrap/users /bootstrap/groups
+                    mkdir -p /bootstrap/users /bootstrap/groups
+                    for f in /bootstrap-input/user-*.json; do
+                      [ -e "$f" ] || continue
+                      cp "$f" /bootstrap/users/$(basename "$f")
+                    done
+                    for f in /bootstrap-input/group-*.json; do
+                      [ -e "$f" ] || continue
+                      cp "$f" /bootstrap/groups/$(basename "$f")
+                    done
+                    USER_CONFIGS_DIR=/bootstrap/users GROUP_CONFIGS_DIR=/bootstrap/groups /app/bootstrap.sh > /tmp/bootstrap.log 2>&1 || true
+      volumes:
+        - name: data
+          {{- if .Values.developmentDatabasePersistence }}
+          persistentVolumeClaim:
+            claimName: lldap-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+{{ include "loculus.configVolume" (dict "name" "lldap-bootstrap") | nindent 8 }}
+        - name: bootstrap-work
+          emptyDir: {}
+{{- end }}

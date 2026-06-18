@@ -1,2 +1,0 @@
-<#ftl output_format="plainText">
-${msg("identityProviderLinkBody", identityProviderDisplayName, properties.projectName, identityProviderContext.username, link, linkExpiration, linkExpirationFormatter(linkExpiration))}
