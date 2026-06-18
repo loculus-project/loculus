@@ -8,6 +8,7 @@ from typing import Any
 
 import click
 import orjsonl
+import pandas as pd
 import requests
 import yaml
 from loculus_client import Config, get_submitted
@@ -45,6 +46,7 @@ class SequenceUpdateManager:
     sampled_out: list[JointInsdcAccession]
     hashes: list[float]
     config: Config
+    muted_hashes: dict[LoculusAccession, set[str]]
 
 
 @dataclass
@@ -130,6 +132,15 @@ def process_hashes(
     status = previously_submitted_entry.status
 
     if previously_submitted_entry.hash == newly_ingested_hash:
+        update_manager.noop[metadata_id] = corresponding_loculus_accession
+        return update_manager
+
+    if newly_ingested_hash in update_manager.muted_hashes.get(
+        corresponding_loculus_accession, set()
+    ):
+        logger.info(
+            f"Skipping muted hash {newly_ingested_hash} for accession {corresponding_loculus_accession}"
+        )
         update_manager.noop[metadata_id] = corresponding_loculus_accession
         return update_manager
 
@@ -294,9 +305,19 @@ def get_approved_submitted_accessions(
     return approved
 
 
+def load_muted_hashes_dict(muted_hashes_path: str) -> dict[LoculusAccession, set[str]]:
+    expect_columns = {"accession", "hash_digest"}
+    df = pd.read_csv(muted_hashes_path, sep="\t")
+    if not expect_columns.issubset(df.columns):
+        msg = f"Malformatted muted-hash file {muted_hashes_path}: must contain columns '{expect_columns}'"
+        raise ValueError(msg)
+    return df.groupby("accession")["hash_digest"].agg(set).to_dict()
+
+
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--old-hashes", required=True, type=click.Path(exists=True))
+@click.option("--muted-hashes", required=False, type=click.Path(exists=True))
 @click.option("--metadata", required=True, type=click.Path(exists=True))
 @click.option("--to-submit", required=True, type=click.Path())
 @click.option("--to-revise", required=True, type=click.Path())
@@ -313,6 +334,7 @@ def get_approved_submitted_accessions(
 def main(
     config_file: str,
     old_hashes: str,
+    muted_hashes: str,
     metadata: str,
     to_submit: str,
     to_revise: str,
@@ -338,6 +360,9 @@ def main(
     )
     already_ingested_accessions = get_approved_submitted_accessions(submitted)
     current_ingested_accessions: set[InsdcAccession] = set()
+    muted_hashes_dict: dict[LoculusAccession, set[str]] = (
+        load_muted_hashes_dict(muted_hashes) if muted_hashes else {}
+    )
 
     update_manager = SequenceUpdateManager(
         submit=[],
@@ -348,6 +373,7 @@ def main(
         sampled_out=[],
         hashes=[],
         config=config,
+        muted_hashes=muted_hashes_dict,
     )
 
     for field in orjsonl.stream(metadata):
@@ -361,7 +387,13 @@ def main(
             if sample_out_hashed_records(insdc_accession_base, subsample_fraction):
                 update_manager.sampled_out.append(insdc_accession_base)
                 continue
-            process_hashes(insdc_accession_base, metadata_id, record, submitted, update_manager)
+            process_hashes(
+                insdc_accession_base,
+                metadata_id,
+                record,
+                submitted,
+                update_manager,
+            )
             current_ingested_accessions.add(insdc_accession_base)
             continue
 

@@ -903,6 +903,12 @@
                   },
                   "required": ["method"]
                 },
+                "muted_hashes_url": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "string",
+                  "description": "URL to a TSV file mapping accessions to hashes that should not trigger a revision."
+                },
                 "grouping_override_url": {
                   "groups": ["ingest"],
                   "docsIncludePrefix": false,
