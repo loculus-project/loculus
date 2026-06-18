@@ -8,6 +8,9 @@ import type { DetailsJson } from '../../types/detailsJson';
 import type { SequenceEntryHistoryEntry } from '../../types/lapis';
 import { getAccessionVersionString, extractAccessionVersion } from '../../utils/extractAccessionVersion';
 import { getVersionStatusColor, getVersionStatusLabel } from '../../utils/getVersionStatusColor';
+import { Checkbox } from '../common/Checkbox';
+import ErrorBox from '../common/ErrorBox';
+import { Spinner } from '../common/Spinner';
 
 type VersionsWithDiffProps = {
     versions: SequenceEntryHistoryEntry[];
@@ -63,7 +66,6 @@ export function VersionsWithDiff({ versions, accession }: VersionsWithDiffProps)
         url.searchParams.set('compare', `${v1},${v2}`);
         window.history.pushState({}, '', url.toString());
 
-        // Fetch data
         const fetchAndCompare = async () => {
             setLoading(true);
             setError(null);
@@ -97,9 +99,7 @@ export function VersionsWithDiff({ versions, accession }: VersionsWithDiffProps)
         if (newSelection.has(version)) {
             newSelection.delete(version);
         } else {
-            // Only allow 2 selections
             if (newSelection.size >= 2) {
-                // Remove the oldest selection
                 const oldest = Array.from(newSelection)[0];
                 newSelection.delete(oldest);
             }
@@ -125,11 +125,11 @@ export function VersionsWithDiff({ versions, accession }: VersionsWithDiffProps)
                         <li key={version.version} className='mb-4'>
                             <div className='flex items-start gap-3'>
                                 {showCheckboxes && (
-                                    <input
-                                        type='checkbox'
+                                    <Checkbox
+                                        size='sm'
                                         checked={selectedVersions.has(version.version)}
                                         onChange={() => handleVersionToggle(version.version)}
-                                        className='checkbox mt-1'
+                                        className='mt-1'
                                     />
                                 )}
                                 <div className='flex-1'>
@@ -164,26 +164,21 @@ export function VersionsWithDiff({ versions, accession }: VersionsWithDiffProps)
                         </h2>
                         <label className='flex items-center gap-2 cursor-pointer'>
                             <span className='text-sm'>Show all fields</span>
-                            <input
-                                type='checkbox'
+                            <Checkbox
+                                size='sm'
                                 checked={showAllFields}
                                 onChange={(e) => setShowAllFields(e.target.checked)}
-                                className='toggle toggle-sm'
                             />
                         </label>
                     </div>
 
                     {loading && (
                         <div className='flex justify-center items-center py-8'>
-                            <div className='loading loading-spinner loading-lg'></div>
+                            <Spinner size='lg' label='Loading comparison' />
                         </div>
                     )}
 
-                    {error && (
-                        <div className='alert alert-error'>
-                            <span>{error}</span>
-                        </div>
-                    )}
+                    {error && <ErrorBox title='Failed to load comparison'>{error}</ErrorBox>}
 
                     {!loading && !error && comparisonData && (
                         <DiffTable

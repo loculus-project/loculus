@@ -42,7 +42,7 @@ export function compareVersionData(v1: DetailsJson, v2: DetailsJson): Comparison
                 label: v1Entry.label,
                 header: v1Entry.header,
                 value1: v1Entry.value,
-                value2: '' as string, // Field doesn't exist in v2
+                value2: '', // Field doesn't exist in v2
                 type: v1Entry.type,
                 hasChanged: true,
                 isNoisy: isNoisyField(v1Entry.name),
@@ -88,7 +88,7 @@ export function compareVersionData(v1: DetailsJson, v2: DetailsJson): Comparison
                 name: v2Entry.name,
                 label: v2Entry.label,
                 header: v2Entry.header,
-                value1: '' as string, // Field doesn't exist in v1
+                value1: '', // Field doesn't exist in v1
                 value2: v2Entry.value,
                 type: v2Entry.type,
                 hasChanged: true,
