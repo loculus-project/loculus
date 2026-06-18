@@ -41,7 +41,6 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
             databaseName = "Loculus Database",
             email = "dois@loculus.org",
             organization = "loculus.org",
-            hostUrl = "https://main.loculus.org",
             writeEnabled = writeEnabled,
         ),
         DateProvider(),

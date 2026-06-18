@@ -1282,11 +1282,6 @@
               "type": "string",
               "description": "The organization name for CrossRef"
             },
-            "hostUrl": {
-              "groups": ["general"],
-              "type": "string",
-              "description": "The host URL for CrossRef callbacks"
-            },
             "writeEnabled": {
               "groups": ["general"],
               "type": "boolean",

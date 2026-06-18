@@ -60,7 +60,6 @@ seqSets:
     databaseName: "Loculus Test Database"
     email: "test@loculus.org"
     organization: "Loculus"
-    hostUrl: "https://loculus.org"
     writeEnabled: true
 auth:
   smtp:
