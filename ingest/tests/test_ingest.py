@@ -81,7 +81,7 @@ def compare_ndjson_files(file1, file2):
     return dict1 == dict2
 
 
-def compare_tsv_files(file1, file2):
+def compare_tsv_files(file1, file2):  # noqa: C901
     df1 = pd.read_csv(file1, sep="\t")
     df2 = pd.read_csv(file2, sep="\t")
 
@@ -118,7 +118,7 @@ def run_snakemake(rule, touch=False, config_overrides: dict[str, str] | None = N
     if config_overrides:
         cmd.append("--config")
         cmd.extend(f"{k}={v}" for k, v in config_overrides.items())
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, check=True)  # noqa: S603
 
 
 def read_record_by_id(ndjson_path, submission_id):
@@ -129,7 +129,8 @@ def read_record_by_id(ndjson_path, submission_id):
     for record in orjsonl.stream(str(ndjson_path)):
         if record["id"] == submission_id:
             return record
-    raise AssertionError(f"{submission_id} not found in {ndjson_path}")
+    msg = f"{submission_id} not found in {ndjson_path}"
+    raise AssertionError(msg)
 
 
 def prepare_compare_hashes_inputs(config_overrides: dict[str, str] | None = None):
