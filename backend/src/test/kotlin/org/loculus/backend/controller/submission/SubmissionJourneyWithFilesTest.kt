@@ -71,7 +71,7 @@ class SubmissionJourneyWithFilesTest(
             jwt = jwtForProcessingPipeline,
         ).andGetFileIdsAndUrls()[0]
         val pipelineFileContent = "Hello back!"
-        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, pipelineFileContent)
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, pipelineFileContent, fileIdAndUrl.headers)
         val processedData = unprocessedData.map {
             val processed = PreparedProcessedData.successfullyProcessed(accession = it.accession)
             val fileCategory = it.data.files!!.keys.first()

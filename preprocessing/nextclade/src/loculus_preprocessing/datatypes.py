@@ -225,6 +225,7 @@ class FileUploadInfo:
 
     fileId: str  # noqa: N815
     url: str
+    headers: dict = field(default_factory=dict)
 
 
 class MoleculeType(StrEnum):
