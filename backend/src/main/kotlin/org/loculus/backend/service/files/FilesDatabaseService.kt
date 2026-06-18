@@ -69,17 +69,12 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         chunk.filterNot { it in existingIds }
     }, 1).toSet()
 
-    fun getOrphanedFileIds(threshold: LocalDateTime): Set<FileId> = queryUnreferencedFiles(
-        extraCondition = "",
-        threshold = threshold,
-    )
-
-    fun getMarkedOrphanedFileIds(threshold: LocalDateTime): Set<FileId> = queryUnreferencedFiles(
+    fun getMarkedOrphanedFileIds(threshold: LocalDateTime): Set<FileId> = getOrphanedFileIds(
         extraCondition = "AND f.marked_for_deletion_at IS NOT NULL",
         threshold = threshold,
     )
 
-    private fun queryUnreferencedFiles(extraCondition: String, threshold: LocalDateTime): Set<FileId> {
+    fun getOrphanedFileIds(threshold: LocalDateTime, extraCondition: String = ""): Set<FileId> {
         val sql = """
             -- check for files not referenced by a submission. For this, check the submitted_data,
             -- archive_of_submitted_data and processed_data jsonb objects
@@ -116,7 +111,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         return transaction {
             exec(
                 sql,
-                listOf<Pair<IColumnType<*>, Any?>>(KotlinLocalDateTimeColumnType() to threshold),
+                listOf<Pair<IColumnType<*>, Any?>>(Pair(KotlinLocalDateTimeColumnType(), threshold)),
                 explicitStatementType = StatementType.SELECT,
             ) { rs ->
                 buildSet<FileId> {
