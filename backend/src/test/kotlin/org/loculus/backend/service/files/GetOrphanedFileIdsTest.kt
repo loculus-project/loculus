@@ -62,25 +62,6 @@ class GetOrphanedFileIdsTest(
         assertThat(orphans, `is`(setOf(old)))
     }
 
-    @Suppress("ktlint:standard:max-line-length")
-    @Test
-    fun `GIVEN a file only referenced in archive_of_submitted_data THEN it is orphaned, but submitted_data is protected`() {
-        // Simulate a case where a user edited a submission, replacing `editedAway` with `currentFile`.
-        val editedAway = UUID.randomUUID()
-        val currentFile = UUID.randomUUID()
-        listOf(editedAway, currentFile).forEach { insertFile(it, groupId, daysAgo(10)) }
-        insertSequenceEntry(
-            accession = "A",
-            version = 2,
-            archive = makeUnprocessedData(editedAway),
-            submitted = makeUnprocessedData(currentFile),
-        )
-
-        val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
-
-        assertThat(orphans, `is`(setOf(editedAway)))
-    }
-
     @Test
     fun `GIVEN multiple pipeline versions THEN files from all pipeline versions are protected`() {
         transaction {

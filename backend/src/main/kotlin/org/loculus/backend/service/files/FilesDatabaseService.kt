@@ -54,8 +54,8 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
                 .select(FilesTable.idColumn, FilesTable.multipartUploadId)
                 .where {
                     FilesTable.idColumn inList chunk and
-                        (FilesTable.multipartUploadId neq null) and
-                        (not(FilesTable.multipartCompleted))
+                            (FilesTable.multipartUploadId neq null) and
+                            (not(FilesTable.multipartCompleted))
                 }
                 .map { it[FilesTable.idColumn] to it[FilesTable.multipartUploadId]!! }
         }, 1)
@@ -81,24 +81,31 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
 
     private fun queryUnreferencedFiles(extraCondition: String, params: List<Pair<IColumnType<*>, Any?>>): Set<FileId> {
         val sql = """
-            -- check for files not referenced by a submission. For this, check the submitted_data
-            -- and processed_data jsonb objects (but not archive_of_submitted_data)
+            -- check for files not referenced by a submission. For this, check the submitted_data,
+            -- archive_of_submitted_data and processed_data jsonb objects
             WITH referenced AS (
-              -- fetch ids for files uploaded by users and referenced in submissions
-              SELECT (fil->>'fileId')::uuid AS file_id
-              FROM sequence_entries,
-                 LATERAL jsonb_each(COALESCE(NULLIF(submitted_data->'files', 'null'::jsonb),'{}'::jsonb)) AS cat(k,v),
-                 LATERAL jsonb_array_elements(cat.v) AS fil
-              UNION
-              -- also need to check processed_data since preprocessing
-              -- can create files that are never referenced in submissions
-              SELECT (fil->>'fileId')::uuid AS file_id
-              FROM sequence_entries_preprocessed_data sepd
-              JOIN sequence_entries se
-                  ON se.accession = sepd.accession
-                 AND se.version   = sepd.version,
-                 LATERAL jsonb_each(COALESCE(NULLIF(sepd.processed_data->'files', 'null'::jsonb),'{}'::jsonb)) AS cat(k,v),
-                 LATERAL jsonb_array_elements(cat.v) AS fil
+                -- fetch ids for files uploaded by users and referenced in submissions
+                SELECT (fil->>'fileId')::uuid AS file_id
+                FROM sequence_entries se,
+                    LATERAL (
+                        VALUES
+                        (se.submitted_data),
+                        (se.archive_of_submitted_data)
+                    ) AS src(data),
+                    LATERAL jsonb_each(
+                        COALESCE(NULLIF(src.data->'files', 'null'::jsonb), '{}'::jsonb)
+                    ) AS cat(k, v),
+                    LATERAL jsonb_array_elements(cat.v) AS fil
+                UNION
+                -- also need to check processed_data since preprocessing
+                -- can create files that are never referenced in submissions
+                SELECT (fil->>'fileId')::uuid AS file_id
+                FROM sequence_entries_preprocessed_data sepd
+                JOIN sequence_entries se
+                    ON se.accession = sepd.accession
+                    AND se.version   = sepd.version,
+                    LATERAL jsonb_each(COALESCE(NULLIF(sepd.processed_data->'files', 'null'::jsonb),'{}'::jsonb)) AS cat(k,v),
+                    LATERAL jsonb_array_elements(cat.v) AS fil
             )
             SELECT f.id FROM files f
               LEFT JOIN referenced r ON r.file_id = f.id
