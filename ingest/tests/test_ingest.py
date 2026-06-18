@@ -101,7 +101,7 @@ def compare_tsv_files(file1, file2):
     return df1.sort_index(axis=1).equals(df2.sort_index(axis=1))
 
 
-def run_snakemake(rule, touch=False):
+def run_snakemake(rule, touch=False, config_overrides: dict[str, str] | None = None):
     """
     Function to run Snakemake with the test data.
     """
@@ -115,6 +115,9 @@ def run_snakemake(rule, touch=False):
     ]
     if touch:
         cmd.append("--touch")
+    if config_overrides:
+        cmd.append("--config")
+        cmd.extend(f"{k}={v}" for k, v in config_overrides.items())
     subprocess.run(cmd, check=True)
 
 
@@ -129,28 +132,35 @@ def read_record_by_id(ndjson_path, submission_id):
     raise AssertionError(f"{submission_id} not found in {ndjson_path}")
 
 
-def prepare_compare_hashes_inputs(input_config_dir: str):
+def prepare_compare_hashes_inputs(config_overrides: dict[str, str] | None = None):
     """
     Set up a fresh workspace and run the first steps of the ingest pipeline.
 
     After this, the results directory wil contain previous_submissions.ndjson
     and metadata_post_group.ndjson
+
+    config_overrides can be added used to alter/extend the base config loaded from
+    CONFIG_DIR. This can be used to avoid making different config.yaml files
+    for individual tests
     """
     delete_directory(OUTPUT_DIR)
     copy_files(TEST_DATA_DIR / "test_data_cchf", OUTPUT_DIR)
-    copy_files(TEST_DATA_DIR / input_config_dir, CONFIG_DIR)
-    run_snakemake("fetch_inflate_ncbi_dataset_package", touch=True)
-    run_snakemake("format_ncbi_dataset_sequences", touch=True)  # Ignore sequences for now
-    run_snakemake("get_loculus_depositions", touch=True)  # Do not call_loculus
-    run_snakemake("heuristic_group_segments")
-    run_snakemake("get_previous_submissions", touch=True)  # Do not call_loculus
+    copy_files(TEST_DATA_DIR / "config_cchf", CONFIG_DIR)
+    # Touch the rules that would otherwise hit the network; only group/compare run for real.
+    run_snakemake(
+        "fetch_inflate_ncbi_dataset_package", touch=True, config_overrides=config_overrides
+    )
+    run_snakemake("format_ncbi_dataset_sequences", touch=True, config_overrides=config_overrides)
+    run_snakemake("get_loculus_depositions", touch=True, config_overrides=config_overrides)
+    run_snakemake("heuristic_group_segments", config_overrides=config_overrides)
+    run_snakemake("get_previous_submissions", touch=True, config_overrides=config_overrides)
 
 
 def test_snakemake():
     """
     Test function to run the Snakemake workflow and verify output.
     """
-    prepare_compare_hashes_inputs("config_cchf")
+    prepare_compare_hashes_inputs()
     run_snakemake("compare_hashes")
     run_snakemake("prepare_files")
 
@@ -186,8 +196,9 @@ def test_muted_hashes_prevents_revision():
     """
     target_loculus = "LOC_0000VXA"
     target_submission = "KX096703.1.S"
+    config_overrides = {"muted_hashes_url": "https://some_url.com"}
 
-    prepare_compare_hashes_inputs("config_cchf_muted")
+    prepare_compare_hashes_inputs(config_overrides)
 
     # Get the hash value for KX096703.1.S, then create a tsv to mute it
     record = read_record_by_id(OUTPUT_DIR / "metadata_post_group.ndjson", target_submission)
@@ -196,7 +207,9 @@ def test_muted_hashes_prevents_revision():
         OUTPUT_DIR / "muted_hashes.tsv", sep="\t", index=False
     )
 
-    run_snakemake("compare_hashes")
+    # The tsv is already in place, so fake the download rule instead of curling the dummy URL.
+    run_snakemake("download_muted_hashes", touch=True, config_overrides=config_overrides)
+    run_snakemake("compare_hashes", config_overrides=config_overrides)
 
     to_revise = json.loads((OUTPUT_DIR / "to_revise.json").read_text(encoding="utf-8"))
     unchanged = json.loads((OUTPUT_DIR / "unchanged.json").read_text(encoding="utf-8"))
