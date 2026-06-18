@@ -657,11 +657,11 @@ rule get_previous_submissions:
 
 rule compare_hashes:
     input:
+        **({"muted_hashes": "results/muted_hashes.tsv"} if MUTED_HASHES_URL else {}),
         script="scripts/compare_hashes.py",
         config="results/config.yaml",
         old_hashes="results/previous_submissions.ndjson",
         metadata=prepped_metadata(),
-        **({"muted_hashes": "results/muted_hashes.tsv"} if MUTED_HASHES_URL else {}),
     output:
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
@@ -672,7 +672,9 @@ rule compare_hashes:
     params:
         log_level=LOG_LEVEL,
         subsample_fraction=config.get("subsample_fraction", 1.0),
-        muted_hashes="--muted-hashes results/muted_hashes.tsv" if MUTED_HASHES_URL else "",
+        muted_hashes=(
+            "--muted-hashes results/muted_hashes.tsv" if MUTED_HASHES_URL else ""
+        ),
     shell:
         """
         python {input.script} \
