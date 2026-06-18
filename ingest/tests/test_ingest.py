@@ -208,7 +208,7 @@ def test_muted_hashes_prevents_revision():
         OUTPUT_DIR / "muted_hashes.tsv", sep="\t", index=False
     )
 
-    # The tsv is already in place, so fake the download rule instead of curling the dummy URL.
+    # # The tsv is already in place, so just need to --touch the download rule
     run_snakemake("download_muted_hashes", touch=True, config_overrides=config_overrides)
     run_snakemake("compare_hashes", config_overrides=config_overrides)
 
