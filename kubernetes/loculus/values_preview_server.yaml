@@ -55,7 +55,7 @@ sequenceFlagging:
 seqSets:
   enabled: true
   crossRef:
-    DOIPrefix: "placeholder"
+    DOIPrefix: "10.62599"
     endpoint: "https://test.crossref.org"
     databaseName: "Loculus Test Database"
     email: "test@loculus.org"

@@ -378,6 +378,7 @@ class SeqSetCitationsDatabaseService(
             ),
         )
         crossRefService.postCrossRefXML(crossRefXml)
+        log.info { "Successfully created DOI for seqSet $seqSetId, version $version, user $username" }
 
         return ResponseSeqSet(
             seqSetId,
