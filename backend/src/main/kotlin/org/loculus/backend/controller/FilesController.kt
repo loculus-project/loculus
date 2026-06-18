@@ -128,6 +128,9 @@ class FilesController(
         @Parameter(description = "Number of files, default is 1.")
         @RequestParam
         numberFiles: Int = 1,
+        @Parameter(description = "Whether to return upload URLs signed for the internal S3 endpoint.")
+        @RequestParam
+        useInternalEndpoint: Boolean = false,
     ): List<FileIdAndWriteUrl> {
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
         val response = mutableListOf<FileIdAndWriteUrl>()
@@ -136,7 +139,7 @@ class FilesController(
         }
         repeat(numberFiles) {
             val fileId = generateFileId()
-            val presignedUploadUrl = s3Service.createUrlToUploadPrivateFile(fileId)
+            val presignedUploadUrl = s3Service.createUrlToUploadPrivateFile(fileId, useInternalEndpoint)
             filesDatabaseService.createFileEntry(fileId, authenticatedUser.username, groupId)
             response.add(FileIdAndWriteUrl(fileId, presignedUploadUrl))
         }

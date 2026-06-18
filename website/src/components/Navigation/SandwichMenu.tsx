@@ -29,6 +29,8 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
     activeTopNavigationItem,
 }) => {
     const { isOpen, open: openMenu, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
+    const overviewNavigationItems = topNavigationItems.filter(({ id }) => id === 'overview');
+    const remainingTopNavigationItems = topNavigationItems.filter(({ id }) => id !== 'overview');
 
     useEffect(() => {
         const handler = () => openMenu();
@@ -66,6 +68,15 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
                             />
                         </div>
                         <div className='grow divide-y-2 divide-gray-300 border-y-2 border-gray-300'>
+                            {overviewNavigationItems.map(({ text, path, id }) => (
+                                <OffCanvasNavItem
+                                    key={path}
+                                    text={text}
+                                    level={1}
+                                    path={path}
+                                    isActive={activeTopNavigationItem !== undefined && id === activeTopNavigationItem}
+                                />
+                            ))}
                             <div className='py-3'>
                                 <h3 className='ml-4 mb-3 font-semibold text-gray-700'>Organisms</h3>
                                 <div className='ml-4 space-y-1'>
@@ -99,7 +110,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
                                     ))}
                                 </div>
                             </div>
-                            {topNavigationItems.map(({ text, path, id }) => (
+                            {remainingTopNavigationItems.map(({ text, path, id }) => (
                                 <OffCanvasNavItem
                                     key={path}
                                     text={text}

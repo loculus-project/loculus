@@ -15,6 +15,8 @@ export const approxMaxAcceptableUrlLength = 7400;
 export const routes = {
     apiDocumentationPage: () => '/api-documentation',
     organismStartPage: (organism: string) => `/${organism}`,
+    overviewPage: () => '/overview',
+    viewPage: (viewKey: string) => (viewKey === 'overview' ? routes.overviewPage() : `/views/${viewKey}`),
     searchPage: (organism: string) => withOrganism(organism, `/search`),
     metadataTemplate: (organism: string, format: UploadAction, fileType: TemplateFileType) =>
         withOrganism(organism, `/submission/template?format=${format}&fileType=${fileType}`),

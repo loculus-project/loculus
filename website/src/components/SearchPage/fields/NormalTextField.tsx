@@ -11,7 +11,7 @@ export type NormalFieldProps = {
     onFocus?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     onBlur?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     fieldValue: string | number;
-    type?: 'string' | 'boolean' | 'float' | 'int' | 'authors';
+    type?: 'string' | 'boolean' | 'float' | 'int' | 'number' | 'authors';
 };
 
 export const NormalTextField = forwardRef<HTMLInputElement, NormalFieldProps>((props, ref) => {

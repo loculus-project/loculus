@@ -13,6 +13,7 @@ export const metadataPossibleTypes = z.enum([
     'date',
     'int',
     'float',
+    'number',
     'timestamp',
     'boolean',
     'authors',
@@ -218,6 +219,16 @@ export const instanceConfig = z.object({
 });
 export type InstanceConfig = z.infer<typeof instanceConfig>;
 
+// SQL-backed metadata-only views behave like organisms for the search UI, with
+// their own key and display name.
+export const viewConfig = instanceConfig.extend({
+    key: z.string(),
+    displayName: z.string(),
+});
+export const overviewConfig = viewConfig;
+export type ViewConfig = z.infer<typeof viewConfig>;
+export type OverviewConfig = z.infer<typeof overviewConfig>;
+
 const logoConfig = z.object({
     url: z.string(),
     width: z.number(),
@@ -252,6 +263,9 @@ export type SeqSetGraph = z.infer<typeof seqSetGraph>;
 export const websiteConfig = z.object({
     accessionPrefix: z.string(),
     organisms: z.record(instanceConfig),
+    views: z.record(viewConfig).default({}),
+    // Legacy single overview table configuration.
+    overview: overviewConfig.optional(),
     name: z.string(),
     logo: logoConfig,
     bannerMessage: z.string().optional(),

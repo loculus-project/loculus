@@ -482,7 +482,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 );
             }
             if (field.autocomplete === true) {
-                if (field.type === 'int' || field.type === 'float') {
+                if (field.type === 'int' || field.type === 'float' || field.type === 'number') {
                     return (
                         <SingleChoiceAutoCompleteField
                             field={field}

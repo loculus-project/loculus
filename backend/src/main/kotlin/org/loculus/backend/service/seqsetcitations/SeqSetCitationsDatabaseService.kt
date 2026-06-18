@@ -34,7 +34,7 @@ import org.loculus.backend.api.SeqSetRecord
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.auth.AuthenticatedUser
-import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.controller.UnprocessableEntityException
@@ -59,7 +59,7 @@ data class SeqSetToCitationSourceEntry(val citationSourceId: Long, val seqSetId:
 @Transactional
 class SeqSetCitationsDatabaseService(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
-    private val backendConfig: BackendConfig,
+    private val configService: ConfigService,
     private val crossRefService: CrossRefService,
     private val dateProvider: DateProvider,
     pool: DataSource,
@@ -68,7 +68,8 @@ class SeqSetCitationsDatabaseService(
         Database.connect(pool)
     }
 
-    fun constructSeqsetId(seqsetIdNumber: Long): String = "${backendConfig.accessionPrefix}SS_$seqsetIdNumber"
+    fun constructSeqsetId(seqsetIdNumber: Long): String =
+        "${configService.getInstanceConfig().config.accessionPrefix}SS_$seqsetIdNumber"
 
     fun createSeqSet(
         authenticatedUser: AuthenticatedUser,

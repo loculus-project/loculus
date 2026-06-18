@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
 import org.loculus.backend.auth.Roles.EXTERNAL_METADATA_UPDATER
+import org.loculus.backend.auth.Roles.LOCULUS_ADMINISTRATOR
 import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
 import org.springframework.beans.factory.InitializingBean
@@ -60,6 +61,7 @@ class SecurityConfig {
         "/*/get-released-data",
         "/files/get/**",
         "/groups/*",
+        "/api/config/**",
     )
 
     private val headEndpointsThatArePublic = arrayOf(
@@ -72,6 +74,7 @@ class SecurityConfig {
 
     private val adminEndpoints = arrayOf(
         "/admin/*",
+        "/api/admin/config/**",
     )
 
     @Bean
@@ -87,8 +90,13 @@ class SecurityConfig {
                 "/actuator/**",
                 "/api-docs**",
                 "/api-docs/**",
+                "/api-docs.json/**",
                 "/swagger-ui/**",
+                "/scalar-api-reference",
             ).permitAll()
+            // LAPIS proxy / query API are open (no authentication) for now.
+            auth.requestMatchers(HttpMethod.GET, "/*/lapis/**", "/query/**").permitAll()
+            auth.requestMatchers(HttpMethod.POST, "/*/lapis/**", "/query/**").permitAll()
             auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
@@ -96,9 +104,12 @@ class SecurityConfig {
             auth.requestMatchers(
                 *endpointsForExternalMetadataUpdater,
             ).hasAuthority(EXTERNAL_METADATA_UPDATER)
-            auth.requestMatchers(*adminEndpoints).hasAuthority(SUPER_USER)
+            auth.requestMatchers(*adminEndpoints).hasAuthority(LOCULUS_ADMINISTRATOR)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
+        }
+        .csrf { csrf ->
+            csrf.ignoringRequestMatchers("/*/lapis/**", "/query/**")
         }
         .oauth2ResourceServer { oauth2 ->
             oauth2.jwt { jwt ->

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { configuredOrganismsFromConfig, validateWebsiteConfig } from './config.ts';
+import { configuredOrganismsFromConfig, configuredViewsFromConfig, validateWebsiteConfig } from './config.ts';
 import type { WebsiteConfig } from './types/config.ts';
 import { SINGLE_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA } from './types/referenceGenomes.spec.ts';
 
@@ -14,6 +14,7 @@ const defaultConfig: WebsiteConfig = {
     logo: { url: '', width: 0, height: 0 },
     name: '',
     organisms: {},
+    views: {},
     dateFieldForGroupGraph: null,
     readOnlyMode: false,
 };
@@ -79,5 +80,33 @@ describe('configuredOrganismsFromConfig', () => {
         });
 
         expect(organisms.map((organism) => organism.key)).toEqual(['andes', 'zika']);
+    });
+});
+
+describe('configuredViewsFromConfig', () => {
+    it('uses the view display name', () => {
+        const realOrganismsKey = 'real-organisms';
+        const views = configuredViewsFromConfig({
+            ...defaultConfig,
+            views: {
+                [realOrganismsKey]: {
+                    key: realOrganismsKey,
+                    displayName: 'Real organisms',
+                    schema: {
+                        organismName: 'Internal schema name',
+                        inputFields: [],
+                        tableColumns: [],
+                        primaryKey: '',
+                        metadata: [],
+                        defaultOrderBy: '',
+                        defaultOrder: 'ascending',
+                        submissionDataTypes: { consensusSequences: false },
+                    },
+                    referenceGenomes: [],
+                },
+            },
+        });
+
+        expect(views).toEqual([{ key: 'real-organisms', displayName: 'Real organisms', image: undefined }]);
     });
 });

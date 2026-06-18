@@ -30,7 +30,10 @@ jobs:
       - name: Generate files hash
         id: prepare
         run: |
-          DIR_HASH=$(echo -n ${{ hashFiles('website/**', '.github/workflows/website-image.yml') }})
+          # config-tools/src/schema/ is the source of truth for the canonical Zod
+          # schemas; website re-exports them. Changes there must invalidate the
+          # website image cache too.
+          DIR_HASH=$(echo -n ${{ hashFiles('website/**', 'config-tools/src/schema/**', '.github/workflows/website-image.yml') }})
           echo "dir-hash=$DIR_HASH" >> $GITHUB_OUTPUT
           echo "sha-short=${sha::7}" >> $GITHUB_OUTPUT
       - name: Login to GitHub Container Registry
@@ -89,6 +92,12 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: ./website
+          # The website re-exports canonical Zod schemas from `config-tools/`,
+          # which lives outside its build context. Bring it in as a named build
+          # context so `../../../config-tools/...` relative imports resolve at
+          # build time (the Dockerfile does `COPY --from=config-tools .`).
+          build-contexts: |
+            config-tools=./config-tools
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=website-${{ github.ref }}-${{ env.PLATFORM_PAIR }}

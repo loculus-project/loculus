@@ -6,7 +6,10 @@ secrets:
       preprocessingPipelinePassword: "preprocessing_pipeline"
       externalMetadataUpdaterPassword: "external_metadata_updater"
       backendUserPassword: "backend"
+      configLoaderUserPassword: "config_loader_user"
 createTestAccounts: true
+seedPreviewData:
+  enabled: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
 disableEnaSubmission: true

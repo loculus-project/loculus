@@ -24,16 +24,26 @@ All commands mentioned in this section are run from the `backend` directory unle
    postgres:latest
    ```
 
-2. Start the backend (including test config):
+2. Start the backend once to run Flyway migrations:
 
    ```sh
-   ../generate_local_test_config.sh
    ./start_dev.sh
    ```
 
-The service listens, by default, to **port 8079**: <http://localhost:8079/swagger-ui/index.html>. The test config will be written to `loculus/website/tests/config`.
+   Stop it again after startup has completed.
 
-3. Clean up the database when done:
+3. Import the preview organisms and restart the backend:
+
+   ```sh
+   ../generate_local_test_config.sh
+   ./import_local_test_config.py
+   ./start_dev.sh
+   ```
+
+The service listens, by default, to **port 8079**: <http://localhost:8079/swagger-ui/index.html>. The test config will be written to `loculus/website/tests/config`; `import_local_test_config.py` imports the generated preview organisms into the DB-backed config tables and merges website-facing schema fields from the generated website config.
+The importer uses a local `psql` binary when available, then falls back to the k3d/Helm database via `kubectl`, the `loculus_postgres` container created above, or a temporary Docker PostgreSQL client against the exposed host port.
+
+4. Clean up the database when done:
 
    ```sh
    docker stop loculus_postgres
@@ -54,10 +64,11 @@ You need to set:
 --spring.datasource.password=unsecure
 ```
 
-- the path to the config file (use `../generate_local_test_config.sh` to generate this file):
+- the technical backend URLs:
 
 ```sh
---loculus.config.path=../website/tests/config/backend_config.json
+--loculus.backend.website-url=http://localhost:3000
+--loculus.backend.backend-url=http://localhost:8079
 ```
 
 - the url to fetch the public key for JWT verification

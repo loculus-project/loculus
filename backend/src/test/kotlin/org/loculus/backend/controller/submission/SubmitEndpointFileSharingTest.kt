@@ -5,12 +5,12 @@ import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.config.fixtures.ConfigFixtures
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.S3_CONFIG
+import org.loculus.backend.controller.S3_VARIANT
 import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.files.andGetFileIds
 import org.loculus.backend.controller.files.andGetFileIdsAndUrls
@@ -27,16 +27,20 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.*
 
-@EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
-)
+@EndpointTest
 class SubmitEndpointFileSharingTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val filesClient: FilesClient,
-    @Autowired val backendConfig: BackendConfig,
+    @Autowired val configService: ConfigService,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
+    @Autowired private val configFixtures: ConfigFixtures,
 ) {
+
+    @BeforeEach
+    fun loadS3Fixture() {
+        configFixtures.loadVariant(S3_VARIANT)
+    }
     var groupId: Int = 0
 
     @BeforeEach
@@ -62,7 +66,9 @@ class SubmitEndpointFileSharingTest(
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
-            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(
+                jsonPath("\$[0].accession", containsString(configService.getInstanceConfig().config.accessionPrefix)),
+            )
             .andExpect(jsonPath("\$[0].version").value(1))
     }
 

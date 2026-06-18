@@ -22,19 +22,29 @@ const websiteConfig = getWebsiteConfig();
 const siteName = websiteConfig.name;
 
 const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
+const userRoles = Astro.locals.session?.roles ?? [];
 
 const loginUrl = await getAuthUrl(Astro.url.toString());
 
-const topNavigationItems = navigationItems.top(isLoggedIn, loginUrl);
+const topNavigationItems = navigationItems.top(isLoggedIn, loginUrl, userRoles);
+const overviewNavigationItems = topNavigationItems.filter(({ id }) => id === 'overview');
+const remainingTopNavigationItems = topNavigationItems.filter(({ id }) => id !== 'overview');
 const accessionPrefix = getWebsiteConfig().accessionPrefix;
 ---
 
 <div class='flex justify-end relative'>
     <div class='subtitle hidden lg:flex lg:z-6 items-center gap-5'>
         <div class='flex items-end gap-1'>
+            {
+                overviewNavigationItems.map(({ text, path, id }) => (
+                    <NavigationTab as='a' href={path} isActive={id === activeTopNavigationItem}>
+                        {text}
+                    </NavigationTab>
+                ))
+            }
             <OrganismNavigation currentOrganism={selectedOrganism} knownOrganisms={knownOrganisms} client:load />
             {
-                topNavigationItems.map(({ text, path, id }) => {
+                remainingTopNavigationItems.map(({ text, path, id }) => {
                     const itemIsActive =
                         activeTopNavigationItem !== undefined
                             ? id === activeTopNavigationItem || (id === undefined && activeTopNavigationItem === path)

@@ -4,8 +4,10 @@ kind: ConfigMap
 metadata:
   name: loculus-website-config
 data:
-  website_config.json: |
-    {{ include "loculus.generateWebsiteConfig" . | fromYaml | toJson }}
+  # Domain config (organisms, schemas, reference genomes, metadata, branding,
+  # linkOuts, dataUseTerms) is fetched per-request from the backend (DB-backed)
+  # via the website's configMiddleware — it is no longer baked in here. Only the
+  # technical runtime_config.json (service URLs, Keycloak, secrets) remains.
   runtime_config.json: |
     {
         "name" : "{{ $.Values.name }}",
@@ -19,7 +21,6 @@ data:
             {{- else -}}
             "backendUrl": "http://loculus-backend-service:8079",
             {{- end }}
-            "lapisUrls": {{- include "loculus.generateInternalLapisUrls" . | fromYaml | toJson }},
             "keycloakUrl": "{{ if not .Values.disableWebsite -}}http://loculus-keycloak-service:8083{{ else -}}http://{{ $.Values.localHost }}:8083{{ end }}"
             {{- end }}
         },

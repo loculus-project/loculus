@@ -68,6 +68,10 @@ secrets:
 
 ### Configuring file submission
 
+:::note[Where this config now lives]
+Enabling S3 (above) is a deployment setting and stays in `values.yaml`. The **file categories** shown below are part of an organism's `schema`, which is now stored in the [database-backed configuration system](../configuration-system/) — edit it through the admin dashboard (or the `kubernetes/loculus/fixtures/` files seeded by the config loader), not in `values.yaml`. The YAML shape shown here is still correct; only its location has changed.
+:::
+
 Users can submit files along with sequence metadata and sequences (or also instead of sequences).
 For this, you need to enable the `files` submission type, and configure at least one file category that users can submit:
 

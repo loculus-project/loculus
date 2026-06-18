@@ -17,9 +17,12 @@ SILO_RUN_TIMEOUT_SECONDS = 99
 
 def test_config_from_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     backend_url = "http://example.com/base"
-    lineage_json = '{"test": {"1": "http://example.com/lineage.yaml"}}'
+    # The config-adapter writes this file from the DB instance config; the
+    # silo-importer reads it and downloads the actual lineage definitions itself.
+    lineage_file = tmp_path / "lineage_definitions.json"
+    lineage_file.write_text('{"test": {"1": "http://example.com/lineage.yaml"}}', encoding="utf-8")
     monkeypatch.setenv("BACKEND_BASE_URL", backend_url)
-    monkeypatch.setenv("LINEAGE_DEFINITIONS", lineage_json)
+    monkeypatch.setenv("LINEAGE_DEFINITIONS_FILE", str(lineage_file))
     monkeypatch.setenv("HARD_REFRESH_INTERVAL", str(HARD_REFRESH_INTERVAL))
     monkeypatch.setenv("SILO_IMPORT_POLL_INTERVAL_SECONDS", str(SILO_IMPORT_POLL_INTERVAL_SECONDS))
     monkeypatch.setenv("SILO_RUN_TIMEOUT_SECONDS", str(SILO_RUN_TIMEOUT_SECONDS))
@@ -35,6 +38,35 @@ def test_config_from_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     assert config.silo_run_timeout == SILO_RUN_TIMEOUT_SECONDS
     assert config.root_dir == tmp_path
     assert config.hierarchical_filters is None
+
+
+def test_config_lineage_definitions_absent_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com/base")
+    monkeypatch.setenv("LINEAGE_DEFINITIONS_FILE", str(tmp_path / "missing.json"))
+    assert ImporterConfig.from_env().lineage_definitions is None
+
+
+def test_config_lineage_definitions_empty_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    lineage_file = tmp_path / "lineage_definitions.json"
+    lineage_file.write_text("{}", encoding="utf-8")
+    monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com/base")
+    monkeypatch.setenv("LINEAGE_DEFINITIONS_FILE", str(lineage_file))
+    assert ImporterConfig.from_env().lineage_definitions is None
+
+
+def test_config_lineage_definitions_invalid_json(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    lineage_file = tmp_path / "lineage_definitions.json"
+    lineage_file.write_text("{not json", encoding="utf-8")
+    monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com/base")
+    monkeypatch.setenv("LINEAGE_DEFINITIONS_FILE", str(lineage_file))
+    with pytest.raises(RuntimeError):
+        ImporterConfig.from_env()
 
 
 def test_config_missing_backend_env(monkeypatch: pytest.MonkeyPatch) -> None:

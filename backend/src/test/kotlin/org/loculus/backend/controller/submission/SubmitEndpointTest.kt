@@ -16,7 +16,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.Organism
-import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
@@ -49,7 +49,7 @@ import kotlin.time.Clock
 class SubmitEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
-    @Autowired val backendConfig: BackendConfig,
+    @Autowired val configService: ConfigService,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
 ) {
     var groupId: Int = 0
@@ -137,7 +137,9 @@ class SubmitEndpointTest(
             .andExpect(content().contentType(APPLICATION_JSON))
             .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
-            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(
+                jsonPath("\$[0].accession", containsString(configService.getInstanceConfig().config.accessionPrefix)),
+            )
             .andExpect(jsonPath("\$[0].version").value(1))
     }
 
@@ -153,7 +155,9 @@ class SubmitEndpointTest(
             .andExpect(content().contentType(APPLICATION_JSON))
             .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
-            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(
+                jsonPath("\$[0].accession", containsString(configService.getInstanceConfig().config.accessionPrefix)),
+            )
             .andExpect(jsonPath("\$[0].version").value(1))
     }
 
@@ -256,7 +260,9 @@ class SubmitEndpointTest(
             .andExpect(content().contentType(APPLICATION_JSON))
             .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
-            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(
+                jsonPath("\$[0].accession", containsString(configService.getInstanceConfig().config.accessionPrefix)),
+            )
             .andExpect(jsonPath("\$[0].version").value(1))
     }
 
@@ -574,7 +580,9 @@ class SubmitEndpointTest(
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(2))
             .andExpect(jsonPath("\$[0].submissionId").value("header1"))
-            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(
+                jsonPath("\$[0].accession", containsString(configService.getInstanceConfig().config.accessionPrefix)),
+            )
             .andExpect(jsonPath("\$[0].version").value(1))
 
         val unalignedNucleotideSequences = convenienceClient.extractUnprocessedData()[0]
@@ -613,7 +621,9 @@ class SubmitEndpointTest(
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(2))
             .andExpect(jsonPath("\$[0].submissionId").value("header1"))
-            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(
+                jsonPath("\$[0].accession", containsString(configService.getInstanceConfig().config.accessionPrefix)),
+            )
             .andExpect(jsonPath("\$[0].version").value(1))
 
         val unalignedNucleotideSequences = convenienceClient.extractUnprocessedData(organism = OTHER_ORGANISM)[0]
@@ -650,7 +660,9 @@ class SubmitEndpointTest(
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(2))
             .andExpect(jsonPath("\$[0].submissionId").value("header1"))
-            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(
+                jsonPath("\$[0].accession", containsString(configService.getInstanceConfig().config.accessionPrefix)),
+            )
             .andExpect(jsonPath("\$[0].version").value(1))
 
         val unalignedNucleotideSequences = convenienceClient.extractUnprocessedData(organism = OTHER_ORGANISM)[0]

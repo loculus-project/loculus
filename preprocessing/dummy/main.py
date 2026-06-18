@@ -55,6 +55,16 @@ parser.add_argument(
     help="Path to Keycloak token endpoint",
 )
 parser.add_argument("--pipeline-version", type=int, default=1)
+parser.add_argument(
+    "--organism",
+    type=str,
+    default=None,
+    help=(
+        "Organism key this pipeline instance processes. The dummy pipeline does not "
+        "use it (it reads no per-organism config), but the deployment passes it "
+        "unconditionally to every pipeline, so we accept and ignore it."
+    ),
+)
 
 args = parser.parse_args()
 backendHost = args.backend_host

@@ -1,0 +1,106 @@
+---
+import { JsonViewer } from '../../../../../components/admin/JsonViewer';
+import { getRuntimeConfig } from '../../../../../config';
+import AdminConfigLayout from '../../../../../layouts/AdminConfigLayout.astro';
+import { AdminConfigError, getAdminConfigClient } from '../../../../../services/adminConfigClient';
+import { ConfigFetchError, fetchOrganismConfig } from '../../../../../services/configClient';
+import type { CanonicalOrganismResponse, OrganismDraftResponse } from '../../../../../types/loculusConfig';
+
+const key = Astro.params.key!;
+const session = Astro.locals.session!;
+const client = await getAdminConfigClient(session);
+const backendUrl = getRuntimeConfig().serverSide.backendUrl;
+
+let loadError: string | null = null;
+let status: 'released' | 'unreleased' | null = null;
+let published: CanonicalOrganismResponse | null = null;
+let draft: OrganismDraftResponse | null = null;
+
+try {
+    const list = await client.listOrganisms();
+    const found = list.organisms.find((o) => o.key === key);
+    if (found === undefined) {
+        return Astro.redirect('/admin/config/organisms');
+    }
+    status = found.status;
+
+    if (status === 'released') {
+        try {
+            published = await fetchOrganismConfig(backendUrl, key);
+        } catch (e) {
+            loadError = e instanceof ConfigFetchError ? e.message : String(e);
+        }
+    }
+    try {
+        draft = await client.getOrganismDraft(key);
+    } catch (e) {
+        loadError = AdminConfigError.isInstance(e) ? (e.body.message ?? e.body.error) : String(e);
+    }
+} catch (e) {
+    loadError = AdminConfigError.isInstance(e) ? (e.body.message ?? e.body.error) : String(e);
+}
+---
+
+<AdminConfigLayout title={`JSON · ${key}`}>
+    <p class='mb-4 text-sm text-gray-600'>
+        Read-only view of the organism configuration. Use <code class='font-mono'>Copy</code> to copy the JSON to the clipboard.
+        To edit, go to{' '}
+        {
+            status === 'released' ? (
+                <a
+                    class='text-primary-700 hover:underline'
+                    href={`/admin/config/organisms/${encodeURIComponent(key)}/edit`}
+                >
+                    operations editor
+                </a>
+            ) : (
+                <a
+                    class='text-primary-700 hover:underline'
+                    href={`/admin/config/organisms/${encodeURIComponent(key)}/draft`}
+                >
+                    draft editor
+                </a>
+            )
+        }
+        .
+    </p>
+
+    {loadError !== null && <p class='text-red-600 mb-4'>Failed to load: {loadError}</p>}
+
+    <div class='space-y-4'>
+        {
+            published !== null && (
+                <JsonViewer
+                    title='Published config'
+                    subtitle={`version ${published.version} · published ${published.publishedAt}`}
+                    value={published.config}
+                    client:load
+                />
+            )
+        }
+        {
+            draft !== null && (
+                <JsonViewer
+                    title='Draft config'
+                    subtitle={`revision ${draft.revision}${draft.baseVersion !== null ? ` · based on v${draft.baseVersion}` : ''}`}
+                    value={draft.config}
+                    client:load
+                />
+            )
+        }
+        {
+            published === null && draft === null && loadError === null && (
+                <p class='italic text-gray-500'>
+                    This organism has no published version and no draft yet. Create the first draft in the{' '}
+                    <a
+                        class='text-primary-700 hover:underline'
+                        href={`/admin/config/organisms/${encodeURIComponent(key)}/draft`}
+                    >
+                        draft editor
+                    </a>
+                    .
+                </p>
+            )
+        }
+    </div>
+</AdminConfigLayout>

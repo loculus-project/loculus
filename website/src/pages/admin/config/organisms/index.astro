@@ -1,0 +1,199 @@
+---
+import { CreateOrganismDialog } from '../../../../components/admin/CreateOrganismDialog';
+import { MarkOrganismDeployedButton } from '../../../../components/admin/MarkOrganismDeployedButton';
+import { getRuntimeConfig } from '../../../../config';
+import AdminConfigLayout from '../../../../layouts/AdminConfigLayout.astro';
+import { getAdminConfigClient, AdminConfigError } from '../../../../services/adminConfigClient';
+import { fetchOrganismsList } from '../../../../services/configClient';
+
+const session = Astro.locals.session!;
+const client = await getAdminConfigClient(session);
+const runtime = getRuntimeConfig();
+const publicBackendUrl = runtime.public.backendUrl;
+
+interface Row {
+    key: string;
+    status: 'released' | 'unreleased';
+    currentVersion: number | null;
+    deployed: boolean;
+    displayName: string | null;
+    pendingOps: number;
+}
+
+let rows: Row[] = [];
+let loadError: string | null = null;
+try {
+    const adminList = await client.listOrganisms();
+
+    // The public list only contains released organisms; unreleased ones don't
+    // appear there. Use it as the source of displayName for released orgs.
+    let publicByKey = new Map<string, string>();
+    try {
+        const publicList = await fetchOrganismsList(runtime.serverSide.backendUrl);
+        publicByKey = new Map(publicList.organisms.map((o) => [o.key, o.displayName]));
+    } catch {
+        // Non-fatal: fall back to key as the visible name.
+    }
+
+    // Detect a "pending draft" per organism by fetching the draft endpoint in
+    // parallel. 204 → no draft; 200 → draft (may or may not have ops).
+    const drafts = await Promise.all(
+        adminList.organisms.map(async (o) => {
+            try {
+                const d = await client.getOrganismDraft(o.key);
+                return {
+                    key: o.key,
+                    pendingOps: d?.operations.length ?? 0,
+                    displayName: d?.config.displayName ?? null,
+                };
+            } catch {
+                return { key: o.key, pendingOps: 0, displayName: null };
+            }
+        }),
+    );
+    const draftByKey = new Map(drafts.map((d) => [d.key, d]));
+
+    rows = adminList.organisms.map((o) => {
+        const d = draftByKey.get(o.key);
+        const displayName = d?.displayName ?? publicByKey.get(o.key) ?? null;
+        return {
+            key: o.key,
+            status: o.status,
+            currentVersion: o.currentVersion,
+            deployed: o.deployed,
+            displayName,
+            pendingOps: d?.pendingOps ?? 0,
+        };
+    });
+} catch (e) {
+    loadError = AdminConfigError.isInstance(e) ? (e.body.message ?? e.body.error) : String(e);
+}
+---
+
+<AdminConfigLayout title='Organisms'>
+    {loadError !== null && <p class='text-red-600 mb-4'>Failed to load organisms: {loadError}</p>}
+
+    <table class='w-full text-sm border-collapse mb-8'>
+        <thead>
+            <tr class='border-b border-gray-200 text-left'>
+                <th class='py-2 pr-4 font-semibold'>Organism</th>
+                <th class='py-2 pr-4 font-semibold'>Status</th>
+                <th class='py-2 pr-4 font-semibold'>Deployment</th>
+                <th class='py-2 pr-4 font-semibold'>Current version</th>
+                <th class='py-2 pr-4 font-semibold'>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {
+                rows.map((r) => (
+                    <tr class='border-b border-gray-100 align-top'>
+                        <td class='py-2 pr-4'>
+                            <div class='font-mono text-xs text-gray-700'>{r.key}</div>
+                            {r.displayName !== null && r.displayName !== r.key && (
+                                <div class='text-sm font-semibold text-gray-900'>{r.displayName}</div>
+                            )}
+                        </td>
+                        <td class='py-2 pr-4'>
+                            <span
+                                class:list={[
+                                    'inline-block rounded px-2 py-0.5 text-xs',
+                                    r.status === 'released'
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-gray-100 text-gray-700',
+                                ]}
+                            >
+                                {r.status}
+                            </span>
+                            {r.status === 'released' && r.pendingOps > 0 && (
+                                <span
+                                    class='ml-1 inline-block rounded px-2 py-0.5 text-xs bg-amber-100 text-amber-800'
+                                    title='This organism has unpublished pending changes'
+                                >
+                                    {r.pendingOps} pending
+                                </span>
+                            )}
+                        </td>
+                        <td class='py-2 pr-4'>
+                            {r.status === 'released' ? (
+                                r.deployed ? (
+                                    <span class='inline-block rounded px-2 py-0.5 text-xs bg-green-100 text-green-800'>
+                                        deployed
+                                    </span>
+                                ) : (
+                                    <div class='space-y-1'>
+                                        <span
+                                            class='inline-block rounded px-2 py-0.5 text-xs bg-amber-100 text-amber-800'
+                                            title='Hidden from public organism lists until SILO/LAPIS are deployed'
+                                        >
+                                            not deployed
+                                        </span>
+                                        <p class='text-xs text-gray-600 max-w-xs'>
+                                            Hidden from the public website until SILO/LAPIS are deployed and marked
+                                            ready.
+                                        </p>
+                                    </div>
+                                )
+                            ) : (
+                                <span class='text-gray-400'>—</span>
+                            )}
+                        </td>
+                        <td class='py-2 pr-4'>{r.currentVersion ?? '—'}</td>
+                        <td class='py-2 pr-4 space-x-3'>
+                            {r.status === 'unreleased' ? (
+                                <a
+                                    class='text-primary-700 hover:underline'
+                                    href={`/admin/config/organisms/${encodeURIComponent(r.key)}/draft`}
+                                >
+                                    Edit draft
+                                </a>
+                            ) : (
+                                <a
+                                    class='text-primary-700 hover:underline'
+                                    href={`/admin/config/organisms/${encodeURIComponent(r.key)}/edit`}
+                                >
+                                    Edit
+                                </a>
+                            )}
+                            <a
+                                class='text-gray-700 hover:underline'
+                                href={`/admin/config/organisms/${encodeURIComponent(r.key)}/json`}
+                            >
+                                View JSON
+                            </a>
+                            <a
+                                class='text-gray-700 hover:underline'
+                                href={`/admin/config/organisms/${encodeURIComponent(r.key)}/history`}
+                            >
+                                History
+                            </a>
+                            {r.status === 'released' && !r.deployed && (
+                                <MarkOrganismDeployedButton
+                                    accessToken={session.token!.accessToken}
+                                    backendUrl={publicBackendUrl}
+                                    organismKey={r.key}
+                                    client:load
+                                />
+                            )}
+                        </td>
+                    </tr>
+                ))
+            }
+            {
+                rows.length === 0 && loadError === null && (
+                    <tr>
+                        <td class='py-4 text-gray-500 italic' colspan='5'>
+                            No organisms yet. Create one below.
+                        </td>
+                    </tr>
+                )
+            }
+        </tbody>
+    </table>
+
+    <CreateOrganismDialog
+        accessToken={session.token!.accessToken}
+        backendUrl={publicBackendUrl}
+        releasedOrganismKeys={rows.filter((r) => r.status === 'released' && r.deployed).map((r) => r.key)}
+        client:load
+    />
+</AdminConfigLayout>

@@ -1,0 +1,145 @@
+{{- /*
+  loculus-config-loader: Job that POSTs the fixture YAMLs in
+  `kubernetes/loculus/fixtures/` to the Loculus admin config API.
+
+  By default this runs as a post-install/post-upgrade Helm hook. Argo-managed
+  preview deployments set `runConfigLoaderAsArgoJob=true`, which renders the
+  same workload as a normal replaceable Job so previews load the bundled
+  instance, organism, and preprocessing config by default.
+
+  Skipped when `disableBackend=true` (the `--dev` flow). In that mode the
+  backend runs in the developer's IDE on the host and is typically not yet
+  reachable when the Helm post-install hook fires. Run the loader CLI
+  manually from the host once the IDE backend is up — see the
+  "Local development instance" docs for the exact command.
+
+  Mode: `fresh-only` (Phase-2-7 resolution + Phase-3-prep-4) — fails fast if
+  any organism already exists, so reruns over an existing cluster won't
+  publish phantom new versions. Operators who explicitly want to overwrite
+  the in-cluster state should run the loader CLI manually with `--mode
+  republish` (once that mode is fully implemented).
+
+  Token acquisition is inline: the Job's main container runs a short shell
+  script that uses Keycloak's password grant on the `config_loader_user`
+  service account (autogen secret `service-accounts.configLoaderUserPassword`)
+  to obtain an access token, writes it to /tmp/token, then invokes the loader
+  CLI with `--admin-token-file`.
+*/}}
+{{- if not .Values.disableBackend }}
+{{- $backendHost := .Values.disableBackend | ternary
+    "http://host.k3d.internal:8079"
+    "http://loculus-backend-service:8079"
+}}
+{{- $testconfig := .Values.testconfig | default false }}
+{{- $keycloakHost := $testconfig | ternary (printf "http://%s:8083" $.Values.localHost) "http://loculus-keycloak-service:8083" }}
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- $loaderImage := printf "%s:%s" .Values.images.configLoader.repository (.Values.images.configLoader.tag | default $dockerTag) }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: loculus-config-loader
+  annotations:
+{{- if .Values.runConfigLoaderAsArgoJob }}
+    "argocd.argoproj.io/sync-options": "Force=true,Replace=true"
+    "argocd.argoproj.io/sync-wave": "0"
+{{- else }}
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+{{- end }}
+spec:
+  backoffLimit: 6
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: loculus-config-loader
+    spec:
+      restartPolicy: Never
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
+      containers:
+        - name: config-loader
+          image: {{ $loaderImage | quote }}
+          imagePullPolicy: {{ .Values.images.configLoader.pullPolicy | default .Values.imagePullPolicy }}
+          env:
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: configLoaderUserPassword
+            - name: BACKEND_URL
+              value: {{ $backendHost | quote }}
+            - name: KEYCLOAK_URL
+              value: {{ $keycloakHost | quote }}
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              # 1. Wait for Keycloak and the backend to be reachable. The Job is
+              # a Helm post-install hook so its own start time isn't gated on
+              # other pods being ready; in a fresh cluster Keycloak may still
+              # be booting when we run. Retry for up to ~5 minutes.
+              # Up to 120 attempts × 5s = 10 minutes per URL. Keycloak's cold
+              # start on a fresh cluster can take well over 5 minutes,
+              # especially when init containers (config-processor,
+              # theme-prep) plus realm import all run on first boot.
+              wait_for_url() {
+                local url="$1"
+                local label="$2"
+                local attempt=0
+                while [ "$attempt" -lt 120 ]; do
+                  if wget --spider --quiet --timeout=3 "$url"; then
+                    echo "$label reachable at $url"
+                    return 0
+                  fi
+                  attempt=$((attempt + 1))
+                  echo "Waiting for $label at $url (attempt $attempt/120)..."
+                  sleep 5
+                done
+                echo "$label not reachable after 120 attempts; aborting." >&2
+                return 1
+              }
+              wait_for_url "$KEYCLOAK_URL/realms/loculus/.well-known/openid-configuration" "Keycloak" || exit 1
+              wait_for_url "$BACKEND_URL/actuator/health" "Backend" || exit 1
+
+              # 2. Fetch a loculus_administrator access token from Keycloak.
+              TOKEN_FILE=/tmp/loader-token
+              echo "Fetching access token from $KEYCLOAK_URL..."
+              ACCESS_TOKEN=$(wget -qO- --post-data="grant_type=password&client_id=backend-client&username=config_loader_user&password=$KEYCLOAK_PASSWORD" \
+                "$KEYCLOAK_URL/realms/loculus/protocol/openid-connect/token" \
+                | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+              if [ -z "$ACCESS_TOKEN" ]; then
+                echo "Failed to obtain access token; aborting." >&2
+                exit 2
+              fi
+              printf '%s' "$ACCESS_TOKEN" > "$TOKEN_FILE"
+              # 3. Run the loader in fresh-only mode.
+              exec npx tsx /app/src/loader/cli.ts \
+                --backend-url "$BACKEND_URL" \
+                --fixtures /etc/fixtures \
+                --admin-token-file "$TOKEN_FILE" \
+                --mode fresh-only
+          volumeMounts:
+            - name: fixtures
+              mountPath: /etc/fixtures
+              readOnly: true
+      volumes:
+        - name: fixtures
+          projected:
+            sources:
+              - configMap:
+                  name: loculus-config-loader-fixtures
+                  items:
+                    - key: instance.yaml
+                      path: instance.yaml
+{{- range $path, $_ := .Files.Glob "fixtures/organisms/*.yaml" }}
+                    - key: {{ base $path | quote }}
+                      path: organisms/{{ base $path }}
+{{- end }}
+{{- range $path, $_ := .Files.Glob "fixtures/preprocessing/*/*" }}
+                    - key: {{ printf "preprocessing__%s__%s" (base (dir $path)) (base $path) | quote }}
+                      path: preprocessing/{{ base (dir $path) }}/{{ base $path }}
+{{- end }}
+{{- end }}

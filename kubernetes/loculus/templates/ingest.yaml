@@ -115,13 +115,12 @@ spec:
             "args" (list "snakemake" "results/submitted" "results/revised" "--all-temp")
           ) | nindent 8 }}
 {{/*
-PostSync-hook trigger: kicks off a one-off ingest Job from the CronJob's
-template after argocd reports the sync as healthy. PostSync waits for
-all resources (e.g. backend, ena-submission) to be Healthy before firing,
-so the spawned ingest pod doesn't start hammering services that aren't
-ready yet. The trigger itself exits in seconds; the spawned ingest Job
-runs untracked by argocd. Concurrency with a scheduled CronJob run is
-handled by the shared lock init container in the spawned pod.
+One-off ingest trigger: kicks off a bootstrap ingest Job from the CronJob's
+template after the backend and config are ready. Argo uses PostSync so it
+fires after the app is Healthy; Helm uses a post-install hook ordered after
+preview seed data. The trigger itself exits in seconds; the spawned ingest
+Job runs untracked by the deploy tool. Concurrency with a scheduled CronJob
+run is handled by the shared lock init container in the spawned pod.
 */}}
 ---
 apiVersion: batch/v1
@@ -129,8 +128,14 @@ kind: Job
 metadata:
   name: loculus-ingest-trigger-{{ $key }}
   annotations:
+{{- if $.Values.runConfigLoaderAsArgoJob }}
     argocd.argoproj.io/hook: PostSync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+{{- else }}
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-weight": "30"
+    "helm.sh/hook-delete-policy": "before-hook-creation,hook-succeeded"
+{{- end }}
 spec:
   activeDeadlineSeconds: 600
   backoffLimit: 0

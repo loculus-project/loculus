@@ -257,6 +257,180 @@ ALTER TABLE public.compression_dictionaries ALTER COLUMN id ADD GENERATED ALWAYS
 
 
 --
+-- Name: config_audit_log; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.config_audit_log (
+    id bigint NOT NULL,
+    occurred_at timestamp without time zone DEFAULT now() NOT NULL,
+    actor text NOT NULL,
+    scope text NOT NULL,
+    organism_key text,
+    action text NOT NULL,
+    details jsonb,
+    result_version bigint
+);
+
+
+ALTER TABLE public.config_audit_log OWNER TO postgres;
+
+--
+-- Name: config_audit_log_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.config_audit_log_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.config_audit_log_id_seq OWNER TO postgres;
+
+--
+-- Name: config_audit_log_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.config_audit_log_id_seq OWNED BY public.config_audit_log.id;
+
+
+--
+-- Name: config_instance_draft; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.config_instance_draft (
+    singleton boolean DEFAULT true NOT NULL,
+    config jsonb NOT NULL,
+    base_version bigint,
+    revision bigint DEFAULT 0 NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    created_by text NOT NULL,
+    updated_by text NOT NULL,
+    CONSTRAINT config_instance_draft_singleton_check CHECK (singleton)
+);
+
+
+ALTER TABLE public.config_instance_draft OWNER TO postgres;
+
+--
+-- Name: config_instance_state; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.config_instance_state (
+    singleton boolean DEFAULT true NOT NULL,
+    current_version bigint,
+    CONSTRAINT config_instance_state_singleton_check CHECK (singleton)
+);
+
+
+ALTER TABLE public.config_instance_state OWNER TO postgres;
+
+--
+-- Name: config_instance_versions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.config_instance_versions (
+    version bigint NOT NULL,
+    config jsonb NOT NULL,
+    published_at timestamp without time zone DEFAULT now() NOT NULL,
+    published_by text NOT NULL
+);
+
+
+ALTER TABLE public.config_instance_versions OWNER TO postgres;
+
+--
+-- Name: config_instance_versions_version_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.config_instance_versions_version_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.config_instance_versions_version_seq OWNER TO postgres;
+
+--
+-- Name: config_instance_versions_version_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.config_instance_versions_version_seq OWNED BY public.config_instance_versions.version;
+
+
+--
+-- Name: config_organism_drafts; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.config_organism_drafts (
+    organism_key text NOT NULL,
+    config jsonb NOT NULL,
+    base_version bigint,
+    revision bigint DEFAULT 0 NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    created_by text NOT NULL,
+    updated_by text NOT NULL
+);
+
+
+ALTER TABLE public.config_organism_drafts OWNER TO postgres;
+
+--
+-- Name: config_organism_versions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.config_organism_versions (
+    organism_key text NOT NULL,
+    version bigint NOT NULL,
+    config jsonb NOT NULL,
+    published_at timestamp without time zone DEFAULT now() NOT NULL,
+    published_by text NOT NULL
+);
+
+
+ALTER TABLE public.config_organism_versions OWNER TO postgres;
+
+--
+-- Name: config_organisms; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.config_organisms (
+    key text NOT NULL,
+    status text NOT NULL,
+    current_version bigint,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    created_by text NOT NULL,
+    first_published_at timestamp without time zone,
+    last_published_at timestamp without time zone,
+    deployed boolean DEFAULT true NOT NULL,
+    CONSTRAINT config_organisms_check CHECK (((status = 'unreleased'::text) = (current_version IS NULL))),
+    CONSTRAINT config_organisms_status_check CHECK ((status = ANY (ARRAY['unreleased'::text, 'released'::text])))
+);
+
+
+ALTER TABLE public.config_organisms OWNER TO postgres;
+
+--
+-- Name: config_preprocessing_files; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.config_preprocessing_files (
+    organism_key text NOT NULL,
+    pipeline_version bigint NOT NULL,
+    config_file text NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_by text NOT NULL
+);
+
+
+ALTER TABLE public.config_preprocessing_files OWNER TO postgres;
+
+--
 -- Name: current_processing_pipeline; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -718,6 +892,20 @@ ALTER TABLE ONLY public.audit_log ALTER COLUMN id SET DEFAULT nextval('public.au
 
 
 --
+-- Name: config_audit_log id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_audit_log ALTER COLUMN id SET DEFAULT nextval('public.config_audit_log_id_seq'::regclass);
+
+
+--
+-- Name: config_instance_versions version; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_instance_versions ALTER COLUMN version SET DEFAULT nextval('public.config_instance_versions_version_seq'::regclass);
+
+
+--
 -- Name: groups_table group_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -774,6 +962,70 @@ ALTER TABLE ONLY public.compression_dictionaries
 
 ALTER TABLE ONLY public.compression_dictionaries
     ADD CONSTRAINT compression_dictionaries_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: config_audit_log config_audit_log_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_audit_log
+    ADD CONSTRAINT config_audit_log_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: config_instance_draft config_instance_draft_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_instance_draft
+    ADD CONSTRAINT config_instance_draft_pkey PRIMARY KEY (singleton);
+
+
+--
+-- Name: config_instance_state config_instance_state_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_instance_state
+    ADD CONSTRAINT config_instance_state_pkey PRIMARY KEY (singleton);
+
+
+--
+-- Name: config_instance_versions config_instance_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_instance_versions
+    ADD CONSTRAINT config_instance_versions_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: config_organism_drafts config_organism_drafts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_organism_drafts
+    ADD CONSTRAINT config_organism_drafts_pkey PRIMARY KEY (organism_key);
+
+
+--
+-- Name: config_organism_versions config_organism_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_organism_versions
+    ADD CONSTRAINT config_organism_versions_pkey PRIMARY KEY (organism_key, version);
+
+
+--
+-- Name: config_organisms config_organisms_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_organisms
+    ADD CONSTRAINT config_organisms_pkey PRIMARY KEY (key);
+
+
+--
+-- Name: config_preprocessing_files config_preprocessing_files_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_preprocessing_files
+    ADD CONSTRAINT config_preprocessing_files_pkey PRIMARY KEY (organism_key, pipeline_version);
 
 
 --
@@ -943,6 +1195,20 @@ CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING b
 
 
 --
+-- Name: ix_config_audit_log_actor_time; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_config_audit_log_actor_time ON public.config_audit_log USING btree (actor, occurred_at DESC);
+
+
+--
+-- Name: ix_config_audit_log_organism_time; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_config_audit_log_organism_time ON public.config_audit_log USING btree (organism_key, occurred_at DESC);
+
+
+--
 -- Name: sequence_entries_organism_covering_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1101,6 +1367,62 @@ CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.sequence_entrie
 --
 
 CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.sequence_entries_preprocessed_data REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_preprocessed_data_tracker();
+
+
+--
+-- Name: config_instance_draft config_instance_draft_base_version_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_instance_draft
+    ADD CONSTRAINT config_instance_draft_base_version_fkey FOREIGN KEY (base_version) REFERENCES public.config_instance_versions(version);
+
+
+--
+-- Name: config_instance_state config_instance_state_current_version_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_instance_state
+    ADD CONSTRAINT config_instance_state_current_version_fkey FOREIGN KEY (current_version) REFERENCES public.config_instance_versions(version);
+
+
+--
+-- Name: config_organism_drafts config_organism_drafts_organism_key_base_version_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_organism_drafts
+    ADD CONSTRAINT config_organism_drafts_organism_key_base_version_fkey FOREIGN KEY (organism_key, base_version) REFERENCES public.config_organism_versions(organism_key, version);
+
+
+--
+-- Name: config_organism_drafts config_organism_drafts_organism_key_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_organism_drafts
+    ADD CONSTRAINT config_organism_drafts_organism_key_fkey FOREIGN KEY (organism_key) REFERENCES public.config_organisms(key) ON DELETE CASCADE;
+
+
+--
+-- Name: config_organism_versions config_organism_versions_organism_key_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_organism_versions
+    ADD CONSTRAINT config_organism_versions_organism_key_fkey FOREIGN KEY (organism_key) REFERENCES public.config_organisms(key);
+
+
+--
+-- Name: config_organisms config_organisms_current_version_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_organisms
+    ADD CONSTRAINT config_organisms_current_version_fk FOREIGN KEY (key, current_version) REFERENCES public.config_organism_versions(organism_key, version) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: config_preprocessing_files config_preprocessing_files_organism_key_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.config_preprocessing_files
+    ADD CONSTRAINT config_preprocessing_files_organism_key_fkey FOREIGN KEY (organism_key) REFERENCES public.config_organisms(key) ON DELETE CASCADE;
 
 
 --

@@ -1,0 +1,60 @@
+---
+import { SearchFullUI } from '../../components/SearchPage/SearchFullUI';
+import {
+    getContactConfig,
+    getOverviewConfig,
+    getOverviewReferenceGenomes,
+    getOverviewSchema,
+    getRuntimeConfig,
+    getWebsiteConfig,
+    overviewIsEnabled,
+} from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { parseUrlSearchParams } from '../../utils/parseUrlSearchParams';
+import { performLapisSearchQueries } from '../../utils/serversideSearch';
+
+if (!overviewIsEnabled()) {
+    return Astro.rewrite('/404');
+}
+
+// The overview is metadata-only. Current/all-version filtering is applied by
+// the backend query proxy when the overview schema exposes versionStatus.
+const hiddenFieldValues = {};
+
+const overview = getOverviewConfig();
+const clientConfig = getRuntimeConfig().public;
+const schema = getOverviewSchema();
+const referenceGenomesInfo = getOverviewReferenceGenomes();
+const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
+const { data, totalCount } = await performLapisSearchQueries(
+    initialQueryDict,
+    schema,
+    referenceGenomesInfo,
+    hiddenFieldValues,
+    overview.key,
+);
+
+const websiteConfig = getWebsiteConfig();
+const contactConfig = getContactConfig(websiteConfig);
+---
+
+<BaseLayout title={`${overview.displayName} - Browse`} fullWidth withoutMargin>
+    <SearchFullUI
+        client:load
+        clientConfig={clientConfig}
+        organism={overview.key}
+        schema={schema}
+        myGroups={[]}
+        accessToken={undefined}
+        referenceGenomesInfo={referenceGenomesInfo}
+        hiddenFieldValues={hiddenFieldValues}
+        initialData={data}
+        initialCount={totalCount}
+        initialQueryDict={initialQueryDict}
+        dataUseTermsEnabled={false}
+        contactConfig={contactConfig}
+        isReleasedPage={false}
+        enableSequencePreview={false}
+        showRecentSequencesBanner={false}
+    />
+</BaseLayout>

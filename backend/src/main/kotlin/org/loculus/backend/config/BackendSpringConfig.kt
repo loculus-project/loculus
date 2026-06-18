@@ -1,22 +1,20 @@
 package org.loculus.backend.config
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.headers.Header
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
+import io.swagger.v3.oas.models.tags.Tag
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.DatabaseConfig
 import org.jetbrains.exposed.sql.Slf4jSqlDebugLogger
-import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.controller.LoculusCustomHeaders
+import org.loculus.backend.controller.QueryController
 import org.loculus.backend.log.REQUEST_ID_HEADER_DESCRIPTION
-import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
-import org.loculus.backend.utils.DateProvider
+import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
@@ -26,14 +24,14 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.CommonsRequestLoggingFilter
-import java.io.File
 import javax.sql.DataSource
 
 object BackendSpringProperty {
-    const val BACKEND_CONFIG_PATH = "loculus.config.path"
     const val STALE_AFTER_SECONDS = "loculus.cleanup.task.reset-stale-in-processing-after-seconds"
     const val CLEAN_UP_RUN_EVERY_SECONDS = "loculus.cleanup.task.run-every-seconds"
     const val PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS =
@@ -53,6 +51,30 @@ object BackendSpringProperty {
 
 const val DEBUG_MODE_ON_VALUE = "true"
 const val ENABLE_SEQSETS_TRUE_VALUE = "true"
+const val LAPIS_PROXY_CONTROLLER_TAG = "lapis-proxy-controller"
+
+private const val LAPIS_PROXY_CONTROLLER_DESCRIPTION =
+    "This is temporary and used for calls that have not yet switched to using the new query API."
+
+fun updateLapisProxyOpenApiTags(openApi: OpenAPI) {
+    val operationTagNames = openApi.paths.orEmpty().values
+        .flatMap { it.readOperations() }
+        .flatMap { it.tags.orEmpty() }
+        .distinct()
+    val tagsByName = linkedMapOf<String, Tag>()
+    openApi.tags.orEmpty()
+        .filter { it.name in operationTagNames }
+        .forEach { tag -> tagsByName[tag.name] = tag }
+    operationTagNames.forEach { tagName -> tagsByName.putIfAbsent(tagName, Tag().name(tagName)) }
+    tagsByName[LAPIS_PROXY_CONTROLLER_TAG] = tagsByName[LAPIS_PROXY_CONTROLLER_TAG]
+        ?: Tag().name(LAPIS_PROXY_CONTROLLER_TAG)
+    tagsByName[LAPIS_PROXY_CONTROLLER_TAG]?.description(LAPIS_PROXY_CONTROLLER_DESCRIPTION)
+    openApi.tags = orderOpenApiTags(tagsByName.values)
+}
+
+private fun orderOpenApiTags(tags: Collection<Tag>) = tags
+    .filter { it.name.isNotBlank() }
+    .sortedWith(compareBy<Tag> { it.name == LAPIS_PROXY_CONTROLLER_TAG }.thenBy { it.name })
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -83,13 +105,7 @@ class BackendSpringConfig {
     }
 
     @Bean
-    fun backendConfig(
-        objectMapper: ObjectMapper,
-        @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
-    ): BackendConfig = readBackendConfig(objectMapper, configPath)
-
-    @Bean
-    fun openApi(backendConfig: BackendConfig) = buildOpenApiSchema(backendConfig)
+    fun openApi() = buildOpenApiSchema()
 
     @Bean
     fun s3Config(
@@ -139,6 +155,121 @@ class BackendSpringConfig {
         }
         operation
     }
+
+    @Bean
+    @Order(Ordered.LOWEST_PRECEDENCE)
+    fun lapisProxyTagCustomizer() = OpenApiCustomizer { openApi -> updateLapisProxyOpenApiTags(openApi) }
+
+    @Bean
+    fun queryControllerOpenApiCustomizer(configService: ConfigService) =
+        OperationCustomizer { operation, handlerMethod ->
+            if (handlerMethod.beanType != QueryController::class.java) {
+                return@OperationCustomizer operation
+            }
+
+            val organismKeys = runCatching { configService.listReleasedOrganisms().map { it.key } }
+                .getOrDefault(emptyList())
+            val endpointDocs = queryEndpointDocs(handlerMethod.method.name)
+            operation.tags = listOf("Query")
+            operation.summary = endpointDocs?.summary ?: operation.summary
+            operation.description = endpointDocs?.description ?: operation.description
+            operation.parameters?.forEach { parameter ->
+                when (parameter.name) {
+                    "organism" -> {
+                        parameter.description = "Organism key configured for this instance."
+                        parameter.example = organismKeys.firstOrNull()
+                        parameter.schema = StringSchema()._enum(organismKeys)
+                    }
+
+                    "versionGroup" -> {
+                        parameter.description = "Use current for latest versions or allVersions for version history."
+                        parameter.example = "current"
+                        parameter.schema = StringSchema()._enum(listOf("current", "allVersions"))
+                    }
+
+                    "segment" -> parameter.description = "Sequence segment name as configured in LAPIS."
+
+                    "referenceName" -> parameter.description = "Nucleotide reference name as configured in LAPIS."
+
+                    "geneName" -> parameter.description = "Gene name as configured in LAPIS."
+                }
+            }
+            operation
+        }
+
+    private companion object {
+        data class QueryEndpointDocs(val summary: String, val description: String)
+
+        fun queryEndpointDocs(methodName: String) =
+            QUERY_ENDPOINT_DOCS[methodName] ?: methodName.removeSuffix("Get").let { QUERY_ENDPOINT_DOCS[it] }
+
+        val QUERY_ENDPOINT_DOCS = mapOf(
+            "metadata" to QueryEndpointDocs(
+                "Query metadata",
+                "Return metadata rows for released sequence entries.",
+            ),
+            "aggregated" to QueryEndpointDocs(
+                "Aggregate metadata",
+                "Return aggregated metadata counts for released sequence entries.",
+            ),
+            "sequences" to QueryEndpointDocs(
+                "Query unaligned nucleotide sequences",
+                "Return unaligned nucleotide sequences for released sequence entries.",
+            ),
+            "sequencesForSegment" to QueryEndpointDocs(
+                "Query unaligned nucleotide sequences by segment",
+                "Return unaligned nucleotide sequences for one segment of released sequence entries.",
+            ),
+            "sequencesAligned" to QueryEndpointDocs(
+                "Query aligned nucleotide sequences",
+                "Return aligned nucleotide sequences for released sequence entries.",
+            ),
+            "sequencesAlignedMutations" to QueryEndpointDocs(
+                "Query nucleotide mutations",
+                "Return nucleotide mutation records for released sequence entries.",
+            ),
+            "sequencesAlignedInsertions" to QueryEndpointDocs(
+                "Query nucleotide insertions",
+                "Return nucleotide insertion records for released sequence entries.",
+            ),
+            "sequencesAlignedAggregatedMutations" to QueryEndpointDocs(
+                "Aggregate nucleotide mutations",
+                "Return aggregated nucleotide mutations for released sequence entries.",
+            ),
+            "sequencesAlignedForSegment" to QueryEndpointDocs(
+                "Query aligned nucleotide sequences by reference",
+                "Return aligned nucleotide sequences for one reference of released sequence entries.",
+            ),
+            "sequencesAlignedForSegmentMutations" to QueryEndpointDocs(
+                "Query nucleotide mutations by reference",
+                "Return nucleotide mutation records for one reference.",
+            ),
+            "sequencesAlignedForSegmentAggregatedMutations" to QueryEndpointDocs(
+                "Aggregate nucleotide mutations by reference",
+                "Return aggregated nucleotide mutations for one reference.",
+            ),
+            "translations" to QueryEndpointDocs(
+                "Query aligned amino acid sequences",
+                "Return aligned amino acid sequences for one gene.",
+            ),
+            "translationsMutations" to QueryEndpointDocs(
+                "Query amino acid mutations",
+                "Return amino acid mutation records for released sequence entries.",
+            ),
+            "translationsInsertions" to QueryEndpointDocs(
+                "Query amino acid insertions",
+                "Return amino acid insertion records for released sequence entries.",
+            ),
+            "translationsForGeneMutations" to QueryEndpointDocs(
+                "Query amino acid mutations by gene",
+                "Return amino acid mutation records for one gene.",
+            ),
+            "translationsForGeneAggregatedMutations" to QueryEndpointDocs(
+                "Aggregate amino acid mutations by gene",
+                "Return aggregated amino acid mutations for one gene.",
+            ),
+        )
+    }
 }
 
 @Component
@@ -146,8 +277,6 @@ class BackendSpringConfig {
 class FlywayInit(
     // get Flyway from the Spring autoconfiguration so that Java based migrations can use Spring beans
     private val flyway: Flyway,
-    private val backendConfig: BackendConfig,
-    private val dateProvider: DateProvider,
     private val dataSource: DataSource,
 ) : InitializingBean {
     override fun afterPropertiesSet() {
@@ -155,60 +284,6 @@ class FlywayInit(
 
         flyway.migrate()
 
-        // Since migration V1.10 we need to initialize the CurrentProcessingPipelineTable
-        // in code, because the configured organisms are not known in the SQL table definitions.
-        logger.info("Initializing CurrentProcessingPipelineTable")
-        transaction {
-            val insertedRows = CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
-                backendConfig.organisms.keys,
-                dateProvider.getCurrentDateTime(),
-            )
-            logger.info("$insertedRows inserted.")
-        }
+        logger.info("Flyway migration complete")
     }
-}
-
-/**
- * Check whether configured metadata fields for earliestReleaseDate are actually fields and are of type date.
- * Returns a non-empty list of errors if validation errors were found.
- */
-internal fun validateEarliestReleaseDateFields(config: BackendConfig): List<String> {
-    val errors = mutableListOf<String>()
-    config.organisms.values.forEach {
-        val organism = it.schema.organismName
-        val allFields = it.schema.metadata.map { it.name }.toSet()
-        val dateFields = it.schema.metadata.filter { it.type == MetadataType.DATE }.map { it.name }.toSet()
-        it.schema.earliestReleaseDate.externalFields.forEach {
-            if (!allFields.contains(it)) {
-                errors.add(
-                    "Error on organism $organism in earliestReleaseDate.externalFields: " +
-                        "Field $it does not exist.",
-                )
-            } else {
-                if (!dateFields.contains(it)) {
-                    errors.add(
-                        "Error on organism $organism in earliestReleaseDate.externalFields: " +
-                            "Field $it is not of type ${MetadataType.DATE}.",
-                    )
-                }
-            }
-        }
-    }
-    return errors
-}
-
-fun readBackendConfig(objectMapper: ObjectMapper, configPath: String): BackendConfig {
-    val config = objectMapper
-        .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
-        .readValue<BackendConfig>(File(configPath))
-    logger.info { "Loaded backend config from $configPath" }
-    logger.info { "Config: $config" }
-    val validationErrors = validateEarliestReleaseDateFields(config)
-    if (validationErrors.isNotEmpty()) {
-        throw IllegalArgumentException(
-            "The configuration file at $configPath is invalid: " +
-                validationErrors.joinToString(" "),
-        )
-    }
-    return config
 }

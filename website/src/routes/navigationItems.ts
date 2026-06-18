@@ -3,7 +3,7 @@ import type { ComponentType } from 'react';
 import { bottomNavigationItems } from './bottomNavigationItems.ts';
 import { extraStaticTopNavigationItems } from './extraTopNavigationItems.js';
 import { routes } from './routes.ts';
-import { getWebsiteConfig } from '../config.ts';
+import { getOverviewConfig, getWebsiteConfig, overviewIsEnabled } from '../config.ts';
 import UploadIcon from '~icons/material-symbols/upload';
 import SearchIcon from '~icons/tabler/list-search';
 
@@ -60,6 +60,20 @@ function getSeqSetsItems() {
     ];
 }
 
+function getOverviewItems() {
+    if (!overviewIsEnabled()) {
+        return [];
+    }
+    return [
+        {
+            id: 'overview',
+            text: getOverviewConfig().displayName,
+            path: routes.overviewPage(),
+            icon: SearchIcon,
+        },
+    ];
+}
+
 function getAccountItems(isLoggedIn: boolean, loginUrl: string) {
     if (!getWebsiteConfig().enableLoginNavigationItem || getWebsiteConfig().readOnlyMode) {
         return [];
@@ -79,9 +93,18 @@ function getAccountItems(isLoggedIn: boolean, loginUrl: string) {
     return [accountItem];
 }
 
-function topNavigationItems(isLoggedIn: boolean, loginUrl: string) {
+function getAdminItems(roles: string[]) {
+    if (!roles.includes('loculus_administrator')) {
+        return [];
+    }
+    return [{ id: 'admin', text: 'Admin', path: '/admin/config' }];
+}
+
+function topNavigationItems(isLoggedIn: boolean, loginUrl: string, roles: string[] = []) {
+    const overviewItems = getOverviewItems();
     const seqSetsItems = getSeqSetsItems();
     const accountItems = getAccountItems(isLoggedIn, loginUrl);
+    const adminItems = getAdminItems(roles);
 
-    return [...seqSetsItems, ...extraStaticTopNavigationItems, ...accountItems];
+    return [...overviewItems, ...seqSetsItems, ...extraStaticTopNavigationItems, ...accountItems, ...adminItems];
 }

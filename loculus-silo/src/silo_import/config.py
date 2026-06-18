@@ -29,27 +29,9 @@ class ImporterConfig:
             msg = "BACKEND_BASE_URL environment variable is required"
             raise RuntimeError(msg)
 
-        lineage_definitions_raw = env.get("LINEAGE_DEFINITIONS")
-        lineage_definitions: dict[str, dict[int, str]] | None = None
-        if lineage_definitions_raw:
-            try:  # noqa: PLW0717
-                data = json.loads(lineage_definitions_raw)
-                lineage_definitions = {}
-                for key, value in data.items():
-                    if isinstance(value, dict):
-                        lineage_definitions[key] = {int(k): v for k, v in value.items()}
-                    else:
-                        msg = (
-                            f"Each item in LINEAGE_DEFINITIONS must be a dictionary, "
-                            f"received: {lineage_definitions_raw}"
-                        )
-                        raise TypeError(msg)
-
-            except json.JSONDecodeError as exc:
-                msg = "LINEAGE_DEFINITIONS must be valid JSON"
-                raise RuntimeError(msg) from exc
-            except TypeError as exc:
-                raise RuntimeError(str(exc)) from exc
+        lineage_definitions = cls._load_lineage_definitions(
+            env.get("LINEAGE_DEFINITIONS_FILE", "/app/lineage_definitions.json")
+        )
 
         hierarchical_filters = _parse_hierarchical_filters(env.get("HIERARCHICAL_FILTERS"))
 
@@ -74,6 +56,33 @@ class ImporterConfig:
             preprocessing_config=preprocessing_config,
             hierarchical_filters=hierarchical_filters,
         )
+
+    @staticmethod
+    def _load_lineage_definitions(path: str) -> dict[str, dict[int, str]] | None:
+        """Read the lineage-definition URL map (system -> pipeline version -> URL)
+        that the config-adapter wrote from the DB instance config. The adapter
+        always writes the file (possibly `{}`); a missing or empty file means no
+        lineage systems for this organism.
+        """
+        if not path or not os.path.exists(path):
+            return None
+        raw = Path(path).read_text(encoding="utf-8").strip()
+        if not raw:
+            return None
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            msg = f"{path} must be valid JSON"
+            raise RuntimeError(msg) from exc
+        if not data:
+            return None
+        lineage_definitions: dict[str, dict[int, str]] = {}
+        for key, value in data.items():
+            if not isinstance(value, dict):
+                msg = f"Each entry in {path} must map version -> URL; got {value!r}"
+                raise TypeError(msg)
+            lineage_definitions[key] = {int(k): v for k, v in value.items()}
+        return lineage_definitions
 
     @property
     def released_data_endpoint(self) -> str:

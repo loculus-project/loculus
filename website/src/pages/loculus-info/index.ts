@@ -19,7 +19,9 @@ export const GET: APIRoute = async ({ request }) => {
     const response = {
         hosts: {
             backend: runtime.public.backendUrl,
-            lapis: runtime.public.lapisUrls,
+            lapis: Object.fromEntries(
+                Object.keys(website.organisms).map((org) => [org, `${runtime.public.backendUrl}/${org}/lapis`]),
+            ),
             keycloak: keycloakUrl,
             website: new URL(request.url).origin,
         },

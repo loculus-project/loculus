@@ -61,6 +61,15 @@ export default defineConfig({
                     items: [
                         { label: 'Getting started', link: '/for-administrators/getting-started/' },
                         { label: 'My first Loculus', link: '/for-administrators/my-first-loculus/' },
+                        { label: 'Local development instance', link: '/for-administrators/local-dev-instance/' },
+                        {
+                            label: 'Configuration',
+                            items: [
+                                'for-administrators/configuration-system',
+                                'for-administrators/managing-configuration',
+                                'for-administrators/rolling-out-organism-config',
+                            ],
+                        },
                         { label: 'Setup with k3d and nginx', link: '/for-administrators/setup-with-k3d-and-nginx/' },
                         { label: 'Setup with Kubernetes', link: '/for-administrators/setup-with-kubernetes/' },
                         { label: 'Schema designs', link: '/for-administrators/schema-designs/' },
@@ -70,6 +79,7 @@ export default defineConfig({
                                 'for-administrators/pipeline-concept',
                                 'for-administrators/existing-preprocessing-pipelines',
                                 'for-administrators/build-new-preprocessing-pipeline',
+                                'for-administrators/configure-pipeline-admin-panel',
                             ],
                         },
                         { label: 'Configuring extra files', link: '/for-administrators/configuring-extra-files/' },

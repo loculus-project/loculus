@@ -6,6 +6,10 @@ Before submitted user data is available for review and release, it is first proc
 
 Using an [existing pipeline](../existing-preprocessing-pipelines/) is the fastest way to get started with Loculus, but it is also easy to develop new pipelines that use custom tooling and logic. For a very brief guide on how to build a new pipeline, please see [here](../build-new-preprocessing-pipeline/).
 
+:::note[Pipelines are external and customizable]
+A preprocessing pipeline is a separate program that talks to the Loculus backend; Loculus does not prescribe how you configure or run it. Loculus _optionally_ offers a place to store a pipeline's config file (per organism and pipeline version), editable in the admin panel — see [Configuring pipelines in the admin panel](../configure-pipeline-admin-panel/). Using it is not mandatory: you can run and configure your pipeline however you like.
+:::
+
 ## Tasks
 
 The preprocessing pipeline receives the user submitted data and then validates and enriches this data.
@@ -23,6 +27,6 @@ While the exact functionality depends on the specific pipeline, generally a pipe
 
 ## Pipeline versions
 
-As the preprocessing logic might change over time, preprocessing pipelines are versioned (You specify the pipeline version under `<organismConfig>.preprocessing.version`).
+As the preprocessing logic might change over time, preprocessing pipelines are versioned. Each running pipeline declares which version it is via the `--pipeline-version` argument (in our Helm chart this comes from `preprocessing[].version` in `values.yaml`). Several versions can run in parallel — for example while migrating to a new version.
 The backend keeps track of which sequences have successfully been processed with which pipeline version.
 Once all data for an organism has successfully been processed with a new version, that version will also automatically be served to users.

@@ -5,6 +5,10 @@ Components include: website, backend, deployment, preprocessing, ingest, deposit
 
 Write detailed PR summaries, not just short bullet points. When creating PRs, you should generally create them as a draft PR. If you have access to https://github.com/loculus-project/agent_store/ you can upload screenshots (which you might take using `playwright-cli` there to be able to use in PR descriptions, and maybe issue descriptions).
 
+## Markdown formatting
+
+When writing or editing Markdown files, keep each paragraph on a single line — do not insert manual line breaks (hard wraps) within a paragraph. Readers use editors with soft line wrapping. Hard-wrapping is only acceptable where the syntax requires a new line (list items, table rows, headings, code blocks, etc.).
+
 ## Preventing flaky Playwright tests (website)
 
 When adding or modifying interactive components in the website, ensure they are disabled until React hydration completes to prevent race conditions in Playwright tests:
@@ -19,4 +23,3 @@ These wrappers automatically disable components until client-side hydration is c
 
 Conda dependencies in `environment.yml` files are not automatically updated by dependabot.
 The `maintenance-scripts/` folder contains utilities to help update conda environment versions.
-
