@@ -202,7 +202,7 @@ def test_muted_hashes_prevents_revision():
     unchanged = json.loads((OUTPUT_DIR / "unchanged.json").read_text(encoding="utf-8"))
 
     assert target_submission not in to_revise, (
-        f"{target_submission} should not be revised when hash B is in muted_hashes.tsv"
+        f"{target_submission} should not be revised when hash_to_mute is in muted_hashes.tsv"
     )
     assert unchanged.get(target_submission) == target_loculus, (
         f"{target_submission} should be recorded as unchanged -> {target_loculus}"

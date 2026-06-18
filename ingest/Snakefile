@@ -530,7 +530,7 @@ if MUTED_HASHES_URL:
             url=MUTED_HASHES_URL,
         shell:
             """
-            curl --fail --silent --show-error --retry 3 -L -o {output.results} {params.url}
+            curl --fail --silent --show-error --retry 3 -L -o {output.results} "{params.url}"
             """
 
 

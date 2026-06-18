@@ -115,7 +115,7 @@ def process_hashes(
     metadata_id: SubmissionId,
     new_metadata: dict[str, Any],
     submitted: dict[InsdcAccession, LatestLoculusVersion],
-    muted_hashes: dict[str, set[str]],
+    muted_hashes: dict[LoculusAccession, set[str]],
     update_manager: SequenceUpdateManager,
 ):
     """
@@ -136,6 +136,9 @@ def process_hashes(
         return update_manager
 
     if newly_ingested_hash in muted_hashes.get(corresponding_loculus_accession, set()):
+        logger.info(
+            f"Skipping muted hash {newly_ingested_hash} for accession {corresponding_loculus_accession}"
+        )
         update_manager.noop[metadata_id] = corresponding_loculus_accession
         return update_manager
 
@@ -300,7 +303,7 @@ def get_approved_submitted_accessions(
     return approved
 
 
-def load_muted_hashes_dict(muted_hashes_path: str) -> dict[InsdcAccession, set[str]]:
+def load_muted_hashes_dict(muted_hashes_path: str) -> dict[LoculusAccession, set[str]]:
     expect_columns = {"accession", "hash_digest"}
     df = pd.read_csv(muted_hashes_path, sep="\t")
     if not expect_columns.issubset(df.columns):
@@ -356,7 +359,7 @@ def main(
     )
     already_ingested_accessions = get_approved_submitted_accessions(submitted)
     current_ingested_accessions: set[InsdcAccession] = set()
-    muted_hashes_dict: dict[InsdcAccession, set[str]] = (
+    muted_hashes_dict: dict[LoculusAccession, set[str]] = (
         load_muted_hashes_dict(muted_hashes) if muted_hashes else {}
     )
 
