@@ -118,21 +118,23 @@ def run_snakemake(rule, touch=False):
     subprocess.run(cmd, check=True)
 
 
-def read_hash_for_submission(ndjson_path, submission_id):
-    """Return the freshly-ingested hash (hash B) for a submission id in a metadata ndjson."""
+def read_record_by_id(ndjson_path, submission_id):
+    """
+    Retrieve a record from an ndjson file for a given submission id.
+    Raises if the submission is not found.
+    """
     for record in orjsonl.stream(str(ndjson_path)):
         if record["id"] == submission_id:
-            return record["metadata"]["hash"]
+            return record
     raise AssertionError(f"{submission_id} not found in {ndjson_path}")
 
 
 def prepare_compare_hashes_inputs(input_config_dir: str):
     """
-    Set up a fresh workspace and run the pipeline up to (but not including) compare_hashes.
+    Set up a fresh workspace and run the first steps of the ingest pipeline.
 
-    Produces the inputs compare_hashes consumes (results/config.yaml,
-    results/previous_submissions.ndjson, results/metadata_post_group.ndjson). The two
-    compare_hashes tests share this identical setup; each calls it so they stay independent.
+    After this, the results directory wil contain previous_submissions.ndjson
+    and metadata_post_group.ndjson
     """
     delete_directory(OUTPUT_DIR)
     copy_files(TEST_DATA_DIR / "test_data_cchf", OUTPUT_DIR)
@@ -180,24 +182,17 @@ def test_snakemake():
 
 def test_no_revision_hashes_prevents_revision():
     """
-    A submission ingested in a previous round (hash A) that re-ingests this round with a
-    changed metadata field (hash B) would normally be revised. If hash B is listed in
-    no_revision_hashes.tsv, compare_hashes must treat it as a noop (unchanged) instead.
-
-    Reuses the CCHF fixtures: KX096703.1.S -> LOC_0000VXA is in to_revise.json in the
-    baseline test because previous_submissions.ndjson records it with the placeholder
-    hash "different_hash", while this round computes a real md5 (hash B).
+    Tests the manual muting of specific hashes in the ingest pipeline.
     """
-    target_submission = "KX096703.1.S"
-    target_accession = "KX096703"  # INSDC accession base = the TSV key
     target_loculus = "LOC_0000VXA"
+    target_submission = "KX096703.1.S"
 
     prepare_compare_hashes_inputs("config_cchf_mute_revision")
 
-    # Drop the no-revision list into results/. The download rule has no inputs and its
-    # output now exists, so Snakemake treats it as satisfied and never runs it (no network).
-    hash_b = read_hash_for_submission(OUTPUT_DIR / "metadata_post_group.ndjson", target_submission)
-    pd.DataFrame([{"accession": target_accession, "hash_digest": hash_b}]).to_csv(
+    # Get the hash value for KX096703.1.S, then create a tsv to mute it
+    record = read_record_by_id(OUTPUT_DIR / "metadata_post_group.ndjson", target_submission)
+    hash_to_mute = record["metadata"]["hash"]
+    pd.DataFrame([{"accession": target_loculus, "hash_digest": hash_to_mute}]).to_csv(
         OUTPUT_DIR / "no_revision_hashes.tsv", sep="\t", index=False
     )
 

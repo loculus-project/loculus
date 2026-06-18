@@ -115,7 +115,7 @@ def process_hashes(
     metadata_id: SubmissionId,
     new_metadata: dict[str, Any],
     submitted: dict[InsdcAccession, LatestLoculusVersion],
-    no_revision_hashes: dict[InsdcAccession, set[str]],
+    no_revision_hashes: dict[str, set[str]],
     update_manager: SequenceUpdateManager,
 ):
     """
@@ -135,7 +135,7 @@ def process_hashes(
         update_manager.noop[metadata_id] = corresponding_loculus_accession
         return update_manager
 
-    if newly_ingested_hash in no_revision_hashes.get(ingested_insdc_accession, set()):
+    if newly_ingested_hash in no_revision_hashes.get(corresponding_loculus_accession, set()):
         update_manager.noop[metadata_id] = corresponding_loculus_accession
         return update_manager
 
