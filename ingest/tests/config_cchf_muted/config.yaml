@@ -30,4 +30,4 @@ rename:
   ncbiSubmitterNames: authors
 taxon_id: 3052518
 check_ena_deposition: true
-no_revision_hashes_url: "http://example.invalid/ignored.tsv"
+muted_hashes_url: "http://example.invalid/ignored.tsv"

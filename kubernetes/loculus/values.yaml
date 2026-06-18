@@ -1553,7 +1553,7 @@ defaultOrganismConfig: &defaultOrganismConfig
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile:
-      no_revision_hashes_url: "https://pathoplexus.github.io/curation_data/no_revision_hashes/no_revision_hashes.tsv"
+      muted_hashes_url: "https://pathoplexus.github.io/curation_data/muted_hashes/muted_hashes.tsv"
 defaultOrganisms:
   ebola-sudan:
     <<: *defaultOrganismConfig

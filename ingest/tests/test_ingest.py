@@ -180,20 +180,20 @@ def test_snakemake():
         ), f"{output_file} does not match {expected_file}."
 
 
-def test_no_revision_hashes_prevents_revision():
+def test_muted_hashes_prevents_revision():
     """
     Tests the manual muting of specific hashes in the ingest pipeline.
     """
     target_loculus = "LOC_0000VXA"
     target_submission = "KX096703.1.S"
 
-    prepare_compare_hashes_inputs("config_cchf_mute_revision")
+    prepare_compare_hashes_inputs("config_cchf_muted")
 
     # Get the hash value for KX096703.1.S, then create a tsv to mute it
     record = read_record_by_id(OUTPUT_DIR / "metadata_post_group.ndjson", target_submission)
     hash_to_mute = record["metadata"]["hash"]
     pd.DataFrame([{"accession": target_loculus, "hash_digest": hash_to_mute}]).to_csv(
-        OUTPUT_DIR / "no_revision_hashes.tsv", sep="\t", index=False
+        OUTPUT_DIR / "muted_hashes.tsv", sep="\t", index=False
     )
 
     run_snakemake("compare_hashes")
@@ -202,7 +202,7 @@ def test_no_revision_hashes_prevents_revision():
     unchanged = json.loads((OUTPUT_DIR / "unchanged.json").read_text(encoding="utf-8"))
 
     assert target_submission not in to_revise, (
-        f"{target_submission} should not be revised when hash B is in no_revision_hashes.tsv"
+        f"{target_submission} should not be revised when hash B is in muted_hashes.tsv"
     )
     assert unchanged.get(target_submission) == target_loculus, (
         f"{target_submission} should be recorded as unchanged -> {target_loculus}"

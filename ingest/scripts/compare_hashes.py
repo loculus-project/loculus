@@ -115,7 +115,7 @@ def process_hashes(
     metadata_id: SubmissionId,
     new_metadata: dict[str, Any],
     submitted: dict[InsdcAccession, LatestLoculusVersion],
-    no_revision_hashes: dict[str, set[str]],
+    muted_hashes: dict[str, set[str]],
     update_manager: SequenceUpdateManager,
 ):
     """
@@ -135,7 +135,7 @@ def process_hashes(
         update_manager.noop[metadata_id] = corresponding_loculus_accession
         return update_manager
 
-    if newly_ingested_hash in no_revision_hashes.get(corresponding_loculus_accession, set()):
+    if newly_ingested_hash in muted_hashes.get(corresponding_loculus_accession, set()):
         update_manager.noop[metadata_id] = corresponding_loculus_accession
         return update_manager
 
@@ -300,15 +300,20 @@ def get_approved_submitted_accessions(
     return approved
 
 
-def load_no_revision_hashes_dict(no_revision_hashes_path: str) -> dict[InsdcAccession, set[str]]:
-    df = pd.read_csv(no_revision_hashes_path, sep="\t")
+def load_muted_hashes_dict(muted_hashes_path: str) -> dict[InsdcAccession, set[str]]:
+    expect_columns = {"accession", "hash_digest"}
+    df = pd.read_csv(muted_hashes_path, sep="\t")
+    if not expect_columns.issubset(df.columns):
+        raise ValueError(
+            f"Malformatted muted-hash file {muted_hashes_path}: must contain columns '{expect_columns}'"
+        )
     return df.groupby("accession")["hash_digest"].agg(set).to_dict()
 
 
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--old-hashes", required=True, type=click.Path(exists=True))
-@click.option("--no-revision-hashes", required=False, type=click.Path(exists=True))
+@click.option("--muted-hashes", required=False, type=click.Path(exists=True))
 @click.option("--metadata", required=True, type=click.Path(exists=True))
 @click.option("--to-submit", required=True, type=click.Path())
 @click.option("--to-revise", required=True, type=click.Path())
@@ -325,7 +330,7 @@ def load_no_revision_hashes_dict(no_revision_hashes_path: str) -> dict[InsdcAcce
 def main(
     config_file: str,
     old_hashes: str,
-    no_revision_hashes: str,
+    muted_hashes: str,
     metadata: str,
     to_submit: str,
     to_revise: str,
@@ -351,8 +356,8 @@ def main(
     )
     already_ingested_accessions = get_approved_submitted_accessions(submitted)
     current_ingested_accessions: set[InsdcAccession] = set()
-    no_revision_hashes_dict: dict[InsdcAccession, set[str]] = (
-        load_no_revision_hashes_dict(no_revision_hashes) if no_revision_hashes else {}
+    muted_hashes_dict: dict[InsdcAccession, set[str]] = (
+        load_muted_hashes_dict(muted_hashes) if muted_hashes else {}
     )
 
     update_manager = SequenceUpdateManager(
@@ -382,7 +387,7 @@ def main(
                 metadata_id,
                 record,
                 submitted,
-                no_revision_hashes_dict,
+                muted_hashes_dict,
                 update_manager,
             )
             current_ingested_accessions.add(insdc_accession_base)
@@ -412,7 +417,7 @@ def main(
             # grouping is the same, can just look at first segment in group
             accession = insdc_accession_base_list[0]
             process_hashes(
-                accession, metadata_id, record, submitted, no_revision_hashes_dict, update_manager
+                accession, metadata_id, record, submitted, muted_hashes_dict, update_manager
             )
             continue
         # old group is subset of new group, new group has new segments
@@ -429,7 +434,7 @@ def main(
             # has a new segment, must be revised
             accession = old_submitted[0]
             process_hashes(
-                accession, metadata_id, record, submitted, no_revision_hashes_dict, update_manager
+                accession, metadata_id, record, submitted, muted_hashes_dict, update_manager
             )
             continue
         old_accessions: dict[LoculusAccession, JointInsdcAccession] = {
