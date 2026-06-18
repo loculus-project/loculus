@@ -46,6 +46,7 @@ class SequenceUpdateManager:
     sampled_out: list[JointInsdcAccession]
     hashes: list[float]
     config: Config
+    muted_hashes: dict[LoculusAccession, set[str]]
 
 
 @dataclass
@@ -115,7 +116,6 @@ def process_hashes(
     metadata_id: SubmissionId,
     new_metadata: dict[str, Any],
     submitted: dict[InsdcAccession, LatestLoculusVersion],
-    muted_hashes: dict[LoculusAccession, set[str]],
     update_manager: SequenceUpdateManager,
 ):
     """
@@ -135,7 +135,9 @@ def process_hashes(
         update_manager.noop[metadata_id] = corresponding_loculus_accession
         return update_manager
 
-    if newly_ingested_hash in muted_hashes.get(corresponding_loculus_accession, set()):
+    if newly_ingested_hash in update_manager.muted_hashes.get(
+        corresponding_loculus_accession, set()
+    ):
         logger.info(
             f"Skipping muted hash {newly_ingested_hash} for accession {corresponding_loculus_accession}"
         )
@@ -307,9 +309,8 @@ def load_muted_hashes_dict(muted_hashes_path: str) -> dict[LoculusAccession, set
     expect_columns = {"accession", "hash_digest"}
     df = pd.read_csv(muted_hashes_path, sep="\t")
     if not expect_columns.issubset(df.columns):
-        raise ValueError(
-            f"Malformatted muted-hash file {muted_hashes_path}: must contain columns '{expect_columns}'"
-        )
+        msg = f"Malformatted muted-hash file {muted_hashes_path}: must contain columns '{expect_columns}'"
+        raise ValueError(msg)
     return df.groupby("accession")["hash_digest"].agg(set).to_dict()
 
 
@@ -372,6 +373,7 @@ def main(
         sampled_out=[],
         hashes=[],
         config=config,
+        muted_hashes=muted_hashes_dict,
     )
 
     for field in orjsonl.stream(metadata):
@@ -390,7 +392,6 @@ def main(
                 metadata_id,
                 record,
                 submitted,
-                muted_hashes_dict,
                 update_manager,
             )
             current_ingested_accessions.add(insdc_accession_base)
@@ -419,9 +420,7 @@ def main(
         ):
             # grouping is the same, can just look at first segment in group
             accession = insdc_accession_base_list[0]
-            process_hashes(
-                accession, metadata_id, record, submitted, muted_hashes_dict, update_manager
-            )
+            process_hashes(accession, metadata_id, record, submitted, update_manager)
             continue
         # old group is subset of new group, new group has new segments
         old_submitted = [
