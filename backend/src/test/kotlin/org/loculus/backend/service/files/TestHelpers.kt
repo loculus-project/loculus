@@ -1,4 +1,4 @@
-package org.loculus.backend.service
+package org.loculus.backend.service.files
 
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime

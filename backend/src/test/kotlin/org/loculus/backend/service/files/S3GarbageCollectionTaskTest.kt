@@ -17,10 +17,10 @@ import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.PreparedProcessedData
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.log.AuditLogger
-import org.loculus.backend.service.daysAgo
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
-import org.loculus.backend.service.insertFile
+import org.loculus.backend.service.files.daysAgo
+import org.loculus.backend.service.files.insertFile
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID

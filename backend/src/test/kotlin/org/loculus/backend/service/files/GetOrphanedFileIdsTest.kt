@@ -14,8 +14,8 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.PreparedProcessedData
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
-import org.loculus.backend.service.daysAgo
-import org.loculus.backend.service.insertFile
+import org.loculus.backend.service.files.daysAgo
+import org.loculus.backend.service.files.insertFile
 import org.loculus.backend.service.submission.UseNewerProcessingPipelineVersionTask
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID
