@@ -1,115 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { DiffTable } from './DiffTable';
-import { compareVersionData } from './compareVersions';
-import type { ComparisonResult } from './types';
+import { useVersionComparison } from './useVersionComparison';
 import { routes } from '../../routes/routes';
-import type { DetailsJson } from '../../types/detailsJson';
 import type { SequenceEntryHistoryEntry } from '../../types/lapis';
 import { getAccessionVersionString, extractAccessionVersion } from '../../utils/extractAccessionVersion';
 import { getVersionStatusColor, getVersionStatusLabel } from '../../utils/getVersionStatusColor';
 import { Checkbox } from '../common/Checkbox';
 import ErrorBox from '../common/ErrorBox';
 import { Spinner } from '../common/Spinner';
+import { withQueryProvider } from '../common/withQueryProvider';
 
 type VersionsWithDiffProps = {
     versions: SequenceEntryHistoryEntry[];
     accession: string;
 };
 
-export function VersionsWithDiff({ versions, accession }: VersionsWithDiffProps) {
-    const [selectedVersions, setSelectedVersions] = useState<Set<number>>(new Set());
-    const [showAllFields, setShowAllFields] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [comparisonData, setComparisonData] = useState<{
-        v1: DetailsJson;
-        v2: DetailsJson;
-        result: ComparisonResult;
-    } | null>(null);
+function VersionsWithDiffInner({ versions, accession }: VersionsWithDiffProps) {
+    const { selectedVersions, selectedPair, toggleVersion, comparison, isLoading, isFetching, error } =
+        useVersionComparison(accession, versions);
 
     const showCheckboxes = versions.length > 2;
-    const autoCompare = versions.length === 2;
+    const [showAllFields, setShowAllFields] = useState(false);
 
-    // Read URL params on mount
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const compareParam = params.get('compare');
-
-        if (compareParam) {
-            const versionNumbers = compareParam
-                .split(',')
-                .map((v) => parseInt(v, 10))
-                .filter((v) => !isNaN(v));
-            if (versionNumbers.length === 2) {
-                setSelectedVersions(new Set(versionNumbers));
-            }
-        } else if (autoCompare) {
-            // Auto-select both versions if only 2 exist
-            const versionNumbers = versions.map((v) => v.version);
-            setSelectedVersions(new Set(versionNumbers));
-        }
-    }, [autoCompare, versions]);
-
-    // Fetch and compare when selection changes
-    useEffect(() => {
-        const selectedArray = Array.from(selectedVersions);
-        if (selectedArray.length !== 2) {
-            setComparisonData(null);
-            return;
-        }
-
-        const [v1, v2] = selectedArray.sort((a, b) => a - b);
-
-        // Update URL
-        const url = new URL(window.location.href);
-        url.searchParams.set('compare', `${v1},${v2}`);
-        window.history.pushState({}, '', url.toString());
-
-        const fetchAndCompare = async () => {
-            setLoading(true);
-            setError(null);
-
-            try {
-                const [data1, data2] = await Promise.all([
-                    fetch(`/seq/${accession}.${v1}/details.json`).then((r) => {
-                        if (!r.ok) throw new Error(`Failed to fetch version ${v1}`);
-                        return r.json() as Promise<DetailsJson>;
-                    }),
-                    fetch(`/seq/${accession}.${v2}/details.json`).then((r) => {
-                        if (!r.ok) throw new Error(`Failed to fetch version ${v2}`);
-                        return r.json() as Promise<DetailsJson>;
-                    }),
-                ]);
-
-                const result = compareVersionData(data1, data2);
-                setComparisonData({ v1: data1, v2: data2, result });
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Failed to fetch version data');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        void fetchAndCompare();
-    }, [selectedVersions, accession]);
-
-    const handleVersionToggle = (version: number) => {
-        const newSelection = new Set(selectedVersions);
-        if (newSelection.has(version)) {
-            newSelection.delete(version);
-        } else {
-            if (newSelection.size >= 2) {
-                const oldest = Array.from(newSelection)[0];
-                newSelection.delete(oldest);
-            }
-            newSelection.add(version);
-        }
-        setSelectedVersions(newSelection);
-    };
-
-    const selectedArray = Array.from(selectedVersions).sort((a, b) => a - b);
-    const canCompare = selectedArray.length === 2;
+    // Prefer the pair the loaded comparison is for (kept stable while a new pair loads), falling
+    // back to the current selection during the very first load.
+    const comparedVersions = comparison?.versions ?? selectedPair;
 
     return (
         <div>
@@ -128,7 +44,7 @@ export function VersionsWithDiff({ versions, accession }: VersionsWithDiffProps)
                                     <Checkbox
                                         size='sm'
                                         checked={selectedVersions.has(version.version)}
-                                        onChange={() => handleVersionToggle(version.version)}
+                                        onChange={() => toggleVersion(version.version)}
                                         className='mt-1'
                                     />
                                 )}
@@ -156,11 +72,11 @@ export function VersionsWithDiff({ versions, accession }: VersionsWithDiffProps)
                 </ul>
             </div>
 
-            {(canCompare || autoCompare) && (
+            {(comparison !== undefined || selectedPair !== null) && (
                 <div className='mt-8 border-t pt-6'>
                     <div className='flex justify-between items-center mb-4'>
                         <h2 className='text-xl font-semibold'>
-                            Comparing Version {selectedArray[0]} vs Version {selectedArray[1]}
+                            Comparing Version {comparedVersions?.[0]} vs Version {comparedVersions?.[1]}
                         </h2>
                         <label className='flex items-center gap-2 cursor-pointer'>
                             <span className='text-sm'>Show all fields</span>
@@ -172,24 +88,35 @@ export function VersionsWithDiff({ versions, accession }: VersionsWithDiffProps)
                         </label>
                     </div>
 
-                    {loading && (
+                    {isLoading && (
                         <div className='flex justify-center items-center py-8'>
                             <Spinner size='lg' label='Loading comparison' />
                         </div>
                     )}
 
-                    {error && <ErrorBox title='Failed to load comparison'>{error}</ErrorBox>}
+                    {error !== null && <ErrorBox title='Failed to load comparison'>{error}</ErrorBox>}
 
-                    {!loading && !error && comparisonData && (
-                        <DiffTable
-                            comparison={comparisonData.result}
-                            version1={selectedArray[0]}
-                            version2={selectedArray[1]}
-                            showAllFields={showAllFields}
-                        />
+                    {error === null && comparison !== undefined && (
+                        <div className='relative'>
+                            <div className={`transition-opacity ${isFetching ? 'opacity-40 pointer-events-none' : ''}`}>
+                                <DiffTable
+                                    comparison={comparison.result}
+                                    version1={comparison.versions[0]}
+                                    version2={comparison.versions[1]}
+                                    showAllFields={showAllFields}
+                                />
+                            </div>
+                            {isFetching && (
+                                <div className='absolute inset-0 flex items-start justify-center pt-8'>
+                                    <Spinner size='lg' label='Loading comparison' />
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
             )}
         </div>
     );
 }
+
+export const VersionsWithDiff = withQueryProvider(VersionsWithDiffInner);

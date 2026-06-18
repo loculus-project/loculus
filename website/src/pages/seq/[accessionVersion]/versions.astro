@@ -18,7 +18,7 @@ const { organism, versionListResult } = await getVersionsData(accession);
     {
         versionListResult.match(
             (list) => {
-                return <VersionsWithDiff versions={list} accession={accession} client:load />;
+                return <VersionsWithDiff versions={list} accession={accession} client:only='react' />;
             },
             (error) => {
                 return <ErrorBox title='Request for sequence history failed'>{error}</ErrorBox>;
