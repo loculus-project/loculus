@@ -54,8 +54,8 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
                 .select(FilesTable.idColumn, FilesTable.multipartUploadId)
                 .where {
                     FilesTable.idColumn inList chunk and
-                            (FilesTable.multipartUploadId neq null) and
-                            (not(FilesTable.multipartCompleted))
+                        (FilesTable.multipartUploadId neq null) and
+                        (not(FilesTable.multipartCompleted))
                 }
                 .map { it[FilesTable.idColumn] to it[FilesTable.multipartUploadId]!! }
         }, 1)
