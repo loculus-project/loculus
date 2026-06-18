@@ -86,9 +86,15 @@ class S3GarbageCollectionTask(
         fileIds.forEach { fileId ->
             try {
                 s3Service.deleteFile(fileId)
+            } catch (e: Exception) {
+                log.warn("Failed to delete S3 $fileId", e)
+                deleteFailures++
+                return@forEach
+            }
+            try {
                 filesDatabaseService.deleteFileEntry(fileId)
             } catch (e: Exception) {
-                log.warn("Failed to delete $fileId", e)
+                log.warn("Failed to delete database entry for S3 $fileId", e)
                 deleteFailures++
             }
         }
