@@ -11,6 +11,7 @@ import org.loculus.backend.SpringBootTestWithoutDatabase
 import org.loculus.backend.api.CitationContributor
 import org.loculus.backend.api.CitationSource
 import org.loculus.backend.api.SeqSetCitationSource
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.Instant
@@ -19,7 +20,10 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 @SpringBootTestWithoutDatabase
-class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefService) {
+class CrossRefServiceTest(
+    @Autowired private val crossRefService: CrossRefService,
+    private val backendConfig: BackendConfig,
+) {
     private val doiBatchID: String = "3cbae87e-77b2-4560-b411-502288f3f636"
     private val now: LocalDate = LocalDateTime.ofInstant(
         Instant.ofEpochSecond(1711411200),
@@ -44,6 +48,7 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
             writeEnabled = writeEnabled,
         ),
         DateProvider(),
+        backendConfig,
     )
 
     @Test
