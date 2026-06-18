@@ -51,6 +51,27 @@ CREATE FUNCTION public.jsonb_concat(a jsonb, b jsonb) RETURNS jsonb
 ALTER FUNCTION public.jsonb_concat(a jsonb, b jsonb) OWNER TO postgres;
 
 --
+-- Name: update_current_processing_pipeline_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_current_processing_pipeline_tracker() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, cr.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    GROUP BY cr.organism
+    ON CONFLICT (table_name, organism, pipeline_version)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_current_processing_pipeline_tracker() OWNER TO postgres;
+
+--
 -- Name: update_data_use_terms_table_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -985,13 +1006,6 @@ CREATE INDEX user_groups_table_user_name_idx ON public.user_groups_table USING b
 
 
 --
--- Name: current_processing_pipeline update_tracker_trigger; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.current_processing_pipeline FOR EACH STATEMENT EXECUTE FUNCTION public.update_table_tracker();
-
-
---
 -- Name: groups_table update_tracker_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -1017,6 +1031,13 @@ CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCA
 --
 
 CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.user_groups_table FOR EACH STATEMENT EXECUTE FUNCTION public.update_table_tracker();
+
+
+--
+-- Name: current_processing_pipeline update_tracker_trigger_del; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.current_processing_pipeline REFERENCING OLD TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_current_processing_pipeline_tracker();
 
 
 --
@@ -1048,6 +1069,13 @@ CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.sequence_entrie
 
 
 --
+-- Name: current_processing_pipeline update_tracker_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.current_processing_pipeline REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_current_processing_pipeline_tracker();
+
+
+--
 -- Name: data_use_terms_table update_tracker_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -1073,6 +1101,13 @@ CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.sequence_entrie
 --
 
 CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.sequence_entries_preprocessed_data REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_preprocessed_data_tracker();
+
+
+--
+-- Name: current_processing_pipeline update_tracker_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.current_processing_pipeline REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_current_processing_pipeline_tracker();
 
 
 --
