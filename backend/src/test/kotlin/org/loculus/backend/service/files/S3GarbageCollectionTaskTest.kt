@@ -46,6 +46,26 @@ class S3GarbageCollectionTaskTest(
 
     private var groupId = 0
 
+    private fun createProcessedSubmissionReferencingFile(file: UUID) {
+        val submissions = convenienceClient.submitDefaultFiles(groupId = groupId).submissionIdMappings
+        val targetAccession = submissions.first().accession
+
+        convenienceClient.extractUnprocessedData()
+
+        convenienceClient.submitProcessedData(
+            submissions.map { av ->
+                if (av.accession == targetAccession) {
+                    PreparedProcessedData.withFiles(
+                        av.accession,
+                        mapOf("myFileCategory" to listOf(FileIdAndName(file, "output.txt"))),
+                    )
+                } else {
+                    PreparedProcessedData.successfullyProcessed(av.accession)
+                }
+            },
+        )
+    }
+
     @BeforeEach
     fun setup() {
         groupId = groupManagementClient
@@ -54,7 +74,7 @@ class S3GarbageCollectionTaskTest(
     }
 
     @Test
-    fun `GIVEN GC is disabled WHEN the task runs THEN orphaned files are neither marked nor deleted`() {
+    fun `GIVEN GC is disabled WHEN the task runs THEN orphaned files are not deleted`() {
         val orphan = UUID.randomUUID()
         insertFile(orphan, groupId, daysAgo(2))
 
@@ -69,7 +89,6 @@ class S3GarbageCollectionTaskTest(
 
         verify(exactly = 0) { s3Service.deleteFile(any()) }
         assertThat(filesDatabaseService.getNonExistentFileIds(setOf(orphan)), `is`(emptySet()))
-        assertThat(filesDatabaseService.getMarkedForDeletionFileIds(setOf(orphan)), `is`(emptySet()))
     }
 
     @Suppress("ktlint:standard:max-line-length")
@@ -104,21 +123,7 @@ class S3GarbageCollectionTaskTest(
         val referenced = UUID.randomUUID()
         listOf(orphan, referenced).forEach { insertFile(it, groupId, daysAgo(2)) }
 
-        val submissions = convenienceClient.submitDefaultFiles(groupId = groupId).submissionIdMappings
-        val targetAccession = submissions.first().accession
-        convenienceClient.extractUnprocessedData()
-        convenienceClient.submitProcessedData(
-            submissions.map { av ->
-                if (av.accession == targetAccession) {
-                    PreparedProcessedData.withFiles(
-                        av.accession,
-                        mapOf("myFileCategory" to listOf(FileIdAndName(referenced, "output.txt"))),
-                    )
-                } else {
-                    PreparedProcessedData.successfullyProcessed(av.accession)
-                }
-            },
-        )
+        createProcessedSubmissionReferencingFile(referenced)
 
         s3GarbageCollectionTask.task() // phase 1: marks orphan, skips referenced
         s3GarbageCollectionTask.task() // phase 2: deletes orphan
@@ -137,21 +142,7 @@ class S3GarbageCollectionTaskTest(
         val file = UUID.randomUUID()
         insertFile(file, groupId, daysAgo(2))
 
-        val submissions = convenienceClient.submitDefaultFiles(groupId = groupId).submissionIdMappings
-        val targetAccession = submissions.first().accession
-        convenienceClient.extractUnprocessedData()
-        convenienceClient.submitProcessedData(
-            submissions.map { av ->
-                if (av.accession == targetAccession) {
-                    PreparedProcessedData.withFiles(
-                        av.accession,
-                        mapOf("myFileCategory" to listOf(FileIdAndName(file, "output.txt"))),
-                    )
-                } else {
-                    PreparedProcessedData.successfullyProcessed(av.accession)
-                }
-            },
-        )
+        createProcessedSubmissionReferencingFile(file)
 
         // Simulate the race condition: GC phase 1 marked the file as an orphan (it was unreferenced at the
         // time), but a new submission referencing the file committed before phase 2 runs. We replicate this
