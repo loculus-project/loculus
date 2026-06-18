@@ -654,6 +654,7 @@ rule get_previous_submissions:
             --output {output.hashes}
         """
 
+
 compare_hashes_input = {
     "script": "scripts/compare_hashes.py",
     "config": "results/config.yaml",
@@ -664,9 +665,10 @@ compare_hashes_input = {
 if MUTED_HASHES_URL:
     compare_hashes_input["muted_hashes"] = "results/muted_hashes.tsv"
 
+
 rule compare_hashes:
     input:
-        **compare_hashes_input
+        **compare_hashes_input,
     output:
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
