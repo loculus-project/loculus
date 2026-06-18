@@ -354,7 +354,10 @@ export const AllowedValuesList: FC<AllowedValuesListProps> = ({ options, fieldNa
                 disabled={!isClient}
                 className='border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100'
             />
-            <ul className='max-h-40 overflow-y-auto border border-gray-200 rounded text-sm'>
+            <ul
+                className='max-h-40 overflow-y-auto border border-gray-200 rounded text-sm'
+                aria-label={`Allowed values for ${fieldName}`}
+            >
                 {filtered.length === 0 ? (
                     <li className='px-2 py-1 text-gray-400 italic'>No matches</li>
                 ) : (
@@ -413,11 +416,7 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                                       />
                                       {field.options && field.options.length > 0 && (
                                           <div className='mt-2'>
-                                              <AllowedValuesList
-                                                  options={field.options}
-                                                  fieldName={field.name}
-                                                  aria-label={`Allowed values for ${field.name}`}
-                                              />
+                                              <AllowedValuesList options={field.options} fieldName={field.name} />
                                           </div>
                                       )}
                                   </td>
