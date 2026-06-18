@@ -1,0 +1,65 @@
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-query-service
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: {{ $.Values.replicas.queryService | default 1 }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-query-service
+  template:
+    metadata:
+      annotations:
+        timestamp: {{ now | quote }}
+      labels:
+        app: loculus
+        component: loculus-query-service
+    spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      containers:
+        - name: query-service
+          image: "{{ $.Values.images.queryService.repository }}:{{ $.Values.images.queryService.tag | default $dockerTag }}"
+          imagePullPolicy: "{{ $.Values.images.queryService.pullPolicy | default $.Values.imagePullPolicy }}"
+          {{- include "loculus.resources" (list "query-service" $.Values) | nindent 10 }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: LAPIS_SERVICE_TEMPLATE
+              value: "http://loculus-lapis-service-{organism}:8080"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: ORGANISM_CONFIG_FILE
+              value: "/config/organisms.json"
+          volumeMounts:
+            - name: organism-config
+              mountPath: /config
+              readOnly: true
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+      volumes:
+        - name: organism-config
+          configMap:
+            name: loculus-query-service-config

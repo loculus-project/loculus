@@ -23,7 +23,7 @@ global.ResizeObserver = class FakeResizeObserver {
 
 vi.mock('../../config', () => ({
     fetchAutoCompletion: vi.fn().mockResolvedValue([]),
-    getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy.url'),
+    getQueryServiceUrl: vi.fn().mockReturnValue('http://query.dummy.url'),
 }));
 
 vi.mock('../../services/serviceHooks.ts', () => ({

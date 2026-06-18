@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { type FC, useMemo } from 'react';
 
-import { versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSetRecord, SeqSetRecordType } from '../../types/seqSetCitation';
 import { Spinner } from '../common/Spinner';
@@ -27,16 +26,21 @@ type SeqSetRecordsTableWithMetadataProps = {
 };
 
 async function queryLapisDetails(
-    lapisUrl: string,
+    queryServiceUrl: string,
+    organism: string,
     filter: Record<string, unknown>,
     fields: string[],
 ): Promise<Record<string, unknown>[]> {
     try {
-        const response = await axios.post(`${lapisUrl}/sample/details`, {
-            ...filter,
-            fields,
-            dataFormat: 'json',
-        });
+        const response = await axios.post(
+            `${queryServiceUrl}/v1/metadata`,
+            {
+                ...filter,
+                fields,
+                dataFormat: 'json',
+            },
+            { params: { organism } },
+        );
         const responseData = response.data as { data?: Record<string, unknown>[] } | undefined;
         return responseData?.data ?? [];
     } catch (_error) {
@@ -62,37 +66,35 @@ const fetchRecordsMetadata = async (
     // Extract just the field names for the API request
     const fields = fieldsToDisplay.map((f) => f.field);
 
-    // filter out "organism" as substring in lapisUrls as a hack to remove the dummy organisms
+    // filter out "organism" as substring to remove the dummy organisms
     // #TODO: do this better, in a less hacky way
     // But if we do try to query something that doesn't have the field its no huge problem it will just lead to a console error
-    const lapisUrlsWithoutDummies = Object.fromEntries(
-        Object.entries(clientConfig.lapisUrls).filter(([organism]) => !organism.includes('organism')),
-    );
+    const organismsWithoutDummies = clientConfig.organisms.filter((organism) => !organism.includes('organism'));
 
     const metadataMap = new Map<string, RecordMetadata>();
 
-    // Query all LAPIS instances in parallel
-    const lapisPromises = Object.entries(lapisUrlsWithoutDummies).map(async ([organism, lapisUrl]) => {
+    // Query all organisms in parallel through the query-service.
+    const lapisPromises = organismsWithoutDummies.map(async (organism) => {
         const queries: Promise<{ data: Record<string, unknown>[]; keyField: string }>[] = [];
 
         // Query versioned accessions by accessionVersion
         if (versionedAccessions.length > 0) {
             queries.push(
-                queryLapisDetails(lapisUrl, { accessionVersion: versionedAccessions }, [
+                queryLapisDetails(clientConfig.queryServiceUrl, organism, { accessionVersion: versionedAccessions }, [
                     'accessionVersion',
                     ...fields,
                 ]).then((data) => ({ data, keyField: 'accessionVersion' })),
             );
         }
 
-        // Query bare accessions by accession, filtering for the latest version
+        // Query bare accessions by accession; query-service applies the
+        // latest-version default automatically.
         if (bareAccessions.length > 0) {
             queries.push(
-                queryLapisDetails(
-                    lapisUrl,
-                    { accession: bareAccessions, versionStatus: versionStatuses.latestVersion },
-                    ['accession', ...fields],
-                ).then((data) => ({ data, keyField: 'accession' })),
+                queryLapisDetails(clientConfig.queryServiceUrl, organism, { accession: bareAccessions }, [
+                    'accession',
+                    ...fields,
+                ]).then((data) => ({ data, keyField: 'accession' })),
             );
         }
 

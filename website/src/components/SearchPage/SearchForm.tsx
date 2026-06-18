@@ -108,6 +108,7 @@ const getSearchDisplayOrder = (field: GroupedMetadataFilter | MetadataFilter | M
     field.orderInSearchDisplay ?? ('order' in field ? field.order : undefined) ?? Number.POSITIVE_INFINITY;
 
 export const SearchForm = ({
+    organism,
     filterSchema,
     fieldValues,
     setSomeFieldValues,
@@ -258,6 +259,7 @@ export const SearchForm = ({
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
+                    organism={organism}
                     lapisSearchParameters={lapisSearchParameters}
                     segmentName={segmentName}
                 />
@@ -280,6 +282,7 @@ export const SearchForm = ({
                     key={filter.name}
                     field={filter}
                     lapisUrl={lapisUrl}
+                    organism={organism}
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
                     lapisSearchParameters={lapisSearchParameters}
@@ -343,6 +346,7 @@ export const SearchForm = ({
                         fieldValues={fieldValues}
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
+                        organism={organism}
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
@@ -361,6 +365,7 @@ export const SearchForm = ({
                                             key={item.field.name}
                                             field={item.field}
                                             lapisUrl={lapisUrl}
+                                            organism={organism}
                                             fieldValues={fieldValues}
                                             setSomeFieldValues={setSomeFieldValues}
                                             lapisSearchParameters={lapisSearchParameters}
@@ -422,12 +427,20 @@ export const SearchForm = ({
 interface SearchFieldProps {
     field: GroupedMetadataFilter | MetadataFilter;
     lapisUrl: string;
+    organism: string;
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
     lapisSearchParameters: LapisSearchParameters;
 }
 
-const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSearchParameters }: SearchFieldProps) => {
+const SearchField = ({
+    field,
+    lapisUrl,
+    organism,
+    fieldValues,
+    setSomeFieldValues,
+    lapisSearchParameters,
+}: SearchFieldProps) => {
     if (field.grouped === true) {
         if (field.groupedFields[0].rangeOverlapSearch) {
             return <DateRangeField field={field} fieldValues={fieldValues} setSomeFieldValues={setSomeFieldValues} />;
@@ -444,6 +457,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                             key={f.name}
                             lapisSearchParameters={lapisSearchParameters}
                             lapisUrl={lapisUrl}
+                            organism={organism}
                         />
                     ))}
                 </div>
@@ -476,6 +490,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                         fieldValue={(fieldValues[field.name] ?? '') as string}
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
+                        organism={organism}
                         lapisSearchParameters={lapisSearchParameters}
                         mode={field.lineageSearch ? 'lineage' : 'default'}
                     />
@@ -491,6 +506,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                             optionsProvider={{
                                 type: 'generic',
                                 lapisUrl,
+                                organism,
                                 lapisSearchParameters,
                                 fieldName: field.name,
                             }}
@@ -508,6 +524,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                         optionsProvider={{
                             type: 'generic',
                             lapisUrl,
+                            organism,
                             lapisSearchParameters,
                             fieldName: field.name,
                         }}
@@ -532,6 +549,7 @@ interface AdvancedOptionsModalProps {
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
+    organism: string;
     lapisSearchParameters: LapisSearchParameters;
 }
 
@@ -542,6 +560,7 @@ const AdvancedOptionsModal = ({
     fieldValues,
     setSomeFieldValues,
     lapisUrl,
+    organism,
     lapisSearchParameters,
 }: AdvancedOptionsModalProps) => {
     if (fields.length === 0) {
@@ -558,6 +577,7 @@ const AdvancedOptionsModal = ({
                             fieldValues={fieldValues}
                             setSomeFieldValues={setSomeFieldValues}
                             lapisUrl={lapisUrl}
+                            organism={organism}
                             lapisSearchParameters={lapisSearchParameters}
                         />
                     </div>

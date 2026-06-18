@@ -1,4 +1,9 @@
-"""LAPIS API client for Loculus."""
+"""Client for the Loculus query-service v1 API.
+
+Kept named ``LapisClient`` for now to avoid churning callers; the
+``lapis_url`` argument is the query-service base URL, and ``organism``
+is passed as a query parameter on every request.
+"""
 
 from typing import Any
 
@@ -27,10 +32,10 @@ class LapisClient:
             f"[dim]→ {response.request.method} {response.url}[/dim]"
         )
 
-    def _build_url(self, organism: str, endpoint: str) -> str:
-        """Build URL for organism-specific endpoint."""
-        # The lapis_url already includes the organism path, so just use the endpoint
-        return f"/{endpoint.lstrip('/')}"
+    def _params_with_organism(
+        self, organism: str, params: dict[str, Any]
+    ) -> dict[str, Any]:
+        return {"organism": organism, **params}
 
     def get_sample_details(
         self,
@@ -41,10 +46,8 @@ class LapisClient:
         order_by: str | None = None,
         fields: list[str] | None = None,
     ) -> LapisResponse:
-        """Get sample details from LAPIS."""
-        url = self._build_url(organism, "/sample/details")
-
-        params = {}
+        """Get sample details from the query-service."""
+        params: dict[str, Any] = {}
         if filters:
             params.update(filters)
         if limit is not None:
@@ -57,7 +60,9 @@ class LapisClient:
             params["fields"] = ",".join(fields)
 
         try:
-            response = self.client.get(url, params=params)
+            response = self.client.get(
+                "/v1/metadata", params=self._params_with_organism(organism, params)
+            )
             self._log_request(response)
             response.raise_for_status()
             return LapisResponse.model_validate(response.json())
@@ -77,10 +82,8 @@ class LapisClient:
         group_by: list[str] | None = None,
         order_by: str | None = None,
     ) -> LapisAggregatedResponse:
-        """Get aggregated data from LAPIS."""
-        url = self._build_url(organism, "/sample/aggregated")
-
-        params = {}
+        """Get aggregated data from the query-service."""
+        params: dict[str, Any] = {}
         if filters:
             params.update(filters)
         if group_by:
@@ -89,7 +92,9 @@ class LapisClient:
             params["orderBy"] = order_by
 
         try:
-            response = self.client.get(url, params=params)
+            response = self.client.get(
+                "/v1/aggregated", params=self._params_with_organism(organism, params)
+            )
             self._log_request(response)
             response.raise_for_status()
             return LapisAggregatedResponse.model_validate(response.json())
@@ -111,16 +116,11 @@ class LapisClient:
         offset: int | None = None,
         order_by: str | None = None,
     ) -> LapisSequenceResponse:
-        """Get aligned sequences from LAPIS."""
-
+        """Get aligned sequences from the query-service."""
+        path = "/v1/alignedSequences"
         if segment:
-            url = self._build_url(
-                organism, f"/sample/alignedNucleotideSequences/{segment}"
-            )
-        else:
-            url = self._build_url(organism, "/sample/alignedNucleotideSequences")
-
-        params = {}
+            path = f"{path}/{segment}"
+        params: dict[str, Any] = {}
         if filters:
             params.update(filters)
         if limit is not None:
@@ -131,45 +131,16 @@ class LapisClient:
             params["orderBy"] = order_by
 
         try:
-            # Request FASTA format
             headers = {"Accept": "text/x-fasta"}
-            response = self.client.get(url, params=params, headers=headers)
+            response = self.client.get(
+                path,
+                params=self._params_with_organism(organism, params),
+                headers=headers,
+            )
             self._log_request(response)
             response.raise_for_status()
 
-            # Parse FASTA response
-            fasta_data = []
-            if response.text.strip():
-                lines = response.text.strip().split("\n")
-                current_header = None
-                current_sequence: list[str] = []
-
-                for line in lines:
-                    if line.startswith(">"):
-                        if current_header:
-                            # Save previous sequence
-                            fasta_data.append(
-                                {
-                                    "accessionVersion": current_header,
-                                    "alignedNucleotideSequence": "".join(
-                                        current_sequence
-                                    ),
-                                }
-                            )
-                        current_header = line[1:]  # Remove '>'
-                        current_sequence = []
-                    else:
-                        current_sequence.append(line)
-
-                # Save last sequence
-                if current_header:
-                    fasta_data.append(
-                        {
-                            "accessionVersion": current_header,
-                            "alignedNucleotideSequence": "".join(current_sequence),
-                        }
-                    )
-
+            fasta_data = _parse_fasta(response.text, "alignedNucleotideSequence")
             return LapisSequenceResponse(data=fasta_data, info={})
         except httpx.HTTPStatusError as e:
             full_url = str(e.response.url)
@@ -189,15 +160,11 @@ class LapisClient:
         offset: int | None = None,
         order_by: str | None = None,
     ) -> LapisSequenceResponse:
-        """Get unaligned sequences from LAPIS."""
+        """Get unaligned sequences from the query-service."""
+        path = "/v1/unalignedSequences"
         if segment:
-            url = self._build_url(
-                organism, f"/sample/unalignedNucleotideSequences/{segment}"
-            )
-        else:
-            url = self._build_url(organism, "/sample/unalignedNucleotideSequences")
-
-        params = {}
+            path = f"{path}/{segment}"
+        params: dict[str, Any] = {}
         if filters:
             params.update(filters)
         if limit is not None:
@@ -208,45 +175,16 @@ class LapisClient:
             params["orderBy"] = order_by
 
         try:
-            # Request FASTA format
             headers = {"Accept": "text/x-fasta"}
-            response = self.client.get(url, params=params, headers=headers)
+            response = self.client.get(
+                path,
+                params=self._params_with_organism(organism, params),
+                headers=headers,
+            )
             self._log_request(response)
             response.raise_for_status()
 
-            # Parse FASTA response
-            fasta_data = []
-            if response.text.strip():
-                lines = response.text.strip().split("\n")
-                current_header = None
-                current_sequence: list[str] = []
-
-                for line in lines:
-                    if line.startswith(">"):
-                        if current_header:
-                            # Save previous sequence
-                            fasta_data.append(
-                                {
-                                    "accessionVersion": current_header,
-                                    "unalignedNucleotideSequence": "".join(
-                                        current_sequence
-                                    ),
-                                }
-                            )
-                        current_header = line[1:]  # Remove '>'
-                        current_sequence = []
-                    else:
-                        current_sequence.append(line)
-
-                # Save last sequence
-                if current_header:
-                    fasta_data.append(
-                        {
-                            "accessionVersion": current_header,
-                            "unalignedNucleotideSequence": "".join(current_sequence),
-                        }
-                    )
-
+            fasta_data = _parse_fasta(response.text, "unalignedNucleotideSequence")
             return LapisSequenceResponse(data=fasta_data, info={})
         except httpx.HTTPStatusError as e:
             full_url = str(e.response.url)
@@ -260,3 +198,33 @@ class LapisClient:
     def close(self) -> None:
         """Close the HTTP client."""
         self.client.close()
+
+
+def _parse_fasta(text: str, sequence_field: str) -> list[dict[str, str]]:
+    """Parse a FASTA blob into [{accessionVersion, <sequence_field>}, ...]."""
+    fasta_data: list[dict[str, str]] = []
+    if not text.strip():
+        return fasta_data
+    current_header: str | None = None
+    current_sequence: list[str] = []
+    for line in text.strip().split("\n"):
+        if line.startswith(">"):
+            if current_header is not None:
+                fasta_data.append(
+                    {
+                        "accessionVersion": current_header,
+                        sequence_field: "".join(current_sequence),
+                    }
+                )
+            current_header = line[1:]
+            current_sequence = []
+        else:
+            current_sequence.append(line)
+    if current_header is not None:
+        fasta_data.append(
+            {
+                "accessionVersion": current_header,
+                sequence_field: "".join(current_sequence),
+            }
+        )
+    return fasta_data

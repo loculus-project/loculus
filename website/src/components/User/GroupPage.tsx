@@ -8,9 +8,8 @@ import type { Organism } from '../../config.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { ContinueSubmissionIntent } from '../../routes/routes.ts';
-import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
+import { GROUP_ID_FIELD } from '../../settings.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
-import { versionStatuses } from '../../types/lapis.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.js';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
@@ -313,20 +312,19 @@ const InnerGroupPage: FC<GroupPageProps> = ({
 
 async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, organisms: Organism[]) {
     const counts: Record<string, number> = {};
+    const queryServiceUrl = clientConfig.queryServiceUrl;
     await Promise.all(
         organisms.map(async ({ key }) => {
-            const url = clientConfig.lapisUrls[key];
-            if (!url) {
-                counts[key] = 0;
-                return;
-            }
             try {
-                const response = await axios.post(`${url}/sample/aggregated`, {
-                    [GROUP_ID_FIELD]: groupId,
-                    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
-                    [IS_REVOCATION_FIELD]: 'false',
-                    fields: [],
-                });
+                // versionStatus + isRevocation defaults are applied by query-service.
+                const response = await axios.post(
+                    `${queryServiceUrl}/v1/aggregated`,
+                    {
+                        [GROUP_ID_FIELD]: groupId,
+                        fields: [],
+                    },
+                    { params: { organism: key } },
+                );
                 const count = (response.data as { data?: { count?: number }[] }).data?.[0]?.count ?? 0;
                 counts[key] = count;
             } catch (error) {

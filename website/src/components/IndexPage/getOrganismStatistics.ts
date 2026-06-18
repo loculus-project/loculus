@@ -54,12 +54,8 @@ const getTotalAndLastUpdatedAt = async (
     organism: string,
 ): Promise<{ total: number; lastUpdatedAt: DateTime | undefined }> => {
     const client = LapisClient.createForOrganism(organism);
-    return (
-        await client.call('aggregated', {
-            [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
-            [IS_REVOCATION_FIELD]: 'false',
-        })
-    )
+    // versionStatus=LATEST_VERSION & isRevocation=false are query-service defaults.
+    return (await client.call('aggregated', {}, { queries: { organism: client.organism } }))
         .map((x) => ({
             total: x.data[0].count,
             lastUpdatedAt: DateTime.fromSeconds(Number.parseInt(x.info.dataVersion, 10), {
@@ -101,6 +97,7 @@ const getRecentFilter = (organism: string, numberDaysAgo: number): Record<string
 const getRecent = async (organism: string, numberDaysAgo: number): Promise<number> => {
     const recentFilter = getRecentFilter(organism, numberDaysAgo);
     const client = LapisClient.createForOrganism(organism);
+    const organismQueries = { queries: { organism: client.organism } };
     const recentlyReleasedTotal = (
         await client.call('aggregated', {
             ...recentFilter,
