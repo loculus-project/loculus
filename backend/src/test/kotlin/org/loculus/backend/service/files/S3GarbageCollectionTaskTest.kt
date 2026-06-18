@@ -4,19 +4,18 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.verify
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
-import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.controller.submission.PreparedProcessedData
+import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.daysAgo
 import org.loculus.backend.service.files.FilesDatabaseService
@@ -30,13 +29,15 @@ import java.util.UUID
     properties = [
         "${BackendSpringProperty.S3_ENABLED}=true",
         "${BackendSpringProperty.S3_GC_ENABLED}=true",
-        "${BackendSpringProperty.S3_ORPHAN_RETENTION_PERIOD_MINUTES}=1440",
+        "${BackendSpringProperty.S3_ORPHAN_RETENTION_PERIOD_MINUTES}=1",
+        "${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG",
     ],
 )
 class S3GarbageCollectionTaskTest(
     @Autowired val s3GarbageCollectionTask: S3GarbageCollectionTask,
     @Autowired val filesDatabaseService: FilesDatabaseService,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
+    @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val dateProvider: DateProvider,
     @Autowired val auditLogger: AuditLogger,
 ) {
@@ -53,22 +54,31 @@ class S3GarbageCollectionTaskTest(
     }
 
     @Test
-    fun `GIVEN dry run is enabled WHEN the task runs THEN the orphan is not deleted from S3 or the DB`() {
+    fun `GIVEN GC is disabled WHEN the task runs THEN orphaned files are neither marked nor deleted`() {
+        val orphan = UUID.randomUUID()
+        insertFile(orphan, groupId, daysAgo(2))
+
+        S3GarbageCollectionTask(
+            filesDatabaseService,
+            s3Service,
+            dateProvider,
+            auditLogger,
+            orphanRetentionPeriod = 1,
+            enabled = false,
+        ).task()
+
+        verify(exactly = 0) { s3Service.deleteFile(any()) }
+        assertThat(filesDatabaseService.getNonExistentFileIds(setOf(orphan)), `is`(emptySet()))
+        assertThat(filesDatabaseService.getMarkedForDeletionFileIds(setOf(orphan)), `is`(emptySet()))
+    }
+
+    @Suppress("ktlint:standard:max-line-length")
+    @Test
+    fun `GIVEN an orphaned file WHEN the task runs once THEN the orphan is marked but not yet deleted from S3 or the DB`() {
         val orphan = UUID.randomUUID()
         insertFile(orphan, groupId, daysAgo(2))
 
         s3GarbageCollectionTask.task()
-
-        verify(exactly = 0) { s3Service.deleteFile(any()) }
-        assertThat(filesDatabaseService.getNonExistentFileIds(setOf(orphan)), `is`(emptySet()))
-    }
-
-    @Test
-    fun `GIVEN an orphaned file WHEN the task runs THEN the file is marked for deletion but not yet deleted`() {
-        val orphan = UUID.randomUUID()
-        insertFile(orphan, groupId, daysAgo(2))
-
-        nonDryRunTask().task()
 
         verify(exactly = 0) { s3Service.deleteFile(any()) }
         assertThat(filesDatabaseService.getNonExistentFileIds(setOf(orphan)), `is`(emptySet()))
@@ -80,9 +90,8 @@ class S3GarbageCollectionTaskTest(
         val orphan = UUID.randomUUID()
         insertFile(orphan, groupId, daysAgo(2))
 
-        val task = nonDryRunTask()
-        task.task() // phase 1: marks the file
-        task.task() // phase 2: deletes it
+        s3GarbageCollectionTask.task() // phase 1: marks the file
+        s3GarbageCollectionTask.task() // phase 2: deletes it
 
         verify { s3Service.deleteFile(orphan) }
         assertThat(filesDatabaseService.getNonExistentFileIds(setOf(orphan)), `is`(setOf(orphan)))
@@ -95,11 +104,24 @@ class S3GarbageCollectionTaskTest(
         val referenced = UUID.randomUUID()
         listOf(orphan, referenced).forEach { insertFile(it, groupId, daysAgo(2)) }
 
-        insertSequenceEntry(accession = "A1", version = 1, fileId = referenced)
+        val submissions = convenienceClient.submitDefaultFiles(groupId = groupId).submissionIdMappings
+        val targetAccession = submissions.first().accession
+        convenienceClient.extractUnprocessedData()
+        convenienceClient.submitProcessedData(
+            submissions.map { av ->
+                if (av.accession == targetAccession) {
+                    PreparedProcessedData.withFiles(
+                        av.accession,
+                        mapOf("myFileCategory" to listOf(FileIdAndName(referenced, "output.txt"))),
+                    )
+                } else {
+                    PreparedProcessedData.successfullyProcessed(av.accession)
+                }
+            },
+        )
 
-        val task = nonDryRunTask()
-        task.task() // phase 1: marks orphan, skips referenced
-        task.task() // phase 2: deletes orphan
+        s3GarbageCollectionTask.task() // phase 1: marks orphan, skips referenced
+        s3GarbageCollectionTask.task() // phase 2: deletes orphan
 
         verify { s3Service.deleteFile(orphan) }
         verify(exactly = 0) { s3Service.deleteFile(referenced) }
@@ -111,45 +133,35 @@ class S3GarbageCollectionTaskTest(
 
     @Suppress("ktlint:standard:max-line-length")
     @Test
-    fun `GIVEN a file marked then referenced between runs WHEN the task runs again THEN the file is NOT deleted (race condition fix)`() {
+    fun `GIVEN a referenced file that is marked for deletion WHEN the task runs THEN the file is NOT deleted (race condition fix)`() {
         val file = UUID.randomUUID()
         insertFile(file, groupId, daysAgo(2))
 
-        nonDryRunTask().task() // phase 1: marks the file
+        val submissions = convenienceClient.submitDefaultFiles(groupId = groupId).submissionIdMappings
+        val targetAccession = submissions.first().accession
+        convenienceClient.extractUnprocessedData()
+        convenienceClient.submitProcessedData(
+            submissions.map { av ->
+                if (av.accession == targetAccession) {
+                    PreparedProcessedData.withFiles(
+                        av.accession,
+                        mapOf("myFileCategory" to listOf(FileIdAndName(file, "output.txt"))),
+                    )
+                } else {
+                    PreparedProcessedData.successfullyProcessed(av.accession)
+                }
+            },
+        )
 
-        // Simulate the race condition: a submission referencing this file commits
-        // after the mark but before the next GC run's phase 2 check.
-        insertSequenceEntry(accession = "B1", version = 1, fileId = file)
+        // Simulate the race condition: GC phase 1 marked the file as an orphan (it was unreferenced at the
+        // time), but a new submission referencing the file committed before phase 2 runs. We replicate this
+        // by marking the file while it is already referenced. Phase 2 must re-check orphan status and skip
+        // any file that now has a reference.
+        filesDatabaseService.markFilesForDeletion(setOf(file))
 
-        nonDryRunTask().task() // phase 2: file is now referenced, must NOT be deleted
+        s3GarbageCollectionTask.task() // phase 2: file is marked but still referenced — must NOT be deleted
 
         verify(exactly = 0) { s3Service.deleteFile(any()) }
         assertThat(filesDatabaseService.getNonExistentFileIds(setOf(file)), `is`(emptySet()))
-    }
-
-    private fun nonDryRunTask() = S3GarbageCollectionTask(
-        filesDatabaseService,
-        s3Service,
-        dateProvider,
-        auditLogger,
-        orphanRetentionPeriod = 1,
-        enabled = true,
-    )
-
-    private fun insertSequenceEntry(accession: String, version: Long, fileId: UUID) = transaction {
-        SequenceEntriesTable.insert {
-            it[accessionColumn] = accession
-            it[versionColumn] = version
-            it[organismColumn] = DEFAULT_ORGANISM
-            it[submissionIdColumn] = "submission-$accession"
-            it[submitterColumn] = "testuser"
-            it[groupIdColumn] = groupId
-            it[submittedAtTimestampColumn] = dateProvider.getCurrentDateTime()
-            it[submittedDataColumn] = SubmittedData(
-                metadata = emptyMap(),
-                unalignedNucleotideSequences = emptyMap(),
-                files = mapOf("rawReads" to listOf(FileIdAndName(fileId, "raw.fastq"))),
-            )
-        }
     }
 }
