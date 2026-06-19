@@ -54,7 +54,7 @@ class GetOrphanedFileIdsTest(
 
         val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
 
-        assertThat(orphans, `is`(setOf(old)))
+        assertThat(orphans.keys, `is`(setOf(old)))
     }
 
     @Test
@@ -89,7 +89,7 @@ class GetOrphanedFileIdsTest(
         convenienceClient.extractUnprocessedData(pipelineVersion = 3)
         convenienceClient.submitProcessedData(processedDataAtPipeline(fileFromNewerPipeline), pipelineVersion = 3)
 
-        assertThat(filesDatabaseService.getOrphanedFileIds(daysAgo(5)), `is`(emptySet()))
+        assertThat(filesDatabaseService.getOrphanedFileIds(daysAgo(5)).keys, `is`(emptySet()))
     }
 
     @Suppress("ktlint:standard:max-line-length")
@@ -123,11 +123,11 @@ class GetOrphanedFileIdsTest(
         convenienceClient.extractUnprocessedData(pipelineVersion = 3)
         convenienceClient.submitProcessedData(processedData(includeFile = false), pipelineVersion = 3)
 
-        assertThat(filesDatabaseService.getOrphanedFileIds(daysAgo(5)), `is`(emptySet()))
+        assertThat(filesDatabaseService.getOrphanedFileIds(daysAgo(5)).keys, `is`(emptySet()))
 
         // Upgrades to v3, deletes v1 preprocessed data (keeps v2 as the one retained older version)
         useNewerProcessingPipelineVersionTask.task()
 
-        assertThat(filesDatabaseService.getOrphanedFileIds(daysAgo(5)), `is`(setOf(fileInOldPipelineVersion)))
+        assertThat(filesDatabaseService.getOrphanedFileIds(daysAgo(5)).keys, `is`(setOf(fileInOldPipelineVersion)))
     }
 }

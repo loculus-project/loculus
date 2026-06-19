@@ -55,8 +55,11 @@ class S3GarbageCollectionTask(
             .minus(orphanRetentionPeriod, DateTimeUnit.MINUTE, DateProvider.timeZone)
             .toLocalDateTime(DateProvider.timeZone)
 
+        val orphans = filesDatabaseService.getOrphanedFileIds(threshold)
+        val markedOrphans = orphans.filterValues { it != null }.keys
+        val newOrphans = orphans.filterValues { it == null }.keys
+
         // Phase 2: delete files that were marked in a previous run and are still unreferenced
-        val markedOrphans = filesDatabaseService.getMarkedOrphanedFileIds(threshold)
         if (!enabled) {
             log.info {
                 "S3 garbage collection task would have deleted ${markedOrphans.size} marked orphan(s): $markedOrphans"
@@ -66,8 +69,6 @@ class S3GarbageCollectionTask(
         }
 
         // Phase 1: mark newly discovered orphans so they are rejected from submissions until the next run
-        val newOrphans = filesDatabaseService.getOrphanedFileIds(threshold)
-
         if (newOrphans.isNotEmpty()) {
             filesDatabaseService.markFilesForDeletion(newOrphans)
             log.info { "S3 garbage collection task marked ${newOrphans.size} orphan(s) for deletion" }

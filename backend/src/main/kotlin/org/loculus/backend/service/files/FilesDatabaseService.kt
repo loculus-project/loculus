@@ -69,12 +69,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         chunk.filterNot { it in existingIds }
     }, 1).toSet()
 
-    fun getMarkedOrphanedFileIds(threshold: LocalDateTime): Set<FileId> = getOrphanedFileIds(
-        extraCondition = "AND f.marked_for_deletion_at IS NOT NULL",
-        threshold = threshold,
-    )
-
-    fun getOrphanedFileIds(threshold: LocalDateTime, extraCondition: String = ""): Set<FileId> {
+    fun getOrphanedFileIds(threshold: LocalDateTime): Map<FileId, LocalDateTime?> {
         val sql = """
             -- check for files not referenced by a submission. For this, check the submitted_data,
             -- archive_of_submitted_data and processed_data jsonb objects
@@ -102,11 +97,10 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
                     LATERAL jsonb_each(COALESCE(NULLIF(sepd.processed_data->'files', 'null'::jsonb),'{}'::jsonb)) AS cat(k,v),
                     LATERAL jsonb_array_elements(cat.v) AS fil
             )
-            SELECT f.id FROM files f
+            SELECT f.id, f.marked_for_deletion_at FROM files f
               LEFT JOIN referenced r ON r.file_id = f.id
               WHERE r.file_id IS NULL
-                    AND f.upload_requested_at < ?
-                    $extraCondition;
+                    AND f.upload_requested_at < ?;
         """.trimIndent()
         return transaction {
             exec(
@@ -114,12 +108,24 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
                 listOf<Pair<IColumnType<*>, Any?>>(Pair(KotlinLocalDateTimeColumnType(), threshold)),
                 explicitStatementType = StatementType.SELECT,
             ) { rs ->
-                buildSet<FileId> {
+                buildMap<FileId, LocalDateTime?> {
                     while (rs.next()) {
-                        add(rs.getObject("id", UUID::class.java))
+                        val id = rs.getObject("id", UUID::class.java)
+                        val markedAt = rs.getTimestamp("marked_for_deletion_at")?.toLocalDateTime()?.let { ldt ->
+                            LocalDateTime(
+                                ldt.year,
+                                ldt.monthValue,
+                                ldt.dayOfMonth,
+                                ldt.hour,
+                                ldt.minute,
+                                ldt.second,
+                                ldt.nano,
+                            )
+                        }
+                        put(id, markedAt)
                     }
                 }
-            } ?: emptySet()
+            } ?: emptyMap()
         }
     }
 
