@@ -1,5 +1,5 @@
 import type { ComparisonResult, FieldComparison } from './types';
-import { groupTableDataByHeader } from '../SequenceDetailsPage/groupTableDataByHeader';
+import { groupTableDataByHeader, headerSectionRank } from '../SequenceDetailsPage/groupTableDataByHeader';
 
 type DiffTableProps = {
     comparison: ComparisonResult;
@@ -50,9 +50,12 @@ export function DiffTable({ comparison, version1, version2, showAllFields }: Dif
     // Add noisy fields at the end
     fieldsToDisplay.push(...comparison.noisyFields);
 
-    // Group by header and order groups/rows by the central, config-defined order,
-    // matching how the sequence details page lays out fields.
-    const groupedFields = groupTableDataByHeader(fieldsToDisplay);
+    // Group by header and order groups/rows by the central, config-defined order, then
+    // push the alignment/QC and mutation sections to the bottom, matching how the
+    // sequence details page lays out its sections.
+    const groupedFields = groupTableDataByHeader(fieldsToDisplay).sort(
+        (a, b) => headerSectionRank(a.header) - headerSectionRank(b.header),
+    );
 
     // If no fields to display
     if (fieldsToDisplay.length === 0) {

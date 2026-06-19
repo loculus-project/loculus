@@ -1,3 +1,20 @@
+import { DEFAULT_AA_MUTATION_DETAILS_HEADER, DEFAULT_NUC_MUTATION_DETAILS_HEADER } from '../../types/config';
+
+/**
+ * Section rank matching the sequence details page layout (see DataTable.tsx): general
+ * sections come first, then the alignment/QC section, then mutation details. Within a
+ * rank, the config order from `groupTableDataByHeader` is preserved (stable sort).
+ */
+export function headerSectionRank(header: string): number {
+    if (header === DEFAULT_NUC_MUTATION_DETAILS_HEADER || header === DEFAULT_AA_MUTATION_DETAILS_HEADER) {
+        return 2;
+    }
+    if (header.toLowerCase().includes('alignment')) {
+        return 1;
+    }
+    return 0;
+}
+
 /**
  * Groups table data entries by their `header` and orders both the groups and the
  * rows within each group by `orderOnDetailsPage` (the central, config-defined order).

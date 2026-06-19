@@ -3,14 +3,35 @@ import type { DetailsJson } from '../../types/detailsJson';
 import type { TableDataEntry } from '../SequenceDetailsPage/types';
 
 // Fields that are expected to change between versions and should be shown greyed out
-const NOISY_FIELD_NAMES = ['submittedAtTimestamp', 'version', 'versionStatus', 'accessionVersion'];
-const NOISY_FIELD_PATTERNS = [/timestamp/i, /release.*date/i];
+const NOISY_FIELD_NAMES = [
+    'submittedAtTimestamp',
+    'releasedAtTimestamp',
+    'version',
+    'versionStatus',
+    'accessionVersion',
+];
+
+const NOISY_FIELD_PATTERNS: RegExp[] = [];
+
+// Fields that should never be shown in the diff and are dropped entirely
+const HIDDEN_FIELD_NAMES: string[] = [];
+const HIDDEN_FIELD_PATTERNS: RegExp[] = [
+    // data use terms
+    /dataUseTerms/,
+];
 
 function isNoisyField(fieldName: string): boolean {
     if (NOISY_FIELD_NAMES.includes(fieldName)) {
         return true;
     }
     return NOISY_FIELD_PATTERNS.some((pattern) => pattern.test(fieldName));
+}
+
+function isHiddenField(fieldName: string): boolean {
+    if (HIDDEN_FIELD_NAMES.includes(fieldName)) {
+        return true;
+    }
+    return HIDDEN_FIELD_PATTERNS.some((pattern) => pattern.test(fieldName));
 }
 
 function compareValues(value1: string | number | boolean, value2: string | number | boolean): boolean {
@@ -22,9 +43,13 @@ export function compareVersionData(v1: DetailsJson, v2: DetailsJson): Comparison
     const unchangedFields: FieldComparison[] = [];
     const noisyFields: FieldComparison[] = [];
 
+    // Drop hidden fields up front so neither pass below ever has to consider them.
+    const v1Fields = v1.tableData.filter((entry) => !isHiddenField(entry.name));
+    const v2Fields = v2.tableData.filter((entry) => !isHiddenField(entry.name));
+
     // Create a map of fields from version 2 for quick lookup
     const v2FieldMap = new Map<string, TableDataEntry>();
-    for (const entry of v2.tableData) {
+    for (const entry of v2Fields) {
         v2FieldMap.set(entry.name, entry);
     }
 
@@ -32,7 +57,7 @@ export function compareVersionData(v1: DetailsJson, v2: DetailsJson): Comparison
     const processedFields = new Set<string>();
 
     // Process all fields from version 1
-    for (const v1Entry of v1.tableData) {
+    for (const v1Entry of v1Fields) {
         const v2Entry = v2FieldMap.get(v1Entry.name);
 
         // If field doesn't exist in v2, consider it as changed (removed)
@@ -84,7 +109,7 @@ export function compareVersionData(v1: DetailsJson, v2: DetailsJson): Comparison
     }
 
     // Process fields that only exist in version 2 (added fields)
-    for (const v2Entry of v2.tableData) {
+    for (const v2Entry of v2Fields) {
         if (!processedFields.has(v2Entry.name)) {
             const comparison: FieldComparison = {
                 name: v2Entry.name,

@@ -19,7 +19,7 @@ function formatAuthorName(author: string): string {
     }
     return author.trim();
 }
-function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
+function groupCustomDisplayEntries(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
     const result: TableDataEntry[] = [];
     const groupedEntries = new Map<string, TableDataEntry[]>();
 
@@ -72,7 +72,7 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
         (entry) =>
             !(entry.type.kind === 'metadata' && entry.value === 0 && entry.header.toLowerCase().includes('alignment')),
     );
-    const listTableDataEntriesAfterGrouping = grouping(filteredEntries);
+    const listTableDataEntriesAfterGrouping = groupCustomDisplayEntries(filteredEntries);
 
     const entriesForTable: TableDataEntry[] = [];
     for (const entry of listTableDataEntriesAfterGrouping) {
