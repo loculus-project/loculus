@@ -1258,7 +1258,7 @@
         },
         "crossRef": {
           "groups": ["general"],
-          "type": "object",
+          "type": ["object", "null"],
           "additionalProperties": false,
           "description": "Configuration for CrossRef integration. Set to `null` to disable CrossRef integration (you can still use SeqSets without CrossRef DOIs).",
           "properties": {
