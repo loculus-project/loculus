@@ -28,7 +28,14 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
                 trigger={
                     <label
                         tabIndex={0}
-                        className={buttonClasses({ size: 'sm', variant: 'outline', className: 'py-1' })}
+                        // Kept black (rather than the primary `outline` variant) to match the
+                        // dark control icons it sits next to in SeqPreviewModal.
+                        className={buttonClasses({
+                            size: 'sm',
+                            variant: 'unstyled',
+                            className:
+                                'py-1 bg-transparent border-base-content text-base-content hover:bg-base-content hover:text-base-100',
+                        })}
                     >
                         <span className='text-sm'>
                             {selectedVersion === undefined ? 'All versions' : `Version ${selectedVersion.version}`}

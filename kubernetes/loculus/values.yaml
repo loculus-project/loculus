@@ -1,12 +1,16 @@
 environment: server
 imagePullPolicy: Always
+
+# Pod scheduling: nodeSelector, tolerations, affinity, and priority class for pod placement
+podScheduling:
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
 localHost: localhost
 robotsNoindexHeader: false
 seqSets:
   enabled: true
-  crossRef:
-    DOIPrefix: "placeholder"
-    endpoint: "https://test.crossref.org"
   fieldsToDisplay:
     - field: "geoLocCountry"
       displayName: "Country"
@@ -1545,6 +1549,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
+    configFile:
+      muted_hashes_url: "https://pathoplexus.github.io/curation_data/muted_hashes/muted_hashes.tsv"
 defaultOrganisms:
   ebola-sudan:
     <<: *defaultOrganismConfig
@@ -2645,11 +2651,6 @@ secrets:
       username: "postgres"
       password: "unsecure"
       port: "5432"
-  crossref:
-    type: raw
-    data:
-      username: "dummy"
-      password: "dummy"
   service-accounts:
     type: autogen
     data:

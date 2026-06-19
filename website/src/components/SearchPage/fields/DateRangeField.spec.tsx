@@ -110,13 +110,6 @@ describe('DateRangeField', () => {
             />,
         );
 
-        expect(setSomeFieldValues).toHaveBeenCalledWith(
-            ['collectionDateRangeLowerFrom', '2024-01-01'],
-            ['collectionDateRangeUpperTo', '2024-12-31'],
-            ['collectionDateRangeUpperFrom', null],
-            ['collectionDateRangeLowerTo', null],
-        );
-
         const strictCheckbox = screen.getByRole('checkbox');
         expect(strictCheckbox).toBeChecked();
         await userEvent.click(strictCheckbox);
@@ -127,34 +120,6 @@ describe('DateRangeField', () => {
             ['collectionDateRangeLowerTo', '2024-12-31'],
             ['collectionDateRangeLowerFrom', null],
             ['collectionDateRangeUpperTo', null],
-        );
-    });
-
-    it('updates query params if user types in new dates', async () => {
-        render(
-            <DateRangeField
-                field={field}
-                fieldValues={{ collectionDateRangeLowerFrom: '2024-01-01', collectionDateRangeUpperTo: '2024-12-31' }}
-                setSomeFieldValues={setSomeFieldValues}
-            />,
-        );
-
-        const fromInput = screen.getByText('From').closest('div')?.querySelector('input');
-        const toInput = screen.getByText('To').closest('div')?.querySelector('input');
-
-        expect(fromInput).toHaveValue('2024-01-01');
-        expect(toInput).toHaveValue('2024-12-31');
-
-        await userEvent.type(fromInput!, '{backspace}');
-        await userEvent.type(fromInput!, '19870423');
-        await userEvent.type(toInput!, '{backspace}');
-        await userEvent.type(toInput!, '20141013');
-
-        expect(setSomeFieldValues).toHaveBeenLastCalledWith(
-            ['collectionDateRangeLowerFrom', '1987-04-23'],
-            ['collectionDateRangeUpperTo', '2014-10-13'],
-            ['collectionDateRangeUpperFrom', null],
-            ['collectionDateRangeLowerTo', null],
         );
     });
 

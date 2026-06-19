@@ -41,6 +41,7 @@ spec:
         app: loculus
         component: minio
     spec:
+      {{- include "loculus.podScheduling" . | nindent 6 }}
       volumes:
         - name: policy-volume
           configMap:

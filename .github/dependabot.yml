@@ -12,14 +12,18 @@ updates:
     schedule:
       interval: weekly
     ignore:
-    - dependency-name: "@tanstack/react-query"
-      # see https://github.com/loculus-project/loculus/issues/3305
-      # see https://github.com/loculus-project/loculus/issues/3295
-      versions: [ ">=5.0.0" ]
-    - dependency-name: "@mui/material"
-    - dependency-name: "change-case"
-    - dependency-name: "@types/node"
-      versions: [">=23"] # Increase when we update node version in .nvmrc
+      - dependency-name: "@tanstack/react-query"
+        # see https://github.com/loculus-project/loculus/issues/3305
+        # see https://github.com/loculus-project/loculus/issues/3295
+        versions: [">=5.0.0"]
+      - dependency-name: "@mui/material" #https://github.com/loculus-project/loculus/issues/1548
+      - dependency-name: "change-case"
+      - dependency-name: "@types/node"
+        versions: [">=23"] # Increase when we update node version in .nvmrc
+      - dependency-name: "zod"
+        versions: [">=4.0.0"] #https://github.com/loculus-project/loculus/issues/3295
+      - dependency-name: "react"
+        versions: [">=19.0.0"] #https://github.com/loculus-project/loculus/issues/3452
     groups:
       minor:
         update-types:

@@ -222,8 +222,12 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
     return [FileUploadInfo(**item) for item in response.json()]
 
 
-def upload_embl_file_to_presigned_url(content: str, url: str) -> None:
+def upload_embl_file_to_presigned_url(
+    content: str, url: str, extra_headers: dict | None = None
+) -> None:
     headers = {"Content-Type": "chemical/x-embl-dl-nucleotide"}
+    if extra_headers:
+        headers.update(extra_headers)
     r = requests.put(url, data=content.encode("utf-8"), headers=headers, timeout=60)
     if not r.ok:
         msg = f"Upload failed: {r.status_code}, {r.text}"

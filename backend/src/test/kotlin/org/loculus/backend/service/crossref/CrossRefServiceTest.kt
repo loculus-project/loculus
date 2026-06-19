@@ -1,6 +1,7 @@
 package org.loculus.backend.service.crossref
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -10,6 +11,8 @@ import org.loculus.backend.SpringBootTestWithoutDatabase
 import org.loculus.backend.api.CitationContributor
 import org.loculus.backend.api.CitationSource
 import org.loculus.backend.api.SeqSetCitationSource
+import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.Instant
 import java.time.LocalDate
@@ -17,7 +20,10 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 @SpringBootTestWithoutDatabase
-class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefService) {
+class CrossRefServiceTest(
+    @Autowired private val crossRefService: CrossRefService,
+    @Autowired private val backendConfig: BackendConfig,
+) {
     private val doiBatchID: String = "3cbae87e-77b2-4560-b411-502288f3f636"
     private val now: LocalDate = LocalDateTime.ofInstant(
         Instant.ofEpochSecond(1711411200),
@@ -27,8 +33,23 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
 
     private val crossRefXMLReference = """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-        <doi_batch version="5.3.1" xmlns="http://www.crossref.org/schema/5.3.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.crossref.org/schema/5.3.1 http://data.crossref.org/schemas/crossref5.3.1.xsd"><head><doi_batch_id>$doiBatchID</doi_batch_id><timestamp>1711411200000</timestamp><depositor><depositor_name>Loculus Database</depositor_name><email_address>dois@loculus.org</email_address></depositor><registrant>Loculus Database</registrant></head><body><database><database_metadata><titles><title>Loculus Database</title></titles></database_metadata><dataset><contributors><organization contributor_role="author" sequence="first">loculus.org</organization></contributors><titles><title>SeqSet: My test set</title></titles><database_date><publication_date><month>03</month><day>26</day><year>2024</year></publication_date></database_date><doi_data><doi>$doi</doi><resource>https://main.loculus.org/seqsets/LOC_SS_1.1</resource></doi_data></dataset></database></body></doi_batch>
+        <doi_batch version="5.3.1" xmlns="http://www.crossref.org/schema/5.3.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.crossref.org/schema/5.3.1 http://data.crossref.org/schemas/crossref5.3.1.xsd"><head><doi_batch_id>$doiBatchID</doi_batch_id><timestamp>1711411200000</timestamp><depositor><depositor_name>Loculus Database</depositor_name><email_address>dois@loculus.org</email_address></depositor><registrant>Loculus Database</registrant></head><body><database><database_metadata><titles><title>Loculus Database</title></titles></database_metadata><dataset><contributors><organization contributor_role="author" sequence="first">loculus.org</organization></contributors><titles><title>SeqSet: My test set</title></titles><database_date><publication_date><month>03</month><day>26</day><year>2024</year></publication_date></database_date><doi_data><doi>$doi</doi><resource>${backendConfig.websiteUrl}/seqsets/LOC_SS_1.1</resource></doi_data></dataset></database></body></doi_batch>
     """.trimIndent()
+
+    private fun crossRefService(writeEnabled: Boolean?) = CrossRefService(
+        CrossRefServiceProperties(
+            endpoint = "dummy",
+            username = "dummy",
+            password = "dummy",
+            doiPrefix = "placeholder",
+            databaseName = "Loculus Database",
+            email = "dois@loculus.org",
+            organization = "loculus.org",
+            writeEnabled = writeEnabled,
+        ),
+        DateProvider(),
+        backendConfig,
+    )
 
     @Test
     fun `parseCrossRefCitedByXML returns citations from valid XML across different citation types`() {
@@ -268,6 +289,21 @@ class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefServic
             ),
             result.sources[0].source.contributors,
         )
+    }
+
+    @Test
+    fun `postCrossRefXML is rejected when write is not enabled`() {
+        val readOnlyService = crossRefService(writeEnabled = false)
+        val ex = assertThrows<RuntimeException> {
+            readOnlyService.postCrossRefXML(crossRefXMLReference)
+        }
+        assertTrue(ex.message!!.contains("read-only", ignoreCase = true))
+    }
+
+    @Test
+    fun `crossref write-enabled=true property string is coerced to the boolean flag`() {
+        // Application properties sets crossref.write-enabled=true
+        assertTrue(crossRefService.isWriteEnabled)
     }
 
     @Test
