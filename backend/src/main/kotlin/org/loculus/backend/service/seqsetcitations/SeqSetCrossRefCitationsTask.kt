@@ -49,8 +49,6 @@ class SeqSetCrossRefCitationsTask(
         fixedDelay = 5,
         timeUnit = java.util.concurrent.TimeUnit.MINUTES,
     )
-    // The scheduler polls every 5 minutes, but `lockAtLeastFor` holds the lock for the full interval so
-    // the CrossRef service is queried at most once per interval, regardless of how many replicas run.
     @SchedulerLock(
         name = "seqSetCrossRefCitations",
         lockAtLeastFor = "\${loculus.locks.seqSetCrossRefCitations.atLeast:PT6H}",

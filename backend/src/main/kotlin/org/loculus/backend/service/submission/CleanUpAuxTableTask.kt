@@ -20,13 +20,9 @@ class CleanUpAuxTableTask(
 ) {
 
     /**
-     * Deletes auxTable entries older than 24 hours.
-     *
-     * The scheduler polls frequently (every 5 minutes), but `lockAtLeastFor` keeps the ShedLock lock
-     * held for at least the configured interval, so across replicas the task effectively runs once
-     * per `lockAtLeastFor` regardless of replica count. `lockAtMostFor` is deliberately larger than
-     * `lockAtLeastFor` so an unusually long run keeps the lock (no parallel run) while still releasing
-     * within bounds if a replica dies mid-task.
+     * Deletes auxTable entries older than 24 hours. Effectively runs once per `lockAtLeastFor` (1h)
+     * regardless of replica count; `lockAtMostFor` is larger so an occasional long run keeps the lock
+     * rather than allowing a parallel run, while still releasing if a replica dies mid-task.
      */
     @Scheduled(fixedDelay = 5, timeUnit = java.util.concurrent.TimeUnit.MINUTES)
     @SchedulerLock(

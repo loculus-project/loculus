@@ -37,9 +37,7 @@ class ShedLockIntegrationTest(
 
     @Test
     fun `WHEN a lock is released within lockAtLeastFor THEN it cannot be re-acquired yet`() {
-        // A unique lock name that no scheduled task uses, so the result is not affected by the
-        // background scheduler. lockAtLeastFor is what prevents the task from running more often
-        // than the configured interval (regardless of replica count), even after an early release.
+        // A unique lock name no scheduled task uses, so the background scheduler can't interfere.
         val lockName = "shedLockIntegrationTestLock"
         val lockAtMostFor = Duration.ofMinutes(5)
         val lockAtLeastFor = Duration.ofMinutes(1)

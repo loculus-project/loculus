@@ -21,11 +21,9 @@ class UseNewerProcessingPipelineVersionTask(private val submissionDatabaseServic
     )
     @SchedulerLock(
         name = "useNewerProcessingPipelineVersion",
-        // `lockAtLeastFor` enforces the effective check interval across replicas. It defaults to the
-        // configured check interval, so operators who tune `interval-seconds` (down to 1s) are honored
-        // rather than silently overridden. The Helm chart sets `lockAtMostFor` to 5x the interval; the
-        // PT1M fallback here covers non-Helm runs. Both are overridable via the `loculus.locks.*` keys
-        // (tests set `atLeast` to PT0S).
+        // Defaults to the configured check interval so an operator who tunes `interval-seconds` is
+        // honored, not overridden. The Helm chart sets `atMost` to 5x the interval; PT1M is the
+        // non-Helm fallback. Both overridable via `loculus.locks.*` (tests use PT0S).
         lockAtLeastFor = "\${loculus.locks.useNewerProcessingPipelineVersion.atLeast:" +
             "PT\${${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}}S}",
         lockAtMostFor = "\${loculus.locks.useNewerProcessingPipelineVersion.atMost:PT1M}",

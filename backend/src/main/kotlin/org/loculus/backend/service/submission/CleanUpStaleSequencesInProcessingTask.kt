@@ -14,19 +14,15 @@ class CleanUpStaleSequencesInProcessingTask(
     private val submissionDatabaseService: SubmissionDatabaseService,
     @Value("\${${BackendSpringProperty.STALE_AFTER_SECONDS}}") private val timeToStaleInSeconds: Long,
 ) {
-    // `fixedDelay` (not `fixedRate`): schedules from completion, so the next poll always fires after
-    // `lockAtLeastFor` (= run-every) has elapsed since acquisition. With `fixedRate` the poll grid would
-    // sit exactly on the lock-expiry boundary and skip ticks unpredictably due to clock jitter.
+    // `fixedDelay`, not `fixedRate`: scheduling from completion keeps each poll past the lock expiry.
+    // With `fixedRate` the poll grid would sit on the `lockAtLeastFor` boundary and skip ticks on jitter.
     @Scheduled(
         fixedDelayString = "\${${BackendSpringProperty.CLEAN_UP_RUN_EVERY_SECONDS}}",
         timeUnit = TimeUnit.SECONDS,
     )
     @SchedulerLock(
         name = "cleanUpStaleSequencesInProcessing",
-        // `lockAtLeastFor` enforces the effective run interval across replicas; it defaults to the
-        // configured run-every interval so that value is honored rather than silently overridden.
-        // `lockAtMostFor` (PT5M) is the crash-recovery ceiling. Overridable via `loculus.locks.*`
-        // (tests set `atLeast` to PT0S).
+        // Defaults to the configured run-every interval so it is honored, not overridden (tests use PT0S).
         lockAtLeastFor = "\${loculus.locks.cleanUpStaleSequencesInProcessing.atLeast:" +
             "PT\${${BackendSpringProperty.CLEAN_UP_RUN_EVERY_SECONDS}}S}",
         lockAtMostFor = "PT5M",
