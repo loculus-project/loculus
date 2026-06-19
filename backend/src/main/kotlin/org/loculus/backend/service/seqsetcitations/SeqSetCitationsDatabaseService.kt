@@ -574,7 +574,7 @@ class SeqSetCitationsDatabaseService(
                     ),
                     seqSets = rows.map {
                         SeqSetCitingSequence(
-                            seqSetAccession = AccessionVersion(
+                            seqSetAccessionVersion = AccessionVersion(
                                 it[SeqSetsTable.seqSetId],
                                 it[SeqSetsTable.seqSetVersion],
                             ).displayAccessionVersion(),

@@ -97,7 +97,8 @@ data class SeqSetCitationSource(val source: CitationSource, val seqSetDOIs: Set<
 @Schema(description = "A citation of a SeqSet.")
 data class SeqSetCitation(val source: CitationSource)
 
-data class SeqSetCitingSequence(val seqSetAccession: String, val sequenceAccession: String)
+// `sequenceAccession` can be either a bare accession or an accessionVersion.
+data class SeqSetCitingSequence(val seqSetAccessionVersion: String, val sequenceAccession: String)
 
 @Schema(description = "A citation of a sequence.")
 data class SequenceCitation(val source: CitationSource, val seqSets: List<SeqSetCitingSequence>)

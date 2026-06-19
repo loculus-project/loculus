@@ -62,7 +62,8 @@ const sequenceCitation = z.object({
     source: citationSource,
     seqSets: z.array(
         z.object({
-            seqSetAccession: z.string(),
+            seqSetAccessionVersion: z.string(),
+            // can be either a bare accession or an accessionVersion
             sequenceAccession: z.string(),
         }),
     ),
