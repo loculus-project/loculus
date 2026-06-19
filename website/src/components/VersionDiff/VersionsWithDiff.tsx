@@ -75,24 +75,14 @@ function VersionsWithDiffInner({ versions, accession }: VersionsWithDiffProps) {
                         <h2 className='text-xl font-semibold'>
                             Comparing Version {comparedVersions?.[0]} vs Version {comparedVersions?.[1]}
                         </h2>
-                        <div className='flex items-center gap-4'>
-                            <label className='flex items-center gap-2 cursor-pointer'>
-                                <span className='text-sm'>Hide shared substitutions/indels</span>
-                                <Checkbox
-                                    size='sm'
-                                    checked={mutationsDiffOnly}
-                                    onChange={(e) => setMutationsDiffOnly(e.target.checked)}
-                                />
-                            </label>
-                            <label className='flex items-center gap-2 cursor-pointer'>
-                                <span className='text-sm'>Show all fields</span>
-                                <Checkbox
-                                    size='sm'
-                                    checked={showAllFields}
-                                    onChange={(e) => setShowAllFields(e.target.checked)}
-                                />
-                            </label>
-                        </div>
+                        <label className='flex items-center gap-2 cursor-pointer'>
+                            <span className='text-sm'>Show all fields</span>
+                            <Checkbox
+                                size='sm'
+                                checked={showAllFields}
+                                onChange={(e) => setShowAllFields(e.target.checked)}
+                            />
+                        </label>
                     </div>
 
                     {isLoading && (
@@ -112,6 +102,7 @@ function VersionsWithDiffInner({ versions, accession }: VersionsWithDiffProps) {
                                     version2={comparison.versions[1]}
                                     showAllFields={showAllFields}
                                     mutationsDiffOnly={mutationsDiffOnly}
+                                    setMutationsDiffOnly={setMutationsDiffOnly}
                                 />
                             </div>
                             {isFetching && (

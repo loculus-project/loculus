@@ -2,6 +2,7 @@ import { DiffFieldValue } from './DiffFieldValue';
 import { diffMutationEntries } from './mutationDiff';
 import type { ComparisonResult, FieldComparison } from './types';
 import { groupTableDataByHeader, headerSectionRank } from '../SequenceDetailsPage/groupTableDataByHeader';
+import { Checkbox } from '../common/Checkbox';
 
 type DiffTableProps = {
     comparison: ComparisonResult;
@@ -9,6 +10,7 @@ type DiffTableProps = {
     version2: number;
     showAllFields: boolean;
     mutationsDiffOnly: boolean;
+    setMutationsDiffOnly: (value: boolean) => void;
 };
 
 function FieldRow({ field, mutationsDiffOnly }: { field: FieldComparison; mutationsDiffOnly: boolean }) {
@@ -35,26 +37,34 @@ function FieldGroup({
     header,
     fields,
     mutationsDiffOnly,
+    setMutationsDiffOnly,
+    showMutationToggle,
 }: {
     header: string;
     fields: FieldComparison[];
     mutationsDiffOnly: boolean;
+    setMutationsDiffOnly: (value: boolean) => void;
+    // Render the "hide shared substitutions/indels" control on this section header. Set
+    // only on the first mutation section so the control sits right next to where it acts.
+    showMutationToggle: boolean;
 }) {
-    // In diff-only mode the mutation sections show only the mutations that differ between
-    // the versions, so make that explicit (the full list is shown by default, and is also
-    // available on each version's sequence page).
-    const showDiffCaveat = mutationsDiffOnly && headerSectionRank(header) === 2;
-
     return (
         <>
             <tr>
                 <td colSpan={3} className='bg-gray-100 px-4 py-2 font-semibold'>
-                    {header}
-                    {showDiffCaveat && (
-                        <span className='ml-2 text-xs font-normal italic text-gray-500'>
-                            showing only mutations that differ between the two versions
-                        </span>
-                    )}
+                    <div className='flex items-center justify-between gap-4'>
+                        <span>{header}</span>
+                        {showMutationToggle && (
+                            <label className='flex items-center gap-2 cursor-pointer font-normal text-sm'>
+                                <span>Hide shared substitutions/indels</span>
+                                <Checkbox
+                                    size='sm'
+                                    checked={mutationsDiffOnly}
+                                    onChange={(e) => setMutationsDiffOnly(e.target.checked)}
+                                />
+                            </label>
+                        )}
+                    </div>
                 </td>
             </tr>
             {fields.map((field) => (
@@ -64,7 +74,14 @@ function FieldGroup({
     );
 }
 
-export function DiffTable({ comparison, version1, version2, showAllFields, mutationsDiffOnly }: DiffTableProps) {
+export function DiffTable({
+    comparison,
+    version1,
+    version2,
+    showAllFields,
+    mutationsDiffOnly,
+    setMutationsDiffOnly,
+}: DiffTableProps) {
     // Prepare fields to display
     const fieldsToDisplay: FieldComparison[] = [];
 
@@ -85,6 +102,10 @@ export function DiffTable({ comparison, version1, version2, showAllFields, mutat
     const groupedFields = groupTableDataByHeader(fieldsToDisplay).sort(
         (a, b) => headerSectionRank(a.header) - headerSectionRank(b.header),
     );
+
+    // The first mutation section (if any) hosts the "hide shared substitutions/indels"
+    // control, so it sits next to the mutations it affects rather than at the top.
+    const firstMutationSectionHeader = groupedFields.find(({ header }) => headerSectionRank(header) === 2)?.header;
 
     // If no fields to display
     if (fieldsToDisplay.length === 0) {
@@ -107,7 +128,14 @@ export function DiffTable({ comparison, version1, version2, showAllFields, mutat
                 </thead>
                 <tbody>
                     {groupedFields.map(({ header, rows }) => (
-                        <FieldGroup key={header} header={header} fields={rows} mutationsDiffOnly={mutationsDiffOnly} />
+                        <FieldGroup
+                            key={header}
+                            header={header}
+                            fields={rows}
+                            mutationsDiffOnly={mutationsDiffOnly}
+                            setMutationsDiffOnly={setMutationsDiffOnly}
+                            showMutationToggle={header === firstMutationSectionHeader}
+                        />
                     ))}
                 </tbody>
             </table>
