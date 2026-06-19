@@ -6,6 +6,7 @@ import org.jsoup.parser.Parser
 import org.loculus.backend.api.CitationContributor
 import org.loculus.backend.api.CitationSource
 import org.loculus.backend.api.SeqSetCitationSource
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.utils.DateProvider
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
@@ -34,7 +35,6 @@ data class CrossRefServiceProperties(
     val databaseName: String?,
     val email: String?,
     val organization: String?,
-    val hostUrl: String?,
     val writeEnabled: Boolean?,
 )
 
@@ -54,15 +54,18 @@ data class CrossRefCitedByResult(
 )
 
 @Service
-class CrossRefService(private val properties: CrossRefServiceProperties, private val dateProvider: DateProvider) {
+class CrossRefService(
+    private val properties: CrossRefServiceProperties,
+    private val dateProvider: DateProvider,
+    private val backendConfig: BackendConfig,
+) {
     val isActive = !properties.endpoint.isNullOrBlank() &&
         !properties.username.isNullOrBlank() &&
         !properties.password.isNullOrBlank() &&
         !properties.doiPrefix.isNullOrBlank() &&
         !properties.databaseName.isNullOrBlank() &&
         !properties.email.isNullOrBlank() &&
-        !properties.organization.isNullOrBlank() &&
-        !properties.hostUrl.isNullOrBlank()
+        !properties.organization.isNullOrBlank()
     val isWriteEnabled = properties.writeEnabled == true
     val doiPrefix: String? = properties.doiPrefix
     val dateTimeFormatterMM: DateTimeFormatter = DateTimeFormatter.ofPattern("MM")
@@ -274,7 +277,7 @@ class CrossRefService(private val properties: CrossRefServiceProperties, private
                             "doi" { -entry.doi }
                             // The "payload" of the DOI request, usually an URL
                             // If the request is successful, the newly minted DOI will resolve to this URL
-                            "resource" { -"${properties.hostUrl!!}${entry.urlPath}" }
+                            "resource" { -"${backendConfig.websiteUrl}${entry.urlPath}" }
                         }
                     }
                 }
