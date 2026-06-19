@@ -2,24 +2,15 @@ import { type APIRoute } from 'astro';
 
 import { findOrganismAndData } from './findOrganismAndData';
 import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
-import { getRuntimeConfig, getSchema, seqSetsAreEnabled } from '../../../config';
+import { getRuntimeConfig, getSchema } from '../../../config';
 import { getInstanceLogger } from '../../../logger.ts';
-import { SeqSetCitationClient } from '../../../services/seqSetCitationClient.ts';
 import type { DetailsJson } from '../../../types/detailsJson';
-import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
 
 const logger = getInstanceLogger('details.json');
 
 export const GET: APIRoute = async (req) => {
     const params = req.params as { accessionVersion: string; accessToken?: string };
     const { accessionVersion } = params;
-    const { accession } = parseAccessionVersionFromString(accessionVersion);
-
-    const sequenceCitationsPromise = seqSetsAreEnabled()
-        ? SeqSetCitationClient.create().call('getSequenceCitations', {
-              params: { accession }, // Display citations across all accession versions
-          })
-        : undefined;
 
     const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
 
@@ -40,8 +31,6 @@ export const GET: APIRoute = async (req) => {
         });
     }
 
-    const sequenceCitations = (await sequenceCitationsPromise)?.unwrapOr(undefined);
-
     const clientConfig = getRuntimeConfig().public;
 
     const schema = getSchema(organism);
@@ -56,7 +45,7 @@ export const GET: APIRoute = async (req) => {
         segmentReferences: result.segmentReferences,
         isRevocation: result.isRevocation,
         sequenceEntryHistory: result.sequenceEntryHistory,
-        sequenceCitations,
+        sequenceCitations: result.sequenceCitations,
     };
 
     return new Response(JSON.stringify(detailsDataUIProps), {

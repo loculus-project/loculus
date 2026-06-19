@@ -1,13 +1,15 @@
-import { Result } from 'neverthrow';
+import { ok, Result } from 'neverthrow';
 
 import { getTableData } from '../../../components/SequenceDetailsPage/getTableData';
 import { type TableDataEntry } from '../../../components/SequenceDetailsPage/types.ts';
-import { getReferenceGenomes, getSchema } from '../../../config.ts';
+import { getReferenceGenomes, getSchema, seqSetsAreEnabled, type Organism } from '../../../config.ts';
 import { routes } from '../../../routes/routes.ts';
 import { createBackendClient } from '../../../services/backendClientFactory.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
+import { SeqSetCitationClient } from '../../../services/seqSetCitationClient.ts';
 import type { DataUseTermsHistoryEntry, ProblemDetail } from '../../../types/backend.ts';
 import type { SequenceEntryHistory } from '../../../types/lapis.ts';
+import type { SequenceCitation } from '../../../types/seqSetCitation.ts';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
 import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 
@@ -16,56 +18,129 @@ export enum SequenceDetailsTableResultType {
     REDIRECT = 'redirect',
 }
 
-export type TableData = {
-    type: SequenceDetailsTableResultType.TABLE_DATA;
+type LapisData = {
+    organism: string;
     tableData: TableDataEntry[];
     sequenceEntryHistory: SequenceEntryHistory;
-    dataUseTermsHistory: DataUseTermsHistoryEntry[];
     segmentReferences?: SegmentReferenceSelections;
     isRevocation: boolean;
 };
 
+type BackendData = {
+    dataUseTermsHistory: DataUseTermsHistoryEntry[];
+    sequenceCitations?: SequenceCitation[];
+};
+
+type TableData = {
+    organism: string;
+    type: SequenceDetailsTableResultType.TABLE_DATA;
+    tableData: TableDataEntry[];
+    sequenceEntryHistory: SequenceEntryHistory;
+    segmentReferences?: SegmentReferenceSelections;
+    isRevocation: boolean;
+    dataUseTermsHistory: DataUseTermsHistoryEntry[];
+    sequenceCitations?: SequenceCitation[];
+};
+
 export type Redirect = {
+    organism: string;
     type: SequenceDetailsTableResultType.REDIRECT;
     redirectUrl: string;
 };
 
-export type SequenceDetailsTableDataResult = Promise<Result<TableData | Redirect, ProblemDetail>>;
+type LapisDataResult = Result<LapisData, ProblemDetail>;
+type BackendDataResult = Result<BackendData, ProblemDetail>;
+type SequenceDetailsTableDataResult = Result<TableData | Redirect, ProblemDetail>;
 
-export const getSequenceDetailsTableData = async (
-    accessionVersion: string,
-    organism: string,
-): SequenceDetailsTableDataResult => {
-    const { accession, version } = parseAccessionVersionFromString(accessionVersion);
-
+const getLapisData = async (accessionVersion: string, organism: string): Promise<LapisDataResult> => {
+    const { accession } = parseAccessionVersionFromString(accessionVersion);
     const lapisClient = LapisClient.createForOrganism(organism);
-    const backendClient = createBackendClient();
-
-    if (version === undefined) {
-        const latestVersionResult = await lapisClient.getLatestAccessionVersion(accession);
-        return latestVersionResult.map((latestVersion) => ({
-            type: SequenceDetailsTableResultType.REDIRECT,
-            redirectUrl: routes.sequenceEntryDetailsPage(latestVersion),
-        }));
-    }
-
     const schema = getSchema(organism);
     const referenceGenomesInfo = getReferenceGenomes(organism);
 
-    const [tableDataResult, sequenceEntryHistoryResult, dataUseHistoryResult] = await Promise.all([
+    const [tableDataResult, sequenceEntryHistoryResult] = await Promise.all([
         getTableData(accessionVersion, schema, referenceGenomesInfo, lapisClient),
         lapisClient.getAllSequenceEntryHistoryForAccession(accession),
-        backendClient.getDataUseTermsHistory(accession),
     ]);
 
-    return Result.combine([tableDataResult, sequenceEntryHistoryResult, dataUseHistoryResult]).map(
-        ([tableData, sequenceEntryHistory, dataUseTermsHistory]) => ({
-            type: SequenceDetailsTableResultType.TABLE_DATA as const,
-            tableData: tableData.data,
-            sequenceEntryHistory,
+    return Result.combine([tableDataResult, sequenceEntryHistoryResult]).map(([tableData, sequenceEntryHistory]) => ({
+        organism,
+        tableData: tableData.data,
+        sequenceEntryHistory,
+        segmentReferences: tableData.segmentReferences,
+        isRevocation: tableData.isRevocation,
+    }));
+};
+
+const getBackendData = async (accessionVersion: string): Promise<BackendDataResult> => {
+    const { accession } = parseAccessionVersionFromString(accessionVersion);
+    const backendClient = createBackendClient();
+    const seqSetCitationClient = SeqSetCitationClient.create();
+
+    const [dataUseHistoryResult, sequenceCitationsResult] = await Promise.all([
+        backendClient.getDataUseTermsHistory(accession),
+        // If enabled, fetch citations across all versions of the accession
+        seqSetsAreEnabled()
+            ? seqSetCitationClient.call('getSequenceCitations', {
+                  params: { accession },
+              })
+            : ok(undefined),
+    ]);
+
+    return Result.combine([dataUseHistoryResult, sequenceCitationsResult]).map(
+        ([dataUseTermsHistory, sequenceCitations]) => ({
             dataUseTermsHistory,
-            segmentReferences: tableData.segmentReferences,
-            isRevocation: tableData.isRevocation,
+            sequenceCitations,
         }),
     );
+};
+
+export const getSequenceDetailsTableData = async (
+    accessionVersion: string,
+    organisms: Organism[],
+): Promise<SequenceDetailsTableDataResult> => {
+    const { accession, version } = parseAccessionVersionFromString(accessionVersion);
+
+    if (version === undefined) {
+        const latestVersions = organisms.map((organism) =>
+            LapisClient.createForOrganism(organism.key)
+                .getLatestAccessionVersion(accession)
+                .then((result) =>
+                    result.isOk()
+                        ? ok({ organism: organism.key, result: result.value })
+                        : Promise.reject(new Error(`${organism.key}: '${result.error.detail}'`)),
+                ),
+        );
+        const latestVersionResult = await Promise.any(latestVersions);
+        return latestVersionResult.map((latestVersion) => ({
+            organism: latestVersion.organism,
+            type: SequenceDetailsTableResultType.REDIRECT,
+            redirectUrl: routes.sequenceEntryDetailsPage(latestVersion.result),
+        }));
+    }
+
+    // getLapisData resolves to a Result and never rejects, so wrap it to reject on error.
+    // This lets Promise.any return the first organism that *succeeds*, rather than the first to settle.
+    const backendDataPromise = getBackendData(accessionVersion);
+    const lapisDataPromises = organisms.map((organism) =>
+        getLapisData(accessionVersion, organism.key).then((result) =>
+            result.isOk() ? result : Promise.reject(new Error(`${organism.key}: '${result.error.detail}'`)),
+        ),
+    );
+
+    const [backendDataResult, lapisDataResult] = await Promise.all([
+        backendDataPromise,
+        Promise.any(lapisDataPromises),
+    ]);
+
+    return Result.combine([backendDataResult, lapisDataResult]).map(([backendData, lapisData]) => ({
+        organism: lapisData.organism,
+        type: SequenceDetailsTableResultType.TABLE_DATA as const,
+        tableData: lapisData.tableData,
+        sequenceEntryHistory: lapisData.sequenceEntryHistory,
+        dataUseTermsHistory: backendData.dataUseTermsHistory,
+        sequenceCitations: backendData.sequenceCitations,
+        segmentReferences: lapisData.segmentReferences,
+        isRevocation: lapisData.isRevocation,
+    }));
 };
