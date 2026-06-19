@@ -14,7 +14,13 @@ class CleanUpStaleSequencesInProcessingTask(
     private val submissionDatabaseService: SubmissionDatabaseService,
     @Value("\${${BackendSpringProperty.STALE_AFTER_SECONDS}}") private val timeToStaleInSeconds: Long,
 ) {
-    @Scheduled(fixedRateString = "\${${BackendSpringProperty.CLEAN_UP_RUN_EVERY_SECONDS}}", timeUnit = TimeUnit.SECONDS)
+    // `fixedDelay` (not `fixedRate`): schedules from completion, so the next poll always fires after
+    // `lockAtLeastFor` (= run-every) has elapsed since acquisition. With `fixedRate` the poll grid would
+    // sit exactly on the lock-expiry boundary and skip ticks unpredictably due to clock jitter.
+    @Scheduled(
+        fixedDelayString = "\${${BackendSpringProperty.CLEAN_UP_RUN_EVERY_SECONDS}}",
+        timeUnit = TimeUnit.SECONDS,
+    )
     @SchedulerLock(
         name = "cleanUpStaleSequencesInProcessing",
         // `lockAtLeastFor` enforces the effective run interval across replicas; it defaults to the
