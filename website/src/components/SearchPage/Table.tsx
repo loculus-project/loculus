@@ -79,7 +79,7 @@ const CellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName
     return (
         <span
             ref={textRef}
-            className='truncate block min-h-5'
+            className='truncate block'
             style={{ maxWidth: getColumnWidthStyle(columnWidth) }}
             data-tooltip-id={isTruncated ? 'table-tip' : undefined}
             data-tooltip-content={isTruncated ? tooltipText : undefined}
@@ -290,7 +290,7 @@ export const Table: FC<TableProps> = ({
                                     </td>
 
                                     <td
-                                        className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
+                                        className='px-2 py-2 whitespace-nowrap text-primary-900 md:pl-6'
                                         aria-label='SearchResult'
                                     >
                                         <a
