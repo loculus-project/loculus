@@ -77,7 +77,7 @@ function VersionsWithDiffInner({ versions, accession }: VersionsWithDiffProps) {
                         </h2>
                         <div className='flex items-center gap-4'>
                             <label className='flex items-center gap-2 cursor-pointer'>
-                                <span className='text-sm'>Only show differing mutations</span>
+                                <span className='text-sm'>Hide shared substitutions/indels</span>
                                 <Checkbox
                                     size='sm'
                                     checked={mutationsDiffOnly}
