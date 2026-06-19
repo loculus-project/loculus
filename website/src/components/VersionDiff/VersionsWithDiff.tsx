@@ -22,6 +22,7 @@ function VersionsWithDiffInner({ versions, accession }: VersionsWithDiffProps) {
 
     const showCheckboxes = versions.length > 2;
     const [showAllFields, setShowAllFields] = useState(false);
+    const [mutationsDiffOnly, setMutationsDiffOnly] = useState(false);
 
     // Prefer the pair the loaded comparison is for (kept stable while a new pair loads), falling
     // back to the current selection during the very first load.
@@ -74,14 +75,24 @@ function VersionsWithDiffInner({ versions, accession }: VersionsWithDiffProps) {
                         <h2 className='text-xl font-semibold'>
                             Comparing Version {comparedVersions?.[0]} vs Version {comparedVersions?.[1]}
                         </h2>
-                        <label className='flex items-center gap-2 cursor-pointer'>
-                            <span className='text-sm'>Show all fields</span>
-                            <Checkbox
-                                size='sm'
-                                checked={showAllFields}
-                                onChange={(e) => setShowAllFields(e.target.checked)}
-                            />
-                        </label>
+                        <div className='flex items-center gap-4'>
+                            <label className='flex items-center gap-2 cursor-pointer'>
+                                <span className='text-sm'>Only show differing mutations</span>
+                                <Checkbox
+                                    size='sm'
+                                    checked={mutationsDiffOnly}
+                                    onChange={(e) => setMutationsDiffOnly(e.target.checked)}
+                                />
+                            </label>
+                            <label className='flex items-center gap-2 cursor-pointer'>
+                                <span className='text-sm'>Show all fields</span>
+                                <Checkbox
+                                    size='sm'
+                                    checked={showAllFields}
+                                    onChange={(e) => setShowAllFields(e.target.checked)}
+                                />
+                            </label>
+                        </div>
                     </div>
 
                     {isLoading && (
@@ -100,6 +111,7 @@ function VersionsWithDiffInner({ versions, accession }: VersionsWithDiffProps) {
                                     version1={comparison.versions[0]}
                                     version2={comparison.versions[1]}
                                     showAllFields={showAllFields}
+                                    mutationsDiffOnly={mutationsDiffOnly}
                                 />
                             </div>
                             {isFetching && (
