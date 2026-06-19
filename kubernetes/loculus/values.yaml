@@ -11,7 +11,7 @@ localHost: localhost
 robotsNoindexHeader: false
 seqSets:
   enabled: true
-  crossRef: 
+  crossRef:
     DOIPrefix: "placeholder"
     endpoint: "https://test.crossref.org"
   fieldsToDisplay:
