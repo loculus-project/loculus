@@ -6,8 +6,7 @@ import { SequenceDataUI } from '../../../components/SequenceDetailsPage/Sequence
 import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.tsx';
 import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
-import { getSchema, getRuntimeConfig, getReferenceGenomes } from '../../../config';
-import { getWebsiteConfig } from '../../../config';
+import { getSchema, getRuntimeConfig, getWebsiteConfig, getReferenceGenomes, seqSetsAreEnabled } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { SeqSetCitationClient } from '../../../services/seqSetCitationClient';
 import { type Group } from '../../../types/backend';
@@ -18,12 +17,14 @@ import { getSegmentNames } from '../../../utils/sequenceTypeHelpers';
 
 const accessionVersion = Astro.params.accessionVersion!;
 const { accession } = parseAccessionVersionFromString(accessionVersion);
-const sequenceCitationsPromise = SeqSetCitationClient.create().call('getSequenceCitations', {
-    params: { accession }, // Display citations across all accession versions
-});
+const sequenceCitationsPromise = seqSetsAreEnabled()
+    ? SeqSetCitationClient.create().call('getSequenceCitations', {
+          params: { accession }, // Display citations across all accession versions
+      })
+    : undefined;
 
 const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
-const sequenceCitations = (await sequenceCitationsPromise).unwrapOr(undefined);
+const sequenceCitations = (await sequenceCitationsPromise)?.unwrapOr(undefined);
 
 if (
     sequenceDetailsTableData.isOk() &&
