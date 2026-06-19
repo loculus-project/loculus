@@ -44,7 +44,7 @@ class SequenceUpdateManager:
     ]  # Map of current submissionId to map of previous state
     # i.e. loculus accessions (to be revoked) and their corresponding old joint insdc accessions
     sampled_out: list[JointInsdcAccession]
-    hashes: list[float]
+    hashes: list[str]
     config: Config
     muted_hashes: dict[LoculusAccession, set[str]]
 
@@ -53,7 +53,7 @@ class SequenceUpdateManager:
 class LatestLoculusVersion:
     loculus_accession: LoculusAccession
     latest_version: int
-    hash: float | None
+    hash: str | None
     status: Status
     curated: bool
     jointAccession: JointInsdcAccession  # noqa: N815
@@ -121,7 +121,7 @@ def process_hashes(
     """
     Decide if metadata_id should be submitted, revised, or noop
     """
-    newly_ingested_hash: float | None = new_metadata.get("hash")
+    newly_ingested_hash: str | None = new_metadata.get("hash")
 
     if ingested_insdc_accession not in submitted:
         update_manager.submit.append(metadata_id)
