@@ -543,6 +543,7 @@ class SeqSetCitationsDatabaseService(
 
         // If a version is provided, return citations pinned to that exact accession and version
         // Otherwise, return all citations for the accession, regardless of version, including unversioned
+        // NOTE: In this table, the 'accession' column can contain both accessions and accessionVersions
         val accessionQuery: Op<Boolean> = if (version != null) {
             val accessionVersion = AccessionVersion(accession, version)
             SeqSetRecordsTable.accession eq accessionVersion.displayAccessionVersion()
