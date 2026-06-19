@@ -7,6 +7,7 @@ export type FieldComparison = {
     value1: string | number | boolean;
     value2: string | number | boolean;
     type: TableDataEntryType;
+    orderOnDetailsPage?: number;
     hasChanged: boolean;
     isNoisy: boolean;
 };

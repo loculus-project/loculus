@@ -44,6 +44,7 @@ export function compareVersionData(v1: DetailsJson, v2: DetailsJson): Comparison
                 value1: v1Entry.value,
                 value2: '', // Field doesn't exist in v2
                 type: v1Entry.type,
+                orderOnDetailsPage: v1Entry.orderOnDetailsPage,
                 hasChanged: true,
                 isNoisy: isNoisyField(v1Entry.name),
             };
@@ -65,6 +66,7 @@ export function compareVersionData(v1: DetailsJson, v2: DetailsJson): Comparison
                 value1: v1Entry.value,
                 value2: v2Entry.value,
                 type: v1Entry.type,
+                orderOnDetailsPage: v1Entry.orderOnDetailsPage ?? v2Entry.orderOnDetailsPage,
                 hasChanged,
                 isNoisy,
             };
@@ -91,6 +93,7 @@ export function compareVersionData(v1: DetailsJson, v2: DetailsJson): Comparison
                 value1: '', // Field doesn't exist in v1
                 value2: v2Entry.value,
                 type: v2Entry.type,
+                orderOnDetailsPage: v2Entry.orderOnDetailsPage,
                 hasChanged: true,
                 isNoisy: isNoisyField(v2Entry.name),
             };

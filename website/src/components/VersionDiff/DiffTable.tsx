@@ -1,4 +1,5 @@
 import type { ComparisonResult, FieldComparison } from './types';
+import { groupTableDataByHeader } from '../SequenceDetailsPage/groupTableDataByHeader';
 
 type DiffTableProps = {
     comparison: ComparisonResult;
@@ -6,18 +7,6 @@ type DiffTableProps = {
     version2: number;
     showAllFields: boolean;
 };
-
-function groupFieldsByHeader(fields: FieldComparison[]): Map<string, FieldComparison[]> {
-    const grouped = new Map<string, FieldComparison[]>();
-    for (const field of fields) {
-        const header = field.header || 'Other';
-        if (!grouped.has(header)) {
-            grouped.set(header, []);
-        }
-        grouped.get(header)!.push(field);
-    }
-    return grouped;
-}
 
 function FieldRow({ field }: { field: FieldComparison }) {
     const rowClass = field.isNoisy ? 'text-gray-400' : field.hasChanged ? 'bg-amber-50' : '';
@@ -61,8 +50,9 @@ export function DiffTable({ comparison, version1, version2, showAllFields }: Dif
     // Add noisy fields at the end
     fieldsToDisplay.push(...comparison.noisyFields);
 
-    // Group by header
-    const groupedFields = groupFieldsByHeader(fieldsToDisplay);
+    // Group by header and order groups/rows by the central, config-defined order,
+    // matching how the sequence details page lays out fields.
+    const groupedFields = groupTableDataByHeader(fieldsToDisplay);
 
     // If no fields to display
     if (fieldsToDisplay.length === 0) {
@@ -84,8 +74,8 @@ export function DiffTable({ comparison, version1, version2, showAllFields }: Dif
                     </tr>
                 </thead>
                 <tbody>
-                    {Array.from(groupedFields.entries()).map(([header, fields]) => (
-                        <FieldGroup key={header} header={header} fields={fields} />
+                    {groupedFields.map(({ header, rows }) => (
+                        <FieldGroup key={header} header={header} fields={rows} />
                     ))}
                 </tbody>
             </table>
